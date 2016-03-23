@@ -17,11 +17,11 @@ m = arm32nb
 Cpu = ARMV6
 
 mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include
-mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a
+mdclib = /usr/pkg/lib/libiconv.a -lm /usr/pkg/lib/libncurses.a
 C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
 o = o
-mdsrc = arm32le.c
-mdobj = arm32le.o
+mdsrc = arm32nb.c
+mdobj = arm32nb.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -38,5 +38,5 @@ ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
-	(cd ../zlib; CFLAGS=-m32 ./configure)
-	(cd ../zlib; make)
+	(cd ../zlib; ./configure)
+	(cd ../zlib; ${MAKE})
