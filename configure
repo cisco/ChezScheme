@@ -99,6 +99,11 @@ case `uname` in
       m64=a6nb
       tm32=ti3nb
       tm64=ta6nb
+    elif uname -a | grep evbarm > /dev/null 2>&1 ; then
+      m32=arm32nb
+      m64=""
+      tm32=""
+      tm64=""
     fi
     installprefix=/usr
     installmansuffix=share/man

@@ -362,6 +362,7 @@
   a6nt      ta6nt
   i3qnx     ti3qnx
   arm32le   tarm32le
+  arm32nb   tarm32nb
   ppc32le   tppc32le
   a6df      ta6df
 )

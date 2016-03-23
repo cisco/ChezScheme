@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#if (machine_type == machine_type_arm32le || machine_type == machine_type_tarm32le || machine_type == machine_type_arm64le || machine_type == machine_type_tarm64le)
+#if (machine_type == machine_type_arm32le || machine_type == machine_type_tarm32le || \
+     machine_type == machine_type_arm64le || machine_type == machine_type_tarm64le)
 #if (machine_type == machine_type_tarm32le || machine_type == machine_type_tarm64le)
 #define PTHREADS
 #endif
@@ -174,8 +175,10 @@ typedef int tputsputcchar;
 #define UNUSED __attribute__((__unused__))
 #endif
 
-#if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb)
-#if (machine_type == machine_type_ti3nb || machine_type == machine_type_ta6nb)
+#if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || \
+     machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb || \
+     machine_type == machine_type_arm32nb || machine_type == machine_type_tarm32nb)
+#if (machine_type == machine_type_ti3nb || machine_type == machine_type_ta6nb || machine_type == machine_type_tarm32nb)
 #define NETBSD
 #define PTHREADS
 #endif
@@ -205,7 +208,8 @@ typedef int tputsputcchar;
 #define UNUSED __attribute__((__unused__))
 #endif
 
-#if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
+#if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || \
+     machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
 #if (machine_type == machine_type_ti3nt || machine_type == machine_type_ta6nt)
 #define PTHREADS
 #endif

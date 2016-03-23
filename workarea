@@ -40,6 +40,7 @@ case "$M" in
   a6nt) ;;
   a6s2) ;;
   arm32le) ;;
+  arm32nb) ;;
   i3fb) ;;
   i3le) ;;
   i3nb) ;;
@@ -58,6 +59,7 @@ case "$M" in
   ta6nb) ;;
   ta6s2) ;;
   tarm32le) ;;
+  tarm32nb) ;;
   ti3fb) ;;
   ti3le) ;;
   ti3nb) ;;
