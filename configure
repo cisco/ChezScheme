@@ -235,13 +235,7 @@ if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
   exit 1
 fi
 
-if [ ! -e nanopass ] ; then
-  (curl -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -xzf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
-fi
-
-if [ ! -e zlib ] ; then
-  (curl -L -o v1.2.8.tar.gz https://github.com/madler/zlib/archive/v1.2.8.tar.gz && tar -xzf v1.2.8.tar.gz && mv zlib-1.2.8 zlib && rm v1.2.8.tar.gz) || exit 1
-fi
+git submodule init && git submodule update || exit 1
 
 ./workarea $m $w
 
