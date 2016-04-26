@@ -1,0 +1,58 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Preface}
+
+{\ChezScheme} Version~9 is a complete implementation of the language of
+the Revised$^6$ Report on Scheme (R6RS), with numerous extensions.
+The implementation is extensively tested and actively maintained and supported.
+It includes a fast compiler that generates efficient native code for each
+processor upon which it runs along with a run-time system that provides
+automatic storage management, foreign language interfaces, and an
+extensive run-time library.
+
+The compiler has been rewritten for Version~9 and generates
+substantially faster code than the earlier compiler at the cost of
+additional compile time.
+This is the primary difference between Versions~8 and~9.
+
+This book is a companion to \emph{The Scheme Programming Language, 4th
+Edition} (TSPL4).
+While TSPL4 describes only standard R6RS features, this book describes
+{\ChezScheme} extensions.
+For the reader's convenience, the summary of forms and index at the back
+of this book contain entries from both books, with each entry from TSPL4
+marked with a ``t'' in front of its page number.
+In the online version, the page numbers given in the summary of forms and
+index double as direct links into one of the documents or the other.
+
+Additional documentation for {\ChezScheme} includes release notes, a
+manual page, and a number of published papers and articles that describe
+various aspects of the system's design and implementation.
+
+The threaded versions of {\ChezScheme} support native threads, allowing
+Scheme programs to take advantage of multiprocessor or multiple-core
+systems. 
+Nonthreaded versions are also available and are faster for
+single-threaded applications.
+Both 32-bit and 64-bit versions are available for some platforms.
+The 64-bit versions support larger heaps, while the 32-bit versions
+are faster for some applications.
+
+{\ChezScheme}'s interactive programming system includes an expression
+editor that, like many shells, supports command-line editing, a history
+mechanism, and command completion.
+Unlike most shells that support command-line editing, the expression
+editor properly supports multiline expressions.
+
+Thank you for using {\ChezScheme}.

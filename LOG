@@ -1,0 +1,26 @@
+9.4 changes:
+- updated version to 9.4
+    bintar README NOTICE makefiles/Mf-install.in scheme.1.in
+    c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
+    mats/bldnt.bat workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/csug.stex
+- added missing include
+    killme.c
+- added new mat verifying that primitives raise exceptions for invalid
+  arguments based on primdata.ss signatures.  fixed some of those
+  signatures, which weren't otherwise used except for arity checking.
+  fixed some issues turned up by the test with who reports errors
+  and how.
+    primdata.ss, 5_1.ss, 7.ss, compile.ss, cpnanopass.ss, fasl.ss,
+    interpret.ss, io.ss, record.ss, syntax.ss,
+    primvars.ms, 5_1.ms, 7.ms, 8.ms, record.ms, mats/Mf-base,
+    root-experr*, patch*
+- string comparisons (string=?, string-ci<?, etc.) now get out fast
+  when handed eq arguments.
+    5_4.ss
+- changed representation of most-negative iptr, I32, and I64 to make
+  Visual C compiler happy.  updated windows make files, which had
+  fallen out of date.  added missing hsrc= files sort.h and thread.h
+  so they show up in the Windows workarea c directory.
+    cmacros.ss,
+    fasl.c, number.c, c/Mf-base, c/Makefile.{t,}{i3,a6}nt

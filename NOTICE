@@ -1,0 +1,30 @@
+Chez Scheme Version 9.4
+Copyright 1984-2016 Cisco Systems, Inc.
+
+This product includes code developed by Cisco Systems, Inc.
+
+This product also includes separately copyrighted:
+
+* Unicode data files from the Unicode Consortium
+
+* Unicode data-file processing code developed by Abdulaziz Ghuloum and
+  R. Kent Dybvig
+
+* sorting code developed by Olin Shivers
+
+* example programs, an html formatting module, and documentation
+  support files developed by R. Kent Dybvig
+
+* test code and other code used for testing developed by
+  William D Clinger, by Dirk Lutzebaeck, and by Oscar Waddell and
+  R. Kent Dybvig.
+
+* code derived from C. David Boyer's command-line editor
+
+Builds of this product incorporate separately copyrighted code from:
+
+* the Nanopass Infrastructure, developed by Dipanwita Sarkar,
+  Andrew W. Keep, R. Kent Dybvig, and Oscar Waddell
+
+* the Zlib compression library, developed by Jean-loup Gailly and
+  Mark Adler

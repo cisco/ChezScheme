@@ -1,0 +1,662 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Control Structures\label{CHPTCONTROL}}
+
+This chapter describes {\ChezScheme} extensions to the set of standard
+control structures.
+See Chapter~\ref{TSPL:CHPTCONTROL} of {\TSPLFOUR} or the Revised$^6$ Report
+on Scheme for a description of standard control structures.
+
+
+\section{Conditionals}
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{exclusive-cond}{\categorysyntax}{(exclusive-cond \var{clause_1} \var{clause_2} \dots)}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{exclusive-cond} is a version of \scheme{cond}
+(Section~\ref{TSPL:SECTCONDITIONALS} of {TSPLFOUR}) that differs
+from \scheme{cond} in that the tests embedded within the clauses
+are assumed to be exclusive in the sense that if one of the tests
+is true, the others are not.
+This allows the implementation to reorder clauses when profiling
+information is available at expansion time (Section~\ref{SECTMISCPROFILE}).
+
+The \scheme{(\var{test})} form of clause is not supported.
+The order chosen when profiling information is available is based
+on the relative numbers of times the RHS of each clause is executed,
+and \scheme{(\var{test})} has no RHS.
+\scheme{(\var{test} => values)} is equivalent, abeit less concise.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{case}{\categorysyntax}{(case \var{expr_0} \var{clause_1} \var{clause_2} \dots)}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+Each clause but the last must take one of the forms:
+
+\schemedisplay
+((\var{key} \dots) \var{expr_1} \var{expr_2} \dots)
+(\var{key} \var{expr_1} \var{expr_2} \dots)
+\endschemedisplay
+
+\noindent
+where each \var{key} is a datum distinct from the other keys.
+The last clause may be in the above form or it may be an
+\index{\scheme{else}}\scheme{else} clause of the form
+
+\schemedisplay
+(else \var{expr_1} \var{expr_2} \dots)
+\endschemedisplay
+
+\var{expr_0} is evaluated and the result is compared
+(using \scheme{equal?}) against the keys of each clause in order.
+If a clause containing a matching key is found, the
+expressions \scheme{\var{expr_1} \var{expr_2} \dots} are evaluated in sequence
+and the values of the last expression are returned.
+
+If none of the clauses contains a matching key and an \scheme{else} clause
+is present, the expressions \scheme{\var{expr_1} \var{expr_2} \dots} of the
+\scheme{else} clause are evaluated in sequence and the values of the last
+expression are returned.
+
+If none of the clauses contains a matching key and no \scheme{else} clause
+is present, the value or values are unspecified.
+
+The Revised$^6$ Report version of \scheme{case} does not support singleton
+keys (the second of the first two clause forms above) and uses
+\scheme{eqv?} rather than \scheme{equal?} as the comparison procedure.
+Both versions are defined in terms of \scheme{exclusive-cond} so that
+if profiling information is available at expansion time, the clauses will
+be reordered to put those that are most frequently executed first.
+
+\schemedisplay
+(let ([ls '(ii iv)])
+  (case (car ls)
+    [i 1]
+    [ii 2]
+    [iii 3]
+    [(iiii iv) 3]
+    [else 'out-of-range])) ;=> 2
+
+(define p
+  (lambda (x)
+    (case x
+      [("abc" "def") 'one]
+      [((a b c)) 'two]
+      [else #f])))
+
+(p (string #\d #\e #\f)) ;=> one
+(p '(a b c)) ;=> two
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{record-case}{\categorysyntax}{(record-case \var{expr} \var{clause_1} \var{clause_2} \dots)}
+\returns see explanation
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{record-case} is a restricted form of \scheme{case} that supports the
+destructuring of \index{records}\emph{records}, or \index{tagged lists}\emph{tagged lists}.
+A record has as its first element a tag that determines what ``type''
+of record it is; the remaining elements are the fields of the record.
+
+Each clause but the last must take the form
+
+\schemedisplay
+((\var{key} \dots) \var{formals} \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+\noindent
+where each \var{key} is a datum distinct from the other keys.
+The last clause may be in the above form or it may be an
+\index{\scheme{else}}\scheme{else} clause of the form
+
+\schemedisplay
+(else \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+\var{expr} must evaluate to a pair.
+\var{expr} is evaluated and the car of its value is compared
+(using \scheme{eqv?}) against the keys of each clause in order.
+If a clause containing a matching key is found, the variables in
+\var{formals} are bound to the remaining elements
+of the list and the expressions
+\scheme{\var{body_1} \var{body_2} \dots} are evaluated in sequence.
+The value of the last expression is returned.
+The effect is identical to the application of
+
+\schemedisplay
+(lambda \var{formals} \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+\noindent
+to the cdr of the list.
+
+If none of the clauses contains a matching key and an \scheme{else} clause
+is present, the expressions \scheme{\var{body_1} \var{body_2} \dots} of the
+\scheme{else} clause are evaluated in sequence and the value of the last
+expression is returned.
+
+If none of the clauses contains a matching key and no \scheme{else} clause
+is present, the value is unspecified.
+
+
+\schemedisplay
+(define calc
+  (lambda (x)
+    (record-case x
+      [(add) (x y) (+ x y)]
+      [(sub) (x y) (- x y)]
+      [(mul) (x y) (* x y)]
+      [(div) (x y) (/ x y)]
+      [else (assertion-violationf 'calc "invalid expression ~s" x)])))
+
+(calc '(add 3 4)) ;=> 7
+(calc '(div 3 4)) ;=> 3/4
+\endschemedisplay
+
+
+\section{Mapping and Folding}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{ormap}{\categoryprocedure}{(ormap \var{procedure} \var{list_1} \var{list_2} \dots)}
+\returns see explanation
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{ormap} is identical to the Revised$^6$ Report \scheme{exists}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{andmap}{\categoryprocedure}{(andmap \var{procedure} \var{list_1} \var{list_2} \dots)}
+\returns see explanation
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{andmap} is identical to the Revised$^6$ Report \scheme{for-all}.
+
+
+\section{Continuations}
+
+{\ChezScheme} supports one-shot continuations as well as the standard
+multi-shot continuations obtainable via \scheme{call/cc}.
+One-shot continuations are continuations that may be invoked at most
+once, whether explicitly or implicitly.
+They are obtained with \scheme{call/1cc}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{call/1cc}{\categoryprocedure}{(call/1cc \var{procedure})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{call/1cc} obtains its continuation and passes it to \var{procedure},
+which should accept one argument.
+The continuation itself is represented by a procedure.
+This procedure normally takes one argument but may take an arbitrary
+number of arguments depending upon whether the context of the call
+to \scheme{call/1cc}
+expects multiple return values or not.
+When this procedure is applied to a value or values, it returns the values
+to the continuation of the \scheme{call/1cc} application.
+
+The continuation obtained by \scheme{call/1cc} is a
+\index{one-shot continuations}``one-shot continuation.''
+A one-shot continuation should not be returned to multiple times, either
+by invoking the continuation or returning normally from \var{procedure} more
+than once.
+A one-shot continuation is ``promoted'' into a normal (multishot)
+continuation, however, if it is 
+still active when a
+normal continuation is obtained by \scheme{call/cc}.
+After a one-shot continuation is promoted into a multishot continuation,
+it behaves exactly as if it had been obtained via \scheme{call/cc}.
+This allows \scheme{call/cc} and \scheme{call/1cc} to be used together
+transparently in many applications.
+
+One-shot continuations may be more efficient for some applications than
+multishot continuations.
+See the paper ``Representing control in the presence of one-shot
+continuations''~\cite{Bruggeman:oneshots} for more information about
+one-shot continuations, including how they are implemented in
+{\ChezScheme}.
+
+The following examples highlight the similarities and differences
+between one-shot and normal continuations.
+
+\schemedisplay
+(define prod
+ ; compute the product of the elements of ls, bugging out
+ ; with no multiplications if a zero element is found
+  (lambda (ls)
+    (lambda (k)
+      (if (null? ls)
+          1
+          (if (= (car ls) 0)
+              (k 0)
+              (* (car ls) ((prod (cdr ls)) k)))))))
+
+(call/cc (prod '(1 2 3 4))) ;=> 24
+(call/1cc (prod '(1 2 3 4))) ;=> 24
+
+(call/cc (prod '(1 2 3 4 0))) ;=> 0
+(call/1cc (prod '(1 2 3 4 0))) ;=> 0
+
+(let ([k (call/cc (lambda (x) x))])
+  (k (lambda (x) 0))) ;=> 0
+
+(let ([k (call/1cc (lambda (x) x))])
+  (k (lambda (x) 0))) ;=> \var{exception}
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{dynamic-wind}
+\formdef{dynamic-wind}{\categoryprocedure}{(dynamic-wind \var{in} \var{body} \var{out})}
+\formdef{dynamic-wind}{\categoryprocedure}{(dynamic-wind \var{critical?} \var{in} \var{body} \var{out})}
+\returns values resulting from the application of \var{body}
+\listlibraries
+\endentryheader
+
+The first form is identical to the Revised$^6$ Report \scheme{dynamic-wind}.
+When the optional \var{critical?} argument is present and non-false,
+the \var{in} thunk is invoked in a critical section along with the code
+that records that the body has been entered, and the \var{out} thunk is
+invoked in a critical section section along with the code that records
+that the body has been exited.
+Extreme caution must be taken with this form of \scheme{dynamic-wind},
+since an error or long-running computation can leave interrupts
+and automatic garbage collection disabled.
+
+\section{Engines\label{SECTENGINES}}
+
+\index{engines}Engines are a high-level process abstraction supporting
+\index{timed preemption}\emph{timed preemption}~\cite{Dybvig:engines,Haynes:abstracting}.
+Engines may be used to simulate \index{multiprocessing}multiprocessing, implement operating
+system kernels, and perform \index{nondeterministic computations}nondeterministic computations.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-engine}{\categoryprocedure}{(make-engine \var{thunk})}
+\returns an engine
+\listlibraries
+\endentryheader
+
+An engine is created by passing a thunk (no argument procedure)
+to \scheme{make-engine}.
+The body of the thunk is the computation to be performed by the engine.
+An engine itself is a procedure of three arguments:
+
+\begin{description}
+\item[\var{ticks}:]
+\index{ticks@\var{ticks}|see{engines}}a positive integer that specifies
+the amount of \emph{fuel} to be given
+to the engine.
+An engine executes until this fuel runs out or until its computation
+finishes.
+
+\item[\var{complete}:]
+\index{complete@\var{complete}|see{engines}}a procedure of one or more
+arguments that
+specifies what to do if the computation finishes.
+Its arguments are the amount of fuel left over and the
+values produced by the computation.
+
+\item[\var{expire}:]
+\index{expire@\var{expire}|see{engines}}a procedure of one argument that
+specifies what to do if the fuel runs
+out before the computation finishes.
+Its argument is a new engine capable of continuing the computation
+from the point of interruption.
+\end{description}
+
+When an engine is applied to its arguments, it sets up a timer
+to fire in \var{ticks} time units.
+(See \scheme{set-timer} on page~\pageref{desc:set-timer}.)
+If the engine computation completes before the timer expires, the
+system invokes \var{complete}, passing 
+it the number of \var{ticks} left over and
+the values produced by the computation.
+If, on the other hand, the timer goes off before the engine computation
+completes, the system creates a new engine from the continuation of
+the interrupted computation and passes this engine to \var{expire}.
+\var{complete} and \var{expire} are invoked in the continuation
+of the engine invocation.
+
+An implementation of engines is given
+in Section~\ref{TSPL:SECTEXENGINES}.
+of {\TSPLFOUR}.
+
+Do not use the timer interrupt (see \index{\scheme{set-timer}}\scheme{set-timer}) and \index{engines}engines
+at the same time, since engines are implemented in terms of the timer.
+
+The following example creates an engine from a trivial computation,
+3, and gives the engine 10 ticks.
+
+\schemedisplay
+(define eng
+  (make-engine
+    (lambda () 3)))
+
+(eng 10
+     (lambda (ticks value) value)
+     (lambda (x) x)) ;=> 3
+\endschemedisplay
+
+It is often useful to pass \scheme{list} as the \var{complete}
+procedure to an engine, causing an engine that completes to return a
+list whose first element is the ticks remaining and whose remaining elements
+are the values returned by the computation.
+
+\schemedisplay
+(define eng
+  (make-engine
+    (lambda () 3)))
+
+(eng 10
+     list
+     (lambda (x) x)) ;=> (9 3)
+\endschemedisplay
+
+\noindent
+In the example above, the value is 3 and there are 9 ticks left over,
+i.e., it takes one unit of fuel to evaluate 3.
+(The fuel amounts given here are for illustration only.
+Your mileage may vary.)
+
+Typically, the engine computation does not finish in one try.
+\index{\scheme{fibonacci}}The following example displays the use of an engine to
+compute the 10th Fibonacci number in steps.
+
+\schemedisplay
+(define fibonacci
+  (lambda (n)
+    (let fib ([i n])
+      (cond
+        [(= i 0) 0]
+        [(= i 1) 1]
+        [else (+ (fib (- i 1))
+                 (fib (- i 2)))]))))
+
+(define eng
+  (make-engine
+    (lambda ()
+      (fibonacci 10))))
+
+(eng 50
+     list
+     (lambda (new-eng)
+       (set! eng new-eng)
+       "expired")) ;=> "expired"
+
+(eng 50
+     list
+     (lambda (new-eng)
+       (set! eng new-eng)
+       "expired")) ;=> "expired"
+
+(eng 50
+     list
+     (lambda (new-eng)
+       (set! eng new-eng)
+       "expired")) ;=> "expired"
+
+(eng 50
+     list
+     (lambda (new-eng)
+       (set! eng new-eng)
+       "expired")) ;=> (21 55)
+\endschemedisplay
+
+\noindent
+Each time the engine's fuel runs out, the \var{expire} procedure assigns
+\scheme{eng} to the new engine.
+The entire computation requires four blocks of 50 ticks to complete; of the
+last 50 it uses all but 21.
+Thus, the total amount of fuel used is 179 ticks.
+This leads to the following procedure, \scheme{mileage}, which ``times'' a
+computation using engines:
+
+\schemedisplay
+(define mileage
+  (lambda (thunk)
+    (let loop ([eng (make-engine thunk)] [total-ticks 0])
+      (eng 50
+           (lambda (ticks . values)
+             (+ total-ticks (- 50 ticks)))
+           (lambda (new-eng)
+             (loop new-eng
+                   (+ total-ticks 50)))))))
+
+(mileage (lambda () (fibonacci 10))) ;=> 179
+\endschemedisplay
+
+\noindent
+The choice of 50 for the number of ticks to use each time is
+arbitrary, of course.
+It might make more sense to pass a much larger number, say 10000,
+in order to reduce the number of times the computation is interrupted.
+
+The next procedure is similar to \scheme{mileage}, but it returns a list
+of engines, one for each tick it takes to complete the computation.
+Each of the engines in the list represents a ``snapshot'' of the
+computation, analogous to a single frame of a moving picture.
+\scheme{snapshot} might be useful for ``single stepping'' a computation.
+
+\schemedisplay
+(define snapshot
+  (lambda (thunk)
+    (let again ([eng (make-engine thunk)])
+      (cons eng
+            (eng 1 (lambda (t . v) '()) again)))))
+\endschemedisplay
+
+\noindent
+The recursion embedded in this procedure is rather strange.
+The complete procedure performs the base case, returning the empty
+list, and the expire procedure performs the recursion.
+
+The next procedure, \index{\scheme{round-robin}}\scheme{round-robin}, could be the basis for a simple
+time-sharing \index{operating system}operating system.
+\scheme{round-robin} maintains a queue of processes (a list of engines),
+cycling through the queue in a \emph{round-robin} fashion, allowing each
+process to run for a set amount of time.
+\scheme{round-robin} returns a list of the values returned by the engine
+computations in the order that the computations complete.
+Each computation is assumed to produce exactly one value.
+
+\schemedisplay
+(define round-robin
+  (lambda (engs)
+    (if (null? engs)
+        '()
+        ((car engs)
+         1
+         (lambda (ticks value)
+           (cons value (round-robin (cdr engs))))
+         (lambda (eng)
+           (round-robin
+             (append (cdr engs) (list eng))))))))
+\endschemedisplay
+
+\noindent
+Since the amount of fuel supplied each time, one tick, is constant,
+the effect of \scheme{round-robin} is to return a list of the values sorted
+from the quickest to complete to the slowest to complete.
+Thus, when we call \scheme{round-robin} on a list of engines, each computing
+one of the Fibonacci numbers, the output list is sorted with the earlier
+Fibonacci numbers first, regardless of the order of the input list.
+
+\schemedisplay
+(round-robin
+  (map (lambda (x)
+         (make-engine
+           (lambda ()
+             (fibonacci x))))
+       '(4 5 2 8 3 7 6 2))) ;=> (1 1 2 3 5 8 13 21)
+\endschemedisplay
+
+More interesting things can happen if the amount of fuel varies
+each time through the loop.
+\index{nondeterministic computations}In this case, the computation would
+be nondeterministic, i.e., the results would vary from call to call.
+
+The following syntactic form, \index{\scheme{por} (parallel-or)}\scheme{por} (parallel-or), returns the
+first of its expressions to complete with a true value.
+\scheme{por} is implemented with the procedure \scheme{first-true}, which is
+similar to \scheme{round-robin} but quits when any of the engines
+completes with a true value.
+If all of the engines complete, but none with a true value,
+\scheme{first-true} (and hence \scheme{por}) returns \scheme{#f}.
+Also, although \scheme{first-true} passes a fixed amount of fuel to each
+engine, it chooses the next engine to run at random, and is thus
+nondeterministic.
+
+\schemedisplay
+(define-syntax por
+  (syntax-rules ()
+    [(_ x ...)
+     (first-true
+       (list (make-engine (lambda () x)) ...))]))
+
+(define first-true
+  (let ([pick
+         (lambda (ls)
+           (list-ref ls (random (length ls))))])
+    (lambda (engs)
+      (if (null? engs)
+          #f
+          (let ([eng (pick engs)])
+            (eng 1
+                 (lambda (ticks value)
+                   (or value
+                       (first-true
+                         (remq eng engs))))
+                 (lambda (new-eng)
+                   (first-true
+                     (cons new-eng
+                           (remq eng engs))))))))))
+\endschemedisplay
+
+\noindent
+The list of engines is maintained with \scheme{pick}, which randomly
+chooses an element of the list, and \scheme{remq}, which removes the
+chosen engine from the list.
+Since \scheme{por} is nondeterministic, subsequent uses with the same
+expressions may not return the same values.
+
+\schemedisplay
+(por 1 2 3) ;=> 2
+(por 1 2 3) ;=> 3
+(por 1 2 3) ;=> 2
+(por 1 2 3) ;=> 1
+\endschemedisplay
+
+\noindent
+Furthermore, even if one of the expressions is an infinite loop,
+\scheme{por} still finishes as long as one of the other expressions
+completes and returns a true value.
+
+\schemedisplay
+(por (let loop () (loop)) 2) ;=> 2
+\endschemedisplay
+
+\noindent
+With \scheme{engine-return} and \scheme{engine-block}, it is possible to
+terminate an engine explicitly.
+\scheme{engine-return} causes the engine to complete, as if the
+computation had finished.
+Its arguments are passed to the \var{complete} procedure along with the
+number of ticks remaining.
+It is essentially a nonlocal exit from the engine.
+Similarly, \scheme{engine-block} causes the engine to expire, as if the
+timer had run out.
+A new engine is made from the continuation of the call to \scheme{engine-block}
+and passed to the \var{expire} procedure.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{engine-block}{\categoryprocedure}{(engine-block)}
+\returns does not return
+\listlibraries
+\endentryheader
+
+\noindent
+This causes a running engine to stop, create a new engine capable
+of continuing the computation, and pass the new engine to the original
+engine's third argument
+(the expire procedure).
+Any remaining fuel is forfeited.
+
+\schemedisplay
+(define eng
+  (make-engine
+    (lambda ()
+      (engine-block)
+      "completed")))
+
+(eng 100
+     (lambda (ticks value) value)
+     (lambda (x)
+        (set! eng x)
+        "expired")) ;=> "expired"
+
+(eng 100
+     (lambda (ticks value) value)
+     (lambda (x)
+        (set! eng x)
+        "expired")) ;=> "completed"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{engine-return}{\categoryprocedure}{(engine-return \var{obj} \dots)}
+\returns does not return
+\listlibraries
+\endentryheader
+
+\noindent
+This causes a running engine to stop and pass control to the
+engine's \var{complete} argument.
+The first argument passed to the complete procedure is the amount of
+fuel remaining, as usual, and
+the remaining arguments are the objects \scheme{\var{obj} \dots}
+passed to \scheme{engine-return}.
+
+\schemedisplay
+(define eng
+  (make-engine
+    (lambda ()
+      (reverse (engine-return 'a 'b 'c)))))
+
+(eng 100
+     (lambda (ticks . values) values)
+     (lambda (new-eng) "expired")) ;=> (a b c)
+\endschemedisplay

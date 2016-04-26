@@ -1,0 +1,3163 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Operations on Objects\label{CHPTOBJECTS}}
+
+This chapter describes operations specific to {\ChezScheme} on
+nonnumeric objects, including standard objects such as pairs and
+numbers and {\ChezScheme} extensions such as boxes and records.
+Chapter~\ref{CHPTNUMERIC} describes operations on numbers.
+See Chapter~\ref{TSPL:CHPTOBJECTS} of {\TSPLFOUR} or the Revised$^6$ Report
+on Scheme for a description of standard operations on objects.
+
+\section{Missing R6RS Type Predicates\label{SECTMISSINGR6RSTYPEPREDS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{enum-set?}{\categoryprocedure}{(enum-set? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an enum set, \scheme{#f} otherwise
+\listlibraries
+\endnoskipentryheader
+
+This predicate is not defined by the Revised$^6$ Report, but should be.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-constructor-descriptor?}{\categoryprocedure}{(record-constructor-descriptor? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a record constructor descriptor, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+This predicate is not defined by the Revised$^6$ Report, but should be.
+
+
+\section{Pairs and Lists}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{atom?}{\categoryprocedure}{(atom? \var{obj})}
+\returns \scheme{#t} if \var{obj} is not a pair, \scheme{#f} otherwise
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{atom?} is equivalent to \scheme{(lambda (x) (not (pair? x)))}.
+
+\schemedisplay
+(atom? '(a b c)) ;=> #f
+(atom? '(3 . 4)) ;=> #f
+(atom? '()) ;=> #t
+(atom? 3) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{list-head}{\categoryprocedure}{(list-head \var{list} \var{n})}
+\returns a list of the first \var{n} elements of \var{list}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative integer less than or equal to
+the length of \var{list}.
+
+\scheme{list-head} and the standard Scheme procedure \scheme{list-tail} 
+may be used together to split a list into two separate lists.
+While \scheme{list-tail} performs no allocation but instead returns a
+sublist of the original list, \scheme{list-head} always returns a copy
+of the first portion of the list.
+
+\scheme{list-head} may be defined as follows.
+
+\schemedisplay
+(define list-head
+  (lambda (ls n)
+    (if (= n 0)
+        '()
+        (cons (car ls) (list-head (cdr ls) (- n 1))))))
+
+(list-head '(a b c) 0) ;=> ()
+(list-head '(a b c) 2) ;=> (a b)
+(list-head '(a b c) 3) ;=> (a b c)
+(list-head '(a b c . d) 2) ;=> (a b)
+(list-head '(a b c . d) 3) ;=> (a b c)
+(list-head '#1=(a . #1#) 5) ;=> (a a a a a)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{last-pair}{\categoryprocedure}{(last-pair \var{list})}
+\returns the last pair of a \var{list}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{list} must not be empty.
+\scheme{last-pair} returns the last pair (not the last element) of \var{list}.
+\var{list} may be an improper list, in which case the last pair is the
+pair containing the last element and the terminating object.
+
+\schemedisplay
+(last-pair '(a b c d)) ;=> (d)
+(last-pair '(a b c . d)) ;=> (c . d)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{list-copy}{\categoryprocedure}{(list-copy \var{list})}
+\returns a copy of \var{list}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{list-copy} returns a list \scheme{equal?} to \var{list}, using new pairs
+to reform the top-level list structure.
+
+\schemedisplay
+(list-copy '(a b c)) ;=> (a b c)
+
+(let ([ls '(a b c)])
+  (equal? ls (list-copy ls))) ;=> #t
+
+(let ([ls '(a b c)])
+  (let ([ls-copy (list-copy ls)])
+    (or (eq? ls-copy ls)
+        (eq? (cdr ls-copy) (cdr ls))
+        (eq? (cddr ls-copy) (cddr ls))))) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{list*}{\categoryprocedure}{(list* \var{obj} \dots \var{final-obj})}
+\returns a list of \scheme{\var{obj} \dots} terminated by \var{final-obj}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{list*} is identical to the Revised$^6$ Report \scheme{cons*}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-list}{\categoryprocedure}{(make-list \var{n})}
+\formdef{make-list}{\categoryprocedure}{(make-list \var{n} \var{obj})}
+\returns a list of \var{n} \var{objs}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative integer.
+If \var{obj} is omitted, the elements of the list are unspecified.
+
+\schemedisplay
+(make-list 0 '()) ;=> ()
+(make-list 3 0) ;=> (0 0 0)
+(make-list 2 "hi") ;=> ("hi" "hi")
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{iota}{\categoryprocedure}{(iota \var{n})}
+\returns a list of integers from 0 (inclusive) to \var{n} (exclusive)
+\listlibraries
+\endentryheader
+
+\var{n} must be an exact nonnegative integer.
+
+\schemedisplay
+(iota 0) ;=> ()
+(iota 5) ;=> (0 1 2 3 4)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{enumerate}{\categoryprocedure}{(enumerate \var{ls})}
+\returns a list of integers from 0 (inclusive) to the length of \var{ls} (exclusive)
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(enumerate '()) ;=> ()
+(enumerate '(a b c)) ;=> (0 1 2)
+(let ([ls '(a b c)])
+  (map cons ls (enumerate ls))) ;=> ((a . 0) (b . 1) (c . 2))
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{remq!}{\categoryprocedure}{(remq! \var{obj} \var{list})}
+\formdef{remv!}{\categoryprocedure}{(remv! \var{obj} \var{list})}
+\formdef{remove!}{\categoryprocedure}{(remove! \var{obj} \var{list})}
+\returns a list containing the elements of \var{list} with all occurrences of \var{obj} removed
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures are similar to the Revised$^6$ Report
+\scheme{remq}, \scheme{remv}, and \scheme{remove} procedures, except
+\scheme{remq!}, \scheme{remv!} and \scheme{remove!} use pairs from the
+input list to build the output list.
+They perform less allocation but are not
+necessarily faster than their nondestructive counterparts.
+Their use can easily lead to confusing or incorrect results if used
+indiscriminately.
+
+\schemedisplay
+(remq! 'a '(a b a c a d)) ;=> (b c d)
+
+(remv! #\a '(#\a #\b #\c)) ;=> (#\b #\c)
+
+(remove! '(c) '((a) (b) (c))) ;=> ((a) (b))
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{substq}{\categoryprocedure}{(substq \var{new} \var{old} \var{tree})}
+\formdef{substv}{\categoryprocedure}{(substv \var{new} \var{old} \var{tree})}
+\formdef{subst}{\categoryprocedure}{(subst \var{new} \var{old} \var{tree})}
+\formdef{substq!}{\categoryprocedure}{(substq! \var{new} \var{old} \var{tree})}
+\formdef{substv!}{\categoryprocedure}{(substv! \var{new} \var{old} \var{tree})}
+\formdef{subst!}{\categoryprocedure}{(subst! \var{new} \var{old} \var{tree})}
+\returns a tree with \var{new} substituted for occurrences of \var{old} in \var{tree}
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures traverse \var{tree}, replacing all objects equivalent to
+the object \var{old} with the object \var{new}.
+
+The equivalence test for \scheme{substq} and \scheme{substq!} is \scheme{eq?},
+for \scheme{substv} and \scheme{substv!} is \scheme{eqv?},
+and for \scheme{subst} and \scheme{subst!} is \scheme{equal?}.
+
+\scheme{substq!}, \scheme{substv!}, and \scheme{subst!} perform the
+substitutions destructively.
+They perform less allocation but are not
+necessarily faster than their nondestructive counterparts.
+Their use can easily lead to confusing or incorrect results if used
+indiscriminately.
+
+
+\schemedisplay
+(substq 'a 'b '((b c) b a)) ;=> ((a c) a a)
+
+(substv 2 1 '((1 . 2) (1 . 4) . 1)) ;=> ((2 . 2) (2 . 4) . 2)
+
+(subst 'a
+       '(a . b)
+       '((a . b) (c a . b) . c)) ;=> (a (c . a) . c)
+
+(let ([tr '((b c) b a)])
+  (substq! 'a 'b tr)
+  tr) ;=> ((a c) a a)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{reverse!}{\categoryprocedure}{(reverse! \var{list})}
+\returns a list containing the elements of \var{list} in reverse order
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{reverse!} destructively reverses \var{list}
+by reversing its links.
+Using \scheme{reverse!} in place of \scheme{reverse} reduces allocation but is not
+necessarily faster than \scheme{reverse}.
+Its use can easily lead to confusing or incorrect results if used
+indiscriminately.
+
+\schemedisplay
+(reverse! '()) ;=> ()
+(reverse! '(a b c)) ;=> (c b a)
+
+(let ([x '(a b c)])
+    (reverse! x)
+    x) ;=> (a)
+
+(let ([x '(a b c)])
+    (set! x (reverse! x))
+    x) ;=> (c b a)
+\endschemedisplay
+
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{append!}{\categoryprocedure}{(append! \var{list} \dots)}
+\returns the concatenation of the input lists
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{append},
+\scheme{append!} returns a new list consisting of the elements of the first
+list followed by the elements of the second list, the elements of the
+third list, and so on.
+Unlike \scheme{append},
+\scheme{append!} reuses the pairs in all of the
+arguments in forming the new list.
+That is, the last cdr of each list argument but the last is changed to
+point to the next list argument.
+If any argument but the last is the empty list, it is essentially ignored.
+The final argument (which need not be a list) is not altered.
+
+\scheme{append!} performs less allocation than \scheme{append} but is not
+necessarily faster.
+Its use can easily lead to confusing or incorrect results if used
+indiscriminately.
+
+\schemedisplay
+(append! '(a b) '(c d)) ;=> (a b c d)
+
+(let ([x '(a b)])
+    (append! x '(c d))
+    x) ;=> (a b c d)
+\endschemedisplay
+
+
+
+\section{Characters}
+
+{\ChezScheme} extends the syntax of characters in two ways.
+First, a \scheme{#\} prefix followed by exactly three octal digits is read
+as a character whose numeric code is the octal value of the three digits,
+e.g., \scheme{#\044} is read as \scheme{#\$}.
+Second, it recognizes several nonstandard named characters:
+\scheme{#\rubout} (which is the the same as \scheme{#\delete}),
+\scheme{#\bel} (which is the same as \scheme{#\alarm}),
+\scheme{#\vt} (which is the same as \scheme{#\vtab}),
+\scheme{#\nel} (the Unicode NEL character), and
+\scheme{#\ls} (the Unicode LS character).
+The set of nonstandard character names may be changed via the procedure
+\index{\scheme{char-name}}\scheme{char-name} (page \ref{desc:char-name}).
+
+These extensions are disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char=?}{\categoryprocedure}{(char=? \var{char_1} \var{char_2} \dots)}
+\formdef{char<?}{\categoryprocedure}{(char<? \var{char_1} \var{char_2} \dots)}
+\formdef{char>?}{\categoryprocedure}{(char>? \var{char_1} \var{char_2} \dots)}
+\formdef{char<=?}{\categoryprocedure}{(char<=? \var{char_1} \var{char_2} \dots)}
+\formdef{char>=?}{\categoryprocedure}{(char>=? \var{char_1} \var{char_2} \dots)}
+\formdef{char-ci=?}{\categoryprocedure}{(char-ci=? \var{char_1} \var{char_2} \dots)}
+\formdef{char-ci<?}{\categoryprocedure}{(char-ci<? \var{char_1} \var{char_2} \dots)}
+\formdef{char-ci>?}{\categoryprocedure}{(char-ci>? \var{char_1} \var{char_2} \dots)}
+\formdef{char-ci<=?}{\categoryprocedure}{(char-ci<=? \var{char_1} \var{char_2} \dots)}
+\formdef{char-ci>=?}{\categoryprocedure}{(char-ci>=? \var{char_1} \var{char_2} \dots)}
+\returns \scheme{#t} if the relation holds, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+These predicates are identical to the Revised$^6$ Report counterparts,
+except they are extended to accept one or more rather than two or more
+arguments.
+When passed one argument, each of these predicates returns \scheme{#t}.
+
+\schemedisplay
+(char>? #\a) ;=> #t
+(char<? #\a) ;=> #t
+(char-ci=? #\a) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-}{\categoryprocedure}{(char- \var{char_1} \var{char_2})}
+\returns the integer difference between \var{char_1} and \var{char_2}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{char-} subtracts the integer value of \var{char_2} from the
+integer value of \var{char_1} and returns the difference.
+The following examples assume that the integer representation is the
+ASCII code for the character.
+
+\schemedisplay
+(char- #\f #\e) ;=> 1
+
+(define digit-value
+ ; returns the digit value of the base-r digit c, or #f if c
+ ; is not a valid digit
+  (lambda (c r)
+    (let ([v (cond
+               [(char<=? #\0 c #\9) (char- c #\0)]
+               [(char<=? #\A c #\Z) (char- c #\7)]
+               [(char<=? #\a c #\z) (char- c #\W)]
+               [else 36])])
+      (and (fx< v r) v))))
+(digit-value #\8 10) ;=> 8
+(digit-value #\z 10) ;=> #f
+(digit-value #\z 36) ;=> 35
+\endschemedisplay
+
+\noindent
+\scheme{char-} might be defined as follows.
+
+\schemedisplay
+(define char-
+  (lambda (c1 c2)
+    (- (char->integer c1) (char->integer c2))))
+\endschemedisplay
+
+\section{Strings}
+
+{\ChezScheme} extends the standard string syntax with two character
+escapes: \scheme{\'}, which produces the single quote character, and
+\scheme{\\var{nnn}}, i.e., backslash followed by 3 octal digits,
+which produces the character equivalent of the octal value of
+the 3 digits.
+These extensions are disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+The length and indices of a string in {\ChezScheme} are always fixnums.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string=?}{\categoryprocedure}{(string=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string<?}{\categoryprocedure}{(string<? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string>?}{\categoryprocedure}{(string>? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string<=?}{\categoryprocedure}{(string<=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string>=?}{\categoryprocedure}{(string>=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string-ci=?}{\categoryprocedure}{(string-ci=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string-ci<?}{\categoryprocedure}{(string-ci<? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string-ci>?}{\categoryprocedure}{(string-ci>? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string-ci<=?}{\categoryprocedure}{(string-ci<=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\formdef{string-ci>=?}{\categoryprocedure}{(string-ci>=? \var{string_1} \var{string_2} \var{string_3} \dots)}
+\returns \scheme{#t} if the relation holds, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+These predicates are identical to the Revised$^6$ Report counterparts,
+except they are extended to accept one or more rather than two or more
+arguments.
+When passed one argument, each of these predicates returns \scheme{#t}.
+
+\schemedisplay
+(string>? "a") ;=> #t
+(string<? "a") ;=> #t
+(string-ci=? "a") ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string-copy!}{\categoryprocedure}{(string-copy! \var{src} \var{src-start} \var{dst} \var{dst-start} \var{n})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{src} and \var{dst} must be strings.
+\var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
+integers.
+The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
+and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
+
+\scheme{string-copy!} overwrites the \var{n} bytes of \var{dst}
+starting at \var{dst-start} with the \var{n} bytes of \var{dst}
+starting at \var{src-start}.
+This works even if \var{dst} is the same string as \var{src} and the
+source and destination locations overlap.
+That is, the destination is filled with the characters that appeared at the
+source before the operation began.
+
+\schemedisplay
+(define s1 "to boldly go")
+(define s2 (make-string 10 #\-))
+
+(string-copy! s1 3 s2 1 3)
+s2 ;=> "-bol------"
+ 
+(string-copy! s1 7 s2 4 2)
+s2 ;=> "-bolly----"
+ 
+(string-copy! s2 2 s2 5 4)
+s2 ;=> "-bollolly-"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{substring-fill!}{\categoryprocedure}{(substring-fill! \var{string} \var{start} \var{end} \var{char})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+The characters of \var{string} from \var{start} (inclusive) to \var{end}
+(exclusive) are set to \var{char}.
+\var{start} and \var{end} must be nonnegative integers; \var{start}
+must be strictly less than the length of \var{string}, while \var{end} may
+be less than or equal to the length of \var{string}.
+If $end\le start$, the string is left unchanged.
+
+\schemedisplay
+(let ([str (string-copy "a tpyo typo")])
+  (substring-fill! str 2 6 #\X)
+  str) ;=> "a XXXX typo"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string-truncate!}{\categoryprocedure}{(string-truncate! \var{string} \var{n})}
+\returns \var{string} or the empty string
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative fixnum not greater than the length of
+\var{string}.
+If \var{n} is zero, \scheme{string-truncate!} returns the empty string.
+Otherwise, \var{string-truncate!} destructively truncates \var{string} to
+its first \var{n} characters and returns \var{string}.
+
+\schemedisplay
+(define s (make-string 7 #\$))
+(string-truncate! s 0) ;=> ""
+s ;=> "$$$$$$$"
+(string-truncate! s 3) ;=> "$$$"
+s ;=> "$$$"
+\endschemedisplay
+
+
+
+\section{Vectors}
+
+{\ChezScheme} extends the syntax of vectors to allow the length of the
+vector to be specified between the \scheme{#} and open parenthesis, e.g.,
+\scheme{#3(a b c)}.
+If fewer elements are supplied in the syntax than the specified length,
+each element after the last printed element is the same as the last
+printed element.
+This extension is disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+The length and indices of a vector in {\ChezScheme} are always fixnums.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector-copy}{\categoryprocedure}{(vector-copy \var{vector})}
+\returns a copy of \var{vector}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{vector-copy} creates a new vector of the same length and contents
+as \var{vector}.
+The elements themselves are not copied.
+
+\schemedisplay
+(vector-copy '#(a b c)) ;=> #(a b c)
+
+(let ([v '#(a b c)])
+  (eq? v (vector-copy v))) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector-set-fixnum!}{\categoryprocedure}{(vector-set-fixnum! \var{vector} \var{n} \var{fixnum})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{vector-set-fixnum!} changes the \var{n}th element of \var{vector} to \var{fixnum}.
+\var{n} must be an exact nonnegative integer strictly less than
+the length of \var{vector}.
+
+It is faster to store a fixnum than an arbitrary value,
+since for arbitrary values, the system has to record potential assignments from older to
+younger objects to support generational garbage collection.
+Care must be taken to ensure that the argument is indeed a fixnum, however;
+otherwise, the collector may not properly track the assignment.
+The primitive performs a fixnum check on the argument except at
+optimization level~3.
+
+See also the description of fixnum-only vectors (fxvectors) below.
+
+\schemedisplay
+(let ([v (vector 1 2 3 4 5)])
+  (vector-set-fixnum! v 2 73)
+  v) ;=> #(1 2 73 4 5)
+\endschemedisplay
+
+\section{Fixnum-Only Vectors\label{SECTFXVECTORS}}
+
+Fixnum-only vectors, or ``fxvectors,'' are like vectors but contain
+only fixnums.
+Fxvectors are written with the \scheme{#vfx} prefix in place of the the
+\scheme{#} prefix for vectors, e.g., \scheme{#vfx(1 2 3)} or
+\scheme{#10vfx(2)}.
+The fxvector syntax is disabled in an input stream after \scheme{#!r6rs}
+has been seen by the reader, unless \scheme{#!chezscheme} has been seen
+more recently.
+
+The length and indices of an fxvector are always fixnums.
+
+Updating an fxvector is generally less expensive than updating a vector,
+since for vectors, the system records potential assignments from older to
+younger objects to support generational garbage collection.
+The storage management system also takes advantage of the fact that
+fxvectors contain no pointers to place them in an area of memory that
+does not have to be traced during collection.
+
+See also \scheme{vector-set-fixnum!} above.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector?}{\categoryprocedure}{(fxvector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an fxvector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(fxvector? #vfx()) ;=> #t
+(fxvector? #vfx(1 2 3)) ;=> #t
+(fxvector? (fxvector 1 2 3)) ;=> #t
+(fxvector? '#(a b c)) ;=> #f
+(fxvector? '(a b c)) ;=> #f
+(fxvector? "abc") ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector}{\categoryprocedure}{(fxvector \var{fixnum} \dots)}
+\returns an fxvector of the fixnums \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(fxvector) ;=> #vfx()
+(fxvector 1 3 5) ;=> #vfx(1 3 5)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-fxvector}{\categoryprocedure}{(make-fxvector \var{n})}
+\formdef{make-fxvector}{\categoryprocedure}{(make-fxvector \var{n} \var{fixnum})}
+\returns an fxvector of length \var{n}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a fixnum.
+If \var{fixnum} is supplied, each element of the fxvector is initialized
+to \var{fixnum}; otherwise, the elements are unspecified.
+
+\schemedisplay
+(make-fxvector 0) ;=> #vfx()
+(make-fxvector 0 7) ;=> #vfx()
+(make-fxvector 5 7) ;=> #vfx(7 7 7 7 7)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-length}{\categoryprocedure}{(fxvector-length \var{fxvector})}
+\returns the number of elements in \var{fxvector}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(fxvector-length #vfx()) ;=> 0
+(fxvector-length #vfx(1 2 3)) ;=> 3
+(fxvector-length #10vfx(1 2 3)) ;=> 10
+(fxvector-length (fxvector 1 2 3 4)) ;=> 4
+(fxvector-length (make-fxvector 300)) ;=> 300
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-ref}{\categoryprocedure}{(fxvector-ref \var{fxvector} \var{n})}
+\returns the \var{n}th element (zero-based) of \var{fxvector}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum strictly less than
+the length of \var{fxvector}.
+
+\schemedisplay
+(fxvector-ref #vfx(-1 2 4 7) 0) ;=> -1
+(fxvector-ref #vfx(-1 2 4 7) 1) ;=> 2
+(fxvector-ref #vfx(-1 2 4 7) 3) ;=> 7
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-set!}{\categoryprocedure}{(fxvector-set! \var{fxvector} \var{n} \var{fixnum})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum strictly less than
+the length of \var{fxvector}.
+\scheme{fxvector-set!} changes the \var{n}th element of \var{fxvector} to \var{fixnum}.
+
+\schemedisplay
+(let ([v (fxvector 1 2 3 4 5)])
+  (fxvector-set! v 2 (fx- (fxvector-ref v 2)))
+  v) ;=> #vfx(1 2 -3 4 5)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-fill!}{\categoryprocedure}{(fxvector-fill! \var{fxvector} \var{fixnum})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{fxvector-fill!} replaces each element of \var{fxvector} with \var{fixnum}.
+
+\schemedisplay
+(let ([v (fxvector 1 2 3)])
+  (fxvector-fill! v 0)
+  v) ;=> #vfx(0 0 0)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector->list}{\categoryprocedure}{(fxvector->list \var{fxvector})}
+\returns a list of the elements of \var{fxvector}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(fxvector->list (fxvector)) ;=> ()
+(fxvector->list #vfx(7 5 2)) ;=> (7 5 2)
+
+(let ([v #vfx(1 2 3 4 5)])
+  (apply fx* (fxvector->list v))) ;=> 120
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{list->fxvector}{\categoryprocedure}{(list->fxvector \var{list})}
+\returns an fxvector of the elements of \var{list}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{list} must consist entirely of fixnums.
+
+\schemedisplay
+(list->fxvector '()) ;=> #vfx()
+(list->fxvector '(3 5 7)) ;=> #vfx(3 5 7)
+
+(let ([v #vfx(1 2 3 4 5)])
+  (let ([ls (fxvector->list v)])
+    (list->fxvector (map fx* ls ls)))) ;=> #vfx(1 4 9 16 25)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-copy}{\categoryprocedure}{(fxvector-copy \var{fxvector})}
+\returns a copy of \var{fxvector}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{fxvector-copy} creates a new fxvector with the same length and contents
+as \var{fxvector}.
+
+\schemedisplay
+(fxvector-copy #vfx(3 4 5)) ;=> #vfx(3 4 5)
+
+(let ([v #vfx(3 4 5)])
+  (eq? v (fxvector-copy v))) ;=> #f
+\endschemedisplay
+
+\section{Bytevectors\label{SECTBYTEVECTORS}}
+
+As with vectors, {\ChezScheme} extends the syntax of bytevectors to allow
+the length of the vector to be specified between the \scheme{#} and open
+parenthesis, e.g., \scheme{#3vu8(1 105 73)}.
+If fewer elements are supplied in the syntax than the specified length,
+each element after the last printed element is the same as the last
+printed element.
+This extension is disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+{\ChezScheme} also extends the set of bytevector primitives, including
+primitives for loading and storing 3, 5, 6, and 7-byte quantities.
+
+The length and indices of a bytevector in {\ChezScheme} are always fixnums.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector}{\categoryprocedure}{(bytevector \var{fill} \dots)}
+\returns a new bytevector containing \scheme{\var{fill} \dots}
+\listlibraries
+\endentryheader
+
+Each \var{fill} value must be an exact integer representing a signed or
+unsigned 8-bit value, i.e.,
+a value in the range -128 to 255 inclusive.
+A negative fill value is treated as its two's complement equivalent.
+
+\schemedisplay
+(bytevector) ;=> #vu8()
+(bytevector 1 3 5) ;=> #vu8(1 3 5)
+(bytevector -1 -3 -5) ;=> #vu8(255 253 251)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector->s8-list}{\categoryprocedure}{(bytevector->s8-list \var{bytevector})}
+\returns a new list of the 8-bit signed elements of \var{bytevector}
+\listlibraries
+\endentryheader
+
+The values in the returned list are exact eight-bit signed integers,
+i.e., values in the range -128 to 127 inclusive.
+\scheme{bytevector->s8-list} is similar to the Revised$^6$ Report 
+\scheme{bytevector->u8-list} except the values in the returned list
+are signed rather than unsigned.
+
+\schemedisplay
+(bytevector->s8-list (make-bytevector 0)) ;=> ()
+(bytevector->s8-list #vu8(1 127 128 255)) ;=> (1 127 -128 -1)
+
+(let ([v #vu8(1 2 3 255)])
+  (apply * (bytevector->s8-list v))) ;=> -6
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{s8-list->bytevector}{\categoryprocedure}{(s8-list->bytevector \var{list})}
+\returns a new bytevector of the elements of \var{list}
+\listlibraries
+\endentryheader
+
+\var{list} must consist entirely of exact eight-bit signed integers, i.e.,
+values in the range -128 to 127 inclusive.
+\scheme{s8-list->bytevector} is similar to the Revised$^6$ Report 
+procedure
+\scheme{u8-list->bytevector}, except the elements of the input list
+are signed rather than unsigned.
+
+\schemedisplay
+(s8-list->bytevector '()) ;=> #vu8()
+(s8-list->bytevector '(1 127 -128 -1)) ;=> #vu8(1 127 128 255)
+
+(let ([v #vu8(1 2 3 4 5)])
+  (let ([ls (bytevector->s8-list v)])
+    (s8-list->bytevector (map - ls)))) ;=> #vu8(255 254 253 252 251)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-truncate!}{\categoryprocedure}{(bytevector-truncate! \var{bytevector} \var{n})}
+\returns \var{bytevector} or the empty bytevector
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative fixnum not greater than the length of
+\var{bytevector}.
+If \var{n} is zero, \scheme{bytevector-truncate!} returns the empty bytevector.
+Otherwise, \var{bytevector-truncate!} destructively truncates \var{bytevector} to
+its first \var{n} bytes and returns \var{bytevector}.
+
+\schemedisplay
+(define bv (make-bytevector 7 19))
+(bytevector-truncate! bv 0) ;=> #vu8()
+bv ;=> #vu8(19 19 19 19 19 19 19)
+(bytevector-truncate! bv 3) ;=> #vu8(19 19 19)
+bv ;=> #vu8(19 19 19)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-u24-ref}{\categoryprocedure}{(bytevector-u24-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 24-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-s24-ref}{\categoryprocedure}{(bytevector-s24-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 24-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-u40-ref}{\categoryprocedure}{(bytevector-u40-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 40-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-s40-ref}{\categoryprocedure}{(bytevector-s40-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 40-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-u48-ref}{\categoryprocedure}{(bytevector-u48-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 48-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-s48-ref}{\categoryprocedure}{(bytevector-s48-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 48-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-u56-ref}{\categoryprocedure}{(bytevector-u56-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 56-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\formdef{bytevector-s56-ref}{\categoryprocedure}{(bytevector-s56-ref \var{bytevector} \var{n} \var{eness})}
+\returns the 56-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative integer and
+indexes the starting byte of the value.
+The sum of \var{n} and the number of bytes occupied by the value
+(3 for 24-bit values, 5 for 40-bit values, 6 for 48-bit values,
+and 7 for 56-bit values) must not exceed the length of \var{bytevector}.
+\var{eness} must be a valid endianness symbol naming the endianness.
+
+The return value is an exact integer in the appropriate range for
+the number of bytes occupied by the value.
+Signed values are the equivalent of the stored value treated as a two's
+complement value.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-u24-set!}{\categoryprocedure}{(bytevector-u24-set! \var{bytevector} \var{n} \var{u24} \var{eness})}
+\formdef{bytevector-s24-set!}{\categoryprocedure}{(bytevector-s24-set! \var{bytevector} \var{n} \var{s24} \var{eness})}
+\formdef{bytevector-u40-set!}{\categoryprocedure}{(bytevector-u40-set! \var{bytevector} \var{n} \var{u40} \var{eness})}
+\formdef{bytevector-s40-set!}{\categoryprocedure}{(bytevector-s40-set! \var{bytevector} \var{n} \var{s40} \var{eness})}
+\formdef{bytevector-u48-set!}{\categoryprocedure}{(bytevector-u48-set! \var{bytevector} \var{n} \var{u48} \var{eness})}
+\formdef{bytevector-s48-set!}{\categoryprocedure}{(bytevector-s48-set! \var{bytevector} \var{n} \var{s48} \var{eness})}
+\formdef{bytevector-u56-set!}{\categoryprocedure}{(bytevector-u56-set! \var{bytevector} \var{n} \var{u56} \var{eness})}
+\formdef{bytevector-s56-set!}{\categoryprocedure}{(bytevector-s56-set! \var{bytevector} \var{n} \var{s56} \var{eness})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative integer and
+indexes the starting byte of the value.
+The sum of \var{n} and the number of bytes occupied by the value must
+not exceed the length of \var{bytevector}.
+\var{u24} must be a 24-bit unsigned value, i.e., a value in the range
+0 to $2^{24}-1$ inclusive;
+\var{s24} must be a 24-bit signed value, i.e., a value in the range
+$-2^{23}$ to $2^{23}-1$ inclusive;
+\var{u40} must be a 40-bit unsigned value, i.e., a value in the range
+0 to $2^{40}-1$ inclusive;
+\var{s40} must be a 40-bit signed value, i.e., a value in the range
+$-2^{39}$ to $2^{39}-1$ inclusive;
+\var{u48} must be a 48-bit unsigned value, i.e., a value in the range
+0 to $2^{48}-1$ inclusive;
+\var{s48} must be a 48-bit signed value, i.e., a value in the range
+$-2^{47}$ to $2^{47}-1$ inclusive;
+\var{u56} must be a 56-bit unsigned value, i.e., a value in the range
+0 to $2^{56}-1$ inclusive; and
+\var{s56} must be a 56-bit signed value, i.e., a value in the range
+$-2^{55}$ to $2^{55}-1$ inclusive.
+\var{eness} must be a valid endianness symbol naming the endianness.
+
+These procedures store the given value in the 3, 5, 6, or 7 bytes starting
+at index \var{n} (zero-based) of \var{bytevector}.
+Negative values are stored as their two's complement equivalent.
+
+
+\section{Boxes\label{SECTBOXES}}
+
+\index{boxes}Boxes are single-cell objects that are primarily useful for providing
+an ``extra level of indirection.''
+This extra level of indirection is typically used to allow more than one body
+of code or data structure to share a \index{reference}reference, or \index{pointer}pointer, to an object.
+For example, boxes may be used to implement \index{call-by-reference}\emph{call-by-reference} semantics
+in an interpreter for a language employing this parameter passing discipline.
+
+\index{\scheme{#&} (box prefix)}Boxes are written with
+the prefix \scheme{#&} (pronounced ``hash-ampersand'').
+For example, \scheme{#&(a b c)} is a box holding the list \scheme{(a b c)}.
+The box syntax is disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box?}{\categoryprocedure}{(box? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a box, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(box? '#&a) ;=> #t
+(box? 'a) ;=> #f
+(box? (box 3)) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box}{\categoryprocedure}{(box \var{obj})}
+\returns a new box containing \var{obj}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(box 'a) ;=> #&a
+(box (box '(a b c))) ;=> #&#&(a b c)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{unbox}{\categoryprocedure}{(unbox \var{box})}
+\returns contents of \var{box}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(unbox #&a) ;=> a
+(unbox #&#&(a b c)) ;=> #&(a b c)
+
+(let ([b (box "hi")])
+  (unbox b)) ;=> "hi"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-box!}{\categoryprocedure}{(set-box! \var{box} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{set-box!} sets the contents of \var{box} to \var{obj}.
+
+\schemedisplay
+(let ([b (box 'x)])
+    (set-box! b 'y)
+    b) ;=> #&y
+
+(let ([incr!
+       (lambda (x)
+          (set-box! x (+ (unbox x) 1)))])
+  (let ([b (box 3)])
+    (incr! b)
+    (unbox b))) ;=> 4
+\endschemedisplay
+
+
+\section{Symbols\label{SECTMISCSYMBOLS}}
+
+{\ChezScheme} extends the standard symbol syntax in several ways:
+
+\begin{itemize}
+\item
+Symbol names may begin with \scheme{@}, but \scheme{,@abc} is parsed
+as \scheme{(unquote-splicing abc)}; to produce \scheme{(unquote @abc)}
+one can type \scheme{, @abc}, \scheme{\x40;abc}, or \scheme{,|@abc|}.
+
+\item 
+The single-character sequences \scheme{\schlbrace} and \scheme{\schrbrace}
+are read as symbols.
+
+\item
+A symbol's name may begin with any character that might normally start a
+number, including a digit, \scheme{.}, \scheme{+}, \scheme{-}, as long as
+the delimited sequence of characters starting with that character cannot
+be parsed as a number.
+
+\item
+A symbol whose name contains arbitrary characters may be written by
+escaping them them with \scheme{\} or with \scheme{|}.
+\scheme{\} is used to escape a single character (except 'x', since
+\scheme{\x} marks the start of a hex scalar value),
+whereas \scheme{|} is used
+to escape the group of characters that follow it up through the
+matching \scheme{|}.
+\end{itemize}
+
+The printer always prints symbols using the standard R6RS syntax, so that,
+e.g., \scheme{@abc} prints as \scheme{\x40;abc} and \scheme{1-} prints as
+\scheme{\x31;-}.  '
+
+Gensyms are printed
+\index{\scheme{#\schlbrace} (gensym prefix)}\scheme{#\schlbrace} and
+\scheme{\schrbrace} brackets that enclose both the ``pretty'' and ``unique''
+names,
+e.g., \scheme{#\schlbrace\raw{{}}g1426 e5g1c94g642dssw-a\schrbrace}.
+They may also be printed using the pretty name only with the prefix
+\index{\scheme{#:} (gensym prefix)}\scheme{#:}, e.g.,
+\scheme{#:g1426}.
+
+These extensions are disabled in an input stream after \scheme{#!r6rs} has
+been seen by the reader, unless \scheme{#!chezscheme} has been seen more
+recently.
+
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:gensym}
+\formdef{gensym}{\categoryprocedure}{(gensym)}
+\formdef{gensym}{\categoryprocedure}{(gensym \var{pretty-name})}
+\formdef{gensym}{\categoryprocedure}{(gensym \var{pretty-name} \var{unique-name})}
+\returns a unique generated symbol
+\listlibraries
+\endentryheader
+
+\noindent
+\index{gensyms}\index{generated symbols}Each
+call to \scheme{gensym} returns a unique generated symbol, or \emph{gensym}.
+Each generated symbol has two names: a ``pretty'' name and a
+``unique'' name.
+
+In the first form above, the pretty name is formed (lazily---see
+below) by combining an
+internal prefix with the value of an internal counter.
+After each name is formed, the internal counter is incremented.
+The parameters \scheme{gensym-prefix} and
+\scheme{gensym-count}, described below, may be used to access and set
+the internal prefix and counter.
+By default, the prefix is the single-character string \scheme{"g"}.
+In the second and third forms, the pretty name of the new gensym
+is \var{pretty-name}, which must be a string.
+The pretty name of a gensym is returned by the procedure
+\scheme{symbol->string}.
+
+In both the first and second forms, the unique name is an
+automatically generated globally unique name.
+Globally unique names are constructed (lazily---see below)
+from some combination of a unique machine identifier (such as the
+network address), the current process identifier (PID), and the
+time at which the Scheme session began, along with an internal
+counter.
+In the third form of gensym, the unique name of the new gensym is
+\var{unique-name}, which must be a string.
+The unique name of a gensym may be obtained via the procedure
+\scheme{gensym->unique-string}.
+
+The unique name allows gensyms to be written in such a way that they
+can be read back and reliably commonized on input.
+\index{\scheme{#\schlbrace} (gensym prefix)}The syntax for gensyms
+includes both the pretty name and the unique name, as shown in the
+example below:
+
+\schemedisplay
+(gensym) ;=> #{g0 bcsfg5eq4e9b3h9o-a}
+\endschemedisplay
+
+\noindent
+When the parameter \index{\scheme{print-gensym}}\scheme{print-gensym} is set to \scheme{pretty},
+the printer prints the pretty name only, with a
+\index{\scheme{#:} (gensym prefix)}\scheme{#:} syntax, so
+
+\schemedisplay
+(parameterize ([print-gensym 'pretty])
+  (write (gensym)))
+\endschemedisplay
+
+prints \scheme{#:g0}.
+
+When the reader sees the \scheme{#:} syntax, it produces a gensym with
+the given pretty name, but the original unique name is lost.
+
+When the parameter is set to \scheme{#f}, the printer prints just the
+pretty name, so
+
+\schemedisplay
+(parameterize ([print-gensym #f])
+  (write (gensym)))
+\endschemedisplay
+
+\noindent
+prints \scheme{g0}.
+This is useful only when gensyms do not need to be read back in
+as gensyms.
+
+In order to reduce construction and (when threaded) synchronization
+overhead when gensyms are frequently created but rarely printed or
+stored in an object file, generated pretty and unique names are created
+lazily, i.e., not until first requested, either by the printer, fasl
+writer, or explicitly by one of the procedures \scheme{symbol->string}
+or \scheme{gensym->unique-string}.
+In addition, a gensym is not placed into the system's internal symbol
+table (the oblist; see page~\pageref{desc:oblist}) until the unique name
+is requested.
+This allows a gensym to be reclaimed by the storage manager
+if no references to the gensym exist and no unique name exists by which to
+access it, even if it has a top-level binding or a nonempty property
+list.
+
+\schemedisplay
+(define x (gensym))
+x                         ;=> #{g2 bcsfg5eq4e9b3h9o-c}
+(symbol->string x)        ;=> "g2"
+(gensym->unique-string x) ;=> "bcsfg5eq4e9b3h9o-c"
+\endschemedisplay
+
+Gensyms subsume the notion of \index{uninterned symbols}\emph{uninterned
+symbols} supported by earlier versions of {\ChezScheme}.
+Similarly, the predicate
+\index{uninterned-symbol?}\scheme{uninterned-symbol?} has been replaced
+by \scheme{gensym?}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{gensym-prefix}{\categorythreadparameter}{gensym-prefix}
+\formdef{gensym-count}{\categorythreadparameter}{gensym-count}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{gensym}}The parameters \scheme{gensym-prefix} and
+\scheme{gensym-count} are used to access and set the internal prefix
+and counter from which the pretty name of a gensym
+is generated when \scheme{gensym} is not given an explicit string
+argument.
+\scheme{gensym-prefix} defaults to the string \scheme{"g"} and may be
+set to any object.
+\scheme{gensym-count} starts at 0 and may be set to any nonnegative
+integer.
+
+As described above, {\ChezScheme} delays the creation
+of the pretty name until the name is first requested by the printer or by
+an explicit call to \scheme{symbol->string}.
+These parameters are not consulted until that time; setting them when
+\scheme{gensym} is called thus has no effect on the generated name.
+
+\schemedisplay
+(let ([x (parameterize ([gensym-prefix "genny"]
+                        [gensym-count 17]
+                        [print-gensym 'pretty])
+           (gensym))])
+  (format "~s" x))                       ;=> "#{g4 bcsfg5eq4e9b3h9o-e}"
+(let ([x (gensym)])
+  (parameterize ([gensym-prefix "genny"]
+                 [gensym-count 17]
+                 [print-gensym #f])
+    (format "~s" (gensym))))             ;=> "genny17"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{gensym->unique-string}{\categoryprocedure}{(gensym->unique-string \var{gensym})}
+\returns the unique name of \var{gensym}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(gensym->unique-string (gensym)) ;=> "bd3kufa7ypjcuvut-g"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{gensym?}{\categoryprocedure}{(gensym? \var{obj})}
+\returns \scheme{#t} if \var{obj} is gensym, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(gensym? (string->symbol "z")) ;=> #f
+(gensym? (gensym "z")) ;=> #t
+(gensym? 'a) ;=> #f
+(gensym? 3) ;=> #f
+(gensym? (gensym)) ;=> #t
+(gensym? '#{g2 bcsfg5eq4e9b3h9o-c}) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader\label{property-lists}
+\formdef{putprop}{\categoryprocedure}{(putprop \var{symbol} \var{key} \var{value})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+{\ChezScheme} associates a \index{property lists}\emph{property list} with
+each symbol, allowing multiple \var{key-value} pairs to be stored
+directly with the symbol.
+New key-value pairs may be placed in the property list or retrieved in
+a manner analogous to the use of association lists, using the procedures
+\scheme{putprop} and \scheme{getprop}.
+Property lists are often used to store information related to the symbol
+itself.
+For example, a natural language program might use symbols to represent
+words, using their property lists to store information about use and
+meaning.
+
+\scheme{putprop} associates \var{value} with \var{key} on the
+property list of \var{symbol}.
+\var{key} and \var{value} may be any types of object, although \var{key} is
+typically a symbol.
+
+\scheme{putprop} may be used to establish a new property or to change
+an existing property.
+
+See the examples under \scheme{getprop} below.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{getprop}{\categoryprocedure}{(getprop \var{symbol} \var{key})}
+\formdef{getprop}{\categoryprocedure}{(getprop \var{symbol} \var{key} \var{default})}
+\returns the value associated with \var{key} on the property list of \var{symbol}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{property lists}\scheme{getprop} searches the property list of
+\var{symbol} for a key identical to \var{key} (in the sense of
+\scheme{eq?}), and returns the value associated with this key, if any.
+If no value is associated with \var{key} on the property list of
+\var{symbol}, \scheme{getprop} returns \var{default}, or \scheme{#f} if
+the \var{default} argument is not supplied.
+
+
+\schemedisplay
+(putprop 'fred 'species 'snurd)
+(putprop 'fred 'age 4)  
+(putprop 'fred 'colors '(black white))
+
+(getprop 'fred 'species) ;=> snurd
+(getprop 'fred 'colors) ;=> (black white)
+(getprop 'fred 'nonkey) ;=> #f
+(getprop 'fred 'nonkey 'unknown) ;=> unknown
+ 
+(putprop 'fred 'species #f)
+(getprop 'fred 'species 'unknown) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{remprop}{\categoryprocedure}{(remprop \var{symbol} \var{key})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{remprop} removes the property with key \var{key} from the property
+list of \var{symbol}, if such a property exists\index{Fred}.
+
+\schemedisplay
+(putprop 'fred 'species 'snurd)
+(getprop 'fred 'species) ;=> snurd
+
+(remprop 'fred 'species)
+(getprop 'fred 'species 'unknown) ;=> unknown
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{property-list}{\categoryprocedure}{(property-list \var{symbol})}
+\returns a copy of the internal property list for \var{symbol}
+\listlibraries
+\endentryheader
+
+\noindent
+A property list is a list of alternating keys and values,
+i.e., \scheme{(\var{key} \var{value} \dots)}.
+
+\schemedisplay
+(putprop 'fred 'species 'snurd)
+(putprop 'fred 'colors '(black white))
+(property-list 'fred) ;=> (colors (black white) species snurd)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:oblist}
+\formdef{oblist}{\categoryprocedure}{(oblist)}
+\returns a list of interned symbols
+\listlibraries
+\endentryheader
+
+\noindent
+The system maintains an internal symbol table used
+to insure that any two occurrences of the same
+symbol name resolve to the same symbol object.
+The \scheme{oblist} procedure returns a list of the symbols currently in
+this symbol table.
+
+The list of interned symbols grows when a new symbol
+is introduced into the system or when the unique name of a
+gensym (see page~\pageref{desc:gensym}) is requested.
+It shrinks when the garbage collector determines that it is
+safe to discard a symbol.
+It is safe to discard a symbol only if the symbol is not accessible except
+through the oblist,
+has no top-level binding, and has no properties on its property
+list.
+
+\schemedisplay
+(if (memq 'tiger (oblist)) 'yes 'no) ;=> yes
+(equal? (oblist) (oblist)) ;=> #t
+(= (length (oblist)) (length (oblist))) ;=> #t \var{or} #f
+\endschemedisplay
+
+\noindent
+The first example above follows from the property that all interned
+symbols are in the oblist from the time they are read, which happens
+prior to evaluation.
+The second example follows from the fact that no symbols can be
+removed from the oblist while references to those symbols exist, in
+this case, within the list returned by the first call to
+\scheme{oblist} (whichever call is performed first).
+The expression in the third example can return \scheme{#f} only if a garbage
+collection occurs sometime between the two calls to \scheme{oblist}, and only
+if one or more symbols are removed from the oblist by that collection.
+
+\section{Void\label{SECTMISCVOID}}
+
+Many Scheme operations return an unspecified result.
+{\ChezScheme} typically returns a special \emph{void} object when the
+value returned by an operation is unspecified.
+The {\ChezScheme} void object is not meant to be used as a datum, and
+consequently does not have a reader syntax.
+As for other objects without a reader syntax, such as procedures and
+ports, {\ChezScheme} output procedures print the void object using a
+nonreadable representation, i.e., \scheme{#<void>}.
+Since the void object should be returned only by operations that do not
+have ``interesting'' values, the default waiter printer (see
+\scheme{waiter-write}) suppresses the printing of the void object.
+\scheme{set!}, \scheme{set-car!}, \scheme{load}, and \scheme{write} are examples of {\ChezScheme}
+operations that return the void object.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{void}{\categoryprocedure}{(void)}
+\returns the void object
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{void} is a procedure of no arguments that returns the void object.
+It can be used to force expressions that are used for effect or whose
+values are otherwise unspecified to evaluate to a consistent, trivial
+value.
+Since most {\ChezScheme} operations that are used for effect
+return the void object, however, it is rarely necessary to explicitly
+invoke the \scheme{void} procedure.
+
+Since the void object is used explicitly as an ``unspecified'' value,
+it is a bad idea to use it for any other purpose or to count on any
+given expression evaluating to the void object.
+
+The default waiter printer suppresses the void object; that is, nothing
+is printed for expressions that evaluate to the void object.
+
+\schemedisplay
+(eq? (void) #f) ;=> #f
+(eq? (void) #t) ;=> #f
+(eq? (void) '()) ;=> #f
+\endschemedisplay
+
+\section{Sorting\label{SECTMISCSORTING}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{sort}{\categoryprocedure}{(sort \var{predicate} \var{list})}
+\formdef{sort!}{\categoryprocedure}{(sort! \var{predicate} \var{list})}
+\returns a list containing the elements of \var{list} sorted according to \var{predicate}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{sort} is identical to the Revised$^6$ Report \scheme{list-sort},
+and \scheme{sort!} is a destructive version of \scheme{sort}, i.e., it
+reuses pairs from the input list to form the output list.
+
+\schemedisplay
+(sort < '(3 4 2 1 2 5)) ;=> (1 2 2 3 4 5)
+(sort! < '(3 4 2 1 2 5)) ;=> (1 2 2 3 4 5)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{merge}{\categoryprocedure}{(merge \var{predicate} \var{list_1} \var{list_2})}
+\formdef{merge!}{\categoryprocedure}{(merge! \var{predicate} \var{list_1} \var{list_2})}
+\returns \var{list_1} merged with \var{list_2} in the order specified by \var{predicate}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{predicate} should be a procedure that expects two arguments and
+returns \scheme{#t} if its first argument must precede its second in
+the merged list.
+It should not have any side effects.
+That is, if \var{predicate} is applied to two objects \var{x} and
+\var{y}, where \var{x} is taken from the second list and \var{y}
+is taken from the first list,
+it should return true only if \var{x} should appear before \var{y}
+in the output list.
+If this constraint is met,
+\scheme{merge} and \scheme{merge!} are stable, in that items from \var{list_1} are
+placed in front of equivalent items from \var{list_2} in the output list.
+Duplicate elements are included in the merged list.
+
+\scheme{merge!} combines the lists destructively, using pairs from the input
+lists to form the output list.
+
+\schemedisplay
+(merge char<?
+       '(#\a #\c)
+       '(#\b #\c #\d)) ;=> (#\a #\b #\c #\c #\d)
+(merge <
+       '(1/2 2/3 3/4)
+       '(0.5 0.6 0.7)) ;=> (1/2 0.5 0.6 2/3 0.7 3/4)
+\endschemedisplay
+
+
+\section{Hashtables\label{SECTMISCHASHTABLES}}
+
+{\ChezScheme} provides several extensions to the hashtable mechanism,
+including a mechanism for directly accessing a key, value pair in a
+hashtable, support for weak eq and eqv hashtables, and a set of procedures
+specialized to eq and symbol hashtables.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-cell}{\categoryprocedure}{(hashtable-cell \var{hashtable} \var{key} \var{default})}
+\returns a pair (see below)
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a hashtable.
+\var{key} and \var{default} may be any Scheme values.
+
+If no value is associated with \var{key} in \var{hashtable},
+\scheme{hashtable-cell} modifies \var{hashtable} to associate \var{key} with
+\var{default}.
+It returns a pair whose car is \var{key} and whose cdr is
+the associated value.
+Changing the cdr of this pair effectively updates the table to
+associate \var{key} with a new value.
+The \var{key} in the car field should not be changed.
+The advantage of this procedure over the Revised$^6$ Report procedures
+for manipulating hashtable entries is that the value associated with
+a key may be read or written many times with only a single hashtable
+lookup.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define v (vector 'a 'b 'c))
+(define cell (hashtable-cell ht v 3))
+cell ;=> (#(a b c) . 3)
+(hashtable-ref ht v 0) ;=> 3
+(set-cdr! cell 4)
+(hashtable-ref ht v 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-values}{\categoryprocedure}{(hashtable-values \var{hashtable})}
+\returns a vector containing the values in \var{hashtable}
+\listlibraries
+\endentryheader
+
+\noindent
+Each value is the value of one of the keys in \var{hashtable}.
+Duplicate values are not removed.
+The values may appear in any order in the returned vector.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define p1 (cons 'a 'b))
+(define p2 (cons 'a 'b))
+(hashtable-set! ht p1 "one")
+(hashtable-set! ht p2 "two")
+(hashtable-set! ht 'q "two")
+(hashtable-values ht) ;=> #("one" "two" "two")
+\endschemedisplay
+
+This procedure is equivalent to:
+
+\schemedisplay
+(lambda (ht)
+  (let-values ([(keys values) (hashtable-entries ht)])
+    values))
+\endschemedisplay
+
+but more efficient since the separate vector of keys need
+not be created.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-weak-eq-hashtable}{\categoryprocedure}{(make-weak-eq-hashtable)}
+\formdef{make-weak-eq-hashtable}{\categoryprocedure}{(make-weak-eq-hashtable \var{size})}
+\formdef{make-weak-eqv-hashtable}{\categoryprocedure}{(make-weak-eqv-hashtable)}
+\formdef{make-weak-eqv-hashtable}{\categoryprocedure}{(make-weak-eqv-hashtable \var{size})}
+\returns a new weak eq hashtable
+\listlibraries
+\endentryheader
+
+These procedures are like the Revised$^6$ Report procedures \scheme{make-eq-hashtable}
+and \scheme{make-eqv-hashtable}
+except the keys of the hashtable are held weakly, i.e., they are not
+protected from the garbage collector.
+Keys reclaimed by the garbage collector are removed from the table,
+and their associated values are dropped the next time the table
+is modified, if not sooner.
+
+A copy of a weak eq or eqv hashtable created by \scheme{hashtable-copy} is
+also weak.
+If the copy is immutable, inaccessible keys may still be dropped from the
+hashtable, even though the contents of the table is otherwise unchanging.
+The effect of this can be observed via \scheme{hashtable-keys} and
+\scheme{hashtable-entries}.
+
+\schemedisplay
+(define ht1 (make-weak-eq-hashtable))
+(define ht2 (make-weak-eq-hashtable 32))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-weak?}{\categoryprocedure}{(hashtable-weak? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a weak eq or eqv hashtable, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define ht1 (make-weak-eq-hashtable))
+(define ht2 (hashtable-copy ht1))
+(hashtable-weak? ht2) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable?}{\categoryprocedure}{(eq-hashtable? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an eq hashtable, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(eq-hashtable? (make-eq-hashtable)) ;=> #t
+(eq-hashtable? '(not a hash table)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-weak?}{\categoryprocedure}{(eq-hashtable-weak? \var{hashtable})}
+\returns \scheme{#t} if \var{hashtable} is weak, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+
+\schemedisplay
+(eq-hashtable-weak? (make-eq-hashtable)) ;=> #f
+(eq-hashtable-weak? (make-weak-eq-hashtable)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-set!}{\categoryprocedure}{(eq-hashtable-set! \var{hashtable} \var{key} \var{value})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable eq hashtable.
+\var{key} and \var{value} may be any Scheme values.
+
+\scheme{eq-hashtable-set!} associates the value
+\var{value} with the key \var{key} in \var{hashtable}.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(eq-hashtable-set! ht 'a 73)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-ref}{\categoryprocedure}{(eq-hashtable-ref \var{hashtable} \var{key} \var{default})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+\var{key} and \var{default} may be any Scheme values.
+
+\scheme{eq-hashtable-ref} returns the value
+associated with \var{key} in \var{hashtable}.
+If no value is associated with \var{key} in \var{hashtable},
+\scheme{eq-hashtable-ref} returns \var{default}.
+
+% Key comparisons are performed with \var{eq?}.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define p1 (cons 'a 'b))
+(define p2 (cons 'a 'b))
+(eq-hashtable-set! ht p1 73)
+(eq-hashtable-ref ht p1 55) ;=> 73
+(eq-hashtable-ref ht p2 55) ;=> 55
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-contains?}{\categoryprocedure}{(eq-hashtable-contains? \var{hashtable} \var{key})}
+\returns \scheme{#t} if an association for \var{key} exists in \var{hashtable}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+\var{key} may be any Scheme value.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define p1 (cons 'a 'b))
+(define p2 (cons 'a 'b))
+(eq-hashtable-set! ht p1 73)
+(eq-hashtable-contains? ht p1) ;=> #t
+(eq-hashtable-contains? ht p2) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-update!}{\categoryprocedure}{(eq-hashtable-update! \var{hashtable} \var{key} \var{procedure} \var{default})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable eq hashtable.
+\var{key} and \var{default} may be any Scheme values.
+\var{procedure} should accept one argument, should return one value, and
+should not modify \var{hashtable}.
+
+\scheme{eq-hashtable-update!} applies \var{procedure} to the value associated with
+\var{key} in \var{hashtable}, or to \var{default} if no value is associated with
+\var{key} in \var{hashtable}.
+If \var{procedure} returns, \scheme{eq-hashtable-update!} associates \var{key}
+with the value returned by \var{procedure}, replacing the old association,
+if any.
+
+A version of \scheme{eq-hashtable-update!} that does not verify that it receives
+arguments of the proper type might be defined as follows.
+
+\schemedisplay
+(define eq-hashtable-update!
+  (lambda (ht key proc value)
+    (eq-hashtable-set! ht key
+      (proc (eq-hashtable-ref ht key value)))))
+\endschemedisplay
+
+An implementation may, however, be able to implement
+\scheme{eq-hashtable-update!} more efficiently by avoiding multiple
+hash computations and hashtable lookups.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(eq-hashtable-update! ht 'a
+  (lambda (x) (* x 2))
+  55)
+(eq-hashtable-ref ht 'a 0) ;=> 110
+(eq-hashtable-update! ht 'a
+  (lambda (x) (* x 2))
+  0)
+(eq-hashtable-ref ht 'a 0) ;=> 220
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-cell}{\categoryprocedure}{(eq-hashtable-cell \var{hashtable} \var{key} \var{default})}
+\returns a pair (see below)
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+\var{key} and \var{default} may be any Scheme values.
+
+If no value is associated with \var{key} in \var{hashtable},
+\scheme{eq-hashtable-cell} modifies \var{hashtable} to associate \var{key} with
+\var{default}.
+It returns a pair whose car is \var{key} and whose cdr is
+the associated value.
+Changing the cdr of this pair effectively updates the table to
+associate \var{key} with a new value.
+The \var{key} should not be changed.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define v (vector 'a 'b 'c))
+(define cell (eq-hashtable-cell ht v 3))
+cell ;=> (#(a b c) . 3)
+(eq-hashtable-ref ht v 0) ;=> 3
+(set-cdr! cell 4)
+(eq-hashtable-ref ht v 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-delete!}{\categoryprocedure}{(eq-hashtable-delete! \var{hashtable} \var{key})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable eq hashtable.
+\var{key} may be any Scheme value.
+
+\scheme{eq-hashtable-delete!} drops any association
+for \var{key} from \var{hashtable}.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define p1 (cons 'a 'b))
+(define p2 (cons 'a 'b))
+(eq-hashtable-set! ht p1 73)
+(eq-hashtable-contains? ht p1) ;=> #t
+(eq-hashtable-delete! ht p1)
+(eq-hashtable-contains? ht p1) ;=> #f
+(eq-hashtable-contains? ht p2) ;=> #f
+(eq-hashtable-delete! ht p2)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable?}{\categoryprocedure}{(symbol-hashtable? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an eq hashtable, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(symbol-hashtable? (make-hashtable symbol-hash eq?)) ;=> #t
+(symbol-hashtable? (make-eq-hashtable)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-set!}{\categoryprocedure}{(symbol-hashtable-set! \var{hashtable} \var{key} \var{value})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol, and \var{value} may be any Scheme value.
+
+\scheme{symbol-hashtable-set!} associates the value
+\var{value} with the key \var{key} in \var{hashtable}.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(symbol-hashtable-ref ht 'a #f) ;=> #f
+(symbol-hashtable-set! ht 'a 73)
+(symbol-hashtable-ref ht 'a #f) ;=> 73
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-ref}{\categoryprocedure}{(symbol-hashtable-ref \var{hashtable} \var{key} \var{default})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol, and \var{default} may be any Scheme value.
+
+\scheme{symbol-hashtable-ref} returns the value
+associated with \var{key} in \var{hashtable}.
+If no value is associated with \var{key} in \var{hashtable},
+\scheme{symbol-hashtable-ref} returns \var{default}.
+
+% Key comparisons are performed with \var{eq?}.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(define k1 'abcd)
+(define k2 'not-abcd)
+(symbol-hashtable-set! ht k1 "hi")
+(symbol-hashtable-ref ht k1 "bye") ;=> "hi"
+(symbol-hashtable-ref ht k2 "bye") ;=> "bye"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-contains?}{\categoryprocedure}{(symbol-hashtable-contains? \var{hashtable} \var{key})}
+\returns \scheme{#t} if an association for \var{key} exists in \var{hashtable}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(define k1 'abcd)
+(define k2 'not-abcd)
+(symbol-hashtable-set! ht k1 "hi")
+(symbol-hashtable-contains? ht k1) ;=> #t
+(symbol-hashtable-contains? ht k2 ) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-update!}{\categoryprocedure}{(symbol-hashtable-update! \var{hashtable} \var{key} \var{procedure} \var{default})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol, and \var{default} may be any Scheme value.
+\var{procedure} should accept one argument, should return one value, and
+should not modify \var{hashtable}.
+
+\scheme{symbol-hashtable-update!} applies \var{procedure} to the value associated with
+\var{key} in \var{hashtable}, or to \var{default} if no value is associated with
+\var{key} in \var{hashtable}.
+If \var{procedure} returns, \scheme{symbol-hashtable-update!} associates \var{key}
+with the value returned by \var{procedure}, replacing the old association,
+if any.
+
+A version of \scheme{symbol-hashtable-update!} that does not verify that it receives
+arguments of the proper type might be defined as follows.
+
+\schemedisplay
+(define symbol-hashtable-update!
+  (lambda (ht key proc value)
+    (symbol-hashtable-set! ht key
+      (proc (symbol-hashtable-ref ht key value)))))
+\endschemedisplay
+
+An implementation may, however, be able to implement
+\scheme{symbol-hashtable-update!} more efficiently by avoiding multiple
+hash computations and hashtable lookups.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(symbol-hashtable-update! ht 'a
+  (lambda (x) (* x 2))
+  55)
+(symbol-hashtable-ref ht 'a 0) ;=> 110
+(symbol-hashtable-update! ht 'a
+  (lambda (x) (* x 2))
+  0)
+(symbol-hashtable-ref ht 'a 0) ;=> 220
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-cell}{\categoryprocedure}{(symbol-hashtable-cell \var{hashtable} \var{key} \var{default})}
+\returns a pair (see below)
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol, and \var{default} may be any Scheme value.
+
+If no value is associated with \var{key} in \var{hashtable},
+\scheme{symbol-hashtable-cell} modifies \var{hashtable} to associate \var{key} with
+\var{default}.
+It returns a pair whose car is \var{key} and whose cdr is
+the associated value.
+Changing the cdr of this pair effectively updates the table to
+associate \var{key} with a new value.
+The \var{key} should not be changed.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(define k 'a-key)
+(define cell (symbol-hashtable-cell ht k 3))
+cell ;=> (a-key . 3)
+(symbol-hashtable-ref ht k 0) ;=> 3
+(set-cdr! cell 4)
+(symbol-hashtable-ref ht k 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-delete!}{\categoryprocedure}{(symbol-hashtable-delete! \var{hashtable} \var{key})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol.
+
+\scheme{symbol-hashtable-delete!} drops any association
+for \var{key} from \var{hashtable}.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(define k1 (gensym))
+(define k2 (gensym))
+(symbol-hashtable-set! ht k1 73)
+(symbol-hashtable-contains? ht k1) ;=> #t
+(symbol-hashtable-delete! ht k1)
+(symbol-hashtable-contains? ht k1) ;=> #f
+(symbol-hashtable-contains? ht k2) ;=> #f
+(symbol-hashtable-delete! ht k2)
+\endschemedisplay
+
+
+\section{Record Types\label{SECTR6RSRECORDS}}
+
+\index{\scheme{define-record-type}}\index{\scheme{require-nongenerative-clause}}%
+Chez Scheme extends the Revised$^6$ Report's \scheme{define-record-type}
+syntax in one way, which is that it allows a generative record type
+to be declared explicitly as such (in a double-negative sort of way)
+by including a \scheme{nongenerative} clause with \scheme{#f} as the
+uid, i.e.:
+
+\schemedisplay
+(nongenerative #f)
+\endschemedisplay
+
+This can be used in conjunction with the parameter
+\scheme{require-nongenerative-clause} to catch the accidental use of
+generative record types while avoiding spurious errors for record types
+that must be generative.
+Generative record types are rarely needed and are generally less
+efficient since a run-time representation of the type is created each
+time the \scheme{define-record-clause} is evaluated, rather than once
+at compile (expansion) time.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{require-nongenerative-clause}{\categorythreadparameter}{require-nongenerative-clause}
+\listlibraries
+\endentryheader
+
+This parameter holds a boolean value that determines whether
+\index{\scheme{define-record-type}}\scheme{define-record-type}
+requires a nongenerative clause.
+The default value is \scheme{#f}.
+The lead-in above describes why one might want to set this to \scheme{#t}.
+
+
+\section{Legacy Record Types\label{SECTCSV7RECORDS}}
+
+\index{records}\index{\scheme{define-record}}\index{\scheme{make-record-type}}%
+In addition to the Revised$^6$ Report record-type creation and definition
+mechanisms, which are described in Chapter~\ref{TSPL:CHPTRECORDS} of {\TSPLFOUR},
+{\ChezScheme} continues to support pre-R6RS mechanisms for creating new
+data types, or \emph{record types}, with fixed sets of named fields.
+Many of the procedures described in this section are available only when
+imported from the \scheme{(chezscheme csv7)} library.
+
+Code intended to be portable should use the R6RS mechanism instead.
+
+Records may be defined via the \scheme{define-record} syntactic form or
+via the \scheme{make-record-type} procedure.
+The underlying representation of records and record-type descriptors is the
+same for the Revised$^6$ Report mechanism and the alternative mechanism.
+Record types created by one can be used as parent record types for the
+other via the procedural mechanisms, though not via the syntactic mechanisms.
+
+% undocumented:
+%   record-type-interfaces
+
+The syntactic (\scheme{define-record})
+interface is the most commonly used interface.
+Each \scheme{define-record} form defines a constructor
+procedure for records of the new type, a type predicate that returns
+true only for records of the new type, an access procedure for each field,
+and an assignment procedure for each mutable field.
+For example,
+
+\schemedisplay
+(define-record point (x y))
+\endschemedisplay
+
+creates a new \scheme{point} record type with two fields, \scheme{x}
+and \scheme{y}, and defines the following procedures:
+
+\begin{tabular}{ll}
+\scheme{(make-point \var{x} \var{y})} & constructor\\
+\scheme{(point? \var{obj})} & predicate\\
+\scheme{(point-x \var{p})} & accessor for field \scheme{x}\\
+\scheme{(point-y \var{p})} & accessor for field \scheme{y}\\
+\scheme{(set-point-x! \var{p} \var{obj})} & mutator for field \scheme{x}\\
+\scheme{(set-point-y! \var{p} \var{obj})} & mutator for field \scheme{y}
+\end{tabular}
+
+The names of these procedures follow a regular naming convention by
+default, but the programmer can override the defaults if desired.
+\scheme{define-record} allows the programmer to control which fields
+are arguments to the generated constructor procedure and which 
+are explicitly initialized by the constructor procedure.
+Fields are mutable by default, but may be declared immutable.
+Fields can generally contain any Scheme value, but the internal
+representation of each field may be specified, which places implicit
+constraints on the type of value that may be stored there.
+These customization options are covered in the formal description
+of \scheme{define-record} later in this section.
+
+The procedural (\scheme{make-record-type}) interface may be used to
+implement interpreters that must handle \scheme{define-record} forms.
+Each call to \scheme{make-record-type} returns a \emph{record-type
+descriptor} representing the record type.
+Using this record-type descriptor, programs may generate constructors,
+type predicates, field accessors, and field mutators dynamically.
+The following code demonstrates how the procedural interface might
+be used to create a similar \scheme{point} record type and associated
+definitions.
+
+\schemedisplay
+(define point (make-record-type "point" '(x y)))
+(define make-point (record-constructor point))
+(define point? (record-predicate point))
+(define point-x (record-field-accessor point 'x))
+(define point-y (record-field-accessor point 'y))
+(define set-point-x! (record-field-mutator point 'x))
+(define set-point-y! (record-field-mutator point 'y))
+\endschemedisplay
+
+The procedural interface is more flexible than the syntactic interface,
+but this flexibility can lead to less readable programs and
+compromises the compiler's ability to generate efficient code.
+Programmers should use the syntactic interface whenever it suffices.
+
+A record-type descriptor may also be extracted from an instance
+of a record type, whether the record type was produced by
+\scheme{define-record} or \scheme{make-record-type}, and the extracted
+descriptor may also be used to produce constructors, predicates,
+accessors, and mutators, with a few limitations noted in the description
+of \scheme{record-type-descriptor} below.
+This is a powerful feature that permits the coding of portable printers
+and object inspectors.
+For example, the printer employs this feature in its default record
+printer, and the inspector uses it to allow inspection and mutation of
+system- and user-defined records during debugging.
+
+\index{record inheritance}\index{inheritance in records}A parent record
+may be specified in the \scheme{define-record} syntax or as an optional
+argument to \scheme{make-record-type}.
+A new record inherits the parent record's fields, and each instance
+of the new record type is considered to be an instance of the parent
+type as well, so that accessors and mutators for the parent type may
+be used on instances of the new type.
+
+\index{record generativity}\index{generativity of record definitions}Record
+type definitions may be classified as either generative or nongenerative.
+A new type results for each \emph{generative} record definition,
+while only one type results for all occurrences of a given
+\emph{nongenerative} record definition.
+This distinction is important semantically since record accessors
+and setters are applicable only to objects with the same type.
+
+Syntactic (\scheme{define-record}) record definitions are
+\index{expand-time generativity}\emph{expand-time generative} by default, which means that a new
+record is created when the code is expanded.
+Expansion happens once for each form prior to compilation or
+interpretation, as when it is entered interactively, loaded from source,
+or compiled by \scheme{compile-file}.
+As a result, multiple evaluations of a single \scheme{define-record}
+form, e.g., in the body of a procedure called multiple times, always
+produce the same record type.
+
+\index{nongenerative record definitions}Separate \scheme{define-record} forms
+usually produce different types, even if the forms are textually
+identical.
+The only exception occurs when the name of a record is specified as
+a generated symbol, or \emph{gensym} (page~\pageref{desc:gensym}).
+Multiple copies of a record definition whose name is given by a gensym
+always produce the same record type; i.e., such definitions are
+nongenerative.
+Each copy of the record definition must contain the same fields and field
+modifiers in the same order; an exception is raised with condition-type
+\scheme{&assertion} when two differing
+record types with the same generated name are loaded into the same
+Scheme process.
+
+Procedural (\scheme{make-record-type}) record definitions are
+\index{run-time generativity}\emph{run-time generative} by default.
+That is, each call to \scheme{make-record-type} usually produces a new
+record type.
+As with the syntactic interface,
+the only exception occurs when the name of the record is specified
+as a gensym, in which case the record type is
+fully nongenerative.
+
+By default, a record is printed with the syntax
+
+\schemedisplay
+#[\var{type-name} \var{field} \dots]
+\endschemedisplay
+
+\noindent
+where \scheme{\var{field} \dots} are the printed representations of
+the contents of the fields of the record, and
+\var{type-name} is a generated symbol, or \emph{gensym}
+(page~\pageref{desc:gensym}), that uniquely identifies the record type.
+For nongenerative records, \var{type-name} is the gensym
+provided by the program.
+Otherwise, it is a gensym whose ``pretty'' name
+(page~\pageref{desc:gensym}) is the name given to the record by
+\scheme{define-record} or \scheme{make-record-type}.
+
+The default printing of records of a given type may be overridden
+with \var{record-writer}.
+
+The default syntax may be used as input to the reader as well, as long
+as the corresponding record type has already been defined in the Scheme
+session in which the read occurs.
+The parameter \scheme{record-reader} may be used to specify a
+different name to be recognized by the reader in place of the
+generated name.
+Specifying a different name in this manner also changes the name used
+when the record is printed.
+This reader extension is disabled in an input stream after \scheme{#!r6rs}
+has been seen by the reader, unless \scheme{#!chezscheme} has been seen
+more recently.
+
+The mark (\scheme{#\var{n}=}) and reference (\scheme{#\var{n}#})
+syntaxes may be used within the record syntax, with the result
+of creating shared or cyclic structure as desired.
+All cycles must be resolvable, however, without mutation of an
+immutable record field.
+That is, any cycle must contain at least one pointer through a
+mutable field, whether it is a mutable record field or a mutable
+field of a built-in object type such as a pair or vector.
+
+When the parameter \scheme{print-record} is set to \scheme{#f}, records
+are printed using the simpler syntax
+
+\schemedisplay
+#<record of type \var{name}>
+\endschemedisplay
+
+\noindent
+where \var{name} is the ``pretty'' name of the record (not the full
+gensym) or the reader name first assigned to the record
+type.
+
+%%% need more define-record examples 
+%%%   - show use of field types other than ptr
+%%%   - show non-top-level use 
+
+%%% make-record-type and company
+%%%   - (scan primvars for record-related primitives)
+%%%   - adapt some of the define-record examples
+%%%   - show definition of default print method
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{define-record}{\categorysyntax}{(define-record \var{name} (\var{fld_1} \dots) ((\var{fld_2} \var{init}) \dots) (\var{opt} \dots))}
+\formdef{define-record}{\categorysyntax}{(define-record \var{name} \var{parent} (\var{fld_1} \dots) ((\var{fld_2} \var{init}) \dots) (\var{opt} \dots))}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+A \scheme{define-record} form is a definition and may appear anywhere
+and only where other definitions may appear.
+
+\scheme{define-record} creates a new record type containing a specified
+set of named fields and defines a set of procedures for creating and
+manipulating instances of the record type.
+
+\var{name} must be an identifier.
+If \var{name} is a generated symbol (gensym), the record definition is
+\emph{nongenerative}, otherwise it is \emph{expand-time generative}.
+(See the discussion of generativity earlier in this section.)
+
+Each \var{fld} must be an identifier \var{field-name}, or it must take
+the form
+
+\schemedisplay
+(\var{class} \var{type} \var{field-name})
+\endschemedisplay
+
+\noindent
+where \var{class} and \var{type} are optional and
+\var{field-name} is an identifier.
+\var{class}, if present, must be the keyword \scheme{immutable}
+or the keyword \scheme{mutable}.
+If the \scheme{immutable} class specifier is present, the field is
+immutable; otherwise, the field is mutable.
+\var{type}, if present, specifies how the field is represented,
+as described below.
+ 
+\begin{tabular}{ll}\label{record-field-types}
+\scheme{ptr} &            any Scheme object\\
+\scheme{scheme-object} &  same as \scheme{ptr}\\
+\scheme{int} &            a C \scheme{int}\\
+\scheme{unsigned} &       a C \scheme{unsigned int}\\
+\scheme{short} &          a C \scheme{short}\\
+\scheme{unsigned-short} & a C \scheme{unsigned short}\\
+\scheme{long} &           a C \scheme{long}\\
+\scheme{unsigned-long} &  a C \scheme{unsigned long}\\
+\scheme{iptr} &           a signed integer the size of a \scheme{ptr}\\
+\scheme{uptr} &           an unsigned integer the size of a \scheme{ptr}\\
+\scheme{float} &          a C \scheme{float}\\
+\scheme{double} &         a C \scheme{double}\\
+\scheme{integer-8} &      an eight-bit signed integer\\
+\scheme{unsigned-8} &     an eight-bit unsigned integer\\
+\scheme{integer-16} &     a 16-bit signed integer\\
+\scheme{unsigned-16} &    a 16-bit unsigned integer\\
+\scheme{integer-32} &     a 32-bit signed integer\\
+\scheme{unsigned-32} &    a 32-bit unsigned integer\\
+\scheme{integer-64} &     a 64-bit signed integer\\
+\scheme{unsigned-64} &    a 64-bit unsigned integer\\
+\scheme{single-float} &   a 32-bit single floating point number\\
+\scheme{double-float} &   a 64-bit double floating point number
+\end{tabular}
+
+\noindent
+If a type is specified, the field can contain objects only of the
+specified type.
+If no type is specified, the field is of type \scheme{ptr},
+meaning that it can contain any Scheme object.
+
+The field identifiers name the fields of the record.
+The values of the $n$ fields described by \scheme{\var{fld_1} \dots} are
+specified by the $n$ arguments to the generated constructor procedure.
+The values of the remaining fields, \scheme{\var{fld_2} \dots}, are
+given by the corresponding expressions, \scheme{\var{init} \dots}.
+Each \var{init} is evaluated within the scope of the set of field names
+given by \scheme{\var{fld_1} \dots} and each field in
+\scheme{\var{fld_2} \dots} that precedes it, as if within a
+\scheme{let*} expression.
+Each of these field names is bound to the value of the corresponding field
+during initialization.
+
+\index{record inheritance}\index{inheritance in records}If
+\var{parent} is present, the record type named by \var{parent}
+is the parent of the record.
+The new record type inherits each of the parent record's fields,
+and records of the new type are considered records of the
+parent type.
+If \var{parent} is not present, the parent record type is
+a base record type with no fields.
+
+The following procedures are defined by \scheme{define-record}:
+
+\begin{itemize}
+\item
+a constructor procedure whose name is \scheme{make-\var{name}},
+
+\item
+a type predicate whose name is \scheme{\var{name}?},
+
+\item
+an access procedure whose name is \scheme{\var{name}-\var{fieldname}}
+for each noninherited field, and
+
+\item
+an assignment procedure whose name is
+\scheme{set-\var{name}-\var{fieldname}!}
+for each noninherited mutable field.
+\end{itemize}
+
+\noindent
+If no parent record type is specified,
+the constructor behaves as if defined as
+
+\schemedisplay
+(define make-\var{name}
+  (lambda (\var{id_1} \dots)
+    (let* ([\var{id_2} \var{init}] \dots)
+      \var{body})))
+\endschemedisplay
+
+\noindent
+where \scheme{\var{id_1} \dots} are the names of the fields defined by
+\scheme{\var{fld_1} \dots},
+\scheme{\var{id_2} \dots} are the names of the fields defined by
+\scheme{\var{fld_2} \dots},
+and \var{body} builds the record from the values of the identifiers
+\scheme{\var{id_1} \dots} and \scheme{\var{id_2} \dots}.
+
+If a parent record type is specified, the parent arguments appear first,
+and the parent fields are inserted into the record before the child
+fields.
+
+The options \scheme{\var{opt} \dots} control the selection of names
+of the generated constructor, predicate, accessors, and mutators.
+
+\schemedisplay
+(constructor \var{id})
+(predicate \var{id})
+(prefix \var{string})
+\endschemedisplay
+
+\noindent
+The option
+\scheme{(constructor \var{id})} causes the generated constructor's name
+to be \var{id} rather than \scheme{make-\var{name}}.
+The option \scheme{(predicate \var{id})} likewise causes the generated
+predicate's name to be \var{id} rather than \scheme{\var{name}?}.
+The option \scheme{(prefix \var{string})} determines the prefix
+to be used in the generated accessor and mutator names in place of
+\scheme{\var{name}-}.
+
+If no options are needed, the third subexpression,
+\scheme{(\var{opt} \dots)}, may be omitted.
+If no options and no fields other than those initialized by the arguments
+to the
+constructor procedure are needed, both the second and third subexpressions
+may be omitted.
+If options are specified, the second subexpression must be present,
+even if it contains no field specifiers.
+
+Here is a simple example with no inheritance and no options.
+
+\schemedisplay
+(define-record marble (color quality))
+(define x (make-marble 'blue 'medium))
+(marble? x) ;=> #t
+(pair? x) ;=> #f
+(vector? x) ;=> #f
+(marble-color x) ;=> blue
+(marble-quality x) ;=> medium
+(set-marble-quality! x 'low)
+(marble-quality x) ;=> low
+
+(define-record marble ((immutable color) (mutable quality))
+  (((mutable shape) (if (eq? quality 'high) 'round 'unknown))))
+(marble-shape (make-marble 'blue 'high)) ;=> round
+(marble-shape (make-marble 'blue 'low)) ;=> unknown
+(define x (make-marble 'blue 'high))
+(set-marble-quality! x 'low)
+(marble-shape x) ;=> round
+(set-marble-shape! x 'half-round)
+(marble-shape x) ;=> half-round
+\endschemedisplay
+
+\pagebreak
+The following example illustrates inheritance.
+
+\schemedisplay
+(define-record shape (x y))
+(define-record point shape ())
+(define-record circle shape (radius))
+
+(define a (make-point 7 -3))
+(shape? a) ;=> #t
+(point? a) ;=> #t
+(circle? a) ;=> #f
+
+(shape-x a) ;=> 7
+(set-shape-y! a (- (shape-y a) 1))
+(shape-y a) ;=> -4
+
+(define b (make-circle 7 -3 1))
+(shape? b) ;=> #t
+(point? b) ;=> #f
+(circle? b) ;=> #t
+
+(circle-radius b) ;=> 1
+(circle-radius a) ;=> \var{exception: not of type circle}
+
+(define c (make-shape 0 0))
+(shape? c) ;=> #t
+(point? c) ;=> #f
+(circle? c) ;=> #f
+\endschemedisplay
+
+This example demonstrates the use of options:
+
+\schemedisplay
+(define-record pair (car cdr)
+  ()
+  ((constructor cons)
+   (prefix "")))
+
+(define x (cons 'a 'b))
+(car x) ;=> a
+(cdr x) ;=> b
+(pair? x) ;=> #t
+
+(pair? '(a b c)) ;=> #f
+x ;=> #[#{pair bdhavk1bwafxyss1-a} a b]
+\endschemedisplay
+
+This example illustrates the use a specified reader name, immutable
+fields, and the graph mark and reference syntax.
+
+\schemedisplay
+(define-record triple ((immutable x1) (mutable x2) (immutable x3)))
+(record-reader 'triple (type-descriptor triple))
+
+(let ([t '#[triple #1=(1 2) (3 4) #1#]])
+  (eq? (triple-x1 t) (triple-x3 t))) ;=> #t
+(let ([x '(#1=(1 2) . #[triple #1# b c])])
+  (eq? (car x) (triple-x1 (cdr x)))) ;=> #t
+(let ([t #[triple #1# (3 4) #1=(1 2)]])
+  (eq? (triple-x1 t) (triple-x3 t))) ;=> #t
+(let ([t '#1=#[triple a #1# c]])
+  (eq? t (triple-x2 t))) ;=> #t
+(let ([t '#1=(#[triple #1# b #1#])])
+  (and (eq? t (triple-x1 (car t)))
+       (eq? t (triple-x1 (car t))))) ;=> #t
+\endschemedisplay
+
+\noindent
+Cycles established with the mark and reference syntax can be
+resolved only if a mutable record field or mutable location
+of some other object is involved the cycle, as in the last
+two examples above.
+An exception is raised with condition type \scheme{&lexical} if only
+immutable fields are involved.
+
+\schemedisplay
+'#1=#[triple #1# (3 4) #1#] ;=> \var{exception}
+\endschemedisplay
+
+\index{nongenerative record definitions}The following example demonstrates
+the use of nongenerative record definitions.
+
+\schemedisplay
+(module A (point-disp)
+  (define-record #{point bdhavk1bwafxyss1-b} (x y))
+  (define square (lambda (x) (* x x)))
+  (define point-disp
+    (lambda (p1 p2)
+      (sqrt (+ (square (- (point-x p1) (point-x p2)))
+               (square (- (point-y p1) (point-y p2))))))))
+
+(module B (base-disp)
+  (define-record #{point bdhavk1bwafxyss1-b} (x y))
+  (import A)
+  (define base-disp
+    (lambda (p)
+      (point-disp (make-point 0 0) p))))
+
+(let ()
+  (import B)
+  (define-record #{point bdhavk1bwafxyss1-b} (x y))
+  (base-disp (make-point 3 4))) ;=> 5
+\endschemedisplay
+
+\noindent
+This works even if the different program components are loaded from
+different source files or are compiled separately and loaded from
+different object files.
+
+%----------------------------------------------------------------------------
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{predicate}{\categorysyntax}{predicate}
+\formdef{prefix}{\categorysyntax}{prefix}
+\formdef{constructor}{\categorysyntax}{constructor}
+% \formdef{mutable}{\categorysyntax}{mutable}
+% \formdef{immutable}{\categorysyntax}{immutable}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{mutable}\index{immutable}%
+These identifiers are auxiliary keywords for \scheme{define-record}.
+It is a syntax violation to reference these identifiers except in
+contexts where they are recognized as auxiliary keywords.
+\scheme{mutable} and \scheme{immutable} are also auxiliary keywords for
+\scheme{define-record}, shared with the Revised$^6$ Report
+\scheme{define-record-type}.
+
+
+%----------------------------------------------------------------------------
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{type-descriptor}{\categorysyntax}{(type-descriptor \var{name})}
+\returns the record-type descriptor associated with \var{name}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{name} must name a record type defined by \scheme{define-record}
+of \scheme{define-record-type}.
+
+This form is equivalent to the Revised$^6$ Report
+\scheme{record-type-descriptor} form.
+
+The record-type descriptor is useful for overriding the default
+read and write syntax using \scheme{record-reader} and
+\scheme{record-writer} and may also be used with the procedural
+interface routines described later in this section.
+
+\schemedisplay
+(define-record frob ())
+(type-descriptor frob) ;=> #<record type frob>
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-reader}{\categoryprocedure}{(record-reader \var{name})}
+\returns the record-type descriptor associated with \var{name}
+\formdef{record-reader}{\categoryprocedure}{(record-reader \var{rtd})}
+\returns the first name associated with \var{rtd}
+\formdef{record-reader}{\categoryprocedure}{(record-reader \var{name} \var{rtd})}
+\returns unspecified
+\formdef{record-reader}{\categoryprocedure}{(record-reader \var{name} #f)}
+\returns unspecified
+\formdef{record-reader}{\categoryprocedure}{(record-reader \var{rtd} #f)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{name} must be a symbol, and \var{rtd} must be a
+record-type descriptor.
+
+With one argument, \scheme{record-reader} is used to retrieve the record
+type associated with a name or name associated with a record type.
+If no association has been created, \scheme{record-reader} returns
+\scheme{#f}
+
+With arguments \var{name} and \var{rtd}, \scheme{record-reader} registers
+\var{rtd} as the record-type descriptor to be used whenever the
+\scheme{read} procedure encounters a record named by \var{name} and
+printed in the default record syntax.
+
+With arguments \var{name} and \scheme{#f}, \scheme{record-reader} removes
+any association for \var{name} to a record-type descriptor.
+Similarly, with arguments \var{rtd} and \scheme{#f}, \scheme{record-reader}
+removes any association for \var{rtd} to a name.
+
+\schemedisplay
+(define-record marble (color quality))
+(define m (make-marble 'blue 'perfect))
+m ;=> #[#{marble bdhavk1bwafxyss1-c} blue perfect]
+
+(record-reader (type-descriptor marble)) ;=> #f
+(record-reader 'marble) ;=> #f
+
+(record-reader 'marble (type-descriptor marble))
+(marble-color '#[marble red miserable]) ;=> red
+
+(record-reader (type-descriptor marble)) ;=> marble
+(record-reader 'marble) ;=> #<record type marble>
+
+(record-reader (type-descriptor marble) #f)
+(record-reader (type-descriptor marble)) ;=> #f
+(record-reader 'marble) ;=> #f
+
+(record-reader 'marble (type-descriptor marble))
+(record-reader 'marble #f)
+(record-reader (type-descriptor marble)) ;=> #f
+(record-reader 'marble) ;=> #f
+\endschemedisplay
+
+\noindent
+The introduction of a record reader also changes the default
+printing of records.
+The printer always chooses the reader name first assigned
+to the record, if any, in place of the unique record name, as this
+continuation of the example above demonstrates.
+
+\schemedisplay
+(record-reader 'marble (type-descriptor marble))
+(make-marble 'pink 'splendid) ;=> #[marble pink splendid]
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-writer}{\categoryprocedure}{(record-writer \var{rtd})}
+\returns the record writer associated with \var{rtd}
+\formdef{record-writer}{\categoryprocedure}{(record-writer \var{rtd} \var{procedure})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor, and \var{procedure} should
+accept three arguments, as described below.
+
+When passed only one argument, \scheme{record-writer} returns the
+record writer associated with \var{rtd}, which is initially the
+default record writer for all records.
+The default print method prints all records in a uniform syntax that
+includes the generated name for the record 
+and the values of each of the fields, as described in the introduction
+to this section.
+
+When passed two arguments, \scheme{record-writer} establishes a
+new association between \var{rtd} and \var{procedure} so that
+\var{procedure} will be used by the printer in place of the default
+printer for records of the given type.
+The printer passes \var{procedure} three arguments:
+the record \var{r}, a port \var{p}, and a procedure \var{wr} that
+should be used to write out the values of arbitrary Scheme objects that
+the print method chooses to include in the printed representation of the
+record, e.g., values of the record's fields.
+
+\schemedisplay
+(define-record marble (color quality))
+(define m (make-marble 'blue 'medium))
+
+m ;=> #[#{marble bdhavk1bwafxyss1-d} blue medium]
+
+(record-writer (type-descriptor marble)
+  (lambda (r p wr)
+    (display "#<" p)
+    (wr (marble-quality r) p)
+    (display " quality " p)
+    (wr (marble-color r) p)
+    (display " marble>" p)))
+
+m ;=> #<medium quality blue marble>
+\endschemedisplay
+
+The record writer is used only when \scheme{print-record} is true
+(the default).
+When the parameter \scheme{print-record} is set to \scheme{#f}, records
+are printed using a compressed syntax that identifies only the type
+of record.
+
+\schemedisplay
+(parameterize ([print-record #f])
+  (format "~s" m)) ;=> "#<record of type marble>"
+\endschemedisplay
+
+A print method may be called more than once during the printing of a
+single record to support cycle detection and graph printing
+(see \index{\scheme{print-graph}}\scheme{print-graph}),
+so print
+methods that perform side effects other than printing to the given
+port are discouraged.
+Whenever a print method is called more than once during the printing
+of a single record, in all but one call, a generic ``bit sink'' port
+is used to suppress output automatically so that only one copy of
+the object appears on the actual port.
+In order to avoid confusing the cycle detection and graph printing
+algorithms, a print method should always produce the same printed
+representation for each object.
+Furthermore, a print method should normally use the supplied procedure
+\var{wr} to print subobjects, though atomic values, such as strings
+or numbers, may be printed by direct calls to \scheme{display} or
+\scheme{write} or by other means.
+
+\schemedisplay
+(let ()
+  (define-record ref () ((contents 'nothing)))
+  (record-writer (type-descriptor ref)
+    (lambda (r p wr)
+      (display "<" p)
+      (wr (ref-contents r) p)
+      (display ">" p)))
+  (let ([ref-lexive (make-ref)])
+    (set-ref-contents! ref-lexive ref-lexive)
+    ref-lexive)) ;=> #0=<#0#>
+\endschemedisplay
+
+Print methods need not be concerned with handling nonfalse values of
+the parameters
+\index{\scheme{print-length}}\scheme{print-level}.
+The printer handles \scheme{print-level} automatically even when
+user-defined print procedures are used.
+Since records typically contain a small, fixed number of fields, it
+is usually possible to ignore nonfalse values of
+\index{\scheme{print-length}}\scheme{print-length} as well.
+
+\schemedisplay
+(print-level 3)
+(let ()
+  (define-record ref () ((contents 'nothing)))
+  (record-writer (type-descriptor ref)
+    (lambda (r p wr)
+      (display "<" p)
+      (wr (ref-contents r) p)
+      (display ">" p)))
+  (let ([ref-lexive (make-ref)])
+    (set-ref-contents! ref-lexive ref-lexive)
+    ref-lexive)) ;=> <<<<#[...]>>>>
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-record}{\categorythreadparameter}{print-record}
+\listlibraries
+\endentryheader
+
+\noindent
+This parameter controls the printing of records.
+If set to true (the default) the record writer associated with a
+record type is used to print records of that type.
+If set to false, all records are printed with the syntax
+\scheme{#<record of type \var{name}>}, where \var{name} is the
+name of the record type as returned by \scheme{record-type-name}.
+
+% not documented:
+%   extended version with base-rtd, parent, name, fields, interfaces, and extras
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-record-type}{\categoryprocedure}{(make-record-type \var{type-name} \var{fields})}
+\formdef{make-record-type}{\categoryprocedure}{(make-record-type \var{parent-rtd} \var{type-name} \var{fields})}
+\returns a record-type descriptor for a new record type
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{make-record-type} creates a new data type and returns a
+record-type descriptor, a value representing the new data type.
+The new type is disjoint from all others.
+
+If present, \var{parent-rtd} must be a record-type descriptor.
+
+\var{type-name} must be a string or gensym.
+If \var{type-name} is a string, a new record type is generated.
+If \var{type-name} is a gensym, a new record type is generated only
+if one with the same gensym has not already been defined.
+If one has already been defined, the parent and fields must be identical
+to those of the existing record type, and the
+existing record type is used.
+If the parent and fields are not identical, an exception is raised with
+condition-type \scheme{&assertion}.
+
+\var{fields} must be a list of field descriptors, each of which
+describes one field of instances of the new record type.
+A field descriptor is either a symbol or a list in the following form:
+
+\schemedisplay
+(\var{class} \var{type} \var{field-name})
+\endschemedisplay
+
+\noindent
+where \var{class} and \var{type} are optional.
+\var{field-name} must be a symbol.
+\var{class}, if present, must be the symbol \scheme{immutable} or
+the symbol \scheme{mutable}.
+If the \scheme{immutable} class-specifier is present, the field is
+immutable; otherwise, the field is mutable.
+\var{type}, if present, specifies how the field is represented.
+The types are the same as those given in the description
+of \scheme{define-record} on page~\pageref{record-field-types}.
+
+\noindent
+If a type is specified, the field can contain objects only of the
+specified type.
+If no type is specified, the field is of type \scheme{ptr},
+meaning that it can contain any Scheme object.
+
+The behavior of a program that modifies the string \var{type-name}
+or the list \var{fields} or any of its sublists is unspecified.
+
+The record-type descriptor may be passed as an argument to any of the
+Revised$^6$ Report procedures
+
+\begin{itemize}
+\item \scheme{record-constructor},
+\item \scheme{record-predicate},
+\item \scheme{record-accessor}, and
+\item \scheme{record-mutator},
+\end{itemize}
+
+or to the {\ChezScheme} variants
+
+\begin{itemize}
+\item \scheme{record-constructor},
+\item \scheme{record-field-accessor}, and
+\item \scheme{record-field-mutator}
+\end{itemize}
+
+\noindent
+to obtain procedures for creating and manipulating records of the
+new type.
+
+\schemedisplay
+(define marble
+  (make-record-type "marble"
+    '(color quality)
+    (lambda (r p wr)
+      (display "#<" p)
+      (wr (marble-quality r) p)
+      (display " quality " p)
+      (wr (marble-color r) p)
+      (display " marble>" p))))
+(define make-marble
+  (record-constructor marble))
+(define marble?
+  (record-predicate marble))
+(define marble-color
+  (record-field-accessor marble 'color))
+(define marble-quality
+  (record-field-accessor marble 'quality))
+(define set-marble-quality!
+  (record-field-mutator marble 'quality))
+(define x (make-marble 'blue 'high))
+(marble? x) ;=> #t
+(marble-quality x) ;=> high
+(set-marble-quality! x 'low)
+(marble-quality x) ;=> low
+x ;=> #<low quality blue marble>
+\endschemedisplay
+
+The order in which the fields appear in \var{fields} is important.
+While field names are generally distinct, it is permissible for one field
+name to be the same as another in the list of fields or the same as
+an inherited name.
+In this case, \index{ordinals}\index{record field ordinals}field ordinals
+must be used to select fields in calls to \scheme{record-field-accessor}
+and \scheme{record-field-mutator}.
+Ordinals range from zero through one less than the number of fields.
+Parent fields come first, if any, followed by the fields in
+\var{fields}, in the order given.
+
+\schemedisplay
+(define r1 (make-record-type "r1" '(t t)))
+(define r2 (make-record-type r1 "r2" '(t)))
+(define r3 (make-record-type r2 "r3" '(t t t)))
+
+(define x ((record-constructor r3) 'a 'b 'c 'd 'e 'f))
+((record-field-accessor r3 0) x) ;=> a
+((record-field-accessor r3 2) x) ;=> c
+((record-field-accessor r3 4) x) ;=> e
+((record-field-accessor r3 't) x) ;=> \var{unspecified}
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-constructor}{\categoryprocedure}{(record-constructor \var{rcd})}
+\formdef{record-constructor}{\categoryprocedure}{(record-constructor \var{rtd})}
+\returns a constructor for records of the type represented by \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+Like the Revised$^6$ Report version of this procedure, this procedure
+may be passed a record-constructor descriptor, \var{rcd}, which determines
+the behavior of the constructor.
+It may also be passed a record-type descriptor, \var{rtd}, in which
+case the constructor accepts as many arguments as there are fields in the
+record; these arguments are the initial values of the fields in the
+order given when the record-type descriptor was created.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-field-accessor}{\categoryprocedure}{(record-field-accessor \var{rtd} \var{field-id})}
+\returns an accessor for the identified field
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor, \var{field-id} must be
+a symbol or field ordinal, i.e., a nonnegative exact integer less than
+the number of fields of the given record type.
+The specified field must be accessible.
+
+The generated accessor expects one argument, which must be a record of
+the type represented by \var{rtd}.
+It returns the contents of the specified field of the record.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-field-accessible?}{\categoryprocedure}{(record-field-accessible? \var{rtd} \var{field-id})}
+\returns \scheme{#t} if the specified field is accessible, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor, \var{field-id} must be
+a symbol or field ordinal, i.e., a nonnegative exact integer less than
+the number of fields of the given record type.
+
+The compiler is free to eliminate a record field if it can prove that
+the field is not accessed.
+In making this determination, the compiler is free to ignore the
+possibility that an accessor might be created from a record-type
+descriptor obtained by calling \scheme{record-type-descriptor} on an
+instance of the record type.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-field-mutator}{\categoryprocedure}{(record-field-mutator \var{rtd} \var{field-id})}
+\returns a mutator for the identified field
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor, \var{field-id} must be
+a symbol or field ordinal, i.e., a nonnegative exact integer less than
+the number of fields of the given record type.
+The specified field must be mutable.
+
+\noindent
+The mutator expects two arguments, \var{r} and \var{obj}.
+\var{r} must be a record of the type represented by \var{rtd}.
+\var{obj} must be a value that is compatible with the type declared for
+the specified field when the record-type descriptor was created.
+\var{obj} is stored in the specified field of the record.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-field-mutable?}{\categoryprocedure}{(record-field-mutable? \var{rtd} \var{field-id})}
+\returns \scheme{#t} if the specified field is mutable, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor, \var{field-id} must be
+a symbol or field ordinal, i.e., a nonnegative exact integer less than
+the number of fields of the given record type.
+
+Any field declared immutable is immutable.
+In addition,
+the compiler is free to treat a field as immutable if it can prove that
+the field is never assigned.
+In making this determination, the compiler is free to ignore the
+possibility that a mutator might be created from a record-type
+descriptor obtained by calling \scheme{record-type-descriptor} on an
+instance of the record type.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-name}{\categoryprocedure}{(record-type-name \var{rtd})}
+\returns the name of the record-type represented by \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
+
+The name is a always a string.
+If a gensym is provided as the record-type name in a
+\scheme{define-record} form or \scheme{make-record-type} call, the result
+is the ``pretty'' name of the gensym (see~\ref{desc:gensym}).
+
+\schemedisplay
+(record-type-name (make-record-type "empty" '())) ;=> "empty"
+
+(define-record #{point bdhavk1bwafxyss1-b} (x y))
+(define p (type-descriptor #{point bdhavk1bwafxyss1-b}))
+(record-type-name p) ;=> "point"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-symbol}{\categoryprocedure}{(record-type-symbol \var{rtd})}
+\returns the generated symbol associated with \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
+
+\schemedisplay
+(define e (make-record-type "empty" '()))
+(record-type-symbol e) ;=> #{empty bdhavk1bwafxyss1-e}
+
+(define-record #{point bdhavk1bwafxyss1-b} (x y))
+(define p (type-descriptor #{point bdhavk1bwafxyss1-b}))
+(record-type-symbol p) ;=> #{point bdhavk1bwafxyss1-b}
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-field-names}{\categoryprocedure}{(record-type-field-names \var{rtd})}
+\returns a list of field names of the type represented by \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
+The field names are symbols.
+
+\schemedisplay
+(define-record triple ((immutable x1) (mutable x2) (immutable x3)))
+(record-type-field-names (type-descriptor triple)) ;=> (x1 x2 x3)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-field-decls}{\categoryprocedure}{(record-type-field-decls \var{rtd})}
+\returns a list of field declarations of the type represented by \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
+Each field declaration has the following form:
+
+\schemedisplay
+(\var{class} \var{type} \var{field-name})
+\endschemedisplay
+
+\noindent
+where \var{class}, \var{type}, and \var{field-name} are as described
+under \scheme{make-record-type}.
+
+\schemedisplay
+(define-record shape (x y))
+(define-record circle shape (radius))
+
+(record-type-field-decls
+  (type-descriptor circle)) ;=> ((mutable ptr x)
+                            ;==  (mutable ptr y)
+                            ;==  (mutable ptr radius))
+\endschemedisplay
+
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record?}{\categoryprocedure}{(record? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a record, otherwise \scheme{#f}
+\formdef{record?}{\categoryprocedure}{(record? \var{obj} \var{rtd})}
+\returns \scheme{#t} if \var{obj} is a record of the given type, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+If present, \var{rtd} must be a record-type descriptor.
+
+A record is ``of the given type'' if it is an instance of the record
+type or one of its ancestors.
+The predicate generated by \scheme{record-predicate} for a
+record-type descriptor \var{rtd} is equivalent to the following.
+
+\schemedisplay
+(lambda (x) (record? x \var{rtd}))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-descriptor}{\categoryprocedure}{(record-type-descriptor \var{rec})}
+\returns the record-type descriptor of \var{rec}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rec} must be a record.
+This procedure is intended for use in the definition of portable printers
+and debuggers.
+For records created with \scheme{make-record-type},
+it may not be the same as the descriptor returned by
+\scheme{make-record-type}.
+See the comments about field accessibility and mutability under
+\scheme{record-field-accessible?} and
+\scheme{record-field-mutable?} above.
+
+This procedure is equivalent to the Revised$^6$ Report \scheme{record-rtd}
+procedure.
+
+\schemedisplay
+(define rtd (make-record-type "frob" '(blit blat)))
+rtd ;=> #<record type frob>
+(define x ((record-constructor rtd) 1 2))
+(record-type-descriptor x) ;=> #<record type frob>
+(eq? (record-type-descriptor x) rtd) ;=> \var{unspecified}
+\endschemedisplay
+
+

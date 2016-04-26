@@ -1,0 +1,1562 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Debugging\label{CHPTDEBUG}}
+
+{\ChezScheme} has several features that support debugging.
+In addition to providing error messages when fully type-checked code is
+run, {\ChezScheme} also permits tracing of procedure calls, interruption
+of any computation, redefinition of exception and interrupt handlers,
+and inspection of any object, including the continuations of exceptions and
+interrupts.
+
+Programmers new to Scheme or {\ChezScheme}, and even more experienced
+Scheme programmers, might want to consult
+the tutorial ``How to Debug Chez Scheme Programs.''
+HTML and PDF versions
+% of the tutorial
+are available at
+\hyperlink{http://www.cs.indiana.edu/chezscheme/debug/}{http://www.cs.indiana.edu/chezscheme/debug/}.
+
+
+\section{Tracing\label{SECTDEBUGTRACING}}
+
+Tracing is one of the most useful mechanisms for debugging Scheme programs.
+{\ChezScheme} permits any primitive or user-defined procedure to be traced.
+The trace package prints the arguments and return values for each
+traced procedure with a compact indentation mechanism that shows the
+nesting depth of calls.
+The distinction between tail calls and nontail calls is reflected
+properly by an increase in indentation for nontail calls only.
+For nesting depths of 10 or greater, a number in brackets is used in
+place of indentation to signify nesting depth.
+
+This section covers the mechanisms for tracing procedures and
+controlling trace output.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-lambda}{\categorysyntax}{(trace-lambda \var{name} \var{formals} \var{body_1} \var{body_2} \dots)}
+\returns a traced procedure
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{lambda}}A \scheme{trace-lambda} expression is equivalent to a
+\scheme{lambda} expression with the same formals and body
+except that trace information is printed to the trace output port whenever
+the procedure is invoked, using \var{name} to identify the procedure.
+The trace information shows the value of the arguments passed to the
+procedure and the values returned by the procedure, with indentation to
+show the nesting of calls.
+
+The traced procedure \index{\scheme{half}}\scheme{half} defined below
+returns the integer quotient of its argument and 2.
+
+\schemedisplay
+(define half
+  (trace-lambda half (x)
+    (cond
+      [(zero? x) 0]
+      [(odd? x) (half (- x 1))]
+      [(even? x) (+ (half (- x 1)) 1)])))
+\endschemedisplay
+
+\noindent
+A trace of the call \scheme{(half 5)}, which returns 2, is shown below.
+
+\schemedisplay
+|(half 5)
+|(half 4)
+| (half 3)
+| (half 2)
+| |(half 1)
+| |(half 0)
+| |0
+| 1
+|2
+\endschemedisplay
+
+\noindent
+This example highlights the proper treatment of tail and nontail calls
+by the trace package.
+Since \scheme{half} tail calls itself when its argument is odd, the call
+\scheme{(half 4)} appears at the same level of indentation as the call
+\scheme{(half 5)}.
+Furthermore, since the return values of \scheme{(half 5)} and
+\scheme{(half 4)} are necessarily the same, only one return value is
+shown for both calls.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-case-lambda}{\categorysyntax}{(trace-case-lambda \var{name} \var{clause} \dots)}
+\returns a traced procedure
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{case-lambda}}A \scheme{trace-case-lambda} expression is
+equivalent to a \scheme{case-lambda} expression with the same clauses
+except that trace information is printed to the trace output port whenever
+the procedure is invoked, using \var{name} to identify the procedure.
+The trace information shows the value of the arguments passed to the
+procedure and the values returned by the procedure, with indentation to
+show the nesting of calls.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-let}{\categorysyntax}{(trace-let \var{name} ((\var{var} \var{expr}) \dots) \var{body_1} \var{body_2} \dots)}
+\returns the values of the body \scheme{\var{body_1} \var{body_2} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{let}}A \scheme{trace-let} expression is equivalent to a
+named \scheme{let} expression with the same name, bindings, and body
+except that trace information is printed to the trace output port on
+entry or reentry (via invocation of the procedure bound to \scheme{name})
+into the \scheme{trace-let} expression.
+
+A \scheme{trace-let} expression of the form
+
+\schemedisplay
+(trace-let \var{name} ([\var{var} \var{expr}] \dots)
+  \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+\noindent
+can be rewritten in terms of \scheme{trace-lambda} as follows:
+
+\schemedisplay
+((letrec ([\var{name}
+           (trace-lambda \var{name} (\var{var} \dots)
+             \var{body_1} \var{body_2} \dots)])
+   \var{name})
+ \var{expr} \dots)
+\endschemedisplay
+
+\noindent
+\scheme{trace-let} may be used to trace ordinary \scheme{let} expressions
+as well as \scheme{let} expressions as long as the name inserted along
+with the \scheme{trace-let} keyword in place of \scheme{let} does not
+appear free within the body of the \scheme{let} expression.
+It is also sometimes useful to insert a \scheme{trace-let} expression
+into a program simply to display the value of an arbitrary expression
+at the current trace indentation.
+For example, a call to the following variant of \scheme{half}
+
+\schemedisplay
+(define half
+  (trace-lambda half (x)
+    (cond
+      [(zero? x) 0]
+      [(odd? x) (half (trace-let decr-value () (- x 1)))]
+      [(even? x) (+ (half (- x 1)) 1)])))
+\endschemedisplay
+
+\noindent
+with argument 5 results in the trace:
+
+\schemedisplay
+|(half 5)
+| (decr-value)
+| 4
+|(half 4)
+| (half 3)
+| |(decr-value)
+| |2
+| (half 2)
+| |(half 1)
+| | (decr-value)
+| | 0
+| |(half 0)
+| 1
+|2
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-do}{\categorysyntax}{(trace-do ((\var{var} \var{init} \var{update}) \dots) (\var{test} \var{result} \dots) \var{expr} \dots)}
+\returns the values of the last \var{result} expression
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{do}}A \scheme{trace-do} expression is equivalent to a
+\scheme{do} expression with the same subforms,
+except that trace information is printed to the trace output port,
+showing the values of \scheme{\var{var} \dots} and each iteration and
+the final value of the loop on termination.
+For example, the expression
+
+\schemedisplay
+(trace-do ([old '(a b c) (cdr old)]
+           [new '() (cons (car old) new)])
+  ((null? old) new))
+\endschemedisplay
+
+produces the trace
+
+\schemedisplay
+|(do (a b c) ())
+|(do (b c) (a))
+|(do (c) (b a))
+|(do () (c b a))
+|(c b a)
+\endschemedisplay
+
+and returns \scheme{(c b a)}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace}{\categorysyntax}{(trace \var{var_1} \var{var_2} \dots)}
+\returns a list of \scheme{\var{var_1} \var{var_2} \dots}
+\formdef{trace}{\categorysyntax}{(trace)}
+\returns a list of all currently traced top-level variables
+\listlibraries
+\endentryheader
+
+\noindent
+In the first form, \scheme{trace} reassigns the top-level values of
+\scheme{\var{var_1} \var{var_2} \dots}, whose values must be procedures,
+to equivalent procedures that display trace information in the manner
+of \scheme{trace-lambda}.
+
+\scheme{trace} works by encapsulating the old value of each var in a
+traced procedure.
+It could be defined approximately as follows.  (The actual version
+records and returns information about traced variables.)
+
+\schemedisplay
+(define-syntax trace
+  (syntax-rules ()
+    [(_ var ...)
+     (begin
+       (set-top-level-value! 'var
+         (let ([p (top-level-value 'var)])
+           (trace-lambda var args (apply p args))))
+       ...)]))
+\endschemedisplay
+
+Tracing for a procedure traced in this manner may be disabled via
+\scheme{untrace} (see below), an assignment of the corresponding
+variable to a different, untraced value, or a subsequent use of
+\scheme{trace} for the same variable.
+Because the value is traced and not the binding, however, a traced
+value obtained before tracing is disabled and retained after tracing is
+disabled will remain traced.
+
+\scheme{trace} without subexpressions evaluates to a list of all
+currently traced variables.
+A variable is currently traced if it has been traced and
+not subsequently untraced or assigned to a different value.
+
+The following transcript demonstrates the use of \scheme{trace} in
+an interactive session.
+
+\schemedisplay
+> (define half
+    (lambda (x)
+      (cond
+        [(zero? x) 0]
+        [(odd? x) (half (- x 1))]
+        [(even? x) (+ (half (- x 1)) 1)])))
+> (half 5)
+2
+> (trace half)
+(half)
+> (half 5)
+|(half 5)
+|(half 4)
+| (half 3)
+| (half 2)
+| |(half 1)
+| |(half 0)
+| |0
+| 1
+|2
+2
+> (define traced-half half)
+> (untrace half)
+(half)
+> (half 2)
+1
+> (traced-half 2)
+|(half 2)
+|1
+1
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{untrace}{\categorysyntax}{(untrace \var{var_1} \var{var_2} \dots)}
+\formdef{untrace}{\categorysyntax}{(untrace)}
+\returns a list of untraced variables
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{untrace} restores the original (pre-\scheme{trace}) top-level values
+of each currently traced variable in
+\scheme{\var{var_1} \var{var_2} \dots},
+effectively disabling the tracing of the values of these variables.
+Any variable in \scheme{\var{var_1} \var{var_2} \dots} that is not
+currently traced is ignored.
+If \scheme{untrace} is called without arguments, the values of all
+currently traced variables are restored.
+
+The following transcript demonstrates the use of \scheme{trace} and
+\scheme{untrace} in an interactive session to debug an incorrect
+procedure definition.
+
+\schemedisplay
+> (define square-minus-one
+    (lambda (x)
+      (- (* x x) 2)))
+> (square-minus-one 3)
+7
+> (trace square-minus-one * -)
+(square-minus-one * -)
+> (square-minus-one 3)
+|(square-minus-one 3)
+| (* 3 3)
+| 9
+|(- 9 2)
+|7
+7
+> (define square-minus-one
+    (lambda (x)
+      (- (* x x) 1))) ; change the 2 to 1
+> (trace)
+(- *)
+> (square-minus-one 3)
+|(* 3 3)
+|9
+|(- 9 1)
+|8
+8
+> (untrace square-minus-one)
+()
+> (untrace * -)
+(- *)
+> (square-minus-one 3)
+8
+\endschemedisplay
+
+\noindent
+The first call to \scheme{square-minus-one} indicates there is an error,
+the second (traced) call indicates the step at which the error occurs,
+the third call demonstrates that the fix works,
+and the fourth call demonstrates that
+\scheme{untrace} does not wipe out the fix.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-output-port}{\categorythreadparameter}{trace-output-port}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{trace-output-port} is a parameter that determines the
+output port to which tracing information is sent.
+When called with no arguments, \scheme{trace-output-port} returns the
+current trace output port.
+When called with one argument, which must be a textual output port,
+\scheme{trace-output-port} changes the value of the current
+trace output port.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-print}{\categorythreadparameter}{trace-print}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of \scheme{trace-print} must be a procedure of two arguments,
+an object and an output port.
+The trace package uses the value of \scheme{trace-print} to print the
+arguments and return values for each call to a traced procedure.
+\scheme{trace-print} is set to \scheme{pretty-print} by default.
+
+The trace package sets
+\index{\scheme{pretty-initial-indent}}\scheme{pretty-initial-indent}
+to an appropriate value for the current nesting level before calling
+the value of \scheme{trace-print} so that multiline output can be
+indented properly.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-define}{\categorysyntax}{(trace-define \var{var} \var{expr})}
+\formdef{trace-define}{\categorysyntax}{(trace-define (\var{var} . \var{idspec}) \var{body_1} \var{body_2} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{trace-define} is a convenient shorthand for defining variables bound
+to traced procedures of the same name.
+The first form is equivalent to
+
+\schemedisplay
+(define \var{var}
+  (let ([x \var{expr}])
+    (trace-lambda \var{var} args
+      (apply x args))))
+\endschemedisplay
+
+\noindent
+and the second is equivalent to
+
+\schemedisplay
+(define \var{var}
+  (trace-lambda \var{var} \var{idspec}
+    \var{body_1} \var{body_2} \dots))
+\endschemedisplay
+
+\noindent
+In the former case, \var{expr} must evaluate to a procedure.
+
+\schemedisplay
+> (let ()
+    (trace-define plus
+      (lambda (x y) 
+        (+ x y)))
+    (list (plus 3 4) (+ 5 6)))
+|(plus 3 4)
+|7
+(7 11)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{trace-define-syntax}{\categorysyntax}{(trace-define-syntax \var{keyword} \var{expr})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{trace-define-syntax} traces the input and output to the
+transformer value of \var{expr}, stripped of the contextual
+information used by the expander to maintain lexical scoping.
+
+\schemedisplay
+> (trace-define-syntax let*
+    (syntax-rules ()
+      [(_ () b1 b2 ...)
+       (let () b1 b2 ...)]
+      [(_ ((x e) m ...) b1 b2 ...)
+       (let ((x e))
+         (let* (m ...) b1 b2 ...))]))
+> (let* ([x 3] [y (+ x x)]) (list x y))
+|(let* (let* [(x 3) (y (+ x x))] [list x y]))
+|(let ([x 3]) (let* ([y (+ x x)]) (list x y)))
+|(let* (let* [(y (+ x x))] [list x y]))
+|(let ([y (+ x x)]) (let* () (list x y)))
+|(let* (let* () [list x y]))
+|(let () (list x y))
+(3 6)
+\endschemedisplay
+
+\noindent
+Without contextual information, the displayed forms are more readable
+but less precise, since different identifiers with the same name are
+indistinguishable, as shown in the example below.
+
+\schemedisplay
+> (let ([x 0])
+    (trace-define-syntax a
+      (syntax-rules ()
+        [(_ y) (eq? x y)]))
+    (let ([x 1])
+      (a x)))
+|(a (a x))
+|(eq? x x)
+#f
+\endschemedisplay
+
+
+\section{The Interactive Debugger\label{SECTDEBUGINTERACTIVE}}
+
+The interactive debugger is entered as a result of
+a call to the procedure \scheme{debug} after an exception is handled
+by the default exception handler.
+It can also be entered directly from the default exception handler, for
+serious or non-warning conditions, if the parameter
+\scheme{debug-on-exception} is true.
+
+Within the debugger, the command ``?'' lists the debugger command options.
+These include commands to:
+
+\begin{itemize}
+\item inspect the raise continuation,
+\item display the condition,
+\item inspect the condition, and
+\item exit the debugger.
+\end{itemize}
+
+The raise continuation is the continuation encapsulated within the
+condition, if any.
+The standard exception reporting procedures and forms \scheme{assert},
+\scheme{assertion-violation}, and \scheme{error} as well as the
+{\ChezScheme} procedures \scheme{assertion-violationf}, \scheme{errorf},
+and \scheme{syntax-error} all raise exceptions with conditions that
+encapsulate the continuations of their calls, allowing the programmer to
+inspect the frames of pending calls at the point of a violation, error, or
+failed assertion.
+
+A variant of the interactive debugger, the break handler, is entered as
+the result of a keyboard interrupt handled by the default
+keyboard-interrupt handler or an explicit call to the procedure 
+\scheme{break} handled by the default break handler.
+Again, the command ``?'' lists the command options.
+These include commands to:
+
+\begin{itemize}
+\item exit the break handler and continue,
+\item reset to the current caf\'e,
+\item abort the entire Scheme session,
+\item enter a new caf\'e,
+\item inspect the current continuation, and
+\item display program statistics (run time and memory usage).
+\end{itemize}
+
+\noindent
+It is also usually possible to exit from the debugger or break handler by
+typing the end-of-file character (``control-D'' under Unix, ``control-Z''
+under Windows).
+
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{debug}{\categoryprocedure}{(debug)}
+\returns does not return
+\listlibraries
+\endentryheader
+
+\noindent
+When the default exception handler receives a serious or non-warning
+condition, it displays the condition and resets to the current caf\'e.
+Before it resets, it saves the condition in the parameter
+\scheme{debug-condition}.
+The \scheme{debug} procedure may be used to inspect the condition.
+Whenever one of the built-in error-reporting mechanisms is used to
+raise an exception, the continuation at the point where the
+exception was raised can be inspected as well.
+More generally, \scheme{debug} allows the the continuation contained
+within any continuation condition created by
+\scheme{make-continuation-condition} to be inspected.
+
+If the parameter \scheme{debug-on-exception} is set to \scheme{#t},
+the default exception handler enters the debugger directly for all
+serious and non-warning conditions, delaying its reset until after
+the debugger exits.
+The \index{\scheme{--debug-on-exception} command-line option}\scheme{--debug-on-exception}
+command-line option may be used to set \scheme{debug-on-exception} to
+\scheme{#t} from the command line, which is particularly useful when
+debugging scripts or top-level programs run via the
+\index{\scheme{--script} command-line option}\scheme{--script} or
+\index{\scheme{--program} command-line option}\scheme{--program}
+command-line options.
+
+
+
+\section{The Interactive Inspector\label{SECTDEBUGINSPECTOR}}
+
+The \index{inspector}inspector may be called directly via the procedure \scheme{inspect} or
+indirectly from the debugger.
+It allows the programmer to examine circular objects, objects such as
+ports and procedures that do not have a reader syntax, and objects such
+as continuations and variables that are not directly accessible by the
+programmer, as well as ordinary printable Scheme objects.
+
+The primary intent of the inspector is examination, not alteration, of
+objects.
+The values of \index{assignable variables}assignable variables may be changed from within the
+inspector, however.
+Assignable variables are generally limited to those for which
+assignments occur in the source program.
+It is also possible to invoke arbitrary procedures
+(including mutation procedures such as \scheme{set-car!}) on an object.
+No mechanism is provided for altering objects that are inherently
+immutable, e.g., nonassignable variables, procedures, and bignums, since
+doing so can violate assumptions made by the compiler and run-time
+system.
+
+The user is presented with a prompt line that includes a printed
+representation of the current object, abbreviated if necessary to
+fit on the line.
+Various commands are provided for displaying objects and moving around
+inside of objects.
+On-line descriptions of the command options are provided.
+The command ``?'' displays commands that apply specifically to the
+current object.
+The command ``??'' displays commands that are always applicable.
+The command ``h'' provides a brief description of how to use the
+inspector.
+The end-of-file character or the command ``q'' exits the inspector.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{inspect}{\categoryprocedure}{(inspect \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+Invokes the inspector on \var{obj}, as described above.
+The commands recognized by the inspector are listed below, categorized
+by the type of the current object.
+
+
+\def\Itype#1 {\bigskip\noindent\textbf{#1 commands}\nobreak\medskip\nobreak}
+\def\Icmd#1{\medskip\noindent #1}
+
+\Itype{Generally applicable}
+
+\Icmd{\scheme{help} or \scheme{h}} displays a brief description of how to use the
+inspector.
+
+\Icmd{\scheme{?}} displays commands applicable to the current type of
+object.
+
+\Icmd{\scheme{??}} displays the generally applicable commands.
+
+\Icmd{\scheme{print} or \scheme{p}} prints the current object (using \scheme{pretty-print}).
+
+\Icmd{\scheme{write} or \scheme{w}} writes the current object (using \scheme{write}).
+
+\Icmd{\scheme{size}} writes the size in bytes occupied by the current object
+(determined via \index{\scheme{compute-size}}\scheme{compute-size}),
+including any objects accessible from the current object except those
+for which the size was previously requested during the same interactive
+inspector session.
+
+\Icmd{\scheme{find} \var{expr} [ \var{g} ]} evaluates \var{expr}, which should evaluate
+to a procedure of one argument, and searches
+(via \index{\scheme{make-object-finder}}\scheme{make-object-finder})
+for the first occurrence
+of an object within the current object for which the predicate returns
+a true value, treating immediate values (e.g., fixnums), values in
+generations older than \var{g}, and values already visited during the
+search as leaves.
+If \var{g} is not unspecified, it defaults to the current maximum
+generation, i.e., the value of \scheme{collect-maximum-generation}.
+If specified, \var{g} must be an exact nonnegative integer less than or
+equal to the current maximum generation or the symbol \scheme{static}
+representing the static generation.
+If such an object is found, the inspector's focus moves to that object
+as if through a series of steps that lead from the current object to the
+located object, so that the \scheme{up} command can be used to determine
+where the object was found relative to the original object.
+
+\Icmd{\scheme{find-next}} repeats the last \scheme{find}, locating an
+occurrence not previously found, if any.
+
+\Icmd{\scheme{up} or \scheme{u} \var{n}} returns to the \var{nth} previous level.
+Used to move outwards in the structure of the inspected object.
+\var{n} defaults to 1.
+
+\Icmd{\scheme{top} or \scheme{t}} returns to the outermost level of the inspected
+object.
+
+\Icmd{\scheme{forward} or \scheme{f}} moves to the \var{nth} next expression.
+Used to move from one element to another of an object containing
+a sequence of elements, such as a list, vector, record, frame, or closure.
+\var{n} defaults to 1.
+
+\Icmd{\scheme{back} or \scheme{b}} moves to the \var{nth} previous expression.
+Used to move from one element to another of an object containing
+a sequence of elements, such as a list, vector, record, frame, or closure.
+\var{n} defaults to 1.
+
+\Icmd{\scheme{=>} \var{expr}} sends the current object to the procedure value
+of \var{expr}.
+\var{expr} may begin on the current or following line and may
+span multiple lines.
+
+\Icmd{\scheme{file} \var{path}} opens the source file at the specified path for
+listing.
+The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
+determines the set of directories
+searched for source files.
+
+\Icmd{\scheme{list} \var{line} \var{count}} lists \var{count} lines of the
+current source file (see \scheme{file}) starting at \var{line}.
+\var{line} defaults to the end of the previous set of lines listed and
+\var{count} defaults to ten or the number of lines previously listed.
+If \var{line} is negative, listing begins \var{line} lines before the
+previous set of lines listed.
+
+\Icmd{\scheme{files}} shows the currently open source files.
+
+\Icmd{\scheme{mark} or \scheme{m} \var{m}} marks the current location with the
+symbolic mark \var{m}.
+If \var{m} is not specified, the current location is marked with
+a unique default mark.
+
+\Icmd{\scheme{goto} or \scheme{g} \var{m}} returns to the location marked \var{m}.
+If \var{m} is not specified, the inspector returns to the location
+marked with the default mark.
+
+\Icmd{\scheme{new-cafe} or \scheme{n}} enters a new read-eval-print loop
+(caf\'e), giving access to the normal top-level environment.
+
+\Icmd{\scheme{quit} or \scheme{q}} exits from the inspector.
+
+\Icmd{\scheme{reset} or \scheme{r}} resets to the current caf\'e.
+
+\Icmd{\scheme{abort} or \scheme{a} \var{x}} aborts from Scheme with exit
+status \var{x}, which defaults to -1.
+
+
+\Itype{Continuation}
+
+\Icmd{\scheme{show-frames} or \scheme{sf}} shows the next \var{n} frames.
+If \var{n} is not specified, all frames are displayed.
+
+\Icmd{\scheme{depth}} displays the number of frames in the continuation.
+
+\Icmd{\scheme{down} or \scheme{d} \var{n}} move to the \var{nth} frame down in the
+continuation.
+\var{n} defaults to 1.
+
+\Icmd{\scheme{show} or \scheme{s}} shows the continuation (next frame) and,
+if available, the calling procedure source, the pending call source,
+the closure, and the frame and free-variable values.
+Source is available only if generation of inspector information
+was enabled during compilation of the corresponding lambda
+expression.
+
+\Icmd{\scheme{show-local} or \scheme{sl}} is like \scheme{show} or~\scheme{s}
+except that free variable values are not shown.  (If present, free variable
+values can be found by inspecting the closure.)
+
+\Icmd{\scheme{length} or \scheme{l}} displays the number of elements
+in the topmost frame of the continuation.
+
+\Icmd{\scheme{ref} or \scheme{r}} moves to the \var{nth} or named
+frame element.  \var{n} defaults to 0.
+If multiple elements have the same name, only one is
+accessible by name, and the others must be accessed by number.
+
+\Icmd{\scheme{code} or \scheme{c}} moves to the source for the calling procedure.
+
+\Icmd{\scheme{call}} moves to the source for the pending call.
+
+\Icmd{\scheme{file}} opens the source file containing the pending call,
+if known.
+The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
+determines the list of source directories searched for source files
+identified by relative path names.
+
+For absolute pathnames starting with a \scheme{/} (or \scheme{\} or a
+directory specifier under Windows), the inspector tries the absolute
+pathname first, then looks for the last (filename) component of the path in
+the list of source directories. 
+For pathnames starting with \scheme{./} (or \scheme{.\} under Windows)
+or \scheme{../} (or \scheme{..\} under Windows), the inspector looks in
+\scheme{"."} or \scheme{".."} first, as appropriate, then for the entire
+\scheme{.}- or \scheme{..}-prefixed
+pathname in the source directories, then for the last (filename)
+component in the source directories.
+For other (relative) pathnames, the inspector looks for the entire
+relative pathname in the list of source directories, then the last
+(filename) component in the list of source directories. 
+
+If a file by the same name as but different contents from the original
+source file is found during this process, it will be skipped over.
+This typically happens because the file has been modified since it was
+compiled.
+Pass an explicit filename argument to force opening of a particular file
+(see the generally applicable commands above).
+
+
+
+\Icmd{\scheme{eval} or \scheme{e} \var{expr}} evaluates the expression
+\var{expr} in an environment containing bindings for the elements of
+the frame.  Within the evaluated expression, the value of each frame
+element \var{n} is accessible via the variable \scheme{%\var{n}}.
+Named elements are accessible via their names as well.  Names are
+available only if generation of inspector information was enabled
+during compilation of the corresponding lambda expression.
+
+\Icmd{\scheme{set!} or \scheme{!} \var{n} \var{e}} sets the value of the \var{nth} frame
+element to \var{e}, if the frame element corresponds to
+an assignable variable.
+\var{n} defaults to 0.
+
+
+
+\Itype{Procedure}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the source and free variables of the
+procedure.
+Source is available only if generation of inspector information
+was enabled during compilation of the corresponding lambda
+expression.
+
+\Icmd{\scheme{code} or \scheme{c}} moves to the source for the procedure.
+
+\Icmd{\scheme{file}} opens the file containing the procedure's source code,
+if known.
+See the description of the continuation \scheme{file} entry above for more
+information.
+
+\Icmd{\scheme{length} or \scheme{l}} displays the number of free variables
+whose values are recorded in the procedure object.
+
+\Icmd{\scheme{ref} or \scheme{r}} moves to the \var{nth} or named
+free variable.  \var{n} defaults to 0.
+If multiple free variables have the same name, only one is
+accessible by name, and the others must be accessed by number.
+
+\Icmd{\scheme{set!} or \scheme{!} \var{n} \var{e}} sets the value of the \var{nth} free variable
+to \var{e}, if the variable is assignable.
+\var{n} defaults to 0.
+
+\Icmd{\scheme{eval} or \scheme{e} \var{expr}} evaluates the expression
+\var{expr} in an environment containing bindings for the free variables
+of the procedure.
+Within the evaluated expression, the value of each free variable
+\var{n} is accessible via the variable \scheme{%\var{n}}.
+Named free variables are accessible via their names as well.
+Names are available only if generation of inspector information was
+enabled during compilation of the corresponding lambda expression.
+
+
+\Itype{Pair (list)}
+
+\Icmd{\scheme{show} or \scheme{s} \var{n}} shows the first \var{n} elements of the list.
+If \var{n} is not specified, all elements are displayed.
+
+\Icmd{\scheme{length} or \scheme{l}} displays the list length.
+
+\Icmd{\scheme{car}} moves to the object in the car of the current object.
+
+\Icmd{\scheme{cdr}} moves to the object in the cdr.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} element of the list.
+\var{n} defaults to 0.
+
+\Icmd{\scheme{tail} \var{n}} moves to the \var{nth} cdr of the list.
+\var{n} defaults to 1.
+
+
+\Itype{Vector, Bytevector, and Fxvector}
+
+\Icmd{\scheme{show} or \scheme{s} \var{n}} shows the first \var{n} elements of the vector.
+If \var{n} is not specified, all elements are displayed.
+
+\Icmd{\scheme{length} or \scheme{l}} displays the vector length.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} element of the vector.
+\var{n} defaults to 0.
+
+
+\Itype{String}
+
+\Icmd{\scheme{show} or \scheme{s} \var{n}} shows the first \var{n} elements of the string.
+If \var{n} is not specified, all elements are displayed.
+
+\Icmd{\scheme{length} or \scheme{l}} displays the string length.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} element of the string.
+\var{n} defaults to 0.
+
+\Icmd{\scheme{unicode} \var{n}} displays the first \var{n} elements of the string
+as hexadecimal Unicode scalar values.
+
+\Icmd{\scheme{ascii} \var{n}} displays the first \var{n} elements of the string
+as hexadecimal ASCII values, using \scheme{--} to denote characters whose Unicode
+scalar values are not in the ASCII range.
+
+
+\Itype{Symbol}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the fields of the symbol.
+
+\Icmd{\scheme{value} or \scheme{v}} moves to the top-level value of the symbol.
+
+\Icmd{\scheme{name} or \scheme{n}} moves to the name of the symbol.
+
+\Icmd{\scheme{property-list} or \scheme{pl}} moves to the property list
+of the symbol.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} field of the symbol.
+Field 0 is the top-level value of the symbol, field 1 
+is the symbol's name, and field 2 is its property list.
+\var{n} defaults to 0.
+
+
+% in subset-mode system also value-slot, system-property-list, and symbol-hash
+
+
+\Itype{Character}
+
+\Icmd{\scheme{unicode}} displays the hexadecimal Unicode scalar value for
+the character.
+
+\Icmd{\scheme{ascii}} displays the hexadecimal ASCII code for the character,
+using \scheme{--} to denote characters whose Unicode scalar values are not
+in the ASCII range.
+
+
+\Itype{Box}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the contents of the box.
+
+\Icmd{\scheme{unbox} or \scheme{ref} or \scheme{r}} moves to the boxed object.
+
+
+\Itype{Port}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the fields of the port, including
+the input and output size, index, and buffer fields.
+
+\Icmd{\scheme{name}} moves to the port's name.
+
+\Icmd{\scheme{handler}} moves to the port's handler.
+
+\Icmd{\scheme{output-buffer} or \scheme{ob}} moves to the port's output buffer.
+
+\Icmd{\scheme{input-buffer} or \scheme{ib}} moves to the port's input buffer.
+
+% \Icmd{\scheme{info}} moves to the port's info.
+
+
+\Itype{Record}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the contents of the record.
+
+\Icmd{\scheme{fields}} moves to the list of field names
+of the record.
+
+\Icmd{\scheme{name}} moves to the name of the record.
+
+\Icmd{\scheme{rtd}} moves to the record-type descriptor of the record.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{name}} moves to the named field of the
+record, if accessible.
+
+\Icmd{\scheme{set!} or \scheme{!} \var{name} \var{value}} sets the value
+of the named field of the record, if mutable.
+
+
+\Itype{Transport Link Cell (TLC)}
+
+\Icmd{\scheme{show} or \scheme{s}} shows the fields of the TLC.
+
+\Icmd{\scheme{keyval}} moves to the keyval of the TLC.
+
+\Icmd{\scheme{tconc}} moves to the tconc of the TLC.
+
+\Icmd{\scheme{next}} moves to the next link of the TLC.
+
+\Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} field of the symbol.
+Field 0 is the keyval, field 1 the tconc, and field 2 the next link.
+\var{n} defaults to 0.
+
+
+\section{The Object Inspector\label{SECTDEBUGOBJECTINSPECTOR}}
+
+A facility for noninteractive inspection is also provided
+to allow construction of different inspection interfaces.
+Like the interactive facility, it allows objects to be examined in
+ways not ordinarily possible.
+The noninteractive system follows a simple, object-oriented protocol.
+Ordinary Scheme objects are encapsulated in procedures, or inspector
+objects, that take symbolic messages and return either information
+about the encapsulated object or new inspector objects that encapsulate
+pieces of the object.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{inspect/object}{\categoryprocedure}{(inspect/object \var{object})}
+\returns an inspector object procedure
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{inspect/object} is used to turn an ordinary Scheme object into an
+inspector object.
+All inspector objects accept the messages \scheme{type}, \scheme{print},
+\scheme{write}, and \scheme{size}.
+The \scheme{type} message returns a symbolic representation of the type of
+the object.
+The \scheme{print} and \scheme{write} messages must be accompanied by a port
+parameter.
+They cause a representation of the object to be written to the port,
+using the Scheme procedures \scheme{pretty-print} and \scheme{write}.
+The \scheme{size} message returns a fixnum representing the size
+in bytes occupied by the object, including any objects accessible
+from the current object except those for which the size was already
+requested via an inspector object derived from the argument of the
+same \scheme{inspect/object} call.
+
+All inspector objects except for variable inspector objects accept
+the message \scheme{value}, which returns the actual object encapsulated
+in the inspector object.
+
+\schemedisplay
+(define x (inspect/object '(1 2 3)))
+(x 'type) ;=> pair
+(define p (open-output-string))
+(x 'write p)
+(get-output-string p) ;=> "(1 2 3)"
+(x 'length) ;=> (proper 3)
+(define y (x 'car))
+(y 'type) ;=> simple
+(y 'value) ;=> 1
+\endschemedisplay
+
+\def\instype#1{\bigskip\noindent\textbf{#1 inspector objects.}}
+
+\def\insmsg#1#2{\medskip\noindent\scheme{(}\emph{#1-object} #2\scheme{)}}
+
+\instype{Pair}
+Pair inspector objects contain Scheme pairs.
+
+\insmsg{pair}{\scheme{'type}}
+returns the symbol \scheme{pair}.
+
+\insmsg{pair}{\scheme{'car}}
+returns an inspector object containing the ``car'' field of the pair.
+
+\insmsg{pair}{\scheme{'cdr}}
+returns an inspector object containing the ``cdr'' field of the pair.
+
+\insmsg{pair}{\scheme{'length}}
+returns a list of the form (\var{type} \var{count}).
+The type field contains the symbol \scheme{proper}, the symbol \scheme{improper}, or
+the symbol \scheme{circular}, depending on the structure of the list.
+The count field contains the number of distinct pairs in the list.
+
+\instype{Box}
+Box inspector objects contain {\ChezScheme} boxes.
+
+\insmsg{box}{\scheme{'type}}
+returns the symbol \scheme{box}.
+
+\insmsg{box}{\scheme{'unbox}}
+returns an inspector object containing the contents of the box.
+
+\instype{TLC}
+Box inspector objects contain {\ChezScheme} boxes.
+
+\insmsg{tlc}{\scheme{'type}}
+returns the symbol \scheme{tlc}.
+
+\insmsg{tlc}{\scheme{'keyval}}
+returns an inspector object containing the TLC's keyval.
+
+\insmsg{tlc}{\scheme{'tconc}}
+returns an inspector object containing the TLC's tconc.
+
+\insmsg{tlc}{\scheme{'next}}
+returns an inspector object containing the TLC's next link.
+
+\instype{Vector, String, Bytevector, and Fxvector}
+Vector (bytevector, string, fxvector) inspector objects contain Scheme
+vectors (bytevectors, strings, fxvectors).
+
+\insmsg{vector}{\scheme{'type}}
+returns the symbol \scheme{vector} (\scheme{string}, \scheme{bytevector}, \scheme{fxvector}).
+
+\insmsg{vector}{\scheme{'length}}
+returns the number of elements in the vector or string.
+
+\insmsg{vector}{\scheme{'ref} \var{n}}
+returns an inspector object containing the \var{nth} element of the
+vector or string.
+
+\instype{Simple}
+Simple inspector objects contain unstructured, unmodifiable objects.
+These include numbers, booleans, the empty list, the end-of-file
+object, and the void object.
+They may be examined directly by asking for the \scheme{value} of the object.
+
+\insmsg{simple}{\scheme{'type}}
+returns the symbol \scheme{simple}.
+
+\instype{Unbound}
+Although unbound objects are not normally accessible to Scheme programs,
+they may be encountered when inspecting variables.
+
+\insmsg{unbound}{\scheme{'type}}
+returns the symbol \scheme{unbound}.
+
+\instype{Procedure}
+Procedure inspector objects contain Scheme procedures.
+
+\insmsg{procedure}{\scheme{'type}}
+returns the symbol \scheme{procedure}.
+
+\insmsg{procedure}{\scheme{'length}}
+returns the number of free variables.
+
+\insmsg{procedure}{\scheme{'ref} \var{n}}
+returns an inspector object containing the \var{nth} free variable of the
+procedure.
+See the description below of variable inspector objects.
+\var{n} must be nonnegative and less than the length of the procedure.
+
+\insmsg{procedure}{\scheme{'eval} \var{expr}}
+evaluates expr and returns its value.
+The values of the procedure's free variables are bound within the
+evaluated expression to
+identifiers of the form \%$n$, where $n$ is the location number
+displayed by the inspector.
+The values of named variables are also bound to their names.
+
+\insmsg{procedure}{\scheme{'code}}
+returns an inspector object containing the procedure's code object.
+See the description below of code inspector objects.
+
+
+\instype{Continuation}
+Continuations created by \scheme{call/cc} are actually
+procedures.
+However, when inspecting such a procedure the underlying data structure
+that embodies the continuation may be exposed.
+A continuation structure contains the location at which computation is
+to resume, the variable values necessary to perform the computation,
+and a link to the next continuation.
+
+\insmsg{continuation}{\scheme{'type}}
+returns the symbol \scheme{continuation}.
+
+\insmsg{continuation}{\scheme{'length}}
+returns the number of free variables.
+
+\insmsg{continuation}{\scheme{'ref} \var{n}}
+returns an inspector object containing the \var{nth} free variable of the
+continuation.
+See the description below of variable inspector objects.
+\var{n} must be nonnegative and less than the length of the continuation.
+
+\insmsg{continuation}{\scheme{'eval} \var{expr}}
+evaluates expr and returns its value.
+The values of frame locations are bound within the
+evaluated expression to
+identifiers of the form \%$n$, where $n$ is the location number
+displayed by the inspector.
+The values of named locations are also bound to their names.
+
+\insmsg{continuation}{\scheme{'code}}
+returns an inspector object containing the code object for the procedure
+that was active when the current continuation frame was created.
+See the description below of code inspector objects.
+
+\insmsg{continuation}{\scheme{'depth}}
+returns the number of frames in the continuation.
+
+\insmsg{continuation}{\scheme{'link}}
+returns an inspector object containing the next continuation frame.
+The depth must be greater than 1.
+
+\insmsg{continuation}{\scheme{'link*} \var{n}}
+returns an inspector object containing the \var{nth} continuation link.
+\var{n} must be less than the depth.
+
+\insmsg{continuation}{\scheme{'source}}
+returns an inspector object containing the source information attached
+to the continuation (representing the source for the application that
+resulted in the formation of the continuation)
+or \scheme{#f} if no source information is attached.
+
+\insmsg{continuation}{\scheme{'source-path}}
+attempts to find the pathname of the file containing the source for
+the procedure application that resulted in the formation of the continuation.
+If successful, three values are returned to identify the file and position
+of the application within the file: \var{path}, \var{line}, and \var{char}.
+Two values, a file name and an absolute character position, are returned
+if the file name is known but the named file cannot be found.
+The search may be unsuccessful even if a file by the expected
+name is found in the path if the file has been modified since the source
+code was compiled.
+If no file name is known, no values are returned.
+The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
+determines the set of directories
+searched for source files identified by relative path names.
+
+
+\instype{Code}
+Code inspector objects contain {\ChezScheme} code objects.
+
+\insmsg{code}{\scheme{'type}}
+returns the symbol \scheme{code}.
+
+\insmsg{code}{\scheme{'name}}
+returns a string or \scheme{#f}.
+The name associated with a code inspector object is the name of the
+variable to which the procedure was originally bound or assigned.
+Since the binding of a variable can be changed, this name association
+may not always be accurate.
+\scheme{#f} is returned if the inspector cannot determine a name for the
+procedure.
+
+\insmsg{code}{\scheme{'source}}
+returns an inspector object containing the source information attached
+to the code object or \scheme{#f} if no source information is attached.
+
+\insmsg{code}{\scheme{'source-path}}
+attempts to find the pathname of the file containing the source for
+the lambda expression that produced the code object.
+If successful, three values are returned to identify the file and position
+of the application within the file: \var{path}, \var{line}, and \var{char}.
+Two values, a file name and an absolute character position, are returned
+if the file name is known but the named file cannot be found.
+The search may be unsuccessful even if a file by the expected
+name is found in the path if the file has been modified since the source
+code was compiled.
+If no file name is known, no values are returned.
+The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
+determines the set of directories
+searched for source files identified by relative path names.
+
+\insmsg{code}{\scheme{'free-count}}
+returns the number of free variables in any procedure for which this is
+the corresponding code.
+
+
+\instype{Variable}
+Variable inspector objects encapsulate variable bindings.
+Although the actual underlying representation varies, the variable
+inspector object provides a uniform interface.
+
+\insmsg{variable}{\scheme{'type}}
+returns the symbol \scheme{variable}.
+
+\insmsg{variable}{\scheme{'name}}
+returns a symbol or \scheme{#f}.
+\scheme{#f} is returned if the name is not available or if the variable is a
+compiler-generated temporary variable.
+Variable names are not retained when the parameter
+\scheme{generate-inspector-information}
+(page~\ref{desc:generate-inspector-information})
+is false during compilation.
+
+\insmsg{variable}{\scheme{'ref}}
+returns an inspector object containing the current value of the
+variable.
+
+\insmsg{variable}{\scheme{'set!} \var{e}}
+returns unspecified, after setting the current value of the
+variable to \var{e}.
+An exception is raised with condition type \scheme{&assertion} if the variable is not assignable.
+
+% \insmsg{variable}{\scheme{id}} returns compiler's internal data structure
+% representing the variable, if available.
+
+
+\instype{Port}
+Port inspector objects contain ports.
+
+\insmsg{port}{\scheme{'type}}
+returns the symbol \scheme{port}.
+
+\insmsg{port}{\scheme{'input?}}
+returns \scheme{#t} if the port is an input port, \scheme{#f} otherwise.
+
+\insmsg{port}{\scheme{'output?}}
+returns \scheme{#t} if the port is an output port, \scheme{#f} otherwise.
+
+\insmsg{port}{\scheme{'binary?}}
+returns \scheme{#t} if the port is a binary port, \scheme{#f} otherwise.
+
+\insmsg{port}{\scheme{'closed?}}
+returns \scheme{#t} if the port is closed, \scheme{#f} if the port is open.
+
+\insmsg{port}{\scheme{'name}}
+returns an inspector object containing the port's name.
+
+\insmsg{port}{\scheme{'handler}}
+returns a procedure inspector object encapsulating the port handler,
+such as would be returned by \scheme{port-handler}.
+
+\insmsg{port}{\scheme{'output-size}}
+returns the output buffer size as a fixnum if the port is an
+output port (otherwise the value is unspecified).
+
+\insmsg{port}{\scheme{'output-index}}
+returns the output buffer index as a fixnum if the port is an
+output port (otherwise the value is unspecified).
+
+\insmsg{port}{\scheme{'output-buffer}}
+returns an inspector object containing the string used for buffered
+output.
+
+\insmsg{port}{\scheme{'input-size}}
+returns the input buffer size as a fixnum if the port is an
+input port (otherwise the value is unspecified).
+
+\insmsg{port}{\scheme{'input-index}}
+returns the input buffer index as a fixnum if the port is an
+input port (otherwise the value is unspecified).
+
+\insmsg{port}{\scheme{'input-buffer}}
+returns an inspector object containing the string used for buffered
+input.
+
+% \insmsg{port}{\scheme{'info}}
+% returns an inspector object containing the port's info.
+
+\instype{Symbol}
+Symbol inspector objects contain symbols.
+These include gensyms.
+
+\insmsg{symbol}{\scheme{'type}}
+returns the symbol \scheme{symbol}.
+
+\insmsg{symbol}{\scheme{'name}}
+returns a string inspector object.
+The string name associated with a symbol inspector object is the print
+representation of a symbol, such as would be returned by the procedure
+\scheme{symbol->string}.
+
+\insmsg{symbol}{\scheme{'gensym?}}
+returns \scheme{#t} if the symbol is a gensym, \scheme{#f} otherwise.
+Gensyms are created by \scheme{gensym}.
+
+\insmsg{symbol}{\scheme{'top-level-value}}
+returns an inspector object containing the global value of the symbol.
+
+\insmsg{symbol}{\scheme{'property-list}}
+returns an inspector object containing the property list for the
+symbol.
+
+% also $top-level-value, system-property-list, and symbol-hash
+
+
+\instype{Record}
+Record inspector objects contain records.
+
+\insmsg{record}{\scheme{'type}}
+returns the symbol \scheme{record}.
+
+\insmsg{record}{\scheme{'name}}
+returns a string inspector object corresponding to the name of
+the record type.
+
+\insmsg{record}{\scheme{'fields}}
+returns an inspector object containing a list of the field names of
+the record type.
+
+\insmsg{record}{\scheme{'length}}
+returns the number of fields.
+
+\insmsg{record}{\scheme{'rtd}}
+returns an inspector object containing the record-type descriptor of the
+record type.
+
+\insmsg{record}{\scheme{'accessible?} \var{name}}
+returns \scheme{#t} if the named field is accessible, \scheme{#f} otherwise.
+A field may be inaccessible if optimized away by the compiler.
+
+\insmsg{record}{\scheme{'ref} \var{name}}
+returns an inspector object containing the value of the named field.
+An exception is raised with condition type \scheme{&assertion} if the named field is not accessible.
+
+\insmsg{record}{\scheme{'mutable?} \var{name}}
+returns \scheme{#t} if the named field is mutable, \scheme{#f} otherwise.
+A field is immutable if it is not declared mutable or if the compiler
+optimizes away all assignments to the field.
+
+\insmsg{record}{\scheme{'set!} \var{name} \var{value}}
+sets the value of the named field to \var{value}.
+An exception is raised with condition type \scheme{&assertion} if the named field is not assignable.
+
+\section{Locating objects\label{SECTDEBUGLOCATINGOBJECTS}}
+
+\noskipentryheader
+\formdef{make-object-finder}{\categoryprocedure}{(make-object-finder \var{pred})}
+\formdef{make-object-finder}{\categoryprocedure}{(make-object-finder \var{pred} \var{g})}
+\formdef{make-object-finder}{\categoryprocedure}{(make-object-finder \var{pred} \var{x} \var{g})}
+\returns see below
+\listlibraries
+\endentryheader
+
+The procedure \scheme{make-object-finder} takes a predicate \var{pred} and two optional
+arguments: a starting point \var{x} and a maximum generation \var{g}.
+The starting point defaults to the value of the procedure \scheme{oblist},
+and the maximum generation defaults to the value of the parameter
+\scheme{collect-maximum-generation}.
+\scheme{make-object-finder} returns an object finder \var{p} that can be used to
+search for objects satisfying \var{pred} within the starting-point object \var{x}.
+Immediate objects and objects in generations older than \var{g} are treated
+as leaves.
+\var{p} is a procedure accepting no arguments.
+If an object \var{y} satisfying \var{pred} can be found starting with \var{x},
+\var{p} returns a list whose first element is \var{y} and whose remaining
+elements represent the path of objects from \var{x} to \var{y}, listed
+in reverse order.
+\var{p} can be invoked multiple times to find additional objects satisfying
+the predicate, if any.
+\var{p} returns \scheme{#f} if no more objects matching the predicate
+can be found.
+
+\var{p} maintains internal state recording where it has been so it
+can restart at the point of the last found object and not return
+the same object twice.
+The state can be several times the size of the starting-point object
+\var{x} and all that is reachable from \var{x}.
+
+The interactive inspector provides a convenient interface to the object
+finder in the form of \scheme{find} and \scheme{find-next} commands.
+
+Relocation tables for static code objects are discarded by default, which
+prevents object finders from providing accurate results when static code
+objects are involved.
+That is, they will not find any objects pointed to directly from a code
+object that has been promoted to the static generation.
+If this is a problem, the command-line argument
+\index{\scheme{--retain-static-relocation} command-line option}\scheme{--retain-static-relocation}
+can be used to prevent the relocation tables from being discarded.
+
+
+\section{Nested object size and composition\label{SECTDEBUGOBJECTSIZES}}
+
+The procedures \scheme{compute-size} and \scheme{compute-composition} can be
+used to determine the size or composition of an object, including anything
+reachable via pointers from the object.
+Depending on the number of objects reachable from the object, the procedures
+potentially allocate a large amount of memory.
+In an application for which knowing the number, size, generation, and types
+of all objects in the heap is sufficient,
+\index{\scheme{object-counts}}\scheme{object-counts} is potentially much
+more efficient.
+
+These procedures treat immediate objects such as fixnums, booleans, and
+characters as zero-count, zero-byte leaves.
+
+By default, these procedures also treat static objects (those in the
+initial heap) as zero-count, zero-byte leaves.
+Both procedures accept an optional second argument that specifies the
+maximum generation of interest, with the symbol \scheme{static} being
+used to represent the static generation.
+
+Objects sometimes point to a great deal more than one might expect.
+For example, if static data is included, the procedure value of
+\scheme{(lambda (x) x)} points indirectly to the exception handling
+subsystem (because of the argument-count check) and many other things
+as a result of that.
+
+Relocation tables for static code objects are discarded by default,
+which prevents these procedures from providing accurate results when
+static code objects are involved.
+That is, they will not find any objects pointed to directly from a code
+object that has been promoted to the static generation.
+If accurate sizes and compositions for static code objects are
+required, the command-line argument
+\index{\scheme{--retain-static-relocation} command-line option}\scheme{--retain-static-relocation}
+can be used to prevent the relocation tables from being discarded.
+
+\entryheader
+\formdef{compute-size}{\categoryprocedure}{(compute-size \var{object})}
+\formdef{compute-size}{\categoryprocedure}{(compute-size \var{object} \var{generation})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{object} can be any object.
+\var{generation} must be a fixnum between 0 and the value of
+\scheme{collect-maximum-generation}, inclusive, or the symbol
+\scheme{static}.
+If \var{generation} is not supplied, it defaults to the value of
+\scheme{collect-maximum-generation}.
+
+\scheme{compute-size} returns the amount of memory, in bytes, occupied by
+\var{object} and anything reachable from \var{object} in any generation
+less than or equal to \var{generation}.
+Immediate values such as fixnums, booleans, and characters have zero size.
+
+The following examples are valid for machines with 32-bit pointers.
+
+\schemedisplay
+(compute-size 0) ;=> 0
+(compute-size (cons 0 0)) ;=> 8
+(compute-size (cons (vector #t #f) 0)) ;=> 24
+
+(compute-size
+  (let ([x (cons 0 0)])
+    (set-car! x x)
+    (set-cdr! x x)
+    x))                  ;=> 8
+
+(define-record-type frob (fields x))
+(collect 1 1) ; force rtd into generation 1
+(compute-size
+  (let ([x (make-frob 0)])
+    (cons x x))
+  0)                       ;=> 16
+\endschemedisplay
+
+\entryheader
+\formdef{compute-composition}{\categoryprocedure}{(compute-composition \var{object})}
+\formdef{compute-composition}{\categoryprocedure}{(compute-composition \var{object} \var{generation})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{object} can be any object.
+\var{generation} must be a fixnum between 0 and the value of
+\scheme{collect-maximum-generation}, inclusive, or the symbol
+\scheme{static}.
+If \var{generation} is not supplied, it defaults to the value of
+\scheme{collect-maximum-generation}.
+
+\scheme{compute-composition} returns an association list representing
+the composition of \var{object}, including anything reachable from it
+in any generation less than or equal to \var{generation}.
+The association list has the following structure:
+
+\schemedisplay
+((\var{type} \var{count} . \var{bytes}) \dots)
+\endschemedisplay
+
+\var{type} is either the name of a primitive type, represented as a
+symbol, e.g., \scheme{pair}, or a record-type descriptor (rtd).
+\var{count} and \var{bytes} are nonnegative fixnums.
+
+Immediate values such as fixnums, booleans, and characters are not
+included in the composition.
+
+The following examples are valid for machines with 32-bit pointers.
+
+\schemedisplay
+(compute-composition 0) ;=> ()
+(compute-composition (cons 0 0)) ;=> ((pair 1 . 8))
+(compute-composition
+  (cons (vector #t #f) 0)) ;=> ((pair 1 . 8) (vector 1 . 16))
+
+(compute-composition
+  (let ([x (cons 0 0)])
+    (set-car! x x)
+    (set-cdr! x x)
+    x))                 ;=> ((pair 1 . 8)
+
+(define-record-type frob (fields x))
+(collect 1 1) ; force rtd into generation 1
+(compute-composition
+  (let ([x (make-frob 0)])
+    (cons x x))
+  0)                       ;=> ((pair 1 . 8)
+                                (#<record type frob> 1 . 8))
+\endschemedisplay

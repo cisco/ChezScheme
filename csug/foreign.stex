@@ -1,0 +1,3753 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Foreign Interface\label{CHPTFOREIGN}}
+
+
+{\ChezScheme} provides two ways to interact with ``foreign'' code,
+i.e., code written in other languages.
+The first is via subprocess creation and communication, which is
+discussed in the Section~\ref{SECTFOREIGNSUBPROCESS}.
+The second is via static or dynamic loading and invocation from Scheme
+of procedures written in \index{C (programming language)}C and
+invocation from C of procedures written in Scheme.
+These mechanisms are discussed in Sections~\ref{SECTFOREIGNPROCEDURES}
+through~\ref{SECTFOREIGNCONTINUATIONS}.
+
+The method for static loading of C object code is dependent upon which
+machine you are running; see the installation instructions distributed
+with {\ChezScheme}.
+
+
+\section{Subprocess Communication\label{SECTFOREIGNSUBPROCESS}}
+
+Two procedures, \index{\scheme{system}}\scheme{system} and \index{\scheme{process}}\scheme{process}, are used to create
+\index{creating subprocesses}subprocesses.
+Both procedures accept a single string argument and create a
+subprocess to execute the shell command contained in the string.
+The \scheme{system} procedure waits for the process to exit before
+returning, however,
+while the \scheme{process} procedure returns immediately without
+waiting for the process to exit.
+The standard input and output files of a subprocess created by \scheme{system} 
+may be used to communicate with the user's console.
+The standard
+input and output files of a subprocess created by \scheme{process} may be used
+to communicate with the Scheme process.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{system}{\categoryprocedure}{(system \var{command})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{command} must be a string.
+
+The \scheme{system} procedure creates a subprocess to perform the operation
+specified by \var{command}.
+The subprocess may communicate with the user through the same console
+input and console output files used by the Scheme process.
+After creating the subprocess, \scheme{system} waits for the process to exit
+before returning.
+
+When the subprocess exits, \scheme{system} returns the exit code for the
+subprocess, unless (on Unix-based systems) a signal caused the subprocess
+to terminate, in which case \scheme{system} returns the negation of the
+signal that caused the termination, e.g., -1 for \scheme{SIGHUP}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-process-ports}{\categoryprocedure}{(open-process-ports \var{command})}
+\formdef{open-process-ports}{\categoryprocedure}{(open-process-ports \var{command} \var{b-mode})}
+\formdef{open-process-ports}{\categoryprocedure}{(open-process-ports \var{command} \var{b-mode} \var{?transcoder})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{command} must be a string.
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure creates textual ports, each of whose
+transcoder is \var{?transcoder}.
+Otherwise, this procedure returns binary ports.
+\var{b-mode} specifies the buffer mode used by each of the ports
+returned by this procedure and defaults to \scheme{block}.
+Buffer modes are described in Section~\ref{TSPL:SECTOPENINGFILES} of
+{\TSPLFOUR}.
+
+\scheme{open-process-ports} creates a subprocess to perform the operation
+specified by \var{command}.
+Unlike \scheme{system}, \scheme{process} returns immediately after creating the
+subprocess, i.e., without waiting for the subprocess to terminate.
+It returns four values:
+
+\begin{enumerate}
+\item
+\var{to-stdin} is an output port to which Scheme can send output to the
+subprocess through the subprocess's standard input file.
+
+\item
+\var{from-stdout} is an input port from which Scheme can read input from
+the subprocess through the subprocess's standard output file.
+
+\item
+\var{from-stderr} is an input port from which Scheme can read input from
+the subprocess through the subprocess's standard error file.
+
+\item
+\var{process-id} is an integer identifying the created subprocess
+provided by the host operating system.
+\end{enumerate}
+
+\noindent
+If the process exits or closes its standard output file descriptor, any
+procedure that reads input from \var{from-stdout} will return an
+end-of-file object.
+Similarly, if the process exits or closes its standard error file
+descriptor, any procedure that reads input from \var{from-stderr} will
+return an end-of-file object.
+
+The predicate \index{\scheme{input-port-ready?}}\scheme{input-port-ready?}
+may be used to detect whether input has been sent by the subprocess to
+Scheme.
+
+It is sometimes necessary to force output to be sent immediately
+to the subprocess by invoking \scheme{flush-output-port} on
+\var{to-stdin}, since {\ChezScheme} buffers the output for efficiency.
+
+On UNIX systems, the \var{process-id} is the process identifier
+for the shell created to execute \var{command}.
+If \var{command} is used to invoke an executable file rather than
+a shell command, it may be useful to prepend \var{command} with
+the string \scheme{"exec "}, which causes the shell to load and execute
+the named executable directly, without forking a new
+process---the shell equivalent of a tail call.
+This will reduce by one the number of subprocesses created and
+cause \var{process-id} to reflect the process identifier for the 
+executable once the shell has transferred control.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{process}{\categoryprocedure}{(process \var{command})}
+\returns see explanation
+\listlibraries
+\endentryheader
+
+\noindent
+\var{command} must be a string.
+
+\scheme{process} is similar to \scheme{open-process-ports}, but less
+general.
+It does not return a port from which the subproces's standard error output
+can be read, and it always creates textual ports.
+It returns a list of three values rather than the four separate values
+of \scheme{open-process-ports}.
+The returned list contains, in order: \var{from-stdout},
+\var{to-stdin}, and \var{process-id}, which correspond to the second,
+first, and fourth return values of \scheme{open-process-ports}.
+
+
+\def\foreigntype#1 {\medskip\noindent#1: }
+
+\section{Calling out of Scheme\label{SECTFOREIGNPROCEDURES}}
+
+{\ChezScheme}'s \index{foreign-procedure interface}foreign-procedure interface allows a Scheme program
+to invoke
+procedures written in \index{C (programming language)}C or in languages that obey the same
+calling conventions as C.
+Two steps are necessary before foreign procedures can be invoked from Scheme.
+First, the foreign procedure must be compiled and loaded,
+either statically or dynamically,
+as described in Section~\ref{SECTFOREIGNACCESS}.
+Then, access to the foreign procedure must be established in Scheme,
+as described in this section.
+Once access to a foreign procedure has been established it may be called as an
+ordinary Scheme procedure.
+
+Since foreign procedures operate independently of the Scheme memory management
+and exception handling system, great care must be taken when using them.
+Although the foreign-procedure interface provides
+type checking (at optimize levels less than 3) and
+type conversion, the programmer must ensure that
+the sharing of data between Scheme and foreign procedures is done safely by
+specifying proper argument and result types.
+
+Scheme-callable wrappers for foreign procedures can also be created via
+\scheme{ftype-ref} and function ftypes (Section~\ref{SECTFOREIGNDATA}).
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{conv} \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
+\returns a procedure
+\listlibraries
+\endentryheader
+
+\noindent
+\var{entry-exp} must evaluate to a string representing a valid foreign
+procedure entry point or an integer representing the address of the
+foreign procedure.
+The \var{param-types} and \var{res-type} must be symbols or
+structured forms as described below.
+When a \scheme{foreign-procedure} expression is evaluated, a Scheme procedure is
+created that will invoke the foreign procedure specified by \var{entry-exp}.
+When the procedure is called each argument is checked and converted according to
+the specified \var{param-type} before it is passed to the foreign procedure.
+The result of the foreign procedure call is converted as specified
+by the \var{res-type}.
+Multiple procedures may be created for the same \index{foreign entry}foreign entry.
+
+\label{page:conv-description}%
+If \var{conv} is present, it specifies the calling convention to be used.
+The default is \scheme{#f}, which specifies the default calling convention
+on the target machine.
+Three other conventions are currently supported, all only under
+Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com}.
+Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
+equivalent to specifying \scheme{#f} or no convention.
+
+Use \scheme{__stdcall} to access most Windows API procedures.
+Use \scheme{__cdecl} for Windows API varargs procedures,
+for C library procedures, and for most other procedures.
+Use \scheme{__com} to invoke COM interface methods; COM uses the
+\scheme{__stdcall} convention but additionally performs the indirections
+necessary to obtain the correct method from a COM instance.
+The address of the COM instance must be passed as the first argument,
+which should normally be declared as \scheme{iptr}.
+For the \scheme{__com} interface only, \var{entry-exp} must evaluate
+to the byte offset of the method in the COM vtable.
+For example,
+
+\schemedisplay
+(foreign-procedure __com 12 (iptr double-float) integer-32)
+\endschemedisplay
+
+% MichaelL@frogware.com:
+% [Minor point: It would be more impressive to use the three methods of IUnknown 
+% for your example since every COM interface must support them. See 
+% http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/html/33f1d7
+% 9a-33fc-4ce5-a372-e08bda378332.asp 
+% for details.]
+
+\noindent
+creates an interface to a COM method at offset 12 in the vtable
+encapsulated within the COM instance passed as the first argument,
+with the second argument being a double float and the return
+value being an integer.
+
+Complete type checking and conversion is performed on the parameters.
+The types
+\index{\scheme{scheme-object}}\scheme{scheme-object},
+\index{\scheme{string}}\scheme{string},
+\index{\scheme{wstring}}\scheme{wstring},
+\index{\scheme{u8*}}\scheme{u8*},
+\index{\scheme{u16*}}\scheme{u16*},
+\index{\scheme{u32*}}\scheme{u32*},
+\index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16le}}\scheme{utf-16le},
+\index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32le}}\scheme{utf-32le},
+and
+\index{\scheme{utf-32be}}\scheme{utf-32be},
+must be used with caution, however, since they allow allocated
+Scheme objects to be used in places the Scheme memory management system
+cannot control.  
+No problems will arise as long as such objects are not
+retained in
+foreign variables or data structures while Scheme code is running,
+since garbage collection can occur only while Scheme code is running.
+All other parameter types are converted to equivalent foreign
+representations and consequently can be retained indefinitely in
+foreign variables and data structures.
+Following are the valid parameter types:
+
+\foreigntype{\scheme{integer-8}}
+\index{\scheme{integer-8}}Exact integers from $-2^{7}$ through
+$2^{8}-1$ are valid.
+Integers in the range $2^{7}$ through $2^{8}-1$ are treated as
+two's complement representations of negative numbers, e.g.,
+\scheme{#xff} is treated as $-1$.
+The argument is passed to C as an integer of the appropriate size
+(usually \scheme{signed char}).
+
+\foreigntype{\scheme{unsigned-8}}
+\index{\scheme{unsigned-8}}Exact integers from $-2^{7}$ to
+$2^{8}-1$ are valid.
+Integers in the range $-2^{7}$ through $-1$ are treated as the
+positive equivalents of their two's complement representation,
+e.g., $-1$ is treated as \scheme{#xff}.
+The argument is passed to C as an unsigned integer of the
+appropriate size (usually \scheme{unsigned char}).
+
+\foreigntype{\scheme{integer-16}}
+\index{\scheme{integer-16}}Exact integers from $-2^{15}$ through
+$2^{16}-1$ are valid.
+Integers in the range $2^{15}$ through $2^{16}-1$ are treated as
+two's complement representations of negative numbers, e.g.,
+\scheme{#xffff} is treated as $-1$.
+The argument is passed to C as an integer of the appropriate size
+(usually \scheme{short}).
+
+\foreigntype{\scheme{unsigned-16}}
+\index{\scheme{unsigned-16}}Exact integers from $-2^{15}$ to
+$2^{16}-1$ are valid.
+Integers in the range $-2^{15}$ through $-1$ are treated as the
+positive equivalents of their two's complement representation,
+e.g., $-1$ is treated as \scheme{#xffff}.
+The argument is passed to C as an unsigned integer of the
+appropriate size (usually \scheme{unsigned short}).
+
+\foreigntype{\scheme{integer-32}}
+\index{\scheme{integer-32}}Exact integers from $-2^{31}$ through
+$2^{32}-1$ are valid.
+Integers in the range $2^{31}$ through $2^{32}-1$ are treated as
+two's complement representations of negative numbers, e.g.,
+\scheme{#xffffffff} is treated as $-1$.
+The argument is passed to C as an integer of the appropriate size
+(usually \scheme{int}).
+
+\foreigntype{\scheme{unsigned-32}}
+\index{\scheme{unsigned-32}}Exact integers from $-2^{31}$ to
+$2^{32}-1$ are valid.
+Integers in the range $-2^{31}$ through $-1$ are treated as the
+positive equivalents of their two's complement representation,
+e.g., $-1$ is treated as \scheme{#xffffffff}.
+The argument is passed to C as an unsigned integer of the
+appropriate size (usually \scheme{unsigned int}).
+
+\foreigntype{\scheme{integer-64}}
+\index{\scheme{integer-64}}Exact integers from $-2^{63}$ through
+$2^{64}-1$ are valid.
+Integers in the range $2^{63}$ through $2^{64}-1$ are treated as
+two's complement representations of negative numbers.
+The argument is passed to C as an integer of the appropriate
+size (usually \scheme{long long} or, on many 64-bit platforms,
+\scheme{long}).
+
+\foreigntype{\scheme{unsigned-64}}
+\index{\scheme{unsigned-64}}Exact integers from $-2^{63}$ through
+$2^{64}-1$ are valid.
+Integers in the range $-2^{63}$ through $-1$ are treated as the
+positive equivalents of their two's complement representation,
+The argument is passed to C as an integer of the appropriate
+size (usually \scheme{unsigned long long} or, on many 64-bit
+platforms, \scheme{long}).
+
+\foreigntype{\scheme{double-float}}
+\index{\scheme{double-float}}Only Scheme flonums are valid---other
+Scheme numeric types are not automatically converted.
+The argument is passed to C as a double float.
+
+\foreigntype{\scheme{single-float}}
+\index{\scheme{single-float}}Only Scheme flonums are valid---other
+Scheme numeric types are not automatically converted.
+The argument is passed to C as a single float.
+Since {\ChezScheme} represents flonums in double-float format, the
+parameter is first converted into single-float format.
+
+\foreigntype{\scheme{short}}
+\index{\scheme{short}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{short}.
+
+\foreigntype{\scheme{unsigned-short}}
+\index{\scheme{unsigned short}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned short}.
+
+\foreigntype{\scheme{int}}
+\index{\scheme{int}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{int}.
+
+\foreigntype{\scheme{unsigned}}
+\index{\scheme{unsigned}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned}.
+
+\foreigntype{\scheme{unsigned-int}}
+\index{\scheme{unsigned-int}}This type is an alias \scheme{unsigned}.
+fixed-size type above, depending on the size of a C \scheme{unsigned}.
+
+\foreigntype{\scheme{long}}
+\index{\scheme{long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{long}.
+
+\foreigntype{\scheme{unsigned-long}}
+\index{\scheme{unsigned long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned long}.
+
+\foreigntype{\scheme{long-long}}
+\index{\scheme{long-long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of the nonstandard C type
+\scheme{long long}.
+
+\foreigntype{\scheme{unsigned-long-long}}
+\index{\scheme{unsigned-long-long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of the nonstandard C type
+\scheme{unsigned long long}.
+
+\foreigntype{\scheme{ptrdiff_t}}
+\index{\scheme{ptrdiff_t}}This type is an alias for the appropriate
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{size_t}}
+\index{\scheme{size_t}}This type is an alias for the appropriate unsigned
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{ssize_t}}
+\index{\scheme{ssize_t}}This type is an alias for the appropriate signed
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{iptr}}
+\index{\scheme{iptr}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C pointer.
+
+\foreigntype{\scheme{uptr}}
+\index{\scheme{uptr}}This type is an alias for the appropriate
+(unsigned) fixed-size type above, depending on the size of a C pointer.
+
+\foreigntype{\scheme{void*}}
+\index{\scheme{void*}}This type is an alias for \scheme{uptr}.
+
+\foreigntype{\scheme{fixnum}}
+\index{\scheme{fixnum}}This type is equivalent to \scheme{iptr},
+except only values in the fixnum range are valid.
+Transmission of fixnums is slightly faster than transmission of
+\scheme{iptr} values, but the fixnum range is smaller, so some
+\scheme{iptr} values do not have a fixnum representation.
+
+\foreigntype{\scheme{boolean}}
+\index{\scheme{boolean}}Any Scheme object may be passed as a boolean.
+\scheme{#f} is converted to 0; all other objects are converted to 1.
+The argument is passed to C as an \scheme{int}.
+
+\foreigntype{\scheme{char}}
+\index{\scheme{char}}Only Scheme characters with Unicode scalar values
+in the range 0 through 255 are valid \scheme{char} parameters.
+The character is converted to its Unicode scalar value, as with
+\scheme{char->integer}, and passed to C as an \scheme{unsigned char}.
+
+\foreigntype{\scheme{wchar_t}}
+\index{\scheme{wchar_t}}Only Scheme characters are valid \scheme{wchar_t} parameters.
+Under Windows and any other system where \scheme{wchar_t} holds only
+16-bit values rather than full Unicode scalar values, only characters with
+16-bit Unicode scalar values are valid.
+On systems where \scheme{wchar_t} is a full 32-bit value, any Scheme
+character is valid.
+The character is converted to its Unicode scalar value, as with
+\scheme{char->integer}, and passed to C as a \scheme{wchar_t}.
+
+\foreigntype{\scheme{wchar}}
+\index{\scheme{wchar}}This type is an alias for \scheme{wchar_t}.
+
+\foreigntype{\scheme{double}}
+\index{\scheme{double}}This type is an alias for \scheme{double-float}.
+
+\foreigntype{\scheme{float}}
+\index{\scheme{float}}This type is an alias for \scheme{single-float}.
+
+\foreigntype{\scheme{scheme-object}}
+\index{\scheme{scheme-object}}The argument is passed directly to the
+foreign procedure; no conversion or type checking is performed.
+This form of parameter passing should be used with discretion.
+Scheme objects should not be preserved in foreign variables or data structures
+since the memory management system may relocate them between foreign procedure
+calls.
+
+\foreigntype{\scheme{ptr}}
+\index{\scheme{ptr}}This type is an alias for \scheme{scheme-object}.
+
+\foreigntype{\scheme{u8*}}
+\index{\scheme{u8*}}The argument must be a Scheme bytevector or
+\scheme{#f}.
+For \scheme{#f}, the null pointer (0) is passed to the foreign procedure.
+For a bytevector, a pointer to the first byte of the bytevector's data
+is passed.
+If the C routine to which the data is passed requires the input to be
+null-terminated, a null (0) byte must be included explicitly in the
+bytevector.
+The bytevector should not be retained in foreign variables or data
+structures, since the memory management system may relocate or discard
+them between foreign procedure calls, and use their storage for some
+other purpose.
+
+\foreigntype{\scheme{u16*}}
+\index{\scheme{u16*}}Arguments of this type are treated just like
+arguments of type \scheme{u8*}.
+If the C routine to which the data is passed requires the input to be
+null-terminated, two null (0) bytes must be included explicitly in the
+bytevector, aligned on a 16-bit boundary.
+
+\foreigntype{\scheme{u32*}}
+\index{\scheme{u32*}}Arguments of this type are treated just like
+arguments of type \scheme{u8*}.
+If the C routine to which the data is passed requires the input to be
+null-terminated, four null (0) bytes must be included explicitly in the
+bytevector, aligned on a 32-bit boundary.
+
+\foreigntype{\scheme{utf-8}}
+\index{\scheme{utf-8}}The argument must be a Scheme string or
+\scheme{#f}.
+For \scheme{#f}, the null pointer (0) is passed to the foreign procedure.
+A string is converted into a bytevector, as if via \scheme{string->utf8},
+with an added null byte, and the address of the first byte of the
+bytevector is passed to C.
+The bytevector should not be retained in foreign variables or data
+structures, since the memory management system may relocate or discard
+them between foreign procedure calls, and use their storage for some
+other purpose.
+
+\foreigntype{\scheme{utf-16le}}
+\index{\scheme{utf-16le}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf16} with endianness \scheme{little}, and they are
+extended by two null bytes rather than one.
+
+\foreigntype{\scheme{utf-16be}}
+\index{\scheme{utf-16be}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf16} with endianness \scheme{big}, and they are
+extended by two null bytes rather than one.
+
+\foreigntype{\scheme{utf-32le}}
+\index{\scheme{utf-32le}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf32} with endianness \scheme{little}, and they are
+extended by four null bytes rather than one.
+
+\foreigntype{\scheme{utf-32be}}
+\index{\scheme{utf-32be}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf32} with endianness \scheme{big}, and they are
+extended by four null bytes rather than one.
+
+\foreigntype{\scheme{string}}
+\index{\scheme{string}}This type is an alias for \scheme{utf-8}.
+
+\foreigntype{\scheme{wstring}}
+\index{\scheme{string}}This type is an alias for \scheme{utf-16le},
+\scheme{utf-16be}, \scheme{utf-32le}, or \scheme{utf-32be} as
+appropriate depending on the size of a C \scheme{wchar_t} and
+the endianness of the target machine.
+For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
+under Windows running on Intel hardware.
+
+\foreigntype{\scheme{(* \var{ftype})}}
+\index{ftype}This type allows a pointer to a foreign
+type (ftype) to be passed.
+The argument must be an ftype pointer of with type \var{ftype},
+and the actual argument is the address encapsulated in the
+ftype pointer.
+See Section~\ref{SECTFOREIGNDATA} for a description of
+foreign types.
+
+\medskip\noindent
+The result types are similar to the parameter types with the addition of a
+\index{\scheme{void}}\scheme{void} type.
+In general, the type conversions are the inverse of the parameter type
+conversions.
+No error checking is performed on return, since the system cannot determine
+whether a foreign result is actually of the indicated type.
+Particular caution should be exercised with the result types
+\index{\scheme{scheme-object}}\scheme{scheme-object},
+\index{\scheme{double-float}}\scheme{double-float},
+\index{\scheme{double}}\scheme{double},
+\index{\scheme{single-float}}\scheme{single-float},
+\index{\scheme{float}}\scheme{float},
+and the types that result in the construction of bytevectors or strings,
+since invalid
+return values may lead to invalid memory references as well as incorrect
+computations.
+Following are the valid result types:
+
+\foreigntype{\scheme{void}}
+\index{\scheme{void}}The result of the foreign procedure call is
+ignored and an unspecified Scheme object is returned.
+\scheme{void} should be used when foreign procedures are called for effect only.
+
+\foreigntype{\scheme{integer-8}}
+\index{\scheme{integer-8}}The result is interpreted as a signed
+8-bit integer and is converted to a Scheme exact integer.
+
+\foreigntype{\scheme{unsigned-8}}
+\index{\scheme{unsigned-8}}The result is interpreted as an unsigned
+8-bit integer and is converted to a Scheme nonnegative exact integer.
+
+\foreigntype{\scheme{integer-16}}
+\index{\scheme{integer-16}}The result is interpreted as a signed
+16-bit integer and is converted to a Scheme exact integer.
+
+\foreigntype{\scheme{unsigned-16}}
+\index{\scheme{unsigned-16}}The result is interpreted as an unsigned
+16-bit integer and is converted to a Scheme nonnegative exact integer.
+
+\foreigntype{\scheme{integer-32}}
+\index{\scheme{integer-32}}The result is interpreted as a signed
+32-bit integer and is converted to a Scheme exact integer.
+
+\foreigntype{\scheme{unsigned-32}}
+\index{\scheme{unsigned-32}}The result is interpreted as an unsigned
+32-bit integer and is converted to a Scheme nonnegative exact integer.
+
+\foreigntype{\scheme{integer-64}}
+\index{\scheme{integer-64}}The result is interpreted as a signed
+64-bit integer and is converted to a Scheme exact integer.
+
+\foreigntype{\scheme{unsigned-64}}
+\index{\scheme{unsigned-64}}The result is interpreted as an unsigned
+64-bit integer and is converted to a Scheme nonnegative exact integer.
+
+\foreigntype{\scheme{double-float}}
+\index{\scheme{double-float}}The result is interpreted as a double float
+and is translated into a {\ChezScheme} flonum.
+
+\foreigntype{\scheme{single-float}}
+\index{\scheme{single-float}}The result is interpreted as a single float
+and is translated into a {\ChezScheme} flonum.
+Since {\ChezScheme} represents flonums in double-float format, the
+result is first converted into double-float format.
+
+\foreigntype{\scheme{short}}
+\index{\scheme{short}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{short}.
+
+\foreigntype{\scheme{unsigned-short}}
+\index{\scheme{unsigned short}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned short}.
+
+\foreigntype{\scheme{int}}
+\index{\scheme{int}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{int}.
+
+\foreigntype{\scheme{unsigned}}
+\index{\scheme{unsigned}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned}.
+
+\foreigntype{\scheme{unsigned-int}}
+\index{\scheme{unsigned-int}}This type is an alias \scheme{unsigned}.
+fixed-size type above, depending on the size of a C \scheme{unsigned}.
+
+\foreigntype{\scheme{long}}
+\index{\scheme{long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{long}.
+
+\foreigntype{\scheme{unsigned-long}}
+\index{\scheme{unsigned long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C \scheme{unsigned long}.
+
+\foreigntype{\scheme{long-long}}
+\index{\scheme{long-long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of the nonstandard C type
+\scheme{long long}.
+
+\foreigntype{\scheme{unsigned-long-long}}
+\index{\scheme{unsigned-long-long}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of the nonstandard C type
+\scheme{unsigned long long}.
+
+\foreigntype{\scheme{ptrdiff_t}}
+\index{\scheme{ptrdiff_t}}This type is an alias for the appropriate
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{size_t}}
+\index{\scheme{size_t}}This type is an alias for the appropriate unsigned
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{ssize_t}}
+\index{\scheme{ssize_t}}This type is an alias for the appropriate signed
+fixed-size type above, depending on its definition in the host machine's
+\scheme{stddef.h} include file.
+
+\foreigntype{\scheme{iptr}}
+\index{\scheme{iptr}}This type is an alias for the appropriate
+fixed-size type above, depending on the size of a C pointer.
+
+\foreigntype{\scheme{uptr}}
+\index{\scheme{uptr}}This type is an alias for the appropriate
+(unsigned) fixed-size type above, depending on the size of a C pointer.
+
+\foreigntype{\scheme{void*}}
+\index{\scheme{void*}}This type is an alias for \scheme{uptr}.
+
+\foreigntype{\scheme{boolean}}
+\index{\scheme{boolean}}This type converts a C \scheme{int} return value
+into a Scheme boolean.
+0 is converted to \scheme{#f}; all other values are converted to \scheme{#t}.
+
+\foreigntype{\scheme{char}}
+\index{\scheme{char}}This type converts a C \scheme{unsigned char} return value
+into a Scheme character, as if via \scheme{integer->char}.
+
+\foreigntype{\scheme{wchar_t}}
+\index{\scheme{wchar_t}}This type converts a C \scheme{wchar_t} return value
+into a Scheme character, as if via \scheme{integer->char}.
+The \scheme{wchar_t} value must be a valid Unicode scalar value.
+
+\foreigntype{\scheme{wchar}}
+\index{\scheme{wchar}}This type is an alias for \scheme{wchar_t}.
+
+\foreigntype{\scheme{double}}
+\index{\scheme{double}}This type is an alias for \scheme{double-float}.
+
+\foreigntype{\scheme{float}}
+\index{\scheme{float}}This type is an alias for \scheme{single-float}.
+
+\foreigntype{\scheme{scheme-object}}
+\index{\scheme{scheme-object}}The result is assumed to be a valid Scheme
+object, and no conversion is performed.
+This type is inherently dangerous, since an invalid Scheme object can corrupt
+the memory management system with unpredictable (but always unpleasant) results.
+Since Scheme objects are actually typed pointers, even integers cannot
+safely be returned as type \scheme{scheme-object} unless they were created by
+the Scheme system.
+
+\foreigntype{\scheme{ptr}}
+\index{\scheme{ptr}}This type is an alias for \scheme{scheme-object}.
+
+\foreigntype{\scheme{u8*}}
+\index{\scheme{u8*}}The result is interpreted as a pointer to a
+null-terminated sequence of 8-bit unsigned integers (bytes).
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of bytes is stored in a freshly allocated
+bytevector of the appropriate length, and the bytevector is returned to
+Scheme.
+
+\foreigntype{\scheme{u16*}}
+\index{\scheme{u16*}}The result is interpreted as a pointer to a
+null-terminated sequence of 16-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of 16-bit integers is stored in a freshly allocated
+bytevector of the appropriate length, and the bytevector is returned to
+Scheme.
+The null terminator must be a properly aligned 16-bit word,
+i.e., two bytes of zero aligned on a 16-bit boundary.
+
+\foreigntype{\scheme{u32*}}
+\index{\scheme{u16*}}The result is interpreted as a pointer to a
+null-terminated sequence of 32-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of 16-bit integers is stored in a freshly allocated
+bytevector of the appropriate length, and the bytevector is returned to
+Scheme.
+The null terminator must be a properly aligned 32-bit word,
+i.e., four bytes of zero aligned on a 32-bit boundary.
+
+\foreigntype{\scheme{utf-8}}
+\index{\scheme{utf-8}}The result is interpreted as a pointer to a
+null-terminated sequence of 8-bit unsigned character values.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of bytes is converted into a Scheme string, as if
+via \scheme{utf8->string}, and the string is returned to Scheme.
+
+\foreigntype{\scheme{utf-16le}}
+\index{\scheme{utf-16le}}The result is interpreted as a pointer to a
+null-terminated sequence of 16-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf16->string} with endianness \scheme{little},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
+\foreigntype{\scheme{utf-16be}}
+\index{\scheme{utf-16be}}The result is interpreted as a pointer to a
+null-terminated sequence of 16-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf16->string} with endianness \scheme{big},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
+\foreigntype{\scheme{utf-32le}}
+\index{\scheme{utf-32le}}The result is interpreted as a pointer to a
+null-terminated sequence of 32-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf32->string} with endianness \scheme{little},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
+\foreigntype{\scheme{utf-32be}}
+\index{\scheme{utf-32be}}The result is interpreted as a pointer to a
+null-terminated sequence of 32-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf32->string} with endianness \scheme{big},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
+\foreigntype{\scheme{string}}
+\index{\scheme{string}}This type is an alias for \scheme{utf-8}.
+
+\foreigntype{\scheme{wstring}}
+\index{\scheme{string}}This type is an alias for \scheme{utf-16le},
+\scheme{utf-16be}, \scheme{utf-32le}, or \scheme{utf-32be} as
+appropriate depending on the size of a C \scheme{wchar_t} and
+the endianness of the target machine.
+For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
+under Windows running on Intel hardware.
+
+\foreigntype{\scheme{(* \var{ftype})}}
+\index{ftype}The result is interpreted as the address of a foreign object
+whose structure is described by \var{ftype}, and a freshly allocated
+ftype pointer encapsulating the address is returned.
+See Section~\ref{SECTFOREIGNDATA} for a description of
+foreign types.
+
+\medskip\noindent
+Consider a C identity procedure:
+\schemedisplay
+int id(x) int x; { return x; }
+\endschemedisplay
+
+\noindent
+After a file containing this procedure has been compiled and loaded
+(see Section~\ref{SECTFOREIGNACCESS}) it can be accessed as follows:
+
+\schemedisplay
+(foreign-procedure "id"
+  (int) int) ;=> #<procedure>
+((foreign-procedure "id"
+   (int) int)
+ 1) ;=> 1
+(define int-id
+  (foreign-procedure "id"
+    (int) int))
+(int-id 1) ;=> 1
+\endschemedisplay
+
+\noindent
+The \scheme{"id"} entry can also be interpreted as accepting and returning
+a boolean:
+
+\schemedisplay
+(define bool-id
+  (foreign-procedure "id"
+    (boolean) boolean))
+(bool-id #f) ;=> #f
+(bool-id #t) ;=> #t
+(bool-id 1) ;=> #t
+\endschemedisplay
+
+\noindent
+As the last example reveals, \scheme{bool-id} is actually a conversion procedure.
+When a Scheme object is passed as type \scheme{boolean} it is converted to
+0 or 1, and when it is returned it is converted to \scheme{#f} or \scheme{#t}.
+As a result objects are converted to normalized boolean values.
+The \scheme{"id"} entry can be used to create other conversion procedures by
+varying the type specifications:
+
+\schemedisplay
+(define int->bool
+  (foreign-procedure "id"
+    (int) boolean))
+(int->bool 0) ;=> #f
+(int->bool 5) ;=> #t
+(map (foreign-procedure "id"
+       (boolean) int)
+     '(#t #f)) ;=> (1 0)
+(define void
+  (foreign-procedure "id"
+    (int) void))
+(void 10) ;=> \var{unspecified}
+\endschemedisplay
+
+There are, of course, simpler and more efficient ways of accomplishing
+these conversions directly in Scheme.
+
+A foreign entry is resolved when a
+\index{\scheme{foreign-procedure}}\scheme{foreign-procedure} expression
+is evaluated, rather than either when the code is loaded or each time
+the procedure is invoked.
+Thus, the following definition is always valid since the
+\scheme{foreign-procedure} expression is not immediately evaluated:
+
+\schemedisplay
+(define doit
+  (lambda ()
+    ((foreign-procedure "doit" () void))))
+\endschemedisplay
+
+\noindent
+\scheme{doit} should not be invoked, however, before an entry for
+\scheme{"doit"} has been provided.
+Similarly, an entry for \scheme{"doit"} must exist before the following code
+is evaluated:
+
+\schemedisplay
+(define doit
+  (foreign-procedure "doit" () void))
+\endschemedisplay
+
+\noindent
+Although the second definition is more constraining on the load order
+of foreign files, it is more efficient since the entry resolution need
+be done only once.
+
+It is often useful to define a template to be used
+in the creation of several foreign procedures with similar argument
+types and return values.
+For example, the following code creates two foreign procedures from
+a single foreign procedure expression, by abstracting out the foreign
+procedure name:
+
+\schemedisplay
+(define double->double
+  (lambda (proc-name)
+    (foreign-procedure proc-name
+      (double)
+      double)))
+
+(define log10 (double->double "log10"))
+(define gamma (double->double "gamma"))
+\endschemedisplay
+
+\noindent
+Both \scheme{"log10"} and \scheme{"gamma"} must be available as foreign
+entries (see Section~\ref{SECTFOREIGNACCESS})
+before the corresponding definitions.
+The use of foreign procedure templates can simplify the coding process
+and reduce the amount of code generated when a large number of
+foreign procedures are involved, e.g., when an entire library of
+foreign procedures is imported into Scheme.
+
+
+\section{Calling into Scheme\label{SECTFOREIGNCALLABLE}}
+
+Section~\ref{SECTFOREIGNPROCEDURES} describes the \scheme{foreign-procedure}
+form, which permits Scheme code to invoke C~or C-compatible foreign
+procedures.  
+This section describes the \scheme{foreign-callable} form, which permits
+C~or C-compatible code to call Scheme procedures.  
+A more primitive mechanism for calling Scheme procedures from C is
+described in Section~\ref{SECTFOREIGNCLIB}.
+
+As when calling foreign procedures from Scheme,
+great care must be taken when sharing data between Scheme and
+foreign code that calls Scheme to avoid corrupting Scheme's memory
+management system.
+
+A foreign-callable wrapper for a Scheme procedure can also be created by
+passing the procedure to \scheme{make-ftype-pointer} with an appropriate
+function ftype (Section~\ref{SECTFOREIGNDATA}).
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-callable}{\categorysyntax}{(foreign-callable \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-procedure}{\categorysyntax}{(foreign-callable \var{conv} \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
+\returns a code object
+\listlibraries
+\endentryheader
+
+\noindent
+\var{proc-exp} must evaluate to a procedure, the Scheme procedure that
+is to be invoked by foreign code.
+The parameter and result types are as described for
+\scheme{foreign-procedure} in Section~\ref{SECTFOREIGNPROCEDURES},
+except that the requirements and conversions are effectively reversed,
+e.g., the conversions described for \scheme{foreign-procedure}
+arguments are performed for \scheme{foreign-callable} return
+values.
+Type checking is performed for result values but not argument values,
+since the parameter
+values are provided by the foreign code and must be assumed to be
+correct.
+
+If \var{conv} is present, it specifies the calling convention to be used.
+\scheme{foreign-callable} supports the same conventions as
+\scheme{foreign-procedure} with the exception of \scheme{__com}.
+
+The value produced by \scheme{foreign-callable} is a Scheme code object,
+which contains some header information as well as code that performs
+the call to the encapsulated Scheme procedure.
+The code object may be converted into a foreign-callable address via
+\index{\scheme{foreign-callable-entry-point}}\scheme{foreign-callable-entry-point}, which returns an integer representing
+the address of the entry point within the code object.
+(The C-callable library function \scheme{Sforeign_callable_entry_point}, described in
+Section~\ref{SECTFOREIGNCLIB}, may be used to obtain the entry point
+as well.)  
+This is an implicit pointer into a Scheme object, and
+in many cases, it is necessary to lock the code object
+(using \index{\scheme{lock-object}}\scheme{lock-object})
+before converting it into an entry point
+to prevent Scheme's storage management system from
+relocating or destroying the code object, e.g., when the entry point is
+registered as a callback and retained in the ``C'' side indefinitely.
+
+The following code creates a foreign-callable code object, locks
+the code object, and returns the entry point.
+
+\schemedisplay
+(let ([x (foreign-callable
+           (lambda (x y) (pretty-print (cons x (* y 2))))
+           (string integer-32)
+           void)])
+  (lock-object x)
+  (foreign-callable-entry-point x))
+\endschemedisplay
+
+\noindent
+Unless the entry point is intended to be permanent, a pointer to the
+code object returned by \scheme{foreign-callable} should be retained
+so that it can be unlocked when no longer needed.
+
+Mixed use of \scheme{foreign-callable} and \scheme{foreign-procedure}
+may result in nesting of foreign and Scheme calls, and this
+results in some interesting considerations when continuations are
+involved, directly or indirectly (as via the default exception handler).
+See Section~\ref{SECTFOREIGNCONTINUATIONS} for a discussion of the
+interaction between foreign calls and continuations.
+
+The following example demonstrates how the ``callback'' functions
+required by many windowing systems might be defined in Scheme with the
+use of \scheme{foreign-callable}.
+Assume that the following C code has been compiled and loaded
+(see Section~\ref{SECTFOREIGNACCESS}).
+
+\schemedisplay
+#include <stdio.h>
+
+typedef void (*CB)(char);
+
+CB callbacks[256];
+
+void cb_init(void) {
+   int i;
+
+   for (i = 0; i < 256; i += 1)
+       callbacks[i] = (CB)0;
+}
+
+void register_callback(char c, int cb) {
+    callbacks[c] = (CB)cb;
+}
+
+void event_loop(void) {
+    CB f; char c;
+
+    for (;;) {
+        c = getchar();
+        if (c == EOF) break;
+        f = callbacks[c];
+        if (f != (CB)0) f(c);
+    }
+}
+\endschemedisplay
+
+\noindent
+Interfaces to these functions may be defined in Scheme as follows.
+
+\schemedisplay
+(define cb-init
+  (foreign-procedure "cb_init" () void))
+(define register-callback
+  (foreign-procedure "register_callback" (char int) void))
+(define event-loop
+  (foreign-procedure "event_loop" () void))
+\endschemedisplay
+
+\noindent
+A callback for selected characters can then be defined.
+
+\schemedisplay
+(define callback
+  (lambda (p)
+    (let ([code (foreign-callable p (char) void)])
+      (lock-object code)
+      (foreign-callable-entry-point code))))
+(define ouch
+  (callback
+    (lambda (c)
+      (printf "Ouch! Hit by '~c'~%" c))))
+(define rats
+  (callback
+    (lambda (c)
+      (printf "Rats! Received '~c'~%" c))))
+
+(cb-init)
+(register-callback #\a ouch)
+(register-callback #\c rats)
+(register-callback #\e ouch)
+\endschemedisplay
+
+\noindent
+This sets up the following interaction.
+
+\schemedisplay
+> (event-loop)
+a
+Ouch! Hit by 'a'
+b
+c
+Rats! Received 'c'
+d
+e
+Ouch! Hit by 'e'
+\endschemedisplay
+
+\noindent
+A more well-behaved version of this example would save each code object
+returned by \scheme{foreign-callable} and unlock it when it is no longer
+registered as a callback.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-callable-entry-point}{\categoryprocedure}{(foreign-callable-entry-point \var{code})}
+\returns the address of the foreign-callable entry point in \var{code}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{code} should be a code object produced by \scheme{foreign-callable}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-callable-code-object}{\categoryprocedure}{(foreign-callable-code-object \var{address})}
+\returns the code object corresponding to the foreign-callable entry point \var{address}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{address} must be an exact integer and should be the address of the
+entry point of a code object produced by \scheme{foreign-callable}.
+
+
+\section{Continuations and Foreign Calls\label{SECTFOREIGNCONTINUATIONS}}
+
+\scheme{foreign-callable} and \scheme{foreign-procedure} allow arbitrary
+nesting of foreign and Scheme calls.
+Because other languages do not support the fully general first-class
+continuations of Scheme, the interaction between continuations and
+nested calls among Scheme and foreign procedures is problematic.
+{\ChezScheme} handles this interaction in a general manner by trapping
+attempts to return to \emph{stale} foreign contexts rather than by restricting
+the use of continuations directly.
+A foreign context is a foreign frame and return point corresponding to
+a particular call from a foreign language, e.g., C, into Scheme.
+A foreign context becomes stale after a normal return to the context or
+after a return to some other foreign context beneath it on the control
+stack.
+
+As a result of this treatment, Scheme continuations may be used to
+throw control either upwards or downwards logically through any mix
+of Scheme and foreign frames.
+Furthermore, until some return to a foreign context is actually performed,
+all return points remain valid.
+In particular, this means that programs that use continuations
+exclusively for nonlocal exits never attempt to return to a
+stale foreign context.
+(Nonlocal exits themselves are no problem and are implemented
+by the C library function \scheme{longjmp} or the equivalent.)
+Programs that use continuations more generally also function
+properly as long as they never actually return to a stale foreign context,
+even if control logically moves past stale foreign contexts via invocation
+of continuations.
+
+One implication of this mechanism is that the C stack pointer is not
+automatically restored to its base value when a continuation is used on
+the Scheme side to perform a nonlocal exit.
+If the program continues to run after the nonlocal exit, any further
+build-up of the C stack will add to the existing build up, which might
+result in a C stack overflow.
+To avoid this situation, a program can arrange to set up a single C
+call frame before obtaining the continuation and return to the C frame
+after the nonlocal exit.
+The procedure \scheme{with-exit-proc} below arranges to do this without
+involving any C code.
+
+\schemedisplay
+(define with-exit-proc
+  (lambda (p)
+    (define th (lambda () (call/cc p)))
+    (define-ftype ->ptr (function () ptr))
+    (let ([fptr (make-ftype-pointer ->ptr th)])
+      (let ([v ((ftype-ref ->ptr () fptr))])
+        (unlock-object
+          (foreign-callable-code-object
+            (ftype-pointer-address fptr)))
+        v))))
+\endschemedisplay
+
+\scheme{with-exit-proc} behaves like \scheme{call/cc} except it resets
+the C stack when the continuation is invoked.
+To do this, it creates an ftype-pointer representing a foreign-callable
+entry point for \scheme{th} and creates a Scheme-callable procedure for
+that entry point.
+This creates a wrapper for \scheme{th} that involves a C call.
+When a call to the wrapper returns, either by explicit invocation of the
+continuation passed to \scheme{p} or by a normal return from \scheme{p},
+the C stack is reset to its original value.
+
+\section{Foreign Data\label{SECTFOREIGNDATA}}
+
+The procedures described in this section directly create and manipulate
+foreign data, i.e., data that resides outside of the Scheme heap.
+With the exception of \scheme{foreign-alloc} and \scheme{foreign-sizeof},
+these procedures are inherently unsafe in the sense that they do not (and
+cannot) check the validity of the addresses they are passed.
+Improper use of these procedures can result in invalid memory references,
+corrupted data, or system crashes.
+
+This section also describes a higher-level syntactic mechanism for
+manipulating foreign data, including foreign structures, unions,
+arrays, and bit fields.
+The syntactic interface is safer than the procedural interface but
+must still assume that the addresses it's given are appropriate for
+the types of object being manipulated.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-alloc}{\categoryprocedure}{(foreign-alloc \var{n})}
+\returns the address of a freshly allocated block of foreign data \var{n} bytes long
+\listlibraries
+\endentryheader
+
+\var{n} must be a positive fixnum.
+The returned value is an exact integer and is guaranteed to be properly
+aligned for any type of value according to the requirements of the
+underlying hardware.
+An exception is raised with condition type \scheme{&assertion}
+if the block of foreign data cannot be allocated.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-free}{\categoryprocedure}{(foreign-free \var{address})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+This procedure frees the block of storage to which \var{address} points.
+\var{address} must be an exact integer in the range $-2^{w-1}$ through
+$2^w-1$, where $w$ is the width in bits of a pointer, e.g., 64 for a
+64-bit machine.
+It should be an address returned by an earlier call to
+\scheme{foreign-alloc} and not subsequently passed to
+\scheme{foreign-free}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-ref}{\categoryprocedure}{(foreign-ref \var{type} \var{address} \var{offset})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{foreign-ref} extracts the value of type \var{type}
+\var{offset} bytes into the block of foreign data addressed by
+\var{address}.
+
+\var{type} must be a symbol identifying the type of value
+to be extracted.
+The following types have machine-dependent sizes and correspond to the
+like-named C types:
+
+\begin{itemize}
+\item \scheme{short},
+\item \scheme{unsigned-short},
+\item \scheme{int},
+\item \scheme{unsigned},
+\item \scheme{unsigned-int},
+\item \scheme{long},
+\item \scheme{unsigned-long},
+\item \scheme{long-long},
+\item \scheme{unsigned-long-long},
+\item \scheme{ptrdiff_t},
+\item \scheme{size_t},
+\item \scheme{ssize_t},
+\item \scheme{char},
+\item \scheme{wchar_t},
+\item \scheme{float},
+\item \scheme{double}, and
+\item \scheme{void*}.
+\end{itemize}
+
+The types \scheme{long-long} and \scheme{unsigned-long-long}
+correspond to the C types \scheme{long long} 
+and \scheme{unsigned long long}.
+A value of type \scheme{char} is referenced as a single
+byte and converted (as if via \scheme{integer->char})
+into a Scheme character.
+A value of type \scheme{wchar_t} is converted (as if via
+\scheme{integer->char}) into a Scheme character.
+The value must be a valid Unicode scalar value.
+
+\scheme{wchar} is an alias for \scheme{wchar_t}.
+
+Several additional machine-dependent types are recognized:
+
+\begin{itemize}
+\item \scheme{iptr},
+\item \scheme{uptr},
+\item \scheme{fixnum}, and
+\item \scheme{boolean}.
+\end{itemize}
+
+\scheme{uptr} is equivalent to \scheme{void*}; both are treated as
+unsigned integers the size of a pointer.
+\scheme{iptr} is treated as a signed integer the size of a pointer.
+\scheme{fixnum} is treated as an \scheme{iptr}, but with a range limited
+to the fixnum range.
+\scheme{boolean} is treated as an \scheme{int}, with zero
+converted to the Scheme value \scheme{#f} and all
+other values converted to \scheme{#t}.
+
+Finally, several fixed-sized types are also supported:
+
+\begin{itemize}
+\item \scheme{integer-8},
+\item \scheme{unsigned-8},
+\item \scheme{integer-16},
+\item \scheme{unsigned-16},
+\item \scheme{integer-32},
+\item \scheme{unsigned-32},
+\item \scheme{integer-64},
+\item \scheme{unsigned-64},
+\item \scheme{single-float}, and
+\item \scheme{double-float}.
+\end{itemize}
+
+\var{address} must be an exact integer in the range $-2^{w-1}$ through
+$2^w-1$, where $w$ is the width in bits of a pointer, e.g., 64 for a
+64-bit machine.
+\var{offset} must be an exact fixnum.
+The sum of \var{address} and \var{offset} should address a readable block
+of memory large enough to hold a value of type \var{type}, within a block
+of storage previously returned by \scheme{foreign-alloc} and not
+subsequently freed by \scheme{foreign-free} or within a block of storage
+obtained via some other mechanism, e.g., a foreign call.
+For multiple-byte values, the native endianness of the machine is assumed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-set!}{\categoryprocedure}{(foreign-set! \var{type} \var{address} \var{offset} \var{value})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{foreign-set!} stores a representation of \var{value} as type
+\var{type} \var{offset} bytes into the block of foreign data addressed by
+\var{address}.
+
+\var{type} must be a symbol identifying the type of value
+to be stored, one of those listed in the description of
+\scheme{foreign-ref} above.
+Scheme characters are converted to type \scheme{char} or \scheme{wchar_t}
+as if via \scheme{char->integer}.
+For type \scheme{boolean}, Scheme \scheme{#f} is converted to the
+\scheme{int} 0, and any other Scheme object is converted to 1.
+
+\var{address} must be an exact integer in the range $-2^{w-1}$ through
+$2^w-1$, where $w$ is the width in bits of a pointer, e.g., 64 for a
+64-bit machine.
+\var{offset} must be an exact fixnum.
+The sum of \var{address} and \var{offset} should address a writable block
+of memory large enough to hold a value of type \var{type}, within a block
+of storage previously returned by \scheme{foreign-alloc} and not
+subsequently freed by \scheme{foreign-free} or within a block of storage
+obtained via some other mechanism, e.g., a foreign call.
+\var{value} must be an appropriate value for \var{type}, e.g.,
+a floating-point number for the float types or an exact integer within
+the appropriate range for the integer types.
+For multiple-byte values, the native endianness of the machine is assumed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-sizeof}{\categoryprocedure}{(foreign-sizeof \var{type})}
+\returns the size in bytes of \var{type}
+\listlibraries
+\endentryheader
+
+\var{type} must be one of the symbols listed in the description
+of \scheme{foreign-ref} above.
+
+
+%----------------------------------------------------------------------------
+\entryheader\label{defn:define-ftype}
+\formdef{define-ftype}{\categorysyntax}{(define-ftype \var{ftype-name} \var{ftype})}
+\formdef{define-ftype}{\categorysyntax}{(define-ftype (\var{ftype-name} \var{ftype}) \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\index{ftypes}%
+\index{foreign types}%
+A \scheme{define-ftype} form is a definition and can appear anywhere
+other definitions can appear.
+It establishes one or more foreign-type (ftype) bindings for the identifier
+\var{ftype-name} or identifiers \scheme{\var{ftype-name} \dots}
+to the foreign type represented \var{ftype} or the foreign types
+represented by \scheme{\var{ftype} \dots}.
+Each \var{ftype-name} can be used to access foreign objects with the
+declared shape, and each can be used in the formation of other ftypes.
+
+An \var{ftype} must take one of the following forms:
+
+\schemedisplay
+\var{ftype-name}
+(struct (\var{field-name} \var{ftype}) \dots)
+(union (\var{field-name} \var{ftype}) \dots)
+(array \var{length} \var{ftype})
+(* \var{ftype})
+(bits (\var{field-name} \var{signedness} \var{bits}) \dots)
+(function (\var{ftype} \dots) \var{ftype})
+(function \var{conv} (\var{ftype} \dots) \var{ftype})
+(packed \var{ftype})
+(unpacked \var{ftype})
+(endian \var{endianness} \var{ftype})
+\endschemedisplay
+
+where \var{length} is an exact nonnegative integer,
+\var{bits} is an exact positive integer,
+\var{field-name} is an identifier,
+\var{conv} is \scheme{#f} or a string naming a valid convention
+as described on page~\ref{page:conv-description},
+signedness is either \scheme{signed} or \scheme{unsigned}, and
+endianness is one of \scheme{native}, \scheme{big}, or \scheme{little}.
+
+A restriction not reflected above is that 
+\scheme{function} ftypes cannot be used as the types of
+field names or array elements.
+That is, \index{function ftype}function ftypes are valid only at the
+top level of an ftype, e.g,:
+
+\schemedisplay
+(define-ftype bvcopy_t (function (u8* u8* size_t) void))
+\endschemedisplay
+
+or as the immediate sub-type of a pointer (\scheme{*}) ftype, as in the
+following definitions, which are equivalent assuming the definition of
+\scheme{bvcopy_t} above.
+
+\schemedisplay
+(define-ftype A
+  (struct
+    [x int]
+    [f (* (function (u8* u8* size_t) void))]))
+
+(define-ftype A
+  (struct
+    [x int]
+    [f (* bvcopy_t)]))
+\endschemedisplay
+
+That is, a function cannot be embedded within a struct, union,
+or array, but a pointer to a function can be so embedded.
+
+The following definitions establish ftype bindings for \scheme{F},
+\scheme{A}, and \scheme{E}.
+
+\schemedisplay
+(define-ftype F (function (wchar_t int) int))
+
+(define-ftype A (array 10 wchar_t))
+
+(define-ftype E
+  (struct
+    [a int]
+    [b double]
+    [c (array 25
+         (struct
+           [a short]
+           [_ long]
+           [b A]))]
+    [d (endian big
+         (union
+           [v1 unsigned-32]
+           [v2 (bits
+                 [hi unsigned 12]
+                 [lo unsigned 20])]))]
+    [e (* A)]
+    [f (* F)]))
+\endschemedisplay
+
+The ftype \scheme{F} describes the type of a foreign function that
+takes two arguments, a wide character and an integer, and returns an
+integer.
+The ftype \scheme{A} is simply an array of 10 \scheme{wchar_t} values,
+and its size will be 10 times the size of a single \scheme{wchar_t}.
+The ftype \scheme{E} is a structure with five fields: an integer
+\scheme{a}, a double-float \scheme{b}, an array \scheme{c}, a
+union \scheme{d}, and a pointer \scheme{e}.
+The array \scheme{c} is an array of 25 structs, each of which
+contains a short integer, a long integer, and a \scheme{A} array.
+The size of the \scheme{c} array will be 25 times the size of a
+single \scheme{A} array, plus 25 times the space needed to store
+each of the short and long integers.
+The union \scheme{d} is either a 32-bit unsigned integer or
+a 32-bit unsigned integer split into high (12 bits) and low (20 bits)
+components.
+The fields of a union overlap so that writing to one effectively
+overlaps the other.
+Thus, one can use the \scheme{d} union type to split apart an
+unsigned integer by writing the integer into \scheme{v1} and reading
+the pieces from \scheme{hi} and \scheme{lo}.
+The pointer \scheme{e} points to an \scheme{A} array; it is not
+itself an array, and its size is just the size of a single pointer.
+Similarly, \scheme{f} points to a function, and its size is also
+that of a single pointer.
+
+An underscore (~\scheme{_}~) can be used as the field name for one or
+more fields of a \scheme{struct}, \scheme{union}, or \scheme{bits} ftype.
+Such fields are included in the layout but are considered unnamed and
+cannot be accessed via the ftype operators described below.
+Thus, in the example above, the \scheme{long} field within the
+\scheme{c} array is inaccessible.
+
+Non-underscore field names are handled symbolically, i.e.,
+they are treated as symbols rather than identifiers.
+Each symbol must be unique (as a symbol) with respect to the other
+field names within a single \scheme{struct}, \scheme{union},
+or \scheme{bits} ftype but need not be
+unique with respect to field names in other \scheme{struct},
+\scheme{union}, or \scheme{bits} ftypes within the same
+ftype.
+
+Each \var{ftype-name} in an \var{ftype} must either
+(a) have been defined previously by \scheme{define-ftype},
+(b) be defined by the current \scheme{define-ftype},
+or
+(c) be a base-type name, i.e., one of the type names supported by
+\scheme{foreign-ref} and \scheme{foreign-set!}.
+In case (b), any reference within one \var{ftype} to the
+\var{ftype-name} of one of the earlier bindings is permissible,
+but a reference to the \var{ftype-name} of the current or a
+subsequent binding can appear only within a pointer field.
+
+For example, in:
+
+\schemedisplay
+(define-ftype
+  [Qlist (struct
+           [head int]
+           [tail (* Qlist)])])
+\endschemedisplay
+
+the reference to \scheme{Qlist} is permissible since it appears
+within a pointer field.
+Similarly, in:
+
+\schemedisplay
+(define-ftype
+  [Qfrob (struct
+           [head int]
+           [tail (* Qsnark)])]
+  [Qsnark (struct
+            [head int]
+            [xtra Qfrob]
+            [tail (* Qfrob)])])
+\endschemedisplay
+
+the mutually recursive references to \scheme{Qsnark} and \scheme{Qfrob}
+are permissible.
+In the following, however:
+
+\schemedisplay
+(define-ftype
+  [Qfrob (struct
+           [head int]
+           [xtra Qfrob]
+           [tail (* Qsnark)])]
+  [Qsnark (struct
+            [head int]
+            [tail (* Qfrob)])])
+\endschemedisplay
+
+the reference to \scheme{Qfrob} within the \var{ftype} for \scheme{Qfrob}
+is invalid, and in:
+
+\schemedisplay
+(define-ftype
+  [Qfrob (struct
+           [head int]
+           [xtra Qsnark]
+           [tail (* Qsnark)])]
+  [Qsnark (struct
+            [head int]
+            [tail (* Qfrob)])])
+\endschemedisplay
+
+the reference to \scheme{Qsnark} is similarly invalid.
+
+By default, padding is inserted where appropriate to maintain
+proper alignment of multiple-byte scalar values in an attempt to
+mirror the target machine's C struct layout conventions, where
+such layouts are adequately documented.
+For packed ftypes (ftypes wrapped in a \scheme{packed} form with
+no closer enclosing \scheme{unpacked} form), this padding is not
+inserted.
+
+Multiple-byte scalar values are stored in memory using the
+target machine's native ``endianness,'' e.g., \scheme{little}
+on X86 and X86\_64-based platforms and \scheme{big} on
+Sparc-based platforms.
+Big-endian or little-endian representation can be forced via
+the \scheme{endian} ftype with a \scheme{big} or \scheme{little}
+\var{endianness} specifier.
+The \scheme{native} specifier can be used to force a return
+back to \scheme{native} representation.
+Each \scheme{endian} form affects only ftypes nested syntactically
+within it and not nested within a closer \scheme{endian} form.
+
+The total size $n$ of the fields within an ftype bits form must
+be 8, 16, 24, 32, 40, 48, 56, or 64.  padding must be added manually if needed.
+In little-endian representation, the first field occupies
+the low-order bits of the containing 8, 16, 24, 32, 40, 48, 56, or 64-bit word,
+with each subsequent field just above the preceding field.
+In big-endian representation, the first field occupies the
+high-order bits, with each subsequent field just below the
+preceding field.
+
+Two ftypes are considered equivalent only if defined by the
+same \scheme{ftype} binding.
+If two ftype definitions look identical but appear in two
+parts of the same program, the ftypes are not identical,
+and attempts to access one using the name of the other via
+the operators described below will fail with a run-time
+exception.
+
+Array bounds must always be constant.
+If an array's length cannot be known until run time, the array
+can be placed at the end of the ftype (and any containing ftype)
+and declared to have size zero, as illustrated by the example below.
+
+\schemedisplay
+(define-ftype Vec
+  (struct
+    [len int]
+    [data (array 0 double)]))
+(define make-Vec
+  (lambda (n)
+    (let ([fptr (make-ftype-pointer Vec
+                  (foreign-alloc
+                    (+ (ftype-sizeof Vec)
+                       (* (ftype-sizeof double) n))))])
+      (ftype-set! Vec (len) fptr n)
+      fptr)))
+(define x (make-Vec 100))
+(/ (- (ftype-pointer-address (ftype-&ref Vec (data 10) x))
+      (ftype-pointer-address x)                            ;=> 10
+      (ftype-sizeof int))
+   (ftype-sizeof double))
+(foreign-free (ftype-pointer-address x))
+\endschemedisplay
+
+No array bounds checks are performed for zero-length arrays.
+Only one variable-sized array can appear
+in a single foreign object, but one can work around this by
+treating the object as multiple individual objects.
+
+To avoid specifying the constant length of an array in more than
+one place, a macro that binds both a variable to the size as
+well as an ftype name to the ftype can be used.
+For example,
+
+\schemedisplay
+(define-syntax define-array
+  (syntax-rules ()
+    [(_ array-name type size-name size)
+     (begin
+       (define size-name size)
+       (define-ftype array-name
+         (array size type)))]))
+(define-array A int A-size 100)
+A-size ;=> 100
+(ftype-pointer-ftype
+  (make-ftype-pointer A
+    (foreign-alloc (ftype-sizeof A)))) ;=> (array 100 int)
+\endschemedisplay
+
+This technique can be used to define arbitrary ftypes with
+arbitrary numbers of array fields.
+
+\label{page:ftype-subtyping}%
+\index{ftype subtyping}%
+A struct ftype is an implicit subtype of the type of the first field
+of the struct.
+Similarly, an array ftype is an implicit subtype of the type of its
+elements.
+Thus, the struct or array extends the type of first field or element
+with additional fields or elements.
+This allows an instance of the struct or array to be treated as an instance
+of the type of its first field or element, without the need to use
+\scheme{ftype-&ref} to allocate a new pointer to the field or element.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-sizeof}{\categorysyntax}{(ftype-sizeof \var{ftype-name})}
+\returns the size in bytes of the ftype identified by \var{ftype-name}
+\listlibraries
+\endentryheader
+
+The size includes the sizes of any ftypes directly embedded within the
+identified ftype but excludes those indirectly embedded via a pointer
+ftype.
+In the latter case, the size of the pointer is included.
+
+\var{ftype-name} must not be defined as a function ftype, since the size
+of a function cannot generally be determined.
+
+% careful---B and C are used by ftype-&ref, etc., below
+\schemedisplay
+(define-ftype B
+  (struct
+    [b1 integer-32]
+    [b2 (array 10 integer-32)]))
+(ftype-sizeof B) ;=> 44
+
+(define-ftype C (* B))
+(ftype-sizeof C) ;=> 4  \var{; on 32-bit machines}
+(ftype-sizeof C) ;=> 8  \var{; on 64-bit machines}
+
+(define-ftype BB
+  (struct
+    [bb1 B]
+    [bb2 (* B)]))
+(- (ftype-sizeof BB) (ftype-sizeof void*)) ;=> 44
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:make-ftype-pointer}
+\formdef{make-ftype-pointer}{\categorysyntax}{(make-ftype-pointer \var{ftype-name} \var{expr})}
+\returns an ftype-pointer object
+\listlibraries
+\endentryheader
+
+If \var{ftype-name} does not describe a function ftype, \var{expr}
+must evaluate to an \var{address} represented as an exact integer in
+the appropriate range for the target machine.
+
+The ftype-pointer object returned by this procedure encapsulates the
+address and is tagged with a representation of the type identified by
+\var{ftype-name} to enable various forms of checking to be done by the
+access routines described below.
+
+\schemedisplay
+(make-ftype-pointer E #x80000000) ;=> #<ftype-pointer #x80000000>
+\endschemedisplay
+
+The address will not typically be a constant, as shown.
+Instead, it might instead come from a call to \scheme{foreign-alloc}, e.g.:
+
+\schemedisplay
+(make-ftype-pointer E (foreign-alloc (ftype-sizeof E)))
+\endschemedisplay
+
+It might also come from source outside of Scheme such as from a C
+routine called from Scheme via the foreign-procedure interface.
+
+If \var{ftype-name} describes a \index{function ftype}function ftype,
+\var{expr} must evaluate to an address, procedure, or string.
+If it evaluates to address, the call behaves like any other call to
+\scheme{make-ftype-pointer} with an address argument.
+
+If it evaluates to a procedure, a foreign-callable code object is
+created for the procedure, as if via
+\index{\scheme{foreign-callable}}\scheme{foreign-callable}
+(Section~\ref{SECTFOREIGNCALLABLE}).
+The address encapsulated in the resulting ftype-pointer object is the
+address of the procedure's entry point.
+
+\schemedisplay
+(define fact
+  (lambda (n)
+    (if (= n 0) 1 (fact (- n 1)))))
+(define-ftype fact_t (function (int) int))
+(define fact-fptr (make-ftype-pointer fact_t fact))
+\endschemedisplay
+
+The resulting ftype pointer can be passed to a C routine,
+if the argument is declared to be a pointer to the same ftype, and
+the C routine can invoke the function pointer it receives as it
+would any other function pointer.
+Thus, \scheme{make-ftype-pointer} with a function ftype is an alternative
+to \scheme{foreign-callable} for creating C-callable wrappers for Scheme
+procedures.
+
+Since all Scheme objects, including code objects, can be relocated or
+even reclaimed by the garbage collector the foreign-callable code object
+is automatically locked, as if via \scheme{lock-object}, before it is
+embedded in the ftype pointer.
+The code object should be unlocked after its last use from C,
+since locked objects take up space, cause fragmentation, and
+increase the cost of collection.
+Since the system cannot determine automatically when the last use
+from C occurs, the program must explicitly unlock the code object,
+which it can do by extracting the address from the ftype-pointer
+converting the address (back) into a code object, and passing it
+to \scheme{unlock-object}:
+
+\schemedisplay
+(unlock-object
+  (foreign-callable-code-object
+    (ftype-pointer-address fact-fptr)))
+\endschemedisplay
+
+Once unlocked, the ftype pointer should not be used again, unless
+it is relocked, e.g., via:
+
+\schemedisplay
+(lock-object
+  (foreign-callable-code-object
+    (ftype-pointer-address fact-fptr)))
+\endschemedisplay
+
+A program can determine whether an object is already locked via
+the \scheme{locked-object?} predicate.
+
+A \index{function ftype}function ftype can be also used with
+\scheme{make-ftype-pointer} to create an ftype-pointer to a C function,
+either by providing the address of the C function or its name, represented
+as a string.
+For example, with the following definition of \scheme{bvcopy_t},
+
+\schemedisplay
+(define-ftype bvcopy_t (function (u8* u8* size_t) void))
+\endschemedisplay
+
+the two definitions of \scheme{bvcopy-ftpr} below are equivalent.
+
+\schemedisplay
+(define bvcopy-fptr (make-ftype-pointer bvcopy_t "memcpy"))
+(define bvcopy-fptr (make-ftype-pointer bvcopy_t (foreign-entry "memcpy")))
+\endschemedisplay
+
+A library that defines \var{memcpy} must be loaded first via
+\scheme{load-shared-object}, or \scheme{memcpy} must be registered
+via one of the methods described in Section ~\ref{SECTFOREIGNACCESS}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer?}{\categorysyntax}{(ftype-pointer? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an ftype pointer, otherwise \scheme{#f}
+\formdef{ftype-pointer?}{\categorysyntax}{(ftype-pointer? \var{ftype-name} \var{obj})}
+\returns \scheme{#t} if \var{obj} is an \var{ftype-name}, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define-ftype Widget1 (struct [x int] [y int]))
+(define-ftype Widget2 (struct [w Widget1] [b boolean]))
+
+(define x1 (make-ftype-pointer Widget1 #x80000000))
+(define x2 (make-ftype-pointer Widget2 #x80000000))
+
+(ftype-pointer? x1) ;=> #t
+(ftype-pointer? x2) ;=> #t
+
+(ftype-pointer? Widget1 x1) ;=> #t
+(ftype-pointer? Widget1 x2) ;=> #t
+
+(ftype-pointer? Widget2 x1) ;=> #f
+(ftype-pointer? Widget2 x2) ;=> #t
+
+(ftype-pointer? #x80000000) ;=> #f
+(ftype-pointer? Widget1 #x80000000) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer-address}{\categoryprocedure}{(ftype-pointer-address \var{fptr})}
+\returns the address encapsulated within \var{fptr}
+\listlibraries
+\endentryheader
+
+\var{fptr} must be an ftype-pointer object.
+
+\schemedisplay
+(define x (make-ftype-pointer E #x80000000))
+(ftype-pointer-address x) ;=> #x80000000
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer=?}{\categorysyntax}{(ftype-pointer=? \var{fptr_1} \var{fptr_2})}
+\returns \scheme{#t} if \var{fptr_1} and \var{fptr_2} have the same address, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\var{fptr_1} and \var{fptr_2} must be ftype-pointer objects.
+
+\scheme{ftype-pointer=?} might be defined as follows:
+
+\schemedisplay
+(define ftype-pointer=?
+  (lambda (fptr1 fptr2)
+    (= (ftype-pointer-address fptr1) (ftype-pointer-address fptr2))))
+\endschemedisplay
+
+It is, however, guaranteed not to allocate bignums for the addresses
+even if the addresses do not fit in fixnum range.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer-null?}{\categorysyntax}{(ftype-pointer-null? \var{fptr})}
+\returns \scheme{#t} if the address of \var{fptr} is $0$, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\var{fptr} must be an ftype-pointer object.
+
+\scheme{ftype-pointer-null?} might be defined as follows:
+
+\schemedisplay
+(define ftype-pointer-null?
+  (lambda (fptr)
+    (= (ftype-pointer-address fptr) 0)))
+\endschemedisplay
+
+It is, however, guaranteed not to allocate a bignum for the address
+even if the address does not fit in fixnum range.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-&ref}{\categorysyntax}{(ftype-&ref \var{ftype-name} (\var{a} ...) \var{fptr-expr})}
+\formdef{ftype-&ref}{\categorysyntax}{(ftype-&ref \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{index})}
+\returns an ftype-pointer object
+\listlibraries
+\endentryheader
+
+The ftype-pointer object returned by \scheme{ftype-&ref}
+encapsulates the address of some object embedded directly or
+indirectly within the foreign object pointed to by the value
+of \var{fptr-expr}, offset by \var{index}, if present.
+The value of \var{fptr-expr} must be
+an ftype pointer (fptr) of the ftype identified by \var{ftype-name},
+and \var{index} must either be the identifier \scheme{*} or evaluate
+to a fixnum, possibly negative.
+The index is automatically scaled by the size of the ftype identified
+by \var{ftype-name}, which allows the fptr to be treated as an array
+of \var{ftype-name} objects and \var{index} as an index into that array.
+An index of \scheme{*} or 0 is the same as no index.
+
+The sequence of accessors \scheme{\var{a} \dots} must specify a
+valid path through the identified ftype.
+For \scheme{struct}, \scheme{union}, and \scheme{bits} ftypes,
+an accessor must be a valid field name for the ftype, while for
+pointer and array ftypes, an accessor must be the identifier
+\scheme{*} or evaluate to a fixnum index.
+For array ftypes, an index must be nonnegative, and for array ftypes
+with nonzero length, an index must also be less than the length.
+
+The examples below assume the definitions of \scheme{B} and \scheme{BB}
+shown above in the description of \scheme{ftype-sizeof}.
+Fixed addresses are shown for illustrative purposes and are assumed
+to be valid, although addresses are generally determined
+at run time via \scheme{foreign-alloc} or some other mechanism.
+
+\schemedisplay
+(define x (make-ftype-pointer B #x80000000))
+(ftype-&ref B () x) ;=> #<ftype-pointer #x80000000>
+(let ([idx 1])             ;=> #<ftype-pointer #x8000002C>
+  (ftype-&ref B () x idx))
+(let ([idx -1])            ;=> #<ftype-pointer #x7FFFFFD4>
+  (ftype-&ref B () x idx))
+(ftype-&ref B (b1) x) ;=> #<ftype-pointer #x80000000>
+(ftype-&ref B (b2) x) ;=> #<ftype-pointer #x80000004>
+(ftype-&ref B (b2 5) x) ;=> #<ftype-pointer #x80000018>
+(let ([n 5]) (ftype-&ref B (b2 n) x)) ;=> #<ftype-pointer #x80000018>
+
+(ftype-&ref B (b1 b2) x) ;=> \var{syntax error}
+(ftype-&ref B (b2 15) x) ;=> \var{run-time exception}
+
+(define y (make-ftype-pointer BB #x90000000))
+(ftype-set! BB (bb2) y x)
+(ftype-&ref BB (bb1 b2) y) ;=> #<ftype-pointer #x90000004>
+(ftype-&ref BB (bb2 * b2) y) ;=> #<ftype-pointer #x80000004>
+(let ([idx 1])                    ;=> #<ftype-pointer #x80000030>
+  (ftype-&ref BB (bb2 idx b2) y))
+\endschemedisplay
+
+With no accessors and no index, as in the first use of \scheme{ftype-&ref}
+above, the returned \scheme{ftype-pointer} might be \scheme{eq?} to
+the input.
+Otherwise, the \scheme{ftype-pointer} is freshly allocated.
+
+%----------------------------------------------------------------------------
+\entryheader\label{defn:ftype-set!}
+\formdef{ftype-set!}{\categorysyntax}{(ftype-set! \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{val-expr})}
+\formdef{ftype-set!}{\categorysyntax}{(ftype-set! \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{index} \var{val-expr})}
+\returns unspecified
+\formdef{ftype-ref}{\categorysyntax}{(ftype-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr})}
+\formdef{ftype-ref}{\categorysyntax}{(ftype-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{index})}
+\returns an ftype-pointer object
+\listlibraries
+\endentryheader
+
+These forms are used to store values into or retrieve values from the
+object pointed to by the value of \var{fptr-expr}, offset by
+\var{index}, if present.
+The value of \var{fptr-expr} must be
+an ftype pointer (fptr) of the ftype identified by \var{ftype-name},
+and \var{index} must either be the identifier \scheme{*} or evaluate
+to a fixnum, possibly negative.
+The index is automatically scaled by the size of the ftype identified
+by \var{ftype-name}, which allows the fptr to be treated as an array
+of \var{ftype-name} objects and \var{index} as an index into that array.
+An index of \scheme{*} or 0 is the same as no index.
+
+The sequence of accessors \scheme{\var{a} \dots} must specify a
+valid path through the identified ftype.
+For \scheme{struct}, \scheme{union}, and \scheme{bits} ftypes,
+an accessor must be a valid field name for the ftype, while for
+pointer and array ftypes, an accessor must be the identifier
+\scheme{*} or evaluate to a fixnum index.
+For array ftypes, an index must be nonnegative, and for array ftypes
+with nonzero length, an index must also be less than the length.
+The field or element specified by the sequence of accessors must be a scalar
+field, e.g., a pointer field or a field containing a base type
+such as an \scheme{int}, \scheme{char}, or \scheme{double}.
+
+For \scheme{ftype-set!}, \var{val-expr} must evaluate to a value
+of the appropriate type for the specified field, e.g., an ftype
+pointer of the appropriate type or an appropriate base-type value.
+
+For both signed and unsigned integer fields, values in the range
+$-2^{w-1}$ through $2^{w}-1$ are accepted, where $w$ is the width in
+bits of the integer field.
+For signed integer fields, values in the range $2^{w-1}$ through $2^{w}-1$
+are treated as two's complement representations of the corresponding
+negative numbers.
+For unsigned integer fields, values in the range $-2^{w-1}$ through
+$-1$ are similarly treated as two's complement representations of the
+corresponding positive numbers.
+
+\scheme{char} and \scheme{wchar_t} (\scheme{wchar}) field values
+are converted from (\scheme{ftype-set!}) or to (\scheme{ftype-ref})
+Scheme characters, as if with \scheme{char->integer} and
+\scheme{integer->char}.
+Characters stored by \scheme{ftype-set!} into a \scheme{char}
+field must have Unicode scalar values in the range 0 through 255.
+Under Windows and any other system where \scheme{wchar_t}
+(\scheme{wchar}) is a 16-bit value, characters stored by
+\scheme{ftype-set!} into a \scheme{whar_t} (\scheme{wchar})
+field must have Unicode scalar values in the range 0 through $2^{16}-1$.
+On systems where \scheme{wchar_t} is a 32-bit value, any
+character can be stored in a \scheme{wchar_t} (\scheme{wchar})
+field.
+
+The examples below assume that \scheme{B} and \scheme{C} have been
+defined as shown in the description of \scheme{ftype-sizeof} above.
+
+\schemedisplay
+(define b
+  (make-ftype-pointer B
+    (foreign-alloc
+      (* (ftype-sizeof B) 3))))
+(define c
+  (make-ftype-pointer C
+    (foreign-alloc (ftype-sizeof C))))
+
+(ftype-set! B (b1) b 5)
+(ftype-set! B (b1) b 1 6)
+(ftype-set! B (b1) c 5) ;=> \var{exception: ftype mismatch}
+(ftype-set! B (b2) b 0) ;=> \var{exception: not a scalar}
+(ftype-set! B (b2 -1) b 0) ;=> \var{exception: invalid index}
+(ftype-set! B (b2 0) b 50)
+(ftype-set! B (b2 4) b 55)
+(ftype-set! B (b2 10) b 55) ;=> \var{exception: invalid index}
+
+(ftype-set! C () c (ftype-&ref B () b 1))
+
+(= (ftype-pointer-address (ftype-ref C () c))      ;=> #t
+   (+ (ftype-pointer-address b) (ftype-sizeof B)))
+(= (ftype-pointer-address (ftype-&ref C (*) c)) ;=> #t
+   (+ (ftype-pointer-address b) (ftype-sizeof B)))
+(= (ftype-pointer-address (ftype-&ref C (-1) c)) ;=> #t
+   (ftype-pointer-address b))
+
+(ftype-ref C (-1 b1) c) ;=> 5
+(ftype-ref C (* b1) c) ;=> 6
+(ftype-ref C (-1 b2 0) c) ;=> 50
+(let ([i 4]) (ftype-ref C (-1 b2 i) c)) ;=> 55
+
+(ftype-set! C (-1 b2 0) c 75)
+(ftype-ref B (b2 0) b) ;=> 75
+(foreign-free (ftype-pointer-address c))
+(foreign-free (ftype-pointer-address b))
+\endschemedisplay
+
+A \index{function ftype}function ftype pointer can be converted into
+a Scheme-callable procedure via \scheme{ftype-ref}.
+Assuming that a library defining \var{memcpy} has been loaded via
+\scheme{load-shared-object} or \scheme{memcpy} has been registered
+via one of the methods described in Section ~\ref{SECTFOREIGNACCESS},
+A Scheme-callable \scheme{memcpy} can be defined as follows.
+
+\schemedisplay
+(define-ftype bvcopy_t (function (u8* u8* size_t) void))
+(define bvcopy-fptr (make-ftype-pointer bvcopy_t "memcpy"))
+(define bvcopy (ftype-ref bvcopy_t () bvcopy-fptr))
+
+(define bv1 (make-bytevector 8 0))
+(define bv2 (make-bytevector 8 57))
+bv1 ;=> #vu8(0 0 0 0 0 0 0 0)
+bv2 ;=> #vu8(57 57 57 57 57 57 57 57)
+(bvcopy bv1 bv2 5)
+bv1 ;=> #vu8(57 57 57 57 57 0 0 0)
+\endschemedisplay
+
+An ftype pointer can also be obtained as a return value from a
+C function declared to return a pointer to a function ftype.
+
+Thus, \scheme{ftype-ref} with a function ftype is an alternative to
+\index{\scheme{foreign-procedure}}\scheme{foreign-procedure}
+(Section~\ref{SECTFOREIGNPROCEDURES})
+for creating Scheme-callable wrappers for
+C functions.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer-ftype}{\categoryprocedure}{(ftype-pointer-ftype \var{fptr})}
+\returns \var{fptr}'s ftype, represented as an s-expression
+\listlibraries
+\endentryheader
+
+\var{fptr} must be an ftype-pointer object.
+
+\schemedisplay
+(define-ftype Q0
+  (struct
+    [x int]
+    [y int]))
+(define-ftype Q1
+  (struct
+    [x double]
+    [y char]
+    [z (endian big
+         (bits
+           [_ unsigned 3]
+           [a unsigned 9]
+           [b unsigned 4]))]
+    [w (* Q0)]))
+(define q1 (make-ftype-pointer Q1 0))
+(ftype-pointer-ftype q1) ;=> (struct 
+                         ;==   [x double]
+                         ;==   [y char]
+                         ;==   [z (endian big
+                         ;==        (bits
+                         ;==          [_ unsigned 3]
+                         ;==          [a unsigned 9]
+                         ;==          [b unsigned 4]))]
+                         ;==   [w (* Q0)])
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-pointer->sexpr}{\categoryprocedure}{(ftype-pointer->sexpr \var{fptr})}
+\returns an s-expression representation of the object to which \var{fptr} points
+\listlibraries
+\endentryheader
+
+\var{fptr} must be an ftype-pointer object.
+
+For each unnamed field, i.e., each whose field name is an underscore, the
+corresponding field value in the resulting s-expression is also an underscore.
+Similarly, if a field is inaccessible, i.e., if its address is invalid, the
+value is the symbol \scheme{invalid}.
+
+\schemedisplay
+(define-ftype Frob
+  (struct
+    [p boolean]
+    [q char]))
+(define-ftype Snurk
+  (struct
+    [a Frob]
+    [b (* Frob)]
+    [c (* Frob)]
+    [d (bits
+         [_ unsigned 15]
+         [dx signed 17])]
+    [e (array 5 double)]))
+(define x
+  (make-ftype-pointer Snurk
+    (foreign-alloc (ftype-sizeof Snurk))))
+(ftype-set! Snurk (b) x
+  (make-ftype-pointer Frob
+    (foreign-alloc (ftype-sizeof Frob))))
+(ftype-set! Snurk (c) x
+  (make-ftype-pointer Frob 0))
+(ftype-set! Snurk (a p) x #t)
+(ftype-set! Snurk (a q) x #\A)
+(ftype-set! Snurk (b * p) x #f)
+(ftype-set! Snurk (b * q) x #\B)
+(ftype-set! Snurk (d dx) x -2500)
+(do ([i 0 (fx+ i 1)])
+    ((fx= i 5))
+  (ftype-set! Snurk (e i) x (+ (* i 5.0) 3.0)))
+(ftype-pointer->sexpr x) ;=> (struct
+                         ;==   [a (struct [p #t] [q #\A])]
+                         ;==   [b (* (struct [p #f] [q #\B]))]
+                         ;==   [c (* (struct [p invalid] [q invalid]))]
+                         ;==   [d (bits [_ _] [dx -2500])]
+                         ;==   [e (array 5 3.0 8.0 13.0 18.0 23.0)])
+\endschemedisplay
+
+
+
+
+\section{Providing Access to Foreign Procedures\label{SECTFOREIGNACCESS}}
+
+Access to foreign procedures can be provided in several ways:
+
+\begin{itemize}
+\item Foreign procedures may be loaded from
+``shared objects'' using \scheme{load-shared-object}.
+
+\item A new {\ChezScheme} image can be built with additional foreign code
+linked in.  (Consult with the person who installed {\ChezScheme} at
+your site for details.)
+These entries are typically registered via
+\scheme{Sforeign_symbol} or \scheme{Sregister_symbol},
+documented in Section~\ref{SECTFOREIGNCLIB}.
+
+\item Additional entries may be dynamically loaded or otherwise obtained
+by foreign code.
+These are also typically registered using
+\scheme{Sforeign_symbol} or \scheme{Sregister_symbol}.
+
+\item The address of an entry, i.e., a function pointer, may be passed
+into Scheme and used as the the value of the entry expression in a
+foreign-procedure expression.  
+This allows foreign entry points to be used even when they are not
+registered by name.  
+\end{itemize}
+
+% \noindent
+% \scheme{load-shared-object} is available on all platforms, including
+% Sun Sparc systems running Solaris 2.0 (SunOS 5.X) or later,
+% DEC Alpha systems running Digital Unix 2.X or later,
+% SGI systems running IRIX 5.X or later,
+% PowerPC systems running AIX 4.1 or later,
+% HP PA-RISC systems running HP/UX 9.X or later,
+% Intel-based Linux systems running kernel version 2.X or higher,
+% Intel-based Windows~NT 3.51 or later,
+% and Windows~95/98.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-entry?}{\categoryprocedure}{(foreign-entry? \var{entry-name})}
+\returns \scheme{#t} if \var{entry-name} is an existing foreign procedure entry
+point, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\var{entry-name} must be a string.
+\scheme{foreign-entry?} may be used to determine if an entry exists for a foreign
+procedure.
+
+The following examples assume that 
+a library that defines \var{strlen} has been loaded via
+\scheme{load-shared-object} or that \scheme{strlen} has been registered
+via one of the other methods described in this section.
+
+\schemedisplay
+(foreign-entry? "strlen") ;=> #t
+((foreign-procedure "strlen"
+    (string) size_t)
+ "hey!") ;=> 4
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-entry}{\categoryprocedure}{(foreign-entry \var{entry-name})}
+\returns the address of \var{entry-name} as an exact integer
+\listlibraries
+\endentryheader
+
+\noindent
+\var{entry-name} must be a string naming an existing foreign entry point.
+
+The following examples assume that 
+a library that defines \var{strlen} has been loaded via
+\scheme{load-shared-object} or that \scheme{strlen} has been registered
+via one of the other methods described in this section.
+
+\schemedisplay
+(let ([addr (foreign-entry "strlen")])
+  (and (integer? addr) (exact? addr))) ;=> #t
+
+(define-ftype strlen-type (function (string) size_t))
+(define strlen
+  (ftype-ref strlen-type ()
+    (make-ftype-pointer strlen-type "strlen")))
+(strlen "hey!") ;=> 4
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-address-name}{\categoryprocedure}{(foreign-address-name \var{address})}
+\returns the entry name corresponding to \var{address}, if known, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+The following examples assume that 
+a library that defines \var{strlen} has been loaded via
+\scheme{load-shared-object} or that \scheme{strlen} has been registered
+via one of the other methods described in this section.
+
+\schemedisplay
+(foreign-address-name (foreign-entry "strlen")) ;=> "strlen"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{load-shared-object}{\categoryprocedure}{(load-shared-object \var{path})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{load-shared-object} loads the shared object named by \var{path}.
+Shared objects may be system libraries or files created from ordinary
+C programs.
+All external symbols in the shared object, along with external symbols
+available in other shared objects linked with the shared object,
+are made available as foreign entries. 
+
+This procedure is supported for most platforms upon which {\ChezScheme}
+runs.
+
+If \var{path} does not begin with a ``.'' or ``/'', the shared
+object is searched for in a default set of directories determined
+by the system.
+
+On most Unix systems, \scheme{load-shared-object} is based on the
+system routine \scheme{dlopen}.
+%Under AIX, \scheme{load-shared-object} is based on the system routine
+%\scheme{load}.
+%Under HPUX, \scheme{load-shared-object} is based on the system routine
+%\scheme{shl_load}.
+Under Windows, \scheme{load-shared-object} is based on \scheme{LoadLibrary}.
+Refer to the documentation for these routines and for the C compiler
+and loader for precise rules for locating and building shared objects.
+
+\scheme{load-shared-object} can be used to access built-in C library
+functions, such as \scheme{getenv}.
+The name of the shared object varies from one system to another.
+% On Sun Sparc systems running Solaris 2.X or higher
+% running Digital Unix 2.X or higher, and SGI systems running IRIX 5.X
+% or higher
+On Linux systems:
+
+\schemedisplay
+(load-shared-object "libc.so.6")
+\endschemedisplay
+
+On Solaris, OpenSolaris, FreeBSD, NetBSD, and OpenBSD systems:
+
+\schemedisplay
+(load-shared-object "libc.so")
+\endschemedisplay
+
+On MacOS X systems:
+
+\schemedisplay
+(load-shared-object "libc.dylib")
+\endschemedisplay
+
+% \noindent
+% On PA-RISC systems running HP/UX 9.X or later:
+% 
+% \schemedisplay
+% (load-shared-object "/lib/libc.sl")
+% \endschemedisplay
+
+On Windows:
+
+\schemedisplay
+(load-shared-object "crtdll.dll")
+\endschemedisplay
+
+Once the C library has been loaded, \scheme{getenv} should be available
+as a foreign entry.
+
+\schemedisplay
+(foreign-entry? "getenv") ;=> #t
+\endschemedisplay
+
+\noindent
+An equivalent Scheme procedure may be defined and
+invoked as follows.
+
+\schemedisplay
+(define getenv
+  (foreign-procedure "getenv"
+    (string)
+    string))
+(getenv "HOME") ;=> "/home/elmer/fudd"
+(getenv "home") ;=> #f
+\endschemedisplay
+
+\scheme{load-shared-object} can be used to access user-created
+libraries as well.
+Suppose the \index{C (programming language)}C file \scheme{"even.c"}
+contains
+
+\schemedisplay
+int even(n) int n; { return n == 0 || odd(n - 1); }
+\endschemedisplay
+
+\noindent
+and the C file \scheme{"odd.c"} contains
+
+\schemedisplay
+int odd(n) int n; { return n != 0 && even(n - 1); }
+\endschemedisplay
+
+\noindent
+The files must be compiled and linked into a shared object before
+they can be loaded.
+How this is done depends upon the host system.
+\noindent
+On Linux, FreeBSD, OpenBSD, and OpenSolaris systems:
+
+\schemedisplay
+(system "cc -fPIC -shared -o evenodd.so even.c odd.c")
+\endschemedisplay
+
+Depending on the host configuration, the \scheme{-m32} or
+\scheme{-m64} option might be needed to specify 32-bit
+or 64-bit compilation as appropriate.
+
+On MacOS X (Intel or PowerPC) systems:
+
+\schemedisplay
+(system "cc -dynamiclib -o evenodd.so even.c odd.c")
+\endschemedisplay
+
+Depending on the host configuration, the \scheme{-m32} or
+\scheme{-m64} option might be needed to specify 32-bit
+or 64-bit compilation as appropriate.
+
+On 32-bit Sparc Solaris:
+
+\schemedisplay
+(system "cc -KPIC -G -o evenodd.so even.c odd.c")
+\endschemedisplay
+
+\noindent
+On 64-bit Sparc Solaris:
+
+\schemedisplay
+(system "cc -xarch=v9 -KPIC -G -o evenodd.so even.c odd.c")
+\endschemedisplay
+
+%\noindent
+%On DEC Alpha systems running Digital Unix 2.X or higher:
+%
+%\schemedisplay
+%(system "cc -c even.c")
+%(system "cc -c odd.c")
+%(system "ld -o evenodd.so -shared even.o odd.o")
+%\endschemedisplay
+%
+%\noindent
+%On SGI systems running IRIX 5.X:
+%
+%\schemedisplay
+%(system "cc -G -c even.c")
+%(system "cc -G -c odd.c")
+%(system "ld -o evenodd.so -shared even.o odd.o")
+%\endschemedisplay
+%
+%\noindent
+%On PA-RISC systems running HP/UX 9.X or later:
+%
+%\schemedisplay
+%(system "cc -Ae +z -c even.c")
+%(system "cc -Ae +z -c odd.c")
+%(system "ld -b -o evenodd.so even.o odd.o")
+%\endschemedisplay
+
+On Windows, we build a DLL (dynamic link library) file.
+In order to make the compiler generate the appropriate entry
+points, we alter \scheme{even.c} to read
+
+\schemedisplay
+#ifdef WIN32
+#define EXPORT extern __declspec (dllexport)
+#else
+#define EXPORT extern
+#endif
+
+EXPORT int even(n) int n; { return n == 0 || odd(n - 1); }
+\endschemedisplay
+
+\noindent
+and \scheme{odd.c} to read
+
+\schemedisplay
+#ifdef WIN32
+#define EXPORT extern __declspec (dllexport)
+#else
+#define EXPORT extern
+#endif
+
+EXPORT int odd(n) int n; { return n != 0 && even(n - 1); }
+\endschemedisplay
+
+\noindent
+We can then build the DLL as follows, giving
+it the extension ``.so'' rather than ``.dll''
+for consistency with the other systems.
+
+\schemedisplay
+(system "cl -c -DWIN32 even.c")
+(system "cl -c -DWIN32 odd.c")
+(system "link -dll -out:evenodd.so even.obj odd.obj")
+\endschemedisplay
+
+
+%On PowerPC systems running AIX 4.1 or higher, it is necessary to provide
+%``.imp'' and ``.exp'' files on the command line.
+%(See the documentation for \scheme{ld} for details).
+%The ``.imp'' file lists imports, and the ``.exp'' file lists
+%exports.
+%Since we do not have any imports, the ``.imp'' can be empty.
+%The ``.exp'' file should simply contain a list of the exported
+%identifiers, one per line.
+%We also need to provide an entry point, so we include an extra file
+%\scheme{evenodd.c} that defines one.
+%
+%\schemedisplay
+%(system "echo > evenodd.imp")
+%(system "echo even > evenodd.exp; echo odd >> evenodd.exp")
+%(system "echo 'void init(void) { return; }' > evenodd.c")
+%(system "cc -c even.c")
+%(system "cc -c odd.c")
+%(system "cc -c evenodd.c")
+%(system "ld -o evenodd.so -e init -bI:evenodd.imp -bE:evenodd.exp\\
+%           evenodd.o even.o odd.o")
+%\endschemedisplay
+%
+%\noindent
+%(The \scheme{\\} in the last command should be omitted if the command
+%is all on one line.)
+
+\medskip\noindent
+The resulting ``.so'' file can be loaded into Scheme and \scheme{even} and
+\scheme{odd} made available as foreign procedures:
+
+\schemedisplay
+(load-shared-object "./evenodd.so")
+(let ([odd (foreign-procedure "odd"
+             (integer-32) boolean)]
+      [even (foreign-procedure "even"
+              (integer-32) boolean)])
+  (list (even 100) (odd 100))) ;=> (#t #f)
+\endschemedisplay
+
+\noindent
+The filename is given as \scheme{"./evenodd.so"} rather than simply
+\scheme{"evenodd.so"}, because some systems look for shared libraries
+in a standard set of system directories that does not include the
+current directory.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{remove-foreign-entry}{\categoryprocedure}{(remove-foreign-entry \var{entry-name})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{remove-foreign-entry} blocks further access to the entry
+specified by the string \var{entry-name}.
+An exception is raised with condition type \scheme{&assertion}
+if the entry does not exist.
+Since access previously established by \scheme{foreign-procedure} is not affected,
+\scheme{remove-foreign-entry} may be used to clean up after the desired interface
+to a group of foreign procedures has been established.
+
+\scheme{remove-foreign-entry} can be used to remove entries registered using
+\scheme{Sforeign_symbol} and \scheme{Sregister_symbol} but not
+entries created as
+a result of a call to \scheme{load-shared-object}.
+
+
+\section{Using Other Foreign Languages\label{SECTFOREIGNOTHER}}
+
+Although the {\ChezScheme} foreign procedure interface is oriented primarily
+toward procedures defined in C or available in C libraries, it
+is possible to invoke procedures defined in other languages that follow C
+calling conventions.
+One source of difficulty may be the interpretation of names.
+Since \index{Unix}Unix-based \index{C (programming language)}C compilers often prepend an underscore to external
+names,
+the foreign interface attempts to interpret entry names in
+a manner consistent with the host C compiler.
+Occasionally, such as for assembly coded files, this entry
+name interpretation may not be desired.
+It can be prevented by prefixing the entry name with an ``='' character.
+For example, after loading an assembly file containing a procedure \scheme{"foo"}
+one might have\index{\scheme{foreign-entry?}}:
+
+\schemedisplay
+(foreign-entry? "foo") ;=> #f
+(foreign-entry? "=foo") ;=> #t
+\endschemedisplay
+
+
+\section{C Library Routines\label{SECTFOREIGNCLIB}}
+
+Additional foreign interface support is provided via a set of
+\index{C (programming language)}\index{C preprocessor macros}C
+preprocessor macros and
+\index{C-callable library functions}C-callable library functions.
+Some of these routines allow C programs to examine,
+allocate, and alter Scheme objects.
+Others permit C functions to call Scheme procedures via a
+more primitive interface than that defined in
+Section~\ref{SECTFOREIGNCALLABLE}.
+Still others permit the development of custom executable images
+and use of the Scheme system as a subordinate program within
+another program, e.g., for use as an extension language.
+
+C code that uses these routines must include the \scheme{"scheme.h"}
+header file distributed with {\ChezScheme} and must be linked
+(statically or dynamically) with the {\ChezScheme} kernel.
+The header file contains definitions for the preprocessor macros and
+\scheme{extern} declarations for the library functions.
+The file is customized to the release of {\ChezScheme} and machine
+type with which it is distributed; it
+should be left unmodified to facilitate switching among {\ChezScheme}
+releases, and the proper version of the header file should always be
+used with C code compiled for use with a particular version of
+{\ChezScheme}.
+The version and machine type are defined in \scheme{"scheme.h"}
+under the names \scheme{VERSION} and \scheme{MACHINE_TYPE}.
+
+The name of each routine begins with a capital \scheme{S}, e.g.,
+\scheme{Sfixnump}.
+Many of the names are simple translations of the names of closely
+related Scheme procedures, e.g., \scheme{Sstring_to_symbol} is the C
+interface equivalent of \scheme{string->symbol}.
+Most externally visible entries in the {\ChezScheme} executable that
+are not documented here begin with capital \scheme{S} followed by an
+underscore (\scheme{S_}); their use should be avoided.
+
+In addition to the various macros and external declarations given
+in \scheme{scheme.h}, the header file also defines (\scheme{typedefs})
+several types used in the header file:
+
+\begin{itemize}
+\item \scheme{ptr}: type of a Scheme value,
+
+\item \scheme{iptr}: a signed integer the same size as a Scheme value, and
+
+\item \scheme{uptr}: an unsigned integer the same size as a Scheme value.
+
+\item \scheme{string_char}: type of a single Scheme string element.
+
+\item \scheme{octet}: type of a single Scheme bytevector element (unsigned char).
+\end{itemize}
+
+\noindent
+These types may vary depending upon the platform, although \scheme{ptr}
+is typically \scheme{void *}, \scheme{iptr} is typically \scheme{long} \scheme{int},
+and \scheme{uptr} is typically \scheme{unsigned} \scheme{long} \scheme{int}.
+
+Under Windows, defining \scheme{SCHEME_IMPORT} before including scheme.h
+causes scheme.h to declare its entry points using
+\scheme{extern} \scheme{declspec} \scheme{(dllimport)} rather than
+\scheme{extern} \scheme{declspec} \scheme{(dllexport)} (the default).
+Not defining \scheme{SCHEME_IMPORT} and instead defining \scheme{SCHEME_STATIC}
+causes scheme.h to declare exports using just \scheme{extern}.
+The static libraries distributed with Chez Scheme are built using
+\scheme{SCHEME_STATIC}.
+
+The remainder of this section describes each of the C interface
+routines in turn.
+A declaration for each routine is given in ANSI C function prototype
+notation to precisely specify the argument and result types.
+Scheme objects have the C type \scheme{ptr}, which is defined in
+\scheme{"scheme.h"}.
+Where appropriate, C values are accepted as arguments or returned as
+values in place of Scheme objects.
+
+The preprocessor macros may evaluate their arguments more than once
+(or not at all), so care should be taken to ensure that this does not
+cause problems.
+
+% these must be xdef, since their expansions contain \scheme{...}
+\xdef\cconst#1#2{\noindent\index{\scheme{#2}}%
+[macro] \scheme{#1} \scheme{#2}\\}
+
+\xdef\cmacro#1#2#3{\noindent\index{\scheme{#2}}%
+[macro] \scheme{#1} \scheme{#2}\scheme{(#3)}\\}
+
+\xdef\cfunction#1#2#3{\noindent\index{\scheme{#2}}%
+[func] \scheme{#1} \scheme{#2}\scheme{(#3)}\\}
+
+\parheader{Customization}
+The functions described here are used to initialize the Scheme system,
+build the Scheme heap, and run the Scheme system from a separate
+program.
+
+\cfunction{char *}{Skernel_version}{void}
+\cfunction{void}{Sscheme_init}{void (*\var{abnormal}_\var{exit})(void)}
+\cfunction{void}{Sset_verbose}{int \var{v}}
+\cfunction{void}{Sregister_boot_file}{const char *\var{name}}
+\cfunction{void}{Sbuild_heap}{const char *\var{exec}, void (*\var{custom}_\var{init})(void)}
+\cfunction{void}{Senable_expeditor}{const char *\var{history}_\var{file}}
+\cfunction{void}{Sretain_static_relocation}{void}
+\cfunction{int}{Sscheme_start}{int \var{argc}, char *\var{argv}[]}
+\cfunction{int}{Sscheme_script}{char *\var{scriptfile}, int \var{argc}, char *\var{argv}[]}
+\cfunction{int}{Sscheme_program}{char *\var{programfile}, int \var{argc}, char *\var{argv}[]}
+\cfunction{void}{Scompact_heap}{void}
+\cfunction{void}{Sscheme_deinit}{void}
+
+\scheme{Skernel_version} returns a string representing the Scheme
+version.
+It should be compared against the value of the VERSION preprocessor
+macro before any of the initialization functions listed above are
+used to verify that the correct \scheme{"scheme.h"} header file has
+been used.
+
+\scheme{Sscheme_init} causes the Scheme system to
+initialize its static memory in preparation for boot file
+registration.
+The \scheme{\var{abnormal}_\var{exit}} parameter should be a (possibly null)
+pointer to a C function
+of no arguments that takes appropriate action if the initialization or
+subsequent heap-building process fails.
+If null, the default action is to call \scheme{exit(1)}.
+
+\scheme{Sset_verbose} sets verbose mode on for nonzero
+values of \var{v} and off when \var{v} is zero.
+In verbose mode, the system displays a trace of the search process
+for subsequently registered boot files.
+
+\scheme{Sregister_boot_file} searches for
+the named boot file and
+register it for loading.
+The file is opened but not loaded until the heap is built via
+\scheme{Sbuild_heap}.
+For the first boot file registered only, the system also
+searches for the boot files upon which the named file
+depends, either directly or indirectly.
+
+\scheme{Sbuild_heap} creates the Scheme heap from the registered boot
+files.
+\var{exec} is assumed to be the name of or path to the executable
+image and is used when no boot files have been registered as
+the base name for the boot-file search process.
+\var{exec} may be null only if one or more boot files have
+been registered.
+\scheme{\var{custom}_\var{init}} must be a (possibly null) pointer to
+a C function of no arguments; if non-null, it is called before any boot
+files are loaded.
+
+\scheme{Sscheme_start} invokes the interactive startup procedure, i.e., 
+the value of the parameter \scheme{scheme-start}, with one Scheme
+string argument for the first \var{argc} elements of \var{argv},
+not including \scheme{argv[0]}.
+\scheme{Sscheme_script} similarly invokes the script startup
+procedure, i.e., 
+the value of the parameter \scheme{scheme-script}, with one Scheme
+string argument for \var{scriptfile} and the first \var{argc} elements
+of \var{argv},
+not including \scheme{argv[0]}.
+\scheme{Sscheme_program} similarly invokes the program startup
+procedure, i.e., 
+the value of the parameter \scheme{scheme-program}, with one Scheme
+string argument for \var{programfile} and the first \var{argc} elements
+of \var{argv},
+not including \scheme{argv[0]}.
+
+\scheme{Senable_expeditor} enables the expression editor
+(Section~\ref{SECTUSEEXPEDITOR}, Chapter~\ref{CHPTEXPEDITOR}),
+which is disabled by default,
+and determines the history file from which it restores and to
+which it saves the history.
+This procedure must be called after the heap is built, or
+an error will result.
+It must also be called before \scheme{Sscheme_start} in order
+to be effective.
+If the \scheme{\var{history}_\var{file}} argument is the null pointer, the
+history is not restored or saved.
+The preprocessor variable \scheme{FEATURE_EXPEDITOR} is defined
+in \scheme{scheme.h} if support for the expression editor has
+been compiled into the system.
+
+\scheme{Sretain_static_relocation} causes relocation information
+to be retained for static generation code objects created by
+heap compaction for the benefit of \scheme{compute-size} and
+related procedures.
+
+\scheme{Scompact_heap} compacts the Scheme heap and places all objects
+currently in the heap into a \emph{static} generation.
+Objects in the static generation are never collected.
+That is, they are never moved during collection and the storage used
+for them is never reclaimed even if they become inaccessible.
+\scheme{Scompact_heap} is called implicitly after any boot files have been
+loaded.
+
+\scheme{Sscheme_deinit} closes any open files, tears down the Scheme heap,
+and puts the Scheme system in an uninitialized state.
+
+
+\parheader{Predicates}
+The predicates described here correspond to the similarly named
+Scheme predicates.
+A trailing letter \scheme{p}, for ``predicate,'' is used in place of
+the question mark that customarily appears at the end of a Scheme
+predicate name.
+Each predicate accepts a single Scheme object and returns a boolean
+(C integer) value.
+
+\begin{flushleft}
+\cmacro{int}{Sfixnump}{ptr \var{obj}}
+\cmacro{int}{Scharp}{ptr \var{obj}}
+\cmacro{int}{Snullp}{ptr \var{obj}}
+\cmacro{int}{Seof_objectp}{ptr \var{obj}}
+\cmacro{int}{Sbwp_objectp}{ptr \var{obj}}
+\cmacro{int}{Sbooleanp}{ptr \var{obj}}
+\cmacro{int}{Spairp}{ptr \var{obj}}
+\cmacro{int}{Ssymbolp}{ptr \var{obj}}
+\cmacro{int}{Sprocedurep}{ptr \var{obj}}
+\cmacro{int}{Sflonump}{ptr \var{obj}}
+\cmacro{int}{Svectorp}{ptr \var{obj}}
+\cmacro{int}{Sbytevectorp}{ptr \var{obj}}
+\cmacro{int}{Sfxvectorp}{ptr \var{obj}}
+\cmacro{int}{Sstringp}{ptr \var{obj}}
+\cmacro{int}{Sbignump}{ptr \var{obj}}
+\cmacro{int}{Sboxp}{ptr \var{obj}}
+\cmacro{int}{Sinexactnump}{ptr \var{obj}}
+\cmacro{int}{Sexactnump}{ptr \var{obj}}
+\cmacro{int}{Sratnump}{ptr \var{obj}}
+\cmacro{int}{Sinputportp}{ptr \var{obj}}
+\cmacro{int}{Soutputportp}{ptr \var{obj}}
+\cmacro{int}{Srecordp}{ptr \var{obj}}
+\end{flushleft}
+
+\parheader{Accessors}
+Some of the accessors described here correspond to similarly named
+Scheme procedures, while others are unique to this interface.
+\scheme{Sfixnum_value}, \scheme{Schar_value}, \scheme{Sboolean_value},
+and \scheme{Sflonum_value} return the C equivalents of the given
+Scheme value.
+
+\begin{flushleft}
+\cmacro{iptr}{Sfixnum_value}{ptr \var{fixnum}}
+\cmacro{uptr}{Schar_value}{ptr \var{character}}
+\cmacro{int}{Sboolean_value}{ptr \var{obj}}
+\cmacro{double}{Sflonum_value}{ptr \var{flonum}}
+\end{flushleft}
+
+\noindent
+\scheme{Sinteger_value} and \scheme{Sunsigned_value} are similar to
+\scheme{Sfixnum_value}, except they accept not only fixnum arguments
+but bignum arguments in the range of C integer or unsigned values.
+\scheme{Sinteger_value} and \scheme{Sunsigned_value} accept the same
+range of Scheme integer values.
+They differ only in the result type, and so allow differing
+interpretations of negative and large unsigned values.
+
+\begin{flushleft}
+\cfunction{iptr}{Sinteger_value}{ptr \var{integer}}
+\cmacro{uptr}{Sunsigned_value}{ptr \var{integer}}
+\end{flushleft}
+
+\scheme{Sinteger32_value}, \scheme{Sunsigned32_value},
+\scheme{Sinteger64_value}, and \scheme{Sunsigned64_value}
+accept signed or unsigned Scheme integers in the 32-
+or 64-bit range and return integers of the appropriate
+type for the machine type.
+
+\begin{flushleft}
+\cfunction{<32-bit int type>}{Sinteger32_value}{ptr \var{integer}}
+\cmacro{<32-bit unsigned type>}{Sunsigned32_value}{ptr \var{integer}}
+\cfunction{<64-bit int type>}{Sinteger64_value}{ptr \var{integer}}
+\cmacro{<64-bit unsigned type>}{Sunsigned64_value}{ptr \var{integer}}
+\end{flushleft}
+
+\noindent
+\scheme{Scar}, \scheme{Scdr}, \scheme{Ssymbol_to_string} (corresponding
+to \scheme{symbol->string}), and \scheme{Sunbox} are identical to their
+Scheme counterparts.
+
+\begin{flushleft}
+\cmacro{ptr}{Scar}{ptr \var{pair}}
+\cmacro{ptr}{Scdr}{ptr \var{pair}}
+\cmacro{ptr}{Ssymbol_to_string}{ptr \var{sym}}
+\cmacro{ptr}{Sunbox}{ptr \var{box}}
+\end{flushleft}
+
+\noindent
+\scheme{Sstring_length}, \scheme{Svector_length},
+\scheme{Sbytevector_length}, and
+\scheme{Sfxvector_length} each return a C integer representing the length
+(in elements) of the object.
+
+\begin{flushleft}
+\cmacro{iptr}{Sstring_length}{ptr \var{str}}
+\cmacro{iptr}{Svector_length}{ptr \var{vec}}
+\cmacro{iptr}{Sbytevector_length}{ptr \var{bytevec}}
+\cmacro{iptr}{Sfxvector_length}{ptr \var{fxvec}}
+\end{flushleft}
+
+\noindent
+\scheme{Sstring_ref}, \scheme{Svector_ref}, \scheme{Sbytevector_u8_ref},
+and \scheme{Sfxvector_ref}
+correspond to their Scheme counterparts, except that the index arguments
+are C integers, the return value for \scheme{Sstring_ref} is a C
+character, and the return value for \scheme{Sbytevector_u8_ref} is an
+octet (unsigned char).
+
+\begin{flushleft}
+\cmacro{char}{Sstring_ref}{ptr \var{str}, iptr \var{i}}
+\cmacro{ptr}{Svector_ref}{ptr \var{vec}, iptr \var{i}}
+\cmacro{octet}{Sbytevector_u8_ref}{ptr \var{fxvec}, iptr \var{i}}
+\cmacro{ptr}{Sfxvector_ref}{ptr \var{fxvec}, iptr \var{i}}
+\end{flushleft}
+
+\noindent
+A Scheme bytevector is represented as a length field followed by a
+sequence of octets (unsignec chars).
+\scheme{Sbytevector_data} returns a pointer to the start of the sequence
+of octets.
+Extreme care should be taken to stop dereferencing the pointer returned by
+\scheme{Sbytevector_data} or to lock the bytevector into memory (see
+\scheme{Slock_object} below) before any Scheme code is executed,
+whether by calling into Scheme or returning to a Scheme caller.
+The storage manager may otherwise relocate or discard the object into which
+the pointer points and may copy other data over the object.
+
+\begin{flushleft}
+\cmacro{octet *}{Sbytevector_data}{ptr \var{bytevec}}
+\end{flushleft}
+
+\parheader{Mutators}
+Changes to mutable objects that contain pointers, such as pairs and
+vectors, must be tracked on behalf of the storage
+manager, as described in one of the references~\cite{Dybvig:sm}.
+The operations described here perform this tracking automatically
+where necessary.
+
+\begin{flushleft}
+\cfunction{void}{Sset_box}{ptr \var{box}, ptr \var{obj}}
+\cfunction{void}{Sset_car}{ptr \var{pair}, ptr \var{obj}}
+\cfunction{void}{Sset_cdr}{ptr \var{pair}, ptr \var{obj}}
+\cmacro{void}{Sstring_set}{ptr \var{str}, iptr \var{i}, char \var{c}}
+\cfunction{void}{Svector_set}{ptr \var{vec}, iptr \var{i}, ptr \var{obj}}
+\cmacro{void}{Sbytevector_u8_set}{ptr \var{bytevec}, iptr \var{i}, octet \var{n}}
+\cmacro{void}{Sfxvector_set}{ptr \var{fxvec}, iptr \var{i}, ptr \var{fixnum}}
+\end{flushleft}
+
+\noindent
+Some Scheme objects, such as procedures and numbers,
+are not mutable, so no operators are provided for altering
+the contents of those objects.
+
+\parheader{Constructors}
+The constructors described here create Scheme objects.
+Some objects, such as fixnums and the empty list, are
+represented as immediate values that do not require any heap
+allocation; others, such as pairs and vectors, are represented
+as pointers to heap allocated objects.
+
+\scheme{Snil}, \scheme{Strue}, \scheme{Sfalse}, \scheme{Sbwp_object},
+\scheme{Seof_object}, and
+\scheme{Svoid}
+construct constant immediate values representing
+the empty list (~\scheme{()}~), the boolean values (\scheme{#t} and
+\scheme{#f}), the broken-weak-pointer object (\scheme{#!bwp}),
+the eof object (\scheme{#!eof}), and the void object.
+
+\begin{flushleft}
+\cconst{ptr}{Snil}
+\cconst{ptr}{Strue}
+\cconst{ptr}{Sfalse}
+\cconst{ptr}{Sbwp_object}
+\cconst{ptr}{Seof_object}
+\cconst{ptr}{Svoid}
+\end{flushleft}
+
+\noindent
+Fixnums, characters, booleans, flonums, and strings may be created from
+their C equivalents.
+
+\begin{flushleft}
+\cmacro{ptr}{Sfixnum}{iptr \var{n}}
+\cmacro{ptr}{Schar}{char \var{c}}
+\cmacro{ptr}{Sboolean}{int \var{b}}
+\cfunction{ptr}{Sflonum}{double x}
+\cfunction{ptr}{Sstring}{const char *\var{s}}
+\cfunction{ptr}{Sstring_of_length}{const char *\var{s}, iptr \var{n}}
+\end{flushleft}
+
+\noindent
+\scheme{Sstring} creates a Scheme copy of the C string \var{s}, while
+\scheme{Sstring_of_length} creates a Scheme string of length \var{n}
+and copies the first \var{n} bytes from \var{s}
+into the new Scheme string.
+
+It is possible to determine whether a C integer is within fixnum range
+by comparing the fixnum value of a fixnum created from a C integer with
+the C integer:
+
+\schemedisplay
+#define fixnum_rangep(x) (Sfixnum_value(Sfixnum(x)) == x)
+\endschemedisplay
+
+\noindent
+\scheme{Sinteger} and \scheme{Sunsigned} may be used to create Scheme
+integers whether they are in fixnum range or not.
+
+\begin{flushleft}
+\cfunction{ptr}{Sinteger}{iptr \var{n}}
+\cfunction{ptr}{Sunsigned}{uptr \var{n}}
+\end{flushleft}
+
+\noindent
+\scheme{Sinteger} and \scheme{Sunsigned} differ in their treatment of
+negative C integer values as well as C unsigned integer values that would
+appear negative if cast to integers.
+\scheme{Sinteger} converts such values into negative Scheme values,
+whereas \scheme{Sunsigned} converts such values into the appropriate
+positive Scheme values.
+For example, assuming a 32-bit, two's complement representation for
+\scheme{iptrs}, \scheme{Sinteger(-1)} and \scheme{Sunsigned((iptr)0xffffffff)}
+both evaluate to the Scheme integer \scheme{-1}, whereas
+\scheme{Sunsigned(0xffffffff)} and \scheme{Sunsigned((uptr)-1)}
+both evaluate to the Scheme integer
+\scheme{#xffffffff} (\scheme{4294967295}).
+
+Whichever routine is used, \scheme{Sinteger_value} and
+\scheme{Sunsigned_value} always reproduce the corresponding C
+input value, thus the following are all equivalent to \var{x}
+if \var{x} is an iptr.
+
+\schemedisplay
+Sinteger_value(Sinteger(\var{x}))
+(iptr)Sunsigned_value(Sinteger(\var{x}))
+Sinteger_value(Sunsigned((uptr)\var{x}))
+(iptr)Sunsigned_value(Sunsigned((uptr)\var{x}))
+\endschemedisplay
+
+\noindent
+Similarly, the following are all equivalent to \var{x}
+if \var{x} is a uptr.
+
+\schemedisplay
+(uptr)Sinteger_value(Sinteger((iptr)\var{x}))
+Sunsigned_value(Sinteger((iptr)\var{x}))
+(uptr)Sinteger_value(Sunsigned(\var{x}))
+Sunsigned_value(Sunsigned(\var{x}))
+\endschemedisplay
+
+\noindent
+\scheme{Sinteger32}, \scheme{Sunsigned32}, \scheme{Sinteger64},
+and \scheme{Sunsigned64} are like the generic equivalents but
+restrict their arguments to the 32- or 64-bit range.
+
+\begin{flushleft}
+\cfunction{ptr}{Sinteger32}{<32-bit int type> \var{n}}
+\cfunction{ptr}{Sunsigned32}{<32-bit unsigned type> \var{n}}
+\cfunction{ptr}{Sinteger64}{<64-bit int type> \var{n}}
+\cfunction{ptr}{Sunsigned64}{<64-bit unsigned type> \var{n}}
+\end{flushleft}
+
+\noindent
+\scheme{Scons} and \scheme{Sbox} are identical to their Scheme
+counterparts.
+
+\begin{flushleft}
+\cfunction{ptr}{Scons}{ptr \var{obj_1}, ptr \var{obj_2}}
+\cfunction{ptr}{Sbox}{ptr \var{obj}}
+\end{flushleft}
+
+\noindent
+\scheme{Sstring_to_symbol} is similar to its Scheme counterpart,
+\scheme{string->symbol}, except
+that it takes a C string (character pointer) as input.
+
+\begin{flushleft}
+\cfunction{ptr}{Sstring_to_symbol}{const char *\var{s}}
+\end{flushleft}
+
+\noindent
+\scheme{Smake_string}, \scheme{Smake_vector}, \scheme{Smake_bytevector},
+and \scheme{Smake_fxvector} are similar to their Scheme counterparts.
+
+\begin{flushleft}
+\cfunction{ptr}{Smake_string}{iptr \var{n}, int \var{c}}
+\cfunction{ptr}{Smake_vector}{iptr \var{n}, ptr \var{obj}}
+\cfunction{ptr}{Smake_bytevector}{iptr \var{n}, int \var{fill}}
+\cfunction{ptr}{Smake_fxvector}{iptr \var{n}, ptr \var{fixnum}}
+\end{flushleft}
+
+\noindent
+\scheme{Smake_uninitialized_string} is similar to the one-argument
+\scheme{make-string}.
+
+\begin{flushleft}
+\cfunction{ptr}{Smake_uninitialized_string}{iptr \var{n}}
+\end{flushleft}
+
+
+\parheader{Accessing top-level values}
+Top-level variable bindings may be accessed or assigned via
+\scheme{Stop_level_value} and \scheme{Sset_top_level_value}.
+
+\begin{flushleft}
+\cfunction{ptr}{Stop_level_value}{ptr \var{sym}}
+\cfunction{void}{Sset_top_level_value}{ptr \var{sym}, ptr \var{obj}}
+\end{flushleft}
+
+These procedures give fast access to the bindings in the original
+interaction environment and do not reflect changes to the
+\scheme{interaction-environment} parameter or top-level module imports.
+To access the current interaction-environment binding for a symbol, it
+is necessary to call the Scheme \scheme{top-level-value} and
+\scheme{set-top-level-value!} procedures instead.
+
+\parheader{Locking Scheme objects}
+The storage manager periodically relocates objects in order to reclaim
+storage and compact the heap.
+This relocation is completely transparent to Scheme programs, since all
+pointers to a relocated object are updated to refer to the new
+location of the object.
+The storage manager cannot, however, update Scheme pointers that reside
+outside of the Scheme heap.
+
+As a general rule, all pointers from C variables or data structures
+to Scheme objects should be discarded before entry (or reentry) into
+Scheme.
+That is, if a C procedure receives an object from Scheme or obtains it
+via the mechanisms described in this section, all pointers to the
+object should be considered invalid once the C procedure calls into
+Scheme or returns back to Scheme.
+Dereferencing an invalid pointer or passing it back to Scheme can
+have disastrous effects, including unrecoverable memory faults.
+The foregoing does not apply to immediate objects, e.g., fixnums,
+characters, booleans, or the empty list.
+It does apply to all heap-allocated objects, including pairs, vectors,
+strings, all numbers other than fixnums, ports, procedures, and records.
+
+In practice, the best way to ensure that C code does not retain
+pointers to Scheme objects is to immediately convert the Scheme objects
+into C equivalents, if possible.
+In certain cases, it is not possible to do so, yet retention of the
+Scheme object is essential to the design of the C portions of the
+program.
+In these cases, the object may be \emph{locked} via the library routine
+\scheme{Slock_object} (or from Scheme, the equivalent procedure
+\index{\scheme{lock-object}}\scheme{lock-object}).
+
+\begin{flushleft}
+\cfunction{void}{Slock_object}{ptr \var{obj}}
+\end{flushleft}
+
+\noindent
+Locking an object prevents the storage manager from reclaiming or
+relocating the object.
+Locking should be used sparingly, as it introduces memory fragmentation
+and increases storage management overhead.
+Locking can also lead to accidental retention of storage if objects
+are not unlocked.
+Locking objects that have been made static via heap compaction
+(see \index{\scheme{Scompact_heap}}\scheme{Scompact_heap} above)
+is unnecessary but harmless.
+
+Objects may be unlocked via \scheme{Sunlock_object}
+(\index{\scheme{unlock-object}}\scheme{unlock-object}).
+
+\begin{flushleft}
+\cfunction{void}{Sunlock_object}{ptr \var{obj}}
+\end{flushleft}
+
+\noindent
+An object may be locked more than once by successive calls to
+\scheme{Slock_object} or \scheme{lock-object}, in which case it must
+be unlocked by an equal number of calls to
+\scheme{Sunlock_object} or \scheme{unlock-object} before it is
+truly unlocked.
+
+The function \scheme{Sunlocked_objectp} can be used to determine
+if an object is locked.
+
+\begin{flushleft}
+\cfunction{int}{Sunlocked_objectp}{ptr \var{obj}}
+\end{flushleft}
+
+When a foreign procedure call is made into Scheme, a return address
+pointing into the Scheme code object associated with the foreign
+procedure is passed implicitly to the C routine.
+The system therefore locks the code object before calls are
+made from C back into Scheme and unlocks it upon return from
+Scheme.
+This locking is performed automatically; user
+code should never need to lock such code objects.
+
+An object contained within a locked object, such as an object in the car
+of a locked pair, need not also be locked unless a separate C pointer
+to the object exists.
+
+\parheader{Registering foreign entry points}
+Foreign entry points may be made visible to Scheme via
+\scheme{Sforeign_symbol} or \scheme{Sregister_symbol}.
+
+\begin{flushleft}
+\cfunction{void}{Sforeign_symbol}{const char *\var{name}, void *\var{addr}}
+\cfunction{void}{Sregister_symbol}{const char *\var{name}, void *\var{addr}}
+\end{flushleft}
+
+\noindent
+External entry points in object files or shared objects loaded as a
+result of a call to \scheme{load-shared-object} are automatically
+made visible by the system.
+Once a foreign entry point is made visible, it may be named in a
+\scheme{foreign-procedure} expression to create a Scheme-callable
+version of the entry point.
+\scheme{Sforeign_symbol} and \scheme{Sregister_symbol} allow
+programs to register nonexternal
+entry points, entry points in code linked statically with {\ChezScheme},
+and entry points into code loaded directly from C, i.e., without
+\scheme{load-shared-object}.
+\scheme{Sforeign_symbol} and \scheme{Sregister_symbol} differ only in
+that \scheme{Sforeign_symbol} raises an exception when an attempt is made
+to register an existing name, whereas \scheme{Sregister_symbol}
+permits existing names to be redefined.
+
+\parheader{Obtaining Scheme entry points}
+\scheme{Sforeign_callable_entry_point} extracts the entry point from a code
+object produced by \scheme{foreign-callable}, performing the same
+operation as its Scheme counterpart, i.e., the Scheme procedure
+\scheme{foreign-callable-entry-point}.
+
+\begin{flushleft}
+\cfunction{(void (*) (void))}{Sforeign_callable_entry_point}{ptr \var{code}}
+\end{flushleft}
+
+\noindent
+This can be used to avoid converting the code object into an address
+until just when it is needed, which may eliminate the need to lock
+the code object in some circumstances, assuming that the code object
+is not saved across any calls back into Scheme.
+
+The inverse translation can be made via \scheme{Sforeign_callable_code_object}.
+
+\begin{flushleft}
+\cfunction{ptr}{Sforeign_callable_code_object}{(void (*addr)(void))}
+\end{flushleft}
+
+\parheader{Low-level support for calls into Scheme}
+Support for calling Scheme procedures from C is provided by the set of 
+routines documented below.
+Calling a Scheme procedure that expects a small number of arguments
+(0--3) involves the use of one of the following routines.
+
+\begin{flushleft}
+\cfunction{ptr}{Scall0}{ptr \var{procedure}}
+\cfunction{ptr}{Scall1}{ptr \var{procedure}, ptr \var{obj_1}}
+\cfunction{ptr}{Scall2}{ptr \var{procedure}, ptr \var{obj_1}, ptr \var{obj_2}}
+\cfunction{ptr}{Scall3}{ptr \var{procedure}, ptr \var{obj_1}, ptr \var{obj_2}, ptr \var{obj_3}}
+\end{flushleft}
+
+\noindent
+In each case,
+the first argument, \var{procedure}, should be a Scheme procedure.
+The remaining arguments, which should be Scheme objects, are
+passed to the procedure.
+The tools described earlier in this section may be used to convert
+C datatypes into their Scheme equivalents.
+A program that automatically generates conversion code from
+declarations that are similar to \scheme{foreign-procedure} expressions
+is distributed with {\ChezScheme}.
+It can be found in the Scheme library directory on most systems in the
+file \scheme{"foreign.ss"}.
+
+A Scheme procedure may be obtained in a number of ways.
+For example, it may be received as an argument in a call
+from Scheme into C, obtained via another call to Scheme,
+extracted from a Scheme data structure, or obtained from the top-level
+environment via \scheme{Stop_level_value}.
+
+A more general interface involving the following routines is available
+for longer argument lists.
+
+\begin{flushleft}
+\cfunction{void}{Sinitframe}{iptr \var{n}}
+\cfunction{void}{Sput_arg}{iptr \var{i}, ptr \var{obj}}
+\cfunction{ptr}{Scall}{ptr \var{procedure}, iptr \var{n}}
+\end{flushleft}
+
+\noindent
+A C procedure first calls \scheme{Sinitframe} with one argument, the
+number of arguments to be passed to Scheme.
+It then calls \scheme{Sput_arg} once for each argument (in any order), passing
+\scheme{Sput_arg} the argument number (starting with \scheme{1}) and
+the argument.
+Finally, it calls \scheme{Scall} to perform the call, passing it
+the Scheme procedure and the number of arguments (the same number as
+in the call to \scheme{Sinitframe}).
+Programmers should ensure a Scheme call initiated via
+\scheme{Sinitframe} is completed via \scheme{Scall} before any other
+calls to Scheme are made and before a return to Scheme is attempted.
+If for any reason the call is not completed after \scheme{Sinitframe}
+has been called, it may not be possible to return to Scheme.
+
+The following examples serve to illustrate both the simpler and more
+general interfaces.
+
+\schemedisplay
+/* a particularly silly way to multiply two floating-point numbers */
+double mul(double x, double y) {
+    ptr times = Stop_level_value(Sstring_to_symbol("*"));
+
+    return Sflonum_value(Scall2(times, Sflonum(x), Sflonum(y)));
+}
+\endschemedisplay
+
+\schemedisplay
+/* an equally silly way to call printf with five arguments */
+
+/* it is best to define interfaces such as the one below to handle
+ * calls into Scheme to prevent accidental attempts to nest frame
+ * creation and to help ensure that initiated calls are completed
+ * as discussed above.  Specialized versions tailored to particular
+ * C argument types may be defined as well, with embedded conversions
+ * to Scheme objects. */
+ptr Scall5(ptr p, ptr x1, ptr x2, ptr x3, ptr x4, ptr x5) {
+    Sinitframe(5);
+    Sput_arg(1, x1);
+    Sput_arg(2, x2);
+    Sput_arg(3, x3);
+    Sput_arg(4, x4);
+    Sput_arg(5, x5);
+    Scall(p, 5);
+}
+
+static void dumpem(char *s, int a, double b, ptr c, char *d) {
+    printf(s, a, b, c, d);
+}
+
+static void foo(int x, double y, ptr z, char *s) {
+    ptr ois, sip, read, expr, eval, c_dumpem;
+    char *sexpr = "(foreign-procedure \"dumpem\" (string integer-32\
+ double-float scheme-object string) void)";
+
+  /* this series of statements is carefully crafted to avoid referencing
+     variables holding Scheme objects after calls into Scheme */
+    ois = Stop_level_value(Sstring_to_symbol("open-input-string"));
+    sip = Scall1(ois, Sstring(sexpr));
+    read = Stop_level_value(Sstring_to_symbol("read"));
+    expr = Scall1(read, sip);
+    eval = Stop_level_value(Sstring_to_symbol("eval"));
+    Sforeign_symbol("dumpem", (void *)dumpem);
+    c_dumpem = Scall1(eval, expr);
+    Scall5(c_dumpem,
+           Sstring("x = %d, y = %g, z = %x, s = %s\n"),
+           Sinteger(x),
+           Sflonum(y),
+           z,
+           Sstring(s));
+}
+\endschemedisplay
+
+Calls from C to Scheme should not be made from C interrupt handlers.
+When Scheme calls into C, the system saves the contents of certain
+dedicated machine registers in a register save area.
+When C then calls into Scheme, the registers are restored from the
+register save area.
+Because an interrupt can occur at any point in a computation, the
+contents of the register save locations would typically contain invalid
+information that would cause the Scheme system to fail to operate
+properly.
+
+\parheader{Activating, deactivating, and destroying threads}
+Three functions are provided by the threaded versions of Scheme to
+allow C code to notify Scheme when a thread should be activated,
+deactivated, or destroyed.
+
+\cfunction{int}{Sactivate_thread}{void}
+\cfunction{void}{Sdeactivate_thread}{void}
+\cfunction{int}{Sdestroy_thread}{void}
+
+A thread created via the Scheme procedure \scheme{fork-thread} starts
+in the active state and need not be activated.
+Any thread that has been deactivated, and any
+thread created by some mechanism other than \scheme{fork-thread} must,
+however, be activated before before it can access Scheme data or execute
+Scheme code.
+\scheme{Sactivate_thread} is used for this purpose.
+It returns 1 the first time the thread is activated and 0 on each
+subsequent call.
+
+Since active threads operating in C code prevent the storage management
+system from garbage collecting,
+a thread should be deactivated via \scheme{Sdeactivate_thread} whenever
+it may spend a significant amount of time in C code.
+This is especially important whenever the thread calls a C library
+function, like \scheme{read}, that may block indefinitely.
+Once deactivated, the thread must not touch any Scheme data or
+execute any Scheme code until it is reactivated, with one exception.
+The exception is that the thread may access or even modify a locked
+Scheme object, such as a locked string, that contains no pointers to
+other, unlocked Scheme objects.
+(Objects that are not locked may be relocated by the garbage collector
+while the thread is inactive.)
+
+\scheme{Sdestroy_thread} is used to notify the Scheme system that the
+thread is shut down and any thread-specific data can be released.
+
+\parheader{Low-level synchronization primitives}
+The header file defines several preprocessor macros that can be
+used to lock memory locations in a manner identical to the corresponding
+ftype lock operations (sections ~\ref{SECTTHREADLOCKS} and
+\ref{SECTTHREADLOCKEDINCRDECR}).
+
+\cmacro{void}{INITLOCK}{void *\var{addr}}
+\cmacro{void}{SPINLOCK}{void *\var{addr}}
+\cmacro{void}{UNLOCK}{void *\var{addr}}
+\cmacro{void}{LOCKED_INCR}{void *\var{addr}, int *\var{ret}}
+\cmacro{void}{LOCKED_DECR}{void *\var{addr}, int *\var{ret}}
+
+\scheme{LOCKED_INCR} and \scheme{LOCKED_DECR} set \var{ret} to a
+nonzero (true) value if the incremented or decremented value is 0.
+Otherwise they set \var{ret} to 0.
+
+\section{Example: Socket Operations\label{SECTFOREIGNSOCKETS}}
+
+\index{sockets}This section presents a simple socket interface that
+employs a combination of Scheme and C code.
+The C code defines a set of convenient low-level operating-system
+interfaces that can be used in the higher-level Scheme code to open,
+close, read from, and write to sockets.
+
+The C code (csocket.c) is given below, followed by the Scheme code
+(socket.ss).
+The code should require little or no modification to run on most Unix
+systems and can be modified to work under Windows (using the Windows
+\emph{WinSock} interface).
+
+A sample session demonstrating the socket interface follows the code.
+See Section~\ref{SECTPORTEXAMPLES} for an example that demonstrates how
+to use the same socket interface to build a process port that allows
+transparent input from and output to a subprocess via a Scheme port.
+
+\parheader{C code}
+
+\schemedisplay
+/* csocket.c */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <string.h>
+#include <errno.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <stdio.h>
+
+/* c_write attempts to write the entire buffer, pushing through
+   interrupts, socket delays, and partial-buffer writes */
+int c_write(int fd, char *buf, unsigned n) {
+    unsigned i, m;
+
+    m = n;
+    while (m > 0) {
+        if ((i = write(fd, buf, m)) < 0) {
+            if (errno != EAGAIN && errno != EINTR)
+                return i;
+        } else {
+            m -= i;
+            buf += i;
+        }
+    }
+    return n;
+}
+
+/* c_read pushes through interrupts and socket delays */
+int c_read(int fd, char *buf, unsigned n) {
+    int i;
+
+    for (;;) {
+        i = read(fd, buf, n);
+        if (i >= 0) return i;
+        if (errno != EAGAIN && errno != EINTR) return -1;
+    }
+}
+
+/* bytes_ready(fd) returns true if there are bytes available
+   to be read from the socket identified by fd */
+int bytes_ready(int fd) {
+    int n;
+
+    (void) ioctl(fd, FIONREAD, &n);
+    return n;
+}
+
+/* socket support */
+
+/* do_socket() creates a new AF_UNIX socket */
+int do_socket(void) {
+
+    return socket(AF_UNIX, SOCK_STREAM, 0);
+}
+
+/* do_bind(s, name) binds name to the socket s */
+int do_bind(int s, char *name) {
+    struct sockaddr_un sun;
+    int length;
+
+    sun.sun_family = AF_UNIX;
+    (void) strcpy(sun.sun_path, name);
+    length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
+
+    return bind(s, &sun, length);
+}
+
+/* do_accept accepts a connection on socket s */
+int do_accept(int s) {
+    struct sockaddr_un sun;
+    int length;
+
+    length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
+
+    return accept(s, &sun, &length);
+}
+
+/* do_connect initiates a socket connection */
+int do_connect(int s, char *name) {
+    struct sockaddr_un sun;
+    int length;
+
+    sun.sun_family = AF_UNIX;
+    (void) strcpy(sun.sun_path, name);
+    length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
+
+    return connect(s, &sun, length);
+}
+
+/* get_error returns the operating system's error status */
+char* get_error(void) {
+    extern int errno;
+    return strerror(errno);
+}
+\endschemedisplay
+
+\parheader{Scheme code}
+
+\schemedisplay
+;;; socket.ss
+
+;;; Requires csocket.so, built from csocket.c.
+(case (machine-type)
+  [(i3le ti3le) (load-shared-object "libc.so.6")]
+  [(i3osx ti3osx) (load-shared-object "libc.dylib")]
+  [else (load-shared-object "libc.so")])
+
+;;; Requires from C library:
+;;;   close, dup, execl, fork, kill, listen, tmpnam, unlink
+(load-shared-object "libc.so")
+
+;;; basic C-library stuff
+
+(define close
+  (foreign-procedure "close" (integer-32)
+    integer-32))
+
+(define dup
+  (foreign-procedure "dup" (integer-32)
+    integer-32))
+
+(define execl4
+  (let ([execl-help
+         (foreign-procedure "execl"
+           (string string string string integer-32)
+           integer-32)])
+    (lambda (s1 s2 s3 s4)
+      (execl-help s1 s2 s3 s4 0))))
+
+(define fork
+  (foreign-procedure "fork" ()
+    integer-32))
+
+(define kill
+  (foreign-procedure "kill" (integer-32 integer-32)
+    integer-32))
+
+(define listen
+  (foreign-procedure "listen" (integer-32 integer-32)
+    integer-32))
+
+(define tmpnam
+  (foreign-procedure "tmpnam" (integer-32)
+    string))
+
+(define unlink
+  (foreign-procedure "unlink" (string)
+    integer-32))
+
+;;; routines defined in csocket.c
+
+(define accept
+  (foreign-procedure "do_accept" (integer-32)
+    integer-32))
+
+(define bytes-ready?
+  (foreign-procedure "bytes_ready" (integer-32)
+    boolean))
+
+(define bind
+  (foreign-procedure "do_bind" (integer-32 string)
+    integer-32))
+
+(define c-error
+  (foreign-procedure "get_error" ()
+    string))
+
+(define c-read
+  (foreign-procedure "c_read" (integer-32 string integer-32)
+    integer-32))
+
+(define c-write
+  (foreign-procedure "c_write" (integer-32 string integer-32)
+    integer-32))
+
+(define connect
+  (foreign-procedure "do_connect" (integer-32 string)
+    integer-32))
+
+(define socket
+  (foreign-procedure "do_socket" ()
+    integer-32))
+
+;;; higher-level routines
+
+(define dodup
+ ; (dodup old new) closes old and dups new, then checks to
+ ; make sure that resulting fd is the same as old
+  (lambda (old new)
+    (check 'close (close old))
+    (unless (= (dup new) old)
+      (errorf 'dodup
+        "couldn't set up child process io for fd ~s" old))))
+
+(define dofork
+ ; (dofork child parent) forks a child process and invokes child
+ ; without arguments and parent with the child's pid
+  (lambda (child parent)
+    (let ([pid (fork)])
+      (cond
+        [(= pid 0) (child)]
+        [(> pid 0) (parent pid)]
+        [else (errorf 'fork (c-error))]))))
+
+(define setup-server-socket
+ ; create a socket, bind it to name, and listen for connections
+  (lambda (name)
+    (let ([sock (check 'socket (socket))])
+      (unlink name)
+      (check 'bind (bind sock name))
+      (check 'listen (listen sock 1))
+      sock)))
+
+(define setup-client-socket
+ ; create a socket and attempt to connect to server
+  (lambda (name)
+    (let ([sock (check 'socket (socket))])
+      (check 'connect (connect sock name))
+      sock)))
+
+(define accept-socket
+ ; accept a connection
+  (lambda (sock)
+    (check 'accept (accept sock))))
+
+(define check
+ ; raise an exception if status x is negative, using c-error to
+ ; obtain the operating-system's error message
+  (lambda (who x)
+    (if (< x 0)
+        (errorf who (c-error))
+        x)))
+
+(define terminate-process
+ ; kill the process identified by pid
+  (lambda (pid)
+    (define sigterm 15)
+    (kill pid sigterm)
+    (void)))
+\endschemedisplay
+
+\parheader{Sample session}
+
+\schemedisplay
+> (define client-pid)
+> (define client-socket)
+> (let* ([server-socket-name (tmpnam 0)]
+         [server-socket (setup-server-socket server-socket-name)])
+   ; fork a child, use it to exec a client Scheme process, and set
+   ; up server-side client-pid and client-socket variables.
+    (dofork   ; child
+      (lambda () 
+       ; the child establishes the socket input/output fds as
+       ; stdin and stdout, then starts a new Scheme session
+        (check 'close (close server-socket))
+        (let ([sock (setup-client-socket server-socket-name)])
+          (dodup 0 sock)
+          (dodup 1 sock))
+        (check 'execl (execl4 "/bin/sh" "/bin/sh" "-c" "exec scheme -q"))
+        (errorf 'client "returned!"))
+      (lambda (pid) ; parent
+       ; the parent waits for a connection from the client
+        (set! client-pid pid)
+        (set! client-socket (accept-socket server-socket))
+        (check 'close (close server-socket)))))
+> (define put ; procedure to send data to client
+    (lambda (x)
+      (let ([s (format "~s~%" x)])
+        (c-write client-socket s (string-length s)))
+      (void)))
+> (define get ; procedure to read data from client
+    (let ([buff (make-string 1024)])
+      (lambda ()
+        (let ([n (c-read client-socket buff (string-length buff))])
+          (printf "client:~%~a~%server:~%" (substring buff 0 n))))))
+> (get)
+server:
+> (put '(let ([x 3]) x))
+> (get)
+client:
+3
+server:
+> (terminate-process client-pid)
+> (exit)
+\endschemedisplay
+

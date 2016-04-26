@@ -1,0 +1,119 @@
+\ProvidesFile{tspl10.clo}[1995/06/18 v0.1]
+\renewcommand{\normalsize}{%
+   \@setfontsize\normalsize\@xpt{12pt plus .5pt}%
+   \abovedisplayskip 6\p@ \@plus.6\p@
+   \abovedisplayshortskip \z@
+   \belowdisplayshortskip 3\p@ \@plus.3\p@
+   \belowdisplayskip \abovedisplayskip
+   \let\@listi\@listI}
+\normalsize
+\newcommand{\small}{%
+   \@setfontsize\small\@ixpt{11pt plus .5pt}%
+   \abovedisplayskip 5\p@ \@plus.5\p@ \@minus4\p@
+   \abovedisplayshortskip \z@
+   \belowdisplayshortskip 2.5\p@ \@plus.25\p@
+   \def\@listi{\leftmargin\leftmargini
+               \topsep 3\p@ \@plus.3\p@
+               \parsep 3\p@ \@plus.3\p@
+               \itemsep \z@}%
+   \belowdisplayskip \abovedisplayskip
+}
+\newcommand{\footnotesize}{%
+   \@setfontsize\footnotesize\@viiipt{9.5}%
+   \abovedisplayskip 6\p@ \@plus2\p@ \@minus4\p@
+   \abovedisplayshortskip \z@ \@plus\p@
+   \belowdisplayshortskip 3\p@ \@plus\p@ \@minus2\p@
+   \def\@listi{\leftmargin\leftmargini
+               \topsep 3\p@ \@plus.3\p@
+               \parsep 3\p@ \@plus.3\p@
+               \itemsep \z@}%
+   \belowdisplayskip \abovedisplayskip
+}
+\newcommand{\scriptsize}{\@setfontsize\scriptsize\@viipt\@viiipt}
+\newcommand{\tiny}{\@setfontsize\tiny\@vpt\@vipt}
+\newcommand{\large}{\@setfontsize\large\@xiipt{14}}
+\newcommand{\Large}{\@setfontsize\Large\@xivpt{18}}
+\newcommand{\LARGE}{\@setfontsize\LARGE\@xviipt{22}}
+\newcommand{\huge}{\@setfontsize\huge\@xxpt{25}}
+\newcommand{\Huge}{\@setfontsize\Huge\@xxvpt{30}}
+\setlength\parindent{15\p@}
+\setlength\headheight{12\p@}
+\setlength\headsep   {.25in}
+\setlength\topskip   {10\p@}
+\setlength\footskip{.35in}
+\setlength\maxdepth{.5\topskip}
+\setlength\@maxdepth\maxdepth
+\if@twoside % see notes on heights, widths, and margins in cls file
+  \setlength\oddsidemargin    {\gutterwidth}
+  \addtolength\oddsidemargin  {-1.0in}             % default hoffset
+  \setlength\evensidemargin   {\edgewidth}
+  \addtolength\evensidemargin {\trimwidth}
+  \addtolength\evensidemargin {-1.0in}             % default hoffset
+  \setlength\textwidth        {\paperwidth}
+  \addtolength\textwidth      {-\trimwidth}
+  \addtolength\textwidth      {-\gutterwidth}
+  \addtolength\textwidth      {-\edgewidth}
+  \setlength\textheight       {\paperheight}
+  \addtolength\textheight     {-2\trimheight}
+  \addtolength\textheight     {-2\edgewidth}
+\else
+  \figurethisoutlaterifneeded
+\fi
+\ifdim \marginparwidth >2in
+   \setlength\marginparwidth{2in}
+\fi
+\@settopoint\oddsidemargin
+\@settopoint\evensidemargin
+\@settopoint\marginparwidth
+\setlength\marginparsep{7\p@}
+\setlength\marginparpush{5\p@}
+\setlength\topmargin{\paperheight}
+\addtolength\topmargin{-2in}
+\addtolength\topmargin{-\headheight}
+\addtolength\topmargin{-\headsep}
+\addtolength\topmargin{-\textheight}
+\addtolength\topmargin{-\footskip}     % this might be wrong!
+\addtolength\topmargin{-.5\topmargin}
+\@settopoint\topmargin
+\setlength\footnotesep{6.65\p@}
+\setlength{\skip\footins}{9\p@ \@plus 4\p@ \@minus 2\p@}
+\setlength\floatsep    {12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\textfloatsep{20\p@ \@plus 2\p@ \@minus 4\p@}
+\setlength\intextsep   {12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\dblfloatsep    {12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\dbltextfloatsep{20\p@ \@plus 2\p@ \@minus 4\p@}
+\setlength\@fptop{0\p@ \@plus 1fil}
+\setlength\@fpsep{8\p@ \@plus 2fil}
+\setlength\@fpbot{0\p@ \@plus 1fil}
+\setlength\@dblfptop{0\p@ \@plus 1fil}
+\setlength\@dblfpsep{8\p@ \@plus 2fil}
+\setlength\@dblfpbot{0\p@ \@plus 1fil}
+\setlength\partopsep{2\p@ \@plus 1\p@ \@minus 1\p@}
+\def\@listI{\leftmargin\leftmargini
+            \parsep 3\p@ \@plus.3\p@
+            \topsep 3\p@ \@plus.3\p@
+            \itemsep \z@}
+\let\@listi\@listI
+\@listi
+\def\@listii {\leftmargin\leftmarginii
+              \labelwidth\leftmarginii
+              \advance\labelwidth-\labelsep
+              \topsep    3\p@ \@plus.3\p@
+              \parsep    3\p@ \@plus.3\p@
+              \itemsep   \z@}
+\def\@listiii{\leftmargin\leftmarginiii
+              \labelwidth\leftmarginiii
+              \advance\labelwidth-\labelsep
+              \topsep    2\p@ \@plus.2\p@
+              \parsep    2\p@ \@plus.2\p@
+              \itemsep   \z@}
+\def\@listiv {\leftmargin\leftmarginiv
+              \labelwidth\leftmarginiv
+              \advance\labelwidth-\labelsep}
+\def\@listv  {\leftmargin\leftmarginv
+              \labelwidth\leftmarginv
+              \advance\labelwidth-\labelsep}
+\def\@listvi {\leftmargin\leftmarginvi
+              \labelwidth\leftmarginvi
+              \advance\labelwidth-\labelsep}
+\endinput

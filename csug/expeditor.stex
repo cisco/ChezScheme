@@ -1,0 +1,684 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Expression Editor\label{CHPTEXPEDITOR}}
+
+When the expression editor (expeditor) is enabled as described in
+Section~\ref{SECTUSEEXPEDITOR}, it allows the user to edit expressions
+entered into the system and move backwards and forwards through
+a history of entered expressions.
+This chapter describes a set of parameters that may be used to
+control various aspects of the expression editor's behavior
+(Section~\ref{SECTEXPEDITORPARAMS}),
+a procedure for binding key sequences to editing commands
+(Section~\ref{SECTEXPEDITORKEYBINDING}),
+the built-in editing commands
+(Section~\ref{SECTEXPEDITOREDITCMDS}), and mechanisms for creating new
+editing commands (Section~\ref{SECTEXPEDITORNEWCMDS}).
+
+These mechanisms are available through the \scheme{expression-editor} module.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{expression-editor}{\categorymodule}{expression-editor}
+\listlibraries
+\endentryheader
+
+The \scheme{expression-editor} module exports a set of bindings for
+parameters and other procedures that can be used to modify how the
+expression editor interacts with the user, including the particular keys
+used to invoke the various editing commands.
+
+\medskip
+Basic use of the expression editor is described in Section~\ref{SECTUSEEXPEDITOR}.
+
+\xdef\cntl#1{\scheme{^#1}}
+
+\section{Expression Editor Parameters\label{SECTEXPEDITORPARAMS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{ee-auto-indent}{\categoryglobalparameter}{ee-auto-indent}
+\nolistlibraries
+\endnoskipentryheader
+
+The value of \scheme{ee-auto-indent} is a boolean value that determines
+whether the expression editor indents expressions as they are entered.
+Its default value is \scheme{#t}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-standard-indent}{\categoryglobalparameter}{ee-standard-indent}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-standard-indent} is a nonnegative fixnum
+value that determines the amount (in single spaces) by which each
+expression is indented relative to the enclosing expression, if
+not aligned otherwise by one of the indenter's other heuristics,
+when \scheme{ee-auto-indent} is true or when one of the indentation
+commands is invoked explicitly.
+It's default value is \scheme{2}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-auto-paren-balance}{\categoryglobalparameter}{ee-auto-paren-balance}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-auto-paren-balance} is a boolean value that determines
+whether the expression editor automatically corrects a close
+parenthesis or bracket, when typed, to match the corresponding open
+parenthesis or bracket, if any.
+Its default value is \scheme{#t}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-flash-parens}{\categoryglobalparameter}{ee-flash-parens}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-flash-parens} is a boolean value that determines
+whether the expression editor briefly moves the cursor when an open
+or close parenthesis or bracket is typed to the
+matching close or open parenthesis or bracket (if any).
+Its default value is \scheme{#t}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-paren-flash-delay}{\categoryglobalparameter}{ee-paren-flash-delay}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-paren-flash-delay} is a nonnegative fixnum
+value that determines the amount of time (in milliseconds) that the
+expression editor pauses when the cursor is moved to the matching
+parenthesis or bracket, if any, when a parenthesis or bracket is
+entered.
+The value is ignored if the \scheme{ee-flash-parens} is false.
+Its default value is \scheme{100}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-default-repeat}{\categoryglobalparameter}{ee-default-repeat}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-default-repeat} is a nonnegative fixnum
+value that determines the number of of times the next command is
+repeated after the \scheme{ee-command-repeat} editing command
+(bound to \scheme{Esc-^U} by default) is used and \emph{not}
+followed by a sequence of digits.
+It's default value is \scheme{4}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-noisy}{\categoryglobalparameter}{ee-noisy}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-noisy} is a boolean value that determines
+whether the expression editor emits a beep (bell) when an error
+occurs, such as an attempt to find the matching delimiter for a
+non-delimiter character.
+Its default value is \scheme{#f}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-history-limit}{\categoryglobalparameter}{ee-history-limit}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-history-limit} is a nonnegative fixnum value
+that determines the number of history entries retained by the
+expression editor during and across sessions.
+Only the last \scheme{(ee-history-limit)} entries are retained.
+% Its default value is \scheme{100}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-common-identifiers}{\categoryglobalparameter}{ee-common-identifiers}
+\nolistlibraries
+\endentryheader
+
+The value of \scheme{ee-common-identifiers} is list of symbols that
+are considered common enough that they should appear early when
+one of the incremental identifier-completion editing commands is
+invoked.
+Its default value contains a few dozen entries.
+They are all more than a few characters long (under the theory that
+users will most likely type short ones out fully) and all would
+appear later than they likely should when incremental
+identifier-completion is used.
+
+
+\section{Key Binding\label{SECTEXPEDITORKEYBINDING}}
+
+Key bindings are established via \scheme{ee-bind-key}.
+The default key bindings are described in Section~\ref{SECTEXPEDITOREDITCMDS}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-bind-key}{\categoryprocedure}{(ee-bind-key \var{key} \var{procedure})}
+\nolistlibraries
+\returns unspecified
+\endentryheader
+
+The \scheme{ee-bind-key} procedure is used to add to or change the
+set of key bindings recognized by the expression editor.
+
+The \var{key} must be a character or string; if it is a string, it
+must have the following form.
+
+\begin{grammar}
+\ang{key-string}\longis \scheme{"}\ang{key-char}\kplus\scheme{"}
+\end{grammar}
+
+where
+
+\begin{grammar}
+\ang{key-char}\longis \scheme{\\e} (specifying an escape character)\\
+  \orbar \scheme{^\var{x}} (specifying control-\var{x})\\
+  \orbar \scheme{\\^} (specifying caret)\\
+  \orbar \scheme{\\\\} (specifying back slash)\\
+  \orbar \scheme{plain char} (any character other than \scheme{\} or \scheme{^})
+\end{grammar}
+
+Note that each double-backslash in the syntax actually denotes just
+one backslash in the string.
+
+For example, the \var{key} \scheme{"\\eX"} represents the two-character
+sequence Escape-x, i.e., the ``escape'' key followed by the (capital)
+``X'' key.
+Similarly, they \var{key} \scheme{"\\e^X"} represents the two-character
+sequence Escape-Control-x, i.e., the ``escape'' key followed by
+Control-X.
+
+Character keys and string keys consisting of a single plain character
+always represent a single keystroke.
+
+The \var{procedure} argument should normally be one of the built-in editing
+commands described below.
+It is also possible to define new editing commands with
+\index{\scheme{ee-string-macro}}\scheme{ee-string-macro}
+and \index{\scheme{ee-compose}}\scheme{ee-compose}.
+
+
+\section{Editing Commands\label{SECTEXPEDITOREDITCMDS}}
+
+\xdef\editproc#1#2{\medskip {\bf command:} \index{\scheme{#1}}\scheme{#1}\\
+                            {\bf key(s):} #2\par{}}
+\xdef\endeditproc{\par{}}
+
+\def\ECgroup#1 {\medskip\noindent{\bf #1}\par}
+
+The editing commands are grouped into sections according to usage.
+Each is listed along with the default character sequence or sequences by
+which it may be invoked.
+
+\ECgroup{Insertion commands}
+
+\editproc{ee-insert-self}{most printing characters}
+Inserts the entered character into the entry.
+\endeditproc
+
+\editproc{ee-insert-paren}{\scheme{(}, \scheme{)}, \scheme{[}, \scheme{]}}
+Inserts the entered parenthesis or bracket into the entry.
+
+If the parameter
+\index{\scheme{ee-auto-paren-balance}}\scheme{ee-auto-paren-balance} is
+true, the editor corrects close delimiters if necessary to balance
+existing open delimiters, when a matching open delimiter can be found.
+
+If the parameter \index{\scheme{ee-flash-parens}}\scheme{ee-flash-parens}
+is true, the editor briefly moves the cursor to the matching delimiter, if
+one can be found, pausing for an amount of time controlled by the
+parameter \index{\scheme{ee-paren-flash-delay}}\scheme{ee-paren-flash-delay}.
+If the matching delimiter is not presently displayed, the cursor is flashed
+to the upper-left or lower-left corner of the displayed portion of the
+entry, as appropriate.
+
+The behavior of this command is undefined if used for something other
+than a parenthesis or bracket.
+parentheses and brackets.
+\endeditproc
+
+\editproc{ee-newline}{none}
+Inserts a newline at the cursor position, moves to the next line, and
+indents that line if the parameter
+\index{\scheme{ee-auto-indent}}\scheme{ee-auto-indent} is true.
+Does nothing if the entry is empty.
+See also \scheme{ee-newline/accept}.
+\endeditproc
+
+\editproc{ee-open-line}{\cntl{O}}
+Inserts a newline at the cursor position and indents the next line,
+but does not move to the next line.
+\endeditproc
+
+\editproc{ee-yank-kill-buffer}{\cntl{Y}}
+Inserts the contents of the kill buffer, which is set by the deletion
+commands described below.
+\endeditproc
+
+\editproc{ee-yank-selection}{\cntl{V}}
+Inserts the contents of the window system's current selection or paste
+buffer.
+When running in a shell window under X Windows, this command requires that
+the DISPLAY environment variable be set to the appropriate display.
+\endeditproc
+
+% The following is no longer true, since auto-indent is disabled when
+% the characters are coming fast enough that they are likely happening
+% as the result of a paste operation.
+%
+% While it may be possible to insert the contents of the current selection
+% or paste buffer via some other means, e.g., via the mouse or some
+% OS-specific key combination, this command is preferable whenever the
+% parameter \index{\scheme{ee-auto-indent}}\scheme{ee-auto-indent} is true
+% for multi-line input that is already indented.
+
+\ECgroup{Cursor movement commands}
+
+\editproc{ee-backward-char}{leftarrow, \cntl{B}}
+Moves the cursor left one character.
+\endeditproc
+
+\editproc{ee-forward-char}{rightarrow, \cntl{F}}
+Moves the cursor right one character.
+\endeditproc
+
+\editproc{ee-next-line}{downarrow, \cntl{N}}
+Moves the cursor down one line (and to the left if necessary so that
+the cursor does not sit beyond the last possible position).
+If the cursor is at the end of the current entry, and the current
+entry has not been modified, this command behaves like
+\index{\scheme{ee-history-fwd}}\scheme{ee-history-fwd}.
+\endeditproc
+
+\editproc{ee-previous-line}{uparrow, \cntl{P}}
+Moves the cursor up one line (and to the left if necessary so that
+the cursor does not sit beyond the last possible position).
+If the cursor is at the top of the current entry, and the current
+entry has not been modified, this command behaves like
+\index{\scheme{ee-history-bwd}}\scheme{ee-history-bwd}.
+\endeditproc
+
+\editproc{ee-beginning-of-line}{home, \cntl{A}}
+Moves the cursor to the first character of the current line.
+\endeditproc
+
+\editproc{ee-end-of-line}{end, \cntl{E}}
+Moves the cursor to the right of the last character of the current line.
+\endeditproc
+
+\editproc{ee-beginning-of-entry}{escape-\scheme{<}}
+Moves the cursor to the first character of the entry.
+\endeditproc
+
+\editproc{ee-end-of-entry}{escape-\scheme{>}}
+Moves the cursor to the right of the last character of the entry.
+\endeditproc
+
+\editproc{ee-goto-matching-delimiter}{escape-\scheme{]}}
+Moves the cursor to the matching delimiter.
+Has no effect if the character under the cursor is not a parenthesis
+or bracket or if no matching delimiter can be found.
+\endeditproc
+
+\editproc{ee-flash-matching-delimiter}{\cntl{]}}
+Moves the cursor briefly to the matching delimiter, if
+one can be found, pausing for an amount of time controlled by the
+parameter \index{\scheme{ee-paren-flash-delay}}\scheme{ee-paren-flash-delay}.
+If the matching delimiter is not presently displayed, the cursor is flashed
+to the upper-left or lower-left corner of the displayed portion of the
+entry, as appropriate.
+\endeditproc
+
+\editproc{ee-exchange-point-and-mark}{\cntl{X}-\cntl{X}}
+Moves the cursor to the mark and leaves the mark at the old cursor
+position.
+(The mark can be set with \scheme{ee-set-mark}.)
+\endeditproc
+
+\editproc{ee-forward-sexp}{escape-\cntl{F}}
+Moves the cursor to the start of the next expression.
+\endeditproc
+
+\editproc{ee-backward-sexp}{escape-\cntl{B}}
+Moves the cursor to the start of the preceding expression.
+\endeditproc
+
+\editproc{ee-forward-word}{escape-f, escape-\scheme{F}}
+Moves the cursor to the end of the next word.
+\endeditproc
+
+\editproc{ee-backward-word}{escape-b, escape-\scheme{B}}
+Moves the cursor to the start of the preceding word.
+\endeditproc
+
+\editproc{ee-forward-page}{pagedown, \cntl{X}-\scheme{]}}
+Moves the cursor down one screen page.
+\endeditproc
+
+\editproc{ee-backward-page}{pageup, \cntl{X}-\scheme{[}}
+Moves the cursor up one screen page.
+\endeditproc
+
+
+\ECgroup{Deletion commands}
+
+\editproc{ee-delete-char}{delete}
+Deletes the character under the cursor.
+
+See also \scheme{ee-eof/delete-char}.
+\endeditproc
+
+\editproc{ee-backward-delete-char}{backspace (rubout), \cntl{H}}
+Deletes the character to the left of the cursor.
+\endeditproc
+
+\editproc{ee-delete-line}{\cntl{U}}
+Deletes the contents of the current line, leaving behind an empty line.
+When used on the first line of a multiline entry of which only the first line
+is displayed, i.e., immediately after history movement, \scheme{ee-delete-line}
+deletes the contents of the entire entry, like \scheme{ee-delete-entry}
+(described below).
+\endeditproc
+
+\editproc{ee-delete-to-eol}{\cntl{K}, escape-\scheme{K}}
+If the cursor is at the end of a line, joins the line with the next
+line, otherwise deletes from the cursor position to the end of the line.
+\endeditproc
+
+\editproc{ee-delete-between-point-and-mark}{\cntl{W}}
+Deletes text between the current cursor position and the mark.
+(The mark can be set with \scheme{ee-set-mark}.)
+\endeditproc
+
+\editproc{ee-delete-entry}{\cntl{G}}
+Deletes the contents of the current entry.
+\endeditproc
+
+\editproc{ee-reset-entry}{\cntl{C}}
+Deletes the contents of the current entry and moves to the end of the
+history.
+\endeditproc
+
+\editproc{ee-delete-sexp}{escape-\cntl{K}, escape-delete}
+Deletes the expression that starts under the cursor, or if
+no expression starts under the cursor, deletes up to the next
+expression.
+\endeditproc
+
+\editproc{ee-backward-delete-sexp}{escape-backspace (escape-rubout), escape-\cntl{H}}
+Deletes the expression to the left of the cursor.
+\endeditproc
+
+\ECgroup{Identifier/filename completion commands}
+
+These commands perform either identifier or filename completion.
+Identifier completion is performed outside of a string constant, and filename
+completion is performed within a string constant.
+(In determining whether the cursor is within a string constant, the
+expression editor looks only at the current line and so can be fooled
+by string constants that span multiple lines.)
+
+\editproc{ee-id-completion}{none}
+Inserts the common prefix of possible completions of the identifier or
+filename immediately to the left of the cursor.
+Identifier completion is based on the identifiers
+defined in the interaction environment.
+When there is exactly one possible completion, the common prefix is the
+completion.
+This command has no effect if no filename or identifier prefix is
+immediately the left of the cursor or if the possible completions have
+no common prefix.
+If run twice in succession, a list of possible completions is displayed.
+
+See also
+\index{\scheme{ee-id-completion/indent}}\scheme{ee-id-completion/indent}.
+\endeditproc
+
+\editproc{ee-next-id-completion}{\cntl{R}}
+Inserts one of the possible completions of the identifier or filename
+immediately to the left of the cursor.
+Identifier completion is based on the identifiers
+defined in the interaction environment.
+If run twice or more in succession, this command cycles through all of
+the possible completions.
+The order is determined by the following heuristics: appearing first
+are identifiers whose names appear in the list value of the parameter
+\index{\scheme{ee-common-identifiers}}\scheme{ee-common-identifiers};
+appearing second are identifiers bound in the interaction environment
+but not bound in the scheme-environment (i.e., identifiers defined by
+the user), and appearing last are those in the scheme environment.
+Within the set of matches appearing in the \scheme{ee-common-identifiers}
+list, those listed earliest are shown first; the order is alphabetical
+within the other two sets.
+
+See also
+\index{\scheme{ee-next-id-completion/indent}}\scheme{ee-next-id-completion/indent}.
+\endeditproc
+
+\ECgroup{History movement commands}
+
+\index{\scheme{--eehistory} command-line-option}%
+The expression editor maintains a history of entries during each session.
+It also saves the history across sessions unless this behavior is
+disabled via the command-line argument ``\scheme{--eehistory off}.''
+
+When moving from one history entry to another, only the first line of each
+multi-line entry is displayed.
+The redisplay command (which \cntl{L} is bound to by default) can be used
+to display the entire entry.
+It is also possible to move down one line at a time to expose just part of
+the rest of the entry.
+
+\editproc{ee-history-bwd}{escape-uparrow, escape-\cntl{P}}
+Moves to the preceding history entry
+if the current entry is empty or has not been modified;
+otherwise, has no effect.
+
+See also \scheme{ee-previous-line}.
+\endeditproc
+
+\editproc{ee-history-fwd}{escape-downarrow, escape-\cntl{N}}
+Moves to the next history entry
+if the current entry is empty or has not been modified;
+otherwise, has no effect.
+
+See also \scheme{ee-next-line}.
+\endeditproc
+
+\editproc{ee-history-bwd-prefix}{escape-\scheme{p}}
+Moves to the closest previous history entry, if any, that starts with
+the sequence of characters that makes up the current entry.
+May be used multiple times to search for same prefix.
+\endeditproc
+
+\editproc{ee-history-fwd-prefix}{escape-\scheme{n}}
+Moves to the closest following history entry, if any, that starts with
+the sequence of characters that makes up the current entry.
+May be used multiple times to search for same prefix.
+\endeditproc
+
+\editproc{ee-history-bwd-contains}{escape-\scheme{P}}
+Moves to the closest previous history entry, if any, that contains within
+it the sequence of characters that makes up the current entry.
+May be used multiple times to search for same content.
+\endeditproc
+
+\editproc{ee-history-fwd-contains}{escape-\scheme{N}}
+Moves to the closest following history entry, if any, that contains within
+it the sequence of characters that makes up the current entry.
+May be used multiple times to search for same content.
+\endeditproc
+
+
+\ECgroup{Indentation commands}
+
+\editproc{ee-indent}{escape-tab}
+Re-indents the current line.
+
+See also \scheme{ee-next-id-completion/indent}.
+\endeditproc
+
+\editproc{ee-indent-all}{escape-\scheme{q}, escape-\scheme{Q}, escape-\cntl{Q}}
+Re-indents each line of the entire entry.
+\endeditproc
+
+
+\ECgroup{Miscellaneous commands}
+
+\editproc{ee-accept}{\cntl{J}}
+Causes the expression editor to invoke the Scheme reader on the contents
+of the entry.
+If the read is successful, the expression is returned to the waiter;
+otherwise, an error message is printed, the entry redisplayed, and the
+cursor left (if possible) at the start of the invalid subform.
+
+See also \scheme{ee-newline/accept}.
+\endeditproc
+
+\editproc{ee-eof}{none}
+Causes end-of-file to be returned from the expression editor,
+which in turn causes the waiter to exit.
+Ignored unless entry is empty.
+
+See also \scheme{ee-eof/delete-char}.
+\endeditproc
+
+\editproc{ee-redisplay}{\cntl{L}}
+Redisplays the current expression.
+If run twice in succession, clears the screen and redisplays the
+expression at the top of the screen.
+\endeditproc
+
+\editproc{ee-suspend-process}{\cntl{Z}}
+Suspends the current process in shells that support job control.
+\endeditproc
+
+\editproc{ee-set-mark}{\cntl{@}, \cntl{}space}
+Sets the mark to the current cursor position.
+\endeditproc
+
+\editproc{ee-command-repeat}{escape-\cntl{U}}
+Repeats the next command $n$ times.
+If the next character typed is a digit, $n$ is determined by reading
+up the sequence of the digits typed and treating it as a decimal
+number.
+Otherwise, $n$ is the value of the parameter
+\index{\scheme{ee-default-repeat}}\scheme{ee-default-repeat}.
+\endeditproc
+
+
+\ECgroup{Combination commands}
+
+\editproc{ee-newline/accept}{enter, \cntl{M}}
+Behaves like \scheme{ee-accept} if run at the end (not including
+whitespace) of an entry that starts with a balanced expression;
+otherwise, behaves like \scheme{ee-newline}.
+\endeditproc
+
+\editproc{ee-id-completion/indent}{tab}
+Behaves like \scheme{ee-id-completion} if an identifier (outside
+a string constant) or filename (within a string constant) appears
+just to the left of the cursor and the last character of that
+identifier or filename was just entered;
+otherwise, behaves like \scheme{ee-indent}.
+
+If an existing identifier or filename, i.e., not one just typed, appears to the left
+of the cursor, the first use of this command behaves like
+\scheme{ee-newline}, the second consecutive use behaves like
+\scheme{ee-id-completion}, and the third behaves like a second consecutive
+use of \scheme{ee-id-completion}.
+\endeditproc
+
+\editproc{ee-next-id-completion/indent}{none}
+Behaves like \scheme{ee-next-id-completion} if an identifier (outside
+a string constant) or filename (within a string constant)
+appears just to the left of the cursor and the last character of that
+identifier or identifier was just entered;
+otherwise, behaves like \scheme{ee-indent}.
+\endeditproc
+
+\editproc{ee-eof/delete-char}{\cntl{D}}
+Behaves like \scheme{ee-delete-char} if the entry is nonempty;
+otherwise, behaves like \scheme{ee-eof}.
+If the entry is nonempty and this command is run twice or more in
+succession, it does nothing once the entry becomes empty.
+This is to prevent accidental exit from the waiter in cases where
+the command is run repeatedly (perhaps with the help of a keyboard's
+auto-repeat feature) to delete all of the characters in an entry.
+\endeditproc
+
+\section{Creating New Editing Commands\label{SECTEXPEDITORNEWCMDS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{ee-string-macro}{\categoryprocedure}{(ee-string-macro \var{string})}
+\nolistlibraries
+\returns a new editing command
+\endnoskipentryheader
+
+The new editing command produced inserts \var{string} before the current
+cursor position.
+
+Two string macros are predefined:
+
+\begin{tabular}{ll}
+\scheme{(ee-string-macro "(define ")} & ~~escape-d\\
+\scheme{(ee-string-macro "(lambda ")} & ~~escape-l
+\end{tabular}
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ee-compose}{\categoryprocedure}{(ee-compose \var{ecmd} \dots)}
+\nolistlibraries
+\returns a new editing command
+\endentryheader
+
+Each \var{ecmd} must be an editing command.
+
+The new editing command runs each of the editing commands
+\scheme{\var{ecmd} \dots} in sequence.
+
+% this is of limited utility until we provide some
+% inspection procedures, like point-pos and end-of-line?
+
+For example, the following expression binds \cntl{X}-p to an editing
+command that behaves like \scheme{ee-history-bwd-prefix} but leaves the
+cursor at the end of the expression rather than at the end of the first
+line, causing the entire entry to be displayed.
+
+\schemedisplay
+(let ()
+  (import expression-editor)
+  (ee-bind-key "^Xp"
+    (ee-compose ee-history-bwd ee-end-of-entry)))
+\endschemedisplay
+
+A command such as \scheme{ee-id-completion} that performs a different
+action when run twice in succession will not recognize that it has been
+run twice in succession if run as part of a composite command.
+
+

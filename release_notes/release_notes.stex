@@ -1,0 +1,1872 @@
+\documentclass{releasenotes}
+
+\thisversion{Version 9.4}
+\thatversion{Version 8.4}
+\pubmonth{April}
+\pubyear{2016}
+
+\begin{document}
+
+\maketitle
+
+% \tableofcontents
+
+\section{Overview}
+
+This document outlines the changes made to {\ChezScheme} for
+{\thisversion} since {\thatversion}.
+
+{\thisversion} is supported for the following platforms.
+The Chez Scheme machine type (returned by the \scheme{machine-type}
+procedure) is given in parentheses.
+
+\begin{itemize}
+\item Linux x86, nonthreaded (i3le) and threaded (ti3le)
+\item Linux x86\_64, nonthreaded (a6le) and threaded (ta6le)
+\item MacOS X x86, nonthreaded (i3osx) and threaded (ti3osx)
+\item MacOS X x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
+\item Linux ARMv6 (32-bit), nonthreaded (arm32le)
+\item Linux PowerPC (32-bit), nonthreaded (ppc32le) and threaded (tppc32le)
+\item Windows x86, nonthreaded (i3nt) and threaded (ti3nt)
+\item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt) [experimental]
+%\item OpenBSD x86, nonthreaded (i3ob) and threaded (ti3ob)
+%\item OpenBSD x86\_64, nonthreaded (a6ob) and threaded (ta6ob)
+%\item FreeBSD x86, nonthreaded (i3fb) and threaded (ti3fb)
+%\item FreeBSD x86\_64, nonthreaded (a6fb) and threaded (ta6fb)
+%\item NetBSD x86, nonthreaded (i3nb) and threaded (ti3nb)
+%\item NetBSD x86\_64, nonthreaded (a6nb) and threaded (ta6nb)
+%\item OpenSolaris x86, nonthreaded (i3s2) and threaded (ti3s2)
+%\item OpenSolaris x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
+\end{itemize}
+
+This document contains three sections describing significant
+(1) \href[static]{section:functionality}{functionality changes},
+(2) \href[static]{section:bugfixes}{bugs fixed}, and
+(3) \href[static]{section:performance}{performance enhancements}.
+A version number listed in parentheses in the header for a change
+indicates the first minor release or internal prerelease to support
+the change.
+
+More information on {\ChezScheme} and {\PetiteChezScheme} can 
+\scheme{be} found at \hyperlink{http://www.scheme.com/}{http://www.scheme.com},
+and extensive documentation is available in
+\TSPL{4}{th} (available directly from MIT Press or from online and local retailers)
+and the \CSUG{9}.
+Online versions of both books can be found at
+\hyperlink{http://www.scheme.com/}{http://www.scheme.com}.
+
+%-----------------------------------------------------------------------------
+\section{Functionality Changes}\label{section:functionality}
+
+\subsection{Extensions to whole-program, whole-library optimization (9.3.1, 9.3.4)}
+
+\scheme{compile-whole-program} now supports incomplete
+whole-program optimization, i.e., whole program optimization that
+incorporates only libraries for which wpo files are available while
+leaving separate libraries for which only object files are available.
+In addition, imported libraries can be left visible for run-time
+use by the \scheme{environment} procedure or for dynamically loaded
+object files that might require them.
+The new procedure \scheme{compile-whole-library} supports the combination
+of groups of libraries separate from programs and unconditionally
+leaves all imported libraries visible.
+
+\subsection{24-, 40-, 48-, and 56-bit bit-field containers (9.3.3)}
+
+The total size of the fields within an ftype \scheme{bits} can now be
+24, 40, 48, or 56 (as well as 8, 16, 32, and 64). 
+
+\subsection{Object-counting for static-generation collections (9.3.3)}
+
+Object counting (see \scheme{object-counts} below) is now enabled for
+all collections targeting the static generation.
+
+\subsection{Support for off-line profile profile-dump processing (9.3.2)}
+
+Previously, the output of \scheme{profile-dump} was not specified.
+It is now specified to be a list of source-object, profile-count pairs.
+In addition, \scheme{profile-dump-html}, \scheme{profile-dump-list},
+and \scheme{profile-dump-data} all now take an optional \var{dump}
+argument, which is a list of source-object, profile-count pairs in
+the form returned by \scheme{profile-dump} and defaults to the current
+value of \scheme{(profile-dump)}.
+
+With these changes, it is now possible to obtain a dump from
+\scheme{profile-dump} in one process, and write it to a fasl file
+(using \scheme{fasl-write}) for subsequent off-line processing in
+another process, where it can be read from the fasl file (using
+\scheme{fasl-read}) and processed using \scheme{profile-dump-html},
+\scheme{profile-dump-list}, \scheme{profile-dump-data} or some
+custom mechanism.
+
+\subsection{More support for controlling return of memory to the O/S (9.3.2)}
+
+A new parameter, \scheme{release-minimum-generation}, determines when
+the collector attempts to return unneeded virtual memory to the O/S.
+It defaults to the value of \scheme{collect-maximum-generation}, so the
+collector attempts to return memory to the O/S only when performing a
+maximum-generation collection.
+It can be set to a lower generation number to cause the collector to
+do so for younger generations we well.
+
+\subsection{\protect\scheme{library-group} eliminated (9.3.1)}
+
+With the extensions to \scheme{compile-whole-program} and the
+addition of \scheme{compile-whole-library}, as described above,
+support for whole-program and whole-library optimization now subsumes
+the functionality of the experimental \scheme{library-group} form,
+and the form has been eliminated.
+This is an \emph{incompatible change}.
+
+\subsection{Support for Version~7 interaction-environment semantics eliminated (9.3.1)}
+
+Prior to Version~8, the semantics of the interaction environment
+used by the read-eval-print loop (REPL), aka waiter, and by
+\scheme{load}, \scheme{compile}, and \scheme{interpret} without
+explicit environment arguments treated all variables in the environment
+as mutable, including those bound to primitives.
+This meant that top-level references to primitive names could not
+be optimized by the compiler because their values might change at
+run time, except that, at optimize-level 2 and above, the compiler
+did treat primitive names as always having their original values.
+
+In Version 8 and subsequent versions, primitive bindings in the
+interaction environment are immutable, as if imported directly from
+the immutable Scheme environment.
+That is, they cannot be assigned, although they can be replaced
+with new bindings with a top-level definition.
+
+To provide temporary backward compatibility, the
+\scheme{--revert-interaction-semantics} command-line option and
+\scheme{revert-interaction-semantics} parameters allowed programmers
+to revert the interaction environment to Version~7 semantics.
+This functionality has now been eliminated and along with it the
+special treatment of primitive bindings at optimize level 2 and
+above.
+
+This is an \emph{incompatible change}.
+
+\subsection{Explicit specification of profile source locations (9.3.1)}
+
+Version 9.3.1 augments existing support for explicit source-code
+annotations with additional features targeted at source profiling
+for externally generated programs, including programs generated by
+language front ends that target Scheme and use Chez Scheme as the
+back end.
+Included is a \scheme{profile} expression that explicitly associates
+a specified source object with a profile count (of times the
+expression is evaluated), \scheme{generate-profile-forms} parameter
+that controls whether the compiler (also) associates profile counts
+with source locations implicitly identified by annotated expressions
+in the input, and a finer-grained method for marking whether an
+individual annotation should be used for debugging, profiling, or
+both.
+
+\subsection{``Maybe'' file (re)compilation (9.3.1)}
+
+When \scheme{compile-imported-libraries} is set to \scheme{#t},
+libraries required indirectly by one of the
+file-compilation procedures, e.g., \scheme{compile-library},
+\scheme{compile-program}, and \scheme{compile-file}, are automatically
+compiled if and only if the object file is not present, older than
+the source (main and include) files, or some library upon which
+they depend has been or needs to be recompiled.
+
+Version 9.3.1 adds three new procedures: \scheme{maybe-recompile-library},
+\scheme{maybe-recompile-program}, and \scheme{maybe-recompile-file},
+that perform a similar analysis and compile the library, program,
+or file only under similar circumstances.
+
+\subsection{New primitives for querying memory utilization (9.3.1)}
+
+Three new primitives have been added to allow a Scheme process to
+track usage of virtual memory for its heap.
+
+\scheme{current-memory-bytes} returns the total number of bytes of
+virtual memory used or reserved to represent the Scheme heap.
+This differs from \scheme{bytes-allocated}, which returns the number
+of bytes currently occupied by Scheme objects.
+\scheme{current-memory-bytes} additionally includes memory used for
+heap management as well as memory held in reserve to satisfy future
+allocation requests.
+
+\scheme{maximum-memory-bytes} returns the maximum number of bytes
+of virtual memory occupied or reserved for the Scheme heap by the
+calling process since the last call to \scheme{reset-maximum-memory-bytes!}
+or, if \scheme{reset-maximum-memory-bytes!} has never been called,
+since system start-up.
+
+\scheme{reset-maximum-memory-bytes!} resets the maximum memory bytes
+to the current memory bytes.
+
+\subsection{Unicode 7.0 support (9.3.1)}
+
+The character sets, character classes, and word-breaking algorithms
+for character, string, and Unicode-related bytevector operations
+have now been updated to Unicode 7.0.
+
+\subsection{Linux PowerPC (32-bit) support (9.3)}
+
+Support for running {\ChezScheme} on 32-bit PowerPC processors
+running Linux has been added, with machines type ppc32le (nonthreaded)
+and tppc32le (threaded).
+C~code intended to be linked with these versions of the system
+should be compiled using the Gnu C~compiler's \scheme{-m32} option.
+
+\subsection{Printed representation of procedures (9.2.1)}
+
+The printed representation of a procedure now includes the source
+file and beginning file position when available.
+
+\subsection{I/O errors writing to the console error port (9.2.1)}
+
+The default exception handler now catches I/O exceptions that occur
+when it attempts to display a condition and, if an I/O exception
+does occur, resets as if by calling the \scheme{reset} procedure.
+The intent is to avoid an infinite regression (ultimately ending
+in exhaustion of memory) in which the process repeatedly recurs
+back to the default exception handler trying to write to a console-error
+port (typically stderr) that is no longer writable, e.g., due to
+the other end of a pipe or socket having been closed.
+
+\subsection{C locking macros (9.2.1)}
+
+The header file scheme.h distributed with Chez Scheme now includes
+several new lock-related macros:
+\scheme{INITLOCK} (corresponding to \scheme{ftype-init-lock!}),
+\scheme{SPINLOCK} (\scheme{ftype-spin-lock!}),
+\scheme{UNLOCK} (\scheme{ftype-unlock!}),
+\scheme{LOCKED_INCR} (\scheme{ftype-locked-incr!}), and
+\scheme{LOCKED_DECR} (\scheme{ftype-locked-decr!}).
+All take a pointer to an iptr or uptr.
+\scheme{LOCKED_INCR} and \scheme{LOCKED_DECR} also take an
+\scheme{lvalue} argument that is set to true (nonzero) if the result
+of the increment or decrement is zero, otherwise false (zero).
+
+\subsection{New \protect\scheme{compile-to-file} procedure (9.2.1)}
+
+The new procedure \scheme{compile-to-file} is similar to
+\scheme{compile-to-port} with the output port replaced with an
+output pathname.
+
+\subsection{Whole-program optimization (9.2)}
+
+Version 9.2 includes support whole-program optimization of a top-level
+program and the libraries upon which it depends at run time based on ``wpo''
+(whole-program-optimization) files produced as a byproduct of compiling
+the program and libraries when the parameter \scheme{generate-wpo-files}
+is set to \scheme{#t}.
+The new procedure \scheme{compile-whole-program} takes as input
+a wpo file for a top-level program, combines it with the wpo files for
+any libraries the program requires at run time, and produces a single
+object file containing a self-contained program.
+In so doing, it discards unused code and optimizes across program and
+library boundaries, potentially reducing program load time, run time,
+and memory requirements.
+
+\scheme{compile-file}, \scheme{compile-program}, \scheme{compile-library},
+and \scheme{compile-script} produce wpo files as well as ordinary
+object files when the new \scheme{generate-wpo-files} parameter is set
+to \scheme{#t} (the default is \scheme{#f}).
+\scheme{compile-port} and \scheme{compile-to-port} do so when passed
+an optional \var{wpo output port}.
+
+\subsection{Type-specific symbol-hashtable operators (9.2)\label{sec:symbol-hashtables}}
+
+A new set of primitives that operate on symbol
+hashtables has been added:
+
+\schemedisplay
+symbol-hashtable?
+symbol-hashtable-ref
+symbol-hashtable-set!
+symbol-hashtable-contains?
+symbol-hashtable-cell
+symbol-hashtable-update!
+symbol-hashtable-delete!
+\endschemedisplay
+
+These are like their generic counterparts but operate only on symbol
+hashtables, i.e., hashtables created with \scheme{symbol-hash} as
+the hash function and \scheme{eq?}, \scheme{eqv?}, \scheme{equal?},
+or \scheme{symbol=?} as the equivalence function.
+
+These primitives are more efficient at optimize-level 3 than their
+generic counterparts when both are applied to symbol hashtables.
+The performance of symbol hashtables has been improved even when the new
+operators are not used (Section~\ref{sec:symbol-hashtable-performance}).
+
+\subsection{\protect\scheme{strip-fasl-file} is now machine-independent (9.2)}
+
+\scheme{strip-fasl-file} can now strip fasl files created for a machine
+type other than the machine type of the calling process as long as the
+Chez Scheme version is the same.
+
+\subsection{\protect\scheme{source-file-descriptor} and \protect\scheme{locate-source} (9.2)}
+
+The new procedure \scheme{source-file-descriptor} can be used to construct
+a custom source-file descriptor or reconstruct a source-file descriptor
+from values previously extracted from another source-file descriptor.
+It takes two arguments: a string \var{path} and exact nonnegative integer
+\var{checksum} and returns a new source-file descriptor.
+
+The new procedure \scheme{locate-source} can be used to determine a full
+path, line number, and character position from a source-file descriptor
+and file position.
+It accepts two arguments: a source-file descriptor \var{sfd} and an
+exact nonnegative integer file position \var{fp}.
+It returns zero values if the unmodified file is not found in the source
+directories and three values (string \var{path}, exact nonnegative
+integer \var{line}, and exact nonnegative integer \var{char}) if the
+file is found.
+
+\subsection{Compressed compiled scripts and partially compressed files (9.2)}
+
+Support for creating and handling files that begin with uncompressed
+data and end with compressed data has been added in the form of the
+new procedure \scheme{port-file-compressed!} that takes a port and
+if not already set up to read or write compressed data, sets it up
+to do so.
+The port must be a file port pointing to a regular file, i.e., a
+file on disk rather than a socket or pipe and the port must not be
+an input/output port.
+The port can be a binary or textual port.
+If the port is an output port, subsequent output sent to the port
+will be compressed.
+If the port is an input port, subsequent input will be decompressed
+if and only if the port is currently pointing at compressed data.
+
+When the parameter \scheme{compile-compressed} is set ot \scheme{#t},
+the \scheme{compile-script} and \scheme{compile-program} procedures
+take advantage of this functionality to copy the \scheme{#!} prefix,
+if present in the source file, uncompressed in the object file while
+compressing the object code emitted for the program, thus reducing
+the size of the resulting file without preventing the \scheme{#!}
+line from being read and interpreted properly by the operating
+system.
+
+\subsection{Change in library import handling (9.2)}
+
+In previous releases, when an object file was found before the
+corresponding source file in the library directories, the object file was
+older, and the parameter \scheme{compile-imported-libraries} was not set,
+the object file was loaded rather than the source file.
+The (newer) source file is now loaded instead, just as it would be if
+the source file is found before the corresponding, older object file.
+This is an \emph{incompatible change}.
+
+\subsection{Change in fasl-strip options (9.1)}
+
+\scheme{strip-fasl-file} now supports stripping of all compile-time
+information and no longer supports stripping of just library visit code.
+Stripping all compile-time information nearly always results in smaller
+object files than stripping just library visit code, with a corresponding
+reduction in the memory required when the resulting
+file is loaded.
+
+To reflect this, the old fasl-strip option \scheme{library-visit-code}
+has been eliminated, and the new fasl-strip option
+\scheme{compile-time-information} has been added.
+This is an \emph{incompatible change} in that code that previously
+used the fasl-strip option \scheme{library-visit-code} will
+have to be modified to omit the option or to replace it with
+\scheme{compile-time-information}.
+
+\subsection{Library loading (9.1)}
+
+Visiting (via \scheme{visit}) a library no longer loads the library's
+run-time information (invoke dependencies and invoke code), and revisiting
+(via \scheme{revisit}) a library no longer loads the library's
+compile-time information (import and visit dependencies and import and
+visit code).
+
+When a library is invoked due to a run-time dependency of another
+library or a top-level program on the library, the library is now
+``revisited'' (as if via \scheme{revisit}) rather than ``loaded''
+(as if via \scheme{load}).
+As a result, the compile-time information is not loaded, which can result
+in substantial reductions in both library invocation time and memory
+footprint.
+
+If a library is revisited, either explicitly or as the result of run-time
+dependency, a subsequent import of the library causes it to be
+``visited'' (as if via \scheme{visit}) if the same object file can be
+found at the same path and the visit code has not been stripped.
+The compile-time code can alternatively be loaded explicitly from the same or a
+different file via a direct call to \scheme{visit}.
+
+While this change is mostly transparent (ignoring the reduced invocation
+time and memory footprint), it is an \emph{incompatible change} in the
+sense that the system potentially reads the file twice and can run
+code that is marked using \scheme{eval-when} as both visit
+and revisit code.
+
+\subsection{Finding objects in the heap (9.1)}
+
+Version 9.1 includes support for a new heap inspection tool that
+allows a programmer to look for objects in the heap according to
+arbitrary predicates.
+The new procedure \scheme{make-object-finder} takes a predicate \var{pred} and two optional
+arguments: a starting point \var{x} and a maximum generation \var{g}.
+The starting point defaults to the value of the procedure \scheme{oblist},
+and the maximum generation defaults to the value of the parameter
+\scheme{collect-maximum-generation}.
+\scheme{make-object-finder} returns an object finder \var{p} that can be used to
+search for objects satisfying \var{pred} within the starting-point object \var{x}.
+Immediate objects and objects in generations older than \var{g} are treated
+as leaves.
+\var{p} is a procedure accepting no arguments.
+If an object \var{y} satisfying \var{pred} can be found starting with \var{x},
+\var{p} returns a list whose first element is \var{y} and whose remaining
+elements represent the path of objects from \var{x} to \var{y}, listed
+in reverse order.
+\var{p} can be invoked multiple times to find additional objects satisfying
+the predicate, if any.
+\var{p} returns \scheme{#f} if no more objects matching the predicate
+can be found.
+
+\var{p} maintains internal state recording where it has been so that it
+can restart at the point of the last found object and not return
+the same object twice.
+The state can be several times the size of the starting-point object
+\var{x} and all that is reachable from \var{x}.
+
+The interactive inspector provides a convenient interface to the object
+finder in the form of \scheme{find} and \scheme{find-next} commands.
+The \scheme{find} command evaluates its first argument, which should
+evaluate to the desired predicate, and treats its second argument, if
+present, as the maximum generation, overriding the default.
+The starting point \var{x} is the object upon which the
+inspector is currently focused.
+If an object is found, the inspector's new focus is the found object,
+the parent focus (obtainable via the \scheme{up} command) is the first
+element in the (reversed) path, the parent's parent is the next element,
+and so on up to \var{x}.
+The \scheme{find-next} command repeats the last find, as if by an explicit
+invocation of the same object finder.
+
+Relocation tables for static code objects are discarded by default, which
+prevents object finders from providing accurate results when static code
+objects are involved.
+That is, they will not find any objects pointed to directly from a code
+object that has been promoted to the static generation.
+If this is a problem, the command-line argument
+\scheme{--retain-static-relocation} can be used to prevent the relocation
+tables from being discarded.
+
+\subsection{Object counts (9.1)}
+
+The new procedure \scheme{object-counts} can be used to determine,
+for each type of object, the number and size in bytes of objects of
+that type in each generation.
+Its return value has the following structure:
+
+\schemedisplay
+((\var{type} (\var{generation} \var{count} . \var{bytes}) \dots) \dots)
+\endschemedisplay
+
+\var{type} is either the name of a primitive type, represented as a
+symbol, e.g., \scheme{pair}, or a record-type descriptor (rtd).
+\var{generation} is a nonnegative fixnum between 0 and the value
+of \scheme{(collect-maximum-generation)}, inclusive, or the symbol
+\scheme{static} representing the static generation.
+\var{count} and \var{bytes} are nonnegative fixnums.
+
+Object counts are accurate for a generation $n$ immediately after
+a collection of generation $n$ or higher if enabled during that
+collection.
+Object counts are enabled by setting the parameter
+\scheme{enable-object-counts} to \scheme{#t}.
+The command-line option \scheme{--enable-object-counts} can be used to
+set this parameter to \scheme{#t} on startup.
+Object counts are not enabled by default since it adds overhead to
+garbage collection.
+
+To make the information more useful in the presence of ftype pointers,
+the ftype descriptors produced by \scheme{define-ftype} for each
+defined ftype now carry the name of the ftype rather than a generic
+name like \scheme{ftd-struct}.
+(Ftype descriptors are subtypes of record-type descriptors and can appear
+as types in the \scheme{object-counts} return value.)
+
+\subsection{Native-eol style is now none (9.1)}
+
+To simplify interaction with tools that naively expose multiple-character
+end-of-line sequences such as CRLF as separate characters to the user, the
+native end-of-line style (\scheme{native-eol-style}) is now \scheme{none}
+on all machine types.
+This is an \emph{incompatible change}.
+
+\subsection{Library-requirements options (9.1)}
+
+In previous releases, the \scheme{library-requirements} procedure
+returns a list of all libraries required by the specified library,
+whether they are needed when the specified library is imported,
+visited, or invoked.
+While this remains the default behavior, \scheme{library-requirements}
+now takes an optional ``options'' argument.
+This must be a library-requirements-options enumerations set, i.e., the
+value of a \scheme{library-requirements-options} form with some subset of
+the options \scheme{import}, \scheme{visit@visit}, \scheme{invoke@visit},
+and \scheme{invoke}.  \scheme{import} includes the libraries
+that must be imported when the specified library is imported;
+\scheme{visit@visit} includes the libraries that must be visited when
+the specified library is visited; \scheme{invoke@visit} includes the libraries
+that must be invoked when the specified library is visited; and
+\scheme{invoke} includes the libraries that must be invoked when
+the specified library is invoked.
+The default behavior is obtained by supplying a enumeration set containing all
+of these options.
+
+\subsection{Nested object size and composition (9.1)}
+
+Two new procedures, \scheme{compute-size} and
+\scheme{compute-composition}, can be used to determine the
+size and make-up of nested objects with the heap.
+
+Both take an object and an optional generation.
+The generation must be a fixnum between 0 and the value of
+\scheme{(collect-maximum-generation)}, inclusive, or the symbol static.
+It defaults to the value of \scheme{(collect-maximum-generation)}.
+
+\scheme{compute-size} returns the number of bytes occupied by the object
+and everything to which it points, ignoring objects in generations older
+than the specified generation.
+
+\scheme{compute-composition} returns an association list giving the
+number and number of bytes of each type of object that the specified
+object is constructed from, ignoring objects in generations older than
+the specified generation.  The association list maps type names (e.g.,
+pair and flonum) or record-type descriptors to a pair of fixnums
+giving the count and bytes.
+Types with zero counts are not included in the list.
+
+A surprising number of objects effectively point indirectly to a large
+percentage of all objects in the heap due to the attachment of top-level
+environment bindings to symbols, but the generation argument can be used
+in combination with explicit calls to collect (with automatic collections
+disabled) to measure precisely how much space is allocated to freshly
+allocated structures.
+
+When used directly from the REPL with no other threads running,
+\scheme{(compute-size (oblist) 'static)} effectively gives the size of
+the entire heap, and \scheme{(compute-composition (oblist) 'static)}
+effectively gives the composition of the entire heap.
+
+The inspector makes the aggregate size of an object similarly available
+through the \scheme{size} inspector-object message and the corresponding
+\scheme{size} interactive-inspector command, with the twist that it
+does not include objects whose sizes were previously requested in the
+same session, making it possible to see the effectively smaller sizes
+of what the programmer perceives to be substructures in shared and
+cyclic structures.
+
+These procedures potentially allocate a large amount of memory and
+so should be used only when the information returned by the
+procedure \scheme{object-counts} (see preceding entry) does not suffice.
+
+Relocation tables for static code objects are discarded by default,
+which prevents these procedures from providing accurate results when
+static code objects are involved.
+That is, they will not find any objects pointed to directly from a code
+object that has been promoted to the static generation.
+If accurate sizes and compositions for static code objects are
+required, the command-line argument \scheme{--retain-static-relocation}
+can be used to prevent the relocation tables from being discarded.
+
+\subsection{Showing expander and optimizer output (9.1)}
+
+When the parameter \scheme{expand-output} is set to a textual output
+port, the output of the expander is printed to the port as a side effect
+of running \scheme{compile}, \scheme{interpret}, or any of the file
+compiling primitives, e.g., \scheme{compile-file} or
+\scheme{compile-library}.
+Similarly, when the parameter \scheme{expand/optimize-output} is set to a
+textual output port, the output of the source optimizer is printed.
+
+\subsection{Undefined-variable warnings (9.1)}
+
+When \scheme{undefined-variable-warnings} is set to \scheme{#t}, the
+compiler issues a warning message whenever it cannot determine that
+a variable bound by \scheme{letrec}, \scheme{letrec*}, or an internal
+definition will not be referenced before it is defined.
+The default value is \scheme{#f}.
+
+Regardless of the setting of this parameter, the compiler inserts code
+to check for the error, except at optimize level 3.
+The check is fairly inexpensive and does not typically inhibit inlining
+or other optimizations.
+In code that must be carefully tuned, however, it is sometimes useful
+to reorder bindings or make other changes to eliminate the checks.
+Enabling this warning can facilitate this process.
+
+The checks are also visible in the output of \scheme{expand/optimize}.
+
+\subsection{Detecting accidental use of generative record types (9.1)}
+
+When the new boolean parameter \scheme{require-nongenerative-clause}
+is set to \scheme{#t}, a \scheme{define-record-type} without a
+\scheme{nongenerative} clause is treated as a syntax error.
+This allows the programmer to detect accidental use of generative
+record types.
+Generative record types are rarely useful and are less efficient
+than nongenerative types, since generative record types require the
+construction of a record-type-descriptor each time a
+\scheme{define-record-type} form is evaluated rather than once,
+at compile time.
+To support the rare need for a generative record type while still
+allowing accidental generativity to be detected,
+\scheme{define-record-type} has been extended to allow a generative
+record type to be explicitly declared with a \scheme{nongenerative}
+clause with \scheme{#f} for the uid, i.e,. \scheme{(nongenerative #f)}.
+
+\subsection{Improved support for cross compilation (9.1)}
+
+Cross-compilation support has been improved in two ways: (1) it is
+now possible to cross-compile a library and import it later in a
+separate process for cross-compilation of dependent libraries, and
+(2) the code produced for the target machine when cross compiling is no
+longer less efficient than code produced natively on the target
+machine.
+
+\subsection{Linux ARMv6 (32-bit) support (9.1)}
+
+Support for running {\ChezScheme} on ARMv6 processors running Linux
+has been added, with machine type arm32le (32-bit nonthreaded).
+C~code intended to be linked with these versions of the system
+should be compiled using the Gnu C~compiler's \scheme{-m32} option.
+
+\subsection{Source information in ftype ref/set! error messages (9.0)}
+
+When available at compile time, source information is now included
+in run-time error messages produced when \scheme{ftype-&ref},
+\scheme{ftype-ref}, \scheme{ftype-set!}, and the locked ftype
+operations are handed invalid inputs, e.g., ftype pointers of some
+unexpected type, RHS values of some unexpected type, or improper
+indices.
+
+\subsection{\protect\scheme{compile-to-port} top-level-program dependencies (9.0)}
+
+When passed a single \scheme{top-level-program} form,
+\scheme{compile-to-port} now returns a list of the libraries the
+top-level program requires at run time, as with \scheme{compile-program}.
+Otherwise, the return value is unspecified.
+
+\subsection{Better feedback for record-type mismatches (9.0)}
+
+When \scheme{make-record-type} or \scheme{make-record-type-descriptor}
+detect an incompatibility between two record types with the same
+UID, the resulting error messages provide more information to
+describe the mismatch, i.e., whether the parent, fields, flags, or
+mutability differ.
+
+\subsection{\protect\scheme{enable-cross-library-optimization} parameter (9.0)}
+
+When a library is compiled, information is stored with the object
+code to enable propagation of constants and inlining of procedures
+defined in the library into dependent libraries.
+The new parameter \scheme{enable-cross-library-optimization}, whose
+value defaults to \scheme{#t}, can be set to \scheme{#f} to prevent
+this information from being stored and disable the corresponding
+optimizations.
+This might be done to reduce the size of the object files or to
+reduce the potential for exposure of near-source information via
+the object file.
+
+\subsection{Stripping object files (9.0)}
+
+The new procedure \scheme{strip-fasl-file} allows the removal of
+source information of various sorts from a compiled object (fasl) file
+produced by \scheme{compile-file} or one of the other file compiling
+procedures.
+It also allows removal of library visit code, i.e., the code
+required to compile (but not run) dependent libraries.
+
+\scheme{strip-fasl-file} accepts three arguments: an input pathname,
+and output pathname, and a fasl-strip-options enumeration set,
+created by \scheme{fasl-strip-options} with zero or more of the
+following options.
+
+\begin{description}
+\item[\scheme{inspector-source}:]
+Strip inspector source information.
+
+\item[\scheme{source-annotations}:]
+Strip source annotations.
+
+\item[\scheme{profile-source}:]
+Strip source file and character position information from profiled
+code objects.
+
+\item[\scheme{library-visit-code}:]
+This strips library visit code from compiled libraries.
+\end{description}
+
+\subsection{Ftype array bound of zero (9.0)}
+
+The bound of an ftype array can now be zero and, when zero, is
+treated as unbounded in the sense that no run-time upper-bound
+checks are performed for accesses to the array.
+This simplifies the creation of ftype arrays whose actual bounds
+are determined dynamically.
+
+\subsection{\protect\scheme{compile-profile} no longer implies \protect\scheme{generate-inspector-information} (9.0)}
+
+In previous releases, profile and inspector source information was
+gathered and stored together so that compiling with profiling enabled
+required that inspector also be stored with each code object.
+This is no longer the case.
+
+\subsection{\protect\scheme{case} now uses \protect\scheme{member} (9.0)}
+
+\scheme{case} now uses \scheme{member} rather than \scheme{memv} for key
+comparisons, a generalization that allows \scheme{case} to be used for
+strings, lists, vectors, etc., rather than just atomic values.
+This adds no overhead when keys are comparable with \scheme{memv},
+since the compiler converts calls to \scheme{member} into calls to
+\scheme{memv} (or \scheme{memq}, or even individual inline pointer
+comparisons) when it can determine the more expensive test is not
+required.
+
+The \scheme{case} syntax exported by the the \scheme{(rnrs)} and
+\scheme{(rnrs base)} libraries still uses \scheme{memv} for
+compatibility with the R6RS standard.
+
+\subsection{\protect\scheme{write} and \protect\scheme{display} and foreign addresses (9.0)}
+
+The \scheme{write} and \scheme{display} procedures now recognize
+foreign addresses that happen to look like Scheme objects and print
+them as \scheme{#<foreign>}; previously, \scheme{write} and
+\scheme{display} would attempt to treat the addresses as Scheme
+objects, typically leading to invalid memory references.
+Some foreign addresses are indistinguishable from fixnums and
+still print as fixnums.
+
+\subsection{Profile-directed optimization (9.0)}
+
+Compiled code can be instrumented to gather two kinds of
+execution counts, source-level and block-level, via different settings
+of the \scheme{compile-profile} parameter.
+When \scheme{compile-profile} is set to the symbol \scheme{source}
+at compile time, source execution counts are gathered by the generated
+code, and when \scheme{compile-profile} is set to \scheme{block},
+block execution counts aer gathered.
+Setting it to \scheme{#f} (the default) disables instrumentation.
+
+Source counts identical to the source counts gathered by generated
+code in previous releases when compiled with in previous releases
+when \scheme{compile-profile} is set to \scheme{#t}, and \scheme{#t}
+can be still be used in place of \scheme{source} for backward
+compatibility.
+Source counts can be viewed by the programmer at the end of the run
+of the generated code via \scheme{profile-dump-list} and
+\scheme{profile-dump-html}.
+
+Block counts are per \emph{basic block}.
+Basic blocks are individual sequences of straight-line code and are
+the building blocks of the machine code generated by the compiler.
+Counting the number of times a block is executed is thus equivalent
+to counting the number of times the instructions within it are
+executed.
+
+There is no mechanism for the programmer to view block counts, but
+both block counts and source counts can now be saved after a sample
+run of the generated code for use in guiding various optimations
+during a subsequent compilation of the same code.
+
+The source counts can be used by ``profile-aware macros,'' i.e.,
+macros whose expansion is guided by profiling information.
+A profile-aware macro can use profile information to optimize
+the code it produces.
+For example, a macro defining an abstract datatype might choose
+representations and algorithms based on the frequencies
+of its operations.
+Similarly, a macro, like \scheme{case}, that performs a set of
+disjoint tests might choose to order those tests based on which are
+most likely to succeed.
+Indeed, the built-in \scheme{case} now does just that.
+A new syntactic form, \scheme{exclusive-cond}, abstracts a common
+use case for profile-aware macros.
+
+The block counts are used to guide certain low-level optimizations,
+such as block ordering and register allocation.
+
+The procedure \scheme{profile-dump-data} writes to a specified file
+the profile data collected during the run of a program compiled
+with \scheme{compile-profile} set to either \scheme{source} or
+\scheme{block}.
+It is similar to \scheme{profile-dump-list} or \scheme{profile-dump-html}
+but stores the profile data in a machine readable form.
+
+The procedure \scheme{profile-load-data} loads one or more files
+previously created by \scheme{profile-dump-data} into an internal
+database.
+
+The database associates \emph{weights} with source locations or
+blocks, where a weight is flonum representing the ratio of the
+location's count versus the maximum count.
+When multiple profile data sets are loaded, the weights for each
+location is averaged across the data sets.
+
+The procedure \scheme{profile-query-weight} accepts a source object
+and returns the weight associated with the location identified by
+the source object, or \scheme{#f} if no weight is associated with
+the location.
+This procedure is intended to be used by a profile-aware macro on
+pieces of its input to optimize code based on profile data previously
+stored by \scheme{profile-dump-data} and loaded by
+\scheme{profile-load-data}.
+
+The procedure \scheme{profile-clear-data} clears the database.
+
+The new \scheme{exclusive-cond} syntax is similar to \scheme{cond}
+except it assumes the tests performed by the clauses are disjoint
+and reorders them based on available profiling data.
+Because the tests might be reordered, the order in which side effects
+of the test expressions occur is undefined.
+The built-in \scheme{case} form is implemented in terms of
+\scheme{exclusive-cond}.
+
+\subsection{New \protect\scheme{ssize_t} foreign type (9.0)}
+
+A new foreign type, \scheme{ssize_t}, is now supported.
+It is the signed analogue of \scheme{size_t}.
+
+\subsection{Guardian representatives (9.0)}
+
+When \scheme{make-guardian} is passed a second, \emph{representative},
+argument, the representative is returned from the guardian in place
+of the guarded object when the guarded object is no longer accessible.
+
+\subsection{Library reloading on dependency change (9.0)}
+
+A library initially imported from an object file is now reimported from
+source when a dependency (another library or include file) has changed
+since the library was compiled.
+
+\subsection{Expression-editor filename completion (8.9.5)}
+
+The expression editor now performs filename- rather than
+command-completion within string constants.
+It looks only at the current line to determine whether the cursor is
+within a string constant; this can lead to the wrong kind of command
+completion for strings that cross line boundaries.
+
+\subsection{New lock mechanisms and elimination of old lock mechanism (8.9.5)}
+
+The built in ftype \scheme{ftype-lock} has been eliminated along
+with the corresponding procedures, \scheme{acquire-lock},
+\scheme{release-lock}, and \scheme{initialize-lock}.
+This is an incompatible change, although defining
+\scheme{ftype-lock} and the associated procedures is straightforward
+using the forms described below.
+
+The functionality has been replaced and generalized by four new syntactic
+forms that operate on lock fields wherever they appear within a foreign
+type:
+
+\schemedisplay
+(ftype-init-lock! \var{T} (\var{a} ...) \var{e})
+(ftype-lock! \var{T} (\var{a} ...) \var{e})
+(ftype-spin-lock! \var{T} (\var{a} ...) \var{e})
+(ftype-unlock! \var{T} (\var{a} ...) \var{e})
+\endschemedisplay
+
+The access chain \scheme{\var{a} \dots} must specify a word-size
+integer represented using the native endianness, i.e., a \scheme{uptr}
+or \scheme{iptr}.
+It is a syntax violation when this is not the case.
+
+For each of the forms, the expression \var{e} is evaluated first
+and must evaluate to a ftype pointer \var{p} of type \var{T}.
+
+\scheme{ftype-init-lock!} initializes the specified field of the foreign
+object to which \var{p} points, puts the field into the unlocked state,
+and returns an unspecified value.
+
+If the field is in the unlocked state, \scheme{ftype-lock!} puts it
+into the locked state and returns \scheme{#t}.
+If the field is already in the locked state, \scheme{ftype-lock!}
+returns \scheme{#f}.
+
+\scheme{ftype-spin-lock!} loops until the lock is in the unlocked
+state, then puts it into the locked state and returns an unspecified
+value.
+\emph{This operation will never return if no other thread or process
+unlocks the field, causing interrupts and requests for collection to
+be ignored.}
+
+Finally, \scheme{ftype-unlock} puts the field into the unlocked state
+(regardless of the current state) and returns an unspecified value.
+
+An additional pair of syntactic forms can be used when just an
+atomic increment or decrement is required:
+
+\schemedisplay
+(ftype-locked-incr! \var{T} (\var{a} ...) \var{e})
+(ftype-locked-decr! \var{T} (\var{a} ...) \var{e})
+\endschemedisplay
+
+As for the first set of forms, the access chain \scheme{\var{a} \dots}
+must specify a word-size integer represented using the native endianness.
+
+\subsection{\protect\scheme{ftype-pointer-null?}, \protect\scheme{ftype-pointer=?} (8.9.5)}
+
+The new procedure \scheme{ftype-pointer-null?} can be used to compare the
+address of its single argument, which must be an ftype pointer, against 0.
+It returns \scheme{#t} if the address is 0 and \scheme{#f} otherwise.
+Similarly, \scheme{ftype-pointer=?} can be used to compare the
+addresses of two ftype-pointer arguments.
+It returns \scheme{#t} if the address are the same and \scheme{#f}
+otherwise.
+
+These are potentially more efficient than extracting ftype-pointer
+addresses first, which might result in bignum allocation for addresses
+outside the fixnum range,
+although the compiler also now
+tries to avoid allocation when the result of a call to
+\scheme{ftype-pointer-address} is directly compared with 0 or with the
+result of another call to \scheme{ftype-pointer-address}, as described
+in Section~\ref{ftpaopt}.
+
+\subsection{\protect\scheme{gensym}'s new optional unique-name argument (8.9.5)}
+
+\scheme{gensym} now accepts a second optional argument, the unique
+name to use.
+It must be a string and should not be used by any other gensym intended
+to be distinct from the new gensym.
+
+\subsection{GC times now maintained with finer granularity (8.9.5)}
+
+In previous releases, collection times as reported by \scheme{statistics}
+or printed by \scheme{display-statistics} were gathered internally
+with millisecond granularity at each collection, possibly leading to
+significant inaccuracies over the course of many collections.
+They are now maintained using high-resolution timers with generally
+much better accuracy.
+
+\subsection{New time types for tracking collection times (8.9.5)}
+
+New time types \scheme{time-collector-cpu} and \scheme{time-collector-real}
+have been added.
+When \scheme{current-time} is passed one of these types, a time
+object of the specified type is returned and represents the time
+(cpu or real) spent during collection.
+
+Previously, this information was available only via the
+\scheme{statistics} or \scheme{display-statistics} procedures, and then
+with lower precision.
+
+\subsection{New storage-management introspection procedures (8.9.5)}
+
+Three new storage-management introspection procedures have been
+added:
+
+\schemedisplay
+(collections)
+(initial-bytes-allocated)
+(bytes-deallocated)
+\endschemedisplay
+
+\scheme{collections} returns the number of collections performed so
+far by the current Scheme process.
+
+\scheme{initial-bytes-allocated} returns the number of bytes
+allocated after loading the boot files and before running any
+non-boot user code.
+
+\scheme{bytes-deallocated} returns the total number of bytes
+deallocated by the collector.
+
+Previously, this information was available only via the
+\scheme{statistics} or \scheme{display-statistics}
+procedures.
+
+\subsection{New time-object manipulation procedures (8.9.5)}
+
+Three new procedures for performing arithmetic on time objects have
+been added, per SRFI~19:
+
+\schemedisplay
+(time-difference \var{t1} \var{t2}) ;=> \var{t3}
+(add-duration \var{t1} \var{t2}) ;=> \var{t3}
+(subtract-duration \var{t1} \var{t2}) ;=> \var{t3}
+\endschemedisplay
+
+\scheme{time-duration} takes two time objects \var{t1} and \var{t2},
+which must have the same time type, and returns the result of subtracting
+\var{t2} from \var{t1}, represented as a new time object with type
+\scheme{duration}.
+\scheme{add-duration} adds time object \var{t2}, which must be of type
+\scheme{duration}, to time object \var{t1}, producing a new time object
+\var{t3} with the same type as \var{t1}.
+\scheme{subtract-duration} subtracts time object \var{t2} which must be
+of type \scheme{duration}, from time object \var{t1}, producing a new
+time object \var{t3} with the same type as \var{t1}.
+
+SRFI~19 also names destructive versions of these operators:
+
+\schemedisplay
+(time-difference! \var{t1} \var{t2}) ;=> \var{t3}
+(add-duration! \var{t1} \var{t2}) ;=> \var{t3}
+(subtract-duration! \var{t1} \var{t2}) ;=> \var{t3}
+\endschemedisplay
+
+These are available as well in {\ChezScheme} but are actually
+nondestructive, i.e., entirely equivalent to the nondestructive
+versions.
+
+\subsection{Better reporting of profile counts (8.9.4, 8.9.5)}
+
+The compiler now collects and reports profile counts for every
+source expression that is not determined to be dead either at
+compile time or by the time the profile information is obtained via
+\scheme{profile-dump-list} or \scheme{profile-dump-html}.
+Previously, the compiler suppressed profile counts for constants and
+variable references in contexts where the information was likely (though
+not guaranteed) to be redundant, and it dropped profile counts for some
+forms that were optimized away, such as inlined calls, folded calls,
+or useless code.
+Furthermore, profile counts now uniformly represent the number of times
+a source expression's evaluation was started, which was not always the
+case before.
+
+A small related enhancement has been made in the HTML output produced
+by \scheme{profile-dump-html}.
+Hovering over a source expression now shows, in addition to the count,
+the starting position (line number and character) of the source expression
+to which the count belongs.
+This is useful for identifying when a source expression does not have its
+own count but instead inherits the count (and color) from an enclosing
+expression.
+
+\subsection{Virtual registers (8.9.4)}
+
+A limited set of \emph{virtual registers} is now supported by the compiler
+for use by programs that require high-speed, global, and mutable storage
+locations.
+Referencing or assigning a virtual register is potentially faster and
+never slower than accessing an assignable local or global variable,
+and the code sequences for doing so are generally smaller.
+Assignment is potentially significantly faster because there is no need
+to track pointers from the virtual registers to young objects, as there
+is for variable locations that might reside in older generations.
+On threaded versions of the system, virtual registers are ``per thread''
+and thus serve as thread-local storage in a manner that is less expensive
+than thread parameters.
+
+The interface consists of three procedures:
+
+\scheme{(virtual-register-count)} returns the number of virtual registers.
+As of this writing, the count is set at 16.  This number is fixed, i.e.,
+cannot be changed except by recompiling {\ChezScheme} from source.
+
+\scheme{(set-virtual-register! \var{k} \var{x})} stores \var{x} in virtual
+register \var{k}.
+\var{k} must be a fixnum between 0 (inclusive) and the value of
+\scheme{(virtual-register-count)} (exclusive).
+
+\scheme{(virtual-register \var{k})} returns the value most recently
+stored in virtual register \var{k} (on the current thread, in threaded
+versions of the system).
+
+To get the fastest possible speed out of the latter two procedures,
+\var{k} should be a constant embedded right in the call
+(or propagatable via optimization to the call).
+To avoid putting these constants in the source code, programmers should
+consider using identifier macros to give names to virtual registers, e.g.:
+
+\schemedisplay
+(define-syntax foo
+  (identifier-syntax
+    [id (virtual-register 0)]
+    [(set! id e) (set-virtual-register! 0 e)]))
+(set! foo 'hello)
+foo ;=> hello
+\endschemedisplay
+
+Virtual-registers must be treated as an application-level resource, i.e.,
+libraries intended to be used by multiple applications should generally
+not use virtual registers to avoid conflicts with the applications use of
+the registers.
+
+\subsection{24-, 40-, 48-, and 56-bit integer values (8.9.3)}
+
+Support for storing and extracting 24-, 40-, 48-, and 56-bit integers 
+to and from records, bytevectors, and foreign types (ftypes) has been
+added.
+For records and ftypes, this is accomplished by declaring a field
+to be of type
+\scheme{integer-24}, \scheme{unsigned-24},
+\scheme{integer-40}, \scheme{unsigned-40},
+\scheme{integer-48}, \scheme{unsigned-48},
+\scheme{integer-56}, or \scheme{unsigned-56}.
+For bytevectors, this is accomplished via the following new
+primitives:
+
+\schemedisplay
+bytevector-24-ref
+bytevector-24-set!
+bytevector-40-ref
+bytevector-40-set!
+bytevector-48-ref
+bytevector-48-set!
+bytevector-56-ref
+bytevector-56-set!
+\endschemedisplay
+
+Similarly, support has been added for sending and receiving
+24-, 40-, 48-, and 56-bit integers to and from foreign code via
+\scheme{foreign-procedure} and \scheme{foreign-callable}.
+Arguments and return values of type \scheme{integer-24} and
+\scheme{unsigned-24} are passed as 32-bit quantities, while
+those of type \scheme{integer-40}, \scheme{unsigned-40},
+\scheme{integer-48}, \scheme{unsigned-48}, \scheme{integer-56},
+and \scheme{unsigned-56} are passed as 64-bit quantities.
+
+For unpacked ftypes, a 48-bit (6-byte) quantity is aligned
+on an even two-byte boundary, while a
+24-bit (3-byte), 40-bit (5-byte), or 56-bit (7-byte) quantity
+is aligned on an arbitrary byte boundary.
+
+\subsection{New \protect\scheme{pariah} expression (8.9.3)}
+
+A \scheme{pariah} expression:
+
+\schemedisplay
+(pariah \var{expr} \var{expr} \dots)
+\endschemedisplay
+
+is syntactically similar and semantically equivalent to a begin
+expression but tells the compiler that the expressions within are
+relatively unlikely to be executed.
+This information is currently used by the compiler for prioritizing
+allocation of registers to variables and for putting pariah code
+out-of-line in an attempt to reduce instruction cache misses for the
+remaining code.
+
+A \scheme{pariah} form is generally most usefully wrapped around the
+consequent or alternative of an \scheme{if} expression to identify which
+is the less likely path.
+
+The compiler implicitly treats as pariah code any code that leads
+up to an unconditional call to \scheme{raise}, \scheme{error},
+\scheme{errorf}, \scheme{assertion-violation}, etc., so it is not
+necessary to wrap a \scheme{pariah} for around such a call.
+
+At some point, there will likely be an option for gathering similar
+information automatically via profiling.
+In the meantime, we are interested in feedback about whether the
+mechanism is beneficial and whether the benefit of using the
+\scheme{pariah} form outweighs the programming overhead.
+
+\subsection{Improved automatic library recompilation (8.9.2)}
+
+Local imports within a library now triggers automatic recompilation
+of the library when the imported library has been recompiled or needs
+to be recompiled, in the same manner as imports listed directly in the
+importing library's \scheme{library} form.
+Changes in include files also trigger automatic recompilation.
+
+(Automatic recompilation of a library is enabled when an import of
+the library, e.g., in another library or in a top-level program, is
+compiled and the parameter \scheme{compile-imported-libraries} is set
+to a true value.)
+
+\subsection{Redundant profile information (8.9.2)}
+
+Profiling information is no longer produced for constants and variable
+references where the information is likely to be redundant.
+It is still produced in contexts where the counts are likely to differ
+from those of the enclosing form, e.g., where a constant or variable
+reference occurs in the consequent or alternative of an \scheme{if}
+expression.
+This change brings the profiling information largely in sync with
+Version~8.4.1 and earlier, though Version~8.9.2 retains source information
+in a few cases where it is inappropriately discarded by Version~8.4.1's
+compiler, and Version~8.9.2 discards source information in a few cases
+where the code has been optimized away.
+
+\subsection{New \protect\scheme{compile-to-port} procedure (8.9.2)}
+
+The procedure \scheme{compile-to-port} is like \scheme{compile-port}
+but, instead of taking an input port from which it reads expressions
+to be compiled, takes a list of expressions to be compiled.
+As with \scheme{compile-port}, the second argument must be a binary
+output port.
+
+\subsection{Debug levels (8.9.1)}
+
+Newly introduced debug levels control the amount of debugging support
+embedded in the code generated by the compiler.
+The current debug level is controlled by the parameter
+\scheme{debug-level} and must be set when the compiler is run to have
+any effect on the generated code.
+Valid debug levels are~0, 1, 2, and~3, and the default is~1.
+At present, the only difference between debug levels is whether calls to
+certain error-producing routines, like \scheme{error}, whether explicit
+or as the result of an implicit run-time check (such as the pair check
+in \scheme{car}) are treated as tail calls even when not in tail position.
+At debug levels 0 and 1, they are treated as tail calls, and at debug
+levels 2 and 3, they are treated as nontail calls.
+Treating them as tail calls is more efficient but treating them as
+nontail calls leaves more information on the stack, which affects what
+can be shown by the inspector.
+
+For example, assume \scheme{f} is defined as follows:
+
+\schemedisplay
+(define f
+  (lambda (x)
+    (unless (pair? x) (error #f "oops"))
+    (car x)))
+\endschemedisplay
+
+and is called with a non-pair argument, e.g.:
+
+\schemedisplay
+(f 3)
+\endschemedisplay
+
+If the debug level is 2 or more at the time the definition is compiled,
+the call to \scheme{f} will still be on the stack when the exception
+is raised by \scheme{error} and will thus be visible to the inspector:
+
+\schemedisplay
+> (f 3)
+Exception: oops
+Type (debug) to enter the debugger.
+> (debug)
+debug> i
+#<continuation in f>                                              : sf
+  0: #<continuation in f>
+  1: #<system continuation in new-cafe>
+#<continuation in f>                                              : s
+  continuation:          #<system continuation in new-cafe>
+  procedure code:        (lambda (x) (if (...) ...) (car x))
+  call code:             (error #f "oops")
+  frame and free variables:
+  0. x:                  3
+\endschemedisplay
+
+On the other hand, if the debug level is 1 (the default) or 0 at the
+time the definition of \scheme{f} is compiled, the call to \scheme{f}
+will no longer be on the stack:
+
+\schemedisplay
+> (f 3)
+Exception: oops
+Type (debug) to enter the debugger.
+> (debug)
+debug> i
+#<system continuation in new-cafe>                                : sf
+  1: #<system continuation in new-cafe>
+\endschemedisplay
+
+\subsection{Cost centers (8.9.1)}
+
+Cost centers are used to track the bytes allocated, instructions executed,
+and/or cpu time elapsed while evaluating selected sections of code.
+Cost centers are created via the procedure \scheme{make-cost-center}, and
+costs are tracked via the procedure \scheme{with-cost-center}.
+
+Allocation and instruction counts are tracked only for code instrumented
+for that purpose.
+This instrumentation is controlled by the \scheme{generate-allocation-counts}
+and \scheme{generate-instruction-counts} parameters.
+Instrumentation is disabled by default.
+Built in procedures are not instrumented, nor is interpreted code or
+non-Scheme code.
+Elapsed time is tracked only when the optional \scheme{timed?} argument to
+\scheme{with-cost-center} is provided and is not false.
+
+The \scheme{with-cost-center} procedure accurately tracks costs, subject
+to the caveats above, even when reentered with the same cost center, used
+simultaneously in multiple threads, and exited or reentered one or more
+times via continuation invocation.
+
+\textbf{thread parameter:} \scheme{generate-allocation-counts}
+
+When this parameter has a true value, the compiler inserts a short sequence of
+instructions at each allocation point in generated code to track the amount of
+allocation that occurs.
+This parameter is initially false.
+
+\textbf{thread parameter:} \scheme{generate-instruction-counts}
+
+When this parameter has a true value, the compiler inserts a short
+sequence of instructions in each block of generated code to track the
+number of instructions executed by that block.
+This parameter is initially false.
+
+\textbf{procedure:} \scheme{(make-cost-center)}
+
+Creates a new \scheme{cost-center} object with all of its recorded costs
+set to zero.
+
+\textbf{procedure:} \scheme{(cost-center? \var{obj})}
+
+Returns \scheme{#t} if \var{obj} is a \scheme{cost-center} object, otherwise
+returns \scheme{#f}.
+
+\textbf{procedure:} \scheme{(with-cost-center \var{cost-center} \var{thunk})}\\
+\textbf{procedure:} \scheme{(with-cost-center \var{timed?} \var{cost-center} \var{thunk})}
+
+This procedure invokes \var{thunk} without arguments and returns its
+values.
+It also tracks, dynamically, the bytes allocated, instructions executed,
+and cpu time elapsed while evaluating the invocation of \var{thunk} and
+adds the tracked costs to the cost center's running record of these costs.
+
+Allocation counts are tracked only for code compiled with the parameter
+\scheme{generate-allocation-counts} set to true, and
+instruction counts are tracked only for code compiled with
+\scheme{generate-instruction-counts} set to true.
+Cpu time is tracked only if \var{timed?} is provided and not false and
+includes cpu time spent in instrumented, uninstrumented, and non-Scheme
+code.
+
+\textbf{procedure:} \scheme{(cost-center-instruction-count \var{cost-center})}
+
+This procedure returns instructions executed recorded by
+\var{cost-center}.
+
+\textbf{procedure:} \scheme{(cost-center-allocation-count \var{cost-center})}
+
+This procedure returns the bytes allocated recorded by \var{cost-center}.
+
+\textbf{procedure:} \scheme{(cost-center-time \var{cost-center})}
+
+This procedure returns the cpu time recorded by \var{cost-center}.
+
+\textbf{procedure:} \scheme{(reset-cost-center! \var{cost-center})}
+
+This procedure resets the costs recorded by \var{cost-center} to zero.
+
+\subsection{Experimental access to hardware performance counters (8.9.1)}
+
+Two system primitives, \scheme{#%$read-time-stamp-counter} and
+\scheme{#%$read-performance-monitoring-counter}, provide access to the
+x86 and x86\_64 hardware time-stamp counter register and to the
+model-specific performance monitoring registers.
+
+These primitives rely on instructions that might be restricted to run only in
+kernel mode, depending on kernel configuration.
+The performance monitoring counters must also be configured to enable
+monitoring and to specify which event to monitor.
+This can be configured only by instructions executed in kernel mode.
+
+\textbf{procedure:} \scheme{(#%$read-time-stamp-counter)}
+
+This procedure returns the current value of the time-stamp counter for
+the CPU core executing this code.
+A general protection fault, which manifests as an invalid memory
+reference exception, results if this operation is not permitted by
+the operating system.
+
+Since multiple processes might run on the same core between reads of
+the time-stamp counter, the counter does not necessarily reflect time
+spent only in the current process.
+Also, on machines with multiple cores, the executing process might be
+swapped to a different core with a different time-stamp counter.
+
+\textbf{procedure:} \scheme{(#%$read-performance-monitoring-counter \var{counter})}
+
+This procedure returns the current value of the model-specific
+performance monitoring register specified by \var{counter}.
+\var{counter} must be a fixnum and should specify a valid performance
+monitoring register.
+Allowable values depend on the processor model.
+A general protection fault, which manifests as an invalid memory
+reference exception, results if this operation is not permitted by
+the operating system or if the specified counter does not exist.
+
+In order to get meaningful results, the performance monitoring registers
+must be enabled, and the event to be monitored must by configured by
+the performance monitoring control register.
+This configuration can be done only by code run in kernel mode.
+
+Since multiple processes might run on the same core between reads of
+a performance monitoring register, the register does not necessarily reflect
+only the activities of the current process.
+Also, on machines with multiple cores, the executing process might be
+swapped to a different core with its own set of performance monitoring
+registers and possibly a different configuration for those registers.
+
+\subsection{New inspector functionality (8.9.1)}
+
+Within the interactive inspector, closure and frame variables can now
+be set by name, and the forward (f) and back (b) commands can now be
+used to to move among the frames that comprise a continuation.
+
+A new show-local (sl) command can be be used to look at just the local
+variables of a stack frame.
+This contrasts with the show (s) command, which shows the free variables
+of the frame's closure as well.
+
+Errors occurring during inspection, such as attempts to assign immutable
+variables, are handled more smoothly than in previous versions.
+
+\subsection{Fasl support for records with non-ptr fields (8.4.1)}
+
+The fasl writer and reader now support records with non-ptr fields,
+e.g., integer-32, wchar, etc., allowing constant record instances with
+such fields to appear in source code (or be introduced as constants
+by macros) into code to be compiled via \scheme{compile-file},
+\scheme{compile-library}, \scheme{compile-program},
+\scheme{compile-script}, or \scheme{compile-port}.
+Ftype-pointer fields are not supported, since storing addresses
+in fasl files does not generally make sense.
+
+%-----------------------------------------------------------------------------
+\section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{\protect\scheme{dynamic-wind} mistakenly enabling interrupts (9.3.3)}
+
+A bug causing \scheme{dynamic-wind} to unconditionally enable
+interrupts upon a nonlocal exit from the body thunk has been fixed.
+Interrupts are now properly enabled only when the optional
+\var{critical?} argument is supplied and is not false.
+[This bug dated back to Version 6.9c.]
+
+\subsection{Incorrect optimization of various primitives (9.3.1)}
+
+Mistakes in our primitive database that caused the source optimizer
+to treat \scheme{append}, \scheme{append!}, \scheme{list*},
+\scheme{cons*}, and \scheme{record-type-parent} as always returning
+true values have been fixed, along with mistakes that caused the
+source optimizer to treat \scheme{null-environment},
+\scheme{source-object-bfp}, \scheme{source-object-efp}, and
+\scheme{source-object-sfd} as not requiring argument checks.
+[This bug dated back to Version 6.0.]
+
+\subsection{Increased allocation ceiling under 32-bit Windows (9.3.1)}
+
+We have worked around a limitation in the number of distinct allocation
+areas the Windows VirtualAlloc function permits to be allocated by
+allocating fewer, larger chunks of memory, effectively increasing the
+maximum size of the heap to the full amount permitted by the operating
+system.
+
+\subsection{Syntax errors for \protect\scheme{let} and \protect\scheme{let*} (9.2.1)}
+
+The expander now handles \scheme{let} and \scheme{let*} in such a
+way that certain syntax errors previously reported as syntax errors
+in \scheme{lambda} are now reported properly as syntax errors in
+\scheme{let} or \scheme{let*}.  This includes duplicate identifier
+errors for \scheme{let} and errors involving internal definitions
+for both \scheme{let} and \scheme{let*}.
+
+\subsection{Dropped \protect\scheme{profile-dump-html} calls (9.0)}
+
+A bug that caused effect-context calls to \scheme{profile-dump-html}
+to be dropped at optimize-level 3 has been fixed.
+[This bug dated back to Version 7.5.]
+
+\subsection{Proper treatment of imported meta bindings (8.9.3)}
+
+A deficiency in the handling of library dependencies that prevented meta
+definitions exported in one library from being used reliably by a macro
+defined in another library has been fixed.
+Handling imported meta bindings involves tracking
+visit-visit-requirements, which for a library \scheme{(A)} is the set of
+libraries that must be visited (rather than invoked) when \scheme{(A)}
+is visited.
+An attempt to assign a meta variable imported from a library now results
+in a syntax error.
+[This bug dated back to Version 7.9.1.]
+
+\subsection{Reexport of identifiers with properties (8.9.3)}
+
+A bug that prevented an identifier given a property via
+\scheme{define-property} from being exported from a library \scheme{(A)},
+imported into and reexported from a second library \scheme{(B)}, and
+imported from both \scheme{(A)} and \scheme{(B)} into and reexported
+from a third library \scheme{(C)} has been fixed.
+[This bug dated back to Version 8.1.]
+
+\subsection{Cyclic record-type descriptors (8.4.1)}
+
+The fasl (fast load) format used for compiled files now supports cyclic
+record-type descriptors (RTDs), which are produced for recursive ftype
+definitions.
+Previously, compiling a file containing a recursive ftype definition
+and subsequently loading the file resulted in corruption of the ftype
+descriptor used to typecheck ftype pointers, potentially leading to
+incorrect behavior or invalid memory references.
+[This bug dated back to Version 8.2.]
+
+\subsection{Invalid folding of record accesses (8.4.1)}
+
+A bug that caused the optimizer to fold calls to record accessors applied
+to a constant value of the wrong type, sometimes resulting in compile-time
+invalid memory references or other compile-time errors, has been fixed.
+[This bug dated back to Version 8.4.]
+
+\subsection{4GB+ allocation for Windows x86\_64 (8.4.1)}
+
+A bug that prevented objects larger than 4GB to be created under Windows
+x86\_64 has been fixed.
+[This bug dated back to Version 8.4.]
+
+%-----------------------------------------------------------------------------
+\section{Performance Enhancements}\label{section:performance}
+
+\subsection{Improved oblist management (9.3.3)}
+
+As a result of improvements in the handing of the oblist (symbol table),
+the storage for a symbol is often reclaimed more quickly after it
+becomes inaccessible, less space is set aside for the oblist at
+start-up, oblist lookups are faster when the oblist contains a large
+number of symbols, and the minimum cost of a maximum-generation
+collection has been cut significantly, down from tens of microseconds
+to just a handful on contemporary hardware.
+
+\subsection{Reduced maximum-generation collection overhead (9.3.3)}
+
+Various changes in the storage manager have reduced the amount of
+extra memory required for managing heap storage and increased the
+likelihood that memory can be returned to the O/S as the heap
+shrinks.
+Returning memory to the O/S is now faster, so the minimum time for
+for a maximum-generation collection, or any other collection where
+release of memory to the O/S is enabled, has been cut.
+
+\subsection{Faster library load times (9.3.1)}
+
+Libraries now load faster at both compile and run time, with more
+pronounced improvements when dozens of libraries or more are being
+loaded.
+
+\subsection{Partially static record instances (9.3.1)}
+
+The source optimizer now maintains information about partially static
+record instances to eliminate field accesses and type checks when a
+binding site for a record instances is visible to the access or checking
+code.
+For example,
+
+\schemedisplay
+(let ()
+  (import scheme)
+  (define-record foo ([immutable ptr a] [immutable ptr b]))
+  (define (inc r) (make-foo (foo-a r) (+ (foo-b r) 1)))
+  (lambda (x)
+    (let* ([r (make-foo 37 x)]
+           [r (inc r)]
+           [r (inc r)])
+      r)))
+\endschemedisplay
+
+is reduced by the source optimizer down to:
+
+\schemedisplay
+(lambda (x) ($record '#<record type foo> 37 (+ (+ x 1) 1)))
+\endschemedisplay
+
+where \scheme{$record} is a low-level primitive for creating record
+instances.
+That is, the source optimizer eliminates the intermediate record
+structures, record references, and type checks, in addition to
+creating the record-type descriptor at compile time, eliminating
+the record-constructor descriptor, record constructor, and record
+accessors produced by expansion of the record definition.
+
+\subsection{More source-optimizer improvements (9.3.1)}
+
+The source optimizer now handles \scheme{apply} with a known-list
+final argument, e.g., a constant list or list constructed directly
+within the apply operation via \scheme{cons}, \scheme{list}, or
+\scheme{list*} (\scheme{cons*}) as if it were an ordinary call,
+i.e., without the \scheme{apply} and without the constant list
+wrapper or list constructor.
+For example:
+
+\schemedisplay
+(apply apply apply + (list 1 (cons 2 (list x (cons* 4 '(5 6))))))
+\endschemedisplay
+ an andd
+folds down to \scheme{(+ 18 x)}.
+While not common at the source levels, patterns like this can
+materialize as the result of other source optimizations,
+particularly inlining.
+
+The source optimizer now also reduces applications of \scheme{car} and
+\scheme{cdr} to the list-building operators \scheme{cons} and
+\scheme{list}, e.g.:
+
+\schemedisplay
+(car (cons \var{e_1} \var{e_2})) ;-> (begin \var{e_2} \var{e_1})
+(car (list \var{e_1} \var{e_2} \var{e_3})) ;-> (begin \var{e_2} \var{e_3} \var{e_1})
+(cdr (list \var{e_1} \var{e_2} \var{e_3})) ;-> (begin \var{e_1} (list \var{e_2} \var{e_3}))
+\endschemedisplay
+
+discarding side-effect-free expressions in the \scheme{begin} forms
+where appropriate.
+It treats similarly calls of \scheme{vector-ref} on \scheme{vector};
+\scheme{list-ref} on \scheme{list}, \scheme{list*}, and \scheme{cons*};
+\scheme{string-ref} on \scheme{string}; and \scheme{fxvector-ref}
+on \scheme{fxvector}, taking care with \scheme{string-ref} and
+\scheme{fxvector-ref} not to optimize when doing so might mask an
+invalid type of argument to a safe constructor.
+
+Finally, the source optimizer now removes certain unnecessary
+\scheme{let} bindings within the constraints of evaluation-order
+preservation.
+For example,
+
+\schemedisplay
+(let ([x \var{e_1}] [y \var{e_2}]) (list (cons x y) 7))
+\endschemedisplay
+
+reduces to:
+
+\schemedisplay
+(list (cons \var{e_1} \var{e_2}) 7)
+\endschemedisplay
+
+Such bindings commonly arise from inlining.  Eliminating them tends
+to make the output of \scheme{expand/optimize} more readable.
+
+The impact on performance is minimal, but it can result in smaller
+expressions and thus enable more inlining within the same size limits.
+
+\subsection{Improved foreign-pointer address handling (9.3.1)}
+
+Various composed operation on ftypes now avoid allocating
+and dereferencing intermediate ftype pointers, i.e., \scheme{ftype-ref},
+\scheme{ftype-set!}, \scheme{ftype-init-lock!}, \scheme{ftype-lock!},
+\scheme{ftype-unlock!}, \scheme{ftype-spin-lock!},
+\scheme{ftype-locked-incr!}, or \scheme{ftype-locked-decr!} applied
+directly to the result of \scheme{ftype-ref}, \scheme{ftype-&ref}, or
+\scheme{make-ftype-pointer}.
+
+\subsection{New source optimizations (9.2.1)}
+
+The source optimizer does a few new optimizations: it folds
+calls to \scheme{symbol->string}, \scheme{string->symbol}, and
+\scheme{gensym->unique-string} if the argument is known at compile
+time and has the right type; it folds zero-argument calls to
+\scheme{vector}, \scheme{string}, \scheme{bytevector}, and
+\scheme{fxvector}; and it discards subsumed case-lambda clauses,
+e.g., the second clause in
+\scheme{(case-lambda [(x . y) \var{e_1}] [(x y) \var{e_2}])}.
+
+\subsection{Reduced stack requirements after large apply (9.2)}
+
+A call to \scheme{apply} with a very long argument list can cause an
+large chunk of memory to be allocated for the topmost portion of
+the stack.
+This space is now reclaimed during the next collection.
+
+\subsection{Improved symbol-hashtables performance (9.2)\label{sec:symbol-hashtable-performance}}
+
+The performance of operations on symbol hashtables has been improved
+generally over previous releases by eliminating call overhead for the
+hash and equality functions.
+Further improvements are possible with the use of the new type-specific
+symbol-hashtable operators (Section~\ref{sec:symbol-hashtables}).
+
+\subsection{Reduced library-invocation time, memory consumption (9.1)}
+
+The amount of time required to invoke a library and the amount of memory
+occupied by the library when the library is invoked as the result of a
+run-time dependency of another library or a top-level program have both
+been reduced by ``revisiting'' rather than ``invoking'' the library,
+effectively leaving the compile-time information on disk until if and
+when it is needed.
+
+\subsection{Discarding relocation tables for static code objects (9.1)}
+
+Unless the command-line parameter \scheme{--retain-static-relocation}
+is supplied, the collector now discards relocation tables for code
+objects when the code objects are promoted to the static generation,
+either at boot time via heap compaction or via a call to \scheme{collect}
+with the symbol \scheme{static} as the target generation.
+This results in a significant reduction in the memory occupied by the
+code object (around 20\% in our tests).
+
+\subsection{Guardian registration (9.1)}
+
+The code to register an object with a guardian is now open-coded, at
+the cost of some additional work during the next collection.
+The result is a modest net improvement in registration overhead (around
+15\% in our tests).
+Of potentially greater importance when threaded, each registration no
+longer requires synchronization.
+
+\subsection{Generated code improvements (9.1)}
+
+The compiler generates better code in several small ways, resulting
+in small decreases in code size and corresponding small
+performance improvements in the range of 1--5\% in our tests.
+
+\subsection{Reduced collector overhead for large heaps (9.0)}
+
+In previous releases, a factor in collector performance was the
+overall size of the heap (measured both in number of pages and the
+amount of virtual memory spanned by the heap).
+Through various changes to the data structures used to support
+storage manager, this factor has been eliminated, which can
+significantly reduce the cost of collecting a younger generation
+with a small number of accessible objects relative to overall heap
+size.
+In our experiments, the minimum cost of collection on contemporary
+hardware exceeded 100 microseconds for heaps of 64MB or more and 5
+milliseconds for heaps of 1GB or more.
+The minimum cost grew in proportion to the heap size from there.
+This is now fixed for all heap sizes at just a few microseconds.
+
+\subsection{Reduced mutation overhead (9.0)}
+
+Improvements in the compiler and storage manager have been made to
+reduce the cost of tracking possible pointers from older to younger
+generations when objects are mutated.
+
+\subsection{Improved foreign-pointer address handling (8.9.5)\label{ftpaopt}}
+
+Ftype pointers with constant addresses are now created at compile
+time, with ftype-pointer address checks optimized away as well.
+
+Bignum allocation overhead is avoided for addresses outside the
+fixnum range when the results of two \scheme{ftype-pointer-address}
+calls are directly compared or the result of one
+\scheme{ftype-pointer-address} call is directly compared with 0.
+That is, comparisons like:
+
+\schemedisplay
+(= (ftype-pointer-address x) 0)
+(= (ftype-pointer-address x) (ftype-pointer-address y))
+\endschemedisplay
+
+are effectively optimized to:
+
+\schemedisplay
+(ftype-pointer-null? x)
+(ftype-pointer=? x y)
+\endschemedisplay
+
+This optimization is performed when the comparison procedure is
+\scheme{=}, \scheme{eqv?}, or \scheme{equal?} and the arguments
+are given in either order.
+The optimization is also performed when \scheme{zero?} is applied directly
+to the result of \scheme{ftype-pointer-address}.
+
+Bignum allocation overhead is also avoided at optimize-level~3
+when \scheme{ftype-pointer-address} is used in combination with
+\scheme{make-ftype-pointer} to effect a type cast, as in:
+
+\schemedisplay
+(make-ftype-pointer T (ftype-pointer-address x))
+\endschemedisplay
+
+Both bignum and ftype-pointer allocation is avoided when the result
+of such a cast is used directly as the base pointer in an
+\scheme{ftype-ref}, \scheme{ftype-&ref}, \scheme{ftype-set!},
+\scheme{ftype-locked-incr!}, \scheme{ftype-locked-decr!},
+\scheme{ftype-init-lock!}, \scheme{ftype-lock!}, \scheme{ftype-spin-lock!},
+or \scheme{ftype-unlock!} form, as in:
+
+\schemedisplay
+(ftype-ref T (fld) (make-ftype-pointer T (ftype-pointer-address x)))
+\endschemedisplay
+
+These optimizations do not occur when the calls to
+\scheme{ftype-pointer-address} are not nested directly within the outer
+form, as when a \scheme{let} binding is used to name the result of the
+\scheme{ftype-pointer-address} call, e.g.:
+
+\schemedisplay
+(let ([addr (ftype-pointer-address x)]) (= addr 0))
+\endschemedisplay
+
+In other places where \scheme{ftype-pointer-address} is used, the compiler
+now open-codes the extraction and (if necessary) bignum allocation,
+reducing overhead by the cost of a procedure call.
+
+\subsection{Improved performance when profiling (8.9.5)}
+
+In addition to improvements in the tracking of profile counts, the
+run-time overhead for gathering profile information has gone down by
+5--10\% in our tests and is now typically around 10\% of the total
+unprofiled run time.
+(Unprofiled code is also slightly faster, but by less than 2\% in
+our tests.)
+
+\subsection{Improved compile times (8.9.5)}
+
+Due to a rework of the new compiler back-end, Version~8.9.5 compile
+times are up to 20\% less in our tests, relative to Version~8.9.3,
+with a corresponding reduction in memory allocation.
+Compile runs that spend a significant portion of the time in macro
+expansion will not benefit by as much.
+Compile times are now reliably within a factor of two of Version~8.4.1
+
+\subsection{Open-coding of \protect\scheme{make-guardian} (8.9.4)}
+
+Calls to \scheme{make-guardian} are now open-coded by the compiler to
+expose the implicit resulting \scheme{case-lambda} expression so that
+calls to the guardian can themselves be inlined, thus reducing the overhead
+for registering objects with a guardian and querying the guardian for
+resurrected objects.
+
+\subsection{Improved open-coding of \protect\scheme{make-parameter} and \protect\scheme{make-thread-parameter} (8.9.4)}
+
+\scheme{make-parameter} and \scheme{make-thread-parameter}
+are now open-coded in all cases to expose the implicit resulting
+\scheme{case-lambda} expression.
+(They were already open-coded when the second, \emph{filter},
+argument was a \scheme{lambda} expression or primitive name.)
+
+\subsection{Cross-library constant folding and inlining (8.9.2)\label{subsection:clcfai}}
+
+The compiler now propagates constants and inlines simple procedures
+across library boundaries.
+A simple procedure is one that, after optimization of the exporting
+library, is smaller than a given threshold, contains no free references
+to other bindings in the exporting library, and contains no constants
+that cannot copied without breaking pointer identity.
+The size threshold is determined, as for inlining within a library or
+other compilation unit, by the parameter \scheme{cp0-score-limit}.
+In this case, the size threshold is determined based on the size
+\emph{before} inlining rather than the size \emph{after} inlining,
+which is often more conservative.
+Omitting larger procedures that might generate less code when inlined in
+a particular context reduces the amount of information that must be stored
+in the exporting library's object code to support cross-library inlining.
+
+One particularly useful benefit of this optimization is that record
+predicates, accessors, mutators, and (depending on protocols)
+constructors created by a record definition in one library and exported
+by another are inlined in the importing library, just as if the record
+type were defined in the importing library.
+
+\subsection{Faster generated code (8.9.2)}
+
+The code generated by the new compiler back end
+(Section~\ref{subsection:ncbe} is faster.
+In our tests comparing Versions~8.9.2 and~8.4.1 under Linux, Version~8.9.2
+is faster on x86\_64 by about 14\% at optimize-level 3 and about 21\%
+at lower optimization levels.
+For x86, it is about 20\% faster at optimize-level 3 and about 25\%
+faster at lower optimization levels.
+Results for other operating systems should be about the same.
+These improvements are independent of improvements resulting from
+cross-library constant folding and inlining
+(Section~\ref{subsection:clcfai}).
+
+\subsection{New compiler back-end (8.9.1)\label{subsection:ncbe}}
+
+Versions starting with 8.9.1 employ a new compiler back end.
+As of Version~8.9.1, compilation using the new back end is approximately
+2--3 times slower in our tests.
+The code generated by the new back end for the x86\_64 is typically
+about the same speed as code generated by the old back end, while the
+code generated by the new back end for the x86 is typically faster,
+by an average of around 13\% in our tests.
+The code generated for a specific program might be faster or slower
+on either processor.
+The speed and effectiveness of the compiler should improve in subsequent
+releases.
+
+\end{document}

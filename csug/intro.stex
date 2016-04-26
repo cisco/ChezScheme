@@ -1,0 +1,426 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Introduction}
+
+{\ChezScheme} is an implementation of the Revised$^6$ Report on
+Scheme~\cite{r6rs} (R6RS) with numerous language and programming environment
+extensions.
+
+This book describes these extensions in detail.
+It contains as well a concise summary of standard and {\ChezScheme} forms 
+and procedures, which gives the syntax of each form and the number and
+types of arguments accepted by each procedure.
+Details on standard Scheme features can be found in
+\index{The Scheme Programming Language, 4th Edition@\emph{The Scheme Programming Language, 4th Edition}}\hyperlink{http://www.scheme.com/tspl4/}{\emph{The
+Scheme Programming Language, 4th Edition}} (TSPL4)~\cite{Dybvig:tspl4} or
+the Revised$^6$ Report on Scheme.
+\emph{The Scheme Programming Language, 4th Edition} also contains an
+extensive introduction to the Scheme language and numerous short and
+extended examples.
+
+Most of this document also applies equally to \index{PetiteChezScheme@\PetiteChezScheme}{\PetiteChezScheme},
+which is fully compatible with the complete {\ChezScheme} system but uses
+a high-speed interpreter in place of {\ChezScheme}'s
+incremental native-code compiler.
+Programs written for {\ChezScheme} run unchanged in
+{\PetiteChezScheme} as long as they do not require the
+compiler to be invoked.
+In fact, {\PetiteChezScheme} is built from the same sources as
+{\ChezScheme}, with all but the compiler sources included.
+A detailed discussion of the impact of this distinction appears in
+Section~\ref{SECTUSEAPPLICATIONS}.
+
+The remainder of this chapter covers
+{\ChezScheme} extensions to Scheme syntax (Section~\ref{SECTINTROSYNTAX}),
+notational conventions used in this book (Section~\ref{SECTINTRONOTATION}),
+the use of parameters for system customization (Section~\ref{SECTINTROPARAMETERS}),
+and where to look for more information on
+{\ChezScheme} (Section~\ref{SECTINTROMOREINFO}).
+
+Chapter~\ref{CHPTUSE} describes how one uses {\ChezScheme}
+for program development, scripting, and application delivery, plus
+how to get the compiler to generate the most efficient code
+possible.
+Chapter~\ref{CHPTDEBUG} describes debugging and object inspection
+facilities.
+Chapter~\ref{CHPTFOREIGN} documents facilities for interacting with
+separate processes or code written in other languages.
+Chapter~\ref{CHPTBINDING} describes binding forms.
+Chapter~\ref{CHPTCONTROL} documents control structures.
+Chapter~\ref{CHPTOBJECTS} documents operations on nonnumeric objects,
+while Chapter~\ref{CHPTNUMERIC} documents various numeric operations,
+including efficient type-specific operations.
+Chapter~\ref{CHPTIO} describes input/output operations and
+generic ports, which allow the definition of ports with arbitrary
+input/output semantics.
+Chapter~\ref{CHPTLIBRARIES} discusses how R6RS libraries and top-level
+programs are loaded into {\ChezScheme} along with various features for
+controlling and tracking the loading process.
+Chapter~\ref{CHPTSYNTAX} describes syntactic extension and modules.
+Chapter~\ref{CHPTSYSTEM} describes system operations, such as operations
+for interacting with the operating system and customizing
+{\ChezScheme}'s user interface.
+Chapter~\ref{CHPTSMGMT} describes how to invoke and control the storage
+management system and documents guardians and weak pairs.
+Chapter~\ref{CHPTEXPEDITOR} describes {\ChezScheme}'s expression
+editor and how it can be customized.
+Chapter~\ref{CHPTTHREADS} documents the procedures and syntactic forms
+that comprise the interface to {\ChezScheme}'s native thread system.
+Finally, Chapter~\ref{CHPTCOMPAT} describes various compatibility features.
+
+The back of this book contains a bibliography, 
+the summary of forms, and an index.
+The page numbers appearing in the summary of forms and
+the italicized page numbers appearing in the index indicate the
+locations in the text where forms and procedures are formally defined.
+The summary of forms and index includes entries from TSPL4, so that
+they cover the entire set of {\ChezScheme} features.
+A TSPL4 entry is marked by a ``t'' prefix on the page number.
+
+Online versions and errata for this book and for TSPL4 can be found at
+\hyperlink{http://www.scheme.com}{www.scheme.com}.
+% Printed versions of this book may be obtained from
+% \hyperlink{http://www.lulu.com/product/paperback/chez-scheme-version-9-users-guide/6516800}{www.lulu.com}.
+
+\bigskip\noindent
+\emph{Acknowledgments:}
+Michael Adams, Mike Ashley, Carl Bruggeman, Bob Burger, Sam
+Daniel, George Davidson, Aziz Ghuloum, Bob Hieb, Andy Keep, and Oscar Waddell have
+contributed substantially to the development of {\ChezScheme}.
+{\ChezScheme}'s expression editor is based on a command-line editor for
+Scheme developed from 1989 through 1994 by C.~David Boyer.
+File compression is performed with the use of the zlib compression library
+developed by Jean-loup Gailly and Mark Adler.
+Implementations of the list and vector sorting routines are based on
+Olin Shiver's opportunistic merge-sort algorithm and implementation.
+Michael Lenaghan provided a number of corrections for earlier drafts
+of this book.
+Many of the features documented in this book were suggested by
+current {\ChezScheme} users, and numerous comments from users have also
+led to improvements in the text.
+Additional suggestions for improvements to {\ChezScheme} and to this
+book are welcome.
+
+\section{Chez Scheme Syntax\label{SECTINTROSYNTAX}}
+
+{\ChezScheme} extends Scheme's syntax both at the object (datum) level
+and at the level of syntactic forms.
+At the object level, {\ChezScheme} supports additional representations for
+symbols that contain nonstandard characters, 
+nondecimal numbers expressed in floating-point
+and scientific notation, vectors with explicit lengths,
+shared and cyclic structures, records, boxes, and more.
+These extensions are described below.
+Form-level extensions are described throughout the book and summarized
+in the Summary of Forms, which also appears in the back of this book.
+
+{\ChezScheme} extends the syntax of identifiers in several ways.
+First, the sequence of characters making up an identifier's name may
+start with digits, periods, plus signs, and minus
+signs as long as the sequence cannot be parsed as a number.
+For example, \scheme{0abc}, \scheme{+++}, and \scheme{..} are all
+valid identifiers in {\ChezScheme}.
+Second, the single-character sequences \scheme{\schlbrace} and
+\scheme{\schrbrace} are identifiers.
+Third, identifiers containing arbitrary characters may be printed by
+escaping them them with \scheme{\} or with \scheme{|}.
+\scheme{\} is used to escape a single character (except 'x', since
+\scheme{\x} marks the start of a hex scalar value),
+whereas \scheme{|} is used
+to escape the group of characters that follow it up through the
+matching \scheme{|}.
+For example, \scheme{\||\|} is an identifier with a two-character
+name consisting of the character \scheme{|} followed by the
+the character \scheme{\}, and \scheme{|hit me!|} is an identifier whose name
+contains a space.
+
+In addition, gensyms (page~\ref{desc:gensym}) are printed with
+\index{\scheme{#\schlbrace} (gensym prefix)}\scheme{#\schlbrace} and
+\scheme{\schrbrace} brackets that enclose both the ``pretty'' and ``unique''
+names, e.g., \scheme{#\schlbrace\raw{{}}g1426 e5g1c94g642dssw-a\schrbrace}.
+They may also be printed using the pretty name only with the prefix
+\index{\scheme{#:} (gensym prefix)}\scheme{#:}, e.g.,
+\scheme{#:g1426}.
+
+Arbitrary radixes from two through 36 may be specified with the prefix
+\index{#r (radix prefix)@\scheme{#\var{n}r} (radix prefix)}\scheme{#\var{n}r},
+where \var{n} is the radix.
+Case is not significant, so \scheme{#\var{n}R} may be used as well.
+Digit values from 10 through 35 are specified as either lower- or upper-case
+alphabetic characters, just as for hexadecimal numbers.
+For example, \scheme{#36rZZ} is $35\times36+35$, or $1295$.
+
+{\ChezScheme} also permits nondecimal numbers
+to be printed in floating-point or scientific notation.
+For example, \scheme{#o1.4} is equivalent to \scheme{1.5}, and
+\scheme{#b1e10} is equivalent to \scheme{4.0}.
+Digits take precedence over exponent specifiers, so that
+\scheme{#x1e20} is simply the four-digit hexadecimal number equivalent
+to \scheme{7712}.
+
+In addition to the standard named characters
+\index{\scheme{#\alarm}}\scheme{#\alarm},
+\index{\scheme{#\backspace}}\scheme{#\backspace},
+\index{\scheme{#\delete}}\scheme{#\delete},
+\index{\scheme{#\esc}}\scheme{#\esc},
+\index{\scheme{#\linefeed}}\scheme{#\linefeed},
+\index{\scheme{#\newline}}\scheme{#\newline},
+\index{\scheme{#\page}}\scheme{#\page},
+\index{\scheme{#\return}}\scheme{#\return},
+\index{\scheme{#\space}}\scheme{#\space},
+and
+\index{\scheme{#\tab}}\scheme{#\tab},
+{\ChezScheme} recognizes
+\index{\scheme{#\bel}}\scheme{#\bel},
+\index{\scheme{#\ls}}\scheme{#\ls},
+\index{\scheme{#\nel}}\scheme{#\nel},
+\index{\scheme{#\nul}}\scheme{#\nul},
+\index{\scheme{#\rubout}}\scheme{#\rubout},
+and
+\index{\scheme{#\vt}}\scheme{#\vt} (or \scheme{#\vtab}).
+Characters whose scalar values are less than 256 may also be printed with
+an octal syntax consisting of the prefix \scheme{#\} followed by a three
+octal-digit sequence.
+For example, \scheme{#\000} is equivalent to \scheme{#\nul}.
+
+{\ChezScheme}'s fxvectors, or fixnum vectors, are printed like vectors
+but with the prefix \scheme{#vfx(} in place of \scheme{#(}.
+Vectors, bytevectors, and fxvectors may be printed with an explicit length
+prefix, and when the explicit length prefix is specified, duplicate
+trailing elements may be omitted.
+For example,
+\index{\scheme{#(} (vector prefix)}\scheme{#(a b c)} may be printed as
+\index{#( (vector prefix)@\scheme{#\var{n}(} (vector prefix)}\scheme{#3(a b c)},
+and a vector of length 100 containing all zeros may be printed as
+\scheme{#100(0)}.
+
+{\ChezScheme}'s boxes are printed with a
+\index{\scheme{#&} (box prefix)}\scheme{#&} prefix, e.g.,
+\scheme{#&17} is a box containing the integer \scheme{17}.
+
+Records are printed with the syntax
+\index{\scheme{#[} (record prefix)}\scheme{#[\var{type-name} \var{field} \dots]},
+where the symbol \var{type-name} is the name of the record
+type and \scheme{\var{field} \dots} are the printed
+representations for the contents of the fields of the record.
+
+Shared and cyclic structure may be printed using the graph mark and
+reference prefixes
+\index{#= (graph mark)@\scheme{#\var{n}=} (graph mark)}\scheme{#\var{n}=}
+and
+\index{## (graph reference)@\scheme{#\var{n}#} (graph reference)}\scheme{#\var{n}#}.
+\scheme{#\var{n}=} is used to mark an item in the input, and
+\scheme{#\var{n}#} is used to refer to the item marked \var{n}.
+For example, \scheme{'(#1=(a) . #1#)} is a pair whose car and cdr
+contain the same list, and \scheme{#0=(a . #0#)} is a cyclic
+list, i.e., its cdr is itself.
+
+A \scheme{$primitive} form (see page~\pageref{desc:hash-primitive}) may
+be abbreviated in the same manner as a \scheme{quote} form, using the 
+\index{#% ($primitive)@\scheme{#%} (\scheme{$primitive})}\scheme{#%} prefix.
+For example,
+\scheme{#%car} is equivalent to \scheme{($primitive car)},
+\scheme{#2%car} to \scheme{($primitive 2 car)}, and
+\scheme{#3%car} to \scheme{($primitive 3 car)}.
+
+{\ChezScheme}'s end-of-file object is printed \scheme{#!eof}.
+If the end-of-file object appears outside of any datum within a file
+being loaded, \scheme{load} will treat it as if it were a true
+end of file and stop loading at that point.
+Inserting \scheme{#!eof} into the middle of a file can thus be handy
+when tracking down a load-time error.
+
+Broken pointers in weak pairs (see page~\pageref{desc:weak-cons}) are
+represented by the \emph{broken weak pointer} object, which is
+printed \scheme{#!bwp}.
+
+In addition to the standard delimiters (whitespace, open and close
+parentheses, open and close brackets, double quotes, semi-colon,
+and \scheme{#}), {\ChezScheme} also treats as delimiters
+open and close braces, single quote, backward quote, and comma.
+
+The {\ChezScheme} lexical extensions described above are disabled in an
+input stream after an \scheme{#!r6rs} comment directive has been seen,
+unless a \scheme{#!chezscheme} comment directive has been seen since.
+Each library loaded implicitly via \scheme{import} and each RNRS top-level
+program loaded via the \scheme{--program} command-line option, the
+\scheme{scheme-script} command, or the \scheme{load-program} procedure is
+treated as if it begins implicitly with an \scheme{#!r6rs} comment directive.
+
+The case of symbol and character names is normally significant,
+as required by the Revised$^6$ Report.
+Names are folded, as if by \scheme{string-foldcase}, following a
+\scheme{#!fold-case} comment directive in the same input stream
+unless a \scheme{#!no-fold-case} has been seen since.
+Names are also folded if neither directive has been seen and the
+parameter \scheme{case-sensitive} has been set to \scheme{#f}.
+
+The printer invoked by \scheme{write}, \scheme{put-datum},
+\scheme{pretty-print}, and the \scheme{format} \scheme{~s}
+option always prints standard Revised$^6$ Report objects
+using the standard syntax.
+For example, it prints symbols whose names require escaping using hex
+scalar value escapes, not one of the other mechanisms supported by the
+reader.
+Similarly, it does not print the explicit length or suppress
+duplicate trailing elements unless the parameter
+\index{\scheme{print-vector-length}}\scheme{print-vector-length} is set to
+true.
+
+
+\section{Notational Conventions\label{SECTINTRONOTATION}}
+
+This book follows essentially the same notational conventions as
+\emph{The Scheme Programming Language, 4th Edition}.
+These conventions are repeated below, with notes specific to
+{\ChezScheme}.
+
+When the value produced by a procedure or syntactic form is said to
+be \index{unspecified}\emph{unspecified}, the form or procedure may
+return any number of values, each of which may be any Scheme
+object.
+{\ChezScheme} usually returns a single, unique
+\index{void object}\emph{void} object
+(see \index{\scheme{void}}\scheme{void}) whenever
+the result is unspecified; avoid counting on this behavior, however,
+especially if your program may be ported to another Scheme implementation.
+Printing of the void object is suppressed by {\ChezScheme}'s waiter
+(read-evaluate-print loop).
+
+% following borrowed from TSPL4
+\index{exceptions}This book uses the words ``must'' and ``should'' to
+describe program requirements, such as the requirement to provide an index
+that is less than the length of the vector in a call to
+\scheme{vector-ref}.
+If the word ``must'' is used, it means that the requirement is enforced
+by the implementation, i.e., an exception is raised, usually with
+condition type \scheme{&assertion}.
+If the word ``should'' is used, an exception may or may not be raised,
+and if not, the behavior of the program is undefined.
+\index{syntax violation}The phrase ``syntax violation'' is used to
+describe a situation in which a program is malformed.
+Syntax violations are detected prior to program execution.
+When a syntax violation is detected, an exception of type \scheme{&syntax}
+is raised and the program is not executed.
+
+Scheme objects are displayed in a \scheme{typewriter} typeface just
+as they are to be typed at the keyboard.
+This includes identifiers, constant objects, parenthesized Scheme
+expressions, and whole programs.
+An \emph{italic} typeface is used to set off syntax variables in
+the descriptions of syntactic forms and arguments in the descriptions of
+procedures.
+Italics are also used to set off technical terms the first time they
+appear.
+The first letter of an identifier that is not ordinarily capitalized
+is not capitalized when it appears at the beginning of a sentence.
+The same is true for syntax variables written in italics.
+
+In the description of a syntactic form or procedure, a pattern shows
+the syntactic form or the application of the procedure.
+The syntax keyword or procedure name is given in typewriter font,
+as are parentheses.
+The remaining pieces of the syntax or arguments are shown in italics,
+using names that imply the types of the expressions or arguments expected
+by the syntactic form or procedure.
+Ellipses are used to specify
+zero or more occurrences of a subexpression or argument.
+
+
+\section{Parameters\label{SECTINTROPARAMETERS}}
+
+\index{parameters}All {\ChezScheme} system customization is done via
+\emph{parameters}.
+A parameter is a procedure that encapsulates a hidden state variable.
+When invoked without arguments, a parameter returns the value of
+the encapsulated variable.
+When invoked with one argument, the parameter changes the value
+of the variable to the value of its argument.
+A parameter may raise an exception if its argument is not appropriate,
+or it may filter the argument in some way.
+
+New parameters may be created and used by programs running in
+{\ChezScheme}.
+Parameters are used rather than global variables for program customization
+for two reasons:
+First, unintentional redefinition of a customization variable can cause
+unexpected problems, whereas unintentional redefinition of a
+parameter simply makes the parameter inaccessible.
+For example, a program that defines \scheme{*print-level*} for its own
+purposes in early releases of {\ChezScheme} would have unexpected
+effects on the printing of Scheme objects, whereas a program that
+defines \index{\scheme{print-level}}\scheme{print-level} for its own
+purposes simply loses the ability to alter the printer's behavior.
+Of course, a program that invokes \scheme{print-level} by accident can
+still affect the system in unintended ways, but such an occurrence is
+less likely, and can only happen in an incorrect program.
+
+Second, invalid values for parameters can be detected and rejected
+immediately when the ``assignment'' is made, rather than at the point
+where the first use occurs, when it is too late to recover and
+reinstate the old value.
+For example, an assignment of \scheme{*print-level*} to $-1$ would not
+have been caught until the first call to \scheme{write} or
+\scheme{pretty-print}, whereas an attempted assignment of $-1$ to the
+parameter \scheme{print-level}, i.e., \scheme{(print-level -1)}, is
+flagged as an error immediately, before the change is actually made.
+
+Built-in system parameters are described in different sections
+throughout this book and are listed along with other syntactic
+forms and procedures in the Summary of Forms in the
+back of this book.
+Parameters marked ``thread parameters'' have per-thread values in threaded
+versions of {\ChezScheme}, while the values of parameters marked ``global
+parameters'' are shared by all threads.
+Nonthreaded versions of {\ChezScheme} do not distinguish between
+thread and global parameters.
+See Sections~\ref{SECTPARAMETERS} and~\ref{SECTTHREADPARAMETERS} for
+more information on creating and manipulating parameters.
+
+
+\section{More Information\label{SECTINTROMOREINFO}}
+
+The articles and technical reports listed below document various
+features of {\ChezScheme} and its implementation:
+
+\begin{itemize}
+\item syntactic abstraction~\cite{Dybvig:expansion:jour,Dybvig:syntax-case,Dybvig:syntactic},
+\item modules~\cite{waddell:modules},
+\item libraries~\cite{Ghuloum:libraries},
+\item storage management~\cite{Dybvig:guardians,Dybvig:sm},
+\item threads~\cite{Dybvig:mitchfest-threads},
+\item multiple return values~\cite{Ashley:mvalues},
+\item optional arguments~\cite{Dybvig:lambdastar},
+\item continuations~\cite{Dybvig:phd,Hieb:representing,Bruggeman:oneshots},
+\item eq? hashtables~\cite{ghuloum:eq-hash-tables},
+\item internal definitions, \scheme{letrec}, and \scheme{letrec*}~\cite{Waddell:fixing-letrec,Ghuloum:fixing-letrec},
+\item \scheme{equal?}~\cite{adams:equal},
+\item engines~\cite{Dybvig:engines},
+\item floating-point printing~\cite{Burger:floatprinting},
+\item code generation~\cite{Dybvig:destination},
+\item register allocation~\cite{Burger:regalloc},
+\item procedure inlining~\cite{waddell:sas97},
+\item profiling~\cite{Burger:pdrtc},
+and
+\item history of the implementation~\cite{Dybvig:hocs}.
+\end{itemize}
+
+\noindent
+Links to abstracts and electronic versions of these publications are
+available at the url
+\hyperlink{http://www.cs.indiana.edu/chezscheme/pubs/}{http://www.cs.indiana.edu/chezscheme/pubs/}.
+% Additional resources,
+% online versions of this book and of The Scheme Programming Language,
+% 4th Edition, and links to various Scheme resources are available at
+% \hyperlink{http://www.scheme.com}{www.scheme.com}.

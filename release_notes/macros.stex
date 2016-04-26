@@ -1,0 +1,4 @@
+\def\ChezScheme{\textsl{Chez Scheme}}
+\def\PetiteChezScheme{\textsl{Petite Chez Scheme}}
+\def\CSUG#1{\hyperlink{http://www.scheme.com/csug#1/}{\emph{Chez Scheme Version #1 User's Guide}}}
+\def\TSPL#1#2{\hyperlink{http://www.scheme.com/tspl#1/}{\emph{The Scheme Programming Language, #1#2 edition}}}

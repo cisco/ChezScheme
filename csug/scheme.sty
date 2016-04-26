@@ -1,0 +1,89 @@
+\usepackage{color}
+\def\transerr#1{\begingroup\slshape}
+\def\transin#1{\begingroup\color{red}}
+\def\transout#1{\begingroup\color{blue}}
+\def\traceout#1{\begingroup\color{blue}}
+\def\endtranserr#1{\endgroup}
+\def\endtransin#1{\endgroup}
+\def\endtransout#1{\endgroup}
+\def\endtraceout#1{\endgroup}
+
+% this didn't work --- screwed up indentation:
+\long\def\showinteraction#1#2{\begin{minipage}[t]{4.375in}#1\end{minipage}\hfill\fbox{\begin{minipage}[t]{2in}#2\end{minipage}}}
+% so I resorted to this:
+\def\startrepl{\begin{minipage}[t]{4.3in}} % was 4.375 and 2 when interactionwindow = 28
+\def\endrepl{\end{minipage}}
+\def\startinteraction{\begin{minipage}[t]{2.2in}\vrule\begin{minipage}[t]{2.2in}\hrule\schemeindent=2pt}
+\def\endinteraction{\hrule\end{minipage}\vrule\end{minipage}}
+
+\font\ninefivett=cmtt9 at 9.5pt
+\newskip\ttglue
+\ttglue=.5em plus .25em minus .15em
+\font\tinyvar=cmti7
+\font\smallvar=cmti9
+\font\summarysizevar=cmti9
+\font\indexsizevar=cmti8
+\font\normalvar=cmti11
+\def\schemelarge{%
+  \def\schemelarger{\fontsize{14}{16}}%
+  \def\schemesmaller{\fontsize{10}{12}}%
+  \def\tt{\fontsize{12}{14}\ttfamily}%
+  \def\var##1{{\normalvar##1\/}}}
+\def\schemenormal{%
+  \def\schemelarger{\fontsize{12}{14}}%
+  \def\schemesmaller{\fontsize{8}{9}}%
+  \def\tt{\fontsize{10pt}{11pt}\ttfamily\ninefivett}%
+  \def\var##1{{\smallvar##1\/}}}
+\def\schemesmall{%
+  \def\schemelarger{\fontsize{10}{12}}%
+  \def\schemesmaller{\fontsize{6}{7}}%
+  \def\tt{\fontsize{8}{9}\ttfamily}%
+  \def\var##1{{\smallvar##1\/}}}
+\def\schemesummarysize{%
+  \def\schemelarger{\fontsize{10}{12}}%
+  \def\schemesmaller{\fontsize{6}{7}}%
+  \def\tt{\fontsize{8}{9}\ttfamily}%
+  \def\var##1{{\summarysizevar##1\/}}}
+\def\schemeindexsize{%
+  \def\schemelarger{\fontsize{10}{12}}%
+  \def\schemesmaller{\fontsize{6}{7}}%
+  \def\tt{\fontsize{7}{8}\ttfamily}%
+  \def\var##1{{\indexsizevar##1\/}}}
+\schemenormal
+
+\newskip\schemeindent
+\schemeindent=0pt
+{\obeyspaces\global\let =\ }
+\def\schtilde{\raisebox{-.5ex}{\hbox to .5em{\hss\schemelarger\rm\char`\~\hss}}}
+\def\schdot{\hbox to .5em{\hfil\schemelarger\bf.\hfil}}
+\def\schcarat{\char`\^}
+\def\schbackslash{\char`\\}
+\def\schatsign{\hbox to .5em{\hss\schemesmaller\rm\char`\@\hss}}
+\def\schunderscore{\hbox to .5em{\hss\schemelarger\_\hss}}
+\def\schlbrace{$\{$}
+\def\schrbrace{$\}$}
+\def\scheme#1{\mbox{\tt\frenchspacing\spaceskip=\ttglue#1}}
+
+\def\schemeblankline{\par\penalty-100\vskip .7\baselineskip}
+\def\schemelinestart{{\leavevmode\hbox{\hskip \schemeindent\relax}}}
+%%% handle numbered lines in scheme.sty and scheme.hsty
+%%% ---have scheme-prep produce only \schemelinestart
+\def\schemelinestartnumbered#1{{\leavevmode\hbox{\hbox to 1em {\hfil{\rm #1}} \hskip .5\schemeindent\relax}}}
+
+\def\noskip\schemedisplay{\begingroup%
+  \parindent=0pt%
+  \parskip=0pt%
+  \def\becomes{\hbox to 2em{\hfil$\rightarrow$\hfil}}%
+  \def\is{\hbox to 2em{\hfil$\Rightarrow$\hfil}}%
+  \def\si{\hbox to 2em{\hfil}}%
+  \interlinepenalty=2000%
+  \tt\obeyspaces\frenchspacing}
+\def\schemedisplay{\beforeschemedisplay\noskip\schemedisplay}
+\def\longcode\schemedisplay{\penalty-200\vskip 8pt plus 4pt%
+  \kern3pt\hrule\kern5pt\nobreak\noskip\schemedisplay}
+\def\endschemedisplay{\par\endgroup\afterschemedisplay}
+\def\var#1{{\normalsize\textrm{\textit{#1}}}}
+\def\raw#1{#1}
+\def\beforeschemedisplay{\penalty-100\vskip\parskip\vskip5pt}
+\def\afterschemedisplay{\penalty-200\vskip5pt}
+

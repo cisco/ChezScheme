@@ -1,0 +1,1903 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Syntactic Extension and Modules\label{CHPTSYNTAX}}
+
+This chapter describes the {\ChezScheme} extensions to the
+syntax-case syntactic abstraction mechanism now standardized in
+the Revised$^6$ Report.
+These extensions include
+the module system (Section~\ref{SECTSYNTAXMODULES}),
+meta definitions (Section~\ref{SECTSYNTAXMETA}),
+conditional expansion (Section~\ref{SECTSYNTAXMETACOND})
+\scheme{syntax-rules} fenders,
+\scheme{fluid-let-syntax},
+and \scheme{include}.
+
+
+\section{Fluid Keyword Bindings\label{SECTSYNTAXDEFINITIONS}}
+
+Keyword bindings established via the Revised$^6$ Report
+\scheme{define-syntax}, \scheme{let-syntax}, or \scheme{letrec-syntax}
+forms may be rebound temporarily with \scheme{fluid-let-syntax}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fluid-let-syntax}{\categorysyntax}{(fluid-let-syntax ((\var{keyword} \var{expr}) \dots) \var{form_1} \var{form_2} \dots)}
+\returns see explanation
+\listlibraries
+\endentryheader
+
+\noindent
+Each \var{expr} must evaluate to a transformer.
+\scheme{fluid-let-syntax} is similar to the standard \scheme{let-syntax}, except
+that instead of introducing new bindings for the keywords
+\scheme{\var{keyword} \dots},
+\scheme{fluid-let-syntax} temporarily alters the existing bindings
+for the keywords during the expansion of its body.
+That is, during the expansion of \scheme{\var{form_1} \var{form_2} \dots},
+the visible lexical (or top-level) binding
+for each \scheme{keyword} is temporarily replaced by a new association
+between the keyword and the corresponding transformer.
+This affects any references to the keyword that resolve
+to the same lexical (or top-level) binding whether the references occur
+in the text of the body or are introduced during its expansion.
+In contrast, \scheme{let-syntax} captures only those references that
+occur within the text of its body.
+
+The following example shows how \scheme{fluid-let-syntax}
+differs from \scheme{let-syntax}.
+
+\schemedisplay
+(let ([f (lambda (x) (+ x 1))])
+  (let-syntax ([g (syntax-rules ()
+                    [(_ x) (f x)])])
+    (let-syntax ([f (syntax-rules ()
+                      [(_ x) x])])
+      (g 1)))) ;=> 2
+
+(let ([f (lambda (x) (+ x 1))])
+  (let-syntax ([g (syntax-rules ()
+                    [(_ x) (f x)])])
+    (fluid-let-syntax ([f (syntax-rules ()
+                            [(_ x) x])])
+      (g 1)))) ;=> 1
+\endschemedisplay
+
+\noindent
+The two expressions are identical except that the inner
+\scheme{let-syntax} form
+in the first expression is a \scheme{fluid-let-syntax} form in the second.
+In the first expression, the \scheme{f} occurring in the expansion of
+\scheme{(g 1)} refers to
+the \scheme{let}-bound variable \scheme{f}, whereas in the second it refers
+to the keyword \scheme{f} by virtue of the fluid syntax binding for
+\scheme{f}.
+
+\index{integrable procedures}\index{\scheme{define-integrable}}%
+The following code employs \scheme{fluid-let-syntax} in the definition
+of a \scheme{define-integrable} form that is similar
+to \scheme{define} for procedure definitions except that it causes the
+code for the procedure to be \emph{integrated}, or inserted, wherever
+a direct call to the procedure is found.
+No semantic difference is visible between procedures defined with
+\scheme{define-integrable} and those defined with \scheme{define}, except that
+a top-level \scheme{define-integrable} form must appear before the first
+reference to the defined identifier.
+Lexical scoping is preserved, the actual parameters
+in an integrated call are evaluated once and at the proper time,
+integrable procedures may be used as first-class values, and
+recursive procedures do not cause indefinite recursive expansion.
+
+\schemedisplay
+(define-syntax define-integrable
+  (syntax-rules (lambda)
+    [(_ name (lambda formals form1 form2 ...))
+     (begin
+       (define xname
+         (fluid-let-syntax ([name (identifier-syntax xname)])
+           (lambda formals form1 form2 ...)))
+       (define-syntax name
+         (lambda (x)
+           (syntax-case x ()
+             [_ (identifier? x) #'xname]
+             [(_ arg (... ...))
+              #'((fluid-let-syntax ([name (identifier-syntax xname)])
+                   (lambda formals form1 form2 ...))
+                  arg
+                  (... ...))]))))]))
+\endschemedisplay
+
+\noindent
+A \scheme{define-integrable} has the following form.
+
+\schemedisplay
+(define-integrable \var{name} \var{lambda-expression})
+\endschemedisplay
+
+\noindent
+A \scheme{define-integrable} form expands into a pair of definitions: a syntax
+definition of \var{name} and a variable definition of \scheme{xname}.
+The transformer for \var{name} converts apparent calls to
+\var{name} into direct calls to \var{lambda-expression}.
+Since the resulting forms are merely direct \scheme{lambda} applications
+(the equivalent of \scheme{let} expressions),
+the actual parameters are evaluated exactly once and before evaluation
+of the procedure's body, as required.
+All other references to \var{name} are replaced with references to
+\scheme{xname}.
+The definition of \scheme{xname} binds it to the value of
+\var{lambda-expression}.
+This allows the procedure to be used as a first-class value.
+Because \scheme{xname} is introduced by the transformer, the binding for
+\scheme{xname} is not visible anywhere except where references to it
+are introduced by the the transformer for \var{name}.
+
+Within \var{lambda-expression}, wherever it appears, \var{name}
+is rebound to a transformer that expands all references into references
+to \scheme{xname}.
+The use of \index{\scheme{fluid-let-syntax}}\scheme{fluid-let-syntax}
+for this purpose prevents indefinite
+expansion from indirect recursion among integrable procedures.
+This allows the procedure to be recursive without causing indefinite
+expansion.
+Nothing special is done by \scheme{define-integrable} to maintain lexical
+scoping, since lexical scoping is maintained automatically by the
+expander.
+
+{\ChezScheme} integrate locally defined procedures automatically when it is
+appropriate to do so.
+It cannot integrate procedures defined at top-level,
+however, since code that assigns top-level variables can be introduced
+into the system (via \scheme{eval} or \scheme{load}) at any time.
+\scheme{define-integrable} can be used to force the integration of
+procedures bound at top-level, even if the integration of locally bound
+procedures is left to the compiler.
+It can also be used to force the integration of large procedures that
+the compiler would not normally integrate.
+(The \scheme{expand/optimize} procedure is useful for determining when
+integration does or does not take place.)
+
+\section{Syntax-Rules Transformers\label{SECTSYNTAXRULES}}
+
+{\ChezScheme} extends \scheme{syntax-rules} to permit clause to include
+fenders just like those allowed within \scheme{syntax-case} clauses.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{syntax-rules}{\categorysyntax}{(syntax-rules (\var{literal} \dots) \var{clause} \dots)}
+\returns a transformer
+\listlibraries
+\endentryheader
+
+\noindent
+Each \index{literals}\var{literal} must be an identifier other than
+an underscore (~\scheme{_}~) or ellipsis (~\scheme{...}~).
+Each clause must take the form below.
+
+\schemedisplay
+(\var{pattern} \var{template})
+(\var{pattern} \var{fender} \var{template})
+\endschemedisplay
+
+\noindent
+The first form is the only form supported by the Revised$^6$ Report.
+
+
+\section{Syntax-Case Transformers\label{SECTSYNTAXCASE}}
+
+{\ChezScheme} provides several procedures and syntactic forms that may
+be used to simplify the coding of certain syntactic abstractions.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{syntax->list}{\categoryprocedure}{(syntax->list \var{syntax-object})}
+\returns a list of syntax objects
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure takes a syntax object representing
+a list-structured form and returns a list of syntax objects, each representing
+the corresponding subform of the input form.
+
+%Programmers are encouraged to use this procedure even when the current
+%{\ChezScheme} implementation of \scheme{syntax-case} guarantees that
+%the output of a \scheme{syntax} form is a list, since future versions of
+%{\ChezScheme} may remove these guarantees in the interest of maintaining
+%better source information.
+
+\scheme{syntax->list} may be defined as follows.
+
+\schemedisplay
+(define syntax->list
+  (lambda (ls)
+    (syntax-case ls ()
+      [() '()]
+      [(x . r) (cons #'x (syntax->list #'r))])))
+
+#'(a b c) ;=> #<syntax (a b c)>
+(syntax->list #'(a b c)) ;=> (#<syntax a> #<syntax b> #<syntax c>)
+\endschemedisplay
+
+\scheme{syntax->list} is not required for list structures constructed
+from individual pattern variable values or sequences of pattern-variable
+values, since such structures are already lists.
+For example:
+
+\schemedisplay
+(list? (with-syntax ([x #'a] [y #'b] [z #'c]) #'(x y z)))) ;=> #t
+(list? (with-syntax ([(x ...) #'(a b c)]) #'(x ...))) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{syntax->vector}{\categoryprocedure}{(syntax->vector \var{syntax-object})}
+\returns a list of syntax objects
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure takes a syntax object representing
+a vector-structured form and returns a list of syntax objects, each representing
+the corresponding subform of the input form.
+
+%Programmers are encouraged to use this procedure even when the current
+%{\ChezScheme} implementation of \scheme{syntax-case} guarantees that
+%the output of a \scheme{syntax} form is a vector, since future versions of
+%{\ChezScheme} may remove these guarantees in the interest of maintaining
+%better source information.
+
+\scheme{syntax->vector} may be defined as follows.
+
+\schemedisplay
+(define syntax->vector
+  (lambda (v)
+    (syntax-case v ()
+      [#(x ...) (apply vector (syntax->list #'(x ...)))])))
+
+#'#(a b c) ;=> #<syntax #(a b c)>
+(syntax->vector #'#(a b c)) ;=> #(#<syntax a> #<syntax b> #<syntax c>)
+\endschemedisplay
+
+\scheme{syntax->vector} is not required for vector structures constructed
+from individual pattern variable values or sequences of pattern-variable
+values, since such structures are already vectors.
+For example:
+
+\schemedisplay
+(vector? (with-syntax ([x #'a] [y #'b] [z #'c]) #'#(x y z)))) ;=> #t
+(vector? (with-syntax ([(x ...) #'(a b c)]) #'#(x ...))) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{syntax-object->datum}{\categoryprocedure}{(syntax-object->datum \var{obj})}
+\returns \var{obj} stripped of syntactic information
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{syntax-object->datum} is identical to the Revised$^6$ Report
+\scheme{syntax->datum}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{datum}{\categorysyntax}{(datum \var{template})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{(datum \var{template})} is a convenient shorthand syntax for
+
+\schemedisplay
+(syntax->datum (syntax \var{template}))
+\endschemedisplay
+
+\var{datum} may be defined simply as follows.
+
+\schemedisplay
+(define-syntax datum
+  (syntax-rules ()
+    [(_ t) (syntax->datum #'t)]))
+
+(with-syntax ((a #'(a b c))) (datum a)) ;=> (a b c)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{datum->syntax-object}{\categoryprocedure}{(datum->syntax-object \var{template-identifier} \var{obj})}
+\returns a syntax object
+\listlibraries
+\endentryheader
+
+\scheme{datum->syntax-object} is identical to the Revised$^6$ Report
+\scheme{datum->syntax}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with-implicit}{\categorysyntax}{(with-implicit (\var{id_0} \var{id_1} \dots) \var{body_1} \var{body_2} \dots)}
+\returns see below
+\listlibraries
+\endentryheader
+
+This form abstracts over the common usage of \scheme{datum->syntax}
+for creating implicit identifiers (see above).
+The form
+
+\schemedisplay
+(with-implicit (\var{id_0} \var{id_1} \dots)
+  \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+is equivalent to
+
+\schemedisplay
+(with-syntax ([\var{id_1} (datum->syntax #'\var{id_0} '\var{id_1})] \dots)
+  \var{body_1} \var{body_2} \dots)
+\endschemedisplay
+
+\scheme{with-implicit} can be defined simply as follows.
+
+\schemedisplay
+(define-syntax with-implicit
+  (syntax-rules ()
+    [(_ (tid id ...) b1 b2 ...)
+     (with-syntax ([id (datum->syntax #'tid 'id)] ...)
+       b1 b2 ...)]))
+\endschemedisplay
+
+We can use \scheme{with-implicit} to simplify the (correct version of)
+\scheme{loop} above.
+
+\schemedisplay
+(define-syntax loop
+  (lambda (x)
+    (syntax-case x ()
+      [(k e ...)
+       (with-implicit (k break)
+         #'(call-with-current-continuation
+             (lambda (break)
+               (let f () e ... (f)))))])))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{include}{\categorysyntax}{(include \var{path})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{include} expands into a \scheme{begin} expression containing
+the forms found in the file named by \var{path}.
+For example, if the file \scheme{f-def.ss} contains
+% the expression
+\scheme{(define f (lambda () x))}, the expression
+
+\schemedisplay
+(let ([x "okay"])
+  (include "f-def.ss")
+  (f))
+\endschemedisplay
+
+\noindent
+evaluates to \scheme{"okay"}.
+An include form is treated as a definition if it appears within a
+sequence of definitions and the forms on the file named by
+\var{path} are all definitions, as in the above example.
+If the file contains expressions instead, the \scheme{include} form is
+treated as an expression.
+
+\scheme{include} may be defined portably as follows, although
+{\ChezScheme} uses an implementation-dependent definition that allows
+it to capture and maintain source information for included code.
+
+\schemedisplay
+(define-syntax include
+  (lambda (x)
+    (define read-file
+      (lambda (fn k)
+        (let ([p (open-input-file fn)])
+          (let f ([x (read p)])
+            (if (eof-object? x)
+                (begin (close-input-port p) '())
+                (cons (datum->syntax k x)
+                      (f (read p))))))))
+    (syntax-case x ()
+      [(k filename)
+       (let ([fn (datum filename)])
+         (with-syntax ([(exp ...) (read-file fn #'k)])
+           #'(begin exp ...)))])))
+\endschemedisplay
+
+\noindent
+The definition of \scheme{include} uses \scheme{datum->syntax} to convert
+the objects read from the file into syntax objects in the proper
+lexical context, so that identifier references and definitions within
+those expressions are scoped where the \scheme{include} form appears.
+
+In {\ChezScheme}'s implementation of \scheme{include},
+the parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
+determines the set of directories searched for source files not identified
+by absolute path names.
+
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:syntax-error}
+\formdef{syntax-error}{\categoryprocedure}{(syntax-error \var{obj} \var{string} \dots)}
+\returns does not return
+\listlibraries
+\endentryheader
+
+Syntax errors may be reported with \scheme{syntax-error}, which produces
+a message by concatenating \scheme{\var{string} \dots} and a printed
+representation of \var{obj}.
+If no string arguments are provided, the string \scheme{"invalid syntax"}
+is used instead.
+When \var{obj} is a syntax object, the syntax-object wrapper is
+stripped (as with \scheme{syntax->datum}) before the printed representation
+is created.
+If source file information is present in the syntax-object wrapper,
+\scheme{syntax-error} incorporates this information into the error
+message.
+
+\scheme{syntax-case} and \scheme{syntax-rules} call \scheme{syntax-error}
+automatically if the input fails to match one of the clauses.
+
+We can use \scheme{syntax-error} to precisely report the cause
+of the errors detected in the following definition of
+(unnamed) \scheme{let}.
+
+\schemedisplay
+(define-syntax let
+  (lambda (x)
+    (define check-ids!
+      (lambda (ls)
+        (unless (null? ls)
+          (unless (identifier? (car ls))
+            (syntax-error (car ls) "let cannot bind non-identifier"))
+          (check-ids! (cdr ls)))))
+    (define check-unique!
+      (lambda (ls)
+        (unless (null? ls)
+          (let ([x (car ls)])
+            (when (let mem? ([ls (cdr ls)])
+                    (and (not (null? ls))
+                         (or (bound-identifier=? x (car ls))
+                             (mem? (cdr ls)))))
+              (syntax-error x "let cannot bind two occurrences of")))
+          (check-unique! (cdr ls)))))
+    (syntax-case x ()
+      [(_ ((i e) ...) b1 b2 ...)
+       (begin
+         (check-ids! #'(i ...))
+         (check-unique! #'(i ...))
+         #'((lambda (i ...) b1 b2 ...) e ...))])))
+\endschemedisplay
+
+With this change, the expression
+
+\schemedisplay
+(let ([a 3] [a 4]) (+ a a))
+\endschemedisplay
+
+produces the error message ``let cannot bind two occurrences of \scheme{a}.''
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{literal-identifier=?}{\categoryprocedure}{(literal-identifier=? \var{identifier_1} \var{identifier_2})}
+\returns see below
+\listlibraries
+\endentryheader
+
+This procedure is identical to the Revised$^6$ Report
+\scheme{free-identifier=?}, and is provided for backward
+compatibility only.
+
+\section{Compile-time Values and Properties\label{SECTSYNTAXCTVS}}
+
+When defining sets of dependent macros, it is often convenient to attach
+information to identifiers in the same \emph{compile time environment}
+that the expander uses to record information about variables, keywords,
+module names, etc.
+For example, a record-type definition macro, like
+\scheme{define-record-type}, might need to attach information to the
+record-type name in the compile-time environment for use in handling child
+record-type definitions.
+
+{\ChezScheme} provides two mechanisms for attaching information to
+identifiers in the compile-time environment: compile-time values and
+compile-time properties.
+A compile-time value is a kind of transformer that can be
+associated with an identifier via \scheme{define-syntax},
+\scheme{let-syntax}, \scheme{letrec-syntax}, and \scheme{fluid-let-syntax}.
+When an identifier is associated with a compile-time value, it cannot
+also have any other meaning, and an attempt to reference it as an
+ordinary identifier results in a syntax error.
+A compile-time property, on the other hand, is maintained alongside
+an existing binding, providing additional information about the
+binding.
+Properties are ignored when ordinary references to an identifier
+occur.
+
+The mechanisms used by a macro to obtain compile-time values and
+properties are similar.
+In both cases, the macro's transformer returns a procedure \var{p}
+rather than a syntax object.
+The expander invokes \var{p} with one argument, an environment-lookup
+procedure \var{lookup}, which \var{p} can then use to obtain compile-time
+values and properties for one or more identifiers before it constructs the
+macro's final output.
+\var{lookup} accepts one or two identifier arguments.
+With one argument, \var{id}, \var{lookup} returns the compile-time
+value of \var{id}, or \scheme{#f} if \var{id} has no compile-time value.
+With two arguments, \var{id} and \var{key}, \var{lookup} returns the
+value of  \var{id}'s \var{key} property, or \scheme{#f} if \var{id}
+has no \var{key} property.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-compile-time-value}{\categoryprocedure}{(make-compile-time-value \var{obj})}
+\returns a compile-time value
+\listlibraries
+\endentryheader
+
+A compile time value is a kind of transformer with which a keyword may
+be associated by any of the keyword binding constructs, e.g., \scheme{define-syntax}
+or \scheme{let-syntax}.
+The transformer encapsulates the supplied \var{obj}.
+The encapsulated object may be retrieved as described above.
+
+The following example illustrates how this feature might be used to define
+a simple syntactic record-definition mechanism where the record type descriptor
+is generated at expansion time.
+
+\schemedisplay
+(define-syntax drt
+  (lambda (x)
+    (define construct-name
+      (lambda (template-identifier . args)
+        (datum->syntax template-identifier
+          (string->symbol
+            (apply string-append
+              (map (lambda (x)
+                     (if (string? x)
+                         x
+                         (symbol->string (syntax->datum x))))
+                   args))))))
+    (define do-drt
+      (lambda (rname fname* prtd)
+        (with-syntax ([rname rname]
+                      [rtd (make-record-type-descriptor
+                             (syntax->datum rname) prtd #f #f #f
+                             (list->vector
+                               (map (lambda (fname)
+                                      `(immutable ,(syntax->datum fname)))
+                                    fname*)))]
+                      [make-rname (construct-name rname "make-" rname)]
+                      [rname? (construct-name rname rname "?")]
+                      [(rname-fname ...)
+                       (map (lambda (fname)
+                              (construct-name fname rname "-" fname))
+                            fname*)]
+                      [(i ...) (enumerate fname*)])
+          #'(begin
+              (define-syntax rname (make-compile-time-value 'rtd))
+              (define rcd (make-record-constructor-descriptor 'rtd #f #f))
+              (define make-rname (record-constructor rcd))
+              (define rname? (record-predicate 'rtd))
+              (define rname-fname (record-accessor 'rtd i))
+              ...))))
+    (syntax-case x (parent)
+      [(_ rname (fname ...))
+       (for-all identifier? #'(rname fname ...))
+       (do-drt #'rname #'(fname ...) #f)]
+      [(_ rname pname (fname ...))
+       (for-all identifier? #'(rname pname fname ...))
+       (lambda (lookup)
+         (let ([prtd (lookup #'pname)])
+           (unless (record-type-descriptor? prtd)
+             (syntax-error #'pname "unrecognized parent record type"))
+           (do-drt #'rname #'(fname ...) prtd)))])))
+\endschemedisplay
+
+\schemedisplay
+(drt prec (x y))
+(drt crec prec (z))
+(define r (make-crec 1 2 3))
+(prec? r) ;=> #t
+(prec-x r) ;=> 1
+(crec-z r) ;=> 3
+prec ;=> \var{exception: invalid syntax prec}
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{define-property}{\categorysyntax}{(define-property \var{id} \var{key} \var{expr})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+A \scheme{define-property} form attaches a property to an
+existing identifier binding without disturbing the existing meaning
+of the identifier in the scope of that binding.
+It is typically used by one macro to record information about a binding
+for use by another macro.
+Both \var{id} and \var{key} must be identifiers.
+The expression \var{expr} is evaluated when the \scheme{define-property}
+form is expanded, and a new property associating \var{key} with the
+value of \var{expr} is attached to the existing binding of
+\var{id}, which must have a visible local or top-level binding.
+
+\scheme{define-property} is a definition and can appear anywhere
+other definitions can appear.
+The scope of a property introduced by \scheme{define-property} is the
+entire body in which the \scheme{define-property} form appears or global
+if it appears at top level, except
+where it is replaced by a property for the same \var{id} and
+\var{key} or where the binding to which it is attached is shadowed.
+Any number of properties can be attached to the same binding with
+different keys.
+Attaching a new property with the same name as an property already
+attached to a binding shadows the existing property with the new
+property.
+
+The following example defines a macro, \scheme{get-info}, that retrieves
+the \scheme{info} property of a binding, defines the variable \scheme{x},
+attaches an \scheme{info} property to the binding of \scheme{x}, retrieves
+the property via \scheme{get-info}, references \scheme{x} to show that
+its normal binding is still intact, and uses \scheme{get-info} again
+within the scope of a different binding of \scheme{x} to show that the
+properties are shadowed as well as the outer binding of \scheme{x}.
+
+\schemedisplay
+(define info)
+(define-syntax get-info
+  (lambda (x)
+    (lambda (lookup)
+      (syntax-case x ()
+        [(_ q)
+         (let ([info-value (lookup #'q #'info)])
+           #`'#,(datum->syntax #'* info-value))]))))
+(define x "x-value")
+(define-property x info "x-info")
+(get-info x) ;=> "x-info"
+x ;=> "x-value"
+(let ([x "inner-x-value"]) (get-info x)) ;=> #f
+\endschemedisplay
+
+For debugging, it is often useful to have a form that retrieves
+an arbitrary property, given an identifier and a key.
+The \index{\scheme{get-property}}\scheme{get-property} macro below does
+just that.
+
+\schemedisplay
+(define-syntax get-property
+  (lambda (x)
+    (lambda (r)
+      (syntax-case x ()
+        [(_ id key)
+         #`'#,(datum->syntax #'* (r #'id #'key))]))))
+(get-property x info) ;=> "x-info"
+\endschemedisplay
+
+The bindings for both identifiers must be visible where
+\scheme{get-property} is used.
+
+The version of \scheme{drt} defined below is like the one defined using
+\scheme{make-compile-time-value} above, except that it defines the
+record name as a macro that raises an exception with a more descriptive
+message, while attaching the record type descriptor to the binding as a
+separate property.
+The variable \scheme{drt-key} defined along with \scheme{drt} is used
+only as the key for the property that \scheme{drt} attaches to a record
+name.
+Both \scheme{drt-key} and \scheme{drt} are defined within a module that
+exports only the latter, ensuring that the properties used by \scheme{drt}
+cannot be accessed or forged.
+
+\schemedisplay
+(library (drt) (export drt) (import (chezscheme))
+  (define drt-key)
+  (define-syntax drt
+    (lambda (x)
+      (define construct-name
+        (lambda (template-identifier . args)
+          (datum->syntax template-identifier
+            (string->symbol
+              (apply string-append
+                (map (lambda (x)
+                       (if (string? x)
+                           x
+                           (symbol->string (syntax->datum x))))
+                     args))))))
+      (define do-drt
+        (lambda (rname fname* prtd)
+          (with-syntax ([rname rname]
+                        [rtd (make-record-type-descriptor
+                               (syntax->datum rname) prtd #f #f #f
+                               (list->vector
+                                 (map (lambda (fname)
+                                        `(immutable ,(syntax->datum fname)))
+                                      fname*)))]
+                        [make-rname (construct-name rname "make-" rname)]
+                        [rname? (construct-name rname rname "?")]
+                        [(rname-fname ...)
+                         (map (lambda (fname)
+                                (construct-name fname rname "-" fname))
+                              fname*)]
+                        [(i ...) (enumerate fname*)])
+            #'(begin
+                (define-syntax rname
+                  (lambda (x)
+                    (syntax-error x "invalid use of record name")))
+                (define rcd (make-record-constructor-descriptor 'rtd #f #f))
+                (define-property rname drt-key 'rtd)
+                (define make-rname (record-constructor rcd))
+                (define rname? (record-predicate 'rtd))
+                (define rname-fname (record-accessor 'rtd i))
+                ...))))
+      (syntax-case x (parent)
+        [(_ rname (fname ...))
+         (for-all identifier? #'(rname fname ...))
+         (do-drt #'rname #'(fname ...) #f)]
+        [(_ rname pname (fname ...))
+         (for-all identifier? #'(rname pname fname ...))
+         (lambda (lookup)
+           (let ([prtd (lookup #'pname #'drt-key)])
+             (unless prtd
+               (syntax-error #'pname "unrecognized parent record type"))
+             (do-drt #'rname #'(fname ...) prtd)))]))))
+\endschemedisplay
+
+\schemedisplay
+(import (drt))
+(drt prec (x y))
+(drt crec prec (z))
+(define r (make-crec 1 2 3))
+(prec? r) ;=> #t
+(prec-x r) ;=> 1
+(crec-z r) ;=> 3
+prec ;=> \var{exception: invalid use of record name prec}
+\endschemedisplay
+
+\section{Modules\label{SECTSYNTAXMODULES}}
+
+\index{modules}Modules are used to help organize programs into separate
+parts that interact cleanly via declared interfaces.
+Although modular programming is typically used to facilitate the development
+of large programs possibly written by many individuals, it may also be
+used in {\ChezScheme} at a ``micro-modular'' level, since {\ChezScheme}
+module and import forms are definitions and may appear anywhere any other
+kind of definition may appear, including within a \scheme{lambda} body
+or other local scope.
+
+Modules control visibility of bindings and can be viewed as extending
+lexical scoping to allow more precise control over where bindings are
+or are not visible.
+Modules export identifier bindings, i.e., variable bindings, keyword
+bindings, or module name bindings.
+Modules may be \emph{named} or \emph{anonymous}.
+Bindings exported from a named module may be made visible via an import
+form wherever the module's name is visible.
+Bindings exported from an anonymous module are implicitly imported where
+the module form appears.
+Anonymous modules are useful for hiding some of a set of bindings while
+allowing the remaining bindings in the set to be visible.
+
+Some of the text and examples given in this section are
+adapted from the paper
+``Extending the scope of syntactic
+abstraction''~\cite{waddell:modules}, which describes modules and their
+implementation in more detail.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{module}{\categorysyntax}{(module \var{name} \var{interface} \var{defn} \dots \var{init} \dots)}
+\formdef{module}{\categorysyntax}{(module \var{interface} \var{defn} \dots \var{init} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{name} is an identifier, \scheme{\var{defn} \dots}
+are definitions, and \scheme{\var{init} \dots} are expressions.
+\var{interface} is a list of exports \scheme{(\var{export} \dots)},
+where each \var{export} is either an identifier \var{identifier}
+or of the form \scheme{(\var{identifier} \var{export} \dots)}.
+
+The first syntax for \scheme{module} establishes a named scope that
+encapsulates a set of identifier bindings.
+The exported bindings may be made visible via \scheme{import} or
+\scheme{import-only} (Section~\ref{SECTLIBRARYIMPORTEXPORTFORMS})
+anywhere the module name is visible.
+The second syntax for \scheme{module} introduces an anonymous module
+whose bindings are implicitly imported (as if by \scheme{import} of a
+hidden module name) where the module form appears.
+
+A module consists of a (possibly empty) set of
+definitions and a (possibly empty) sequence of initialization expressions.
+The identifiers defined within a module are visible within the body
+of the module and, if exported, within the scope of an import for the
+module.
+Each identifier listed in a module's interface must be defined within
+or imported into that module.
+A \scheme{module} form is a definition and can appear anywhere other
+definitions can appear, including
+at the top level of a program, nested within the bodies of
+\scheme{lambda} expressions, nested within \scheme{library} and
+top-level program forms, and nested within other modules.
+Also, because module names are scoped like other identifiers,
+modules and libraries may export module names as well as variables and keywords.
+
+When an interface contains an export of the form
+\scheme{(\var{identifier} \var{export} \dots)}, only \var{identifier} is
+visible in the importing context.
+The identifiers within \scheme{\var{export} \dots} are
+\emph{indirect imports}, as if declared via an
+\scheme{indirect-export} form (Section~\ref{SECTLIBRARYIMPORTEXPORTFORMS}).
+
+Module names occupy the same namespace as other identifiers and follow
+the same scoping rules.
+Unless exported, identifiers defined within a module are visible only
+within that module.
+
+Expressions within a module can reference identifiers bound outside of
+the module.
+
+\schemedisplay
+(let ([x 3])
+  (module m (plusx)
+    (define plusx (lambda (y) (+ x y))))
+  (import m)
+  (let ([x 4])
+    (plusx 5))) ;=> 8
+\endschemedisplay
+
+\noindent
+Similarly, \scheme{import} does not prevent access to identifiers that
+are visible where the import form appears, except for those variables
+shadowed by the imported identifiers.
+
+\schemedisplay
+(module m (y) (define y 'm-y))
+(let ([x 'local-x] [y 'local-y])
+  (import m)
+  (list x y)) ;=> (local-x m-y)
+\endschemedisplay
+
+On the other hand, use of \scheme{import-only} within a module
+establishes an isolated scope in
+which the only visible identifiers are those exported by the
+imported module.
+
+\schemedisplay
+(module m (y) (define y 'm-y))
+(let ([x 'local-x] [y 'local-y])
+  (import-only m)
+  x) ;=> Error: x is not visible
+\endschemedisplay
+
+\noindent
+This is sometimes desirable for static verification that no
+identifiers are used except those explicitly imported into a
+module or local scope.
+
+Unless a module imported via \scheme{import-only} exports
+\scheme{import} or
+\scheme{import-only} and the name of at least one module, subsequent
+imports within the scope of the \scheme{import-only} form are not
+possible.
+To create an isolated scope containing the exports of more than one
+module without making \scheme{import} or \scheme{import-only}
+visible, all of the modules to be imported must be listed in the
+same \scheme{import-only} form.
+
+Another solution is to create a single module that contains
+the exports of each of the other modules.
+
+\schemedisplay
+(module m2 (y) (define y 'y))
+(module m1 (x) (define x 'x))
+(module mega-module (cons x y)
+  (import m1)
+  (import m2)
+  (import scheme))
+(let ([y 3])
+  (import-only mega-module)
+  (cons x y)) ;=> (x . y)
+\endschemedisplay
+
+\bigskip
+Before it is compiled, a source program is translated into
+a core language program containing no syntactic abstractions, syntactic
+definitions, library definitions, module definitions, or import forms.
+Translation is performed by a \emph{syntax expander} that
+processes the forms in the source program via recursive descent.
+
+A \scheme{define-syntax} form associates a keyword
+with a transformer in a translation-time environment.
+When the expander encounters a keyword, it invokes the
+associated transformer and reprocesses the resulting form.
+A \scheme{module} form associates a module name with an interface.
+When the expander encounters an \scheme{import} form, it extracts the
+corresponding module interface from the translation-time environment and makes
+the exported bindings visible in the scope where the \scheme{import} form
+appears.
+
+Internal definitions and definitions within a \scheme{module}
+body are processed from left to right so that a module's definition
+and import may appear within the same sequence of definitions.
+Expressions appearing within a body and the right-hand sides of variable
+definitions, however, are translated
+only after the entire set of definitions has been processed, allowing
+full mutual recursion among variable and syntactic definitions.
+
+Module and import forms affect only the visibility of identifiers in
+the source program, not their meanings.
+In particular, variables are bound to locations whether defined within or
+outside of a module, and \scheme{import} does not introduce new locations.
+Local variables are renamed as necessary to preserve the scoping
+relationships established by both modules and syntactic abstractions.
+Thus, the expression:
+
+\schemedisplay
+(let ([x 1])
+  (module m (x setter)
+    (define-syntax x (identifier-syntax z))
+    (define setter (lambda (x) (set! z x)))
+    (define z 5))
+  (let ([y x] [z 0])
+    (import m)
+    (setter 3)
+    (+ x y z))) ;=> 4
+\endschemedisplay
+
+is equivalent to the following program
+in which identifiers have been consistently renamed as indicated by
+subscripts.
+
+\schemedisplay
+(let ([x\var{_0} 1])
+  (define-syntax x\var{_1} (identifier-syntax z\var{_1}))
+  (define setter\var{_1} (lambda (x\var{_2}) (set! z\var{_1} x\var{_2})))
+  (define z\var{_1} 5)
+  (let ([y\var{_3} x\var{_0}] [z\var{_3} 0])
+    (setter\var{_1} 3)
+    (+ x\var{_1} y\var{_3} z\var{_3})))
+\endschemedisplay
+
+Definitions within a top-level \scheme{begin}, \scheme{lambda}, top-level program,
+\scheme{library}, or \scheme{module} body
+are processed from left to right by the expander at expand time, and the
+variable definitions are evaluated from left-to-right at run time.
+Initialization expressions appearing within a \scheme{module} body
+are evaluated in sequence after the evaluation of the variable
+definitions.
+
+Mutually recursive modules can be defined in several ways.
+In the following program, \scheme{a} and \scheme{b} are mutually recursive
+modules exported by an anonymous module whose local scope is used to
+statically link the two.
+For example,
+the free variable \scheme{y} within module \scheme{a} refers to
+the binding for \scheme{y}, provided by importing \scheme{b},
+in the enclosing module.
+
+\schemedisplay
+(module (a b)
+  (module a (x) (define x (lambda () y)))
+  (module b (y) (define y (lambda () x)))
+  (import a)
+  (import b))
+\endschemedisplay
+
+\noindent
+The following syntactic abstraction generalizes this pattern to
+permit the definition of multiple mutually recursive modules.
+
+\schemedisplay
+(define-syntax rec-modules
+  (syntax-rules (module)
+    [(_ (module m (id ...) form ...) ...)
+     (module (m ...)
+       (module m (id ...) form ...) ...
+       (import m) ...)]))
+\endschemedisplay
+
+Because a module can re-export imported bindings,
+it is quite easy to provide multiple views on a single
+module, as \scheme{s} and \scheme{t} provide for \scheme{r}
+below, or to combine several modules into a compound,
+as \scheme{r} does.
+
+\schemedisplay
+(module p (x y)
+  (define x 1) (define y 2))
+(module q (y z)
+  (define y 3) (define z 4))
+(module r (a b c d)
+  (import* p (a x) (b y))
+  (import* q (c y) (d z)))
+(module s (a c) (import r))
+(module t (b d) (import r))
+\endschemedisplay
+
+To allow interfaces to be separated from implementations,
+the following syntactic abstractions support the definition and use of
+named interfaces.
+
+\schemedisplay
+(define-syntax define-interface
+  (syntax-rules ()
+    [(_ name (export ...))
+     (define-syntax name
+       (lambda (x)
+         (syntax-case x ()
+           [(_ n defs)
+            (with-implicit (n export ...)
+              #'(module n (export ...) .
+                  defs))])))]))
+
+(define-syntax define-module
+  (syntax-rules ()
+    [(_ name interface defn ...)
+     (interface name (defn ...))]))
+\endschemedisplay
+
+\noindent
+\scheme{define-interface} creates an interface macro that, given a module
+name and a list of definitions, expands into a module definition with
+a concrete interface.
+
+\scheme{with-implicit} is used to ensure that the introduced
+\scheme{export} identifiers are visible in the same scope as the name of
+the module in the \scheme{define-module} form.
+
+\noindent
+\scheme{define-interface} and \scheme{define-module} can be used as
+follows.
+
+\schemedisplay
+(define-interface simple (a b))
+(define-module m simple
+  (define-syntax a (identifier-syntax 1))
+  (define b (lambda () c))
+  (define c 2))
+(let () (import m) (+ a (b))) ;=> 3
+\endschemedisplay
+
+The abstract module facility defined below allows a module interface to
+be satisfied incrementally when module forms are evaluated.
+This permits flexibility in the separation between the interface and
+implementation, supports separate compilation of mutually recursive
+modules, and permits redefinition of module implementations.
+
+\schemedisplay
+(define-syntax abstract-module
+  (syntax-rules ()
+    [(_ name (ex ...) (kwd ...) defn ...)
+     (module name (ex ... kwd ...)
+       (declare ex) ...
+       defn ...)]))
+
+(define-syntax implement
+  (syntax-rules ()
+    [(_ name form ...)
+     (module () (import name) form ...)]))
+\endschemedisplay
+
+\noindent
+Within an \scheme{abstract-module} form,
+each of the exports in the list \scheme{\var{ex} \dots} must be
+variables.
+The values of these variables are supplied by one or more separate
+\scheme{implement} forms.
+Since keyword bindings must be present at compile time,
+they cannot be satisfied incrementally and are instead listed as
+separate exports and defined within the abstract module.
+
+Within an \scheme{implement} form,
+the sequence of forms \scheme{\var{form} \dots} is a sequence of
+zero or more definitions followed by a sequence of zero or more
+expressions.
+Since the module used in the expansion of \scheme{implement} does
+not export anything, the definitions are all local to the
+\scheme{implement} form.
+The expressions may be arbitrary expressions, but should include
+one \scheme{satisfy} form for each variable whose definition is
+supplied by the \scheme{implement} form.
+A \scheme{satisfy} form has the syntax
+
+\schemedisplay
+(satisfy \var{variable} \var{expr})
+\endschemedisplay
+
+\noindent
+\scheme{declare} and \scheme{satisfy} may simply be the equivalents of
+\scheme{define} and \scheme{set!}.
+
+\schemedisplay
+(define-syntax declare (identifier-syntax define))
+(define-syntax satisfy (identifier-syntax set!))
+\endschemedisplay
+
+\noindent
+Alternatively, \scheme{declare} can initialize the declared variable to
+the value of a flag known only to \scheme{declare} and \scheme{satisfy},
+and \scheme{satisfy} can verify that this flag is still present to insure
+that only one attempt to satisfy the value of a given identifier is
+made.
+
+\schemedisplay
+(module ((declare cookie) (satisfy cookie))
+  (define cookie "chocolate chip")
+  (define-syntax declare
+    (syntax-rules () [(_ var) (define var cookie)]))
+  (define-syntax satisfy
+    (syntax-rules ()
+      [(_ var exp)
+       (if (eq? var cookie)
+           (set! var exp)
+           (assertion-violationf 'satisfy
+             "value of variable ~s has already been satisfied"
+             'var))])))
+\endschemedisplay
+
+Using \scheme{abstract-module} and \scheme{implement}, we can define
+mutually recursive and separately compilable modules as follows.
+
+\schemedisplay
+(abstract-module e (even?) (pred)
+  (define-syntax pred
+    (syntax-rules () [(_ exp) (- exp 1)])))
+
+(abstract-module o (odd?) ())
+
+(implement e
+  (import o)
+  (satisfy even?
+    (lambda (x)
+      (or (zero? x) (odd? (pred x))))))
+
+(implement o
+  (import e)
+  (satisfy odd?
+    (lambda (x) (not (even? x)))))
+
+(let () (import-only e) (even? 38)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{only}{\categorysyntax}{only}
+\formdef{except}{\categorysyntax}{except}
+\formdef{add-prefix}{\categorysyntax}{add-prefix}
+\formdef{drop-prefix}{\categorysyntax}{drop-prefix}
+\formdef{rename}{\categorysyntax}{rename}
+\formdef{alias}{\categorysyntax}{alias}
+\listlibraries
+\endentryheader
+
+\noindent
+These identifiers are auxiliary keywords for \scheme{import}
+and \scheme{import-only}.
+It is a syntax violation to reference these identifiers except in
+contexts where they are recognized as auxiliary keywords.
+
+\section{Standalone import and export forms\label{SECTSYNTAXIMPORTEXPORTFORMS}}
+
+The local import and export forms described in
+Section~\ref{SECTLIBRARYIMPORTEXPORTFORMS} can be used
+equally well for and within modules.
+
+\section{Built-in Modules\label{SECTSYNTAXBUILTINMODULES}}
+
+Five modules are built-in to {\ChezScheme}: \index{\scheme{scheme} module}\scheme{scheme},
+\index{\scheme{r5rs} module}\scheme{r5rs}, \index{\scheme{r5rs-syntax} module}\scheme{r5rs-syntax}, \index{\scheme{ieee} module}\scheme{ieee}, and
+\index{\scheme{$system} module}\scheme{$system}.
+Each module is immutable, i.e., the exported bindings cannot be
+altered.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{scheme}{\categorymodule}{scheme}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{scheme} contains all user-visible top-level bindings
+(variables, keywords, and module names) built into {\ChezScheme}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{r5rs}{\categorymodule}{r5rs}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{r5rs} contains all top-level bindings
+(variables and keywords) defined in the
+Revised$^5$ Report on Scheme.
+The bindings exported from \scheme{r5rs} are precisely those that are
+available within an expression evaluated via \scheme{eval} with the
+environment specifier returned by
+\index{\scheme{scheme-report-environment}}\scheme{scheme-report-environment}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{r5rs-syntax}{\categorymodule}{r5rs-syntax}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{r5rs-syntax} contains all top-level keyword bindings
+defined in the Revised$^5$ Report on Scheme.
+The bindings exported from \scheme{r5rs-syntax} are precisely those that are
+available within an expression evaluated via \scheme{eval} with the
+environment specifier returned by
+\index{\scheme{null-environment}}\scheme{null-environment}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ieee}{\categorymodule}{ieee}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{ieee} contains all top-level bindings
+(variables and keywords) defined in the
+ANSI/IEEE standard for Scheme.
+The bindings exported from \scheme{ieee} are precisely those that are
+available within an expression evaluated via \scheme{eval} with the
+environment specifier returned by
+\index{\scheme{ieee-environment}}\scheme{ieee-environment}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{$system}{\categorymodule}{$system}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{$system} contains all user-visible top-level bindings built
+into {\ChezScheme} along with various undocumented system bindings.
+
+
+\section{Meta Definitions\label{SECTSYNTAXMETA}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{meta}{\categorysyntax}{(meta . \var{definition})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+The \scheme{meta} keyword is actually a prefix that can be placed in
+front of any definition keyword, e.g.,
+
+\schemedisplay
+(meta define x 3)
+\endschemedisplay
+
+It tells the expander that any variable definition resulting
+from the definition is to be an expand-time definition available only
+to the right-hand sides of other meta definitions and, most importantly,
+transformer expressions.
+It is used to define expand-time helpers and other information for use
+by one or more \scheme{syntax-case} transformers.
+
+% (module count-let (count let)
+%   (meta define counter 0)
+%   (define-syntax count (lambda (x) counter))
+%   (define-syntax let
+%     (lambda (x)
+%       (import scheme)
+%       (set! counter (+ counter 1))
+%       (syntax-case x () [(_ . stuff) #'(let . stuff)]))))
+
+\schemedisplay
+(module M (helper1 a b)
+  (meta define helper1
+    (lambda (---)
+      ---))
+  (meta define helper2
+    (lambda (---)
+      --- (helper2 ---) ---))
+  (define-syntax a
+    (lambda (x)
+      --- (helper1 ---) ---))
+  (define-syntax b
+    (lambda (x)
+      --- (helper1 ---) ---
+      --- (helper2 ---) ---)))
+\endschemedisplay
+
+The right-hand-side expressions of a syntax definition or meta definition
+can refer only to identifiers whose values are already available in the
+compile-time environment.
+Because of the left-to-right expansion order for \scheme{library},
+\scheme{module}, \scheme{lambda}, and similar bodies, this implies a
+semantics similar to \scheme{let*} for a sequence of meta definitions,
+in which each right-hand side can refer only to the variables defined
+earlier in the sequence.
+An exception is that the right-hand side of a meta definition can refer
+to its own name as long as the reference is not evaluated until after
+the value of the expression has been computed.
+This permits meta definitions to be self-recursive but not mutually
+recursive.
+The right-hand side of a meta definition can, however, build syntax
+objects containing occurrences of any identifiers defined in the body
+in which the meta definition appears.
+
+Meta definitions propagate through macro expansion, so one can write,
+for example:
+
+\schemedisplay
+(module (a)
+  (meta define-record foo (x))
+  (define-syntax a
+    (let ([q (make-foo #''q)])
+      (lambda (x) (foo-x q)))))
+a ;=> q
+\endschemedisplay
+
+where define-record is a macro that expands into a set of defines.
+
+It is also sometimes convenient to write
+
+\schemedisplay
+(meta begin defn \dots)
+\endschemedisplay
+
+or
+
+\schemedisplay
+(meta module {exports} defn \dots)
+\endschemedisplay
+
+or
+
+\schemedisplay
+(meta include "\var{path}")
+\endschemedisplay
+
+to create groups of meta bindings.
+
+\section{Conditional expansion\label{SECTSYNTAXMETACOND}}
+
+Expansion-time decisions can be made via \scheme{meta-cond}, which is
+similar to \scheme{cond} but evaluates the test expressions at
+expansion time and can be used in contexts where definitions are
+expected as well as in expression contexts.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{meta-cond}{\categorysyntax}{(meta-cond \var{clause_1} \var{clause_2} \dots)}
+\returns see below
+\listlibraries
+\endentryheader
+
+Each \var{clause} but the last must take the form:
+
+\schemedisplay
+(\var{test} \var{expr_1} \var{expr_2} \dots)
+\endschemedisplay
+
+The last may take the same form or be an \scheme{else} clause of the form:
+
+\schemedisplay
+(\var{else} \var{expr_1} \var{expr_2} \dots)
+\endschemedisplay
+
+During expansion, the \var{test} expressions are evaluated in order until
+one evaluates to a true value or until all of the tests have been
+evaluated.
+If a \var{test} evaluates to a true value, the \scheme{meta-cond} form
+expands to a \scheme{begin} form containing the corresponding
+expressions \scheme{\var{expr_1} \var{expr_2} \dots}.
+If no \var{test} evaluates to a true value and an \scheme{else} clause
+is present, the \scheme{meta-cond} form expands to a \scheme{begin} form
+containing the expressions \scheme{\var{expr_1} \var{expr_2} \dots} from
+the \scheme{else} clause.
+Otherwise the \scheme{meta-cond} expression expands into a call to
+the \scheme{void} procedure.
+
+\scheme{meta-cond} might be defined as follows.
+
+\schemedisplay
+(define-syntax meta-cond
+  (syntax-rules ()
+    [(_ [a0 a1 a2 ...] [b0 b1 b2 ...] ...)
+     (let-syntax ([expr (cond
+                          [a0 (identifier-syntax (begin a1 a2 ...))]
+                          [b0 (identifier-syntax (begin b1 b2 ...))]
+                          ...)])
+       expr)]))
+\endschemedisplay
+
+\scheme{meta-cond} is used to choose, at expansion time, from among a
+set of possible forms.
+For example, one might have safe (error-checking) and unsafe
+(non-error-checking) versions of a procedure and decide which to
+call based on the compile-time optimization level, as shown
+below.
+
+\schemedisplay
+(meta-cond
+  [(= (optimize-level) 3) (unsafe-frob x)]
+  [else (safe-frob x)])
+\endschemedisplay
+
+\section{Aliases\label{SECTSYNTAXALIAS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{alias}{\categorysyntax}{(alias \var{id_1} \var{id_2})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\scheme{alias} is a definition and can appear anywhere
+other definitions can appear.
+It is used to transfer the binding from one identifier to
+another.
+
+\schemedisplay
+(let ([x 3]) (alias y x) (set! y 4) (list x y)) ;=> (4 4)
+
+(module lisp (if)
+  (module (scheme:if)
+    (import scheme)
+    (alias scheme:if if))
+  (define-syntax if
+    (syntax-rules ()
+      [(_ e_1 e_2 e_3)
+       (scheme:if (not (memq e_1 '(#f ()))) e_2 e_3)])))
+(define (length ls)
+  (import lisp)
+  (if ls (+ (length (cdr ls)) 1) 0))
+(length '(a b c)) ;=> 3
+\endschemedisplay
+
+Because of left-to-right expansion order, aliases should appear after
+the definition of the right-hand-side identifier, e.g.:
+
+\schemedisplay
+(let ()
+  (import-only (chezscheme))
+  (define y 3)
+  (alias x y)
+  x) ;=> 3
+\endschemedisplay
+
+rather than:
+
+\schemedisplay
+(let ()
+  (import-only (chezscheme))
+  (alias x y)
+  (define y 3)
+  x) ;=> \var{exception: unbound identifier}
+\endschemedisplay
+
+
+\section{Annotations\label{SECTSYNTAXANNOTATIONS}}
+
+\index{annotations}%
+When source code is read from a file by \scheme{load},
+\scheme{compile-file}, or variants of these, such as
+\scheme{load-library}, the reader attaches \emph{annotations} to each
+object read from the file.
+These annotations identify the file and the position of the object within
+the file.
+Annotations are tracked through the compilation process and associated
+with compiled code at run time.
+The expander and compiler use the annotations to produce syntax errors
+and compiler warnings that identify the location of the offending form,
+and the inspector uses them to identify the locations of calls and
+procedure definitions.
+The compiler and run time also use annotations to associate source
+positions with profile counts.
+
+While these annotations are usually maintained ``behind the scenes,''
+the programmer can manipulate them directly via a set
+of routines for creating and accessing annotations.
+
+Annotations are values of a type distinct from other types and have
+four components: an expression, possibly with annotated subexpressions,
+a \emph{source object}, a stripped version of the expression, and
+usage options.
+Annotations can be created via
+\index{\scheme{make-annotation}}\scheme{make-annotation}, which has
+three required arguments corresponding to the first three components
+and an optional fourth argument corresponding to the fourth component.
+The second argument must be a source object, and the third argument should be a
+stripped version of the first argument, i.e., equivalent to the first
+argument with each annotation replaced by its expression component.
+An annotation is essentially equivalent to its stripped component as a
+representation of source code, with the source information attached and
+available to the expander or evaluator.
+The optional fourth argument, if present, must be an enumeration set over
+the symbols \scheme{debug} and \scheme{profile} and defaults to an
+enumeration set containing both \scheme{debug} and \scheme{profile}.
+
+Annotations marked \scheme{debug} are used for compile-time error
+reporting and run-time error reporting and inspection; annotations
+marked \scheme{profile} are used for profiling.
+Annotations created by the Scheme reader are always marked both
+\scheme{debug} and \scheme{profile}, but other readers and parsers
+might choose to mark some annotations only \scheme{debug} or only
+\scheme{profile}.
+In particular, it might be useful to annotate multiple
+expressions in the output of a parser with the same source object
+for debugging purposes and mark only one of them \scheme{profile}
+to avoid duplicate counts.
+It might also be useful to mark no expressions \scheme{profile} and
+instead introduce explicit \scheme{profile} forms
+(Section~\ref{SECTMISCPROFILE}) to identify the set of source
+locations to be profiled.
+
+\index{source objects}%
+Source objects are also values of a type distinct from other types and
+also have three components: a \emph{source-file descriptor} (sfd),
+a beginning file position (bfp), and an ending file position (efp).
+The sfd identifies the file from which an expression is read and the
+bfp identify the range of character positions occupied by the object
+in the file, with the bfp being inclusive and the efp being exclusive.
+A source object can be created via
+\index{\scheme{make-source-object}}\scheme{make-source-object}, which
+takes three arguments corresponding to these components.
+The first argument must be a source-file descriptor, the second and
+third must be nonnegative exact integers, and the second must not be
+greater than the third.
+
+\index{source-file descriptors}%
+Source-file descriptors are also values of a type distinct
+from all other types and have two components: the file's path,
+represented by a string, and a checksum, represented by a number.
+The path might or might not be an absolute path depending on how
+the file's path was specified when the source-file descriptor was
+created.
+The checksum is computed based on the file's length and contents
+when the file is created and checked by tools that look for the
+source file to make sure that the proper file has been found and
+has not been modified.
+Source-file descriptors can be created with
+\index{\scheme{make-source-file-descriptor}}\scheme{make-source-file-descriptor},
+which accepts two arguments: a string naming the path and a binary
+input port, along with an optional third boolean argument, \var{reset?},
+which defaults to false.
+\scheme{make-source-file-descriptor} computes a checksum based on
+the contents of the port, starting at its current position.
+It resets the port, using \scheme{set-port-position!}, after computing
+the checksum if \var{reset?} is true; otherwise, it leaves the
+port at end-of-file.
+
+The procedures that create, check for, and access annotations,
+source objects, and source-file descriptors are summarized below
+and described in more detail later in this section.
+
+\schemedisplay
+(make-annotation \var{obj} \var{source-object} \var{obj}) ;-> \var{annotation}
+(annotation? \var{obj}) ;-> \var{boolean}
+(annotation-expression \var{annotation}) ;-> \var{obj}
+(annotation-source \var{annotation}) ;-> \var{source-object}
+(annotation-stripped \var{annotation}) ;-> \var{obj}
+
+(make-source-object \var{sfd} \var{uint} \var{uint}) ;-> \var{source-object}
+(source-object? \var{obj}) ;-> \var{boolean}
+(source-object-bfp \var{source-object}) ;-> \var{uint}
+(source-object-efp \var{source-object}) ;-> \var{uint}
+(source-object-sfd \var{source-object}) ;-> \var{sfd}
+
+(make-source-file-descriptor \var{string} \var{binary-input-port}) ;-> \var{sfd}
+(make-source-file-descriptor \var{string} \var{binary-input-port} \var{reset?}) ;-> \var{sfd}
+(source-file-descriptor? \var{obj}) ;-> \var{boolean}
+(source-file-descriptor-checksum \var{sfd}) ;-> \var{obj}
+(source-file-descriptor-path \var{sfd}) ;-> \var{obj}
+\endschemedisplay
+
+A program might open a source file with
+\scheme{open-file-input-port}, create an sfd using
+\index{\scheme{make-source-file-descriptor}}\scheme{make-source-file-descriptor},
+create a textual port from the binary port using transcoded-port, and
+create source objects and annotations for each of the objects it reads
+from the file.
+If a custom reader is not required, the Scheme
+reader can be used to read annotations via the
+\index{\scheme{get-datum/annotations}}\scheme{get-datum/annotations}
+procedure:
+
+\schemedisplay
+(get-datum/annotations \var{textual-input-port} \var{sfd} \var{uint}) ;-> \var{obj}, \var{uint}
+\endschemedisplay
+
+\scheme{get-datum/annotations} is like \scheme{get-datum} but instead of returning
+a plain datum, it returns an annotation encapsulating a datum (possibly with nested
+annotations), a source object, and the plain (stripped) datum.  
+It also returns a second value, the position of the first character beyond the
+object in the file.
+Character positions are accepted and returned by
+\scheme{get-datum/annotations} so that the textual port need not support
+\scheme{port-position} and need not report positions in characters
+if it does support \scheme{port-position}.
+(Positions are usually reported in bytes.)
+The bfp and efp positions recorded in the annotations returned by
+\scheme{get-datum/annotations} are correct only if the positions supplied
+to it are correct.
+
+Once read, an annotation can be passed to the expander, interpreter, or
+compiler.
+The procedures \scheme{eval}, \scheme{expand}, \scheme{interpret},
+and \scheme{compile} all accept annotated or unannotated input.
+
+Two additional procedures complete the set of annotation-related primitives:
+
+\schemedisplay
+(open-source-file \var{sfd}) ;-> #f or \var{port}
+(syntax->annotation \var{obj}) ;-> #f or \var{annotation}
+\endschemedisplay
+
+\index{\scheme{open-source-file}}\scheme{open-source-file} attempts to
+locate and open the source file identified by \var{sfd}.
+It returns a textual input port, positioned at the beginning of the file,
+if successful, and \scheme{#f} otherwise.
+
+\index{\scheme{syntax->annotation}}\scheme{syntax->annotation} accepts
+a syntax object.
+If the syntax object's expression is annotated, it returns the
+annotation; otherwise, it returns \scheme{#f}.
+It can be used by a macro to extract source information, when
+available, from an input form.
+
+The procedure \scheme{datum->syntax} accepts either an
+annotated or unannotated input datum.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-annotation}{\categoryprocedure}{(make-annotation \var{obj} \var{source-object} \var{stripped-obj})}
+\formdef{make-annotation}{\categoryprocedure}{(make-annotation \var{obj} \var{source-object} \var{stripped-obj} \var{options})}
+\returns an annotation
+\listlibraries
+\endentryheader
+
+The annotation is formed with \var{obj} as its expression component,
+\var{source-object} as its source-object component, and \var{stripped-obj}
+as its stripped component.
+\var{obj} should represent an expression, possibly with embedded
+annotations.
+\var{stripped-obj} should be a stripped version of \var{obj}, i.e.,
+equivalent to \var{obj} with each annotation replaced by its
+expression component.
+\var{options}, if present must be an enumeration set over
+the symbols \scheme{debug} and \scheme{profile}, and defaults to an
+enumeration set containing both \scheme{debug} and \scheme{profile}.
+Annotations marked \scheme{debug} are used for compile-time error
+reporting and run-time error reporting and inspection; annotations
+marked \scheme{profile} are used for profiling.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation?}{\categoryprocedure}{(annotation? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an annotation, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation-expression}{\categoryprocedure}{(annotation-expression \var{annotation})}
+\returns the expression component of \var{annotation}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation-source}{\categoryprocedure}{(annotation-source \var{annotation})}
+\returns the source-object component of \var{annotation}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation-stripped}{\categoryprocedure}{(annotation-stripped \var{annotation})}
+\returns the stripped component of \var{annotation}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation-options}{\categoryprocedure}{(annotation-options \var{annotation})}
+\returns the options enumeration set of \var{annotation}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-source-object}{\categoryprocedure}{(make-source-object \var{sfd} \var{bfp} \var{efp})}
+\returns a source-object
+\listlibraries
+\endentryheader
+
+\var{sfd} must be a source-file descriptor.
+\var{bfp} and \var{efp} must be exact nonnegative integers, and \var{bfp}
+should not be greater than \var{efp}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object?}{\categoryprocedure}{(source-object? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a source object, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object-bfp}{\categoryprocedure}{(source-object-bfp \var{source-object})}
+\returns the bfp component of \var{source-object}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object-efp}{\categoryprocedure}{(source-object-efp \var{source-object})}
+\returns the efp component of \var{source-object}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object-sfd}{\categoryprocedure}{(source-object-sfd \var{source-object})}
+\returns the sfd component of \var{source-object}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{string} \var{binary-input-port})}
+\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{string} \var{binary-input-port} \var{reset?})}
+\returns a source-file descriptor
+\listlibraries
+\endentryheader
+
+To compute the checksum encapsulated in the source-file descriptor,
+this procedure must read all of the data from
+\var{binary-input-port}.
+If \var{reset?} is present and \scheme{#t}, the port is reset to its
+original position, as if via \scheme{port-position}.
+Otherwise, it is left pointing at end-of-file.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-file-descriptor?}{\categoryprocedure}{(source-file-descriptor? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a source-file descriptor, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-file-descriptor-checksum}{\categoryprocedure}{(source-file-descriptor-checksum \var{sfd})}
+\returns the checksum component of \var{sfd}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-file-descriptor-path}{\categoryprocedure}{(source-file-descriptor-path \var{sfd})}
+\returns the path component of \var{sfd}
+\listlibraries
+\endentryheader
+
+\var{sfd} must be a source-file descriptor.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-file-descriptor}{\categoryprocedure}{(source-file-descriptor \var{path} \var{checksum})}
+\returns a new source-file-descriptor
+\listlibraries
+\endentryheader
+
+\var{path} must be a string, and \var{checksum} must be an exact nonnegative integer.
+This procedure can be used to construct custom source-file descriptors or to reconstitute
+source-file descriptors from the \var{path} and \var{checksum} components.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{annotation-option-set}{\categorysyntax}{(annotation-option-set \var{symbol} \dots)}
+\returns an annotation-options enumeration set
+\listlibraries
+\endentryheader
+
+\noindent
+Annotation-options enumeration sets may be passed to \scheme{make-annotation} to
+control whether the annotation is used for debugging, profiling, both, or neither.
+Accordingly, each \var{symbol} must be either \var{debug} or \scheme{profile}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{syntax->annotation}{\categoryprocedure}{(syntax->annotation \var{obj})}
+\returns an annotation or \scheme{#f}
+\listlibraries
+\endentryheader
+
+If \var{obj} is an annotation or syntax-object encapsulating an annotation,
+the annotation is returned.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-datum/annotations}{\categoryprocedure}{(get-datum/annotations \var{textual-input-port} \var{sfd} \var{bfp})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{sfd} must be a source-file descriptor.
+\var{bfd} must be an exact nonnegative integer and should be the
+character position of the next character to be read from
+\var{textual-input-port}.
+
+This procedure returns two values: an annotated object and an ending
+file position.
+In most cases, \var{bfp} should be 0 for the first call
+to \scheme{get-datum/annotation} at the start of a file,
+and it should be the second return value of the preceding
+call to \scheme{get-datum/annotation} for each subsequent
+call.
+This protocol is necessary to handle files containing multiple-byte
+characters, since file positions do not necessarily correspond
+to character positions.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-source-file}{\categoryprocedure}{(open-source-file \var{sfd})}
+\returns a port or \scheme{#f}
+\listlibraries
+\endentryheader
+
+\var{sfd} must be a source-file descriptor.
+This procedure attempts to locate and open the source file identified
+by \var{sfd}.
+It returns a textual input port, positioned at the beginning of the file,
+if successful, and \scheme{#f} otherwise.
+It can fail even if a file with the correct name exists in one of
+the source directories when the file's checksum does not match the
+checksum recorded in \var{sfd}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{locate-source}{\categoryprocedure}{(locate-source \var{sfd} \var{pos})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\var{sfd} must be a source-file descriptor, and \var{pos} must be an
+exact nonnegative integer.
+
+This procedure attempts to locate and open the source file identified
+by \var{sfd}.
+If successful, it returns three values: a string \var{path}, an exact
+nonnegative integer \var{line}, and an exact nonnegative integer \var{char}
+representing the absolute pathname, line, and character position within
+the line represented by the specified source-file descriptor and file
+position.
+If unsuccessful, it returns zero values.
+It can fail even if a file with the correct name exists in one of
+the source directories when the file's checksum does not match the
+checksum recorded in \var{sfd}.

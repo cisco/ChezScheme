@@ -1,0 +1,788 @@
+.ds s \fIChez Scheme\fP
+.ds p \fIPetite Chez Scheme\fP
+.if t .ds c caf\o'\'e'
+.if n .ds c cafe
+.ds ]W 
+.TH SCHEME 1 "April 2016 Cisco Systems, Inc."
+.SH NAME
+\fIChez Scheme\fP
+.br
+\fIPetite Chez Scheme\fP
+.SH SYNOPSIS
+\fB{InstallSchemeName}\fP [ \fIoptions\fP ] \fIfile\fP ...
+.br
+\fB{InstallPetiteName}\fP [ \fIoptions\fP ] \fIfile\fP ...
+.SH DESCRIPTION
+\*s is a high-performance implementation of R6RS Scheme with numerous 
+extensions.
+\*s compiles source expressions \fIincrementally\fP,
+providing the speed of compiled code in an interactive system.
+.LP
+\*p is an interpreted version of \*s that may be
+used as a run-time environment for \*s applications or as a
+stand-alone Scheme system.
+With the exception that the compiler is not present, \*p is 100%
+compatible with \*s.
+Interpreted code is fast in \*p, but generally not nearly as fast as
+compiled code.
+Debugging and profiling support is also limited for interpreted
+code.
+.LP
+Scheme is normally used interactively.  The system prompts
+the user with a right angle bracket (\*(lq>\*(rq) at the beginning of each
+input line.  Any Scheme expression may be entered.  The system evaluates
+the expression and prints the result.  After printing
+the result, the system prompts again for more input.
+The user can exit the system by typing 
+Control-D or by using the procedure \fIexit\fP.
+.SH COMMAND-LINE OPTIONS
+.LP
+\*s recognizes the following command line options:
+.TP 1i
+.B -q, --quiet
+Suppress greeting and prompts.
+.TP
+.B --script \fIfile\fP
+Run \fIfile\fP as a shell script.
+.TP
+.B --program \fIfile\fP
+Run rnrs program in \fIfile\fP as a shell script.
+.TP
+.B --libdirs \fIdir\fP:...
+Set library directories to \fIdir\fP:....
+.TP
+.B --libexts \fIext\fP:...
+Set library extensions to \fIext\fP:....
+.TP
+.B --compile-imported-libraries
+Compile libraries before loading them.
+.TP
+.B --import-notify
+Enable import search messages.
+.TP
+.B --optimize-level 0 | 1 | 2 | 3
+Set optimize level to 0, 1, 2, or 3.
+.TP
+.B --debug-on-exception
+On uncaught exception, call debug.
+.TP
+.B --eedisable
+Disables the expression editor.
+.TP
+.B --eehistory off | \fIfile\fP
+Set expression-editor history file or disable restore and save of history.
+.TP
+.B ---enable-object-counts
+Have collector maintain object counts.
+.TP
+.B -b \fIfile\fP, --boot \fIfile\fP
+Load boot code from \fIfile\fP.
+.TP
+.B --verbose
+Trace boot search process.
+.TP
+.B --version
+Print version and exit.
+.TP
+.B --help
+Print brief command-line help and exit.
+.TP
+.B --
+Pass all remaining command-line arguments through to Scheme.
+.LP
+The following options are recognized but cause the system to print an
+error message and exit because saved heaps are not presently supported.
+.TP 1in
+.B -h \fIfile\fP, --heap \fIfile\fP
+.TP
+.B -s[\fIlevel\fP] \fIfile\fP, --saveheap[\fIlevel\fP] \fIfile\fP
+.TP
+.B -c, --compact
+.SH WAITERS and CAFES
+.LP
+Interaction of the system with the user is performed
+by a Scheme program called a \fIwaiter\fP, running in a
+program state called a \fI\*c\fP.  The waiter
+merely prompts, reads, evaluates, prints and loops
+back for more.  It is possible to open up a chain of \*s
+\*cs by invoking the \fInew-cafe\fP procedure with no arguments.
+New-cafe is also one of the options when an interrupt
+occurs.  Each \*c has its own reset and exit procedures.
+Exiting from one \*c in the chain returns you to the next one
+back, and so on, until the entire chain closes and you leave the
+system altogether.  Sometimes it is useful to
+interrupt a long computation by typing the interrupt character,
+enter a new \*c to execute something (perhaps to check a status
+variable set by computation), and exit the \*c back to the old
+computation.
+.LP
+You can tell what level you are at by the number of angle brackets
+in the prompt, one for level one, two for level two, and so on.
+Three angle brackets in the prompt means you would have to exit from
+three \*cs to get out of \*s.  If you wish to abort
+from \*s and you are several \*cs deep, the procedure
+\fIabort\fP leaves the system directly.
+.LP
+You can exit the system by typing the end-of-file character
+(normally Control-D) or by using the procedure \fIexit\fP.
+Typing Control-D is equivalent to (exit), (exit (void)), or
+(exit 0), each of which is considered a \*(lqnormal exit\*(rq.
+.SH DEBUGGER
+Ordinarily, if an exception occurs during interactive use of the system,
+the default exception handler displays
+the condition with which the exception was raised, saves it for
+possibly later use by the debugger, and prints the message
+``type (debug) to enter the debugger.''
+Once in the debugger, the user has the option of inspecting the
+raise continuation, i.e., the stack frames of the pending calls.
+When an exception occurs in a script or top level program, or when the
+standard input and/or output ports are redirected, the default exception
+handler does not save the continuation of the exception and does not print
+the ``type (debug)'' message.
+.LP
+If the parameter debug-on-exception is set to #t, however, the default
+exception handler directly invokes debug, whether running interactively or
+not, and even when running a script or top-level program.
+The \*(lq--debug-on-exception\*(rq option may be used to set
+debug-on-exception to #t from the command line, which is particularly
+useful when debugging scripts or top-level programs run via the
+\*(lq--script\*(rq or \*(lq--program\*(rq  options.
+.LP
+None of this applies to exceptions raised with a non-serious (warning)
+condition, for which the default exception handler simply displays the
+condition and returns.
+.SH KEYBOARD INTERRUPTS
+Running programs may be interrupted by typing the interrupt
+character (normally Control-C).   In response, the
+system enters a break handler, which prompts for input with a
+\*(lqbreak>\*(rq prompt.
+Several commands may be issued to the break handler, including
+\*(lqe\*(rq to exit from the handler and continue,
+\*(lqr\*(rq to reset to the current \*c,
+\*(lqa\*(rq to abort \*s,
+\*(lqn\*(rq to enter a new \*c,
+\*(lqi\*(rq to inspect the current continuation, and
+\*(lqs\*(rq to display statistics about the interrupted program.
+While typing an expression to the waiter, the interrupt character
+simply resets to the current \*c.
+.SH EXPRESSION EDITOR
+.LP
+When \*s is used interactively in a 
+shell window, the waiter's \*(lqprompt and read\*(rq
+procedure employs an expression editor that permits entry and editing of
+single- and multiple-line expressions, automatically indents expressions
+as they are entered, and supports name-completion based on the identifiers
+defined in the interactive environment.
+The expression editor also maintains a history of expressions typed during
+and across sessions and supports tcsh(1)-like history movement and search
+commands.
+Other editing commands include simple cursor movement via
+arrow keys, deletion of characters via backspace and delete, and
+movement, deletion, and other commands using mostly
+emacs key bindings.
+.LP
+The expression editor does not run if the TERM environment variable is
+not set, if the standard input or output files have been redirected, or
+if the --eedisable command-line option has been used.
+The history is saved across sessions, by default, in the file
+\*(lq$HOME/.chezscheme_history\*(rq.
+The --eehistory command-line option
+can be used to specify a different
+location for the history file or to disable the saving and restoring of
+the history file.
+.LP
+Keys for nearly all printing characters (letters, digits, and special
+characters) are \*(lqself inserting\*(rq by default.
+The open parenthesis, close parenthesis, open bracket, and close bracket
+keys are self inserting as well, but also cause the editor to \*(lqflash\*(rq
+to the matching delimiter, if any.
+Furthermore, when a close parenthesis or close bracket is typed, it is
+automatically corrected to match the corresponding open delimiter, if any.
+.LP
+Key bindings for other keys and key sequences initially recognized by
+the expression editor are given below, organized into groups by function.
+Some keys or key sequences serve more than one purpose depending upon
+context.
+For example, tab is used both for identifier completion and for
+indentation.
+Such bindings are shown in each applicable functional group.
+.LP
+Multiple-key sequences are displayed with hyphens between the keys of
+the sequences, but these hyphens should not be entered.
+When two or more key sequences perform the same operation, the sequences
+are shown separated by commas.
+.LP
+Newlines, acceptance, exiting, and redisplay:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+enter, ^M	 accept balanced entry if used at end of entry;
+.br
+	 else add a newline before the cursor and indent
+.br
+^J	 accept entry unconditionally
+.br
+^O	 insert newline after the cursor and indent
+.br
+^D	 exit from the waiter if entry is empty;
+.br
+	 else delete character under cursor
+.br
+^Z	 suspend to shell if shell supports job control
+.br
+^L	 redisplay entry
+.br
+^L-^L	 clear screen and redisplay entry
+.br
+.LP
+Basic movement and deletion:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+left, ^B	 move cursor left
+.br
+right, ^F	 move cursor right
+.br
+up, ^P	 move cursor up; from top of unmodified entry,
+.br
+	 move to preceding history entry.
+.br
+down, ^N	 move cursor down; from bottom of unmodified entry,
+.br
+	 move to next history entry.
+.br
+^D	 delete character under cursor if entry not empty;
+.br
+	 else exit from the waiter.
+.br
+backspace, ^H	 delete character before cursor
+.br
+.br
+delete	 delete character under cursor
+.br
+.LP
+Line movement and deletion:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+home, ^A	 move cursor to beginning of line
+.br
+end, ^E	 move cursor to end of line
+.br
+^K, esc-k	 delete to end of line or, if cursor is at the end
+.br
+	 of a line, join with next line
+.br
+^U	 delete contents of current line
+.LP
+When used on the first line of a multiline entry of which only the first line
+is displayed, i.e., immediately after history movement, ^U deletes the
+contents of the entire entry, like ^G (described below).
+.br
+.LP
+Expression movement and deletion:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+esc-^F	 move cursor to next expression
+.br
+esc-^B	 move cursor to preceding expression
+.br
+esc-]	 move cursor to matching delimiter
+.br
+^]	 flash cursor to matching delimiter
+.br
+esc-^K, esc-delete	 delete next expression
+.br
+esc-backspace, esc-^H	 delete preceding expression
+.br
+.LP
+Entry movement and deletion:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+esc-<	 move cursor to beginning of entry
+.br
+esc->	 move cursor to end of entry
+.br
+^G	 delete current entry contents
+.br
+^C	 delete current entry contents; reset to end of history
+.br
+.LP
+Indentation:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+tab	 re-indent current line if identifier prefix not
+.br
+	 just entered; else insert identifier completion
+.br
+esc-tab	 re-indent current line unconditionally
+.br
+esc-q, esc-Q, esc-^Q	 re-indent each line of entry
+.br
+.LP
+Identifier completion:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+tab	 insert identifier completion if just entered
+.br
+	 identifier prefix; else re-indent current line
+.br
+tab-tab	 show possible identifier completions at end of
+.br
+	 identifier just typed, else re-indent
+.br
+^R	 insert next identifier completion
+.LP
+If at end of existing identifier, i.e., not one just typed, the first tab
+re-indents, the second tab inserts identifier completion, and the third
+shows possible completions.
+.br
+.LP
+History movement:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+up, ^P	 move to preceding entry if at top of unmodified
+.br
+	 entry; else move up within entry
+.br
+down, ^N	 move to next entry if at bottom of unmodified
+.br
+	 entry; else move down within entry
+.br
+esc-up, esc-^P	 move to preceding entry from unmodified entry
+.br
+esc-down, esc-^N	 move to next entry from unmodified entry
+.br
+esc-p	 search backward through history for given prefix
+.br
+esc-n	 search forward through history for given prefix
+.br
+esc-P	 search backward through history for given string
+.br
+esc-N	 search forward through history for given string
+.br
+.LP
+To search, enter a prefix or string followed by one of the search key
+sequences.
+Follow with additional search key sequences to search further backward or
+forward in the history.
+For example, enter \*(lq(define\*(rq followed by one or more esc-p key sequences
+to search backward for entries that are definitions, or \*(lq(define\*(rq
+followed by one or more esc-P key sequences for entries that contain
+definitions.
+.br
+.LP
+Word and page movement:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+esc-f, esc-F	 move cursor to end of next word
+.br
+esc-b, esc-B	 move cursor to start of preceding word
+.br
+^X-[	 move cursor up one screen page
+.br
+^X-]	 move cursor down one screen page
+.br
+.LP
+Inserting saved text:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+^Y	 insert most recently deleted text
+.br
+^V	 insert contents of window selection/paste buffer
+.br
+.LP
+Mark operations:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+^@, ^space, ^^	 set mark to current cursor position
+.br
+^X-^X	 move cursor to mark, leave mark at old cursor
+.br
+^W	 delete between current cursor position and mark
+.br
+.LP
+Command repetition:
+.LP
+.ta \w'{xxxxxxxxxxxxx}'u+.25i
+esc-^U	 repeat next command four times
+.br
+esc-^U-\fIn\fP	 repeat next command \fIn\fP times
+.br
+.SH TOP-LEVEL ENVIRONMENT SEMANTICS
+.LP
+Upon startup, the \*(lqinteraction environment\*(rq used to
+hold the top-level bindings for user-defined variables and other
+identifiers contains an initial set of bindings, some standard
+and some specific to \*s.
+Any initial identifier binding may be replaced by redefining
+the identifier with a normal top-level definition.
+For example, the initial binding for \fIcons\fP can be replaced
+with one that performs a ``reverse cons'' as follows.
+.br
+.sp
+(define cons (lambda (x y) (import scheme) (cons y x)))
+.br
+.sp
+Code entered into the REPL or loaded from a file prior to this
+point will still use the original binding for \fIcons\fP.
+If you want it to use the new binding, you must reenter or reload
+the code.
+Furthermore, the initial bindings for variables like \fIcons\fP are immutable,
+so you cannot assign one (e.g., via set! or trace) without first defining
+it.
+This allows the system to check to make sure it receives the expected
+two arguments at compile time and generate inline code to allocate
+the pair.
+This is not the case if \fIcons\fP is redefined, even if redefined to have
+the same value, since its value can be changed via set! at any time
+during a program run.
+.SH COMMAND-LINE FILE ARGUMENTS
+.LP
+In the normal mode of operation,
+the file names on the command line (except for the arguments
+to the various command-line options) are
+loaded before \*s begins interacting with the user.  Each of the
+expressions in the loaded files is executed just as if it were
+typed by the user in response to a prompt.  If you wish to load a
+set of definitions each time, consider setting up a shell script to
+load the file \*(lq.schemerc\*(rq from your home directory:
+.br
+.sp
+     {InstallSchemeName} ${HOME}/.schemerc $*
+.sp
+.br
+If you have a 
+substantial number of definitions to load each time, it might
+be worthwhile to compile the .schemerc file (that is, compile
+the definitions and name the resulting object file .schemerc).
+.LP
+Typically, a Scheme programmer creates a source file of
+definitions and other Scheme forms using an editor such as
+\fIvi\fP(1), \fIemacs\fP(1), or the SWL (Scheme Widget Library) user interface
+and loads the file into Scheme to test them.  The
+conventional filename extension for \*s source files
+is \fI.ss\fP.  Such a file may be loaded during a session by typing
+(load \*(lq\fIfilename\fP\*(rq), or by specifying the filename on
+the command line as mentioned above.  Any expression that may be
+typed interactively may be placed in a file to be loaded.
+.SH SCHEME SCRIPTS
+.LP
+When the \*(lq--script\*(rq option is used, the named file is
+treated as a Scheme shell script, and the script name and remaining
+command-line arguments are made available via the parameter
+\*(lqcommand-line\*(rq.
+To support executable shell scripts, the system ignores the first
+line of a loaded script if it begins with #! followed by
+a space or forward slash.
+For example, the following script prints its command-line arguments.
+.br
+.sp
+#! {InstallBin}/{InstallSchemeName} --script
+.br
+(for-each
+.br
+  (lambda (x) (display x) (newline))
+.br
+  (cdr (command-line)))
+.SH RNRS TOP-LEVEL PROGRAMS
+.LP
+The \*(lq--program\*(rq option is like the \*(lq--script\*(rq option
+except that the script file is treated as an RNRS top-level program.
+The following RNRS top-level program prints its command-line arguments, as
+with the script above.
+.br
+.sp
+#! {InstallBin}/{InstallSchemeName} --program
+.br
+(import (rnrs))
+.br
+(for-each
+.br
+  (lambda (x) (display x) (newline))
+.br
+  (cdr (command-line)))
+.LP
+\*(lqscheme-script\*(rq may be used in place of \*(lqscheme --program\*(rq,
+possibly prefixed by \*(lq/usr/bin/env\*(rq as suggested in the nonnormative
+R6RS appendix on running top-level programs as scripts, i.e., the first line
+of the top-level program may be replaced with the following.
+.br
+.sp
+#! /usr/bin/env {InstallScriptName}
+.br
+.LP
+If a top-level program depends on libraries other than those built into
+\*s, the \*(lq--libdirs\*(rq option can be used to specify
+which source and object directories to search.
+Similarly, if a library upon which a top-level program depends has an
+extension other than one of the standard extensions, the
+\*(lq--libexts\*(rq option can be used to specify additional extensions
+to search.
+.LP
+These options set the corresponding \*s parameters
+library-directories and library-extensions.
+The values of both parameters are lists of pairs of strings.
+The first string in each library-directories pair identifies a
+source-file root directory, and the second identifies the corresponding
+object-file root directory.
+Similarly, the first string in each library-extensions pair
+identifies a source-file extension, and the second identifies the
+corresponding object-file extension.
+The full path of a library source or object file consists of the source or
+object root followed by the components of the library name prefixed by
+slashes, with the library extension added on the end.
+For example, for root /usr/lib/scheme, library name
+(app lib1), and extension .sls, the full path is
+/usr/lib/scheme/app/lib1.sls.
+.LP
+The format of the arguments to \*(lq--libdirs\*(rq and
+\*(lq--libexts\*(rq is the same:
+a sequence of substrings separated by a single separator
+character.
+The separator character is a colon (:), except under Windows where it is a
+semi-colon (;).
+Between single separators, the source and object strings, if both are
+specified, are separated by two separator characters.
+If a single separator character appears at the end of the string,
+the specified pairs are added to the existing list; otherwise, the
+specified pairs replace the existing list.
+The parameters are set after all boot files have been loaded.
+.LP
+If multiple \*(lq--libdirs\*(rq options appear, all but the final
+one are ignored, and if 
+If multiple \*(lq--libexts\*(rq options appear, all but the final
+are ignored.
+If no \*(lq--libdirs\*(rq option appears and the CHEZSCHEMELIBDIRS
+environment variable is set, the string value of CHEZSCHEMELIBDIRS is
+treated as if it were specified by a \*(lq--libdirs\*(rq option.
+Similarly, if no \*(lq--libexts\*(rq option appears and the CHEZSCHEMELIBEXTS
+environment variable is set, the string value of CHEZSCHEMELIBEXTS is
+treated as if it were specified by a \*(lq--libexts\*(rq option.
+.LP
+The library-directories and library-extensions
+parameters set by these options are consulted by the expander when it
+encounters an import for a library that has not previously been defined or
+loaded.
+The expander first constructs a partial name from the list of components in the
+library name, e.g., \*(lqa/b\*(rq for library (a b).
+It then searches for the partial name in each pair
+of root directories, in order, trying each of the source extensions then
+each of the object extensions in turn before moving onto the next pair of
+root directories.
+If the partial name is an absolute pathname, e.g., \*(lq~/.myappinit\*(rq
+for a library named (~/.myappinit), only the specified absolute
+path is searched, first with each source extension, then with each object
+extension.
+If the expander finds both a source file and its corresponding object
+file, and the object file is not older than the source file, the
+expander loads the object file.
+If the object file does not exist, if the object file is older, or
+if after loading the object file, the expander determines it was
+built using a library or include file that has changed, the source
+file is loaded or compiled, depending on the value of the parameter
+compile-imported-libraries.
+If compile-imported-libraries
+is set to #t, the expander
+compiles the library via compile-library (which is described below).
+Otherwise, the expander loads the source file.
+(Loading the source file actually causes the code to be compiled,
+assuming the default value of current-eval, but the compiled
+code is not saved to an object file.)
+An exception is raised during this process if a
+source or object file exists but is not readable or if an object
+file cannot be created.
+.LP
+The search process used by the expander when processing an import
+for a library that has not yet been loaded can be monitored by
+setting the parameter import-notify to #t.
+This parameter can be set from the command line via the
+\*(lq--import-notify\*(rq command-line option.
+.SH OPTIMIZE LEVELS
+The \*(lq--optimize-level\*(rq option sets the initial value of the
+\*s optimize-level parameter to 0, 1, 2, or 3.
+The value is 0 by default.
+.LP
+At optimize-levels 0, 1, and 2, code generated by the compiler is
+\fIsafe\fP, i.e., generates full type and bounds checks.
+At optimize-level 3, code generated by the compiler is \fIunsafe\fP,
+i.e., may omit these checks.
+Unsafe code is usually faster, but optimize-level 3 should be used only
+for well-tested code since the absense of type and bounds checks may
+result in invalid memory references, corruption of the Scheme heap (which
+may cause seemingly unrelated problems later), system crashes, or other
+undesirable behaviors.
+.LP
+At present, there is no direct difference other than safety among
+optimize levels.
+.SH COMPILING FILES
+.LP
+\*s compiles source expressions as it sees them.  In
+order to speed loading of a large file, the file may be compiled
+with the output placed in an object file.
+(compile-file \*(lqfoo\*(rq) compiles the expressions in the file
+\*(lqfoo.ss\*(rq and places the resulting object code on the file
+\*(lqfoo.so\*(rq.  Loading a pre-compiled file is no different from
+loading the source file, except that loading is faster since
+compilation is already done.  
+.LP
+To compile a program to be run with --program, use
+compile-program instead of compile-file.
+compile-program preserves the first line unchanged, if it begins
+with #! followed by a forward slash or space.
+Also, while compile-file compresses the resulting object file,
+compile-program does not do so if the #! line is present, so
+it can be recognized by the shell's script executor.
+Any libraries upon which the top-level program depends, other than
+built-in libraries, must be compiled first via compile-file
+or compile-library.
+This can be done manually or by setting the parameter
+compile-imported-libraries to #t before compiling the program.
+.LP
+To compile a script to be run with --script, use
+compile-script instead of compile-file.
+compile-script is like compile-program, but, like compile-file, implements
+the interactive top-level semantics rather than the RNRS top-level
+program semantics.
+.SH BOOT and HEAP FILES
+.LP
+When \*s is run, it looks for one or more boot files to load.
+Boot files contain the compiled Scheme code that implements most of
+the Scheme system, including the interpreter, compiler, and most
+libraries.
+Boot files may be specified explicitly on the command
+line via \*(lq-b\*(rq options or implicitly.
+In the simplest case, no \*(lq-b\*(rq options
+are given and the necessary boot files are loaded
+automatically based on the name of the executable.
+For example, if the executable name is \*(lqmyapp\*(rq, the
+system looks for \*(lqmyapp.boot\*(rq in a set of standard
+directories.
+It also looks for and loads any subordinate boot files required
+by \*(lqmyapp.boot\*(rq.
+Subordinate boot files are also loaded automatically for the
+first boot file explicitly specified via the command line.
+When multiple boot files are specified via the command line and boot each
+file must be listed before those that depend upon it.
+.LP
+The \*(lq--verbose\*(rq option may be used to trace the boot file
+searching process and must appear before any boot arguments
+for which search tracing is desired.
+.LP
+Ordinarily, the search for boot files is limited to a set of
+default installation directories, but this may be overridden by setting
+the environment variable SCHEMEHEAPDIRS.
+SCHEMEHEAPDIRS should be a colon-separated list of directories, listed in
+the order in which they should be searched.
+Within each directory, the two-character escape sequence \*(lq%v\*(rq
+is replaced by the current version, and the two-character escape sequence
+\*(lq%m\*(rq is replaced by the machine type.
+A percent followed by any other character is replaced by the second
+character; in particular, \*(lq%%\*(rq is replaced by \*(lq%\*(rq, and
+\*(lq%:\*(rq is replaced by \*(lq:\*(rq.
+If SCHEMEHEAPDIRS ends in a non-escaped colon, the default directories are
+searched after those in SCHEMEHEAPDIRS; otherwise, only those listed in
+SCHEMEHEAPDIRS are searched.
+Under Windows, semi-colons are used in place of colons.
+.LP
+Boot files consist of a header followed by ordinary compiled code and
+may be created with make-boot-file.
+For example,
+.br
+.sp
+  (make-boot-file "myapp.boot" '("petite")
+    "myapp1.so" "myapp2.so")
+.sp
+.br
+creates a boot file containing the code from myapp1.so and myapp2.so
+with a header identifying petite.boot as a boot file upon which the new
+boot file depends.
+Source files can be provided as well and are compiled on-the-fly
+by make-boot-header.
+.LP
+Multiple alternatives for the boot file upon which the new boot
+file depends can be listed, e.g.:
+.br
+.sp
+  (make-boot-file "myapp.boot" '("petite" "scheme")
+    "myapp1.so" "myapp2.so")
+.sp
+.br
+When possible, both \*(lqscheme\*(lq and \*(lqpetite\*(lq should be
+specified when creating a boot file for an application, as shown above, so
+that the application can run in either \*p or \*s.
+If the application requires the use of the compiler, just
+\*(lqscheme\*(lq should be specified.
+.LP
+If the new boot file is to be a base boot file, i.e., one that does not
+depend on another boot file, petite.boot (or some other boot file created
+from petite.boot) should be listed first among the input files.
+.br
+.sp
+  (make-boot-file "myapp.boot" '() "petite.boot"
+    "myapp1.so" "myapp2.so")
+.sp
+.br
+.SH DOCUMENTATION
+.LP
+Complete documentation for \*s is available in two parts:
+\fIThe Scheme Programming Language, 4th Edition\fP, and
+\fIThe Chez Scheme Version 8 User's Guide\fP.
+Both documents are available electronically at
+\fIwww.scheme.com\fP as well as in printed form.
+.LP
+Several example Scheme programs, ranging from a simple factorial procedure
+to a somewhat complex unification algorithm, are in the examples directory
+(see FILES below).  Looking at and trying out example programs is a good way
+to start learning Scheme.
+.SH ENVIRONMENT
+.LP
+The environment variable
+.B SCHEMEHEAPDIRS \fR
+(see above) may be set
+to a colon-separated (semi-colon under Windows) list of directories
+in which to search for boot files.
+.SH FILES
+.if 0 COMMENT: put the longest path from below in the tab computation:
+.ta \w'{InstallLibBin}'u+.25i
+{InstallBin}/{InstallSchemeName}	executable file
+.br
+{InstallBin}/{InstallPetiteName}	executable file
+.br
+{InstallBin}/{InstallScriptName}	executable file
+.br
+{InstallLibLib}	example program library
+.br
+{InstallLibBin}	boot and include files
+.sp
+.br
+.SH SEE ALSO
+.in +5
+.br
+.ti -5
+R. Kent Dybvig,
+\fIThe Scheme Programming Language, 4th Edition\fP,
+MIT Press (2009), http://www.scheme.com/tspl4/.
+.br
+.ti -5
+\fIChez Scheme Version 9 User's Guide\fP,
+Cisco Systems, Inc.
+.br
+.ti -5
+Michael Sperber, R. Kent Dybvig, Matthew Flatt, and Anton van Straaten, eds.,
+.if t \*(lqRevised\u6\d Report on the Algorithmic Language Scheme,\*(rq
+.if n \*(lqRevised^6 Report on the Algorithmic Language Scheme,\*(rq
+(2007), http://www.r6rs.org/.
+.br
+.ti -5
+Daniel P. Friedman and Matthias Felleisen,
+\fIThe Little Schemer\fP, fourth edition,
+MIT Press (1996).
+.br
+.ti -5
+Harold Abelson and Gerald J. Sussman with Julie Sussman,
+\fIStructure and Interpretation  of Computer Programs,
+Second Edition\fP,
+MIT press (1996).
+.in -5
+.SH AUTHOR
+Copyright 2016 Cisco Systems, Inc.  
+Licensed under the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0)

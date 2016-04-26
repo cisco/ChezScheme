@@ -1,0 +1,138 @@
+# Makefile.a6nt
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+m = a6nt
+
+# following have to use \ for directory separator
+SchemeInclude = ..\boot\$m
+ZlibInclude = ..\zlib
+KernelDll = ..\bin\$m\csv94.dll
+KernelLib = ..\bin\$m\csv94.lib
+MTKernelLib = ..\boot\$m\csv94mt.lib
+MDKernelLib = ..\boot\$m\csv94md.lib
+KernelExp = ..\bin\$m\csv94.exp
+Exec = ..\bin\$m\scheme.exe
+MTMain = ..\boot\$m\mainmt.obj
+MDMain = ..\boot\$m\mainmd.obj
+ResFile = ..\boot\$m\scheme.res
+
+# We use MD so that we can link with and load DLLs built against msvcrxxx.dll
+CFLAGS=/nologo /Ox /W3 /I$(SchemeInclude) /I$(ZlibInclude) /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+MDCFLAGS=$(CFLAGS) /MD
+MTCFLAGS=$(CFLAGS) /MT
+DLLLDFLAGS=/machine:X64 /release /nologo
+# stack limit is 1MB by default.  this is not enough for one of the mats in foreign.ms, which
+# builds up nested C & Scheme stack frames.  2MB seems to be enough, but we set to 16MB.
+EXELDFLAGS=/machine:X64 /incremental:no /release /nologo /STACK:0x1000000
+
+# use following flags for debugging
+# CFLAGS=/nologo /Od /W3 /I$(SchemeInclude) /I$(ZlibInclude) /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# MDCFLAGS=$(CFLAGS) /Zi /MDd
+# MTCFLAGS=$(CFLAGS) /Zi /MTd
+# DLLLDFLAGS=/machine:X64 /debug /nologo /nodefaultlib:msvcrt
+# EXELDFLAGS=/machine:X64 /incremental:no /debug /nologo /STACK:0x1000000
+
+SystemLib=rpcrt4.lib ole32.lib advapi32.lib User32.lib
+MDZlibLib=..\zlib\zlib.lib
+MTZlibLib=..\zlib\zlibmt.lib
+
+csrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-oce.c gc-ocd.c\
+ number.c schsig.c io.c new-io.c print.c fasl.c stats.c\
+ foreign.c prim.c prim5.c flushcache.c\
+ windows.c\
+ schlib.c thread.c expeditor.c scheme.c
+
+cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-oce.obj gc-ocd.obj\
+ number.obj schsig.obj io.obj new-io.obj print.obj fasl.obj stats.obj\
+ foreign.obj prim.obj prim5.obj flushcache.obj\
+ windows.obj\
+ schlib.obj thread.obj expeditor.obj scheme.obj
+
+hsrc=system.h types.h version.h globals.h externs.h segment.h gc.c thread.h sort.h itest.c
+
+.SUFFIXES:
+
+all: $(Exec) $(MTKernelLib) $(MDKernelLib) $(MTMain)
+
+$(KernelLib) $(MTKernelLib) $(MDKernelLib): $(hsrc)
+$(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeInclude)/scheme.h
+$(KernelLib) $(MTKernelLib) $(MDKernelLib): $(ZlibInclude)/zconf.h $(ZlibInclude)/zlib.h
+
+$(MTKernelLib): $(csrc) $(MTZlibLib)
+	-del /f $(MTKernelLib)
+	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib)
+
+$(MDKernelLib): $(csrc) $(MDZlibLib)
+	-del /f $(MDKernelLib)
+	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib)
+
+# nmake builds Dll twice if we list it with $(KernelLib) below
+$(KernelDll): $(KernelLib)
+
+# base chosen to be consistent with "microsoft conventions"
+#   http://www.windevnet.com/documents/s=7482/win1078945937961/
+# but set at a basically odd address to reduce likelihood of
+# conflicts with other dlls.  use 'depends <exefile>' to check.
+# we no longer attempt to rebase other the CRT dll since it
+# has already been signed.
+$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib)
+	-del /f $(KernelLib)
+	-del /f $(KernelDll)
+	cl /c $(MDCFLAGS) $(csrc)
+	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(SystemLib)
+	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
+
+$(MTMain): main.c
+	-del /f $(MTMain)
+	cl /DSCHEME_STATIC /c $(MTCFLAGS) main.c
+	copy main.obj $(MTMain)
+
+$(MDMain): main.c
+	-del /f $(MDMain)
+	cl /c $(MDCFLAGS) main.c
+	copy main.obj $(MDMain)
+
+$(Exec): $(ResFile) $(MDMain) $(KernelLib)
+	-del /f $(Exec)
+	link /out:$(Exec) $(EXELDFLAGS) $(ResFile) $(MDMain) $(KernelLib)
+
+$(ResFile): scheme.rc
+	-del /f $(ResFile)
+	rc -r /fo $(ResFile) -DWIN32 scheme.rc
+
+# for testing mt kernel and mainmt.obj:
+mtscheme.exe: $(ResFile) $(MTMain) $(MTKernelLib)
+	-del /f mtscheme.exe
+	link /out:mtscheme.exe $(EXELDFLAGS) $(ResFile) $(MTMain) $(MTKernelLib) $(SystemLib)
+
+# for testing md kernel and mainmd.obj:
+mdscheme.exe: $(ResFile) $(MDMain) $(MDKernelLib)
+	-del /f mdscheme.exe
+	link /out:mdscheme.exe $(EXELDFLAGS) $(ResFile) $(MDMain) $(MDKernelLib) $(SystemLib)
+
+$(ZlibInclude)\zlib.h $(ZlibInclude)\zconf.h $(MDZlibLib) $(MTZlibLib):
+	cd ../zlib
+	nmake /nologo -f win32/Makefile.msc AR="link /lib" CFLAGS="-nologo -MT -O2 $(LOC)"
+	rename zlib.lib zlibmt.lib
+	nmake /nologo -f win32/Makefile.msc clean
+	nmake /nologo -f win32/Makefile.msc AR="link /lib"
+	cd ../c
+
+clean:
+	-del /f $(cobj) main.obj $(KernelExp)
+	-del /f mtscheme.exe
+	-del /f mdscheme.exe

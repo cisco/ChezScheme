@@ -1,0 +1,348 @@
+#! /bin/csh -f
+
+# checkin
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if ($#argv != 1) then
+    echo "Usage: checkin <workarea name>"
+    exit 1
+endif
+
+# set M to machine type and W to workarea name
+set W = $1
+if (!(-d $W)) then
+    echo "Workarea ./$W not found."
+    exit 1
+endif
+
+set M = $W/boot/*/.
+if ($status || $#M != 1) then
+    echo "Cannot determine machine type."
+    exit 1
+endif
+
+set M = $M:h
+set M = $M:t
+
+onintr error
+
+# This shell script checks sources and binaries in from a workarea to
+# the release directory.  Invoke with the name of a machine type and
+# an optional workarea name.  The workarea name defaults to the machine
+# type.
+
+set BACKUPDIR = $cwd:h/backup
+if (!(-d $BACKUPDIR)) then
+    echo "creating backup directory $BACKUPDIR"
+    mkdir $BACKUPDIR || goto error
+endif
+
+echo -n "have you updated $W/LOG? [y]: "
+set RESPONSE = $<
+if ("$RESPONSE" != "y" && "$RESPONSE" != "") goto error
+
+if (-e $W/scheme.1.in) then
+  cmp scheme.1.in $W/scheme.1.in >& /dev/null
+  if ($status != 0) then
+    echo -n "Did you update the date in $W/scheme.1.in? [y]: "
+    set RESPONSE = $<
+    if ("$RESPONSE" != "y" && "$RESPONSE" != "") goto error
+  endif
+endif
+
+set tmpsdirs = (. c mats s examples unicode makefiles csug release_notes)
+set sdirs = ()
+foreach x ($tmpsdirs)
+    if (!(-e $x)) then
+        echo "ERROR: ./$x does not exist"
+        goto error
+    endif
+    if (!(-d $x)) then
+        echo "ERROR: ./$x is not a directory"
+        goto error
+    endif
+    test -d $W/$x && set sdirs = ($sdirs $x)
+end
+
+set tmpbdirs = (bin/$M boot/$M)
+set bdirs = ()
+foreach x ($tmpbdirs)
+    if ((-e $x) && !(-d $x)) then
+        echo "ERROR: ./$x is not a directory"
+        goto error
+    endif
+    test -d $W/$x && set bdirs = ($bdirs $x)
+end
+
+echo '*** running "make clean" in source directories ***'
+foreach x ($sdirs)
+    switch ($x)
+        case .:
+            (cd $W; /bin/rm -f Make.out)
+        case unicode:
+        case unicode/UNIDATA:
+        case makefiles:
+        case csug:
+        case release_notes:
+            breaksw
+        case c:
+        case s:
+        case mats:
+        case benchmarks:
+        case examples:
+            (cd $W/$x; make clean > /dev/null)
+            breaksw
+        default:
+            echo "checkin error: unexpected sdir $x"
+            goto error
+     endsw
+end
+(cd $W/zlib; make distclean > & /dev/null; rm -f zconf.h rm -f Makefile > /dev/null)
+
+set ignorefiles = ()
+
+set tmpsfiles = ()
+foreach x ($sdirs)
+    set y = `(cd $W; find $x/* -type f -print -o -type d -prune)`
+    set tmpsfiles = ($tmpsfiles $y)
+end
+
+set sfiles = ()
+foreach x ($tmpsfiles)
+    if ("$x" == "./Makefile" || "$x" == "./Mf-install" || "$x" == "./Mf-boot") then
+        set ignorefiles = ($ignorefiles $x)
+    else
+        cmp $W/$x $x >& /dev/null
+        if ($status == 0) then
+            set ignorefiles = ($ignorefiles $x)
+        else
+            set sfiles = ($sfiles $x)
+        endif
+    endif
+end
+
+if ($#sfiles == 0) echo "*** no source files found in ./$W ***"
+
+set tmpbfiles = ()
+foreach x ($bdirs)
+    set y = `(cd $W; find $x/* -type f -print -o -type d -prune)`
+    set tmpbfiles = ($tmpbfiles $y)
+end
+
+set bfiles = ()
+foreach x ($tmpbfiles)
+    cmp $W/$x $x >& /dev/null
+    if ($status == 0) then
+        set ignorefiles = ($ignorefiles $x)
+    else
+        set bfiles = ($bfiles $x)
+    endif
+end
+
+if ($#bfiles == 0) echo "*** no binary files found in ./$W ***"
+
+if ($#sfiles == 0 && $#bfiles == 0) goto delete
+
+set tmpsfiles = ($sfiles)
+set sfiles = ()
+foreach x ($tmpsfiles)
+    if ($x:h == ".") then
+        set xpretty = $x:t
+    else
+        set xpretty = $x
+    endif
+    if (-e $x) then
+        set comment = ""
+    else
+        set comment = " new"
+    endif
+    echo -n "check in$comment source file $W/$xpretty? [y]: "
+    set RESPONSE = $<
+    if ("$RESPONSE" == "" || "$RESPONSE" == "y") set sfiles = ($sfiles $x)
+end
+
+set tmpbfiles = ($bfiles)
+set bfiles = ()
+foreach x ($tmpbfiles)
+    if (-e $x) then
+        set comment = ""
+    else
+        set comment = " new"
+    endif
+    echo -n "check in$comment binary file $W/$x? [y]: "
+    set RESPONSE = $<
+    if ("$RESPONSE" == "" || "$RESPONSE" == "y") set bfiles = ($bfiles $x)
+end
+
+set RESPONSE = ""
+while ("$RESPONSE" != "y")
+    echo -n "proceed with check in? (y/n): "
+    set RESPONSE = $<
+    if ("$RESPONSE" == "n") goto error
+end
+
+set oldsfiles = ()
+foreach x ($sfiles)
+    if (-e $x) set oldsfiles = ($oldsfiles $x)
+end
+if ($#oldsfiles != 0) then
+    echo "backing up old versions of source files"
+    if (!(-f $BACKUPDIR/seqno)) then
+        set seqno = 0
+    else
+        set seqno = `cat $BACKUPDIR/seqno`
+    endif
+    set backuproot = $BACKUPDIR/$seqno
+    @ seqno = $seqno + 1
+    echo $seqno > $BACKUPDIR/seqno
+    echo "backup directory is $backuproot"
+    mkdir $backuproot || goto error
+    set n = 4
+    echo -n "    "
+    foreach x ($oldsfiles)
+        set i = `echo "$x" | wc -c`
+        @ n = $n + $i + 1
+        if ($n > 78) then
+            echo ""
+            echo -n "    "
+            @ n = $i + 4
+        endif
+        echo -n "$x "
+        set y = $backuproot/$x:h
+        if (!(-d $y)) then
+            mkdir -p $y || goto error
+        endif
+        rm -f $y/$x:t || goto error
+        mv $x $y || goto error
+        gzip $y/$x:t || goto error
+    end
+    echo ""
+endif
+
+foreach x ($bdirs)
+    set x = ./$x
+    if (!(-d $x)) then
+        mkdir -p $x || goto error
+    endif
+end
+
+set oldbfiles = ()
+foreach x ($bfiles)
+    if (-e $x) set oldbfiles = ($oldbfiles $x)
+end
+if ($#oldbfiles != 0) then
+    echo "deleting old versions of binary files"
+    set n = 4
+    echo -n "    "
+    foreach x ($oldbfiles)
+        set i = `echo "$x" | wc -c`
+        @ n = $n + $i + 1
+        if ($n > 78) then
+            echo ""
+            echo -n "    "
+            @ n = $i + 4
+        endif
+        echo -n "$x "
+        rm -f $x || goto error
+    end
+    echo ""
+endif
+
+if ($#sfiles != 0) then
+    echo "moving new source files to release directory"
+    set n = 4
+    echo -n "    "
+    foreach x ($sfiles)
+        set i = `echo "$x" | wc -c`
+        @ n = $n + $i + 1
+        if ($n > 78) then
+            echo ""
+            echo -n "    "
+            @ n = $i + 4
+        endif
+        echo -n "$x "
+        mv $W/$x $x || goto error
+    end
+    echo ""
+endif
+
+if ($#bfiles != 0) then
+    echo "moving new binary files to release directory"
+    set n = 4
+    echo -n "    "
+    foreach x ($bfiles)
+        set i = `echo "$x" | wc -c`
+        @ n = $n + $i + 1
+        if ($n > 78) then
+            echo ""
+            echo -n "    "
+            @ n = $i + 4
+        endif
+        echo -n "$x "
+        mv $W/$x $x || goto error
+    end
+    echo ""
+endif
+
+delete:
+
+set tmpfiles = `(cd $W; find . -type f -print)`
+set files = ()
+foreach x ($tmpfiles)
+    set files = ($x $files)
+    set tmpignorefiles = ($ignorefiles)
+    while ($#tmpignorefiles)
+        if ($x == ./$tmpignorefiles[1] || $x == $tmpignorefiles[1]) then
+            shift files
+            break
+        endif
+        shift tmpignorefiles
+    end
+end
+
+if ($#files == 0) then
+    set delete = "y"
+else
+    set delete = "n"
+    echo "*** new or modified files remain in ./$W"
+    set n = 4
+    echo -n "    "
+    foreach x ($files)
+        set i = `echo "$x" | wc -c`
+        @ n = $n + $i + 1
+        if ($n > 78) then
+            echo ""
+            echo -n "    "
+            @ n = $i + 4
+        endif
+        echo -n "$x "
+    end
+    echo ""
+endif
+
+echo -n "delete ./$W? [$delete]: "
+set RESPONSE = $<
+if ("$RESPONSE" == "") set RESPONSE = $delete
+if ("$RESPONSE" == "y") then
+    rm -rf $W || goto error
+endif
+
+exit 0
+
+error:
+
+echo ""
+echo "quitting (error occurred)."
+exit 1

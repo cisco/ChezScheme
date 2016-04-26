@@ -1,0 +1,148 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\documentclass{csug8}
+\chapterpicturesfalse
+
+% \let\cleardoublepage=\relax\includeonly{threads}
+
+\usepackage{scheme}
+
+\schemeinit
+(case-sensitive #t)
+\endschemeinit
+
+\iflatex
+\usepackage{graphicx}
+\usepackage{color}
+\definecolor{formdefcolor}{gray}{.8}
+\fi
+
+\iflatex
+\usepackage{makeidx}
+% \ifdraft \usepackage{showidx} \fi
+\ifdraft\setlength\overfullrule{5pt}\else\setlength\overfullrule{0pt}\fi
+\tolerance=1000
+\makeindex
+\fi
+
+% also fix Revised date and version in copyright.stex
+\ifhtml
+\def\copyrightnotice{\raw{<hr class=copyright align=left>
+<p>
+<a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
+Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
+(<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
+Revised \INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version 9.4<br>
+<a class=plain href="canned/about.html">about this book</a>
+</tr></table>
+}}
+\documenttitle[csug.css]{Chez Scheme Version 9 User's Guide}
+\fi
+
+
+\newcommand{\ChezScheme}{\textsl{Chez~Scheme}}
+\newcommand{\PetiteChezScheme}{\textsl{Petite~Chez~Scheme}}
+\newcommand{\TSPLFOUR}{\emph{The Scheme Programming Language, 4th Edition}}
+\iflatex
+\newcommand{\dash}{\raise.5ex\hbox to 1em{\leaders\hrule\hfil}}
+\fi
+\ifhtml
+\newcommand{\dash}{---}
+\fi
+
+\iflatex
+\font\titlefont=cmbxsl10 at 18pt
+\font\subtitlefont=cmbxsl10 at 15pt
+\fi
+
+% \iflatex
+% \setlength{\pdfpagewidth}{6in}
+% \setlength{\pdfpageheight}{9in}
+% \fi
+
+
+\begin{document}
+
+\iflatex
+\parskip=4pt
+\parindent=0pt
+\fi
+
+\frontmatter
+
+\ifhtml
+\raw{\raw{<table><tr>
+<td><img src="canned/cisco-logo.png"><br></td>
+<td style="padding-left: 2em"><span class=title>Chez Scheme Version 9<br>User's Guide</span></td>
+</tr></table>}}
+\fi
+
+\include{title}
+\include{copyright}
+\include{contents}
+\include{preface}
+%
+\mainmatter
+\include{intro}
+\include{use}
+\include{debug}
+\include{foreign}
+\include{binding}
+\include{control}
+\include{objects}
+\include{numeric}
+\include{io}
+\include{libraries}
+\include{syntax}
+\include{system}
+\include{smgmt}
+\include{expeditor}
+\include{threads}
+\include{compat}
+%
+\backmatter
+\include{bibliography}
+\include{summary}
+%
+\def\indexintrotext{%
+This index is a unified index for this book and
+\index{The Scheme Programming Language, 4th Edition@\emph{The Scheme Programming Language, 4th Edition}}\emph{The
+Scheme Programming Language, 4th Edition} (TSPL4).
+Page numbers prefixed by ``t'' refer the latter document.
+Italicized page numbers refer to the primary description of a syntactic
+form or procedure.}
+%
+\ifhtml
+\chapter{Index}
+
+{\indexintrotext}
+
+All page numbers appearing here refer to the printed version of these
+books and also serve as hypertext links to the corresponding locations
+in the electronic versions of these books.
+
+\makeindex
+\else
+\begingroup\tolerance=2000
+\printindex
+\endgroup
+\fi
+%
+\ifhtml
+\end{contents}
+\copyrightnotice
+\fi
+
+\end{document}

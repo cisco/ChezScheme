@@ -1,0 +1,147 @@
+#! /bin/csh -f
+
+# newrelease
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if ($#argv != 2 && $#argv != 3) then
+    echo "Usage: newrelease <release-number> <machine type> [<workarea name>]"
+    exit 1
+endif
+
+# set R to release number
+set R = $1
+
+if ({(echo -n "$1" | grep '^[0-9]\.[0-9]$' >& /dev/null)}) then
+  # set MR to major release number
+  set MR = $R:r
+
+  # set mR to minor release number
+  set mR = $R:e
+
+  # set bR to build number
+  set bR = 0
+
+  # set ZR to release number w/o "."
+  set ZR = $MR$mR
+else if ({(echo -n "$1" | grep '^[0-9]\.[0-9]\.[0-9]$' >& /dev/null)}) then
+  # set MR to major release number
+  set tmp = $R:r
+  set MR = $tmp:r
+
+  # set mR to minor release number
+  set mR = $tmp:e
+
+  # set bR to build number
+  set bR = $R:e
+
+  # set ZR to release number w/o "."
+  set ZR = $MR$mR$bR
+else
+  echo "invalid release number $R"
+  exit 1
+endif
+
+# set M to machine type and W to workarea name
+set M =  $2
+if ("$3" == "") then
+    set W = $M
+else
+    set W = $3
+endif
+
+# clear running list of updated files
+set updatedfiles = ()
+
+workarea $M $W
+if ($status != 0) exit 1
+
+cd $W
+
+/bin/rm -f bintar
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$ZR/g" \
+    -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" \
+    ../bintar > bintar
+set updatedfiles = ($updatedfiles bintar)
+
+/bin/rm -f BUILDING
+sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
+    -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
+    ../BUILDING > BUILDING
+set updatedfiles = ($updatedfiles BUILDING)
+
+/bin/rm -f NOTICE
+sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
+    -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
+    ../NOTICE > NOTICE
+set updatedfiles = ($updatedfiles NOTICE)
+
+mkdir makefiles
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
+set updatedfiles = ($updatedfiles makefiles/Mf-install.in)
+
+/bin/rm scheme.1.in
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../scheme.1.in > scheme.1.in
+set updatedfiles = ($updatedfiles scheme.1.in)
+
+/bin/rm -f c/Makefile.{,t}{i3,a6}nt
+sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.i3nt > c/Makefile.i3nt
+sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.ti3nt > c/Makefile.ti3nt
+sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.a6nt > c/Makefile.a6nt
+sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.ta6nt > c/Makefile.ta6nt
+set updatedfiles = ($updatedfiles c/Makefile.{,t}{i3,a6}nt)
+
+/bin/rm -f mats/bldnt.bat
+sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../mats/bldnt.bat > mats/bldnt.bat
+set updatedfiles = ($updatedfiles mats/bldnt.bat)
+
+sed -e "s/csv[0-9][.0-9][0-9]\?/csv$ZR/g" ../workarea > workarea
+chmod +x workarea
+set updatedfiles = ($updatedfiles workarea)
+
+set RCVERSION = "$MR,$mR,$bR,0"
+sed -e "s/FILEVERSION .*/FILEVERSION $RCVERSION/"\
+    -e "s/PRODUCTVERSION .*/PRODUCTVERSION $RCVERSION/"\
+    -e 's/"FileDescription", .*/"FileDescription", "Chez Scheme Version '$R'"/'\
+    -e 's/"FileVersion", .*/"FileVersion", "'$R'"/'\
+    -e 's/"ProductVersion", .*/"ProductVersion", "'$R'"/'\
+    -e "s/Copyright 1984-..../Copyright 1984-`date +%Y`/g" ../c/scheme.rc > c/scheme.rc
+set updatedfiles = ($updatedfiles c/scheme.rc)
+
+/bin/rm -f s/7.ss
+sed -e "s/nCopyright 1984-..../nCopyright 1984-`date +%Y`/g" ../s/7.ss > s/7.ss
+set updatedfiles = ($updatedfiles s/7.ss)
+
+/bin/rm -f s/cmacros.ss
+set VNUM = `printf "%04x%02x%02x" $MR $mR $bR`
+sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" ../s/cmacros.ss > s/cmacros.ss
+set updatedfiles = ($updatedfiles s/cmacros.ss)
+
+mkdir release_notes
+sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" ../release_notes/release_notes.stex > release_notes/release_notes.stex
+set updatedfiles = ($updatedfiles release_notes/release_notes.stex)
+
+mkdir csug
+sed -e "s/Revised \(.*\) for Chez Scheme Version [^ ]*\./Revised \\INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version $R./" ../csug/copyright.stex > csug/copyright.stex
+sed -e "s/Revised \(.*\) for Chez Scheme Version [^ ]*<br>/Revised \\INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version $R<br>/" ../csug/csug.stex > csug/csug.stex
+set updatedfiles = ($updatedfiles csug/csug.stex)
+
+/bin/rm LOG
+cat ../LOG > LOG
+echo "" >> LOG
+echo "$R changes:" >> LOG
+echo "   * updated version to $R" >> LOG
+echo $updatedfiles | sed -e 's/^/        /' | fmt >> LOG
+
+exit 0

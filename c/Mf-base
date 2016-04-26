@@ -1,0 +1,55 @@
+# Mf-base
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Include=../boot/$m
+ZlibInclude=../zlib
+PetiteBoot=../boot/$m/petite.boot
+SchemeBoot=../boot/$m/scheme.boot
+Kernel=../boot/$m/kernel.$o
+Main=../boot/$m/main.$o
+Scheme=../bin/$m/scheme
+
+kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-oce.c\
+ number.c schsig.c io.c new-io.c print.c fasl.c stats.c foreign.c prim.c prim5.c flushcache.c\
+ schlib.c thread.c expeditor.c scheme.c
+
+kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
+
+kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h itest.c 
+
+mainsrc=main.c
+
+mainobj:=${mainsrc:%.c=%.$o}
+
+doit: ${Scheme}
+
+source: ${kernelsrc} ${kernelhdr} ${mdsrc} ${mainsrc}
+
+${Main}: ${mainobj}
+	cp -p ${mainobj} ${Main}
+
+rootsrc=$(shell cd ../../c; echo *)
+${rootsrc}: ; ln -s ../../c/$@ $@
+
+scheme.o: itest.c
+${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h
+${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
+${mainobj}: ${Include}/scheme.h
+scheme.o io.o new-io.o: ${ZlibInclude}/zconf.h ${ZlibInclude}/zlib.h
+gc-ocd.o gc-oce.o: gc.c
+
+clean:
+	rm -f *.$o ${mdclean}
+	rm -f Make.out

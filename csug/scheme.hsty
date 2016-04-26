@@ -1,0 +1,33 @@
+\def\transerr#1{\raw{<i>}}
+\def\transin#1{\raw{<font color="##ff0000">}}
+\def\transout#1{\raw{<font color="##0000ff">}}
+\def\endtranserr#1{\raw{</i>}}
+\def\endtransin#1{\raw{</font>}}
+\def\endtransout#1{\raw{</font>}}
+
+\def\schemeblankline{{\\\\}}
+\def\schemelinestart{}
+%%% handle numbered lines in scheme.sty and scheme.hsty
+%%% ---have scheme-prep produce only \schemelinestart
+% following is probably broken until we have tables, I suspect.
+% Actually, the right way to fix this may be to use CSS
+\def\schemelinestartnumbered#1{\raw{<table><tr width=20><td>}#1\raw{</td></tr></table>}}
+
+\def\scheme#1{{\tt #1}}
+\def\longcode\schemedisplay{\schemedisplay}
+\def\noskip\schemedisplay{\schemedisplay}
+\def\schemedisplay{\par\begingroup\tt\hardspaces}
+\def\endschemedisplay{\endgroup\par}
+\def\schemeindent{}
+\def\schatsign{\raw{@}}
+\def\schbackslash{\raw{\}}
+\def\schcarat{\raw{^}}
+\def\schdot{\raw{.}}
+\def\schlbrace{\raw{&##123;}}
+\def\schrbrace{\raw{&##125;}}
+\def\schtilde{\raw{~}}
+\def\schunderscore{\raw{_}}
+\def\becomes{$\rightarrow$}
+\def\is{$\Rightarrow$}
+\def\si{\raw{<img src="gifs/ghostRightarrow.gif">}}
+\def\var#1{\emph{#1}}

@@ -1,0 +1,42 @@
+# Mf-i3nb
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+m = i3nb
+Cpu = I386
+
+mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include
+mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a
+C = gcc -Wpointer-arith -Wextra -Werror -O
+o = o
+mdsrc = i3le.c
+mdobj = i3le.o
+
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+.c.o:
+	$C -c -D${Cpu} -I${Include} -I${ZlibInclude} ${mdinclude} $*.c
+
+include Mf-base
+
+${Kernel}: ${kernelobj} ../zlib/libz.a
+	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
+
+${Scheme}: ${Kernel} ${Main}
+	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+
+${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
+	(cd ../zlib; CFLAGS=-m32 ./configure)
+	(cd ../zlib; make)
