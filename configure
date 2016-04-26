@@ -1,0 +1,263 @@
+#! /bin/sh
+
+# configure
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+machs=""; last=""; sep0=""; sep1=""; sep2=""; sep3=""; sep4=" and ";
+for fn in boot/*/scheme.boot ; do
+  machs=$machs$sep0$last
+  last=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
+  sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
+done
+machs=$machs$sep2$last
+
+m=""
+w=""
+threads=no
+temproot=""
+help=no
+gzipmanpages=yes
+installowner=""
+installgroup=""
+
+case `uname` in
+  Linux)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3le
+      m64=a6le
+      tm32=ti3le
+      tm64=ta6le
+    elif uname -a | grep -i power > /dev/null 2>&1 ; then
+      m32=ppc32le
+      m64=""
+      tm32=tppc32le
+      tm64=""
+    fi
+    installprefix=/usr
+    installman=/usr/share/man
+    ;;
+  QNX)
+    if uname -a | egrep 'x86' > /dev/null 2>&1 ; then
+      m32=i3qnx
+      tm32=ti3qnx
+    fi
+    installprefix=/usr/local
+    installman=/usr/local/man
+    ;;
+  FreeBSD)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3fb
+      m64=a6fb
+      tm32=ti3fb
+      tm64=ta6fb
+    fi
+    installprefix=/usr/local
+    installman=/usr/local/man
+    ;;
+  OpenBSD)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3ob
+      m64=a6ob
+      tm32=ti3ob
+      tm64=ta6ob
+    fi
+    installprefix=/usr/local
+    installman=/usr/local/man
+    ;;
+  NetBSD)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3nb
+      m64=a6nb
+      tm32=ti3nb
+      tm64=ta6nb
+    fi
+    installprefix=/usr
+    installman=/usr/share/man
+    gzipmanpages=no
+    ;;
+  Darwin)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3osx
+      m64=a6osx
+      tm32=ti3osx
+      tm64=ta6osx
+    fi
+    installprefix=/usr/local
+    installman=/usr/local/share/man
+    ;;
+  SunOS)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3s2
+      m64=a6s2
+      tm32=ti3s2
+      tm64=ta6s2
+      installprefix=/usr
+      installman=/usr/share/man
+      gzipmanpages=no
+    fi
+    ;;
+esac
+
+threads=""
+bits=""
+
+while [ $# != 0 ] ; do
+  case $1 in
+    -m=*)
+      m=`echo $1 | sed -e 's/^-m=//'`
+      ;;
+    --machine=*)
+      m=`echo $1 | sed -e 's/^--machine=//'`
+      ;;
+    --threads)
+      threads=yes
+      ;;
+    --64)
+      bits=64
+      ;;
+    --32)
+      bits=32
+      ;;
+    --installprefix=*)
+      installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
+      ;;
+    --installman=*)
+      installman=`echo $1 | sed -e 's/^--installman=//'`
+      ;;
+    --installowner=*)
+      installowner=`echo $1 | sed -e 's/^--installowner=//'`
+      ;;
+    --installgroup=*)
+      installgroup=`echo $1 | sed -e 's/^--installgroup=//'`
+      ;;
+    --gzip-man-pages)
+      gzipmanpages=yes
+      ;;
+    --nogzip-man-pages)
+      gzipmanpages=no
+      ;;
+    --temproot=*)
+      temproot=`echo $1 | sed -e 's/^--temproot=//'`
+      ;;
+    --workarea=*)
+      w=`echo $1 | sed -e 's/^--workarea=//'`
+      ;;
+    --help)
+      help=yes
+      ;;
+    *)
+      echo "option '$1' unrecognized or missing an argument; try $0 --help"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if [ "$bits" = "" ] ; then
+  if uname -a | egrep 'amd64|x86_64' > /dev/null 2>&1 ; then
+    bits=64
+  else
+    bits=32
+  fi
+fi
+
+if [ "$threads" = "" ] ; then
+  threads=no
+fi
+
+if [ "$m" = "" ] ; then
+  if [ $bits = 64 ] ; then 
+    if [ $threads = yes ] ; then m=$tm64 ; else m=$m64 ; fi
+  else
+    if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
+  fi
+fi
+
+if [ "$w" = "" ] ; then
+  w=$m
+fi
+
+if [ "$help" = "yes" ]; then
+  echo "Purpose:"
+  echo "  $0 determines the machine type and constructs a custom Makefile"
+  echo "  and Mf-install, taking into account the options below."
+  echo ""
+  echo "Options (defaults shown in parens):"
+  echo "  --machine=<machine type>    explicitly specify machine type ($m)"
+  echo "  -m=<machine type>           same as --machine <machine type> ($m)"
+  echo "  --threads                   specify threaded version ($threads)"
+  echo "  --32|--64                   specify 32/64-bit version ($bits)"
+  echo "  --installprefix=<pathname>  final installation root ($installprefix)"
+  echo "  --installman=<pathname>     manpage directory ($installman)"
+  echo "  --temproot=<pathname>       staging root ($temproot)"
+  echo "  --installowner=<ownername>  install with owner ($installowner)"
+  echo "  --installgroup=<groupname>  install with group ($installgroup)"
+  echo "  --[no]gzip-man-pages        compress manual pages ($gzipmanpages)"
+  echo "  --workarea=<pathname>       build directory ($w)"
+  echo ""
+  echo "Available machine types: $machs"
+  echo ""
+  echo "Examples:"
+  echo "  $0 --machine=i3le"
+  echo ""
+  echo "  set machine-type to i3le rather than to determined type"
+  echo ""
+  echo "  $0 --threads --installprefix=/usr/local"
+  echo ""
+  echo "  specify threaded version and set installation directory to /usr/local."
+  echo ""
+  echo "  $0 --installprefix=/usr/local --temproot=/tmp"
+  echo ""
+  echo "  declare the final destination to be /usr/local but staging area"
+  echo "  to be /tmp/usr/local.  Make will record the final destination in the"
+  echo "  installed manual pages but actually install the system and manual"
+  echo "  pages in the staging area."
+  echo ""
+  exit 0
+fi
+
+if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
+  echo "no suitable machine type found"
+  echo "try rerunning as $0 -m=<machine type>"
+  echo "available machine types: $machs"
+  exit 1
+fi
+
+if [ ! -e nanopass ] ; then
+  (curl -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -xzf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
+fi
+
+if [ ! -e zlib ] ; then
+  (curl -L -o v1.2.8.tar.gz https://github.com/madler/zlib/archive/v1.2.8.tar.gz && tar -xzf v1.2.8.tar.gz && mv zlib-1.2.8 zlib && rm v1.2.8.tar.gz) || exit 1
+fi
+
+./workarea $m $w
+
+sed -e 's/$(workarea)/'$w'/g' makefiles/Makefile.in > Makefile
+
+sed -e 's/$(m)/'$m'/g' makefiles/Makefile-workarea.in > $w/Makefile
+
+sed -e 's/$(m)/'$m'/g'\
+    -e 's/$(workarea)/'$w'/g'\
+    makefiles/Mf-boot.in > $w/Mf-boot
+
+sed -e "s;^m=none\$;m=$m;"\
+    -e "s;^InstallPrefix=.*\$;InstallPrefix=$installprefix;"\
+    -e "s;^InstallMan=.*\$;InstallMan=$installman/man1;"\
+    -e "s;^InstallOwner=.*\$;InstallOwner=$installowner;"\
+    -e "s;^InstallGroup=.*\$;InstallGroup=$installgroup;"\
+    -e "s;^TempRoot=.*;TempRoot=$temproot;"\
+    -e "s;^GzipManPages=.*$;GzipManPages=$gzipmanpages;"\
+    makefiles/Mf-install.in > $w/Mf-install

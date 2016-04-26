@@ -1,0 +1,4150 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Input/Output Operations\label{CHPTIO}}
+
+This chapter describes {\ChezScheme}'s generic port facility,
+operations on ports, and various {\ChezScheme} extensions to the
+standard set of input/output operations.
+See Chapter~\ref{TSPL:CHPTIO} of {\TSPLFOUR} or the Revised$^6$ Report
+on Scheme for a description of standard input/output operations.
+Definitions of a few sample generic ports are given in
+Section~\ref{SECTPORTEXAMPLES}.
+
+{\ChezScheme} closes file ports automatically after they become
+inaccessible to the program or when the Scheme program exits, but it is
+best to close ports explicitly whenever possible.
+
+
+\section{Generic Ports}
+
+{\ChezScheme}'s ``\index{generic port}generic port'' facility
+allows the programmer to add new types of textual ports with
+arbitrary input/output semantics.
+It may be used, for example, to define any of the built-in
+Common Lisp~\cite{Steele:common} stream types, i.e.,
+\index{synonym streams}synonym streams,
+\index{broadcast streams}broadcast streams,
+\index{concatenated streams}concatenated streams,
+\index{two-way streams}two-way streams,
+\index{echo streams}echo streams, and
+\index{string streams}string streams.
+It may also be used to define more exotic ports, such as ports that
+represent windows on a bit-mapped display or ports that represent
+processes connected to the current process via pipes or sockets.
+
+Each port has an associated \emph{port handler}.
+A port handler is a procedure that accepts messages in an
+object-oriented style.
+Each message corresponds to one of the low-level Scheme operations
+on ports, such as \scheme{read-char} and \scheme{close-input-port} (but not
+\scheme{read}, which is defined in terms of the lower-level operations).
+Most of these operations simply call the handler immediately with
+the corresponding message.
+
+Standard messages adhere to the following conventions: the message name is
+the first argument to the handler.
+It is always a symbol, and it is always the name of a primitive
+Scheme operation on ports.
+The additional arguments are the same as the arguments to the
+primitive procedure and occur in the same order.
+(The port argument to some of the primitive procedures is optional;
+in the case of the messages passed to a handler, the port argument
+is always supplied.)
+The following messages are defined for built-in ports:
+
+\schemedisplay
+block-read \var{port} \var{string} \var{count}
+block-write \var{port} \var{string} \var{count}
+char-ready? \var{port}
+clear-input-port \var{port}
+clear-output-port \var{port}
+close-port \var{port}
+file-position \var{port}
+file-position \var{port} \var{position}
+file-length \var{port}
+flush-output-port \var{port}
+peek-char \var{port}
+port-name \var{port}
+read-char \var{port}
+unread-char \var{char} \var{port}
+write-char \var{char} \var{port}
+\endschemedisplay
+
+\noindent
+Additional messages may be accepted by user-defined ports.
+
+{\ChezScheme} input and output is normally buffered for efficiency.
+To support buffering, each input port contains an input buffer and
+each output port contains an output buffer.
+Bidirectional ports, ports that are both input ports and output
+ports, contain both input and output buffers.
+Input is not buffered if the input buffer is the empty string,
+and output is not buffered if the output buffer is the empty
+string.
+In the case of unbuffered input and output, calls to \scheme{read-char},
+\scheme{write-char}, and similar messages cause the handler to be invoked
+immediately with the corresponding message.
+For buffered input and output, calls to these procedures cause the
+buffer to be updated, and the handler is not called under normal
+circumstances until the buffer becomes empty (for input) or full (for
+output).
+Handlers for buffered ports must \var{not} count
+on the buffer being empty or full when \scheme{read-char}, \scheme{write-char}, and
+similar messages are received, however, due to the possibility that (a)
+the handler is invoked through some other mechanism, or (b) the
+call to the handler is interrupted.
+
+In the presence of keyboard, timer, and other interrupts, it is
+possible for a call to a port handler to be interrupted or for the
+handler itself to be interrupted.
+If the port is accessible outside of the interrupted code, there
+is a possibility that the interrupt handler will cause input or
+output to be performed on the port.
+This is one reason, as stated above, that port handlers must not count
+on the input buffer being empty or output buffer being full when a
+\scheme{read-char}, \scheme{write-char}, or similar message is received.
+In addition, port handlers may need to manipulate the buffers only
+with interrupts disabled (using \scheme{with-interrupts-disabled}).
+
+Generic ports are created via one of the port construction
+procedures \scheme{make-input-port}, 
+\scheme{make-output-port}, and \scheme{make-input/output-port} defined
+later in this chapter.
+Ports have seven accessible fields:
+
+\begin{description}
+\item[\var{handler},] accessed with \scheme{port-handler};
+\item[\var{output-buffer},] accessed with \scheme{port-output-buffer},
+\item[\var{output-size},] accessed with \scheme{port-output-size},
+\item[\var{output-index},] accessed with \scheme{port-output-index},
+\item[\var{input-buffer},] accessed with \scheme{port-input-buffer},
+\item[\var{input-size},] accessed with \scheme{port-input-size}, and
+\item[\var{input-index},] accessed with \scheme{port-input-index}.
+\end{description}
+
+\noindent
+The output-size and output-index fields are valid only for output
+ports, and the input-size and input-index fields are valid only for
+input ports.
+The output and input size and index fields may be updated as well
+using the corresponding ``\scheme{set-\var{field}!}'' procedure.
+
+A port's output size determines how much of the port's output buffer is
+actually available for writing by \scheme{write-char}.
+The output size is often the same as the string length of the port's
+output buffer, but it can be set to less (but no less than zero) at the
+discretion of the programmer.
+The output index determines to which position in the port's
+buffer the next character will be written.
+The output index should be between $0$ and the output size,
+inclusive.
+If no output has occurred since the buffer was last flushed, the
+output index should be $0$.
+If the index is less than the size, \scheme{write-char}
+stores its character argument into the specified character
+position within the buffer and increments the index.
+If the index is equal to the size, \scheme{write-char} leaves the fields of
+the port unchanged and invokes the handler.
+
+A port's input size determines how much of the port's input buffer is
+actually available for reading by \scheme{read-char}.
+A port's input size and input index are constrained in the same manner
+as output size and index, i.e., the input size must be between
+$0$ and the string length of the input buffer (inclusive), and the input
+index must be between $0$ and the input size (inclusive).
+Often, the input size is less than the length of the input buffer
+because there are fewer characters available to read than would fit
+in the buffer.
+The input index determines from which position in the input buffer the
+next character will be read.
+If the index is less than the size, \scheme{read-char} extracts the character
+in this position, increments the index, and returns the character.
+If the index is equal to the size, \scheme{read-char} leaves the fields of
+the port unchanged and invokes the handler.
+
+The operation of \scheme{peek-char} is similar to that of \scheme{read-char}, except
+that it does not increment the input index.
+\scheme{unread-char} decrements the input index if it is greater than $0$,
+otherwise it invokes the handler.
+\scheme{char-ready?} returns \scheme{#t} if the input index is less than the input
+size, otherwise it invokes the handler.
+
+Although the fields shown and discussed above are logically present in
+a port, actual implementation details may differ.
+The current {\ChezScheme} implementation uses a different representation
+that allows \scheme{read-char}, \scheme{write-char}, and similar operations to be
+open-coded with minimal overhead.
+The access and assignment operators perform the conversion between the
+actual representation and the one shown above.
+
+Port handlers receiving a message must return a value appropriate for
+the corresponding operation.
+For example, a handler receiving a \scheme{read-char} message must return a
+character or eof object (if it returns).
+For operations that return unspecified values, such as \scheme{close-port},
+the handler is not required to return any particular value.
+
+\section{File Options\label{SECTFILEOPTIONS}}
+
+The Revised$^6$ Report requires that the universe of a file-options
+enumeration set must include \scheme{no-create}, \scheme{no-fail},
+and \scheme{no-truncate}, whose meanings are described within the
+description of the \scheme{file-options} syntax in
+Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}.
+{\ChezScheme} defines a number of additional file options:
+
+\begin{description}
+\item[\var{compressed}:]
+An output file should be compressed when written; and a compressed input
+file should be decompressed when read.
+
+\item[\var{replace}:]
+For output files only, replace (remove and recreate) the existing file if
+it exists.
+
+\item[\var{exclusive}:]
+For output files only, lock the file for exclusive access.
+On some systems the lock is advisory, i.e., it inhibits access by 
+other processes only if they also attempt to open exclusively.
+
+\item[\var{append}:]
+For output files only, position the output port at the end of the file
+before each write so that output to the port is always appended to the
+file.
+
+\item[\var{perm-set-user-id}:]
+For newly created output files under Unix-based systems only, set
+user-id bit.
+
+\item[\var{perm-set-group-id}:]
+For newly created output files under Unix-based systems only, set
+group-id bit.
+
+\item[\var{perm-sticky}:]
+For newly created output files under Unix-based systems only, set
+sticky bit.
+
+\item[\var{perm-no-user-read}:]
+For newly created output files under Unix-based systems only,
+do not set user read bit.
+(User read bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-no-user-write}:]
+For newly created output files under Unix-based systems only,
+do not set user write bit.
+(User write bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-user-execute}:]
+For newly created output files under Unix-based systems only,
+set user execute bit unless masked by process umask.
+(User execute bit is not set by default.)
+
+\item[\var{perm-no-group-read}:]
+For newly created output files under Unix-based systems only,
+do not set group read bit.
+(Group read bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-no-group-write}:]
+For newly created output files under Unix-based systems only,
+do not set group write bit.
+(Group write bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-group-execute}:]
+For newly created output files under Unix-based systems only,
+set group execute bit unless masked by process umask.
+(Group execute bit is not set by default.)
+
+\item[\var{perm-no-other-read}:]
+For newly created output files under Unix-based systems only,
+do not set other read bit.
+(Other read bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-no-other-write}:]
+For newly created output files under Unix-based systems only,
+do not set other write bit.
+(Other write bit is set by default, unless masked by the process umask.)
+
+\item[\var{perm-other-execute}:]
+For newly created output files under Unix-based systems only,
+set other execute bit unless masked by process umask.
+(Other execute bit is not set by default.)
+\end{description}
+
+\section{Transcoders\label{SECTTRANSCODERS}}
+
+The language of the Revised$^6$ Report provides three built-in codecs:
+a latin-1 codec, a utf-8 codec, and a utf-16 codec.
+{\ChezScheme} provides three additional codecs: a utf-16le codec,
+utf-16be codec, and an ``iconv'' codec for non-Unicode character sets.
+It also provides an alternative to the standard utf-16 codec that
+defaults to little-endian format rather than the default big-endian
+format.
+This section describes these codecs, plus a \scheme{current-transcoder}
+parameter that allows the programmer to determine the transcoder
+used for a textual port whenever the transcoder is implicit, as for
+\scheme{open-input-file} or \scheme{load}, along with the
+predicate \scheme{transcoder?}, which should be standard but is not.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{utf-16-codec}{\categoryprocedure}{(utf-16-codec)}
+\formdef{utf-16-codec}{\categoryprocedure}{(utf-16-codec \var{endianness})}
+\formdef{utf-16le-codec}{\categoryprocedure}{(utf-16le-codec)}
+\formdef{utf-16be-codec}{\categoryprocedure}{(utf-16be-codec)}
+\returns a codec
+\listlibraries
+\endentryheader
+
+\var{endianness} must be the symbol \scheme{big} or the symbol
+\scheme{little}.
+
+The codec returned by \scheme{utf-16-codec} can be used to create
+process data written UFT-16 format.
+When called without the \var{endianness} argument or with \var{endianness}
+\scheme{big}, \scheme{utf-16-codec} returns a codec for standard UTF-16
+data, i.e., one that defaults to big-endian format if no byte-order mark
+(BOM) is found.
+
+When output is transcoded with a transcoder based on this codec, a BOM is
+emitted just before the first character written, and each character is
+written as a UTF-16 character in big-endian format.
+For input, a BOM is looked for at the start of the
+input and, if present, controls the byte order of the remaining
+UTF-16 characters.
+If no BOM is present, big-endian order is assumed.
+For input-output ports, the BOM is not emitted if the file is
+read before written, and a BOM is not looked for if the file is written
+before read.
+
+For textual ports created via \scheme{transcoded-port}, a BOM written or
+read via the transcoder appears at the beginning of the underlying data
+stream or file only if the binary port passed to \scheme{transcoded-port}
+is positioned at the start of the data stream or file.
+When the transcoder can determine this is the case, it sets a flag that
+causes \scheme{set-port-position!}) to position the port beyond the BOM if
+an attempt is made to reposition the port to the start of the data stream
+or file, so that the BOM is preserved.
+
+When called with \var{endianness} \scheme{little}, \scheme{utf-16-codec}
+returns a codec that defaults to the little-endian format both for reading
+and for writing.
+For output-only streams or input/output streams that are written before read,
+the result is standard UTF-16, with a BOM that specifies little-endian
+format followed by characters in little-endian byte order.
+For input-only streams or input/output streams that are read before written,
+this codec allows programs to read from input streams that either
+begin with a BOM or are encoded in UTF-16LE format.
+This is particularly useful for handling files that might have been
+produced by older Windows applications that claim to produce UTF-16 files
+but actually produce UTF-16LE files.
+
+The Revised$^6$ Report version of \scheme{utf-16-codec} lacks the
+optional \var{endianness} argument.
+
+The codecs returned by \scheme{utf-16le-codec} and \scheme{utf-16be-codec}
+are used to read and write data in the UTF-16LE and UTF-16BE formats,
+i.e., UTF-16 with little-endian or big-endian byte order and no BOM.
+For output, these codecs are useful for controlling whether and where
+the BOM is emitted, since no BOM is emitted implicitly and a BOM
+can be emitted explicitly as an ordinary character.
+For input, these codecs are useful for processing files known to be
+in little-endian or big-endian format with no BOM.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{iconv-codec}{\categoryprocedure}{(iconv-codec \var{code-page})}
+\returns a codec
+\listlibraries
+\endentryheader
+
+\var{code-page} must be a string and should identify a codec accepted by
+the \scheme{iconv} library installed on the target machine.
+The codec returned by this procedure can be used to convert from the
+non-Unicode single- and multiple-byte character sets supported by
+\scheme{iconv}.
+When used in the input direction, the codec converts byte sequences
+into Scheme strings, and when used in the output direction, it converts
+Scheme strings to byte sequences.
+
+The set of supported code pages depends on the version of
+\scheme{iconv} available; consult the \scheme{iconv} documentation
+or use the shell command \scheme{iconv --list} to obtain a list
+of supported code pages.
+
+While the Windows operating system does not supply an \scheme{iconv}
+library, it is possible to use \scheme{iconv-codec} on Windows systems by
+supplying an \scheme{iconv} dynamic-link library (named \scheme{iconv.dll},
+\scheme{libiconv.dll}, or \scheme{libiconv-2.dll}) that provides
+Posix-conformant \scheme{iconv_open}, \scheme{iconv}, and
+\scheme{iconv_close} entry points either under those names or under the
+alternative names \scheme{libiconv_open}, \scheme{libiconv}, and
+\scheme{libiconv_close}.
+The dll must be located in a standard location for dlls or in the
+current directory of the process the first time \scheme{iconv-codec}
+is called.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-transcoder}{\categorythreadparameter}{current-transcoder}
+\listlibraries
+\endentryheader
+
+The transcoder value of the \scheme{current-transcoder} parameter is used
+whenever a textual file is opened with an implicit transcoder, e.g., by
+\scheme{open-input-file} and other convenience I/O procedures,
+\scheme{compile-file} \scheme{include}, \scheme{load}, and
+\scheme{pretty-file}.
+Its initial value is the value of the \scheme{native-transcoder} procedure.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{transcoder?}{\categoryprocedure}{(transcoder? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a transcoder, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+
+\section{Port Operations\label{SECTPORTOPERATIONS}}
+
+The procedures used to create, access, and alter ports directly
+are described in this section.
+Also described are several nonstandard operations on ports.
+
+Unless otherwise specified, procedures requiring either input ports or
+output ports as arguments accept input/output ports as well, i.e., an
+input/output port is both an input port and an output port.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-input-port}{\categoryprocedure}{(make-input-port \var{handler} \var{input-buffer})}
+\formdef{make-output-port}{\categoryprocedure}{(make-output-port \var{handler} \var{output-buffer})}
+\formdef{make-input/output-port}{\categoryprocedure}{(make-input/output-port \var{handler} \var{input-buffer} \var{output-buffer})}
+\returns a new textual port
+\listlibraries
+\endentryheader
+
+\noindent
+\var{handler} must be a procedure, and
+\var{input-buffer} and \var{output-buffer} must be strings.
+Each procedure creates a \index{generic port}generic port.
+The handler associated with the port is \var{handler}, the
+input buffer is \var{input-buffer}, and the
+output buffer is \var{output-buffer}.
+For \scheme{make-input-port}, the output buffer is undefined, and for
+\scheme{make-output-port}, the input buffer is undefined.
+
+The input size of an input or input/output port is initialized to the
+string length of the input buffer, and the input index is set to $0$.
+The output size and index of an output or input/output port are
+initialized similarly.
+
+The length of an input or output buffer may be zero, in which case
+buffering is effectively disabled.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-handler}{\categoryprocedure}{(port-handler \var{port})}
+\returns a procedure
+\listlibraries
+\endentryheader
+
+\noindent
+For generic ports, \scheme{port-handler} returns the handler passed to one
+of the generic port creation procedures described above.
+For ports created by \scheme{open-input-file} and similar procedures,
+\scheme{port-handler} returns an internal handler that may be invoked in
+the same manner as any other handler.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-input-buffer}{\categoryprocedure}{(port-input-buffer \var{input-port})}
+\formdef{port-input-size}{\categoryprocedure}{(port-input-size \var{input-port})}
+\formdef{port-input-index}{\categoryprocedure}{(port-input-index \var{input-port})}
+\formdef{textual-port-input-buffer}{\categoryprocedure}{(textual-port-input-buffer \var{textual-input-port})}
+\formdef{textual-port-input-size}{\categoryprocedure}{(textual-port-input-size \var{textual-input-port})}
+\formdef{textual-port-input-index}{\categoryprocedure}{(textual-port-input-index \var{textual-input-port})}
+\formdef{binary-port-input-buffer}{\categoryprocedure}{(binary-port-input-buffer \var{binary-input-port})}
+\formdef{binary-port-input-size}{\categoryprocedure}{(binary-port-input-size \var{binary-input-port})}
+\formdef{binary-port-input-index}{\categoryprocedure}{(binary-port-input-index \var{binary-input-port})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures return the input buffer, size, or index
+of the input port.
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterparts.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-input-index!}{\categoryprocedure}{(set-port-input-index! \var{input-port} \var{n})}
+\formdef{set-port-input-size!}{\categoryprocedure}{(set-port-input-size! \var{input-port} \var{n})}
+\formdef{set-port-input-buffer!}{\categoryprocedure}{(set-port-input-buffer! \var{input-port} \var{x})}
+\formdef{set-textual-port-input-index!}{\categoryprocedure}{(set-textual-port-input-index! \var{textual-input-port} \var{n})}
+\formdef{set-textual-port-input-size!}{\categoryprocedure}{(set-textual-port-input-size! \var{textual-input-port} \var{n})}
+\formdef{set-textual-port-input-buffer!}{\categoryprocedure}{(set-textual-port-input-buffer! \var{textual-input-port} \var{string})}
+\formdef{set-binary-port-input-index!}{\categoryprocedure}{(set-binary-port-input-index! \var{binary-input-port} \var{n})}
+\formdef{set-binary-port-input-size!}{\categoryprocedure}{(set-binary-port-input-size! \var{binary-input-port} \var{n})}
+\formdef{set-binary-port-input-buffer!}{\categoryprocedure}{(set-binary-port-input-buffer! \var{binary-input-port} \var{bytevector})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{set-port-input-index!} sets the input index field of
+\var{input-port} to $n$, which must be a nonnegative integer less than
+or equal to the port's input size.
+
+The procedure \scheme{set-port-input-size!} sets the input size field of
+\var{input-port} to $n$, which must be a nonnegative integer less than
+or equal to the string length of the port's input buffer.
+It also sets the input index to $0$.
+
+The procedure \scheme{set-port-input-buffer!} sets the input buffer field of
+\var{input-port} to $x$, which must be a string for textual ports and a
+bytevector for binary ports.
+It also sets the input size to the length of the string or bytevector
+and the input index to $0$.
+
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterparts.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-input-count}{\categoryprocedure}{(port-input-count \var{input-port})}
+\formdef{textual-port-input-count}{\categoryprocedure}{(textual-port-input-count \var{textual-input-port})}
+\formdef{binary-port-input-count}{\categoryprocedure}{(binary-port-input-count \var{binary-input-port})}
+\returns see below
+\listlibraries
+\endentryheader
+
+These procedures return an exact integer representing the number of
+characters or bytes left to be read from the port's input buffer, i.e.,
+the difference between the buffer size and index.
+
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterpart.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-input-empty?}{\categoryprocedure}{(port-input-empty? \var{input-port})}
+\returns \scheme{#t} if the port's input buffer contains no more data, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+This procedure determines whether the port's input count is zero without
+computing or returning the actual count.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-output-buffer}{\categoryprocedure}{(port-output-buffer \var{output-port})}
+\formdef{port-output-size}{\categoryprocedure}{(port-output-size \var{output-port})}
+\formdef{port-output-index}{\categoryprocedure}{(port-output-index \var{output-port})}
+\formdef{textual-port-output-buffer}{\categoryprocedure}{(textual-port-output-buffer \var{output-port})}
+\formdef{textual-port-output-size}{\categoryprocedure}{(textual-port-output-size \var{output-port})}
+\formdef{textual-port-output-index}{\categoryprocedure}{(textual-port-output-index \var{output-port})}
+\formdef{binary-port-output-buffer}{\categoryprocedure}{(binary-port-output-buffer \var{output-port})}
+\formdef{binary-port-output-size}{\categoryprocedure}{(binary-port-output-size \var{output-port})}
+\formdef{binary-port-output-index}{\categoryprocedure}{(binary-port-output-index \var{output-port})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures return the output buffer, size, or index
+of the output port.
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterparts.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-output-index!}{\categoryprocedure}{(set-port-output-index! \var{output-port} \var{n})}
+\formdef{set-port-output-size!}{\categoryprocedure}{(set-port-output-size! \var{output-port} \var{n})}
+\formdef{set-port-output-buffer!}{\categoryprocedure}{(set-port-output-buffer! \var{output-port} \var{x})}
+\formdef{set-textual-port-output-index!}{\categoryprocedure}{(set-textual-port-output-index! \var{textual-output-port} \var{n})}
+\formdef{set-textual-port-output-size!}{\categoryprocedure}{(set-textual-port-output-size! \var{textual-output-port} \var{n})}
+\formdef{set-textual-port-output-buffer!}{\categoryprocedure}{(set-textual-port-output-buffer! \var{textual-output-port} \var{string})}
+\formdef{set-binary-port-output-index!}{\categoryprocedure}{(set-binary-port-output-index! \var{output-port} \var{n})}
+\formdef{set-binary-port-output-size!}{\categoryprocedure}{(set-binary-port-output-size! \var{output-port} \var{n})}
+\formdef{set-binary-port-output-buffer!}{\categoryprocedure}{(set-binary-port-output-buffer! \var{binary-output-port} \var{bytevector})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{set-port-output-index!} sets the output index field of
+the output port to $n$, which must be a nonnegative integer less than
+or equal to the port's output size.
+
+The procedure \scheme{set-port-output-size!} sets the output size field of
+the output port to $n$, which must be a nonnegative integer less than
+or equal to the string length of the port's output buffer.
+It also sets the output index to $0$.
+
+The procedure \scheme{set-port-output-buffer!} sets the output buffer field of
+\var{output-port} to $x$, which must be a string for textual ports and a
+bytevector for binary ports.
+It also sets the output size to the length of the string or bytevector
+and the output index to $0$.
+
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterparts.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-output-count}{\categoryprocedure}{(port-output-count \var{output-port})}
+\formdef{textual-port-output-count}{\categoryprocedure}{(textual-port-output-count \var{textual-output-port})}
+\formdef{binary-port-output-count}{\categoryprocedure}{(binary-port-output-count \var{binary-output-port})}
+\returns see below
+\listlibraries
+\endentryheader
+
+These procedures return an exact integer representing the amount of
+space in characters or bytes available to be written in the
+port's output buffer, i.e., the difference between the buffer size
+and index.
+
+The variants specialized to textual or binary ports are slightly
+more efficient than their generic counterpart.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-output-full?}{\categoryprocedure}{(port-output-full? \var{output-port})}
+\returns \scheme{#t} if the port's input buffer has no more room, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+This procedure determines whether the port's output count is zero without
+computing or returning the actual count.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mark-port-closed!}{\categoryprocedure}{(mark-port-closed! \var{port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure directly marks the port closed so that no further
+input or output operations are allowed on it.
+It is typically used by handlers upon receipt of a \scheme{close-port}
+message.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-closed?}{\categoryprocedure}{(port-closed? \var{port})}
+\returns \scheme{#t} if \var{port} is closed, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(let ([p (open-output-string)])
+  (port-closed? p)) ;=> #f
+
+(let ([p (open-output-string)])
+  (close-port p)
+  (port-closed? p)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:set-port-bol}
+\formdef{set-port-bol!}{\categoryprocedure}{(set-port-bol! \var{output-port} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+When When \var{obj} is \scheme{#f}, the port's beginning-of-line (BOL)
+flag is cleared; otherwise, the port's BOL flag is set.
+
+The BOL flag is consulted by \scheme{fresh-line}
+(page~\pageref{desc:fresh-line}) to determine if it needs to emit a
+newline.
+This flag is maintained automatically for file output ports, string output
+ports, and transcript ports.
+The flag is set for newly created file and string output ports, except
+for file output ports created with the \scheme{append} option, for which
+the flag is reset.
+The BOL flag is clear for newly created generic ports and never set
+automatically, but may be set explicitly using \scheme{set-port-bol!}.
+The port is always flushed immediately before the flag is consulted, so it
+need not be maintained on a per-character basis for buffered ports.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-bol?}{\categoryprocedure}{(port-bol? \var{port})}
+\returns \scheme{#t} if \var{port}'s BOL flag is set, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-eof!}{\categoryprocedure}{(set-port-eof! \var{input-port} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+When \var{obj} is not \scheme{#f}, \scheme{set-port-eof!} marks \var{input-port}
+so that, once its buffer is empty, the port is treated as if it were at
+eof even if more data is available in the underlying byte or character
+stream.
+Once this artificial eof has been read, the eof mark is cleared, making
+any additional data in the stream available beyond the eof.
+This feature can be used by a generic port to simulate a stream consisting
+of multiple input files.
+
+When \var{obj} is \scheme{#f}, the eof mark is cleared.
+
+The following example assumes /dev/zero provides an infinite stream of
+zero bytes.
+
+\schemedisplay
+(define p
+  (parameterize ([file-buffer-size 3])
+    (open-file-input-port "/dev/zero")))
+(set-port-eof! p #t)
+(get-u8 p) ;=> #!eof
+(get-u8 p) ;=> 0
+(set-port-eof! p #t)
+(get-u8 p) ;=> 0
+(get-u8 p) ;=> 0
+(get-u8 p) ;=> #!eof
+(get-u8 p) ;=> 0
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-name}{\categoryprocedure}{(port-name \var{port})}
+\returns the name associated with \var{port}
+\listlibraries
+\endentryheader
+
+\noindent
+The name may be any object but is usually a string or \scheme{#f}
+(denoting no name).
+For file ports, the name is typically a string naming the file.
+
+\schemedisplay
+(let ([p (open-input-file "myfile.ss")])
+  (port-name p)) ;=> "myfile.ss"
+
+(let ([p (open-output-string)])
+  (port-name p)) ;=> "string"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-name!}{\categoryprocedure}{(set-port-name! \var{port} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure sets \var{port}'s name to \var{obj}, which should be
+a string or \scheme{#f} (denoting no name).
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-length}{\categoryprocedure}{(port-length \var{port})}
+\formdef{file-length}{\categoryprocedure}{(file-length \var{port})}
+\returns the length of the file or other object to which \var{port} refers
+\formdef{port-has-port-length?}{\categoryprocedure}{(port-has-port-length? \var{port})}
+\returns \scheme{#t} if the port supports \scheme{port-length}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+A port may allow the length of the underlying stream of characters or bytes
+to be determined.
+If so, the procedure \scheme{port-has-port-length?} returns
+\scheme{#t} and \scheme{port-length} returns the current length.
+For binary ports, the length is always an exact nonnegative integer byte
+count.
+For textual ports, the representation of a length is unspecified; it
+may not be an exact nonnegative integer and, even if it is, it may not
+represent either a byte or character count.
+The length may be used at some later time to reset the length if the
+port supports \scheme{set-port-length!}.
+If \scheme{port-length} is called on a port that does not support it,
+an exception with condition type \scheme{&assertion} is raised.
+
+File lengths beyond $2^{32}$ might not be reported property
+for compressed files on 32-bit versions of the system.
+
+\scheme{file-length} is identical to \scheme{port-length}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-length!}{\categoryprocedure}{(set-port-length! \var{port} \var{len})}
+\returns unspecified
+\formdef{port-has-set-port-length!?}{\categoryprocedure}{(port-has-set-port-length!? \var{port})}
+\returns \scheme{#t} if the port supports \scheme{set-port-length!}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+A port may allow the length of the underlying stream of characters or bytes
+to be set, i.e., extended or truncated.
+If so, the procedure \scheme{port-has-set-port-length!?} returns
+\scheme{#t} and \scheme{set-port-length!} changes the length.
+For binary ports, the length \var{len} must be an exact nonnegative integer byte
+count.
+For textual ports, the representation of a length is unspecified, as
+described in the entry for \scheme{port-length} above, but \var{len} must be
+an appropriate length for the textual port, which is usually guaranteed
+to be the case only if it was obtained from a call to \scheme{port-length}
+on the same port.
+If \scheme{set-port-length!} is called on a port that does not support it,
+an exception with condition type \scheme{&assertion} is raised.
+
+It is not possible to set the length of a port opened with compression
+to an arbitrary position, and the result of an attempt to set the length
+of a compressed file beyond $2^{32}$ on 32-bit versions of the system is
+undefined.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-nonblocking?}{\categoryprocedure}{(port-nonblocking? \var{port})}
+\returns \scheme{#t} if the port is in nonblocking mode, \scheme{#f} otherwise
+\formdef{port-has-port-nonblocking??}{\categoryprocedure}{(port-has-port-nonblocking?? \var{port})}
+\returns \scheme{#t} if the port supports \scheme{port-nonblocking?}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+A port may allow the nonblocking status of the port to be determined.
+If so, the procedure \scheme{port-has-port-nonblocking??} returns
+\scheme{#t} and \scheme{port-nonblocking?} returns a boolean value
+reflecting whether the port is in nonblocking mode.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-port-nonblocking!}{\categoryprocedure}{(set-port-nonblocking! \var{port} \var{obj})}
+\returns unspecified
+\formdef{port-has-set-port-nonblocking!?}{\categoryprocedure}{(port-has-set-port-nonblocking!? \var{port})}
+\returns \scheme{#t} if the port supports \scheme{set-port-nonblocking!}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+A port may allow reads or writes to be performed in a ``nonblocking'' fashion.
+If so, the procedure \scheme{port-has-set-port-nonblocking!?} returns
+\scheme{#t} and \scheme{set-port-nonblocking!} sets the port to nonblocking
+mode (if \var{obj} is a true value) or blocking mode (if \var{obj} is \scheme{#f}).
+If \scheme{set-port-nonblocking!} is called on a port that does not support it,
+an exception with condition type \scheme{&assertion} is raised.
+
+Ports created by the standard Revised$^6$ port opening procedures are
+initially set in blocking mode by default.
+The same is true for most of the procedures described in this document.
+A generic port based on a nonblocking source may be nonblocking
+initially.
+A port returned by \scheme{open-fd-input-port},
+\scheme{open-fd-output-port}, or \scheme{open-fd-input/output-port}
+is initially in nonblocking mode if the file-descriptor passed in is in
+nonblocking mode.
+Similarly, a port returned by \scheme{standard-input-port},
+\scheme{standard-output-port}, or \scheme{standard-error-port} is
+initially in nonblocking mode if the underlying stdin, stdout,
+or stderr file descriptor is in nonblocking mode.
+
+Although \scheme{get-bytevector-some} and \scheme{get-string-some} normally
+cannot return an empty bytevector or empty string, they can if the port
+is in nonblocking mode and no input is available.
+Also, \scheme{get-bytevector-some!}, \scheme{get-string-some!}
+may not read any data if the port is in nonblocking mode and
+no data is available.
+Similarly, \scheme{put-bytevector-some} and \scheme{put-string-some}
+may not write any data if the port is in nonblocking mode and
+no room is available.
+
+Nonblocking mode is not supported under Windows.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-position}{\categoryprocedure}{(file-position \var{port})}
+\formdef{file-position}{\categoryprocedure}{(file-position \var{port} \var{pos})}
+\returns see below
+\listlibraries
+\endentryheader
+
+When the second argument is omitted, this procedure behaves like the R6RS
+\scheme{port-position} procedure, and when present, like the R6RS
+\scheme{set-port-position!} procedure.
+
+For compressed files opened with the \scheme{compressed} flag,
+\scheme{file-position} returns the position in the
+uncompressed stream of data.
+Changing the position of a compressed input file opened with the
+\scheme{compressed} flag generally requires rewinding and rereading the
+file and might thus be slow.
+The position of a compressed output file opened with the
+\scheme{compressed} flag can be moved forward only; this is
+accomplished by writing a (compressed) sequence of zeros.
+File positions beyond $2^{32}$ might not be reported property
+for compressed files on 32-bit versions of the system.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{clear-input-port}{\categoryprocedure}{(clear-input-port)}
+\formdef{clear-input-port}{\categoryprocedure}{(clear-input-port \var{input-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{input-port} is not supplied, it defaults to the current input port.
+This procedure discards any data in the buffer associated
+with \var{input-port}.
+This may be necessary, for example, to clear any type-ahead from the keyboard
+in preparation for an urgent query.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{clear-output-port}{\categoryprocedure}{(clear-output-port)}
+\formdef{clear-output-port}{\categoryprocedure}{(clear-output-port \var{output-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{output-port} is not supplied, it defaults to the current output port.
+This procedure discards any data in the buffer associated
+with \var{output-port}.
+This may be necessary, for example, to clear any pending output on an
+interactive port in preparation for an urgent message.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flush-output-port}{\categoryprocedure}{(flush-output-port)}
+\formdef{flush-output-port}{\categoryprocedure}{(flush-output-port \var{output-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{output-port} is not supplied, it defaults to the current output port.
+This procedure  forces any data in the buffer associated
+with \var{output-port} to be printed immediately.
+The console output port is automatically flushed after a newline and before
+input from the console input port; all ports are automatically flushed when
+they are closed.
+\scheme{flush-output-port} may be necessary, however, to force a message
+without a newline to be sent to the console output port or to force output
+to appear on a file without delay.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-file-compressed!}{\categoryprocedure}{(port-file-compressed! \var{port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{port} must be an input or an output port, but not an input/output port.
+It must be a file port pointing to a regular file, i.e., a file on disk rather
+than, e.g., a socket.
+The port can be a binary or textual port.
+If the port is an output port, subsequent output sent to the port
+will be compressed.
+If the port is an input port, subsequent input will be decompressed
+if and only if the port is currently pointing at compressed data.
+This procedure has no effect if the port is already set for compression.
+
+
+\section{String Ports\label{SECTIOSTRINGPORTS}}
+
+String ports allow the creation and manipulation of strings via port
+operations.
+The procedure
+\scheme{open-input-string} converts a string into a textual input port,
+allowing the characters in the string to be read in sequence via input
+operations such as \scheme{read-char} or \scheme{read}.
+The procedure
+\scheme{open-output-string} allows new strings to be built up with
+output operations such as \scheme{write-char} and \scheme{write}.
+
+While string ports could be defined as generic ports, they are instead
+supported as primitive by the implementation.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-input-string}{\categoryprocedure}{(open-input-string \var{string})}
+\returns a new string input port
+\listlibraries
+\endentryheader
+
+\noindent
+A \index{string input port}string input port is similar to a file input port, except that
+characters and objects drawn from the port come from \var{string}
+rather than from a file.
+
+A string port is at ``end of file'' when the port reaches the end of the
+string.
+It is not necessary to close a string port, although it is okay to do so.
+
+\schemedisplay
+(let ([p (open-input-string "hi mom!")])
+  (let ([x (read p)])
+    (list x (read p)))) ;=> (hi mom!)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with-input-from-string}{\categoryprocedure}{(with-input-from-string \var{string} \var{thunk})}
+\returns the values returned by \var{thunk}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{thunk} must be a procedure and should accept zero arguments.
+\scheme{with-input-from-string} parameterizes the current input port to be the
+result of opening \var{string} for input during the
+application of \var{thunk}.
+
+\schemedisplay
+(with-input-from-string "(cons 3 4)"
+  (lambda ()
+    (eval (read)))) ;=> (3 . 4)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-output-string}{\categoryprocedure}{(open-output-string)}
+\returns a new string output port
+\listlibraries
+\endentryheader
+
+\noindent
+A \index{string output port}string output port is similar to a file output port, except that
+characters and objects written to the port are placed in a string
+(which grows as needed) rather than to a file.
+The string built by writing to a string output port may be obtained
+with \scheme{get-output-string}.
+See the example given for \scheme{get-output-string} below.
+It is not necessary to close a string port, although it is okay to do so.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-output-string}{\categoryprocedure}{(get-output-string \var{string-output-port})}
+\returns the string associated with \var{string-output-port}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{string-output-port} must be an port returned by \scheme{open-output-string}.
+
+As a side effect, \scheme{get-output-string} resets \var{string-output-port}
+so that subsequent output to \var{string-output-port} is placed
+into a fresh string.
+
+\schemedisplay
+(let ([p (open-output-string)])
+  (write 'hi p)
+  (write-char #\space p)
+  (write 'mom! p)
+  (get-output-string p)) ;=> "hi mom!"
+\endschemedisplay
+
+\noindent
+An implementation of \scheme{format} (Section~\ref{SECTFORMAT}) might be
+written using string-output ports to produce string output.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with-output-to-string}{\categoryprocedure}{(with-output-to-string \var{thunk})}
+\returns a string containing the output
+\listlibraries
+\endentryheader
+
+\noindent
+\var{thunk} must be a procedure and should accept zero arguments.
+\scheme{with-output-to-string} parameterizes the current output port to
+a new string output port during the
+application of \var{thunk}.
+If \var{thunk} returns, the string associated with the new string output
+port is returned, as with \scheme{get-output-from-string}.
+
+\schemedisplay
+(with-output-to-string
+  (lambda ()
+    (display "Once upon a time ...")
+    (newline))) ;=> "Once upon a time ...\n"
+\endschemedisplay
+
+
+\section{File Ports\label{SECTIOFILEPORTS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{file-buffer-size}{\categorythreadparameter}{file-buffer-size}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{file-buffer-size} is a parameter that determines the size of each
+buffer created when the buffer mode is not \scheme{none} for a port
+created by one of the file open operations, e.g., \scheme{open-input-file}
+or \scheme{open-file-output-port}.
+When called with no arguments, the parameter returns the
+current buffer size.
+When called with a positive fixnum \var{k},
+it sets the current buffer size to \var{k}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-port?}{\categoryprocedure}{(file-port? \var{port})}
+\returns \scheme{#t} if \var{port} is a file port, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+A file port is any port based directly
+on an O/S file descriptor, e.g., one created by \scheme{open-file-input-port},
+\scheme{open-output-port}, \scheme{open-fd-input-port}, etc., but not
+a string, bytevector, or custom  port.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{port-file-descriptor}{\categoryprocedure}{(port-file-descriptor \var{port})}
+\returns the file descriptor associated with \var{port}
+\listlibraries
+\endentryheader
+
+\var{port} must be a file port, i.e., a port for which \var{file-port?}
+returns \scheme{#t}.
+
+
+\section{Custom Ports\label{SECTIOCUSTOMPORTS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{custom-port-buffer-size}{\categorythreadparameter}{custom-port-buffer-size}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{custom-port-buffer-size} is a parameter that determines the sizes
+of the buffers associated with newly created custom ports.
+When called with no arguments, the parameter returns the
+current buffer size.
+When called with a positive fixnum \var{k},
+it sets the current buffer size to \var{k}.
+
+\section{Input Operations\label{SECTIOINPUT}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{console-input-port}{\categoryglobalparameter}{console-input-port}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{console-input-port} is a parameter that determines the
+input port used by the waiter and interactive debugger.
+When called with no arguments, it returns the
+console input port.
+When called with one argument, which must be a textual input port,
+it changes the value of the console
+input port.
+The initial value of this parameter is a port tied to the standard
+input (stdin) stream of the Scheme process.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-input-port}{\categorythreadparameter}{current-input-port}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{current-input-port} is a parameter that determines the
+default port argument for most input procedures, including
+\scheme{read-char}, \scheme{peek-char}, and \scheme{read},
+When called with no arguments, \scheme{current-input-port} returns the
+current input port.
+When called with one argument, which must be a textual input port,
+it changes the value of the current
+input port.
+The Revised$^6$ Report version of \scheme{current-input-port} accepts
+only zero arguments, i.e., it cannot be used to change the current input
+port.
+The initial value of this parameter is the same port as the initial
+value of \scheme{console-input-port}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-input-file}{\categoryprocedure}{(open-input-file \var{path})}
+\formdef{open-input-file}{\categoryprocedure}{(open-input-file \var{path} \var{options})}
+\returns a new input port
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{open-input-file} opens a textual input port for the file named by
+\var{path}.
+An exception is raised with condition type
+\scheme{&i/o-filename} if the file does not exist or cannot be
+opened for input.
+
+\var{options}, if present, is a symbolic option name or option list.
+Possible symbolic option names are 
+\scheme{compressed}, \scheme{uncompressed}, \scheme{buffered},
+and \scheme{unbuffered}.
+An option list is a list containing zero or more symbolic option names.
+
+The mutually exclusive \scheme{compressed} and
+\scheme{uncompressed} options determine whether the input file
+should be decompressed if it is compressed.
+(See \scheme{open-output-file}.)
+The default is \scheme{uncompressed}, so the \scheme{uncompressed}
+option is useful only as documentation.
+
+The mutually exclusive \scheme{buffered} and \scheme{unbuffered}
+options determine whether input is buffered.
+When input is buffered, it is read in large blocks and buffered internally
+for efficiency to reduce the number of operating system requests.
+When the \scheme{unbuffered} option is specified, input is unbuffered,
+but not fully, since one character of buffering is required to support
+\scheme{peek-char} and \scheme{unread-char}.
+Input is buffered by default, so the \scheme{buffered} option is useful
+only as documentation.
+
+% flushed this: posix lockf works only on file descriptors open for writing
+%The mutually exclusive \scheme{exclusive} and \scheme{nonexclusive}
+%options determine whether access to the file is ``exclusive.''
+%When the exclusive option is specified, the file is locked until
+%the port is closed to prevent access by other processes.
+%On some systems the lock is advisory, i.e., it inhibits access by 
+%other processes only if they also attempt to open exclusively.
+%Nonexclusive access is the default, so the \scheme{nonexclusive} option
+%is useful only as documentation.
+
+For example, the call
+
+\schemedisplay
+(open-input-file "frob" '(compressed))
+\endschemedisplay
+
+opens the file frob with decompression enabled.
+
+The Revised$^6$ Report version of \scheme{open-input-file} does not
+support the optional \var{options} argument.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{call-with-input-file}{\categoryprocedure}{(call-with-input-file \var{path} \var{procedure})}
+\formdef{call-with-input-file}{\categoryprocedure}{(call-with-input-file \var{path} \var{procedure} \var{options})}
+\returns the values returned by \var{procedure}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{procedure} should accept one argument.
+
+\scheme{call-with-input-file} creates a new input port for the file named
+by \var{path}, as if with \scheme{open-input-file}, and passes this port to \var{procedure}.
+If \var{procedure} returns normally, \scheme{call-with-input-file} closes the input port
+and returns the values returned by \var{procedure}.
+
+\scheme{call-with-input-file} does not automatically close the input
+port if a continuation created outside of \var{procedure} is invoked, since it
+is possible that another continuation created inside of \var{procedure} will be
+invoked at a later time, returning control to \var{procedure}.
+If \var{procedure} does not return, an implementation is free to close the
+input port only if it can prove that the input port is no longer accessible.
+As shown in Section~\ref{TSPL:SECTCONTINUATIONS} of {\TSPLFOUR}, \scheme{dynamic-wind} may be used to
+ensure that the port is closed if a continuation created outside of
+\var{procedure} is invoked.
+
+See \scheme{open-input-file} above for a description of the optional
+\var{options} argument.
+
+The Revised$^6$ Report version of \scheme{call-with-input-file} does not
+support the optional \var{input} argument.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with-input-from-file}{\categoryprocedure}{(with-input-from-file \var{path} \var{thunk})}
+\formdef{with-input-from-file}{\categoryprocedure}{(with-input-from-file \var{path} \var{thunk} \var{options})}
+\returns the values returned by \var{thunk}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{thunk} must be a procedure and should accept zero arguments.
+
+\scheme{with-input-from-file} temporarily changes the current input port to be the
+result of opening the file named by \var{path}, as if with \scheme{open-input-file}, during the
+application of \var{thunk}.
+If \var{thunk} returns, the port is closed and the current input port
+is restored to its old value.
+
+The behavior of \scheme{with-input-from-file} is unspecified
+if a continuation created outside
+of \var{thunk} is invoked before \var{thunk} returns.
+An implementation may close the port and restore the current input
+port to its old value---but it may not.
+
+See \scheme{open-input-file} above for a description of the optional
+\var{options} argument.
+
+The Revised$^6$ Report version of \scheme{with-input-from-file} does not
+support the optional \var{options} argument.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-fd-input-port}{\categoryprocedure}{(open-fd-input-port \var{fd})}
+\formdef{open-fd-input-port}{\categoryprocedure}{(open-fd-input-port \var{fd} \var{b-mode})}
+\formdef{open-fd-input-port}{\categoryprocedure}{(open-fd-input-port \var{fd} \var{b-mode} \var{?transcoder})}
+\returns a new input port for the file descriptor \var{fd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fd} must be a nonnegative exact integer and should be a valid
+open file descriptor.
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual input port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary input port.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The file descriptor is closed when the port is closed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{standard-input-port}{\categoryprocedure}{(standard-input-port)}
+\formdef{standard-input-port}{\categoryprocedure}{(standard-input-port \var{b-mode})}
+\formdef{standard-input-port}{\categoryprocedure}{(standard-input-port \var{b-mode} \var{?transcoder})}
+\returns a new input port connected to the process's standard input
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual input port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary input port.
+The buffer mode \var{b-mode} defaults to \scheme{block}, which differs from
+\scheme{block} in {\ChezScheme} only for textual output ports.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The Revised$^6$ Report version of this procedure does not accept the
+optional \var{b-mode} and \var{?transcoder} arguments, which limits
+it to an implementation-dependent buffering mode (\scheme{block} in
+{\ChezScheme}) and binary output.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-string-some}{\categoryprocedure}{(get-string-some \var{textual-input-port})}
+\returns a nonempty string or the eof object
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{textual-input-port} is at end of file, the eof object is returned.
+Otherwise, \scheme{get-string-some} reads (as if with \scheme{get-u8})
+at least one character and possibly more, and returns a string containing
+these characters.
+The port's position is advanced past the characters read.
+The maximum number of characters read by this operation is implementation-dependent.
+
+An exception to the ``at least one character'' guarantee occurs
+if the port is in nonblocking mode (see \scheme{set-port-nonblocking!})
+and no input is ready.
+In this case, an empty string is returned.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-string-some!}{\categoryprocedure}{(get-string-some! \var{textual-input-port} \var{string} \var{start} \var{n})}
+\returns the count of characters read or the eof object
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{n} must be exact nonnegative integers, and the sum of
+\var{start} and \var{n} must not exceed the length of \var{string}.
+
+If \var{textual-input-port} is at end of file, the eof object is returned.
+Otherwise, this procedure reads (as if with \scheme{get-char})
+as many characters, up to \var{n}, as are available before the port is at end
+of file, stores the characters in consecutive locations of \var{string}
+starting at \var{start}, and returns the count of characters read as an exact
+positive integer.
+The port's position is advanced past the characters read.
+
+If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
+the number of characters read may be less than \var{n} even if the port is
+not at end of file after the operation has completed, if the system
+would have to block to wait for more characters.
+Similarly, zero may be returned even if the port is ultimately determined
+to be at end of file, if this cannot be determined without blocking.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-bytevector-some!}{\categoryprocedure}{(get-bytevector-some! \var{binary-input-port} \var{bytevector} \var{start} \var{n})}
+\returns the count of bytes read or the eof object
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{n} must be exact nonnegative integers, and the sum of
+\var{start} and \var{n} must not exceed the length of \var{bytevector}.
+
+If \var{bytevector-input-port} is at end of file, the eof object is returned.
+Otherwise, this procedure reads (as if with \scheme{get-u8})
+as many bytes, up to \var{n}, as are available before the port is at end
+of file, stores the bytes in consecutive locations of \var{bytevector}
+starting at \var{start}, and returns the count of bytes read as an exact
+positive integer.
+The port's position is advanced past the bytes read.
+
+If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
+the number of bytes read may be less than \var{n} even if the port is
+not at end of file after the operation has completed, if the system
+would have to block to wait for more bytes.
+Similarly, zero may be returned even if the port is ultimately determined
+to be at end of file, if this cannot be determined without blocking.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{unread-char}{\categoryprocedure}{(unread-char \var{char})}
+\formdef{unread-char}{\categoryprocedure}{(unread-char \var{char} \var{textual-input-port})}
+\formdef{unget-char}{\categoryprocedure}{(unget-char \var{textual-input-port} \var{char})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+For \scheme{unread-char}, if \var{textual-input-port} is not supplied, it
+defaults to the current input port.
+These procedures ``unread'' the last character read from
+\scheme{textual-input-port}.
+\var{char} may or may not be ignored, depending upon the implementation.
+In any case, \var{char} should be last character read from the port.
+A character should not be unread twice on the same port
+without an intervening call to \scheme{read-char} or \scheme{get-char}.
+
+\scheme{unread-char} and \scheme{unget-char} are provided for applications
+requiring one character of lookahead and may be used in place of, or even
+in combination with, \scheme{peek-char} or \scheme{lookahead-char}.
+One character of lookahead is required in the procedure
+\scheme{read-word}, which is defined below in terms of \scheme{unread-char}.
+\scheme{read-word} returns the next word from a textual input port as a string, where
+a word is defined to be a sequence of alphabetic characters.
+Since it does not know until it reads one character too many that it has
+read the entire word, \scheme{read-word} uses \scheme{unread-char} to
+return the character to the input port.
+
+\schemedisplay
+(define read-word
+  (lambda (p)
+    (list->string
+      (let f ([c (read-char p)])
+        (cond
+          [(eof-object? c) '()]
+          [(char-alphabetic? c)
+           (cons c (f (read-char p)))]
+          [else
+           (unread-char c p)
+           '()])))))
+\endschemedisplay
+
+\noindent
+In the alternate version below, \scheme{peek-char} is used instead of
+\scheme{unread-char}.
+
+\schemedisplay
+(define read-word
+  (lambda (p)
+    (list->string
+      (let f ([c (peek-char p)])
+        (cond
+          [(eof-object? c) '()]
+          [(char-alphabetic? c)
+           (read-char p)
+           (cons c (f (peek-char p)))]
+          [else '()])))))
+\endschemedisplay
+
+\noindent
+The advantage of \scheme{unread-char} in this situation is that only
+one call to \scheme{unread-char} per word is required, whereas one
+call to \scheme{peek-char} is required for each character in the word
+plus the first character beyond.
+In many cases, \scheme{unread-char} and \scheme{unget-char} do not enjoy
+this advantage, and \scheme{peek-char} or \scheme{lookahead-char}
+should be used instead.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{unget-u8}{\categoryprocedure}{(unget-u8 \var{binary-input-port} \var{octet})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+This procedures ``unreads'' the last byte read from
+\scheme{binary-input-port}.
+\var{octet} may or may not be ignored, depending upon the implementation.
+In any case, \var{octet} should be last byte read from the port.
+A byte should not be unread twice on the same port
+without an intervening call to \scheme{get-u8}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{input-port-ready?}{\categoryprocedure}{(input-port-ready? \var{input-port})}
+\returns \scheme{#t} if data is available on \var{input-port}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\scheme{input-port-ready?} allows a program to check to see if input is
+available on a textual or binary input port without hanging.
+If input is available or the port is at end of file,
+\scheme{input-port-ready?} returns \scheme{#t}.
+If it cannot determine from the port whether input is ready, 
+\scheme{input-port-ready?} raises an exception with condition type
+\scheme{&i/o-read-error}.
+Otherwise, it returns \scheme{#f}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-ready?}{\categoryprocedure}{(char-ready?)}
+\formdef{char-ready?}{\categoryprocedure}{(char-ready? \var{textual-input-port})}
+\returns \scheme{#t} if a character is available on \var{textual-input-port}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{textual-input-port} is not supplied, it defaults to the current input port.
+\scheme{char-ready?} is like \scheme{input-port-ready?} except it is
+restricted to textual input ports.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{block-read}{\categoryprocedure}{(block-read \var{textual-input-port} \var{string})}
+\formdef{block-read}{\categoryprocedure}{(block-read \var{textual-input-port} \var{string} \var{count})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{count} must be a nonnegative fixnum less than or equal to the
+length of \var{string}.
+If not provided, it defaults to the length of \var{string}.
+
+If \var{textual-input-port} is at end-of-file, an eof object is returned.
+Otherwise, \var{string} is filled with as many characters as are
+available for reading from \var{textual-input-port} up to \var{count},
+and the number of characters placed in the string is returned.
+
+If \var{textual-input-port} is buffered and the buffer is nonempty,
+the buffered input or a portion thereof is returned; otherwise
+\scheme{block-read} bypasses the buffer entirely.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{read-token}{\categoryprocedure}{(read-token)}
+\formdef{read-token}{\categoryprocedure}{(read-token \var{textual-input-port})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+Parsing of a Scheme datum is conceptually performed in two steps.
+First, the sequence of characters that form the datum are grouped into
+\scheme{tokens}, such as symbols, numbers, left parentheses, and
+double quotes.
+During this first step, whitespace and comments are discarded.
+Second, these tokens are grouped into data.
+
+\scheme{read} performs both of these steps and creates an internal
+representation of each datum it parses.
+\scheme{read-token} may be used to perform the first step only, one
+token at a time.
+\scheme{read-token} is intended to be used by editors and program
+formatters that must be able to parse a program or datum without
+actually reading it.
+
+If \var{textual-input-port} is not supplied, it defaults to the current input port.
+One token is read from the input port and returned as four values:
+
+\begin{description}
+\item[\var{type}:] a symbol describing the type of token read,
+
+\item[\var{value}:] the token value,
+
+\item[\var{start}:] the position of the first character of the token,
+relative to the starting position of the input port, and
+
+\item[\var{end}:] the first position beyond the token,
+relative to the starting position of the input port.
+\end{description}
+
+\noindent
+When the token type fully specifies the token,
+\scheme{read-token} returns \scheme{#f} for the value.
+The token types are listed below with the corresponding \var{value}
+in parentheses.
+
+\begin{description}
+\item[\scheme{atomic}] (\var{atom}) an atomic value, i.e., 
+    a symbol, boolean, number, character, \scheme{#!eof},
+    or \scheme{#!bwp}
+\item[\scheme{box}] (\scheme{#f}) box prefix, i.e.,  \scheme{#&}
+\item[\scheme{dot}] (\scheme{#f}) dotted pair separator, i.e., \scheme{.}
+\item[\scheme{eof}] (\scheme{#!eof}) end of file
+\item[\scheme{fasl}] (\scheme{#f}) fasl prefix, i.e., \scheme{#@}
+\item[\scheme{insert}] (\var{n}) graph reference, i.e., \scheme{#\var{n}#}
+\item[\scheme{lbrack}] (\scheme{#f}) open square bracket
+\item[\scheme{lparen}] (\scheme{#f}) open parenthesis
+\item[\scheme{mark}] (\var{n}) graph mark, i.e., \scheme{#\var{n}=}
+\item[\scheme{quote}] (\scheme{quote}, \scheme{quasiquote},
+    \scheme{syntax}, \scheme{unquote}, \scheme{unquote-splicing},
+    or \scheme{datum-comment})
+    an abbreviation mark, e.g., \scheme{'} or \scheme{,@} or
+    datum-comment prefix
+\item[\scheme{rbrack}] (\scheme{#f}) close square bracket
+\item[\scheme{record-brack}] (\scheme{#f}) record open bracket, i.e., \scheme{#[}
+\item[\scheme{rparen}] (\scheme{#f}) close parenthesis
+\item[\scheme{vfxnparen}] (\var{n}) fxvector prefix, i.e., \scheme{#\var{n}vfx(}
+\item[\scheme{vfxparen}] (\scheme{#f}) fxvector prefix, i.e., \scheme{#vfx(}
+\item[\scheme{vnparen}] (\var{n}) vector prefix, i.e., \scheme{#\var{n}(}
+\item[\scheme{vparen}] (\scheme{#f}) vector prefix, i.e., \scheme{#(}
+\item[\scheme{vu8nparen}] (\var{n}) bytevector prefix, i.e., \scheme{#\var{n}vu8(}
+\item[\scheme{vu8paren}] (\scheme{#f}) bytevector prefix, i.e., \scheme{#vu8(}
+\end{description}
+
+\noindent
+The set of token types is likely to change in future releases of the
+system; check the release notes for details on such changes.
+
+The input port is left pointing to the first character position beyond
+the token, i.e., \var{end} characters from the starting position.
+
+\schemedisplay
+(define s (open-input-string "(a b c)"))
+(read-token s) ;=> lparen
+                   #f
+                   0
+                   1
+(define s (open-input-string "abc 123"))
+(read-token s) ;=> atomic
+                   abc
+                   0
+                   3
+(define s (open-input-string ""))
+(read-token s) ;=> eof
+                   #!eof
+                   0
+                   0
+(define s (open-input-string "#7=#7#"))
+(read-token s) ;=> mark
+                   7
+                   0
+                   3
+(read-token s) ;=> insert
+                   7
+                   3
+                   6
+\endschemedisplay
+
+The information \scheme{read-token} returns is not always
+sufficient for reconstituting the exact sequence of characters that
+make up a token.
+For example, \scheme{1.0} and \scheme{1e0} both return
+\var{type} \scheme{atomic} with \var{value} \scheme{1.0}.
+The exact sequence of characters may be obtained only by repositioning
+the port and reading a block of characters of the appropriate length,
+using the relative positions given by \var{start} and \var{end}.
+
+
+\section{Output Operations\label{SECTIOOUTPUT}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{console-output-port}{\categoryglobalparameter}{console-output-port}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{console-output-port} is a parameter that determines the
+output port used by the waiter and interactive debugger.
+When called with no arguments, it returns the
+console output port.
+When called with one argument, which must be a textual output port,
+it changes the value of the console
+output port.
+The initial value of this parameter is a port tied to the standard
+output (stdout) stream of the Scheme process.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-output-port}{\categorythreadparameter}{current-output-port}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{current-output-port} is a parameter that determines the
+default port argument for most output procedures,
+including \scheme{write-char}, \scheme{newline}, \scheme{write},
+\scheme{display}, and \scheme{pretty-print}.
+When called with no arguments, \scheme{current-output-port} returns the
+current output port.
+When called with one argument, which must be a textual output port,
+it changes the value of the current
+output port.
+The Revised$^6$ Report version of \scheme{current-output-port} accepts
+only zero arguments, i.e., it cannot be used to change the current output
+port.
+The initial value of this parameter is the same port as the initial
+value of \scheme{console-output-port}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{console-error-port}{\categorythreadparameter}{console-error-port}
+\listlibraries
+\endentryheader
+
+\scheme{console-error-port} is a parameter that can be used to set
+or obtain the console error port, which determines the port to which
+conditions and other messages are printed by the default exception
+handler.
+When called with no arguments, \scheme{console-error-port} returns the
+console error port.
+When called with one argument, which must be a textual output port,
+it changes the value of the console
+error port.
+
+If the system determines that the standard output (stdout) and standard
+error (stderr) streams refer to the same file, socket, pipe, virtual
+terminal, device, etc., this parameter is initially set to the same value
+as the parameter \scheme{console-output-port}.
+Otherwise, this parameter is initially set to a different port tied to the
+standard error (stderr) stream of the Scheme process.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-error-port}{\categorythreadparameter}{current-error-port}
+\listlibraries
+\endentryheader
+
+\scheme{current-error-port} is a parameter that can be used to set
+or obtain the current error port.
+When called with no arguments, \scheme{current-error-port} returns the
+current error port.
+When called with one argument, which must be a textual output port,
+it changes the value of the current error port.
+The Revised$^6$ Report version of \scheme{current-error-port} accepts
+only zero arguments, i.e., it cannot be used to change the current error
+port.
+The initial value of this parameter is the same port as the initial
+value of \scheme{console-error-port}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-output-file}{\categoryprocedure}{(open-output-file \var{path})}
+\formdef{open-output-file}{\categoryprocedure}{(open-output-file \var{path} \var{options})}
+\returns a new output port
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{open-output-file} opens a textual output port for the file named by
+\var{path}.
+
+\var{options}, if present, is a symbolic option name or option list.
+Possible symbolic option names are 
+\scheme{error}, \scheme{truncate}, \scheme{replace}, \scheme{append},
+\scheme{compressed}, \scheme{uncompressed}, \scheme{buffered},
+\scheme{unbuffered}, \scheme{exclusive}, and \scheme{nonexclusive}.
+An option list is a list containing zero or more symbolic option names
+and possibly the two-element
+option \scheme{mode \var{mode}}.
+
+The mutually exclusive \scheme{error}, \scheme{truncate},
+\scheme{replace}, and \scheme{append} options are used to direct what happens when
+the file to be opened already exists.
+\begin{description}
+\item[\scheme{error}:] An exception is raised with condition-type \scheme{&i/o-filename}.
+\item[\scheme{replace}:] The existing file is deleted before the new file
+is opened.
+\item[\scheme{truncate}:] The existing file is opened
+and truncated to zero length.
+\item[\scheme{append}:] 
+The existing file is opened
+and the output port is positioned at the end of the file before each write
+so that output to the port is always appended to the file.
+\end{description}
+The default behavior is to raise an exception.
+
+The mutually exclusive \scheme{compressed} and
+\scheme{uncompressed} options determine whether the output file is to
+be compressed.
+Compression is performed with the use of the
+zlib compression library developed by
+Jean-loup Gailly and Mark Adler.
+It is therefore compatible with the \scheme{gzip} program, which
+means that \scheme{gzip} may be used to uncompress files produced
+by {\ChezScheme} and visa versa.
+Files are uncompressed by default, so the \scheme{uncompressed}
+option is useful only as documentation.
+
+The mutually exclusive \scheme{buffered} and \scheme{unbuffered}
+options determine whether output is buffered.
+Unbuffered output is sent immediately to the file, whereas buffered
+output not written until the port's output buffer is filled or the
+port is flushed (via \scheme{flush-output-port}) or closed (via
+\scheme{flush-output-port} or by the storage management system when
+the port becomes inaccessible).
+Output is buffered by default for efficiency, so the
+\scheme{buffered} option is useful only as documentation.
+
+The mutually exclusive \scheme{exclusive} and \scheme{nonexclusive}
+options determine whether access to the file is ``exclusive.''
+When the exclusive option is specified, the file is locked until
+the port is closed to prevent access by other processes.
+On some systems the lock is advisory, i.e., it inhibits access by 
+other processes only if they also attempt to open exclusively.
+Nonexclusive access is the default, so the \scheme{nonexclusive} option
+is useful only as documentation.
+
+The \scheme{mode} option determines the permission bits
+on Unix systems when the file is created by the operation, subject
+to the process umask.
+The subsequent element in the options list must be an exact integer
+specifying the permissions in the manner of the Unix \scheme{open}
+function.
+The mode option is ignored under Windows.
+
+For example, the call
+
+\schemedisplay
+(open-output-file "frob" '(compressed truncate mode #o644))
+\endschemedisplay
+
+opens the file frob with compression enabled.
+If frob already exists it is truncated.
+On Unix-based systems, if frob does not already exist, the permission
+bits on the newly created file are set to logical and of \scheme{#o644} and the
+process's umask.
+
+The Revised$^6$ Report version of \scheme{open-output-file} does not
+support the optional \var{options} argument.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{call-with-output-file}{\categoryprocedure}{(call-with-output-file \var{path} \var{procedure})}
+\formdef{call-with-output-file}{\categoryprocedure}{(call-with-output-file \var{path} \var{procedure} \var{options})}
+\returns the values returned by \var{procedure}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{procedure} should accept one argument.
+
+\scheme{call-with-output-file} creates a new output port for the file named
+by \var{path}, as if with \scheme{open-output-file}, and passes this port to \var{procedure}.
+If \var{procedure} returns, \scheme{call-with-output-file} closes the output port
+and returns the values returned by \var{procedure}.
+
+\scheme{call-with-output-file} does not automatically close the output
+port if a continuation created outside of \var{procedure} is invoked, since it
+is possible that another continuation created inside of \var{procedure} will be
+invoked at a later time, returning control to \var{procedure}.
+If \var{procedure} does not return, an implementation is free to close the
+output port only if it can prove that the output port is no longer accessible.
+As shown in Section~\ref{TSPL:SECTCONTINUATIONS} of {\TSPLFOUR}, \scheme{dynamic-wind} may be used to
+ensure that the port is closed if a continuation created outside of
+\var{procedure} is invoked.
+
+See \scheme{open-output-file} above for a description of the optional
+\var{options} argument.
+
+The Revised$^6$ Report version of \scheme{call-with-output-file} does not
+support the optional \var{options} argument.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with-output-to-file}{\categoryprocedure}{(with-output-to-file \var{path} \var{thunk})}
+\formdef{with-output-to-file}{\categoryprocedure}{(with-output-to-file \var{path} \var{thunk} \var{options})}
+\returns the value returned by \var{thunk}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{thunk} must be a procedure and should accept zero arguments.
+
+\scheme{with-output-to-file} temporarily rebinds the current output port to be the
+result of opening the file named by \var{path}, as if with \scheme{open-output-file},
+during the application of \var{thunk}.
+If \var{thunk} returns, the port is closed and the current output port
+is restored to its old value.
+
+The behavior of \scheme{with-output-to-file} is unspecified if a
+continuation created outside of \var{thunk} is invoked before
+\var{thunk} returns.
+An implementation may close the port and restore the current output
+port to its old value---but it may not.
+
+See \scheme{open-output-file} above for a description of the optional
+\var{options} argument.
+
+The Revised$^6$ Report version of \scheme{with-output-to-file} does not
+support the optional \var{options} argument.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path})}
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path} \var{b-mode})}
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path} \var{b-mode} \var{?transcoder})}
+\returns a new output port for the file descriptor \var{fd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fd} must be a nonnegative exact integer and should be a valid
+open file descriptor.
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual output port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary output port.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The file descriptor is closed when the port is closed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{standard-output-port}{\categoryprocedure}{(standard-output-port)}
+\formdef{standard-output-port}{\categoryprocedure}{(standard-output-port \var{b-mode})}
+\formdef{standard-output-port}{\categoryprocedure}{(standard-output-port \var{b-mode} \var{?transcoder})}
+\returns a new output port connected to the process's standard output
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual output port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary output port.
+The buffer mode \var{b-mode} defaults to \scheme{line}, which differs from
+\scheme{block} in {\ChezScheme} only for textual output ports.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The Revised$^6$ Report version of this procedure does not accept the
+optional \var{b-mode} and \var{?transcoder} arguments, which limits
+it to an implementation-dependent buffering mode (\scheme{line} in
+{\ChezScheme}) and binary output.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{standard-error-port}{\categoryprocedure}{(standard-error-port)}
+\formdef{standard-error-port}{\categoryprocedure}{(standard-error-port \var{b-mode})}
+\formdef{standard-error-port}{\categoryprocedure}{(standard-error-port \var{b-mode} \var{?transcoder})}
+\returns a new output port connected to the process's standard error
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual output port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary output port.
+The buffer mode \var{b-mode} defaults to \scheme{none}.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The Revised$^6$ Report version of this procedure does not accept the
+optional \var{b-mode} and \var{?transcoder} arguments, which limits
+it to an implementation-dependent buffering mode (\scheme{none} in
+{\ChezScheme}) and binary output.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{put-bytevector-some}{\categoryprocedure}{(put-bytevector-some \var{binary-output-port} \var{bytevector})}
+\formdef{put-bytevector-some}{\categoryprocedure}{(put-bytevector-some \var{binary-output-port} \var{bytevector} \var{start})}
+\formdef{put-bytevector-some}{\categoryprocedure}{(put-bytevector-some \var{binary-output-port} \var{bytevector} \var{start} \var{n})}
+\returns the number of bytes written
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{n} must be nonnegative exact integers, and the sum of
+\var{start} and \var{n} must not exceed the length of \var{bytevector}.
+If not supplied, \var{start} defaults to zero and \var{n} defaults to
+the difference between the length of \var{bytevector} and \var{start}.
+
+This procedure normally writes the \var{n} bytes of \var{bytevector}
+starting at \var{start} to the port and advances the its position past the
+end of the bytes written.
+If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
+however, the number of bytes written may be less than \var{n}, if
+the system would have to block to write more bytes.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{put-string-some}{\categoryprocedure}{(put-string-some \var{textual-output-port} \var{string})}
+\formdef{put-string-some}{\categoryprocedure}{(put-string-some \var{textual-output-port} \var{string} \var{start})}
+\formdef{put-string-some}{\categoryprocedure}{(put-string-some \var{textual-output-port} \var{string} \var{start} \var{n})}
+\returns the number of characters written
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{n} must be nonnegative exact integers, and the sum of
+\var{start} and \var{n} must not exceed the length of \var{string}.
+If not supplied, \var{start} defaults to zero and \var{n} defaults to
+the difference between the length of \var{string} and \var{start}.
+
+This procedure normally writes the \var{n} characters of \var{string}
+starting at \var{start} to the port and advances the its position past the
+end of the characters written.
+If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
+however, the number of characters written may be less than \var{n}, if
+the system would have to block to write more characters.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{display-string}{\categoryprocedure}{(display-string \var{string})}
+\formdef{display-string}{\categoryprocedure}{(display-string \var{string} \var{textual-output-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{display-string} writes the characters contained within
+\var{string} to \var{textual-output-port} or to the current-output port 
+if \scheme{textual-output-port} is not specified.
+The enclosing string quotes are not printed, and special characters
+within the string are not escaped.
+\scheme{display-string} is a more efficient alternative to
+\scheme{display} for displaying strings.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{block-write}{\categoryprocedure}{(block-write \var{textual-output-port} \var{string})}
+\formdef{block-write}{\categoryprocedure}{(block-write \var{textual-output-port} \var{string} \var{count})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{count} must be a nonnegative fixnum less than or equal to the
+length of \var{string}.
+If not provided, it defaults to the length of \var{string}.
+
+\scheme{block-write} writes the first \var{count} characters of \var{string}
+to \var{textual-output-port}.
+If the port is buffered and the buffer is nonempty, the
+buffer is flushed before the contents of \var{string} are written.
+In any case, the contents of \var{string} are written immediately,
+without passing through the buffer.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{truncate-port}{\categoryprocedure}{(truncate-port \var{output-port})}
+\formdef{truncate-port}{\categoryprocedure}{(truncate-port \var{output-port} \var{pos})}
+\formdef{truncate-file}{\categoryprocedure}{(truncate-file \var{output-port})}
+\formdef{truncate-file}{\categoryprocedure}{(truncate-file \var{output-port} \var{pos})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{truncate-port} and \scheme{truncate-file} are identical.
+
+\var{pos} must be an exact nonnegative integer.  It defaults to 0.
+
+These procedures truncate the file or other object associated with
+\var{output-port} to \var{pos} and repositions the port
+to that position, i.e., it combines the functionality of
+\scheme{set-port-length!} and \scheme{set-port-position!} and
+can be called on a port only if \scheme{port-has-set-port-length!?} and
+\scheme{port-has-set-port-position!?} are both true of the port.
+
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:fresh-line}
+\formdef{fresh-line}{\categoryprocedure}{(fresh-line)}
+\formdef{fresh-line}{\categoryprocedure}{(fresh-line \var{textual-output-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{textual-output-port} is not supplied, it defaults to the current output port.
+
+This procedure behaves like \scheme{newline}, i.e., sends a newline
+character to \var{textual-output-port}, unless it can determine that the port
+is already positioned at the start of a line.
+It does this by flushing the port and consulting the
+``beginning-of-line'' (BOL) flag associated with the port.
+(See page~\pageref{desc:set-port-bol}.)
+
+
+\section{Input/Output Operations\label{SECTIOINPUTOUTPUT}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{open-input-output-file}{\categoryprocedure}{(open-input-output-file \var{path})}
+\formdef{open-input-output-file}{\categoryprocedure}{(open-input-output-file \var{path} \var{options})}
+\returns a new input-output port
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{open-input-output-file} opens a textual input-output port for the file named by
+\var{path}.
+
+The port may be used to read from or write to the named file.
+The file is created if it does not already exist.
+
+\var{options}, if present, is a symbolic option name or option list.
+Possible symbolic option names are 
+\scheme{buffered},
+\scheme{unbuffered}, \scheme{exclusive}, and \scheme{nonexclusive}.
+An option list is a list containing zero or more symbolic option names
+and possibly the two-element
+option \scheme{mode \var{mode}}.
+See the description of \scheme{open-output-file} for an explanation
+of these options.
+
+Input/output files are usually closed using \scheme{close-port}
+but may also be closed with either
+\scheme{close-input-port} or
+\scheme{close-output-port}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path})}
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path} \var{b-mode})}
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path} \var{b-mode} \var{?transcoder})}
+\returns a new input/output port for the file descriptor \var{fd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fd} must be a nonnegative exact integer and should be a valid
+open file descriptor.
+If \var{?transcoder} is present and not \scheme{#f}, it must be a
+transcoder, and this procedure returns a textual input/output port
+whose transcoder is \var{?transcoder}.
+Otherwise, this procedure returns a binary input/output port.
+See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
+for a description of the constraints on and effects of the other
+arguments.
+
+The file descriptor is closed when the port is closed.
+
+
+\section{Non-Unicode Bytevector/String Conversions\label{SECTMBCONVS}}
+
+The procedures described in this section convert bytevectors containing
+single- and multiple-byte sequences in non-Unicode character sets to and
+from Scheme strings.
+They are available only under Windows.
+Under other operating systems, and when an \scheme{iconv} DLL is
+available under Windows, \scheme{bytevector->string} and
+\scheme{string->bytevector} can be used with a transcoder based
+on a codec constructed via
+\index{\scheme{iconv-codec}}\scheme{iconv-codec}
+to achieve the same results, with more control over the handling
+of invalid characters and line endings.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{multibyte->string}{\categoryprocedure}{(multibyte->string \var{code-page} \var{bytevector})}
+\returns a string containing the characters encoded in \var{bytevector}
+\formdef{string->multibyte}{\categoryprocedure}{(string->multibyte \var{code-page} \var{string})}
+\returns a bytevector containing the encodings of the characters in \var{string}
+\listlibraries
+\endentryheader
+
+These procedures are available only under Windows.
+The procedure \scheme{multibyte->string} is a wrapper for the Windows API
+\scheme{MultiByteToWideChar} function,
+and \scheme{string->multibyte} is a wrapper for the Windows API
+\scheme{WideCharToMultiByte} function.
+
+\var{code-page} declares the encoding of the byte sequences in the input
+or output bytevectors.
+It must be an exact nonnegative integer identifying a code page or one of
+the symbols \scheme{cp-acp}, \scheme{cp-maccp}, \scheme{cp-oemcp},
+\scheme{cp-symbol}, \scheme{cp-thread-acp}, \scheme{cp-utf7}, or
+\scheme{cp-utf8}, which have the same meanings as the API function
+meanings for the like-named constants.
+
+\section{Pretty Printing\label{SECTPRETTY}}
+
+The pretty printer is a version of the \scheme{write} procedure that
+produces more human-readable output via introduced whitespace, i.e.,
+line breaks and indentation.
+The pretty printer is the default printer used by the read-eval-print
+loop (waiter) to print the output(s) of each evaluated form.
+The pretty printer may also be invoked explicitly by calling the
+procedure \scheme{pretty-print}.
+
+The pretty printer's operation can be controlled via the \scheme{pretty-format}
+procedure described later in this section, which allows the
+programmer to specify how specific forms are to be printed, various
+pretty-printer controls, also described later in this section, and also
+by the generic input/output controls described in Section~\ref{SECTMISCIOCONTROL}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-print}{\categoryprocedure}{(pretty-print \var{obj})}
+\formdef{pretty-print}{\categoryprocedure}{(pretty-print \var{obj} \var{textual-output-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{textual-output-port} is not supplied, it defaults to the current output port.
+
+\scheme{pretty-print} is similar to \scheme{write} except that it uses
+any number of spaces and newlines in order to print \var{obj} in a
+style that is pleasing to look at and which shows the nesting level via
+indentation.
+For example,
+
+\schemedisplay
+(pretty-print '(define factorial (lambda (n) (let fact ((i n) (a 1))
+  (if (= i 0) a (fact (- i 1) (* a i)))))))
+\endschemedisplay
+
+\noindent
+might produce
+
+\schemedisplay
+(define factorial
+  (lambda (n)
+    (let fact ([i n] [a 1])
+      (if (= i 0) a (fact (- i 1) (* a i))))))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-file}{\categoryprocedure}{(pretty-file \var{ifn} \var{ofn})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{ifn} and \var{ofn} must be strings.
+\scheme{pretty-file} reads each object in turn from the file named by
+\var{ifn} and pretty prints the object to the file named by \var{ofn}.
+Comments present in the input are discarded by the reader and so do
+not appear in the output file.
+If the file named by \var{ofn} already exists, it is replaced.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-format}{\categoryprocedure}{(pretty-format \var{sym})}
+\returns see below
+\formdef{pretty-format}{\categoryprocedure}{(pretty-format \var{sym} \var{fmt})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+By default, the pretty printer uses a generic algorithm for printing
+each form.
+This procedure is used to override this default and guide the
+pretty-printers treatment of specific forms.
+The symbol \var{sym} names a syntactic form or procedure.
+With just one argument, \scheme{pretty-format} returns the current
+format associated with \var{sym}, or \scheme{#f} if no format is
+associated with \var{sym}.
+
+In the two-argument case, the format \var{fmt} is associated with
+\var{sym} for future invocations of the pretty printer.
+\var{fmt} must be in the formatting language described below.
+
+\begin{grammar}
+\ang{fmt}\longis\scheme{(quote \var{symbol})}\\
+  \orbar\scheme{var}\\
+  \orbar\scheme{\var{symbol}}\\
+  \orbar\scheme{(read-macro \var{string} \var{symbol})}\\
+  \orbar\scheme{(meta)}\\
+  \orbar\scheme{(bracket . \var{fmt-tail})}\\
+  \orbar\scheme{(alt \var{fmt} \var{fmt}*)}\\
+  \orbar\scheme{\var{fmt-tail}}\\
+\var{fmt-tail}\longis\scheme{()}\\
+  \orbar\scheme{(\var{tab} \var{fmt} ...)}\\
+  \orbar\scheme{(\var{fmt} \var{tab} ...)}\\
+  \orbar\scheme{(\var{tab} \var{fmt} . \var{fmt-tail})}\\
+  \orbar\scheme{(\var{fmt} ...)}\\
+  \orbar\scheme{(\var{fmt} . \var{fmt-tail})}\\
+  \orbar\scheme{(fill \var{tab} \var{fmt} ...)}\\
+\var{tab}\longis\scheme{\var{int}}\\
+  \orbar\scheme{#f}
+\end{grammar}
+
+Some of the format forms are used for matching when there are multiple
+alternatives, while others are used for matching and control indentation
+or printing.
+A description of each \var{fmt} is given below.
+
+\begin{description}
+\item[\scheme{(quote \var{symbol})}:]
+This matches only the symbol \var{symbol}.
+
+\item[\scheme{var}:]
+This matches any symbol.
+
+\item[\scheme{\var{symbol}}:]
+This matches any input.
+
+\item[\scheme{(read-macro \var{string} \var{symbol})}:]
+This is used for read macros like \scheme{quote} and \var{syntax}.
+It matches any input of the form (\var{symbol} \var{subform}).
+For forms that match, the pretty printer prints
+\var{string} immediately followed by \var{subform}.
+
+\item[\scheme{(meta)}:]
+This is a special case used for the \scheme{meta} keyword
+(Section~\ref{SECTSYNTAXMETA}) which is used as a keyword prefix of
+another form.
+
+\item[\scheme{(alt \var{fmt} \var{fmt}*)}:]
+This compares the input against the specified formats and uses the
+one that is the closest match.
+Most often, one of the formats will match exactly, but in other
+cases, as when input is malformed or appears in abstract form in the
+template of a syntactic abstraction, none of the formats will match
+exactly.
+
+\item[\scheme{(bracket . \var{fmt-tail})}:]
+This matches any list-structured input and prints the input enclosed
+in square brackets, i.e.,
+\index{\scheme{[}}\scheme{[} and \index{\scheme{]}}\scheme{]},
+rather than parentheses.
+
+\item[\scheme{\var{fmt-tail}}:]
+This matches any list-structured input.
+\end{description}
+
+Indentation of list-structured forms is determined via the
+\var{fmt-tail} specifier used to the last two cases above.
+A description of each \var{fmt-tail} is given below.
+
+\begin{description}
+\item[\scheme{()}:]
+This matches an empty list tail.
+
+\item[\scheme{(\var{tab} \var{fmt} ...)}:]
+This matches the tail of any proper list; if the tail is nonempty
+and the list does not fit entirely on the current line, a line break is
+inserted before the first subform of the tail and \var{tab} (see
+below) determines the amount by which this and all subsequent subforms
+are indented.
+
+\item[\scheme{(\var{fmt} \var{tab} ...)}:]
+This matches the tail of any proper list; if the tail is nonempty
+and the list does not fit entirely on the current line, a line break is
+inserted after the first subform of the tail and \var{tab} (see
+below) determines the amount by which all subsequent subforms are
+indented.
+
+\item[\scheme{(\var{tab} \var{fmt} . \var{fmt-tail})}:]
+This matches a nonempty tail if the tail of the tail matches \var{fmt-tail}.
+If the list does not fit entirely on the current line, a line break is
+inserted before the first subform of the tail and \var{tab} (see
+below) determines the amount by which the subform is indented.
+
+\item[\scheme{(\var{fmt} ...)}:]
+This matches the tail of any proper list and specified that no
+line breaks are to be inserted before or after the current or
+subsequent subforms.
+
+\item[\scheme{(\var{fmt} . \var{fmt-tail})}:]
+This matches a nonempty tail if the tail of the tail matches \var{fmt-tail}
+and specifies that no line break is to be inserted before or after
+the current subform.
+
+\item[\scheme{(fill \var{tab} \var{fmt} ...)}:]
+This matches the tail of any proper list and invokes a fill mode in
+which the forms are packed with as many as will fit on each line.
+\end{description}
+
+A \var{tab} determines the amount by which a list subform is indented.
+If \var{tab} is a nonnegative exact integer \var{int}, the subform
+is indented \var{int} spaces in from the character position just after
+the opening parenthesis or bracket of the parent form.
+If \var{tab} is \scheme{#f}, the standard indentation is used.
+The standard indentation can be determined or changed via the parameter
+\scheme{pretty-standard-indent}, which is described later in this
+section.
+
+In cases where a format is given that doesn't quite match, the pretty
+printer tries to use the given format as far as it can.
+For example, if a format matches a list-structured form with a specific
+number of subforms, but more or fewer subform are given, the pretty
+printer will discard or replicate subform formats as necessary.
+
+Here is an example showing the formatting of \var{let} might be specified.
+
+\schemedisplay
+(pretty-format 'let
+  '(alt (let ([bracket var x] 0 ...) #f e #f e ...)
+        (let var ([bracket var x] 0 ...) #f e #f e ...)))
+\endschemedisplay
+
+Since \scheme{let} comes in two forms, named and unnamed, two alternatives
+are specified.
+In either case, the \scheme{bracket} \var{fmt} is used to enclose the
+bindings in square brackets, with all bindings after the first appearing
+just below the first (and just after the enclosing opening parenthesis),
+if they don't all fit on one line.
+Each body form is indented by the standard indentation.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-line-length}{\categorythreadparameter}{pretty-line-length}
+\formdef{pretty-one-line-limit}{\categorythreadparameter}{pretty-one-line-limit}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of each of these parameters must be a positive fixnum.
+
+The parameters \scheme{pretty-line-length} and
+\scheme{pretty-one-line-limit} control the output produced by
+\index{\scheme{pretty-print}}\scheme{pretty-print}.
+\scheme{pretty-line-length} determines after which character position (starting
+from the first) on a line the pretty printer attempts to cut off output.
+This is a soft limit only; if necessary, the pretty-printer will go beyond
+\scheme{pretty-line-length}.
+
+\scheme{pretty-one-line-limit} is similar to
+\scheme{pretty-line-length}, except that it is relative to the first
+nonblank position on each line of output.
+It is also a soft limit.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-initial-indent}{\categorythreadparameter}{pretty-initial-indent}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of this parameter must be a nonnegative fixnum.
+
+The parameter \scheme{pretty-initial-indent} is used to tell
+\index{\scheme{pretty-print}}\scheme{pretty-print} where on an output
+line it has been called.
+If \scheme{pretty-initial-indent} is zero (the default), \scheme{pretty-print}
+assumes that the first line of output it produces will start at the
+beginning of the line.
+If set to a nonzero value \var{n}, \scheme{pretty-print} assumes that the first
+line will appear at character position \var{n} and will adjust its
+printing of subsequent lines.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-standard-indent}{\categorythreadparameter}{pretty-standard-indent}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of this parameter must be a nonnegative fixnum.
+
+This determines the amount by which
+\scheme{pretty-print} indents subexpressions of most forms, such as \scheme{let}
+expressions, from the form's keyword or first subexpression.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pretty-maximum-lines}{\categorythreadparameter}{pretty-maximum-lines}
+\listlibraries
+\endentryheader
+
+\noindent
+The parameter \scheme{pretty-maximum-lines} controls how many lines
+\scheme{pretty-print} prints when it is called.
+If set to \scheme{#f} (the default), no limit is imposed; if set to a
+nonnegative fixnum \var{n}, at most \var{n} lines are printed.
+
+
+\section{Formatted Output\label{SECTFORMAT}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{format}{\categoryprocedure}{(format \var{format-string} \var{obj} \dots)}
+\formdef{format}{\categoryprocedure}{(format #f \var{format-string} \var{obj} \dots)}
+\formdef{format}{\categoryprocedure}{(format #t \var{format-string} \var{obj} \dots)}
+\formdef{format}{\categoryprocedure}{(format \var{textual-output-port} \var{format-string} \var{obj} \dots)}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\index{formatted output}%
+When the first argument to format is a string or \scheme{#f} (first and
+second forms above),
+\scheme{format} constructs an output string from \var{format-string} and the
+objects \scheme{\var{obj} \dots}.
+Characters are copied from \var{format-string} to the output string from
+left to right, until \var{format-string} is exhausted.
+The format string may contain one or more \var{format directives}, which are
+multi-character sequences prefixed by a a tilde (~\scheme{~}~).
+Each directive is replaced by some other text, often involving one or more
+of the \scheme{\var{obj} \dots} arguments, as determined by the semantics
+of the directive.
+
+When the first argument is \scheme{#t}, output is sent to the current output
+port instead, as with \scheme{printf}.
+When the first argument is a port, output is sent to that port, as with
+\scheme{fprintf}.
+\scheme{printf} and \scheme{fprintf} are described later in this section.
+
+{\ChezScheme}'s implementation of \scheme{format} supports all of the
+Common Lisp~\cite{Steele:common} format directives except for those specific
+to the Common Lisp pretty printer.
+Please consult a Common Lisp reference or the
+\hyperlink{http://www.lispworks.com/documentation/HyperSpec/Front/index.htm}{Common Lisp Hyperspec},
+for complete documentation.
+A few of the most useful directives are described below.
+
+% \begin{itemize}
+% \item \scheme{~s}
+% is replaced by the printed representation of the next \var{obj}, which
+% may be any object, in machine-readable format, as with \scheme{write}.
+% ``s'' is used for compatibility with \index{Common Lisp}Common Lisp, where it stands for
+% ``s-expression,'' the Lisp term for object.
+% 
+% \item \scheme{~a}
+% is replaced by the printed representation of the next \var{obj}, which
+% may be any object, in human-readable format, as with \scheme{display}.
+% ``a'' is used for compatibility with \index{Common Lisp}Common Lisp, where it stands for
+% ``ascii.''
+% 
+% \item \scheme{~c}
+% is replaced by the next \var{obj}, which must be a character, as with
+% \scheme{write-char}.
+% 
+% \item \scheme{~%}
+% is replaced by a newline character, as with \scheme{newline}.
+% 
+% \item \scheme{~~}
+% is replaced by a single tilde.
+% \end{itemize}
+% 
+% An exception is raised with condition-type \scheme{&assertion}
+% if more or fewer \var{objs} are given than required by
+% a \var{format-string} that requires a fixed number of objects, or if the
+% format string is malformed in any way.
+
+Absent any format directives, \scheme{format} simply displays its string
+argument.
+
+\schemedisplay
+(format "hi there") ;=> "hi there"
+\endschemedisplay
+
+The \scheme{~s} directive is replaced by the printed representation of
+the next \var{obj}, which may be any object, in machine-readable format,
+as with \scheme{write}.
+
+\schemedisplay
+(format "hi ~s" 'mom) ;=> "hi mom"
+(format "hi ~s" "mom") ;=> "hi \"mom\""
+(format "hi ~s~s" 'mom #\!) ;=> "hi mom#\\!"
+\endschemedisplay
+
+The general form of a \scheme{~s} directive is actually
+\scheme{~\var{mincol},\var{colinc},\var{minpad},\var{padchar}s},
+and the \scheme{s} can be preceded by an at sign (~\scheme{@}~)
+modifier.
+These additional parameters are used to control padding in the
+output, with at least \var{minpad} copies of \var{padchar}
+plus an integer multiple of \var{colinc} copies of \var{padchar}
+to make the total width, including the written object,
+\var{mincol} characters wide.
+The padding is placed on the left if the \var{@} modifier is
+present, otherwise on the right.
+\var{mincol} and \var{minpad} default to 0, \var{colinc} defaults
+to 1, and \var{padchar} defaults to space.
+If specified, \var{padchar} is prefixed by a single quote mark.
+
+\schemedisplay
+(format "~10s" 'hello) ;=> "hello     "
+(format "~10@s" 'hello) ;=> "     hello"
+(format "~10,,,'*@s" 'hello) ;=> "*****hello"
+\endschemedisplay
+
+The \scheme{~a} directive is similar, but prints the object as with
+\scheme{display}.
+
+\schemedisplay
+(format "hi ~s~s" "mom" #\!) ;=> "hi \"mom\"#\\!"
+(format "hi ~a~a" "mom" #\!) ;=> "hi mom!"
+\endschemedisplay
+
+A tilde may be inserted into the output with \scheme{~~}, and a newline
+may be inserted with \scheme{~%} (or embedded in the string with
+\scheme{\n}).
+
+\schemedisplay
+(format "~~line one,~%line two.~~") ;=> "~line one,\nline two.~"
+(format "~~line one,\nline two.~~") ;=> "~line one,\nline two.~"
+\endschemedisplay
+
+Real numbers may be printed in floating-point notation with \scheme{~f}.
+
+\schemedisplay
+(format "~f" 3.14159) ;=> 3.14159
+\endschemedisplay
+
+Exact numbers may printed as well as inexact numbers in this manner; they
+are simply converted to inexact first as if with \scheme{exact->inexact}.
+
+\schemedisplay
+(format "~f" 1/3) ;=> "0.3333333333333333"
+\endschemedisplay
+
+The general form is actually \scheme{~\var{w},\var{d},\var{k},\var{overflowchar},\var{padchar}f}.
+If specified, \var{w} determines the overall width of the output,
+and \var{d} the number of digits to the right of the decimal point.
+\var{padchar}, which defaults to space, is the pad character used
+if padding is needed.
+Padding is always inserted on the left.
+The number is scaled by $10^k$ when printed; \var{k} defaults to zero.
+The entire \var{w}-character field is filled with copies of
+\var{overflowchar} if \var{overflowchar} is specified and the number
+cannot be printed in \var{w} characters.
+\var{k} defaults to 1
+If an \scheme{@} modifier is present, a plus sign is printed before the
+number for nonnegative inputs; otherwise, a sign is printed only if the
+number is negative.
+
+\schemedisplay
+(format "~,3f" 3.14159) ;=> "3.142"
+(format "~10f" 3.14159) ;=> "   3.14159"
+(format "~10,,,'#f" 1e20) ;=> "##########"
+\endschemedisplay
+
+Real numbers may also be printed with \scheme{~e} for scientific
+notation or with \scheme{~g}, which uses either floating-point or
+scientific notation based on the size of the input.
+
+\schemedisplay
+(format "~e" 1e23) ;=> "1.0e+23"
+(format "~g" 1e23) ;=> "1.0e+23"
+\endschemedisplay
+
+A real number may also be printed with \scheme{~$}, which uses
+monetary notation defaulting to two digits to the right of the
+decimal point.
+
+\schemedisplay
+(format "$~$" (* 39.95 1.06)) ;=> "$42.35"
+(format "~$USD" 1/3) ;=> "0.33USD"
+\endschemedisplay
+
+Words can be pluralized automatically using \scheme{p}.
+\schemedisplay
+(format "~s bear~:p in ~s den~:p" 10 1) ;=> "10 bears in 1 den"
+\endschemedisplay
+
+Numbers may be printed out in words or roman numerals using variations
+on \scheme{~r}.
+
+\schemedisplay
+(format "~r" 2599) ;=>  "two thousand five hundred ninety-nine"
+(format "~:r" 99) ;=>  "ninety-ninth"
+(format "~@r" 2599) ;=> "MMDXCIX"
+\endschemedisplay
+
+Case conversions can be performed by bracketing a portion of the
+format string with the \scheme{~@(} and \scheme{~)} directives.
+
+\schemedisplay
+(format "~@(~r~)" 2599) ;=>  "Two thousand five hundred ninety-nine"
+(format "~@:(~a~)" "Ouch!") ;=>  "ouch!"
+\endschemedisplay
+
+\noindent
+Some of the directives shown above have more options and parameters, and 
+there are other directives as well, including directives for conditionals,
+iteration, indirection, and justification.
+Again, please consult a Common Lisp reference for complete documentation.
+
+An implementation of a greatly simplified version of \scheme{format}
+appears in Section~\ref{TSPL:SECTEXPRINTF} of {\TSPLFOUR}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{printf}{\categoryprocedure}{(printf \var{format-string} \var{obj} \dots)}
+\formdef{fprintf}{\categoryprocedure}{(fprintf \var{textual-output-port} \var{format-string} \var{obj} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures are simple wrappers for \scheme{format}.
+\scheme{printf} prints the formatted output to the current output,
+as with a first-argument of \scheme{#t} to \scheme{format}, and
+\scheme{fprintf} prints the formatted output to the \var{textual-output-port},
+as when the first argument to \scheme{format} is a port.
+
+\section{Input/Output Control Operations\label{SECTMISCIOCONTROL}}
+
+The I/O control operations described in this section are used to
+control how the reader reads and printer writes, displays, or
+pretty-prints
+characters,
+symbols,
+gensyms,
+numbers,
+vectors,
+long or deeply nested lists or vectors,
+and graph-structured objects.
+ 
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:char-name}
+\formdef{char-name}{\categoryprocedure}{(char-name \var{obj})}
+\returns see below
+\formdef{char-name}{\categoryprocedure}{(char-name \var{name} \var{char})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{char-name} is used to associate names (symbols) with characters
+or to retrieve the most recently associated name or character for a 
+given character or name.
+A name can map to only one character, but more than one name
+can map to the same character.
+The name most recently associated with a character determines
+how that character prints, and each name associated with a character
+may be used after the \scheme{#\} character prefix to name that
+character on input.
+
+Character associations created by \scheme{char-name} are ignored by the
+printer unless the parameter \scheme{print-char-name} is set to a true
+value.
+The reader recognizes character names established by \scheme{char-name}
+except after the \scheme{#!r6rs}, which is implied within a library or
+R6RS top-level program.
+
+In the one-argument form, \var{obj} must be a symbol or character.
+If it is a symbol and a character is associated with the
+symbol, \scheme{char-name} returns that character.
+If it is a symbol and no character is associated with the symbol,
+\scheme{char-name} returns \scheme{#f}.
+Similarly, if \var{obj} is a character, \scheme{char-name} returns the
+most recently associated symbol for the character or \scheme{#f} if
+no name is associated with the character.
+For example, with the default set of character names:
+
+\schemedisplay
+(char-name #\space) ;=> space
+(char-name 'space) ;=> #\space
+(char-name 'nochar) ;=> #f
+(char-name #\a) ;=> #f
+\endschemedisplay
+
+When passed two arguments, \var{name} is added to the set of names
+associated with \var{char}, and any other association for \var{name}
+is dropped.
+\var{char} may be \scheme{#f}, in which case any other association
+for \var{name} is dropped and no new association is formed.
+In either case, any other names associated with \var{char} remain
+associated with \var{char}.
+
+The following interactive session demonstrates the use of
+\scheme{char-name} to establish and remove associations between
+characters and names, including the association of more than
+one name with a character.
+
+\schemedisplay
+(print-char-name #t)
+(char-name 'etx) ;=> #f
+(char-name 'etx #\x3)
+(char-name 'etx) ;=> #\etx
+(char-name #\x3) ;=> etx
+#\etx ;=> #\etx
+(eq? #\etx #\x3) ;=> #t
+#!r6rs #\etx ;=> \var{exception: invalid character name etx}
+#!chezscheme #\etx ;=> #\etx
+(char-name 'etx #\space)
+(char-name #\x3) ;=> #f
+(char-name 'etx) ;=> #\etx
+#\space ;=> #\etx
+(char-name 'etx #f)
+#\etx ;=> \var{exception: invalid character name etx}
+#\space ;=> #\space
+\endschemedisplay
+
+(When using the expression editor, it is necessary to type Control-J to
+force the editor to read the erroneous \scheme{#\etx} input on the two
+inputs above that result in read errors, since typing Enter
+causes the expression editor to read the input only if the input is
+well-formed.)
+
+The reader does not recognize hex scalar value escapes in character names,
+as it does in symbols, so \scheme{#\new\x6c;ine} is not equivalent
+to \scheme{#\newline}.
+In general, programmers should avoid the use of character name symbols
+that cannot be entered without the use of hex scalar value escapes or
+other symbol-name escape mechanisms, since such character names will
+not be readable.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-char-name}{\categorythreadparameter}{print-char-name}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-char-name} is set to \scheme{#f} (the default), associations
+created by \scheme{char-name} are ignored by \scheme{write},
+\scheme{put-datum}, \scheme{pretty-print}, and the \scheme{format}
+``\scheme{~s}'' directive.
+Otherwise, these procedures use the names established by
+\scheme{char-name} when printing character objects.
+
+\schemedisplay
+(char-name 'etx #\x3)
+(format "~s" #\x3) ;=> "#\\x3"
+(parameterize ([print-char-name #t])
+  (format "~s" #\x3)) ;=> "#\\etx"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{case-sensitive}{\categorythreadparameter}{case-sensitive}
+\listlibraries
+\endentryheader
+
+\noindent
+The \scheme{case-sensitive} parameter determines whether the
+reader is case-sensitive with respect to symbol and character names.
+When set to true (the default, as required by the Revised$^6$ Report)
+the case of alphabetic characters
+within symbol names is significant.
+When set to \scheme{#f}, case is insignificant.
+More precisely, when set to \scheme{#f}, symbol and character names are
+folded (as if by \scheme{string-foldcase}); otherwise, they are left
+as they appear in the input.
+
+The value of the \scheme{case-sensitive} matters only
+if neither \scheme{#!fold-case} nor \scheme{#!no-fold-case} has appeared
+previously in the same input stream.
+That is, symbol and character name are folded if \scheme{#!fold-case} has
+been seen.
+They are not folded if \scheme{#!no-fold-case} has been seen.
+If neither has been seen, they are folded if and only if
+\scheme{(case-sensitive)} is \scheme{#f}.
+
+\schemedisplay
+(case-sensitive) ;=> #t
+(eq? 'abc 'ABC) ;=> #f
+'ABC ;=> ABC
+(case-sensitive #f)
+'ABC ;=> abc
+(eq? 'abc 'ABC) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-graph}{\categorythreadparameter}{print-graph}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-graph} is set to a true value,
+\scheme{write} and \scheme{pretty-print}
+locate and print objects with shared structure, including
+cycles, in a notation that may be read subsequently with \scheme{read}.
+This notation employs the syntax
+\index{#= (graph mark)@\scheme{#\var{n}=} (graph mark)}``\scheme{#\var{n}=\var{obj}},''
+where \var{n}
+is a nonnegative integer and \var{obj} is the printed representation
+of an object, to label the first occurrence of \var{obj} in the output.
+The syntax
+\index{## (graph reference)@\scheme{#\var{n}#} (graph reference)}``\scheme{#\var{n}#}''
+is used to refer to the object labeled by
+\var{n} thereafter in the output.
+\scheme{print-graph} is set to \scheme{#f} by default.
+
+If graph printing is not enabled,
+the settings of \scheme{print-length} and \scheme{print-level}
+are insufficient to force finite output,
+and \scheme{write} or \scheme{pretty-print} detects a cycle in an
+object it is given to print,
+a warning is issued (an exception with condition type \scheme{&warning} is
+raised) and the object is printed as if
+\scheme{print-graph} were enabled.
+
+Since objects printed through the \scheme{~s} option in the format control
+strings of \scheme{format}, \scheme{printf}, and \scheme{fprintf} are printed as with
+\scheme{write}, the printing of such objects is also affected by \scheme{print-graph}.
+
+\schemedisplay
+(parameterize ([print-graph #t])
+  (let ([x (list 'a 'b)])
+    (format "~s" (list x x)))) ;=> "(#0=(a b) #0#)"
+
+(parameterize ([print-graph #t])
+  (let ([x (list 'a 'b)])
+    (set-car! x x)
+    (set-cdr! x x)
+    (format "~s" x))) ;=> "#0=(#0# . #0#)"
+\endschemedisplay
+
+\noindent
+The graph syntax is understood by the procedure
+\index{\scheme{read}}\scheme{read}, allowing graph structures
+to be printed and read consistently.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-level}{\categorythreadparameter}{print-level}
+\formdef{print-length}{\categorythreadparameter}{print-length}
+\listlibraries
+\endentryheader
+
+\noindent
+These parameters can be used to limit the extent to which nested
+or multiple-element structures are printed.
+When called without arguments, \scheme{print-level} returns the current
+print level and \scheme{print-length} returns the current print length.
+When called with one argument, which must be a nonnegative fixnum or
+\scheme{#f}, \scheme{print-level} sets the current print level and
+\scheme{print-length} sets the current print length to the argument.
+
+When \scheme{print-level} is set to a nonnegative integer \var{n},
+\scheme{write} and \scheme{pretty-print}
+traverse only \var{n} levels deep into nested structures.
+If a structure being printed exceeds \var{n} levels of nesting,
+the substructure beyond that point is replaced in the output by an
+\index{\scheme{...}~(ellipses)}\index{ellipses (~\scheme{...}~)}ellipsis
+(~\scheme{...}~).
+\scheme{print-level} is set to \scheme{#f} by default, which places
+no limit on the number of levels printed.
+
+When \scheme{print-length} is set to a nonnegative integer \var{n}, the
+procedures \scheme{write} and \scheme{pretty-print}
+print only \var{n} elements of a list or vector,
+replacing the remainder of the list or vector with an
+\index{\scheme{...}~(ellipses)}\index{ellipses (~\scheme{...}~)}ellipsis
+(~\scheme{...}~).
+\scheme{print-length} is set to \scheme{#f} by default, which places
+no limit on the number of elements printed.
+
+Since objects printed through the \scheme{~s} option in
+the format control strings of \scheme{format}, \scheme{printf}, and \scheme{fprintf} are
+printed as with \scheme{write},
+the printing of such objects is also affected by \scheme{print-level}
+and \scheme{print-length}.
+
+The parameters \scheme{print-level} and \scheme{print-length} are useful for
+controlling the volume of output in contexts where only a small portion
+of the output is needed to identify the object being printed.
+They are also useful in situations where circular structures may be
+printed (see also \scheme{print-graph}).
+
+\schemedisplay
+(format "~s" '((((a) b) c) d e f g)) ;=> "((((a) b) c) d e f g)"
+
+(parameterize ([print-level 2])
+  (format "~s" '((((a) b) c) d e f g))) ;=> "(((...) c) d e f g)"
+
+(parameterize ([print-length 3])
+  (format "~s" '((((a) b) c) d e f g))) ;=> "((((a) b) c) d e ...)"
+
+(parameterize ([print-level 2]
+               [print-length 3])
+  (format "~s" '((((a) b) c) d e f g))) ;=> "(((...) c) d e ...)"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-radix}{\categorythreadparameter}{print-radix}
+\listlibraries
+\endentryheader
+
+\noindent
+The \scheme{print-radix} parameter determines the radix in which
+numbers are printed by \scheme{write}, \scheme{pretty-print}, and
+\scheme{display}.
+Its value should be an integer between 2 and 36, inclusive.
+Its default value is 10.
+
+When the value of \scheme{print-radix} is not 10, \scheme{write} and
+\scheme{pretty-print} print a radix prefix before the number
+(\scheme{#b} for radix 2, \scheme{#o} for radix 8, \scheme{#x} for
+radix 16, and \scheme{#\var{n}r} for any other radix \var{n}).
+
+Since objects printed through the \scheme{~s} and
+\scheme{~a} options in the format control strings of
+\scheme{format}, \scheme{printf}, and \scheme{fprintf} are printed as
+with \scheme{write} and \scheme{display}, the printing of such objects
+is also affected by \scheme{print-radix}.
+
+\schemedisplay
+(format "~s" 11242957) ;=> "11242957"
+
+(parameterize ([print-radix 16])
+  (format "~s" 11242957)) ;=> "#xAB8DCD"
+
+(parameterize ([print-radix 16])
+  (format "~a" 11242957)) ;=> "AB8DCD"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-gensym}{\categorythreadparameter}{print-gensym}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{\scheme{gensym}}\index{\scheme{#:} (gensym prefix)}When
+\scheme{print-gensym} is set to \scheme{#t} (the default)
+gensyms are printed with an
+extended symbol syntax that includes both the pretty name and the unique
+name of the gensym: 
+\index{\scheme{#\schlbrace} (gensym prefix)}\scheme{#\schlbrace\var{pretty-name} \var{unique-name}\schrbrace}.
+When set to \scheme{pretty}, the pretty name only is shown, with the
+prefix \index{\scheme{#:} (gensym prefix)}\scheme{#:}.
+When set to \scheme{pretty/suffix},
+the printer prints the gensym's ``pretty'' name along with a
+suffix based on the gensym's ``unique'' name, separated by a dot (~"."~).
+If the gensym's unique name is generated automatically during the current
+session, the suffix is that portion of the unique name that is not common
+to all gensyms created during the current session.
+Otherwise, the suffix is the entire unique name.
+When set to \scheme{#f}, the pretty name only is shown, with no
+prefix.
+
+Since objects printed through the \scheme{~s} option in the
+format control strings of \scheme{format}, \scheme{printf},
+\scheme{errorf}, etc., are printed as with \scheme{write}, the printing of
+such objects is also affected by \scheme{print-gensym}.
+
+When printing an object that may contain more than one occurrence of a
+gensym and \scheme{print-graph} is set to \scheme{pretty} or \scheme{#f},
+it is useful to set \scheme{print-graph} to \scheme{#t} so that
+multiple occurrences of the same gensym are marked as identical in
+the output.
+
+\schemedisplay
+(let ([g (gensym)])
+  (format "~s" g)) ;=> "#{g0 bdids2xl6v49vgwe-a}"
+
+(let ([g (gensym)])
+  (parameterize ([print-gensym 'pretty])
+    (format "~s" g))) ;=> "#:g1
+
+(let ([g (gensym)])
+  (parameterize ([print-gensym #f])
+    (format "~s" g))) ;=> "g2"
+
+(let ([g (gensym)])
+  (parameterize ([print-graph #t] [print-gensym 'pretty])
+    (format "~s" (list g g)))) ;=> "(#0=#:g3 #0#)"
+
+(let ([g1 (gensym "x")]
+      [g2 (gensym "x")]
+      [g3 (gensym "y")])
+  (parameterize ([print-gensym 'pretty/suffix])
+    (format "~s ~s ~s" g1 g2 g3))) ;=> "x.1 x.2 y.3"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-brackets}{\categorythreadparameter}{print-brackets}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-brackets} is set to a true value, the pretty printer
+(see \index{\scheme{pretty-print}}\scheme{pretty-print}) uses square
+brackets rather than parentheses around certain subexpressions of
+common control structures, e.g., around \scheme{let} bindings and
+\scheme{cond} clauses.
+\scheme{print-brackets} is set to \scheme{#t} by default.
+
+\schemedisplay
+(let ([p (open-output-string)])
+  (pretty-print '(let ([x 3]) x) p) ;=> "(let ([x 3]) x)
+  (get-output-string p))            ;== "
+
+(parameterize ([print-brackets #f])
+  (let ([p (open-output-string)])
+    (pretty-print '(let ([x 3]) x) p) ;=> "(let ((x 3)) x)
+    (get-output-string p)))           ;== "
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-vector-length}{\categorythreadparameter}{print-vector-length}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-vector-length} is set to a true value,
+\scheme{write}, \scheme{put-datum}, and \scheme{pretty-print} includes the length
+for all vectors between the ``\scheme{#}'' and open parenthesis,
+all bytevectors between the ``\scheme{#vu8}'' and open parenthesis,
+and all fxvectors between the ``\scheme{#vfx}'' and open parenthesis.
+This parameter is set to \scheme{#f} by default.
+
+\index{vector printing}When \scheme{print-vector-length} is set to a
+true value, \scheme{write}, \scheme{put-datum}, and \scheme{pretty-print}
+also suppress duplicated trailing elements in the vector to
+reduce the amount of output.
+This form is also recognized by the reader.
+
+Since objects printed through the \scheme{~s} option in the
+format control strings of \scheme{format}, \scheme{printf}, and
+\scheme{fprintf} are printed as with \scheme{write}, the printing of
+such objects is also affected by the setting of
+\scheme{print-vector-length}.
+
+\schemedisplay
+(format "~s" (vector 'a 'b 'c 'c 'c)) ;=> "#(a b c c c)"
+
+(parameterize ([print-vector-length #t])
+  (format "~s" (vector 'a 'b 'c 'c 'c))) ;=> "#5(a b c)"
+
+(parameterize ([print-vector-length #t])
+  (format "~s" (bytevector 1 2 3 4 4 4))) ;=> "#6vu8(1 2 3 4)"
+
+(parameterize ([print-vector-length #t])
+  (format "~s" (fxvector 1 2 3 4 4 4))) ;=> "#6vfx(1 2 3 4)"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-precision}{\categorythreadparameter}{print-precision}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-precision} is set to \scheme{#f} (the default),
+\scheme{write}, \scheme{put-datum}, \scheme{pretty-print}, and the
+\scheme{format} ``\scheme{~s}'' directive do not include the
+vertical-bar ``mantissa-width'' syntax after each floating-point
+number.
+When set to a nonnegative exact integer, the mantissa width is
+included, as per the precision argument to
+\scheme{number->string}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-unicode}{\categorythreadparameter}{print-unicode}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-unicode} is set to \scheme{#f},
+\scheme{write}, \scheme{put-datum}, \scheme{pretty-print}, and the
+\scheme{format} ``\scheme{~s}'' directive display Unicode characters
+with encodings $80_{16}$ (128) and above that appear 
+within character objects, symbols, and strings
+using hexadecimal character escapes.
+When set to a true value (the default), they are displayed like
+other printing characters, as if by \scheme{put-char}.
+
+\schemedisplay
+(format "~s" #\x3bb) ;=> "#\\\raw{$\lambda$}"
+(parameterize ([print-unicode #f])
+  (format "~s" #\x3bb)) ;=> "#\\x3BB"
+\endschemedisplay
+
+\section{Fasl Output\label{SECTFASL}}
+
+\index{fast loading format}%
+The procedures \scheme{write} and \scheme{pretty-print} print objects in a
+human readable format.
+For objects with external datum representations, the output produced by
+\scheme{write} and \scheme{pretty-print} is also machine-readable with
+\scheme{read}.
+Objects with external datum representations include pairs, symbols,
+vectors, strings, numbers, characters, booleans, and records but not
+procedures and ports.
+
+An alternative \emph{fast loading}, or \emph{fasl}, format may be used for
+objects with external datum representations.
+The fasl format is not human readable, but it is machine readable and both
+more compact and more quickly processed by \scheme{read}.
+This format is always used for compiled code generated by
+\scheme{compile-file}, but it may also be used for data that needs to be
+written and read quickly, such as small databases encoded with Scheme data
+structures.
+
+Objects are printed in fasl format with \scheme{fasl-write}.
+Because the fasl format is a binary format, fasl output must be written
+to a binary port.
+For this reason, it is not possible to include data written in fasl
+format with textual data in the same file, as was the case in
+earlier versions of {\ChezScheme}.
+Similarly, the (textual) reader does not handle objects written in
+fasl format; the procedure \scheme{fasl-read}, which requires a binary
+input port, must be used instead.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port})}
+\formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{fasl-write} writes the fasl representation of \var{obj} to
+\var{binary-output-port}.
+An exception is raised with condition-type \scheme{&assertion} if
+\var{obj} or any portion of \var{obj} has no external fasl representation,
+e.g., if \var{obj} is or contains a procedure.
+
+\scheme{fasl-read} reads one object from
+\var{binary-input-port}, which must be positioned at the
+front of an object written in fasl format.
+\scheme{fasl-read} returns the eof object if the file is positioned
+at the end of file.
+
+\schemedisplay
+(define bop (open-file-output-port "tmp.fsl"))
+(fasl-write '(a b c) bop)
+(close-port bop)
+
+(define bip (open-file-input-port "tmp.fsl"))
+(fasl-read bip) ;=> (a b c)
+(fasl-read bip) ;=> #!eof
+(close-port bip)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fasl-file}{\categoryprocedure}{(fasl-file \var{ifn} \var{ofn})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{ifn} and \var{ofn} must be strings.
+\scheme{fasl-file} may be used to convert a file in human-readable
+format into an equivalent
+file written in fasl format.
+\scheme{fasl-file} reads each object in turn from the file named by
+\var{ifn} and writes the fasl format for the object onto the file
+named by \var{ofn}.
+If the file named by \var{ofn} already exists, it is replaced.
+
+
+\section{File System Interface\label{SECTIOFILESYSTEM}}
+
+This section describes operations on files, directories, and pathnames.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-directory}{\categoryglobalparameter}{current-directory}
+\formdef{cd}{\categoryglobalparameter}{cd}
+\listlibraries
+\endentryheader
+
+\noindent
+When invoked without arguments, \scheme{current-directory} returns a string
+representing the the current working directory.
+Otherwise, the current working directory is changed to the directory
+specified by the argument, which must be a string representing a valid
+directory pathname.
+
+\scheme{cd} is bound to the same parameter.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{directory-list}{\categoryprocedure}{(directory-list \var{path})}
+\returns a list of file names
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+The return value is a list of strings representing the names of
+files found in the directory named by \var{path}.
+\scheme{directory-list} raises an exception with condition
+type \scheme{&i/o-filename} if \var{path} does not name a directory
+or if the process cannot list the directory.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-exists?}{\categoryprocedure}{(file-exists? \var{path})}
+\formdef{file-exists?}{\categoryprocedure}{(file-exists? \var{path} \var{follow?})}
+\returns \scheme{#t} if the file named by \var{path} exists, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+If the optional \var{follow?} argument is true (the default),
+\scheme{file-exists?} follows symbolic links; otherwise it does not.
+Thus, \scheme{file-exists?} will return \scheme{#f} when handed the
+pathname of a broken symbolic link unless \var{follow?} is provided
+and is \scheme{#f}.
+
+The Revised$^6$ Report \scheme{file-exists?} does not accept the
+optional \var{follow?} argument.
+Whether it follows symbolic links is unspecified.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-regular?}{\categoryprocedure}{(file-regular? \var{path})}
+\formdef{file-regular?}{\categoryprocedure}{(file-regular? \var{path} \var{follow?})}
+\returns \scheme{#t} if the file named by \var{path} is a regular file, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+If the optional \var{follow?} argument is true (the default),
+\scheme{file-regular?} follows symbolic links; otherwise it does not.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-directory?}{\categoryprocedure}{(file-directory? \var{path})}
+\formdef{file-directory?}{\categoryprocedure}{(file-directory? \var{path} \var{follow?})}
+\returns \scheme{#t} if the file named by \var{path} is a directory, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+If the optional \var{follow?} argument is true (the default),
+this procedure follows symbolic links; otherwise it does not.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-symbolic-link?}{\categoryprocedure}{(file-symbolic-link? \var{path})}
+\returns \scheme{#t} if the file named by \var{path} is a symbolic link, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+\scheme{file-symbolic-link?} never follows symbolic links in making its
+determination.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{file-access-time}{\categoryprocedure}{(file-access-time \var{path/port})}
+\formdef{file-access-time}{\categoryprocedure}{(file-access-time \var{path/port} \var{follow?})}
+\returns the access time of the specified file
+\formdef{file-change-time}{\categoryprocedure}{(file-change-time \var{path/port})}
+\formdef{file-change-time}{\categoryprocedure}{(file-change-time \var{path/port} \var{follow?})}
+\returns the change time of the specified file
+\formdef{file-modification-time}{\categoryprocedure}{(file-modification-time \var{path/port})}
+\formdef{file-modification-time}{\categoryprocedure}{(file-modification-time \var{path/port} \var{follow?})}
+\returns the modification time of the specified file
+\listlibraries
+\endentryheader
+
+\var{path/port} must be a string or port.
+If \var{path/port} is a string, the time returned is for the file named
+by the string, and the optional \var{follow?} argument determines whether
+symbolic links are followed.
+If \var{follow?} is true (the default),
+this procedure follows symbolic links; otherwise it does not.
+If \var{path/port} is a port, it must be a file port, and the time returned
+is for the associated file.
+In this case, \var{follow?} is ignored.
+
+The returned times are represented as time objects
+(Section~\ref{SECTSYSTEMTIMESNDATES}).
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mkdir}{\categoryprocedure}{(mkdir \var{path})}
+\formdef{mkdir}{\categoryprocedure}{(mkdir \var{path} \var{mode})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{mode} must be a fixnum.
+
+\scheme{mkdir} creates a directory with the name given by \var{path}.
+All \var{path} path components leading up to the last must already
+exist.
+If the optional \var{mode} argument is present, it overrides the default
+permissions for the new directory.
+Under Windows, the \var{mode} argument is ignored.
+
+\scheme{mkdir} raises an exception with condition
+type \scheme{&i/o-filename} if the directory cannot be created.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{delete-file}{\categoryprocedure}{(delete-file \var{path})}
+\formdef{delete-file}{\categoryprocedure}{(delete-file \var{path} \var{error?})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{delete-file} removes the file named by \var{path}.
+If the optional \var{error?} argument is \scheme{#f} (the default),
+\scheme{delete-file} returns a boolean value: \scheme{#t} if the
+operation is successful and \scheme{#f} if it is not.
+Otherwise, \scheme{delete-file} returns an unspecified value if the
+operation is successful and raises an exception with condition
+type \scheme{&i/o-filename} if it is not.
+
+The Revised$^6$ Report \scheme{delete-file} does not accept the
+optional \var{error?} argument but behaves as if \var{error?}
+is true.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{delete-directory}{\categoryprocedure}{(delete-directory \var{path})}
+\formdef{delete-directory}{\categoryprocedure}{(delete-directory \var{path} \var{error?})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{delete-directory} removes the directory named by \var{path}.
+If the optional \var{error?} argument is \scheme{#f} (the default),
+\scheme{delete-directory} returns a boolean value: \scheme{#t} if the
+operation is successful and \scheme{#f} if it is not.
+Otherwise, \scheme{delete-directory} returns an unspecified value if the
+operation is successful and raises an exception with condition
+type \scheme{&i/o-filename} if it is not.
+The behavior is unspecified if the directory is not empty, but on
+most systems the operations will not succeed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{rename-file}{\categoryprocedure}{(rename-file \var{old-pathname} \var{new-pathname})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{old-pathname} and \var{new-pathname} must be strings.
+\scheme{rename-file} changes the name of the file named by \var{old-pathname}
+to \var{new-pathname}.
+If the file does not exist or cannot be renamed,
+an exception is raised with condition type \scheme{&i/o-filename}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{chmod}{\categoryprocedure}{(chmod \var{path} \var{mode})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\var{mode} must be a fixnum.
+
+\scheme{chmod} sets the permissions on the file named by
+\var{path} to \var{mode}.
+Bits 0, 1, and~2 of \var{mode} are the execute, write, and read permission bits
+for users other than the file's owner who are not in the file's group.
+Bits 3-5 are the execute, write, and read permission bits for users other
+than the file's owner but in the file's group.
+Bits 6-8 are the execute, write, and read permission bits
+for the file's owner.
+Bits 7-9 are the Unix sticky, set-group-id, and set-user-id bits.
+Under Windows, all but the user ``write'' bit are ignored.
+If the file does not exist or the permissions cannot be changed,
+an exception is raised with condition type \scheme{&i/o-filename}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-mode}{\categoryprocedure}{(get-mode \var{path})}
+\formdef{get-mode}{\categoryprocedure}{(get-mode \var{path} \var{follow?})}
+\returns the current permissions mode for \var{path}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{path} must be a string.
+\scheme{get-mode} retrieves the permissions on the file named by
+\var{path} and returns them as a fixnum in the same form as the \var{mode}
+argument to \scheme{chmod}.
+If the optional \var{follow?} argument is true (the default),
+this procedure follows symbolic links; otherwise it does not.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{directory-separator?}{\categoryprocedure}{(directory-separator? \var{char})}
+\returns \scheme{#t} if \var{char} is a directory separator, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+The character \scheme{#\/} is a directory separator on all
+current machine types, and \scheme{#\\} is a directory separator
+under Windows.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{directory-separator}{\categoryprocedure}{(directory-separator)}
+\returns the preferred directory separator
+\listlibraries
+\endentryheader
+
+The preferred directory separator is \scheme{#\\} for Windows and
+\scheme{#\/} for other systems.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{path-first}{\categoryprocedure}{(path-first \var{path})}
+\formdef{path-rest}{\categoryprocedure}{(path-rest \var{path})}
+\formdef{path-last}{\categoryprocedure}{(path-last \var{path})}
+\formdef{path-parent}{\categoryprocedure}{(path-parent \var{path})}
+\formdef{path-extension}{\categoryprocedure}{(path-extension \var{path})}
+\formdef{path-root}{\categoryprocedure}{(path-root \var{path})}
+\returns the specified component of \var{path}
+\formdef{path-absolute?}{\categoryprocedure}{(path-absolute? \var{path})}
+\returns \scheme{#t} if \var{path} is absolute, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\var{path} must be a string.
+The return value is also a (possibly empty) string.
+
+The path first component is the first directory in the path, or the
+empty string if the path consists only of a single filename.
+The path rest component is the portion of the path that does not
+include the path first component or the directory separator (if
+any) that separates it from the rest of the path.
+The path last component is the last (filename) portion of \var{path}.
+The path parent component is the portion of \var{path} that does not
+include the path last component, if any, or the directory separator that
+separates it from the rest of the path.
+
+If the first component of the path names a root directory (including drives
+and shares under Windows), home directory
+(e.g., \scheme{~/abc} or \scheme{~user/abc}), 
+the current directory (\scheme{.}), or the parent directory
+(\scheme{..}), \scheme{path-first} returns that component.
+For paths that consist only of such a directory,
+both \scheme{path-first} and \scheme{path-parent} act as
+identity procedures, while \scheme{path-rest} and \scheme{path-last}
+return the empty string.
+
+The path extension component is the portion of \var{path} that follows
+the last dot (period) in the last component of a path name.
+The path root component is the portion of \var{path} that does not
+include the extension, if any, or the dot that precedes it.
+
+If the first component names a root directory (including drivers
+and shared under Windows) or home directory,
+\scheme{path-absolute?} returns \scheme{#t}.
+Otherwise, \scheme{path-absolute?} returns \scheme{#f}. 
+
+The tables below identify the components for several example paths,
+with underscores representing empty strings.
+
+\begin{tabular}{llllllll}
+path               & abs         & first              & rest               & parent             & last               & root               & ext        \\
+\scheme{a}         & \scheme{#f} & \scheme{_}         & \scheme{a}         & \scheme{_}         & \scheme{a}         & \scheme{a}         & \scheme{_} \\
+\scheme{a/}        & \scheme{#f} & \scheme{a}         & \scheme{_}         & \scheme{a}         & \scheme{_}         & \scheme{a/}        & \scheme{_} \\
+\scheme{a/b}       & \scheme{#f} & \scheme{a}         & \scheme{b}         & \scheme{a}         & \scheme{b}         & \scheme{a/b}       & \scheme{_} \\
+\scheme{a/b.c}     & \scheme{#f} & \scheme{a}         & \scheme{b.c}       & \scheme{a}         & \scheme{b.c}       & \scheme{a/b}       & \scheme{c} \\
+\scheme{/}         & \scheme{#t} & \scheme{/}         & \scheme{_}         & \scheme{/}         & \scheme{_}         & \scheme{/}         & \scheme{_} \\
+\scheme{/a/b.c}    & \scheme{#t} & \scheme{/}         & \scheme{a/b.c}     & \scheme{/a}        & \scheme{b.c}       & \scheme{/a/b}      & \scheme{c} \\
+\scheme{~/a/b.c}   & \scheme{#t} & \scheme{~}         & \scheme{a/b.c}     & \scheme{~/a}       & \scheme{b.c}       & \scheme{~/a/b}     & \scheme{c} \\
+\scheme{~u/a/b.c}  & \scheme{#t} & \scheme{~u}        & \scheme{a/b.c}     & \scheme{~u/a}      & \scheme{b.c}       & \scheme{~u/a/b}    & \scheme{c} \\
+\scheme{../..}     & \scheme{#f} & \scheme{..}        & \scheme{..}        & \scheme{..}        & \scheme{..}        & \scheme{../..}     & \scheme{_} \\
+\end{tabular}
+
+The second table shows the components when Windows drives and shares
+are involved.
+
+\begin{tabular}{llllllll}
+path               & abs         & first              & rest               & parent             & last               & root               & ext       \\
+\scheme{c:}        & \scheme{#t} & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_} \\
+\scheme{c:/}       & \scheme{#t} & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_} \\
+\scheme{c:a/b}     & \scheme{#t} & \scheme{c:}        & \scheme{a/b}       & \scheme{c:a}       & \scheme{b}         & \scheme{c:a/b}     & \scheme{_} \\
+\scheme{//s/a/b.c} & \scheme{#t} & \scheme{//s}       & \scheme{a/b.c}     & \scheme{//s/a}     & \scheme{b.c}       & \scheme{//s/a/b}   & \scheme{c} \\
+\scheme{//s.com}   & \scheme{#t} & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_} \\
+\end{tabular}
+
+The following procedure can be used to reproduce the tables above.
+
+\schemedisplay
+(define print-table
+  (lambda path*
+    (define print-row
+      (lambda (abs? path first rest parent last root extension)
+        (printf "~a~11t~a~17t~a~28t~a~39t~a~50t~a~61t~a~73t~a\n"
+          abs? path first rest parent last root extension)))
+    (print-row "path" "abs" "first" "rest" "parent" "last" "root" "ext")
+    (for-each
+      (lambda (path)
+        (define uscore (lambda (s) (if (eqv? s "") "_" s)))
+        (apply print-row path
+          (map (lambda (s) (if (eqv? s "") "_" s))
+               (list (path-absolute? path) (path-first path)
+                 (path-rest path) (path-parent path) (path-last path)
+                 (path-root path) (path-extension path)))))
+      path*)))
+\endschemedisplay
+
+For example, the first table can be produced with:
+
+\schemedisplay
+(print-table "a" "a/" "a/b" "a/b.c" "/" "/a/b.c" "~/a/b.c"
+  "~u/a/b.c" "../..")
+\endschemedisplay
+
+while the second can be produced (under Windows) with:
+
+\schemedisplay
+(print-table "c:" "c:/" "c:a/b" "//s/a/b.c" "//s.com")
+\endschemedisplay
+
+\section{Generic Port Examples\label{SECTPORTEXAMPLES}}
+
+This section presents the definitions for three types of generic ports:
+two-way ports, transcript ports, and process ports.
+
+\parheader{Two-way ports}
+\index{two-way ports}The first example defines \scheme{make-two-way-port}, which constructs a
+textual input/output port from a given pair of textual input and output ports.
+For example:
+
+\schemedisplay
+(define ip (open-input-string "this is the input"))
+(define op (open-output-string))
+(define p (make-two-way-port ip op))
+\endschemedisplay
+
+\noindent
+The port returned by \scheme{make-two-way-port} is both an input and an output
+port, and it is also a textual port:
+
+\schemedisplay
+(port? p) ;=> #t
+(input-port? p) ;=> #t
+(output-port? p) ;=> #t
+(textual-port? p) ;=> #t
+\endschemedisplay
+
+\noindent
+Items read from a two-way port come from the constituent input port,
+and items written to a two-way port go to the constituent output
+port:
+
+\schemedisplay
+(read p) ;=> this
+(write 'hello p)
+(get-output-string op) ;=> hello
+\endschemedisplay
+
+\noindent
+The definition of \scheme{make-two-way-port} is straightforward.
+To keep the example simple,
+no local buffering is performed,
+although it would be more efficient to do so.
+
+\schemedisplay
+(define make-two-way-port
+  (lambda (ip op)
+    (define handler
+      (lambda (msg . args)
+        (record-case (cons msg args)
+          [block-read (p s n) (block-read ip s n)]
+          [block-write (p s n) (block-write op s n)]
+          [char-ready? (p) (char-ready? ip)]
+          [clear-input-port (p) (clear-input-port ip)]
+          [clear-output-port (p) (clear-output-port op)]
+          [close-port (p) (mark-port-closed! p)]
+          [flush-output-port (p) (flush-output-port op)]
+          [file-position (p . pos) (apply file-position ip pos)]
+          [file-length (p) (file-length ip)]
+          [peek-char (p) (peek-char ip)]
+          [port-name (p) "two-way"]
+          [read-char (p) (read-char ip)]
+          [unread-char (c p) (unread-char c ip)]
+          [write-char (c p) (write-char c op)]
+          [else (assertion-violationf 'two-way-port
+                  "operation ~s not handled"
+                  msg)])))
+    (make-input/output-port handler "" "")))
+\endschemedisplay
+
+\noindent
+Most of the messages are passed directly to one of the constituent
+ports.
+Exceptions are \scheme{close-port}, which is handled directly by
+marking the port closed, \scheme{port-name}, which is also handled directly.
+\scheme{file-position} and \scheme{file-length} are rather arbitrarily
+passed off to the input port.
+
+
+\parheader{Transcript ports}
+\index{transcript ports}The next example defines \scheme{make-transcript-port}, which constructs a
+textual input/output port from three ports:  a textual input port \var{ip} and two textual
+output ports, \var{op} and \var{tp}.
+Input read from a transcript port comes from \var{ip}, and output
+written to a transcript port goes to \var{op}.
+In this manner, transcript ports are similar to two-way ports.
+Unlike two-way ports, input from \var{ip} and output to \var{op} is
+also written to \var{tp}, so that \var{tp} reflects both input from
+\var{ip} and output to \var{op}.
+
+Transcript ports may be used to define the Scheme procedures
+\scheme{transcript-on} and \scheme{transcript-off}, or the {\ChezScheme} procedure
+\scheme{transcript-cafe}.
+For example, here is a definition of \scheme{transcript-cafe}:
+
+\schemedisplay
+(define transcript-cafe
+  (lambda (pathname)
+    (let ([tp (open-output-file pathname 'replace)])
+      (let ([p (make-transcript-port
+                 (console-input-port)
+                 (console-output-port)
+                 tp)])
+       ; set both console and current ports so that
+       ; the waiter and read/write will be in sync
+        (parameterize ([console-input-port p]
+                       [console-output-port p]
+                       [current-input-port p]
+                       [current-output-port p])
+          (let-values ([vals (new-cafe)])
+            (close-port p)
+            (close-port tp)
+            (apply values vals)))))))
+\endschemedisplay
+
+
+The implementation of transcript ports is significantly more complex
+than the implementation of two-way ports defined above, primarily
+because it buffers input and output locally.
+Local buffering is needed to allow the transcript file to reflect
+accurately the actual input and output performed in the presence of
+\scheme{unread-char}, \scheme{clear-output-port}, and \scheme{clear-input-port}.
+Here is the code:
+
+% exercise: Try rewriting make-transcript-port without local buffering.
+% Why does this not work satisfactorily?
+
+\schemedisplay
+(define make-transcript-port
+  (lambda (ip op tp)
+    (define (handler msg . args)
+      (record-case (cons msg args)
+        [block-read (p str cnt)
+         (with-interrupts-disabled
+           (let ([b (port-input-buffer p)]
+                 [i (port-input-index p)]
+                 [s (port-input-size p)])
+             (if (< i s)
+                 (let ([cnt (fxmin cnt (fx- s i))])
+                   (do ([i i (fx+ i 1)]
+                        [j 0 (fx+ j 1)])
+                       ((fx= j cnt)
+                        (set-port-input-index! p i)
+                        cnt)
+                       (string-set! str j (string-ref b i))))
+                 (let ([cnt (block-read ip str cnt)])
+                   (unless (eof-object? cnt)
+                     (block-write tp str cnt))
+                   cnt))))]
+        [char-ready? (p)
+         (or (< (port-input-index p) (port-input-size p))
+             (char-ready? ip))]
+        [clear-input-port (p)
+         ; set size to zero rather than index to size
+         ; in order to invalidate unread-char
+         (set-port-input-size! p 0)]
+        [clear-output-port (p)
+         (set-port-output-index! p 0)]
+        [close-port (p)
+         (with-interrupts-disabled
+           (flush-output-port p)
+           (set-port-output-size! p 0)
+           (set-port-input-size! p 0)
+           (mark-port-closed! p))]
+        [file-position (p . pos)
+         (if (null? pos)
+             (most-negative-fixnum)
+             (assertion-violationf 'transcript-port "cannot reposition"))]
+        [flush-output-port (p)
+         (with-interrupts-disabled
+           (let ([b (port-output-buffer p)]
+                 [i (port-output-index p)])
+             (unless (fx= i 0)
+               (block-write op b i)
+               (block-write tp b i)
+               (set-port-output-index! p 0)
+               (set-port-bol! p
+                 (char=? (string-ref b (fx- i 1)) #\newline))))
+           (flush-output-port op)
+           (flush-output-port tp))]
+        [peek-char (p)
+         (with-interrupts-disabled
+           (let ([b (port-input-buffer p)]
+                 [i (port-input-index p)]
+                 [s (port-input-size p)])
+             (if (fx< i s)
+                 (string-ref b i)
+                 (begin
+                   (flush-output-port p)
+                   (let ([s (block-read ip b)])
+                     (if (eof-object? s)
+                         s
+                         (begin
+                           (block-write tp b s)
+                           (set-port-input-size! p s)
+                           (string-ref b 0))))))))]
+        [port-name (p) "transcript"]
+        [constituent-ports (p) (values ip op tp)]
+        [read-char (p)
+         (with-interrupts-disabled
+           (let ([c (peek-char p)])
+             (unless (eof-object? c)
+               (set-port-input-index! p
+                 (fx+ (port-input-index p) 1)))
+             c))]
+        [unread-char (c p)
+         (with-interrupts-disabled
+           (let ([b (port-input-buffer p)]
+                 [i (port-input-index p)]
+                 [s (port-input-size p)])
+             (when (fx= i 0)
+               (assertion-violationf 'unread-char
+                 "tried to unread too far on ~s"
+                 p))
+             (set-port-input-index! p (fx- i 1))
+             ; following could be skipped; it's supposed
+             ; to be the same character anyway
+             (string-set! b (fx- i 1) c)))]
+        [write-char (c p)
+         (with-interrupts-disabled
+           (let ([b (port-output-buffer p)]
+                 [i (port-output-index p)]
+                 [s (port-output-size p)])
+             (string-set! b i c)
+            ; could check here to be sure that we really
+            ; need to flush; we may end up here even if
+            ; the buffer isn't full
+             (block-write op b (fx+ i 1))
+             (block-write tp b (fx+ i 1))
+             (set-port-output-index! p 0)
+             (set-port-bol! p (char=? c #\newline))))]
+        [block-write (p str cnt)
+         (with-interrupts-disabled
+          ; flush buffered data
+           (let ([b (port-output-buffer p)]
+                 [i (port-output-index p)])
+             (unless (fx= i 0)
+               (block-write op b i)
+               (block-write tp b i)
+               (set-port-output-index! p 0)
+               (set-port-bol! p (char=? (string-ref b (fx- i 1)) #\newline))))
+          ; write new data
+           (unless (fx= cnt 0)
+             (block-write op str cnt)
+             (block-write tp str cnt)
+             (set-port-bol! p
+               (char=? (string-ref str (fx- cnt 1)) #\newline))))]
+        [else (assertion-violationf 'transcript-port
+                "operation ~s not handled"
+                msg)]))
+    (let ([ib (make-string 1024)] [ob (make-string 1024)])
+      (let ([p (make-input/output-port handler ib ob)])
+        (set-port-input-size! p 0)
+        (set-port-output-size! p (fx- (string-length ob) 1))
+        p))))
+\endschemedisplay
+
+\noindent
+The chosen length of both the input and output ports is the same; this
+is not necessary.
+They could have different lengths, or one could be buffered locally and
+the other not buffered locally.
+Local buffering could be disabled effectively by providing zero-length
+buffers.
+
+After we create the port, the input size is set to zero since there
+is not yet any data to be read.
+The port output size is set to one less than the length of the buffer.
+This is done so that \scheme{write-char} always has one character position
+left over into which to write its character argument.
+Although this is not necessary, it does simplify the code somewhat
+while allowing the buffer to be flushed as soon as the last character
+is available.
+
+Block reads and writes are performed on the constituent ports for
+efficiency and (in the case of writes) to ensure that the operations
+are performed immediately.
+
+The call to \scheme{flush-output-port} in the handling of \scheme{read-char} insures
+that all output written to \scheme{op} appears before input is read from
+\scheme{ip}.
+Since \scheme{block-read} is typically used to support higher-level operations
+that are performing their own buffering, or for direct input and output
+in support of I/O-intensive applications, the flush call has been
+omitted from that part of the handler.
+
+Critical sections are used whenever the handler manipulates one of the
+buffers, to protect against untimely interrupts that could lead to
+reentry into the handler.
+The critical sections are unnecessary if no such reentry is possible,
+i.e., if only one ``thread'' of the computation can have access to the
+port.
+
+\parheader{Process ports}
+\index{process ports}\index{sockets}The final example
+demonstrates how to incorporate the socket interface
+defined in Section~\ref{SECTFOREIGNSOCKETS} into a generic port that
+allows transparent communication with subprocesses via normal Scheme
+input/output operations.
+
+A process port is created with \scheme{open-process}, which accepts a
+shell command as a string.
+\scheme{open-process} sets up a socket, forks a child process, sets up
+two-way communication via the socket, and invokes the command in a
+subprocess.
+
+The sample session below demonstrates the use of \scheme{open-process},
+running and communicating with another Scheme process started with the
+``\scheme{-q}'' switch to suppress the greeting and prompts.
+
+\schemedisplay
+> (define p (open-process "exec scheme -q"))
+> (define s (make-string 1000 #\nul))
+> (pretty-print '(+ 3 4) p)
+> (read p)
+7
+> (pretty-print '(define (f x) (if (= x 0) 1 (* x (f (- x 1))))) p)
+> (pretty-print '(f 10) p)
+> (read p)
+3628800
+> (pretty-print '(exit) p)
+> (read p)
+#!eof
+> (close-port p)
+\endschemedisplay
+
+\noindent
+Since process ports, like transcript ports, are two-way, the implementation 
+is somewhat similar.
+The main difference is that a transcript port reads from and writes to its
+subordinate ports, whereas a process port reads from and writes to a socket.
+When a process port is opened, the socket is created and subprocess
+invoked, and when the port is closed, the socket is closed and the
+subprocess is terminated.
+
+\schemedisplay
+(define open-process
+  (lambda (command)
+    (define handler
+      (lambda (pid socket)
+        (define (flush-output who p)
+          (let ([i (port-output-index p)])
+            (when (fx> i 0)
+              (check who (c-write socket (port-output-buffer p) i))
+              (set-port-output-index! p 0))))
+        (lambda (msg . args)
+          (record-case (cons msg args)
+            [block-read (p str cnt)
+             (with-interrupts-disabled
+               (let ([b (port-input-buffer p)]
+                     [i (port-input-index p)]
+                     [s (port-input-size p)])
+                 (if (< i s)
+                     (let ([cnt (fxmin cnt (fx- s i))])
+                       (do ([i i (fx+ i 1)]
+                            [j 0 (fx+ j 1)])
+                          ((fx= j cnt)
+                           (set-port-input-index! p i)
+                           cnt)
+                          (string-set! str j (string-ref b i))))
+                     (begin
+                       (flush-output 'block-read p)
+                       (let ([n (check 'block-read
+                                  (c-read socket str cnt))])
+                         (if (fx= n 0)
+                             #!eof
+                             n))))))]
+            [char-ready? (p)
+             (or (< (port-input-index p) (port-input-size p))
+                 (bytes-ready? socket))]
+            [clear-input-port (p)
+             ; set size to zero rather than index to size
+             ; in order to invalidate unread-char
+             (set-port-input-size! p 0)]
+            [clear-output-port (p) (set-port-output-index! p 0)]
+            [close-port (p)
+             (with-interrupts-disabled
+               (flush-output 'close-port p)
+               (set-port-output-size! p 0)
+               (set-port-input-size! p 0)
+               (mark-port-closed! p)
+               (terminate-process pid))]
+            [file-length (p) 0]
+            [file-position (p . pos)
+             (if (null? pos)
+                 (most-negative-fixnum)
+                 (assertion-violationf 'process-port "cannot reposition"))]
+            [flush-output-port (p)
+             (with-interrupts-disabled
+               (flush-output 'flush-output-port p))]
+            [peek-char (p)
+             (with-interrupts-disabled
+               (let ([b (port-input-buffer p)]
+                     [i (port-input-index p)]
+                     [s (port-input-size p)])
+                 (if (fx< i s)
+                     (string-ref b i)
+                     (begin
+                       (flush-output 'peek-char p)
+                       (let ([s (check 'peek-char
+                                  (c-read socket b (string-length b)))])
+                         (if (fx= s 0)
+                             #!eof
+                             (begin (set-port-input-size! p s)
+                                    (string-ref b 0))))))))]
+            [port-name (p) "process"]
+            [read-char (p)
+             (with-interrupts-disabled
+               (let ([b (port-input-buffer p)]
+                     [i (port-input-index p)]
+                     [s (port-input-size p)])
+                 (if (fx< i s)
+                     (begin
+                       (set-port-input-index! p (fx+ i 1))
+                       (string-ref b i))
+                     (begin
+                       (flush-output 'peek-char p)
+                       (let ([s (check 'read-char
+                                  (c-read socket b (string-length b)))])
+                         (if (fx= s 0)
+                             #!eof
+                             (begin (set-port-input-size! p s)
+                                    (set-port-input-index! p 1)
+                                    (string-ref b 0))))))))]
+            [unread-char (c p)
+             (with-interrupts-disabled
+               (let ([b (port-input-buffer p)]
+                     [i (port-input-index p)]
+                     [s (port-input-size p)])
+                 (when (fx= i 0)
+                   (assertion-violationf 'unread-char
+                     "tried to unread too far on ~s"
+                     p))
+                 (set-port-input-index! p (fx- i 1))
+                ; following could be skipped; supposed to be
+                ; same character
+                 (string-set! b (fx- i 1) c)))]
+            [write-char (c p)
+             (with-interrupts-disabled
+               (let ([b (port-output-buffer p)]
+                     [i (port-output-index p)]
+                     [s (port-output-size p)])
+                 (string-set! b i c)
+                 (check 'write-char (c-write socket b (fx+ i 1)))
+                 (set-port-output-index! p 0)))]
+            [block-write (p str cnt)
+             (with-interrupts-disabled
+              ; flush buffered data
+               (flush-output 'block-write p)
+              ; write new data
+               (check 'block-write (c-write socket str cnt)))]
+            [else
+             (assertion-violationf 'process-port
+               "operation ~s not handled"
+               msg)]))))
+    (let* ([server-socket-name (tmpnam 0)]
+           [server-socket (setup-server-socket server-socket-name)])
+      (dofork 
+        (lambda () ; child
+          (check 'close (close server-socket))
+          (let ([sock (setup-client-socket server-socket-name)])
+            (dodup 0 sock)
+            (dodup 1 sock))
+          (check 'execl (execl4 "/bin/sh" "/bin/sh" "-c" command))
+          (assertion-violationf 'open-process "subprocess exec failed"))
+        (lambda (pid) ; parent
+          (let ([sock (accept-socket server-socket)])
+            (check 'close (close server-socket))
+            (let ([ib (make-string 1024)] [ob (make-string 1024)])
+              (let ([p (make-input/output-port
+                         (handler pid sock)
+                         ib ob)])
+                (set-port-input-size! p 0)
+                (set-port-output-size! p (fx- (string-length ob) 1))
+                p))))))))
+\endschemedisplay

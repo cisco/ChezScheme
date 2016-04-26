@@ -1,0 +1,107 @@
+;;; 5-7.ms
+;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; 
+;;; Licensed under the Apache License, Version 2.0 (the "License");
+;;; you may not use this file except in compliance with the License.
+;;; You may obtain a copy of the License at
+;;; 
+;;; http://www.apache.org/licenses/LICENSE-2.0
+;;; 
+;;; Unless required by applicable law or agreed to in writing, software
+;;; distributed under the License is distributed on an "AS IS" BASIS,
+;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;;; See the License for the specific language governing permissions and
+;;; limitations under the License.
+
+(mat string->symbol
+    (eq? (string->symbol "foo") 'foo)
+    (eq? (string->symbol "a") (string->symbol "a"))
+    (error? (string->symbol 3))
+    (error? (string->symbol 'a))
+ )
+
+(mat gensym
+    (not (eq? (gensym "hi") 'hi))
+    (not (eq? (gensym "hi")
+         (gensym "hi")))
+    (equal? (symbol->string (gensym "hi")) "hi")
+    (error? (gensym '#(a b c)))
+ )
+
+(mat gensym
+  (error? (gensym 'hitme!))
+  (error? (gensym 17))
+  (error? (gensym #f))
+  (error? (gensym 'hitme "a"))
+  (error? (gensym 17 "a"))
+  (error? (gensym #f "a"))
+  (error? (gensym "a" 'hitme))
+  (error? (gensym "a" 17))
+  (error? (gensym "a" #f))
+  (symbol? (gensym))
+  (gensym? (gensym))
+  (not (eq? (gensym) (gensym)))
+  (not (equal? (symbol->string (gensym)) (symbol->string (gensym))))
+  (parameterize ([gensym-count 1000] [gensym-prefix "xxx"])
+    (equal? (symbol->string (gensym)) "xxx1000"))
+  (error? (gensym-count -1))
+  (error? (gensym-count 'a))
+  (error? (gensym-count "3.4"))
+  (equal? (parameterize ([gensym-count 73]) (format "~a" (gensym)))
+    "g73")
+  (equal?
+    (let* ([g1 (with-input-from-string "#{pn1 un1}" read)] [g2 (gensym "pn1" "un1")])
+      (list (gensym? g1) (gensym? g2) (eq? g1 g2)))
+    '(#t #t #t))
+  (equal?
+    (let* ([g1 (gensym "pn2" "un2")] [g2 (with-input-from-string "#{pn2 un2}" read)])
+      (list (gensym? g1) (gensym? g2) (eq? g1 g2)))
+    '(#t #t #t))
+ )
+
+(mat gensym?
+    (gensym? (gensym "foo"))
+    (not (gensym? 'foo))
+    (not (gensym? (string->symbol "foo")))
+    (not (gensym? '(a b)))
+ )
+
+(mat symbol->string
+    (equal? (symbol->string 'foo) "foo")
+    (equal? (symbol->string (string->symbol "hi")) "hi")
+    (equal? (symbol->string (gensym "hi there")) "hi there")
+    (error? (symbol->string 3))
+ )
+
+(mat gensym->unique-string
+  (error? ; not a gensym
+    (gensym->unique-string "spam"))
+  (error? ; not a gensym
+    (gensym->unique-string 3))
+  (error? ; not a gensym
+    (gensym->unique-string 'spam))
+  (string? (gensym->unique-string (gensym)))
+  (equal?
+    (gensym->unique-string '#{g0 e6sfz8u1obe67hsew4stu0-0})
+    "e6sfz8u1obe67hsew4stu0-0")
+)  
+
+(mat putprop-getprop
+    (begin (putprop 'xyz 'key 'value) (eq? (getprop 'xyz 'key) 'value))
+    (begin (putprop 'xyz 'key 'new-value) (eq? (getprop 'xyz 'key) 'new-value))
+    (begin (putprop 'xyz 'key #f) (not (getprop 'xyz 'key)))
+    (begin (putprop 'xyz 'key #t)
+           (remprop 'xyz 'key)
+           (not (getprop 'xyz 'key)))
+    (let ([g (gensym)] [flag (box 0)])
+       (and (eq? (getprop g 'a flag) flag)
+            (begin (putprop g 'a 'b)
+                   (and (eq? (getprop g 'a) 'b)
+                        (equal? (property-list g) '(a b))))))
+    (begin (putprop 'x 'a 'b)
+           (putprop 'x 'b 'c)
+           (eq? (getprop 'x (getprop 'x (getprop 'x '? 'a) 0) 1) 'c))
+    (error? (getprop 3 'key))
+    (error? (putprop "hi" 'key 'value))
+    (error? (property-list '(a b c)))
+ )

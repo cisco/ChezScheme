@@ -1,0 +1,1416 @@
+\indexentry{Lisp}{ix}
+\indexentry{Scheme standard}{ix}
+\indexentry{Revised Reports}{ix}
+\indexentry{ChezScheme@\ChezScheme}{ix}
+\indexentry{PetiteChezScheme@\PetiteChezScheme}{ix}
+\indexentry{Revised Reports}{3}
+\indexentry{objects}{3}
+\indexentry{dynamic allocation}{3}
+\indexentry{garbage collector}{3}
+\indexentry{first-class data values}{3}
+\indexentry{pointers}{4}
+\indexentry{core syntactic forms}{4}
+\indexentry{primitive procedures}{4}
+\indexentry{interpreter}{4}
+\indexentry{compiler}{4}
+\indexentry{variables}{4}
+\indexentry{keywords}{4}
+\indexentry{lexical scoping}{4}
+\indexentry{block structure}{4}
+\indexentry{binding}{4}
+\indexentry{shadowing}{4}
+\indexentry{procedure definition}{5}
+\indexentry{lexical scoping}{5}
+\indexentry{first-class procedures}{5}
+\indexentry{recursion}{5}
+\indexentry{tail recursion}{5}
+\indexentry{iteration}{5}
+\indexentry{looping}{5}
+\indexentry{tail call}{5}
+\indexentry{continuations}{5}
+\indexentry{syntactic extensions}{5}
+\indexentry{Lisp}{6}
+\indexentry{Algol 60}{6}
+\indexentry{Common Lisp}{6}
+\indexentry{structured forms}{6}
+\indexentry{identifiers}{6}
+\indexentry{list constants}{7}
+\indexentry{empty list}{7}
+\indexentry{()@\scheme{()}}{7}
+\indexentry{brackets (~[~]~)@brackets (~\scheme{[}~\scheme{]}~)}{7}
+\indexentry{boolean values}{7}
+\indexentry{true}{7}
+\indexentry{false}{7}
+\indexentry{#t@\scheme{\#t}}{7}
+\indexentry{#f@\scheme{\#f}}{7}
+\indexentry{expressions}{7}
+\indexentry{whitespace characters}{7}
+\indexentry{comments}{7}
+\indexentry{; (comment)@\scheme{;} (comment)}{7}
+\indexentry{semicolon (~;~)@semicolon (~\scheme{;}~)}{7}
+\indexentry{naming conventions}{8}
+\indexentry{? (question mark)@\scheme{?} (question mark)}{8}
+\indexentry{question mark (~?~)@question mark (~\scheme{?}~)}{8}
+\indexentry{predicates}{8}
+\indexentry{->@\scheme{->}}{8}
+\indexentry{"! (exclamation point)@\scheme{"!} (exclamation point)}{8}
+\indexentry{exclamation point (~"!~)@exclamation point (~\scheme{"!}~)}{8}
+\indexentry{side effects}{8}
+\indexentry{unspecified}{9}
+\indexentry{multiple values}{9}
+\indexentry{exceptions}{9}
+\indexentry{syntax violation}{9}
+\indexentry{load@\scheme{load}}{13}
+\indexentry{strings}{14}
+\indexentry{square@\scheme{square}}{14}
+\indexentry{prefix notation}{15}
+\indexentry{reciprocal@\scheme{reciprocal}}{15}
+\indexentry{numbers}{16}
+\indexentry{+@\scheme{+}}{16}
+\indexentry{-@\scheme{-}}{16}
+\indexentry{*@\scheme{*}}{16}
+\indexentry{/@\scheme{/}}{16}
+\indexentry{procedure application}{16}
+\indexentry{prefix notation}{16}
+\indexentry{operator precedence}{16}
+\indexentry{lists}{17}
+\indexentry{procedure application}{17}
+\indexentry{' (quote)@\scheme{'} (\scheme{quote})}{17}
+\indexentry{quote (~'~)@\scheme{quote} (~\scheme{'}~)}{17}
+\indexentry{syntactic forms}{18}
+\indexentry{variables}{18}
+\indexentry{symbols}{18}
+\indexentry{lists}{18}
+\indexentry{car@\scheme{car}}{18}
+\indexentry{cdr@\scheme{cdr}}{18}
+\indexentry{()@\scheme{()}}{19}
+\indexentry{empty list}{19}
+\indexentry{cons@\scheme{cons}}{19}
+\indexentry{consing}{19}
+\indexentry{pairs}{19}
+\indexentry{proper list}{19}
+\indexentry{improper list}{19}
+\indexentry{. (dot)@\scheme{{\schdot}} (dot)}{19}
+\indexentry{dot (~.~)@dot (~\scheme{{\schdot}}~)}{19}
+\indexentry{dotted pair}{20}
+\indexentry{list@\scheme{list}}{20}
+\indexentry{constants}{21}
+\indexentry{procedure application}{21}
+\indexentry{' (quote)@\scheme{'} (\scheme{quote})}{22}
+\indexentry{quote (~'~)@\scheme{quote} (~\scheme{'}~)}{22}
+\indexentry{syntactic extensions}{22}
+\indexentry{core syntactic forms}{22}
+\indexentry{order of evaluation}{22}
+\indexentry{variables}{23}
+\indexentry{let@\scheme{let}}{23}
+\indexentry{variable binding}{23}
+\indexentry{let-bound variables@\scheme{let}-bound variables}{23}
+\indexentry{shadowing}{25}
+\indexentry{scope}{25}
+\indexentry{lexical scoping}{25}
+\indexentry{lambda@\scheme{lambda}}{26}
+\indexentry{procedures}{26}
+\indexentry{formal parameters}{26}
+\indexentry{procedure application}{27}
+\indexentry{actual parameters}{27}
+\indexentry{double@\scheme{double}}{27}
+\indexentry{double-cons@\scheme{double-cons}}{27}
+\indexentry{occur free}{28}
+\indexentry{free variable}{28}
+\indexentry{let@\scheme{let}}{28}
+\indexentry{formal parameters}{29}
+\indexentry{lambda@\scheme{lambda}}{29}
+\indexentry{occur free}{30}
+\indexentry{top-level definitions}{30}
+\indexentry{variables}{30}
+\indexentry{define@\scheme{define}}{30}
+\indexentry{double-any@\scheme{double-any}}{30}
+\indexentry{procedure definition}{31}
+\indexentry{shadowing}{31}
+\indexentry{list@\scheme{list}}{31}
+\indexentry{cadr@\scheme{cadr}}{31}
+\indexentry{cddr@\scheme{cddr}}{31}
+\indexentry{cadr@\scheme{cadr}}{32}
+\indexentry{list@\scheme{list}}{32}
+\indexentry{defun syntax}{33}
+\indexentry{doubler@\scheme{doubler}}{33}
+\indexentry{double@\scheme{double}}{33}
+\indexentry{double-cons@\scheme{double-cons}}{33}
+\indexentry{cadr@\scheme{cadr}}{34}
+\indexentry{cddr@\scheme{cddr}}{34}
+\indexentry{compose@\scheme{compose}}{34}
+\indexentry{caar, cadr, \dots, cddddr@\scheme{caar,~cadr,~{\dots},~cddddr}}{34}
+\indexentry{abs@\scheme{abs}}{34}
+\indexentry{if@\scheme{if}}{35}
+\indexentry{not@\scheme{not}}{36}
+\indexentry{or@\scheme{or}}{36}
+\indexentry{if@\scheme{if}}{36}
+\indexentry{or@\scheme{or}}{36}
+\indexentry{#t@\scheme{\#t}}{36}
+\indexentry{#f@\scheme{\#f}}{36}
+\indexentry{true}{36}
+\indexentry{false}{36}
+\indexentry{and@\scheme{and}}{37}
+\indexentry{reciprocal@\scheme{reciprocal}}{37}
+\indexentry{predicates}{37}
+\indexentry{? (question mark)@\scheme{?} (question mark)}{37}
+\indexentry{question mark (~?~)@question mark (~\scheme{?}~)}{37}
+\indexentry{null?@\scheme{null?}}{37}
+\indexentry{cdr@\scheme{cdr}}{38}
+\indexentry{lisp-cdr@\scheme{lisp-cdr}}{38}
+\indexentry{eqv?@\scheme{eqv?}}{38}
+\indexentry{type predicates}{38}
+\indexentry{pair?@\scheme{pair?}}{38}
+\indexentry{symbol?@\scheme{symbol?}}{38}
+\indexentry{number?@\scheme{number?}}{38}
+\indexentry{string?@\scheme{string?}}{38}
+\indexentry{pair?@\scheme{pair?}}{38}
+\indexentry{reciprocal@\scheme{reciprocal}}{39}
+\indexentry{cond@\scheme{cond}}{39}
+\indexentry{if@\scheme{if}}{39}
+\indexentry{atom?@\scheme{atom?}}{41}
+\indexentry{shorter@\scheme{shorter}}{41}
+\indexentry{recursion}{41}
+\indexentry{recursion}{41}
+\indexentry{recursive procedure}{41}
+\indexentry{goodbye@\scheme{goodbye}}{41}
+\indexentry{base case}{41}
+\indexentry{recursion step}{41}
+\indexentry{length@\scheme{length}}{42}
+\indexentry{tracing}{42}
+\indexentry{trace@\scheme{trace}}{42}
+\indexentry{ChezScheme@\ChezScheme}{42}
+\indexentry{list-copy@\scheme{list-copy}}{43}
+\indexentry{memv@\scheme{memv}}{43}
+\indexentry{cond@\scheme{cond}}{44}
+\indexentry{remv@\scheme{remv}}{44}
+\indexentry{tree-copy@\scheme{tree-copy}}{44}
+\indexentry{iteration}{45}
+\indexentry{mapping}{45}
+\indexentry{map@\scheme{map}}{45}
+\indexentry{map1@\scheme{map1}}{46}
+\indexentry{append@\scheme{append}}{46}
+\indexentry{make-list@\scheme{make-list}}{46}
+\indexentry{shorter@\scheme{shorter}}{47}
+\indexentry{shorter?@\scheme{shorter?}}{47}
+\indexentry{odd?@\scheme{odd?}}{47}
+\indexentry{even?@\scheme{even?}}{47}
+\indexentry{map@\scheme{map}}{47}
+\indexentry{assignments}{47}
+\indexentry{variables}{47}
+\indexentry{set"!@\scheme{set"!}}{47}
+\indexentry{quadratic-formula@\scheme{quadratic-formula}}{48}
+\indexentry{internal state}{49}
+\indexentry{make-counter@\scheme{make-counter}}{50}
+\indexentry{shhh@\scheme{shhh}}{50}
+\indexentry{tell@\scheme{tell}}{50}
+\indexentry{lazy evaluation}{51}
+\indexentry{lazy@\scheme{lazy}}{51}
+\indexentry{thunk}{51}
+\indexentry{begin@\scheme{begin}}{51}
+\indexentry{if@\scheme{if}}{51}
+\indexentry{stack objects}{52}
+\indexentry{messages}{52}
+\indexentry{make-stack@\scheme{make-stack}}{52}
+\indexentry{abstract objects}{53}
+\indexentry{queue}{53}
+\indexentry{tconc}{53}
+\indexentry{make-queue@\scheme{make-queue}}{54}
+\indexentry{putq"!@\scheme{putq"!}}{54}
+\indexentry{getq@\scheme{getq}}{54}
+\indexentry{delq"!@\scheme{delq"!}}{54}
+\indexentry{make-counter@\scheme{make-counter}}{54}
+\indexentry{case@\scheme{case}}{55}
+\indexentry{make-stack@\scheme{make-stack}}{55}
+\indexentry{vectors}{55}
+\indexentry{set-cdr"!@\scheme{set-cdr"!}}{56}
+\indexentry{cyclic lists}{56}
+\indexentry{list?@\scheme{list?}}{56}
+\indexentry{proper list}{56}
+\indexentry{hare and tortoise}{56}
+\indexentry{core syntactic forms}{59}
+\indexentry{syntactic forms}{59}
+\indexentry{syntactic extensions}{59}
+\indexentry{expansion}{59}
+\indexentry{' (quote)@\scheme{'} (\scheme{quote})}{59}
+\indexentry{quote (~'~)@\scheme{quote} (~\scheme{'}~)}{59}
+\indexentry{lambda@\scheme{lambda}}{59}
+\indexentry{if@\scheme{if}}{59}
+\indexentry{set"!@\scheme{set"!}}{59}
+\indexentry{defun syntax}{60}
+\indexentry{begin@\scheme{begin}}{60}
+\indexentry{defining syntactic extensions}{60}
+\indexentry{syntactic extensions}{60}
+\indexentry{define-syntax@\scheme{define-syntax}}{61}
+\indexentry{transformer}{61}
+\indexentry{keywords}{61}
+\indexentry{auxiliary keywords}{61}
+\indexentry{underscore (~_~)@underscore (~\scheme{{\schunderscore}}~)}{61}
+\indexentry{_ (underscore)@\scheme{{\schunderscore}} (underscore)}{61}
+\indexentry{pattern variables}{61}
+\indexentry{...~(ellipsis)@\scheme{{\schdot}{\schdot}{\schdot}}~(ellipsis)}{61}
+\indexentry{ellipsis (~...~)@ellipsis (~\scheme{{\schdot}{\schdot}{\schdot}}~)}{61}
+\indexentry{and@\scheme{and}}{62}
+\indexentry{or@\scheme{or}}{63}
+\indexentry{lexical scoping}{63}
+\indexentry{let*@\scheme{let*}}{64}
+\indexentry{when@\scheme{when}}{64}
+\indexentry{unless@\scheme{unless}}{64}
+\indexentry{recursion}{65}
+\indexentry{let@\scheme{let}}{65}
+\indexentry{sum}{65}
+\indexentry{letrec@\scheme{letrec}}{65}
+\indexentry{mutually recursive procedures}{66}
+\indexentry{even?@\scheme{even?}}{66}
+\indexentry{odd?@\scheme{odd?}}{66}
+\indexentry{list?@\scheme{list?}}{66}
+\indexentry{hare and tortoise}{66}
+\indexentry{named let@named \scheme{let}}{67}
+\indexentry{list?@\scheme{list?}}{67}
+\indexentry{iteration}{68}
+\indexentry{tail call}{68}
+\indexentry{tail recursion}{68}
+\indexentry{factorial@\scheme{factorial}}{68}
+\indexentry{fibonacci@\scheme{fibonacci}}{69}
+\indexentry{Fibonacci numbers}{69}
+\indexentry{doubly recursive}{70}
+\indexentry{named let@named \scheme{let}}{71}
+\indexentry{factor@\scheme{factor}}{71}
+\indexentry{factor@\scheme{factor}}{72}
+\indexentry{factor@\scheme{factor}}{73}
+\indexentry{continuations}{73}
+\indexentry{call/cc@\scheme{call/cc}}{74}
+\indexentry{product@\scheme{product}}{74}
+\indexentry{factorial@\scheme{factorial}}{75}
+\indexentry{retry@\scheme{retry}}{75}
+\indexentry{continuation-passing style}{78}
+\indexentry{CPS}{78}
+\indexentry{integer-divide@\scheme{integer-divide}}{79}
+\indexentry{product@\scheme{product}}{80}
+\indexentry{reciprocal@\scheme{reciprocal}}{80}
+\indexentry{retry@\scheme{retry}}{80}
+\indexentry{define@\scheme{define}}{81}
+\indexentry{internal definitions}{81}
+\indexentry{even?@\scheme{even?}}{81}
+\indexentry{odd?@\scheme{odd?}}{81}
+\indexentry{letrec@\scheme{letrec}}{81}
+\indexentry{list?@\scheme{list?}}{81}
+\indexentry{variable binding}{91}
+\indexentry{procedures}{91}
+\indexentry{variable reference|emph}{91}
+\indexentry{lambda@\scheme{lambda}|emph}{92}
+\indexentry{procedures}{92}
+\indexentry{formal parameters}{92}
+\indexentry{internal definitions}{92}
+\indexentry{actual parameters}{92}
+\indexentry{formal parameters}{92}
+\indexentry{lambda@\scheme{lambda}}{93}
+\indexentry{optional arguments}{93}
+\indexentry{case-lambda@\scheme{case-lambda}}{94}
+\indexentry{lambda*@\scheme{lambda*}}{94}
+\indexentry{case-lambda@\scheme{case-lambda}|emph}{94}
+\indexentry{make-list@\scheme{make-list}}{94}
+\indexentry{substring@\scheme{substring}}{95}
+\indexentry{let@\scheme{let}|emph}{95}
+\indexentry{local variable bindings}{95}
+\indexentry{let*@\scheme{let*}|emph}{96}
+\indexentry{nested let expressions@nested \scheme{let} expressions}{96}
+\indexentry{letrec@\scheme{letrec}|emph}{97}
+\indexentry{mutually recursive procedures}{97}
+\indexentry{letrec*@\scheme{letrec*}|emph}{98}
+\indexentry{let-values@\scheme{let-values}|emph}{99}
+\indexentry{let*-values@\scheme{let*-values}|emph}{99}
+\indexentry{define@\scheme{define}|emph}{100}
+\indexentry{define@\scheme{define}|emph}{100}
+\indexentry{define@\scheme{define}|emph}{100}
+\indexentry{define@\scheme{define}|emph}{100}
+\indexentry{define@\scheme{define}|emph}{100}
+\indexentry{procedure definition}{100}
+\indexentry{begin@\scheme{begin}}{101}
+\indexentry{top-level definitions}{101}
+\indexentry{set"!@\scheme{set"!}|emph}{102}
+\indexentry{assignment}{102}
+\indexentry{assignments}{102}
+\indexentry{flip-flop@\scheme{flip-flop}}{102}
+\indexentry{Fibonacci numbers}{102}
+\indexentry{fibonacci@\scheme{fibonacci}}{102}
+\indexentry{control structures}{107}
+\indexentry{procedure application|emph}{107}
+\indexentry{order of evaluation}{107}
+\indexentry{apply@\scheme{apply}|emph}{107}
+\indexentry{begin@\scheme{begin}|emph}{108}
+\indexentry{sequencing}{108}
+\indexentry{side effects}{108}
+\indexentry{implicit begin@implicit \scheme{begin}}{109}
+\indexentry{if@\scheme{if}|emph}{109}
+\indexentry{if@\scheme{if}|emph}{109}
+\indexentry{conditionals}{109}
+\indexentry{not@\scheme{not}|emph}{110}
+\indexentry{and@\scheme{and}|emph}{110}
+\indexentry{or@\scheme{or}|emph}{110}
+\indexentry{cond@\scheme{cond}|emph}{111}
+\indexentry{=>@\scheme{=>}}{111}
+\indexentry{else@\scheme{else}}{111}
+\indexentry{else@\scheme{else}|emph}{112}
+\indexentry{=>@\scheme{=>}|emph}{112}
+\indexentry{when@\scheme{when}|emph}{112}
+\indexentry{unless@\scheme{unless}|emph}{112}
+\indexentry{case@\scheme{case}|emph}{113}
+\indexentry{else@\scheme{else}}{113}
+\indexentry{let@\scheme{let}|emph}{114}
+\indexentry{named let@named \scheme{let}}{114}
+\indexentry{iteration}{114}
+\indexentry{recursion}{114}
+\indexentry{divisors@\scheme{divisors}}{115}
+\indexentry{do@\scheme{do}|emph}{115}
+\indexentry{iteration}{115}
+\indexentry{factorial@\scheme{factorial}}{116}
+\indexentry{fibonacci@\scheme{fibonacci}}{116}
+\indexentry{divisors@\scheme{divisors}}{116}
+\indexentry{map@\scheme{map}|emph}{117}
+\indexentry{mapping}{117}
+\indexentry{iteration}{117}
+\indexentry{for-each@\scheme{for-each}|emph}{118}
+\indexentry{mapping}{118}
+\indexentry{iteration}{118}
+\indexentry{exists@\scheme{exists}|emph}{119}
+\indexentry{for-all@\scheme{for-all}|emph}{119}
+\indexentry{fold-left@\scheme{fold-left}|emph}{120}
+\indexentry{folding}{120}
+\indexentry{iteration}{120}
+\indexentry{fold-right@\scheme{fold-right}|emph}{121}
+\indexentry{folding}{121}
+\indexentry{iteration}{121}
+\indexentry{vector-map@\scheme{vector-map}|emph}{121}
+\indexentry{mapping}{121}
+\indexentry{iteration}{121}
+\indexentry{vector-for-each@\scheme{vector-for-each}|emph}{122}
+\indexentry{mapping}{122}
+\indexentry{iteration}{122}
+\indexentry{string-for-each@\scheme{string-for-each}|emph}{122}
+\indexentry{mapping}{122}
+\indexentry{iteration}{122}
+\indexentry{call/cc@\scheme{call/cc}}{122}
+\indexentry{call/cc@\scheme{call/cc}|emph}{123}
+\indexentry{call-with-current-continuation@\scheme{call-with-current-continuation}|emph}{123}
+\indexentry{nonlocal exits}{123}
+\indexentry{dynamic-wind@\scheme{dynamic-wind}|emph}{124}
+\indexentry{continuations}{124}
+\indexentry{thunk}{124}
+\indexentry{unwind-protect (in Lisp)}{124}
+\indexentry{nonlocal exits}{124}
+\indexentry{fluid binding}{125}
+\indexentry{call/cc@\scheme{call/cc}}{126}
+\indexentry{winders|see{\scheme{dynamic-wind}}}{127}
+\indexentry{lazy evaluation}{127}
+\indexentry{delay@\scheme{delay}|emph}{128}
+\indexentry{force@\scheme{force}|emph}{128}
+\indexentry{streams}{128}
+\indexentry{make-promise@\scheme{make-promise}}{129}
+\indexentry{values@\scheme{values}}{130}
+\indexentry{call-with-values@\scheme{call-with-values}}{130}
+\indexentry{values@\scheme{values}|emph}{131}
+\indexentry{call-with-values@\scheme{call-with-values}|emph}{131}
+\indexentry{dxdy@\scheme{dxdy}}{131}
+\indexentry{segment-length@\scheme{segment-length}}{132}
+\indexentry{segment-slope@\scheme{segment-slope}}{132}
+\indexentry{describe-segment@\scheme{describe-segment}}{132}
+\indexentry{split@\scheme{split}}{133}
+\indexentry{call/cc@\scheme{call/cc}}{133}
+\indexentry{let-values@\scheme{let-values}}{134}
+\indexentry{let*-values@\scheme{let*-values}}{134}
+\indexentry{eval@\scheme{eval}|emph}{136}
+\indexentry{environment@\scheme{environment}|emph}{137}
+\indexentry{null-environment@\scheme{null-environment}|emph}{137}
+\indexentry{scheme-report-environment@\scheme{scheme-report-environment}|emph}{137}
+\indexentry{operations on objects}{141}
+\indexentry{constant|emph}{141}
+\indexentry{quote (~'~)@\scheme{quote} (~\scheme{'}~)|emph}{141}
+\indexentry{' (quote)@\scheme{'} (\scheme{quote})|emph}{141}
+\indexentry{data}{141}
+\indexentry{constants}{141}
+\indexentry{quasiquote (~`~)@\scheme{quasiquote} (~\scheme{`}~)|emph}{142}
+\indexentry{` (quasiquote)@\scheme{`} (\scheme{quasiquote})|emph}{142}
+\indexentry{unquote (~,~)@\scheme{unquote} (~\scheme{,}~)|emph}{142}
+\indexentry{, (unquote)@\scheme{,} (\scheme{unquote})|emph}{142}
+\indexentry{unquote-splicing (~,"@~)@\scheme{unquote-splicing} (~\scheme{,{\schatsign}}~)|emph}{142}
+\indexentry{,"@ (unquote-splicing)@\scheme{,{\schatsign}} (\scheme{unquote-splicing})|emph}{142}
+\indexentry{predicates}{143}
+\indexentry{#t@\scheme{\#t}}{143}
+\indexentry{#f@\scheme{\#f}}{143}
+\indexentry{equivalence predicates}{143}
+\indexentry{eq?@\scheme{eq?}|emph}{143}
+\indexentry{object identity}{144}
+\indexentry{eqv?@\scheme{eqv?}|emph}{146}
+\indexentry{equal?@\scheme{equal?}|emph}{148}
+\indexentry{boolean?@\scheme{boolean?}|emph}{150}
+\indexentry{null?@\scheme{null?}|emph}{151}
+\indexentry{pair?@\scheme{pair?}|emph}{151}
+\indexentry{number?@\scheme{number?}|emph}{151}
+\indexentry{complex?@\scheme{complex?}|emph}{151}
+\indexentry{real?@\scheme{real?}|emph}{151}
+\indexentry{rational?@\scheme{rational?}|emph}{151}
+\indexentry{integer?@\scheme{integer?}|emph}{151}
+\indexentry{real-valued?@\scheme{real-valued?}|emph}{153}
+\indexentry{rational-valued?@\scheme{rational-valued?}|emph}{153}
+\indexentry{integer-valued?@\scheme{integer-valued?}|emph}{153}
+\indexentry{char?@\scheme{char?}|emph}{154}
+\indexentry{string?@\scheme{string?}|emph}{154}
+\indexentry{vector?@\scheme{vector?}|emph}{154}
+\indexentry{symbol?@\scheme{symbol?}|emph}{154}
+\indexentry{procedure?@\scheme{procedure?}|emph}{155}
+\indexentry{bytevector?@\scheme{bytevector?}|emph}{155}
+\indexentry{hashtable?@\scheme{hashtable?}|emph}{155}
+\indexentry{pairs}{155}
+\indexentry{cons cell}{155}
+\indexentry{lists}{155}
+\indexentry{cdr@\scheme{cdr}}{155}
+\indexentry{car@\scheme{car}}{155}
+\indexentry{proper list}{155}
+\indexentry{improper list}{155}
+\indexentry{binary trees}{155}
+\indexentry{brackets (~[~]~)@brackets (~\scheme{[}~\scheme{]}~)}{155}
+\indexentry{dotted pair}{155}
+\indexentry{circular lists}{156}
+\indexentry{cons@\scheme{cons}|emph}{156}
+\indexentry{car@\scheme{car}|emph}{156}
+\indexentry{cdr@\scheme{cdr}|emph}{156}
+\indexentry{set-car"!@\scheme{set-car"!}|emph}{157}
+\indexentry{set-cdr"!@\scheme{set-cdr"!}|emph}{157}
+\indexentry{caar@\scheme{caar}|emph}{157}
+\indexentry{cadr@\scheme{cadr}|emph}{157}
+\indexentry{cdar@\scheme{cdar}|emph}{157}
+\indexentry{cddr@\scheme{cddr}|emph}{157}
+\indexentry{caaar@\scheme{caaar}|emph}{157}
+\indexentry{caadr@\scheme{caadr}|emph}{157}
+\indexentry{cadar@\scheme{cadar}|emph}{157}
+\indexentry{caddr@\scheme{caddr}|emph}{157}
+\indexentry{cdaar@\scheme{cdaar}|emph}{157}
+\indexentry{cdadr@\scheme{cdadr}|emph}{157}
+\indexentry{cddar@\scheme{cddar}|emph}{157}
+\indexentry{cdddr@\scheme{cdddr}|emph}{157}
+\indexentry{caaaar@\scheme{caaaar}|emph}{157}
+\indexentry{caaadr@\scheme{caaadr}|emph}{157}
+\indexentry{caadar@\scheme{caadar}|emph}{157}
+\indexentry{caaddr@\scheme{caaddr}|emph}{157}
+\indexentry{cadaar@\scheme{cadaar}|emph}{157}
+\indexentry{cadadr@\scheme{cadadr}|emph}{157}
+\indexentry{caddar@\scheme{caddar}|emph}{157}
+\indexentry{cadddr@\scheme{cadddr}|emph}{157}
+\indexentry{cdaaar@\scheme{cdaaar}|emph}{157}
+\indexentry{cdaadr@\scheme{cdaadr}|emph}{157}
+\indexentry{cdadar@\scheme{cdadar}|emph}{157}
+\indexentry{cdaddr@\scheme{cdaddr}|emph}{157}
+\indexentry{cddaar@\scheme{cddaar}|emph}{157}
+\indexentry{cddadr@\scheme{cddadr}|emph}{157}
+\indexentry{cdddar@\scheme{cdddar}|emph}{157}
+\indexentry{cddddr@\scheme{cddddr}|emph}{157}
+\indexentry{list@\scheme{list}|emph}{158}
+\indexentry{cons*@\scheme{cons*}|emph}{158}
+\indexentry{list?@\scheme{list?}|emph}{158}
+\indexentry{length@\scheme{length}|emph}{159}
+\indexentry{list-ref@\scheme{list-ref}|emph}{159}
+\indexentry{list-tail@\scheme{list-tail}|emph}{160}
+\indexentry{append@\scheme{append}|emph}{160}
+\indexentry{append@\scheme{append}|emph}{160}
+\indexentry{reverse@\scheme{reverse}|emph}{161}
+\indexentry{memq@\scheme{memq}|emph}{161}
+\indexentry{memv@\scheme{memv}|emph}{161}
+\indexentry{member@\scheme{member}|emph}{161}
+\indexentry{memp@\scheme{memp}|emph}{163}
+\indexentry{remq@\scheme{remq}|emph}{163}
+\indexentry{remv@\scheme{remv}|emph}{163}
+\indexentry{remove@\scheme{remove}|emph}{163}
+\indexentry{remp@\scheme{remp}|emph}{163}
+\indexentry{filter@\scheme{filter}|emph}{164}
+\indexentry{partition@\scheme{partition}|emph}{164}
+\indexentry{find@\scheme{find}|emph}{165}
+\indexentry{assq@\scheme{assq}|emph}{165}
+\indexentry{assv@\scheme{assv}|emph}{165}
+\indexentry{assoc@\scheme{assoc}|emph}{165}
+\indexentry{association list}{165}
+\indexentry{assp@\scheme{assp}|emph}{166}
+\indexentry{association list}{166}
+\indexentry{list-sort@\scheme{list-sort}|emph}{167}
+\indexentry{numbers}{167}
+\indexentry{integers}{167}
+\indexentry{rational numbers}{167}
+\indexentry{real numbers}{167}
+\indexentry{complex numbers}{167}
+\indexentry{integer?@\scheme{integer?}}{167}
+\indexentry{rational?@\scheme{rational?}}{167}
+\indexentry{real?@\scheme{real?}}{167}
+\indexentry{complex?@\scheme{complex?}}{167}
+\indexentry{exactness}{167}
+\indexentry{exact?@\scheme{exact?}}{167}
+\indexentry{inexact?@\scheme{inexact?}}{167}
+\indexentry{exactness preserving}{167}
+\indexentry{arbitrary precision}{167}
+\indexentry{floating point}{167}
+\indexentry{#b (binary)@\scheme{\#b} (binary)}{169}
+\indexentry{#o (octal)@\scheme{\#o} (octal)}{169}
+\indexentry{#d (decimal)@\scheme{\#d} (decimal)}{169}
+\indexentry{#x (hexadecimal)@\scheme{\#x} (hexadecimal)}{169}
+\indexentry{s (short)@\scheme{s} (short)}{169}
+\indexentry{f (single)@\scheme{f} (single)}{169}
+\indexentry{d (double)@\scheme{d} (double)}{169}
+\indexentry{l (long)@\scheme{l} (long)}{169}
+\indexentry{exact?@\scheme{exact?}|emph}{170}
+\indexentry{inexact?@\scheme{inexact?}|emph}{170}
+\indexentry{=@\scheme{=}|emph}{170}
+\indexentry{<@\scheme{<}|emph}{170}
+\indexentry{>@\scheme{>}|emph}{170}
+\indexentry{<=@\scheme{<=}|emph}{170}
+\indexentry{>=@\scheme{>=}|emph}{170}
+\indexentry{+@\scheme{+}|emph}{171}
+\indexentry{-@\scheme{-}|emph}{172}
+\indexentry{-@\scheme{-}|emph}{172}
+\indexentry{*@\scheme{*}|emph}{172}
+\indexentry{/@\scheme{/}|emph}{172}
+\indexentry{/@\scheme{/}|emph}{172}
+\indexentry{zero?@\scheme{zero?}|emph}{173}
+\indexentry{positive?@\scheme{positive?}|emph}{173}
+\indexentry{negative?@\scheme{negative?}|emph}{173}
+\indexentry{even?@\scheme{even?}|emph}{174}
+\indexentry{odd?@\scheme{odd?}|emph}{174}
+\indexentry{finite?@\scheme{finite?}|emph}{174}
+\indexentry{infinite?@\scheme{infinite?}|emph}{174}
+\indexentry{nan?@\scheme{nan?}|emph}{174}
+\indexentry{quotient@\scheme{quotient}|emph}{175}
+\indexentry{remainder@\scheme{remainder}|emph}{175}
+\indexentry{modulo@\scheme{modulo}|emph}{175}
+\indexentry{div@\scheme{div}|emph}{175}
+\indexentry{mod@\scheme{mod}|emph}{175}
+\indexentry{div-and-mod@\scheme{div-and-mod}|emph}{175}
+\indexentry{div0@\scheme{div0}|emph}{176}
+\indexentry{mod0@\scheme{mod0}|emph}{176}
+\indexentry{div0-and-mod0@\scheme{div0-and-mod0}|emph}{176}
+\indexentry{truncate@\scheme{truncate}|emph}{177}
+\indexentry{floor@\scheme{floor}|emph}{177}
+\indexentry{ceiling@\scheme{ceiling}|emph}{177}
+\indexentry{round@\scheme{round}|emph}{178}
+\indexentry{abs@\scheme{abs}|emph}{178}
+\indexentry{magnitude@\scheme{magnitude}}{178}
+\indexentry{max@\scheme{max}|emph}{178}
+\indexentry{min@\scheme{min}|emph}{178}
+\indexentry{gcd@\scheme{gcd}|emph}{179}
+\indexentry{lcm@\scheme{lcm}|emph}{179}
+\indexentry{expt@\scheme{expt}|emph}{179}
+\indexentry{inexact@\scheme{inexact}|emph}{180}
+\indexentry{exactness}{180}
+\indexentry{exact@\scheme{exact}|emph}{180}
+\indexentry{exactness}{180}
+\indexentry{exact->inexact@\scheme{exact->inexact}|emph}{181}
+\indexentry{inexact->exact@\scheme{inexact->exact}|emph}{181}
+\indexentry{rationalize@\scheme{rationalize}|emph}{181}
+\indexentry{numerator@\scheme{numerator}|emph}{181}
+\indexentry{denominator@\scheme{denominator}|emph}{181}
+\indexentry{real-part@\scheme{real-part}|emph}{182}
+\indexentry{imag-part@\scheme{imag-part}|emph}{182}
+\indexentry{make-rectangular@\scheme{make-rectangular}|emph}{182}
+\indexentry{make-polar@\scheme{make-polar}|emph}{183}
+\indexentry{angle@\scheme{angle}|emph}{183}
+\indexentry{magnitude@\scheme{magnitude}|emph}{183}
+\indexentry{abs@\scheme{abs}}{183}
+\indexentry{sqrt@\scheme{sqrt}|emph}{183}
+\indexentry{exact-integer-sqrt@\scheme{exact-integer-sqrt}|emph}{184}
+\indexentry{exp@\scheme{exp}|emph}{184}
+\indexentry{log@\scheme{log}|emph}{184}
+\indexentry{log@\scheme{log}|emph}{184}
+\indexentry{sin@\scheme{sin}|emph}{185}
+\indexentry{cos@\scheme{cos}|emph}{185}
+\indexentry{tan@\scheme{tan}|emph}{185}
+\indexentry{asin@\scheme{asin}|emph}{185}
+\indexentry{acos@\scheme{acos}|emph}{185}
+\indexentry{atan@\scheme{atan}|emph}{185}
+\indexentry{atan@\scheme{atan}|emph}{185}
+\indexentry{bitwise-not@\scheme{bitwise-not}|emph}{186}
+\indexentry{bitwise-and@\scheme{bitwise-and}|emph}{186}
+\indexentry{bitwise-ior@\scheme{bitwise-ior}|emph}{186}
+\indexentry{bitwise-xor@\scheme{bitwise-xor}|emph}{186}
+\indexentry{bitwise-if@\scheme{bitwise-if}|emph}{186}
+\indexentry{bitwise-bit-count@\scheme{bitwise-bit-count}|emph}{187}
+\indexentry{bitwise-length@\scheme{bitwise-length}|emph}{187}
+\indexentry{bitwise-first-bit-set@\scheme{bitwise-first-bit-set}|emph}{187}
+\indexentry{bitwise-bit-set?@\scheme{bitwise-bit-set?}|emph}{188}
+\indexentry{bitwise-copy-bit@\scheme{bitwise-copy-bit}|emph}{188}
+\indexentry{bitwise-bit-field@\scheme{bitwise-bit-field}|emph}{189}
+\indexentry{bitwise-copy-bit-field@\scheme{bitwise-copy-bit-field}|emph}{189}
+\indexentry{bitwise-arithmetic-shift-right@\scheme{bitwise-arithmetic-shift-right}|emph}{189}
+\indexentry{bitwise-arithmetic-shift-left@\scheme{bitwise-arithmetic-shift-left}|emph}{189}
+\indexentry{bitwise-arithmetic-shift@\scheme{bitwise-arithmetic-shift}|emph}{190}
+\indexentry{bitwise-rotate-bit-field@\scheme{bitwise-rotate-bit-field}|emph}{190}
+\indexentry{bitwise-reverse-bit-field@\scheme{bitwise-reverse-bit-field}|emph}{191}
+\indexentry{string->number@\scheme{string->number}|emph}{191}
+\indexentry{string->number@\scheme{string->number}|emph}{191}
+\indexentry{number->string@\scheme{number->string}|emph}{191}
+\indexentry{number->string@\scheme{number->string}|emph}{191}
+\indexentry{number->string@\scheme{number->string}|emph}{191}
+\indexentry{fixnum}{192}
+\indexentry{fixnum?@\scheme{fixnum?}|emph}{193}
+\indexentry{least-fixnum@\scheme{least-fixnum}|emph}{193}
+\indexentry{greatest-fixnum@\scheme{greatest-fixnum}|emph}{193}
+\indexentry{fixnum-width@\scheme{fixnum-width}|emph}{193}
+\indexentry{fx=?@\scheme{fx=?}|emph}{193}
+\indexentry{fx<?@\scheme{fx<?}|emph}{193}
+\indexentry{fx>?@\scheme{fx>?}|emph}{193}
+\indexentry{fx<=?@\scheme{fx<=?}|emph}{193}
+\indexentry{fx>=?@\scheme{fx>=?}|emph}{193}
+\indexentry{fxzero?@\scheme{fxzero?}|emph}{194}
+\indexentry{fxpositive?@\scheme{fxpositive?}|emph}{194}
+\indexentry{fxnegative?@\scheme{fxnegative?}|emph}{194}
+\indexentry{fxeven?@\scheme{fxeven?}|emph}{194}
+\indexentry{fxodd?@\scheme{fxodd?}|emph}{194}
+\indexentry{fxmin@\scheme{fxmin}|emph}{195}
+\indexentry{fxmax@\scheme{fxmax}|emph}{195}
+\indexentry{fx+@\scheme{fx+}|emph}{195}
+\indexentry{fx-@\scheme{fx-}|emph}{195}
+\indexentry{fx-@\scheme{fx-}|emph}{195}
+\indexentry{fx*@\scheme{fx*}|emph}{195}
+\indexentry{fxdiv@\scheme{fxdiv}|emph}{196}
+\indexentry{fxmod@\scheme{fxmod}|emph}{196}
+\indexentry{fxdiv-and-mod@\scheme{fxdiv-and-mod}|emph}{196}
+\indexentry{fxdiv0@\scheme{fxdiv0}|emph}{196}
+\indexentry{fxmod0@\scheme{fxmod0}|emph}{196}
+\indexentry{fxdiv0-and-mod0@\scheme{fxdiv0-and-mod0}|emph}{196}
+\indexentry{fx+/carry@\scheme{fx+/carry}|emph}{197}
+\indexentry{fx-/carry@\scheme{fx-/carry}|emph}{197}
+\indexentry{fx*/carry@\scheme{fx*/carry}|emph}{197}
+\indexentry{fxnot@\scheme{fxnot}|emph}{197}
+\indexentry{fxand@\scheme{fxand}|emph}{197}
+\indexentry{fxior@\scheme{fxior}|emph}{197}
+\indexentry{fxxor@\scheme{fxxor}|emph}{197}
+\indexentry{fxif@\scheme{fxif}|emph}{198}
+\indexentry{fxbit-count@\scheme{fxbit-count}|emph}{198}
+\indexentry{fxlength@\scheme{fxlength}|emph}{198}
+\indexentry{fxfirst-bit-set@\scheme{fxfirst-bit-set}|emph}{199}
+\indexentry{fxbit-set?@\scheme{fxbit-set?}|emph}{199}
+\indexentry{fxcopy-bit@\scheme{fxcopy-bit}|emph}{200}
+\indexentry{fxbit-field@\scheme{fxbit-field}|emph}{200}
+\indexentry{fxcopy-bit-field@\scheme{fxcopy-bit-field}|emph}{200}
+\indexentry{fxarithmetic-shift-right@\scheme{fxarithmetic-shift-right}|emph}{201}
+\indexentry{fxarithmetic-shift-left@\scheme{fxarithmetic-shift-left}|emph}{201}
+\indexentry{fxarithmetic-shift@\scheme{fxarithmetic-shift}|emph}{201}
+\indexentry{fxrotate-bit-field@\scheme{fxrotate-bit-field}|emph}{201}
+\indexentry{fxreverse-bit-field@\scheme{fxreverse-bit-field}|emph}{202}
+\indexentry{flonum}{202}
+\indexentry{flonum?@\scheme{flonum?}|emph}{203}
+\indexentry{fl=?@\scheme{fl=?}|emph}{203}
+\indexentry{fl<?@\scheme{fl<?}|emph}{203}
+\indexentry{fl>?@\scheme{fl>?}|emph}{203}
+\indexentry{fl<=?@\scheme{fl<=?}|emph}{203}
+\indexentry{fl>=?@\scheme{fl>=?}|emph}{203}
+\indexentry{flzero?@\scheme{flzero?}|emph}{204}
+\indexentry{flpositive?@\scheme{flpositive?}|emph}{204}
+\indexentry{flnegative?@\scheme{flnegative?}|emph}{204}
+\indexentry{flinteger?@\scheme{flinteger?}|emph}{204}
+\indexentry{flfinite?@\scheme{flfinite?}|emph}{205}
+\indexentry{flinfinite?@\scheme{flinfinite?}|emph}{205}
+\indexentry{flnan?@\scheme{flnan?}|emph}{205}
+\indexentry{fleven?@\scheme{fleven?}|emph}{205}
+\indexentry{flodd?@\scheme{flodd?}|emph}{205}
+\indexentry{flmin@\scheme{flmin}|emph}{205}
+\indexentry{flmax@\scheme{flmax}|emph}{205}
+\indexentry{fl+@\scheme{fl+}|emph}{206}
+\indexentry{fl-@\scheme{fl-}|emph}{206}
+\indexentry{fl-@\scheme{fl-}|emph}{206}
+\indexentry{fl*@\scheme{fl*}|emph}{207}
+\indexentry{fl/@\scheme{fl/}|emph}{207}
+\indexentry{fl/@\scheme{fl/}|emph}{207}
+\indexentry{fldiv@\scheme{fldiv}|emph}{207}
+\indexentry{flmod@\scheme{flmod}|emph}{207}
+\indexentry{fldiv-and-mod@\scheme{fldiv-and-mod}|emph}{207}
+\indexentry{fldiv0@\scheme{fldiv0}|emph}{208}
+\indexentry{flmod0@\scheme{flmod0}|emph}{208}
+\indexentry{fldiv0-and-mod0@\scheme{fldiv0-and-mod0}|emph}{208}
+\indexentry{flround@\scheme{flround}|emph}{208}
+\indexentry{fltruncate@\scheme{fltruncate}|emph}{208}
+\indexentry{flfloor@\scheme{flfloor}|emph}{208}
+\indexentry{flceiling@\scheme{flceiling}|emph}{208}
+\indexentry{flnumerator@\scheme{flnumerator}|emph}{209}
+\indexentry{fldenominator@\scheme{fldenominator}|emph}{209}
+\indexentry{flabs@\scheme{flabs}|emph}{209}
+\indexentry{flexp@\scheme{flexp}|emph}{209}
+\indexentry{fllog@\scheme{fllog}|emph}{209}
+\indexentry{fllog@\scheme{fllog}|emph}{209}
+\indexentry{flsin@\scheme{flsin}|emph}{210}
+\indexentry{flcos@\scheme{flcos}|emph}{210}
+\indexentry{fltan@\scheme{fltan}|emph}{210}
+\indexentry{flasin@\scheme{flasin}|emph}{210}
+\indexentry{flacos@\scheme{flacos}|emph}{210}
+\indexentry{flatan@\scheme{flatan}|emph}{210}
+\indexentry{flatan@\scheme{flatan}|emph}{210}
+\indexentry{flsqrt@\scheme{flsqrt}|emph}{210}
+\indexentry{flexpt@\scheme{flexpt}|emph}{210}
+\indexentry{fixnum->flonum@\scheme{fixnum->flonum}|emph}{211}
+\indexentry{real->flonum@\scheme{real->flonum}|emph}{211}
+\indexentry{characters}{211}
+\indexentry{#\@\scheme{\#{\schbackslash}}}{211}
+\indexentry{char=?@\scheme{char=?}|emph}{212}
+\indexentry{char<?@\scheme{char<?}|emph}{212}
+\indexentry{char>?@\scheme{char>?}|emph}{212}
+\indexentry{char<=?@\scheme{char<=?}|emph}{212}
+\indexentry{char>=?@\scheme{char>=?}|emph}{212}
+\indexentry{char-ci=?@\scheme{char-ci=?}|emph}{212}
+\indexentry{char-ci<?@\scheme{char-ci<?}|emph}{212}
+\indexentry{char-ci>?@\scheme{char-ci>?}|emph}{212}
+\indexentry{char-ci<=?@\scheme{char-ci<=?}|emph}{212}
+\indexentry{char-ci>=?@\scheme{char-ci>=?}|emph}{212}
+\indexentry{char-alphabetic?@\scheme{char-alphabetic?}|emph}{213}
+\indexentry{char-numeric?@\scheme{char-numeric?}|emph}{213}
+\indexentry{char-whitespace?@\scheme{char-whitespace?}|emph}{213}
+\indexentry{char-lower-case?@\scheme{char-lower-case?}|emph}{213}
+\indexentry{char-upper-case?@\scheme{char-upper-case?}|emph}{213}
+\indexentry{char-title-case?@\scheme{char-title-case?}|emph}{213}
+\indexentry{char-general-category@\scheme{char-general-category}|emph}{214}
+\indexentry{char-upcase@\scheme{char-upcase}|emph}{214}
+\indexentry{char-downcase@\scheme{char-downcase}|emph}{214}
+\indexentry{char-titlecase@\scheme{char-titlecase}|emph}{214}
+\indexentry{char-foldcase@\scheme{char-foldcase}|emph}{215}
+\indexentry{char->integer@\scheme{char->integer}|emph}{215}
+\indexentry{integer->char@\scheme{integer->char}|emph}{215}
+\indexentry{strings}{216}
+\indexentry{"" (double quote)@\scheme{""} (double quote)}{216}
+\indexentry{double quotes}{216}
+\indexentry{string=?@\scheme{string=?}|emph}{216}
+\indexentry{string<?@\scheme{string<?}|emph}{216}
+\indexentry{string>?@\scheme{string>?}|emph}{216}
+\indexentry{string<=?@\scheme{string<=?}|emph}{216}
+\indexentry{string>=?@\scheme{string>=?}|emph}{216}
+\indexentry{string-ci=?@\scheme{string-ci=?}|emph}{217}
+\indexentry{string-ci<?@\scheme{string-ci<?}|emph}{217}
+\indexentry{string-ci>?@\scheme{string-ci>?}|emph}{217}
+\indexentry{string-ci<=?@\scheme{string-ci<=?}|emph}{217}
+\indexentry{string-ci>=?@\scheme{string-ci>=?}|emph}{217}
+\indexentry{string@\scheme{string}|emph}{218}
+\indexentry{make-string@\scheme{make-string}|emph}{218}
+\indexentry{make-string@\scheme{make-string}|emph}{218}
+\indexentry{string-length@\scheme{string-length}|emph}{218}
+\indexentry{string-ref@\scheme{string-ref}|emph}{218}
+\indexentry{string-set"!@\scheme{string-set"!}|emph}{219}
+\indexentry{string-copy@\scheme{string-copy}|emph}{219}
+\indexentry{string-append@\scheme{string-append}|emph}{219}
+\indexentry{substring@\scheme{substring}|emph}{220}
+\indexentry{string-fill"!@\scheme{string-fill"!}|emph}{220}
+\indexentry{string-upcase@\scheme{string-upcase}|emph}{221}
+\indexentry{string-downcase@\scheme{string-downcase}|emph}{221}
+\indexentry{string-foldcase@\scheme{string-foldcase}|emph}{221}
+\indexentry{string-titlecase@\scheme{string-titlecase}|emph}{221}
+\indexentry{string-normalize-nfd@\scheme{string-normalize-nfd}|emph}{222}
+\indexentry{string-normalize-nfkd@\scheme{string-normalize-nfkd}|emph}{222}
+\indexentry{string-normalize-nfc@\scheme{string-normalize-nfc}|emph}{222}
+\indexentry{string-normalize-nfkc@\scheme{string-normalize-nfkc}|emph}{222}
+\indexentry{string->list@\scheme{string->list}|emph}{222}
+\indexentry{list->string@\scheme{list->string}|emph}{223}
+\indexentry{vectors}{223}
+\indexentry{vector@\scheme{vector}|emph}{224}
+\indexentry{make-vector@\scheme{make-vector}|emph}{224}
+\indexentry{make-vector@\scheme{make-vector}|emph}{224}
+\indexentry{vector-length@\scheme{vector-length}|emph}{224}
+\indexentry{vector-ref@\scheme{vector-ref}|emph}{224}
+\indexentry{vector-set"!@\scheme{vector-set"!}|emph}{225}
+\indexentry{vector-fill"!@\scheme{vector-fill"!}|emph}{225}
+\indexentry{vector->list@\scheme{vector->list}|emph}{225}
+\indexentry{list->vector@\scheme{list->vector}|emph}{226}
+\indexentry{vector-sort@\scheme{vector-sort}|emph}{226}
+\indexentry{vector-sort"!@\scheme{vector-sort"!}|emph}{226}
+\indexentry{endianness@\scheme{endianness}|emph}{228}
+\indexentry{native-endianness@\scheme{native-endianness}|emph}{228}
+\indexentry{make-bytevector@\scheme{make-bytevector}|emph}{228}
+\indexentry{make-bytevector@\scheme{make-bytevector}|emph}{228}
+\indexentry{bytevector-length@\scheme{bytevector-length}|emph}{229}
+\indexentry{bytevector=?@\scheme{bytevector=?}|emph}{229}
+\indexentry{bytevector-fill"!@\scheme{bytevector-fill"!}|emph}{229}
+\indexentry{bytevector-copy@\scheme{bytevector-copy}|emph}{229}
+\indexentry{bytevector-copy"!@\scheme{bytevector-copy"!}|emph}{230}
+\indexentry{bytevector-u8-ref@\scheme{bytevector-u8-ref}|emph}{230}
+\indexentry{bytevector-s8-ref@\scheme{bytevector-s8-ref}|emph}{231}
+\indexentry{bytevector-u8-set"!@\scheme{bytevector-u8-set"!}|emph}{231}
+\indexentry{bytevector-s8-set"!@\scheme{bytevector-s8-set"!}|emph}{231}
+\indexentry{bytevector->u8-list@\scheme{bytevector->u8-list}|emph}{232}
+\indexentry{u8-list->bytevector@\scheme{u8-list->bytevector}|emph}{232}
+\indexentry{bytevector-u16-native-ref@\scheme{bytevector-u16-native-ref}|emph}{232}
+\indexentry{bytevector-s16-native-ref@\scheme{bytevector-s16-native-ref}|emph}{232}
+\indexentry{bytevector-u32-native-ref@\scheme{bytevector-u32-native-ref}|emph}{232}
+\indexentry{bytevector-s32-native-ref@\scheme{bytevector-s32-native-ref}|emph}{232}
+\indexentry{bytevector-u64-native-ref@\scheme{bytevector-u64-native-ref}|emph}{232}
+\indexentry{bytevector-s64-native-ref@\scheme{bytevector-s64-native-ref}|emph}{232}
+\indexentry{bytevector-u16-native-set"!@\scheme{bytevector-u16-native-set"!}|emph}{233}
+\indexentry{bytevector-s16-native-set"!@\scheme{bytevector-s16-native-set"!}|emph}{233}
+\indexentry{bytevector-u32-native-set"!@\scheme{bytevector-u32-native-set"!}|emph}{233}
+\indexentry{bytevector-s32-native-set"!@\scheme{bytevector-s32-native-set"!}|emph}{233}
+\indexentry{bytevector-u64-native-set"!@\scheme{bytevector-u64-native-set"!}|emph}{233}
+\indexentry{bytevector-s64-native-set"!@\scheme{bytevector-s64-native-set"!}|emph}{233}
+\indexentry{bytevector-u16-ref@\scheme{bytevector-u16-ref}|emph}{235}
+\indexentry{bytevector-s16-ref@\scheme{bytevector-s16-ref}|emph}{235}
+\indexentry{bytevector-u32-ref@\scheme{bytevector-u32-ref}|emph}{235}
+\indexentry{bytevector-s32-ref@\scheme{bytevector-s32-ref}|emph}{235}
+\indexentry{bytevector-u64-ref@\scheme{bytevector-u64-ref}|emph}{235}
+\indexentry{bytevector-s64-ref@\scheme{bytevector-s64-ref}|emph}{235}
+\indexentry{bytevector-u16-set"!@\scheme{bytevector-u16-set"!}|emph}{236}
+\indexentry{bytevector-s16-set"!@\scheme{bytevector-s16-set"!}|emph}{236}
+\indexentry{bytevector-u32-set"!@\scheme{bytevector-u32-set"!}|emph}{236}
+\indexentry{bytevector-s32-set"!@\scheme{bytevector-s32-set"!}|emph}{236}
+\indexentry{bytevector-u64-set"!@\scheme{bytevector-u64-set"!}|emph}{236}
+\indexentry{bytevector-s64-set"!@\scheme{bytevector-s64-set"!}|emph}{236}
+\indexentry{bytevector-uint-ref@\scheme{bytevector-uint-ref}|emph}{237}
+\indexentry{bytevector-sint-ref@\scheme{bytevector-sint-ref}|emph}{237}
+\indexentry{bytevector-uint-set"!@\scheme{bytevector-uint-set"!}|emph}{238}
+\indexentry{bytevector-sint-set"!@\scheme{bytevector-sint-set"!}|emph}{238}
+\indexentry{bytevector->uint-list@\scheme{bytevector->uint-list}|emph}{238}
+\indexentry{bytevector->sint-list@\scheme{bytevector->sint-list}|emph}{238}
+\indexentry{uint-list->bytevector@\scheme{uint-list->bytevector}|emph}{239}
+\indexentry{sint-list->bytevector@\scheme{sint-list->bytevector}|emph}{239}
+\indexentry{bytevector-ieee-single-native-ref@\scheme{bytevector-ieee-single-native-ref}|emph}{239}
+\indexentry{bytevector-ieee-double-native-ref@\scheme{bytevector-ieee-double-native-ref}|emph}{239}
+\indexentry{bytevector-ieee-single-native-set"!@\scheme{bytevector-ieee-single-native-set"!}|emph}{239}
+\indexentry{bytevector-ieee-double-native-set"!@\scheme{bytevector-ieee-double-native-set"!}|emph}{239}
+\indexentry{bytevector-ieee-single-ref@\scheme{bytevector-ieee-single-ref}|emph}{240}
+\indexentry{bytevector-ieee-double-ref@\scheme{bytevector-ieee-double-ref}|emph}{240}
+\indexentry{bytevector-ieee-single-set"!@\scheme{bytevector-ieee-single-set"!}|emph}{240}
+\indexentry{bytevector-ieee-double-set"!@\scheme{bytevector-ieee-double-set"!}|emph}{240}
+\indexentry{symbols}{241}
+\indexentry{symbol table}{241}
+\indexentry{symbol=?@\scheme{symbol=?}|emph}{242}
+\indexentry{string->symbol@\scheme{string->symbol}|emph}{242}
+\indexentry{symbol->string@\scheme{symbol->string}|emph}{242}
+\indexentry{boolean=?@\scheme{boolean=?}|emph}{243}
+\indexentry{hashtables}{243}
+\indexentry{association list}{243}
+\indexentry{make-eq-hashtable@\scheme{make-eq-hashtable}|emph}{243}
+\indexentry{make-eq-hashtable@\scheme{make-eq-hashtable}|emph}{243}
+\indexentry{make-eqv-hashtable@\scheme{make-eqv-hashtable}|emph}{244}
+\indexentry{make-eqv-hashtable@\scheme{make-eqv-hashtable}|emph}{244}
+\indexentry{make-hashtable@\scheme{make-hashtable}|emph}{244}
+\indexentry{make-hashtable@\scheme{make-hashtable}|emph}{244}
+\indexentry{hashtable-mutable?@\scheme{hashtable-mutable?}|emph}{245}
+\indexentry{hashtable-hash-function@\scheme{hashtable-hash-function}|emph}{245}
+\indexentry{hashtable-equivalence-function@\scheme{hashtable-equivalence-function}|emph}{245}
+\indexentry{equal-hash@\scheme{equal-hash}|emph}{245}
+\indexentry{string-hash@\scheme{string-hash}|emph}{245}
+\indexentry{string-ci-hash@\scheme{string-ci-hash}|emph}{245}
+\indexentry{symbol-hash@\scheme{symbol-hash}|emph}{245}
+\indexentry{hashtable-set"!@\scheme{hashtable-set"!}|emph}{246}
+\indexentry{hashtable-ref@\scheme{hashtable-ref}|emph}{246}
+\indexentry{hashtable-contains?@\scheme{hashtable-contains?}|emph}{246}
+\indexentry{hashtable-update"!@\scheme{hashtable-update"!}|emph}{247}
+\indexentry{hashtable-delete"!@\scheme{hashtable-delete"!}|emph}{248}
+\indexentry{hashtable-size@\scheme{hashtable-size}|emph}{248}
+\indexentry{hashtable-copy@\scheme{hashtable-copy}|emph}{248}
+\indexentry{hashtable-copy@\scheme{hashtable-copy}|emph}{248}
+\indexentry{hashtable-clear"!@\scheme{hashtable-clear"!}|emph}{249}
+\indexentry{hashtable-clear"!@\scheme{hashtable-clear"!}|emph}{249}
+\indexentry{hashtable-keys@\scheme{hashtable-keys}|emph}{249}
+\indexentry{hashtable-entries@\scheme{hashtable-entries}|emph}{250}
+\indexentry{define-enumeration@\scheme{define-enumeration}|emph}{250}
+\indexentry{make-enumeration@\scheme{make-enumeration}|emph}{251}
+\indexentry{enum-set-constructor@\scheme{enum-set-constructor}|emph}{251}
+\indexentry{enum-set-universe@\scheme{enum-set-universe}|emph}{252}
+\indexentry{enum-set->list@\scheme{enum-set->list}|emph}{252}
+\indexentry{enum-set-subset?@\scheme{enum-set-subset?}|emph}{252}
+\indexentry{enum-set=?@\scheme{enum-set=?}|emph}{252}
+\indexentry{enum-set-member?@\scheme{enum-set-member?}|emph}{253}
+\indexentry{enum-set-union@\scheme{enum-set-union}|emph}{253}
+\indexentry{enum-set-intersection@\scheme{enum-set-intersection}|emph}{253}
+\indexentry{enum-set-difference@\scheme{enum-set-difference}|emph}{253}
+\indexentry{enum-set-complement@\scheme{enum-set-complement}|emph}{254}
+\indexentry{enum-set-projection@\scheme{enum-set-projection}|emph}{254}
+\indexentry{enum-set-indexer@\scheme{enum-set-indexer}|emph}{254}
+\indexentry{port}{257}
+\indexentry{input port}{257}
+\indexentry{output port}{257}
+\indexentry{file}{257}
+\indexentry{eof object}{257}
+\indexentry{eof-object?@\scheme{eof-object?}}{257}
+\indexentry{binary port}{257}
+\indexentry{textual port}{257}
+\indexentry{octet}{257}
+\indexentry{transcoder}{257}
+\indexentry{codec}{257}
+\indexentry{latin-1}{257}
+\indexentry{utf-8}{257}
+\indexentry{utf-16}{257}
+\indexentry{eol style}{257}
+\indexentry{error handling mode}{258}
+\indexentry{buffer modes}{258}
+\indexentry{block buffering}{258}
+\indexentry{line buffering}{258}
+\indexentry{make-transcoder@\scheme{make-transcoder}|emph}{259}
+\indexentry{make-transcoder@\scheme{make-transcoder}|emph}{259}
+\indexentry{make-transcoder@\scheme{make-transcoder}|emph}{259}
+\indexentry{transcoder-codec@\scheme{transcoder-codec}|emph}{259}
+\indexentry{transcoder-eol-style@\scheme{transcoder-eol-style}|emph}{259}
+\indexentry{transcoder-error-handling-mode@\scheme{transcoder-error-handling-mode}|emph}{259}
+\indexentry{native-transcoder@\scheme{native-transcoder}|emph}{259}
+\indexentry{latin-1-codec@\scheme{latin-1-codec}|emph}{259}
+\indexentry{utf-8-codec@\scheme{utf-8-codec}|emph}{259}
+\indexentry{utf-16-codec@\scheme{utf-16-codec}|emph}{259}
+\indexentry{eol-style@\scheme{eol-style}|emph}{259}
+\indexentry{native-eol-style@\scheme{native-eol-style}|emph}{260}
+\indexentry{error-handling-mode@\scheme{error-handling-mode}|emph}{260}
+\indexentry{file-options@\scheme{file-options}|emph}{261}
+\indexentry{buffer-mode@\scheme{buffer-mode}|emph}{261}
+\indexentry{buffer-mode?@\scheme{buffer-mode?}|emph}{262}
+\indexentry{open-file-input-port@\scheme{open-file-input-port}|emph}{262}
+\indexentry{open-file-input-port@\scheme{open-file-input-port}|emph}{262}
+\indexentry{open-file-input-port@\scheme{open-file-input-port}|emph}{262}
+\indexentry{open-file-input-port@\scheme{open-file-input-port}|emph}{262}
+\indexentry{open-file-output-port@\scheme{open-file-output-port}|emph}{262}
+\indexentry{open-file-output-port@\scheme{open-file-output-port}|emph}{262}
+\indexentry{open-file-output-port@\scheme{open-file-output-port}|emph}{262}
+\indexentry{open-file-output-port@\scheme{open-file-output-port}|emph}{262}
+\indexentry{open-file-input/output-port@\scheme{open-file-input/output-port}|emph}{263}
+\indexentry{open-file-input/output-port@\scheme{open-file-input/output-port}|emph}{263}
+\indexentry{open-file-input/output-port@\scheme{open-file-input/output-port}|emph}{263}
+\indexentry{open-file-input/output-port@\scheme{open-file-input/output-port}|emph}{263}
+\indexentry{current-input-port@\scheme{current-input-port}|emph}{263}
+\indexentry{current-output-port@\scheme{current-output-port}|emph}{263}
+\indexentry{current-error-port@\scheme{current-error-port}|emph}{263}
+\indexentry{standard-input-port@\scheme{standard-input-port}|emph}{264}
+\indexentry{standard-output-port@\scheme{standard-output-port}|emph}{264}
+\indexentry{standard-error-port@\scheme{standard-error-port}|emph}{264}
+\indexentry{open-bytevector-input-port@\scheme{open-bytevector-input-port}|emph}{264}
+\indexentry{open-bytevector-input-port@\scheme{open-bytevector-input-port}|emph}{264}
+\indexentry{open-string-input-port@\scheme{open-string-input-port}|emph}{265}
+\indexentry{open-bytevector-output-port@\scheme{open-bytevector-output-port}|emph}{265}
+\indexentry{open-bytevector-output-port@\scheme{open-bytevector-output-port}|emph}{265}
+\indexentry{open-string-output-port@\scheme{open-string-output-port}|emph}{266}
+\indexentry{call-with-bytevector-output-port@\scheme{call-with-bytevector-output-port}|emph}{266}
+\indexentry{call-with-bytevector-output-port@\scheme{call-with-bytevector-output-port}|emph}{266}
+\indexentry{call-with-string-output-port@\scheme{call-with-string-output-port}|emph}{267}
+\indexentry{object->string@\scheme{object->string}}{267}
+\indexentry{make-custom-binary-input-port@\scheme{make-custom-binary-input-port}|emph}{267}
+\indexentry{make-custom-binary-output-port@\scheme{make-custom-binary-output-port}|emph}{267}
+\indexentry{make-custom-binary-input/output-port@\scheme{make-custom-binary-input/output-port}|emph}{267}
+\indexentry{make-custom-textual-input-port@\scheme{make-custom-textual-input-port}|emph}{268}
+\indexentry{make-custom-textual-output-port@\scheme{make-custom-textual-output-port}|emph}{268}
+\indexentry{make-custom-textual-input/output-port@\scheme{make-custom-textual-input/output-port}|emph}{268}
+\indexentry{port?@\scheme{port?}|emph}{270}
+\indexentry{input-port?@\scheme{input-port?}|emph}{270}
+\indexentry{output-port?@\scheme{output-port?}|emph}{270}
+\indexentry{binary-port?@\scheme{binary-port?}|emph}{270}
+\indexentry{textual-port?@\scheme{textual-port?}|emph}{270}
+\indexentry{close-port@\scheme{close-port}|emph}{270}
+\indexentry{transcoded-port@\scheme{transcoded-port}|emph}{271}
+\indexentry{port-transcoder@\scheme{port-transcoder}|emph}{271}
+\indexentry{port-position@\scheme{port-position}|emph}{271}
+\indexentry{port-has-port-position?@\scheme{port-has-port-position?}|emph}{271}
+\indexentry{set-port-position"!@\scheme{set-port-position"!}|emph}{272}
+\indexentry{port-has-set-port-position"!?@\scheme{port-has-set-port-position"!?}|emph}{272}
+\indexentry{call-with-port@\scheme{call-with-port}|emph}{272}
+\indexentry{output-port-buffer-mode@\scheme{output-port-buffer-mode}|emph}{273}
+\indexentry{eof-object?@\scheme{eof-object?}|emph}{273}
+\indexentry{eof-object@\scheme{eof-object}|emph}{273}
+\indexentry{get-u8@\scheme{get-u8}|emph}{274}
+\indexentry{lookahead-u8@\scheme{lookahead-u8}|emph}{274}
+\indexentry{get-bytevector-n@\scheme{get-bytevector-n}|emph}{274}
+\indexentry{get-bytevector-n"!@\scheme{get-bytevector-n"!}|emph}{274}
+\indexentry{get-bytevector-some@\scheme{get-bytevector-some}|emph}{275}
+\indexentry{get-bytevector-all@\scheme{get-bytevector-all}|emph}{275}
+\indexentry{get-char@\scheme{get-char}|emph}{275}
+\indexentry{lookahead-char@\scheme{lookahead-char}|emph}{275}
+\indexentry{get-string-n@\scheme{get-string-n}|emph}{276}
+\indexentry{get-string-n"!@\scheme{get-string-n"!}|emph}{276}
+\indexentry{get-string-all@\scheme{get-string-all}|emph}{277}
+\indexentry{get-line@\scheme{get-line}|emph}{277}
+\indexentry{get-datum@\scheme{get-datum}|emph}{278}
+\indexentry{port-eof?@\scheme{port-eof?}|emph}{278}
+\indexentry{put-u8@\scheme{put-u8}|emph}{278}
+\indexentry{put-bytevector@\scheme{put-bytevector}|emph}{279}
+\indexentry{put-bytevector@\scheme{put-bytevector}|emph}{279}
+\indexentry{put-bytevector@\scheme{put-bytevector}|emph}{279}
+\indexentry{put-char@\scheme{put-char}|emph}{279}
+\indexentry{put-string@\scheme{put-string}|emph}{279}
+\indexentry{put-string@\scheme{put-string}|emph}{279}
+\indexentry{put-string@\scheme{put-string}|emph}{279}
+\indexentry{put-datum@\scheme{put-datum}|emph}{279}
+\indexentry{flush-output-port@\scheme{flush-output-port}|emph}{280}
+\indexentry{open-input-file@\scheme{open-input-file}|emph}{280}
+\indexentry{open-output-file@\scheme{open-output-file}|emph}{281}
+\indexentry{call-with-input-file@\scheme{call-with-input-file}|emph}{281}
+\indexentry{call-with-output-file@\scheme{call-with-output-file}|emph}{282}
+\indexentry{with-input-from-file@\scheme{with-input-from-file}|emph}{283}
+\indexentry{with-output-to-file@\scheme{with-output-to-file}|emph}{283}
+\indexentry{read@\scheme{read}|emph}{284}
+\indexentry{read@\scheme{read}|emph}{284}
+\indexentry{read-char@\scheme{read-char}|emph}{284}
+\indexentry{read-char@\scheme{read-char}|emph}{284}
+\indexentry{peek-char@\scheme{peek-char}|emph}{284}
+\indexentry{peek-char@\scheme{peek-char}|emph}{284}
+\indexentry{write@\scheme{write}|emph}{284}
+\indexentry{write@\scheme{write}|emph}{284}
+\indexentry{display@\scheme{display}|emph}{285}
+\indexentry{display@\scheme{display}|emph}{285}
+\indexentry{write-char@\scheme{write-char}|emph}{285}
+\indexentry{write-char@\scheme{write-char}|emph}{285}
+\indexentry{newline@\scheme{newline}|emph}{285}
+\indexentry{newline@\scheme{newline}|emph}{285}
+\indexentry{close-input-port@\scheme{close-input-port}|emph}{285}
+\indexentry{close-output-port@\scheme{close-output-port}|emph}{285}
+\indexentry{file-exists?@\scheme{file-exists?}|emph}{286}
+\indexentry{delete-file@\scheme{delete-file}|emph}{286}
+\indexentry{bytevector->string@\scheme{bytevector->string}|emph}{286}
+\indexentry{string->bytevector@\scheme{string->bytevector}|emph}{287}
+\indexentry{string->utf8@\scheme{string->utf8}|emph}{287}
+\indexentry{string->utf16@\scheme{string->utf16}|emph}{287}
+\indexentry{string->utf16@\scheme{string->utf16}|emph}{287}
+\indexentry{string->utf32@\scheme{string->utf32}|emph}{287}
+\indexentry{string->utf32@\scheme{string->utf32}|emph}{287}
+\indexentry{utf8->string@\scheme{utf8->string}|emph}{287}
+\indexentry{utf16->string@\scheme{utf16->string}|emph}{288}
+\indexentry{utf16->string@\scheme{utf16->string}|emph}{288}
+\indexentry{utf32->string@\scheme{utf32->string}|emph}{288}
+\indexentry{utf32->string@\scheme{utf32->string}|emph}{288}
+\indexentry{syntactic extensions}{291}
+\indexentry{syntactic forms}{291}
+\indexentry{macros}{291}
+\indexentry{define-syntax@\scheme{define-syntax}}{291}
+\indexentry{let-syntax@\scheme{let-syntax}}{291}
+\indexentry{letrec-syntax@\scheme{letrec-syntax}}{291}
+\indexentry{syntax-rules@\scheme{syntax-rules}}{291}
+\indexentry{syntax-case@\scheme{syntax-case}}{291}
+\indexentry{syntax@\scheme{syntax}}{291}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}}{291}
+\indexentry{make-variable-transformer@\scheme{make-variable-transformer}}{291}
+\indexentry{keywords}{291}
+\indexentry{define-syntax@\scheme{define-syntax}|emph}{292}
+\indexentry{let-syntax@\scheme{let-syntax}|emph}{293}
+\indexentry{letrec-syntax@\scheme{letrec-syntax}|emph}{293}
+\indexentry{syntax-rules@\scheme{syntax-rules}|emph}{294}
+\indexentry{literals}{294}
+\indexentry{patterns}{294}
+\indexentry{pattern variable}{294}
+\indexentry{_~(underscore)@\scheme{{\schunderscore}}~(underscore)}{294}
+\indexentry{underscore~(_)@underscore~(\scheme{{\schunderscore}})}{294}
+\indexentry{...~(ellipsis)@\scheme{{\schdot}{\schdot}{\schdot}}~(ellipsis)}{294}
+\indexentry{ellipsis (~...~)@ellipsis (~\scheme{{\schdot}{\schdot}{\schdot}}~)}{294}
+\indexentry{auxiliary keywords}{294}
+\indexentry{templates}{295}
+\indexentry{underscore (~_~)@underscore (~\scheme{{\schunderscore}}~)}{296}
+\indexentry{_ (underscore)@\scheme{{\schunderscore}} (underscore)}{296}
+\indexentry{_~(underscore)@\scheme{{\schunderscore}}~(underscore)|emph}{297}
+\indexentry{...~(ellipsis)@\scheme{{\schdot}{\schdot}{\schdot}}~(ellipsis)|emph}{297}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}|emph}{297}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}|emph}{297}
+\indexentry{make-variable-transformer@\scheme{make-variable-transformer}}{298}
+\indexentry{syntax object}{298}
+\indexentry{syntax-case@\scheme{syntax-case}|emph}{299}
+\indexentry{fenders}{299}
+\indexentry{pattern variables}{299}
+\indexentry{syntax (~#'~)@\scheme{syntax} (~\scheme{\#'}~)|emph}{300}
+\indexentry{#' (syntax)@\scheme{\#'} (\scheme{syntax})|emph}{300}
+\indexentry{syntax-rules@\scheme{syntax-rules}}{300}
+\indexentry{identifier?@\scheme{identifier?}|emph}{301}
+\indexentry{fenders}{301}
+\indexentry{free-identifier=?@\scheme{free-identifier=?}|emph}{302}
+\indexentry{bound-identifier=?@\scheme{bound-identifier=?}|emph}{302}
+\indexentry{with-syntax@\scheme{with-syntax}|emph}{304}
+\indexentry{cond@\scheme{cond}}{304}
+\indexentry{quasisyntax (~#`~)@\scheme{quasisyntax} (~\scheme{\#`}~)|emph}{305}
+\indexentry{#` (quasisyntax)@\scheme{\#`} (\scheme{quasisyntax})|emph}{305}
+\indexentry{unsyntax (~#,~)@\scheme{unsyntax} (~\scheme{\#,}~)|emph}{305}
+\indexentry{#, (unsyntax)@\scheme{\#,} (\scheme{unsyntax})|emph}{305}
+\indexentry{unsyntax-splicing (~#,"@~)@\scheme{unsyntax-splicing} (~\scheme{\#,{\schatsign}}~)|emph}{305}
+\indexentry{#,"@ (unsyntax-splicing)@\scheme{\#,{\schatsign}} (\scheme{unsyntax-splicing})|emph}{305}
+\indexentry{case@\scheme{case}}{306}
+\indexentry{make-variable-transformer@\scheme{make-variable-transformer}|emph}{306}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}}{307}
+\indexentry{syntax->datum@\scheme{syntax->datum}|emph}{308}
+\indexentry{datum->syntax@\scheme{datum->syntax}|emph}{308}
+\indexentry{loop@\scheme{loop}}{308}
+\indexentry{break@\scheme{break}}{308}
+\indexentry{include@\scheme{include}}{309}
+\indexentry{generate-temporaries@\scheme{generate-temporaries}|emph}{310}
+\indexentry{letrec@\scheme{letrec}}{310}
+\indexentry{let-values@\scheme{let-values}}{310}
+\indexentry{rec@\scheme{rec}}{311}
+\indexentry{do@\scheme{do}}{312}
+\indexentry{be-like-begin@\scheme{be-like-begin}}{313}
+\indexentry{sequence@\scheme{sequence}}{313}
+\indexentry{letrec-syntax@\scheme{letrec-syntax}}{314}
+\indexentry{let-syntax@\scheme{let-syntax}}{314}
+\indexentry{underscore (~_~)@underscore (~\scheme{{\schunderscore}}~)}{315}
+\indexentry{_ (underscore)@\scheme{{\schunderscore}} (underscore)}{315}
+\indexentry{integrable procedures}{315}
+\indexentry{define-integrable@\scheme{define-integrable}}{315}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}}{316}
+\indexentry{x++@\scheme{x++}}{316}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}}{317}
+\indexentry{datum->syntax@\scheme{datum->syntax}}{317}
+\indexentry{object-oriented programming}{317}
+\indexentry{method@\scheme{method}}{317}
+\indexentry{identifier-syntax@\scheme{identifier-syntax}}{317}
+\indexentry{structures}{318}
+\indexentry{define-structure@\scheme{define-structure}}{318}
+\indexentry{datum->syntax@\scheme{datum->syntax}}{320}
+\indexentry{records}{323}
+\indexentry{define-record-type@\scheme{define-record-type}}{323}
+\indexentry{make-record-type-descriptor@\scheme{make-record-type-descriptor}}{323}
+\indexentry{record generativity}{324}
+\indexentry{generative}{324}
+\indexentry{nongenerative}{324}
+\indexentry{record uid}{325}
+\indexentry{record inheritance}{325}
+\indexentry{inheritance in records}{325}
+\indexentry{parent type}{325}
+\indexentry{child type}{325}
+\indexentry{protocol for records}{326}
+\indexentry{default protocol}{327}
+\indexentry{define-record-type@\scheme{define-record-type}|emph}{328}
+\indexentry{define-record-type@\scheme{define-record-type}|emph}{328}
+\indexentry{sealed record type}{330}
+\indexentry{opaque record type}{330}
+\indexentry{fields@\scheme{fields}|emph}{331}
+\indexentry{mutable@\scheme{mutable}|emph}{331}
+\indexentry{immutable@\scheme{immutable}|emph}{331}
+\indexentry{parent@\scheme{parent}|emph}{331}
+\indexentry{protocol@\scheme{protocol}|emph}{331}
+\indexentry{sealed@\scheme{sealed}|emph}{331}
+\indexentry{opaque@\scheme{opaque}|emph}{331}
+\indexentry{nongenerative@\scheme{nongenerative}|emph}{331}
+\indexentry{parent-rtd@\scheme{parent-rtd}|emph}{331}
+\indexentry{record-type descriptor}{331}
+\indexentry{rtd}{331}
+\indexentry{make-record-type-descriptor}{331}
+\indexentry{make-record-type-descriptor@\scheme{make-record-type-descriptor}|emph}{331}
+\indexentry{record-type descriptor}{331}
+\indexentry{rtd}{331}
+\indexentry{record-type-descriptor?@\scheme{record-type-descriptor?}|emph}{332}
+\indexentry{make-record-constructor-descriptor@\scheme{make-record-constructor-descriptor}|emph}{332}
+\indexentry{record-constructor descriptor}{332}
+\indexentry{rcd}{332}
+\indexentry{protocol for records}{332}
+\indexentry{record-type-descriptor@\scheme{record-type-descriptor}|emph}{333}
+\indexentry{record-constructor-descriptor@\scheme{record-constructor-descriptor}|emph}{333}
+\indexentry{record-constructor@\scheme{record-constructor}|emph}{333}
+\indexentry{record-predicate@\scheme{record-predicate}|emph}{333}
+\indexentry{record-accessor@\scheme{record-accessor}|emph}{334}
+\indexentry{record-mutator@\scheme{record-mutator}|emph}{334}
+\indexentry{opaque record type}{336}
+\indexentry{record-type-name@\scheme{record-type-name}|emph}{336}
+\indexentry{record-type-parent@\scheme{record-type-parent}|emph}{336}
+\indexentry{record-type-uid@\scheme{record-type-uid}|emph}{336}
+\indexentry{record-type-generative?@\scheme{record-type-generative?}|emph}{337}
+\indexentry{record-type-sealed?@\scheme{record-type-sealed?}|emph}{337}
+\indexentry{record-type-opaque?@\scheme{record-type-opaque?}|emph}{337}
+\indexentry{record-type-field-names@\scheme{record-type-field-names}|emph}{337}
+\indexentry{record-field-mutable?@\scheme{record-field-mutable?}|emph}{338}
+\indexentry{record?@\scheme{record?}|emph}{338}
+\indexentry{record-rtd@\scheme{record-rtd}|emph}{338}
+\indexentry{libraries}{343}
+\indexentry{top-level programs}{343}
+\indexentry{library version}{344}
+\indexentry{export@\scheme{export}}{345}
+\indexentry{import@\scheme{import}}{345}
+\indexentry{import spec}{345}
+\indexentry{import level}{345}
+\indexentry{export level}{345}
+\indexentry{import spec}{346}
+\indexentry{only import set@\scheme{only} import set}{346}
+\indexentry{except import set@\scheme{except} import set}{346}
+\indexentry{prefix import set@\scheme{prefix} import set}{346}
+\indexentry{rename import set@\scheme{rename} import set}{346}
+\indexentry{library version reference}{347}
+\indexentry{library body}{348}
+\indexentry{indirect exports}{349}
+\indexentry{immutability of exports}{349}
+\indexentry{command-line@\scheme{command-line}|emph}{350}
+\indexentry{exit@\scheme{exit}|emph}{350}
+\indexentry{exit@\scheme{exit}|emph}{350}
+\indexentry{exceptions}{357}
+\indexentry{conditions}{357}
+\indexentry{current exception handler}{357}
+\indexentry{raise@\scheme{raise}|emph}{357}
+\indexentry{raise-continuable@\scheme{raise-continuable}|emph}{357}
+\indexentry{error@\scheme{error}|emph}{358}
+\indexentry{assertion-violation@\scheme{assertion-violation}|emph}{358}
+\indexentry{assert@\scheme{assert}|emph}{359}
+\indexentry{syntax-violation@\scheme{syntax-violation}|emph}{359}
+\indexentry{syntax-violation@\scheme{syntax-violation}|emph}{359}
+\indexentry{with-exception-handler@\scheme{with-exception-handler}|emph}{360}
+\indexentry{guard@\scheme{guard}|emph}{361}
+\indexentry{condition object}{361}
+\indexentry{condition type}{361}
+\indexentry{compound condition}{362}
+\indexentry{simple condition}{362}
+\indexentry{&condition@\scheme{\&condition}|emph}{362}
+\indexentry{condition?@\scheme{condition?}|emph}{362}
+\indexentry{condition@\scheme{condition}|emph}{362}
+\indexentry{simple-conditions@\scheme{simple-conditions}|emph}{363}
+\indexentry{define-condition-type@\scheme{define-condition-type}|emph}{364}
+\indexentry{condition-predicate@\scheme{condition-predicate}|emph}{365}
+\indexentry{condition-accessor@\scheme{condition-accessor}|emph}{365}
+\indexentry{&serious@\scheme{\&serious}|emph}{366}
+\indexentry{make-serious-condition@\scheme{make-serious-condition}|emph}{366}
+\indexentry{serious-condition?@\scheme{serious-condition?}|emph}{366}
+\indexentry{&violation@\scheme{\&violation}|emph}{366}
+\indexentry{make-violation@\scheme{make-violation}|emph}{366}
+\indexentry{violation?@\scheme{violation?}|emph}{366}
+\indexentry{&assertion@\scheme{\&assertion}|emph}{366}
+\indexentry{make-assertion-violation@\scheme{make-assertion-violation}|emph}{366}
+\indexentry{assertion-violation?@\scheme{assertion-violation?}|emph}{366}
+\indexentry{&error@\scheme{\&error}|emph}{367}
+\indexentry{make-error@\scheme{make-error}|emph}{367}
+\indexentry{error?@\scheme{error?}|emph}{367}
+\indexentry{&warning@\scheme{\&warning}|emph}{367}
+\indexentry{make-warning@\scheme{make-warning}|emph}{367}
+\indexentry{warning?@\scheme{warning?}|emph}{367}
+\indexentry{&message@\scheme{\&message}|emph}{368}
+\indexentry{make-message-condition@\scheme{make-message-condition}|emph}{368}
+\indexentry{message-condition?@\scheme{message-condition?}|emph}{368}
+\indexentry{condition-message@\scheme{condition-message}|emph}{368}
+\indexentry{&irritants@\scheme{\&irritants}|emph}{368}
+\indexentry{make-irritants-condition@\scheme{make-irritants-condition}|emph}{368}
+\indexentry{irritants-condition?@\scheme{irritants-condition?}|emph}{368}
+\indexentry{condition-irritants@\scheme{condition-irritants}|emph}{368}
+\indexentry{&who@\scheme{\&who}|emph}{369}
+\indexentry{make-who-condition@\scheme{make-who-condition}|emph}{369}
+\indexentry{who-condition?@\scheme{who-condition?}|emph}{369}
+\indexentry{condition-who@\scheme{condition-who}|emph}{369}
+\indexentry{&non-continuable@\scheme{\&non-continuable}|emph}{369}
+\indexentry{make-non-continuable-violation@\scheme{make-non-continuable-violation}|emph}{369}
+\indexentry{non-continuable-violation?@\scheme{non-continuable-violation?}|emph}{369}
+\indexentry{&implementation-restriction@\scheme{\&implementation-restriction}|emph}{369}
+\indexentry{make-implementation-restriction-violation@\scheme{make-implementation-restriction-violation}|emph}{369}
+\indexentry{implementation-restriction-violation?@\scheme{implementation-restriction-violation?}|emph}{369}
+\indexentry{&lexical@\scheme{\&lexical}|emph}{370}
+\indexentry{make-lexical-violation@\scheme{make-lexical-violation}|emph}{370}
+\indexentry{lexical-violation?@\scheme{lexical-violation?}|emph}{370}
+\indexentry{&syntax@\scheme{\&syntax}|emph}{370}
+\indexentry{make-syntax-violation@\scheme{make-syntax-violation}|emph}{370}
+\indexentry{syntax-violation?@\scheme{syntax-violation?}|emph}{370}
+\indexentry{syntax-violation-form@\scheme{syntax-violation-form}|emph}{370}
+\indexentry{syntax-violation-subform@\scheme{syntax-violation-subform}|emph}{370}
+\indexentry{&undefined@\scheme{\&undefined}|emph}{371}
+\indexentry{make-undefined-violation@\scheme{make-undefined-violation}|emph}{371}
+\indexentry{undefined-violation?@\scheme{undefined-violation?}|emph}{371}
+\indexentry{&i/o@\scheme{\&i/o}|emph}{371}
+\indexentry{make-i/o-error@\scheme{make-i/o-error}|emph}{371}
+\indexentry{i/o-error?@\scheme{i/o-error?}|emph}{371}
+\indexentry{&i/o-read@\scheme{\&i/o-read}|emph}{372}
+\indexentry{make-i/o-read-error@\scheme{make-i/o-read-error}|emph}{372}
+\indexentry{i/o-read-error?@\scheme{i/o-read-error?}|emph}{372}
+\indexentry{&i/o-write@\scheme{\&i/o-write}|emph}{372}
+\indexentry{make-i/o-write-error@\scheme{make-i/o-write-error}|emph}{372}
+\indexentry{i/o-write-error?@\scheme{i/o-write-error?}|emph}{372}
+\indexentry{&i/o-invalid-position@\scheme{\&i/o-invalid-position}|emph}{372}
+\indexentry{make-i/o-invalid-position-error@\scheme{make-i/o-invalid-position-error}|emph}{372}
+\indexentry{i/o-invalid-position-error?@\scheme{i/o-invalid-position-error?}|emph}{372}
+\indexentry{i/o-error-position@\scheme{i/o-error-position}|emph}{372}
+\indexentry{&i/o-filename@\scheme{\&i/o-filename}|emph}{373}
+\indexentry{make-i/o-filename-error@\scheme{make-i/o-filename-error}|emph}{373}
+\indexentry{i/o-filename-error?@\scheme{i/o-filename-error?}|emph}{373}
+\indexentry{i/o-error-filename@\scheme{i/o-error-filename}|emph}{373}
+\indexentry{&i/o-file-protection@\scheme{\&i/o-file-protection}|emph}{373}
+\indexentry{make-i/o-file-protection-error@\scheme{make-i/o-file-protection-error}|emph}{373}
+\indexentry{i/o-file-protection-error?@\scheme{i/o-file-protection-error?}|emph}{373}
+\indexentry{&i/o-file-is-read-only@\scheme{\&i/o-file-is-read-only}|emph}{374}
+\indexentry{make-i/o-file-is-read-only-error@\scheme{make-i/o-file-is-read-only-error}|emph}{374}
+\indexentry{i/o-file-is-read-only-error?@\scheme{i/o-file-is-read-only-error?}|emph}{374}
+\indexentry{&i/o-file-already-exists@\scheme{\&i/o-file-already-exists}|emph}{374}
+\indexentry{make-i/o-file-already-exists-error@\scheme{make-i/o-file-already-exists-error}|emph}{374}
+\indexentry{i/o-file-already-exists-error?@\scheme{i/o-file-already-exists-error?}|emph}{374}
+\indexentry{&i/o-file-does-not-exist@\scheme{\&i/o-file-does-not-exist}|emph}{374}
+\indexentry{make-i/o-file-does-not-exist-error@\scheme{make-i/o-file-does-not-exist-error}|emph}{374}
+\indexentry{i/o-file-does-not-exist-error?@\scheme{i/o-file-does-not-exist-error?}|emph}{374}
+\indexentry{&i/o-port@\scheme{\&i/o-port}|emph}{375}
+\indexentry{make-i/o-port-error@\scheme{make-i/o-port-error}|emph}{375}
+\indexentry{i/o-port-error?@\scheme{i/o-port-error?}|emph}{375}
+\indexentry{i/o-error-port@\scheme{i/o-error-port}|emph}{375}
+\indexentry{&i/o-decoding@\scheme{\&i/o-decoding}|emph}{375}
+\indexentry{make-i/o-decoding-error@\scheme{make-i/o-decoding-error}|emph}{375}
+\indexentry{i/o-decoding-error?@\scheme{i/o-decoding-error?}|emph}{375}
+\indexentry{&i/o-encoding@\scheme{\&i/o-encoding}|emph}{376}
+\indexentry{make-i/o-encoding-error@\scheme{make-i/o-encoding-error}|emph}{376}
+\indexentry{i/o-encoding-error?@\scheme{i/o-encoding-error?}|emph}{376}
+\indexentry{i/o-encoding-error-char@\scheme{i/o-encoding-error-char}|emph}{376}
+\indexentry{&no-infinities@\scheme{\&no-infinities}|emph}{376}
+\indexentry{make-no-infinities-violation@\scheme{make-no-infinities-violation}|emph}{376}
+\indexentry{no-infinities-violation?@\scheme{no-infinities-violation?}|emph}{376}
+\indexentry{&no-nans@\scheme{\&no-nans}|emph}{377}
+\indexentry{make-no-nans-violation@\scheme{make-no-nans-violation}|emph}{377}
+\indexentry{no-nans-violation?@\scheme{no-nans-violation?}|emph}{377}
+\indexentry{extended examples}{381}
+\indexentry{matrix multiplication}{381}
+\indexentry{mul@\scheme{mul}}{382}
+\indexentry{vectors}{383}
+\indexentry{list-sort@\scheme{list-sort}}{387}
+\indexentry{sort@\scheme{sort}}{387}
+\indexentry{merge@\scheme{merge}}{387}
+\indexentry{set-of@\scheme{set-of}}{389}
+\indexentry{sets}{389}
+\indexentry{define-syntax@\scheme{define-syntax}}{389}
+\indexentry{syntax-rules@\scheme{syntax-rules}}{389}
+\indexentry{map@\scheme{map}}{392}
+\indexentry{C}{393}
+\indexentry{frequency@\scheme{frequency}}{393}
+\indexentry{put-datum@\scheme{put-datum}}{397}
+\indexentry{write@\scheme{write}}{397}
+\indexentry{display@\scheme{display}}{397}
+\indexentry{formatted output}{401}
+\indexentry{fprintf@\scheme{fprintf}}{401}
+\indexentry{printf@\scheme{printf}}{401}
+\indexentry{interpret@\scheme{interpret}}{404}
+\indexentry{meta-circular interpreter}{404}
+\indexentry{interpreter}{404}
+\indexentry{environment}{404}
+\indexentry{association list}{404}
+\indexentry{core syntactic forms}{404}
+\indexentry{call-by-value}{407}
+\indexentry{call-by-name}{408}
+\indexentry{delayed evaluation}{408}
+\indexentry{abstract objects}{408}
+\indexentry{object-oriented programming}{408}
+\indexentry{messages}{408}
+\indexentry{define-object@\scheme{define-object}}{408}
+\indexentry{inheritance}{412}
+\indexentry{complex numbers}{412}
+\indexentry{fast Fourier transform (FFT)}{412}
+\indexentry{unification}{417}
+\indexentry{continuation-passing style}{418}
+\indexentry{unify@\scheme{unify}}{418}
+\indexentry{engines}{421}
+\indexentry{timed preemption}{421}
+\indexentry{multiprocessing}{421}
+\indexentry{light-weight threads}{421}
+\indexentry{threads}{421}
+\indexentry{nondeterministic computations}{421}
+\indexentry{continuations}{421}
+\indexentry{ticks@\var{ticks}|see{engines}}{421}
+\indexentry{complete@\var{complete}|see{engines}}{421}
+\indexentry{expire@\var{expire}|see{engines}}{421}
+\indexentry{fibonacci@\scheme{fibonacci}}{422}
+\indexentry{round-robin@\scheme{round-robin}}{423}
+\indexentry{operating system}{423}
+\indexentry{nondeterministic computations}{424}
+\indexentry{por (parallel-or)@\scheme{por} (parallel-or)}{424}
+\indexentry{timer interrupts}{425}
+\indexentry{call/cc@\scheme{call/cc}}{425}
+\indexentry{call-with-current-continuation@\scheme{call-with-current-continuation}}{426}
+\indexentry{call/cc@\scheme{call/cc}}{426}
+\indexentry{operating system}{429}
+\indexentry{nested engines}{429}
+\indexentry{datum syntax}{455}
+\indexentry{tokens}{455}
+\indexentry{whitespace}{455}
+\indexentry{line ending}{455}
+\indexentry{intraline whitespace}{455}
+\indexentry{comments}{455}
+\indexentry{; (comment)@\scheme{;} (comment)}{455}
+\indexentry{semicolon (~;~)@semicolon (~\scheme{;}~)}{455}
+\indexentry{#; (datum comment)@\scheme{\#;} (datum comment)}{455}
+\indexentry{datum comment (~#;~)@datum comment (~\scheme{\#;}~)}{455}
+\indexentry{#"|\dots"|# (block comment)@\scheme{\#"|{\dots}"|\#} (block comment)}{455}
+\indexentry{block comment (~#"|\dots"|#~)@block comment (~\scheme{\#"|{\dots}"|\#}~)}{455}
+\indexentry{#"!r6rs@\scheme{\#"!r6rs}}{456}
+\indexentry{datum syntax}{456}
+\indexentry{boolean syntax}{457}
+\indexentry{character syntax}{457}
+\indexentry{string syntax}{458}
+\indexentry{symbol syntax}{458}
+\indexentry{number syntax}{459}
+\indexentry{list syntax}{460}
+\indexentry{. (dot)@\scheme{{\schdot}} (dot)}{460}
+\indexentry{dot (~.~)@dot (~\scheme{{\schdot}}~)}{460}
+\indexentry{vector syntax}{461}
+\indexentry{bytevector syntax}{461}

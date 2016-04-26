@@ -1,0 +1,594 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Binding Forms\label{CHPTBINDING}}
+
+This chapter describes {\ChezScheme} extensions to the set of Revised$^6$
+Report binding forms.
+See Chapter~\ref{TSPL:CHPTBINDING} of {\TSPLFOUR} or the Revised$^6$ Report
+for a description of standard binding forms.
+
+\section{Definitions\label{SECTDEFINITIONS}}
+
+A \index{definitions}definition in Revised$^6$ Report Scheme is a
+\index{\scheme{define}}\index{variable definition}variable definition,
+\index{\scheme{define-syntax}}\index{keyword definition}keyword
+definition, or derived definition, i.e., a syntactic extension that
+expands into a definition.
+In addition, the forms within a
+\index{\scheme{begin}}\scheme{begin}
+expression appearing after a sequence
+of definitions is spliced onto the end of the sequence of definitions
+so that definitions at the front of the \scheme{begin} expression
+are treated as if they were part of the outer sequence of definitions.
+A \index{\scheme{let-syntax}}\scheme{let-syntax} or
+\index{\scheme{letrec-syntax}}\scheme{letrec-syntax} form
+is treated similarly, so that definitions at the front of the body
+are treated as if they were part of the outer sequence of definitions,
+albeit scoped where the bindings of the \scheme{let-syntax} or
+\scheme{letrec-syntax} form are visible.
+
+{\ChezScheme} extends the set of definitions to include
+\index{modules}\index{\scheme{module}}\scheme{module} forms,
+\index{\scheme{import}}\scheme{import} forms,
+\index{\scheme{import-only}}\scheme{import-only} forms,
+\index{\scheme{meta}}\scheme{meta} definitions, and
+\index{\scheme{alias}}\scheme{alias} forms, although the
+\scheme{module}, \scheme{import}, \scheme{import-only},
+\scheme{meta}, and \scheme{alias} keywords are not available
+in a library or RNRS top-level program unless the
+\scheme{scheme} library is included in the library or
+top-level programs imports.
+These forms are described in Chatper~\ref{CHPTSYNTAX}.
+
+In Revised$^6$ Report Scheme, definitions can appear at the front of
+a \scheme{lambda} or similar body (e.g., a \scheme{let} or \scheme{letrec}
+body), at the front of a library body, or intermixed with expressions
+within an RNRS top-level program body.
+In {\ChezScheme}, definitions may also be used in the
+interactive top-level, i.e., they can be intermixed with expressions in
+the REPL or in program text to be loaded from a file
+via \index{\scheme{load}}\scheme{load} (Section~\ref{SECTMISCCOMPILEEVAL}).
+The Revised$^6$ Report does not mandate the existence nor specify the
+semantics of an interactive top-level, nor of a \scheme{load}
+procedure.
+
+The macro expander uses the same two-pass algorithm for expanding
+top-level \scheme{begin} expressions as it uses for a \scheme{lambda},
+\scheme{library}, or top-level program body.
+(This algorithm is described in Section~\ref{SECTSYNTAXDEFINITIONS} of {\TSPLFOUR}.)
+As a result,
+
+\schemedisplay
+(begin
+  (define-syntax a (identifier-syntax 3))
+  (define x a))
+\endschemedisplay
+
+and
+
+\schemedisplay
+(begin
+  (define x a)
+  (define-syntax a (identifier-syntax 3)))
+\endschemedisplay
+
+both result in the giving \scheme{x} the value 3,
+even though an unbound variable reference to \scheme{a} would result if
+the two forms within the latter \scheme{begin} expression where run
+independently at top level.
+
+Similarly, the \scheme{begin} form produced by a use of
+
+\schemedisplay
+(define-syntax define-constant
+  (syntax-rules ()
+    [(_ x e)
+     (begin
+       (define t e)
+       (define-syntax x (identifier-syntax t)))]))
+\endschemedisplay
+
+and the \scheme{begin} form produced by a use of
+
+\schemedisplay
+(define-syntax define-constant
+  (syntax-rules ()
+    [(_ x e)
+     (begin
+       (define-syntax x (identifier-syntax t))
+       (define t e))]))
+\endschemedisplay
+
+are equivalent.
+
+The Revised$^6$ Report specifies that internal variable definitions be
+treated like \scheme{letrec*}, while earlier reports required internal
+variable definitions to be treated like \scheme{letrec}.
+By default, {\ChezScheme} implements the Revised$^6$ Report semantics for
+internal variable definitions, as for all other things, but this behavior
+may be overridden via the \scheme{internal-defines-as-letrec*} parameter.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{internal-defines-as-letrec*}{\categorythreadparameter}{internal-defines-as-letrec*}
+\listlibraries
+\endentryheader
+
+\noindent
+When this parameter is set to \scheme{#t} (the default), internal variable
+definitions are evaluated using \scheme{letrec*} semantics.
+It may be set to \scheme{#f} to revert to the \scheme{letrec} semantics
+for internal variable definitions, for backward compatibility.
+
+
+\section{Multiple-value Definitions}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{define-values}{\categorysyntax}{(define-values formals \var{expr})}
+\listlibraries
+\endnoskipentryheader
+
+A \scheme{define-values} form is a definition and can appear anywhere
+other definitions can appear.
+It is like a \scheme{define} form but permits an arbitrary formals list
+(like \scheme{lambda}) on the left-hand side.
+It evaluates \var{expr} and binds the variables appearing in \var{formals}
+to the resulting values, in the same manner as the formal parameters of a
+procedure are bound to its arguments.
+
+\schemedisplay
+(let ()
+  (define-values (x y) (values 1 2))
+  (list x y)) ;=> (1 2)
+(let ()
+  (define-values (x y . z) (values 1 2 3 4))
+  (list x y z)) ;=> (1 2 (3 4))
+\endschemedisplay
+
+A \scheme{define-values} form expands into a sequence of definitions, the
+first for a hidden temporary bound to a data structure holding the values
+returned by \var{expr} and the remainder binding each of the formals to
+the corresponding value or list of values, extracted from the data
+structure via a reference to the temporary.
+Because the temporary must be defined before the other variables are
+defined, this works for internal \scheme{define-values} forms only if
+\scheme{internal-defines-as-letrec*} is set to the default value
+\scheme{#t}.
+
+
+\section{Recursive Bindings}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{rec}{\categorysyntax}{(rec \var{var} \var{expr})}
+\returns value of \var{expr}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+The syntactic form \scheme{rec} creates a \index{recursive object}recursive object from \var{expr} by
+establishing a binding of \var{var} within \var{expr} to the value of \var{expr}.
+In essence, it is a special case of \scheme{letrec} for self-recursive objects.
+
+This form is useful for creating recursive objects (especially procedures)
+that do not depend on external variables for the recursion, which are
+sometimes undesirable because the external bindings can change.
+For example, a recursive procedure defined at top level depends on the value
+of the top-level variable given as its name.
+If the value of this variable should change, the meaning of the procedure
+itself would change.
+If the procedure is defined instead with \scheme{rec}, its meaning is independent
+of the variable to which it is bound.
+
+\schemedisplay
+(map (rec sum
+       (lambda (x)
+         (if (= x 0)
+             0
+             (+ x (sum (- x 1))))))
+     '(0 1 2 3 4 5)) ;=> (0 1 3 6 10 15)
+
+(define cycle
+  (rec self
+    (list (lambda () self))))
+
+(eq? ((car cycle)) cycle) ;=> #t
+\endschemedisplay
+
+\noindent
+The definition below expands \scheme{rec} in terms of \scheme{letrec}.
+
+\schemedisplay
+(define-syntax rec
+  (syntax-rules ()
+    [(_ x e) (letrec ((x e)) x)]))
+\endschemedisplay
+
+\section{Fluid Bindings}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{fluid-let}{\categorysyntax}{(fluid-let ((\var{var} \var{expr}) \dots) \var{body_1} \var{body_2} \dots)}
+\returns the values of the body \scheme{\var{body_1} \var{body_2} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{fluid binding}\index{assignments}The syntactic form \scheme{fluid-let}
+provides a way to temporarily assign values to a set of variables.
+The new values are in effect only during the evaluation of the
+body of the \scheme{fluid-let} expression.
+The scopes of the variables are not determined by \scheme{fluid-let}; as with
+\scheme{set!}, the variables must be bound at top level or by an enclosing
+\scheme{lambda} or other binding form.
+It is possible, therefore, to control the scope of a variable with
+\scheme{lambda} or \scheme{let} while establishing a temporary
+value with \scheme{fluid-let}.
+
+Although it is similar in appearance to \scheme{let}, its operation is more
+like that of \scheme{set!}.
+Each \var{var} is assigned, as with \scheme{set!}, to the value of the
+corresponding \var{expr} within the body \scheme{\var{body_1} \var{body_2} \dots}.
+Should the body
+exit normally or by invoking a continuation made outside of the body
+(see \scheme{call/cc}), the values in effect before the bindings were changed
+are restored.
+Should control return back to the body by the invocation of a continuation
+created within the body, the bindings are changed once again to the values
+in effect when the body last exited.
+
+Fluid bindings are most useful for
+maintaining variables that must be shared by a group of procedures.
+Upon entry to the group of procedures, the shared variables are fluidly
+bound to a new set of initial values so that on exit the original values
+are restored automatically.
+In this way, the group of procedures itself can be reentrant; it may call
+itself directly or indirectly without affecting the values of its shared
+variables.
+
+\index{special bindings (in Lisp)}Fluid bindings are similar to
+\emph{special} bindings in Common Lisp~\cite{Steele:common}, except that
+(1) there is a single namespace for both lexical and fluid bindings, and
+(2) the scope of a fluidly bound variable is not necessarily global.
+
+\schemedisplay
+(let ([x 3])
+  (+ (fluid-let ([x 5])
+       x)
+     x)) ;=> 8
+
+(let ([x 'a])
+  (letrec ([f (lambda (y) (cons x y))])
+    (fluid-let ([x 'b])
+      (f 'c)))) ;=> (b . c)
+
+(let ([x 'a])
+  (call/cc
+    (lambda (k)
+       (fluid-let ([x 'b])
+         (letrec ([f (lambda (y) (k '*))])
+           (f '*)))))
+  x) ;=> a
+\endschemedisplay
+
+
+\noindent
+\scheme{fluid-let} may be defined in terms of \scheme{dynamic-wind} as follows.
+
+\schemedisplay\label{defn:fluid-let}
+(define-syntax fluid-let
+  (lambda (x)
+    (syntax-case x ()
+      [(_ () b1 b2 ...) #'(let () b1 b2 ...)]
+      [(_ ((x e) ...) b1 b2 ...)
+       (andmap identifier? #'(x ...))
+       (with-syntax ([(y ...) (generate-temporaries #'(x ...))])
+         #'(let ([y e] ...)
+             (let ([swap (lambda ()
+                           (let ([t x]) (set! x y) (set! y t))
+                           ...)])
+               (dynamic-wind swap (lambda () b1 b2 ...) swap))))])))
+\endschemedisplay
+
+
+\section{Top-Level Bindings\label{SECTBINDINGTOPLEVEL}}
+
+The procedures described in this section allow the direct manipulation
+of \index{top-level values}top-level bindings for variables
+and keywords.
+They are intended primarily to support the definition of interpreters
+or compilers for Scheme in Scheme but may be used to access or alter
+top-level bindings anywhere within a program whether at top level or not.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{define-top-level-value}{\categoryprocedure}{(define-top-level-value \var{symbol} \var{obj})}
+\formdef{define-top-level-value}{\categoryprocedure}{(define-top-level-value \var{symbol} \var{obj} \var{env})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{define-top-level-value} is used to establish a binding
+for the variable named by \var{symbol} to the value \var{obj}
+in the environment \var{env}.
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+An exception is raised with condition type \scheme{&assertion} if
+\var{env} is not mutable.
+
+A call to \scheme{define-top-level-value} is similar to a top-level
+\index{\scheme{define}}\scheme{define} form, except that a call to
+\scheme{define-top-level-value} need not occur at top-level and
+the variable for which the binding is to be established can be
+determined at run time, as can the environment.
+
+\schemedisplay
+(begin
+  (define-top-level-value 'xyz "hi")
+  xyz) ;=> "hi"
+
+(let ([var 'xyz])
+  (define-top-level-value var "mom")
+  (list var xyz)) ;=> (xyz "mom")
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-top-level-value!}{\categoryprocedure}{(set-top-level-value! \var{symbol} \var{obj})}
+\formdef{set-top-level-value!}{\categoryprocedure}{(set-top-level-value! \var{symbol} \var{obj} \var{env})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\index{assignments}\scheme{set-top-level-value!} assigns 
+the variable named by \var{symbol} to the value \var{obj}
+in the environment \var{env}.
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+An exception is raised with condition type \scheme{&assertion} if the
+identifier named by \var{symbol} is not defined as a variable in \var{env}
+or if the variable or environment is not mutable.
+
+\scheme{set-top-level-value!} is similar to
+\index{\scheme{set!}}\scheme{set!} when \scheme{set!}
+is used on top-level variables except that the variable to be assigned
+can be determined at run time, as can the environment.
+
+\schemedisplay
+(let ([v (let ([cons list])
+           (set-top-level-value! 'cons +)
+           (cons 3 4))])
+  (list v (cons 3 4))) ;=> ((3 4) 7)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-value}{\categoryprocedure}{(top-level-value \var{symbol})}
+\formdef{top-level-value}{\categoryprocedure}{(top-level-value \var{symbol} \var{env})}
+\returns the top-level value of the variable named by \var{symbol} in \var{env}
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+An exception is raised with condition type \scheme{&assertion} if the
+identifier named by \var{symbol} is not defined as a variable in \var{env}.
+
+\scheme{top-level-value} is similar to a top-level variable reference
+except that the variable to be referenced can be determined at run time,
+as can the environment.
+
+\schemedisplay
+(let ([cons +])
+  (list (cons 3 4)
+        ((top-level-value 'cons) 3 4))) ;=> (7 (3 . 4))
+
+(define e (copy-environment (scheme-environment)))
+(define-top-level-value 'pi 3.14 e)
+(top-level-value 'pi e) ;=> 3.14
+(set-top-level-value! 'pi 3.1416 e)
+(top-level-value 'pi e) ;=> 3.1416
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-bound?}{\categoryprocedure}{(top-level-bound? \var{symbol})}
+\formdef{top-level-bound?}{\categoryprocedure}{(top-level-bound? \var{symbol} \var{env})}
+\returns \scheme{#t} if \var{symbol} is defined as a variable in \var{env}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+This predicate is useful in an interpreter to check for the existence of
+a top-level binding before requesting the value with
+\scheme{top-level-value}.
+
+\schemedisplay
+(top-level-bound? 'xyz) ;=> #f
+
+(begin
+  (define-top-level-value 'xyz 3)
+  (top-level-bound? 'xyz)) ;=> #t
+
+(define e (copy-environment (interaction-environment)))
+(define-top-level-value 'pi 3.14 e)
+(top-level-bound? 'pi) ;=> #f
+(top-level-bound? 'pi e) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-mutable?}{\categoryprocedure}{(top-level-mutable? \var{symbol})}
+\formdef{top-level-mutable?}{\categoryprocedure}{(top-level-mutable? \var{symbol} \var{env})}
+\returns \scheme{#t} if \var{symbol} is mutable in \var{env}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+This predicate is useful in an interpreter to check whether a variable
+can be assigned before assigning it with
+\scheme{set-top-level-value!}.
+
+\schemedisplay
+(define xyz 3)
+(top-level-mutable? 'xyz) ;=> #t
+(set-top-level-value! 'xyz 4)
+(top-level-value 'xyz) ;=> 4
+
+(define e (copy-environment (interaction-environment) #f))
+(top-level-mutable? 'xyz e) ;=> #f
+(set-top-level-value! 'xyz e) ;=> \var{exception: xyz is immutable}
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{define-top-level-syntax}{\categoryprocedure}{(define-top-level-syntax \var{symbol} \var{obj})}
+\formdef{define-top-level-syntax}{\categoryprocedure}{(define-top-level-syntax \var{symbol} \var{obj} \var{env})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{define-top-level-syntax} is used to establish a top-level binding
+for the identifier named by \var{symbol} to the value of \var{obj}
+in the environment \var{env}.
+The value must be a procedure, the result of a call to
+\scheme{make-variable-transformer}, or the result of a call to
+\scheme{top-level-syntax}.
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+An exception is raised with condition type \scheme{&assertion} if
+\var{env} is not mutable.
+
+A call to \scheme{define-top-level-syntax} is similar to a top-level
+\index{\scheme{define-syntax}}\scheme{define-syntax} form, except that a call to
+\scheme{define-top-level-syntax} need not occur at top-level and
+the identifier for which the binding is to be established can be
+determined at run time, as can the environment.
+
+\schemedisplay
+(define-top-level-syntax 'let1
+  (syntax-rules ()
+    [(_ x e b1 b2 ...) (let ([x e]) b1 b2 ...)]))
+(let1 a 3 (+ a 1)) ;=> 4
+\endschemedisplay
+
+\scheme{define-top-level-syntax} can also be used to attach
+to an identifier arbitrary compile-time bindings obtained 
+via \scheme{top-level-syntax}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-syntax}{\categoryprocedure}{(top-level-syntax \var{symbol})}
+\formdef{top-level-syntax}{\categoryprocedure}{(top-level-syntax \var{symbol} \var{env})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{top-level-syntax} is used to retrieve the transformer, compile-time
+value, or other compile-time binding to which
+the identifier named by \var{symbol} is bound in the environment \var{env}.
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+All identifiers bound in an environment have compile-time bindings, including
+variables.
+
+An exception is raised with condition type \scheme{&assertion} if the
+identifier named by \var{symbol} is not defined as a keyword in \var{env}.
+
+\schemedisplay
+(define-top-level-syntax 'also-let (top-level-syntax 'let))
+(also-let ([x 3] [y 4]) (+ x y)) ;=> 7
+
+(define foo 17)
+(define-top-level-syntax 'also-foo (top-level-syntax 'foo))
+also-foo ;=> 17
+(set! also-foo 23)
+also-foo ;=> 23
+foo ;=> 23
+\endschemedisplay
+
+The effect of the last example can be had more clearly with \scheme{alias}:
+
+\schemedisplay
+(define foo 17)
+(alias also-foo foo)
+also-foo ;=> 17
+(set! also-foo 23)
+also-foo ;=> 23
+foo ;=> 23
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-syntax?}{\categoryprocedure}{(top-level-syntax? \var{symbol})}
+\formdef{top-level-syntax?}{\categoryprocedure}{(top-level-syntax? \var{symbol} \var{env})}
+\returns \scheme{#t} if \var{symbol} is bound as a keyword in \var{env}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+If \var{env} is not provided, it defaults to the
+value of \scheme{interaction-environment}, i.e., the
+top-level evaluation environment
+(Section~\ref{SECTMISCENVIRONMENTS}).
+
+All identifiers bound in an environment have compile-time bindings, including
+variables, so this predicate amounts to a bound check, but is more general
+than \scheme{top-level-bound?}, which returns true only for bound variables.
+
+\schemedisplay
+(define xyz 'hello)
+(top-level-syntax? 'cons) ;=> #t
+(top-level-syntax? 'lambda) ;=> #t
+(top-level-syntax? 'hello) ;=> #t
+
+(top-level-syntax? 'cons (scheme-environment)) ;=> #t
+(top-level-syntax? 'lambda (scheme-environment)) ;=> #t
+(top-level-syntax? 'hello (scheme-environment)) ;=> #f
+\endschemedisplay

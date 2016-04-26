@@ -1,0 +1,154 @@
+%%% releasenotes.hcls
+
+\newif\iflatex\latexfalse
+\newif\ifhtml\htmltrue
+
+% should be built in
+\newenvironment{center}
+  {\raw{<center>}}
+  {\raw{</center>}}
+
+\let\trueenddocument=\enddocument
+\def\enddocument{
+ \copyright~{\pubyear} Cisco Systems, Inc.\\
+ Licensed under the \hyperlink{http://www.apache.org/licenses/LICENSE-2.0}{Apache License Version 2.0}\\
+ \iftoc
+ \begin{divertoutput}[toc]
+  \ifsubsubsec\raw{</table></td></tr>}\fi
+  \ifsubsec\raw{</table></td></tr>}\fi
+ \end{divertoutput}
+ \fi
+ \trueenddocument}
+
+\newif\ifthisversion\thisversionfalse
+\newif\ifthatversion\thatversionfalse
+\newif\ifpubmonth\pubmonthfalse
+\newif\ifpubyear\pubyearfalse
+\def\thisversion#1{\thisversiontrue\def\thisversion{#1}}
+\def\thatversion#1{\thatversiontrue\def\thatversion{#1}}
+\def\pubmonth#1{\pubmonthtrue\def\pubmonth{#1}}
+\def\pubyear#1{\pubyeartrue\def\pubyear{#1}}
+
+\def\maketitle{%
+\ifthisversion\else\@latex@warning{`thisversion' undefined}\fi
+\ifthatversion\else\@latex@warning{`thatversion' undefined}\fi
+\ifpubmonth\else\@latex@warning{`pubmonth' undefined}\fi
+\ifpubyear\else\@latex@warning{`pubyear' undefined}\fi
+\raw{<h2>}Chez Scheme {\thisversion} Release Notes\\
+{\pubmonth}~{\pubyear}\raw{</h2>}}
+
+%%% table of contents
+\newif\iftoc\tocfalse
+\newif\ifsubsec\subsecfalse
+\newif\ifsubsubsec\subsubsecfalse
+\newcommand{\tableofcontents}{\toctrue
+\raw{<table cellpadding=0 cellspacing=0>}
+\rawinput{\jobname.htoc}
+\raw{</table>}
+\openrawfile{toc}{\jobname.htoc}}
+
+%%% \section
+\newcounter{section}
+\renewcommand{\thesection}{\arabic{section}}
+\newcommand{\section}[1]{
+\refstepcounter{section}
+\edef\templabel{\genlab}
+\sectionstar{\label{\templabel}\thesection. #1}
+\iftoc
+\begin{divertoutput}[toc]
+\ifsubsubsec\raw{</table></td></tr>}\fi
+\subsubsecfalse
+\ifsubsec\raw{</table></td></tr>}\fi
+\subsecfalse
+\raw{<tr><td align="right">}\textbf{\thesection.~}\raw{<td>}\textbf{\href[toc]{\templabel}{#1}}\raw{</td></tr>}
+\end{divertoutput}
+\fi
+}
+\newcommand{\sectionstar}[1]{
+\raw{<h3>}#1\raw{</h3>}
+}
+
+%%% \subsection
+\newcounter{subsection}[section]
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\newcommand{\subsection}[1]{
+\refstepcounter{subsection}
+\edef\templabel{\genlab}
+\subsectionstar{\label{\templabel}\thesubsection. #1}
+\iftoc
+\begin{divertoutput}[toc]
+\ifsubsubsec\raw{</table></td></tr>}\fi
+\subsubsecfalse
+\ifsubsec\else\raw{<tr><td></td><td><table cellpadding=0 cellspacing=0>}\fi
+\subsectrue
+\raw{<tr><td>}\textbf{\thesubsection.~}\raw{</td><td>}\textbf{\href[toc]{\templabel}{#1}}\raw{</td></tr>}
+\end{divertoutput}
+\fi
+}
+\newcommand{\subsectionstar}[1]{
+\raw{<h4>}#1\raw{</h4>}
+}
+
+%%% \subsubsection
+\newcounter{subsubsection}[subsection]
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\newcommand{\subsubsection}[1]{
+\refstepcounter{subsubsection}
+\edef\templabel{\genlab}
+\subsubsectionstar{\label{\templabel}\thesubsubsection. #1}
+\iftoc
+\begin{divertoutput}[toc]
+\ifsubsubsec\else\raw{<tr><td></td><td><table cellpadding=0 cellspacing=0>}\fi
+\subsubsectrue
+\raw{<tr><td>}\textbf{\thesubsubsection.~}\raw{</td><td>}\textbf{\href[toc]{\templabel}{#1}}\raw{</td></tr>}
+\end{divertoutput}
+\fi
+}
+\newcommand{\subsubsectionstar}[1]{
+\raw{<h4>}#1\raw{</h4>}
+}
+
+
+%%% alphalist
+\newcounter{alphalist}
+\def\alphalist{\begingroup\setcounter{alphalist}{0}
+ \def\endalphalistitem{}%
+ \renewcommand{\item}{\endalphalistitem
+  \def\endalphalistiem{\raw{</td></tr>}}%
+  \stepcounter{alphalist}%
+  \raw{<tr valign=top><td>}\alph{alphalist}.\raw{</td><td>}}
+ \raw{<table>}}
+\def\endalphalist{\endalphalistitem\raw{</table>}\endgroup}
+
+%%% define our own (compact) description environment
+\def\description{\begingroup
+ \renewcommand{\item}[1][]{\raw{<dt>}##1\raw{<dd>}}\raw{<dl compact>}}
+\def\enddescription{\raw{</dl>}\endgroup}
+
+\def\parheader#1 {\medskip\noindent{\bf #1.}~~}
+
+%%% grammar support
+\newenvironment{grammar}
+  {\begingroup
+    \def\orbar{&\bar&}
+    \def\nobar{&&}
+    \def\longis{&$\longrightarrow$&}
+   \begin{tabular}{lcl}}
+  {\end{tabular}\endgroup}
+\def\bar{\raw{|}}
+\def\kplus{\raw{<sup>+</sup>}}
+\def\kstar{\raw{*}}
+\def\ang#1{\raw{&lt;}#1\raw{&gt;}}
+
+\def\mbox#1{#1}
+
+%%% hyperlink support
+\def\hyperlink#1#2{\raw{<a class="ref" href="#1">}#2\raw{</a>}}
+
+\usepackage{scheme}
+
+\input{macros.tex}
+
+\documenttitle[releasenotes.css]{Chez Scheme Release Notes}
+
+%%% end of assignment.hcls

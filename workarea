@@ -1,0 +1,217 @@
+#! /bin/sh
+
+# workarea
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if [ $# != 1 -a $# != 2 ]
+then
+    echo "Usage: workarea <machine-type> { <workarea name> }"
+    exit 1
+fi
+
+# set M to machine type and W to workarea name
+M=$1
+if [ "$2" = "" ]
+then
+    W=$M
+else
+    W=$2
+fi
+
+case "$M" in
+  a6fb) ;;
+  a6le) ;;
+  a6ob) ;;
+  a6osx) ;;
+  a6nb) ;;
+  a6nt) ;;
+  a6s2) ;;
+  arm32le) ;;
+  i3fb) ;;
+  i3le) ;;
+  i3nb) ;;
+  i3nt) ;;
+  i3ob) ;;
+  i3osx) ;;
+  i3qnx) ;;
+  i3s2) ;;
+  ppc32le) ;;
+  ta6fb) ;;
+  ta6le) ;;
+  ta6nt) ;;
+  ta6ob) ;;
+  ta6osx) ;;
+  ta6nb) ;;
+  ta6s2) ;;
+  tarm32le) ;;
+  ti3fb) ;;
+  ti3le) ;;
+  ti3nb) ;;
+  ti3nt) ;;
+  ti3ob) ;;
+  ti3osx) ;;
+  ti3qnx) ;;
+  ti3s2) ;;
+  tppc32le) ;;
+  *) echo "Unrecognized machine name $M"; exit 1 ;;
+esac
+
+# This shell script creates a workarea for local modifications to the
+# Chez Scheme source code.  Invoke with the name of a machine type:
+# i3le, i3nt, ti3osx, etc., plus an optional workarea name.  The script
+# creates a subdirectory in the current working (release) directory.
+# If the workarea name argument is not given, this subdirectory is
+# named by the machine type.  The workarea contains subdirectories
+# that correspond to various subdirectories of the release directory.
+# Initially, all of the files in the workarea are links back into the
+# source directories.  Furthermore, many of the files are simply make
+# files that are used to rebuild the system, and in most cases, the
+# make files themselves create links for the source files as needed.
+# To make local modifications, convert the links into local copies.
+
+# workln source dest
+# creates link if dest does not exist and source does
+workln()
+{
+    if [ ! -e $2 -a -e $1 ] ; then
+        /bin/ln -s $1 $2 2> /dev/null
+    fi
+}
+
+# forceworkln source dest
+# attempts to create link even if source does not exist
+forceworkln()
+{
+    if [ ! -e $2 ] ; then
+        /bin/ln -s $1 $2 2> /dev/null
+    fi
+}
+
+# workdir directory-name
+workdir()
+{
+    if [ ! -e $1 ] ; then
+        mkdir $1
+    fi
+}
+
+workdir $W
+
+workdir $W/c
+(cd $W/c; workln ../../c/Mf-$M Mf-$M)
+(cd $W/c; forceworkln Mf-$M Makefile)
+(cd $W/c; workln ../../c/Mf-base Mf-base)
+
+workdir $W/s
+(cd $W/s; workln ../../s/Mf-$M Mf-$M)
+(cd $W/s; forceworkln Mf-$M Makefile)
+(cd $W/s; workln ../../s/Mf-base Mf-base)
+(cd $W/s; workln ../../s/Mf-cross Mf-cross)
+(cd $W/s; workln ../../s/$M.def $M.def)
+(cd $W/s; forceworkln $M.def machine.def)
+
+workdir $W/mats
+(cd $W/mats; workln ../../mats/Mf-$M Mf-$M)
+(cd $W/mats; forceworkln Mf-$M Makefile)
+(cd $W/mats; workln ../../mats/Mf-base Mf-base)
+(cd $W/mats; workln ../../mats/Mf-exobj Mf-exobj)
+
+for dir in `echo zlib examples unicode` ; do
+  workdir $W/$dir
+  for file in `(cd $dir ; echo *)` ; do
+    (cd $W/$dir ; workln ../../$dir/$file $file)
+  done
+done
+
+workdir $W/boot
+workdir $W/boot/$M
+(cd $W/boot/$M; workln ../../../boot/$M/scheme.h scheme.h)
+(cd $W/boot/$M; workln ../../../boot/$M/equates.h equates.h)
+(cd $W/boot/$M; workln ../../../boot/$M/petite.boot petite.boot)
+(cd $W/boot/$M; workln ../../../boot/$M/scheme.boot scheme.boot)
+(cd $W/boot/$M; workln ../../../boot/$M/def.so def.so)
+(cd $W/boot/$M; workln ../../../boot/$M/edit.so edit.so)
+(cd $W/boot/$M; workln ../../../boot/$M/fact.so fact.so)
+(cd $W/boot/$M; workln ../../../boot/$M/fatfib.so fatfib.so)
+(cd $W/boot/$M; workln ../../../boot/$M/fib.so fib.so)
+(cd $W/boot/$M; workln ../../../boot/$M/freq.so freq.so)
+(cd $W/boot/$M; workln ../../../boot/$M/m4.so m4.so)
+(cd $W/boot/$M; workln ../../../boot/$M/macro.so macro.so)
+(cd $W/boot/$M; workln ../../../boot/$M/matrix.so matrix.so)
+(cd $W/boot/$M; workln ../../../boot/$M/object.so object.so)
+(cd $W/boot/$M; workln ../../../boot/$M/power.so power.so)
+(cd $W/boot/$M; workln ../../../boot/$M/rabbit.so rabbit.so)
+(cd $W/boot/$M; workln ../../../boot/$M/rsa.so rsa.so)
+(cd $W/boot/$M; workln ../../../boot/$M/scons.so scons.so)
+(cd $W/boot/$M; workln ../../../boot/$M/setof.so setof.so)
+(cd $W/boot/$M; workln ../../../boot/$M/unify.so unify.so)
+(cd $W/boot/$M; workln ../../../boot/$M/fft.so fft.so)
+(cd $W/boot/$M; workln ../../../boot/$M/compat.so compat.so)
+case $M in
+  *nt)
+    (cd $W/boot/$M; workln ../../../boot/$M/mainmd.obj mainmd.obj)
+    (cd $W/boot/$M; workln ../../../boot/$M/mainmt.obj mainmt.obj)
+    (cd $W/boot/$M; workln ../../../boot/$M/csv94md.lib csv94md.lib)
+    (cd $W/boot/$M; workln ../../../boot/$M/csv94mt.lib csv94mt.lib)
+    (cd $W/boot/$M; workln ../../../boot/$M/scheme.res scheme.res)
+    ;;
+  *)
+    (cd $W/boot/$M; workln ../../../boot/$M/main.o main.o)
+    (cd $W/boot/$M; workln ../../../boot/$M/kernel.o kernel.o)
+    ;;
+esac
+
+workdir $W/bin
+workdir $W/bin/$M
+case $M in
+  *nt)
+    (cd $W/bin/$M; workln ../../../bin/$M/scheme.exe scheme.exe)
+    (cd $W/bin/$M; forceworkln scheme.exe petite.exe)
+    (cd $W/bin/$M; workln ../../../bin/$M/csv94.dll csv94.dll)
+    (cd $W/bin/$M; workln ../../../bin/$M/csv94.lib csv94.lib)
+    ;;
+  *)
+    (cd $W/bin/$M; workln ../../../bin/$M/scheme scheme)
+    (cd $W/bin/$M; forceworkln scheme petite)
+    ;;
+esac
+
+# crutch links for fingers that remember old release structure
+case $M in
+  *nt)
+    (cd $W/bin; forceworkln $M/scheme.exe scheme.exe)
+    (cd $W/bin; forceworkln $M/petite.exe petite.exe)
+    (cd $W/bin; forceworkln $M/csv94.dll csv94.dll)
+    ;;
+  *)
+    (cd $W/bin; forceworkln $M/scheme scheme)
+    (cd $W/bin; forceworkln $M/petite petite)
+    ;;
+esac
+
+(cd $W; workln ../LOG LOG)
+(cd $W; forceworkln ../nanopass nanopass)
+(cd $W; workln ../makefiles/installsh installsh)
+(cd $W; workln ../scheme.1.in scheme.1.in)
+
+case $M in
+  *nt)
+    (cd $W/c; make source > /dev/null 2>&1)
+    (cd $W/s; make source > /dev/null 2>&1)
+    (cd $W/mats; make source > /dev/null 2>&1)
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,12 @@
+To rebuild unicode-char-cases.ss and unicode-charinfo.ss, download into
+./UNIDATA the following files:
+
+http://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt
+http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+http://www.unicode.org/Public/UCD/latest/ucd/CaseFolding.txt
+http://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
+http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/WordBreakProperty.txt
+http://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+http://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt
+
+Then run 'make'.

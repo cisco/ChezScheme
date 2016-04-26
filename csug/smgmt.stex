@@ -1,0 +1,751 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Storage Management\label{CHPTSMGMT}}
+
+This chapter describes aspects of the storage management system and
+procedures that may be used to control its operation.
+
+\section{Garbage Collection\label{SECTSMGMTGC}}
+
+Scheme objects such as pairs, strings, and procedures are
+never explicitly deallocated by a Scheme program.
+Instead, the \index{storage management}storage management system
+automatically reclaims the
+storage associated with an object once it proves the object is no longer
+accessible.
+In order to reclaim this storage, {\ChezScheme} employs a
+\index{garbage collector}garbage
+collector which runs periodically as a program runs.
+Starting from a set of known \emph{roots}, e.g., the machine registers,
+the garbage collector locates all accessible objects,
+copies them (in most cases) in order to eliminate fragmentation
+between accessible objects, and reclaims storage occupied by
+inaccessible objects.
+
+Collections are triggered automatically by the default collect-request
+handler, which is invoked via a collect-request interrupt that occurs
+after approximately $n$ bytes of storage have been allocated, where $n$ is
+the value of the parameter
+\index{\scheme{collect-trip-bytes}}\scheme{collect-trip-bytes}.
+The default collect-request handler causes a collection by calling the
+procedure \index{\scheme{collect}}\scheme{collect} without arguments.
+The collect-request handler can be redefined by changing the value of the
+parameter
+\index{\scheme{collect-request-handler}}\scheme{collect-request-handler}.
+A program can also cause a collection to occur between collect-request
+interrupts by calling \scheme{collect} directly.
+
+{\ChezScheme}'s collector is a \emph{generation-based} collector.
+It segregates objects based on their age (roughly speaking, the
+number of collections survived) and collects older objects less
+frequently than younger objects.
+Since younger objects tend to become inaccessible more quickly than
+older objects, the result is that most collections take little
+time.
+The system also maintains a
+\index{static generation}\emph{static} generation from
+which storage is never reclaimed.
+Objects are placed into the static generation only
+when a heap is compacted (see
+\index{\scheme{Scompact_heap}}\scheme{Scompact_heap} in
+Section~\ref{SECTFOREIGNCLIB}) or when the target-generation argument to
+\index{\scheme{collect}}\scheme{collect} is the symbol \scheme{static}.
+
+Nonstatic generations are numbered starting at zero for the youngest
+generation up through the current value of
+\index{\scheme{collect-maximum-generation}}\scheme{collect-maximum-generation}.
+The storage manager places newly allocated objects into generation 0.
+During a generation 0 collection, objects in generation 0 that survive the
+collection move, by default, to generation 1.
+Similarly, during a generation 1 collection, objects in generations 0 and
+1 that survive move to generation 2, and so on.
+During the collection of the maximum nonstatic collection, all surviving
+nonstatic objects move (possibly back) into the maximum nonstatic
+generation.
+With this mechanism, it is possible for an object to skip one or more
+generations, but this is not likely to happen to many objects, and if the
+objects become inaccessible, their storage is reclaimed eventually.
+
+An internal counter, gc-trip, is maintained to control when each
+generation is collected.
+Each time \scheme{collect} is called without arguments (as from the default
+collect-request handler), gc-trip is incremented by one.
+With a collect-generation radix of $r$, the collected generation
+is the highest numbered generation $g$ for which gc-trip is a
+multiple of $r^g$.
+If \scheme{collect-generation-radix} is set to 4, the system thus
+collects generation 0 every time, generation 1 every 4 times, generation 2
+every 16 times, and so on.
+
+Each time \scheme{collect} is called with a single generation argument $g$,
+generation $g$ is collected and 
+gc-trip is advanced to the next $r^g$ boundary, but not past the next
+$r^{g+1}$ boundary, where $r$ is again the
+value of \scheme{collect-generation-radix}.
+
+If \scheme{collect} is called with a second generation argument,
+$tg$, $tg$ determines the target generation.
+When $g$ is the maximum nonstatic generation, $tg$ must be 
+$g$ or the symbol \scheme{static}.
+Otherwise, $tg$ must be $g$ or $g+1$.
+When the target generation is the symbol \scheme{static}, all data in
+the nonstatic generations are moved to the static generation.
+Objects in the static generation are never collected.
+This is primarily useful after an application's permanent code and data
+structures have been loaded and initialized, to reduce the overhead of
+subsequent collections.
+
+It is possible to make substantial adjustments in the collector's behavior
+by setting the parameters described in this section.
+It is even possible to completely override the collector's default strategy for
+determining when each generation is collected by redefining the
+collect-request handler to call \scheme{collect} with explicit $g$ and
+$tg$ arguments.
+For example, the programmer can redefine the handler to treat the maximum
+nonstatic generation as a static generation over a long period of time
+by calling \scheme{collect} with explicit $g$ and $tg$ arguments
+that are never equal to the maximum nonstatic generation during that
+period of time.
+
+Additional information on {\ChezScheme}'s collector can be found in the
+report ``Don't stop the {BiBOP}:  Flexible and efficient
+storage management for dynamically typed languages''~\cite{Dybvig:sm}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect}{\categoryprocedure}{(collect)}
+\formdef{collect}{\categoryprocedure}{(collect \var{g})}
+\formdef{collect}{\categoryprocedure}{(collect \var{g} \var{tg})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{g} must be a nonnegative fixnum no greater than the
+maximum nonstatic generation, i.e., the
+value returned by \scheme{collect-maximum-generation}.
+If \var{g} is the maximum nonstatic generation,
+\var{tg} must be a fixnum equal to \var{g} or the symbol
+\scheme{static}.
+Otherwise, \var{tg} must be a fixnum equal to or one
+greater than \var{g}.
+
+This procedure causes the storage manager to perform a garbage collection.
+\scheme{collect} is invoked periodically via the collect-request
+handler, but it may also be called explicitly to force collection at a
+particular time, e.g., before timing a computation.
+In the threaded versions of {\ChezScheme}, the thread that invokes
+\scheme{collect} must be the only active thread.
+
+The system determines which generations to collect, based on \var{g} and
+\var{tg} if provided, as described in the lead-in to this section.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-notify}{\categoryglobalparameter}{collect-notify}
+\listlibraries
+\endentryheader
+
+\noindent
+If \scheme{collect-notify} is set to a true value, the collector prints
+a message whenever a collection is run.
+\scheme{collect-notify} is set to \scheme{#f} by default.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-trip-bytes}{\categoryglobalparameter}{collect-trip-bytes}
+\listlibraries
+\endentryheader
+
+\noindent
+This parameter determines the approximate amount of storage that is
+allowed to be allocated between garbage collections.
+Its value must be a positive fixnum.
+
+{\ChezScheme} allocates memory internally in large chunks and
+subdivides these chunks via inline operations for efficiency.
+The storage manager determines whether to request a collection only
+once per large chunk allocated.
+Furthermore, some time may elapse between when a collection is
+requested by the storage manager and when the collect request is
+honored, especially if interrupts are temporarily disabled via
+\index{\scheme{with-interrupts-disabled}}\scheme{with-interrupts-disabled}
+or \index{\scheme{disable-interrupts}}\scheme{disable-interrupts}.
+Thus, \scheme{collect-trip-bytes} is an approximate measure only.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-generation-radix}{\categoryglobalparameter}{collect-generation-radix}
+\listlibraries
+\endentryheader
+
+\noindent
+This parameter determines how often each generation is collected
+when \scheme{collect} is invoked without arguments, as by the default
+collect-request handler.
+Its value must be a positive fixnum.
+Generations are collected once every $r^g$ times a collection occurs,
+where $r$ is the
+value of \scheme{collect-generation-radix} and $g$ is the generation
+number.
+
+Setting \scheme{collect-generation-radix} to one forces all generations
+to be collected each time a collection occurs.
+Setting \scheme{collect-generation-radix} to a very large number
+effectively delays collection of older generations indefinitely.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-maximum-generation}{\categoryglobalparameter}{collect-maximum-generation}
+\listlibraries
+\endentryheader
+
+This parameter determines the maximum nonstatic generation, hence the
+total number of generations, currently in use.
+Its value is an exact integer in the range 1 through 254.
+When set to 1, only two nonstatic generations are used; when set to 2,
+three nonstatic generations are used, and so on.
+When set to 254, 255 nonstatic generations are used, plus the single
+static generation for a total of 256 generations.
+Increasing the number of generations effectively decreases how often old
+objects are collected, potentially decreasing collection overhead but
+potentially increasing the number of inaccessible objects retained in the
+system and thus the total amount of memory required.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-request-handler}{\categoryglobalparameter}{collect-request-handler}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of \scheme{collect-request-handler} must be a procedure.
+The procedure is invoked without arguments whenever the
+system determines that a collection should occur, i.e., some time after
+an amount of storage determined by the parameter
+\scheme{collect-trip-bytes} has been allocated since the last
+collection.
+
+By default, \scheme{collect-request-handler} simply invokes
+\scheme{collect} without arguments.
+
+Automatic collection may be disabled by setting
+\scheme{collect-request-handler} to a procedure that does nothing,
+e.g.:
+
+\schemedisplay
+(collect-request-handler void)
+\endschemedisplay
+
+Collection can also be temporarily disabled using
+\scheme{critical-section}, which prevents any interrupts from
+occurring.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{release-minimum-generation}{\categoryglobalparameter}{release-minimum-generation}
+\listlibraries
+\endentryheader
+
+This parameter's value must be between 0 and the value of
+\scheme{collect-maximum-generation}, inclusive, and defaults to the
+value of \scheme{collect-maximum-generation}.
+
+As new data is allocated and collections occur, the storage-management
+system automatically requests additional virtual memory address space
+from the operating system.
+Correspondingly, in the event the heap shrinks significantly, the system
+attempts to return some of the virtual-memory previously obtained from
+the operating system back to the operating system.
+By default, the system attempts to do so only after a collection that
+targets the maximum nonstatic generation.
+The system can be asked to do so after collections
+targeting younger generations as well by altering the value
+\scheme{release-minimum-generation} to something less than the value
+of \scheme{collect-maximum-generation}.
+When the generation to which the parameter is set, or any older
+generation, is the target generation of a collection, the storage
+management system attempts to return unneeded virtual memory to the
+operating system following the collection.
+
+When \scheme{collect-maximum-generation} is set to a new value \var{g},
+\scheme{release-minimum-generation} is implicitly set to \var{g} as well
+if (a) the two parameters have the same value before the change, or (b)
+\scheme{release-minimum-generation} has a value greater than \var{g}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{heap-reserve-ratio}{\categoryglobalparameter}{heap-reserve-ratio}
+\listlibraries
+\endentryheader
+
+This parameter determines the approximate amount of memory reserved (not
+returned to the O/S as described in the entry for \scheme{release-minimum-generation})
+in proportion to the amount currently occupied, excluding areas
+of memory that have been made static.
+Its value must be an inexact nonnegative flonum value; if set to an exact
+real value, the exact value is converted to an inexact value.
+The default value, 1.0, reserves one page of memory for each currently
+occupied nonstatic page.
+Setting it to a smaller value may result in a smaller average virtual
+memory footprint, while setting it to a larger value may result in fewer
+calls into the operating system to request and free memory space.
+
+
+\section{Weak Pairs and Guardians\label{SECTGUARDWEAKPAIRS}}
+
+\index{weak pairs}\index{weak pointers}\emph{Weak pairs} allow programs
+to maintain \emph{weak pointers} to objects.
+A weak pointer to an object does not prevent the object from being
+reclaimed by the storage management system, but it does remain valid as
+long as the object is otherwise accessible in the system.
+
+\index{guardians}\emph{Guardians}
+allow programs to protect objects from deallocation
+by the garbage collector and to determine when the objects would
+otherwise have been deallocated.
+
+Weak pairs and guardians allow programs to retain
+information about objects in separate data structures (such as hash
+tables) without concern that maintaining this information will cause
+the objects to remain indefinitely in the system.
+In addition, guardians allow objects to be saved from deallocation
+indefinitely so that they can be reused or so that clean-up or other
+actions can be performed using the data stored within the objects.
+
+The implementation of guardians and weak pairs used by {\ChezScheme}
+is described in~\cite{Dybvig:guardians}.
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:weak-cons}
+\formdef{weak-cons}{\categoryprocedure}{(weak-cons \var{obj_1} \var{obj_2})}
+\returns a new weak pair
+\listlibraries
+\endentryheader
+
+\noindent
+\var{obj_1} becomes the car and \var{obj_2} becomes the cdr of the
+new pair.
+Weak pairs are indistinguishable from ordinary pairs in all but two ways:
+
+\begin{itemize}
+\item weak pairs can be distinguished from pairs using the
+\scheme{weak-pair?} predicate, and
+
+\item weak pairs maintain a weak pointer to the object in the
+car of the pair.
+\end{itemize}
+
+\noindent
+The weak pointer in the car of a weak pair is just like a normal
+pointer as long as the object to which it points is accessible through
+a normal (nonweak) pointer somewhere in the system.
+If at some point the garbage collector recognizes that there are no
+nonweak pointers to the object, however, it replaces each weak pointer
+to the object with the ``broken weak-pointer'' object, \scheme{#!bwp},
+and discards the object.
+
+The cdr field of a weak pair is \emph{not} a weak pointer, so
+weak pairs may be used to form lists of weakly held objects.
+These lists may be manipulated using ordinary list-processing
+operations such as \scheme{length}, \scheme{map}, and \scheme{assv}.
+(Procedures like \scheme{map} that produce list structure always
+produce lists formed from nonweak pairs, however, even when their input
+lists are formed from weak pairs.)
+Weak pairs may be altered using \scheme{set-car!} and \scheme{set-cdr!}; after
+a \scheme{set-car!} the car field contains a weak pointer to the new
+object in place of the old object.
+Weak pairs are especially useful for building association pairs
+in association lists or hash tables.
+
+Weak pairs are printed in the same manner as ordinary pairs; there
+is no reader syntax for weak pairs.
+As a result, weak pairs become normal pairs when they are written
+and then read.
+
+\schemedisplay
+(define x (cons 'a 'b))
+(define p (weak-cons x '()))
+(car p) ;=> (a . b)
+
+(define x (cons 'a 'b))
+(define p (weak-cons x '()))
+(set! x '*)
+(collect)
+(car p) ;=> #!bwp
+\endschemedisplay
+
+\noindent
+The latter example above may in fact return \scheme{(a . b)} if a
+garbage collection promoting the pair into an older generation occurs
+prior to the assignment of \scheme{x} to \scheme{*}.
+It may be necessary to force an older generation collection to allow
+the object to be reclaimed.
+The storage management system guarantees only that the object
+will be reclaimed eventually once all nonweak pointers to it are
+dropped, but makes no guarantees about when this will occur.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{weak-pair?}{\categoryprocedure}{(weak-pair? \var{obj})}
+\returns \scheme{#t} if obj is a weak pair, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(weak-pair? (weak-cons 'a 'b)) ;=> #t
+(weak-pair? (cons 'a 'b)) ;=> #f
+(weak-pair? "oops") ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bwp-object?}{\categoryprocedure}{(bwp-object? \var{obj})}
+\returns \scheme{#t} if obj is the broken weak-pair object, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(bwp-object? #!bwp) ;=> #t
+(bwp-object? 'bwp) ;=> #f
+
+(define x (cons 'a 'b))
+(define p (weak-cons x '()))
+(set! x '*)
+(collect (collect-maximum-generation))
+(car p) ;=> #!bwp
+(bwp-object? (car p)) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-guardian}{\categoryprocedure}{(make-guardian)}
+\returns a new guardian
+\listlibraries
+\endentryheader
+
+\noindent
+Guardians are represented by procedures that encapsulate groups of
+objects registered for preservation.
+When a guardian is created, the group of registered objects is empty.
+An object is registered with a guardian by passing the object as an
+argument to the guardian:
+
+\schemedisplay
+(define G (make-guardian))
+(define x (cons 'aaa 'bbb))
+x ;=> (aaa . bbb)
+(G x)
+\endschemedisplay
+
+It is also possible to specify a ``representative'' object when
+registering an object.
+Continuing the above example:
+
+\schemedisplay
+(define y (cons 'ccc 'ddd))
+y ;=> (ccc . ddd)
+(G y 'rep)
+\endschemedisplay
+
+The group of registered objects associated with a guardian is logically
+subdivided into two disjoint subgroups: a subgroup referred to
+as ``accessible'' objects, and one referred to ``inaccessible'' objects.
+Inaccessible objects are objects that have been proven to be
+inaccessible (except through the guardian mechanism itself or through
+the car field of a weak pair), and
+accessible objects are objects that have not been proven so.
+The word ``proven'' is important here: it may be that some objects in
+the accessible group are indeed inaccessible but
+that this has not yet been proven.
+This proof may not be made in some cases until long after the object
+actually becomes inaccessible (in the current implementation, until a
+garbage collection of the generation containing the object occurs).
+
+Objects registered with a guardian are initially placed in the accessible
+group and are moved into the inaccessible group at some point after they
+become inaccessible.
+Objects in the inaccessible group are retrieved by invoking the guardian
+without arguments.
+If there are no objects in the inaccessible group, the guardian returns
+\scheme{#f}.
+Continuing the above example:
+
+\schemedisplay
+(G) ;=> #f
+(set! x #f)
+(set! y #f)
+(collect)
+(G) ;=> (aaa . bbb)   ; \var{this might come out second}
+(G) ;=> rep           ; \var{and this first}
+(G) ;=> #f
+\endschemedisplay
+
+\noindent
+The initial call to \scheme{G} returns \scheme{#f}, since the pairs bound
+to \scheme{x} and \scheme{y} are the
+only object registered with \scheme{G}, and the pairs are still accessible
+through those binding.
+When \scheme{collect} is called, the objects shift into the inaccessible group.
+The two calls to \scheme{G} therefore return the pair previously bound to
+\scheme{x} and the representative of the pair previously bound to \scheme{y},
+though perhaps in the other order from the one shown.
+(As noted above for weak pairs, the call to collect may not actually be
+sufficient to prove the object inaccessible, if the object has
+migrated into an older generation.)
+
+Although an object registered without a representative and returned from
+a guardian has been proven otherwise
+inaccessible (except possibly via the car field of a weak pair), it has
+not yet been reclaimed by the storage management system and will not be
+reclaimed until after the last nonweak pointer to it within or outside
+of the guardian system has been dropped.
+In fact, objects that have been retrieved from a guardian have no
+special status in this or in any other regard.
+This feature circumvents the problems that might otherwise arise with
+shared or cyclic structure.
+A shared or cyclic structure consisting of inaccessible objects is
+preserved in its entirety, and each piece registered for preservation
+with any guardian is placed in the inaccessible set for that guardian.
+The programmer then has complete control over the order in which pieces
+of the structure are processed.
+
+An object may be registered with a guardian more than once, in which
+case it will be retrievable more than once:
+
+\schemedisplay
+(define G (make-guardian))
+(define x (cons 'aaa 'bbb))
+(G x)
+(G x)
+(set! x #f)
+(collect)
+(G) ;=> (aaa . bbb)
+(G) ;=> (aaa . bbb)
+\endschemedisplay
+
+\noindent
+It may also be registered with more than one guardian, and guardians
+themselves can be registered with other guardians.
+
+An object that has been registered with a guardian without a
+representative and placed in
+the car field of a weak pair remains in the car field of the
+weak pair until after it has been returned from the guardian and
+dropped by the program or until the guardian itself is dropped.
+
+\schemedisplay
+(define G (make-guardian))
+(define x (cons 'aaa 'bbb))
+(define p (weak-cons x '()))
+(G x)
+(set! x #f)
+(collect)
+(set! y (G))
+y ;=> (aaa . bbb)
+(car p) ;=> (aaa . bbb)
+(set! y #f)
+(collect 1)
+(car p) ;=> #!bwp
+\endschemedisplay
+
+\noindent
+(The first collector call above would
+promote the object at least into generation~1, requiring the second
+collector call to be a generation~1 collection.
+This can also be forced by invoking \scheme{collect} several times.)
+
+On the other hand, if a representative (other than the object itself)
+is specified, the guarded object is dropped from the car field of the
+weak pair at the same time as the representative becomes available
+from the guardian.
+
+\schemedisplay
+(define G (make-guardian))
+(define x (cons 'aaa 'bbb))
+(define p (weak-cons x '()))
+(G x 'rep)
+(set! x #f)
+(collect)
+(G) ;=> rep
+(car p) ;=> #!bwp
+\endschemedisplay
+
+The following example illustrates that the object is deallocated and
+the car field of the weak pointer set to \scheme{#!bwp} when the guardian
+itself is dropped:
+
+\schemedisplay
+(define G (make-guardian))
+(define x (cons 'aaa 'bbb))
+(define p (weak-cons x '()))
+(G x)
+(set! x #f)
+(set! G #f)
+(collect)
+(car p) ;=> #!bwp
+\endschemedisplay
+
+The example below demonstrates how guardians might be used to
+deallocate external storage, such as storage managed by the C library
+``malloc'' and ``free'' operations.
+
+\schemedisplay
+(define malloc
+  (let ([malloc-guardian (make-guardian)])
+    (lambda (size)
+      ; first free any storage that has been dropped.  to avoid long
+      ; delays, it might be better to deallocate no more than, say,
+      ; ten objects for each one allocated
+      (let f ()
+        (let ([x (malloc-guardian)])
+          (when x
+            (do-free x)
+            (f))))
+      ; then allocate and register the new storage
+      (let ([x (do-malloc size)])
+        (malloc-guardian x)
+        x))))
+\endschemedisplay
+
+\noindent
+\scheme{do-malloc} must return a Scheme object ``header'' encapsulating a pointer to the
+external storage (perhaps as an unsigned integer), and all access to the
+external storage must be made through this header.
+In particular, care must be taken that no pointers to the external storage
+exist outside of Scheme after the corresponding header has been
+dropped.
+\scheme{do-free} must deallocate the external storage using the encapsulated
+pointer.
+Both primitives can be defined in terms of \scheme{foreign-alloc}
+and \scheme{foreign-free} or the C-library ``malloc'' and ``free''
+operators, imported as foreign procedures.  (See
+Chapter~\ref{CHPTFOREIGN}.)
+
+If it is undesirable to wait until \scheme{malloc} is called to free dropped
+storage previously allocated by \scheme{malloc}, a collect-request handler
+can be used instead to check for and free dropped storage, as shown below.
+
+\schemedisplay
+(define malloc)
+(let ([malloc-guardian (make-guardian)])
+  (set! malloc
+    (lambda (size)
+      ; allocate and register the new storage
+      (let ([x (do-malloc size)])
+        (malloc-guardian x)
+        x)))
+  (collect-request-handler
+    (lambda ()
+      ; first, invoke the collector
+      (collect)
+      ; then free any storage that has been dropped
+      (let f ()
+        (let ([x (malloc-guardian)])
+          (when x
+            (do-free x)
+            (f)))))))
+\endschemedisplay
+
+%% for testing:
+% (define do-malloc (lambda (x) (list x)))
+% (define do-free (lambda (x) (printf "freeing ~s~%" (car x))))
+% (define a (malloc 1))
+% (malloc 10)           
+% (let f () (cons f f) (f))
+
+With a bit of refactoring, it would be possible to register
+the encapsulated foreign address as a representative with
+each header, in which \scheme{do-free} would take just the
+foreign address as an argument.
+This would allow the header to be dropped from the Scheme
+heap as soon as it becomes inaccessible.
+
+\section{Locking Objects\label{SECTSMGMTLOCKING}}
+
+All pointers from C variables or data structures to Scheme objects
+should generally be discarded before entry (or reentry) into Scheme.
+When this guideline cannot be followed, the object may be
+\emph{locked} via \scheme{lock-object} or via the equivalent
+C library procedure \index{\scheme{Slock_object}}\scheme{Slock_object}
+(Section~\ref{SECTFOREIGNCLIB}).
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{lock-object}{\categoryprocedure}{(lock-object \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+Locking an object prevents the storage manager from reclaiming or
+relocating the object.
+Locking should be used sparingly, as it introduces memory fragmentation
+and increases storage management overhead.
+
+Locking can also lead to accidental retention of storage if objects
+are not unlocked.
+Objects may be unlocked via \scheme{unlock-object} or the equivalent
+C library procedure
+\index{\scheme{Sunlock_object}}\scheme{Sunlock_object}.
+
+Locking immediate values, such as fixnums, booleans, and characters,
+or objects that have been made static is unnecessary but harmless.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{unlock-object}{\categoryprocedure}{(unlock-object \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+An object may be locked more than once by successive calls to
+\scheme{lock-object}, \scheme{Slock_object}, or both, in which case it must
+be unlocked by an equal number of calls to
+\scheme{unlock-object} or \scheme{Sunlock_object} before it is
+truly unlocked.
+
+An object contained within a locked object, such as an object in the
+car of a locked pair, need not also be locked unless a separate C
+pointer to the object exists.
+That is, if the inner object is accessed only via an indirection of the
+outer object, it should be left unlocked so that the collector is free
+to relocate it during collection.
+
+Unlocking immediate values, such as fixnums, booleans, and characters,
+or objects that have been made static is unnecessary and ineffective but harmless.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{locked-object?}{\categoryprocedure}{(locked-object? \var{obj})}
+\returns \scheme{#t} if \var{obj} is locked, immediate, or static
+\listlibraries
+\endentryheader
+
+\noindent
+This predicate returns true if \var{obj} cannot be relocated or reclaimed
+by the collector, including immediate values, such as fixnums,
+booleans, and characters, and objects that have been made static.

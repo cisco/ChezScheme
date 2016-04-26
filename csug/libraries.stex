@@ -1,0 +1,1123 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Libraries and Top-level Programs\label{CHPTLIBRARIES}}
+
+\index{libraries}%
+\index{top-level-programs}%
+The Revised$^6$ Report describes two units of portable code:
+libraries and top-level programs.
+A library is a named collection of bindings with a declared set of
+explicitly exported bindings, a declared set of imported libraries, and a
+body that initializes its bindings.
+A top-level program is a stand-alone program with a declared set of
+imported libraries and a body that is run when the top-level program is
+run.
+The bindings in a library are created and its initialization code run only
+if the library is used, directly or indirectly, by a top-level program.
+
+\index{\scheme{import}}%
+The \scheme{import} declarations appearing within libraries and top-level
+programs serve two purposes:  first, they cause the imported libraries to
+be loaded, and second, they cause the bindings of the imported libraries
+to become visible in the importing library or top-level program.
+Libraries are typically stored in the file system, with one library per
+file, and the library name typically identifies the file-system path to
+the library, possibly relative to a default or programmer-specified set of
+library locations.
+The exact mechanism by which top-level programs are run and libraries are
+loaded is implementation-dependent.
+
+This chapter describes the mechanisms by which libraries and programs are
+loaded in {\ChezScheme} along with various features for controlling and
+tracking this process.
+It also describes the set of built-in libraries and syntactic forms for
+defining new libraries and top-level programs outside of a library or
+top-level program file.
+
+% \section{Locating Libraries\label{SECTLOCATINGLIBRARIES}}
+% 
+% In {\ChezScheme}, a library to be loaded implicitly by \scheme{import}
+% must reside in a file whose name reflects the name of the library.
+% For example, if the library's name is \scheme{(tools sorting)}, the
+% base name of the file must be \scheme{sorting} with a valid extension, and
+% the file must be in a directory named \scheme{tools} which itself resides
+% in one of the directories searched by \scheme{import}.
+% The set of directories searched by \scheme{import} is determined by
+% the
+% \index{\scheme{library-directories}}\scheme{library-directories}
+% parameter, and the set of
+% extensions is determined by the
+% \index{\scheme{library-extensions}}\scheme{library-extensions}
+% parameter.
+% So, if \scheme{(library-directories)} contains the pathnames
+% \scheme{"/usr/lib/scheme/libraries"} and \scheme{"."}, and
+% \scheme{(library-extensions)} contains the extensions \scheme{.ss}
+% and \scheme{.sls}, the path of the \scheme{(tools sorting)}
+% library must be one of the following.
+% 
+% \schemedisplay
+% /usr/lib/scheme/libraries/tools/sorting.ss
+% /usr/lib/scheme/libraries/tools/sorting.sls
+% ./tools/sorting.ss
+% ./tools/sorting.sls
+% \endschemedisplay
+% 
+% A file containing a library or set of libraries can be explicitly loaded
+% via \scheme{load}, in which case the file may have any name and may reside
+% anywhere in the file system.
+% 
+% \index{\scheme{compile-library}}%
+% \index{\scheme{compile-imported-libraries}}%
+% A file containing a library may be compiled with \scheme{compile-file}
+% or \scheme{compile-library}.
+% The only difference between the two is that the latter treats the source
+% file as if it were prefixed by an implicit \scheme{#!r6rs}.
+% Any libraries upon which the library depends must be compiled first.
+% This can be done manually or by setting the parameter
+% \scheme{compile-imported-libraries} to \scheme{#t} before compiling
+% the importing library.
+% If one of the libraries imported by the library is subsequently
+% recompiled (say because it was modified), the importing library must also
+% be recompiled.
+
+
+\section{Built-in Libraries\label{SECTBUILTINLIBRARIES}}
+
+In addition to the RNRS libraries mandated by the Revised$^6$ Report:
+
+\schemedisplay
+  (rnrs base (6))
+  (rnrs arithmetic bitwise (6))
+  (rnrs arithmetic fixnums (6))
+  (rnrs arithmetic flonums (6))
+  (rnrs bytevectors (6))
+  (rnrs conditions (6))
+  (rnrs control (6))
+  (rnrs enums (6))
+  (rnrs eval (6))
+  (rnrs exceptions (6))
+  (rnrs files (6))
+  (rnrs hashtables (6))
+  (rnrs io ports (6))
+  (rnrs io simple (6))
+  (rnrs lists (6))
+  (rnrs mutable-pairs (6))
+  (rnrs mutable-strings (6))
+  (rnrs programs (6))
+  (rnrs r5rs (6))
+  (rnrs records procedural (6))
+  (rnrs records syntactic (6))
+  (rnrs records inspection (6))
+  (rnrs sorting (6))
+  (rnrs syntax-case (6))
+  (rnrs unicode (6))
+\endschemedisplay
+
+\index{\scheme{(chezscheme)} library}%
+\index{\scheme{(chezscheme csv7)} library}%
+\index{\scheme{(scheme)} library}%
+\index{\scheme{(scheme csv7)} library}%
+{\ChezScheme} also provides two additional libraries: \scheme{(chezscheme)}
+and \scheme{(chezscheme csv7)}.
+The former can also be referenced as \scheme{(scheme)} and the latter can
+also be referenced as \scheme{(scheme csv7)}.
+
+The \scheme{(chezscheme)} library exports bindings for every identifier whose
+binding is described in this document, including those for keywords like
+\scheme{lambda}, auxiliary keywords like \scheme{else}, module names
+like \scheme{scheme}, and procedure names like \scheme{cons}.
+In most cases where an identifier exported from the
+\scheme{(chezscheme)} library corresponds to an identifier exported from
+one of the RNRS libraries, the bindings are identical.
+In some cases, however, the \scheme{(chezscheme)} bindings extend the
+\scheme{rnrs} bindings in some way.
+For example, the \scheme{(chezscheme)} \scheme{syntax-rules} form allows
+its clauses to have fenders (Section~\ref{SECTSYNTAXRULES}), while the
+\scheme{(rnrs)} \scheme{syntax-rules} form does not.
+Similarly, the \scheme{(chezscheme)} \scheme{current-input-port} procedure
+accepts an optional \var{port} argument that, when specified, sets the
+current input port to \var{port} (Section~\ref{SECTIOINPUT}), while the
+\scheme{(rnrs)} \scheme{current-input-port} procedure does not.
+When the \scheme{(chezscheme)} library extends an RNRS binding in some
+way, the \scheme{(chezscheme)} library also exports the RNRS version,
+with the name prefixed by \scheme{r6rs:}, e.g., \scheme{r6rs:syntax-rules}
+or \scheme{r6rs:current-input-port}.
+
+The \scheme{(chezscheme csv7)} Version~7 backward compatibility library
+contains bindings for a set of syntactic forms and procedures whose syntax
+or semantics directly conflicts with the RNRS bindings for the same
+identifiers.
+The following identifiers are exported from \scheme{(chezscheme csv7)}.
+
+\schemedisplay
+record-field-accessible?
+record-field-accessor
+record-field-mutable?
+record-field-mutator
+record-type-descriptor
+record-type-field-decls
+record-type-field-names
+record-type-name
+record-type-symbol
+\endschemedisplay
+
+The bindings of this library should be used only for old code; new
+code should use the RNRS variants.
+Each of these is also available in the \scheme{(chezscheme)} library with
+the prefix \scheme{csv7:}, e.g., \scheme{csv7:record-type-name}.
+
+The interaction environment in which code outside of a library or
+RNRS top-level program is scoped contains all of the bindings of the
+\scheme{(chezscheme)} library, as described in
+Section~\ref{SECTUSEINTERACTIONENVIRONMENT}.
+
+
+\section{Running Top-level Programs\label{SECTRUNNINGTOPLEVELPROGRAMS}}
+
+\index{\scheme{scheme-script}}%
+\index{\scheme{--program} command-line option}%
+\index{\scheme{load-program}}%
+A top-level program must reside in its own file, which may have any
+name and may reside anywhere in the file system.
+A top-level program residing in a file is run by one of three mechanisms: 
+the \scheme{scheme-script} command, the \scheme{--program} command-line
+argument, or the \scheme{load-program} procedure.
+
+The \scheme{scheme-script} command is used as follows:
+
+\schemedisplay
+scheme-script \var{program-filename} \var{arg} \dots
+\endschemedisplay
+
+It may also be run implicitly on Unix-based systems by placing the line
+
+\schemedisplay
+#! /usr/bin/env scheme-script
+\endschemedisplay
+
+at the front of the file containing the top-level program, making the
+top-level program file executable, and executing the file.
+This line may be replaced with
+
+\schemedisplay
+#! /usr/bin/scheme-script
+\endschemedisplay
+
+with \scheme{/usr/bin} replaced by the absolute path to the directory
+containing \scheme{scheme-script} if it is not in \scheme{/usr/bin}.
+The first form is recommended in the nonnormative appendices to the
+Revised$^6$ Report~\cite{r6rsapps}, and works wherever
+\scheme{scheme-script} appears in the path.
+
+The \scheme{--program} command is used similarly with the \scheme{scheme}
+or \scheme{petite} executables, either by running:
+
+\schemedisplay
+scheme --program \var{program-filename} \var{arg} \dots
+petite --program \var{program-filename} \var{arg} \dots
+\endschemedisplay
+
+or by including
+
+\schemedisplay
+#! /usr/bin/scheme --script
+\endschemedisplay
+
+or
+
+\schemedisplay
+#! /usr/bin/petite --script
+\endschemedisplay
+
+at the front of the top-level program file, making the file executable,
+and executing the file.
+Again, \scheme{/usr/bin} should be replaced with the absolute path to
+the actual directory in which \scheme{scheme} and/or \scheme{petite}
+resides, if not \scheme{/usr/bin}.
+
+The \scheme{load-program} procedure, described in
+Section~\ref{SECTMISCCOMPILEEVAL}, is used like \scheme{load}:
+
+\schemedisplay
+(load-program \var{string})
+\endschemedisplay
+
+where \var{string} names the file in which the top-level program resides.
+
+Regardless of the mechanism used, if the opening line is in one of the
+forms described above, or more generally, consists of
+\scheme{#!} followed by a space or a forward slash, the opening line
+is not considered part of the program and is ignored once the Scheme
+system starts up and begins to run the program.
+Thus, the line may be present even in a file loaded by \scheme{load-program}.
+In fact, \scheme{load-program} is ultimately used by the other two
+mechanisms described above, via the value of the \scheme{scheme-program}
+parameter described in Section~\ref{SECTMISCWAITERS}, and it is
+\scheme{load-program} that scans past the \scheme{#!} line, if present,
+before evaluating the program.
+
+A top-level program may be compiled with the
+\index{\scheme{compile-program}}\scheme{compile-program}
+procedure described in Section~\ref{SECTMISCCOMPILEEVAL}.
+\scheme{compile-program} copies the \scheme{#!} line from the source
+file to the object file, followed by a compiled version of the source
+code.
+Any libraries upon which the top-level program depends, other than
+built-in libraries, must be compiled first via \scheme{compile-file}
+or \scheme{compile-library}.
+This can be done manually or by setting the parameter
+\scheme{compile-imported-libraries} to \scheme{#t} before compiling
+the program.
+The program must be recompiled if any of the libraries upon which
+it depends are recompiled.
+A compiled top-level program can be run just like a source top-level
+program via each of the mechanisms described above.
+
+\index{\scheme{load-library}}%
+In {\ChezScheme}, a library may also be defined in the REPL or placed in a
+file to be loaded via \scheme{load} or \scheme{load-library}.
+The syntax for a library is the same whether the library is placed in
+its own file and implicitly loaded via \scheme{import}, entered into
+the REPL, or placed in a file along with other top-level expressions to
+be evaluated by \scheme{load}.
+A top-level program may also be defined in the REPL or placed in a file
+to be loaded via \scheme{load}, but in this case, the syntax is slightly
+different.
+In the language of the Revised$^6$ Report, a top-level program is merely
+an unwrapped sequence of subforms consisting of an \scheme{import} form
+and a body, delimited only by the boundaries of the file in which it
+resides.
+In order for a top-level program to be entered in the REPL or placed in
+a file to be evaluated by \scheme{load}, {\ChezScheme} allows top-level
+programs to be enclosed in a
+\index{\scheme{top-level-program}}\scheme{top-level-program} form.
+
+\section{Library and Top-level Program Forms\label{SECTLIBRARYFORMS}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{library}{\categorysyntax}{(library \var{name} \var{exports} \var{imports} \var{library-body})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+The \scheme{library} form defines a new library with the specified
+name, exports, imports, and body.
+Details on the syntax and semantics of the library form are given in
+Section~\ref{TSPL:SECTLIBPROGRAMS} of {\TSPLFOUR} and in the Revised$^6$
+Report.
+
+Only one version of a library can be loaded at any given time, and an
+exception is raised if a library is implicitly loaded via \scheme{import}
+when another version of the library has already been loaded.
+{\ChezScheme} permits a different version of the library, or a new
+instance of the same version, to be entered explicitly into the REPL
+or loaded explicitly from a file, to facilitate interactive testing
+and debugging.
+The programmer should take care to make sure that any code that uses
+the library is also reentered or reloaded, to make sure that code
+accesses the bindings of the new instance of the library.
+
+\schemedisplay
+(library (test (1)) (export x) (import (rnrs)) (define x 3))
+(import (test))
+(define f (lambda () x))
+(f) ;=> 3
+
+(library (test (1)) (export x) (import (rnrs)) (define x 4))
+(import (test))
+(f) ;=> 3    ; oops---forgot to redefine f
+(define f (lambda () x))
+(f) ;=> 4
+
+(library (test (2)) (export x) (import (rnrs)) (define x 5))
+(import (test))
+(define f (lambda () x))
+(f) ;=> 5
+\endschemedisplay
+
+As with module imports (Section~\ref{SECTSYNTAXMODULES}), a library
+\scheme{import} may appear anywhere a definition may appear, including at
+top level in the REPL, in a file to be loaded by \scheme{load}, or within
+a \scheme{lambda}, \scheme{let}, \scheme{letrec}, \scheme{letrec*},
+etc., body.
+The same \scheme{import} form may be used to import from both libraries
+and modules.
+
+\schemedisplay
+(library (foo) (export a) (import (rnrs)) (define a 'a-from-foo))
+(module bar (b) (define b 'b-from-bar))
+(let () (import (foo) bar) (list a b)) ;=> (a-from-foo b-from-bar)
+\endschemedisplay
+
+The \scheme{import} keyword is not visible within a library body
+unless the library imports it from the \scheme{(chezscheme)} library.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{top-level-program}{\categorysyntax}{(top-level-program \var{imports} \var{body})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\index{top-level-programs}%
+A \scheme{top-level-program} form may be entered into the REPL or placed
+in a file to be loaded via \scheme{load}, where it behaves as if its
+subforms were placed in a file and loaded via \scheme{load-program}.
+Details on the syntax and semantics of a top-level program are given in
+Section~\ref{TSPL:SECTLIBPROGRAMS} of {\TSPLFOUR} and in the Revised$^6$
+Report.
+
+The following transcript illustrates a \scheme{top-level-program} being
+tested in the REPL.
+
+\schemedisplay
+> (top-level-program (import (rnrs))
+    (display "hello!\n"))
+hello!
+\endschemedisplay
+
+\section{Standalone import and export forms\label{SECTLIBRARYIMPORTEXPORTFORMS}}
+
+Although not required by the Revised$^6$ Report,
+{\ChezScheme} supports the use of standalone import and
+export forms.
+The import forms can appear anywhere other definitions
+can appear, including within a \scheme{library} body,
+\scheme{module} (Section~\ref{SECTSYNTAXMODULES}) body,
+\scheme{lambda} or other local body, and at top level.
+The export forms can appear within the definitions of a
+\scheme{library} or \scheme{module} body to specify additional
+exports for the library or module.
+
+Within a library or top-level program, the keywords for
+these forms must be imported from the \scheme{(chezscheme)}
+library to be available for use, since they are not
+defined in any of the Revised$^6$ Report libraries.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{import}{\categorysyntax}{(import \var{import-spec} \dots)}
+\formdef{import-only}{\categorysyntax}{(import-only \var{import-spec} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+An \scheme{import} or \scheme{import-only} form is a definition and can
+appear anywhere other definitions can appear, including
+at the top level of a program, nested within the bodies of
+\scheme{lambda} expressions, and nested within modules
+and libraries.
+
+Each \var{import-spec} must take one of the following forms.
+
+\schemedisplay
+\var{import-set}
+(for \var{import-set} \var{import-level} \dots)
+\endschemedisplay
+
+\noindent
+The \scheme{for} wrapper and \var{import-level} are described in 
+Chapter~\ref{TSPL:CHPTLIBRARIES} of {\TSPLFOUR}.
+They are ignored by {\ChezScheme}, which determines
+automatically the levels at which identifiers must
+be imported, as permitted by the Revised$^6$ Report.
+This frees the programmer from the obligation
+to do so and results in more generality as well as more
+precision in the set of libraries actually imported
+at compile and run time~\cite{Ghuloum:libraries,Ghuloum:phd}.
+
+An \var{import-set} must take one of the following forms:
+
+\schemedisplay
+\var{library-spec}
+\var{module-name}
+(only \var{import-set} \var{identifier} \dots)
+(except \var{import-set} \var{identifier} \dots)
+(prefix \var{import-set} \var{prefix})
+(add-prefix \var{import-set} \var{prefix})
+(drop-prefix \var{import-set} \var{prefix})
+(rename \var{import-set} (\var{import-name} \var{internal-name}) \dots)
+(alias \var{import-set} (\var{import-name} \var{internal-name}) \dots)
+\endschemedisplay
+
+Several of these are specified by the Revised$^6$ Report; the remainder
+are {\ChezScheme} extensions, including \var{module-name} and the
+\scheme{add-prefix}, \scheme{drop-prefix}, and \scheme{alias} forms.
+
+An \scheme{import} or \scheme{import-only} form makes the specified bindings
+visible in the scope in which they appear.
+Except at top level, they differ in that \scheme{import} leaves all bindings
+except for those shadowed by the imported names visible, whereas \scheme{import-only}
+hides all existing bindings, i.e., makes only the imported names visible.
+At top level, \scheme{import-only} behaves like \scheme{import}.
+
+Each \var{import-set} identifies a set of names to make visible
+as follows.
+
+\begin{description}
+\item[\scheme{\var{library-spec}}:]
+all exports of the library identified by the Revised$^6$ Report \var{library-spec}
+(Chapter~\ref{TSPL:CHPTLIBRARIES}.
+
+\item[\scheme{\var{module-name}}:]
+all exports of module named by the identifier \var{module-name}
+
+\item[\scheme{(only \var{import-set} \var{identifier} \dots)}:]
+of those specified by \var{import-set}, just \scheme{\var{identifier} \dots}
+
+\item[\scheme{(except \var{import-set} \var{identifier} \dots)}:]
+all specified by \var{import-set} except \scheme{\var{identifier} \dots}
+
+\item[\scheme{(prefix \var{import-set} \var{prefix})}:]
+all specified by \var{import-set}, each prefixed by \var{prefix}
+
+\item[\scheme{(add-prefix \var{import-set} \var{prefix})}:]
+all specified by \var{import-set}, each prefixed by \var{prefix}
+(just like \scheme{prefix})
+
+\item[\scheme{(drop-prefix \var{import-set} \var{prefix})}:]
+all specified by \var{import-set}, with prefix \var{prefix} removed
+
+\item[\scheme{(rename \var{import-set} (\var{import-name} \var{internal-name}) \dots)}:]
+all specified by \var{import-set}, with each identifier \var{import-name}
+renamed to the corresponding identifier \var{internal-name}
+
+\item[\scheme{(alias \var{import-set} (\var{import-name} \var{internal-name}) \dots)}:]
+all specified by \var{import-set}, with each \var{internal-name} as an alias
+for \var{import-name}
+\end{description}
+
+The \scheme{alias} form differs from the \scheme{rename} form in that both
+\var{import-name} and \var{internal-name} are in the resulting set,
+rather than just \var{internal-name}.
+
+It is a syntax violation if the
+given selection or transformation cannot be made because of a missing
+export or prefix.
+
+An identifier made visible via an import of a module or library is scoped as if its
+definition appears where the import occurs.
+The following example illustrates these scoping rules, using a local
+module \scheme{m}.
+
+\schemedisplay
+(library (A) (export x) (import (rnrs)) (define x 0))
+(let ([x 1])
+  (module m (x setter)
+    (define-syntax x (identifier-syntax z))
+    (define setter (lambda (x) (set! z x)))
+    (define z 2))
+  (let ([y x] [z 3])
+    (import m (prefix (A) a:))
+    (setter 4)
+    (list x a:x y z))) ;=> (4 0 1 3)
+\endschemedisplay
+
+\noindent
+The inner \scheme{let} expression binds \scheme{y} to the value of
+the \scheme{x} bound by the outer \scheme{let}.
+The import of \scheme{m} makes the definitions of \scheme{x}
+and \scheme{setter} visible within the inner \scheme{let}.
+The import of \scheme{(A)} makes the variable \scheme{x} exported
+from \scheme{(A)} visible as \scheme{a:x} within the body of the
+inner \scheme{let}.
+Thus, in the expression \scheme{(list x a:x y z)}, \scheme{x} refers to the
+identifier macro exported from \scheme{m} while \scheme{a:x} refers to the
+variable \scheme{x} exported from \scheme{(A)} and \scheme{y} and \scheme{z}
+refer to the bindings established by the inner \scheme{let}.
+The identifier macro \scheme{x} expands into a reference to
+the variable \scheme{z} defined within the module.
+
+With local import forms, it is rarely necessary to use the extended
+import specifiers.
+For example, an abstraction that encapsulates the import and reference
+can easily be defined and used as follows.
+
+\schemedisplay
+(define-syntax from
+  (syntax-rules ()
+    [(_ m id) (let () (import-only m) id)]))
+
+(library (A) (export x) (import (rnrs)) (define x 1))
+(let ([x 10])
+  (module M (x) (define x 2))
+  (cons (from (A) x) (from M x))) ;=> (1 . 2)
+\endschemedisplay
+
+\noindent
+The definition of \scheme{from} could use \scheme{import} rather than
+\scheme{import-only}, but by using \scheme{import-only} we get feedback
+if an attempt is made to import an identifier from a library or
+module that does not export the identifier.
+With \scheme{import} instead of \scheme{import-only}, the current binding,
+if any, would be visible if the library or module does not export the
+specified name.
+
+\schemedisplay
+(define-syntax lax-from
+  (syntax-rules ()
+    [(_ m id) (let () (import m) id)]))
+
+(library (A) (export x) (import (rnrs)) (define x 1))
+
+(let ([x 10])
+  (module M (x) (define x 2))
+  (+ (from (A) x) (from M y))) ;=> \var{exception: unbound identifier y}
+ 
+(let ([x 10] [y 20])
+  (module M (x) (define x 2))
+  (+ (lax-from (A) x) (lax-from M y))) ;=> 21
+\endschemedisplay
+
+Import visibility interacts with hygienic macro expansion in such a
+way that, as one might expect,
+an identifier \var{x} imported from a module \var{M} is treated in
+the importing context as if the corresponding export identifier had
+been present in the import form along with \var{M}.
+
+The \scheme{from} abstraction above works because both \var{M} and \var{id}
+appear in the input to the abstraction, so the imported \var{id} captures
+the reference to \var{id}.
+
+The following variant of \var{from} also works, because both names are
+introduced into the output by the transformer.
+
+\schemedisplay
+(module M (x) (define x 'x-of-M))
+(define-syntax x-from-M
+  (syntax-rules ()
+    [(_) (let () (import M) x)]))
+
+(let ([x 'local-x]) (x-from-M)) ;=> x-of-M
+\endschemedisplay
+
+On the other hand, imports of introduced module names do not capture
+free references.
+
+\schemedisplay
+(let ([x 'local-x])
+  (define-syntax alpha
+    (syntax-rules ()
+      [(_ var) (let () (import M) (list x var))]))
+ 
+  (alpha x)) ;=> (x-of-M local-x)
+\endschemedisplay
+
+Similarly, imports from free module names do not capture references
+to introduced variables.
+
+\schemedisplay
+(let ([x 'local-x])
+  (define-syntax beta
+    (syntax-rules ()
+      [(_ m var) (let () (import m) (list x var))]))
+
+  (beta M x)) ;=> (local-x x-of-M)
+\endschemedisplay
+
+This semantics extends to prefixed, renamed, and aliased bindings
+created by the extended \scheme{import} specifiers \scheme{prefix},
+\scheme{rename}, and \scheme{alias}.
+
+The \scheme{from} abstraction
+works for variables but not for exported keywords, record names,
+or module names, since the output is an expression and may thus appear only where
+expressions may appear.
+A generalization of this technique is used in the following definition
+of \scheme{import*}, which supports renaming of imported bindings and
+selective import of specific bindings---without the use of the built-in
+\scheme{import} subforms for selecting and renaming identifiers
+
+\schemedisplay
+(define-syntax import*
+  (syntax-rules ()
+    [(_ m) (begin)]
+    [(_ m (new old))
+     (module (new)
+       (module (tmp)
+         (import m)
+         (alias tmp old))
+       (alias new tmp))]
+    [(_ m id) (module (id) (import m))]
+    [(_ m spec0 spec1 ...)
+     (begin (import* m spec0) (import* m spec1 ...))]))
+\endschemedisplay
+
+\noindent
+To selectively import an identifier from module or library \scheme{m}, the
+\scheme{import*} form expands into an anonymous module that first
+imports all exports of \scheme{m} then re-exports only the selected
+identifier.
+To rename on import the macro expands into an anonymous module that
+instead exports an alias (Section~\ref{SECTSYNTAXALIAS}) bound to the new name.
+
+If the output placed the definition of \scheme{new} in the same
+scope as the import of \scheme{m}, a naming conflict would arise
+whenever \scheme{new} is also present in the interface
+of \scheme{m}.
+To prevent this, the output instead places the import within a nested
+anonymous module and links \scheme{old} and \scheme{new}
+by means of an alias for the introduced identifier \scheme{tmp}.
+
+The macro expands recursively to handle multiple import specifications.
+Each of the following examples imports \scheme{cons} as \scheme{+} and \scheme{+} as
+\scheme{cons}, which is probably not a very good idea.
+
+\schemedisplay
+(let ()
+  (import* scheme (+ cons) (cons +))
+  (+ (cons 1 2) (cons 3 4))) ;=> (3 . 7)
+
+(let ()
+  (import* (rnrs) (+ cons) (cons +))
+  (+ (cons 1 2) (cons 3 4))) ;=> (3 . 7)
+\endschemedisplay
+
+% for testing
+% (module m (x y z)
+%    (define x 'x)
+%    (define y 'y)
+%    (define z 'z))
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{export}{\categorysyntax}{(export \var{export-spec} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+An \scheme{export} form is a definition and can appear with other
+definitions at the front of a \scheme{library} or \scheme{module}.
+It is a syntax error for an \scheme{export} form to appear in other
+contexts, including at top level or among the definitions of a
+top-level program or \scheme{lambda} body.
+
+Each \var{export-spec} must take one of the following forms.
+
+\schemedisplay
+\var{identifier}
+(rename (\var{internal-name} \var{export-name}) \dots)
+(import \var{import-spec} \dots)
+\endschemedisplay
+
+\noindent
+where each \var{internal-name} and \var{export-name} is an identifier.
+The first two are syntactically identical to \scheme{library}
+\var{export-spec}s, while the third is syntactically
+identical to a {\ChezScheme} \scheme{import} form, which is an extension of the
+R6RS library \scheme{import} subform.
+The first form names a single export, \var{identifier}, whose export
+name is the same as its internal name.
+The second names a set of exports, each of whose export name is
+given explicitly and may differ from its internal name.
+
+For the third, the identifiers identified by the \scheme{import} form
+become exports, with aliasing, renaming, prefixing, etc., as specified by the
+\var{import-spec}s.
+The module or library whose bindings are exported by an \scheme{import}
+form appearing within an \scheme{export} form can
+be defined within or outside the exporting module or library and need
+not be imported elsewhere within the exporting module or library.
+
+The following library exports a two-armed-only variant of \scheme{if}
+along with all remaining bindings of the \scheme{(rnrs)} library.
+
+\schemedisplay
+(library (rnrs-no-one-armed-if) (export) (import (except (chezscheme) if))
+  (export if (import (except (rnrs) if)))
+  (define-syntax if
+    (let ()
+      (import (only (rnrs) if))
+      (syntax-rules ()
+        [(_ tst thn els) (if tst thn els)]))))
+
+(import (rnrs-no-one-armed-if))
+(if #t 3 4) ;=> 3
+(if #t 3) ;=> \var{exception: invalid syntax}
+\endschemedisplay
+
+Another way to define the same library would be to define the
+two-armed-only \scheme{if} with a different internal name and use
+\scheme{rename} to export it under the name \scheme{if}:
+
+\schemedisplay
+(library (rnrs-no-one-armed-if) (export) (import (chezscheme))
+  (export (rename (two-armed-if if)) (import (except (rnrs) if)))
+  (define-syntax two-armed-if
+    (syntax-rules ()
+      [(_ tst thn els) (if tst thn els)])))
+
+(import (rnrs-no-one-armed-if))
+(if #t 3 4) ;=> 3
+(if #t 3) ;=> \var{exception: invalid syntax}
+\endschemedisplay
+
+The placement of the \scheme{export} form in the library body is
+irrelevant, e.g., the \scheme{export} form can appear after the
+definition in the examples above.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{indirect-export}{\categorysyntax}{(indirect-export \var{id} \var{indirect-id} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+This form is a definition and can appear wherever any other definition
+can appear.
+
+An \scheme{indirect-export} form declares that the named
+\var{indirect-id}s are indirectly exported to top level if \var{id}
+is exported to top level.
+
+In general, if an identifier is not directly exported by a library or
+module, it can be referenced outside of the library or module only in
+the expansion of a macro defined within and exported from the library
+or module.
+Even this cannot occur for libraries or modules defined at top level
+(or nested within other libraries or modules), unless either (1)
+the library or module has been set up to implicitly export all
+identifiers as indirect exports, or (2) each indirectly exported
+identifier is explicitly declared as an indirect export of some
+other identifier that is exported, either directly or indirectly, from
+the library or module, via an \scheme{indirect-export} or the built-in
+indirect export feature of a \scheme{module} export subform.
+By default, (1) is true for a library and false for a module, but the
+default can be overridden via the \scheme{implicit-exports}
+form, which is described below.
+
+This form is meaningful only within a top-level library, top-level module,
+or module enclosed within a library or top-level module, although it
+has no effect if the library or module already implicitly exports all
+bindings.
+It is allowed anywhere else definitions can appear, however, so macros
+that expand into indirect export forms can be used in any definition
+context.
+
+Indirect exports are listed so the compiler can determine the
+exact set of bindings (direct and indirect) that must be inserted
+into the top-level environment, and conversely, the set of bindings
+that may be treated more efficiently as local bindings (and
+perhaps discarded, if they are not used).
+
+In the example below, \scheme{indirect-export} is used to indirectly
+export \scheme{count} to top level when \scheme{current-count} is
+exported to top level.
+
+\schemedisplay
+(module M (bump-count current-count)
+  (define-syntax current-count (identifier-syntax count))
+  (indirect-export current-count count)
+  (define count 0)
+  (define bump-count
+    (lambda ()
+      (set! count (+ count 1)))))
+
+(import M)
+(bump-count)
+current-count ;=> 1
+count ;=> \var{exception: unbound identifier count}
+\endschemedisplay
+
+An \scheme{indirect-export} form is not required to make \scheme{count}
+visible for \scheme{bump-count}, since it is a procedure whose code
+is contained within the module rather than a macro that might expand
+into a reference to \scheme{count} somewhere outside the module.
+
+It is often useful to use \scheme{indirect-export} in the output
+of a macro that expands into another macro named \var{a} if
+\var{a} expands into references to identifiers that might not
+be directly exported, as illustrated by the alternative definition
+of module \scheme{M} above.
+
+\schemedisplay
+(define-syntax define-counter
+  (syntax-rules ()
+    [(_ getter bumper init incr)
+     (begin
+       (define count init)
+       (define-syntax getter (identifier-syntax count))
+       (indirect-export getter count)
+       (define bumper
+         (lambda ()
+           (set! count (incr count)))))]))
+
+(module M (bump-count current-count)
+  (define-counter current-count bump-count 0 add1))
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{implicit-exports}{\categorysyntax}{(implicit-exports #t)}
+\formdef{implicit-exports}{\categorysyntax}{(implicit-exports #f)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+An \scheme{implicit-exports} form is a definition and can appear with other
+definitions at the front of a \scheme{library} or \scheme{module}.
+It is a syntax error for an \scheme{implicit-exports} form to appear in other
+contexts, including at top level or among the definitions of a
+top-level program or \scheme{lambda} body.
+
+The \scheme{implicit-exports} form determines whether identifiers
+not directly exported from a module or library are automatically
+indirectly exported to the top level if any meta-binding (keyword, meta
+definition, or property definition) is directly exported to top level
+from the library or module.
+The default for libraries is \scheme{#t}, to match the behavior required
+by the Revised$^6$ Report, while the default for modules is \scheme{#f}.
+The \scheme{implicit-exports} form is meaningful only within a library,
+top-level module, or module enclosed within a library or top-level module.
+It is allowed in a module enclosed within a \scheme{lambda}, \scheme{let},
+or similar body, but ignored there because none of that module's bindings
+can be exported to top level.
+
+The advantage of \scheme{(implicit-exports #t)} is that indirect exports
+need not be listed explicitly, which is convenient.
+A disadvantage is that it often results in more bindings than necessary
+being elevated to top level where they cannot be discarded as useless
+by the optimizer.
+For modules, another disadvantage is such bindings
+cannot be proven immutable, which inhibits important optimizations such
+as procedure inlining.
+This can result in significantly lower run-time performance.
+
+\section{Library Parameters\label{SECTLIBRARYPARAMETERS}}
+
+\index{\scheme{import}}%
+The parameters described below control where \scheme{import} looks
+when attempting to load a library, whether it compiles the libraries
+it loads, and whether it displays tracking messages as it performs its
+search.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{library-directories}{\categorythreadparameter}{library-directories}
+\formdef{library-extensions}{\categorythreadparameter}{library-extensions}
+\listlibraries
+\endentryheader
+
+The parameter \scheme{library-directories} determines where the files
+containing library source and object code are located in the file system,
+and the parameter \scheme{library-extensions} determines the filename
+extensions for the files holding the code, as described in
+section~\ref{SECTUSESCRIPTING}.
+The values of both parameters are lists of pairs of strings.
+The first string in each \scheme{library-directories} pair identifies a
+source-file root directory, and the second identifies the corresponding
+object-file root directory.
+Similarly, the first string in each \scheme{library-extensions} pair
+identifies a source-file extension, and the second identifies the
+corresponding object-file extension.
+The full path of a library source or object file consists of the source or
+object root followed by the components of the library name prefixed by
+slashes, with the library extension added on the end.
+For example, for root \scheme{/usr/lib/scheme}, library name
+\scheme{(app lib1)}, and extension \scheme{.sls}, the full path is
+\scheme{/usr/lib/scheme/app/lib1.sls}.
+If the library name portion forms an absolute pathname, e.g.,
+\scheme{~/.myappinit}, the \scheme{library-directories} parameter is
+ignored and no prefix is added.
+
+The initial values of these parameters are shown below.
+
+\schemedisplay
+(library-directories) ;=> (("." . "."))
+
+(library-extensions) ;=> ((".chezscheme.sls" . ".chezscheme.so")
+                     ;==  (".ss" . ".so")
+                     ;==  (".sls" . ".so")
+                     ;==  (".scm" . ".so")
+                     ;==  (".sch" . ".so"))
+\endschemedisplay
+
+As a convenience, when either of these parameters is set, any element of
+the list can be specified as a single source string, in which case the
+object string is determined automatically.
+For \scheme{library-directories}, the object string is the same as
+the source string, effectively naming the
+same directory as a source- and object-code root.
+For \scheme{library-extensions}, the object string is the result of
+removing the last (or only) extension from the string and appending
+\scheme{".so"}.
+The \scheme{library-directories} and \scheme{library-extensions}
+parameters also accept as input strings in the format described
+in Section~\ref{SECTUSESCRIPTING}
+for the
+\index{\scheme{--libdirs} command-line option}\scheme{--libdirs} and
+\index{\scheme{--libexts} command-line option}\scheme{--libexts} command-line
+options.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compile-imported-libraries}{\categorythreadparameter}{compile-imported-libraries}
+\listlibraries
+\endentryheader
+
+When the value of this parameter is \scheme{#t}, \scheme{import}
+automatically calls the value of the \scheme{compile-library-handler} parameter (which defaults
+to a procedure that simply calls \scheme{compile-library}) on any imported library if
+the object file is missing, older than the corresponding source file,
+older than any source files included (via \index{\scheme{include}}\scheme{include}) when the
+object file was created, or itself requires a library that has or must
+be recompiled, as described in Section~\ref{SECTUSESCRIPTING}.
+The default initial value of this parameter is \scheme{#f}.
+It can be set to \scheme{#t} via the command-line option
+\index{\scheme{--compile-imported-libraries} command-line option}\scheme{--compile-imported-libraries}.
+
+When \scheme{import} compiles a library via this mechanism, it does not
+also load the compiled library, because this would cause portions of
+library to be reevaluated.
+Because of this, run-time expressions in the file outside of a
+\scheme{library} form will not be evaluated.
+If such expressions are present and should be evaluated, the library
+should be loaded explicitly.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{import-notify}{\categorythreadparameter}{import-notify}
+\listlibraries
+\endentryheader
+
+When the new parameter \scheme{import-notify} is set to a true value,
+\scheme{import} displays messages to the console-output port as it
+searches for the file containing each library it needs to load.
+The default value of this parameter is \scheme{#f}.
+
+\section{Library Inspection\label{SECTLIBRARYINSPECTION}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{library-list}{\categoryprocedure}{(library-list)}
+\returns a list of the libraries currently defined
+\listlibraries
+\endnoskipentryheader
+
+The set of libraries initially defined includes those listed in
+Section~\ref{SECTBUILTINLIBRARIES} above.
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{library-version}{\categoryprocedure}{(library-version \var{libref})}
+\returns the version of the the specified library
+\formdef{library-exports}{\categoryprocedure}{(library-exports \var{libref})}
+\returns a list of the exports of the the specified library
+\formdef{library-requirements}{\categoryprocedure}{(library-requirements \var{libref})}
+\returns a list of libraries required by the specified library
+\formdef{library-requirements}{\categoryprocedure}{(library-requirements \var{libref} \var{options})}
+\returns a list of libraries required by the specified library, filtered by \var{options}
+\formdef{library-object-filename}{\categoryprocedure}{(library-object-filename \var{libref})}
+\returns the name of the object file holding the specified library, if any
+\listlibraries
+\endnoskipentryheader
+
+Information can be obtained only for built-in libraries or libraries
+previously loaded into the system.
+\var{libref} must be an s-expression in the form of a library reference.
+The syntax for library references is given in
+Chapter~\ref{TSPL:CHPTLIBRARIES} of {\TSPLFOUR} and in the Revised$^6$
+Report.
+
+The \scheme{library-version} return value is a list of numbers
+(possibly empty) representing the library's version.
+
+The list of exports returned by \scheme{library-exports} is a list of
+symbols, each identifying one of the library's exports.
+The order in which the elements appear is unspecified.
+
+When the optional \var{options} argument is supplied, it must be
+an enumeration set over the symbols constituting
+valid library-requirements options, as described in the
+\scheme{library-requirements-options} entry below.
+It defaults to a set containing all of the options.
+Each element of the list of libraries returned by
+\scheme{library-requirements} is an s-expression form of a library
+reference.
+The library reference includes the actual version of the library that is
+present in the system (if nonempty), even if a version was not specified
+when it was imported.
+The order in which the libraries appear in the list returned by
+\scheme{library-requirements} is unspecified.
+
+\scheme{library-object-filename} returns a string naming the object
+file if the specified library was loaded from or compiled to an object
+file.
+Otherwise, it returns \scheme{#f}.
+
+
+\schemedisplay
+(with-output-to-file "A.ss"
+  (lambda ()
+    (pretty-print
+      '(library (A (1 2)) (export x z)
+         (import (rnrs))
+         (define x 'ex)
+         (define y 23)
+         (define-syntax z
+           (syntax-rules ()
+             [(_ e) (+ y e)])))))
+  'replace)
+(with-output-to-file "B.ss"
+  (lambda ()
+    (pretty-print
+      '(library (B) (export x w)
+         (import (rnrs) (A))
+         (define w (cons (z 12) x)))))
+  'replace)
+(compile-imported-libraries #t)
+(import (B))
+(library-exports '(A)) ;=> (x z) ; or (z x)
+(library-exports '(A (1 2))) ;=> (x z) ; or (z x)
+(library-exports '(B)) ;=> (x w) ; or (w x)
+(library-version '(A)) ;=> (1 2)
+(library-version '(B)) ;=> ()
+(library-requirements '(A)) ;=> ((rnrs (6)))
+(library-requirements '(B)) ;=> ((rnrs (6)) (A (1 2)))
+(library-object-filename '(A)) ;=> "A.so"
+(library-object-filename '(B)) ;=> "B.so"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{library-requirements-options}{\categorysyntax}{(library-requirements-options \var{symbol} \dots)}
+\returns a library-requirements-options enumeration set
+\listlibraries
+\endentryheader
+
+\noindent
+Library-requirements-options enumeration sets are passed to
+\scheme{library-requirements} to determine the library requirements
+to be listed.  The available options are described below.
+
+\begin{description}
+\item[\scheme{import}:]
+Include the libraries that must be imported when the specified library
+is imported.
+
+\item[\scheme{visit@visit}:]
+Includes the libraries that must be visited when the specified library
+is visited.
+
+\item[\scheme{invoke@visit}:]
+Include the libraries that must be invoked when the specified library
+is visited.
+
+\item[\scheme{invoke}:]
+Includes the libraries that must be invoked when the specified library
+is invoked.
+\end{description}
+

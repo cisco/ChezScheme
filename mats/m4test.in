@@ -1,0 +1,53 @@
+dnl m4test.in
+dnl Copyright 1984-2016 Cisco Systems, Inc.
+dnl 
+dnl Licensed under the Apache License, Version 2.0 (the "License");
+dnl you may not use this file except in compliance with the License.
+dnl You may obtain a copy of the License at
+dnl 
+dnl http://www.apache.org/licenses/LICENSE-2.0
+dnl 
+dnl Unless required by applicable law or agreed to in writing, software
+dnl distributed under the License is distributed on an "AS IS" BASIS,
+dnl WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+dnl See the License for the specific language governing permissions and
+dnl limitations under the License.
+dnl
+dnl a small excerpt from the delta 68k .m4 file that nonetheless strains
+dnl m4 pretty well.  use "make bullym4test.in" to test more fully, if you
+dnl have the time.
+
+changequote({,})
+
+dnl delta assembler does not support register masks; must convert to constant
+define(PUSHREGS,{moveml REGMASK({$1},{A7FIRST}),DEC(SP)})
+define(POPREGS,{moveml INC(SP),REGMASK({$1},{D0FIRST})})
+define(STOREREGS,{moveml REGMASK({$1},{D0FIRST}),{$2}})
+define(LOADREGS,{moveml {$2},REGMASK({$1},{D0FIRST})})
+define(REGMASK,{{&0x}HEXWORD(eval(REGMASK1({$1}/,0,{$2})))})
+define(REGMASK1,{
+  ifelse(
+    $2,len({$1}),
+      {0},
+    substr({$1},eval($2+2),1),-,
+      {REGRANGE(substr({$1},$2,1),
+                substr({$1},eval($2+1),1),
+                substr({$1},eval($2+4),1),
+                {$3}) +
+       REGMASK1({$1},eval($2+6),{$3})},
+      {$3(substr({$1},$2,1),substr({$1},eval($2+1),1)) +
+       REGMASK1({$1},eval($2+3),{$3})})})
+define(REGRANGE,{$4($1,$2)+ifelse($2,$3,{0},{REGRANGE($1,incr($2),$3,{$4})})})
+define(A7FIRST,{(2**(ifelse($1,D,15,7)-$2))})
+define(D0FIRST,{(2**(ifelse($1,A,8,0)+$2))})
+
+dnl used to pretty up register mask
+define(HEXLONG,{HEXIFY($1,0)})
+define(HEXWORD,{HEXIFY($1,4)})
+define(HEXBYTE,{HEXIFY($1,6)})
+define(HEXIFY,{ifelse($1,0,{substr(00000000,$2)},{HEXIFY(eval($1/16),incr($2)){}HEXDIGIT(eval($1%16))})})
+define(HEXDIGIT,{substr({0123456789abcdef},$1,1)})
+
+    PUSHREGS({D2-D7/A2-A6})
+
+    POPREGS({D2-D7/A2-A6})

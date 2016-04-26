@@ -1,0 +1,42 @@
+# Mf-i3nt
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+m = i3nt
+
+fsrc = foreign1.c foreign2.c foreign3.c
+ftmp = foreign1.obj foreign2.obj foreign3.obj
+fobj = foreign1.so
+mdclean = ${ftmp} foreign1.exp foreign1.lib make.bat cat_flush.obj cat_flush.exe libiconv-2.dll
+mdsrc = bld$m.bat bldnt.bat clean.bat make.bat libiconv-2.dll
+
+MSDOS = 1
+
+include Mf-base
+
+.SUFFIXES: .c .obj
+
+.c.obj: ; cl -c -DWIN32 -I${Include} $*.c
+
+foreign1.so: $(ftmp)
+	link -dll -out:foreign1.so foreign1.obj foreign2.obj foreign3.obj
+
+make.bat:
+	echo "@echo off" > make.bat
+	echo "call bldi3nt" >> make.bat
+	echo "call bldi3nt 2" >> make.bat
+	echo "bldi3nt 3" >> make.bat
+
+libiconv-2.dll:
+	ln -s ../bin/libiconv-2.dll .

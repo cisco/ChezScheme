@@ -1,0 +1,38 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Summary of Forms\label{CHPTFORMSUMMARY}}
+
+
+The table that follows summarizes the syntactic forms and procedures
+described in this book along with standard Scheme syntactic forms and
+procedures.
+It shows each item's category and the page number where it is defined.
+Page numbers prefixed by ``t'' refer to
+\index{The Scheme Programming Language, 4th Edition@\emph{The Scheme Programming Language, 4th Edition}}\emph{The
+Scheme Programming Language, 4th Edition} (TSPL4).
+
+\ifhtml
+All page numbers appearing here refer to the printed version of these
+books and also serve as hypertext links to the corresponding locations
+in the electronic versions of these books.
+\fi
+
+% abbreviate to fit
+\def\categorythreadparameter{thread param}
+\def\categoryglobalparameter{global param}
+
+\begingroup
+\input{csug.sfm}
+\endgroup
+

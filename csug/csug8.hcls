@@ -1,0 +1,191 @@
+%%% csug8.hcls
+%%% Based on tspl4.hcls
+%%% Copyright (c) 1998 R, Kent Dybvig
+%%%
+%%% Permission is hereby granted, free of charge, to any person obtaining a
+%%% copy of this software and associated documentation files (the "Software"),
+%%% to deal in the Software without restriction, including without limitation
+%%% the rights to use, copy, modify, merge, publish, distribute, sublicense,
+%%% and/or sell copies of the Software, and to permit persons to whom the
+%%% Software is furnished to do so, subject to the following conditions:
+%%%
+%%% The above copyright notice and this permission notice shall be included in
+%%% all copies or substantial portions of the Software.
+%%%
+%%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%%% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%%% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+%%% THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%%% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+%%% FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+%%% DEALINGS IN THE SOFTWARE.
+
+\newif\iflatex\latexfalse
+\newif\ifhtml\htmltrue
+
+\newif\ifdraft\draftfalse % define to prevent confusion in tspl.stex
+
+%%% \frontmatter, \mainmatter, \backmatter
+\newif\ifmainmatter \mainmattertrue
+\newcommand{\frontmatter}{\mainmatterfalse}
+\newcommand{\mainmatter}{\setcounter{chapter}{0}\mainmattertrue}
+\newcommand{\backmatter}{\mainmatterfalse}
+
+\newif\ifchapterpictures\chapterpicturestrue
+
+% we \let\label=\nolable within toc entries to avoid inserting
+% labels that belong with the labeled entity, not the toc
+\def\nolabel#1{}
+
+%%% \chapter
+\newcounter{chapter}
+\def\chpic#1#2{\raw{<img src="canned/#1">}\\\emph{#2}}
+\newcommand{\chapter}[1]{
+\endchapter
+\begingroup\renewcommand{\label}[1]{}\openhtmlfile{#1}\endgroup
+\ifmainmatter
+\refstepcounter{chapter}
+\edef\templabel{\genlab}\label{\templabel}
+\ifchapterpictures
+ \input{hebert/new/ch\thechapter}
+\fi
+\raw{<h1>}Chapter \thechapter. #1\raw{</h1>}
+\begin{divertoutput}[0]
+\raw{<li>}\textbf{\hpageref[toc]{\templabel}{Chapter \thechapter. {\let\label=\nolabel #1}}}
+\raw{<ul class=tocsection>}
+\end{divertoutput}
+\renewcommand{\endchapter}{\begin{divertoutput}[0]
+\raw{</ul><p>}
+\end{divertoutput}
+\copyrightnotice
+\closehtmlfile\renewcommand{\endchapter}{}}
+\else
+\edef\templabel{\genlab}\label{\templabel}
+\raw{<h1>}#1\raw{</h1>}
+\begin{divertoutput}[0]
+\raw{<li>}\textbf{\hpageref[toc]{\templabel}{{\let\label=\nolabel #1}}}\raw{<p>}
+\end{divertoutput}
+\renewcommand{\endchapter}{\copyrightnotice
+ \closehtmlfile\renewcommand{\endchapter}{}}
+\fi
+}
+\newcommand{\endchapter}{}
+\newcommand{\copyrightnotice}{}
+
+%%% \section
+\newcounter{section}[chapter]
+\renewcommand{\thesection}{\thechapter.\arabic{section}}
+\newcommand{\section}[1]{
+\raw{<h3>}\refstepcounter{section}\edef\templabel{\genlab}%
+ \label{\templabel}Section \thesection. #1\raw{</h3>}
+\begin{divertoutput}[0]
+\raw{<li>}\textbf{\hpageref[toc]{\templabel}{Section \thesection. {\let\label=\nolabel #1}}}
+\end{divertoutput}
+}
+
+%%% \subsection
+\newcounter{subsection}[section]
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\newcommand{\subsection}[1]{
+\raw{<h4>}Subsection \refstepcounter{subsection}\thesubsection. #1\raw{</h4>}
+}
+
+%%% \exercise
+\newcounter{exercise}[section]
+\renewcommand{\theexercise}{\thesection.\arabic{exercise}}
+\newcommand{\exercise}{
+\raw{<h4>}Exercise \refstepcounter{exercise}\theexercise\raw{</h4>}
+}
+
+%%% alphalist
+\newcounter{alphalist}
+\def\alphalist{\begingroup\setcounter{alphalist}{0}
+ \def\endalphalistitem{}%
+ \renewcommand{\item}{\endalphalistitem
+  \def\endalphalistiem{\raw{</td></tr>}}%
+  \stepcounter{alphalist}%
+  \raw{<tr valign=top><td>}\textit{~~\alph{alphalist}}.\raw{</td><td>}}
+ \raw{<table>}}
+\def\endalphalist{\endalphalistitem\raw{</table>}\endgroup}
+
+%%% define our own (compact) description environment
+\def\description{\begingroup
+ \renewcommand{\item}[1][]{\raw{<dt>}##1\raw{<dd>}}\raw{<dl compact>}}
+\def\enddescription{\raw{</dl>}\endgroup}
+
+
+%%% table of contents
+% do \endchapter as a favor to \chapter
+\newenvironment{contents}
+  {\raw{<h1>}Table of Contents\raw{</h1>}\raw{<ul class=tocchapter>}}
+  {\endchapter\raw{</ul>}}
+
+%%% summary of forms
+\def\sfentry#1#2#3{\raw{<tr><td nowrap>}#1\raw{</td>}%
+ \raw{<td>}#2\raw{</td>}%
+ \raw{<td align=right>}#3\raw{</td></tr>}}%
+\newenvironment{thesummary}
+  {\raw{<table>}%
+        \raw{<tr><th align=left>Form</th><th align=left>Category</th>}%
+        \raw{<th align=right>Page</th></tr><tr><td colspan=3><hr></td></tr>}}
+  {\raw{</table>}}
+
+%%% index
+\newcommand{\see}[2]{\emph{see} #1}
+\newenvironment{theindex}
+  {\begingroup\newcommand{\itemindent}{\raw{<tt>&nbsp;&nbsp;&nbsp;</tt>}}
+   \def\indexbreak{\def\indexbreak{\raw{<br>}}}
+   \renewcommand{\item}{\indexbreak}
+   \newcommand{\subitem}{\raw{<br>}\itemindent}
+   \newcommand{\subsubitem}{\raw{<br>}\itemindent\itemindent}}
+  {\par\endgroup}
+
+%%% answers
+\def\answer#1#2{}
+\def\ansentry#1#2{\par\bigskip\noindent\textbf{Exercise~\ref{#2}.~}(page~\pageref{#2})\\ #1}
+\def\theanswers{\begingroup
+  \ifhtml\begingroup\def\hardspaces{}\fi
+  \input{\jobname.ans}
+  \ifhtml\endgroup\fi
+  \endgroup}
+
+%%%% TSPL/CSSM specific
+\def\longcode{}
+\def\noskip{}
+\def\copyright{&copy;}
+\def\itemvdots{\vdots}
+
+\def\parheader#1 {\medskip\noindent{\bf #1.}~~}
+
+%%% grammar support
+\newenvironment{grammar}
+ {\begingroup
+  \def\orbar{\raw{</td><td align=center>|</td><td nowrap>}}
+  \def\longis{\raw{</td><td align=center>}$\longrightarrow$\raw{</td><td nowrap>}}
+  \def\\{\raw{</td></tr><tr><td nowrap>}}
+  \raw{<table><tr><td nowrap>}}
+ {\raw{</td></tr></table>}\endgroup}
+
+\def\bar{\raw{|}}
+\def\kplus{\raw{<sup>+</sup>}}
+\def\kstar{\raw{*}}
+\def\ang#1{\raw{&lt;}#1\raw{&gt;}}
+
+\def\entryheader{\noskipentryheader}
+\def\noskipentryheader{\def\entrybreak{\def\entrybreak{\raw{<br>}}}}
+\def\endentryheader{\endnoskipentryheader}
+\def\endnoskipentryheader{\par}
+\def\formdef#1#2{\entrybreak\raw{<span class=formdef>}{\bf #1}: #2\raw{</span>}}
+\def\formsummary#1#2#3#4{}
+\def\returns{\\\textbf{returns: }}
+\def\libraries{\\\textbf{libraries: }}
+\def\categorysyntax{syntax}
+\def\categoryprocedure{procedure}
+\def\categorythreadparameter{thread parameter}
+\def\categoryglobalparameter{global parameter}
+\def\categorymodule{module}
+\def\categoryftype{ftype}
+
+%%% hyperlink support
+\newcommand{\hyperlink}[3][]{\raw{<a #1 href=#2>}#3\raw{</a>}}
+

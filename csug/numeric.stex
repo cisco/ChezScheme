@@ -1,0 +1,1697 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Numeric Operations\label{CHPTNUMERIC}}
+
+This chapter describes {\ChezScheme} extensions to the standard set of
+operations on numbers.
+See Chapter~\ref{TSPL:CHPTOBJECTS} of {\TSPLFOUR} or the Revised$^6$ Report
+on Scheme for a description of standard operations on numbers.
+
+{\ChezScheme} supports the full set of Scheme numeric datatypes, including
+exact and inexact integer, rational, real, and complex numbers.
+A variety of representations are used to support these datatypes:
+
+\begin{description}
+\item[\index{fixnum}\emph{Fixnums}] represent exact integers in the
+fixnum range (see \scheme{most-negative-fixnum} and
+\scheme{most-positive-fixnum}).
+The length of a string, vector, or fxvector is constrained to be a fixnum.
+
+\item[\index{bignum}\emph{Bignums}] represent arbitrary-precision
+exact integers outside of the fixnum range.
+
+\item[\index{ratnum}\emph{Ratnums}] represent arbitrary-precision
+exact rational numbers.
+Each ratnum contains an exact integer (fixnum
+or bignum) numerator and an exact integer denominator.
+Ratios are always reduced to lowest terms and never have a denominator
+of one or a numerator of zero.
+
+\item[\index{flonum}\emph{Flonums}] represent inexact real numbers.
+Flonums are IEEE 64-bit floating-point numbers.
+(Since flonums cannot represent irrational numbers, all inexact real
+numbers are actually rational, although they may approximate irrational
+quantities.)
+
+\item[\index{exact complexnum}\emph{Exact complexnums}]
+represent exact complex numbers.
+Each exact complexnum contains an exact rational (fixnum, bignum, or
+ratnum) real part and an exact rational imaginary part.
+
+\item[\index{inexact complexnum}\emph{Inexact complexnums}]
+represent inexact complex numbers.
+Each inexact complexnum contains a flonum real part and a flonum imaginary part.
+\end{description}
+
+\noindent
+Most numbers can be represented in only one way; however, real numbers
+are sometimes represented as inexact complex numbers with imaginary
+component equal to zero.
+
+{\ChezScheme} extends the syntax of numbers with arbitrary radixes from
+two through 36, nondecimal floating-point and scientific notation,
+and printed representations for
+IEEE infinities and NANs. (NAN stands for ``not-a-number.'')
+
+Arbitrary radixes are specified with the prefix \scheme{#\var{n}r}, where
+\var{n} ranges from 2 through 36.
+Digits beyond 9 are specified with the letters (in either
+upper or lower case) \scheme{a} through \scheme{z}.
+For example, \scheme{#2r101} is $5_{10}$, and
+\scheme{#36rZ} is $35_{10}$.
+
+For higher radixes, an ambiguity arises between the interpretation of
+certain letters, e.g., \scheme{e}, as digits or exponent specifiers; in
+such cases, the letter is assumed to be a digit.
+For example, the \scheme{e} in \scheme{#x3.2e5} is interpreted as a
+digit, not as an exponent marker, whereas in \scheme{3.2e5} it is
+treated as an exponent marker.
+
+IEEE infinities are printed as \scheme{+inf.0} and \scheme{-inf.0},
+while IEEE NANs are printed as \scheme{+nan.0} or \scheme{-nan.0}.
+(+nan.0 is used on output for all NANs.)
+
+\schemedisplay
+(/ 1.0 0.0) ;=> +inf.0
+(/ 1.0 -0.0) ;=> -inf.0
+(/ 0.0 0.0) ;=> +nan.0
+(/ +inf.0 -inf.0) ;=> +nan.0
+\endschemedisplay
+
+The first section of this chapter describes type-specific numeric type
+predicates.
+Sections~\ref{SECTNUMERICFIXNUM} through~\ref{SECTNUMERICCOMPLEXNUM}
+describe fast, type-specific
+numeric operations on fixnums, flonums, and inexact complex numbers
+(flonums and/or inexact complexnums).
+The fixnum-specific versions should be used only when the programmer
+is certain that the operands and results (where appropriate) will be
+fixnums, i.e., integers in the range \scheme{(most-negative-fixnum)} to
+\scheme{(most-positive-fixnum)}, inclusive.
+The flonum-specific versions should be used only when the
+inputs and outputs (where appropriate) are certain to be flonums.
+The mixed flonum/complexnum versions should be used only when the
+inputs are certain to be either flonums or inexact complexnums.
+Section~\ref{SECTNUMERICLOGICAL} describes operations, both
+arbitrary precision and fixnum-specific, that allow
+exact integers to be treated as sets or sequences of bits.
+Random number generation is covered Section~\ref{SECTNUMERICRANDOM},
+and miscellaneous numeric operations are covered in the
+Section~\ref{SECTNUMERICMISC}.
+
+
+\section{Numeric Type Predicates}
+
+\index{fixnum}\index{flonum}\index{bignum}\index{ratnum}\index{cflonum}%
+The Revised$^6$ Report distinguishes two types of special numeric objects:
+fixnums and flonums.
+{\ChezScheme} additionally distinguishes \emph{bignums} (exact integers outside
+of the bignum range) and \emph{ratnums} (ratios of exact integers).
+It also provides a predicate for recognizing \emph{cflonums}, which are
+flonums or inexact complex numbers.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bignum?}{\categoryprocedure}{(bignum? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a bignum, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(bignum? 0) ;=> #f
+(bignum? (most-positive-fixnum)) ;=> #f
+(bignum? (most-negative-fixnum)) ;=> #f
+(bignum? (* (most-positive-fixnum) 2)) ;=> #t
+(bignum? 3/4) ;=> #f
+(bignum? 'a) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ratnum?}{\categoryprocedure}{(ratnum? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a ratnum, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(ratnum? 0) ;=> #f
+(ratnum? (* (most-positive-fixnum) 2)) ;=> #f
+(ratnum? 3/4) ;=> #t
+(ratnum? -10/2) ;=> #f
+(ratnum? -11/2) ;=> #t
+(ratnum? 'a) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cflonum?}{\categoryprocedure}{(cflonum? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an inexact complexnum or flonum, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(cflonum? 0) ;=> #f
+(cflonum? 0.0) ;=> #t
+(cflonum? 3+4i) ;=> #f
+(cflonum? 3.0+4i) ;=> #t
+(cflonum? +i) ;=> #f
+(cflonum? +1.0i) ;=> #t
+\endschemedisplay
+
+\section{Fixnum Operations\label{SECTNUMERICFIXNUM}}
+
+Fixnum-specific procedures normally check their inputs and outputs (where
+appropriate), but at optimization level 3 the compiler generates, in most
+cases, code that does not perform these checks.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{most-positive-fixnum}{\categoryprocedure}{(most-positive-fixnum)}
+\returns the most negative fixnum supported by the system
+\formdef{most-negative-fixnum}{\categoryprocedure}{(most-negative-fixnum)}
+\returns the most positive fixnum supported by the system
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures are identical to the Revised$^6$ Report
+\scheme{greatest-fixnum} and \scheme{least-fixnum} procedures.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx=}{\categoryprocedure}{(fx= \var{fixnum_1} \var{fixnum_2} \dots)}
+\formdef{fx<}{\categoryprocedure}{(fx< \var{fixnum_1} \var{fixnum_2} \dots)}
+\formdef{fx>}{\categoryprocedure}{(fx> \var{fixnum_1} \var{fixnum_2} \dots)}
+\formdef{fx<=}{\categoryprocedure}{(fx<= \var{fixnum_1} \var{fixnum_2} \dots)}
+\formdef{fx>=}{\categoryprocedure}{(fx>= \var{fixnum_1} \var{fixnum_2} \dots)}
+\returns \scheme{#t} if the relation holds, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+The predicate \scheme{fx=} returns \scheme{#t} if its arguments are equal.
+The predicate \scheme{fx<} returns \scheme{#t} if its arguments are monotonically
+increasing, i.e., each argument is greater than the preceding ones,
+while \scheme{fx>} returns \scheme{#t} if its arguments are monotonically decreasing.
+The predicate \scheme{fx<=} returns \scheme{#t} if its arguments are monotonically
+nondecreasing, i.e., each argument is not less than the preceding ones,
+while \scheme{fx>=} returns \scheme{#t} if its arguments are monotonically nonincreasing.
+When passed only one argument, each of these predicates returns \scheme{#t}.
+
+These procedures are similar to the Revised$^6$ Report procedures
+\scheme{fx=?}, \scheme{fx<?}, \scheme{fx>?}, \scheme{fx<=?},
+and \scheme{fx>=?} except that the Revised$^6$ Report procedures
+require two or more arguments, and their names have the ``\scheme{?}''
+suffix.
+
+\schemedisplay
+(fx= 0) ;=> #t
+(fx= 0 0) ;=> #t
+(fx< (most-negative-fixnum) 0 (most-positive-fixnum)) ;=> #t
+(let ([x 3]) (fx<= 0 x 9)) ;=> #t
+(fx<= 0 3 3) ;=> #t
+(fx>= 0 0 (most-negative-fixnum)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxnonpositive?}{\categoryprocedure}{(fxnonpositive? \var{fixnum})}
+\returns \scheme{#t} if \var{fixnum} is not greater than zero, \scheme{#f} otherwise
+\formdef{fxnonnegative?}{\categoryprocedure}{(fxnonnegative? \var{fixnum})}
+\returns \scheme{#t} if \var{fixnum} is not less than zero, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{fxnonpositive?} is equivalent to \scheme{(lambda (x) (fx<= x 0))},
+and
+\scheme{fxnonnegative?} is equivalent to \scheme{(lambda (x) (fx>= x 0))}.
+
+\schemedisplay
+(fxnonpositive? 128) ;=> #f
+(fxnonpositive? 0) ;=> #t
+(fxnonpositive? -1) ;=> #t
+
+(fxnonnegative? -65) ;=> #f
+(fxnonnegative? 0) ;=> #t
+(fxnonnegative? 1) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx+}{\categoryprocedure}{(fx+ \var{fixnum} \dots)}
+\returns the sum of the arguments \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+When called with no arguments, \scheme{fx+} returns \scheme{0}.
+
+\schemedisplay
+(fx+) ;=> 0
+(fx+ 1 2) ;=> 3
+(fx+ 3 4 5) ;=> 12
+(apply fx+ '(1 2 3 4 5)) ;=> 15
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx-}{\categoryprocedure}{(fx- \var{fixnum_1} \var{fixnum_2} \dots)}
+\returns a fixnum
+\listlibraries
+\endentryheader
+
+\noindent
+When called with one argument, \scheme{fx-} returns the negative of \var{fixnum_1}.
+Thus, \scheme{(fx- \var{fixnum_1})} is an idiom for \scheme{(fx- 0 \var{fixnum_1})}.
+
+When called with two or more arguments, \scheme{fx-} returns the result of
+subtracting the sum of the numbers \scheme{\var{fixnum_2} \dots} from
+\var{fixnum_1}.
+
+\schemedisplay
+(fx- 3) ;=> -3
+(fx- 4 3) ;=> 1
+(fx- 4 3 2 1) ;=> -2
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx*}{\categoryprocedure}{(fx* \var{fixnum} \dots)}
+\returns the product of the arguments \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+When called with no arguments, \scheme{fx*} returns \scheme{1}.
+
+\schemedisplay
+(fx*) ;=> 1
+(fx* 1 2) ;=> 2
+(fx* 3 -4 5) ;=> -60
+(apply fx* '(1 -2 3 -4 5)) ;=> 120
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx/}{\categoryprocedure}{(fx/ \var{fixnum_1} \var{fixnum_2} \dots)}
+\returns see explanation
+\listlibraries
+\endentryheader
+
+\noindent
+When called with one argument, \scheme{fx/} returns the reciprocal
+of \var{fixnum_1}.
+That is, \scheme{(fx/ \var{fixnum_1})} is an idiom for
+\scheme{(fx/ 1 \var{fixnum_1})}.
+
+When called with two or more arguments, \scheme{fx/} returns
+the result of
+dividing \var{fixnum_1} by the product of the remaining arguments
+\scheme{\var{fixnum_2} \dots}.
+
+\schemedisplay
+(fx/ 1) ;=> 1
+(fx/ -17) ;=> 0
+(fx/ 8 -2) ;=> -4
+(fx/ -9 2) ;=> -4
+(fx/ 60 5 3 2) ;=> 2
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fx1+}{\categoryprocedure}{(fx1+ \var{fixnum})}
+\formdef{fx1-}{\categoryprocedure}{(fx1- \var{fixnum})}
+\returns \var{fixnum} plus 1 or \var{fixnum} minus 1
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define fxplus
+  (lambda (x y)
+    (if (fxzero? x)
+        y
+        (fxplus (fx1- x) (fx1+ y)))))
+
+(fxplus 7 8) ;=> 15
+\endschemedisplay
+
+\noindent
+\scheme{fx1+} and \scheme{fx1-} can be defined as follows:
+
+\schemedisplay
+(define fx1+ (lambda (x) (fx+ x 1)))
+(define fx1- (lambda (x) (fx- x 1)))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxquotient}{\categoryprocedure}{(fxquotient \var{fixnum_1} \var{fixnum_2} \dots)}
+\returns see explanation
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{fxquotient} is identical to \scheme{fx/}.
+See the description of \scheme{fx/} above.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxremainder}{\categoryprocedure}{(fxremainder \var{fixnum_1} \var{fixnum_2})}
+\returns the fixnum remainder of \var{fixnum_1} divided by \var{fixnum_2}
+\listlibraries
+\endentryheader
+
+\noindent
+The result of \scheme{fxremainder} has the same sign as \var{fixnum_1}.
+
+\schemedisplay
+(fxremainder 16 4) ;=> 0
+(fxremainder 5 2) ;=> 1
+(fxremainder -45 7) ;=> -3
+(fxremainder 10 -3) ;=> 1
+(fxremainder -17 -9) ;=> -8
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxmodulo}{\categoryprocedure}{(fxmodulo \var{fixnum_1} \var{fixnum_2})}
+\returns the fixnum modulus of \var{fixnum_1} and \var{fixnum_2}
+\listlibraries
+\endentryheader
+
+\noindent
+The result of \scheme{fxmodulo} has the same sign as \var{fixnum_2}.
+
+\schemedisplay
+(fxmodulo 16 4) ;=> 0
+(fxmodulo 5 2) ;=> 1
+(fxmodulo -45 7) ;=> 4
+(fxmodulo 10 -3) ;=> -2
+(fxmodulo -17 -9) ;=> -8
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxabs}{\categoryprocedure}{(fxabs \var{fixnum})}
+\returns the absolute value of \var{fixnum}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(fxabs 1) ;=> 1
+(fxabs -1) ;=> 1
+(fxabs 0) ;=> 0
+\endschemedisplay
+
+
+\section{Flonum Operations\label{SECTNUMERICFLONUM}}
+
+Inexact real numbers are normally represented by \var{flonums}.
+A flonum is a single 64-bit double-precision floating point
+number.
+This section describes operations on flonums, most of which accept
+flonum arguments and return flonum values.
+In most cases, the operations are inline-coded or coded as machine
+language subroutines at optimize-level~3 with
+no argument type checking; full type checking is performed at lower
+optimize levels.
+Flonum-specific procedure names begin with the prefix ``\scheme{fl}'' to
+set them apart from their generic counterparts.
+
+Inexact real numbers may also be represented by inexact complexnums
+with imaginary parts equal to zero, which cannot be used as input
+to the flonum-specific operators.
+Such numbers are produced, however, only from operations involving
+complex numbers with nonzero imaginary parts, by explicit calls
+to \scheme{fl-make-rectangular}, \scheme{make-rectangular}, or
+\scheme{make-polar}, or by numeric input in either polar or rectangular
+format.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flonum->fixnum}{\categoryprocedure}{(flonum->fixnum \var{flonum})}
+\returns the fixnum representation of \var{flonum}, truncated
+\listlibraries
+\endentryheader
+
+\noindent
+The truncated value of \var{flonum} must fall within the fixnum range.
+\scheme{flonum->fixnum} is a restricted version of
+\index{\scheme{exact}}\scheme{exact},
+which converts any numeric representation
+to its exact equivalent.
+
+\schemedisplay
+(flonum->fixnum 0.0) ;=> 0
+(flonum->fixnum 3.9) ;=> 3
+(flonum->fixnum -2.2) ;=> -2
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fl=}{\categoryprocedure}{(fl= \var{flonum_1} \var{flonum_2} \dots)}
+\formdef{fl<}{\categoryprocedure}{(fl< \var{flonum_1} \var{flonum_2} \dots)}
+\formdef{fl>}{\categoryprocedure}{(fl> \var{flonum_1} \var{flonum_2} \dots)}
+\formdef{fl<=}{\categoryprocedure}{(fl<= \var{flonum_1} \var{flonum_2} \dots)}
+\formdef{fl>=}{\categoryprocedure}{(fl>= \var{flonum_1} \var{flonum_2} \dots)}
+\returns \scheme{#t} if the relation holds, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+The predicate \scheme{fl=} returns \scheme{#t} if its arguments are equal.
+The predicate \scheme{fl<} returns \scheme{#t} if its arguments are monotonically
+increasing, i.e., each argument is greater than the preceding ones,
+while \scheme{fl>} returns \scheme{#t} if its arguments are monotonically decreasing.
+The predicate \scheme{fl<=} returns \scheme{#t} if its arguments are monotonically
+nondecreasing, i.e., each argument is not less than the preceding ones,
+while \scheme{fl>=} returns \scheme{#t} if its arguments are monotonically nonincreasing.
+When passed only one argument, each of these predicates returns \scheme{#t}.
+
+IEEE NANs are not comparable, i.e., comparisons involving NANs always return
+\scheme{#f}.
+
+These procedures are similar to the Revised$^6$ Report procedures
+\scheme{fl=?}, \scheme{fl<?}, \scheme{fl>?}, \scheme{fl<=?},
+and \scheme{fl>=?} except that the Revised$^6$ Report procedures
+require two or more arguments, and their names have the ``\scheme{?}''
+suffix.
+
+\schemedisplay
+(fl= 0.0) ;=> #t
+(fl= 0.0 0.0) ;=> #t
+(fl< -1.0 0.0 1.0) ;=> #t
+(fl> -1.0 0.0 1.0) ;=> #f
+(fl<= 0.0 3.0 3.0) ;=> #t
+(fl>= 4.0 3.0 3.0) ;=> #t
+(fl< 7.0 +inf.0) ;=> #t
+(fl= +nan.0 0.0) ;=> #f
+(fl= +nan.0 +nan.0) ;=> #f
+(fl< +nan.0 +nan.0) ;=> #f
+(fl> +nan.0 +nan.0) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flnonpositive?}{\categoryprocedure}{(flnonpositive? \var{fl})}
+\returns \scheme{#t} if \var{fl} is not greater than zero, \scheme{#f} otherwise
+\formdef{flnonnegative?}{\categoryprocedure}{(flnonnegative? \var{fl})}
+\returns \scheme{#t} if \var{fl} is not less than zero, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{flnonpositive?} is equivalent to \scheme{(lambda (x) (fl<= x 0.0))},
+and
+\scheme{flnonnegative?} is equivalent to \scheme{(lambda (x) (fl>= x 0.0))}.
+
+\noindent
+Even if the flonum representation distinguishes -0.0 from +0.0, both
+are considered nonpositive and nonnegative.
+
+\schemedisplay
+(flnonpositive? 128.0) ;=> #f
+(flnonpositive? 0.0) ;=> #t
+(flnonpositive? -0.0) ;=> #t
+(flnonpositive? -1.0) ;=> #t
+
+(flnonnegative? -65.0) ;=> #f
+(flnonnegative? 0.0) ;=> #t
+(flnonnegative? -0.0) ;=> #t
+(flnonnegative? 1.0) ;=> #t
+
+(flnonnegative? +nan.0) ;=> #f
+(flnonpositive? +nan.0) ;=> #f
+
+(flnonnegative? +inf.0) ;=> #t
+(flnonnegative? -inf.0) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{decode-float}{\categoryprocedure}{(decode-float \var{x})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{x} must be a flonum.
+\scheme{decode-float} returns a vector with three integer elements,
+\var{m}, \var{e}, and \var{s}, such that
+$x = sm2^e$.
+It is useful primarily in the printing of floating-point numbers.
+
+\schemedisplay
+(decode-float 1.0) ;=> #(4503599627370496 -52 1)
+(decode-float -1.0) ;=> #(4503599627370496 -52 -1)
+
+(define slow-identity
+  (lambda (x)
+    (inexact
+      (let ([v (decode-float x)])
+        (let ([m (vector-ref v 0)]
+              [e (vector-ref v 1)]
+              [s (vector-ref v 2)])
+          (* s m (expt 2 e)))))))
+
+(slow-identity 1.0) ;=> 1.0
+(slow-identity -1e20) ;=> -1e20
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fllp}{\categoryprocedure}{(fllp \var{flonum})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{fllp} returns the 12-bit integer consisting of the exponent
+plus highest order represented bit of a flonum (ieee 64-bit
+floating-point number).
+It can be used to compute a fast approximation of the logarithm of
+the number.
+
+\schemedisplay
+(fllp 0.0) ;=> 0
+(fllp 1.0) ;=> 2046
+(fllp -1.0) ;=> 2046
+
+(fllp 1.5) ;=> 2047
+
+(fllp +inf.0) ;=> 4094
+(fllp -inf.0) ;=> 4094
+
+(fllp #b1.0e-1111111111) ;=> 1
+(fllp #b1.0e-10000000000) ;=> 0
+\endschemedisplay
+
+
+\section{Inexact Complex Operations\label{SECTNUMERICCOMPLEXNUM}}
+
+The procedures described in this section provide mechanisms for
+creating and operating on inexact complex numbers.
+Inexact complex numbers with nonzero imaginary parts are represented as
+\emph{inexact complexnums}.
+An inexact complexnum contains two 64-bit double-precision floating point
+numbers.
+Inexact \index{imaginary numbers}\index{complex numbers}complex numbers
+with imaginary parts equal to zero (in other words, inexact real numbers)
+may be represented as either inexact complexnums or flonums.
+The operations described in this section accept any mix of
+inexact complexnum and flonum arguments
+(collectively, ``\index{cflonums}cflonums'').
+
+In most cases, the operations are performed with minimal type checking
+at optimize-level 3; full type checking is performed at lower optimize
+levels.
+Inexact complex procedure names begin with the prefix ``\scheme{cfl}''
+to set them apart from their generic counterparts.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fl-make-rectangular}{\categoryprocedure}{(fl-make-rectangular \var{flonum_1} \var{flonum_2})}
+\returns an inexact complexnum 
+\listlibraries
+\endentryheader
+
+\noindent
+The inexact complexnum produced by fl-make-rectangular has real part equal
+to \var{flonum_1} and imaginary part equal to \var{flonum_2}.
+
+\schemedisplay
+(fl-make-rectangular 2.0 -3.0) ;=> 2.0-3.0i
+(fl-make-rectangular 2.0 0.0) ;=> 2.0+0.0i
+(fl-make-rectangular 2.0 -0.0) ;=> 2.0-0.0i
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cfl-real-part}{\categoryprocedure}{(cfl-real-part \var{cflonum})}
+\returns the real part of \var{cflonum}
+\formdef{cfl-imag-part}{\categoryprocedure}{(cfl-imag-part \var{cflonum})}
+\returns the imaginary part of \var{cflonum}
+\listlibraries
+\endentryheader
+
+%\noindent
+%Due to the flonum and inexact complexnum representations employed by
+%{\ChezScheme}, these operations require no memory
+%references and no heap allocation.
+
+\schemedisplay
+(cfl-real-part 2.0-3.0i) ;=> 2.0
+(cfl-imag-part 2.0-3.0i) ;=> -3.0
+(cfl-imag-part 2.0-0.0i) ;=> -0.0
+(cfl-imag-part 2.0-inf.0i) ;=> -inf.0
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cfl=}{\categoryprocedure}{(cfl= \var{cflonum} \dots)}
+\returns \scheme{#t} if its arguments are equal, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(cfl= 7.0+0.0i 7.0) ;=> #t
+(cfl= 1.0+2.0i 1.0+2.0i) ;=> #t
+(cfl= 1.0+2.0i 1.0-2.0i) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cfl+}{\categoryprocedure}{(cfl+ \var{cflonum} \dots)}
+\formdef{cfl*}{\categoryprocedure}{(cfl* \var{cflonum} \dots)}
+\formdef{cfl-}{\categoryprocedure}{(cfl- \var{cflonum_1} \var{cflonum_2} \dots)}
+\formdef{cfl/}{\categoryprocedure}{(cfl/ \var{cflonum_1} \var{cflonum_2} \dots)}
+\returns a cflonum
+\listlibraries
+\endentryheader
+
+\noindent
+These procedures compute the sum, difference, product, or quotient
+of inexact complex quantities, whether these quantities are represented
+by flonums or inexact complexnums.
+For example, if \scheme{cfl+} receives two flonum arguments $a$ and $b$, it
+returns the sum $a+b$; in this case, it behaves the same as \scheme{fl+}.
+With two inexact complexnum arguments $a+bi$ and $c+di$, it returns
+the sum $(a+c)+(b+d)i$.
+If one argument is a flonum $a$ and the other an inexact complexnum
+$c+di$, \scheme{cfl+} returns $(a+c)+di$.
+
+When passed zero arguments, \scheme{cfl+} returns 0.0 and
+\scheme{cfl*} returns 1.0.
+When passed one argument, \scheme{cfl-} returns the additive inverse
+of the argument, and \scheme{cfl/} returns the multiplicative inverse
+of the argument.
+When passed three or more arguments, \scheme{cfl-} returns the
+difference between its first and the sum of its remaining arguments,
+and \scheme{cfl/} returns the quotient of its first and the product
+of its remaining arguments.
+
+%On machines supporting the IEEE Standard for Floating Point Arithmetic
+%\cite{IEEEFLOAT},
+%adding a flonum $a$ to a complexnum $c+di$ is not always the same
+%as adding the complexnum $a+0.0i$ to $c+di$.
+%The counter example is when $d=-0.0$, in which case the former leads
+%to $(a+c)-0.0i$ while the latter leads to $(a+c)+0.0i$.
+%{\ChezScheme} performs the former operation under the assumption that
+%the imaginary part of a flonum representing a complex quantity always
+%has an exact zero imaginary part.
+%We do not treat flonums $a$ as if they were equivalent to $a+0.0i$.
+%Although this would seem to simplify the semantics slightly, it leads
+%to unfortunate consistency problems.
+%For example, assuming that we do want to treat flonums $a$ as
+%equivalent to $a+0.0i$, the product $ab$ of two flonums $a$ and $b$
+%would presumably be equivalent $ab+0.0i$.
+%However, if $a$ and $b$ are negative, the product of $a+0.0i$ and
+%$b+0.0i$ is actually $ab-0.0i$, not $ab+0.0i$.
+%Unfortunately, {\ChezScheme} currently represents imaginary numbers
+%as complexnums, so while 1.0 is assumed to have an exact
+%zero imaginary part, +1.0i is arbitrarily assigned a real part of
+%+0.0.
+
+\schemedisplay
+(cfl+) ;=> 0.0
+(cfl*) ;=> 1.0
+(cfl- 5.0+1.0i) ;=> -5.0-1.0i
+(cfl/ 2.0+2.0i) ;=> 0.25-0.25i
+
+(cfl+ 1.0+2.2i -3.7+5.3i) ;=> -2.7+7.5i
+(cfl+ 1.0 -5.3) ;=> -4.3
+(cfl+ 1.0 2.0 -5.3i) ;=> 3.0-5.3i
+(cfl- 1.0+2.5i -3.7) ;=> 4.7+2.5i
+(cfl* 1.0+2.0i 3.0+4.0i) ;=> -5.0+10.0i
+(cfl/ -5.0+10.0i 1.0+2.0i 2.0) ;=> 1.5+2.0i
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cfl-conjugate}{\categoryprocedure}{(cfl-conjugate \var{cflonum})}
+\returns complex conjugate of \var{cflonum}
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{cfl-conjugate}, when passed an inexact complex argument
+$a + bi$, returns its complex conjugate $a + (-b)i$.
+
+See also \index{\scheme{conjugate}}\scheme{conjugate}, which is a generic
+version of this operator that returns the complex conjugate of any
+valid representation for a complex number.
+
+\schemedisplay
+(cfl-conjugate 3.0) ;=> 3.0
+(cfl-conjugate 3.0+4.0i) ;=> 3.0-4.0i
+(cfl-conjugate 1e-20-2e-30i) ;=> 1e-20+2e-30i
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cfl-magnitude-squared}{\categoryprocedure}{(cfl-magnitude-squared \var{cflonum})}
+\returns magnitude of \var{cflonum} squared
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{cfl-magnitude-squared}, when passed an inexact complex
+argument $a + bi$ returns a flonum representing the magnitude of the
+argument squared, i.e., $a^2 + b^2$.
+
+See also \index{\scheme{magnitude-squared}}\scheme{magnitude-squared},
+which is a generic version of this
+operator that returns the magnitude squared of any valid representation
+for a complex number.
+Both operations are similar to the \index{\scheme{magnitude}}\scheme{magnitude} procedure,
+which returns the magnitude, $sqrt(a^2 + b^2)$, of its generic complex
+argument.
+
+\schemedisplay
+(cfl-magnitude-squared 3.0) ;=> 9.0
+(cfl-magnitude-squared 3.0-4.0i) ;=> 25.0
+\endschemedisplay
+
+\section{Bitwise and Logical Operators\label{SECTNUMERICLOGICAL}}
+
+{\ChezScheme} provides a set of logical operators that allow exact
+integers (fixnums and bignums) to be treated as sets or sequences
+of bits.
+These operators include
+\scheme{logand} (bitwise logical \scheme{and}),
+\scheme{logior} (bitwise logical \scheme{or}),
+\scheme{logxor} (bitwise logical exclusive \scheme{or}),
+\scheme{lognot} (bitwise logical \scheme{not}),
+\scheme{logtest} (test multiple bits),
+\scheme{logbit?} (test single bit),
+\scheme{logbit0} (reset single bit),
+\scheme{logbit1} (set single bit),
+and \scheme{ash} (arithmetic shift).
+Each of these operators treats its arguments as two's complement integers,
+regardless of the underlying representation.
+This treatment can be exploited to represent infinite sets:
+a negative number represents an infinite number of one bits beyond the
+leftmost zero, and a nonnegative number represents an infinite number of zero
+bits beyond the leftmost one bit.
+
+Fixnum equivalents of the logical operators are provided, as
+\scheme{fxlogand}, \scheme{fxlogior}, \scheme{fxlogxor},
+\scheme{fxlognot}, \scheme{fxlogtest}, \scheme{fxlogbit?},
+\scheme{fxlogbit0}, and \scheme{fxlogbit1}.
+Three separate fixnum operators are provided for shifting:
+\scheme{fxsll} (shift-left logical),
+\scheme{fxsrl} (shift-right logical),
+\scheme{fxsra} (shift-right arithmetic).
+Logical and arithmetic shifts differ only for right shifts.
+Shift-right logical shifts in zero bits on the left end, and shift-right
+arithmetic replicates the sign bit.
+
+Logical shifts do not make sense for arbitrary-precision integers,
+since these have no ``left end'' into which bits must be shifted.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logand}{\categoryprocedure}{(logand \var{int} \dots)}
+\returns the logical ``and'' of the arguments \scheme{\var{int} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments must be exact integers (fixnums or bignums) and are treated
+as two's complement integers, regardless of the underlying representation.
+With no arguments, \scheme{logand} returns -1, i.e., all bits set.
+
+\schemedisplay
+(logand) ;=> -1
+(logand 15) ;=> 15
+(logand -1 -1) ;=> -1
+(logand -1 0) ;=> 0
+(logand 5 3) ;=> 1
+(logand #x173C8D95 7) ;=> 5
+(logand #x173C8D95 -8) ;=> #x173C8D90
+(logand #b1100 #b1111 #b1101) ;=> #b1100
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logior}{\categoryprocedure}{(logior \var{int} \dots)}
+\formdef{logor}{\categoryprocedure}{(logor \var{int} \dots)}
+\returns the logical ``or'' of the arguments \scheme{\var{int} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments must be exact integers (fixnums or bignums) and are treated
+as two's complement integers, regardless of the underlying representation.
+With no arguments, \scheme{logior} returns 0, i.e., all bits reset.
+
+\schemedisplay
+(logior) ;=> 0
+(logior 15) ;=> 15
+(logior -1 -1) ;=> -1
+(logior -1 0) ;=> -1
+(logior 5 3) ;=> 7
+(logior #b111000 #b101010) ;=> #b111010
+(logior #b1000 #b0100 #b0010) ;=> #b1110
+(apply logior '(1 2 4 8 16)) ;=> 31
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logxor}{\categoryprocedure}{(logxor \var{int} \dots)}
+\returns the logical ``exclusive or'' of the arguments \scheme{\var{int} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments must be exact integers (fixnums or bignums) and are treated
+as two's complement integers, regardless of the underlying representation.
+With no arguments, \scheme{logxor} returns 0, i.e., all bits reset.
+
+\schemedisplay
+(logxor) ;=> 0
+(logxor 15) ;=> 15
+(logxor -1 -1) ;=> 0
+(logxor -1 0) ;=> -1
+(logxor 5 3) ;=> 6
+(logxor #b111000 #b101010) ;=> #b010010
+(logxor #b1100 #b0100 #b0110) ;=> #b1110
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{lognot}{\categoryprocedure}{(lognot \var{int})}
+\returns the logical ``not'' of \var{int}
+\listlibraries
+\endentryheader
+
+\noindent
+The argument must be an exact integer (fixnum or bignum) and is treated
+as a two's complement integer, regardless of the underlying representation.
+
+\schemedisplay
+(lognot -1) ;=> 0
+(lognot 0) ;=> -1
+(lognot 7) ;=> -8
+(lognot -8) ;=> 7
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logbit?}{\categoryprocedure}{(logbit? \var{index} \var{int})}
+\returns \scheme{#t} if the specified bit is set, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{index} must be a nonnegative exact integer.
+\var{int} must be an exact integer (fixnum or bignum) and is treated
+as a two's complement integer, regardless of the underlying representation.
+
+\scheme{logbit?} returns \scheme{#t} if the bit at index \var{index}
+of \var{int} is set (one) and \scheme{#f} otherwise.
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+There is no upper limit on the index; for nonnegative values of \var{int},
+the bits above the highest order set bit are all considered to be zero,
+and for negative values, the bits above the highest order reset bit are
+all considered to be one.
+
+\scheme{logbit?} is equivalent to
+
+\schemedisplay
+(lambda (k n) (not (zero? (logand n (ash 1 k)))))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(logbit? 0 #b1110) ;=> #f
+(logbit? 1 #b1110) ;=> #t
+(logbit? 2 #b1110) ;=> #t
+(logbit? 3 #b1110) ;=> #t
+(logbit? 4 #b1110) ;=> #f
+(logbit? 100 #b1110) ;=> #f
+
+(logbit? 0 -6) ;=> #f  ; \var{the two's complement of} -6 \var{is} 1...1010
+(logbit? 1 -6) ;=> #t
+(logbit? 2 -6) ;=> #f
+(logbit? 3 -6) ;=> #t
+(logbit? 100 -6) ;=> #t
+
+(logbit? (random 1000000) 0) ;=> #f
+(logbit? (random 1000000) -1) ;=> #t
+
+(logbit? 20000 (ash 1 20000)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logtest}{\categoryprocedure}{(logtest \var{int_1} \var{int_2})}
+\returns \scheme{#t} if any common bits are set, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments must be exact integers (fixnums or bignums) and are treated
+as two's complement integers, regardless of the underlying representation.
+
+\scheme{logtest} returns \scheme{#t} if any bit set in one argument is
+also set in the other.
+It returns \scheme{#f} if the two arguments have no set bits in common.
+
+\scheme{logtest} is equivalent to
+
+\schemedisplay
+(lambda (n1 n2) (not (zero? (logand n1 n2))))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(logtest #b10001 #b1110) ;=> #f
+(logtest #b10101 #b1110) ;=> #t
+(logtest #b111000 #b110111) ;=> #t
+
+(logtest #b101 -6) ;=> #f  ; \var{the two's complement of} -6 \var{is} 1...1010
+(logtest #b1000 -6) ;=> #t
+(logtest 100 -6) ;=> #t
+
+(logtest (+ (random 1000000) 1) 0) ;=> #f
+(logtest (+ (random 1000000) 1) -1) ;=> #t
+
+(logtest (ash #b101 20000) (ash #b111 20000)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logbit0}{\categoryprocedure}{(logbit0 \var{index} \var{int})}
+\returns the result of clearing bit \var{index} of \var{int}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{index} must be a nonnegative exact integer.
+\var{int} must be an exact integer (fixnum or bignum) and is treated
+as a two's complement integer, regardless of the underlying representation.
+
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+As with \scheme{logbit?}, there is no upper limit on the index.
+
+\scheme{logbit0} is equivalent to
+
+\schemedisplay
+(lambda (i n) (logand (lognot (ash 1 i)) n))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(logbit0 3 #b10101010) ;=> #b10100010
+(logbit0 4 #b10101010) ;=> #b10101010
+(logbit0 0 -1) ;=> -2
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{logbit1}{\categoryprocedure}{(logbit1 \var{index} \var{int})}
+\returns the result of setting bit \var{index} of \var{int}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{index} must be a nonnegative exact integer.
+\var{int} must be an exact integer (fixnum or bignum) and is treated
+as a two's complement integer, regardless of the underlying representation.
+
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+As with \scheme{logbit?}, there is no upper limit on the index.
+
+\scheme{logbit1} is equivalent to
+
+\schemedisplay
+(lambda (i n) (logor (ash 1 i) n))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(logbit1 3 #b10101010) ;=> #b10101010
+(logbit1 4 #b10101010) ;=> #b10111010
+(logbit1 4 0) ;=> #b10000
+(logbit1 0 -2) ;=> -1
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ash}{\categoryprocedure}{(ash \var{int} \var{count})}
+\returns \var{int} shifted left arithmetically by \var{count}.
+\listlibraries
+\endentryheader
+
+\noindent
+Both arguments must be exact integers.
+The first argument is treated as a two's complement integer, regardless
+of the underlying representation.
+If \var{count} is negative, \var{int} is shifted right by
+$-$\var{count} bits.
+
+\schemedisplay
+(ash 8 0) ;=> 8
+(ash 8 2) ;=> 32
+(ash 8 -2) ;=> 2
+(ash -1 2) ;=> -4
+(ash -1 -2) ;=> -1
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogand}{\categoryprocedure}{(fxlogand \var{fixnum} \dots)}
+\returns the logical ``and'' of the arguments \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments are treated as two's complement integers, regardless
+of the underlying representation.
+With no arguments, \scheme{fxlogand} returns -1, i.e., all bits set.
+
+\schemedisplay
+(fxlogand) ;=> -1
+(fxlogand 15) ;=> 15
+(fxlogand -1 -1) ;=> -1
+(fxlogand -1 0) ;=> 0
+(fxlogand 5 3) ;=> 1
+(fxlogand #b111000 #b101010) ;=> #b101000
+(fxlogand #b1100 #b1111 #b1101) ;=> #b1100
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogior}{\categoryprocedure}{(fxlogior \var{fixnum} \dots)}
+\formdef{fxlogor}{\categoryprocedure}{(fxlogor \var{fixnum} \dots)}
+\returns the logical ``or'' of the arguments \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments are treated as two's complement integers, regardless
+of the underlying representation.
+With no arguments, \scheme{fxlogior} returns 0, i.e., all bits reset.
+
+\schemedisplay
+(fxlogior) ;=> 0
+(fxlogior 15) ;=> 15
+(fxlogior -1 -1) ;=> -1
+(fxlogior -1 0) ;=> -1
+(fxlogior #b111000 #b101010) ;=> #b111010
+(fxlogior #b1000 #b0100 #b0010) ;=> #b1110
+(apply fxlogior '(1 2 4 8 16)) ;=> 31
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogxor}{\categoryprocedure}{(fxlogxor \var{fixnum} \dots)}
+\returns the logical ``exclusive or'' of the arguments \scheme{\var{fixnum} \dots}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments are treated as two's complement integers, regardless
+of the underlying representation.
+With no arguments, \scheme{fxlogxor} returns 0, i.e., all bits reset.
+
+\schemedisplay
+(fxlogxor) ;=> 0
+(fxlogxor 15) ;=> 15
+(fxlogxor -1 -1) ;=> 0
+(fxlogxor -1 0) ;=> -1
+(fxlogxor 5 3) ;=> 6
+(fxlogxor #b111000 #b101010) ;=> #b010010
+(fxlogxor #b1100 #b0100 #b0110) ;=> #b1110
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlognot}{\categoryprocedure}{(fxlognot \var{fixnum})}
+\returns the logical ``not'' of \var{fixnum}
+\listlibraries
+\endentryheader
+
+\noindent
+The argument is treated as a two's complement integer, regardless
+of the underlying representation.
+
+\schemedisplay
+(fxlognot -1) ;=> 0
+(fxlognot 0) ;=> -1
+(fxlognot 1) ;=> -2
+(fxlognot -2) ;=> 1
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogbit?}{\categoryprocedure}{(fxlogbit? \var{index} \var{fixnum})}
+\returns \scheme{#t} if the specified bit is set, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{index} must be a nonnegative fixnum.
+\var{fixnum} is treated as a two's complement integer, regardless of
+the underlying representation.
+
+\scheme{fxlogbit?} returns \scheme{#t} if the bit at index \var{index}
+of \var{fixnum} is set (one) and \scheme{#f} otherwise.
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+The index is limited only by the fixnum range; for nonnegative values of
+\var{fixnum}, the bits above the highest order set bit are all considered
+to be zero, and for negative values, the bits above the highest order
+reset bit are all considered to be one.
+
+\schemedisplay
+(fxlogbit? 0 #b1110) ;=> #f
+(fxlogbit? 1 #b1110) ;=> #t
+(fxlogbit? 2 #b1110) ;=> #t
+(fxlogbit? 3 #b1110) ;=> #t
+(fxlogbit? 4 #b1110) ;=> #f
+(fxlogbit? 100 #b1110) ;=> #f
+
+(fxlogbit? 0 -6) ;=> #f  ; \var{the two's complement of} -6 \var{is} 1...1010
+(fxlogbit? 1 -6) ;=> #t
+(fxlogbit? 2 -6) ;=> #f
+(fxlogbit? 3 -6) ;=> #t
+(fxlogbit? 100 -6) ;=> #t
+
+(fxlogbit? (random 1000000) 0) ;=> #f
+(fxlogbit? (random 1000000) -1) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogtest}{\categoryprocedure}{(fxlogtest \var{fixnum_1} \var{fixnum_2})}
+\returns \scheme{#t} if any common bits are set, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+The arguments are treated as two's complement integers, regardless of
+the underlying representation.
+
+\scheme{fxlogtest} returns \scheme{#t} if any bit set in one argument is
+also set in the other.
+It returns \scheme{#f} if the two arguments have no set bits in common.
+
+\schemedisplay
+(fxlogtest #b10001 #b1110) ;=> #f
+(fxlogtest #b10101 #b1110) ;=> #t
+(fxlogtest #b111000 #b110111) ;=> #t
+
+(fxlogtest #b101 -6) ;=> #f  ; \var{the two's complement of} -6 \var{is} 1...1010
+(fxlogtest #b1000 -6) ;=> #t
+(fxlogtest 100 -6) ;=> #t
+
+(fxlogtest (+ (random 1000000) 1) 0) ;=> #f
+(fxlogtest (+ (random 1000000) 1) -1) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogbit0}{\categoryprocedure}{(fxlogbit0 \var{index} \var{fixnum})}
+\returns the result of clearing bit \var{index} of \var{fixnum}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} is treated
+as a two's complement integer, regardless of the underlying representation.
+\var{index} must be nonnegative and less than the number of
+bits in a fixnum, excluding the sign bit, i.e., less than
+\scheme{(integer-length (most-positive-fixnum))}.
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+
+\scheme{fxlogbit0} is equivalent to
+
+\schemedisplay
+(lambda (i n) (fxlogand (fxlognot (fxsll 1 i)) n))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(fxlogbit0 3 #b10101010) ;=> #b10100010
+(fxlogbit0 4 #b10101010) ;=> #b10101010
+(fxlogbit0 0 -1) ;=> -2
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxlogbit1}{\categoryprocedure}{(fxlogbit1 \var{index} \var{fixnum})}
+\returns the result of setting bit \var{index} of \var{fixnum}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} is treated
+as a two's complement integer, regardless of the underlying representation.
+\var{index} must be nonnegative and less than the number of
+bits in a fixnum, excluding the sign bit, i.e., less than
+\scheme{(integer-length (most-positive-fixnum))}.
+The index is zero-based, counting from the lowest-order toward
+higher-order bits.
+
+\scheme{fxlogbit1} is equivalent to
+
+\schemedisplay
+(lambda (i n) (fxlogor (fxsll 1 i) n))
+\endschemedisplay
+
+but more efficient.
+
+\schemedisplay
+(fxlogbit1 3 #b10101010) ;=> #b10101010
+(fxlogbit1 4 #b10101010) ;=> #b10111010
+(fxlogbit1 4 0) ;=> #b10000
+(fxlogbit1 0 -2) ;=> -1
+\endschemedisplay
+
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxsll}{\categoryprocedure}{(fxsll \var{fixnum} \var{count})}
+\returns \var{fixnum} shifted left by \var{count}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} is treated as a two's complement integer, regardless
+of the underlying representation.
+\var{count} must be nonnegative and not more than the number of
+bits in a fixnum, i.e.,
+\scheme{(+ (integer-length (most-positive-fixnum)) 1)}.
+An exception is raised with condition-type
+\scheme{&implementation-restriction} if the result cannot be represented
+as a fixnum.
+
+\schemedisplay
+(fxsll 1 2) ;=> 4
+(fxsll -1 2) ;=> -4
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxsrl}{\categoryprocedure}{(fxsrl \var{fixnum} \var{count})}
+\returns \var{fixnum} logically shifted right by \var{count}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} is treated as a two's complement integer, regardless
+of the underlying representation.
+\var{count} must be nonnegative and not more than the number of
+bits in a fixnum, i.e.,
+\scheme{(+ (integer-length (most-positive-fixnum)) 1)}.
+
+\schemedisplay
+(fxsrl 4 2) ;=> 1
+(= (fxsrl -1 1) (most-positive-fixnum)) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxsra}{\categoryprocedure}{(fxsra \var{fixnum} \var{count})}
+\returns \var{fixnum} arithmetically shifted right by \var{count}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} is treated as a two's complement integer, regardless
+of the underlying representation.
+\var{count} must be nonnegative and not more than the number of
+bits in a fixnum, i.e.,
+\scheme{(+ (integer-length (most-positive-fixnum)) 1)}.
+
+\schemedisplay
+(fxsra 64 3) ;=> 8
+(fxsra -1 1) ;=> -1
+(fxsra -64 3) ;=> -8
+\endschemedisplay
+
+
+\section{Random Number Generation\label{SECTNUMERICRANDOM}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{random}{\categoryprocedure}{(random \var{real})}
+\returns a nonnegative pseudo-random number less than \var{real}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{real} must be a positive integer or positive inexact real number.
+
+\schemedisplay
+(random 1) ;=> 0
+(random 1029384535235) ;=> 1029384535001, \var{every} \var{now} \var{and} \var{then}
+(random 1.0) ;=> 0.5, \var{every} \var{now} \var{and} \var{then}
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{random-seed}{\categorythreadparameter}{random-seed}
+\listlibraries
+\endentryheader
+
+\noindent
+The \index{random number generator}random number generator allows the
+current random seed to be obtained and modified via the parameter
+\scheme{random-seed}.
+
+When called without arguments, \scheme{random-seed} returns the current
+random seed.
+When called with one argument, which must be a nonnegative exact integer
+ranging from 1 through $2^{32}-1$, \scheme{random-seed} sets the current
+random seed to the argument.
+
+\schemedisplay
+(let ([s (random-seed)])
+  (let ([r1 (random 1.0)])
+    (random-seed s)
+    (eqv? (random 1.0) r1))) ;=> #t
+\endschemedisplay
+
+
+
+\section{Miscellaneous Numeric Operations\label{SECTNUMERICMISC}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{=}{\categoryprocedure}{(= \var{num_1} \var{num_2} \var{num_3} \dots)}
+\formdef{<}{\categoryprocedure}{(< \var{real_1} \var{real_2} \var{real_3} \dots)}
+\formdef{>}{\categoryprocedure}{(> \var{real_1} \var{real_2} \var{real_3} \dots)}
+\formdef{<=}{\categoryprocedure}{(<= \var{real_1} \var{real_2} \var{real_3} \dots)}
+\formdef{>=}{\categoryprocedure}{(>= \var{real_1} \var{real_2} \var{real_3} \dots)}
+\returns \scheme{#t} if the relation holds, \scheme{#f} otherwise
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+These predicates are identical to the Revised$^6$ Report counterparts,
+except they are extended to accept one or more rather than two or more
+arguments.
+When passed one argument, each of these predicates returns \scheme{#t}.
+
+\schemedisplay
+(> 3/4) ;=> #t
+(< 3/4) ;=> #t
+(= 3/4) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{1+}{\categoryprocedure}{(1+ \var{num})}
+\formdef{add1}{\categoryprocedure}{(add1 \var{num})}
+\formdef{1-}{\categoryprocedure}{(1- \var{num})}
+\formdef{-1+}{\categoryprocedure}{(-1+ \var{num})}
+\formdef{sub1}{\categoryprocedure}{(sub1 \var{num})}
+\returns \var{num} plus 1 or \var{num} minus 1
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{1+} and \scheme{add1} are equivalent to
+\scheme{(lambda (x) (+ x 1))};
+\scheme{1-}, \scheme{-1+}, and \scheme{sub1} are equivalent to
+\scheme{(lambda (x) (- x 1))}.
+
+\schemedisplay
+(define plus
+ ; x should be a nonnegative integer
+  (lambda (x y)
+    (if (zero? x)
+        y
+        (plus (1- x) (1+ y)))))
+
+(plus 7 8) ;=> 15
+
+(define double
+ ; x should be a nonnegative integer
+  (lambda (x)
+    (if (zero? x)
+        0
+        (add1 (add1 (double (sub1 x)))))))
+
+(double 7) ;=> 14
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{expt-mod}{\categoryprocedure}{(expt-mod \var{int_1} \var{int_2} \var{int_3})}
+\returns \var{int_1} raised to the \var{int_2} power, modulo \var{int_3}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{int_1}, \var{int_2} and \var{int_3}
+must be nonnegative integers.
+\scheme{expt-mod} performs its computation in such a way that the
+intermediate results are never much larger than \var{int_3}.
+This means that when \var{int_2} is large, \scheme{expt-mod} is more efficient
+than the equivalent procedure \scheme{(lambda (x y z) (modulo (expt x y) z))}.
+
+\schemedisplay
+(expt-mod 2 4 3) ;=> 1
+(expt-mod 2 76543 76543) ;=> 2
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{isqrt}{\categoryprocedure}{(isqrt \var{n})}
+\returns the integer square root of \var{n}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative integer.
+The integer square root of $n$ is defined to be
+$\bigl\lfloor\sqrt n\bigr\rfloor$.
+
+
+\schemedisplay
+(isqrt 0) ;=> 0
+(isqrt 16) ;=> 4
+(isqrt 16.0) ;=> 4.0
+(isqrt 20) ;=> 4
+(isqrt 20.0) ;=> 4.0
+(isqrt (* 2 (expt 10 20))) ;=> 14142135623
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{integer-length}{\categoryprocedure}{(integer-length \var{n})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{integer-length} returns the length in bits of
+the smallest two's complement representation for \var{n}, with an
+assumed leading 1 (sign) bit for negative numbers.
+For zero, \scheme{integer-length} returns 0.
+
+\schemedisplay
+(integer-length 0) ;=> 0
+(integer-length 1) ;=> 1
+(integer-length 2) ;=> 2
+(integer-length 3) ;=> 2
+(integer-length 4) ;=> 3
+(integer-length #b10000000) ;=> 8
+(integer-length #b11111111) ;=> 8
+(integer-length -1) ;=> 0
+(integer-length -2) ;=> 1
+(integer-length -3) ;=> 2
+(integer-length -4) ;=> 2
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{nonpositive?}{\categoryprocedure}{(nonpositive? \var{real})}
+\returns \scheme{#t} if \var{real} is not greater than zero, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{nonpositive?} is equivalent to \scheme{(lambda (x) (<= x 0))}.
+
+\schemedisplay
+(nonpositive? 128) ;=> #f
+(nonpositive? 0.0) ;=> #t
+(nonpositive? 1.8e-15) ;=> #f
+(nonpositive? -2/3) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{nonnegative?}{\categoryprocedure}{(nonnegative? \var{real})}
+\returns \scheme{#t} if \var{real} is not less than zero, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{nonnegative?} is equivalent to \scheme{(lambda (x) (>= x 0))}.
+
+\schemedisplay
+(nonnegative? -65) ;=> #f
+(nonnegative? 0) ;=> #t
+(nonnegative? -0.0121) ;=> #f
+(nonnegative? 15/16) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{conjugate}{\categoryprocedure}{(conjugate \var{num})}
+\returns complex conjugate of \var{num}
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{conjugate}, when passed a complex argument
+$a + bi$, returns its complex conjugate $a + (-b)i$.
+
+\schemedisplay
+(conjugate 3.0+4.0i) ;=> 3.0-4.0i
+(conjugate 1e-20-2e-30i) ;=> 1e-20+2e-30i
+(conjugate 3) ;=> 3
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{magnitude-squared}{\categoryprocedure}{(magnitude-squared \var{num})}
+\returns magnitude of \var{num} squared
+\listlibraries
+\endentryheader
+
+\noindent
+The procedure \scheme{magnitude-squared}, when passed a complex
+argument $a + bi$ returns its magnitude squared,
+i.e., $a^2 + b^2$.
+
+\schemedisplay
+(magnitude-squared 3.0-4.0i) ;=> 25.0
+(magnitude-squared 3.0) ;=> 9.0
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{sinh}{\categoryprocedure}{(sinh \var{num})}
+\formdef{cosh}{\categoryprocedure}{(cosh \var{num})}
+\formdef{tanh}{\categoryprocedure}{(tanh \var{num})}
+\returns the hyperbolic sine, cosine, or tangent of \var{num}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(sinh 0.0) ;=> 0.0
+(cosh 0.0) ;=> 1.0
+(tanh -0.0) ;=> -0.0
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{asinh}{\categoryprocedure}{(asinh \var{num})}
+\formdef{acosh}{\categoryprocedure}{(acosh \var{num})}
+\formdef{atanh}{\categoryprocedure}{(atanh \var{num})}
+\returns the hyperbolic arc sine, arc cosine, or arc tangent of \var{num}
+\listlibraries
+\endentryheader
+
+
+\schemedisplay
+(acosh 0.0) ;=> 0.0+1.5707963267948966i
+(acosh 1.0) ;=> 0.0
+(atanh -1.0) ;=> -inf.0
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string->number}{\categoryprocedure}{(string->number \var{string})}
+\formdef{string->number}{\categoryprocedure}{(string->number \var{string} \var{radix})}
+\returns the number represented by \var{string}, or \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure is identical to the Revised$^6$ Report version except
+that \scheme{radix} may be any exact integer between 2 and 36, inclusive.
+The Revised$^6$ Report version requires radix to be in the set
+$\{2,8,10,16\}$.
+
+\schemedisplay
+(string->number "211012" 3) ;=> 559
+(string->number "tobeornottobe" 36) ;=> 140613689159812836698
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{number->string}{\categoryprocedure}{(number->string \var{num})}
+\formdef{number->string}{\categoryprocedure}{(number->string \var{num} \var{radix})}
+\formdef{number->string}{\categoryprocedure}{(number->string \var{num} \var{radix} \var{precision})}
+\returns an external representation of \var{num} as a string
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure is identical to the Revised$^6$ Report version except
+that \scheme{radix} may be any exact integer between 2 and 36, inclusive.
+The Revised$^6$ Report version requires radix to be in the set
+$\{2,8,10,16\}$.
+
+\schemedisplay
+(number->string 10000 4) ;=> "2130100"
+(number->string 10000 27) ;=> "DJA"
+\endschemedisplay
+

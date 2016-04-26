@@ -1,0 +1,153 @@
+# Mf-boot.in
+# Copyright 1984-2016 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+m=none
+
+# The following variables determine where the executables, boot files,
+# example programs, and manual pages are installed.
+
+# InstallPrefix is the final destination base and will be reflected
+# in the generated manual page
+InstallPrefix=/usr
+
+# installation owner
+InstallOwner=
+
+# installation group
+InstallGroup=
+
+# executable directory
+InstallBin=${InstallPrefix}/bin
+
+# library directory
+InstallLib=${InstallPrefix}/lib/csv9.4
+
+# example program directory
+InstallLibLib=${InstallLib}/lib
+
+# base executable and heap file directory
+InstallLibBin=${InstallLib}/$m
+
+# man page directory
+InstallMan=${InstallPrefix}/man/man1
+
+# compress man pages?
+GzipManPages=yes
+
+# executable names
+InstallPetiteName=petite
+InstallSchemeName=scheme
+# the name "scheme-script" is hardwired in custom.c, so if
+# InstallScriptName is changed, the executable may have to be
+# rebuilt with a modified custom.c that looks for the new name
+InstallScriptName=scheme-script
+
+# Files are actually installed at ${TempRoot}${InstallPrefix}
+# This useful for testing the install process and for building
+# installation scripts
+TempRoot=
+
+###############################################################################
+#                 no changes should be needed below this point                #
+###############################################################################
+
+Include=boot/$m
+PetiteBoot=boot/$m/petite.boot
+SchemeBoot=boot/$m/scheme.boot
+Scheme=bin/$m/scheme
+Petite=bin/$m/petite
+
+Bin=${TempRoot}${InstallBin}
+Lib=${TempRoot}${InstallLib}
+LibLib=${TempRoot}${InstallLibLib}
+LibBin=${TempRoot}${InstallLibBin}
+Man=${TempRoot}${InstallMan}
+PetitePath=${Bin}/${InstallPetiteName}
+SchemePath=${Bin}/${InstallSchemeName}
+SchemeScriptPath=${Bin}/${InstallScriptName}
+
+install: bininstall libbininstall maninstall liblibinstall
+
+uninstall:
+	@echo To uninstall all machine types:
+	@echo rm -rf ${Lib}
+	@echo rm -f ${PetitePath}
+	@echo rm -f ${SchemePath}
+	@echo rm -f ${Man}/${InstallPetiteName}.1'{,.gz}'
+	@echo rm -f ${Man}/${InstallSchemeName}.1'{,.gz}'
+	@echo ""
+	@echo To uninstall just machine-type $m
+	@echo rm -rf ${Lib}/$m
+	@echo rm -f ${PetitePath}
+	@echo rm -f ${SchemePath}
+
+scheme.1 petite.1: scheme.1.in
+	sed -e "s;{InstallBin};${InstallBin};g" \
+            -e "s;{InstallLib};${InstallLib};g" \
+            -e "s;{InstallLibLib};${InstallLibLib};g" \
+            -e "s;{InstallLibBin};${InstallLibBin};g" \
+            -e "s;{InstallPetiteName};${InstallPetiteName};g" \
+            -e "s;{InstallSchemeName};${InstallSchemeName};g" \
+            -e "s;{InstallScriptName};${InstallScriptName};g" \
+            scheme.1.in > $@
+
+###############################################################################
+#                  no useful external targets below this line                 #
+###############################################################################
+
+I=./installsh -o "${InstallOwner}" -g "${InstallGroup}"
+
+bininstall: ${Bin}
+	$I -m 555 ${Scheme} ${SchemePath}
+	ln -f ${SchemePath} ${PetitePath}
+	ln -f ${SchemePath} ${SchemeScriptPath}
+
+libbininstall: ${LibBin}
+	$I -m 444 ${PetiteBoot} ${LibBin}/petite.boot
+	if [ "${InstallPetiteName}" != "petite" ]; then\
+          /bin/rm -f ${LibBin}/${InstallPetiteName}.boot;\
+          ln -f ${LibBin}/petite.boot ${LibBin}/${InstallPetiteName}.boot;\
+        fi
+	$I -m 444 ${SchemeBoot} ${LibBin}/scheme.boot;\
+	if [ "${InstallSchemeName}" != "scheme" ]; then\
+          /bin/rm -f ${LibBin}/${InstallSchemeName}.boot;\
+          ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallSchemeName}.boot;\
+        fi
+	ln -sf ${LibBin}/scheme.boot ${LibBin}/${InstallScriptName}.boot;
+	$I -m 444 ${Include}/scheme.h ${LibBin}
+
+maninstall: scheme.1 petite.1 ${Man}
+	$I -m 444 scheme.1 ${Man}/${InstallSchemeName}.1
+	if [ ${GzipManPages} = yes ] ; then gzip ${Man}/${InstallSchemeName}.1 ; fi
+	$I -m 444 petite.1 ${Man}/${InstallPetiteName}.1
+	if [ ${GzipManPages} = yes ] ; then gzip ${Man}/${InstallPetiteName}.1 ; fi
+
+liblibinstall: ${LibLib}
+	$I -m 444 ../examples/* ${LibLib}
+
+${Lib}:
+	$I -d -m 755 ${Lib}
+
+${LibBin}: ${Lib}
+	$I -d -m 755 ${LibBin}
+
+${LibLib}: ${Lib}
+	$I -d -m 755 ${LibLib}
+
+${Bin}:
+	$I -d -m 755 ${Bin}
+
+${Man}:
+	$I -d -m 755 ${Man}

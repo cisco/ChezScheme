@@ -1,0 +1,47 @@
+\usepackage{color}
+\def\transerr#1{\begingroup\slshape}
+\def\transin#1{\begingroup\color{red}}
+\def\transout#1{\begingroup\color{blue}}
+\def\endtranserr#1{\endgroup}
+\def\endtransin#1{\endgroup}
+\def\endtransout#1{\endgroup}
+
+\newskip\ttglue
+\let\ninefivett=\tt % \font\ninefivett=cmtt9 at 9.5pt
+\ttglue=.5em plus .25em minus .15em
+\newskip\schemeindent
+\schemeindent=0pt
+{\obeyspaces\global\let =\ }
+\def\schtilde{\raisebox{-.5ex}{\hbox to .5em{\hss\large\rm\char`\~\hss}}}
+\def\schdot{\hbox to .5em{\hfil\large\bf.\hfil}}
+\def\schcarat{\char`\^}
+\def\schbackslash{\char`\\}
+\def\schatsign{\hbox to .5em{\hss\footnotesize\rm\char`\@\hss}}
+\def\schunderscore{\hbox to .5em{\hss\large\_\hss}}
+\def\schlbrace{$\{$}
+\def\schrbrace{$\}$}
+\def\scheme#1{\mbox{\ttfamily\ninefivett\frenchspacing\spaceskip=\ttglue#1}}
+
+\def\schemeblankline{\par\beforeschemedisplay}
+\def\schemelinestart{{\leavevmode\hbox{\hskip \schemeindent\relax}}}
+%%% handle numbered lines in scheme.sty and scheme.hsty
+%%% ---have scheme-prep produce only \schemelinestart
+\def\schemelinestartnumbered#1{{\leavevmode\hbox{\hbox to 1em {\hfil{\rm #1}} \hskip .5\schemeindent\relax}}}
+
+\def\noskip\schemedisplay{\begingroup%
+  \parindent=0pt%
+  \parskip=0pt%
+  \def\becomes{\hbox to 2em{\hfil$\rightarrow$\hfil}}%
+  \def\is{\hbox to 2em{\hfil$\Rightarrow$\hfil}}%
+  \def\si{\hbox to 2em{\hfil}}%
+  \interlinepenalty=2000%
+  \baselineskip=11pt plus 1pt\ninefivett\obeyspaces\frenchspacing}
+\def\schemedisplay{\beforeschemedisplay\noskip\schemedisplay}
+\def\longcode\schemedisplay{\penalty-200\vskip 8pt plus 4pt%
+  \kern3pt\hrule\kern5pt\nobreak\noskip\schemedisplay}
+\def\endschemedisplay{\par\endgroup\afterschemedisplay}
+\def\var#1{{\normalsize\textrm{\textit{#1}}}}
+\def\raw#1{#1}
+\def\beforeschemedisplay{\penalty-100\vskip\parskip\vskip5pt}
+\def\afterschemedisplay{\penalty-200\vskip5pt}
+

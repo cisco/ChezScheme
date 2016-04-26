@@ -1,0 +1,821 @@
+% Copyright 2005-2016 Cisco Systems, Inc.
+% 
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% 
+% http://www.apache.org/licenses/LICENSE-2.0
+% 
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+\chapter{Compatibility Features\label{CHPTCOMPAT}}
+
+This chapter describes several items that are included with current
+versions of {\ChezScheme} primarily for compatibility with older
+versions of the system.
+
+Section~\ref{SECTCOMPATHASHTABLES} describes a hash-table interface
+that has since been replaced by the R6RS hashtable interface.
+Section~\ref{SECTCOMPATEXTENDSYNTAX}
+describes \scheme{extend-syntax} macros.
+These features are supported directly by current versions of {\ChezScheme},
+but support may be dropped in future versions.
+New programs should use the standard mechanisms described in
+in \emph{The Scheme Programming Language, 4th Edition}~\cite{Dybvig:tspl4}
+instead.
+
+Section~\ref{SECTCOMPATSTRUCTURES} describes a mechanism for defining
+record-like structures as vectors instead of new unique types.
+New programs should use \scheme{define-record}, which is described
+in Section~\ref{SECTCSV7RECORDS}, instead.
+
+Section~\ref{SECTCOMPATOTHER}
+describes a compatibility file distributed with
+{\ChezScheme} that contains definitions for forms and procedures no
+longer supported directly by {\ChezScheme}.
+
+% undocumented:
+%   application-expander    not bothering...
+%   constant-expander       not bothering...
+%   variable-expander       not bothering...
+%   syntax-match?           not bothering...
+%   extend-syntax/code      not bothering...
+
+
+\section{Hash Tables\label{SECTCOMPATHASHTABLES}}
+
+The hash table procedures here are obviated by the new hash table procedures
+listed in Section~\ref{SECTMISCHASHTABLES}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-hash-table}{\categoryprocedure}{(make-hash-table)}
+\formdef{make-hash-table}{\categoryprocedure}{(make-hash-table \var{weak?})}
+\returns a new hash table
+\listlibraries
+\endentryheader
+
+If \var{weak?} is provided and is non-false, the hash
+table is a weak hash table, which means that it does not protect
+keys from the garbage collector.
+Keys reclaimed by the garbage collector are removed from the table,
+and their associated values are dropped the next time the table
+is modified, if not sooner.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hash-table?}{\categoryprocedure}{(hash-table? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a hash table, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{put-hash-table!}{\categoryprocedure}{(put-hash-table! \var{ht} \var{k} \var{v})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{ht} must be a hash table.
+\var{k} and \var{v} may be any Scheme values.
+
+\scheme{put-hash-table!} associates the value
+\var{v} with the key \var{k} in \var{ht}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-hash-table}{\categoryprocedure}{(get-hash-table \var{ht} \var{k} \var{d})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{get-hash-table} returns the value
+associated with \var{k} in \var{ht}.
+If no value is associated with \var{k} in \var{ht},
+\scheme{get-hash-table} returns \var{d}.
+
+Key comparisons are performed with \var{eq?}.
+
+Because objects may be moved by the garbage collector, \scheme{get-hash-table}
+may need to rehash some objects and therefore cause side effects in the
+hash table.
+Thus, it is not safe to perform concurrent accesses of the same hash table
+from multiple threads using \scheme{get-hash-table}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{remove-hash-table!}{\categoryprocedure}{(remove-hash-table! \var{ht} \var{k})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\scheme{remove-hash-table!} drops any association
+for \var{k} from \var{ht}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hash-table-map}{\categoryprocedure}{(hash-table-map \var{ht} \var{p})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\scheme{hash-table-map} applies \var{p} to each key, value association
+in \var{ht}, in no particular order, and returns a list of the resulting
+values, again in no particular order.
+\var{p} should accept two arguments, a key and a value.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hash-table-for-each}{\categoryprocedure}{(hash-table-for-each \var{ht} \var{p})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\scheme{hash-table-for-each} applies \var{p} to each key, value
+association in \var{ht}, in no particular order.
+Unlike \scheme{hash-table-map}, it does not create a list of the values;
+instead, it's value is unspecified.
+\var{p} should accept two arguments, a key and a value.
+
+
+\section{Extend-Syntax Macros\label{SECTCOMPATEXTENDSYNTAX}}
+
+This section describes \scheme{extend-syntax}, a powerful yet easy to use
+syntactic extension facility based on
+\index{pattern matching}pattern matching~\cite{Kohlbecker:phd}.
+Syntactic transformations written using 
+\scheme{extend-syntax} are similar to those written using a
+\scheme{define-syntax} with \scheme{syntax-case}, except that the
+transformations produced by \scheme{extend-syntax} do not automatically
+respect lexical scoping.
+
+It is not typically possible to mix syntactic abstractions written using
+\scheme{syntax-case} with those written using \scheme{extend-syntax}
+seamlessly; it is generally preferable to use one or the other wherever
+possible.
+Support for \scheme{extend-syntax} within the \scheme{syntax-case} expander
+is provided only as an aid to migrating to \scheme{syntax-case}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{extend-syntax}{\categorysyntax}{(extend-syntax (\var{name} \var{key} \dots) (\var{pat} \var{fender} \var{template}) \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+The identifier \var{name} is the name, or syntax keyword, for the
+syntactic extension to be defined.
+When the system expander processes any list expression whose car is
+\var{name}, the syntactic transformation procedure generated by
+\scheme{extend-syntax} is invoked on this expression.
+The remaining identifiers \scheme{\var{key} \dots} are additional keywords to
+be recognized within input expressions during expansion (such as
+\scheme{else} in \scheme{cond} or \scheme{case}).
+
+Each clause after the list of keys consists of a pattern \var{pat}, an
+optional \index{fenders}\var{fender},
+and a \var{template}.
+The optional \var{fender} is omitted more often than not.
+The \var{pat} specifies the syntax the input expression must have
+for the clause to be chosen.
+Identifiers within the pattern that are not keywords
+(\emph{pattern variables}) are bound to corresponding pieces of the input expression.
+If present, the \var{fender} is a Scheme expression that specifies
+additional constraints on the input expression (accessed through the
+pattern variables) that must be satisfied in order for the clause to
+be chosen.
+The \var{template} specifies what form the output takes, usually in
+terms of the pattern variables.
+
+During expansion, the transformation procedure \scheme{extend-syntax}
+generates attempts to match the input expression against each
+pattern in the order the clauses are given.
+If the input expression matches the pattern, the pattern variables are
+bound to the corresponding pieces of the input expression and the
+fender for the clause, if any, is evaluated.
+If the fender returns a true value, the given expansion is performed.
+If input does not match the pattern or if the fender returns a false
+value, the transformation procedure tries the next clause.
+An exception is raised with condition type \scheme{&assertion} if no clause can be chosen.
+
+Within the pattern,
+\index{\scheme{...}~(ellipses)}\index{ellipses (~\scheme{...}~)}\emph{ellipsis}
+(\scheme{...}) may be
+used to specify zero or more occurrences
+of the preceding pattern fragment, or prototype.
+Similarly, ellipses may be used in the output to specify the construction
+of zero or more expansion prototypes.
+In this case, the expansion prototype must contain part of an input pattern
+prototype.
+The use of patterns, templates, ellipses within patterns and templates,
+and fenders is illustrated in the following sequence of examples.
+
+The first example, defining \index{\scheme{rec}}\scheme{rec}, uses a single keyword, a single
+clause with no fender, and no ellipses.
+
+\schemedisplay
+(extend-syntax (rec)
+  [(rec id val)
+   (let ([id #f])
+     (set! id val)
+     id)])
+\endschemedisplay
+
+The second example, defining \index{\scheme{when}}\scheme{when}, shows
+the use of ellipses.
+
+\schemedisplay
+(extend-syntax (when)
+  [(when test exp1 exp2 ...)
+   (if test (begin exp1 exp2 ...) #f)])
+\endschemedisplay
+
+The next example shows the definition of
+\index{\scheme{let}}\scheme{let}.
+The definition of \scheme{let} shows the use of multiple ellipses, employing
+one for the identifier/value pairs and one for the expressions in the body.
+It also shows that the prototype need not be a single identifier, and that
+pieces of the prototype may be separated from one another in the template.
+
+\schemedisplay
+(extend-syntax (let)
+  [(let ([x e] ...) b1 b2 ...)
+   ((lambda (x ...) b1 b2 ...) e ...)])
+\endschemedisplay
+
+The next example shows \index{\scheme{let*}}\scheme{let*}, whose syntax is the same as for
+\scheme{let}, but which is defined recursively in terms of \scheme{let} with
+two clauses (one for the base case, one for the recursion step) since
+it must produce a nested structure.
+
+\schemedisplay
+(extend-syntax (let*)
+  [(let* () b1 b2 ...)
+   (let () b1 b2 ...)]
+  [(let* ([x e] more ...) b1 b2 ...)
+   (let ([x e]) (let* (more ...) b1 b2 ...))])
+\endschemedisplay
+
+The first pattern/template pair matches any \scheme{let*} expression with no
+identifier/value pairs and maps it into the equivalent \scheme{begin} expression.
+This is the base case.
+The second pattern/template pair matches any \scheme{let*} expression with one
+or more identifier/value pairs and transforms it into a \scheme{let} expression
+binding the first pair whose body is a \scheme{let*} expression binding the
+remaining pairs.
+This is the recursion step, which will eventually lead us to the base case
+because we remove one identifier/value pair at each step.
+Notice that the second pattern uses the pattern variable \scheme{more} for the
+second and later identifier/value pairs; this makes the pattern and template
+less cluttered and makes it clear that only the first identifier/value pair
+is dealt with explicitly.
+
+The definition for \index{\scheme{and}}\scheme{and} requires three clauses.
+The first clause is necessary to recognize \scheme{(and)}, and the second
+two define all other \scheme{and} forms recursively.
+
+\schemedisplay
+(extend-syntax (and)
+  [(and) #t]
+  [(and x) x]
+  [(and x y ...) (if x (and y ...) #f)])
+\endschemedisplay
+
+The definition for \index{\scheme{cond}}\scheme{cond} requires four clauses.
+As with \scheme{let*}, \scheme{cond} must be described recursively, partly because
+it produces nested \scheme{if} expressions, and partly because one
+ellipsis prototype would not be sufficient to describe all possible
+\scheme{cond} clauses.
+The definition of \scheme{cond} also requires that we specify \scheme{else} as a
+keyword, in addition to \scheme{cond}.
+Here is the definition:
+
+\schemedisplay
+(extend-syntax (cond else)
+  [(cond) #f]
+  [(cond (else e1 e2 ...))
+   (begin e1 e2 ...)]
+  [(cond (test) more ...)
+   (or test (cond more ...))]
+  [(cond (test e1 e2 ...) more ...)
+   (if test
+       (begin e1 e2 ...)
+       (cond more ...))])
+\endschemedisplay
+
+\noindent
+Two of the clauses are base cases and two are recursion steps.
+The first base case is an empty \scheme{cond}.
+The value of \scheme{cond} in this case is unspecified, so the choice of
+\scheme{#f} is somewhat arbitrary.
+The second base case is a \scheme{cond} containing only an \scheme{else} clause;
+this is transformed to the equivalent \scheme{begin} expression.
+The two recursion steps differ in the number of expressions in the \scheme{cond}
+clause.
+The value of \scheme{cond} when the first true clause contains only the test
+expression is the value of the test.
+This is similar to what \scheme{or} does, so we expand the \scheme{cond} clause
+into an \scheme{or} expression.
+On the other hand, when there are expressions following the test expression,
+the value of the last expression is returned, so we use \scheme{if} and
+\scheme{begin}.
+
+To be absolutely correct about the syntax of \scheme{let}, we actually
+must require that the bound identifiers in the input are symbols.
+If we typed something like \scheme{(let ([3 x]) x)} we would not get an
+error from \scheme{let} because it does not check to verify that the
+objects in the identifier positions are symbols.
+Instead, \scheme{lambda} may complain, or perhaps the system evaluator
+long after expansion is complete. 
+This is where \index{fenders}fenders
+are useful.
+
+\schemedisplay
+(extend-syntax (let)
+  [(let ([x e] ...) b1 b2 ...)
+   (andmap symbol? '(x ...))
+   ((lambda (x ...) b1 b2 ...) e ...)])
+\endschemedisplay
+
+\noindent
+The \index{\scheme{andmap}}\scheme{andmap} of \scheme{symbol?}
+over \scheme{'(x ...)} assures that each
+bound identifier is a symbol.
+A fender is simply a Scheme expression.
+Within that expression, any quoted object is first expanded by the same
+rules as the template part of the clause.
+In this case, \scheme{'(x ...)} is expanded to the list of identifiers from
+the identifier/value pairs.
+
+\scheme{extend-syntax} typically handles everything you need it for, but
+some syntactic extension definitions require the ability to include the
+result of evaluating an arbitrary Scheme expression.
+This ability is provided by \scheme{with}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{with}{\categorysyntax}{(with ((\var{pat} \var{expr}) \dots) \var{template})}
+\returns processed \var{template}
+\nolistlibraries
+\endentryheader
+
+\noindent
+\scheme{with} is valid only within an template inside of \scheme{extend-syntax}.
+\scheme{with} patterns are the same as \scheme{extend-syntax} patterns, \scheme{with}
+expressions are the same as \scheme{extend-syntax} fenders, and \scheme{with}
+templates are the same as \scheme{extend-syntax} templates.
+
+\scheme{with} can be used to introduce new pattern identifiers bound to
+expressions produced by arbitrary Scheme expressions within
+\scheme{extend-syntax} templates.
+That is, \scheme{with} allows an escape from the declarative style of
+\scheme{extend-syntax} into the procedural style of full Scheme.
+
+One common use of \scheme{with} is the introduction of a temporary
+identifier or list of temporary identifiers into a template.
+\scheme{with} is also used to perform complex transformations that might
+be clumsy or inefficient if performed within the \scheme{extend-syntax}
+framework.
+
+For example, \scheme{or} requires the use of a temporary identifier.
+We could define \scheme{or} as follows.
+
+\schemedisplay
+(extend-syntax (or)
+  [(or) #f]
+  [(or x) x]
+  [(or x y ...)
+   (let ([temp x])
+     (if temp temp (or y ...)))])
+\endschemedisplay
+
+\noindent
+This would work until we placed an \scheme{or} expression within the scope
+of an occurrence of \scheme{temp}, in which case strange things could happen,
+since \scheme{extend-syntax} does not respect lexical scoping.
+(This is one of the reasons that \scheme{define-syntax} is preferable to
+\scheme{extend-syntax}.)
+
+\schemedisplay
+(let ([temp #t])
+  (or #f temp)) ;=> #f
+\endschemedisplay
+
+\noindent
+One solution is to use
+\index{\scheme{gensym}}\scheme{gensym} and \scheme{with} to
+create a temporary identifier, as follows.
+
+\schemedisplay
+(extend-syntax (or)
+  [(or) #f]
+  [(or x) x]
+  [(or x y ...)
+   (with ([temp (gensym)])
+     (let ([temp x])
+       (if temp temp (or y ...))))])
+\endschemedisplay
+
+\noindent
+Also, \scheme{with} can be used to combine elements of the input pattern
+in ways not possible directly with \scheme{extend-syntax}, such as the
+following \scheme{folding-plus} example.
+
+\schemedisplay
+(extend-syntax (folding-plus)
+  [(folding-plus x y)
+   (and (number? 'x) (number? 'y))
+   (with ([val (+ 'x 'y)])
+      val)]
+  [(folding-plus x y) (+ x y)])
+\endschemedisplay
+
+\noindent
+\scheme{folding-plus} collapses into the value of \scheme{(+ x y)} if both
+\scheme{x} and \scheme{y} are numeric constants.
+Otherwise, \scheme{folding-plus} is transformed into \scheme{(+ x y)} for
+later evaluation.
+The fender checks that the operands are numbers at expansion time, and
+the \scheme{with} performs the evaluation.
+As with fenders, expansion is performed only within a quoted expressions,
+since \scheme{quote} sets the data apart from the remainder of the Scheme
+expression.
+
+The example below binds a list of pattern variables to a list of
+temporary symbols, taking advantage of the fact that \scheme{with} allows
+us to bind patterns to expressions.
+This list of temporaries helps us to implement the \scheme{sigma} syntactic
+extension.
+\scheme{sigma} is similar to \scheme{lambda}, except it assigns the identifiers
+in the identifier list instead of creating new bindings.
+It may be used to perform a series of assignments in parallel.
+
+\schemedisplay
+(extend-syntax (sigma)
+  [(sigma (x ...) e1 e2 ...)
+   (with ([(t ...) (map (lambda (x) (gensym)) '(x ...))])
+     (lambda (t ...)
+       (set! x t) ...
+       e1 e2 ...))])
+
+(let ([x 'a] [y 'b])
+  ((sigma (x y) (list x y)) y x)) ;=> (b a)
+\endschemedisplay
+
+
+The final example below uses \scheme{extend-syntax} to implement
+\scheme{define-structure}, following a similar example using
+\scheme{syntax-case} in Section~\ref{TSPL:SECTSYNTAXEXAMPLES} of
+\emph{The Scheme Programming Language, 4th Edition}.
+
+The definition of \scheme{define-structure} makes use of two pattern/template
+clauses.
+Two clauses are needed to handle the optionality of the second subexpression.
+The first clause matches the form without the second subexpression and
+merely converts it into the equivalent form with the second subexpression
+present, but empty.
+
+The definition also makes heavy use of \index{\scheme{with}}\scheme{with} to evaluate Scheme
+expressions at expansion time.
+The first four \scheme{with} clauses are used to manufacture the identifiers
+that name the automatically defined procedures.
+(The procedure \index{\scheme{format}}\scheme{format} is particularly useful here, but it could be
+replaced with \scheme{string-append!}, using \scheme{symbol->string} as needed.)
+The first two clauses yield single identifiers (for the constructor and
+predicate), while the next two yield lists of identifiers (for the field
+access and assignment procedures).
+The fifth \scheme{with} clause (the final clause in the outer \scheme{with})
+is used to count the total length vector needed for each instance of
+the structure, which must include room for the name and all of the fields.
+The final \scheme{with} clause (the only clause in the inner \scheme{with})
+is used to create a list of vector indexes, one for each field (starting at
+1, since the structure name occupies position 0).
+
+\schemedisplay
+(extend-syntax (define-structure)
+  [(define-structure (name id1 ...))
+   (define-structure (name id1 ...) ())]
+  [(define-structure (name id1 ...) ([id2 val] ...))
+   (with ([constructor
+           (string->symbol (format "make-~a" 'name))]
+          [predicate
+           (string->symbol (format "~a?" 'name))]
+          [(access ...)
+           (map (lambda (x)
+                  (string->symbol
+                    (format "~a-~a" 'name x)))
+                '(id1 ... id2 ...))]
+          [(assign ...)
+           (map (lambda (x)
+                  (string->symbol
+                    (format "set-~a-~a!" 'name x)))
+                '(id1 ... id2 ...))]
+          [count (length '(name id1 ... id2 ...))])
+     (with ([(index ...)
+             (let f ([i 1])
+               (if (= i 'count)
+                   '()
+                   (cons i (f (+ i 1)))))])
+       (begin
+         (define constructor
+           (lambda (id1 ...)
+             (let* ([id2 val] ...)
+               (vector 'name id1 ... id2 ...))))
+         (define predicate
+           (lambda (obj)
+             (and (vector? obj)
+                  (= (vector-length obj) count)
+                  (eq? (vector-ref obj 0) 'name))))
+         (define access
+           (lambda (obj)
+             (vector-ref obj index)))
+         ...
+         (define assign
+           (lambda (obj newval)
+             (vector-set! obj index newval)))
+         ...)))])
+\endschemedisplay
+
+\section{Structures\label{SECTCOMPATSTRUCTURES}}
+
+\index{structures}This section describes a mechanism, similar
+to the record-defining mechanisms of Section~\ref{SECTCSV7RECORDS},
+that permits the creation of data structures
+with fixed sets of named fields.
+Unlike record types, structure types are not unique types, but are
+instead implemented as vectors.
+Specifically, a structure is implemented as a vector whose length is
+one more than the number of fields and whose first element contains
+the symbolic name of the structure.
+
+The representation of structures as vectors
+simplifies reading and printing of structures somewhat as well
+as extension of the structure definition facility.
+It does, however, have some drawbacks.
+One is that structures may be treated as ordinary vectors by mistake in
+situations where doing so is inappropriate.
+When dealing with both structures and vectors in a program, care must
+be taken to look for the more specific structure type before checking
+for the more generic vector type, e.g., in a series of \scheme{cond}
+clauses.
+A similar drawback is that structure instances are easily ``forged,'' either
+intentionally or by accident.
+It is also impossible to control how structures are printed and read.
+
+Structures are created via \scheme{define-structure}.
+Each structure definition defines a constructor
+procedure, a type predicate, an access procedure for each of its fields,
+and an assignment procedure for each of its fields.
+\scheme{define-structure} allows the programmer to control which fields
+are arguments to the generated constructor procedure and which fields
+are explicitly initialized by the constructor procedure.
+
+\scheme{define-structure} is simple
+yet powerful enough for most applications, and it is easily
+extended to handle many applications for which it is not sufficient.
+The definition of \scheme{define-structure} given at the end of
+this section can serve as a starting point for more complicated
+variants.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{define-structure}{\categorysyntax}{(define-structure (\var{name} \var{id_1} \dots) ((\var{id_2} \var{expr}) \dots))}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+A \scheme{define-structure} form is a definition and may appear anywhere
+and only where other definitions may appear.
+
+\scheme{define-structure} defines a new data structure, \var{name}, and
+creates a set of procedures for creating and manipulating instances of
+the structure.
+The identifiers \scheme{\var{id_1} \dots} and \scheme{\var{id_2} \dots}
+name the fields of the data structure.
+
+The following procedures are defined by \scheme{define-structure}:
+
+\begin{itemize}
+\item
+a constructor procedure whose name is \scheme{make-\var{name}},
+
+\item
+a type predicate whose name is \scheme{\var{name}?},
+
+\item
+an access procedure whose name is \scheme{\var{name}-\var{field}}
+for each field name \scheme{\var{id_1} \dots} and
+\scheme{\var{id_2} \dots}, and
+
+\item
+an assignment procedure whose name is
+\scheme{set-\var{name}-\var{field}!}
+for each field name \scheme{\var{id_1} \dots} and \scheme{\var{id_2} \dots}.
+\end{itemize}
+
+The fields named by the identifiers \scheme{\var{id_1} \dots} are
+initialized by the arguments to the constructor procedure.
+The fields named by the identifiers \scheme{\var{id_2} \dots} are initialized
+explicitly to the values of the expressions \scheme{\var{expr} \dots}.
+Each expression is evaluated within the scope of the identifiers
+\scheme{\var{id_1} \dots} (bound to the corresponding field values) and any
+of the identifiers \scheme{\var{id_2} \dots} (bound to the corresponding field
+values) appearing before it (as if within a \scheme{let*}).
+
+To clarify, the constructor behaves as if defined as
+
+\schemedisplay
+(define make-\var{name}
+  (lambda (\var{id_1} \dots)
+    (let* ([\var{id_2} \var{expr}] \dots)
+      \var{body})))
+\endschemedisplay
+
+\noindent
+where \var{body} builds the structure from the values of the identifiers
+\scheme{\var{id_1} \dots} and \scheme{\var{id_2} \dots}.
+
+If no fields other than those initialized by the arguments to the
+constructor procedure are needed, the second subexpression,
+\scheme{((\var{id_2} \var{expr}) \dots)}, may be omitted.
+
+\index{pares}\index{\scheme{make-pare}}The following simple example
+demonstrates how pairs might be defined in Scheme if they did not
+already exist.
+Both fields are initialized by the arguments to the constructor
+procedure.
+
+\schemedisplay
+(define-structure (pare car cdr))
+(define p (make-pare 'a 'b))
+
+(pare? p) ;=> #t
+(pair? p) ;=> #f
+(pare? '(a . b)) ;=> #f
+
+(pare-car p) ;=> a
+(pare-cdr p) ;=> b
+
+(set-pare-cdr! p (make-pare 'b 'c))
+
+(pare-car (pare-cdr p)) ;=> b
+(pare-cdr (pare-cdr p)) ;=> c
+\endschemedisplay
+
+The following example defines a handy string data structure, called a
+\index{stretch strings}\emph{stretch-string}, that grows as needed.
+This example uses a field explicitly initialized to a value that
+depends on the value of the constructor argument fields.
+
+\schemedisplay
+(define-structure (stretch-string length fill)
+  ([string (make-string length fill)]))
+
+(define stretch-string-ref
+  (lambda (s i)
+    (let ([n (stretch-string-length s)])
+      (when (>= i n) (stretch-stretch-string! s (+ i 1) n))
+      (string-ref (stretch-string-string s) i))))
+
+(define stretch-string-set!
+  (lambda (s i c)
+    (let ([n (stretch-string-length s)])
+      (when (>= i n) (stretch-stretch-string! s (+ i 1) n))
+      (string-set! (stretch-string-string s) i c))))
+
+(define stretch-string-fill!
+  (lambda (s c)
+    (string-fill! (stretch-string-string s) c)
+    (set-stretch-string-fill! s c)))
+
+(define stretch-stretch-string!
+  (lambda (s i n)
+    (set-stretch-string-length! s i)
+    (let ([str (stretch-string-string s)]
+          [fill (stretch-string-fill s)])
+      (let ([xtra (make-string (- i n) fill)])
+        (set-stretch-string-string! s
+          (string-append str xtra))))))
+\endschemedisplay
+
+\noindent
+As often happens, most of the procedures defined automatically are
+used only to define more specialized procedures, in this case the procedures
+\scheme{stretch-string-ref} and \scheme{stretch-string-set!}.
+\scheme{stretch-string-length} and \scheme{stretch-string-string} are
+the only automatically defined procedures that are likely to be
+called directly in code that uses stretch strings.
+
+\schemedisplay
+(define ss (make-stretch-string 2 #\X))
+
+(stretch-string-string ss) ;=> "XX"
+(stretch-string-ref ss 3) ;=> #\X
+(stretch-string-length ss) ;=> 4
+(stretch-string-string ss) ;=> "XXXX"
+
+(stretch-string-fill! ss #\@)
+(stretch-string-string ss) ;=> "@@@@"
+(stretch-string-ref ss 5) ;=> #\@
+(stretch-string-string ss) ;=> "@@@@@@"
+
+(stretch-string-set! ss 7 #\=)
+(stretch-string-length ss) ;=> 8
+(stretch-string-string ss) ;=> "@@@@@@@="
+\endschemedisplay
+
+
+Section~\ref{TSPL:SECTSYNTAXEXAMPLES} of {\TSPLFOUR} defines a simplified
+variant of \scheme{define-structure} as an example of the use of
+\index{\scheme{syntax-case}}\scheme{syntax-case}.
+The definition given below implements the complete version.
+
+\scheme{define-structure} expands into a series of definitions for names
+generated from the structure name and field names.
+The generated identifiers are created with
+\index{\scheme{datum->syntax}}\scheme{datum->syntax} to
+make the identifiers visible where the \scheme{define-structure}
+form appears.
+Since a \scheme{define-structure} form expands into a \scheme{begin}
+containing definitions, it is itself a definition and can be used
+wherever definitions are valid.
+
+\schemedisplay
+(define-syntax define-structure
+  (lambda (x)
+    (define gen-id
+      (lambda (template-id . args)
+        (datum->syntax template-id
+          (string->symbol
+            (apply string-append
+                   (map (lambda (x)
+                          (if (string? x)
+                              x
+                              (symbol->string
+                                (syntax->datum x))))
+                        args))))))
+    (syntax-case x ()
+      ((_ (name field1 ...))
+       (andmap identifier? #'(name field1 ...))
+       #'(define-structure (name field1 ...) ()))
+      ((_ (name field1 ...) ((field2 init) ...))
+       (andmap identifier? #'(name field1 ... field2 ...))
+       (with-syntax
+         ((constructor (gen-id #'name "make-" #'name))
+          (predicate (gen-id #'name #'name "?"))
+          ((access ...)
+           (map (lambda (x) (gen-id x #'name "-" x))
+                #'(field1 ... field2 ...)))
+          ((assign ...)
+           (map (lambda (x) (gen-id x "set-" #'name "-" x "!"))
+                #'(field1 ... field2 ...)))
+          (structure-length
+           (+ (length #'(field1 ... field2 ...)) 1))
+          ((index ...)
+           (let f ([i 1] [ids #'(field1 ... field2 ...)])
+             (if (null? ids)
+                 '()
+                 (cons i (f (+ i 1) (cdr ids)))))))
+         #'(begin
+             (define constructor
+               (lambda (field1 ...)
+                 (let* ([field2 init] ...)
+                   (vector 'name field1 ... field2 ...))))
+             (define predicate
+               (lambda (x)
+                 (and (vector? x)
+                      (#3%fx= (vector-length x) structure-length)
+                      (eq? (vector-ref x 0) 'name))))
+             (define access (lambda (x) (vector-ref x index)))
+             ...
+             (define assign
+               (lambda (x update) (vector-set! x index update)))
+             ...))))))
+\endschemedisplay
+
+
+\section{Compatibility File\label{SECTCOMPATOTHER}}
+
+Current versions of {\ChezScheme} are distributed with a compatibility
+file containing definitions of various syntactic forms and procedures
+supported by earlier versions of {\ChezScheme} for which support has
+since been dropped.
+This file, \scheme{compat.ss}, is typically installed in the library
+subdirectory of the {\ChezScheme} installation directory.
+
+In some cases, the forms and procedures found in \scheme{compat.ss}
+have been dropped because they were infrequently used and easily
+written directly in Scheme.
+In other cases, the forms and procedures have been rendered obsolete by
+improvements in the system.
+In such cases, new code should be written to use the newer features,
+and older code should be rewritten if possible to use the newer
+features as well.

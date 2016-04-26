@@ -1,0 +1,131 @@
+%%% tspl4-prep.stex
+%%% Copyright (c) 1998 R, Kent Dybvig
+%%%
+%%% Permission is hereby granted, free of charge, to any person obtaining a
+%%% copy of this software and associated documentation files (the "Software"),
+%%% to deal in the Software without restriction, including without limitation
+%%% the rights to use, copy, modify, merge, publish, distribute, sublicense,
+%%% and/or sell copies of the Software, and to permit persons to whom the
+%%% Software is furnished to do so, subject to the following conditions:
+%%%
+%%% The above copyright notice and this permission notice shall be included in
+%%% all copies or substantial portions of the Software.
+%%%
+%%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%%% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%%% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+%%% THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%%% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+%%% FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+%%% DEALINGS IN THE SOFTWARE.
+
+\schemeinit
+(define false #f)
+(define true #t)
+(define names '())
+(define listlibraries-seen? false)
+\endschemeinit
+
+\xdef\entryheader{\schemeinit
+(unless (null? names) (errorf 'entryheader "name list is not empty ~s" names))
+(set! listlibraries-seen? false)
+\endschemeinit%
+\xedef\entrylab{\genlab}\raw{\entryheader}\label{\entrylab}}
+
+\xdef\noskipentryheader{\schemeinit
+(unless (null? names) (errorf 'entryheader "name list is not empty ~s" names))
+(set! listlibraries-seen? false)
+\endschemeinit%
+\xedef\entrylab{\genlab}\raw{\noskipentryheader}\label{\entrylab}}
+
+\xdef\endentryheader{\schemeinit
+(unless listlibraries-seen? (errorf 'endentryheader "no \\listlibraries seen"))
+(unless (null? names) (errorf 'endentryheader "name list is not empty ~s" names))
+\endschemeinit%
+\raw{\endentryheader
+
+}}
+
+% \formdef{primitive name}{\categorytype}{form}
+\xdef\formdef#1#2#3{\schemeinit
+(set! names (cons "#1" names))\endschemeinit%
+ \hindex{\entrylab}{\scheme{#1}|emph}%
+ \raw{\formdef}{#2}{\scheme{#3}}%
+ \formsummary{\raw{#1}}{#2}{\scheme{#3}}{\entrylab}}
+
+% \xformdef{sort key}{index entry}{type}{form}
+\xdef\xformdef#1#2#3#4{\hindex{\entrylab}{#2|emph}%
+ \raw{\formdef}{#3}{\scheme{#4}}%
+ \formsummary{\raw{#1}}{#3}{\scheme{#4}}{\entrylab}}
+
+% \suppress\formdef{primitive name}{\categorytype}{form}
+\xdef\suppress\formdef#1#2#3{\schemeinit
+(set! names (cons "#1" names))(set! listlibraries-seen? false)\endschemeinit%
+ \hindex{\entrylab}{\scheme{#1}|emph}%
+ \formsummary{\raw{#1}}{#2}{\scheme{#3}}{\entrylab}}
+
+\xdef\conditionformdef#1{\generated
+(docond '#1)\endgenerated\xdef\showit{This condition type might be defined as follows.
+\schemedisplay
+#1
+\endschemedisplay}}
+
+\xdef\libraryexport#1{\schemeinit
+(set! names (cons "#1" names))\endschemeinit}
+
+\xdef\exercise{\xedef\anslab{\genlab}\raw{\exercise}{\label{\anslab}}}
+
+\xdef\answer#1{\raw{\answer}{#1}{\anslab}}
+
+\schemeinit
+(module (list-libraries)
+  (define libht (make-eq-hashtable))
+  (define (list-libraries)
+    (define (getlibs x)
+      (or (hashtable-ref libht (string->symbol x) #f)
+          (errorf 'list-libraries "no libraries for ~a defined" x)))
+    (when (null? names) (errorf 'list-libraries "name list is empty"))
+    (let ([libs (getlibs (car names))])
+      (for-each
+        (lambda (name)
+          (unless (equal? (getlibs name) libs)
+            (errorf 'list-libraries "libs ~s for ~a don't match libs ~s for ~a" libs (car names) (getlibs name) name)))
+        (cdr names))
+      (with-output-to-file "libslisted"
+        (lambda () (for-each (lambda (x) (printf "~a\n" x)) names))
+        'append)
+      (let f ([libs libs] [sep " "])
+        (unless (null? libs)
+          (printf "~a\\scheme{~a}" sep (car libs))
+          (f (cdr libs) ", ")))))
+  (call-with-output-file "libsrecorded"
+    (lambda (op)
+      (include "priminfo.ss")
+      (import priminfo)
+      (define (record-libs name libs)
+        (unless (null? libs)
+          (when (hashtable-ref libht name #f)
+            (errorf 'record-libs "libs already defined for ~s" name))
+          (fprintf op "~a\n" name)
+          (hashtable-set! libht name
+            (sort (lambda (x y)
+                    (or (> (length x) (length y))
+                        (and (= (length x) (length y))
+                             (ormap (lambda (x y)
+                                      (string<? (symbol->string x) (symbol->string y)))
+                               x y))))
+              libs))))
+      (vector-for-each
+        (lambda (prim) (record-libs prim (get-libraries prim)))
+        (primvec)))
+    'replace))
+\endschemeinit
+
+\xdef\listlibraries{\raw{\libraries}\generated
+(list-libraries)(set! names '())(set! listlibraries-seen? true)
+\endgenerated
+}
+\xdef\nolistlibraries{\generated
+(set! names '())(set! listlibraries-seen? true)
+\endgenerated
+}
