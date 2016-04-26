@@ -1,0 +1,6 @@
+[submodule "zlib"]
+	path = zlib
+	url = https://github.com/madler/zlib.git
+[submodule "nanopass"]
+	path = nanopass
+	url = https://github.com/nanopass/nanopass-framework-scheme.git
