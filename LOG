@@ -36,3 +36,6 @@
   zlib and nanopass, since they are logically part of the git clone.
   It does run make distclean in zlib.
     makefiles/Makefile.in
+- converted s_test_schlib shifts of -1 to equivalent shifts of 1 to
+  avoid undefined left-shift behavior on negative numbers.
+    prim5.c

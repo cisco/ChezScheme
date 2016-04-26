@@ -1686,8 +1686,8 @@ static void s_test_schlib() {
   INT test = 0;
   I32 n1 = 0x73215609;
   I64 n2 = n1 * 37;
-  I32 n3 = (I32)-1<<31;
-  I64 n4 = (I64)-1<<63;
+  I32 n3 = (I32)1<<31;
+  I64 n4 = (I64)1<<63;
   I32 n5 = -1;
 
   SCHLIBTEST(Sinteger_value(Sinteger(n1)) == n1)
