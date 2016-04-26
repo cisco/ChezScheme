@@ -127,7 +127,7 @@ EXPORT void Sset_cdr PROTO((ptr, ptr));
 EXPORT void Svector_set PROTO((ptr, iptr, ptr));
 
 /* Constructors */
-#define Sfixnum(x) ((ptr)(uptr)((x)<<3))
+#define Sfixnum(x) ((ptr)(uptr)((x)*8))
 #define Schar(x) ((ptr)(uptr)((x)<<8|0x16))
 #define Snil ((ptr)0x26)
 #define Strue ((ptr)0xE)

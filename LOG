@@ -24,3 +24,15 @@
   so they show up in the Windows workarea c directory.
     cmacros.ss,
     fasl.c, number.c, c/Mf-base, c/Makefile.{t,}{i3,a6}nt
+- The scheme.h definition of Sfixnum(x) now uses multiply rather than
+  left shift to avoid counting on the behavior of << on negative numbers,
+  which is undefined in C.
+    mkheader.ss
+- Fixed a couple of casts, one harmless and the other causing
+  Sinteger64_value to return 0 for the most-negative I64 on 32-bit
+  builds.
+    number.c
+- The configure-generated Makefile distclean target no longer removes
+  zlib and nanopass, since they are logically part of the git clone.
+  It does run make distclean in zlib.
+    makefiles/Makefile.in

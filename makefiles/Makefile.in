@@ -32,7 +32,6 @@ clean:
 
 distclean:
 	rm -rf $(workarea)
-	rm -rf nanopass
-	rm -rf zlib
+	(cd zlib ; make distclean)
 	rm -f Makefile
 	rm -f Make.out
