@@ -289,7 +289,7 @@ I32 S_int32_value(who, x) char *who; ptr x; {
     if (!BIGSIGN(x)) return (I32)u;
     if (u < ((U32)1 << 31)) return -(I32)u;
     if (u > ((U32)1 << 31)) S_error1(who, "~s is out of range", x);
-    return (iptr)0x80000000;
+    return (I32)0x80000000;
   }
 #endif /* (fixnum_bits > 32) */
 
@@ -320,7 +320,7 @@ I64 S_int64_value(who, x) char *who; ptr x; {
     if (!BIGSIGN(x)) return (I64)u;
     if (u < ((U64)1 << 63)) return -(I64)u;
     if (u > ((U64)1 << 63)) S_error1(who, "~s is out of range", x);
-    return (iptr)0x8000000000000000;
+    return (I64)0x8000000000000000;
   }
 
   S_error1(who, "~s is not an integer", x);

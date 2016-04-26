@@ -310,7 +310,7 @@
         (export "void" "Svector_set" "(ptr, iptr, ptr)")
   
         (nl) (comment "Constructors")
-        (def "Sfixnum(x)" (format "((ptr)(uptr)((x)<<~d))" ($ fixnum-offset)))
+        (def "Sfixnum(x)" (format "((ptr)(uptr)((x)*~d))" ($ fixnum-factor)))
         (def "Schar(x)"
           (format "((ptr)(uptr)((x)<<~d|0x~x))"
             ($ char-data-offset)
