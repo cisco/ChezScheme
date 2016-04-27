@@ -39,3 +39,9 @@
 - converted s_test_schlib shifts of -1 to equivalent shifts of 1 to
   avoid undefined left-shift behavior on negative numbers.
     prim5.c
+- added if(---) {} wrapper around call to WRITE in display macro to
+  silence unused return-value warnings.
+    prim5.c
+- liberalized get-mode check for ../mats.  it's not our business whether
+  people make their directories group and/or other writeable.
+    6.ms

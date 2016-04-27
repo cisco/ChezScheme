@@ -1322,7 +1322,7 @@ static void s_putenv(name, value) char *name, *value; {
 
 #ifdef PTHREADS
 /* backdoor thread is for testing thread creation by Sactivate_thread */
-#define display(s) { const char *S = (s); WRITE(1, S, (unsigned int)strlen(S)); }
+#define display(s) { const char *S = (s); if (WRITE(1, S, (unsigned int)strlen(S))) {} }
 static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
   display("backdoor thread started\n")
   (void) Sactivate_thread();
