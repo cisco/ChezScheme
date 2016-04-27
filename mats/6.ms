@@ -2887,7 +2887,7 @@
            (eqv? (get-mode "c:") (get-mode "c:/."))))
   (if (or (windows?) (embedded?))
       (fixnum? (get-mode "../mats"))
-      (eqv? (logand (get-mode "../mats") #o722) #o700))
+      (eqv? (logand (get-mode "../mats") #o700) #o700))
   (and (eqv? (get-mode "../mats") (get-mode "../mats/"))
        (eqv? (get-mode "../mats") (get-mode "../mats/.")))
   ; access times are unreliable on contemporary file systems
