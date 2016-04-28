@@ -728,7 +728,7 @@ since the compiler converts calls to \scheme{member} into calls to
 comparisons) when it can determine the more expensive test is not
 required.
 
-The \scheme{case} syntax exported by the the \scheme{(rnrs)} and
+The \scheme{case} syntax exported by the \scheme{(rnrs)} and
 \scheme{(rnrs base)} libraries still uses \scheme{memv} for
 compatibility with the R6RS standard.
 
