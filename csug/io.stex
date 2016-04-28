@@ -3319,7 +3319,7 @@ This section describes operations on files, directories, and pathnames.
 
 \noindent
 When invoked without arguments, \scheme{current-directory} returns a string
-representing the the current working directory.
+representing the current working directory.
 Otherwise, the current working directory is changed to the directory
 specified by the argument, which must be a string representing a valid
 directory pathname.

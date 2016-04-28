@@ -2231,7 +2231,7 @@ These are also typically registered using
 \scheme{Sforeign_symbol} or \scheme{Sregister_symbol}.
 
 \item The address of an entry, i.e., a function pointer, may be passed
-into Scheme and used as the the value of the entry expression in a
+into Scheme and used as the value of the entry expression in a
 foreign-procedure expression.  
 This allows foreign entry points to be used even when they are not
 registered by name.  
