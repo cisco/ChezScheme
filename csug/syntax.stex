@@ -141,7 +141,7 @@ The definition of \scheme{xname} binds it to the value of
 This allows the procedure to be used as a first-class value.
 Because \scheme{xname} is introduced by the transformer, the binding for
 \scheme{xname} is not visible anywhere except where references to it
-are introduced by the the transformer for \var{name}.
+are introduced by the transformer for \var{name}.
 
 Within \var{lambda-expression}, wherever it appears, \var{name}
 is rebound to a transformer that expands all references into references

@@ -559,7 +559,7 @@ The \scheme{debug} procedure may be used to inspect the condition.
 Whenever one of the built-in error-reporting mechanisms is used to
 raise an exception, the continuation at the point where the
 exception was raised can be inspected as well.
-More generally, \scheme{debug} allows the the continuation contained
+More generally, \scheme{debug} allows the continuation contained
 within any continuation condition created by
 \scheme{make-continuation-condition} to be inspected.
 

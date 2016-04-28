@@ -20,7 +20,7 @@
 ;;  up to linear in the universe
 ;;
 ;; This code is a good candidate for partial-static-structure optimization
-;;  Right now the the define-enumeration macro is doing optimizations
+;;  Right now the define-enumeration macro is doing optimizations
 ;;  that could be automatically performed by PSS if PSS worked on enums
 ;;
 ;; The R6RS standard is unclear whether the function returned by enum-set-indexer

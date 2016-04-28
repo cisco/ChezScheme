@@ -1013,9 +1013,9 @@ Section~\ref{SECTBUILTINLIBRARIES} above.
 %----------------------------------------------------------------------------
 \noskipentryheader
 \formdef{library-version}{\categoryprocedure}{(library-version \var{libref})}
-\returns the version of the the specified library
+\returns the version of the specified library
 \formdef{library-exports}{\categoryprocedure}{(library-exports \var{libref})}
-\returns a list of the exports of the the specified library
+\returns a list of the exports of the specified library
 \formdef{library-requirements}{\categoryprocedure}{(library-requirements \var{libref})}
 \returns a list of libraries required by the specified library
 \formdef{library-requirements}{\categoryprocedure}{(library-requirements \var{libref} \var{options})}

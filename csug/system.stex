@@ -2291,7 +2291,7 @@ If a \scheme{2} or \scheme{3} appears in the form or between the
 an application of the primitive as if it were compiled
 at the corresponding optimize level (see the \scheme{optimize-level}
 parameter).
-If no number appears in the form, an the application of the primitive is
+If no number appears in the form, the application of the primitive is
 treated as an optimize-level 3 application if the current optimize
 level is 3;
 otherwise, it is treated as an optimize-level 2 application.
@@ -3069,7 +3069,7 @@ The car of each pair is a background color and the cdr is a foreground
 (text) color.
 Each color must be a string, and each string should contain an HTML
 cascading style sheet (css) color specifier.
-The first pair is used for unprofiled code, and the the second is used
+The first pair is used for unprofiled code, and the second is used
 for unexecuted profiled code.
 The third is used for code that is executed least frequently, the fourth
 for code executed next-least frequently, and so on, with the last
