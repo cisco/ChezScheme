@@ -14,6 +14,7 @@
 # limitations under the License.
 
 MAKEFLAGS += --no-print-directory
+PREFIX=
 
 build:
 	(cd c ; $(MAKE))
@@ -24,7 +25,7 @@ install: build
 
 test: build
 	(cd mats ; $(MAKE) allx)
-	@echo "test run complete.  check mats/summary for errors."
+	@echo "test run complete.  check $(PREFIX)mats/summary for errors."
 
 bootfiles: build
 	$(MAKE) -f Mf-boot

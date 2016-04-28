@@ -22,7 +22,7 @@ install:
 	(cd $(workarea) && $(MAKE) install)
 
 test:
-	(cd $(workarea) && $(MAKE) test)
+	(cd $(workarea) && $(MAKE) test PREFIX=$(workarea)/)
 
 bootfiles:
 	(cd $(workarea) && $(MAKE) bootfiles)
