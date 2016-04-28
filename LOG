@@ -45,6 +45,13 @@
 - liberalized get-mode check for ../mats.  it's not our business whether
   people make their directories group and/or other writeable.
     6.ms
+- make test now prints the actual relative path to summary in the
+  "check summary" message, whether invoked from the top-level directory
+  or from the workarea.
+    Makefile.in, Makefile-workarea.in
+- configure now just uses cat to copy Makefile-workarea.in to $w/workarea,
+  since the file is presently the same regardless of the configuration.
+    configure
 - fixed time-utc->date test in mat time&date-printing to work regardless of
   what locale (and time zone) the host machine has set.
     date.ms
