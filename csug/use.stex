@@ -91,7 +91,7 @@ One thing you might soon notice is that the system automatically indents
 the second and subsequent lines of an expression.
 For example, let's say we want to define \scheme{fact}, a procedure that
 implements the factorial function.
-If we type \scheme{(define fact} followed by a the enter key, the cursor
+If we type \scheme{(define fact} followed by the enter key, the cursor
 should be sitting under the first \scheme{e} in \scheme{define}, so that
 if we then type \scheme{(lambda (x)}, we should see:
 
@@ -1753,7 +1753,7 @@ to be loaded before {\ChezScheme} begins interacting with the user.
 
 Most of the options are described elsewhere in this chapter, and a few
 are self-explanatory.
-The remainder pertain the the loading of boot files at system start-up
+The remainder pertain the loading of boot files at system start-up
 time and are described below.
 
 \index{boot files}%

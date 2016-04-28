@@ -709,7 +709,7 @@
 
   (module (display-rest/goto)
     (define (display-rest-of-line ee entry row col clear?)
-     ; display as much of the the rest of row as will fit on the screen
+     ; display as much of the rest of row as will fit on the screen
       (let ([lns (entry-lns entry)] [bot-line (entry-bot-line entry)])
        ; n = number of lines to display beyond the first
         (let loop ([n (fx- (if (fx= row (pos-row bot-line))

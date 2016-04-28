@@ -336,7 +336,7 @@ First, a \scheme{#\} prefix followed by exactly three octal digits is read
 as a character whose numeric code is the octal value of the three digits,
 e.g., \scheme{#\044} is read as \scheme{#\$}.
 Second, it recognizes several nonstandard named characters:
-\scheme{#\rubout} (which is the the same as \scheme{#\delete}),
+\scheme{#\rubout} (which is the same as \scheme{#\delete}),
 \scheme{#\bel} (which is the same as \scheme{#\alarm}),
 \scheme{#\vt} (which is the same as \scheme{#\vtab}),
 \scheme{#\nel} (the Unicode NEL character), and
@@ -606,7 +606,7 @@ See also the description of fixnum-only vectors (fxvectors) below.
 
 Fixnum-only vectors, or ``fxvectors,'' are like vectors but contain
 only fixnums.
-Fxvectors are written with the \scheme{#vfx} prefix in place of the the
+Fxvectors are written with the \scheme{#vfx} prefix in place of the
 \scheme{#} prefix for vectors, e.g., \scheme{#vfx(1 2 3)} or
 \scheme{#10vfx(2)}.
 The fxvector syntax is disabled in an input stream after \scheme{#!r6rs}
