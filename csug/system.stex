@@ -2291,7 +2291,7 @@ If a \scheme{2} or \scheme{3} appears in the form or between the
 an application of the primitive as if it were compiled
 at the corresponding optimize level (see the \scheme{optimize-level}
 parameter).
-If no number appears in the form, the application of the primitive is
+If no number appears in the form, an application of the primitive is
 treated as an optimize-level 3 application if the current optimize
 level is 3;
 otherwise, it is treated as an optimize-level 2 application.
