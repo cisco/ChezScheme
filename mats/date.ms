@@ -563,6 +563,6 @@
     (with-output-to-string (lambda () (pretty-print (make-time 'time-duration 1 -1))))
     "#<time-duration -0.999999999>\n")
   (equal?
-    (with-output-to-string (lambda () (write (time-utc->date (make-time 'time-utc 708626501 1427137297)))))
+    (with-output-to-string (lambda () (write (time-utc->date (make-time 'time-utc 708626501 1427137297) -14400))))
     "#<date Mon Mar 23 15:01:37 2015>")
 )
