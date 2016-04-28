@@ -1,0 +1,12 @@
+#ifdef WIN32
+/* by default, look in executable directory or in parallel boot directory */
+#define defaultsystemheappath "%x;%x\\..\\..\\boot\\%m"
+#define SEARCHPATHSEP ';'
+
+#else /* not WIN32: */
+#define SEARCHPATHSEP ':'
+/* keep in sync with scheme.1 */
+#define defaultsystemheappath "INSTALLPREFIX/lib/csv%v/%m"
+
+#endif
+

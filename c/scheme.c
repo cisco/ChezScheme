@@ -403,11 +403,10 @@ static const char *path_last(p) const char *p; {
   return p;
 }
 
+#include "heappath.h"
+
 #define SEARCHPATHMAXSIZE 8192
 #ifdef WIN32
-/* by default, look in executable directory or in parallel boot directory */
-#define defaultsystemheappath "%x;%x\\..\\..\\boot\\%m"
-#define SEARCHPATHSEP ';'
 
 static char *get_defaultheapdirs() {
   char *result;
@@ -419,10 +418,6 @@ static char *get_defaultheapdirs() {
   return result;
 }
 #else /* not WIN32: */
-#define SEARCHPATHSEP ':'
-/* keep in sync with scheme.1 */
-#define defaultsystemheappath "/usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m"
-
 static char *get_defaultheapdirs() {
   static char defaultheapdirs[SEARCHPATHMAXSIZE];
   const char *home;

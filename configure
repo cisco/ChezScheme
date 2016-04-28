@@ -255,3 +255,6 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^TempRoot=.*;TempRoot=$temproot;"\
     -e "s;^GzipManPages=.*$;GzipManPages=$gzipmanpages;"\
     makefiles/Mf-install.in > $w/Mf-install
+
+sed -e "s;INSTALLPREFIX;$installprefix;" c/heappath.h.in > $w/c/heappath.h
+
