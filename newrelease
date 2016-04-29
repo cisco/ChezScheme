@@ -64,7 +64,7 @@ endif
 # clear running list of updated files
 set updatedfiles = ()
 
-workarea $M $W
+./workarea $M $W
 if ($status != 0) exit 1
 
 cd $W
@@ -86,6 +86,10 @@ sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
     ../NOTICE > NOTICE
 set updatedfiles = ($updatedfiles NOTICE)
+
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../configure > configure 
+chmod +x configure
+set updatedfiles = ($updatedfiles configure)
 
 mkdir makefiles
 sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
