@@ -48,3 +48,5 @@
 - fixed time-utc->date test in mat time&date-printing to work regardless of
   what locale (and time zone) the host machine has set.
     date.ms
+- added custom install options.
+    configure newrelease scheme.c heappath.h.in
