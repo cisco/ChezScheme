@@ -210,7 +210,7 @@ if [ "$help" = "yes" ]; then
   echo "  --threads                   specify threaded version ($threads)"
   echo "  --32|--64                   specify 32/64-bit version ($bits)"
   echo "  --installprefix=<pathname>  final installation root ($installprefix)"
-  echo "  --installlib=<pathname>     lib directory directory ($installlib)"
+  echo "  --installlib=<pathname>     lib directory ($installlib)"
   echo "  --installman=<pathname>     manpage directory ($installman)"
   echo "  --temproot=<pathname>       staging root ($temproot)"
   echo "  --installowner=<ownername>  install with owner ($installowner)"
