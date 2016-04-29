@@ -268,4 +268,5 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^GzipManPages=.*$;GzipManPages=$gzipmanpages;"\
     makefiles/Mf-install.in > $w/Mf-install
 
-sed -e "s;\#define defaultsystemheappath \"/usr/lib/csv%v/%m:.*\$;\#define defaultsystemheappath \"$installlib/csv%v/%m\";" c/heappath.h.in > $w/c/heappath.h
+sed -e "s;\#define defaultsystemheappath \"/usr/lib/csv%v/%m:.*\$;\#define defaultsystemheappath \"$installlib/csv%v/%m\";"\
+    c/heappath.h.in > $w/c/heappath.h
