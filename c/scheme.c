@@ -404,8 +404,6 @@ static const char *path_last(p) const char *p; {
 }
 
 #include "heappath.h"
-
-#define SEARCHPATHMAXSIZE 8192
 #ifdef WIN32
 
 static char *get_defaultheapdirs() {
