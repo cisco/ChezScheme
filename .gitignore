@@ -12,3 +12,6 @@
 /ti3nt/
 /ti3osx/
 Makefile
+.*.sw?
+.sw?
+bin

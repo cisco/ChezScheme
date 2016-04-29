@@ -55,3 +55,7 @@
 - fixed time-utc->date test in mat time&date-printing to work regardless of
   what locale (and time zone) the host machine has set.
     date.ms
+- fixed date->time-utc to honor the zone-offset field when converting a date
+  object to a time-utc object.
+    stats.c,
+    date.ms

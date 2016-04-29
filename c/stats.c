@@ -375,6 +375,7 @@ ptr S_asctime(ptr dtvec) {
 ptr S_mktime(ptr dtvec) {
   time_t tx;
   struct tm tmx;
+  long orig_tzoff = (long)UNFIX(INITVECTIT(dtvec, dtvec_tzoff));
 
   tmx.tm_sec = (int)Sinteger_value(Svector_ref(dtvec, dtvec_sec));
   tmx.tm_min = (int)Sinteger_value(Svector_ref(dtvec, dtvec_min));
@@ -405,6 +406,7 @@ ptr S_mktime(ptr dtvec) {
   INITVECTIT(dtvec, dtvec_year) = Sinteger(tmx.tm_year);
   INITVECTIT(dtvec, dtvec_wday) = Sinteger(tmx.tm_wday);
   INITVECTIT(dtvec, dtvec_yday) = Sinteger(tmx.tm_yday);
+  if (tmx.tm_gmtoff != orig_tzoff) tx = difftime(tx, (time_t)(orig_tzoff - tmx.tm_gmtoff));
   return Scons(S_integer_time_t(tx), Svector_ref(dtvec, dtvec_nsec));
 }
 
