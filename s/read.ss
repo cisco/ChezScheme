@@ -255,21 +255,21 @@
                 ((fx= i n) new)
                 (string-set! new i (string-ref old i))))))))
 
-(xdefine (rd-error start? msg . args)
+(xdefine (rd-error ir? start? msg . args)
   (cond
-    [(eq? ip (console-input-port)) ($lexical-error who msg args ip)]
-    [(not fp) ($lexical-error who "~? on ~s" (list msg args ip) ip)]
-    [sfd ($lexical-error who msg args ip (make-source sfd bfp fp) start?)]
-    [else ($lexical-error who "~? at char ~a of ~s" (list msg args (if start? bfp fp) ip) ip)]))
+    [(eq? ip (console-input-port)) ($lexical-error who msg args ip ir?)]
+    [(not fp) ($lexical-error who "~? on ~s" (list msg args ip) ip ir?)]
+    [sfd ($lexical-error who msg args ip (make-source sfd bfp fp) start? ir?)]
+    [else ($lexical-error who "~? at char ~a of ~s" (list msg args (if start? bfp fp) ip) ip ir?)]))
 
 (xdefine (rd-eof-error s)
-  (xcall rd-error #t "unexpected end-of-file reading ~a" s))
+  (xcall rd-error #f #t "unexpected end-of-file reading ~a" s))
 
 (xdefine (rd-delimiter-error c what)
-  (xcall rd-error #t "invalid delimiter ~a for ~a" c what))
+  (xcall rd-error #f #t "invalid delimiter ~a for ~a" c what))
 
 (xdefine (rd-nonstandard-error s)
-  (xcall rd-error #t "~a syntax is not allowed in #!r6rs mode" s))
+  (xcall rd-error #f #t "~a syntax is not allowed in #!r6rs mode" s))
 
 (define-syntax nonstandard
   (lambda (x)
@@ -280,7 +280,7 @@
              (xcall rd-nonstandard-error str)))])))
 
 (xdefine (rd-nonstandard-delimiter-error c)
-  (xcall rd-error #t "delimiter ~a is not allowed in #!r6rs mode" c))
+  (xcall rd-error #f #t "delimiter ~a is not allowed in #!r6rs mode" c))
 
 (define-syntax nonstandard-delimiter
   (lambda (x)
@@ -449,7 +449,7 @@
                (state-lambda (n slashed?)
                  (state-return atomic (maybe-fold/gensym ip tb n slashed?)))))]
       [#\| (*state rd-token-block-comment 0)]
-      [else (xcall rd-error #t "invalid sharp-sign prefix #~c" c)])))
+      [else (xcall rd-error #f #t "invalid sharp-sign prefix #~c" c)])))
 
 (define-state (rd-token-delimiter x what)
   (with-peek-char c
@@ -480,7 +480,7 @@
                           [eof (xcall rd-eof-error "gensym")]
                           [(#\}) (state-return atomic (maybe-fold/intern ip tb n m slashed1? slashed2?))]
                           [else (with-unread-char c
-                                  (xcall rd-error #f
+                                  (xcall rd-error #f #f
                                     "expected close brace terminating gensym syntax"))]))))])))))])))
 
 (define-state (rd-token-block-comment depth)
@@ -515,13 +515,13 @@
        (nonstandard "#<n>r number prefix")
        (with-stretch-buffer i c
          (*state rd-token-number (fx+ i 1)))]
-      [(#\q #\Q) (xcall rd-error #t "outdated object file format")]
+      [(#\q #\Q) (xcall rd-error #f #t "outdated object file format")]
       [#\# (nonstandard "#<n># insert") (*state rd-token-insert n)]
       [#\= (nonstandard "#<n>= mark") (*state rd-token-mark n)]
       [#\v (*state rd-token-hash-num-v i n)]
       [#\%
        (unless (memv n '(2 3))
-         (xcall rd-error #t "invalid sharp-sign prefix ~a~a"
+         (xcall rd-error #f #t "invalid sharp-sign prefix ~a~a"
                    (substring tb 0 i)
                    c))
        (nonstandard "#<n>% primitive")
@@ -529,7 +529,7 @@
          (*state rd-token-symbol c 0 #f
            (state-lambda (m slashed?)
              (state-return atomic (list '$primitive n (maybe-fold/intern ip tb m slashed?))))))]
-      [else (xcall rd-error #t "invalid sharp-sign prefix ~a~a"
+      [else (xcall rd-error #f #t "invalid sharp-sign prefix ~a~a"
                       (substring tb 0 i)
                       c)])))
 
@@ -575,9 +575,9 @@
                                  (fx* (digit-value c1 8) 8)
                                  (digit-value c2 8))])
                      (when (fx> v 255)
-                       (xcall rd-error #t "invalid character #\\~a~a~a" c c1 c2))
+                       (xcall rd-error #f #t "invalid character #\\~a~a~a" c c1 c2))
                      (xcall rd-token-delimiter (integer->char v) "character"))]
-                  [else (xcall rd-error #t "invalid character #\\~a~a" c c1)])))]
+                  [else (xcall rd-error #f #t "invalid character #\\~a~a" c c1)])))]
            [else (xcall rd-token-delimiter c "character")]))]
       [else (xcall rd-token-delimiter c "character")])))
 
@@ -585,7 +585,7 @@
   (define (int->char n)
     (if (and (fixnum? n) (or (fx<= n #xD7FF) (fx<= #xE000 n #x10FFFF)))
         (integer->char n)
-        (xcall rd-error #t "invalid hex character escape ~a" (substring tb 0 i))))
+        (xcall rd-error #f #t "invalid hex character escape ~a" (substring tb 0 i))))
   (with-read-char c
     (state-case c
       [eof (with-unread-char c (state-return atomic (int->char n)))]
@@ -626,7 +626,7 @@
                              (let-values ([(keys vals) (hashtable-entries char-name-table)])
                                (apply append (vector->list vals)))))))
                 (xcall rd-eof-error "character")
-                (xcall rd-error #t "invalid character name #\\~a" s)))))))
+                (xcall rd-error #f #t "invalid character name #\\~a" s)))))))
 
 (module (valid-prefix?)
   (define string-prefix?
@@ -665,7 +665,7 @@
           ($set-port-flags! ip (constant port-flag-no-fold-case))
           (*state rd-token)]
          [(chezscheme) ($reset-port-flags! ip (constant port-flag-r6rs)) (*state rd-token)]
-         [else (xcall rd-error #t "unexpected #!~s" (car a))]))]
+         [else (xcall rd-error #f #t "unexpected #!~s" (car a))]))]
     [else
      (with-read-char c
        (state-case c
@@ -688,7 +688,7 @@
                                 (state-return atomic #!base-rtd)]
                                [(and (eof-object? c) (valid-prefix? s '("eof" "bwp" "base-rtd")))
                                 (xcall rd-eof-error "#! syntax")]
-                               [else (xcall rd-error #t "invalid syntax #!~a" s)])))))
+                               [else (xcall rd-error #f #t "invalid syntax #!~a" s)])))))
                      (with-stretch-buffer i c
                        (*state rd-token-hash-bang2 (fx+ i 1) undelimited*))))]))]))
 
@@ -702,16 +702,16 @@
              (with-unread-char c
                (if (valid-prefix? s '("fx" "u8"))
                    (xcall rd-eof-error "#v prefix")
-                   (xcall rd-error #t "invalid syntax #v~a" s)))]
+                   (xcall rd-error #f #t "invalid syntax #v~a" s)))]
             [#\( ;)
              (cond
                [(string=? s "fx") (nonstandard "#vfx(...) fxvector") (state-return vfxparen #f)]
                [(string=? s "u8") (state-return vu8paren #f)]
-               [else (xcall rd-error #t "invalid syntax #v~a(" s)])] ;)
+               [else (xcall rd-error #f #t "invalid syntax #v~a(" s)])] ;)
             [else
              (if (valid-prefix? s '("fx" "u8"))
-                 (xcall rd-error #t "expected left paren after #v~a prefix" s)
-                 (xcall rd-error #t "invalid syntax #v~a~a" s c))]))))))
+                 (xcall rd-error #f #t "expected left paren after #v~a prefix" s)
+                 (xcall rd-error #f #t "invalid syntax #v~a~a" s c))]))))))
 
 (define-state (rd-token-hash-num-v preflen nelts)
   (with-read-char c
@@ -723,16 +723,16 @@
              (with-unread-char c
                (if (valid-prefix? s '("fx" "u8"))
                    (xcall rd-eof-error "#v prefix")
-                   (xcall rd-error #t "invalid syntax #~v,'0dv~a" (- preflen 1) nelts s)))]
+                   (xcall rd-error #f #t "invalid syntax #~v,'0dv~a" (- preflen 1) nelts s)))]
             [#\( ;)
              (cond
                [(string=? s "fx") (nonstandard "#<n>vfx(...) fxvector") (state-return vfxnparen nelts)]
                [(string=? s "u8") (nonstandard "#<n>vu8(...) bytevector") (state-return vu8nparen nelts)]
-               [else (xcall rd-error #t "invalid syntax #~v,'0dv~a(" (- preflen 1) nelts s)])] ;)
+               [else (xcall rd-error #f #t "invalid syntax #~v,'0dv~a(" (- preflen 1) nelts s)])] ;)
             [else
              (if (valid-prefix? s '("fx" "u8"))
-                 (xcall rd-error #t "expected left paren after #~v,'0dv~a prefix" (- preflen 1) nelts s)
-                 (xcall rd-error #t "invalid syntax #~v,'0dv~a~a" (- preflen 1) nelts s c))]))))))
+                 (xcall rd-error #f #t "expected left paren after #~v,'0dv~a prefix" (- preflen 1) nelts s)
+                 (xcall rd-error #f #t "invalid syntax #~v,'0dv~a~a" (- preflen 1) nelts s c))]))))))
 
 (define-state (rd-token-to-delimiter n c next)
   (state-case c
@@ -788,23 +788,23 @@
                                       (digit-value c2 8))])
                           (when (fx> v 255)
                             (let ([bfp char-bfp])
-                              (xcall rd-error #t "invalid string character \\~c~c~c" c c1 c2)))
+                              (xcall rd-error #f #t "invalid string character \\~c~c~c" c c1 c2)))
                           (with-stretch-buffer i (integer->char v)
                             (*state rd-token-string (fx+ i 1))))]
                        [else
                         (with-unread-char c2
                           (let ([bfp char-bfp])
-                            (xcall rd-error #t "invalid string character \\~c~c" c c1)))]))]
+                            (xcall rd-error #f #t "invalid string character \\~c~c" c c1)))]))]
                   [else
                    (with-unread-char c1
                      (let ([bfp char-bfp])
-                       (xcall rd-error #t "invalid string character \\~c" c)))]))]
+                       (xcall rd-error #f #t "invalid string character \\~c" c)))]))]
              [(#\')
               (nonstandard "\\' string character")
               (with-stretch-buffer i c
                 (*state rd-token-string (fx+ i 1)))]
              [else (let ([bfp char-bfp])
-                     (xcall rd-error #t "invalid string character \\~c" c))]))]
+                     (xcall rd-error #f #t "invalid string character \\~c" c))]))]
         [(#\newline #\nel #\ls)
          (with-stretch-buffer i #\newline
            (*state rd-token-string (fx+ i 1)))]
@@ -836,7 +836,7 @@
           (with-read-char c (*state rd-token-string-skipwhite i))]
          [else (*state rd-token-string-skipwhite i)]))]
     [intraline-whitespace? (with-read-char c (xcall rd-token-string-whitespace i c))]
-    [else (xcall rd-error #t "unexpected character ~c after \\<intraline whitespace> in string" c)]))
+    [else (xcall rd-error #f #t "unexpected character ~c after \\<intraline whitespace> in string" c)]))
 
 (define-state (rd-token-string-skipwhite i)
   (with-peek-char c
@@ -856,24 +856,20 @@
            (with-stretch-buffer i (integer->char n)
              (*state rd-token-string (fx+ i 1)))
            (let ([bfp char-bfp])
-             (xcall rd-error #t "invalid code point value ~s in string hex escape" n)))]
+             (xcall rd-error #f #t "invalid code point value ~s in string hex escape" n)))]
       [else
        (with-unread-char c1
          (let ([bfp char-bfp])
-           (xcall rd-error #t "invalid character ~c in string hex escape" c1)))])))
+           (xcall rd-error #f #t "invalid character ~c in string hex escape" c1)))])))
 
 (xdefine (rd-make-number-or-symbol n)
-  (let ([x ($str->num 'cool tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
+  (let ([z ($str->num tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
     (cond
-      [(eq? x 'cool) ($str->num #f tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))]
-      [(eq? x 'norep) (xcall rd-error #t "cannot represent ~a" (substring tb 0 n))]
+      [(number? z) z]
+      [(eq? z 'norep) (xcall rd-error #t #t "cannot represent ~a" (substring tb 0 n))]
+      [(eq? z '!r6rs) (xcall rd-nonstandard-error (format "~a number" (substring tb 0 n)))]
       [else
-       (nonstandard
-         (format "~a ~s"
-           (substring tb 0 n)
-           (if (eq? ($str->num 'cool tb n 10 #f #f) 'cool)
-               'number
-               'symbol)))
+       (nonstandard (format "~a symbol" (substring tb 0 n)))
        (maybe-fold/intern ip tb n #f)])))
 
 (define-state (rd-token-number-or-symbol i)
@@ -900,13 +896,13 @@
       [else (*state rd-token-symbol c i #f rd-token-intern-nonstandard)])))
 
 (xdefine (rd-make-number n)
-  (let ([x ($str->num 'cool tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
+  (let ([z ($str->num tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
     (cond
-      [(eq? x 'cool) ($str->num #f tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))]
-      [(and (eq? x #f) (with-peek-char c (eof-object? c)))
-       (xcall rd-eof-error "number")]
-      [(eq? x 'norep) (xcall rd-error #t "cannot represent ~a" (substring tb 0 n))]
-      [else (xcall rd-error #t "invalid number syntax ~a" (substring tb 0 n))])))
+      [(number? z) z]
+      [(and (eq? z #f) (with-peek-char c (eof-object? c))) (xcall rd-eof-error "number")]
+      [(eq? z '!r6rs) (xcall rd-nonstandard-error (format "~a number" (substring tb 0 n)))]
+      [(eq? z 'norep) (xcall rd-error #t #t "cannot represent ~a" (substring tb 0 n))]
+      [else (xcall rd-error #f #t "invalid number syntax ~a" (substring tb 0 n))])))
 
 (define-state (rd-token-number i)
   (with-read-char c
@@ -998,11 +994,11 @@
              (with-read-char c
                (*state rd-token-symbol c (fx+ i 1) slashed? next)))
            (let ([bfp char-bfp])
-             (xcall rd-error #t "invalid code point value ~s in symbol hex escape" n)))]
+             (xcall rd-error #f #t "invalid code point value ~s in symbol hex escape" n)))]
       [else
        (with-unread-char c1
          (let ([bfp char-bfp])
-           (xcall rd-error #t "invalid character ~c in symbol hex escape" c1)))])))
+           (xcall rd-error #f #t "invalid character ~c in symbol hex escape" c1)))])))
 
 (define-state (rd-token-symbol-bar i next)
   (with-read-char c
@@ -1054,7 +1050,7 @@
        (let loop ([x x])
          (unless (insert-seen x)
            (let ([bfp (insert-bfp x)] [fp (insert-efp x)])
-             (xcall rd-error #t "mark #~s= missing" (insert-n x))))
+             (xcall rd-error #f #t "mark #~s= missing" (insert-n x))))
          (let ((z (insert-obj x)))
            (if (insert-visited x)
                (if (insert? z)
@@ -1110,7 +1106,7 @@
                   (loop rwl '() #f)
                   (let ([bfp (delayed-record-bfp (car rwl))]
                         [fp (delayed-record-efp (car rwl))])
-                    (xcall rd-error #t
+                    (xcall rd-error #f #t
                       "unresolvable cycle constructing record of type ~s"
                       (delayed-record-rtd (car rwl))))))
           (let* ((dr (car wl))
@@ -1160,24 +1156,24 @@
     [(vu8nparen) (xmvlet ((v) (xcall rd-sized-bytevector value)) (xvalues v v))]
     [(box) (xcall rd-box)]
     [(fasl)
-     (xcall rd-error #t
+     (xcall rd-error #f #t
        "unsupported old fasl format detected---use new format with binary i/o")]
     [(mark) (xcall rd-mark value)]
     [(insert) (xcall rd-insert value)]
     [(record-brack) (xcall rd-record)]
-    [(rparen) (xcall rd-error #t "unexpected close parenthesis")]
-    [(rbrack) (xcall rd-error #t "unexpected close bracket")]
-    [(dot) (xcall rd-error #t "unexpected dot (.)")]
+    [(rparen) (xcall rd-error #f #t "unexpected close parenthesis")]
+    [(rbrack) (xcall rd-error #f #t "unexpected close bracket")]
+    [(dot) (xcall rd-error #f #t "unexpected dot (.)")]
    ; eof should be caught elsewhere, but just in case ...
-    [(eof) (xcall rd-error #f "unexpected end-of-file")]
-    [else (xcall rd-error #f "unexpected internal token type ~s" type)]))
+    [(eof) (xcall rd-error #f #f "unexpected end-of-file")]
+    [else (xcall rd-error #f #f "unexpected internal token type ~s" type)]))
 
 (xdefine (rd-paren-list)
   (let ([expr-bfp bfp])
     (with-token (type value)
       (case type
         [(rparen) (xvalues '() '())]
-        [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f "parenthesized list terminated by bracket"))]
+        [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f #f "parenthesized list terminated by bracket"))]
         [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "list"))]
         [else
          (xmvlet ((first stripped-first) (xcall rd type value))
@@ -1190,22 +1186,22 @@
   (with-token (type value)
     (case type
       [(rparen) (xvalues '() '())]
-      [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f "parenthesized list terminated by bracket"))]
+      [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f #f "parenthesized list terminated by bracket"))]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "list"))]
       [(dot)
        (with-token (type value)
          (case type
-           [(rparen) (xcall rd-error #f "expected one item after dot (.)")]
+           [(rparen) (xcall rd-error #f #f "expected one item after dot (.)")]
            [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "list"))]
            [else
             (xmvlet ((x stripped-x) (xcall rd type value))
               (with-token (type value)
                 (case type
                   [(rparen) (xvalues x stripped-x)]
-                  [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f "parenthesized list terminated by bracket"))]
-                  [(dot) (xcall rd-error #t "unexpected dot")]
+                  [(rbrack) (let ([bfp expr-bfp]) (xcall rd-error #f #f "parenthesized list terminated by bracket"))]
+                  [(dot) (xcall rd-error #f #t "unexpected dot")]
                   [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "list"))]
-                  [else (xcall rd-error #t "more than one item found after dot (.)")])))]))]
+                  [else (xcall rd-error #f #t "more than one item found after dot (.)")])))]))]
       [else
        (xmvlet ((first stripped-first) (xcall rd type value))
          (xmvlet ((rest stripped-rest) (xcall rd-paren-tail expr-bfp))
@@ -1218,7 +1214,7 @@
     (with-token (type value)
       (case type
         [(rbrack) (xvalues '() '())]
-        [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f "bracketed list terminated by parenthesis"))]
+        [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f #f "bracketed list terminated by parenthesis"))]
         [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bracketed list"))]
         [else
          (xmvlet ((first stripped-first) (xcall rd type value))
@@ -1231,22 +1227,22 @@
   (with-token (type value)
     (case type
       [(rbrack) (xvalues '() '())]
-      [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f "bracketed list terminated by parenthesis"))]
+      [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f #f "bracketed list terminated by parenthesis"))]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bracketed list"))]
       [(dot)
        (with-token (type value)
          (case type
-           [(rbrack) (xcall rd-error #f "expected one item after dot (.)")]
+           [(rbrack) (xcall rd-error #f #f "expected one item after dot (.)")]
            [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bracketed list"))]
            [else
             (xmvlet ((x stripped-x) (xcall rd type value))
               (with-token (type value)
                 (case type
                   [(rbrack) (xvalues x stripped-x)]
-                  [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f "bracketed list terminated by parenthesis"))]
-                  [(dot) (xcall rd-error #t "unexpected dot")]
+                  [(rparen) (let ([bfp expr-bfp]) (xcall rd-error #f #f "bracketed list terminated by parenthesis"))]
+                  [(dot) (xcall rd-error #f #t "unexpected dot")]
                   [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bracketed list"))]
-                  [else (xcall rd-error #t "more than one item found after dot (.)")])))]))]
+                  [else (xcall rd-error #f #t "more than one item found after dot (.)")])))]))]
       [else
        (xmvlet ((first stripped-first) (xcall rd type value))
          (xmvlet ((rest stripped-rest) (xcall rd-brack-tail expr-bfp))
@@ -1272,7 +1268,7 @@
         [else
          (cond
            [(or (not (eq? type 'atomic)) (not (symbol? name)))
-            (xcall rd-error #t "non-symbol found after #[")] ;]
+            (xcall rd-error #f #t "non-symbol found after #[")] ;]
            [(or (record-reader (symbol->string name))
                 (let ((x ($sgetprop name '*rtd* #f)))
                   (and (record-type-descriptor? x)
@@ -1306,7 +1302,7 @@
                                 (make-delayed-record rtd vals expr-bfp fp)
                                 (and a? (make-delayed-record rtd stripped-vals expr-bfp fp)))
                               (loop (cdr fds) (cdr vs)))))))))]
-           [else (xcall rd-error #t "unrecognized record name ~s" name)])]))))
+           [else (xcall rd-error #f #t "unrecognized record name ~s" name)])]))))
 
 (xdefine (rd-record-tail expr-bfp n name)
   (with-token (type value)
@@ -1315,13 +1311,13 @@
        (if (= n 0)
            (xvalues '() '())
            (let ([bfp expr-bfp])
-             (xcall rd-error #t "too few fields supplied for record ~s" name)))]
+             (xcall rd-error #f #t "too few fields supplied for record ~s" name)))]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "record"))]
       [else
        (xmvlet ((first stripped-first) (xcall rd type value))
          (if (= n 0)
              (let ([bfp expr-bfp])
-               (xcall rd-error #t "too many fields supplied for record ~s" name))
+               (xcall rd-error #f #t "too many fields supplied for record ~s" name))
              (xmvlet ((rest stripped-rest) (xcall rd-record-tail expr-bfp (- n 1) name))
                (xvalues
                  (cons first rest)
@@ -1342,7 +1338,7 @@
 (xdefine (rd-sized-vector n)
   (unless (and (fixnum? n) (fxnonnegative? n))
     (let ([bfp (and bfp (+ bfp 1))] [fp (and fp (- fp 1))])
-      (xcall rd-error #t "invalid vector length ~s" n)))
+      (xcall rd-error #f #t "invalid vector length ~s" n)))
   (xcall rd-fill-vector bfp (make-vector n) (and a? (make-vector n)) 0 n))
 
 (xdefine (rd-fill-vector expr-bfp v stripped-v i n)
@@ -1365,7 +1361,7 @@
        (xmvlet ((x stripped-x) (xcall rd type value))
          (unless (fx< i n)
            (let ([bfp expr-bfp])
-             (xcall rd-error #t "too many vector elements supplied")))
+             (xcall rd-error #f #t "too many vector elements supplied")))
          (vector-set! v i x)
          (and stripped-v (vector-set! stripped-v i stripped-x))
          (xcall rd-fill-vector expr-bfp v stripped-v (fx+ i 1) n))])))
@@ -1381,7 +1377,7 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "fxvector"))]
       [else
        (unless (and (eq? type 'atomic) (fixnum? value))
-         (xcall rd-error #t "non-fixnum found in fxvector"))
+         (xcall rd-error #f #t "non-fixnum found in fxvector"))
        (xmvlet ((v) (xcall rd-fxvector expr-bfp (fx+ i 1)))
          (fxvector-set! v i value)
          (xvalues v))])))
@@ -1389,7 +1385,7 @@
 (xdefine (rd-sized-fxvector n)
   (unless (and (fixnum? n) (fxnonnegative? n))
     (let ([bfp (and bfp (+ bfp 1))] [fp (and fp (- fp 1))])
-      (xcall rd-error #t "invalid fxvector length ~s" n)))
+      (xcall rd-error #f #t "invalid fxvector length ~s" n)))
   (xcall rd-fill-fxvector bfp (make-fxvector n) 0 n))
 
 (xdefine (rd-fill-fxvector expr-bfp v i n)
@@ -1405,10 +1401,10 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "fxvector"))]
       [else
        (unless (and (eq? type 'atomic) (fixnum? value))
-         (xcall rd-error #t "non-fixnum found in fxvector"))
+         (xcall rd-error #f #t "non-fixnum found in fxvector"))
        (unless (fx< i n)
          (let ([bfp expr-bfp])
-           (xcall rd-error #t "too many fxvector elements supplied")))
+           (xcall rd-error #f #t "too many fxvector elements supplied")))
        (fxvector-set! v i value)
        (xcall rd-fill-fxvector expr-bfp v (fx+ i 1) n)])))
 
@@ -1423,7 +1419,7 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bytevector"))]
       [else
        (unless (and (eq? type 'atomic) (fixnum? value) (fx<= 0 value 255))
-         (xcall rd-error #t "invalid value ~s found in bytevector" value))
+         (xcall rd-error #f #t "invalid value ~s found in bytevector" value))
        (xmvlet ((v) (xcall rd-bytevector expr-bfp (fx+ i 1)))
          (bytevector-u8-set! v i value)
          (xvalues v))])))
@@ -1431,7 +1427,7 @@
 (xdefine (rd-sized-bytevector n)
   (unless (and (fixnum? n) (fxnonnegative? n))
     (let ([bfp (and bfp (+ bfp 1))] [fp (and fp (- fp 1))])
-      (xcall rd-error #t "invalid bytevector length ~s" n)))
+      (xcall rd-error #f #t "invalid bytevector length ~s" n)))
   (xcall rd-fill-bytevector bfp (make-bytevector n) 0 n))
 
 (xdefine (rd-fill-bytevector expr-bfp v i n)
@@ -1447,10 +1443,10 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bytevector"))]
       [else
        (unless (and (eq? type 'atomic) (fixnum? value) (fx<= 0 value 255))
-         (xcall rd-error #t "invalid value ~s found in bytevector" value))
+         (xcall rd-error #f #t "invalid value ~s found in bytevector" value))
        (unless (fx< i n)
          (let ([bfp expr-bfp])
-           (xcall rd-error #t "too many bytevector elements supplied")))
+           (xcall rd-error #f #t "too many bytevector elements supplied")))
        (bytevector-u8-set! v i value)
        (xcall rd-fill-bytevector expr-bfp v (fx+ i 1) n)])))
 
@@ -1468,7 +1464,7 @@
    ; set up insert(s) if not already present
     (unless (cdr a) (set-cdr! a (cons (make-insert n bfp fp) (and a? (make-insert n bfp fp)))))
    ; check for duplicate marks
-    (when (insert-seen (cadr a)) (xcall rd-error #t "duplicate mark #~s= seen" n))
+    (when (insert-seen (cadr a)) (xcall rd-error #f #t "duplicate mark #~s= seen" n))
    ; mark seen before reading so that error comes from second duplicate
     (insert-seen-set! (cadr a) #t)
     (when a? (insert-seen-set! (cddr a) #t))

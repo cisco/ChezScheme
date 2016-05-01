@@ -601,8 +601,10 @@ TODO:
   (define favcond (condition avcond fcond))
   (define fecond (condition econd fcond))
   (define fwcond (condition wcond fcond))
-  (define fimpcond (condition (make-implementation-restriction-violation) fcond))
+  (define ircond (make-implementation-restriction-violation))
+  (define fimpcond (condition ircond fcond))
   (define flexcond (condition (make-lexical-violation) (make-i/o-read-error) fcond))
+  (define flexcond/ir (condition ircond (make-lexical-violation) (make-i/o-read-error) fcond))
 
   (define (error-help warning? who whoarg message irritants basecond)
     (unless (or (eq? whoarg #f) (string? whoarg) (symbol? whoarg))
@@ -704,16 +706,16 @@ TODO:
 
   (set-who! $lexical-error
     (case-lambda
-      [(whoarg msg args port)
+      [(whoarg msg args port ir?)
        (error-help #f who whoarg msg args
          (condition
            (make-i/o-port-error port)
-           flexcond))]
-      [(whoarg msg args port src start?)
+           (if ir? flexcond/ir flexcond)))]
+      [(whoarg msg args port src start? ir?)
        (error-help #f who whoarg msg args
          (condition
            (make-i/o-port-error port)
-           flexcond
+           (if ir? flexcond/ir flexcond)
            ($make-src-condition src start?)))]))
 
   (set-who! $source-violation

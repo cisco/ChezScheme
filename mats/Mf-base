@@ -52,6 +52,11 @@ o = 0
 defaultp = f
 p = $(defaultp)
 
+# pdhtml determines whether profile-dump-html is called at end of a run: f for false, t for true.
+# NB: beware of lost profile information due to mats that call profile-clear
+defaultpdhtml = f
+pdhtml = $(defaultpdhtml)
+
 # cp0 determines whether cp0 is run: f for no, t for yes
 defaultcp0 = f
 cp0 = $(defaultcp0)
@@ -153,6 +158,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(set! *scheme* "${Scheme}")'\
              '(current-eval ${eval})'\
              '(time ((mat-file ".") "$*"))'\
+             '(parameterize ([source-directories (quote ("." "../s"))]) (when #${pdhtml} (profile-dump-html)))'\
              '(unless (= (#%$$check-heap-errors) 0)'\
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
              '  (abort))'\
@@ -305,6 +311,7 @@ script.all$o makescript$o:
              '(current-eval ${eval})'\
              '(time (for-each (mat-file "$(objdir)")'\
              '        (quote ($(mats:%="%")))))'\
+             '(parameterize ([source-directories (quote ("." "../s"))]) (when #${pdhtml} (profile-dump-html)))'\
              '(unless (= (#%$$check-heap-errors) 0)'\
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
              '  (abort))'\

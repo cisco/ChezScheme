@@ -1037,57 +1037,6 @@ struct dblflt {
 #endif
 #endif
 
-#if defined(__STDC__) || defined(USE_ANSI_PROTOTYPES)
-#include <math.h>
-#endif /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
-
-/* use LDEXP to scale floats if it exists and works properly; otherwise
-   use our own.  scale_float no longer receives negative values, so we
-   no longer worry if ldexp can't handle negative numbers */
-#ifdef LDEXP
-#define scale_float ldexp
-#else /* LDEXP */
-#if defined(__STDC__) || defined(USE_ANSI_PROTOTYPES)
-static double scale_float(double d, INT e);
-#endif /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
-#ifdef IEEE_DOUBLE
-#ifdef BAD_INF_POW
-/* pow returns HUGE_VAL instead of infinity when result would overflow */
-#define POW xpow
-static double xpow(x, y) double x, y; {
-  double d = pow(x, y);
-  if (d == +HUGE_VAL)
-    return 1.0 / 0.0;
-  else if (d == -HUGE_VAL)
-    return -1.0 / 0.0;
-  else return d;
-}
-#else /* BAD_INF_POW */
-#define POW pow
-#endif /* BAD_INF_POW */
-static double scale_float(d, e) double d; I32 e; {
- /* works only for normalized ieee double floats */
-  union dxunion {
-    double d;
-    struct dblflt x;
-  } dx;
-
-  if (d == 0.0 || e == 0) return d;
-
-  dx.d = d;
-  e += dx.x.e - bias;
-  dx.x.e = bias;
-
-  if (dx.d > 1.0 && e == - (bias + bitstoright))
-    dx.d = POW(2.0,(double)(e+1));
-  else
-    dx.d = dx.d * POW(2.0,(double)e);
-
-  return dx.d;
-}
-#endif /* IEEE_DOUBLE */
-#endif /* LDEXP */
-
 double S_random_double(m1, m2, m3, m4, scale) U32 m1, m2, m3, m4; double scale; {
  /* helper for s_fldouble in prim5.c */
   union dxunion {
@@ -1104,7 +1053,7 @@ double S_random_double(m1, m2, m3, m4, scale) U32 m1, m2, m3, m4; double scale; 
   return (dx.d - 1.0) * scale;
 }
 
-/* number quotient bigits to guarantee at least 64 bits */
+/* number of quotient bigits to guarantee at least 64 bits */
 /* +2 since first bigit may be zero and second may not be full */
 #define enough (64 / bigit_bits + 2)
 
@@ -1169,17 +1118,17 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
   U64 mlow;
   IBOOL cutbit = 0;
   INT n;
-
- /* shift in what we need, plus at least one bit */
+ 
+  /* shift in what we need, plus at least one bit */
   mhigh = 0; mlow = 0; n = enough;
   while (mhigh == 0 && mlow < hidden_bit * 2) {
     mhigh = (bigit)(mlow >> (64-bigit_bits));
-    mlow = (mlow << bigit_bits) | *p++;  /* broken on i3le */
+    mlow = (mlow << bigit_bits) | *p++;
     n -= 1;
     e -= bigit_bits;
   }
 
- /* back up to align high bit on hidden bit, setting cut bit to last loser */
+  /* back up to align high bit on hidden bit, setting cut bit to last loser */
   do {
     sticky = sticky || cutbit;
     cutbit = (bigit)(mlow & 1);
@@ -1188,31 +1137,53 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
     e = e + 1;
   } while (mhigh != 0 || mlow >= hidden_bit * 2);
 
-  /* round if necessary */
-  if (cutbit) {
-    IBOOL round;
-    round = (mlow & 1) || sticky;
-    while (!round && n-- > 0) round = *p++ != 0;
-    if (round && (mlow += 1) == hidden_bit * 2) e += 1;
+  e = e + bitstoright + bias;
+
+  /* back up further if denormalized */
+  if (e <= 0) {
+    for (;;) {
+      sticky = sticky || cutbit;
+      cutbit = (bigit)(mlow & 1);
+      mlow = mlow >> 1;
+      if (e == 0 || mlow == 0) break;
+      e = e + 1;
+    }
   }
 
- /* fill in the fields */
-  dx.x.sign = 0;
-  dx.x.e = bias;
+  if (e < 0) {
+    e = 0; /* NB: e < 0 => mlow == 0 */
+  } else {
+    /* round up if necessary */
+    if (cutbit) {
+      IBOOL round;
+      /* cutbit = 1 => at least half way to next number.  round up if odd or
+	 if there are any bits set to the right of cutbit */
+      round = (mlow & 1) || sticky;
+      while (!round && n-- > 0) round = *p++ != 0;
+      if (round) {
+        mlow += 1;
+        if (e == 0 && mlow == hidden_bit) {
+          e = 1; /* squeeking into lowest normalized spot */
+        } else if (mlow == hidden_bit * 2) {
+	  /* don't bother with mlow = mlow >> 1 since hidden bit and up are ignored after this */
+          e += 1;
+        }
+      }
+    }
+
+    if (e > 2046) { /* infinity */
+      e = 2047;
+      mlow = 0;
+    }
+  }
+
+  /* fill in the fields */
+  dx.x.sign = sign;
+  dx.x.e = e;
   dx.x.m1 = (UINT)(mlow >> 48 & m1mask);
   dx.x.m2 = (UINT)(mlow >> 32 & 0xffff);
   dx.x.m3 = (UINT)(mlow >> 16 & 0xffff);
   dx.x.m4 = (UINT)(mlow & 0xffff);
-
-  e += bitstoright;
-
-#if (ptr_bits > int_bits)
-  if ((int)e != e) e = e < 0 ? -100000 : 100000;
-#endif
-  dx.d = scale_float(dx.d, (int)e);
-
- /* fat-finger the sign.  HPUX cc at least doesn't properly negate 0.0 */
-  dx.x.sign = sign;
 
   return dx.d;
 }

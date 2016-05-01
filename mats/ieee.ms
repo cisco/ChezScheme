@@ -83,6 +83,29 @@
         #x1000000000000100000000000000000000.0)
    (fl= (inexact (* (+ (ash 1 52) 3/2 (expt 2 -80)) (expt 2 80)))
         #x1000000000000200000000000000000000.0)
+   ; verify fix for incorrect input of 2.2250738585072011e-308 reported by leppie
+   ; 2.2250738585072011e-308 falls right on the edge between normalized and denormalized numbers,
+   ; and should not be rounded up to a normalized number
+   (equal?
+     (number->string (string->number "2.2250738585072011e-308"))
+     "2.225073858507201e-308|52")
+   (equal?
+     (decode-float (string->number "2.2250738585072011e-308"))
+     '#(#b1111111111111111111111111111111111111111111111111111 -1074 1))
+   ; similar case in binary...
+   (equal?
+     (decode-float (string->number "#b1.111111111111111111111111111111111111111111111111111011e-1111111111"))
+     '#(#b1111111111111111111111111111111111111111111111111111 -1074 1))
+   (equal?
+     (number->string (string->number "#b1.111111111111111111111111111111111111111111111111111011e-1111111111"))
+     "2.225073858507201e-308|52")
+   ; slightly higher number should be rounded up
+   (equal?
+     (number->string (string->number "2.2250738585072012e-308"))
+     "2.2250738585072014e-308")
+   (equal?
+     (number->string (string->number "#b1.111111111111111111111111111111111111111111111111111100e-1111111111"))
+     "2.2250738585072014e-308")
 )
 
 (mat exact

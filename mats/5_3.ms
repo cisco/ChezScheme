@@ -256,15 +256,21 @@
    (eqv? (string->number "0/0") #f)
    (== (string->number "0/0#") +nan.0)
    (eqv? (string->number "0#/0") #f)
+   (== (string->number "0/0e20") +nan.0)
+   (== (string->number "0/0#e20") +nan.0)
    (== (string->number "0#/0#") +nan.0)
    (== (string->number "#i0/0") +nan.0)
    (== (string->number "#i0/0#") +nan.0)
    (== (string->number "#i0#/0") +nan.0)
    (== (string->number "#i0#/0#") +nan.0)
+   (== (string->number "#i0/0e20") +nan.0)
+   (== (string->number "#i0/0#e20") +nan.0)
    (eqv? (string->number "#e0/0") #f)
    (eqv? (string->number "#e0/0#") #f)
    (eqv? (string->number "#e0#/0") #f)
    (eqv? (string->number "#e0#/0#") #f)
+   (eqv? (string->number "#e0/0e20") #f)
+   (eqv? (string->number "#e0/0#e20") #f)
    (eqv? (string->number "1/0") #f)
    (eqv? (string->number "1/0#") +inf.0)
    (eqv? (string->number "1#/0") #f)
@@ -374,13 +380,13 @@
    (== (string->number "0/0###") +nan.0)
    (== (string->number "-0/0###") +nan.0)
 
-   (eqv? (string->number "0/0e10") #f)
+   (== (string->number "0/0e10") +nan.0)
    (== (string->number "#i0/0e10") +nan.0)
    (== (string->number "0/0###e10") +nan.0)
-   (eqv? (string->number "1/0e10") #f)
+   (eqv? (string->number "1/0e10") +inf.0)
    (eqv? (string->number "#i1/0e10") +inf.0)
    (eqv? (string->number "1/0###e10") +inf.0)
-   (eqv? (string->number "-1/0e10") #f)
+   (eqv? (string->number "-1/0e10") -inf.0)
    (eqv? (string->number "#i-1/0e10") -inf.0)
    (eqv? (string->number "-1/0###e10") -inf.0)
 
@@ -402,6 +408,59 @@
   ; don't make no sense
    (eqv? (string->number "3@4i") #f)
    (eqv? (string->number "3@-i") #f)
+
+  ; zero with large exponent
+   (eqv? (string->number "0.0e3000") 0.0)
+   (eqv? (string->number "-0.0e3000") -0.0)
+
+  ; exact polar complex numbers.  r6rs says anything w/o radix point, exponent sign, or precision is exact.
+  ; we also include polar numbers w/o #e prefix that can't be represented exactly
+   (eqv? (string->number "0@0") 0)
+   (eqv? (string->number "1@0") 1)
+   (eqv? (string->number "0@1") 0)
+   (eqv? (string->number "1@1") (string->number "1.0@1.0"))
+   (not (string->number "#e1@1"))
+   (eqv? (string->number "#i1@1") (make-polar 1.0 1.0))
+   (eqv? (string->number "1.0@1") (make-polar 1.0 1.0))
+   (eqv? (string->number "1@1.0") (make-polar 1.0 1.0))
+   (eqv? (string->number "1.0@1.0") (make-polar 1.0 1.0))
+
+  ; filling in some cases shown missing by profiling
+   (eqv? (string->number "1e-5000000000") 0.0)
+   (eqv? (string->number "-1e-5000000000") -0.0)
+   (eqv? (string->number "#e0e2000") 0)
+   (eqv? (string->number "#e0e-2000") 0)
+   (eqv? (string->number "1/0@5") #f)
+   (eqv? (string->number "1/0+5") #f)
+   (eqv? (string->number "#e1e20@0") (expt 10 20))
+   (eqv? (string->number "+1/0+5i") #f)
+   (eqv? (string->number "-1/0+5i") #f)
+   (eqv? (string->number "+1/0i") #f)
+   (eqv? (string->number "-1/0i") #f)
+   (eqv? (string->number "#e+inf.0+1i") #f)
+   (eqv? (string->number "1|21") 1.0)
+   (eqv? (string->number "1.5|21") 1.5)
+   (eqv? (string->number "1.5e2|21") 150.)
+   (eqv? (string->number "1.5e2|21+2i") 150.0+2.0i)
+   (eqv? (string->number "1.5e2|") #f)
+   (eqv? (string->number "1.5e2@") #f)
+   (eqv? (string->number "1.5e2@.5") (make-polar 1.5e2 .5))
+   (eqv? (string->number "1.5e2@+.5") (make-polar 1.5e2 .5))
+   (eqv? (string->number "1.5e2@-.5") (make-polar 1.5e2 -.5))
+   (eqv? (string->number "+in") #f)
+   (eqv? (string->number "+inf") #f)
+   (eqv? (string->number "+inf.") #f)
+   (eqv? (string->number "-in") #f)
+   (eqv? (string->number "-inf") #f)
+   (eqv? (string->number "-inf.") #f)
+   (eqv? (string->number "+n") #f)
+   (eqv? (string->number "+na") #f)
+   (eqv? (string->number "+nan") #f)
+   (eqv? (string->number "+nan.") #f)
+   (eqv? (string->number "-n") #f)
+   (eqv? (string->number "-na") #f)
+   (eqv? (string->number "-nan") #f)
+   (eqv? (string->number "-nan.") #f)
  )
 
 (mat r6rs:string->number
@@ -505,9 +564,9 @@
    (eqv? (r6rs:string->number "2.e3") (string->number "2000."))
    (eqv? (r6rs:string->number "2s3") (string->number "2000."))
    (eqv? (r6rs:string->number "2.0f3") (string->number "2000."))
-   (eqv? (r6rs:string->number "2/1E3") (string->number "2000."))
-   (eqv? (r6rs:string->number "1/5S4") (string->number "2000."))
-   (eqv? (r6rs:string->number "-1/5F4") (string->number "-2000."))
+   (eqv? (r6rs:string->number "2/1E3") #f)
+   (eqv? (r6rs:string->number "1/5S4") #f)
+   (eqv? (r6rs:string->number "-1/5F4") #f)
    (eqv? (r6rs:string->number ".2D4") (string->number "2000."))
    (not (r6rs:string->number "2.a"))
    (not (r6rs:string->number "21##.321"))
@@ -524,7 +583,7 @@
    (not (r6rs:string->number "-2/3ex"))
    (not (r6rs:string->number "2.1e-"))
    (not (r6rs:string->number "2e-i"))
-   (eqv? (r6rs:string->number "#e2/3e4") (string->number "20000/3"))
+   (eqv? (r6rs:string->number "#e2/3e4") #f)
    (not (r6rs:string->number "2.0e10a"))
   ; complex cases
    (equal? (r6rs:string->number "+i") +i)
@@ -594,21 +653,24 @@
    (== (r6rs:string->number "#i-0/0000") +nan.0)
 
    (eqv? (r6rs:string->number "0/0e10") #f)
-   (== (r6rs:string->number "#i0/0e10") +nan.0)
+   (eqv? (r6rs:string->number "#i0/0e10") #f)
+   (eqv? (r6rs:string->number "#e0/0e10") #f)
    (eqv? (r6rs:string->number "1/0e10") #f)
-   (eqv? (r6rs:string->number "#i1/0e10") +inf.0)
+   (eqv? (r6rs:string->number "#i1/0e10") #f)
+   (eqv? (r6rs:string->number "#e1/0e10") #f)
    (eqv? (r6rs:string->number "-1/0e10") #f)
-   (eqv? (r6rs:string->number "#i-1/0e10") -inf.0)
+   (eqv? (r6rs:string->number "#i-1/0e10") #f)
+   (eqv? (r6rs:string->number "#e-1/0e10") #f)
 
-   (eqv? (r6rs:string->number "-1/2e10000") -inf.0)
-   (eqv? (r6rs:string->number "1/2e10000") +inf.0)
-   (eqv? (r6rs:string->number "#e-1/2e10000") (* -1/2 (expt 10 10000)))
-   (eqv? (r6rs:string->number "#e1/2e10000") (* 1/2 (expt 10 10000)))
+   (eqv? (r6rs:string->number "-1/2e10000") #f)
+   (eqv? (r6rs:string->number "1/2e10000") #f)
+   (eqv? (r6rs:string->number "#e-1/2e10000") #f)
+   (eqv? (r6rs:string->number "#e1/2e10000") #f)
 
    (eqv? (r6rs:string->number "0e25") 0.0)
    (eqv? (r6rs:string->number "-0e25") -0.0)
-   (eqv? (r6rs:string->number "0/1e25") 0.0)
-   (eqv? (r6rs:string->number "-0/1e25") -0.0)
+   (eqv? (r6rs:string->number "0/1e25") #f)
+   (eqv? (r6rs:string->number "-0/1e25") #f)
 
   ; can't have no exact nans and infinities
    (eqv? (r6rs:string->number "#e+nan.0") #f)
@@ -618,27 +680,162 @@
   ; don't make no sense
    (eqv? (r6rs:string->number "3@4i") #f)
    (eqv? (r6rs:string->number "3@-i") #f)
+
+  ; filling in some cases shown missing by profiling
+   (eqv? (r6rs:string->number "1e-5000000000") 0.0)
+   (eqv? (r6rs:string->number "-1e-5000000000") -0.0)
+   (eqv? (r6rs:string->number "#e0e2000") 0)
+   (eqv? (r6rs:string->number "#e0e-2000") 0)
+   (eqv? (r6rs:string->number "1/0@5") #f)
+   (eqv? (r6rs:string->number "1/0+5") #f)
+   (eqv? (r6rs:string->number "#e1e20@0") (expt 10 20))
+   (eqv? (r6rs:string->number "+1/0+5i") #f)
+   (eqv? (r6rs:string->number "-1/0+5i") #f)
+   (eqv? (r6rs:string->number "+1/0i") #f)
+   (eqv? (r6rs:string->number "-1/0i") #f)
+   (eqv? (r6rs:string->number "#e+inf.0+1i") #f)
+   (eqv? (r6rs:string->number "1|21") 1.0)
+   (eqv? (r6rs:string->number "1.5|21") 1.5)
+   (eqv? (r6rs:string->number "1.5e2|21") 150.)
+   (eqv? (r6rs:string->number "1.5e2|21+2i") 150.0+2.0i)
+   (eqv? (r6rs:string->number "1.5e2|") #f)
+   (eqv? (r6rs:string->number "1.5e2@") #f)
+   (eqv? (r6rs:string->number "1.5e2@.5") (make-polar 1.5e2 .5))
+   (eqv? (r6rs:string->number "1.5e2@+.5") (make-polar 1.5e2 .5))
+   (eqv? (r6rs:string->number "1.5e2@-.5") (make-polar 1.5e2 -.5))
+   (eqv? (r6rs:string->number "+in") #f)
+   (eqv? (r6rs:string->number "+inf") #f)
+   (eqv? (r6rs:string->number "+inf.") #f)
+   (eqv? (r6rs:string->number "-in") #f)
+   (eqv? (r6rs:string->number "-inf") #f)
+   (eqv? (r6rs:string->number "-inf.") #f)
+   (eqv? (r6rs:string->number "+n") #f)
+   (eqv? (r6rs:string->number "+na") #f)
+   (eqv? (r6rs:string->number "+nan") #f)
+   (eqv? (r6rs:string->number "+nan.") #f)
+   (eqv? (r6rs:string->number "-n") #f)
+   (eqv? (r6rs:string->number "-na") #f)
+   (eqv? (r6rs:string->number "-nan") #f)
+   (eqv? (r6rs:string->number "-nan.") #f)
+   (eqv? (r6rs:string->number "1.0e+5000") +inf.0)
+   (eqv? (r6rs:string->number "-1.0e+5000") -inf.0)
+   (eqv? (r6rs:string->number "0@1") 0)
+   (eqv? (r6rs:string->number "#e1@1") #f)
  )
 
 (mat number->string
-   (equal? (number->string 3) "3")
-   (equal? (number->string 3/4) "3/4")
-   (equal? (number->string 3.024) "3.024")
-   (eqv? (string->number (number->string #i2/3)) #i2/3)
-   (equal? (number->string 3.000) "3.0")
-   (equal? (number->string 3.2e20) "3.2e20")
-   (equal? (number->string 3.2e2) "320.0")
-   (equal? (number->string 3200000) "3200000")
-   (equal? (number->string 320000) "320000")
-   (equal? (number->string 3+4.0i) "3.0+4.0i")
-   (equal? (number->string 3-4.0i) "3.0-4.0i")
-   (equal? (number->string 1.003-4i) "1.003-4.0i")
-   (equal? (number->string 3+4i) "3+4i")
-   (equal? (number->string 3-4i) "3-4i")
-   (equal? (number->string (make-rectangular 3.0 4)) "3.0+4.0i")
-   (equal? (number->string (make-rectangular 3 4.0)) "3.0+4.0i")
-   (equal? (number->string (make-rectangular 3 4)) "3+4i")
- )
+  (error? ; not a number
+    (number->string 'a))
+  (error? ; not a number
+    (number->string 'a 24))
+  (error? ; not a number
+    (number->string 'a 16 24))
+  (error? ; invalid radix
+    (number->string 0.0 'a))
+  (error? ; invalid radix
+    (number->string 0.0 -1))
+  (error? ; invalid radix
+    (number->string 0.0 0))
+  (error? ; invalid radix
+    (number->string 0.0 1))
+  (error? ; invalid radix
+    (number->string 0.0 'a 24))
+  (error? ; invalid radix
+    (number->string 0.0 -1 24))
+  (error? ; invalid radix
+    (number->string 0.0 0 24))
+  (error? ; invalid radix
+    (number->string 0.0 1 24))
+  (error? ; invalid precision
+    (number->string 0.0 10 'a))
+  (error? ; invalid precision
+    (number->string 0.0 10 0))
+  (error? ; invalid precision
+    (number->string 0.0 10 -24))
+  (error? ; invalid precision
+    (number->string 0.0 10 (- (most-negative-fixnum) 1)))
+  (error? ; precision given w/exact number
+    (number->string 1 10 24))
+  (equal? (number->string 3) "3")
+  (equal? (number->string 3/4) "3/4")
+  (equal? (number->string 3.024) "3.024")
+  (eqv? (string->number (number->string #i2/3)) #i2/3)
+  (equal? (number->string 3.000) "3.0")
+  (equal? (number->string 3.2e20) "3.2e20")
+  (equal? (number->string 3.2e2) "320.0")
+  (equal? (number->string 3200000) "3200000")
+  (equal? (number->string 320000) "320000")
+  (equal? (number->string 3+4.0i) "3.0+4.0i")
+  (equal? (number->string 3-4.0i) "3.0-4.0i")
+  (equal? (number->string 1.003-4i) "1.003-4.0i")
+  (equal? (number->string 3+4i) "3+4i")
+  (equal? (number->string 3-4i) "3-4i")
+  (equal? (number->string (make-rectangular 3.0 4)) "3.0+4.0i")
+  (equal? (number->string (make-rectangular 3 4.0)) "3.0+4.0i")
+  (equal? (number->string (make-rectangular 3 4)) "3+4i")
+  (equal? (number->string 100.5 10 53) "100.5|53")
+  (equal? (number->string #x100 16) "100")
+  (equal? (number->string #x100 8) "400")
+  (equal? (number->string #x100 16) "100")
+)
+
+(mat r6rs:number->string
+  (error? ; not a number
+    (r6rs:number->string 'a))
+  (error? ; not a number
+    (r6rs:number->string 'a 24))
+  (error? ; not a number
+    (r6rs:number->string 'a 16 24))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 'a))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 -1))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 0))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 1))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 'a 24))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 -1 24))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 0 24))
+  (error? ; invalid radix
+    (r6rs:number->string 0.0 1 24))
+  (error? ; invalid precision
+    (r6rs:number->string 0.0 10 'a))
+  (error? ; invalid precision
+    (r6rs:number->string 0.0 10 0))
+  (error? ; invalid precision
+    (r6rs:number->string 0.0 10 -24))
+  (error? ; invalid precision
+    (r6rs:number->string 0.0 10 (- (most-negative-fixnum) 1)))
+  (error? ; precision given w/exact number
+    (r6rs:number->string 1 10 24))
+  (error? ; precision given radix other than 10
+    (r6rs:number->string 1 16 24))
+  (equal? (r6rs:number->string 3) "3")
+  (equal? (r6rs:number->string 3/4) "3/4")
+  (equal? (r6rs:number->string 3.024) "3.024")
+  (eqv? (string->number (r6rs:number->string #i2/3)) #i2/3)
+  (equal? (r6rs:number->string 3.000) "3.0")
+  (equal? (r6rs:number->string 3.2e20) "3.2e20")
+  (equal? (r6rs:number->string 3.2e2) "320.0")
+  (equal? (r6rs:number->string 3200000) "3200000")
+  (equal? (r6rs:number->string 320000) "320000")
+  (equal? (r6rs:number->string 3+4.0i) "3.0+4.0i")
+  (equal? (r6rs:number->string 3-4.0i) "3.0-4.0i")
+  (equal? (r6rs:number->string 1.003-4i) "1.003-4.0i")
+  (equal? (r6rs:number->string 3+4i) "3+4i")
+  (equal? (r6rs:number->string 3-4i) "3-4i")
+  (equal? (r6rs:number->string (make-rectangular 3.0 4)) "3.0+4.0i")
+  (equal? (r6rs:number->string (make-rectangular 3 4.0)) "3.0+4.0i")
+  (equal? (r6rs:number->string (make-rectangular 3 4)) "3+4i")
+  (equal? (r6rs:number->string 100.5 10 53) "100.5|53")
+  (equal? (r6rs:number->string #x100 16) "100")
+  (equal? (r6rs:number->string #x100 8) "400")
+  (equal? (r6rs:number->string #x100 16) "100")
+)
 
 (mat most-positive-fixnum
     (procedure? most-positive-fixnum)
