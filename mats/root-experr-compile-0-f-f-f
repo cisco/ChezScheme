@@ -785,6 +785,39 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat r6rs:string->number: "string->number: 36 is not a valid radix".
 5_3.mo:Expected error in mat r6rs:string->number: "string->number: a is not a valid radix".
 5_3.mo:Expected error in mat r6rs:string->number: "incorrect argument count in call (string->number "a" 10 10)".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: -1 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: 0 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: 1 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: -1 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: 0 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: 1 is not a valid radix".
+5_3.mo:Expected error in mat number->string: "number->string: a is not a valid precision".
+5_3.mo:Expected error in mat number->string: "number->string: 0 is not a valid precision".
+5_3.mo:Expected error in mat number->string: "number->string: -24 is not a valid precision".
+5_3.mo:Expected error in mat number->string: "number->string: <-int> is not a valid precision".
+5_3.mo:Expected error in mat number->string: "number->string: a precision is specified and 1 is not inexact".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a number".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: -1 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: 0 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: 1 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: -1 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: 0 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: 1 is not a valid radix".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a is not a valid precision".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: 0 is not a valid precision".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: -24 is not a valid precision".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: <-int> is not a valid precision".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a precision is specified and 1 is not inexact".
+5_3.mo:Expected error in mat r6rs:number->string: "number->string: a precision is specified and radix 16 is not 10".
 5_3.mo:Expected error in mat exact?: "exact?: a is not a number".
 5_3.mo:Expected error in mat inexact?: "inexact?: () is not a number".
 5_3.mo:Expected error in mat =: "incorrect argument count in call (=)".
@@ -3997,6 +4030,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: cannot represent #e+inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: cannot represent #e-inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: cannot represent #e+nan.0 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: cannot represent #e0/0e20 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: cannot represent #e1@1 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid number syntax #e+nan.5 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid sharp-sign prefix #N at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid sharp-sign prefix #7% at line 3, char 31 of testfile.ss".
@@ -4130,6 +4165,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -4774,6 +4813,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: cannot represent #e+inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: cannot represent #e-inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: cannot represent #e+nan.0 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: cannot represent #e0/0e20 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: cannot represent #e1@1 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid number syntax #e+nan.5 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid sharp-sign prefix #N at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid sharp-sign prefix #7% at line 3, char 31 of testfile.ss".
@@ -4907,6 +4948,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -5551,6 +5596,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: cannot represent #e+inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: cannot represent #e-inf.0 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: cannot represent #e+nan.0 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: cannot represent #e0/0e20 at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: cannot represent #e1@1 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid number syntax #e+nan.5 at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid sharp-sign prefix #N at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid sharp-sign prefix #7% at line 3, char 31 of testfile.ss".
@@ -5684,6 +5731,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".

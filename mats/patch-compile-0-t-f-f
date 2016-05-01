@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	Fri Apr 15 23:13:15 2016
---- errors-compile-0-t-f-f	Fri Apr 15 22:51:02 2016
+*** errors-compile-0-f-f-f	2016-05-01 13:38:30.812572752 -0400
+--- errors-compile-0-t-f-f	2016-05-01 13:22:13.215255991 -0400
 ***************
 *** 93,99 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
@@ -297,22 +297,33 @@
   5_3.mo:Expected error in mat r6rs:string->number: "string->number: 0 is not a valid radix".
   5_3.mo:Expected error in mat r6rs:string->number: "string->number: 37 is not a valid radix".
 ***************
-*** 784,793 ****
+*** 784,790 ****
   5_3.mo:Expected error in mat r6rs:string->number: "string->number: <int> is not a valid radix".
   5_3.mo:Expected error in mat r6rs:string->number: "string->number: 36 is not a valid radix".
   5_3.mo:Expected error in mat r6rs:string->number: "string->number: a is not a valid radix".
 ! 5_3.mo:Expected error in mat r6rs:string->number: "incorrect argument count in call (string->number "a" 10 10)".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+--- 784,790 ----
+  5_3.mo:Expected error in mat r6rs:string->number: "string->number: <int> is not a valid radix".
+  5_3.mo:Expected error in mat r6rs:string->number: "string->number: 36 is not a valid radix".
+  5_3.mo:Expected error in mat r6rs:string->number: "string->number: a is not a valid radix".
+! 5_3.mo:Expected error in mat r6rs:string->number: "incorrect number of arguments to #<procedure string->number>".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+  5_3.mo:Expected error in mat number->string: "number->string: a is not a number".
+***************
+*** 820,826 ****
+  5_3.mo:Expected error in mat r6rs:number->string: "number->string: a precision is specified and radix 16 is not 10".
   5_3.mo:Expected error in mat exact?: "exact?: a is not a number".
   5_3.mo:Expected error in mat inexact?: "inexact?: () is not a number".
 ! 5_3.mo:Expected error in mat =: "incorrect argument count in call (=)".
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
---- 784,793 ----
-  5_3.mo:Expected error in mat r6rs:string->number: "string->number: <int> is not a valid radix".
-  5_3.mo:Expected error in mat r6rs:string->number: "string->number: 36 is not a valid radix".
-  5_3.mo:Expected error in mat r6rs:string->number: "string->number: a is not a valid radix".
-! 5_3.mo:Expected error in mat r6rs:string->number: "incorrect number of arguments to #<procedure string->number>".
+--- 820,826 ----
+  5_3.mo:Expected error in mat r6rs:number->string: "number->string: a precision is specified and radix 16 is not 10".
   5_3.mo:Expected error in mat exact?: "exact?: a is not a number".
   5_3.mo:Expected error in mat inexact?: "inexact?: () is not a number".
 ! 5_3.mo:Expected error in mat =: "incorrect number of arguments to #<procedure =>".
@@ -320,7 +331,7 @@
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
 ***************
-*** 796,802 ****
+*** 829,835 ****
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
@@ -328,7 +339,7 @@
   5_3.mo:Expected error in mat <: "<: a is not a real number".
   5_3.mo:Expected error in mat <: "<: a is not a real number".
   5_3.mo:Expected error in mat <: "<: a is not a real number".
---- 796,802 ----
+--- 829,835 ----
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
   5_3.mo:Expected error in mat =: "=: a is not a number".
@@ -337,7 +348,7 @@
   5_3.mo:Expected error in mat <: "<: a is not a real number".
   5_3.mo:Expected error in mat <: "<: a is not a real number".
 ***************
-*** 816,822 ****
+*** 849,855 ****
   5_3.mo:Expected error in mat <: "<: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat <: "<: 2+1i is not a real number".
   5_3.mo:Expected error in mat <: "<: 3+1i is not a real number".
@@ -345,7 +356,7 @@
   5_3.mo:Expected error in mat <=: "<=: a is not a real number".
   5_3.mo:Expected error in mat <=: "<=: a is not a real number".
   5_3.mo:Expected error in mat <=: "<=: a is not a real number".
---- 816,822 ----
+--- 849,855 ----
   5_3.mo:Expected error in mat <: "<: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat <: "<: 2+1i is not a real number".
   5_3.mo:Expected error in mat <: "<: 3+1i is not a real number".
@@ -354,7 +365,7 @@
   5_3.mo:Expected error in mat <=: "<=: a is not a real number".
   5_3.mo:Expected error in mat <=: "<=: a is not a real number".
 ***************
-*** 836,842 ****
+*** 869,875 ****
   5_3.mo:Expected error in mat <=: "<=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat <=: "<=: 2+1i is not a real number".
   5_3.mo:Expected error in mat <=: "<=: 3+1i is not a real number".
@@ -362,7 +373,7 @@
   5_3.mo:Expected error in mat >: ">: a is not a real number".
   5_3.mo:Expected error in mat >: ">: a is not a real number".
   5_3.mo:Expected error in mat >: ">: a is not a real number".
---- 836,842 ----
+--- 869,875 ----
   5_3.mo:Expected error in mat <=: "<=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat <=: "<=: 2+1i is not a real number".
   5_3.mo:Expected error in mat <=: "<=: 3+1i is not a real number".
@@ -371,7 +382,7 @@
   5_3.mo:Expected error in mat >: ">: a is not a real number".
   5_3.mo:Expected error in mat >: ">: a is not a real number".
 ***************
-*** 856,862 ****
+*** 889,895 ****
   5_3.mo:Expected error in mat >: ">: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat >: ">: 2+1i is not a real number".
   5_3.mo:Expected error in mat >: ">: 3+1i is not a real number".
@@ -379,7 +390,7 @@
   5_3.mo:Expected error in mat >=: ">=: a is not a real number".
   5_3.mo:Expected error in mat >=: ">=: a is not a real number".
   5_3.mo:Expected error in mat >=: ">=: a is not a real number".
---- 856,862 ----
+--- 889,895 ----
   5_3.mo:Expected error in mat >: ">: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat >: ">: 2+1i is not a real number".
   5_3.mo:Expected error in mat >: ">: 3+1i is not a real number".
@@ -388,7 +399,7 @@
   5_3.mo:Expected error in mat >=: ">=: a is not a real number".
   5_3.mo:Expected error in mat >=: ">=: a is not a real number".
 ***************
-*** 876,883 ****
+*** 909,916 ****
   5_3.mo:Expected error in mat >=: ">=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat >=: ">=: 2+1i is not a real number".
   5_3.mo:Expected error in mat >=: ">=: 3+1i is not a real number".
@@ -397,7 +408,7 @@
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
---- 876,883 ----
+--- 909,916 ----
   5_3.mo:Expected error in mat >=: ">=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat >=: ">=: 2+1i is not a real number".
   5_3.mo:Expected error in mat >=: ">=: 3+1i is not a real number".
@@ -407,7 +418,7 @@
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
 ***************
-*** 885,892 ****
+*** 918,925 ****
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
@@ -416,7 +427,7 @@
   5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
---- 885,892 ----
+--- 918,925 ----
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
   5_3.mo:Expected error in mat r6rs:=: "=: a is not a number".
@@ -426,7 +437,7 @@
   5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
 ***************
-*** 897,904 ****
+*** 930,937 ****
   5_3.mo:Expected error in mat r6rs:<: "<: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: 3+1i is not a real number".
@@ -435,7 +446,7 @@
   5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
---- 897,904 ----
+--- 930,937 ----
   5_3.mo:Expected error in mat r6rs:<: "<: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:<: "<: 3+1i is not a real number".
@@ -445,7 +456,7 @@
   5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
 ***************
-*** 909,916 ****
+*** 942,949 ****
   5_3.mo:Expected error in mat r6rs:<=: "<=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: 3+1i is not a real number".
@@ -454,7 +465,7 @@
   5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
---- 909,916 ----
+--- 942,949 ----
   5_3.mo:Expected error in mat r6rs:<=: "<=: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:<=: "<=: 3+1i is not a real number".
@@ -464,7 +475,7 @@
   5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
 ***************
-*** 921,928 ****
+*** 954,961 ****
   5_3.mo:Expected error in mat r6rs:>: ">: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: 3+1i is not a real number".
@@ -473,7 +484,7 @@
   5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
---- 921,928 ----
+--- 954,961 ----
   5_3.mo:Expected error in mat r6rs:>: ">: 2.0+1.0i is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: 2+1i is not a real number".
   5_3.mo:Expected error in mat r6rs:>: ">: 3+1i is not a real number".
@@ -483,7 +494,7 @@
   5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
   5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
 ***************
-*** 942,948 ****
+*** 975,981 ****
   5_3.mo:Expected error in mat +: "oops".
   5_3.mo:Expected error in mat +: "+: #f is not a number".
   5_3.mo:Expected error in mat +: "+: #f is not a number".
@@ -491,7 +502,7 @@
   5_3.mo:Expected error in mat -: "-: a is not a number".
   5_3.mo:Expected error in mat -: "-: a is not a number".
   5_3.mo:Expected error in mat -: "-: a is not a number".
---- 942,948 ----
+--- 975,981 ----
   5_3.mo:Expected error in mat +: "oops".
   5_3.mo:Expected error in mat +: "+: #f is not a number".
   5_3.mo:Expected error in mat +: "+: #f is not a number".
@@ -500,7 +511,7 @@
   5_3.mo:Expected error in mat -: "-: a is not a number".
   5_3.mo:Expected error in mat -: "-: a is not a number".
 ***************
-*** 955,961 ****
+*** 988,994 ****
   5_3.mo:Expected error in mat *: "*: a is not a number".
   5_3.mo:Expected error in mat *: "*: #f is not a number".
   5_3.mo:Expected error in mat *: "*: #f is not a number".
@@ -508,7 +519,7 @@
   5_3.mo:Expected error in mat /: "/: a is not a number".
   5_3.mo:Expected error in mat /: "/: a is not a number".
   5_3.mo:Expected error in mat /: "/: a is not a number".
---- 955,961 ----
+--- 988,994 ----
   5_3.mo:Expected error in mat *: "*: a is not a number".
   5_3.mo:Expected error in mat *: "*: #f is not a number".
   5_3.mo:Expected error in mat *: "*: #f is not a number".
@@ -517,7 +528,7 @@
   5_3.mo:Expected error in mat /: "/: a is not a number".
   5_3.mo:Expected error in mat /: "/: a is not a number".
 ***************
-*** 969,1032 ****
+*** 1002,1065 ****
   5_3.mo:Expected error in mat infinite?: "infinite?: a is not a real number".
   5_3.mo:Expected error in mat infinite?: "infinite?: 3+4i is not a real number".
   5_3.mo:Expected error in mat infinite?: "infinite?: 3.0-0.0i is not a real number".
@@ -582,7 +593,7 @@
   5_3.mo:Expected error in mat quotient: "quotient: a is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: a is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2/5 is not an integer".
---- 969,1032 ----
+--- 1002,1065 ----
   5_3.mo:Expected error in mat infinite?: "infinite?: a is not a real number".
   5_3.mo:Expected error in mat infinite?: "infinite?: 3+4i is not a real number".
   5_3.mo:Expected error in mat infinite?: "infinite?: 3.0-0.0i is not a real number".
@@ -648,7 +659,7 @@
   5_3.mo:Expected error in mat quotient: "quotient: a is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2/5 is not an integer".
 ***************
-*** 1039,1048 ****
+*** 1072,1081 ****
   5_3.mo:Expected error in mat quotient: "quotient: 2+1i is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2+1i is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2.0+1.0i is not an integer".
@@ -659,7 +670,7 @@
   5_3.mo:Expected error in mat remainder: "remainder: a is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: a is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: 2/5 is not an integer".
---- 1039,1048 ----
+--- 1072,1081 ----
   5_3.mo:Expected error in mat quotient: "quotient: 2+1i is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2+1i is not an integer".
   5_3.mo:Expected error in mat quotient: "quotient: 2.0+1.0i is not an integer".
@@ -671,7 +682,7 @@
   5_3.mo:Expected error in mat remainder: "remainder: a is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: 2/5 is not an integer".
 ***************
-*** 1053,1061 ****
+*** 1086,1094 ****
   5_3.mo:Expected error in mat remainder: "remainder: 2.5 is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: 2.5 is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: -3+2i is not an integer".
@@ -681,7 +692,7 @@
   5_3.mo:Expected error in mat modulo: "modulo: a is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: a is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: 3/5 is not an integer".
---- 1053,1061 ----
+--- 1086,1094 ----
   5_3.mo:Expected error in mat remainder: "remainder: 2.5 is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: 2.5 is not an integer".
   5_3.mo:Expected error in mat remainder: "remainder: -3+2i is not an integer".
@@ -692,7 +703,7 @@
   5_3.mo:Expected error in mat modulo: "modulo: a is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: 3/5 is not an integer".
 ***************
-*** 1065,1110 ****
+*** 1098,1143 ****
   5_3.mo:Expected error in mat modulo: "modulo: 3.2 is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: -3.2 is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: -3+2i is not an integer".
@@ -739,7 +750,7 @@
   5_3.mo:Expected error in mat min: "min: a is not a real number".
   5_3.mo:Expected error in mat min: "min: a is not a real number".
   5_3.mo:Expected error in mat min: "min: a is not a real number".
---- 1065,1110 ----
+--- 1098,1143 ----
   5_3.mo:Expected error in mat modulo: "modulo: 3.2 is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: -3.2 is not an integer".
   5_3.mo:Expected error in mat modulo: "modulo: -3+2i is not an integer".
@@ -787,7 +798,7 @@
   5_3.mo:Expected error in mat min: "min: a is not a real number".
   5_3.mo:Expected error in mat min: "min: a is not a real number".
 ***************
-*** 1163,1185 ****
+*** 1196,1218 ****
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
@@ -811,7 +822,7 @@
   5_3.mo:Expected error in mat random: "random: invalid argument a".
   5_3.mo:Expected error in mat random: "random: invalid argument -3".
   5_3.mo:Expected error in mat random: "random: invalid argument 0".
---- 1163,1185 ----
+--- 1196,1218 ----
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
   5_3.mo:Expected error in mat lcm: "lcm: +nan.0 is not an integer".
@@ -836,7 +847,7 @@
   5_3.mo:Expected error in mat random: "random: invalid argument -3".
   5_3.mo:Expected error in mat random: "random: invalid argument 0".
 ***************
-*** 1192,1230 ****
+*** 1225,1263 ****
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument 0".
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument -1".
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument <int>".
@@ -876,7 +887,7 @@
   5_3.mo:Expected error in mat imag-part: "imag-part: a is not a complex number".
   5_3.mo:Expected error in mat make-rectangular: "make-rectangular: a is not a real number".
   5_3.mo:Expected error in mat make-rectangular: "make-rectangular: b is not a real number".
---- 1192,1230 ----
+--- 1225,1263 ----
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument 0".
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument -1".
   5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument <int>".
@@ -917,7 +928,7 @@
   5_3.mo:Expected error in mat make-rectangular: "make-rectangular: a is not a real number".
   5_3.mo:Expected error in mat make-rectangular: "make-rectangular: b is not a real number".
 ***************
-*** 1234,1310 ****
+*** 1267,1343 ****
   5_3.mo:Expected error in mat make-polar: "make-polar: b is not a real number".
   5_3.mo:Expected error in mat make-polar: "make-polar: 3.4+0.0i is not a real number".
   5_3.mo:Expected error in mat make-polar: "make-polar: 3.4+0.0i is not a real number".
@@ -995,7 +1006,7 @@
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: 35.0 is not an exact integer".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid start index 5.0".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index 8.0".
---- 1234,1310 ----
+--- 1267,1343 ----
   5_3.mo:Expected error in mat make-polar: "make-polar: b is not a real number".
   5_3.mo:Expected error in mat make-polar: "make-polar: 3.4+0.0i is not a real number".
   5_3.mo:Expected error in mat make-polar: "make-polar: 3.4+0.0i is not a real number".
@@ -1074,7 +1085,7 @@
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid start index 5.0".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index 8.0".
 ***************
-*** 1315,1325 ****
+*** 1348,1358 ****
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index -8".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index 3".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index <int>".
@@ -1086,7 +1097,7 @@
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: a is not an exact integer".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid start index 0.0".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index 2.0".
---- 1315,1325 ----
+--- 1348,1358 ----
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index -8".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index 3".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-bit-field: invalid end index <int>".
@@ -1099,7 +1110,7 @@
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid start index 0.0".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index 2.0".
 ***************
-*** 1332,1342 ****
+*** 1365,1375 ****
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index 5".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index <int>".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index <int>".
@@ -1111,7 +1122,7 @@
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: a is not an exact integer".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid start index 0.0".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index 2.0".
---- 1332,1342 ----
+--- 1365,1375 ----
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index 5".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index <int>".
   5_3.mo:Expected error in mat bitwise-copy-bit-field: "bitwise-copy-bit-field: invalid end index <int>".
@@ -1124,7 +1135,7 @@
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid start index 0.0".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index 2.0".
 ***************
-*** 1350,1359 ****
+*** 1383,1392 ****
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index 5".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index <int>".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index <int>".
@@ -1135,7 +1146,7 @@
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: 35.0 is not an exact integer".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid start index 5.0".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid end index 8.0".
---- 1350,1359 ----
+--- 1383,1392 ----
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index 5".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index <int>".
   5_3.mo:Expected error in mat bitwise-rotate-bit-field: "bitwise-rotate-bit-field: invalid end index <int>".
@@ -1147,7 +1158,7 @@
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid start index 5.0".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid end index 8.0".
 ***************
-*** 1364,1387 ****
+*** 1397,1420 ****
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid end index -8".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: start index 5 is greater than end index 3".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: start index <int> is greater than end index <int>".
@@ -1172,7 +1183,7 @@
   5_3.mo:Expected error in mat bitwise-first-bit-set: "bitwise-first-bit-set: 3.0 is not an exact integer".
   5_3.mo:Expected error in mat bitwise-first-bit-set: "bitwise-first-bit-set: a is not an exact integer".
   5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments to #<procedure $quotient-remainder>".
---- 1364,1387 ----
+--- 1397,1420 ----
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: invalid end index -8".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: start index 5 is greater than end index 3".
   5_3.mo:Expected error in mat bitwise-bit-field: "bitwise-reverse-bit-field: start index <int> is greater than end index <int>".
@@ -1198,7 +1209,7 @@
   5_3.mo:Expected error in mat bitwise-first-bit-set: "bitwise-first-bit-set: a is not an exact integer".
   5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments to #<procedure $quotient-remainder>".
 ***************
-*** 1507,1562 ****
+*** 1540,1595 ****
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.4-2.3i is not an exact integer".
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.4-2.3i is not an exact integer".
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.0 is not an exact integer".
@@ -1255,7 +1266,7 @@
   5_3.mo:Expected error in mat real->flonum: "real->flonum: a is not a real number".
   5_3.mo:Expected error in mat real->flonum: "real->flonum: 3+4i is not a real number".
   5_3.mo:Expected error in mat div-and-mod: "div-and-mod: undefined for 0".
---- 1507,1562 ----
+--- 1540,1595 ----
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.4-2.3i is not an exact integer".
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.4-2.3i is not an exact integer".
   5_3.mo:Expected error in mat bitwise-xor: "bitwise-xor: 3.0 is not an exact integer".
@@ -1313,7 +1324,7 @@
   5_3.mo:Expected error in mat real->flonum: "real->flonum: 3+4i is not a real number".
   5_3.mo:Expected error in mat div-and-mod: "div-and-mod: undefined for 0".
 ***************
-*** 1589,1749 ****
+*** 1622,1782 ****
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for 0".
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for a".
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for (a)".
@@ -1475,7 +1486,7 @@
   5_4.mo:Expected error in mat integer->char: "integer->char: a is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: #f is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: #\a is not a valid unicode scalar value".
---- 1589,1749 ----
+--- 1622,1782 ----
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for 0".
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for a".
   5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for (a)".
@@ -1638,7 +1649,7 @@
   5_4.mo:Expected error in mat integer->char: "integer->char: #f is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: #\a is not a valid unicode scalar value".
 ***************
-*** 1762,1774 ****
+*** 1795,1807 ****
   5_4.mo:Expected error in mat integer->char: "integer->char: 1114112 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: 1179648 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: <int> is not a valid unicode scalar value".
@@ -1652,7 +1663,7 @@
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
---- 1762,1774 ----
+--- 1795,1807 ----
   5_4.mo:Expected error in mat integer->char: "integer->char: 1114112 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: 1179648 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: <int> is not a valid unicode scalar value".
@@ -1667,7 +1678,7 @@
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
 ***************
-*** 1783,1928 ****
+*** 1816,1961 ****
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "" and "x" differ".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "y" and "" differ".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "y" and "" differ".
@@ -1814,7 +1825,7 @@
   5_5.mo:Expected error in mat r6rs:string>=?/r6rs:string-ci>=?: "string-ci>=?: a is not a string".
   5_5.mo:Expected error in mat r6rs:string>=?/r6rs:string-ci>=?: "string-ci>=?: a is not a string".
   5_5.mo:Expected error in mat r6rs:string>=?/r6rs:string-ci>=?: "string-ci>=?: a is not a string".
---- 1783,1928 ----
+--- 1816,1961 ----
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "" and "x" differ".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "y" and "" differ".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: lengths of input string "y" and "" differ".
@@ -1962,7 +1973,7 @@
   5_5.mo:Expected error in mat r6rs:string>=?/r6rs:string-ci>=?: "string-ci>=?: a is not a string".
   5_5.mo:Expected error in mat r6rs:string>=?/r6rs:string-ci>=?: "string-ci>=?: a is not a string".
 ***************
-*** 1930,1968 ****
+*** 1963,2001 ****
   5_5.mo:Expected error in mat string: "string: a is not a character".
   5_5.mo:Expected error in mat string: "string: a is not a character".
   5_5.mo:Expected error in mat string: "string: a is not a character".
@@ -2002,7 +2013,7 @@
   5_5.mo:Expected error in mat string-copy!: "string-copy!: 0 is not a string".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: #vu8(1 2 3) is not a string".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: invalid start value -1".
---- 1930,1968 ----
+--- 1963,2001 ----
   5_5.mo:Expected error in mat string: "string: a is not a character".
   5_5.mo:Expected error in mat string: "string: a is not a character".
   5_5.mo:Expected error in mat string: "string: a is not a character".
@@ -2043,7 +2054,7 @@
   5_5.mo:Expected error in mat string-copy!: "string-copy!: #vu8(1 2 3) is not a string".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: invalid start value -1".
 ***************
-*** 1986,1994 ****
+*** 2019,2027 ****
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 4 + count 1 is beyond the end of "1234"".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 0 + count 500 is beyond the end of "abcdefghi"".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 500 + count 0 is beyond the end of "abcdefghi"".
@@ -2053,7 +2064,7 @@
   5_5.mo:Expected error in mat string-truncate!: "string-truncate!: 0 is not a string".
   5_5.mo:Expected error in mat string-truncate!: "string-truncate!: #vu8(1 2 3) is not a string".
   5_5.mo:Expected error in mat string-truncate!: "string-truncate!: invalid new length -1 for "abcdefghi"".
---- 1986,1994 ----
+--- 2019,2027 ----
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 4 + count 1 is beyond the end of "1234"".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 0 + count 500 is beyond the end of "abcdefghi"".
   5_5.mo:Expected error in mat string-copy!: "string-copy!: index 500 + count 0 is beyond the end of "abcdefghi"".
@@ -2064,7 +2075,7 @@
   5_5.mo:Expected error in mat string-truncate!: "string-truncate!: #vu8(1 2 3) is not a string".
   5_5.mo:Expected error in mat string-truncate!: "string-truncate!: invalid new length -1 for "abcdefghi"".
 ***************
-*** 2000,2047 ****
+*** 2033,2080 ****
   5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
   5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
   5_5.mo:Expected error in mat string-append: "string-copy: a is not a string".
@@ -2113,7 +2124,7 @@
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a nonnegative fixnum".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a nonnegative fixnum".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a nonnegative fixnum".
---- 2000,2047 ----
+--- 2033,2080 ----
   5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
   5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
   5_5.mo:Expected error in mat string-append: "string-copy: a is not a string".
@@ -2163,7 +2174,7 @@
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a nonnegative fixnum".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a nonnegative fixnum".
 ***************
-*** 2058,2087 ****
+*** 2091,2120 ****
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e100".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".
@@ -2194,7 +2205,7 @@
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: 3 is not a valid index for #vu8(3 4 5)".
---- 2058,2087 ----
+--- 2091,2120 ----
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e100".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".
@@ -2226,7 +2237,7 @@
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: 3 is not a valid index for #vu8(3 4 5)".
 ***************
-*** 2090,2099 ****
+*** 2123,2132 ****
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value -129".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value 128".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value d".
@@ -2237,7 +2248,7 @@
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: 3 is not a valid index for #vu8(3 4 5)".
---- 2090,2099 ----
+--- 2123,2132 ----
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value -129".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value 128".
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: invalid value d".
@@ -2249,7 +2260,7 @@
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: 3 is not a valid index for #vu8(3 4 5)".
 ***************
-*** 2102,2110 ****
+*** 2135,2143 ****
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value 256".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value d".
@@ -2259,7 +2270,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index -1 for bytevector #vu8(3 252 5)".
---- 2102,2110 ----
+--- 2135,2143 ----
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value 256".
   bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: invalid value d".
@@ -2270,7 +2281,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index -1 for bytevector #vu8(3 252 5)".
 ***************
-*** 2112,2120 ****
+*** 2145,2153 ****
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 2 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 3 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5)".
@@ -2280,7 +2291,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index -1 for bytevector #vu8(3 252 5)".
---- 2112,2120 ----
+--- 2145,2153 ----
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 2 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 3 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-s16-native-ref: "bytevector-s16-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5)".
@@ -2291,7 +2302,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index -1 for bytevector #vu8(3 252 5)".
 ***************
-*** 2122,2131 ****
+*** 2155,2164 ****
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 2 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 3 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5)".
@@ -2302,7 +2313,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2122,2131 ----
+--- 2155,2164 ----
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 2 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 3 for bytevector #vu8(3 252 5)".
   bytevector.mo:Expected error in mat bytevector-u16-native-ref: "bytevector-u16-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5)".
@@ -2314,7 +2325,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2139,2148 ****
+*** 2172,2181 ****
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value 32768".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value -32769".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value "hello"".
@@ -2325,7 +2336,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2139,2148 ----
+--- 2172,2181 ----
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value 32768".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value -32769".
   bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid value "hello"".
@@ -2337,7 +2348,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2156,2164 ****
+*** 2189,2197 ****
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value 65536".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value "hello"".
@@ -2347,7 +2358,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: invalid index -1 for bytevector #vu8(3 252 5)".
---- 2156,2164 ----
+--- 2189,2197 ----
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value 65536".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid value "hello"".
@@ -2358,7 +2369,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: invalid index -1 for bytevector #vu8(3 252 5)".
 ***************
-*** 2168,2176 ****
+*** 2201,2209 ****
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness #t".
@@ -2368,7 +2379,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: invalid index -1 for bytevector #vu8(3 252 5)".
---- 2168,2176 ----
+--- 2201,2209 ----
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s16-ref: "bytevector-s16-ref: unrecognized endianness #t".
@@ -2379,7 +2390,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: #(3 252 5) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: invalid index -1 for bytevector #vu8(3 252 5)".
 ***************
-*** 2180,2189 ****
+*** 2213,2222 ****
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness #t".
@@ -2390,7 +2401,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2180,2189 ----
+--- 2213,2222 ----
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u16-ref: "bytevector-u16-ref: unrecognized endianness #t".
@@ -2402,7 +2413,7 @@
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2199,2208 ****
+*** 2232,2241 ****
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness #t".
@@ -2413,7 +2424,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2199,2208 ----
+--- 2232,2241 ----
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: unrecognized endianness #t".
@@ -2425,7 +2436,7 @@
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2218,2227 ****
+*** 2251,2260 ****
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness #t".
@@ -2436,7 +2447,7 @@
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2218,2227 ----
+--- 2251,2260 ----
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: unrecognized endianness #t".
@@ -2448,7 +2459,7 @@
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2231,2240 ****
+*** 2264,2273 ****
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness #t".
@@ -2459,7 +2470,7 @@
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2231,2240 ----
+--- 2264,2273 ----
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s24-ref: "bytevector-s24-ref: unrecognized endianness #t".
@@ -2471,7 +2482,7 @@
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2244,2254 ****
+*** 2277,2287 ****
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness #t".
@@ -2483,7 +2494,7 @@
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2244,2254 ----
+--- 2277,2287 ----
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u24-ref: "bytevector-u24-ref: unrecognized endianness #t".
@@ -2496,7 +2507,7 @@
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2262,2272 ****
+*** 2295,2305 ****
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2508,7 +2519,7 @@
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2262,2272 ----
+--- 2295,2305 ----
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2521,7 +2532,7 @@
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2280,2288 ****
+*** 2313,2321 ****
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2531,7 +2542,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2280,2288 ----
+--- 2313,2321 ----
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2542,7 +2553,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2294,2302 ****
+*** 2327,2335 ****
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 6 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 7 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5 0 0 0 ...)".
@@ -2552,7 +2563,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2294,2302 ----
+--- 2327,2335 ----
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 6 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 7 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s32-native-ref: "bytevector-s32-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5 0 0 0 ...)".
@@ -2563,7 +2574,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2308,2317 ****
+*** 2341,2350 ****
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 6 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 7 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5 0 0 0 ...)".
@@ -2574,7 +2585,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2308,2317 ----
+--- 2341,2350 ----
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 6 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 7 for bytevector #vu8(3 252 5 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u32-native-ref: "bytevector-u32-native-ref: invalid index 4.0 for bytevector #vu8(3 252 5 0 0 0 ...)".
@@ -2586,7 +2597,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2338,2347 ****
+*** 2371,2380 ****
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value <-int>".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value "hello"".
@@ -2597,7 +2608,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2338,2347 ----
+--- 2371,2380 ----
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value <-int>".
   bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid value "hello"".
@@ -2609,7 +2620,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2368,2377 ****
+*** 2401,2410 ****
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value "hello"".
@@ -2620,7 +2631,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2368,2377 ----
+--- 2401,2410 ----
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid value "hello"".
@@ -2632,7 +2643,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2381,2390 ****
+*** 2414,2423 ****
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness #t".
@@ -2643,7 +2654,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2381,2390 ----
+--- 2414,2423 ----
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s32-ref: "bytevector-s32-ref: unrecognized endianness #t".
@@ -2655,7 +2666,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2394,2404 ****
+*** 2427,2437 ****
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness #t".
@@ -2667,7 +2678,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2394,2404 ----
+--- 2427,2437 ----
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u32-ref: "bytevector-u32-ref: unrecognized endianness #t".
@@ -2680,7 +2691,7 @@
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2413,2423 ****
+*** 2446,2456 ****
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2692,7 +2703,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2413,2423 ----
+--- 2446,2456 ----
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2705,7 +2716,7 @@
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2432,2441 ****
+*** 2465,2474 ****
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2716,7 +2727,7 @@
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2432,2441 ----
+--- 2465,2474 ----
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2728,7 +2739,7 @@
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2445,2454 ****
+*** 2478,2487 ****
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness #t".
@@ -2739,7 +2750,7 @@
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2445,2454 ----
+--- 2478,2487 ----
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s40-ref: "bytevector-s40-ref: unrecognized endianness #t".
@@ -2751,7 +2762,7 @@
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2458,2468 ****
+*** 2491,2501 ****
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness #t".
@@ -2763,7 +2774,7 @@
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2458,2468 ----
+--- 2491,2501 ----
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u40-ref: "bytevector-u40-ref: unrecognized endianness #t".
@@ -2776,7 +2787,7 @@
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2476,2486 ****
+*** 2509,2519 ****
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2788,7 +2799,7 @@
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2476,2486 ----
+--- 2509,2519 ----
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2801,7 +2812,7 @@
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2494,2503 ****
+*** 2527,2536 ****
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2812,7 +2823,7 @@
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2494,2503 ----
+--- 2527,2536 ----
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2824,7 +2835,7 @@
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2507,2516 ****
+*** 2540,2549 ****
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness #t".
@@ -2835,7 +2846,7 @@
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2507,2516 ----
+--- 2540,2549 ----
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s48-ref: "bytevector-s48-ref: unrecognized endianness #t".
@@ -2847,7 +2858,7 @@
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2520,2530 ****
+*** 2553,2563 ****
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness #t".
@@ -2859,7 +2870,7 @@
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2520,2530 ----
+--- 2553,2563 ----
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u48-ref: "bytevector-u48-ref: unrecognized endianness #t".
@@ -2872,7 +2883,7 @@
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2538,2548 ****
+*** 2571,2581 ****
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2884,7 +2895,7 @@
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2538,2548 ----
+--- 2571,2581 ----
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2897,7 +2908,7 @@
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2556,2565 ****
+*** 2589,2598 ****
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2908,7 +2919,7 @@
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2556,2565 ----
+--- 2589,2598 ----
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2920,7 +2931,7 @@
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2569,2578 ****
+*** 2602,2611 ****
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness #t".
@@ -2931,7 +2942,7 @@
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
---- 2569,2578 ----
+--- 2602,2611 ----
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-s56-ref: "bytevector-s56-ref: unrecognized endianness #t".
@@ -2943,7 +2954,7 @@
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: invalid index -1 for bytevector #vu8(3 252 5 0 0 0 ...)".
 ***************
-*** 2582,2592 ****
+*** 2615,2625 ****
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness #t".
@@ -2955,7 +2966,7 @@
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2582,2592 ----
+--- 2615,2625 ----
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness bigger".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness "little"".
   bytevector.mo:Expected error in mat bytevector-u56-ref: "bytevector-u56-ref: unrecognized endianness #t".
@@ -2968,7 +2979,7 @@
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2600,2610 ****
+*** 2633,2643 ****
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2980,7 +2991,7 @@
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2600,2610 ----
+--- 2633,2643 ----
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -2993,7 +3004,7 @@
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2618,2626 ****
+*** 2651,2659 ****
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -3003,7 +3014,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2618,2626 ----
+--- 2651,2659 ----
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness huge".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness "tiny"".
   bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: unrecognized endianness #vu8(173 173 173 173 173 173 ...)".
@@ -3014,7 +3025,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2650,2658 ****
+*** 2683,2691 ****
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 102 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 103 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3024,7 +3035,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2650,2658 ----
+--- 2683,2691 ----
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 102 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 103 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-s64-native-ref: "bytevector-s64-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3035,7 +3046,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2682,2691 ****
+*** 2715,2724 ****
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 102 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 103 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3046,7 +3057,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2682,2691 ----
+--- 2715,2724 ----
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 102 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 103 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-u64-native-ref: "bytevector-u64-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3058,7 +3069,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2719,2728 ****
+*** 2752,2761 ****
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value <-int>".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value "hello"".
@@ -3069,7 +3080,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2719,2728 ----
+--- 2752,2761 ----
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value <-int>".
   bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid value "hello"".
@@ -3081,7 +3092,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2756,2765 ****
+*** 2789,2798 ****
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value "hello"".
@@ -3092,7 +3103,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2756,2765 ----
+--- 2789,2798 ----
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value <int>".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value -1".
   bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid value "hello"".
@@ -3104,7 +3115,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2775,2784 ****
+*** 2808,2817 ****
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness get-real".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e23".
@@ -3115,7 +3126,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2775,2784 ----
+--- 2808,2817 ----
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness get-real".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e23".
@@ -3127,7 +3138,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2794,2804 ****
+*** 2827,2837 ****
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness get-real".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e23".
@@ -3139,7 +3150,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2794,2804 ----
+--- 2827,2837 ----
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness get-real".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e23".
@@ -3152,7 +3163,7 @@
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2817,2827 ****
+*** 2850,2860 ****
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness gorgeous".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness #(ravenous)".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness #t".
@@ -3164,7 +3175,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
---- 2817,2827 ----
+--- 2850,2860 ----
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness gorgeous".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness #(ravenous)".
   bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: unrecognized endianness #t".
@@ -3177,7 +3188,7 @@
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 ***************
-*** 2840,2848 ****
+*** 2873,2881 ****
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness gorgeous".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness #(ravenous)".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness #t".
@@ -3187,7 +3198,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2840,2848 ----
+--- 2873,2881 ----
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness gorgeous".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness #(ravenous)".
   bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: unrecognized endianness #t".
@@ -3198,7 +3209,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2878,2886 ****
+*** 2911,2919 ****
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 38 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 39 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3208,7 +3219,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 2878,2886 ----
+--- 2911,2919 ----
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 38 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 39 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-ref: "bytevector-ieee-single-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3219,7 +3230,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 2920,2929 ****
+*** 2953,2962 ****
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 70 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 71 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3230,7 +3241,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
---- 2920,2929 ----
+--- 2953,2962 ----
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 70 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 71 for bytevector #vu8(0 0 0 0 0 0 ...)".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-ref: "bytevector-ieee-double-native-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3242,7 +3253,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 ***************
-*** 2957,2966 ****
+*** 2990,2999 ****
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: 1.0+0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: 1.0-0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: "oops" is not a real number".
@@ -3253,7 +3264,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
---- 2957,2966 ----
+--- 2990,2999 ----
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: 1.0+0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: 1.0-0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: "oops" is not a real number".
@@ -3265,7 +3276,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 ***************
-*** 3006,3015 ****
+*** 3039,3048 ****
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: 1.0+0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: 1.0-0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: "oops" is not a real number".
@@ -3276,7 +3287,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: invalid index -1 for bytevector #vu8(0 0 0 0 199 0 ...)".
---- 3006,3015 ----
+--- 3039,3048 ----
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: 1.0+0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: 1.0-0.0i is not a real number".
   bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: "oops" is not a real number".
@@ -3288,7 +3299,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: invalid index -1 for bytevector #vu8(0 0 0 0 199 0 ...)".
 ***************
-*** 3021,3030 ****
+*** 3054,3063 ****
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness "nuts"".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness crazy".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness 35".
@@ -3299,7 +3310,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 3021,3030 ----
+--- 3054,3063 ----
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness "nuts"".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness crazy".
   bytevector.mo:Expected error in mat bytevector-ieee-single-ref: "bytevector-ieee-single-ref: unrecognized endianness 35".
@@ -3311,7 +3322,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 3040,3050 ****
+*** 3073,3083 ****
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness "nuts"".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness crazy".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness 35".
@@ -3323,7 +3334,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
---- 3040,3050 ----
+--- 3073,3083 ----
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness "nuts"".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness crazy".
   bytevector.mo:Expected error in mat bytevector-ieee-double-ref: "bytevector-ieee-double-ref: unrecognized endianness 35".
@@ -3336,7 +3347,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 ***************
-*** 3061,3071 ****
+*** 3094,3104 ****
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness "ouch"".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness what?".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness #\newline".
@@ -3348,7 +3359,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
---- 3061,3071 ----
+--- 3094,3104 ----
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness "ouch"".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness what?".
   bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: unrecognized endianness #\newline".
@@ -3361,7 +3372,7 @@
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 ***************
-*** 3086,3096 ****
+*** 3119,3129 ****
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness "ouch"".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness what?".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness #\newline".
@@ -3373,7 +3384,7 @@
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 3086,3096 ----
+--- 3119,3129 ----
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness "ouch"".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness what?".
   bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: unrecognized endianness #\newline".
@@ -3386,7 +3397,7 @@
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 3125,3135 ****
+*** 3158,3168 ****
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size byte".
@@ -3398,7 +3409,7 @@
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 3125,3135 ----
+--- 3158,3168 ----
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-sint-ref: "bytevector-sint-ref: invalid size byte".
@@ -3411,7 +3422,7 @@
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 3167,3178 ****
+*** 3200,3211 ****
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size <int> for bytevector #vu8(1 2 3 4)".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size byte".
@@ -3424,7 +3435,7 @@
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 3167,3178 ----
+--- 3200,3211 ----
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size <int> for bytevector #vu8(1 2 3 4)".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-uint-ref: "bytevector-uint-ref: invalid size byte".
@@ -3438,7 +3449,7 @@
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 3231,3242 ****
+*** 3264,3275 ****
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size byte".
@@ -3451,7 +3462,7 @@
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
---- 3231,3242 ----
+--- 3264,3275 ----
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid size byte".
@@ -3465,7 +3476,7 @@
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 ***************
-*** 3295,3310 ****
+*** 3328,3343 ****
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size byte".
@@ -3482,7 +3493,7 @@
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: 0 is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: #(1 2 3) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: invalid start value -1".
---- 3295,3310 ----
+--- 3328,3343 ----
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size 0".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size -1".
   bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid size byte".
@@ -3500,7 +3511,7 @@
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: #(1 2 3) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: invalid start value -1".
 ***************
-*** 3328,3336 ****
+*** 3361,3369 ****
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 4 + count 1 is beyond the end of #vu8(1 2 3 4)".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 0 + count 500 is beyond the end of #vu8(255 254 253 252 251 250 ...)".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 500 + count 0 is beyond the end of #vu8(255 254 253 252 251 250 ...)".
@@ -3510,7 +3521,7 @@
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: 0 is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: "abc" is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length -1 for #vu8(1 2 3 4 5 6 ...)".
---- 3328,3336 ----
+--- 3361,3369 ----
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 4 + count 1 is beyond the end of #vu8(1 2 3 4)".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 0 + count 500 is beyond the end of #vu8(255 254 253 252 251 250 ...)".
   bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 500 + count 0 is beyond the end of #vu8(255 254 253 252 251 250 ...)".
@@ -3521,7 +3532,7 @@
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: "abc" is not a bytevector".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length -1 for #vu8(1 2 3 4 5 6 ...)".
 ***************
-*** 3338,3378 ****
+*** 3371,3411 ****
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length 1000 for #vu8(1 2 3 4 5 6 ...)".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length <int> for #vu8(1 2 3 4 5 6 ...)".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length a for #vu8(1 2 3 4 5 6 ...)".
@@ -3563,7 +3574,7 @@
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: (1 2 . 3) is not a proper list".
---- 3338,3378 ----
+--- 3371,3411 ----
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length 1000 for #vu8(1 2 3 4 5 6 ...)".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length <int> for #vu8(1 2 3 4 5 6 ...)".
   bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length a for #vu8(1 2 3 4 5 6 ...)".
@@ -3606,7 +3617,7 @@
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: (1 2 . 3) is not a proper list".
 ***************
-*** 3411,3419 ****
+*** 3444,3452 ****
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size 0".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size 1.0".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size "oops"".
@@ -3616,7 +3627,7 @@
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: (1 2 . 3) is not a proper list".
---- 3411,3419 ----
+--- 3444,3452 ----
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size 0".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size 1.0".
   bytevector.mo:Expected error in mat sint-list->bytevector: "sint-list->bytevector: invalid size "oops"".
@@ -3627,7 +3638,7 @@
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: #(a b c) is not a proper list".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: (1 2 . 3) is not a proper list".
 ***************
-*** 3452,3460 ****
+*** 3485,3493 ****
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size 0".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size 1.0".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size "oops"".
@@ -3637,7 +3648,7 @@
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: unrecognized endianness spam".
---- 3452,3460 ----
+--- 3485,3493 ----
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size 0".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size 1.0".
   bytevector.mo:Expected error in mat uint-list->bytevector: "uint-list->bytevector: invalid size "oops"".
@@ -3648,7 +3659,7 @@
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: unrecognized endianness spam".
 ***************
-*** 3474,3482 ****
+*** 3507,3515 ****
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 10".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 11".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 50".
@@ -3658,7 +3669,7 @@
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: unrecognized endianness spam".
---- 3474,3482 ----
+--- 3507,3515 ----
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 10".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 11".
   bytevector.mo:Expected error in mat bytevector->sint-list: "bytevector->sint-list: bytevector length 12 is not a multiple of size 50".
@@ -3669,7 +3680,7 @@
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: #(a b c) is not a bytevector".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: unrecognized endianness spam".
 ***************
-*** 3496,3515 ****
+*** 3529,3548 ****
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 10".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 11".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 50".
@@ -3690,7 +3701,7 @@
   misc.mo:Expected error in mat compiler3: "incorrect argument count in call (consumer 1 2) at line 3, char 19 of testfile.ss".
   misc.mo:Expected error in mat compiler3: "incorrect argument count in call (consumer 1 2)".
   misc.mo:Expected error in mat compiler3: "variable goto is not bound".
---- 3496,3515 ----
+--- 3529,3548 ----
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 10".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 11".
   bytevector.mo:Expected error in mat bytevector->uint-list: "bytevector->uint-list: bytevector length 12 is not a multiple of size 50".
@@ -3712,7 +3723,7 @@
   misc.mo:Expected error in mat compiler3: "incorrect argument count in call (consumer 1 2)".
   misc.mo:Expected error in mat compiler3: "variable goto is not bound".
 ***************
-*** 3581,3601 ****
+*** 3614,3634 ****
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to assign undefined variable b".
   misc.mo:Expected error in mat compile-profile: "compile-profile: invalid mode src [must be #f, #t, source, or block]".
@@ -3734,7 +3745,7 @@
   misc.mo:Expected error in mat compile-profile: "profile-dump-data: #t is not a string".
   misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump 17".
   misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump (17)".
---- 3581,3601 ----
+--- 3614,3634 ----
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to assign undefined variable b".
   misc.mo:Expected error in mat compile-profile: "compile-profile: invalid mode src [must be #f, #t, source, or block]".
@@ -3757,7 +3768,7 @@
   misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump 17".
   misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump (17)".
 ***************
-*** 3628,3634 ****
+*** 3661,3667 ****
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 2".
@@ -3765,7 +3776,7 @@
   misc.mo:Expected error in mat cost-center: "with-cost-center: foo is not a cost center".
   misc.mo:Expected error in mat cost-center: "with-cost-center: bar is not a procedure".
   misc.mo:Expected error in mat cost-center: "cost-center-instruction-count: 5 is not a cost center".
---- 3628,3634 ----
+--- 3661,3667 ----
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
   misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 2".
@@ -3774,7 +3785,7 @@
   misc.mo:Expected error in mat cost-center: "with-cost-center: bar is not a procedure".
   misc.mo:Expected error in mat cost-center: "cost-center-instruction-count: 5 is not a cost center".
 ***************
-*** 3682,3689 ****
+*** 3715,3722 ****
   misc.mo:Expected error in mat apropos: "apropos: 3 is not a symbol or string".
   misc.mo:Expected error in mat apropos: "apropos: (hit me) is not a symbol or string".
   misc.mo:Expected error in mat apropos: "apropos-list: b is not an environment".
@@ -3783,7 +3794,7 @@
   misc.mo:Expected error in mat apropos: "variable $apropos-unbound1 is not bound".
   misc.mo:Expected error in mat apropos: "variable $apropos-unbound2 is not bound".
   misc.mo:Expected error in mat simplify-if: "textual-port?: a is not a port".
---- 3682,3689 ----
+--- 3715,3722 ----
   misc.mo:Expected error in mat apropos: "apropos: 3 is not a symbol or string".
   misc.mo:Expected error in mat apropos: "apropos: (hit me) is not a symbol or string".
   misc.mo:Expected error in mat apropos: "apropos-list: b is not an environment".
@@ -3793,7 +3804,7 @@
   misc.mo:Expected error in mat apropos: "variable $apropos-unbound2 is not bound".
   misc.mo:Expected error in mat simplify-if: "textual-port?: a is not a port".
 ***************
-*** 3708,3716 ****
+*** 3741,3749 ****
   cp0.mo:Expected error in mat cp0-regression: "source-object-efp: #f is not a source object".
   cp0.mo:Expected error in mat cp0-regression: "source-object-sfd: #f is not a source object".
   cp0.mo:Expected error in mat cp0-regression: "condition: #f is not a condition".
@@ -3803,7 +3814,7 @@
   cp0.mo:Expected error in mat expand-output: "expand-output: #t is not a textual output port or #f".
   cp0.mo:Expected error in mat expand-output: "expand-output: #<binary output port bytevector> is not a textual output port or #f".
   cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #t is not a textual output port or #f".
---- 3708,3716 ----
+--- 3741,3749 ----
   cp0.mo:Expected error in mat cp0-regression: "source-object-efp: #f is not a source object".
   cp0.mo:Expected error in mat cp0-regression: "source-object-sfd: #f is not a source object".
   cp0.mo:Expected error in mat cp0-regression: "condition: #f is not a condition".
@@ -3814,7 +3825,7 @@
   cp0.mo:Expected error in mat expand-output: "expand-output: #<binary output port bytevector> is not a textual output port or #f".
   cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #t is not a textual output port or #f".
 ***************
-*** 3774,3782 ****
+*** 3807,3815 ****
   5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 . 3) is not a proper list".
   5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 3 2 3 2 ...) is circular".
   5_6.mo:Expected error in mat fxvector->list: "fxvector->list: (a b c) is not an fxvector".
@@ -3824,7 +3835,7 @@
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
---- 3774,3782 ----
+--- 3807,3815 ----
   5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 . 3) is not a proper list".
   5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 3 2 3 2 ...) is circular".
   5_6.mo:Expected error in mat fxvector->list: "fxvector->list: (a b c) is not an fxvector".
@@ -3835,7 +3846,7 @@
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
 ***************
-*** 3791,3799 ****
+*** 3824,3832 ****
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
@@ -3845,7 +3856,7 @@
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
---- 3791,3799 ----
+--- 3824,3832 ----
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
@@ -3856,7 +3867,7 @@
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
 ***************
-*** 3808,3825 ****
+*** 3841,3858 ****
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
@@ -3875,7 +3886,7 @@
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: 3 is not a vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
---- 3808,3825 ----
+--- 3841,3858 ----
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
@@ -3895,7 +3906,7 @@
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
 ***************
-*** 3881,3902 ****
+*** 3914,3935 ****
   6.mo:Expected error in mat port-operations: "clear-output-port: not permitted on closed port #<output port testfile.ss>".
   6.mo:Expected error in mat port-operations: "current-output-port: a is not a textual output port".
   6.mo:Expected error in mat port-operations: "current-input-port: a is not a textual input port".
@@ -3918,7 +3929,7 @@
   6.mo:Expected error in mat port-operations1: "open-input-output-file: furball is not a string".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: failed for /probably/not/a/good/path: no such file or directory".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: invalid option compressed".
---- 3881,3902 ----
+--- 3914,3935 ----
   6.mo:Expected error in mat port-operations: "clear-output-port: not permitted on closed port #<output port testfile.ss>".
   6.mo:Expected error in mat port-operations: "current-output-port: a is not a textual output port".
   6.mo:Expected error in mat port-operations: "current-input-port: a is not a textual input port".
@@ -3942,7 +3953,7 @@
   6.mo:Expected error in mat port-operations1: "open-input-output-file: failed for /probably/not/a/good/path: no such file or directory".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: invalid option compressed".
 ***************
-*** 3905,3911 ****
+*** 3938,3944 ****
   6.mo:Expected error in mat port-operations1: "truncate-file: all-the-way is not a valid length".
   6.mo:Expected error in mat port-operations1: "truncate-file: #<input port testfile.ss> is not an output port".
   6.mo:Expected error in mat port-operations1: "truncate-file: animal-crackers is not an output port".
@@ -3950,7 +3961,7 @@
   6.mo:Expected error in mat port-operations1: "truncate-file: not permitted on closed port #<input/output port testfile.ss>".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<input port string> is not a string output port".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<output port testfile.ss> is not a string output port".
---- 3905,3911 ----
+--- 3938,3944 ----
   6.mo:Expected error in mat port-operations1: "truncate-file: all-the-way is not a valid length".
   6.mo:Expected error in mat port-operations1: "truncate-file: #<input port testfile.ss> is not an output port".
   6.mo:Expected error in mat port-operations1: "truncate-file: animal-crackers is not an output port".
@@ -3959,7 +3970,7 @@
   6.mo:Expected error in mat port-operations1: "get-output-string: #<input port string> is not a string output port".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<output port testfile.ss> is not a string output port".
 ***************
-*** 3922,3929 ****
+*** 3955,3962 ****
   6.mo:Expected error in mat string-port-file-position: "file-position: -1 is not a valid position".
   6.mo:Expected error in mat fresh-line: "fresh-line: 3 is not a textual output port".
   6.mo:Expected error in mat fresh-line: "fresh-line: #<input port string> is not a textual output port".
@@ -3968,7 +3979,7 @@
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
---- 3922,3929 ----
+--- 3955,3962 ----
   6.mo:Expected error in mat string-port-file-position: "file-position: -1 is not a valid position".
   6.mo:Expected error in mat fresh-line: "fresh-line: 3 is not a textual output port".
   6.mo:Expected error in mat fresh-line: "fresh-line: #<input port string> is not a textual output port".
@@ -3978,7 +3989,7 @@
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
 ***************
-*** 6389,6420 ****
+*** 6440,6471 ****
   io.mo:Expected error in mat port-operations: "put-u8: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "put-bytevector: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "flush-output-port: not permitted on closed port #<binary output port testfile.ss>".
@@ -4011,7 +4022,7 @@
   io.mo:Expected error in mat port-operations1: "open-file-input/output-port: failed for /probably/not/a/good/path: no such file or directory".
   io.mo:Expected error in mat port-operations1: "invalid file option uncompressed".
   io.mo:Expected error in mat port-operations1: "invalid file option truncate".
---- 6389,6420 ----
+--- 6440,6471 ----
   io.mo:Expected error in mat port-operations: "put-u8: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "put-bytevector: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "flush-output-port: not permitted on closed port #<binary output port testfile.ss>".
@@ -4045,7 +4056,7 @@
   io.mo:Expected error in mat port-operations1: "invalid file option uncompressed".
   io.mo:Expected error in mat port-operations1: "invalid file option truncate".
 ***************
-*** 6425,6431 ****
+*** 6476,6482 ****
   io.mo:Expected error in mat port-operations1: "set-port-length!: all-the-way is not a valid length".
   io.mo:Expected error in mat port-operations1: "truncate-port: #<binary input port testfile.ss> is not an output port".
   io.mo:Expected error in mat port-operations1: "truncate-port: animal-crackers is not an output port".
@@ -4053,7 +4064,7 @@
   io.mo:Expected error in mat port-operations1: "truncate-port: not permitted on closed port #<binary input/output port testfile.ss>".
   io.mo:Expected error in mat port-operations3: "file-port?: "not a port" is not a port".
   io.mo:Expected error in mat port-operations3: "port-file-descriptor: oops is not a port".
---- 6425,6431 ----
+--- 6476,6482 ----
   io.mo:Expected error in mat port-operations1: "set-port-length!: all-the-way is not a valid length".
   io.mo:Expected error in mat port-operations1: "truncate-port: #<binary input port testfile.ss> is not an output port".
   io.mo:Expected error in mat port-operations1: "truncate-port: animal-crackers is not an output port".
@@ -4062,7 +4073,7 @@
   io.mo:Expected error in mat port-operations3: "file-port?: "not a port" is not a port".
   io.mo:Expected error in mat port-operations3: "port-file-descriptor: oops is not a port".
 ***************
-*** 6608,6620 ****
+*** 6659,6671 ****
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: #vu8(1 2 3) is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: -1 is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: 6 is not a valid size for #<binary output port bytevector>".
@@ -4076,7 +4087,7 @@
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: shoe is not a positive fixnum".
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 0 is not a positive fixnum".
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: -15 is not a positive fixnum".
---- 6608,6620 ----
+--- 6659,6671 ----
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: #vu8(1 2 3) is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: -1 is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: 6 is not a valid size for #<binary output port bytevector>".
@@ -4091,7 +4102,7 @@
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 0 is not a positive fixnum".
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: -15 is not a positive fixnum".
 ***************
-*** 6622,6637 ****
+*** 6673,6688 ****
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 1024.0 is not a positive fixnum".
   io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
@@ -4108,7 +4119,7 @@
   io.mo:Expected error in mat custom-binary-ports: "unget-u8: cannot unget 255 on #<binary input port foo>".
   io.mo:Expected error in mat custom-binary-ports: "put-u8: #<binary input port foo> is not a binary output port".
   io.mo:Expected error in mat custom-binary-ports: "port-length: #<binary input port foo> does not support operation".
---- 6622,6637 ----
+--- 6673,6688 ----
   io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 1024.0 is not a positive fixnum".
   io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
@@ -4126,7 +4137,7 @@
   io.mo:Expected error in mat custom-binary-ports: "put-u8: #<binary input port foo> is not a binary output port".
   io.mo:Expected error in mat custom-binary-ports: "port-length: #<binary input port foo> does not support operation".
 ***************
-*** 6703,6718 ****
+*** 6754,6769 ****
   io.mo:Expected error in mat current-ports: "console-output-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-ports: "console-error-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-transcoder: "current-transcoder: #<output port string> is not a transcoder".
@@ -4143,7 +4154,7 @@
   io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 0 of #<input port string>".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 15 of #<input port string>".
---- 6703,6718 ----
+--- 6754,6769 ----
   io.mo:Expected error in mat current-ports: "console-output-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-ports: "console-error-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-transcoder: "current-transcoder: #<output port string> is not a transcoder".
@@ -4161,7 +4172,7 @@
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 0 of #<input port string>".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 15 of #<input port string>".
 ***************
-*** 6883,6889 ****
+*** 6934,6940 ****
   7.mo:Expected error in mat eval-when: "invalid syntax visit-x".
   7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
   7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
@@ -4169,7 +4180,7 @@
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
---- 6883,6889 ----
+--- 6934,6940 ----
   7.mo:Expected error in mat eval-when: "invalid syntax visit-x".
   7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
   7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
@@ -4178,7 +4189,7 @@
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
 ***************
-*** 6897,6923 ****
+*** 6948,6974 ****
   7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
   7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
   7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
@@ -4206,7 +4217,7 @@
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: hello is not an environment".
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: #<environment *scheme*> is not a symbol".
   7.mo:Expected error in mat top-level-value-functions: "variable i-am-not-bound-i-hope is not bound".
---- 6897,6923 ----
+--- 6948,6974 ----
   7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
   7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
   7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
@@ -4235,7 +4246,7 @@
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: #<environment *scheme*> is not a symbol".
   7.mo:Expected error in mat top-level-value-functions: "variable i-am-not-bound-i-hope is not bound".
 ***************
-*** 7295,7385 ****
+*** 7356,7446 ****
   hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
@@ -4327,7 +4338,7 @@
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-weak?: (hash . table) is not a hashtable".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
---- 7295,7385 ----
+--- 7356,7446 ----
   hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
@@ -4420,7 +4431,7 @@
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
 ***************
-*** 7399,7494 ****
+*** 7460,7555 ****
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 3.5 for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 1+2i for any".
@@ -4517,7 +4528,7 @@
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument -1".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #t".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #f".
---- 7399,7494 ----
+--- 7460,7555 ----
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 3.5 for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 1+2i for any".
@@ -4615,7 +4626,7 @@
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #t".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #f".
 ***************
-*** 7496,7511 ****
+*** 7557,7572 ****
   hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
@@ -4632,7 +4643,7 @@
   hash.mo:Expected error in mat hash-functions: "string-ci-hash: hello is not a string".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
---- 7496,7511 ----
+--- 7557,7572 ----
   hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
@@ -4650,7 +4661,7 @@
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
 ***************
-*** 7620,7627 ****
+*** 7681,7688 ****
   8.mo:Expected error in mat with-syntax: "invalid syntax a".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
@@ -4659,7 +4670,7 @@
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: improper list structure (a b . c)".
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
   8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
---- 7620,7627 ----
+--- 7681,7688 ----
   8.mo:Expected error in mat with-syntax: "invalid syntax a".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
@@ -4669,7 +4680,7 @@
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
   8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
 ***************
-*** 8209,8224 ****
+*** 8270,8285 ****
   8.mo:Expected error in mat rnrs-eval: "attempt to assign unbound identifier foo".
   8.mo:Expected error in mat rnrs-eval: "invalid definition in immutable environment (define cons (quote #<procedure vector>))".
   8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: "hello" is not a symbol".
@@ -4686,7 +4697,7 @@
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: hello is not an environment".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: #<environment *scheme*> is not a symbol".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: cannot modify immutable environment #<environment *scheme*>".
---- 8209,8224 ----
+--- 8270,8285 ----
   8.mo:Expected error in mat rnrs-eval: "attempt to assign unbound identifier foo".
   8.mo:Expected error in mat rnrs-eval: "invalid definition in immutable environment (define cons (quote #<procedure vector>))".
   8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: "hello" is not a symbol".
@@ -4704,7 +4715,7 @@
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: #<environment *scheme*> is not a symbol".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: cannot modify immutable environment #<environment *scheme*>".
 ***************
-*** 8297,8319 ****
+*** 8358,8380 ****
   fx.mo:Expected error in mat fx=?: "fx=?: (a) is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <int> is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <-int> is not a fixnum".
@@ -4728,7 +4739,7 @@
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
---- 8297,8319 ----
+--- 8358,8380 ----
   fx.mo:Expected error in mat fx=?: "fx=?: (a) is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <int> is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <-int> is not a fixnum".
@@ -4753,7 +4764,7 @@
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
 ***************
-*** 8345,8357 ****
+*** 8406,8418 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -4767,7 +4778,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8345,8357 ----
+--- 8406,8418 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -4782,7 +4793,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 8401,8413 ****
+*** 8462,8474 ****
   fx.mo:Expected error in mat fx1+: "fx1+: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: <int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: a is not a fixnum".
@@ -4796,7 +4807,7 @@
   fx.mo:Expected error in mat fxmax: "fxmax: a is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <int> is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <-int> is not a fixnum".
---- 8401,8413 ----
+--- 8462,8474 ----
   fx.mo:Expected error in mat fx1+: "fx1+: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: <int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: a is not a fixnum".
@@ -4811,7 +4822,7 @@
   fx.mo:Expected error in mat fxmax: "fxmax: <int> is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <-int> is not a fixnum".
 ***************
-*** 8504,8513 ****
+*** 8565,8574 ****
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
@@ -4822,7 +4833,7 @@
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 35.0 is not a fixnum".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 5.0 is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 8.0 is not a valid end index".
---- 8504,8513 ----
+--- 8565,8574 ----
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
@@ -4834,7 +4845,7 @@
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 5.0 is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 8.0 is not a valid end index".
 ***************
-*** 8521,8554 ****
+*** 8582,8615 ****
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
@@ -4869,7 +4880,7 @@
   fx.mo:Expected error in mat fxif: "fxif: a is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: (a) is not a fixnum".
---- 8521,8554 ----
+--- 8582,8615 ----
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
@@ -4905,7 +4916,7 @@
   fx.mo:Expected error in mat fxif: "fxif: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: (a) is not a fixnum".
 ***************
-*** 8558,8601 ****
+*** 8619,8662 ****
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
@@ -4950,7 +4961,7 @@
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: <int> is not a fixnum".
---- 8558,8601 ----
+--- 8619,8662 ----
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
@@ -4996,7 +5007,7 @@
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: <int> is not a fixnum".
 ***************
-*** 8604,8614 ****
+*** 8665,8675 ****
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index -1".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
@@ -5008,7 +5019,7 @@
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3.4 is not a valid start index".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3/4 is not a valid end index".
---- 8604,8614 ----
+--- 8665,8675 ----
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index -1".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
@@ -5021,7 +5032,7 @@
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3.4 is not a valid start index".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3/4 is not a valid end index".
 ***************
-*** 8668,8677 ****
+*** 8729,8738 ****
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: (a) is not a fixnum".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
@@ -5032,7 +5043,7 @@
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 3.0 is not a fixnum".
---- 8668,8677 ----
+--- 8729,8738 ----
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: (a) is not a fixnum".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
@@ -5044,7 +5055,7 @@
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 3.0 is not a fixnum".
 ***************
-*** 8687,8696 ****
+*** 8748,8757 ****
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
@@ -5055,7 +5066,7 @@
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 3.0 is not a fixnum".
---- 8687,8696 ----
+--- 8748,8757 ----
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
@@ -5067,7 +5078,7 @@
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 3.0 is not a fixnum".
 ***************
-*** 8706,8715 ****
+*** 8767,8776 ****
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
@@ -5078,7 +5089,7 @@
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 3.0 is not a fixnum".
---- 8706,8715 ----
+--- 8767,8776 ----
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
@@ -5090,7 +5101,7 @@
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 3.0 is not a fixnum".
 ***************
-*** 8725,8735 ****
+*** 8786,8796 ****
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
@@ -5102,7 +5113,7 @@
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: a is not a fixnum".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index 2.0".
---- 8725,8735 ----
+--- 8786,8796 ----
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
@@ -5115,7 +5126,7 @@
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index 2.0".
 ***************
-*** 8752,8761 ****
+*** 8813,8822 ****
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: count 1 is greater than difference between end index 5 and start index 5".
@@ -5126,7 +5137,7 @@
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: a is not a fixnum".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index 2.0".
---- 8752,8761 ----
+--- 8813,8822 ----
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: count 1 is greater than difference between end index 5 and start index 5".
@@ -5138,7 +5149,7 @@
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index 2.0".
 ***************
-*** 8771,8788 ****
+*** 8832,8849 ****
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <-int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: start index 7 is greater than end index 5".
@@ -5157,7 +5168,7 @@
   fl.mo:Expected error in mat fl=: "fl=: (a) is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
---- 8771,8788 ----
+--- 8832,8849 ----
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <-int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: start index 7 is greater than end index 5".
@@ -5177,7 +5188,7 @@
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
 ***************
-*** 8790,8796 ****
+*** 8851,8857 ****
   fl.mo:Expected error in mat fl=: "fl=: 3 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
@@ -5185,7 +5196,7 @@
   fl.mo:Expected error in mat fl<: "fl<: (a) is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
---- 8790,8796 ----
+--- 8851,8857 ----
   fl.mo:Expected error in mat fl=: "fl=: 3 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
@@ -5194,7 +5205,7 @@
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
 ***************
-*** 8798,8804 ****
+*** 8859,8865 ****
   fl.mo:Expected error in mat fl<: "fl<: 3 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
@@ -5202,7 +5213,7 @@
   fl.mo:Expected error in mat fl>: "fl>: (a) is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
---- 8798,8804 ----
+--- 8859,8865 ----
   fl.mo:Expected error in mat fl<: "fl<: 3 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
@@ -5211,7 +5222,7 @@
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
 ***************
-*** 8806,8812 ****
+*** 8867,8873 ****
   fl.mo:Expected error in mat fl>: "fl>: 3 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
@@ -5219,7 +5230,7 @@
   fl.mo:Expected error in mat fl<=: "fl<=: (a) is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
---- 8806,8812 ----
+--- 8867,8873 ----
   fl.mo:Expected error in mat fl>: "fl>: 3 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
@@ -5228,7 +5239,7 @@
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
 ***************
-*** 8814,8820 ****
+*** 8875,8881 ****
   fl.mo:Expected error in mat fl<=: "fl<=: 3 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
@@ -5236,7 +5247,7 @@
   fl.mo:Expected error in mat fl>=: "fl>=: (a) is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
---- 8814,8820 ----
+--- 8875,8881 ----
   fl.mo:Expected error in mat fl<=: "fl<=: 3 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
@@ -5245,7 +5256,7 @@
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
 ***************
-*** 8822,8861 ****
+*** 8883,8922 ****
   fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
@@ -5286,7 +5297,7 @@
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: 3 is not a flonum".
---- 8822,8861 ----
+--- 8883,8922 ----
   fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
@@ -5328,7 +5339,7 @@
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: 3 is not a flonum".
 ***************
-*** 8865,8871 ****
+*** 8926,8932 ****
   fl.mo:Expected error in mat fl+: "fl+: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 1 is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 2/3 is not a flonum".
@@ -5336,7 +5347,7 @@
   fl.mo:Expected error in mat fl-: "fl-: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: 1 is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: a is not a flonum".
---- 8865,8871 ----
+--- 8926,8932 ----
   fl.mo:Expected error in mat fl+: "fl+: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 1 is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 2/3 is not a flonum".
@@ -5345,7 +5356,7 @@
   fl.mo:Expected error in mat fl-: "fl-: 1 is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: a is not a flonum".
 ***************
-*** 8875,8957 ****
+*** 8936,9018 ****
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -5429,7 +5440,7 @@
   fl.mo:Expected error in mat flround: "flround: a is not a flonum".
   fl.mo:Expected error in mat flround: "flround: 2.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flround: "flround: 2+1i is not a flonum".
---- 8875,8957 ----
+--- 8936,9018 ----
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -5514,7 +5525,7 @@
   fl.mo:Expected error in mat flround: "flround: 2.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flround: "flround: 2+1i is not a flonum".
 ***************
-*** 8971,9019 ****
+*** 9032,9080 ****
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -5564,7 +5575,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
---- 8971,9019 ----
+--- 9032,9080 ----
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -5615,7 +5626,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
 ***************
-*** 9021,9027 ****
+*** 9082,9088 ****
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -5623,7 +5634,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
---- 9021,9027 ----
+--- 9082,9088 ----
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -5632,7 +5643,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
 ***************
-*** 9029,9042 ****
+*** 9090,9103 ****
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -5647,7 +5658,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: a is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
---- 9029,9042 ----
+--- 9090,9103 ----
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -5663,7 +5674,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
 ***************
-*** 9082,9088 ****
+*** 9143,9149 ****
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -5671,7 +5682,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
---- 9082,9088 ----
+--- 9143,9149 ----
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -5680,7 +5691,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
 ***************
-*** 9092,9105 ****
+*** 9153,9166 ****
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -5695,7 +5706,7 @@
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
---- 9092,9105 ----
+--- 9153,9166 ----
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -5711,7 +5722,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ***************
-*** 9134,9141 ****
+*** 9195,9202 ****
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -5720,7 +5731,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
---- 9134,9141 ----
+--- 9195,9202 ----
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -5730,7 +5741,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
-*** 9653,9724 ****
+*** 9714,9785 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -5803,7 +5814,7 @@
   date.mo:Expected error in mat time: "time>=?: 3 is not a time record".
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
---- 9653,9724 ----
+--- 9714,9785 ----
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -5877,7 +5888,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 9726,9740 ****
+*** 9787,9801 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -5893,7 +5904,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 9726,9740 ----
+--- 9787,9801 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -5910,7 +5921,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 9760,9812 ****
+*** 9821,9873 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -5964,7 +5975,7 @@
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 9760,9812 ----
+--- 9821,9873 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".

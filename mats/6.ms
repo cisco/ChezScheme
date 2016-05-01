@@ -1700,6 +1700,8 @@
   "; Test error \"cannot represent\"\n\n(sqrt #e+inf.0)\n\n"
   "; Test error \"cannot represent\"\n\n(sqrt #e-inf.0)\n\n"
   "; Test error \"cannot represent\"\n\n(sqrt #e+nan.0)\n\n"
+  "; Test error \"cannot represent\"\n\n(sqrt #e0/0e20)\n\n"
+  "; Test error \"cannot represent\"\n\n(sqrt #e1@1)\n\n"
   "; Test error \"invalid number syntax\"\n\n(sqrt #e+nan.5)\n\n"
   "; Test error \"invalid sharp-sign prefix #~c\"\n\n(if #T #N #T)\n"
   "; Test error \"invalid sharp-sign prefix ~a~a\"\n\n(if (optimize-til-it-hurts?) (#7%super-fast+ 1 2) (+ 1 2))\n"
@@ -1833,6 +1835,10 @@
   "; Test error \"back-slash symbol escape syntax not allowed in #!r6rs mode\"\n\n#!r6rs ab\\ cd\n"
   "; Test error \"|...| symbol escape syntax not allowed in #!r6rs mode\"\n\n#!r6rs |ab  cd|\n"
   "; Test error \"@abc symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs @abc\n"
+  "; Test error \"123a symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs 123a\n"
+  "; Test error \"123# number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 123#\n"
+  "; Test error \"#x1/2e2 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 1/2e2\n"
+  "; Test error \"#x.3 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs #x.3\n"
 
  ; following tests adapted from the read0 benchmark distributed by Will
  ; Clinger, which as of 08/08/2009 appears to be in the public domain,
