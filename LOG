@@ -60,5 +60,5 @@
     stats.c,
     date.ms
 - fixed incorrect handling of library-extension when searching wpo files
-    compile.ss
+    compile.ss,
     7.ms

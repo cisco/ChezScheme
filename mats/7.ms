@@ -1926,7 +1926,7 @@ evaluating module init
           '(library (testfile-wpo-extlib)
              (export magic)
              (import (rnrs))
-             (define magic 9))))
+             (define magic (cons 9 5)))))
       'replace)
     (with-output-to-file "testfile-wpo-ext.ss"
       (lambda ()
@@ -1948,6 +1948,10 @@ evaluating module init
            (compile-whole-program (format "~a.wpo" x) (format "~a-all.so" x))))
       'wpo-ext)
     "()\n")
+
+  (equal?
+    (separate-eval '(load "testfile-wpo-ext-all.so"))
+    "(9 . 5)\n")
 )
 
 (mat compile-whole-library
@@ -3041,6 +3045,45 @@ evaluating module init
   (equal?
     (separate-eval '(load-program "testfile-cwl-c13.so"))
     "(51 85 119)\n")
+
+  (begin
+    (with-output-to-file "testfile-wpo-extlib-1.chezscheme.sls"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-wpo-extlib-1)
+             (export magic)
+             (import (rnrs))
+             (define magic (cons 9 5)))))
+      'replace)
+    (with-output-to-file "testfile-wpo-extlib-2.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-wpo-extlib-2)
+             (export p)
+             (import (chezscheme) (testfile-wpo-extlib))
+             (define p
+               (lambda ()
+                 (pretty-print magic))))))
+      'replace)
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t]
+                        [generate-wpo-files #t])
+           (compile-library x)))
+      'wpo-extlib-2)
+    #t)
+
+  (equal?
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([generate-wpo-files #t])
+           (compile-whole-library (format "~a.wpo" x) (format "~a-all.so" x))))
+      'wpo-extlib-2)
+    "()\n")
+
+  (equal?
+    (separate-eval '(let () (import (testfile-wpo-extlib-2)) (p)))
+    "(9 . 5)\n")
 )
 
 
