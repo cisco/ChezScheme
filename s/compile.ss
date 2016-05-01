@@ -792,7 +792,7 @@
         (define read-library
           (lambda (path libs-visible?)
             (cond
-              [(find-library who path "wpo" (map (lambda (ext) (cons (car ext) ".wpo")) (library-extensions))) =>
+              [(find-library who path "wpo" (map (lambda (ext) (cons (car ext) (string-append (path-root (cdr ext)) ".wpo"))) (library-extensions))) =>
                (lambda (fn)
                  (let-values ([(no-program node*) (process-ir*! (read-input-file who fn) fn #f libs-visible?)])
                    (values fn node*)))]
