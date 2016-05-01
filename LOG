@@ -59,6 +59,9 @@
   object to a time-utc object.
     stats.c,
     date.ms
+- fixed incorrect handling of library-extension when searching wpo files
+    compile.ss,
+    7.ms
 - modified floatify_normalize to properly round denormalized results and
   obviated scale_float in the process.
     number.c,
