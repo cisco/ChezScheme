@@ -1918,6 +1918,36 @@ evaluating module init
   (equal?
     (separate-eval '(load "testfile-wpo-ab7-all.so"))
     "invoking a\ninvoking c\ninvoking b\n#t\n#t\n#t\n")
+
+  (begin
+    (with-output-to-file "testfile-wpo-extlib.chezscheme.sls"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-wpo-extlib)
+             (export magic)
+             (import (rnrs))
+             (define magic 9))))
+      'replace)
+    (with-output-to-file "testfile-wpo-ext.ss"
+      (lambda ()
+        (pretty-print '(import (chezscheme) (testfile-wpo-extlib)))
+        (pretty-print '(pretty-print magic)))
+      'replace)
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t]
+                        [generate-wpo-files #t])
+           (compile-program x)))
+      'wpo-ext)
+    #t)
+
+  (equal?
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([generate-wpo-files #t])
+           (compile-whole-program (format "~a.wpo" x) (format "~a-all.so" x))))
+      'wpo-ext)
+    "()\n")
 )
 
 (mat compile-whole-library
