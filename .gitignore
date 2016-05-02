@@ -11,7 +11,7 @@
 /ti3le/
 /ti3nt/
 /ti3osx/
-Makefile
+/Makefile
 .*.sw?
 .sw?
 bin
