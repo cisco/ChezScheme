@@ -40,8 +40,8 @@ Possible options include:
 
 (B) Treat each subpart as exact or inexact in isolation and use the
     usual rules for preserving inexactness when combining the subparts.
-    Apply inexact to the result if #i is present and exact
-    to the result if #e is present.
+    Apply inexact to the result if #i is present and exact to the
+    result if #e is present.
 
 (C) If #e and #i are not present, treat each subpart as exact or inexact
     in isolation and use the usual rules for preserving inexactness when
@@ -58,44 +58,40 @@ We take "zero denomintor" here to mean "exact zero denominator", and
 treat, e.g., #i1/0, as +inf.0.
 
                        A                B                C
-
 0/0                    #f               #f               #f
-
 1/0                    #f               #f               #f
 #e1/0                  #f               #f               #f
 #i1/0                +inf.0             #f             +inf.0
-
 1/0+1.0i          +nan.0+1.0i           #f               #f
 1.0+1/0i           1.0+nan.0i           #f               #f
-
 #e1e1000         (expt 10 1000)         #f         (expt 10 1000)
+0@1.0               0.0+0.0i             0                0
+1.0+0i              1.0+0.0i            1.0              1.0
 
-This code implements Option C and returns #f instead of signaling an
-error whenever a syntactically valid number cannot be represented.
-It computes inexact components with exact arithmetic where possible,
-however, before converting them into inexact numbers, to insure the
-greatest possible accuracy.
+This code implements Option C.  It computes inexact components with
+exact arithmetic where possible, however, before converting them into
+inexact numbers, to insure the greatest possible accuracy.
 
 Rationale for Option C: B and C adhere most closely to the semantics of
-the individual / and make-rectangular operators, and neither requires that
-we scan the entire number first (as with A) to determine the (in)exactness
-of the result.  C takes into account the known (in)exactness of the
-result to represent some useful values that B cannot, such as #i1/0 and
-#e1e1000.
+the individual / and make-rectangular operators, sometimes produce exact
+results when A would produce inexact results, and do not require a scan
+of the entire number first (as with A) to determine the (in)exactness of
+the result.  C takes into account the known (in)exactness of the result
+to represent some useful values that B cannot, such as #i1/0 and #e1e1000.
 
 R6RS doesn't say is what string->number should return for syntactically
 valid numbers (other than exact numbers with a zero denominator) for
-which the implementation has no representation, such as exact 1@1 in
-an implementation that represents complex numbers in rectangular form.
-Options include returning an approximation represented as an inexact
-number (so that the result, which should be exact, isn't exact),
-returning an approximation represented as an exact number (so that the
-approximation misleadingly represents itself as exact), or to admit an
-implementation restriction.  We choose the to return an inexact result
-for 1@1 (extending the set of situations where numeric constants are
-implicitly inexact) and treat #e1@1 as an implementation restriction,
-with string->number returning #f and the reader raising an exception
-with condition type &implementation-restriction.
+which the implementation has no representation, such as exact 1@1 in an
+implementation such as Chez Scheme that represents all complex numbers in
+rectangular form.  Options include returning an approximation represented
+as an inexact number (so that the result, which should be exact, isn't
+exact), returning an approximation represented as an exact number (so
+that the approximation misleadingly represents itself as exact), or to
+admit an implementation restriction.  We choose the to return an inexact
+result for 1@1 (extending the set of situations where numeric constants
+are implicitly inexact) and treat #e1@1 as violating an implementation
+restriction, with string->number returning #f and the reader raising
+an exception.
 |#
 
 (let ()
@@ -258,12 +254,12 @@ with condition type &implementation-restriction.
            (make-rectangular (thaw x1) (thaw x)))]
       [else #f])))
 
-(mknum-state prefix0 (r ex)           ; start state
+(mknum-state prefix0 (r ex)              ; start state
   #f
   [#\# (prefix1 r ex)]
   [else (num0 r ex)])
 
-(mknum-state prefix1 (r ex)           ; saw leading #
+(mknum-state prefix1 (r ex)              ; saw leading #
   #f
   [(digit 10) (let ([!r6rs #t]) (prefix2 d ex))]
   [#\e (prefix3 r 'e)]
@@ -273,17 +269,17 @@ with condition type &implementation-restriction.
   [#\d (prefix6 10 ex)]
   [#\x (prefix6 16 ex)])
 
-(mknum-state prefix2 (r ex)           ; saw digit after #
+(mknum-state prefix2 (r ex)              ; saw digit after #
   #f
   [(digit 10) (fx< r 37) (prefix2 (+ (* r 10) d) ex)]
   [#\r (fx< 1 r 37) (prefix6 r ex)])
 
-(mknum-state prefix3 (r ex)           ; saw exactness prefix
+(mknum-state prefix3 (r ex)              ; saw exactness prefix
   #f
   [#\# (prefix4 ex)]
   [else (num0 r ex)])
 
-(mknum-state prefix4 (ex)             ; saw # after exactness
+(mknum-state prefix4 (ex)                ; saw # after exactness
   #f
   [(digit 10) (let ([!r6rs #t]) (prefix5 d ex))]
   [#\b (num0 2 ex)]
@@ -291,22 +287,22 @@ with condition type &implementation-restriction.
   [#\d (num0 10 ex)]
   [#\x (num0 16 ex)])
 
-(mknum-state prefix5 (r ex)           ; saw # digit after exactness
+(mknum-state prefix5 (r ex)              ; saw # digit after exactness
   #f
   [(digit 10) (fx< r 37) (prefix5 (+ (* r 10) d) ex)]
   [#\r (fx< 1 r 37) (num0 r ex)])
 
-(mknum-state prefix6 (r ex)           ; saw radix prefix
+(mknum-state prefix6 (r ex)              ; saw radix prefix
   #f
   [#\# (prefix7 r)]
   [else (num0 r ex)])
 
-(mknum-state prefix7 (r)              ; saw # after radix
+(mknum-state prefix7 (r)                 ; saw # after radix
   #f
   [#\e (num0 r 'e)]
   [#\i (num0 r 'i)])
 
-(mknum-state num0 (r ex)              ; saw prefix, if any
+(mknum-state num0 (r ex)                 ; saw prefix, if any
   #f
   [(digit r) (num2 r ex 'ureal plus d)]
   [#\. (let ([!r6rs (or !r6rs (not (fx= r 10)))]) (float0 r ex 'ureal plus))]
