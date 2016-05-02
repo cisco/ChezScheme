@@ -1,7 +1,11 @@
 *~
+.*.sw?
+.sw?
+/Makefile
 /a6le/
 /a6nt/
 /a6osx/
+/bin/
 /i3le/
 /i3nt/
 /i3osx/
@@ -11,7 +15,3 @@
 /ti3le/
 /ti3nt/
 /ti3osx/
-/Makefile
-.*.sw?
-.sw?
-bin
