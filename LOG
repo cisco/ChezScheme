@@ -62,7 +62,7 @@
 - fixed incorrect handling of library-extension when searching wpo files
     compile.ss,
     7.ms
-- modified floatify_normalize to properly round denormalized results and
+- modified floatify_normalize to properly round denormalized results.
   obviated scale_float in the process.
     number.c,
     ieee.ms
@@ -73,16 +73,16 @@
   restriction (among the other usual lexical condition types), and
   string->number now raises #f, for #e<m>@<a>, where <m> and <a> are
   nonzero integers, since Chez Scheme can't represent polar numbers other
-  than 0@<a> and <m>@0 exactly.  <m>@<a> still produces an inexact result,
+  than 0@<n> and <n>@0 exactly.  <m>@<a> still produces an inexact result,
   i.e., we're still extending the set of inexact numeric constants beyond
   what R6RS dictates.  doing this required a rework of $str->num, which
   turned into a fairly extensive rewrite that fixed up a few other minor
   issues (like r6rs:string->number improperly allowing 1/2e10) and
   eliminated the need for consumers to call $str->num twice in cases
-  where it actually produces a number.  added some related new tests,
-  including several found lacking by profiling.  added a couple of
-  checks to number->string whose absence was causing argument errors to
-  be reported by other routines.
+  where it can actually produce a number.  added some related new tests,
+  including several found missing by profiling.  added a couple of
+  checks to number->string the absence of which was causing argument
+  errors to be reported by other routines.
     strnum.ss, exceptions.ss, read.ss
     5_3.ms, 6.ms, root-experr*, patch*
 - added pdtml flag, which if set to t causes profile-dump-html to be
