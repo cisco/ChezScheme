@@ -138,7 +138,7 @@ with new bindings with a top-level definition.
 
 To provide temporary backward compatibility, the
 \scheme{--revert-interaction-semantics} command-line option and
-\scheme{revert-interaction-semantics} parameters allowed programmers
+\scheme{revert-interaction-semantics} parameter allowed programmers
 to revert the interaction environment to Version~7 semantics.
 This functionality has now been eliminated and along with it the
 special treatment of primitive bindings at optimize level 2 and
@@ -211,7 +211,7 @@ Support for running {\ChezScheme} on 32-bit PowerPC processors
 running Linux has been added, with machines type ppc32le (nonthreaded)
 and tppc32le (threaded).
 C~code intended to be linked with these versions of the system
-should be compiled using the Gnu C~compiler's \scheme{-m32} option.
+should be compiled using the GNU C~compiler's \scheme{-m32} option.
 
 \subsection{Printed representation of procedures (9.2.1)}
 
@@ -251,7 +251,7 @@ output pathname.
 
 \subsection{Whole-program optimization (9.2)}
 
-Version 9.2 includes support whole-program optimization of a top-level
+Version 9.2 includes support for whole-program optimization of a top-level
 program and the libraries upon which it depends at run time based on ``wpo''
 (whole-program-optimization) files produced as a byproduct of compiling
 the program and libraries when the parameter \scheme{generate-wpo-files}
@@ -328,7 +328,7 @@ new procedure \scheme{port-file-compressed!} that takes a port and
 if not already set up to read or write compressed data, sets it up
 to do so.
 The port must be a file port pointing to a regular file, i.e., a
-file on disk rather than a socket or pipe and the port must not be
+file on disk rather than a socket or pipe, and the port must not be
 an input/output port.
 The port can be a binary or textual port.
 If the port is an output port, subsequent output sent to the port
@@ -618,7 +618,7 @@ To support the rare need for a generative record type while still
 allowing accidental generativity to be detected,
 \scheme{define-record-type} has been extended to allow a generative
 record type to be explicitly declared with a \scheme{nongenerative}
-clause with \scheme{#f} for the uid, i.e,. \scheme{(nongenerative #f)}.
+clause with \scheme{#f} for the uid, i.e., \scheme{(nongenerative #f)}.
 
 \subsection{Improved support for cross compilation (9.1)}
 
@@ -634,7 +634,7 @@ machine.
 Support for running {\ChezScheme} on ARMv6 processors running Linux
 has been added, with machine type arm32le (32-bit nonthreaded).
 C~code intended to be linked with these versions of the system
-should be compiled using the Gnu C~compiler's \scheme{-m32} option.
+should be compiled using the GNU C~compiler's \scheme{-m32} option.
 
 \subsection{Source information in ftype ref/set! error messages (9.0)}
 
@@ -714,7 +714,7 @@ are determined dynamically.
 
 In previous releases, profile and inspector source information was
 gathered and stored together so that compiling with profiling enabled
-required that inspector also be stored with each code object.
+required that inspector information also be stored with each code object.
 This is no longer the case.
 
 \subsection{\protect\scheme{case} now uses \protect\scheme{member} (9.0)}
@@ -750,12 +750,12 @@ of the \scheme{compile-profile} parameter.
 When \scheme{compile-profile} is set to the symbol \scheme{source}
 at compile time, source execution counts are gathered by the generated
 code, and when \scheme{compile-profile} is set to \scheme{block},
-block execution counts aer gathered.
+block execution counts are gathered.
 Setting it to \scheme{#f} (the default) disables instrumentation.
 
-Source counts identical to the source counts gathered by generated
-code in previous releases when compiled with in previous releases
-when \scheme{compile-profile} is set to \scheme{#t}, and \scheme{#t}
+Source counts are identical to the source counts gathered by generated
+code in previous releases when compiled with
+\scheme{compile-profile} set to \scheme{#t}, and \scheme{#t}
 can be still be used in place of \scheme{source} for backward
 compatibility.
 Source counts can be viewed by the programmer at the end of the run
@@ -803,10 +803,10 @@ previously created by \scheme{profile-dump-data} into an internal
 database.
 
 The database associates \emph{weights} with source locations or
-blocks, where a weight is flonum representing the ratio of the
+blocks, where a weight is a flonum representing the ratio of the
 location's count versus the maximum count.
 When multiple profile data sets are loaded, the weights for each
-location is averaged across the data sets.
+location are averaged across the data sets.
 
 The procedure \scheme{profile-query-weight} accepts a source object
 and returns the weight associated with the location identified by
@@ -1152,7 +1152,7 @@ is the less likely path.
 The compiler implicitly treats as pariah code any code that leads
 up to an unconditional call to \scheme{raise}, \scheme{error},
 \scheme{errorf}, \scheme{assertion-violation}, etc., so it is not
-necessary to wrap a \scheme{pariah} for around such a call.
+necessary to wrap a \scheme{pariah} around such a call.
 
 At some point, there will likely be an option for gathering similar
 information automatically via profiling.
@@ -1162,7 +1162,7 @@ mechanism is beneficial and whether the benefit of using the
 
 \subsection{Improved automatic library recompilation (8.9.2)}
 
-Local imports within a library now triggers automatic recompilation
+Local imports within a library now trigger automatic recompilation
 of the library when the imported library has been recompiled or needs
 to be recompiled, in the same manner as imports listed directly in the
 importing library's \scheme{library} form.
@@ -1206,10 +1206,10 @@ Valid debug levels are~0, 1, 2, and~3, and the default is~1.
 At present, the only difference between debug levels is whether calls to
 certain error-producing routines, like \scheme{error}, whether explicit
 or as the result of an implicit run-time check (such as the pair check
-in \scheme{car}) are treated as tail calls even when not in tail position.
+in \scheme{car}), are treated as tail calls even when not in tail position.
 At debug levels 0 and 1, they are treated as tail calls, and at debug
 levels 2 and 3, they are treated as nontail calls.
-Treating them as tail calls is more efficient but treating them as
+Treating them as tail calls is more efficient, but treating them as
 nontail calls leaves more information on the stack, which affects what
 can be shown by the inspector.
 
@@ -1585,9 +1585,9 @@ For example:
 \schemedisplay
 (apply apply apply + (list 1 (cons 2 (list x (cons* 4 '(5 6))))))
 \endschemedisplay
- an andd
+
 folds down to \scheme{(+ 18 x)}.
-While not common at the source levels, patterns like this can
+While not common at the source level, patterns like this can
 materialize as the result of other source optimizations,
 particularly inlining.
 
@@ -1654,7 +1654,7 @@ e.g., the second clause in
 
 \subsection{Reduced stack requirements after large apply (9.2)}
 
-A call to \scheme{apply} with a very long argument list can cause an
+A call to \scheme{apply} with a very long argument list can cause a
 large chunk of memory to be allocated for the topmost portion of
 the stack.
 This space is now reclaimed during the next collection.
@@ -1706,7 +1706,7 @@ performance improvements in the range of 1--5\% in our tests.
 In previous releases, a factor in collector performance was the
 overall size of the heap (measured both in number of pages and the
 amount of virtual memory spanned by the heap).
-Through various changes to the data structures used to support
+Through various changes to the data structures used to support the
 storage manager, this factor has been eliminated, which can
 significantly reduce the cost of collecting a younger generation
 with a small number of accessible objects relative to overall heap
@@ -1825,7 +1825,7 @@ across library boundaries.
 A simple procedure is one that, after optimization of the exporting
 library, is smaller than a given threshold, contains no free references
 to other bindings in the exporting library, and contains no constants
-that cannot copied without breaking pointer identity.
+that cannot be copied without breaking pointer identity.
 The size threshold is determined, as for inlining within a library or
 other compilation unit, by the parameter \scheme{cp0-score-limit}.
 In this case, the size threshold is determined based on the size
@@ -1844,7 +1844,7 @@ type were defined in the importing library.
 \subsection{Faster generated code (8.9.2)}
 
 The code generated by the new compiler back end
-(Section~\ref{subsection:ncbe} is faster.
+(Section~\ref{subsection:ncbe}) is faster.
 In our tests comparing Versions~8.9.2 and~8.4.1 under Linux, Version~8.9.2
 is faster on x86\_64 by about 14\% at optimize-level 3 and about 21\%
 at lower optimization levels.
