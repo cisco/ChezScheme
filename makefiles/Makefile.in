@@ -32,6 +32,5 @@ clean:
 
 distclean:
 	rm -rf $(workarea)
-	(cd zlib ; make distclean)
 	rm -f Makefile
 	rm -f Make.out

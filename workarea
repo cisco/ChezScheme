@@ -128,11 +128,18 @@ workdir $W/mats
 (cd $W/mats; workln ../../mats/Mf-base Mf-base)
 (cd $W/mats; workln ../../mats/Mf-exobj Mf-exobj)
 
-for dir in `echo zlib examples unicode` ; do
+for dir in `echo examples unicode` ; do
   workdir $W/$dir
   for file in `(cd $dir ; echo *)` ; do
     (cd $W/$dir ; workln ../../$dir/$file $file)
   done
+done
+
+# deep copy submodules where builds occur so changes don't propagate through symlinks
+for dir in `echo zlib` ; do
+  if [ ! -e $W/$dir ] ; then
+    /bin/cp -R $dir $W/$dir
+  fi
 done
 
 workdir $W/boot
