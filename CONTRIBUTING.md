@@ -89,10 +89,6 @@ Please keep in mind the following guidance when preparing contributions:
   both used by Chez Scheme and was initially written using Chez Scheme,
   but evolves separately.
 
-* Inclusion of existing permissively licensed open-source code will
-  be considered on a case-by-case basis.  Otherwise, contributions
-  must be the contributors' own original work.
-
 Before investing significant effort preparing a contribution,
 consider running the idea by one of the committers for additional
 guidance and advice.
