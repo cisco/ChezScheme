@@ -130,7 +130,7 @@ void S_gc_init() {
     S_G.countof_size[countof_guardian] = 0;
   for (i = 0; i < countof_types; i += 1) {
     if (Svector_ref(S_G.countof_names, i) == FIX(0)) {
-      fprintf(stderr, "unitialized countof_name at index %d\n", i);
+      fprintf(stderr, "uninitialized countof_name at index %d\n", i);
       S_abnormal_exit();
     }
   }
