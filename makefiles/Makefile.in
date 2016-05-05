@@ -27,10 +27,16 @@ test:
 bootfiles:
 	(cd $(workarea) && $(MAKE) bootfiles)
 
+docs: build
+	(cd csug && $(MAKE) m=$(m))
+	(cd release_notes && $(MAKE) m=$(m))
+
 clean:
 	(cd $(workarea) && $(MAKE) clean)
 
 distclean:
 	rm -rf $(workarea)
+	(cd csug ; make reallyreallyclean)
+	(cd release_notes ; make reallyreallyclean)
 	rm -f Makefile
 	rm -f Make.out

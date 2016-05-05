@@ -88,3 +88,19 @@
 - added pdtml flag, which if set to t causes profile-dump-html to be
   called at the end of a mat run.
     mats/Mf-base
+- compile-whole-program and compile-whole-library now copy the hash-bang
+  line from the wpo file (if it has one) to the object file.
+    compile.ss,
+    7.ms
+- stex is now a submodule.  csug/Makefile and release_notes/Makefile
+  set and use the required Scheme and STEXLIB variables accordingly.
+  they default the machine type to a6le, but this can be overridden
+  and is by the generated top-level Makefile.  the generated top-level
+  Makefile now has a new docs target that runs make in both csug and
+  release_notes, and an updated distclean target that cleans the same.
+  the annoying csug Makefile .fig.pdf rule redefinition is now gone.
+  copyright.stex and csug.stex now list May 2016 as the revision month
+  and date; this will have to be updated for future releases.
+    configure, makefiles/Makefile.in,
+    csug/Makefile, copyright.stex, csug.stex,
+    release_notes/Makefile

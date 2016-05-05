@@ -239,7 +239,9 @@ git submodule init && git submodule update || exit 1
 
 ./workarea $m $w
 
-sed -e 's/$(workarea)/'$w'/g' makefiles/Makefile.in > Makefile
+sed -e 's/$(m)/'$m'/g'\
+    -e 's/$(workarea)/'$w'/g'\
+  makefiles/Makefile.in > Makefile
 
 cat makefiles/Makefile-workarea.in > $w/Makefile
 
