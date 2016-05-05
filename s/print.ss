@@ -1128,6 +1128,9 @@ floating point returns with (1 0 -1 ...).
              (write-char #\- p)
              (print-hex-char c p))]
         [(#\+) (if (fx= n 1) (write-char #\+ p) (print-hex-char c p))]
+        [(#\{ #\}) (if (fx= n 1)
+                     (write-char c p)
+                     (print-hex-char c p))]        
         [$constituent? (if (print-unicode) (write-char c p) (print-hex-char c p))]
         [else (print-hex-char c p)]))
     (s1 s p n 1))
