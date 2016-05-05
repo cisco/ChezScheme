@@ -4,3 +4,6 @@
 [submodule "nanopass"]
 	path = nanopass
 	url = https://github.com/nanopass/nanopass-framework-scheme.git
+[submodule "stex"]
+	path = stex
+	url = https://github.com/dybvig/stex

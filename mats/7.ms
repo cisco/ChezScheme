@@ -1952,6 +1952,44 @@ evaluating module init
   (equal?
     (separate-eval '(load "testfile-wpo-ext-all.so"))
     "(9 . 5)\n")
+
+  ; test propagation of #! shell-script line
+  (begin
+    (define $hash-bang-line "#! /usr/bin/scheme --program\n")
+    (delete-file "testfile-wpo-c8.so")
+    (delete-file "testfile-wpo-c8-all.so")
+    (delete-file "testfile-wpo-c8.wpo")
+    (with-output-to-file "testfile-wpo-c8.ss"
+      (lambda ()
+        (display-string $hash-bang-line)
+        (for-each pretty-print
+          '((import (chezscheme))
+            (printf "hello\n"))))
+      'replace)
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([generate-wpo-files #t])
+           (compile-program x)))
+      'wpo-c8)
+    (separate-compile
+      '(lambda (x)
+         (compile-whole-program (format "~a.wpo" x) (format "~a-all.so" x)))
+      'wpo-c8)
+    #t)
+
+  (equal?
+    (separate-eval '(load "testfile-wpo-c8.so"))
+    "hello\n")
+
+  (equal?
+    (separate-eval '(load "testfile-wpo-c8-all.so"))
+    "hello\n")
+
+  (equal?
+    (call-with-port (open-file-input-port "testfile-wpo-c8-all.so")
+      (lambda (ip)
+        (get-bytevector-n ip (string-length $hash-bang-line))))
+    (string->utf8 $hash-bang-line))
 )
 
 (mat compile-whole-library
@@ -3037,8 +3075,7 @@ evaluating module init
       'cwl-c13)
     (separate-compile
       '(lambda (x)
-           (lambda (op)
-               (compile-whole-program (format "~a.wpo" x) (format "~a.so" x))))
+         (compile-whole-program (format "~a.wpo" x) (format "~a.so" x)))
       'cwl-c13)
     #t)
   

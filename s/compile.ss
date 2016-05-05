@@ -757,17 +757,36 @@
 
   (define read-input-file
     (lambda (who ifn)
-      (call-with-port ($open-file-input-port who ifn (file-options compressed))
+      (call-with-port ($open-file-input-port who ifn)
         (lambda (ip)
           (on-reset (close-port ip)
-            (if ($compiled-file-header? ip)
-                (let loop ([rls '()])
-                  (let ([x (fasl-read ip)])
-                    (cond
-                      [(eof-object? x) (reverse rls)]
-                      [(Lexpand? x) (loop (cons x rls))]
-                      [else ($oops who "unexpected wpo file object ~s" x)])))
-                ($oops who "input file is source ~s" ifn)))))))
+            (let ([hash-bang-line
+                   (let ([start-pos (port-position ip)])
+                     (if (and (eqv? (get-u8 ip) (char->integer #\#))
+                              (eqv? (get-u8 ip) (char->integer #\!))
+                              (let ([b (lookahead-u8 ip)])
+                                (or (eqv? b (char->integer #\space))
+                                    (eqv? b (char->integer #\/)))))
+                         (let-values ([(op get-bv) (open-bytevector-output-port)])
+                           (put-u8 op (char->integer #\#))
+                           (put-u8 op (char->integer #\!))
+                           (let loop ()
+                             (let ([b (get-u8 ip)])
+                               (unless (eof-object? b)
+                                 (put-u8 op b)
+                                 (unless (eqv? b (char->integer #\newline))
+                                   (loop)))))
+                           (get-bv))
+                         (begin (set-port-position! ip start-pos) #f)))])
+              (port-file-compressed! ip)
+              (if ($compiled-file-header? ip)
+                  (let loop ([rls '()])
+                    (let ([x (fasl-read ip)])
+                      (cond
+                        [(eof-object? x) (values hash-bang-line (reverse rls))]
+                        [(Lexpand? x) (loop (cons x rls))]
+                        [else ($oops who "unexpected wpo file object ~s" x)])))
+                  ($oops who "input file is source ~s" ifn))))))))
 
   (define find-library
     (lambda (who path what library-ext*)
@@ -794,7 +813,8 @@
             (cond
               [(find-library who path "wpo" (map (lambda (ext) (cons (car ext) (string-append (path-root (cdr ext)) ".wpo"))) (library-extensions))) =>
                (lambda (fn)
-                 (let-values ([(no-program node*) (process-ir*! (read-input-file who fn) fn #f libs-visible?)])
+                 (let*-values ([(hash-bang-line ir*) (read-input-file who fn)]
+                               [(no-program node*) (process-ir*! ir* fn #f libs-visible?)])
                    (values fn node*)))]
               [(find-library who path "so" (library-extensions)) =>
                (lambda (fn) (values fn (read-binary-file path fn libs-visible?)))]
@@ -1250,13 +1270,12 @@
             `(revisit-only ,(build-combined-library-ir node*)))))))
 
   (define finish-compile
-    (lambda (who msg ifn ofn x1)
-      (let ([op ($open-file-output-port who ofn
-                  (if (compile-compressed)
-                      (file-options replace compressed)
-                      (file-options replace)))])
+    (lambda (who msg ifn ofn hash-bang-line x1)
+      (let ([op ($open-file-output-port who ofn (file-options replace))])
         (on-reset (delete-file ofn #f)
           (on-reset (close-port op)
+            (when hash-bang-line (put-bytevector op hash-bang-line))
+            (when (compile-compressed) (port-file-compressed! op))
             (parameterize ([$target-machine (constant machine-type-name)]
                            ; dummy sfd for block-profile optimization
                            [$sfd (source-file-descriptor ifn #xc7c7c7)]
@@ -1310,29 +1329,29 @@
         [(ifn ofn libs-visible?)
          (unless (string? ifn) ($oops who "~s is not a string" ifn))
          (unless (string? ofn) ($oops who "~s is not a string" ofn))
-         (let ([entry* (read-input-file who ifn)])
-           (let-values ([(program-entry lib* no-wpo*) (build-graph who entry* ifn #t #f libs-visible?)])
-             (safe-assert program-entry)
-             (safe-assert (null? no-wpo*))
-             (let ([node* (topological-sort program-entry lib*)])
-               (finish-compile who "whole program" ifn ofn
-                 (build-program-body program-entry node* lib*))
-               (build-required-library-list node* lib*))))])))
+         (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
+                       [(program-entry lib* no-wpo*) (build-graph who ir* ifn #t #f libs-visible?)])
+           (safe-assert program-entry)
+           (safe-assert (null? no-wpo*))
+           (let ([node* (topological-sort program-entry lib*)])
+             (finish-compile who "whole program" ifn ofn hash-bang-line
+               (build-program-body program-entry node* lib*))
+             (build-required-library-list node* lib*)))])))
 
   (set-who! compile-whole-library
     (lambda (ifn ofn)
       (unless (string? ifn) ($oops who "~s is not a string" ifn))
       (unless (string? ofn) ($oops who "~s is not a string" ofn))
-      (let ([entry* (read-input-file who ifn)])
-        (let-values ([(no-program lib* wpo*) (build-graph who entry* ifn #f (generate-wpo-files) #t)])
-          (safe-assert (not no-program))
-          (safe-assert (or (not (generate-wpo-files)) (not (null? wpo*))))
-          (when (null? lib*) ($oops "did not find libraries in input file ~s" ifn))
-          (let ([node* (topological-sort #f lib*)])
-            (write-wpo-file who ofn wpo*)
-            (finish-compile who "whole library" ifn ofn
-              (build-library-body node* lib*))
-            (build-required-library-list node* lib*)))))))
+      (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
+                    [(no-program lib* wpo*) (build-graph who ir* ifn #f (generate-wpo-files) #t)])
+        (safe-assert (not no-program))
+        (safe-assert (or (not (generate-wpo-files)) (not (null? wpo*))))
+        (when (null? lib*) ($oops "did not find libraries in input file ~s" ifn))
+        (let ([node* (topological-sort #f lib*)])
+          (write-wpo-file who ofn wpo*)
+          (finish-compile who "whole library" ifn ofn hash-bang-line
+            (build-library-body node* lib*))
+          (build-required-library-list node* lib*))))))
 
 (set! $c-make-code
    (lambda (func subtype free name size code-list info pinfo*)

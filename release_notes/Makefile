@@ -1,3 +1,7 @@
+m = a6le
+Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
+STEXLIB=../stex
+
 # define default document pathname here
 # override on command line with 'make x=newdoc'
 x = release_notes
@@ -17,7 +21,7 @@ bib =
 # define index if an index is to be generated
 # index=yes
 
-include ~/stex/Mf-stex
+include $(STEXLIB)/Mf-stex
 
 # define or override suffixes here
 

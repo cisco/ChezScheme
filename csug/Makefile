@@ -1,9 +1,13 @@
+m = a6le
+Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
+STEXLIB=../stex
+installdir=/tmp/csug9
+
 x = csug
 latex = pdflatex
 stexmacrofiles = tspl4-prep
 bib = $(x).bib
 index=yes
-installdir=/u/dyb/crs/www/csug9
 TSPL=tspl4
 DIR=$(shell basename `pwd`)
 
@@ -39,15 +43,7 @@ logcheck2: $(x).thirdrun
             false;\
          fi
 
-include ~/stex/Mf-stex
-
-# HACK to prevent lines from dropping below .5pt
-# .5pt = 1/144in = 8.3 1200ths, so go for 10 1200ths
-.fig.pdf:
-	fig2dev -Leps $*.fig > $*.eps\
-          && grep -q '7.500 slw' $*.eps\
-          && sed -e 's/7.500 slw/10.000 slw/' $*.eps | epstopdf --filter > $*.pdf\
-          && /bin/rm $*.eps || (echo "CHECK GREP"; false)
+include $(STEXLIB)/Mf-stex
 
 stexsrc = csug.stex title.stex copyright.stex contents.stex\
  preface.stex intro.stex use.stex expeditor.stex debug.stex foreign.stex\
@@ -79,7 +75,7 @@ $(x).secondrun: $(x).presecondrun
 $(x).presecondrun: $(x).firstrun
 	cat tspl.aux >> $x.aux
 	cat tspl.rfm >> $x.rfm
-	echo '(summary-make "$x")' | scheme setup.ss summary.ss
+	echo '(summary-make "$x")' | $(Scheme) setup.ss summary.ss
 	cat tspl.idx >> $x.idx
 	touch $(x).presecondrun
 
@@ -87,7 +83,7 @@ $(x).thirdrun: $(x).prethirdrun canned/cisco-logo.png
 $(x).prethirdrun: $(x).secondrun
 	cat tspl.aux >> $x.aux
 	cat tspl.rfm >> $x.rfm
-	echo '(summary-make "$x")' | scheme setup.ss summary.ss
+	echo '(summary-make "$x")' | $(Scheme) setup.ss summary.ss
 	cat tspl.idx >> $x.idx
 	touch $(x).prethirdrun
 
@@ -146,7 +142,7 @@ checklibs: $(x).thirdrun
 
 code: $(stexsrc)
 	extract.pl $(stexsrc) > code
-	echo '(load "code" pretty-print)' | vscheme csv7.5 -q
+	echo '(load "code" pretty-print)' | $(Scheme) -q
 
 $(x).clean:
 	-/bin/rm -f $(x).rfm $(x).sfm $(x).prefirstrun $(x).presecondrun\
