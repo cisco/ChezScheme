@@ -620,7 +620,7 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
                   Sschemeheapdirs, Sdefaultheapdirs);
           S_abnormal_exit();
         } else {
-          if (verbose) fprintf(stderr, "no compatable %s%s found\n", name, ext);
+          if (verbose) fprintf(stderr, "no compatible %s%s found\n", name, ext);
           return 0;
         }
       }
