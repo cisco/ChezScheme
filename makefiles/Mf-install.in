@@ -130,9 +130,9 @@ libbininstall: ${LibBin}
 
 maninstall: scheme.1 petite.1 ${Man}
 	$I -m 444 scheme.1 ${Man}/${InstallSchemeName}.1
-	if [ ${GzipManPages} = yes ] ; then gzip ${Man}/${InstallSchemeName}.1 ; fi
+	if [ ${GzipManPages} = yes ] ; then gzip -f ${Man}/${InstallSchemeName}.1 ; fi
 	$I -m 444 petite.1 ${Man}/${InstallPetiteName}.1
-	if [ ${GzipManPages} = yes ] ; then gzip ${Man}/${InstallPetiteName}.1 ; fi
+	if [ ${GzipManPages} = yes ] ; then gzip -f ${Man}/${InstallPetiteName}.1 ; fi
 
 liblibinstall: ${LibLib}
 	$I -m 444 ../examples/* ${LibLib}

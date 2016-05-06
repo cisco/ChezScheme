@@ -46,7 +46,8 @@ case `uname` in
       tm64=""
     fi
     installprefix=/usr
-    installman=/usr/share/man
+    installlib=$installprefix/lib
+    installman=$installprefix/share/man
     ;;
   QNX)
     if uname -a | egrep 'x86' > /dev/null 2>&1 ; then
@@ -54,7 +55,8 @@ case `uname` in
       tm32=ti3qnx
     fi
     installprefix=/usr/local
-    installman=/usr/local/man
+    installlib=$installprefix/lib
+    installman=$installprefix/man
     ;;
   FreeBSD)
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
@@ -64,7 +66,8 @@ case `uname` in
       tm64=ta6fb
     fi
     installprefix=/usr/local
-    installman=/usr/local/man
+    installlib=$installprefix/lib
+    installman=$installprefix/man
     ;;
   OpenBSD)
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
@@ -74,7 +77,8 @@ case `uname` in
       tm64=ta6ob
     fi
     installprefix=/usr/local
-    installman=/usr/local/man
+    installlib=$installprefix/lib
+    installman=$installprefix/man
     ;;
   NetBSD)
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
@@ -84,7 +88,8 @@ case `uname` in
       tm64=ta6nb
     fi
     installprefix=/usr
-    installman=/usr/share/man
+    installlib=$installprefix/lib
+    installman=$installprefix/share/man
     gzipmanpages=no
     ;;
   Darwin)
@@ -95,7 +100,8 @@ case `uname` in
       tm64=ta6osx
     fi
     installprefix=/usr/local
-    installman=/usr/local/share/man
+    installlib=$installprefix/lib
+    installman=$installprefix/share/man
     ;;
   SunOS)
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
@@ -104,7 +110,8 @@ case `uname` in
       tm32=ti3s2
       tm64=ta6s2
       installprefix=/usr
-      installman=/usr/share/man
+      installlib=$installprefix/lib
+      installman=$installprefix/share/man
       gzipmanpages=no
     fi
     ;;
@@ -132,6 +139,9 @@ while [ $# != 0 ] ; do
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
+      ;;
+    --installlib=*)
+      installlib=`echo $1 | sed -e 's/^--installlib=//'`
       ;;
     --installman=*)
       installman=`echo $1 | sed -e 's/^--installman=//'`
@@ -200,6 +210,7 @@ if [ "$help" = "yes" ]; then
   echo "  --threads                   specify threaded version ($threads)"
   echo "  --32|--64                   specify 32/64-bit version ($bits)"
   echo "  --installprefix=<pathname>  final installation root ($installprefix)"
+  echo "  --installlib=<pathname>     lib directory ($installlib)"
   echo "  --installman=<pathname>     manpage directory ($installman)"
   echo "  --temproot=<pathname>       staging root ($temproot)"
   echo "  --installowner=<ownername>  install with owner ($installowner)"
@@ -251,9 +262,13 @@ sed -e 's/$(m)/'$m'/g'\
 
 sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallPrefix=.*\$;InstallPrefix=$installprefix;"\
+    -e "s;^InstallLib=.*\$;InstallLib=$installlib/csv9.4;"\
     -e "s;^InstallMan=.*\$;InstallMan=$installman/man1;"\
     -e "s;^InstallOwner=.*\$;InstallOwner=$installowner;"\
     -e "s;^InstallGroup=.*\$;InstallGroup=$installgroup;"\
     -e "s;^TempRoot=.*;TempRoot=$temproot;"\
     -e "s;^GzipManPages=.*$;GzipManPages=$gzipmanpages;"\
     makefiles/Mf-install.in > $w/Mf-install
+
+sed -e "s;\#define defaultsystemheappath \"/usr/lib/csv%v/%m:.*\$;\#define defaultsystemheappath \"$installlib/csv%v/%m\";"\
+    c/heappath.h.in > $w/c/heappath.h

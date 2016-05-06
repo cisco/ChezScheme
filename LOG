@@ -104,3 +104,5 @@
     configure, makefiles/Makefile.in,
     csug/Makefile, copyright.stex, csug.stex,
     release_notes/Makefile
+- added custom install options.
+    configure newrelease scheme.c heappath.h.in
