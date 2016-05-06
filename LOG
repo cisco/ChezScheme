@@ -104,5 +104,38 @@
     configure, makefiles/Makefile.in,
     csug/Makefile, copyright.stex, csug.stex,
     release_notes/Makefile
-- added custom install options.
-    configure newrelease scheme.c heappath.h.in
+- added custom install options.  workarea creates an empty config.h,
+  and configure creates a config.h that sets the default scheme heap
+  path and scheme-script name based on the actual configuration.
+    configure, newrelease, workarea, checkin,
+    c/Mf-base, scheme.c, main.c,
+    Mf-install.in
+- renamed the installed example directory from lib to examples.
+    Mf-install.in,
+    scheme.1.in
+- added force option to gzip during man page install to prevent gzip from
+  asking for permission to overwrite existing man page files.
+    Mf-install.in
+- removed ~/lib/csv%v/%m from the default scheme heap path on unix-like
+  systems.  documented inclusion of %x\..\..\boot\%m in the Windows
+  default scheme heap path.
+    main.c,
+    use.stex
+- added new configuration options: --installbin, --installlib,
+  --installschemename, --installpetitename, and --installscriptname.
+    configure
+- updated the example library link to the nanopass framework.
+    CONTRIBUTING.md
+- now cleaning up petite.1 and scheme.1 left behind by make install
+    Makefile-workarea.in, checkin
+- now removing workarea after cleaning csug and release_notes so
+  Mf-stex (included from csug/Makefile and release_notes/Makefile)
+  doesn't complain trying to determine the machine type.
+    Makefile.in
+- added installsh support for --ifdiff so the csug make file can use it
+  for the install target.
+    installsh,
+    csug/Makefile
+- added instructions for building (cross-compiling) a boot file for
+  a supported machine type for which a boot file is not built by default.
+    BUILDING

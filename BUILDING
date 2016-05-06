@@ -150,6 +150,15 @@ The make file supports several targets:
   boot and header files can be committed as well.  'make bootfiles'
   can take 5 minutes or more.
 
+  'make bootfiles' builds boot files for each machine type for which
+  a subdirectory exists in the top-level boot directory.  to build
+  for a supported machine type that isn't built by default, simply
+  add the appropriate subdirectory, i.e., 'mkdir boot/$M', where M
+  is the machine type, before running 'make bootfiles'.  You can
+  also run '(cd $W ; make -f Mf-boot $M.boot)', where W is the name
+  of a built work area for the host machine type, to build just the
+  boot files for machine-type M.
+
 'make clean'
   removes binaries from the workarea.
 

@@ -6,6 +6,7 @@ fi
 
 while ${TRUE} ; do
   mkdirs=0
+  ifdiff=0
   
   while [ $# -ge 0 ] ; do
     case $1 in
@@ -13,27 +14,27 @@ while ${TRUE} ; do
       -o) shift; owner=$1 ;;
       -g) shift; group=$1 ;;
       -m) shift; mode=$1 ;;
+      --ifdiff) ifdiff=1 ;;
       -*) break 2 ;;
       *) break ;;
     esac
     shift
   done
   
+  if [ $mkdirs -eq 1 ] && [ $ifdiff -eq 1 ] ; then
+    break
+  fi
+
   if [ $mkdirs -eq 1 ] ; then
     dirs=$*
   
     for dir in $dirs ; do
-      case $dir in
-        /*) ;;
-        *) echo "directory name must begin with /; $dir does not" ; exit 1 ;;
-      esac
-  
       stack=""
-      while [ "$dir" != "/" ] ; do
+      while [ "$dir" != "/" -a "$dir" != "." -a "$dir" != ".." ] ; do
         stack="$dir $stack"
         dir=`dirname $dir`
       done
-  
+
       for dir in $stack ; do
         if [ ! -d $dir ] ; then
           if mkdir $dir ; then
@@ -60,7 +61,7 @@ while ${TRUE} ; do
     for file in $files ; do
       destfile=$dest
       if [ -d $destfile ] ; then destfile=$destfile/`basename $file` ; fi
-      if cp -f -p $file $destfile ; then
+      if [ $ifdiff == 1 ] && cmp -s $file $destfile || cp -f -p $file $destfile ; then
         if [ "$owner" != "" ] ; then chown $owner $destfile ; fi
         if [ "$group" != "" ] ; then chgrp $group $destfile ; fi
         if [ "$mode" != "" ] ; then chmod $mode $destfile ; fi
@@ -71,7 +72,7 @@ while ${TRUE} ; do
   exit 0
 done
 
-echo "usage: $0 [ -o owner] [ -g group ] [ -m mode ] file dest"
-echo "       $0 [ -o owner] [ -g group ] [ -m mode ] file file ... dir"
+echo "usage: $0 [ -o owner] [ -g group ] [ -m mode ] [ --ifdiff] file dest"
+echo "       $0 [ -o owner] [ -g group ] [ -m mode ] [ --ifdiff] file file ... dir"
 echo "       $0 -d [ -o owner] [ -g group ] [ -m mode ] dir dir ..."
 exit 1

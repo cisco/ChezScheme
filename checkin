@@ -90,6 +90,7 @@ echo '*** running "make clean" in source directories ***'
 foreach x ($sdirs)
     switch ($x)
         case .:
+            (cd $W; /bin/rm -f petite.1 scheme.1)
             (cd $W; /bin/rm -f Make.out)
         case unicode:
         case unicode/UNIDATA:
@@ -121,7 +122,7 @@ end
 
 set sfiles = ()
 foreach x ($tmpsfiles)
-    if ("$x" == "./Makefile" || "$x" == "./Mf-install" || "$x" == "./Mf-boot") then
+    if ("$x" == "./Makefile" || "$x" == "./Mf-install" || "$x" == "./Mf-boot" || "$x" == "c/config.h") then
         set ignorefiles = ($ignorefiles $x)
     else
         cmp $W/$x $x >& /dev/null
@@ -190,7 +191,7 @@ set RESPONSE = ""
 while ("$RESPONSE" != "y")
     echo -n "proceed with check in? (y/n): "
     set RESPONSE = $<
-    if ("$RESPONSE" == "n") goto error
+    if ("$RESPONSE" == "n") exit 0
 end
 
 set oldsfiles = ()

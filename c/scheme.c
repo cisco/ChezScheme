@@ -15,6 +15,7 @@
  */
 
 #include "system.h"
+#include "config.h"
 #include <setjmp.h>
 #include <limits.h>
 #ifdef WIN32
@@ -403,8 +404,13 @@ static const char *path_last(p) const char *p; {
   return p;
 }
 
-#include "heappath.h"
+#define SEARCHPATHMAXSIZE 8192
 #ifdef WIN32
+#ifndef DEFAULT_HEAP_PATH
+/* by default, look in executable directory or in parallel boot directory */
+#define DEFAULT_HEAP_PATH "%x;%x\\..\\..\\boot\\%m"
+#endif
+#define SEARCHPATHSEP ';'
 
 static char *get_defaultheapdirs() {
   char *result;
@@ -412,20 +418,17 @@ static char *get_defaultheapdirs() {
   char key[PATH_MAX];
   snprintf(key, PATH_MAX, "HKEY_LOCAL_MACHINE\\Software\\Chez Scheme\\csv%s\\HeapSearchPath", VERSION);
   result = S_GetRegistry(defaultheapdirs, SEARCHPATHMAXSIZE, key);
-  if (result == NULL) result = defaultsystemheappath;
+  if (result == NULL) result = DEFAULT_HEAP_PATH;
   return result;
 }
 #else /* not WIN32: */
-static char *get_defaultheapdirs() {
-  static char defaultheapdirs[SEARCHPATHMAXSIZE];
-  const char *home;
+#define SEARCHPATHSEP ':'
+#ifndef DEFAULT_HEAP_PATH
+#define DEFAULT_HEAP_PATH "/usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m"
+#endif
 
-  if ((home = S_homedir()) != NULL &&
-        (snprintf(defaultheapdirs, SEARCHPATHMAXSIZE, "%s/lib/csv%%v/%%m:%s",
-                    home, defaultsystemheappath) < SEARCHPATHMAXSIZE))
-    return defaultheapdirs;
-  else
-    return defaultsystemheappath;
+static char *get_defaultheapdirs() {
+  return DEFAULT_HEAP_PATH;
 }
 #endif /* WIN32 */
 
