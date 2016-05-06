@@ -1,4 +1,4 @@
-# Mf-boot.in
+# Mf-install.in
 # Copyright 1984-2016 Cisco Systems, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###############################################################################
+#               the following variables are set up by configure               #
+###############################################################################
+
 m=none
 
 # The following variables determine where the executables, boot files,
@@ -22,56 +26,50 @@ m=none
 # in the generated manual page
 InstallPrefix=/usr
 
+# executable directory
+InstallBin=${InstallPrefix}/bin
+
+# library directory
+InstallLib=${InstallPrefix}/lib
+
+# man page directory
+InstallMan=${InstallPrefix}/man/man1
+
 # installation owner
 InstallOwner=
 
 # installation group
 InstallGroup=
 
-# executable directory
-InstallBin=${InstallPrefix}/bin
-
-# library directory
-InstallLib=${InstallPrefix}/lib/csv9.4
-
-# example program directory
-InstallLibLib=${InstallLib}/lib
-
-# base executable and heap file directory
-InstallLibBin=${InstallLib}/$m
-
-# man page directory
-InstallMan=${InstallPrefix}/man/man1
-
-# compress man pages?
-GzipManPages=yes
-
-# executable names
-InstallPetiteName=petite
-InstallSchemeName=scheme
-# the name "scheme-script" is hardwired in custom.c, so if
-# InstallScriptName is changed, the executable may have to be
-# rebuilt with a modified custom.c that looks for the new name
-InstallScriptName=scheme-script
-
 # Files are actually installed at ${TempRoot}${InstallPrefix}
 # This useful for testing the install process and for building
 # installation scripts
 TempRoot=
 
+# compress man pages?
+GzipManPages=yes
+
+# executable names
+InstallSchemeName=scheme
+InstallPetiteName=petite
+InstallScriptName=scheme-script
+
 ###############################################################################
 #                 no changes should be needed below this point                #
 ###############################################################################
 
+Version=csv9.4
 Include=boot/$m
 PetiteBoot=boot/$m/petite.boot
 SchemeBoot=boot/$m/scheme.boot
 Scheme=bin/$m/scheme
 Petite=bin/$m/petite
+InstallLibExamples=${InstallLib}/${Version}/examples
+InstallLibBin=${InstallLib}/${Version}/$m
 
 Bin=${TempRoot}${InstallBin}
-Lib=${TempRoot}${InstallLib}
-LibLib=${TempRoot}${InstallLibLib}
+Lib=${TempRoot}${InstallLib}/${Version}
+LibExamples=${TempRoot}${InstallLibExamples}
 LibBin=${TempRoot}${InstallLibBin}
 Man=${TempRoot}${InstallMan}
 PetitePath=${Bin}/${InstallPetiteName}
@@ -95,8 +93,7 @@ uninstall:
 
 scheme.1 petite.1: scheme.1.in
 	sed -e "s;{InstallBin};${InstallBin};g" \
-            -e "s;{InstallLib};${InstallLib};g" \
-            -e "s;{InstallLibLib};${InstallLibLib};g" \
+            -e "s;{InstallLibExamples};${InstallLibExamples};g" \
             -e "s;{InstallLibBin};${InstallLibBin};g" \
             -e "s;{InstallPetiteName};${InstallPetiteName};g" \
             -e "s;{InstallSchemeName};${InstallSchemeName};g" \
@@ -134,8 +131,8 @@ maninstall: scheme.1 petite.1 ${Man}
 	$I -m 444 petite.1 ${Man}/${InstallPetiteName}.1
 	if [ ${GzipManPages} = yes ] ; then gzip -f ${Man}/${InstallPetiteName}.1 ; fi
 
-liblibinstall: ${LibLib}
-	$I -m 444 ../examples/* ${LibLib}
+liblibinstall: ${LibExamples}
+	$I -m 444 ../examples/* ${LibExamples}
 
 ${Lib}:
 	$I -d -m 755 ${Lib}
@@ -143,8 +140,8 @@ ${Lib}:
 ${LibBin}: ${Lib}
 	$I -d -m 755 ${LibBin}
 
-${LibLib}: ${Lib}
-	$I -d -m 755 ${LibLib}
+${LibExamples}: ${Lib}
+	$I -d -m 755 ${LibExamples}
 
 ${Bin}:
 	$I -d -m 755 ${Bin}

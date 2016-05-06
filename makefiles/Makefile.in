@@ -35,8 +35,8 @@ clean:
 	(cd $(workarea) && $(MAKE) clean)
 
 distclean:
-	rm -rf $(workarea)
 	(cd csug ; make reallyreallyclean)
 	(cd release_notes ; make reallyreallyclean)
+	rm -rf $(workarea)
 	rm -f Makefile
 	rm -f Make.out

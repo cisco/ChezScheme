@@ -31,6 +31,7 @@ bootfiles: build
 	$(MAKE) -f Mf-boot
 
 clean:
+	rm -f petite.1 scheme.1
 	(cd s ; $(MAKE) clean)
 	(cd c ; $(MAKE) clean)
 	(cd mats ; $(MAKE) clean)

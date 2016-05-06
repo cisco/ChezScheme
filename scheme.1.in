@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "April 2016 Cisco Systems, Inc."
+.TH SCHEME 1 "May 2016 Cisco Systems, Inc."
 .SH NAME
 \fIChez Scheme\fP
 .br
@@ -741,14 +741,14 @@ to a colon-separated (semi-colon under Windows) list of directories
 in which to search for boot files.
 .SH FILES
 .if 0 COMMENT: put the longest path from below in the tab computation:
-.ta \w'{InstallLibBin}'u+.25i
+.ta \w'{InstallLibExamples}'u+.25i
 {InstallBin}/{InstallSchemeName}	executable file
 .br
 {InstallBin}/{InstallPetiteName}	executable file
 .br
 {InstallBin}/{InstallScriptName}	executable file
 .br
-{InstallLibLib}	example program library
+{InstallLibExamples}	example program library
 .br
 {InstallLibBin}	boot and include files
 .sp

@@ -85,9 +85,9 @@ Please keep in mind the following guidance when preparing contributions:
   of their own.  If you are contributing a significant extension built
   using Chez Scheme, consider whether your contribution is such an
   independent project.  An example of such a project is the [Nanopass
-  Framework](http://github.com/akeep/nanopass-framework) which is
-  both used by Chez Scheme and was initially written using Chez Scheme,
-  but evolves separately.
+  Framework](http://github.com/nanopass/nanopass-framework-scheme)
+  which is both used by Chez Scheme and was initially written using
+  Chez Scheme, but evolves separately.
 
 Before investing significant effort preparing a contribution,
 consider running the idea by one of the committers for additional
