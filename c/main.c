@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "scheme.h"
+#include "config.h"
 
 /****
   CUSTOM_INIT may be defined as a function with the signature shown to
@@ -44,6 +45,10 @@
 #ifndef ABNORMAL_EXIT
 #define ABNORMAL_EXIT ((void (*)(void))0)
 #endif /* ABNORMAL_EXIT */
+
+#ifndef SCHEME_SCRIPT
+#define SCHEME_SCRIPT "scheme-script"
+#endif
 
 static const char *path_last(const char *p) {
   const char *s;
@@ -92,7 +97,7 @@ int main(int argc, const char *argv[]) {
 
   Sscheme_init(ABNORMAL_EXIT);
 
-  if (strcmp(path_last(execpath), "scheme-script") == 0) {
+  if (strcmp(path_last(execpath), SCHEME_SCRIPT) == 0) {
     if (argc < 2) {
       (void) fprintf(stderr,"%s requires program-path argument\n", execpath);
       exit(1);

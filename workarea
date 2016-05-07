@@ -113,6 +113,9 @@ workdir $W/c
 (cd $W/c; workln ../../c/Mf-$M Mf-$M)
 (cd $W/c; forceworkln Mf-$M Makefile)
 (cd $W/c; workln ../../c/Mf-base Mf-base)
+if [ ! -e $W/c/config.h ] ; then
+  touch $W/c/config.h
+fi
 
 workdir $W/s
 (cd $W/s; workln ../../s/Mf-$M Mf-$M)
