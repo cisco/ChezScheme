@@ -64,7 +64,7 @@ endif
 # clear running list of updated files
 set updatedfiles = ()
 
-workarea $M $W
+./workarea $M $W
 if ($status != 0) exit 1
 
 cd $W

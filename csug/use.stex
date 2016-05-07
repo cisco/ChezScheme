@@ -1793,7 +1793,7 @@ arguments for which search tracing is desired.
 
 Ordinarily, the search for
 boot files is limited to a set of
-default installation directories, but this may be overridden by setting
+installation directories, but this may be overridden by setting
 the environment variable \index{\scheme{SCHEMEHEAPDIRS}}\scheme{SCHEMEHEAPDIRS}.
 \scheme{SCHEMEHEAPDIRS} should be a colon-separated list of directories, listed in
 the order in which they should be searched.
@@ -1810,7 +1810,8 @@ searched after those in \scheme{SCHEMEHEAPDIRS}; otherwise, only those listed in
 Under Windows, semi-colons are used in place of colons, and one additional
 escape is recognized: ``\scheme{%x},'' which is replaced by the directory in
 which the executable file resides.
-The default search path under Windows consists only of ``\scheme{%x}.''
+The default search path under Windows consists of ``\scheme{%x}''
+and ``\scheme{%x\..\..\boot\%m}.''
 The registry key \scheme{HeapSearchPath} in
 \scheme{HKLM\SOFTWARE\Chez Scheme\csv\var{version}}, where
 \var{version} is the {\ChezScheme} version number, e.g.,

@@ -2,6 +2,7 @@ m = a6le
 Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
 STEXLIB=../stex
 installdir=/tmp/csug9
+INSTALL=../$m/installsh
 
 x = csug
 latex = pdflatex
@@ -14,14 +15,14 @@ DIR=$(shell basename `pwd`)
 target: logcheck1 logcheck2 checklibs $(x).html
 
 install: target
-	installsh -m 2755 -d $(installdir)
-	installsh -m 0644 --ifdiff *.html *.css $(installdir)
-	installsh -m 2755 -d $(installdir)/canned
-	installsh -m 0644 --ifdiff canned/* $(installdir)/canned
-	installsh -m 2755 -d $(installdir)/gifs
-	installsh -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
-	installsh -m 2755 -d $(installdir)/$(mathdir)
-	installsh -m 0644 --ifdiff $(mathdir)/*.gif $(installdir)/$(mathdir)
+	$(INSTALL) -m 2755 -d $(installdir)
+	$(INSTALL) -m 0644 --ifdiff *.html *.css $(installdir)
+	$(INSTALL) -m 2755 -d $(installdir)/canned
+	$(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned
+	$(INSTALL) -m 2755 -d $(installdir)/gifs
+	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
+	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
+	$(INSTALL) -m 0644 --ifdiff $(mathdir)/*.gif $(installdir)/$(mathdir)
 	(cd $(installdir); ln -s -f $(x).html index.html)
 
 # thrice is not enough when starting from scratch
