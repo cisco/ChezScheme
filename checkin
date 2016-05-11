@@ -122,7 +122,7 @@ end
 
 set sfiles = ()
 foreach x ($tmpsfiles)
-    if ("$x" == "./Makefile" || "$x" == "./Mf-install" || "$x" == "./Mf-boot" || "$x" == "c/config.h") then
+    if ("$x" == "./Makefile" || "$x" == "./Mf-install" || "$x" == "./Mf-boot" || "$x" == "c/config.h" || "$x" == "c/Mf-config") then
         set ignorefiles = ($ignorefiles $x)
     else
         cmp $W/$x $x >& /dev/null

@@ -37,6 +37,9 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+CPPFLAGS=""
+CFLAGS=""
+LDFLAGS=""
 
 case `uname` in
   Linux)
@@ -178,6 +181,15 @@ while [ $# != 0 ] ; do
     --help)
       help=yes
       ;;
+    CPPFLAGS=*)
+      CPPFLAGS=`echo $1 | sed -e 's/^CPPFLAGS=//'`
+      ;;
+    CFLAGS=*)
+      CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
+      ;;
+    LDFLAGS=*)
+      LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
+      ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
       exit 1
@@ -244,6 +256,9 @@ if [ "$help" = "yes" ]; then
   echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
+  echo "  CPPFLAGS=<C preprocessor flags>   additional C preprocessor flags ($CPPFLAGS)"
+  echo "  CFLAGS=<C compiler flags>         additional C compiler flags ($CFLAGS)"
+  echo "  LDFLAGS=<linker flags>            additional linker flags ($LDFLAGS)"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -273,7 +288,21 @@ if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
   exit 1
 fi
 
-git submodule init && git submodule update || exit 1
+if [ -d '.git' ] ; then
+  git submodule init && git submodule update || exit 1
+else
+  if [ ! -f 'nanopass/nanopass.ss' ] ; then
+    rmdir nanopass && (curl  -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -zxf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
+  fi
+
+  if [ ! -f 'zlib/configure' ] ; then
+    rmdir zlib && (curl -L -o v1.2.8.tar.gz https://github.com/madler/zlib/archive/v1.2.8.tar.gz && tar -xzf v1.2.8.tar.gz && mv zlib-1.2.8 zlib && rm v1.2.8.tar.gz) || exit 1
+  fi
+
+  if [ ! -f 'stex/Mf-stex' ] ; then
+    rmdir stex && (curl -L -o v1.2.tar.gz https://github.com/dybvig/stex/archive/v1.2.tar.gz && tar -zxf v1.2.tar.gz && mv stex-1.2 stex && rm v1.2.tar.gz) || exit 1
+  fi
+fi
 
 ./workarea $m $w
 
@@ -304,4 +333,10 @@ sed -e "s;^m=none\$;m=$m;"\
 cat > $w/c/config.h << END
 #define SCHEME_SCRIPT "$installscriptname"
 #define DEFAULT_HEAP_PATH "$installlib/csv%v/%m"
+END
+
+cat > $w/c/Mf-config << END
+CPPFLAGS=$CPPFLAGS
+CFLAGS=$CFLAGS
+LDFLAGS=$LDFLAGS
 END

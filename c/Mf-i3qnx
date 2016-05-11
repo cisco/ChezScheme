@@ -17,7 +17,7 @@ m = i3qnx
 Cpu = I386
 
 mdclib = -lm /usr/local/lib/libiconv.so -lsocket -lncurses
-C = qcc -m32 -Wpointer-arith -Wextra -Werror -O2 -N2048K
+C = qcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -N2048K ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
@@ -35,7 +35,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -mi386nto -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+	$C -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
 	(cd ../zlib; CFLAGS=-m32 ./configure)

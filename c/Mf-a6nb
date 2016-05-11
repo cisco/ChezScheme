@@ -18,7 +18,7 @@ Cpu = X86_64
 
 mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/local/include -I/usr/X11R6/include
 mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a
-C = gcc -m64 -Wpointer-arith -Wextra -Werror -O
+C = gcc ${CPPFLAGS} -m64 -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
@@ -35,7 +35,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
 	(cd ../zlib; CFLAGS=-m64 ./configure --64)

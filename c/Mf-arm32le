@@ -17,7 +17,7 @@ m = arm32le
 Cpu = ARMV6
 
 mdclib = -lm -ldl -lncurses -lrt
-C = gcc -Wpointer-arith -Wextra -Werror -O2
+C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -O2 ${CFLAGS}
 o = o
 mdsrc = arm32le.c
 mdobj = arm32le.o
@@ -34,7 +34,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
 	(cd ../zlib; ./configure)
