@@ -18,7 +18,7 @@ Cpu = I386
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
 mdclib = -L/usr/local/lib -liconv -lm -lncurses -lpthread
-C = gcc -Wpointer-arith -Werror -O2 -D_REENTRANT -pthread
+C = gcc ${CPPFLAGS} -Wpointer-arith -Werror -O2 -D_REENTRANT -pthread ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
@@ -35,7 +35,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+	$C -rdynamic -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
 	(cd ../zlib; CFLAGS=-m32 ./configure)

@@ -17,7 +17,7 @@ m = ta6osx
 Cpu = X86_64
 
 mdclib = -liconv -lm -lncurses
-C = gcc -m64 -Wpointer-arith -Wall -Wextra -Werror -O2 -I/opt/X11/include/
+C = gcc ${CPPFLAGS} -m64 -Wpointer-arith -Wall -Wextra -Werror -O2 -I/opt/X11/include/ ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
@@ -34,7 +34,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -r -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib}
+	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
 	(cd ../zlib; CFLAGS=-m64 ./configure --64)

@@ -116,6 +116,9 @@ workdir $W/c
 if [ ! -e $W/c/config.h ] ; then
   touch $W/c/config.h
 fi
+if [ ! -e $W/c/Mf-config ] ; then
+  touch $W/c/Mf-config
+fi
 
 workdir $W/s
 (cd $W/s; workln ../../s/Mf-$M Mf-$M)
