@@ -1,12 +1,12 @@
 /* scheme.c
  * Copyright 1984-2016 Cisco Systems, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -275,7 +275,7 @@ static void idiot_checks() {
       oops = 1;
     }
   }
-    
+
   if (sizeof(bucket_pointer_list) != sizeof(bucket_list)) {
     /* gc repurposes bucket_lists for bucket_pointer lists, so they'd better have the same size */
     fprintf(stderr, "bucket_pointer_list and bucket_list have different sizes\n");
@@ -370,7 +370,7 @@ void S_generic_invoke(tc, code) ptr tc; ptr code; {
     }
     __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ?
              EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
-    { 
+    {
         if (S_pants_down)
             S_error_abort("nonrecoverable invalid memory reference");
         else
@@ -545,7 +545,7 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
 
   if (S_fixedpathp(name)) {
     if (strlen(name) >= PATH_MAX) {
-      fprintf(stderr, "boot-file path is to long %s\n", name);
+      fprintf(stderr, "boot-file path is too long %s\n", name);
       S_abnormal_exit();
     }
 
@@ -566,10 +566,10 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
     if (gzgetc(file) != fasl_type_header ||
         gzgetc(file) != 0 ||
         gzgetc(file) != 0 ||
-        gzgetc(file) != 0 || 
-        gzgetc(file) != 'c' || 
-        gzgetc(file) != 'h' || 
-        gzgetc(file) != 'e' || 
+        gzgetc(file) != 0 ||
+        gzgetc(file) != 'c' ||
+        gzgetc(file) != 'h' ||
+        gzgetc(file) != 'e' ||
         gzgetc(file) != 'z') {
       fprintf(stderr, "malformed fasl-object header in %s\n", path);
       S_abnormal_exit();
@@ -632,23 +632,23 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
       if (gzgetc(file) != fasl_type_header ||
           gzgetc(file) != 0 ||
           gzgetc(file) != 0 ||
-          gzgetc(file) != 0 || 
-          gzgetc(file) != 'c' || 
-          gzgetc(file) != 'h' || 
-          gzgetc(file) != 'e' || 
+          gzgetc(file) != 0 ||
+          gzgetc(file) != 'c' ||
+          gzgetc(file) != 'h' ||
+          gzgetc(file) != 'e' ||
           gzgetc(file) != 'z') {
         if (verbose) fprintf(stderr, "malformed fasl-object header in %s\n", path);
         gzclose(file);
         continue;
       }
-  
+
      /* check version */
       if (zget_uptr(file, &n) != 0) {
         if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
         gzclose(file);
         continue;
       }
-  
+
       if (n != scheme_version) {
         if (verbose) {
           fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
@@ -658,14 +658,14 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
         gzclose(file);
         continue;
       }
-  
+
      /* check machine type */
       if (zget_uptr(file, &n) != 0) {
         if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
         gzclose(file);
         continue;
       }
-  
+
       if (n != machine_type) {
         if (verbose)
           fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
@@ -1181,7 +1181,7 @@ extern void Sscheme_deinit() {
   p = S_symbol_value(S_intern((const unsigned char *)"$close-files"));
   S_initframe(tc, 0);
   boot_call(tc, p, 0);
-  
+
   S_errors_to_console = 1;
   current_state = DEINITIALIZED;
 }
