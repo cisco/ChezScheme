@@ -1120,7 +1120,7 @@ adds the source/object directory pair
 to the front of the default set of library directories.
 The parameters are set after all boot files have been loaded.
 
-\index{CHEZSCHEMELIBS}\index{CHEZSCHEMEEXTS}%
+\index{CHEZSCHEMELIBDIRS}\index{CHEZSCHEMELIBEXTS}%
 If no \scheme{--libdirs} option appears and the CHEZSCHEMELIBDIRS
 environment variable is set, the string value of CHEZSCHEMELIBDIRS is
 treated as if it were specified by a \scheme{--libdirs} option.
