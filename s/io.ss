@@ -1,13 +1,13 @@
 "io.ss"
 ;;; io.ss
 ;;; Copyright 1984-2016 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2282,12 +2282,12 @@ implementation notes:
           (nongenerative)
           (opaque #t)
           (fields decode-desc encode-desc))
-  
+
         (define $iconv-open (foreign-procedure "(cs)s_iconv_open" (string string) ptr))
         (define $iconv-close (foreign-procedure "(cs)s_iconv_close" (uptr) void))
         (define $iconv-from-string (foreign-procedure "(cs)s_iconv_from_string" (uptr ptr uptr uptr ptr uptr uptr) ptr))
         (define $iconv-to-string (foreign-procedure "(cs)s_iconv_to_string" (uptr ptr uptr uptr ptr uptr uptr) ptr))
-  
+
         (define iconv-decode
           (let ()
             (define (err who tp info i iend bv)
@@ -2388,7 +2388,7 @@ implementation notes:
                                      [else (err who tp info i iend bv)])]
                                   [(fx= n 0) (return 0 i iend info)]
                                   [else (loop j 0 (fx+ iend n))])))]))])))))))
-  
+
         (define iconv-encode
           (let ()
             (define (return ans o info)
@@ -2459,12 +2459,12 @@ implementation notes:
                                    (if (fx= newo o)
                                        (return (fx- j start) o info)
                                        (loop j newo)))]))])))))))
-  
+
         (define iconv-close
           (lambda (info)
             (cond [(iconv-info-decode-desc info) => $iconv-close])
             (cond [(iconv-info-encode-desc info) => $iconv-close])))
-  
+
         (set-who! iconv-codec
           (lambda (code)
             (unless (string? code) ($oops who "~s is not a string" code))
@@ -2525,7 +2525,7 @@ implementation notes:
         ($make-transcoder codec eol-style handling-mode)])))
 
   (set-who! transcoder? (lambda (x) ($transcoder? x)))
- 
+
   (let ([transcoder (make-transcoder (utf-8-codec))])
     (set-who! native-transcoder (lambda () transcoder))
     (set-who! current-transcoder
@@ -3768,7 +3768,7 @@ implementation notes:
         (unless (and (input-port? binary-input-port) (binary-port? binary-input-port))
           ($oops who "~s is not a binary input port" binary-input-port))
         (unless (and (fixnum? count) (fx>= count 0))
-          ($oops who "~s is not a non-negative fixnum" count))
+          ($oops who "~s is not a nonnegative fixnum" count))
         (let ([buffer-size (file-buffer-size)])
           (if (not ($fxu< buffer-size count))
               (let ([bv (make-bytevector count)])
@@ -3933,7 +3933,7 @@ implementation notes:
         (unless (and (input-port? textual-input-port) (textual-port? textual-input-port))
           ($oops who "~s is not a textual input port" textual-input-port))
         (unless (and (fixnum? count) (fx>= count 0))
-          ($oops who "~s is not a non-negative fixnum" count))
+          ($oops who "~s is not a nonnegative fixnum" count))
         (let ([buffer-size (file-buffer-size)])
           (if (not ($fxu< buffer-size count))
               (let ([st (make-string count)])
