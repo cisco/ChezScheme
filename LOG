@@ -139,3 +139,6 @@
 - added instructions for building (cross-compiling) a boot file for
   a supported machine type for which a boot file is not built by default.
     BUILDING
+- corrected CHEZSCHEMELIBS and CHEZSCHEMEEXTS index entries to be
+  CHEZSCHEMELIBDIRS and CHEZSCHEMELIBEXTS.
+    use.stex
