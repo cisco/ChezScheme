@@ -1,13 +1,13 @@
 "pdhtml.ss"
 ;;; pdhtml.ss
 ;;; Copyright 1984-2016 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -637,8 +637,7 @@
 
      ; pseudo tags
       (define (<doctype>)
-        (printf "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"
-                    \"http://www.w3.org/TR/html4/strict.dtd\">\n"))
+        (printf "<!DOCTYPE html>\n"))
 
      ;;; other helpers
       (define (html-text-char c)
@@ -748,16 +747,6 @@
                        (<title> () (html-text "~a" title))
                        (newline)
                        (display-palette-style palette)
-                       (newline)
-                       (<script> ([language "javascript"] [type "text/javascript"])
-                         (printf
-                           "<!--\n~
-                            function openInWin(fn,name) {\n~
-                              var w = window.open(fn, name);\n~
-                              w.focus();\n~
-                              return false;\n~
-                            }\n~
-                            -->\n"))
                        (newline))
                      (newline)
                      (let () body1 body2 ...)
@@ -836,14 +825,15 @@
                               (begin (set-port-position! ip 0) n)
                               (loop (if bol? (+ n 1) n) (char=? c #\newline))))))
                     (<table> ()
-                      (<td> ([style (format "color: ~a; text-align: right; padding-right: 1em" color)])
-                        (<pre> ()
-                          (unless (fx= line-count 0)
-                            (newline)
-                            (let loop ([i 1])
-                              (<a> ([name (format "line~d" i)]) (html-text "~s\n" i))
-                              (unless (fx= i line-count) (loop (fx+ i 1)))))))
-                      (<td> () (th))))]
+                      (<tr> ()
+                        (<td> ([style (format "color: ~a; text-align: right; padding-right: 1em" color)])
+                          (<pre> ()
+                            (unless (fx= line-count 0)
+                              (newline)
+                              (let loop ([i 1])
+                                (<span> ([id (format "line~d" i)]) (html-text "~s\n" i))
+                                (unless (fx= i line-count) (loop (fx+ i 1)))))))
+                        (<td> () (th)))))]
                  [else (th)]))]))
         (with-html-file who palette (filedata-htmlpath fdata) (port-name ip)
           (<body> ([class (color-class 0)])
@@ -986,7 +976,7 @@
                    (<table> ()
                      (<tr> ()
                        (newline)
-                       (<td> ([valign "top"])
+                       (<td> ([style "vertical-align: top"])
                          (<p> ([style "margin-bottom: 0"])
                            (<b> () (html-text "Legend:")))
                          (newline)
@@ -1037,9 +1027,7 @@
                                      (nbsp)
                                      (if ip
                                          (<a> ([href (filedata-htmlfn fdata)]
-                                               [onclick (format "return openInWin('~a', '~a');"
-                                                          (filedata-htmlfn fdata)
-                                                          (filedata-winid fdata))]
+                                               [target (filedata-winid fdata)]
                                                [class (color-class (filedata-ci fdata))])
                                            (html-text "~a" (port-name (filedata-ip fdata))))
                                          (html-text "~a"
@@ -1055,7 +1043,7 @@
                        (newline)
                        (<td> ([style "width: 10em"]))
                        (newline)
-                       (<td> ([valign "top"])
+                       (<td> ([style "vertical-align: top"])
                          (<p> ([style "margin-bottom: 0"])
                            (<b> () (html-text "Hot spots:")))
                          (newline)
@@ -1098,9 +1086,7 @@
                                                           (filedata-htmlfn fdata)
                                                         line)])
                                               (<a> ([href url]
-                                                    [onclick (format "return openInWin('~a', '~a');"
-                                                               url
-                                                               (filedata-winid fdata))]
+                                                    [target (filedata-winid fdata)]
                                                     [style "text-decoration: underline"]
                                                     [class (color-class (entrydata-ci entry))])
                                               (html-text "~a line ~s (~:d)"
