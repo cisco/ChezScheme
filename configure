@@ -300,7 +300,7 @@ else
   fi
 
   if [ ! -f 'stex/Mf-stex' ] ; then
-    rmdir stex && (curl -L -o v1.2.tar.gz https://github.com/dybvig/stex/archive/v1.2.tar.gz && tar -zxf v1.2.tar.gz && mv stex-1.2 stex && rm v1.2.tar.gz) || exit 1
+    rmdir stex && (curl -L -o v1.2.1.tar.gz https://github.com/dybvig/stex/archive/v1.2.1.tar.gz && tar -zxf v1.2.1.tar.gz && mv stex-1.2.1 stex && rm v1.2.1.tar.gz) || exit 1
   fi
 fi
 

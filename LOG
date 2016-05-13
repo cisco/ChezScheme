@@ -142,3 +142,5 @@
 - corrected CHEZSCHEMELIBS and CHEZSCHEMEEXTS index entries to be
   CHEZSCHEMELIBDIRS and CHEZSCHEMELIBEXTS.
     use.stex
+- updated to curl stex version 1.2.1
+    configure
