@@ -1,13 +1,13 @@
 "print.ss"
 ;;; print.ss
 ;;; Copyright 1984-2016 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,7 @@
   (lambda (x)
     (if ($immediate? x)
         (eq? x black-hole)
-        (and 
+        (and
           ($object-in-heap? x)
           (or (pair? x)
               (vector? x)
@@ -422,13 +422,13 @@ floating point returns with (1 0 -1 ...).
                (fixup k (* r scale) s m- (and m+ (ash m- 1)) ruf))]
             [else
              (fixup k r s m- m+ ruf)]))))
-     
+
      (define fixup
        (lambda (k r s m- m+ ruf)
          (if ((if ruf >= >) (+ r (or m+ m-)) s)
              (cutoffadjust0 (fx+ k 1) r (* s ob) m- m+ ruf)
              (cutoffadjust0 k r s m- m+ ruf))))
-                
+
      (define cutoffadjust0
        (lambda (k r s m- m+ ruf)
          (case cutoffmode
@@ -437,7 +437,7 @@ floating point returns with (1 0 -1 ...).
             (cutoffadjust k r s m- m+ ruf (fx- initialcutoffplace k))]
            [(relative)
             (when (fx>= initialcutoffplace 0)
-              ($oops '$flonum->digits "non-negative relative cutoffplace ~s"
+              ($oops '$flonum->digits "nonnegative relative cutoffplace ~s"
                      initialcutoffplace))
             (cutoffadjust k r s m- m+ ruf initialcutoffplace)]
            [else
@@ -476,7 +476,7 @@ floating point returns with (1 0 -1 ...).
        (lambda (k r s m- m+ ruf cop)
          (let ([k (fx- k 1)])
            (cons k (generate k r s m- m+ ruf cop)))))
-    
+
      (define generate
        (lambda (k r s m- m+ ruf cop)
          (let* ([rob (* r ob)]
@@ -501,7 +501,7 @@ floating point returns with (1 0 -1 ...).
                            (if (fx= d u)
                                (generate1 k (+ r (or m+ m-)) s cop)
                                (generate1 k (- (+ r (or m+ m-)) s) s cop)))]))))))
-    
+
     ; delta may be zero, in which case all digits are significant,
     ; even if we've been asked for 1,000,000 of them.  This is due to
     ; our definition of (in)significant: "a digit is insignificant when
@@ -510,7 +510,7 @@ floating point returns with (1 0 -1 ...).
     ; words, a digit is insignificant if incrementing the preceding
     ; digit does not cause the number to fall outside the rounding
     ; range of v."  For 1e23, which falls exactly midway between two
-    ; fp numbers and reads as the next one down due to "unbiasd rounding", 
+    ; fp numbers and reads as the next one down due to "unbiasd rounding",
     ; if we add even a single 1 digit way down, we're pushed to the next
     ; higher (when read).  For example:
     ; 100000000000000000000000.000000000000000000000000000000000000001
@@ -941,7 +941,7 @@ floating point returns with (1 0 -1 ...).
    (lambda (x r d? p)
       (unless (or (fx= r 10) d?) (wrradix r p))
       (wrbigits (if (< x 0) (begin (write-char #\- p) (- x)) x) r p)))
- 
+
 (define wrfixnum
    (lambda (x r d? p)
       (unless (or (fx= r 10) d?) (wrradix r p))
@@ -970,7 +970,7 @@ floating point returns with (1 0 -1 ...).
                (let ([u (car s)])
                   (when (or (fx>= u 0) (fx>= e 0))
                      (loop u (cdr s) (fx- e 1)))))))
-      
+
       (define free-format-exponential
          (lambda (e s r p)
             (write-char (flonum-digit->char (car s)) p)
@@ -1167,7 +1167,7 @@ floating point returns with (1 0 -1 ...).
           (wr x (print-radix) lev len #f env p))))
 
   (set-who! write
-    (case-lambda 
+    (case-lambda
       [(x p)
        (unless (and (output-port? p) (textual-port? p))
          ($oops 'write "~s is not a textual output port" p))
@@ -1187,7 +1187,7 @@ floating point returns with (1 0 -1 ...).
     (wr x (print-radix) #f #f #t #f p))
 
   (set-who! display
-    (case-lambda 
+    (case-lambda
       [(x p)
        (unless (and (output-port? p) (textual-port? p))
          ($oops 'display "~s is not a textual output port" p))
