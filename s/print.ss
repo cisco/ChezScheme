@@ -510,7 +510,7 @@ floating point returns with (1 0 -1 ...).
     ; words, a digit is insignificant if incrementing the preceding
     ; digit does not cause the number to fall outside the rounding
     ; range of v."  For 1e23, which falls exactly midway between two
-    ; fp numbers and reads as the next one down due to "unbiasd rounding",
+    ; fp numbers and reads as the next one down due to "unbiased rounding",
     ; if we add even a single 1 digit way down, we're pushed to the next
     ; higher (when read).  For example:
     ; 100000000000000000000000.000000000000000000000000000000000000001
