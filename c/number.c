@@ -1163,7 +1163,7 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
       if (round) {
         mlow += 1;
         if (e == 0 && mlow == hidden_bit) {
-          e = 1; /* squeeking into lowest normalized spot */
+          e = 1; /* squeaking into lowest normalized spot */
         } else if (mlow == hidden_bit * 2) {
 	  /* don't bother with mlow = mlow >> 1 since hidden bit and up are ignored after this */
           e += 1;
