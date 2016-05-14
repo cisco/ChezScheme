@@ -1,9 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=divise-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Chez Scheme</title>
+    
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/chez-theme.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js">
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js">
+    <![endif]-->
   </head>
   <body>
-    <h1>Chez Scheme</h1>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3 left-nav" role="complementary">
+          <nav>
+            <ul class="nav-elements">
+              <li><a href="#intro">Introduction</a></li>
+              <li><a href="#get">Get Chez Scheme</a></li>
+              <li><a href="#docs">Documentation</a></li>
+              <li><a href="#community">Community</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="col-md-9 main" role="main">
+          <h1 id="intro">Chez Scheme</h1>
+          <p>Chez Scheme is a compiler and run-time system for the language of
+             the Revised<sup>6</sup> Report on Scheme (R6RS), with numerous
+             extensions.  The compiler generates native code for each target
+             processor, with support for x86, x86_64, and 32-bit PowerPC
+             architectures.
+           <h2 id="get">Get Chez Scheme</h2>
+           <ul>
+             <li>Current source <a href="https://github.com/cisco/ChezScheme">available on github</a></li>
+             <li>Current Release, version 9.4 [
+               <a href="https://github.com/cisco/ChezScheme/archive/v9.4.zip">zip</a> |
+               <a href="https://github.com/cisco/ChezScheme/archive/v9.4.tar.gz">tar.gz</a> ]</li>
+             <li>All Open Source <a href="https://github.com/cisco/ChezScheme/releases">Releases</a></li>
+             <li>Legacy Releases from <a href="http://scheme.com/download/">scheme.com</a></li>
+           </ul>
+           <h2 id="docs">Documentation</h2>
+           <ul>
+             <li>The Scheme Programming Language (4th Edition) [
+               <a href="http://scheme.com/tspl4/">html</a> |
+               <a href="https://mitpress.mit.edu/books/scheme-programming-language">print</a> ]</li>
+             <li>The Chez Scheme User's Guide for version 9.4 [
+               <a href="csug9.4/index.html">html</a> |
+               <a href="csug9.4/csug9_4.pdf">pdf</a> ]</li>
+             <li>Chez Scheme version 9.4 release notes [
+               <a href="release_notes/v9.4/release_notes.html">html</a> |
+               <a href="release_notes/v9.4/release_notes.pdf">pdf</a> ]</li>
+           </ul>
+           <h2 id="community">Community</h2>
+           <ul>
+             <li>Chez Scheme project issues <a href="https://github.com/cisco/ChezScheme/issues">page</a></li>
+             <!-- <li>chez-scheme Google Group</li> -->
+             <li>#chez on <a href="http://freenode.net">freenode</a></li>
+           </ul>
+        </div>
+      </div>
+    </div>
+    <div class="panel-footer navbar-fixed-bottom">
+      <a href="http://cisco.com/"><img class="cisco-logo" src="images/cisco-logo.png"></a>
+      <div class="copyright">
+      Copyright &copy; 2016 Cisco Systems, Inc.<br>
+      Chez Scheme is licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
+      </div>
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
