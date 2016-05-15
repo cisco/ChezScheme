@@ -144,3 +144,7 @@
     use.stex
 - updated to curl stex version 1.2.1
     configure
+- updated the fix to S_mktime to work on windows.  the struct tm
+  structure on windows does not have the tm_gmtoff field used in the
+  mac and linux version of the code.
+    stats.c
