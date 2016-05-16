@@ -19,7 +19,7 @@ fsrc = foreign1.c foreign2.c foreign3.c
 ftmp = foreign1.obj foreign2.obj foreign3.obj
 fobj = foreign1.so
 mdclean = ${ftmp} foreign1.exp foreign1.lib make.bat cat_flush.obj cat_flush.exe libiconv-2.dll
-mdsrc = bld$m.bat bldnt.bat clean.bat make.bat libiconv-2.dll
+mdsrc = bldnt.bat
 
 MSDOS = 1
 

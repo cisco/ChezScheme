@@ -15,6 +15,6 @@
 
 m = ta6nt
 archincludes = x86_64.ss
-buildsrc = bld$m.bat bldnt.bat clean.bat
+buildsrc = bldnt.bat
 
 include Mf-base
