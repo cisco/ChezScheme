@@ -157,3 +157,5 @@
     mats/Mf-{a6,i3,ta6,ti3}nt
 - updated the read me to include a link to the Chez Scheme project page.
     README.md
+- fixed embarrassing typo in read me.
+    README.md

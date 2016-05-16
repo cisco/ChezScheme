@@ -5,4 +5,4 @@ support for x86, x86_64, and 32-bit PowerPC architectures.
 
 Get started by [Building Chez Scheme](BUILDING).
 
-For more information see the [Chez Schem Project Page](http://cisco.github.io/ChezScheme/)
+For more information see the [Chez Scheme Project Page](http://cisco.github.io/ChezScheme/)
