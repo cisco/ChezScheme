@@ -148,3 +148,12 @@
   structure on windows does not have the tm_gmtoff field used in the
   mac and linux version of the code.
     stats.c
+- updated the Windows makefiles for building and testing to remove links for
+  files that no longer exist, which was getting in the way of creating links
+  for files that do exist.  Also updated the build batch file for Windows to
+  compile the nanopass framework separately before building the rest of the
+  scheme compiler and libraries.
+    s/Mf-{a6,i3,ta6,ti3}nt, s/bldnt.bat,
+    mats/Mf-{a6,i3,ta6,ti3}nt
+- updated the read me to include a link to the Chez Scheme project page.
+    README.md
