@@ -110,7 +110,6 @@ foreach x ($sdirs)
             goto error
      endsw
 end
-(cd $W/zlib; make distclean > & /dev/null; rm -f zconf.h rm -f Makefile > /dev/null)
 
 set ignorefiles = ()
 
@@ -299,7 +298,7 @@ endif
 
 delete:
 
-set tmpfiles = `(cd $W; find . -type f -print)`
+set tmpfiles = `(cd $W; find . -name zlib -prune -o -type f -print)`
 set files = ()
 foreach x ($tmpfiles)
     set files = ($x $files)
