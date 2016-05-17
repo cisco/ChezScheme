@@ -166,3 +166,10 @@
   replace the anchors with spans); and replace the deprecated valign
   attribute with a style attribute.
     pdhtml.ss
+
+9.4.1 changes:
+   * updated version to 9.4.1
+        bintar BUILDING NOTICE makefiles/Mf-install.in scheme.1.in
+        c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
+        mats/bldnt.bat workarea c/scheme.rc s/7.ss s/cmacros.ss
+        release_notes/release_notes.stex csug/csug.stex

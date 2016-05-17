@@ -58,7 +58,7 @@ InstallScriptName=scheme-script
 #                 no changes should be needed below this point                #
 ###############################################################################
 
-Version=csv9.4
+Version=csv9.4.1
 Include=boot/$m
 PetiteBoot=boot/$m/petite.boot
 SchemeBoot=boot/$m/scheme.boot
