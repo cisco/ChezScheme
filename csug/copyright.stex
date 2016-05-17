@@ -22,7 +22,7 @@ Licensed under the Apache License Version 2.0\\
 http://www.apache.org/licenses/LICENSE-2.0
 
 % NB: also update corresponding notice in csug.stex
-Revised May 2016 for Chez Scheme Version 9.4.
+Revised \INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version 9.4.1.
 
 \medskip\noindent
 Cisco and the Cisco logo are trademarks or registered trademarks
