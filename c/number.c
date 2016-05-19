@@ -1157,7 +1157,7 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
     if (cutbit) {
       IBOOL round;
       /* cutbit = 1 => at least half way to next number.  round up if odd or
-	 if there are any bits set to the right of cutbit */
+         if there are any bits set to the right of cutbit */
       round = (mlow & 1) || sticky;
       while (!round && n-- > 0) round = *p++ != 0;
       if (round) {
@@ -1165,7 +1165,7 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
         if (e == 0 && mlow == hidden_bit) {
           e = 1; /* squeaking into lowest normalized spot */
         } else if (mlow == hidden_bit * 2) {
-	  /* don't bother with mlow = mlow >> 1 since hidden bit and up are ignored after this */
+          /* don't bother with mlow = mlow >> 1 since hidden bit and up are ignored after this */
           e += 1;
         }
       }

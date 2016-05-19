@@ -141,7 +141,7 @@ set updatedfiles = ($updatedfiles csug/csug.stex)
 cat ../LOG > LOG
 echo "" >> LOG
 echo "$R changes:" >> LOG
-echo "   * updated version to $R" >> LOG
-echo $updatedfiles | sed -e 's/^/        /' | fmt >> LOG
+echo "- updated version to $R" >> LOG
+echo $updatedfiles | sed -e 's/^/    /' | fmt >> LOG
 
 exit 0
