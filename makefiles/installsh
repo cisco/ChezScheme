@@ -61,7 +61,7 @@ while ${TRUE} ; do
     for file in $files ; do
       destfile=$dest
       if [ -d $destfile ] ; then destfile=$destfile/`basename $file` ; fi
-      if [ $ifdiff == 1 ] && cmp -s $file $destfile || cp -f -p $file $destfile ; then
+      if [ $ifdiff -eq 1 ] && cmp -s $file $destfile || cp -f -p $file $destfile ; then
         if [ "$owner" != "" ] ; then chown $owner $destfile ; fi
         if [ "$group" != "" ] ; then chgrp $group $destfile ; fi
         if [ "$mode" != "" ] ; then chmod $mode $destfile ; fi
