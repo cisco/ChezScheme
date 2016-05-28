@@ -295,7 +295,7 @@ can attempt to lock the lock via \scheme{ftype-lock!} or \scheme{ftype-spin-lock
 Once the lock has been locked and before it is unlocked, further
 attempts to lock the lock fail, even by the process or thread that
 most recently locked it.
-Locks can be unlocked, via \scheme{ftype-lock!}, by any process or thread,
+Locks can be unlocked, via \scheme{ftype-unlock!}, by any process or thread,
 not just by the process or thread that most recently locked the lock.
 
 The lock mechanism provides little structure, and mistakes
