@@ -17,7 +17,7 @@ system, and programming environment.
 Although an interpreter is available, all code is compiled by
 default.
 Source code is compiled on-the-fly when loaded from a source file
-or entered via the shell interface.
+or entered via the shell.
 A source file can also be precompiled into a stored binary form and
 automatically recompiled when its dependencies change.
 Whether compiling on the fly or precompiling, the compiler produces
@@ -45,7 +45,8 @@ expression editing.
 
 The R6RS core of the Chez Scheme language is described in
 [The Scheme Programming Language](http://www.scheme.com/tspl4/),
-while Chez Scheme's additional language, run-time system, and
+which also includes an introduction to Scheme and a set of example programs.
+Chez Scheme's additional language, run-time system, and
 programming environment features are described in the
 [Chez Scheme User's Guide](http://cisco.github.io/ChezScheme/csug9.4/csug.html).
 The latter includes a shared index and a shared summary of forms,
