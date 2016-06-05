@@ -37,9 +37,9 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
-CPPFLAGS=""
-CFLAGS=""
-LDFLAGS=""
+: ${CPPFLAGS:=""}
+: ${CFLAGS:=""}
+: ${LDFLAGS:=""}
 
 case `uname` in
   Linux)
