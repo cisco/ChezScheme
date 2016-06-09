@@ -109,6 +109,13 @@ maximum-generation collection.
 It can be set to a lower generation number to cause the collector to
 do so for younger generations we well.
 
+\subsection{sstats changes (9.3.1)}
+
+The vector-based sstats structure has been replaced with a record type.
+The time fields are all time objects, and the bytes and count fields
+are now exact integers.
+\scheme{time-difference} no longer coerces negative results to zero.
+
 \subsection{\protect\scheme{library-group} eliminated (9.3.1)}
 
 With the extensions to \scheme{compile-whole-program} and the

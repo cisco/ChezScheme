@@ -178,3 +178,11 @@
     newrelease, LOG
 - replaced a couple of tabs
     number.c
+- updated the descriptions of statistics and related functions to
+  reflect the Version 9.3.1 change from sstats structures to sstats
+  records, with sstats times represented as time objects and sstats
+  bytes and counts represented as exact integers; also updated the
+  sstats-difference description to reflect that it no longer coerces
+  negative differences to zero.  added a corresponding release note.
+    system.stex,
+    release_notes.stex

@@ -3856,7 +3856,7 @@ integer less than $10^9$.
 \schemedisplay
 (time-type (current-time)) ;=> time-utc
 (time-type (current-time 'time-process)) ;=> time-process
-(time-type (make-time 'time-duration 0 50) ;=> time-duration
+(time-type (make-time 'time-duration 0 50)) ;=> time-duration
 (time-second (current-time)) ;=> 1198816497
 (time-nanosecond (current-time)) ;=> 2399000
 (time-second (make-time 'time-duration 10 -5)) ;=> -5
@@ -4318,14 +4318,14 @@ of the heap to the current size of the heap.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{statistics}{\categoryprocedure}{(statistics)}
-\returns a sstats structure containing current statistics
+\returns a sstats record containing current statistics
 \listlibraries
 \endentryheader
 
 \noindent
 \scheme{statistics} packages together various timing and allocation
-statistics into a single \scheme{sstats} structure.
-A \scheme{sstats} structure has the following fields:
+statistics into a single \scheme{sstats} record.
+A \scheme{sstats} record has the following fields:
 
 \begin{description}
 \item[\scheme{cpu},] the cpu time consumed, 
@@ -4339,53 +4339,40 @@ A \scheme{sstats} structure has the following fields:
 
 \noindent
 All values are computed since system start-up.
-All times are calculated in milliseconds.
-
-The \scheme{sstats} structure and the corresponding allocation procedure,
-predicate, accessors, and setters described below are defined as vector-based
-structures as if via \scheme{define-structure}
-(Section~\ref{SECTCOMPATSTRUCTURES}) as follows.
-
-\schemedisplay
-(define-structure
-  (sstats cpu real bytes
-    gc-count gc-cpu gc-real gc-bytes))
-\endschemedisplay
+The time values are time objects (Section~\ref{SECTSYSTEMTIMESNDATES}),
+and the bytes and count values are exact integers.
 
 \scheme{statistics} might be defined as follows:
 
 \schemedisplay
 (define statistics
   (lambda ()
-    (define millis
-      (lambda (t)
-        (+ (* (time-second t) 1000)
-           (quotient (time-nanosecond t) 1000000))))
     (make-sstats
-      (cpu-time)
-      (real-time)
+      (current-time 'time-thread)
+      (current-time 'time-monotonic)
       (- (+ (bytes-allocated) (bytes-deallocated))
          (initial-bytes-allocated))
       (collections)
-      (millis (current-time 'time-collector-cpu))
-      (millis (current-time 'time-collector-real))
+      (current-time 'time-collector-cpu)
+      (current-time 'time-collector-real)
       (bytes-deallocated))))
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{make-sstats}{\categoryprocedure}{(make-sstats \var{cpu} \var{real} \var{bytes} \var{gc-count} \var{gc-cpu} \var{gc-real} \var{gc-bytes})}
-\returns a sstats structure
+\returns a sstats record
 \listlibraries
 \endentryheader
 
-Each of the arguments must be a real number.
+The time arguments (\var{cpu}, \var{real}, \var{gc-cpu}, and \var{gc-real}) must be time objects.
+The other arguments must be exact integers.
 
 
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{sstats?}{\categoryprocedure}{(sstats? \var{obj})}
-\returns \scheme{#t} if \var{obj} is a sstats structure, otherwise \scheme{#f}
+\returns \scheme{#t} if \var{obj} is a sstats record, otherwise \scheme{#f}
 \listlibraries
 \endentryheader
 
@@ -4404,51 +4391,42 @@ Each of the arguments must be a real number.
 \endentryheader
 
 \noindent
-\var{s} must be a sstats structure.
+\var{s} must be a sstats record.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{set-sstats-cpu!}{\categoryprocedure}{(set-sstats-cpu! \var{s} \var{obj})}
-\formdef{set-sstats-real!}{\categoryprocedure}{(set-sstats-real! \var{s} \var{obj})}
-\formdef{set-sstats-bytes!}{\categoryprocedure}{(set-sstats-bytes! \var{s} \var{obj})}
-\formdef{set-sstats-gc-count!}{\categoryprocedure}{(set-sstats-gc-count! \var{s} \var{obj})}
-\formdef{set-sstats-gc-cpu!}{\categoryprocedure}{(set-sstats-gc-cpu! \var{s} \var{obj})}
-\formdef{set-sstats-gc-real!}{\categoryprocedure}{(set-sstats-gc-real! \var{s} \var{obj})}
-\formdef{set-sstats-gc-bytes!}{\categoryprocedure}{(set-sstats-gc-bytes! \var{s} \var{obj})}
+\formdef{set-sstats-cpu!}{\categoryprocedure}{(set-sstats-cpu! \var{s} \var{new-value})}
+\formdef{set-sstats-real!}{\categoryprocedure}{(set-sstats-real! \var{s} \var{new-value})}
+\formdef{set-sstats-bytes!}{\categoryprocedure}{(set-sstats-bytes! \var{s} \var{new-value})}
+\formdef{set-sstats-gc-count!}{\categoryprocedure}{(set-sstats-gc-count! \var{s} \var{new-value})}
+\formdef{set-sstats-gc-cpu!}{\categoryprocedure}{(set-sstats-gc-cpu! \var{s} \var{new-value})}
+\formdef{set-sstats-gc-real!}{\categoryprocedure}{(set-sstats-gc-real! \var{s} \var{new-value})}
+\formdef{set-sstats-gc-bytes!}{\categoryprocedure}{(set-sstats-gc-bytes! \var{s} \var{new-value})}
 \returns unspecified
 \listlibraries
 \endentryheader
 
 \noindent
-\var{s} must be a sstats structure.
-Each procedure sets the value of the corresponding field
-to \var{obj}.
-
+\var{s} must be a sstats record, the \var{new-value} arguments for the time fields
+(\var{cpu}, \var{real}, \var{gc-cpu}, and \var{gc-real})
+must be time objects, and
+the other \var{new-value} arguments must be exact integers.
+Each procedure sets the value of the corresponding field of \var{s} to
+\var{new-value}.
 
 
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{sstats-difference}{\categoryprocedure}{(sstats-difference \var{s_1} \var{s_2})}
-\returns a sstats structure representing the difference between \var{s_1} and \var{s_2}
+\returns a sstats record representing the difference between \var{s_1} and \var{s_2}
 \listlibraries
 \endentryheader
 
 \noindent
-\var{s_1} and \var{s_2} must be \scheme{sstats} structures.
+\var{s_1} and \var{s_2} must be sstats records.
 \scheme{sstats-difference} subtracts each field of \var{s_2} from the
-corresponding field of \var{s_1} to produce the result \scheme{sstats}
-structure.
-It coerces negative results to zero.
-\scheme{sstats-difference} is commonly used to measure the time elapsed
-between two points in the execution of a program.
-In doing such comparisons, it is often useful to adjust for overhead
-in the statistics gathering functions by calling \scheme{statistics}
-twice before timing a computation and once after; the difference in the
-results of the first two calls is then subtracted from the difference in
-the results of the last two calls.
-After adjusting for overhead, small negative results could occur for very
-fast running computations without the coercion of negative results to
-zero by \scheme{sstats-difference}.
+corresponding field of \var{s_1} to produce the resulting \scheme{sstats}
+record.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -4459,7 +4437,7 @@ zero by \scheme{sstats-difference}.
 \endentryheader
 
 \noindent
-\var{s} must be a \scheme{sstats} structure.
+\var{s} must be a \scheme{sstats} record.
 If \var{textual-output-port} is not supplied, it defaults to the current output port.
 \scheme{sstats-print} displays the fields of \scheme{s} in a manner similar
 to \scheme{display-statistics} and \scheme{time}.
