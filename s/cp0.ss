@@ -2476,7 +2476,7 @@
           (lambda (x)
             (and (char? x)
                  (constant-case wchar-bits
-                   [(16) (< (integer->char x) #x10000)]
+                   [(16) (< (char->integer x) #x10000)]
                    [(32) #t]))))
         ; NB: is this sufficiently tested by ftype.ms and record.ms?
         (define-inline 2 $foreign-wchar?

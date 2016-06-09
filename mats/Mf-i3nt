@@ -16,27 +16,13 @@
 m = i3nt
 
 fsrc = foreign1.c foreign2.c foreign3.c
-ftmp = foreign1.obj foreign2.obj foreign3.obj
 fobj = foreign1.so
-mdclean = ${ftmp} foreign1.exp foreign1.lib make.bat cat_flush.obj cat_flush.exe libiconv-2.dll
-mdsrc = bldnt.bat
-
-MSDOS = 1
+mdclean = cat_flush.exe cat_flush.obj foreign1.exp foreign1.lib foreign1.obj foreign2.obj foreign3.obj
 
 include Mf-base
 
-.SUFFIXES: .c .obj
+foreign1.so: $(fsrc)
+	../c/vs.bat cl /DWIN32 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv941.lib $(fsrc)
 
-.c.obj: ; cl -c -DWIN32 -I${Include} $*.c
-
-foreign1.so: $(ftmp)
-	link -dll -out:foreign1.so foreign1.obj foreign2.obj foreign3.obj
-
-make.bat:
-	echo "@echo off" > make.bat
-	echo "call bldi3nt" >> make.bat
-	echo "call bldi3nt 2" >> make.bat
-	echo "bldi3nt 3" >> make.bat
-
-libiconv-2.dll:
-	ln -s ../bin/libiconv-2.dll .
+cat_flush: cat_flush.c
+	../c/vs.bat cl /DWIN32 /MD /nologo $<

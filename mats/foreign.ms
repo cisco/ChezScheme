@@ -204,21 +204,7 @@
    (mat load-shared-object
       (file-exists? "foreign1.so")
       (begin (load-shared-object "foreign1.so") #t)
-      (begin
-        (load-shared-object
-          (let ([bindir (format "../bin/~a" (machine-type))])
-            (define prefix?
-              (lambda (x y)
-                (let ([n (string-length x)])
-                  (and (fx<= n (string-length y))
-                       (let prefix? ([i 0])
-                         (or (fx= i n)
-                             (and (char=? (string-ref x i) (string-ref y i))
-                                  (prefix? (fx+ i 1)))))))))
-            (format "~a/~a" bindir
-              (or (find (lambda (s) (prefix? "vcruntime" s)) (directory-list bindir))
-                  (errorf #f "did not find C runtime vcruntime*.dll in ~a" bindir)))))
-        #t)
+      (begin (load-shared-object "msvcrt.dll") #t)
       (begin (load-shared-object "kernel32.dll") #t)
       (error? (load-shared-object 3))
     )

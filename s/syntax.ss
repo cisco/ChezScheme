@@ -4626,7 +4626,7 @@
   (define-who install-library/ct-code
     (lambda (uid import-code visit-code)
       (let ([desc (get-library-descriptor uid)])
-        (unless desc (sorry! who "unable to install visit code for non-existant library ~s" uid))
+        (unless desc (sorry! who "unable to install visit code for non-existent library ~s" uid))
         (let ([ctdesc (libdesc-ctdesc desc)])
           (unless ctdesc (sorry! who "unable to install visit code for revisit-only library ~s" uid))
           (ctdesc-import-code-set! ctdesc import-code)
@@ -4635,7 +4635,7 @@
   (define-who install-library/rt-code
     (lambda (uid invoke-code)
       (let ([desc (get-library-descriptor uid)])
-        (unless desc (sorry! who "unable to install invoke code for non-existant library ~s" uid))
+        (unless desc (sorry! who "unable to install invoke code for non-existent library ~s" uid))
         (let ([rtdesc (libdesc-rtdesc desc)])
           (unless rtdesc (sorry! who "unable to install invoke code for visit-only library ~s" uid))
           (rtdesc-invoke-code-set! rtdesc invoke-code)))))

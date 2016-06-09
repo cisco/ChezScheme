@@ -68,6 +68,13 @@ case "$M" in
   *) echo "Unrecognized machine name $M"; exit 1 ;;
 esac
 
+if [ "$OS" = "Windows_NT" ]
+then
+    ln="/bin/cp -R"
+else
+    ln="/bin/ln -s"
+fi
+
 # This shell script creates a workarea for local modifications to the
 # Chez Scheme source code.  Invoke with the name of a machine type:
 # i3le, i3nt, ti3osx, etc., plus an optional workarea name.  The script
@@ -86,7 +93,7 @@ esac
 workln()
 {
     if [ ! -e $2 -a -e $1 ] ; then
-        /bin/ln -s $1 $2 2> /dev/null
+        $ln $1 $2 2> /dev/null
     fi
 }
 
@@ -96,6 +103,13 @@ forceworkln()
 {
     if [ ! -e $2 ] ; then
         /bin/ln -s $1 $2 2> /dev/null
+    fi
+}
+
+forceworkln2()
+{
+    if [ ! -e $2 ] ; then
+        $ln $1 $2 2> /dev/null
     fi
 }
 
@@ -126,7 +140,7 @@ workdir $W/s
 (cd $W/s; workln ../../s/Mf-base Mf-base)
 (cd $W/s; workln ../../s/Mf-cross Mf-cross)
 (cd $W/s; workln ../../s/$M.def $M.def)
-(cd $W/s; forceworkln $M.def machine.def)
+(cd $W/s; forceworkln2 $M.def machine.def)
 
 workdir $W/mats
 (cd $W/mats; workln ../../mats/Mf-$M Mf-$M)
@@ -191,7 +205,7 @@ workdir $W/bin/$M
 case $M in
   *nt)
     (cd $W/bin/$M; workln ../../../bin/$M/scheme.exe scheme.exe)
-    (cd $W/bin/$M; forceworkln scheme.exe petite.exe)
+    (cd $W/bin/$M; forceworkln2 scheme.exe petite.exe)
     (cd $W/bin/$M; workln ../../../bin/$M/csv941.dll csv941.dll)
     (cd $W/bin/$M; workln ../../../bin/$M/csv941.lib csv941.lib)
     ;;
@@ -204,9 +218,8 @@ esac
 # crutch links for fingers that remember old release structure
 case $M in
   *nt)
-    (cd $W/bin; forceworkln $M/scheme.exe scheme.exe)
-    (cd $W/bin; forceworkln $M/petite.exe petite.exe)
-    (cd $W/bin; forceworkln $M/csv941.dll csv941.dll)
+    (cd $W/bin; forceworkln $M/scheme.exe scheme)
+    (cd $W/bin; forceworkln $M/petite.exe petite)
     ;;
   *)
     (cd $W/bin; forceworkln $M/scheme scheme)
@@ -215,7 +228,7 @@ case $M in
 esac
 
 (cd $W; workln ../LOG LOG)
-(cd $W; forceworkln ../nanopass nanopass)
+(cd $W; forceworkln2 ../nanopass nanopass)
 (cd $W; workln ../makefiles/installsh installsh)
 (cd $W; workln ../scheme.1.in scheme.1.in)
 

@@ -557,8 +557,7 @@
                        [(a6osx a6osx)
                         (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
                        [(i3nt ti3nt a6nt ta6nt)
-                        (system (format "cl /nologo -DWIN32 -c ~a" testfile.c))
-                        (system (format "link /nologo -dll -out:~a testfile-~a.obj" testfile.so testfile))]
+                        (system (format "..\\c\\vs.bat cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
                        [(arm32le tarm32le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...
