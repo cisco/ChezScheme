@@ -36,6 +36,10 @@ DLLLDFLAGS=/machine:ix86 /release /nologo
 # see note in Makefile.a6nt regarding stack size.  we use 8MB here to be consistent.
 EXELDFLAGS=/machine:ix86 /incremental:no /release /nologo /STACK:0x800000
 
+# use following flags for debugging
+# CFLAGS=/nologo /Od /W3 /MDd /I$(SchemeInclude) /I$(ZlibInclude) /DUSE_ANSI_PROTOTYPES /DI386 /DNO_UNISTD_H
+# LDFLAGS=/machine:ix86 /incremental:no /release /nologo /debug
+
 SystemLib=rpcrt4.lib ole32.lib advapi32.lib User32.lib
 MDZlibLib=..\zlib\zlib.lib
 MTZlibLib=..\zlib\zlibmt.lib
@@ -101,6 +105,7 @@ $(MDMain): main.c
 $(Exec): $(ResFile) $(MDMain) $(KernelLib)
 	-del /f $(Exec)
 	link /out:$(Exec) $(EXELDFLAGS) $(ResFile) $(MDMain) $(KernelLib)
+	mt -manifest ..\..\c\scheme.exe.manifest -outputresource:$(Exec);1
 
 $(ResFile): scheme.rc
 	-del /f $(ResFile)
@@ -119,7 +124,7 @@ mdscheme.exe: $(ResFile) $(MDMain) $(MDKernelLib)
 $(ZlibInclude)\zlib.h $(ZlibInclude)\zconf.h $(MDZlibLib) $(MTZlibLib):
 	cd ../zlib
 	nmake /nologo -f win32/Makefile.msc AR="link /lib" CFLAGS="-nologo -MT -O2 $(LOC)"
-	rename zlib.lib zlibmt.lib
+	ren zlib.lib zlibmt.lib
 	nmake /nologo -f win32/Makefile.msc clean
 	nmake /nologo -f win32/Makefile.msc AR="link /lib"
 	cd ../c

@@ -186,3 +186,17 @@
   negative differences to zero.  added a corresponding release note.
     system.stex,
     release_notes.stex
+- added a cast to eliminate a warning
+    c/number.c
+- fixed bug in Windows version of directory-separator-predicate when
+  path-* procedures are passed a path that is not a string.
+    s/6.ss
+- fixed bug in cp0 on Windows with $foreign-wchar?.
+    s/cp0.ss
+- Cygwin is now used on Windows, updated mats, eliminated unused killme
+    BUILDING c/*nt c/Mf-base c/scheme.exe.manifest configure
+    examples/Makefile mats/6.ms mats/Mf-* mats/foreign.ms mats/ftype.ms
+    mats/patch-* mats/windows.ms s/Mf-*nt s/Mf-base workarea
+    release_notes.stex
+- fixed spelling of non-existent
+    s/syntax.ss

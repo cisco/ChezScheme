@@ -105,6 +105,7 @@ $(MDMain): main.c
 $(Exec): $(ResFile) $(MDMain) $(KernelLib)
 	-del /f $(Exec)
 	link /out:$(Exec) $(EXELDFLAGS) $(ResFile) $(MDMain) $(KernelLib)
+	mt -manifest ..\..\c\scheme.exe.manifest -outputresource:$(Exec);1
 
 $(ResFile): scheme.rc
 	-del /f $(ResFile)
@@ -123,7 +124,7 @@ mdscheme.exe: $(ResFile) $(MDMain) $(MDKernelLib)
 $(ZlibInclude)\zlib.h $(ZlibInclude)\zconf.h $(MDZlibLib) $(MTZlibLib):
 	cd ../zlib
 	nmake /nologo -f win32/Makefile.msc AR="link /lib" CFLAGS="-nologo -MT -O2 $(LOC)"
-	rename zlib.lib zlibmt.lib
+	ren zlib.lib zlibmt.lib
 	nmake /nologo -f win32/Makefile.msc clean
 	nmake /nologo -f win32/Makefile.msc AR="link /lib"
 	cd ../c

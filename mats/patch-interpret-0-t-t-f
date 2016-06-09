@@ -1,5 +1,5 @@
-*** errors-compile-0-t-t-f	2015-09-22 16:35:00.445792407 -0400
---- errors-interpret-0-t-t-f	2015-09-22 21:53:21.211385638 -0400
+*** errors-compile-0-t-t-f	2016-06-06 18:06:30.926483000 -0400
+--- errors-interpret-0-t-t-f	2016-06-06 19:30:54.817658600 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -10,12 +10,12 @@
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
 --- 1,13 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 995, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 997, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1004, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1006, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1013, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1015, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of 6.ms
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
   primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
   primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
@@ -169,7 +169,7 @@
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
-*** 3908,3923 ****
+*** 3959,3974 ****
   6.mo:Expected error in mat pretty-print: "incorrect number of arguments to #<procedure pretty-format>".
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
@@ -186,9 +186,26 @@
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
---- 3914,3923 ----
+--- 3965,3974 ----
 ***************
-*** 6979,6986 ****
+*** 6914,6920 ****
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+! 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
+--- 6914,6920 ----
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+! 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
+***************
+*** 7050,7057 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -197,7 +214,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 6979,6986 ----
+--- 7050,7057 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -207,7 +224,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 6988,7002 ****
+*** 7059,7073 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -223,7 +240,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 6988,7002 ----
+--- 7059,7073 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -240,7 +257,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 7009,7034 ****
+*** 7080,7105 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -267,7 +284,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 7009,7034 ----
+--- 7080,7105 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -295,7 +312,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7140,7178 ****
+*** 7221,7259 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -335,7 +352,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7140,7178 ----
+--- 7221,7259 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -376,7 +393,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7198,7233 ****
+*** 7279,7314 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -413,7 +430,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
---- 7198,7233 ----
+--- 7279,7314 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -451,7 +468,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
 ***************
-*** 9783,9792 ****
+*** 9876,9885 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -462,7 +479,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 9783,9792 ----
+--- 9876,9885 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

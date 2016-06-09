@@ -5741,6 +5741,35 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
+*** 9680,9692 ****
+  unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
+  unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
+  unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (get-registry)".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (get-registry 1 2)".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (put-registry! "hi")".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (put-registry! 1)".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (put-registry! 1 2 3)".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (remove-registry!)".
+! windows.mo:Expected error in mat registry: "incorrect argument count in call (remove-registry! 1 2)".
+  windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
+  windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
+  windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
+--- 9680,9692 ----
+  unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
+  unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
+  unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure get-registry>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure get-registry>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure put-registry!>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure put-registry!>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure put-registry!>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure remove-registry!>".
+! windows.mo:Expected error in mat registry: "incorrect number of arguments to #<procedure remove-registry!>".
+  windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
+  windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
+  windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
+***************
 *** 9714,9785 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".

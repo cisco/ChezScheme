@@ -1,5 +1,5 @@
-*** errors-compile-0-t-f-f	2015-09-22 21:53:21.139384282 -0400
---- errors-interpret-0-t-f-f	2015-09-22 16:50:31.816326497 -0400
+*** errors-compile-0-t-f-f	2016-06-06 18:12:13.534516500 -0400
+--- errors-interpret-0-t-f-f	2016-06-06 19:24:55.494488400 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -10,12 +10,12 @@
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
 --- 1,13 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 995, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 997, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1004, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1006, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1013, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1015, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of 6.ms
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
   primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
   primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
@@ -169,7 +169,7 @@
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
-*** 3908,3923 ****
+*** 3959,3974 ****
   6.mo:Expected error in mat pretty-print: "incorrect number of arguments to #<procedure pretty-format>".
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
@@ -186,9 +186,26 @@
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
---- 3914,3923 ----
+--- 3965,3974 ----
 ***************
-*** 7151,7157 ****
+*** 6914,6920 ****
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+! 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
+--- 6914,6920 ----
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
+  7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+! 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
+  7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
+***************
+*** 7232,7238 ****
   record.mo:Expected error in mat record25: "invalid value #\9 for foreign type uptr".
   record.mo:Expected error in mat record25: "invalid value 10 for foreign type float".
   record.mo:Expected error in mat record25: "invalid value 11.0+0.0i for foreign type double".
@@ -196,7 +213,7 @@
   record.mo:Expected error in mat record25: "invalid value 12.0 for foreign type long-long".
   record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
   record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
---- 7151,7157 ----
+--- 7232,7238 ----
   record.mo:Expected error in mat record25: "invalid value #\9 for foreign type uptr".
   record.mo:Expected error in mat record25: "invalid value 10 for foreign type float".
   record.mo:Expected error in mat record25: "invalid value 11.0+0.0i for foreign type double".
@@ -205,7 +222,7 @@
   record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
   record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
 ***************
-*** 9081,9105 ****
+*** 9168,9192 ****
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
@@ -231,7 +248,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
---- 9081,9105 ----
+--- 9168,9192 ----
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
@@ -258,7 +275,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
 ***************
-*** 9112,9143 ****
+*** 9199,9230 ****
   foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
@@ -291,7 +308,7 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
---- 9112,9143 ----
+--- 9199,9230 ----
   foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
@@ -325,7 +342,7 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
 ***************
-*** 9145,9170 ****
+*** 9232,9257 ****
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -352,7 +369,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
---- 9145,9170 ----
+--- 9232,9257 ----
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -380,7 +397,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 ***************
-*** 9175,9209 ****
+*** 9262,9296 ****
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -416,7 +433,7 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
---- 9175,9209 ----
+--- 9262,9296 ----
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -453,7 +470,7 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
 ***************
-*** 9783,9792 ****
+*** 9876,9885 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -464,7 +481,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 9783,9792 ----
+--- 9876,9885 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

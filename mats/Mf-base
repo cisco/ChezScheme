@@ -34,10 +34,15 @@
 # For example, "make o=2 cp0=t ctb=8192" causes the mats to be run at
 # optimize level 2 with cp0 enabled and collect-trip-bytes set to 8192.
 
+ifeq (${OS},Windows_NT)
+  dirsep = ;
+else
+  dirsep = :
+endif
 # Scheme is the scheme executable to test, and SCHEMEHEAPDIRS tells
 # it where to find its boot files
 Scheme = ../bin/$m/scheme
-export SCHEMEHEAPDIRS=.:../boot/%m
+export SCHEMEHEAPDIRS=.${dirsep}../boot/%m
 
 # Include is the directory holding scheme.h.
 Include = ../boot/$m
@@ -188,19 +193,11 @@ errors-$(conf): ${obj}
 
 doerrors:
 	rm -f errors-$(conf)
-ifdef MSDOS
-	-(cd $(objdir); grep '^Error' $(objname)) | dos2unix > errors-$(conf)
-	-(cd $(objdir); grep '^Bug' $(objname)) | dos2unix >> errors-$(conf)
-	-(cd $(objdir); grep '^Warning' $(objname)) | dos2unix >> errors-$(conf)
-	-(cd $(objdir); grep '^Expected' $(objname)) | dos2unix\
-         >> errors-$(conf)
-else
 	-(cd $(objdir); grep '^Error' $(objname)) > errors-$(conf)
 	-(cd $(objdir); grep '^Bug' $(objname)) >> errors-$(conf)
 	-(cd $(objdir); grep '^Warning' $(objname)) >> errors-$(conf)
 	-(cd $(objdir); grep '^Expected' $(objname))\
          >> errors-$(conf)
-endif
 
 fastreport:
 	$(MAKE) doerrors
@@ -288,7 +285,7 @@ all1: ; $(MAKE) all o=1
 all2: ; $(MAKE) all o=2
 all3: ; $(MAKE) all o=3
 
-all: makescript$o $(src) oop.ss ht.ss mat.so killme cat_flush ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} examples
+all: makescript$o $(src) oop.ss ht.ss mat.so cat_flush ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} examples
 	${Scheme} --verbose -q mat.so ${patchfile} < script.all$o
 	$(MAKE) doerrors
 	$(MAKE) doreport
@@ -322,19 +319,20 @@ source:
 	$(MAKE) source2 o=2
 	$(MAKE) source3 o=3
 
-source$o: ${src} mat.ss oop.ss ht.ss killme.c cat_flush.c ${fsrc} freq.in freq.out m4test.in m4test.out ${mdsrc} script.all$o prettytest.ss ftype.h
+source$o: ${src} mat.ss oop.ss ht.ss cat_flush.c ${fsrc} freq.in freq.out m4test.in m4test.out script.all$o prettytest.ss ftype.h
 
 rootsrc = $(shell cd ../../mats; echo *)
-${rootsrc}: ; ln -s ../../mats/$@ $@
+${rootsrc}:
+ifeq ($(OS),Windows_NT)
+	cp -p ../../mats/$@ $@
+else
+	ln -s ../../mats/$@ $@
+endif
 
 prettytest.ss:
 	rm -f prettytest.ss
 	$(MAKE) ${prettysrc}
-ifdef MSDOS
-	cat ${prettysrc} | unix2dos > prettytest.ss
-else
 	cat ${prettysrc} > prettytest.ss
-endif
 
 bullyprettytest.ss: ${src}
 	(cd ../s; make source)
@@ -346,7 +344,7 @@ thread.mo ${objdir}/thread.mo: ${fobj}
 examples.mo ${objdir}/examples.mo: m4test.in m4test.out freq.in freq.out examples
 6.mo ${objdir}/6.mo: prettytest.ss
 io.mo ${objdir}/io.mo: prettytest.ss
-unix.mo ${objdir}/unix.mo io.mo ${objdir}/io.mo 6.mo ${objdir}/6.mo: cat_flush killme
+unix.mo ${objdir}/unix.mo io.mo ${objdir}/io.mo 6.mo ${objdir}/6.mo: cat_flush
 oop.mo ${objdir}/oop.mo: oop.ss
 ftype.mo ${objdir}/ftype.mo: ftype.h
 hash.mo ${objdir}/hash.mo: ht.ss
@@ -356,7 +354,7 @@ examples:
 
 prettyclean:
 	rm -f *.o ${mdclean} *.so *.mo experr* errors* report* summary testfile* testscript\
- ${fobj} prettytest.ss killme cat_flush so_locations\
+ ${fobj} prettytest.ss cat_flush so_locations\
  script.all? *.html experr*.rej experr*.orig
 	rm -rf testdir*
 	rm -rf output-*
