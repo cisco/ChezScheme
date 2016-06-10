@@ -95,8 +95,19 @@ static ptr s_ee_read_char(IBOOL blockp) {
                     S_LastErrorString());
        if (NumberOfEvents == 0) return Sfalse;
     }
-  
-    if (!ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead))
+
+#ifdef PTHREADS
+    ptr tc = get_thread_context();
+    deactivate_thread(tc);
+#endif
+
+    BOOL succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+
+#ifdef PTHREADS
+    reactivate_thread(tc);
+#endif
+
+    if (!succ)
       S_error1("expeditor", "error getting console info: ~a",
                  S_LastErrorString());
   
