@@ -4158,7 +4158,7 @@ integer less than 10<sup>9</sup>.
 
 (time-type&nbsp;(current-time&nbsp;'time-process))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;time-process<br>
 
-(time-type&nbsp;(make-time&nbsp;'time-duration&nbsp;0&nbsp;50)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;time-duration<br>
+(time-type&nbsp;(make-time&nbsp;'time-duration&nbsp;0&nbsp;50))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;time-duration<br>
 
 (time-second&nbsp;(current-time))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1198816497<br>
 
@@ -4663,13 +4663,13 @@ of the heap to the current size of the heap.
 
 <p><a name="./system:s204"></a><span class=formdef><b>procedure</b>: <tt>(statistics)</tt></span>
 <br>
-<b>returns: </b>a sstats structure containing current statistics
+<b>returns: </b>a sstats record containing current statistics
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p><tt>statistics</tt> packages together various timing and allocation
-statistics into a single <tt>sstats</tt> structure.
-A <tt>sstats</tt> structure has the following fields:
+statistics into a single <tt>sstats</tt> record.
+A <tt>sstats</tt> record has the following fields:
 
 <p>
 <dl compact>
@@ -4684,22 +4684,11 @@ A <tt>sstats</tt> structure has the following fields:
 
 <p>
 All values are computed since system start-up.
-All times are calculated in milliseconds.
+The time values are time objects (Section&nbsp;<a href="./system.html#g117">12.10</a>),
+and the bytes and count values are exact integers.
 
 <p>
-The <tt>sstats</tt> structure and the corresponding allocation procedure,
-predicate, accessors, and setters described below are defined as vector-based
-structures as if via <tt>define-structure</tt>
-(Section&nbsp;<a href="./compat.html#g145">16.3</a>) as follows.
-
-<p>
-
-<p><tt>(define-structure<br>
-
-&nbsp;&nbsp;(sstats&nbsp;cpu&nbsp;real&nbsp;bytes<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;gc-count&nbsp;gc-cpu&nbsp;gc-real&nbsp;gc-bytes))</tt>
-<p><tt>statistics</tt> might be defined as follows:
+<tt>statistics</tt> might be defined as follows:
 
 <p>
 
@@ -4707,19 +4696,11 @@ structures as if via <tt>define-structure</tt>
 
 &nbsp;&nbsp;(lambda&nbsp;()<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;(define&nbsp;millis<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(lambda&nbsp;(t)<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+&nbsp;(*&nbsp;(time-second&nbsp;t)&nbsp;1000)<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(quotient&nbsp;(time-nanosecond&nbsp;t)&nbsp;1000000))))<br>
-
 &nbsp;&nbsp;&nbsp;&nbsp;(make-sstats<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cpu-time)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(current-time&nbsp;'time-thread)<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(real-time)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(current-time&nbsp;'time-monotonic)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(-&nbsp;(+&nbsp;(bytes-allocated)&nbsp;(bytes-deallocated))<br>
 
@@ -4727,24 +4708,25 @@ structures as if via <tt>define-structure</tt>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(collections)<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(millis&nbsp;(current-time&nbsp;'time-collector-cpu))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(current-time&nbsp;'time-collector-cpu)<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(millis&nbsp;(current-time&nbsp;'time-collector-real))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(current-time&nbsp;'time-collector-real)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bytes-deallocated))))</tt>
 <p><a name="./system:s205"></a><span class=formdef><b>procedure</b>: <tt>(make-sstats&nbsp;<i>cpu</i>&nbsp;<i>real</i>&nbsp;<i>bytes</i>&nbsp;<i>gc-count</i>&nbsp;<i>gc-cpu</i>&nbsp;<i>gc-real</i>&nbsp;<i>gc-bytes</i>)</tt></span>
 <br>
-<b>returns: </b>a sstats structure
+<b>returns: </b>a sstats record
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>Each of the arguments must be a real number.
+<p>The time arguments (<tt><i>cpu</i></tt>, <tt><i>real</i></tt>, <tt><i>gc-cpu</i></tt>, and <tt><i>gc-real</i></tt>) must be time objects.
+The other arguments must be exact integers.
 
 
 <p>
 <a name="./system:s206"></a><span class=formdef><b>procedure</b>: <tt>(sstats?&nbsp;<i>obj</i>)</tt></span>
 <br>
-<b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a sstats structure, otherwise <tt>#f</tt>
+<b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a sstats record, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -4760,49 +4742,40 @@ structures as if via <tt>define-structure</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><tt><i>s</i></tt> must be a sstats structure.
+<p><tt><i>s</i></tt> must be a sstats record.
 
 <p>
-<a name="./system:s208"></a><span class=formdef><b>procedure</b>: <tt>(set-sstats-cpu!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-real!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-bytes!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-count!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-cpu!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-real!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-bytes!&nbsp;<i>s</i>&nbsp;<i>obj</i>)</tt></span>
+<a name="./system:s208"></a><span class=formdef><b>procedure</b>: <tt>(set-sstats-cpu!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-real!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-bytes!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-count!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-cpu!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-real!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-bytes!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><tt><i>s</i></tt> must be a sstats structure.
-Each procedure sets the value of the corresponding field
-to <tt><i>obj</i></tt>.
-
+<p><tt><i>s</i></tt> must be a sstats record, the <tt><i>new-value</i></tt> arguments for the time fields
+(<tt><i>cpu</i></tt>, <tt><i>real</i></tt>, <tt><i>gc-cpu</i></tt>, and <tt><i>gc-real</i></tt>)
+must be time objects, and
+the other <tt><i>new-value</i></tt> arguments must be exact integers.
+Each procedure sets the value of the corresponding field of <tt><i>s</i></tt> to
+<tt><i>new-value</i></tt>.
 
 
 <p>
 <a name="./system:s209"></a><span class=formdef><b>procedure</b>: <tt>(sstats-difference&nbsp;<i>s<sub>1</sub></i>&nbsp;<i>s<sub>2</sub></i>)</tt></span>
 <br>
-<b>returns: </b>a sstats structure representing the difference between <tt><i>s<sub>1</sub></i></tt> and <tt><i>s<sub>2</sub></i></tt>
+<b>returns: </b>a sstats record representing the difference between <tt><i>s<sub>1</sub></i></tt> and <tt><i>s<sub>2</sub></i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><tt><i>s<sub>1</sub></i></tt> and <tt><i>s<sub>2</sub></i></tt> must be <tt>sstats</tt> structures.
+<p><tt><i>s<sub>1</sub></i></tt> and <tt><i>s<sub>2</sub></i></tt> must be sstats records.
 <tt>sstats-difference</tt> subtracts each field of <tt><i>s<sub>2</sub></i></tt> from the
-corresponding field of <tt><i>s<sub>1</sub></i></tt> to produce the result <tt>sstats</tt>
-structure.
-It coerces negative results to zero.
-<tt>sstats-difference</tt> is commonly used to measure the time elapsed
-between two points in the execution of a program.
-In doing such comparisons, it is often useful to adjust for overhead
-in the statistics gathering functions by calling <tt>statistics</tt>
-twice before timing a computation and once after; the difference in the
-results of the first two calls is then subtracted from the difference in
-the results of the last two calls.
-After adjusting for overhead, small negative results could occur for very
-fast running computations without the coercion of negative results to
-zero by <tt>sstats-difference</tt>.
+corresponding field of <tt><i>s<sub>1</sub></i></tt> to produce the resulting <tt>sstats</tt>
+record.
 
 <p>
 <a name="./system:s210"></a><span class=formdef><b>procedure</b>: <tt>(sstats-print&nbsp;<i>s</i>)</tt></span>
@@ -4812,7 +4785,7 @@ zero by <tt>sstats-difference</tt>.
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><tt><i>s</i></tt> must be a <tt>sstats</tt> structure.
+<p><tt><i>s</i></tt> must be a <tt>sstats</tt> record.
 If <tt><i>textual-output-port</i></tt> is not supplied, it defaults to the current output port.
 <tt>sstats-print</tt> displays the fields of <tt>s</tt> in a manner similar
 to <tt>display-statistics</tt> and <tt>time</tt>.
@@ -5479,7 +5452,7 @@ It is typically used only for system debugging.
 Copyright &copy; 2016 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised May 2016 for Chez Scheme Version 9.4<br>
+Revised June 2016 for Chez Scheme Version 9.4<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

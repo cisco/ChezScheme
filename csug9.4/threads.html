@@ -323,7 +323,7 @@ can attempt to lock the lock via <tt>ftype-lock!</tt> or <tt>ftype-spin-lock!</t
 Once the lock has been locked and before it is unlocked, further
 attempts to lock the lock fail, even by the process or thread that
 most recently locked it.
-Locks can be unlocked, via <tt>ftype-lock!</tt>, by any process or thread,
+Locks can be unlocked, via <tt>ftype-unlock!</tt>, by any process or thread,
 not just by the process or thread that most recently locked the lock.
 
 <p>
@@ -814,7 +814,7 @@ given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliograp
 Copyright &copy; 2016 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised May 2016 for Chez Scheme Version 9.4<br>
+Revised June 2016 for Chez Scheme Version 9.4<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
