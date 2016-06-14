@@ -1179,7 +1179,7 @@ static double floatify_normalize(p, e, sign, sticky) bigit *p; iptr e; IBOOL sig
 
   /* fill in the fields */
   dx.x.sign = sign;
-  dx.x.e = e;
+  dx.x.e = (UINT)e;
   dx.x.m1 = (UINT)(mlow >> 48 & m1mask);
   dx.x.m2 = (UINT)(mlow >> 32 & 0xffff);
   dx.x.m3 = (UINT)(mlow >> 16 & 0xffff);

@@ -73,6 +73,13 @@ pps = f
 Scheme = ../bin/$m/scheme
 export SCHEMEHEAPDIRS=../boot/%m
 
+# Define the libdirs separator character
+ifeq ($(OS),Windows_NT)
+  dirsep = ;
+else
+  dirsep = :
+endif
+
 ProfileDumpSource = source.pd
 ProfileDumpBlock = block.pd
 PetiteBoot = ../boot/$m/petite.boot
@@ -150,7 +157,9 @@ allx: prettyclean saveboot
 	  $(MAKE) checkboot ;\
 	fi
 	$(MAKE) restoreboot
+ifneq ($(OS),Windows_NT)
 	$(MAKE) resetbootlinks
+endif
 
 # bootstrap runs allx if any sources have changed since the last bootstrap
 bootstrap: ${allsrc}
@@ -158,7 +167,7 @@ bootstrap: ${allsrc}
 	touch bootstrap
 
 # source eagerly creates links to most of the files that might be needed
-source: ${allsrc} ${buildsrc} mkheader.ss script.all
+source: ${allsrc} mkheader.ss script.all
 
 # profiled goes through the involved process of building a profile-optimized boot file
 profiled:
@@ -353,10 +362,15 @@ nanopass.so: $(shell echo ../nanopass/nanopass/*) ../nanopass/nanopass.ss
              '(collect-request-handler (lambda () (collect 0 1)))'\
              '(collect 1 2)'\
              '(compile-library "../nanopass/nanopass.ss" "nanopass.so")'\
-             | ${Scheme} -q --libdirs "../nanopass::." --compile-imported-libraries
+             | ${Scheme} -q --libdirs "../nanopass${dirsep}${dirsep}." --compile-imported-libraries
 
 rootsrc = $(shell cd ../../s; echo *)
-${rootsrc}: ; ln -s ../../s/$@ $@
+${rootsrc}:
+ifeq ($(OS),Windows_NT)
+	cp -p ../../s/$@ $@
+else
+	ln -s ../../s/$@ $@
+endif
 
 script.all: Mf-base
 

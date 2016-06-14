@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.4.1}
 \thatversion{Version 8.4}
-\pubmonth{May}
+\pubmonth{June}
 \pubyear{2016}
 
 \begin{document}
@@ -1464,6 +1464,15 @@ denormalized floating-point numbers.
 \scheme{date->time-utc} has been fixed to properly take into account the
 zone-offset field.
 [This bug dated back to Version 8.0.]
+
+\subsection{\protect\scheme{wchar} and \protect\scheme{wchar_t} record field types fail to inline in Windows (9.4)}
+
+On Windows, the inliner has been fixed to handle \scheme{wchar} and
+\scheme{wchar_t} record field types.
+
+\subsection{path-related procedures cause invalid memory reference with non-string arguments in Windows (9.4)}
+
+On Windows, the path-related procedures now raise an appropriate exception when the path argument is not a string.
 
 \subsection{\protect\scheme{dynamic-wind} mistakenly enabling interrupts (9.3.3)}
 

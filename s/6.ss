@@ -358,6 +358,7 @@
   (define directory-separator-predicate
     (lambda (s)
       (if (and windows?
+               (string? s)
                (let ([n (string-length s)])
                  (and (fx>= n 4)
                       (char=? (string-ref s 0) #\\)

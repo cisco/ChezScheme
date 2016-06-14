@@ -15,7 +15,7 @@ src = def.ss edit.ss fact.ss fatfib.ss fft.ss fib.ss freq.ss interpret.ss\
  scons.ss setof.ss socket.ss unify.ss compat.ss
 obj = ${src:%.ss=%.so}
 
-Scheme = scheme -q
+Scheme = ../bin/scheme -q
 
 .SUFFIXES:
 .SUFFIXES: .ss .so

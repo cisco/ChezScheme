@@ -15,6 +15,5 @@
 
 m = ti3nt
 archincludes = x86.ss
-buildsrc = bldnt.bat
 
 include Mf-base

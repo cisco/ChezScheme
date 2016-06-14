@@ -20,12 +20,32 @@ clib=
 o = obj
 mdobj=windows.$o
 mdsrc=windows.c Makefile.$m cs.ico scheme.rc make.bat
-mdclean=make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
+mdclean=vs.bat make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
 
 include Mf-base
+
+${Scheme}: make.bat
+	./make.bat
+	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
 
 # currently creating datestamp at 'make source' time
 datestamp.c:
 
-make.bat:
-	echo "@nmake /nologo -f Makefile.$m %*" > make.bat
+vs.bat:
+	echo '@echo off' > $@
+	echo 'if "%VS140COMNTOOLS%" neq "" goto :VS' >> $@
+	echo 'echo Visual Studio 2015 must be installed.' >> $@
+	echo 'exit 1' >> $@
+	echo ':VS' >> $@
+	echo 'set INCLUDE=' >> $@
+	echo 'set LIB=' >> $@
+	echo 'set LIBPATH=' >> $@
+	echo 'call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" amd64' >> $@
+	echo '%*' >> $@
+	chmod +x $@
+
+make.bat: vs.bat
+	echo '@echo off' > $@
+	echo 'set MAKEFLAGS=' >> $@
+	echo 'call vs.bat nmake /f Makefile.$m /nologo %*' >> $@
+	chmod +x $@

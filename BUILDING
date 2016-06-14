@@ -167,91 +167,45 @@ The make file supports several targets:
 
 WINDOWS
 
-Building Chez Scheme under Windows is currently more complicated than it
-should be.  It requires the configure script (and through it, the workarea
-script) to be run on a host system that supports a compatible shell,
-e.g., bash, and the various command-line tools employed by configure
-and workarea, e.g., sed and ln.  For example, the host system could be a
-Linux or MacOS X machine.  The release directory must be made available
-on a shared filesystem, e.g., samba, to a build machine running Windows.
-It is not presently possible to copy the release directory to a Windows
-filesystem due to the use of symbolic links.
+Building Chez Scheme under Windows with Cygwin follows the
+instructions above except that make install is not supported:
 
-Prerequisite:
+./configure
+make
 
-The Microsoft Visual C compiler (express or full) and associated
-tools must be available on the Windows build machine, and the PATH,
-INCLUDE, and LIB variables must be set up properly for those tools.
+Prerequisites:
 
-Between the configure and build steps (below), the 32-bit or 64-bit
-(as appropriate) C runtime library vcruntime$V.dll must be placed into
-$W/bin/$M with a symbolic link to or copy of the file in $W/bin, where
-$V is the expected C runtime version for the installed Visual C compiler
-(e.g., 140 for Visual Studio 2015), $W is the workarea name, and $M is
-the machine type.
+* Cygwin with bash, grep, make, sed, etc.
+* Microsoft Visual Studio 2015
 
-Configure step (host machine):
-
-To configure the build, run:
-
-./configure -m=$M
-
-where $M is replaced with one of the Windows machine types, i.e.,
-i3nt for 32-bit, a6nt for 64-bit, ti3nt for threaded 32-bit, and
-ta6nt for 64-bit threaded.
-
-Build step (Windows build machine):
-
-To build the executable $W\bin\$M\scheme.exe, run:
-
-nmake -f Makefile.i3nt 
-
-in the directory $W\c, then recompile the Scheme sources via:
-
-bldnt $M
-
-in the directory $W/c, where $W is replaced by the name of the
-workarea created by ./configure, and $M is the machine type.
-
-To run Chez Scheme or Petite Chez Scheme from a terminal window,
-set PATH and SCHEMEHEAPDIRS:
+To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
+set PATH:
 
 set PATH=$W\bin\$M;%PATH%
-set SCHEMEHEAPDIRS=$W/boot/$M
 
 again with $W and $M replaced with the workarea name and machine
 type, and start Chez Scheme with the command "scheme" or Petite
 Chez with the command "petite".
 
-Chez Scheme and Petite Chez Scheme are terminal-based programs,
-not GUIs.  They both incorporate sophisticated command-line editing
-reminiscent of tcsh but with support for expressions that span
-multiple lines.
+The executables are linked against the Microsoft Visual C++ run-time
+library vcruntime140.dll. If you distribute the executables to a
+different system, be sure to include the redistributable run-time
+library.
 
 Testing under Windows
 
 The iconv tests in mats/io.ms require that a 32-bit or 64-bit (as
-appropriate) libiconv-2.dll implementing GNU libiconv be located in
-$W/bin/$M with a symbolic link to or copy of the file in $W/bin, where
-$W and $M are the workarea name and machine type.  Windows sources for
+appropriate) iconv.dll, libiconv.dll, or libiconv-2.dll implementing
+GNU libiconv be located in $W\bin\$M or the path.  Windows sources for
 libiconv can be found at:
 
 http://gnuwin32.sourceforge.net/packages/libiconv.htm
 
-If the dlls are not present, the iconv tests will fail.  No other
-tests should be affected.
+An alternative that uses the Windows API can be found at:
 
-The tests can be run with a default set of options at a single
-optimize level by running the command:
+https://github.com/win-iconv/win-iconv
 
-bldnt $M $O
+If the DLL is not present, the iconv tests will fail.  No other tests
+should be affected.
 
-in $W/mats, with $W and $M replaced with the workarea name and
-machine type and $O replaced by an optimize level, e.g., 0 or 3.
-This produces a set of output (.mo) files in the directory
-$W/mats/output-compile-$O-f-f-f.  "make fastreport o=$O" can be
-then used to generate a report; this step must be run on a host
-system supporting GNU make and the various tools required by the
-fastreport target, e.g., grep.  The resulting report file
-$W/mats/report-compile-$O-f-f-f should be empty if all tests
-succeeded.
+Use 'make test' described above to run the tests.

@@ -1,19 +1,19 @@
-*** errors-compile-3-t-t-f	2015-09-22 17:08:03.746130250 -0400
---- errors-interpret-3-t-t-f	2015-09-22 21:53:21.233386052 -0400
+*** errors-compile-3-t-t-f	2016-06-06 20:35:36.101034000 -0400
+--- errors-interpret-3-t-t-f	2016-06-06 21:55:56.687725100 -0400
 ***************
 *** 1,3 ****
 --- 1,9 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 995, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 997, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1004, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1006, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1013, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1015, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of 6.ms
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x at line 1, char 19 of testfile.ss".
-  misc.mo:Expected warning in mat (argcnt load-warning): "compile: possible incorrect argument count in call (car) at line 3, char 38 of testfile.ss".
+  misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
 ***************
-*** 8,22 ****
+*** 12,26 ****
   misc.mo:Expected warning in mat (argcnt compile-warning): "compile: possible incorrect argument count in call (car (quote (a b)) (quote (c d))) at line 3, char 38 of testfile.ss".
   misc.mo:Expected warning in mat (argcnt compile-warning): "compile: possible incorrect argument count in call (g 7) at line 3, char 47 of testfile.ss".
   misc.mo:Expected warning in mat (argcnt compile-warning): "compile: possible incorrect argument count in call (g) at line 3, char 48 of testfile.ss".
@@ -29,4 +29,4 @@
 - 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
---- 14,22 ----
+--- 18,26 ----
