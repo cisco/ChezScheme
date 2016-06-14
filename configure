@@ -37,9 +37,9 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
-CPPFLAGS=""
-CFLAGS=""
-LDFLAGS=""
+: ${CPPFLAGS:=""}
+: ${CFLAGS:=""}
+: ${LDFLAGS:=""}
 
 case `uname` in
   Linux)
@@ -115,6 +115,16 @@ case `uname` in
       installprefix=/usr
       installmansuffix=share/man
       gzipmanpages=no
+    fi
+    ;;
+  CYGWIN_NT-*)
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+      m32=i3nt
+      m64=a6nt
+      tm32=ti3nt
+      tm64=ta6nt
+      installprefix=/usr/local
+      installmansuffix=share/man
     fi
     ;;
 esac
@@ -332,7 +342,9 @@ sed -e "s;^m=none\$;m=$m;"\
 
 cat > $w/c/config.h << END
 #define SCHEME_SCRIPT "$installscriptname"
+#ifndef WIN32
 #define DEFAULT_HEAP_PATH "$installlib/csv%v/%m"
+#endif
 END
 
 cat > $w/c/Mf-config << END

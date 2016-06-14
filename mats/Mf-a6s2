@@ -25,6 +25,3 @@ foreign1.so: ${fsrc} ../boot/$m/scheme.h
 
 cat_flush: cat_flush.c
 	gcc -o cat_flush cat_flush.c
-
-killme: killme.c
-	gcc -o killme killme.c
