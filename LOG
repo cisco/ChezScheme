@@ -200,3 +200,5 @@
     release_notes.stex
 - fixed spelling of non-existent
     s/syntax.ss
+- fixed unnessesary blocking in expeditor on Windows. 
+    c/expeditor.c
