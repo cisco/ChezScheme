@@ -73,6 +73,10 @@ static IBOOL s_ee_init_term(void) {
 static ptr s_ee_read_char(IBOOL blockp) {
   DWORD cNumRead;
   INPUT_RECORD irInBuf[1]; 
+#ifdef PTHREADS
+  ptr tc;
+#endif /* PTHREADS */
+  BOOL succ;
   static char buf[10];
   static int bufidx = 0;
   static int buflen = 0;
@@ -95,8 +99,22 @@ static ptr s_ee_read_char(IBOOL blockp) {
                     S_LastErrorString());
        if (NumberOfEvents == 0) return Sfalse;
     }
-  
-    if (!ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead))
+
+#ifdef PTHREADS
+    tc = get_thread_context();
+    if (DISABLECOUNT(tc) == FIX(0)) {
+        deactivate_thread(tc);
+        succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+        reactivate_thread(tc);
+    } else {
+        succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+    }
+#else /* PTHREADS */
+    succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+#endif /* PTHREADS */
+
+
+    if (!succ)
       S_error1("expeditor", "error getting console info: ~a",
                  S_LastErrorString());
   

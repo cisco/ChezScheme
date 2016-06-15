@@ -207,3 +207,5 @@
     c/Mf-*, c/Makefile.*nt
 - removed unnecessary datestamp.c target
     c/Mf.*nt
+- fixed unnessesary blocking in expeditor on Windows. 
+    c/expeditor.c
