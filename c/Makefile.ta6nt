@@ -17,7 +17,6 @@ m = ta6nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-ZlibInclude = ..\zlib
 KernelDll = ..\bin\$m\csv941.dll
 KernelLib = ..\bin\$m\csv941.lib
 MTKernelLib = ..\boot\$m\csv941mt.lib
@@ -29,7 +28,7 @@ MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /Ox /W3 /I$(SchemeInclude) /I$(ZlibInclude) /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /Ox /W3 /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
 DLLLDFLAGS=/machine:X64 /release /nologo
@@ -38,7 +37,7 @@ DLLLDFLAGS=/machine:X64 /release /nologo
 EXELDFLAGS=/machine:X64 /incremental:no /release /nologo /STACK:0x1000000
 
 # use following flags for debugging
-# CFLAGS=/nologo /Od /W3 /I$(SchemeInclude) /I$(ZlibInclude) /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# CFLAGS=/nologo /Od /W3 /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 # MDCFLAGS=$(CFLAGS) /Zi /MDd
 # MTCFLAGS=$(CFLAGS) /Zi /MTd
 # DLLLDFLAGS=/machine:X64 /debug /nologo /nodefaultlib:msvcrt
@@ -68,7 +67,7 @@ all: $(Exec) $(MTKernelLib) $(MDKernelLib) $(MTMain)
 
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(hsrc)
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeInclude)/scheme.h
-$(KernelLib) $(MTKernelLib) $(MDKernelLib): $(ZlibInclude)/zconf.h $(ZlibInclude)/zlib.h
+$(KernelLib) $(MTKernelLib) $(MDKernelLib): ..\zlib/zconf.h ..\zlib/zlib.h
 
 $(MTKernelLib): $(csrc) $(MTZlibLib)
 	-del /f $(MTKernelLib)
@@ -125,7 +124,7 @@ mdscheme.exe: $(ResFile) $(MDMain) $(MDKernelLib)
 	-del /f mdscheme.exe
 	link /out:mdscheme.exe $(EXELDFLAGS) $(ResFile) $(MDMain) $(MDKernelLib) $(SystemLib)
 
-$(ZlibInclude)\zlib.h $(ZlibInclude)\zconf.h $(MDZlibLib) $(MTZlibLib):
+..\zlib\zlib.h ..\zlib\zconf.h $(MDZlibLib) $(MTZlibLib):
 	cd ../zlib
 	nmake /nologo -f win32/Makefile.msc AR="link /lib" CFLAGS="-nologo -MT -O2 $(LOC)"
 	ren zlib.lib zlibmt.lib

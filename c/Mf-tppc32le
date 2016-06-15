@@ -26,7 +26,7 @@ mdobj = ppc32le.o
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -D${Cpu} -I${Include} -I${ZlibInclude} $*.c
+	$C -c -D${Cpu} -I${Include} -I../zlib $*.c
 
 include Mf-base
 
@@ -36,6 +36,5 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
-${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
+../zlib/configure.log:
 	(cd ../zlib; CFLAGS=-m32 ./configure)
-	(cd ../zlib; make)

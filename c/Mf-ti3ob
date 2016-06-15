@@ -27,7 +27,7 @@ mdobj = i3le.o
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -D${Cpu} -I${Include} -I${ZlibInclude} ${mdinclude} $*.c
+	$C -c -D${Cpu} -I${Include} -I../zlib ${mdinclude} $*.c
 
 include Mf-base
 
@@ -37,6 +37,5 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
-${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
+../zlib/configure.log:
 	(cd ../zlib; CFLAGS=-m32 ./configure)
-	(cd ../zlib; make)

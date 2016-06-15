@@ -27,7 +27,7 @@ LocalInclude = /usr/local/include
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -D${Cpu} -I${Include} -I${ZlibInclude} -I${LocalInclude} $*.c
+	$C -c -D${Cpu} -I${Include} -I../zlib -I${LocalInclude} $*.c
 
 include Mf-base
 
@@ -37,6 +37,5 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 ${Scheme}: ${Kernel} ${Main}
 	$C -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
-${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
+../zlib/configure.log:
 	(cd ../zlib; CFLAGS=-m32 ./configure)
-	(cd ../zlib; make)
