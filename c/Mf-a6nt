@@ -28,9 +28,6 @@ ${Scheme}: make.bat
 	./make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
 
-# currently creating datestamp at 'make source' time
-datestamp.c:
-
 vs.bat:
 	echo '@echo off' > $@
 	echo 'if "%VS140COMNTOOLS%" neq "" goto :VS' >> $@

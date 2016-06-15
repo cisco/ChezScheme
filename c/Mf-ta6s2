@@ -26,7 +26,7 @@ mdobj = i3le.o
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -DSOLARIS -D${Cpu} -I${Include} -I${ZlibInclude} $*.c
+	$C -c -DSOLARIS -D${Cpu} -I${Include} -I../zlib $*.c
 
 include Mf-base
 
@@ -36,6 +36,5 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 ${Scheme}: ${Kernel} ${Main}
 	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
-${ZlibInclude}/zlib.h ${ZlibInclude}/zconf.h ../zlib/libz.a:
+../zlib/configure.log:
 	(cd ../zlib; CFLAGS=-m64 ./configure --64)
-	(cd ../zlib; make)

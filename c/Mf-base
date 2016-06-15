@@ -16,7 +16,6 @@
 include Mf-config
 
 Include=../boot/$m
-ZlibInclude=../zlib
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot
 Kernel=../boot/$m/kernel.$o
@@ -55,8 +54,13 @@ scheme.o main.o: config.h
 ${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h
 ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
-scheme.o io.o new-io.o: ${ZlibInclude}/zconf.h ${ZlibInclude}/zlib.h
+${kernelobj}: ../zlib/zconf.h ../zlib/zlib.h
 gc-ocd.o gc-oce.o: gc.c
+
+../zlib/zlib.h ../zlib/zconf.h: ../zlib/configure.log
+
+../zlib/libz.a: ../zlib/configure.log
+	(cd ../zlib; ${MAKE})
 
 clean:
 	rm -f *.$o ${mdclean}
