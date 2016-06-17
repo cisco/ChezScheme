@@ -37,7 +37,10 @@ vs.bat:
 	echo 'set INCLUDE=' >> $@
 	echo 'set LIB=' >> $@
 	echo 'set LIBPATH=' >> $@
-	echo 'call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" amd64' >> $@
+	echo 'set MACHINETYPE=amd64' >> $@
+	echo 'if exist "%VS140COMNTOOLS%..\..\VC\bin\x86_amd64\vcvarsx86_amd64.bat" set MACHINETYPE=x86_amd64' >> $@
+	echo 'if exist "%VS140COMNTOOLS%..\..\VC\bin\vcvars64.bat" set MACHINETYPE=amd64' >> $@
+	echo 'call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" %MACHINETYPE%' >> $@
 	echo '%*' >> $@
 	chmod +x $@
 

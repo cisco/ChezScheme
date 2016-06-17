@@ -541,6 +541,7 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n; INT c;
   const char *path;
+  char *expandedpath;
   gzFile file;
 
   if (S_fixedpathp(name)) {
@@ -551,7 +552,12 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
 
     path = name;
 
-    if (!(file = gzopen(S_pathname("", path, 0, (char *)0), "rb"))) {
+    expandedpath = S_malloc_pathname(path);
+    file = gzopen(expandedpath, "rb");
+    /* assumption (seemingly true based on a glance at the source code):
+       gzopen doesn't squirrel away a pointer to expandedpath. */
+    free(expandedpath);
+    if (!file) {
       if (errorp) {
         fprintf(stderr, "cannot open boot file %s\n", path);
         S_abnormal_exit();
@@ -621,7 +627,12 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
         }
       }
 
-      if (!(file = gzopen(S_pathname("", path, 0, (char *)0), "rb"))) {
+      expandedpath = S_malloc_pathname(path);
+      file = gzopen(expandedpath, "rb");
+      /* assumption (seemingly true based on a glance at the source code):
+         gzopen doesn't squirrel away a pointer to expandedpath. */
+      free(expandedpath);
+      if (!file) {
         if (verbose) fprintf(stderr, "trying %s...cannot open\n", path);
         continue;
       }

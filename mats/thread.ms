@@ -1026,7 +1026,15 @@
                     (f (+ i 1))
                     (cons (+ (* i thread-count) j) (g (+ j 1))))))))))
   ($thread-check)
-  (eqv?
+  ; this mat has some inherent starvation issues, with the main thread
+  ; looping rather than waiting on a condition at initialization time and
+  ; other threads looping rather than waiting on a condition when looking
+  ; for work to steal.  these looping threads can hog the cpu without
+  ; doing anything useful, causing progress to stall or halt.  this
+  ; manifests as occasional indefinite delays under Windows and OpenBSD,
+  ; and it has the potential to cause the same on other operating systems.
+  ; it's not clear how to fix the mat without changing it fundamentally.
+  #;(eqv?
     (let () ; from Ryan Newton
     
       (define-syntax ASSERT

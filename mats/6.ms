@@ -3457,14 +3457,14 @@
    (begin (display "hello " (cadr p))
           (flush-output-port (cadr p))
           #t)
-   (begin (sleep (make-time 'time-duration 0 (if (embedded?) 3 1))) #t) ; wait for subprocess to catch up
+   (begin (sleep (make-time 'time-duration 0 3)) #t) ; wait for subprocess to catch up
    (char-ready? (car p))
    (eq? (read (car p)) 'hello)
    (char-ready? (car p))
    (char=? (read-char (car p)) #\space)
    (not (char-ready? (car p)))
    (begin (close-output-port (cadr p)) #t)
-   (begin (sleep (make-time 'time-duration 0 (if (embedded?) 3 1))) #t) ; wait for subprocess to catch up
+   (begin (sleep (make-time 'time-duration 0 3)) #t) ; wait for subprocess to catch up
    (sanitized-error? (write-char #\a (cadr p)))
    (sanitized-error? (write-char #\newline (cadr p)))
    (sanitized-error? (flush-output-port (cadr p)))

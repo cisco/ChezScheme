@@ -209,3 +209,40 @@
     c/Mf.*nt
 - fixed unnessesary blocking in expeditor on Windows. 
     c/expeditor.c
+- eliminated a couple of thread-safety issues and limitations on the
+  sizes of pathnames produced by expansion of tilde (home-directory)
+  prefixes by replacing S_pathname, S_pathname_impl, and S_homedir
+  with S_malloc_pathname, which always mallocs space for the result.
+  one thread-safety issue involved the use of static strings for expanded
+  pathnames and affected various file-system operations.  the other
+  affected the file open routines and involved use of the incoming
+  pathname while deactivated.  the incoming pathname is sometimes if not
+  always a pointer into a Scheme bytevector, which can be overwritten if a
+  collection occurs while the thread is deactivated.  the size limitation
+  corresponded to the use of the static strings, which were limited to
+  PATH_MAX bytes.  (PATH_MAX typically isn't actually the maximum path
+  length in contemporary operating systems.)  eliminated similar issues
+  for wide pathnames under Windows by adding S_malloc_wide_pathname.
+  consumers of the old routines have been modified to use the new
+  routines and to free the result strings.  the various file operations
+  now consistently treat a pathname with an unresolvable home directory
+  as a pathname that happens to start with a tilde.  eliminated unused
+  foreign-symbol binding of "(cs)pathname" to S_pathname.
+    io.c, externs.h, new_io.c, prim5.c, scheme.c, prim.c
+- various places where a call to close or gzclose was retried when
+  the close operation was interrupted no longer do so, since this can
+  cause problems when another thread has reallocated the same file
+  descriptor.
+    new_io.c
+- now using vcvarsall type x86_amd64 rather than amd64 when the
+  former appears to supported and the latter does not, as is the
+  case with VS Express 2015.
+    c/Mf-a6nt, c/Mf-ta6nt
+- commented out one of the thread mats that consistently causes
+  indefinite delays under Windows and OpenBSD due to starvation.
+    thread.ms
+- increased wait time for a couple of subprocess responses
+    6.ms
+- added call to collector to close files opened during iconv mats
+  specifically for when mats are run under Windows with no iconv dll.
+    io.ms
