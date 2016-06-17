@@ -1000,15 +1000,15 @@ been added, per SRFI~19:
 (subtract-duration \var{t1} \var{t2}) ;=> \var{t3}
 \endschemedisplay
 
-\scheme{time-duration} takes two time objects \var{t1} and \var{t2},
+\scheme{time-difference} takes two time objects \var{t1} and \var{t2},
 which must have the same time type, and returns the result of subtracting
 \var{t2} from \var{t1}, represented as a new time object with type
-\scheme{duration}.
+\scheme{time-duration}.
 \scheme{add-duration} adds time object \var{t2}, which must be of type
-\scheme{duration}, to time object \var{t1}, producing a new time object
+\scheme{time-duration}, to time object \var{t1}, producing a new time object
 \var{t3} with the same type as \var{t1}.
 \scheme{subtract-duration} subtracts time object \var{t2} which must be
-of type \scheme{duration}, from time object \var{t1}, producing a new
+of type \scheme{time-duration}, from time object \var{t1}, producing a new
 time object \var{t3} with the same type as \var{t1}.
 
 SRFI~19 also names destructive versions of these operators:
