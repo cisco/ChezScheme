@@ -56,14 +56,36 @@ static INT lockfile PROTO((INT fd));
 static ptr make_gzxfile PROTO((int fd, gzFile file));
 
 /*
- check: whether you want gzerror to be called on fd
-   (i.e. whether to double check if errors reported by 'ok' are real)
+ not_ok_is_fatal: !ok definitely implies error, so ignore gzerror
  ok: whether the result of body seems to be ok
  flag: will be set when an error is detected and cleared if no error
  fd: the gzFile object to call gzerror on
  body: the operation we are checking the error on
 */
 #ifdef EINTR
+/* like FD_EINTR_GUARD and GZ_EINTR_GUARD but ignores EINTR.
+   used for calls to close so we don't close a file descriptor that
+   might already have been reallocated by a different thread */
+#define FD_GUARD(ok,flag,body)                          \
+  do { body;                                            \
+    flag = !(ok) && errno != EINTR;                     \
+  } while (0)
+#define GZ_GUARD(not_ok_is_fatal,ok,flag,fd,body) \
+  do { body;                                            \
+    if (ok) { flag = 0; }                               \
+    else {                                              \
+      INT errnum;                                       \
+      gzerror((fd),&errnum);                            \
+      gzclearerr((fd));                                 \
+      if (errnum == Z_ERRNO) {                          \
+        flag = errno != EINTR;                          \
+      } else {                                          \
+        flag = not_ok_is_fatal || errnum != Z_OK;       \
+        errno = 0;                                      \
+      }                                                 \
+    }                                                   \
+  } while (0)
+/* like FD_GUARD and GZ_GUARD but spins on EINTR */
 #define FD_EINTR_GUARD(ok,flag,body)                    \
   do { body;                                            \
     if (ok) { flag = 0; break; }                        \
@@ -86,8 +108,8 @@ static ptr make_gzxfile PROTO((int fd, gzFile file));
     }                                                   \
   } while (1)
 #else /* EINTR */
-#define FD_EINTR_GUARD(ok,flag,body) do { body; flag = !(ok); } while (0)
-#define GZ_EINTR_GUARD(not_ok_is_fatal,ok,flag,fd,body) \
+#define FD_GUARD(ok,flag,body) do { body; flag = !(ok); } while (0)
+#define GZ_GUARD(not_ok_is_fatal,ok,flag,fd,body)       \
   do { body;                                            \
     if (ok) { flag = 0; }                               \
     else {                                              \
@@ -101,6 +123,8 @@ static ptr make_gzxfile PROTO((int fd, gzFile file));
       }                                                 \
     }                                                   \
   } while (0)
+#define FD_EINTR_GUARD FD_GUARD
+#define GZ_EINTR_GUARD GZ_GUARD
 #endif /* EINTR */
 
 #ifndef O_BINARY
@@ -140,7 +164,8 @@ gzFile S_gzxfile_gzfile(ptr x) {
   return gzxfile_gzfile(x);
 }
 
-ptr S_new_open_input_fd(const char *filename, IBOOL compressed) {
+ptr S_new_open_input_fd(const char *infilename, IBOOL compressed) {
+  char *filename;
   INT saved_errno = 0;
   INT fd, dupfd, error, result, ok, flag;
   gzFile file;
@@ -148,14 +173,16 @@ ptr S_new_open_input_fd(const char *filename, IBOOL compressed) {
   ptr tc = get_thread_context();
 #endif
 
-  if ((filename = S_pathname_impl(filename, NULL)) == NULL) {
-    return Scons(FIX(OPEN_ERROR_OTHER), Sstring("failed to expand path name"));
-  }
+  filename = S_malloc_pathname(infilename);
 
+  /* NB: don't use infilename, which might point into a Scheme string, after this point */
   DEACTIVATE(tc)
   FD_EINTR_GUARD(fd>=0, error, fd=OPEN(filename,O_BINARY|O_RDONLY,0));
   saved_errno = errno;
   REACTIVATE(tc)
+
+  /* NB: don't use free'd filename after this point */
+  free(filename);
 
   if (error) {
     ptr str = S_strerror(saved_errno);
@@ -175,13 +202,13 @@ ptr S_new_open_input_fd(const char *filename, IBOOL compressed) {
     
   if ((dupfd = DUP(fd)) == -1) {
     ptr str = S_strerror(errno);
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
     return Scons(FIX(OPEN_ERROR_OTHER), str);
   }
   
   if ((file = gzdopen(dupfd, "rb")) == Z_NULL) {
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(dupfd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(dupfd));
     return Scons(FIX(OPEN_ERROR_OTHER), Sstring("unable to allocate compression state (too many open files?)"));
   }
 
@@ -190,15 +217,15 @@ ptr S_new_open_input_fd(const char *filename, IBOOL compressed) {
   REACTIVATE(tc)
 
   if (compressed) {
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
     /* box indicates gzip'd */
     return Sbox(make_gzxfile(dupfd, file));
   }
 
-  GZ_EINTR_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, file, ok = gzclose(file));
+  GZ_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, file, ok = gzclose(file));
   if (flag) {} /* make the compiler happy */
   if (LSEEK(fd, 0, SEEK_SET) != 0) { /* gzdirect does not leave fd at position 0 */
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
     return Scons(FIX(OPEN_ERROR_OTHER),Sstring("unable to reset after reading header bytes"));
   }
   return MAKE_FD(fd);
@@ -216,7 +243,7 @@ ptr S_compress_input_fd(INT fd, I64 pos) {
   }
   
   if ((file = gzdopen(dupfd, "rb")) == Z_NULL) {
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(dupfd));
+    FD_GUARD(result == 0, error, result = CLOSE(dupfd));
     return Sstring("unable to allocate compression state (too many open files?)");
   }
   
@@ -225,12 +252,12 @@ ptr S_compress_input_fd(INT fd, I64 pos) {
   REACTIVATE(tc)
 
   if (compressed) {
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
     if (error) {} /* make the compiler happy */
     return Sbox(make_gzxfile(dupfd, file));
   }
 
-  GZ_EINTR_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, file, ok = gzclose(file));
+  GZ_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, file, ok = gzclose(file));
   if (flag) {} /* make the compiler happy */
   if (LSEEK(fd, pos, SEEK_SET) != pos) { /* gzdirect does not leave fd at same position */
     return Sstring("unable to reset after reading header bytes");
@@ -253,9 +280,10 @@ ptr S_compress_output_fd(INT fd) {
 }
 
 static ptr new_open_output_fd_helper(
-  const char *filename, INT mode, INT flags,
+  const char *infilename, INT mode, INT flags,
   IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
   IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed) {
+  char *filename;
   INT saved_errno = 0;
   iptr error;
   INT fd, result;
@@ -269,9 +297,7 @@ static ptr new_open_output_fd_helper(
     (no_truncate ? 0 : O_TRUNC) |
     ((!append) ? 0 : O_APPEND);
 
-  if ((filename = S_pathname_impl(filename, NULL)) == NULL) {
-    return Scons(FIX(OPEN_ERROR_OTHER), Sstring("failed to expand path name"));
-  }
+  filename = S_malloc_pathname(infilename);
   
   if (replace && UNLINK(filename) != 0 && errno != ENOENT) {
     ptr str = S_strerror(errno);
@@ -283,10 +309,14 @@ static ptr new_open_output_fd_helper(
     }
   }
   
+  /* NB: don't use infilename, which might point into a Scheme string, after this point */
   DEACTIVATE(tc)
   FD_EINTR_GUARD(fd >= 0, error, fd = OPEN(filename, flags, mode));
   saved_errno = errno;
   REACTIVATE(tc)
+
+  /* NB: don't use free'd filename after this point */
+  free(filename);
 
   if (error) {
     ptr str = S_strerror(saved_errno);
@@ -308,7 +338,7 @@ static ptr new_open_output_fd_helper(
     saved_errno = errno;
     REACTIVATE(tc)
     if (error) {
-      FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+      FD_GUARD(result == 0, error, result = CLOSE(fd));
       return Scons(FIX(OPEN_ERROR_OTHER), S_strerror(saved_errno));
     }
   }
@@ -319,7 +349,7 @@ static ptr new_open_output_fd_helper(
   
   gzFile file = gzdopen(fd, append ? "ab" : "wb");
   if (file == Z_NULL) {
-    FD_EINTR_GUARD(result == 0, error, result = CLOSE(fd));
+    FD_GUARD(result == 0, error, result = CLOSE(fd));
     return Scons(FIX(OPEN_ERROR_OTHER), Sstring("unable to allocate compression state"));
   }
 
@@ -367,10 +397,10 @@ ptr S_close_fd(ptr file, IBOOL gzflag) {
  /* NOTE: close automatically releases locks so we don't to call unlock*/
   DEACTIVATE(tc)
   if (!gzflag) {
-    FD_EINTR_GUARD(ok == 0, flag, ok = CLOSE(fd));
+    FD_GUARD(ok == 0, flag, ok = CLOSE(fd));
   } else {
    /* zlib 1.2.1 returns Z_BUF_ERROR when closing an empty file opened for reading */
-    GZ_EINTR_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, gzfile, ok = gzclose(gzfile));
+    GZ_GUARD(1, ok == 0 || ok == Z_BUF_ERROR, flag, gzfile, ok = gzclose(gzfile));
   }
   saved_errno = errno;
   REACTIVATE(tc)

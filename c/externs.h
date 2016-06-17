@@ -149,20 +149,20 @@ extern void S_intern_gensym PROTO((ptr g));
 extern void S_retrofit_nonprocedure_code PROTO((void));
 
 /* io.c */
-extern IBOOL S_file_existsp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_regularp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_directoryp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_symbolic_linkp PROTO((const char *path));
-extern const char *S_pathname_impl PROTO((const char *inpath, char *buffer));
-
+extern IBOOL S_file_existsp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_regularp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_directoryp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_symbolic_linkp PROTO((const char *inpath));
 #ifdef WIN32
 extern ptr S_find_files PROTO((const char *wildpath));
 #else
-extern ptr S_directory_list PROTO((const char *path));
+extern ptr S_directory_list PROTO((const char *inpath));
 #endif
-extern const char *S_homedir PROTO((void));
-extern const char *S_pathname PROTO((const char *who, const char *inpath, IBOOL errorp, char *buf));
-extern IBOOL S_fixedpathp PROTO((const char *p));
+extern char *S_malloc_pathname PROTO((const char *inpath));
+#ifdef WIN32
+extern wchar_t *S_malloc_wide_pathname PROTO((const char *inpath));
+#endif
+extern IBOOL S_fixedpathp PROTO((const char *inpath));
 
 /* new-io.c */
 extern INT S_gzxfile_fd PROTO((ptr x));

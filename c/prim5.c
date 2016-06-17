@@ -48,7 +48,7 @@ static ptr sorted_chunk_list PROTO((void));
 static void s_showalloc PROTO((IBOOL show_dump, const char *outfn));
 static ptr s_system PROTO((const char *s));
 static ptr s_process PROTO((char *s, IBOOL stderrp));
-static I32 s_chdir PROTO((const char *s));
+static I32 s_chdir PROTO((const char *inpath));
 static char *s_getwd PROTO((void));
 static ptr s_set_code_byte PROTO((ptr p, ptr n, ptr x));
 static ptr s_set_code_word PROTO((ptr p, ptr n, ptr x));
@@ -68,15 +68,15 @@ static ptr s_intern PROTO((ptr x));
 static ptr s_intern2 PROTO((ptr x, ptr n));
 static ptr s_strings_to_gensym PROTO((ptr pname_str, ptr uname_str));
 static ptr s_intern3 PROTO((ptr x, ptr n, ptr m));
-static ptr s_delete_file PROTO((const char *path));
-static ptr s_delete_directory PROTO((const char *path));
-static ptr s_rename_file PROTO((const char *path1, const char *path2));
-static ptr s_mkdir PROTO((const char *path, INT mode));
-static ptr s_chmod PROTO((const char *path, INT mode));
-static ptr s_getmod PROTO((const char *path, IBOOL followp));
-static ptr s_path_atime PROTO((const char *path, IBOOL followp));
-static ptr s_path_ctime PROTO((const char *path, IBOOL followp));
-static ptr s_path_mtime PROTO((const char *path, IBOOL followp));
+static ptr s_delete_file PROTO((const char *inpath));
+static ptr s_delete_directory PROTO((const char *inpath));
+static ptr s_rename_file PROTO((const char *inpath1, const char *inpath2));
+static ptr s_mkdir PROTO((const char *inpath, INT mode));
+static ptr s_chmod PROTO((const char *inpath, INT mode));
+static ptr s_getmod PROTO((const char *inpath, IBOOL followp));
+static ptr s_path_atime PROTO((const char *inpath, IBOOL followp));
+static ptr s_path_ctime PROTO((const char *inpath, IBOOL followp));
+static ptr s_path_mtime PROTO((const char *inpath, IBOOL followp));
 static ptr s_fd_atime PROTO((INT fd));
 static ptr s_fd_ctime PROTO((INT fd));
 static ptr s_fd_mtime PROTO((INT fd));
@@ -773,16 +773,18 @@ static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
       return LIST3(FIX(ifd), FIX(ofd), FIX(child));
 }
 
-static I32 s_chdir(const char *s) {
-
-#ifdef EINTR
+static I32 s_chdir(const char *inpath) {
+    char *path;
     I32 status;
 
-    while ((status = CHDIR(S_pathname("current-directory", s, 1, (char *)0))) != 0 && errno == EINTR) ;
-    return status;
+    path = S_malloc_pathname(inpath);
+#ifdef EINTR
+    while ((status = CHDIR(path)) != 0 && errno == EINTR) ;
 #else /* EINTR */
-    return CHDIR(S_pathname("current-directory", s, 1, (char *)0));
+    status = CHDIR(path);
 #endif /* EINTR */
+    free(path);
+    return status;
 }
 
 #ifdef GETWD
@@ -931,162 +933,203 @@ static ptr s_strings_to_gensym(ptr pname_str, ptr uname_str) {
                    pname_str, uname_str);
 }
 
-static ptr s_mkdir(const char *path, INT mode) {
-  INT status;
-  const char *expandedpath = S_pathname("mkdir", path, 1, (char *)0);
+static ptr s_mkdir(const char *inpath, INT mode) {
+  INT status; ptr res; char *path;
 
+  path = S_malloc_pathname(inpath);
 #ifdef WIN32
-  status = S_windows_mkdir(expandedpath);
+  status = S_windows_mkdir(path);
 #else /* WIN32 */
-  status =  mkdir(expandedpath, mode);
+  status = mkdir(path, mode);
 #endif /* WIN32 */
 
-  return status == 0 ? Strue : S_strerror(errno);
+  res = status == 0 ? Strue : S_strerror(errno);
+  free(path);
+  return res;
 }
 
-static ptr s_delete_file(const char *path) {
-  const char *extendedpath = S_pathname("delete-file", path, 1, (char *)0);
-  return UNLINK(extendedpath) == 0 ? Strue : S_strerror(errno);
+static ptr s_delete_file(const char *inpath) {
+  ptr res; char *path;
+
+  path = S_malloc_pathname(inpath);
+  res = UNLINK(path) == 0 ? Strue : S_strerror(errno);
+  free(path);
+  return res;
 }
 
-static ptr s_delete_directory(const char *path) {
-  const char *extendedpath = S_pathname("delete-directory", path, 1, (char *)0);
-  return RMDIR(extendedpath) == 0 ? Strue : S_strerror(errno);
+static ptr s_delete_directory(const char *inpath) {
+  ptr res; char *path;
+
+  path = S_malloc_pathname(inpath);
+  res = RMDIR(path) == 0 ? Strue : S_strerror(errno);
+  free(path);
+  return res;
 }
 
-static ptr s_rename_file(const char *path1, const char *path2) {
-  static char buf[PATH_MAX];
-  const char *extendedpath1 = S_pathname("rename-file", path1, 1, buf);
-  const char *extendedpath2 = S_pathname("rename-file", path2, 1, (char *)0);
-  return RENAME(extendedpath1, extendedpath2) == 0 ? Strue : S_strerror(errno);
+static ptr s_rename_file(const char *inpath1, const char *inpath2) {
+  ptr res; char *path1, *path2;
+
+  path1 = S_malloc_pathname(inpath1);
+  path2 = S_malloc_pathname(inpath2);
+  res = RENAME(path1, path2) == 0 ? Strue : S_strerror(errno);
+  free(path1);
+  free(path2);
+  return res;
 }
 
-static ptr s_chmod(const char *path, INT mode) {
-  INT status;
-  const char *extendedpath = S_pathname("chmod", path, 1, (char *)0);
+static ptr s_chmod(const char *inpath, INT mode) {
+  ptr res; INT status; char *path;
 
+  path = S_malloc_pathname(inpath);
 #ifdef WIN32
  /* pathetic approximation: (a) only handles user permissions, (b) doesn't
     handle execute permissions, (c) windows won't make file not readable */
-  status = CHMOD(extendedpath,
+  status = CHMOD(path,
                  (mode & 0400 ? S_IREAD : 0) |
                  (mode & 0200 ? S_IWRITE : 0));
 #else /* WIN32 */
-  status = CHMOD(extendedpath, mode);
+  status = CHMOD(path, mode);
 #endif /* WIN32 */
-  return status == 0 ? Strue : S_strerror(errno);
+  res = status == 0 ? Strue : S_strerror(errno);
+  free(path);
+  return res;
 }
 
-static ptr s_getmod(const char *path, IBOOL followp) {
-  struct STATBUF statbuf;
-  const char *extendedpath = S_pathname("get-mode", path, 1, (char *)0);
+static ptr s_getmod(const char *inpath, IBOOL followp) {
+  ptr res; char *path; struct STATBUF statbuf;
+
+  path = S_malloc_pathname(inpath);
 
  /* according to msdn, user read/write bits are set according to the file's
     permission mode, and user execute bits are set according to the
     filename extension.  it says nothing about group and other execute bits. */
 
-  if ((followp ? STAT(extendedpath, &statbuf) : LSTAT(extendedpath, &statbuf)) != 0)
-    return S_strerror(errno);
-
-  return FIX(statbuf.st_mode & 07777);
+  if ((followp ? STAT(path, &statbuf) : LSTAT(path, &statbuf)) != 0) {
+    res = S_strerror(errno);
+  } else {
+    res = FIX(statbuf.st_mode & 07777);
+  }
+  free(path);
+  return res;
 }
 
-static ptr s_path_atime(const char *path, IBOOL followp) {
+static ptr s_path_atime(const char *inpath, IBOOL followp) {
 #ifdef WIN32
-  wchar_t wpath[PATH_MAX];
+  ptr res;
+  wchar_t *wpath;
   WIN32_FILE_ATTRIBUTE_DATA filedata;
   __int64 total, sec; int nsec;
   
-  path = S_pathname("file-access-time", path, 1, (char *)0);
-  if (MultiByteToWideChar(CP_UTF8,0,path,-1,wpath,PATH_MAX) == 0)
-    return S_LastErrorString();
-  if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
+  if ((wpath = S_malloc_wide_pathname(inpath)) == NULL) {
+    res = S_LastErrorString();
+  } else if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
     DWORD err = GetLastError();
-    return err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
-           Sstring("no such file or directory") :
-           S_LastErrorString();
+    res = err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
+          Sstring("no such file or directory") :
+          S_LastErrorString();
+  } else {
+    total = filedata.ftLastAccessTime.dwHighDateTime;
+    total <<= 32;
+    total |= filedata.ftLastAccessTime.dwLowDateTime;
+    sec = total / 10000000 - 11644473600L;
+    nsec = (total % 10000000) * 100;
+    res = Scons(Sinteger64(sec), Sinteger32(nsec));
   }
-
-  total = filedata.ftLastAccessTime.dwHighDateTime;
-  total <<= 32;
-  total |= filedata.ftLastAccessTime.dwLowDateTime;
-  sec = total / 10000000 - 11644473600L;
-  nsec = (total % 10000000) * 100;
-  return Scons(Sinteger64(sec), Sinteger32(nsec));
+  free(wpath);
+  return res;
 #else /* WIN32 */
+  ptr res;
+  char *path;
   struct STATBUF statbuf;
-  const char *extendedpath = S_pathname("file-access-time", path, 1, (char *)0);
 
-  if ((followp ? STAT(extendedpath, &statbuf) : LSTAT(extendedpath, &statbuf)) != 0)
-    return S_strerror(errno);
-
-  return Scons(Sinteger64(SECATIME(statbuf)), Sinteger32(NSECATIME(statbuf)));
+  path = S_malloc_pathname(inpath);
+  if ((followp ? STAT(path, &statbuf) : LSTAT(path, &statbuf)) != 0) {
+    res = S_strerror(errno);
+  } else {
+    res = Scons(Sinteger64(SECATIME(statbuf)), Sinteger32(NSECATIME(statbuf)));
+  }
+  free(path);
+  return res;
 #endif /* WIN32 */
 }
 
-static ptr s_path_ctime(const char *path, IBOOL followp) {
+static ptr s_path_ctime(const char *inpath, IBOOL followp) {
 #ifdef WIN32
-  wchar_t wpath[PATH_MAX];
+  ptr res;
+  wchar_t *wpath;
   WIN32_FILE_ATTRIBUTE_DATA filedata;
   __int64 total, sec; int nsec;
   
-  path = S_pathname("file-change-time", path, 1, (char *)0);
-  if (MultiByteToWideChar(CP_UTF8,0,path,-1,wpath,PATH_MAX) == 0)
-    return S_LastErrorString();
-  if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
+  if ((wpath = S_malloc_wide_pathname(inpath)) == NULL) {
+    res = S_LastErrorString();
+  } else if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
     DWORD err = GetLastError();
-    return err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
-           Sstring("no such file or directory") :
-           S_LastErrorString();
+    res = err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
+          Sstring("no such file or directory") :
+          S_LastErrorString();
+  } else {
+    total = filedata.ftLastWriteTime.dwHighDateTime;
+    total <<= 32;
+    total |= filedata.ftLastWriteTime.dwLowDateTime;
+    sec = total / 10000000 - 11644473600L;
+    nsec = (total % 10000000) * 100;
+    res = Scons(Sinteger64(sec), Sinteger32(nsec));
   }
-
-  total = filedata.ftLastWriteTime.dwHighDateTime;
-  total <<= 32;
-  total |= filedata.ftLastWriteTime.dwLowDateTime;
-  sec = total / 10000000 - 11644473600L;
-  nsec = (total % 10000000) * 100;
-  return Scons(Sinteger64(sec), Sinteger32(nsec));
+  free(wpath);
+  return res;
 #else /* WIN32 */
+  ptr res;
+  char *path;
   struct STATBUF statbuf;
-  const char *extendedpath = S_pathname("file-change-time", path, 1, (char *)0);
 
-  if ((followp ? STAT(extendedpath, &statbuf) : LSTAT(extendedpath, &statbuf)) != 0)
-    return S_strerror(errno);
-
-  return Scons(Sinteger64(SECCTIME(statbuf)), Sinteger32(NSECCTIME(statbuf)));
+  path = S_malloc_pathname(inpath);
+  if ((followp ? STAT(path, &statbuf) : LSTAT(path, &statbuf)) != 0) {
+    res = S_strerror(errno);
+  } else {
+    res = Scons(Sinteger64(SECCTIME(statbuf)), Sinteger32(NSECCTIME(statbuf)));
+  }
+  free(path);
+  return res;
 #endif /* WIN32 */
 }
 
-static ptr s_path_mtime(const char *path, IBOOL followp) {
+static ptr s_path_mtime(const char *inpath, IBOOL followp) {
 #ifdef WIN32
-  wchar_t wpath[PATH_MAX];
+  ptr res;
+  wchar_t *wpath;
   WIN32_FILE_ATTRIBUTE_DATA filedata;
   __int64 total, sec; int nsec;
   
-  path = S_pathname("file-modification-time", path, 1, (char *)0);
-  if (MultiByteToWideChar(CP_UTF8,0,path,-1,wpath,PATH_MAX) == 0)
-    return S_LastErrorString();
-  if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
+  if ((wpath = S_malloc_wide_pathname(inpath)) == NULL) {
+    res = S_LastErrorString();
+  } else if (!GetFileAttributesExW(wpath, GetFileExInfoStandard, &filedata)) {
     DWORD err = GetLastError();
-    return err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
-           Sstring("no such file or directory") :
-           S_LastErrorString();
+    res = err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND ?
+          Sstring("no such file or directory") :
+          S_LastErrorString();
+  } else {
+    total = filedata.ftLastWriteTime.dwHighDateTime;
+    total <<= 32;
+    total |= filedata.ftLastWriteTime.dwLowDateTime;
+    sec = total / 10000000 - 11644473600L;
+    nsec = (total % 10000000) * 100;
+    res = Scons(Sinteger64(sec), Sinteger32(nsec));
   }
-
-  total = filedata.ftLastWriteTime.dwHighDateTime;
-  total <<= 32;
-  total |= filedata.ftLastWriteTime.dwLowDateTime;
-  sec = total / 10000000 - 11644473600L;
-  nsec = (total % 10000000) * 100;
-  return Scons(Sinteger64(sec), Sinteger32(nsec));
+  free(wpath);
+  return res;
 #else /* WIN32 */
+  ptr res;
+  char *path;
   struct STATBUF statbuf;
-  const char *extendedpath = S_pathname("file-modification-time", path, 1, (char *)0);
 
-  if ((followp ? STAT(extendedpath, &statbuf) : LSTAT(extendedpath, &statbuf)) != 0)
-    return S_strerror(errno);
-
-  return Scons(Sinteger64(SECMTIME(statbuf)), Sinteger32(NSECMTIME(statbuf)));
+  path = S_malloc_pathname(inpath);
+  if ((followp ? STAT(path, &statbuf) : LSTAT(path, &statbuf)) != 0) {
+    res = S_strerror(errno);
+  } else {
+    res = Scons(Sinteger64(SECMTIME(statbuf)), Sinteger32(NSECMTIME(statbuf)));
+  }
+  free(path);
+  return res;
 #endif /* WIN32 */
 }
 
