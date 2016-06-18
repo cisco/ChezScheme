@@ -1366,7 +1366,7 @@ This can be configured only by instructions executed in kernel mode.
 \textbf{procedure:} \scheme{(#%$read-time-stamp-counter)}
 
 This procedure returns the current value of the time-stamp counter for
-the CPU core executing this code.
+the processor core executing this code.
 A general protection fault, which manifests as an invalid memory
 reference exception, results if this operation is not permitted by
 the operating system.
@@ -1582,7 +1582,7 @@ extra memory required for managing heap storage and increased the
 likelihood that memory can be returned to the O/S as the heap
 shrinks.
 Returning memory to the O/S is now faster, so the minimum time for
-for a maximum-generation collection, or any other collection where
+a maximum-generation collection, or any other collection where
 release of memory to the O/S is enabled, has been cut.
 
 \subsection{Faster library load times (9.3.1)}
@@ -1595,7 +1595,7 @@ loaded.
 
 The source optimizer now maintains information about partially static
 record instances to eliminate field accesses and type checks when a
-binding site for a record instances is visible to the access or checking
+binding site for a record instance is visible to the access or checking
 code.
 For example,
 
