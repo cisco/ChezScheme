@@ -208,4 +208,8 @@ https://github.com/win-iconv/win-iconv
 If the DLL is not present, the iconv tests will fail.  No other tests
 should be affected.
 
+Unset the TZ environment variable before running the tests, because
+the Cygwin values are incompatible with the Microsoft C Runtime
+Library.
+
 Use 'make test' described above to run the tests.
