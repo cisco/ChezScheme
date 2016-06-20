@@ -246,5 +246,5 @@
 - added call to collector to close files opened during iconv mats
   specifically for when mats are run under Windows with no iconv dll.
     io.ms
-- fixed typo: VC/bin/vcvars64.bat => VC/amd64/vcvars64.bat
+- fixed typo: VC/bin/vcvars64.bat => VC/bin/amd64/vcvars64.bat
     c/Mf-a6nt, c/Mf-ta6nt
