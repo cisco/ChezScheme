@@ -248,3 +248,8 @@
     io.ms
 - fixed typo: VC/bin/vcvars64.bat => VC/bin/amd64/vcvars64.bat
     c/Mf-a6nt, c/Mf-ta6nt
+- scheme_mutex_t now uses volatile keyword for owner and count fields
+  because these fields can be accessed from multiple threads
+  concurrently. Updated $yield and $thread-check in mats/thread.ms to
+  be more tolerant of timing variability.
+    c/types.h, mats/thread.ms, release_notes.stex

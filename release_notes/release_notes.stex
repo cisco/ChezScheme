@@ -1474,6 +1474,12 @@ On Windows, the inliner has been fixed to handle \scheme{wchar} and
 
 On Windows, the path-related procedures now raise an appropriate exception when the path argument is not a string.
 
+\subsection{Internal mutex structure not always thread safe (9.4)}
+
+The internal mutex structure now has its fields marked
+\scheme{volatile} so that the C compiler does not reorder assignments
+to these fields.
+
 \subsection{\protect\scheme{dynamic-wind} mistakenly enabling interrupts (9.3.3)}
 
 A bug causing \scheme{dynamic-wind} to unconditionally enable
