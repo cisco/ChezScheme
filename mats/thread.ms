@@ -94,11 +94,11 @@
     (define $fib (lambda (x) (if (< x 2) 1 (+ ($fib (- x 1)) ($fib (- x 2))))))
     (define $nthreads 1)
     (define $yield
-      (let ([t (make-time 'time-duration 1000 0)])
+      (let ([t (make-time 'time-duration 1000000 0)])
         (lambda () (sleep t))))
     (define $thread-check
       (lambda ()
-        (let loop ([n 10] [nt (length ($threads))])
+        (let loop ([n 100] [nt (length ($threads))])
           (cond
             [(<= nt $nthreads)
              (set! $nthreads nt)

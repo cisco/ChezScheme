@@ -277,8 +277,8 @@ typedef struct _bucket_pointer_list {
 
 #ifdef PTHREADS
 typedef struct {
-  s_thread_t owner;
-  uptr count;
+  volatile s_thread_t owner;
+  volatile uptr count;
   s_thread_mutex_t pmutex;
 } scheme_mutex_t;
 
