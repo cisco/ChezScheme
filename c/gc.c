@@ -212,7 +212,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
             if (counts == Sfalse) {
               IGEN grtd = rtd == pp ? tg : GENERATION(rtd);
               S_G.countof[grtd][countof_rtd_counts] += 1;
-             /* allocte counts struct in same generation as rtd.  initialize timestamp & counts */
+             /* allocate counts struct in same generation as rtd.  initialize timestamp & counts */
               find_room(space_data, grtd, type_typed_object, size_rtd_counts, counts);
               RTDCOUNTSTYPE(counts) = type_rtd_counts;
               RTDCOUNTSTIMESTAMP(counts) = S_G.gctimestamp[0];
