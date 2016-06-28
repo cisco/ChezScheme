@@ -278,7 +278,7 @@ checkboot:
                  '(#%$$fasl-file-equal? "../boot/$m/sbb" "../boot/$m/petite.boot" #t)'\
                  '(#%$$fasl-file-equal? "../boot/$m/scb" "../boot/$m/scheme.boot" #t)'\
                  '(printf "bootfile comparison succeeded\n"))'\
-             | ../bin/scheme -b ../boot/$m/sbb -q
+             | ../bin/$m/scheme -b ../boot/$m/sbb -q
 
 xcheckboot: ${macroobj} ${patchfile}
 	@echo '(reset-handler abort)'\
