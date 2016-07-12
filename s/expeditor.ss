@@ -111,9 +111,6 @@
          [(x ...) (p x ... e)]
          [(x ... y) b1 b2 ...]))]))
 
-; expression editor presently handles only ascii key bindings
-(define (ascii? c) ($fxu< (char->integer c) 256))
-
 ; screen initialization and manipulation routines
 
 (module (init-screen raw-mode no-raw-mode
@@ -137,7 +134,7 @@
 
   (define init-term (foreign-procedure "(cs)ee_init_term" () boolean))
   (define $ee-read-char (foreign-procedure "(cs)ee_read_char" (boolean) scheme-object))
-  (define $ee-write-char (foreign-procedure "(cs)ee_write_char" (int) void))
+  (define $ee-write-char (foreign-procedure "(cs)ee_write_char" (wchar_t) void))
   (define ee-flush (foreign-procedure "(cs)ee_flush" () void))
   (define get-screen-size (foreign-procedure "(cs)ee_get_screen_size" () scheme-object))
   (define raw-mode (foreign-procedure "(cs)ee_raw" () void))
@@ -226,9 +223,9 @@
     (if (fx= cursor-col cols)
         (begin
           (exit-am-mode)
-          ($ee-write-char (char->integer c))
+          ($ee-write-char c)
           (enter-am-mode))
-        ($ee-write-char (char->integer c))))
+        ($ee-write-char c)))
 
  ; comments regarding ee-write-char above apply also to ee-display-string
   (define (ee-display-string s)
@@ -1915,7 +1912,7 @@
         (let ([c (ee-read-char)])
           (let ([x (if (eof-object? c)
                        (lambda (ee entry c) #f)
-                       (and (ascii? c) (vector-ref table (char->integer c))))])
+                       (hashtable-ref table c ee-insert-self))])
             (cond
               [(procedure? x)
                (let ([n (eestate-repeat-count ee)])
@@ -2852,15 +2849,15 @@
 (module (dispatch-table? base-dispatch-table ee-bind-key)
   (define make-dispatch-table
     (lambda ()
-      (make-vector 256 #f)))
+      (make-eqv-hashtable 256)))
 
-  (define dispatch-table? vector?)
+  (define dispatch-table? hashtable?)
 
   (define ee-bind-key
     (lambda (key proc)
-      (unless (or (and (char? key) (ascii? key))
-                  (and (string? key) (fx> (string-length key) 0) (andmap ascii? (string->list key))))
-        ($oops 'ee-bind-key "~s is not a valid key (ascii character or nonempty ascii string)" key))
+      (unless (or (char? key)
+                  (and (string? key) (fx> (string-length key) 0)))
+        ($oops 'ee-bind-key "~s is not a valid key (character or nonempty string)" key))
       (unless (procedure? proc)
         ($oops 'ee-bind-key "~s is not a procedure" proc))
 
@@ -2871,7 +2868,7 @@
                 (case c
                   [(#\\) (s-backslash table (fx+ i 1))]
                   [(#\^) (s-caret table (fx+ i 1))]
-                  [else (s-lookup table (fx+ i 1) (char->integer c))])))
+                  [else (s-lookup table (fx+ i 1) c)])))
             (define (s-backslash table i)
               (when (fx= i n)
                 ($oops 'ee-bind-key
@@ -2879,28 +2876,28 @@
                   key))
               (let ([c (string-ref key i)])
                 (case c
-                  [(#\e) (s-lookup table (fx+ i 1) 27)]
+                  [(#\e) (s-lookup table (fx+ i 1) #\esc)]
                   [(#\\ #\^) (s-lookup table (fx+ i 1) c)]
                   [else ($oops 'ee-bind-key
                          "malformed key ~s (unexpected character following \\)"
                          key)])))
             (define (s-caret table i)
-              (define (^char->integer c)
-                (fxlogand (char->integer c) #b11111))
+              (define (^char c)
+                (integer->char (fxlogand (char->integer c) #b11111)))
               (when (fx= i n)
                 ($oops 'ee-bind-key
                   "malformed key ~s (nothing following ^)"
                   key))
-              (s-lookup table (fx+ i 1) (^char->integer (string-ref key i))))
-            (define (s-lookup table i code)
-              (let ([x (vector-ref table code)])
+              (s-lookup table (fx+ i 1) (^char (string-ref key i))))
+            (define (s-lookup table i key)
+              (let ([x (hashtable-ref table key #f)])
                 (cond
                   [(fx= i n)
                    (when (dispatch-table? x)
                      (warningf 'ee-bind-key
                        "definition for key ~s disables its use as a prefix"
                        key))
-                   (vector-set! table code proc)]
+                   (hashtable-set! table key proc)]
                   [(dispatch-table? x) (s0 x i)]
                   [else
                    (when (procedure? x)
@@ -2908,15 +2905,15 @@
                        "definition for key ~s disables its use as a prefix"
                        key))
                    (let ([x (make-dispatch-table)])
-                     (vector-set! table code x)
+                     (hashtable-set! table key x)
                      (s0 x i))])))
             (s0 base-dispatch-table 0))
-          (let ([code (char->integer key)])
-            (when (dispatch-table? (vector-ref base-dispatch-table code))
+          (begin
+            (when (dispatch-table? (hashtable-ref base-dispatch-table key #f))
               (warningf 'ee-bind-key
                 "definition for key ~s disables its use as a prefix"
                 key))
-            (vector-set! base-dispatch-table code proc)))))
+            (hashtable-set! base-dispatch-table key proc)))))
 
   (define base-dispatch-table (make-dispatch-table))
 
