@@ -253,3 +253,6 @@
   concurrently. Updated $yield and $thread-check in mats/thread.ms to
   be more tolerant of timing variability.
     c/types.h, mats/thread.ms, release_notes.stex
+- fixed three instances of unchecked mallocs reported by laqrix in
+  github issue #77.
+    io.c, schlib.c, thread.c

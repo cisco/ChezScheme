@@ -84,7 +84,7 @@ char *S_malloc_pathname(const char *inpath) {
   /* if no ~ or tilde dir can't be found, copy inpath */
   {
     size_t n = strlen(inpath) + 1;
-    outpath = (char *)malloc(n);
+    if ((outpath = (char *)malloc(n)) == NULL) S_error("expand_pathname", "malloc failed");
     memcpy(outpath, inpath, n);
     return outpath;
   }
