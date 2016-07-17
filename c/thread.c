@@ -63,6 +63,8 @@ ptr S_create_thread_object() {
     ptr v = S_vector_in(space_new, 0, n);
 
     tc = (ptr)malloc(size_tc);
+    if (tc == (ptr)0)
+      S_error("fork-thread", "unable to malloc thread data structure");
     memcpy((void *)tc, (void *)p_tc, size_tc);
 
     for (i = 0; i < n; i += 1)
