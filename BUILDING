@@ -165,6 +165,14 @@ The make file supports several targets:
 'make distclean'
   removes nanopass, Makefile, and all workareas.
 
+MaxOS X
+
+Install the X11 headers by:
+
+brew cask install xquartz
+
+Or download and install https://www.xquartz.org/
+
 WINDOWS
 
 Building Chez Scheme under Windows with Cygwin follows the
