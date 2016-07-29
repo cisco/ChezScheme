@@ -173,3 +173,6 @@
         c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
         mats/bldnt.bat workarea c/scheme.rc s/7.ss s/cmacros.ss
         release_notes/release_notes.stex csug/csug.stex
+    * continue the profiler's html output refresh: refine the styling
+        (and palette) and update CSUG to match. update the CSUG screenshots
+        to reflect the refined look.
