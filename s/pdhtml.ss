@@ -746,7 +746,7 @@
                        (newline)
                        (<title> () (html-text "~a" title))
                        (newline)
-                       (display-palette-style palette)
+                       (display-style-with-palette palette)
                        (newline))
                      (newline)
                      (let () body1 body2 ...)
@@ -826,7 +826,7 @@
                               (loop (if bol? (+ n 1) n) (char=? c #\newline))))))
                     (<table> ()
                       (<tr> ()
-                        (<td> ([style (format "color: ~a; text-align: right; padding-right: 1em" color)])
+                        (<td> ([style (format "color: ~a; font-weight: bold; padding-right: 1rem; text-align: right" color)])
                           (<pre> ()
                             (unless (fx= line-count 0)
                               (newline)
@@ -837,6 +837,9 @@
                  [else (th)]))]))
         (with-html-file who palette (filedata-htmlpath fdata) (port-name ip)
           (<body> ([class (color-class 0)])
+            (newline)
+            (<h1> ([style "margin-bottom: 1rem"])
+              (html-text "~a" (port-name ip)) (<span> ([style "opacity: 0.5"]) (html-text " on ~a" (date-and-time))))
             (newline)
             (with-line-numbers
               (<pre> ()
@@ -867,13 +870,73 @@
       (lambda (ci)
         (format "pc~s" ci)))
 
-    (define (display-palette-style palette)
+    (define (display-style-with-palette palette)
       (<style> ([type "text/css"])
         (newline)
+
+        ;; CSS Reset Styling
+
+        ;; See https://perishablepress.com/a-killer-collection-of-global-css-reset-styles/ for an overview
+        ;; of CSS resets.
+        ;;
+        ;; See http://code.stephenmorley.org/html-and-css/fixing-browsers-broken-monospace-font-handling/
+        ;; for an explanation of "font-family: monospace, monospace;" and the following "font-size: 1rem;".
+        ;;
+        (printf "* {")
+        (printf " border: 0;")
+        (printf " margin: 0;")
+        (printf " outline: 0;")
+        (printf " padding: 0;")
+        (printf " vertical-align: baseline;")
+        (printf " }\n")
+        (printf "code, kbd, pre, samp {")
+        (printf " font-family: monospace, monospace;")
+        (printf " font-size: 1rem;")
+        (printf " }\n")
+        (printf "html {")
+        (printf " -moz-osx-font-smoothing: grayscale;")
+        (printf " -webkit-font-smoothing: antialiased;")
+        (printf " }\n")
+        (printf "table {")
+        (printf " border-collapse: collapse;")
+        (printf " border-spacing: 0;")
+        (printf " }\n")
+
+        ;; CSS Base Styling
+
+        (printf "body {")
+        (printf " padding: 1rem;")
+        (printf " }\n")
+        (printf "h1, h2, h3, h4 {")
+        (printf " line-height: 1.25;")
+        (printf " margin-bottom: 0.5rem;")
+        (printf " }\n")
+        (printf "h1 {")
+        (printf " font-size: 1.296rem;")
+        (printf " }\n")
+        (printf "h2 {")
+        (printf " font-size: 1.215rem;")
+        (printf " }\n")
+        (printf "h3 {")
+        (printf " font-size: 1.138rem;")
+        (printf " }\n")
+        (printf "h4 {")
+        (printf " font-size: 1.067rem;")
+        (printf " }\n")
+        (printf "html {")
+        (printf " font-family: monospace, monospace;")
+        (printf " font-size: 1rem;")
+        (printf " }\n")
+        (printf "p {")
+        (printf " margin-bottom: 1.25rem;")
+        (printf " }\n")
+
+        ;; CSS Profile Styling
+
         (do ([ci 0 (fx+ ci 1)])
             ((fx= ci (vector-length palette)))
           (let ([color (vector-ref palette ci)])
-            (printf ".~a {background-color: ~a; color: ~a; white-space: nowrap}\n"
+            (printf ".~a { background-color: ~a; color: ~a; white-space: nowrap; }\n"
               (color-class ci) (car color) (cdr color))))))
 
     (define (safe-prefix name name*)
@@ -969,18 +1032,17 @@
                (with-html-file who palette (format "~aprofile.html" path-prefix) "Profile Output"
                  (<body> ([class (color-class 0)])
                    (newline)
-                   (<h3> () (html-text "Profile Output"))
-                   (newline)
-                   (<p> () (html-text "~a" (date-and-time)))
+                   (<h1> ([style "margin-bottom: 1rem"])
+                     (html-text "Profile Output") (<span> ([style "opacity: 0.5"]) (html-text " on ~a" (date-and-time))))
                    (newline)
                    (<table> ()
                      (<tr> ()
                        (newline)
                        (<td> ([style "vertical-align: top"])
-                         (<p> ([style "margin-bottom: 0"])
-                           (<b> () (html-text "Legend:")))
+                         (<h2> ([style "margin-bottom: 0.25rem"])
+                           (html-text "Legend"))
                          (newline)
-                         (<table> ([style "margin-left: 1em"])
+                         (<table> ([style "margin-bottom: 1rem"])
                            (newline)
                            (let* ([n (vector-length palette)] [v (make-vector n #f)])
                              (for-each
@@ -1002,37 +1064,35 @@
                                (let ([p (vector-ref v ci)])
                                  (when p
                                    (<tr> ()
-                                     (<td> ([class (color-class ci)])
-                                       (nbsp)
+                                     (<td> ([class (color-class ci)]
+                                            [style "padding: 0.5rem"])
                                        (let ([smin (readable-number (car p))]
                                              [smax (readable-number (cdr p))])
                                          (if (string=? smin smax)
                                              (html-text "executed ~a time~p"
                                                smin (car p))
                                              (html-text "executed ~a-~a times"
-                                               smin smax)))
-                                       (nbsp)))
+                                               smin smax)))))
                                    (newline))))))
                          (newline)
-                         (<p> ([style "margin-bottom: 0"])
-                           (<b> () (html-text "Files:")))
+                         (<h2> ([style "margin-bottom: 0.25rem"])
+                           (html-text "Files"))
                          (newline)
-                         (<table> ([style "margin-left: 1em"])
+                         (<table> ([style "margin-bottom: 1rem"])
                            (newline)
                            (for-each
                              (lambda (fdata)
                                (let ([ip (filedata-ip fdata)])
                                  (<tr> ()
-                                   (<td> ([class (color-class (filedata-ci fdata))])
-                                     (nbsp)
+                                   (<td> ([class (color-class (filedata-ci fdata))]
+                                          [style "padding: 0.5rem"])
                                      (if ip
                                          (<a> ([href (filedata-htmlfn fdata)]
                                                [target (filedata-winid fdata)]
                                                [class (color-class (filedata-ci fdata))])
                                            (html-text "~a" (port-name (filedata-ip fdata))))
                                          (html-text "~a"
-                                           (source-file-descriptor-name (filedata-sfd fdata))))
-                                     (nbsp)))
+                                           (source-file-descriptor-name (filedata-sfd fdata))))))
                                  (newline)
                                  (when ip (display-file who palette fdata))))
                              (sort
@@ -1041,13 +1101,13 @@
                                     (filedata-max-count y)))
                                fdata*))))
                        (newline)
-                       (<td> ([style "width: 10em"]))
+                       (<td> ([style "width: 10rem"]))
                        (newline)
                        (<td> ([style "vertical-align: top"])
-                         (<p> ([style "margin-bottom: 0"])
-                           (<b> () (html-text "Hot spots:")))
+                         (<h2> ([style "margin-bottom: 0.25rem"])
+                           (html-text "Hot Spots"))
                          (newline)
-                         (<table> ([style "margin-left: 1em"])
+                         (<table> ([style "margin-bottom: 1rem"])
                            (newline)
                            (let loop ([entry*
                                        (sort
@@ -1077,8 +1137,8 @@
                                               (= count last-count)
                                               (= line last-line))
                                    (<tr> ()
-                                     (<td> ([class (color-class (entrydata-ci entry))])
-                                       (nbsp)
+                                     (<td> ([class (color-class (entrydata-ci entry))]
+                                            [style "padding: 0.5rem"])
                                        (cond
                                          [(filedata-ip fdata) =>
                                           (lambda (ip)
@@ -1096,8 +1156,7 @@
                                           (html-text "~a char ~s (~:d)"
                                             (source-file-descriptor-name (filedata-sfd fdata))
                                             (entrydata-bfp entry)
-                                            (entrydata-count entry))])
-                                       (nbsp)))
+                                            (entrydata-count entry))])))
                                    (newline))
                                  (loop (cdr entry*) htmlfn count line)))))
                          (newline))
@@ -1110,19 +1169,19 @@
   (set-who! profile-palette
     (make-parameter
      ; color background with appropriate white or black foreground
-      '#(("black"   . "white")  ; black (for unprofiled code)
-         ("#666666" . "white")  ; gray  (for unexecuted code)
-         ("#A000C8" . "black")  ; purple
-         ("#8200DC" . "white")  ; dark purple
-         ("#1E3CFF" . "white")  ; dark blue
-         ("#00A0FF" . "black")  ; medium blue
-         ("#00D28C" . "black")  ; aqua
-         ("#00DC00" . "black")  ; green
-         ("#A0E632" . "black")  ; yellow green
-         ("#E6DC32" . "black")  ; yellow
-         ("#E6AF2D" . "black")  ; darkyellow
-         ("#F08228" . "black")  ; orange
-         ("#FA3C3C" . "white")) ; red
+      '#(("#111111" . "white")  ; black (for unprofiled code)
+         ("#607D8B" . "white")  ; gray  (for unexecuted code)
+         ("#9C27B0" . "black")  ; purple
+         ("#673AB7" . "white")  ; dark purple
+         ("#3F51B5" . "white")  ; dark blue
+         ("#2196F3" . "black")  ; medium blue
+         ("#00BCD4" . "black")  ; aqua
+         ("#4CAF50" . "black")  ; green
+         ("#CDDC39" . "black")  ; yellow green
+         ("#FFEB3B" . "black")  ; yellow
+         ("#FFC107" . "black")  ; dark yellow
+         ("#FF9800" . "black")  ; orange
+         ("#F44336" . "white")) ; red
       (lambda (palette)
         (unless (and (vector? palette)
                      (andmap

@@ -1,11 +1,11 @@
 % Copyright 2005-2016 Cisco Systems, Inc.
-% 
+%
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
-% 
+%
 % http://www.apache.org/licenses/LICENSE-2.0
-% 
+%
 % Unless required by applicable law or agreed to in writing, software
 % distributed under the License is distributed on an "AS IS" BASIS,
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,7 +175,7 @@ console error port.
 For non-serious warning conditions, it returns immediately after displaying
 the condition.
 
-For serious or other non-warning conditions, it 
+For serious or other non-warning conditions, it
 saves the condition in the parameter \scheme{debug-condition}, where
 \scheme{debug} (Section~\ref{SECTDEBUGINTERACTIVE}) can retrieve it and
 allow it to be inspected.
@@ -362,7 +362,7 @@ The example below shows how to install a keyboard-interrupt handler
 that resets without invoking the debugger.
 
 \schemedisplay
-(keyboard-interrupt-handler 
+(keyboard-interrupt-handler
   (lambda ()
     (newline (console-output-port))
     (reset)))
@@ -535,7 +535,7 @@ Environments may be provided as optional arguments to \scheme{eval},
 \scheme{expand}, and the procedures that define, assign, or
 reference top-level values.
 
-There are several built-in environments, and new environments can 
+There are several built-in environments, and new environments can
 be created by copying existing environments or selected bindings
 from existing environments.
 
@@ -2231,8 +2231,8 @@ While the compiler produces the same code for optimize levels 0--2,
 user-defined macro transformers can differentiate among the different
 levels if desired.
 
-One way to use optimize levels is on a per-file 
-basis, using \index{\scheme{eval-when}}\scheme{eval-when} to force the use of a particular 
+One way to use optimize levels is on a per-file
+basis, using \index{\scheme{eval-when}}\scheme{eval-when} to force the use of a particular
 optimize level at compile time.
 For example, placing:
 
@@ -2241,9 +2241,9 @@ For example, placing:
 \endschemedisplay
 
 \noindent
-at the front of a file will cause all of the forms in the file to be 
-compiled at optimize level 3 when the file is compiled (using 
-\index{\scheme{compile-file}}\scheme{compile-file}) but does not affect the optimize level used 
+at the front of a file will cause all of the forms in the file to be
+compiled at optimize level 3 when the file is compiled (using
+\index{\scheme{compile-file}}\scheme{compile-file}) but does not affect the optimize level used
 when the file is loaded from source.
 Since \scheme{compile-file} parameterizes \scheme{optimize-level} (see \scheme{parameterize}),
 the above
@@ -2607,7 +2607,7 @@ with the outer unroll limit set to one.
 
 Interesting effects can be had by varying several of these parameters at
 once.
-For example, setting the 
+For example, setting the
 effort and outer unroll limits to large values and the score limit
 to \scheme{1} has the effect of inlining even complex recursive procedures
 whose values turn out to be constant at compile time without risking
@@ -3068,7 +3068,7 @@ three pairs.
 The car of each pair is a background color and the cdr is a foreground
 (text) color.
 Each color must be a string, and each string should contain an HTML
-cascading style sheet (css) color specifier.
+cascading style sheet (CSS) color specifier.
 The first pair is used for unprofiled code, and the second is used
 for unexecuted profiled code.
 The third is used for code that is executed least frequently, the fourth
@@ -3085,17 +3085,17 @@ frequently executed code.
 
 \schemedisplay
 (profile-palette) ;=>
-  #(("black" . "white") ("#666666" . "white")
-    ("#A000C8" . "black") ("#8200DC" . "white")
-    ("#1E3CFF" . "white") ("#00A0FF" . "black")
-    ("#00D28C" . "black") ("#00DC00" . "black")
-    ("#A0E632" . "black") ("#E6DC32" . "black")
-    ("#E6AF2D" . "black") ("#F08228" . "black")
-    ("#FA3C3C" . "white"))
+  #(("#111111" . "white") ("#607D8B" . "white")
+    ("#9C27B0" . "black") ("#673AB7" . "white")
+    ("#3F51B5" . "white") ("#2196F3" . "black")
+    ("#00BCD4" . "black") ("#4CAF50" . "black")
+    ("#CDDC39" . "black") ("#FFEB3B" . "black")
+    ("#FFC107" . "black") ("#FF9800" . "black")
+    ("#F44336" . "white"))
 (profile-palette
  ; set palette with rainbow colors and black text
  ; for all but unprofiled or unexecuted code
-  '#(("black" . "white")      ; black
+  '#(("#000000" . "white")    ; black
      ("#666666" . "white")    ; gray
      ("#8B00FF" . "black")    ; violet
      ("#6600FF" . "black")    ; indigo
@@ -3113,7 +3113,7 @@ frequently executed code.
 \endentryheader
 
 This value of this parameter must be a string or \scheme{#f}.
-If it is a string, the string should contain an HTML cascading style sheet (css)
+If it is a string, the string should contain an HTML cascading style sheet (CSS)
 color specifier.
 If the parameter is set to string, \scheme{profile-dump-html} includes line numbers
 in its html rendering of each source file, using the specified color.
@@ -3137,7 +3137,7 @@ has been executed.
 
 \begin{itemize}
  \item execution count
- \item pathname 
+ \item pathname
  \item beginning file position in characters (inclusive)
  \item ending file position in characters (exclusive)
  \item line number of beginning file position
@@ -4124,7 +4124,7 @@ UTC may be obtained by passing an offset of zero.
 (date->time-utc d) ;=> #<time-utc 1190552850.000000000>
 (define t (make-time 'time-utc 0 1190552850))
 (time-utc->date t) ;=> #<date Sun Sep 23 09:07:30 2007>
-(time-utc->date t 0) ;=> #<date Sun Sep 23 13:07:30 2007> 
+(time-utc->date t 0) ;=> #<date Sun Sep 23 13:07:30 2007>
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -4328,11 +4328,11 @@ statistics into a single \scheme{sstats} record.
 A \scheme{sstats} record has the following fields:
 
 \begin{description}
-\item[\scheme{cpu},] the cpu time consumed, 
-\item[\scheme{real},] the elapsed real time, 
+\item[\scheme{cpu},] the cpu time consumed,
+\item[\scheme{real},] the elapsed real time,
 \item[\scheme{bytes},] the number of bytes allocated,
 \item[\scheme{gc-count},] the number of collections,
-\item[\scheme{gc-cpu},] the cpu time consumed during collections, 
+\item[\scheme{gc-cpu},] the cpu time consumed during collections,
 \item[\scheme{gc-real},] the elapsed real time during collections, and
 \item[\scheme{gc-bytes},] the number of bytes reclaimed by the collector.
 \end{description}
@@ -5021,4 +5021,3 @@ Setting \scheme{subset-mode} to \scheme{system} allows the manipulation
 of various undocumented system variables, data structures, and
 settings.
 It is typically used only for system debugging.
-
