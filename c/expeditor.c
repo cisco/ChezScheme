@@ -521,6 +521,11 @@ static ptr s_ee_get_clipboard(void) {
   return x;
 }
 
+static void s_ee_write_char(INT c) {
+  if ((unsigned)c > 255) c = '?';
+  putchar(c);
+}
+
 #else /* WIN32 */
 #ifdef SOLARIS
 #define NCURSES_CONST
@@ -1012,8 +1017,6 @@ static ptr s_ee_get_clipboard(void) {
 }
 #endif
 
-#endif /* WIN32 */
-
 static void s_ee_write_char(wchar_t wch) {
   locale_t old; char buf[MB_LEN_MAX]; size_t n;
 
@@ -1026,6 +1029,8 @@ static void s_ee_write_char(wchar_t wch) {
   }
   uselocale(old);
 }
+
+#endif /* WIN32 */
 
 static void s_ee_flush(void) {
   fflush(stdout);

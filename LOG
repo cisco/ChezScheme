@@ -260,3 +260,7 @@
   except that combining characters are not treated correctly for
   line-wrapping.  this addresses github issue #32 and part of issue #81.
     c/expeditor.c, s/expeditor.ss
+- moved s_ee_write_char function within the WIN32 check to allow the unicode
+  change to compile on windows.  unicode is not yet supported in the windows
+  version of the repl.
+    c/expeditor.c
