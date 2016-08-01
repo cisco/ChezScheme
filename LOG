@@ -256,6 +256,15 @@
 - fixed three instances of unchecked mallocs reported by laqrix in
   github issue #77.
     io.c, schlib.c, thread.c
+- continue the profiler's html output refresh: refine the styling
+  (and palette) and update CSUG to match. update the CSUG screenshots
+  to reflect the refined look.
+    s/pdhtml.ss
+    csug/system.stex 
+    csug/canned/profilehtml-orig.png
+    csug/canned/profilehtml.png
+    csug/canned/fatfibhtml-orig.png
+    csug/canned/fatfibhtml.png
 - add unicode support to the expression editor.  entry and display now work
   except that combining characters are not treated correctly for
   line-wrapping.  this addresses github issue #32 and part of issue #81.
