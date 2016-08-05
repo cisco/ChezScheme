@@ -47,7 +47,7 @@ void S_thread_init() {
    thread_find_room.  main.c does part of the initialization of the
    base thread (e.g., parameters, current input/output ports) in one
    or more places. */
-ptr S_create_thread_object() {
+ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   ptr thread, tc;
   INT i;
 
@@ -56,7 +56,6 @@ ptr S_create_thread_object() {
   if (S_threads == Snil) {
     tc = (ptr)S_G.thread_context;
   } else { /* clone parent */
-    ptr p_tc = get_thread_context();
     ptr p_v = PARAMETERS(p_tc);
     iptr i, n = Svector_length(p_v);
    /* use S_vector_in to avoid thread-local allocation */
@@ -64,7 +63,7 @@ ptr S_create_thread_object() {
 
     tc = (ptr)malloc(size_tc);
     if (tc == (ptr)0)
-      S_error("fork-thread", "unable to malloc thread data structure");
+      S_error(who, "unable to malloc thread data structure");
     memcpy((void *)tc, (void *)p_tc, size_tc);
 
     for (i = 0; i < n; i += 1)
@@ -130,14 +129,12 @@ ptr S_create_thread_object() {
 #ifdef PTHREADS
 IBOOL Sactivate_thread() { /* create or reactivate current thread */
   ptr tc = get_thread_context();
+
   if (tc == (ptr)0) { /* thread created by someone else */
     ptr thread;
 
    /* borrow base thread for now */
-    tc = (ptr)S_G.thread_context;
-    s_thread_setspecific(S_tc_key, tc);
-
-    thread = S_create_thread_object();
+    thread = S_create_thread_object("Sactivate_thread", S_G.thread_context);
     s_thread_setspecific(S_tc_key, (ptr)THREADTC(thread));
     return 1;
   } else {
@@ -199,7 +196,8 @@ ptr S_fork_thread(thunk) ptr thunk; {
   ptr thread;
   int status;
 
-  thread = S_create_thread_object();
+  /* pass the current thread's context as the parent thread */
+  thread = S_create_thread_object("fork-thread", get_thread_context());
   CP(THREADTC(thread)) = thunk;
 
   if ((status = s_thread_create(start_thread, (void *)THREADTC(thread))) != 0) {

@@ -195,7 +195,7 @@ extern void S_new_io_init PROTO((void));
 
 /* thread.c */
 extern void S_thread_init PROTO((void));
-extern ptr S_create_thread_object PROTO((void));
+extern ptr S_create_thread_object PROTO((const char *who, ptr p_tc));
 #ifdef PTHREADS
 extern ptr S_fork_thread PROTO((ptr thunk));
 extern scheme_mutex_t *S_make_mutex PROTO((void));
