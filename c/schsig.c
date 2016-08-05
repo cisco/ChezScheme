@@ -373,7 +373,7 @@ void S_boot_error(ptr who, ptr msg, ptr args) {
 static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr args; {
     ptr tc = get_thread_context();
 
-    if (S_errors_to_console || CCHAIN(tc) == Snil) {
+    if (S_errors_to_console || tc == (ptr)0 || CCHAIN(tc) == Snil) {
         if (strlen(who) == 0)
           printf("Error: %s\n", s);
         else

@@ -1053,7 +1053,9 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     S_threads = Snil;
     S_nthreads = 0;
     S_set_symbol_value(S_G.active_threads_id, FIX(0));
-    tc = (ptr)THREADTC(S_create_thread_object());
+    /* pass a parent tc of Svoid, since this call establishes the initial
+     * thread context and hence there is no parent thread context.  */
+    tc = (ptr)THREADTC(S_create_thread_object("startup", tc));
 #ifdef PTHREADS
     s_thread_setspecific(S_tc_key, tc);
 #endif
