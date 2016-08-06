@@ -1017,7 +1017,7 @@ static ptr s_ee_get_clipboard(void) {
 }
 #endif
 
-static void s_ee_write_char(wchar_t wch) {
+static void s_ee_write_char(INT wch) {
   locale_t old; char buf[MB_LEN_MAX]; size_t n;
 
   old = uselocale(term_locale);
