@@ -1474,6 +1474,23 @@
            (define x (f))
            x)))
     '17)
+  ; check for regression: cpvalid leaving behind a cpvalid-defer form
+  (equivalent-expansion?
+    (parameterize ([run-cp0 (lambda (cp0 x) x)]
+                   [optimize-level 2])
+      (expand/optimize '(letrec* ([f (letrec ([x x]) (lambda () x))]) 0)))
+    '(let ([f (let ([valid? #f])
+                (let ([x (#2%void)])
+                  (set! x
+                    (begin
+                      (if valid?
+                          (#2%void)
+                          (#2%$source-violation #f #f #t
+                            "attempt to reference undefined variable ~s" 'x))
+                      x))
+                  (set! valid? #t)
+                  (lambda () x)))])
+       0))
 )
 
 (mat compile-profile

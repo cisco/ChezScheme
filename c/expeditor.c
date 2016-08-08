@@ -21,7 +21,7 @@
 /* locally defined functions */
 static IBOOL s_ee_init_term(void);
 static ptr s_ee_read_char(IBOOL blockp);
-static void s_ee_write_char(INT c);
+static void s_ee_write_char(wchar_t c);
 static void s_ee_flush(void);
 static ptr s_ee_get_screen_size(void);
 static void s_ee_raw(void);

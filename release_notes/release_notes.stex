@@ -1428,6 +1428,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Compiler error: leaked or unexpected \protect\scheme{cpvalid-defer} form (9.4.1)}
+
+A bug in the pass of the compiler that inserts valid checks for
+\scheme{letrec} and \scheme{letrec*} bindings has been fixed.
+The bug resulted in an internal compiler exception with a condition
+message regarding a leaked or unexpected \scheme{cpvalid-defer} form.
+[This bug dated back to Version 6.9c.]
+
 \subsection{\protect\scheme{string->number} and reader numeric syntax issues (9.4)}
 
 \scheme{string->number} and the reader previously treated all complex
