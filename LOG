@@ -280,3 +280,10 @@
   S_create_thread_object to allow it to report either Sactivate_thread
   or fork-thread led to the error.
     externs.h, schsig.c, scheme.c, thread.c
+- fixed a bug in cpvalid resulting in it leaving behind a cpvalid-defer
+  form for later passes to choke on.  also fixed cp0 to print the correct
+  name for cpvalid when it does this.
+    cpvalid.ss, cp0.ss,
+    misc.ms
+- updated the prototype for s_ee_write_char to match the definition
+    expeditor.c

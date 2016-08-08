@@ -424,11 +424,12 @@
                      (set-prelex-assigned! valid-flag #t)
                      (build-let (list valid-flag) (list `(quote #f))
                        (first-value
-                         (defer-or-not (or dl? body-dl?)
-                           (build-letrec x* e*
-                             `(seq
-                                (set! #f ,valid-flag (quote #t))
-                                ,body))))))
+                         (let-values ([(body body-dl?) (defer-or-not body-dl?
+                                                         `(seq
+                                                            (set! #f ,valid-flag (quote #t))
+                                                            ,body))])
+                           (defer-or-not (or dl? body-dl?)
+                             (build-letrec x* e* body))))))
                    (build-letrec x* e* body))))))]
       [(letrec* ([,x* ,e*] ...) ,body)
        ; - we do unprotected parts of each rhs plus unsafe lambda pieces

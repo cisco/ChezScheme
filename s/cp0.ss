@@ -4635,7 +4635,7 @@
                        [else #f])))]
              [else (void)])))
        `(cte-optimization-loc ,box ,e)]
-      [(cpvalid-defer ,e) (sorry! who "np-valid leaked a cpvalid-defer form ~s" ir)]
+      [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) ir]
       [else ($oops who "unrecognized record ~s" ir)])
     (begin
