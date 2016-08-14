@@ -287,3 +287,7 @@
     misc.ms
 - updated the prototype for s_ee_write_char to match the definition
     expeditor.c
+- fixed a side-effect preservation bug with non-trivial test-context
+  not-like patterns.
+    cp0.ss,
+    cp0.ms, 4.ms
