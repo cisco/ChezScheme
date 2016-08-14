@@ -319,6 +319,54 @@
      (begin
        (condition #f)
        #t))
+   ; nested if optimization
+   (begin
+     (define $cp0-f
+       (lambda (x y a b c)
+         (if (if (if (if (#3%zero? (a)) #f #t) (begin (b) #t) #f)
+                 (c)
+                 #f)
+             (x)
+             (y))))
+     #t)
+   (equal?
+     (with-output-to-string
+       (lambda ()
+         ($cp0-f
+           (lambda () (printf "x\n"))
+           (lambda () (printf "y\n"))
+           (lambda () (printf "a\n") 0)
+           (lambda () (printf "b\n"))
+           (lambda () (printf "c\n") #t))))
+     "a\ny\n")
+   (equivalent-expansion?
+     (expand/optimize
+       '(lambda (x y a b c)
+          (if (if (if (if (#3%zero? (a)) #f #t) (begin (b) #t) #f)
+                  (c)
+                  #f)
+              (x)
+              (y))))
+     '(lambda (x y a b c)
+        (if (if (#3%zero? (a))
+                #f
+                (begin (b) (c)))
+            (x)
+            (y))))
+   (equivalent-expansion?
+     (expand/optimize
+       '(lambda (x y a b c)
+          (if (if (if (not (#3%zero? (a))) (begin (b) #t) #f)
+                  (c)
+                  #f)
+              (x)
+              (y))))
+     '(lambda (x y a b c)
+        (if (if (#3%zero? (a))
+                #f
+                (begin (b) (c)))
+            (x)
+            (y))))
 )
 
 (cp0-mat cp0-mrvs
