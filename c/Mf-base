@@ -19,6 +19,7 @@ Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot
 Kernel=../boot/$m/kernel.$o
+LibChez=../boot/$m/libchezscheme.a
 Main=../boot/$m/main.$o
 Scheme=../bin/$m/scheme
 
@@ -34,7 +35,7 @@ mainsrc=main.c
 
 mainobj:=${mainsrc:%.c=%.$o}
 
-doit: ${Scheme}
+doit: ${Scheme} ${LibChez}
 
 source: ${kernelsrc} ${kernelhdr} ${mdsrc} ${mainsrc}
 

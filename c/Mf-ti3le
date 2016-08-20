@@ -33,6 +33,9 @@ include Mf-base
 ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -melf_i386 -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
+${LibChez}: ${Kernel}
+	ar rs ${LibChez} ${Kernel}
+
 ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 

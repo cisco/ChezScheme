@@ -24,6 +24,12 @@ Test in a workarea's examples subdirectory with:
 ( cd ../c ; ln -sf ../examples/crepl.c . )
 ( cd ../c ; make mainsrc=crepl.c )
 sh -c 'SCHEMEHEAPDIRS=../boot/%m ../bin/scheme'
+
+Another way to test it:
+after install, assume /usr/local/lib/csv9.4.1/a6le/ is where boot file installed
+run
+make -f /usr/local/lib/csv9.4.1/a6le/Mf-embed CFLAGS='${ChezCFLAGS}' LDFLAGS='${ChezLDFLAGS}' LDLIBS='${ChezLDLIBS}' crepl
+bash -c 'exec -a scheme ./crepl'
  */
 
 #include "scheme.h"

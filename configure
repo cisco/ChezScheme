@@ -340,6 +340,12 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallScriptName=.*$;InstallScriptName=$installscriptname;"\
     makefiles/Mf-install.in > $w/Mf-install
 
+sed -e "s;^m=none\$;m=$m;"\
+    -e "s;^InstallPrefix=.*\$;InstallPrefix=$installprefix;"\
+    -e "s;^InstallBin=.*\$;InstallBin=$installbin;"\
+    -e "s;^InstallLib=.*\$;InstallLib=$installlib;"\
+    makefiles/Mf-embed.in > $w/boot/$m/Mf-embed
+
 cat > $w/c/config.h << END
 #define SCHEME_SCRIPT "$installscriptname"
 #ifndef WIN32

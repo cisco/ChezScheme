@@ -1,4 +1,4 @@
-# Mf-i3osx
+# Mf-embed.in
 # Copyright 1984-2016 Cisco Systems, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3osx
-Cpu = I386
+###############################################################################
+#               the following variables are set up by configure               #
+###############################################################################
 
-mdclib = -liconv -lm -lncurses
-C = gcc ${CPPFLAGS} -m32 -Wpointer-arith -Wall -Wextra -Werror -O2 -msse2 -I/opt/X11/include/ ${CFLAGS}
-o = o
-mdsrc = i3le.c
-mdobj = i3le.o
+m=none
 
-.SUFFIXES:
-.SUFFIXES: .c .o
+InstallPrefix=/usr
+InstallLib=${InstallPrefix}/lib
+Version=csv9.4.1
+InstallLibBin=${InstallLib}/${Version}/$m
 
-.c.o:
-	$C -c -D${Cpu} -I${Include} -I../zlib $*.c
-
-include Mf-base
-
-${Kernel}: ${kernelobj} ../zlib/libz.a
-	ld -r -o ${Kernel} ${kernelobj} ../zlib/libz.a
-
-${LibChez}: ${Kernel}
-	ar rs ${LibChez} ${Kernel}
-
-${Scheme}: ${Kernel} ${Main}
-	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
-
-../zlib/configure.log:
-	(cd ../zlib; CFLAGS=-m32 ./configure)
+ChezCFLAGS= -I ${InstallLibBin}
+ChezLDFLAGS= -L ${InstallLibBin}
+ChezLDLIBS= -Wl,--push-state -Wl,-Bsymbolic -lchezscheme -Wl,--pop-state  -lm -ldl -lncurses -lrt

@@ -34,6 +34,9 @@ include Mf-base
 ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -mi386nto -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
+${LibChez}: ${Kernel}
+	ar rs ${LibChez} ${Kernel}
+
 ${Scheme}: ${Kernel} ${Main}
 	$C -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
