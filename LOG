@@ -291,3 +291,8 @@
   not-like patterns.
     cp0.ss,
     cp0.ms, 4.ms
+- instead of default-exception handler, new-cafe establishes a handler
+  that calls the current value of base-exception-handler so the handler
+  can be overridden, as we do in our own make files.
+    cafe.ss,
+    7.ms
