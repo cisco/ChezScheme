@@ -209,7 +209,8 @@ Type e to exit interrupt handler and continue
                  (reset-handler (lambda () (k2)))
                  (call/cc (lambda (k) (set! k2 k)))
                  (parameterize ([$cafe (+ ($cafe) 1)] [$interrupt reset])
-                   (with-exception-handler default-exception-handler
+                   (with-exception-handler
+                     (lambda (c) ((base-exception-handler) c))
                      (lambda ()
                        (waiter ($cafe) eval))))))))]))))
 )
