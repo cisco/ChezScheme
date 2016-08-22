@@ -7243,7 +7243,7 @@
             #;[(e0) (make-clause clause #'e0)]
             [(e0 => e1) (make-clause clause #'e1)]
             [(e0 e1 e2 ...) (make-clause clause #'e1)]
-            [_ (syntax-error "invalid exclusive-cond clause" clause)]))
+            [_ (syntax-error clause "invalid exclusive-cond clause")]))
         (define (sort-em clause*)
           (if sort?
               (sort (lambda (cl1 cl2) (> (clause-weight cl1) (clause-weight cl2)))
@@ -7530,7 +7530,7 @@
             (syntax-case clause ()
               [((k ...) e1 e2 ...) (make-clause #'(k ...) #'(e1 e2 ...))]
               [(k e1 e2 ...) (make-clause #'(k) #'(e1 e2 ...))]
-              [_ (syntax-error "invalid case clause" clause)])))
+              [_ (syntax-error clause "invalid case clause")])))
         (define emit
           (lambda (kcond clause*)
             #`(let ([t #,key-expr])
