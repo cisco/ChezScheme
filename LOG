@@ -296,3 +296,6 @@
   can be overridden, as we do in our own make files.
     cafe.ss,
     7.ms
+- fixed a bug in case and exclusive-cond syntax-error calls causing an
+  exception in syntax-error instead of the intended error message.
+    s/syntax.ss
