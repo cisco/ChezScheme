@@ -3152,14 +3152,14 @@ common control structures, e.g., around \scheme{let} bindings and
 \listlibraries
 \endentryheader
 
-Chez Scheme extends the syntax of identifiers as described
+Chez Scheme extends the syntax of identifiers as described in
 Section~\ref{SECTINTROSYNTAX}, except within a set of forms prefixed by
 \scheme{#!r6rs} (which is implied by in a library or top-level program).
 
-When this parameter is set to a false (the default), identifiers in the
+When this parameter is set to false (the default), identifiers in the
 extended set are printed with hex scalar value escapes as necessary to
 conform to the R6RS syntax for identifiers.
-When this parameter is set to a a true value, identifiers in the
+When this parameter is set to a true value, identifiers in the
 extended set are printed without the escapes.
 Identifiers whose names fall outside of both syntaxes are printed with
 the escapes regardless of the setting of this parameter.
