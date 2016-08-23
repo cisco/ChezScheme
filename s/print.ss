@@ -1143,6 +1143,77 @@ floating point returns with (1 0 -1 ...).
           [else (print-hex-char c p)]))
       (s1 s p n (fx+ i 1))))
 
+  (define extended-identifier?
+    (let ()
+      (define-syntax state-machine
+        (lambda (x)
+          (syntax-case x ()
+            ((_k start-state (name def (test e) ...) ...)
+             (with-implicit (_k s i n) ; support num4 kludge
+               #'(let ()
+                   (define name
+                     (lambda (s i n)
+                       (if (= i n)
+                           def
+                           (let ([g (string-ref s i)])
+                             (state-machine-help (s i n) g (test e) ... ))))) ...
+                   (lambda (string)
+                     (start-state string 0 (string-length string)))))))))
+      (define-syntax state-machine-help
+        (syntax-rules (else to skip)
+          [(_ (s i n) c [test (skip to x)] more ...)
+           (state-machine-help (s i n) c [test (x s i n)] more ...)]
+          [(_ (s i n) c [test (to x)] more ...)
+           (state-machine-help (s i n) c [test (x s (fx+ i 1) n)] more ...)]
+          [(_ (s i n) c [else e]) e]
+          [(_ (s i n) c [test e] more ...)
+           (if (state-machine-test c test)
+               e
+               (state-machine-help (s i n)c more ...))]))
+      (define-syntax state-machine-test
+        (syntax-rules (-)
+          [(_ c (char1 - char2))
+           (char<=? char1 c char2)]
+          [(_ c (e1 e2 ...))
+           (or (state-machine-test c e1) (state-machine-test c e2) ...)]
+          [(_ c char)
+           (char=? c char)]))
+      (state-machine start
+        (start #f          ; start state
+          [((#\a - #\z) (#\A - #\Z)) (to sym)]
+          [(#\- #\+) (to num1)]
+          [(#\* #\= #\> #\<) (to sym)]
+          [(#\0 - #\9) (to num4)]
+          [#\. (to num2)]
+          [(#\{ #\}) (to brace)]
+          [else (skip to sym)])
+        (num1 #t           ; seen + or -
+          [(#\0 - #\9) (to num4)]
+          [#\. (to num3)]
+          [(#\i #\I) (to num5)]
+          [else (skip to sym)])
+        (num2 #f           ; seen .
+          [(#\0 - #\9) (to num4)]
+          [else (skip to sym)])
+        (num3 #f           ; seen +. or -.
+          [(#\0 - #\9) (to num4)]
+          [else (skip to sym)])
+        (num4 #f           ; seen digit, +digit, -digit, or .digit
+          [else ; kludge
+            (if (number? ($str->num s n 10 #f #f)) ; grabbing private s and n
+                #f
+                (sym s i n))])             ; really (skip to sym)
+        (num5 #f           ; bars: seen +i, -i, +I, or -I
+          [else (skip to sym)])
+        (sym #t            ; safe symbol
+          [((#\a - #\z) (#\A - #\Z) #\- #\? (#\0 - #\9) #\* #\! #\= #\> #\< #\+ #\/)
+           (to sym)]
+          [((#\nul - #\space) #\( #\) #\[ #\] #\{ #\} #\" #\' #\` #\, #\; #\" #\\ #\|)
+           #f]
+          [else (to sym)])
+        (brace #t          ; { or }
+          [else #f]))))
+
   (define wrsymbol
     (case-lambda
       [(s p) (wrsymbol s p #f)]
@@ -1152,7 +1223,9 @@ floating point returns with (1 0 -1 ...).
              (s1 s p n 0)
              (if (fx= n 0)
                  (display-string "||" p)
-                 (s0 s p n))))])))
+                 (if (and (print-extended-identifiers) (extended-identifier? s))
+                     (display-string s p)
+                     (s0 s p n)))))])))
 
 (set! $write-pretty-quick
    (lambda (x lev len env p)
@@ -1236,6 +1309,8 @@ floating point returns with (1 0 -1 ...).
 (define print-char-name ($make-thread-parameter #f (lambda (x) (and x #t))))
 
 (define print-vector-length ($make-thread-parameter #f (lambda (x) (and x #t))))
+
+(define print-extended-identifiers ($make-thread-parameter #f (lambda (x) (and x #t))))
 
 (define print-precision
   ($make-thread-parameter
