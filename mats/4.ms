@@ -393,6 +393,8 @@
  )
 
 (mat exclusive-cond
+   (error? ; invalid syntax
+     (exclusive-cond [a . b]))
    (let ((a 'a))
       (and (begin (set! a 3)
                   (exclusive-cond ((= a 4) #f) ((= a 3) #t) (else #f)))
@@ -464,6 +466,8 @@
  )
 
 (mat case
+   (error? ; invalid syntax
+     (case 3 [a . b]))
    (eq? (case 'a [a 'yes] [b 'no]) 'yes)
    (let ((a 'a))
       (and

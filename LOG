@@ -298,4 +298,10 @@
     7.ms
 - fixed a bug in case and exclusive-cond syntax-error calls causing an
   exception in syntax-error instead of the intended error message.
-    s/syntax.ss
+    syntax.ss
+- added tests for the case and exclusive-cond syntax-error calls
+    4.ms, root-experr-compile-0-f-f-f
+- added print-extended-identifier parameter.  when #t, symbols like
+  1+ and +++ print without escapes.
+    priminfo.ss, print.ss,
+    6.ms
