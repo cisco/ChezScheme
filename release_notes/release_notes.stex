@@ -58,6 +58,24 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Printing of non-standard (extended) identifiers (9.4.1)}
+
+Chez Scheme extends the syntax of identifiers as described in the
+introduction to the Chez Scheme User's Guide, except within forms prefixed
+by \scheme{#!r6rs}, which is implied by in a library or top-level program.
+Prior to Version~9.4.1, the printer always printed such identifiers using
+hex scalar value escapes as necessary to render them with valid R6RS identifier syntax.
+When the new parameter \scheme{print-extended-identifiers} is set
+to \scheme{#t}, these identifiers are printed without escapes, e.g.,
+\scheme{1+} prints as \scheme{1+} rather than as \scheme{\x31;+}.
+The default value of this parameter is \scheme{#f}.
+
+\subsection{Expression-editor Unicode support (9.4.1)}
+
+The expression editor now supports Unicode characters under Linux and MacOS~X
+except that combining characters are not treated correctly for
+line-wrapping.
+
 \subsection{Extensions to whole-program, whole-library optimization (9.3.1, 9.3.4)}
 
 \scheme{compile-whole-program} now supports incomplete
@@ -1428,7 +1446,26 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Compiler error: leaked or unexpected \protect\scheme{cpvalid-defer} form (9.4.1)}
+\subsection{Incorrect code for certain nested \protect\scheme{if} patterns (9.4.1)}
+
+A bug in the source optimizer that produced incorrect code for certain
+nested \scheme{if} patterns has been fixed.
+For example, the code generated for the following expression:
+
+\schemedisplay
+(if (if (if (if (zero? (a)) #f #t) (begin (b) #t) #f)
+        (c)
+        #f)
+    (x)
+    (y))
+\endschemedisplay
+
+inappropriately evaluated the subexpression \scheme{(b)} when the
+subexpression \scheme{(a)} evaluates to 0 and not when \scheme{(a)}
+evaluates to 1.
+[This bug dated back to Version 9.0.]
+
+\subsection{Leaked or unexpected \protect\scheme{cpvalid-defer} form (9.4.1)}
 
 A bug in the pass of the compiler that inserts valid checks for
 \scheme{letrec} and \scheme{letrec*} bindings has been fixed.
@@ -1475,18 +1512,17 @@ zone-offset field.
 
 \subsection{\protect\scheme{wchar} and \protect\scheme{wchar_t} record field types fail to inline in Windows (9.4)}
 
-On Windows, the inliner has been fixed to handle \scheme{wchar} and
+On Windows, the source optimizer has been fixed to handle \scheme{wchar} and
 \scheme{wchar_t} record field types.
 
 \subsection{path-related procedures cause invalid memory reference with non-string arguments in Windows (9.4)}
 
 On Windows, the path-related procedures now raise an appropriate exception when the path argument is not a string.
 
-\subsection{Internal mutex structure not always thread safe (9.4)}
+\subsection{Mutex acquisition bug (9.4)}
 
-The internal mutex structure now has its fields marked
-\scheme{volatile} so that the C compiler does not reorder assignments
-to these fields.
+A bug in the handling of mutexes has been fixed.
+The bug typically presented as a spurious ``recursively locked'' exception.
 
 \subsection{\protect\scheme{dynamic-wind} mistakenly enabling interrupts (9.3.3)}
 

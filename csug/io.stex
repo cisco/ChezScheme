@@ -2789,7 +2789,7 @@ Character associations created by \scheme{char-name} are ignored by the
 printer unless the parameter \scheme{print-char-name} is set to a true
 value.
 The reader recognizes character names established by \scheme{char-name}
-except after the \scheme{#!r6rs}, which is implied within a library or
+except after \scheme{#!r6rs}, which is implied within a library or
 R6RS top-level program.
 
 In the one-argument form, \var{obj} must be a symbol or character.
@@ -3144,6 +3144,56 @@ common control structures, e.g., around \scheme{let} bindings and
   (let ([p (open-output-string)])
     (pretty-print '(let ([x 3]) x) p) ;=> "(let ((x 3)) x)
     (get-output-string p)))           ;== "
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-extended-identifiers}{\categorythreadparameter}{print-extended-identifiers}
+\listlibraries
+\endentryheader
+
+Chez Scheme extends the syntax of identifiers as described
+Section~\ref{SECTINTROSYNTAX}, except within a set of forms prefixed by
+\scheme{#!r6rs} (which is implied by in a library or top-level program).
+
+When this parameter is set to a false (the default), identifiers in the
+extended set are printed with hex scalar value escapes as necessary to
+conform to the R6RS syntax for identifiers.
+When this parameter is set to a a true value, identifiers in the
+extended set are printed without the escapes.
+Identifiers whose names fall outside of both syntaxes are printed with
+the escapes regardless of the setting of this parameter.
+
+For example:
+
+\schemedisplay
+(parameterize ([print-extended-identifiers #f])
+  (printf "~s\n~s\n"
+    '(1+ --- { } .xyz)
+    (string->symbol "123")))
+\endschemedisplay
+
+prints
+
+\schemedisplay
+(\x31;+ \x2D;-- \x7B; \x7D; \x2E;xyz)
+\x31;23
+\endschemedisplay
+
+while
+
+\schemedisplay
+(parameterize ([print-extended-identifiers #t])
+  (printf "~s\n~s\n"
+    '(1+ --- { } .xyz)
+    (string->symbol "123")))
+\endschemedisplay
+
+prints
+
+\schemedisplay
+(1+ --- { } .xyz)
+\x31;23
 \endschemedisplay
 
 %----------------------------------------------------------------------------

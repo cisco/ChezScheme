@@ -269,10 +269,13 @@ parameter \scheme{case-sensitive} has been set to \scheme{#f}.
 The printer invoked by \scheme{write}, \scheme{put-datum},
 \scheme{pretty-print}, and the \scheme{format} \scheme{~s}
 option always prints standard Revised$^6$ Report objects
-using the standard syntax.
-For example, it prints symbols whose names require escaping using hex
-scalar value escapes, not one of the other mechanisms supported by the
-reader.
+using the standard syntax, unless a different behavior is
+requested via the setting of one of the print parameters.
+For example, it prints symbols in the extended identifier syntax
+of Chez Scheme described above using hex scalar value escapes,
+unless the parameter
+\index{\scheme{print-extended-identifiers}}\scheme{print-extended-identifiers} is set to
+true.
 Similarly, it does not print the explicit length or suppress
 duplicate trailing elements unless the parameter
 \index{\scheme{print-vector-length}}\scheme{print-vector-length} is set to
