@@ -972,6 +972,7 @@
   (pretty-standard-indent [sig [() -> (ufixnum)] [(ufixnum) -> (void)]] [flags])
   (print-brackets [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (print-char-name [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
+  (print-extended-identifiers [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (print-gensym [sig [() -> (ptr)] [(ptr) -> (void)]] [flags unrestricted])
   (print-graph [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (print-length [sig [() -> (maybe-ufixnum)] [(maybe-ufixnum) -> (void)]] [flags])
