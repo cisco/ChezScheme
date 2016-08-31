@@ -521,8 +521,8 @@ static ptr s_ee_get_clipboard(void) {
   return x;
 }
 
-static void s_ee_write_char(INT c) {
-  if ((unsigned)c > 255) c = '?';
+static void s_ee_write_char(wchar_t c) {
+  if (c > 255) c = '?';
   putchar(c);
 }
 
