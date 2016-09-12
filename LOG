@@ -310,3 +310,13 @@
   of other log entries.
     release_notes.stex,
     intro.stex, io.stex
+- updated the sockets example to work with the current version of Chez.
+  Change the foreign procedure definitions to use the more portable int
+  rather than integer-32.  Switch to a custom port
+  [make-custom-binary-input/output-port] rather than a generic port
+  [make-input/output-port], which resulted in deleting quite a bit of
+  code.  Fix various compiler warnings in the C code, and along the way,
+  fix a signedness bug in c_write that could have resulted in not writing
+  the full buffer (but reporting that it did) in the case of errors from
+  write.
+    examples/csocket.c, examples/socket.ss
