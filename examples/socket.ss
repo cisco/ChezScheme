@@ -1,92 +1,96 @@
 ;;; socket.ss
 ;;; R. Kent Dybvig May 1998
 ;;; Updated November 2005
+;;; Updated by Jamie Taylor, Sept 2016
 ;;; Public Domain
 ;;;
 ;;; bindings for socket operations and other items useful for writing
 ;;; programs that use sockets.
 
 ;;; Requires csocket.so, built from csocket.c.
+;;; Example compilation command line from macOS:
+;;;  cc -c csocket.c -o csocket.o
+;;;  cc csocket.o -dynamic -dynamiclib -current_version 1.0 -compatibility_version 1.0 -o csocket.so
 (load-shared-object "./csocket.so")
 
 ;;; Requires from C library:
 ;;;   close, dup, execl, fork, kill, listen, tmpnam, unlink
 (case (machine-type)
   [(i3le ti3le) (load-shared-object "libc.so.6")]
-  [(i3osx ti3osx) (load-shared-object "libc.dylib")]
+  [(i3osx ti3osx a6osx ta6osx) (load-shared-object "libc.dylib")]
   [else (load-shared-object "libc.so")])
 
 ;;; basic C-library stuff
 
 (define close
-  (foreign-procedure "close" (integer-32)
-    integer-32))
+  (foreign-procedure "close" (int)
+    int))
 
 (define dup
-  (foreign-procedure "dup" (integer-32)
-    integer-32))
+  (foreign-procedure "dup" (int)
+    int))
 
 (define execl4
   (let ((execl-help
          (foreign-procedure "execl"
-           (string string string string integer-32)
-           integer-32)))
+           (string string string string void*)
+           int)))
     (lambda (s1 s2 s3 s4)
       (execl-help s1 s2 s3 s4 0))))
 
 (define fork
   (foreign-procedure "fork" ()
-    integer-32))
+    int))
 
 (define kill
-  (foreign-procedure "kill" (integer-32 integer-32)
-    integer-32))
+  (foreign-procedure "kill" (int int)
+    int))
 
 (define listen
-  (foreign-procedure "listen" (integer-32 integer-32)
-    integer-32))
+  (foreign-procedure "listen" (int int)
+    int))
 
 (define tmpnam
-  (foreign-procedure "tmpnam" (integer-32)
+  (foreign-procedure "tmpnam" (void*)
     string))
 
 (define unlink
   (foreign-procedure "unlink" (string)
-    integer-32))
+    int))
 
 ;;; routines defined in csocket.c
 
 (define accept
-  (foreign-procedure "do_accept" (integer-32)
-    integer-32))
+  (foreign-procedure "do_accept" (int)
+    int))
 
 (define bytes-ready?
-  (foreign-procedure "bytes_ready" (integer-32)
+  (foreign-procedure "bytes_ready" (int)
     boolean))
 
 (define bind
-  (foreign-procedure "do_bind" (integer-32 string)
-    integer-32))
+  (foreign-procedure "do_bind" (int string)
+    int))
 
 (define c-error
   (foreign-procedure "get_error" ()
     string))
 
 (define c-read
-  (foreign-procedure "c_read" (integer-32 string integer-32)
-    integer-32))
+  (foreign-procedure "c_read" (int u8* size_t size_t)
+    ssize_t))
 
 (define c-write
-  (foreign-procedure "c_write" (integer-32 string integer-32)
-    integer-32))
+  (foreign-procedure "c_write" (int u8* size_t ssize_t)
+    ssize_t))
 
 (define connect
-  (foreign-procedure "do_connect" (integer-32 string)
-    integer-32))
+  (foreign-procedure "do_connect" (int string)
+    int))
 
 (define socket
   (foreign-procedure "do_socket" ()
-    integer-32))
+    int))
 
 ;;; higher-level routines
 
@@ -147,118 +151,16 @@
 
 (define open-process
   (lambda (command)
-    (define handler
-      (lambda (pid socket)
-        (define (flush-output who p)
-          (let ([i (port-output-index p)])
-            (when (fx> i 0)
-              (check who (c-write socket (port-output-buffer p) i))
-              (set-port-output-index! p 0))))
-        (lambda (msg . args)
-          (record-case (cons msg args)
-            [block-read (p str cnt)
-             (critical-section
-               (let ([b (port-input-buffer p)]
-                     [i (port-input-index p)]
-                     [s (port-input-size p)])
-                 (if (< i s)
-                     (let ([cnt (fxmin cnt (fx- s i))])
-                       (do ([i i (fx+ i 1)]
-                            [j 0 (fx+ j 1)])
-                          ((fx= j cnt)
-                           (set-port-input-index! p i)
-                           cnt)
-                          (string-set! str j (string-ref b i))))
-                     (begin
-                       (flush-output 'block-read p)
-                       (let ([n (check 'block-read (c-read socket str cnt))])
-                         (if (fx= n 0)
-                             #!eof
-                             n))))))]
-            [char-ready? (p)
-             (or (< (port-input-index p) (port-input-size p))
-                 (bytes-ready? socket))]
-            [clear-input-port (p)
-             ; set size to zero rather than index to size
-             ; in order to invalidate unread-char
-             (set-port-input-size! p 0)]
-            [clear-output-port (p) (set-port-output-index! p 0)]
-            [close-port (p)
-             (critical-section
-               (flush-output 'close-port p)
-               (set-port-output-size! p 0)
-               (set-port-input-size! p 0)
-               (mark-port-closed! p)
-               (terminate-process pid))]
-            [file-length (p) 0]
-            [file-position (p . pos)
-             (if (null? pos)
-                 (most-negative-fixnum)
-                 (error 'process-port "cannot reposition"))]
-            [flush-output-port (p)
-             (critical-section
-               (flush-output 'flush-output-port p))]
-            [peek-char (p)
-             (critical-section
-               (let ([b (port-input-buffer p)]
-                     [i (port-input-index p)]
-                     [s (port-input-size p)])
-                 (if (fx< i s)
-                     (string-ref b i)
-                     (begin
-                       (flush-output 'peek-char p)
-                       (let ([s (check 'peek-char (c-read socket b (string-length b)))])
-                         (if (fx= s 0)
-                             #!eof
-                             (begin (set-port-input-size! p s)
-                                    (string-ref b 0))))))))]
-            [port-name (p) "process"]
-            [read-char (p)
-             (critical-section
-               (let ([b (port-input-buffer p)]
-                     [i (port-input-index p)]
-                     [s (port-input-size p)])
-                 (if (fx< i s)
-                     (begin
-                       (set-port-input-index! p (fx+ i 1))
-                       (string-ref b i))
-                     (begin
-                       (flush-output 'peek-char p)
-                       (let ([s (check 'read-char (c-read socket b (string-length b)))])
-                         (if (fx= s 0)
-                             #!eof
-                             (begin (set-port-input-size! p s)
-                                    (set-port-input-index! p 1)
-                                    (string-ref b 0))))))))]
-            [unread-char (c p)
-             (critical-section
-               (let ([b (port-input-buffer p)]
-                     [i (port-input-index p)]
-                     [s (port-input-size p)])
-                 (when (fx= i 0)
-                   (error 'unread-char
-                          "tried to unread too far on ~s"
-                          p))
-                 (set-port-input-index! p (fx- i 1))
-                ; following could be skipped; supposed to be
-                ; same character
-                 (string-set! b (fx- i 1) c)))]
-            [write-char (c p)
-             (critical-section
-               (let ([b (port-output-buffer p)]
-                     [i (port-output-index p)]
-                     [s (port-output-size p)])
-                 (string-set! b i c)
-                 (check 'write-char (c-write socket b (fx+ i 1)))
-                 (set-port-output-index! p 0)))]
-            [block-write (p str cnt)
-             (critical-section
-              ; flush buffered data
-               (flush-output 'block-write p)
-              ; write new data
-               (check 'block-write (c-write socket str cnt)))]
-            [else
-             (error 'process-port "operation ~s not handled" msg)]))))
+    (define (make-r! socket)
+      (lambda (bv start n)
+        (check 'r! (c-read socket bv start n))))
+    (define (make-w! socket)
+      (lambda (bv start n)
+        (check 'w! (c-write socket bv start n))))
+    (define (make-close pid socket)
+      (lambda ()
+        (check 'close (close socket))
+        (terminate-process pid)))
     (let* ([server-socket-name (tmpnam 0)]
            [server-socket (setup-server-socket server-socket-name)])
       (dofork 
@@ -272,13 +174,8 @@
         (lambda (pid) ; parent
           (let ([sock (accept-socket server-socket)])
             (check 'close (close server-socket))
-            (let ([ib (make-string 1024)] [ob (make-string 1024)])
-              (let ([p (make-input/output-port
-                         (handler pid sock)
-                         ib ob)])
-                (set-port-input-size! p 0)
-                (set-port-output-size! p (fx- (string-length ob) 1))
-                p))))))))
+            (make-custom-binary-input/output-port command
+              (make-r! sock) (make-w! sock) #f #f (make-close pid sock))))))))
 
 #!eof
 
@@ -307,18 +204,21 @@
         (check 'close (close server-socket)))))
 > (define put ; procedure to send data to client
     (lambda (x)
-      (let ([s (format "~s~%" x)])
-        (c-write client-socket s (string-length s)))
+      (let* ([s (format "~s~%" x)]
+             [bv (string->utf8 s)])
+        (c-write client-socket bv 0 (bytevector-length bv)))
       (void)))
 > (define get ; procedure to read data from client
-    (let ([buff (make-string 1024)])
+    (let ([buff (make-bytevector 1024)])
       (lambda ()
-        (let ([n (c-read client-socket buff (string-length buff))])
-          (printf "client:~%~a~%server:~%" (substring buff 0 n))))))
+        (let* ([n (c-read client-socket buff 0 (bytevector-length buff))]
+               [bv (make-bytevector n)])
+          (bytevector-copy! buff 0 bv 0 n)
+          (printf "client:~%~a~%server:~%" (utf8->string bv))))))
 > (get)
 client:
-Chez Scheme Version 7.0
-Copyright (c) 1985-2005 Cadence Research Systems
+Chez Scheme Version 9.4.1
+Copyright 1984-2016 Cisco Systems, Inc.
 
 >
 server:
@@ -334,8 +234,7 @@ server:
 
 ;;; sample session using process port
 
-> (define p (open-process "exec scheme -q"))
-> (define s (make-string 1000 #\nul))
+> (define p (transcoded-port (open-process "exec scheme -q") (native-transcoder)))
 > (pretty-print '(+ 3 4) p)
 > (read p)
 7
