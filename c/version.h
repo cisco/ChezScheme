@@ -115,7 +115,7 @@ typedef int tputsputcchar;
 #endif
 
 #if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb || machine_type == machine_type_a6fb || machine_type == machine_type_ta6fb)
-#if (machine_type == machine_type_ti3fb || machine_type == machine_type_ta6fb)
+#if (machine_type == machine_type_ti3fb || machine_type == machine_type_ta6fb || machine_type == machine_type_ta6df)
 #define PTHREADS
 #endif
 #define NOBLOCK O_NONBLOCK
@@ -141,6 +141,36 @@ typedef int tputsputcchar;
 #define NSECCTIME(sb) (sb).st_ctimespec.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE const char **
+#define UNUSED __attribute__((__unused__))
+#endif
+
+#if (machine_type == machine_type_a6df || machine_type == machine_type_ta6df)
+#if (machine_type == machine_type_ta6df)
+#define PTHREADS
+#endif
+#define NOBLOCK O_NONBLOCK
+#define LOAD_SHARED_OBJECT
+#define USE_MMAP
+#define MMAP_HEAP
+#define IEEE_DOUBLE
+#define LITTLE_ENDIAN_IEEE_DOUBLE
+#define LDEXP
+#define ARCHYPERBOLIC
+#define GETPAGESIZE() getpagesize()
+typedef char *memcpy_t;
+#define MAKE_NAN(x) { x = 0.0; x = x / x; }
+#define GETWD(x) getcwd((x),PATH_MAX)
+typedef int tputsputcchar;
+#define LOCKF
+#define DIRMARKERP(c) ((c) == '/')
+#define LIBX11 "libX11.so"
+#define SECATIME(sb) (sb).st_atimespec.tv_sec
+#define SECCTIME(sb) (sb).st_ctimespec.tv_sec
+#define SECMTIME(sb) (sb).st_mtimespec.tv_sec
+#define NSECATIME(sb) (sb).st_atimespec.tv_nsec
+#define NSECCTIME(sb) (sb).st_ctimespec.tv_nsec
+#define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
+#define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
 #endif
 
