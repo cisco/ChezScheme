@@ -1,5 +1,6 @@
 /*/ csocket.c
 R. Kent Dybvig May 1998
+Updated by Jamie Taylor, Sept 2016
 Public Domain
 /*/
 
@@ -11,12 +12,14 @@ Public Domain
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /* c_write attempts to write the entire buffer, pushing through
    interrupts, socket delays, and partial-buffer writes */
-int c_write(int fd, char *buf, unsigned n) {
-    unsigned i, m;
+int c_write(int fd, char *buf, ssize_t start, ssize_t n) {
+    ssize_t i, m;
 
+    buf += start;
     m = n;
     while (m > 0) {
         if ((i = write(fd, buf, m)) < 0) {
@@ -31,9 +34,10 @@ int c_write(int fd, char *buf, unsigned n) {
 }
 
 /* c_read pushes through interrupts and socket delays */
-int c_read(int fd, char *buf, unsigned n) {
+int c_read(int fd, char *buf, size_t start, size_t n) {
     int i;
 
+    buf += start;
     for (;;) {
         i = read(fd, buf, n);
         if (i >= 0) return i;
@@ -67,17 +71,17 @@ int do_bind(int s, char *name) {
     (void) strcpy(sun.sun_path, name);
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return bind(s, &sun, length);
+    return bind(s, (struct sockaddr*)(&sun), length);
 }
 
 /* do_accept accepts a connection on socket s */
 int do_accept(int s) {
     struct sockaddr_un sun;
-    int length;
+    socklen_t length;
 
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return accept(s, &sun, &length);
+    return accept(s, (struct sockaddr*)(&sun), &length);
 }
 
 /* do_connect initiates a socket connection */
@@ -89,7 +93,7 @@ int do_connect(int s, char *name) {
     (void) strcpy(sun.sun_path, name);
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return connect(s, &sun, length);
+    return connect(s, (struct sockaddr*)(&sun), length);
 }
 
 /* get_error returns the operating system's error status */
