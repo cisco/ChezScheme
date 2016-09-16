@@ -176,7 +176,7 @@
                       (+ v ...)))))))))
 
 (machine-case
-  [(i3ob ti3ob a6ob ta6ob i3fb ti3fb a6fb ta6fb a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
+  [(i3ob ti3ob a6ob ta6ob i3fb ti3fb a6fb ta6fb a6df ta6df a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
    (mat load-shared-object
       (file-exists? "foreign1.so")
       (begin (load-shared-object "./foreign1.so") #t)
