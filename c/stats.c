@@ -463,6 +463,7 @@ ptr S_realtime(void) {
 /********  initialization  ********/
 
 void S_stats_init() {
+#ifdef WIN32
   /* Use GetSystemTimePreciseAsFileTime when available (Windows 8 and later). */
   HMODULE h = LoadLibrary("kernel32.dll");
   if (h != NULL) {
@@ -472,5 +473,6 @@ void S_stats_init() {
     else
       FreeLibrary(h);
   }
+#endif
   s_gettime(time_monotonic, &starting_mono_tp);
 }
