@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="D_bin">
+      <Directory Id="D_bin_ta6nt" Name="ta6nt">
+        <Component Id="cmpA67EF6318D00B4209BFCD0BFDCDF781C" Guid="*">
+          <File Id="fil6AE7892DB37FF6D2C21B5EC064C90DE5" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.dll" />
+        </Component>
+        <Component Id="cmpF41FF9DE554F79FB6FBD85E5B80A5221" Guid="*">
+          <File Id="fil9157F8FB18F1F75BE50A64A9C227BF61" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.exp" />
+        </Component>
+        <Component Id="cmp372F759C97C3C69E4C336B81D807E4F5" Guid="*">
+          <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.lib" />
+        </Component>
+        <Component Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" Guid="*">
+          <File Id="fil8A260A0B8935F8F9011AA2EDB9147BDE" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\petite.exe" />
+        </Component>
+        <Component Id="cmpDEB15B7CB19176296C92E8032592FDB4" Guid="*">
+          <File Id="fil25DA5700F745B21085322BA7CBBEFEB7" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\scheme.exe">
+            <Shortcut Id="cs_ta6nt_shortcut"
+                      Advertise="yes"
+                      Name="Chez Scheme 64-bit threaded"
+                      Description="Chez Scheme Version $(var.Version) 64-bit threaded"
+                      Directory="D_shortcuts"
+                      Icon="cs.ico"
+                      WorkingDirectory="APPLICATIONFOLDER"/>
+          </File>
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <DirectoryRef Id="D_boot">
+      <Directory Id="D_boot_ta6nt" Name="ta6nt">
+        <Component Id="cmpCBDB945622604667783C3C57A0427DF5" Guid="*">
+          <File Id="filD3E4E45F8404EE812C5DAFCBEB2502AA" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv941md.lib" />
+        </Component>
+        <Component Id="cmpD7880184C113065E511275EFD531D589" Guid="*">
+          <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv941mt.lib" />
+        </Component>
+        <Component Id="cmp19832A9F8ABA24EE5E11B447538AC375" Guid="*">
+          <File Id="fil7626314F25A516DCC7C61AC8BA501397" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\equates.h" />
+        </Component>
+        <Component Id="cmp5211817ED85951CDAF2FD5E2419BD211" Guid="*">
+          <File Id="fil21839A8D4062A72DEAB3156D77EEE82A" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\mainmd.obj" />
+        </Component>
+        <Component Id="cmpD21D824506A948F172A50CECA2B6D0AC" Guid="*">
+          <File Id="fil7CB5B5C424BED4107D1F66132BCC7F36" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\mainmt.obj" />
+        </Component>
+        <Component Id="cmpB650D26FBD85BF1F56C4AA76A9CFBD7E" Guid="*">
+          <File Id="fil185022A1691802269015CAF3D3DE051B" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\petite.boot" />
+        </Component>
+        <Component Id="cmpA90C68A50E044FA5FC0FB07B663F6C90" Guid="*">
+          <File Id="filBFB6C7401AC06923CB881EB722D9B977" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\scheme.boot" />
+        </Component>
+        <Component Id="cmp36B1E9BFDE0DFCA8D1E65BBDAD82CE06" Guid="*">
+          <File Id="filFE3C1F9F4374073162B33416E4A93D5B" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\scheme.h" />
+        </Component>
+        <Component Id="cmp9E232A9AA21470428B81018123E55809" Guid="*">
+          <File Id="fil643F2D7723E96BCA16E8A65804C66B4F" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\scheme.res" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <ComponentGroup Id="ta6nt">
+      <ComponentRef Id="cmpA67EF6318D00B4209BFCD0BFDCDF781C" />
+      <ComponentRef Id="cmpF41FF9DE554F79FB6FBD85E5B80A5221" />
+      <ComponentRef Id="cmp372F759C97C3C69E4C336B81D807E4F5" />
+      <ComponentRef Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" />
+      <ComponentRef Id="cmpDEB15B7CB19176296C92E8032592FDB4" />
+      <ComponentRef Id="cmpCBDB945622604667783C3C57A0427DF5" />
+      <ComponentRef Id="cmpD7880184C113065E511275EFD531D589" />
+      <ComponentRef Id="cmp19832A9F8ABA24EE5E11B447538AC375" />
+      <ComponentRef Id="cmp5211817ED85951CDAF2FD5E2419BD211" />
+      <ComponentRef Id="cmpD21D824506A948F172A50CECA2B6D0AC" />
+      <ComponentRef Id="cmpB650D26FBD85BF1F56C4AA76A9CFBD7E" />
+      <ComponentRef Id="cmpA90C68A50E044FA5FC0FB07B663F6C90" />
+      <ComponentRef Id="cmp36B1E9BFDE0DFCA8D1E65BBDAD82CE06" />
+      <ComponentRef Id="cmp9E232A9AA21470428B81018123E55809" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>
