@@ -320,3 +320,5 @@
   the full buffer (but reporting that it did) in the case of errors from
   write.
     examples/csocket.c, examples/socket.ss
+- use high-precision clock time on Windows 8 and up
+    c/stats.c

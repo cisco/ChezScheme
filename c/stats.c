@@ -115,6 +115,10 @@ ptr S_unique_id() {
 
 static __int64 hires_cps = 0;
 
+typedef void (WINAPI *GetSystemTimeAsFileTime_t)(LPFILETIME lpSystemTimeAsFileTime);
+
+static GetSystemTimeAsFileTime_t s_GetSystemTimeAsFileTime = GetSystemTimeAsFileTime;
+
 static void s_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_process: {
@@ -189,7 +193,7 @@ static void s_gettime(INT typeno, struct timespec *tp) {
     case time_utc: {
       FILETIME ft; __int64 total;
 
-      GetSystemTimeAsFileTime(&ft);
+      s_GetSystemTimeAsFileTime(&ft);
       total = ft.dwHighDateTime;
       total <<= 32;
       total |= ft.dwLowDateTime;
@@ -459,5 +463,14 @@ ptr S_realtime(void) {
 /********  initialization  ********/
 
 void S_stats_init() {
+  /* Use GetSystemTimePreciseAsFileTime when available (Windows 8 and later). */
+  HMODULE h = LoadLibrary("kernel32.dll");
+  if (h != NULL) {
+    GetSystemTimeAsFileTime_t proc = (GetSystemTimeAsFileTime_t)GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
+    if (proc != NULL)
+      s_GetSystemTimeAsFileTime = proc;
+    else
+      FreeLibrary(h);
+  }
   s_gettime(time_monotonic, &starting_mono_tp);
 }
