@@ -1201,8 +1201,9 @@ static double s_pow(x, y) double x, y; {
   } else
     return pow(x, y);
 }
-#elif defined(MACOSX)
-/* intel macosx delivers precise results for integer inputs, e.g.,
+#elif defined(MACOSX) || machine_type == machine_type_a6df \
+                      || machine_type == machine_type_ta6df
+/* intel macosx & dragonfly deliver precise results for integer inputs, e.g.,
  * 10.0^21.0, only with long double version of pow */
 static double s_pow(x, y) double x, y; { return powl(x, y); }
 #else /* i3fb/ti3fb */
