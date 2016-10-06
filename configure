@@ -133,10 +133,10 @@ bits=""
 while [ $# != 0 ] ; do
   case $1 in
     -m=*)
-      m=`echo $1 | sed -e 's/^-m=//'`
+      m=${1#-m=}
       ;;
     --machine=*)
-      m=`echo $1 | sed -e 's/^--machine=//'`
+      m=${1#--machine=}
       ;;
     --threads)
       threads=yes
@@ -148,31 +148,31 @@ while [ $# != 0 ] ; do
       bits=32
       ;;
     --installprefix=*)
-      installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
+      installprefix=${1#--installprefix=}
       ;;
     --installlib=*)
-      installlib=`echo $1 | sed -e 's/^--installlib=//'`
+      installlib=${1#--installlib=}
       ;;
     --installbin=*)
-      installbin=`echo $1 | sed -e 's/^--installbin=//'`
+      installbin=${1#--installbin=}
       ;;
     --installman=*)
-      installman=`echo $1 | sed -e 's/^--installman=//'`
+      installman=${1#--installman=}
       ;;
     --installowner=*)
-      installowner=`echo $1 | sed -e 's/^--installowner=//'`
+      installowner=${#--installowner=}
       ;;
     --installgroup=*)
-      installgroup=`echo $1 | sed -e 's/^--installgroup=//'`
+      installgroup=${#--installgroup=}
       ;;
     --installschemename=*)
-      installschemename=`echo $1 | sed -e 's/^--installschemename=//'`
+      installschemename=${1#--installschemename=}
       ;;
     --installpetitename=*)
-      installpetitename=`echo $1 | sed -e 's/^--installpetitename=//'`
+      installpetitename=${1#--installpetitename=}
       ;;
     --installscriptname=*)
-      installscriptname=`echo $1 | sed -e 's/^--installscriptname=//'`
+      installscriptname=${1#--installscriptname=}
       ;;
     --gzip-man-pages)
       gzipmanpages=yes
@@ -181,22 +181,22 @@ while [ $# != 0 ] ; do
       gzipmanpages=no
       ;;
     --temproot=*)
-      temproot=`echo $1 | sed -e 's/^--temproot=//'`
+      temproot=${1#--temproot=}
       ;;
     --workarea=*)
-      w=`echo $1 | sed -e 's/^--workarea=//'`
+      w=${1#--workarea=}
       ;;
     --help)
       help=yes
       ;;
     CPPFLAGS=*)
-      CPPFLAGS=`echo $1 | sed -e 's/^CPPFLAGS=//'`
+      CPPFLAGS=${1#CPPFLAGS=}
       ;;
     CFLAGS=*)
-      CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
+      CFLAGS=${1#CFLAGS=}
       ;;
     LDFLAGS=*)
-      LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
+      LDFLAGS=${1#LDFLAGS=}
       ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
