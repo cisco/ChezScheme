@@ -201,13 +201,17 @@
       (let ([fdatav (hashtable-values fdata-ht)])
         (vector-for-each
           (lambda (fdata)
-            (let ([entry* (sort (lambda (x y) (> (entrydata-bfp x) (entrydata-bfp y)))
+            (let ([entry* (sort (lambda (x y)
+                                  (or (> (entrydata-bfp x) (entrydata-bfp y))
+                                      (and (= (entrydata-bfp x) (entrydata-bfp y))
+                                           (> (entrydata-efp x) (entrydata-efp y)))))
                                 (filedata-entry* fdata))])
               #;(assert (not (null? entry*)))
               (let loop ([entry (car entry*)] [entry* (cdr entry*)] [new-entry* '()])
                 (if (null? entry*)
                     (filedata-entry*-set! fdata (cons entry new-entry*))
-                    (if (= (entrydata-bfp (car entry*)) (entrydata-bfp entry))
+                    (if (and (= (entrydata-bfp (car entry*)) (entrydata-bfp entry))
+                             (= (entrydata-efp (car entry*)) (entrydata-efp entry)))
                         (begin
                           (entrydata-count-set! entry
                             (+ (entrydata-count entry)

@@ -322,3 +322,6 @@
     examples/csocket.c, examples/socket.ss
 - use high-precision clock time on Windows 8 and up
     c/stats.c
+- fixed profiling code that keyed profiling locations off of only the
+  bfp to instead key off of both the bfp and efp.
+    pdhtml.ss
