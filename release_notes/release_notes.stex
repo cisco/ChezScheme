@@ -58,6 +58,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{High-precision clock time in Windows 8 and up (9.4.1)}
+
+When running on Windows 8 and up, Chez Scheme uses the high-precision
+clock time function for the current date and time.
+
 \subsection{Printing of non-standard (extended) identifiers (9.4.1)}
 
 Chez Scheme extends the syntax of identifiers as described in the
