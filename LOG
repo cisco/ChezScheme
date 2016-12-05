@@ -1385,3 +1385,5 @@
     s/update-revision, BUILDING
 - export `ee-backward-delete-sexp` binding in the expression-editor module.
     expeditor.ss
+- fix ee_read_char to handle ^@ properly
+    expeditor.c

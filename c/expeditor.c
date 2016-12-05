@@ -691,11 +691,15 @@ static ptr s_ee_read_char(IBOOL blockp) {
 #endif /* PTHREADS */
 
     if (n == 1) {
-      old_locale = uselocale(term_locale);
-      sz = mbrtowc(&wch, buf, 1, &term_out_mbs);
-      uselocale(old_locale);
-      if (sz == 1) {
-        return Schar(wch);
+      if (buf[0] == '\0') {
+        return Schar('\0');
+      } else {
+        old_locale = uselocale(term_locale);
+        sz = mbrtowc(&wch, buf, 1, &term_out_mbs);
+        uselocale(old_locale);
+        if (sz == 1) {
+          return Schar(wch);
+        }
       }
     }
 
