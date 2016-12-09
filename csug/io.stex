@@ -1943,9 +1943,9 @@ support the optional \var{options} argument.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path})}
-\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path} \var{b-mode})}
-\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{path} \var{b-mode} \var{?transcoder})}
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{fd})}
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{fd} \var{b-mode})}
+\formdef{open-fd-output-port}{\categoryprocedure}{(open-fd-output-port \var{fd} \var{b-mode} \var{?transcoder})}
 \returns a new output port for the file descriptor \var{fd}
 \listlibraries
 \endentryheader
@@ -2174,9 +2174,9 @@ but may also be closed with either
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path})}
-\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path} \var{b-mode})}
-\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{path} \var{b-mode} \var{?transcoder})}
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{fd})}
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{fd} \var{b-mode})}
+\formdef{open-fd-input/output-port}{\categoryprocedure}{(open-fd-input/output-port \var{fd} \var{b-mode} \var{?transcoder})}
 \returns a new input/output port for the file descriptor \var{fd}
 \listlibraries
 \endentryheader
