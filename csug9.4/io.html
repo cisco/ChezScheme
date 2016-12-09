@@ -2090,9 +2090,9 @@ The Revised<sup>6</sup> Report version of <tt>with-output-to-file</tt> does not
 support the optional <tt><i>options</i></tt> argument.
 
 <p>
-<a name="./io:s72"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>path</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>path</i>&nbsp;<i>b-mode</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>path</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
+<a name="./io:s72"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
 <b>returns: </b>a new output port for the file descriptor <tt><i>fd</i></tt>
 <br>
@@ -2328,9 +2328,9 @@ but may also be closed with either
 <tt>close-output-port</tt>.
 
 <p>
-<a name="./io:s82"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>path</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>path</i>&nbsp;<i>b-mode</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>path</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
+<a name="./io:s82"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
 <b>returns: </b>a new input/output port for the file descriptor <tt><i>fd</i></tt>
 <br>
@@ -2959,7 +2959,7 @@ Character associations created by <tt>char-name</tt> are ignored by the
 printer unless the parameter <tt>print-char-name</tt> is set to a true
 value.
 The reader recognizes character names established by <tt>char-name</tt>
-except after the <tt>#!r6rs</tt>, which is implied within a library or
+except after <tt>#!r6rs</tt>, which is implied within a library or
 R6RS top-level program.
 
 <p>
@@ -3364,7 +3364,61 @@ common control structures, e.g., around <tt>let</tt> bindings and
 &nbsp;&nbsp;&nbsp;&nbsp;(pretty-print&nbsp;'(let&nbsp;([x&nbsp;3])&nbsp;x)&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"(let&nbsp;((x&nbsp;3))&nbsp;x)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(get-output-string&nbsp;p)))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;"</tt>
-<p><a name="./io:s119"></a><span class=formdef><b>thread parameter</b>: <tt>print-vector-length</tt></span>
+<p><a name="./io:s119"></a><span class=formdef><b>thread parameter</b>: <tt>print-extended-identifiers</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>Chez Scheme extends the syntax of identifiers as described in
+Section&nbsp;<a href="./intro.html#g1">1.1</a>, except within a set of forms prefixed by
+<tt>#!r6rs</tt> (which is implied by in a library or top-level program).
+
+<p>
+When this parameter is set to false (the default), identifiers in the
+extended set are printed with hex scalar value escapes as necessary to
+conform to the R6RS syntax for identifiers.
+When this parameter is set to a true value, identifiers in the
+extended set are printed without the escapes.
+Identifiers whose names fall outside of both syntaxes are printed with
+the escapes regardless of the setting of this parameter.
+
+<p>
+For example:
+
+<p>
+
+<p><tt>(parameterize&nbsp;([print-extended-identifiers&nbsp;#f])<br>
+
+&nbsp;&nbsp;(printf&nbsp;"~s\n~s\n"<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;'(1+&nbsp;---&nbsp;&#123;&nbsp;&#125;&nbsp;.xyz)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(string-&gt;symbol&nbsp;"123")))</tt>
+<p>prints
+
+<p>
+
+<p><tt>(\x31;+&nbsp;\x2D;--&nbsp;\x7B;&nbsp;\x7D;&nbsp;\x2E;xyz)<br>
+
+\x31;23</tt>
+<p>while
+
+<p>
+
+<p><tt>(parameterize&nbsp;([print-extended-identifiers&nbsp;#t])<br>
+
+&nbsp;&nbsp;(printf&nbsp;"~s\n~s\n"<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;'(1+&nbsp;---&nbsp;&#123;&nbsp;&#125;&nbsp;.xyz)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(string-&gt;symbol&nbsp;"123")))</tt>
+<p>prints
+
+<p>
+
+<p><tt>(1+&nbsp;---&nbsp;&#123;&nbsp;&#125;&nbsp;.xyz)<br>
+
+\x31;23</tt>
+<p><a name="./io:s120"></a><span class=formdef><b>thread parameter</b>: <tt>print-vector-length</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3376,7 +3430,7 @@ and all fxvectors between the "<tt>#vfx</tt>" and open parenthesis.
 This parameter is set to <tt>#f</tt> by default.
 
 <p>
-<a name="./io:s120"></a>When <tt>print-vector-length</tt> is set to a
+<a name="./io:s121"></a>When <tt>print-vector-length</tt> is set to a
 true value, <tt>write</tt>, <tt>put-datum</tt>, and <tt>pretty-print</tt>
 also suppress duplicated trailing elements in the vector to
 reduce the amount of output.
@@ -3407,7 +3461,7 @@ such objects is also affected by the setting of
 (parameterize&nbsp;([print-vector-length&nbsp;#t])<br>
 
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;(fxvector&nbsp;1&nbsp;2&nbsp;3&nbsp;4&nbsp;4&nbsp;4)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#6vfx(1&nbsp;2&nbsp;3&nbsp;4)"</tt>
-<p><a name="./io:s121"></a><span class=formdef><b>thread parameter</b>: <tt>print-precision</tt></span>
+<p><a name="./io:s122"></a><span class=formdef><b>thread parameter</b>: <tt>print-precision</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3421,7 +3475,7 @@ included, as per the precision argument to
 <tt>number-&gt;string</tt>.
 
 <p>
-<a name="./io:s122"></a><span class=formdef><b>thread parameter</b>: <tt>print-unicode</tt></span>
+<a name="./io:s123"></a><span class=formdef><b>thread parameter</b>: <tt>print-unicode</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3447,7 +3501,7 @@ other printing characters, as if by <tt>put-char</tt>.
 
 
 <p>
-<a name="./io:s123"></a>The procedures <tt>write</tt> and <tt>pretty-print</tt> print objects in a
+<a name="./io:s124"></a>The procedures <tt>write</tt> and <tt>pretty-print</tt> print objects in a
 human readable format.
 For objects with external datum representations, the output produced by
 <tt>write</tt> and <tt>pretty-print</tt> is also machine-readable with
@@ -3479,7 +3533,7 @@ input port, must be used instead.
 
 
 <p>
-<a name="./io:s124"></a><span class=formdef><b>procedure</b>: <tt>(fasl-write&nbsp;<i>obj</i>&nbsp;<i>binary-output-port</i>)</tt></span>
+<a name="./io:s125"></a><span class=formdef><b>procedure</b>: <tt>(fasl-write&nbsp;<i>obj</i>&nbsp;<i>binary-output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(fasl-read&nbsp;<i>binary-input-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3515,7 +3569,7 @@ at the end of file.
 (fasl-read&nbsp;bip)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#!eof<br>
 
 (close-port&nbsp;bip)</tt>
-<p><a name="./io:s125"></a><span class=formdef><b>procedure</b>: <tt>(fasl-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
+<p><a name="./io:s126"></a><span class=formdef><b>procedure</b>: <tt>(fasl-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3541,7 +3595,7 @@ If the file named by <tt><i>ofn</i></tt> already exists, it is replaced.
 This section describes operations on files, directories, and pathnames.
 
 <p>
-<a name="./io:s126"></a><span class=formdef><b>global parameter</b>: <tt>current-directory</tt></span>
+<a name="./io:s127"></a><span class=formdef><b>global parameter</b>: <tt>current-directory</tt></span>
 <br><span class=formdef><b>global parameter</b>: <tt>cd</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -3556,7 +3610,7 @@ directory pathname.
 <tt>cd</tt> is bound to the same parameter.
 
 <p>
-<a name="./io:s127"></a><span class=formdef><b>procedure</b>: <tt>(directory-list&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s128"></a><span class=formdef><b>procedure</b>: <tt>(directory-list&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b>a list of file names
 <br>
@@ -3570,7 +3624,7 @@ type <tt>&amp;i/o-filename</tt> if <tt><i>path</i></tt> does not name a director
 or if the process cannot list the directory.
 
 <p>
-<a name="./io:s128"></a><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s129"></a><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> exists, <tt>#f</tt> otherwise
@@ -3590,7 +3644,7 @@ optional <tt><i>follow?</i></tt> argument.
 Whether it follows symbolic links is unspecified.
 
 <p>
-<a name="./io:s129"></a><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s130"></a><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a regular file, <tt>#f</tt> otherwise
@@ -3602,7 +3656,7 @@ If the optional <tt><i>follow?</i></tt> argument is true (the default),
 <tt>file-regular?</tt> follows symbolic links; otherwise it does not.
 
 <p>
-<a name="./io:s130"></a><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s131"></a><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a directory, <tt>#f</tt> otherwise
@@ -3614,7 +3668,7 @@ If the optional <tt><i>follow?</i></tt> argument is true (the default),
 this procedure follows symbolic links; otherwise it does not.
 
 <p>
-<a name="./io:s131"></a><span class=formdef><b>procedure</b>: <tt>(file-symbolic-link?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s132"></a><span class=formdef><b>procedure</b>: <tt>(file-symbolic-link?&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a symbolic link, <tt>#f</tt> otherwise
 <br>
@@ -3625,7 +3679,7 @@ this procedure follows symbolic links; otherwise it does not.
 determination.
 
 <p>
-<a name="./io:s132"></a><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>)</tt></span>
+<a name="./io:s133"></a><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b>the access time of the specified file
@@ -3656,7 +3710,7 @@ The returned times are represented as time objects
 
 
 <p>
-<a name="./io:s133"></a><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s134"></a><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3680,7 +3734,7 @@ type <tt>&amp;i/o-filename</tt> if the directory cannot be created.
 
 
 <p>
-<a name="./io:s134"></a><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s135"></a><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>&nbsp;<i>error?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -3702,7 +3756,7 @@ optional <tt><i>error?</i></tt> argument but behaves as if <tt><i>error?</i></tt
 is true.
 
 <p>
-<a name="./io:s135"></a><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s136"></a><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>&nbsp;<i>error?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -3721,7 +3775,7 @@ The behavior is unspecified if the directory is not empty, but on
 most systems the operations will not succeed.
 
 <p>
-<a name="./io:s136"></a><span class=formdef><b>procedure</b>: <tt>(rename-file&nbsp;<i>old-pathname</i>&nbsp;<i>new-pathname</i>)</tt></span>
+<a name="./io:s137"></a><span class=formdef><b>procedure</b>: <tt>(rename-file&nbsp;<i>old-pathname</i>&nbsp;<i>new-pathname</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3734,7 +3788,7 @@ If the file does not exist or cannot be renamed,
 an exception is raised with condition type <tt>&amp;i/o-filename</tt>.
 
 <p>
-<a name="./io:s137"></a><span class=formdef><b>procedure</b>: <tt>(chmod&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
+<a name="./io:s138"></a><span class=formdef><b>procedure</b>: <tt>(chmod&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3758,7 +3812,7 @@ If the file does not exist or the permissions cannot be changed,
 an exception is raised with condition type <tt>&amp;i/o-filename</tt>.
 
 <p>
-<a name="./io:s138"></a><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s139"></a><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b>the current permissions mode for <tt><i>path</i></tt>
@@ -3774,7 +3828,7 @@ this procedure follows symbolic links; otherwise it does not.
 
 
 <p>
-<a name="./io:s139"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator?&nbsp;<i>char</i>)</tt></span>
+<a name="./io:s140"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator?&nbsp;<i>char</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>char</i></tt> is a directory separator, <tt>#f</tt> otherwise
 <br>
@@ -3785,7 +3839,7 @@ current machine types, and <tt>#\\</tt> is a directory separator
 under Windows.
 
 <p>
-<a name="./io:s140"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator)</tt></span>
+<a name="./io:s141"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator)</tt></span>
 <br>
 <b>returns: </b>the preferred directory separator
 <br>
@@ -3795,7 +3849,7 @@ under Windows.
 <tt>#\/</tt> for other systems.
 
 <p>
-<a name="./io:s141"></a><span class=formdef><b>procedure</b>: <tt>(path-first&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s142"></a><span class=formdef><b>procedure</b>: <tt>(path-first&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-rest&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-last&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-parent&nbsp;<i>path</i>)</tt></span>
@@ -3936,7 +3990,7 @@ This section presents the definitions for three types of generic ports:
 two-way ports, transcript ports, and process ports.
 
 <p>
-<p><b>Two-way ports.</b>&nbsp;&nbsp;<a name="./io:s142"></a>The first example defines <tt>make-two-way-port</tt>, which constructs a
+<p><b>Two-way ports.</b>&nbsp;&nbsp;<a name="./io:s143"></a>The first example defines <tt>make-two-way-port</tt>, which constructs a
 textual input/output port from a given pair of textual input and output ports.
 For example:
 
@@ -4031,7 +4085,7 @@ passed off to the input port.
 
 
 <p>
-<p><b>Transcript ports.</b>&nbsp;&nbsp;<a name="./io:s143"></a>The next example defines <tt>make-transcript-port</tt>, which constructs a
+<p><b>Transcript ports.</b>&nbsp;&nbsp;<a name="./io:s144"></a>The next example defines <tt>make-transcript-port</tt>, which constructs a
 textual input/output port from three ports:  a textual input port <tt><i>ip</i></tt> and two textual
 output ports, <tt><i>op</i></tt> and <tt><i>tp</i></tt>.
 Input read from a transcript port comes from <tt><i>ip</i></tt>, and output
@@ -4386,7 +4440,7 @@ i.e., if only one "thread" of the computation can have access to the
 port.
 
 <p>
-<p><b>Process ports.</b>&nbsp;&nbsp;<a name="./io:s144"></a><a name="./io:s145"></a>The final example
+<p><b>Process ports.</b>&nbsp;&nbsp;<a name="./io:s145"></a><a name="./io:s146"></a>The final example
 demonstrates how to incorporate the socket interface
 defined in Section&nbsp;<a href="./foreign.html#g35">4.9</a> into a generic port that
 allows transparent communication with subprocesses via normal Scheme
@@ -4728,7 +4782,7 @@ subprocess is terminated.
 Copyright &copy; 2016 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised June 2016 for Chez Scheme Version 9.4<br>
+Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -218,7 +218,7 @@ For non-serious warning conditions, it returns immediately after displaying
 the condition.
 
 <p>
-For serious or other non-warning conditions, it 
+For serious or other non-warning conditions, it
 saves the condition in the parameter <tt>debug-condition</tt>, where
 <tt>debug</tt> (Section&nbsp;<a href="./debug.html#g17">3.2</a>) can retrieve it and
 allow it to be inspected.
@@ -399,7 +399,7 @@ that resets without invoking the debugger.
 
 <p>
 
-<p><tt>(keyboard-interrupt-handler&nbsp;<br>
+<p><tt>(keyboard-interrupt-handler<br>
 
 &nbsp;&nbsp;(lambda&nbsp;()<br>
 
@@ -584,7 +584,7 @@ Environments may be provided as optional arguments to <tt>eval</tt>,
 reference top-level values.
 
 <p>
-There are several built-in environments, and new environments can 
+There are several built-in environments, and new environments can
 be created by copying existing environments or selected bindings
 from existing environments.
 
@@ -2439,17 +2439,17 @@ user-defined macro transformers can differentiate among the different
 levels if desired.
 
 <p>
-One way to use optimize levels is on a per-file 
-basis, using <a name="./system:s96"></a><tt>eval-when</tt> to force the use of a particular 
+One way to use optimize levels is on a per-file
+basis, using <a name="./system:s96"></a><tt>eval-when</tt> to force the use of a particular
 optimize level at compile time.
 For example, placing:
 
 <p>
 
 <p><tt>(eval-when&nbsp;(compile)&nbsp;(optimize-level&nbsp;3))</tt>
-<p>at the front of a file will cause all of the forms in the file to be 
-compiled at optimize level 3 when the file is compiled (using 
-<a name="./system:s97"></a><tt>compile-file</tt>) but does not affect the optimize level used 
+<p>at the front of a file will cause all of the forms in the file to be
+compiled at optimize level 3 when the file is compiled (using
+<a name="./system:s97"></a><tt>compile-file</tt>) but does not affect the optimize level used
 when the file is loaded from source.
 Since <tt>compile-file</tt> parameterizes <tt>optimize-level</tt> (see <tt>parameterize</tt>),
 the above
@@ -2823,7 +2823,7 @@ be converted into
 <p>
 Interesting effects can be had by varying several of these parameters at
 once.
-For example, setting the 
+For example, setting the
 effort and outer unroll limits to large values and the score limit
 to <tt>1</tt> has the effect of inlining even complex recursive procedures
 whose values turn out to be constant at compile time without risking
@@ -3310,7 +3310,7 @@ three pairs.
 The car of each pair is a background color and the cdr is a foreground
 (text) color.
 Each color must be a string, and each string should contain an HTML
-cascading style sheet (css) color specifier.
+cascading style sheet (CSS) color specifier.
 The first pair is used for unprofiled code, and the second is used
 for unexecuted profiled code.
 The third is used for code that is executed least frequently, the fourth
@@ -3330,19 +3330,19 @@ frequently executed code.
 
 <p><tt>(profile-palette)&nbsp;<img src="math/csug/0.gif" alt="<graphic>"><br>
 
-&nbsp;&nbsp;#(("black"&nbsp;.&nbsp;"white")&nbsp;("#666666"&nbsp;.&nbsp;"white")<br>
+&nbsp;&nbsp;#(("#111111"&nbsp;.&nbsp;"white")&nbsp;("#607D8B"&nbsp;.&nbsp;"white")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#A000C8"&nbsp;.&nbsp;"black")&nbsp;("#8200DC"&nbsp;.&nbsp;"white")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#9C27B0"&nbsp;.&nbsp;"black")&nbsp;("#673AB7"&nbsp;.&nbsp;"white")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#1E3CFF"&nbsp;.&nbsp;"white")&nbsp;("#00A0FF"&nbsp;.&nbsp;"black")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#3F51B5"&nbsp;.&nbsp;"white")&nbsp;("#2196F3"&nbsp;.&nbsp;"black")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#00D28C"&nbsp;.&nbsp;"black")&nbsp;("#00DC00"&nbsp;.&nbsp;"black")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#00BCD4"&nbsp;.&nbsp;"black")&nbsp;("#4CAF50"&nbsp;.&nbsp;"black")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#A0E632"&nbsp;.&nbsp;"black")&nbsp;("#E6DC32"&nbsp;.&nbsp;"black")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#CDDC39"&nbsp;.&nbsp;"black")&nbsp;("#FFEB3B"&nbsp;.&nbsp;"black")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#E6AF2D"&nbsp;.&nbsp;"black")&nbsp;("#F08228"&nbsp;.&nbsp;"black")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#FFC107"&nbsp;.&nbsp;"black")&nbsp;("#FF9800"&nbsp;.&nbsp;"black")<br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;("#FA3C3C"&nbsp;.&nbsp;"white"))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;("#F44336"&nbsp;.&nbsp;"white"))<br>
 
 (profile-palette<br>
 
@@ -3350,7 +3350,7 @@ frequently executed code.
 
 &nbsp;;&nbsp;for&nbsp;all&nbsp;but&nbsp;unprofiled&nbsp;or&nbsp;unexecuted&nbsp;code<br>
 
-&nbsp;&nbsp;'#(("black"&nbsp;.&nbsp;"white")&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;&nbsp;black<br>
+&nbsp;&nbsp;'#(("#000000"&nbsp;.&nbsp;"white")&nbsp;&nbsp;&nbsp;&nbsp;;&nbsp;black<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("#666666"&nbsp;.&nbsp;"white")&nbsp;&nbsp;&nbsp;&nbsp;;&nbsp;gray<br>
 
@@ -3372,7 +3372,7 @@ frequently executed code.
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>This value of this parameter must be a string or <tt>#f</tt>.
-If it is a string, the string should contain an HTML cascading style sheet (css)
+If it is a string, the string should contain an HTML cascading style sheet (CSS)
 color specifier.
 If the parameter is set to string, <tt>profile-dump-html</tt> includes line numbers
 in its html rendering of each source file, using the specified color.
@@ -3397,7 +3397,7 @@ has been executed.
 <p>
 <ul>
  <li>execution count
- <li>pathname 
+ <li>pathname
  <li>beginning file position in characters (inclusive)
  <li>ending file position in characters (exclusive)
  <li>line number of beginning file position
@@ -4471,7 +4471,7 @@ UTC may be obtained by passing an offset of zero.
 
 (time-utc-&gt;date&nbsp;t)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp;Sep&nbsp;23&nbsp;09:07:30&nbsp;2007&gt;<br>
 
-(time-utc-&gt;date&nbsp;t&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp;Sep&nbsp;23&nbsp;13:07:30&nbsp;2007&gt;&nbsp;</tt>
+(time-utc-&gt;date&nbsp;t&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp;Sep&nbsp;23&nbsp;13:07:30&nbsp;2007&gt;</tt>
 <p><a name="./system:s191"></a><span class=formdef><b>procedure</b>: <tt>(date-and-time)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(date-and-time&nbsp;<i>date</i>)</tt></span>
 <br>
@@ -4673,11 +4673,11 @@ A <tt>sstats</tt> record has the following fields:
 
 <p>
 <dl compact>
-<dt><tt>cpu</tt>,<dd> the cpu time consumed, 
-<dt><tt>real</tt>,<dd> the elapsed real time, 
+<dt><tt>cpu</tt>,<dd> the cpu time consumed,
+<dt><tt>real</tt>,<dd> the elapsed real time,
 <dt><tt>bytes</tt>,<dd> the number of bytes allocated,
 <dt><tt>gc-count</tt>,<dd> the number of collections,
-<dt><tt>gc-cpu</tt>,<dd> the cpu time consumed during collections, 
+<dt><tt>gc-cpu</tt>,<dd> the cpu time consumed during collections,
 <dt><tt>gc-real</tt>,<dd> the elapsed real time during collections, and
 <dt><tt>gc-bytes</tt>,<dd> the number of bytes reclaimed by the collector.
 </dl>
@@ -5441,8 +5441,6 @@ of various undocumented system variables, data structures, and
 settings.
 It is typically used only for system debugging.
 
-<p>
-
 
 
 
@@ -5452,7 +5450,7 @@ It is typically used only for system debugging.
 Copyright &copy; 2016 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised June 2016 for Chez Scheme Version 9.4<br>
+Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

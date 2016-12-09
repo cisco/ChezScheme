@@ -299,13 +299,16 @@ parameter <tt>case-sensitive</tt> has been set to <tt>#f</tt>.
 The printer invoked by <tt>write</tt>, <tt>put-datum</tt>,
 <tt>pretty-print</tt>, and the <tt>format</tt> <tt>~s</tt>
 option always prints standard Revised<sup>6</sup> Report objects
-using the standard syntax.
-For example, it prints symbols whose names require escaping using hex
-scalar value escapes, not one of the other mechanisms supported by the
-reader.
+using the standard syntax, unless a different behavior is
+requested via the setting of one of the print parameters.
+For example, it prints symbols in the extended identifier syntax
+of Chez Scheme described above using hex scalar value escapes,
+unless the parameter
+<a name="./intro:s28"></a><tt>print-extended-identifiers</tt> is set to
+true.
 Similarly, it does not print the explicit length or suppress
 duplicate trailing elements unless the parameter
-<a name="./intro:s28"></a><tt>print-vector-length</tt> is set to
+<a name="./intro:s29"></a><tt>print-vector-length</tt> is set to
 true.
 
 
@@ -323,19 +326,19 @@ These conventions are repeated below, with notes specific to
 
 <p>
 When the value produced by a procedure or syntactic form is said to
-be <a name="./intro:s29"></a><i>unspecified</i>, the form or procedure may
+be <a name="./intro:s30"></a><i>unspecified</i>, the form or procedure may
 return any number of values, each of which may be any Scheme
 object.
 <i>Chez&nbsp;Scheme</i> usually returns a single, unique
-<a name="./intro:s30"></a><i>void</i> object
-(see <a name="./intro:s31"></a><tt>void</tt>) whenever
+<a name="./intro:s31"></a><i>void</i> object
+(see <a name="./intro:s32"></a><tt>void</tt>) whenever
 the result is unspecified; avoid counting on this behavior, however,
 especially if your program may be ported to another Scheme implementation.
 Printing of the void object is suppressed by <i>Chez&nbsp;Scheme</i>'s waiter
 (read-evaluate-print loop).
 
 <p>
-<a name="./intro:s32"></a>This book uses the words "must" and "should" to
+<a name="./intro:s33"></a>This book uses the words "must" and "should" to
 describe program requirements, such as the requirement to provide an index
 that is less than the length of the vector in a call to
 <tt>vector-ref</tt>.
@@ -344,7 +347,7 @@ by the implementation, i.e., an exception is raised, usually with
 condition type <tt>&amp;assertion</tt>.
 If the word "should" is used, an exception may or may not be raised,
 and if not, the behavior of the program is undefined.
-<a name="./intro:s33"></a>The phrase "syntax violation" is used to
+<a name="./intro:s34"></a>The phrase "syntax violation" is used to
 describe a situation in which a program is malformed.
 Syntax violations are detected prior to program execution.
 When a syntax violation is detected, an exception of type <tt>&amp;syntax</tt>
@@ -383,7 +386,7 @@ zero or more occurrences of a subexpression or argument.
 
 
 <p>
-<a name="./intro:s34"></a>All <i>Chez&nbsp;Scheme</i> system customization is done via
+<a name="./intro:s35"></a>All <i>Chez&nbsp;Scheme</i> system customization is done via
 <i>parameters</i>.
 A parameter is a procedure that encapsulates a hidden state variable.
 When invoked without arguments, a parameter returns the value of
@@ -404,7 +407,7 @@ parameter simply makes the parameter inaccessible.
 For example, a program that defines <tt>*print-level*</tt> for its own
 purposes in early releases of <i>Chez&nbsp;Scheme</i> would have unexpected
 effects on the printing of Scheme objects, whereas a program that
-defines <a name="./intro:s35"></a><tt>print-level</tt> for its own
+defines <a name="./intro:s36"></a><tt>print-level</tt> for its own
 purposes simply loses the ability to alter the printer's behavior.
 Of course, a program that invokes <tt>print-level</tt> by accident can
 still affect the system in unintended ways, but such an occurrence is
@@ -483,7 +486,7 @@ available at the url
 Copyright &copy; 2016 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised June 2016 for Chez Scheme Version 9.4<br>
+Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
