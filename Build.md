@@ -17,7 +17,8 @@ limitations under the License.
 This directory contains the sources for Chez Scheme, plus boot and header
 files for various supported machine types.
 
-BASICS
+
+##BASICS
 
 Building and installing Chez Scheme on a recent version of Linux or OS X
 is typically as simple as installing the prerequisites listed below and
@@ -164,7 +165,7 @@ The make file supports several targets:
 'make distclean'
   removes nanopass, Makefile, and all workareas.
 
-WINDOWS
+#WINDOWS
 
 Building Chez Scheme under Windows is currently more complicated than it
 should be.  It requires the configure script (and through it, the workarea
@@ -216,7 +217,7 @@ To run Chez Scheme or Petite Chez Scheme from a terminal window,
 set ```PATH``` and ```SCHEMEHEAPDIRS```:
 ```
 set PATH=$W\bin\$M;%PATH%
-set SCHEMEHEAPDIRS=$W/boot/$M
+set SCHEMEHEAPDIRS=$W\boot\$M
 ```
 again with $W and $M replaced with the workarea name and machine
 type, and start Chez Scheme with the command "scheme" or Petite
@@ -227,7 +228,7 @@ not GUIs.  They both incorporate sophisticated command-line editing
 reminiscent of tcsh but with support for expressions that span
 multiple lines.
 
-Testing under Windows
+##Testing under Windows
 
 The iconv tests in mats/io.ms require that a 32-bit or 64-bit (as
 appropriate) libiconv-2.dll implementing GNU libiconv be located in
