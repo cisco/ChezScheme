@@ -959,7 +959,7 @@ or stderr file descriptor is in nonblocking mode.
 Although <tt>get-bytevector-some</tt> and <tt>get-string-some</tt> normally
 cannot return an empty bytevector or empty string, they can if the port
 is in nonblocking mode and no input is available.
-Also, <tt>get-bytevector-some!</tt>, <tt>get-string-some!</tt>
+Also, <tt>get-bytevector-some!</tt> and <tt>get-string-some!</tt>
 may not read any data if the port is in nonblocking mode and
 no data is available.
 Similarly, <tt>put-bytevector-some</tt> and <tt>put-string-some</tt>
@@ -1486,7 +1486,7 @@ In this case, an empty string is returned.
 <p>
 <a name="./io:s57"></a><span class=formdef><b>procedure</b>: <tt>(get-string-some!&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
-<b>returns: </b>the count of characters read or the eof object
+<b>returns: </b>the count of characters read, as an exact nonnegative integer, or the eof object
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1494,27 +1494,32 @@ In this case, an empty string is returned.
 <tt><i>start</i></tt> and <tt><i>n</i></tt> must not exceed the length of <tt><i>string</i></tt>.
 
 <p>
-If <tt><i>textual-input-port</i></tt> is at end of file, the eof object is returned.
-Otherwise, this procedure reads (as if with <tt>get-char</tt>)
-as many characters, up to <tt><i>n</i></tt>, as are available before the port is at end
-of file, stores the characters in consecutive locations of <tt><i>string</i></tt>
-starting at <tt><i>start</i></tt>, and returns the count of characters read as an exact
-positive integer.
-The port's position is advanced past the characters read.
+If <tt><i>n</i></tt> is 0, this procedure returns zero without attempting to
+read from <tt><i>textual-input-port</i></tt> and without modifying <tt><i>string</i></tt>.
 
 <p>
-If the port is in nonblocking mode (see <tt>set-port-nonblocking!</tt>),
-the number of characters read may be less than <tt><i>n</i></tt> even if the port is
-not at end of file after the operation has completed, if the system
-would have to block to wait for more characters.
-Similarly, zero may be returned even if the port is ultimately determined
-to be at end of file, if this cannot be determined without blocking.
+Otherwise, if <tt><i>textual-input-port</i></tt> is at end of file, this procedure
+returns the eof object, except it returns zero when the port is in nonblocking mode
+(see <tt>set-port-nonblocking!</tt>) and the port cannot be determined
+to be at end of file without blocking.
+In either case, <tt><i>string</i></tt> is not modified.
 
+<p>
+Otherwise, this procedure reads (as if with <tt>get-char</tt>)
+up to <tt><i>n</i></tt> characters from the port, stores the characters in consecutive locations of <tt><i>string</i></tt>
+starting at <tt><i>start</i></tt>, advances the port's position just past the characters read, and
+returns the count of characters read.
+
+<p>
+If the port is in nonblocking mode, this procedure reads no more
+than it can without blocking and thus might read zero characters;
+otherwise, it reads at least one character but no more than are available
+when the first character becomes available.
 
 <p>
 <a name="./io:s58"></a><span class=formdef><b>procedure</b>: <tt>(get-bytevector-some!&nbsp;<i>binary-input-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
-<b>returns: </b>the count of bytes read or the eof object
+<b>returns: </b>the count of bytes read, as an exact nonnegative integer, or the eof object
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1522,22 +1527,27 @@ to be at end of file, if this cannot be determined without blocking.
 <tt><i>start</i></tt> and <tt><i>n</i></tt> must not exceed the length of <tt><i>bytevector</i></tt>.
 
 <p>
-If <tt><i>bytevector-input-port</i></tt> is at end of file, the eof object is returned.
-Otherwise, this procedure reads (as if with <tt>get-u8</tt>)
-as many bytes, up to <tt><i>n</i></tt>, as are available before the port is at end
-of file, stores the bytes in consecutive locations of <tt><i>bytevector</i></tt>
-starting at <tt><i>start</i></tt>, and returns the count of bytes read as an exact
-positive integer.
-The port's position is advanced past the bytes read.
+If <tt><i>n</i></tt> is 0, this procedure returns zero without attempting to
+read from <tt><i>binary-input-port</i></tt> and without modifying <tt><i>bytevector</i></tt>.
 
 <p>
-If the port is in nonblocking mode (see <tt>set-port-nonblocking!</tt>),
-the number of bytes read may be less than <tt><i>n</i></tt> even if the port is
-not at end of file after the operation has completed, if the system
-would have to block to wait for more bytes.
-Similarly, zero may be returned even if the port is ultimately determined
-to be at end of file, if this cannot be determined without blocking.
+Otherwise, if <tt><i>binary-input-port</i></tt> is at end of file, this procedure
+returns the eof object, except it returns zero when the port is in nonblocking mode
+(see <tt>set-port-nonblocking!</tt>) and the port cannot be determined
+to be at end of file without blocking.
+In either case, <tt><i>bytevector</i></tt> is not modified.
 
+<p>
+Otherwise, this procedure reads (as if with <tt>get-u8</tt>)
+up to <tt><i>n</i></tt> bytes from the port, stores the bytes in consecutive locations of <tt><i>bytevector</i></tt>
+starting at <tt><i>start</i></tt>, advances the port's position just past the bytes read, and
+returns the count of bytes read.
+
+<p>
+If the port is in nonblocking mode, this procedure reads no more
+than it can without blocking and thus might read zero bytes;
+otherwise, it reads at least one byte but no more than are available
+when the first byte becomes available.
 
 <p>
 <a name="./io:s59"></a><span class=formdef><b>procedure</b>: <tt>(unread-char&nbsp;<i>char</i>)</tt></span>
