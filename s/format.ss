@@ -1011,7 +1011,7 @@
         (define v20 '#(#f #f twenty thirty forty fifty sixty seventy eighty ninety))
         (define v0 '#(zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen))
         (define *v20 '#(#f #f twentieth thirtieth fortieth fiftieth sixtieth seventieth eightieth ninetieth))
-        (define *v0 '#(zeroth first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelveth thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth))
+        (define *v0 '#(zeroth first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth))
         (define (write-ordinal x op)
           (if (<= -999999999 x +999999999)
               (if (< x 0)
