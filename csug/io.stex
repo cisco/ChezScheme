@@ -873,7 +873,7 @@ or stderr file descriptor is in nonblocking mode.
 Although \scheme{get-bytevector-some} and \scheme{get-string-some} normally
 cannot return an empty bytevector or empty string, they can if the port
 is in nonblocking mode and no input is available.
-Also, \scheme{get-bytevector-some!}, \scheme{get-string-some!}
+Also, \scheme{get-bytevector-some!} and \scheme{get-string-some!}
 may not read any data if the port is in nonblocking mode and
 no data is available.
 Similarly, \scheme{put-bytevector-some} and \scheme{put-string-some}
@@ -1394,7 +1394,7 @@ In this case, an empty string is returned.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{get-string-some!}{\categoryprocedure}{(get-string-some! \var{textual-input-port} \var{string} \var{start} \var{n})}
-\returns the count of characters read or the eof object
+\returns the count of characters read, as an exact nonnegative integer, or the eof object
 \listlibraries
 \endentryheader
 
@@ -1402,26 +1402,29 @@ In this case, an empty string is returned.
 \var{start} and \var{n} must be exact nonnegative integers, and the sum of
 \var{start} and \var{n} must not exceed the length of \var{string}.
 
-If \var{textual-input-port} is at end of file, the eof object is returned.
+If \var{n} is 0, this procedure returns zero without attempting to
+read from \var{textual-input-port} and without modifying \var{string}.
+
+Otherwise, if \var{textual-input-port} is at end of file, this procedure
+returns the eof object, except it returns zero when the port is in nonblocking mode
+(see \scheme{set-port-nonblocking!}) and the port cannot be determined
+to be at end of file without blocking.
+In either case, \var{string} is not modified.
+
 Otherwise, this procedure reads (as if with \scheme{get-char})
-as many characters, up to \var{n}, as are available before the port is at end
-of file, stores the characters in consecutive locations of \var{string}
-starting at \var{start}, and returns the count of characters read as an exact
-positive integer.
-The port's position is advanced past the characters read.
+up to \var{n} characters from the port, stores the characters in consecutive locations of \var{string}
+starting at \var{start}, advances the port's position just past the characters read, and
+returns the count of characters read.
 
-If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
-the number of characters read may be less than \var{n} even if the port is
-not at end of file after the operation has completed, if the system
-would have to block to wait for more characters.
-Similarly, zero may be returned even if the port is ultimately determined
-to be at end of file, if this cannot be determined without blocking.
-
+If the port is in nonblocking mode, this procedure reads no more
+than it can without blocking and thus might read zero characters;
+otherwise, it reads at least one character but no more than are available
+when the first character becomes available.
 
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{get-bytevector-some!}{\categoryprocedure}{(get-bytevector-some! \var{binary-input-port} \var{bytevector} \var{start} \var{n})}
-\returns the count of bytes read or the eof object
+\returns the count of bytes read, as an exact nonnegative integer, or the eof object
 \listlibraries
 \endentryheader
 
@@ -1429,21 +1432,24 @@ to be at end of file, if this cannot be determined without blocking.
 \var{start} and \var{n} must be exact nonnegative integers, and the sum of
 \var{start} and \var{n} must not exceed the length of \var{bytevector}.
 
-If \var{bytevector-input-port} is at end of file, the eof object is returned.
+If \var{n} is 0, this procedure returns zero without attempting to
+read from \var{binary-input-port} and without modifying \var{bytevector}.
+
+Otherwise, if \var{binary-input-port} is at end of file, this procedure
+returns the eof object, except it returns zero when the port is in nonblocking mode
+(see \scheme{set-port-nonblocking!}) and the port cannot be determined
+to be at end of file without blocking.
+In either case, \var{bytevector} is not modified.
+
 Otherwise, this procedure reads (as if with \scheme{get-u8})
-as many bytes, up to \var{n}, as are available before the port is at end
-of file, stores the bytes in consecutive locations of \var{bytevector}
-starting at \var{start}, and returns the count of bytes read as an exact
-positive integer.
-The port's position is advanced past the bytes read.
+up to \var{n} bytes from the port, stores the bytes in consecutive locations of \var{bytevector}
+starting at \var{start}, advances the port's position just past the bytes read, and
+returns the count of bytes read.
 
-If the port is in nonblocking mode (see \scheme{set-port-nonblocking!}),
-the number of bytes read may be less than \var{n} even if the port is
-not at end of file after the operation has completed, if the system
-would have to block to wait for more bytes.
-Similarly, zero may be returned even if the port is ultimately determined
-to be at end of file, if this cannot be determined without blocking.
-
+If the port is in nonblocking mode, this procedure reads no more
+than it can without blocking and thus might read zero bytes;
+otherwise, it reads at least one byte but no more than are available
+when the first byte becomes available.
 
 %----------------------------------------------------------------------------
 \entryheader
