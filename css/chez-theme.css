@@ -58,3 +58,7 @@ a:focus {
   margin-top: auto;
   margin-bottom: auto;
 }
+
+.panel-footer, .push {
+  height: 80px;
+}
