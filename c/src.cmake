@@ -1,0 +1,31 @@
+include_directories(${PROJECT_SOURCE_DIR}/c/)
+set(dir ${PROJECT_SOURCE_DIR}/c/)
+set(src
+  ${src}
+  ${dir}/main.c
+  ${dir}/statics.c
+  ${dir}/segment.c
+  ${dir}/alloc.c
+  ${dir}/symbol.c
+  ${dir}/intern.c
+  ${dir}/gcwrapper.c
+  ${dir}/gc-oce.c
+  ${dir}/gc-ocd.c
+  ${dir}/number.c
+  ${dir}/schsig.c
+  ${dir}/io.c
+  ${dir}/new-io.c
+  ${dir}/print.c
+  ${dir}/fasl.c
+  ${dir}/stats.c
+  ${dir}/foreign.c
+  ${dir}/prim.c
+  ${dir}/prim5.c
+  ${dir}/flushcache.c
+  ${dir}/windows.c
+  ${dir}/schlib.c
+  ${dir}/thread.c
+  ${dir}/expeditor.c
+  ${dir}/scheme.c
+  )
+
