@@ -325,3 +325,4 @@
 - fixed profiling code that keyed profiling locations off of only the
   bfp to instead key off of both the bfp and efp.
     pdhtml.ss
+- fix typo in ordinal format for 12
