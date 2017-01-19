@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="D_examples">
+      <Component Id="cmpB577D6113A5B901F2580AFA28F34BFC3" Guid="*">
+        <File Id="fil63EEC128B76532A8F9B1FF44E6DD7E42" KeyPath="yes" Source="..\examples\compat.ss" />
+      </Component>
+      <Component Id="cmp1BE7F0C8DD746D65C373D5232DEBC50B" Guid="*">
+        <File Id="fil5E9A0DC96C769DA5F955AC63EA6E8BE2" KeyPath="yes" Source="..\examples\crepl.c" />
+      </Component>
+      <Component Id="cmp59DAEDDFDF5E03E332D2E3507E6C5EDA" Guid="*">
+        <File Id="filEC469095C6C7A1D318FD9DE4C24C761E" KeyPath="yes" Source="..\examples\csocket.c" />
+      </Component>
+      <Component Id="cmp1B7E2428CFC451195D1CAC3712B6E2BD" Guid="*">
+        <File Id="filBAE3A7D16D9DDF8FA5FF3057393C638A" KeyPath="yes" Source="..\examples\def.ss" />
+      </Component>
+      <Component Id="cmp5C3868C89D4BAD18E2ECCED683DC8242" Guid="*">
+        <File Id="filCC66438E7F8CAA8C91E98672A069261B" KeyPath="yes" Source="..\examples\edit.ss" />
+      </Component>
+      <Component Id="cmp1D234C979E3E81F4F17A030BEE7447C7" Guid="*">
+        <File Id="fil04703346B8C0E777FFDB540856144F34" KeyPath="yes" Source="..\examples\fact.ss" />
+      </Component>
+      <Component Id="cmp7576F8739617A7D117337B02F17EE881" Guid="*">
+        <File Id="fil49A63BB6E87D5A63BAA3FA8CB1C79126" KeyPath="yes" Source="..\examples\fatfib.ss" />
+      </Component>
+      <Component Id="cmp5D91CD47E8B58823C19ADD710D092163" Guid="*">
+        <File Id="fil309CE6D96728DD21EDE0C7E9B1AD66FC" KeyPath="yes" Source="..\examples\fft.ss" />
+      </Component>
+      <Component Id="cmp6793B3FF110ADF1EB5DA6F05BC317D4A" Guid="*">
+        <File Id="filC0092CE278B72C47A8F4FACF5F749BF0" KeyPath="yes" Source="..\examples\fib.ss" />
+      </Component>
+      <Component Id="cmp3EE81C49B9A25E22A870EC81819536AC" Guid="*">
+        <File Id="fil9733FDDA6ECB785A53543BA7AF2A9DC2" KeyPath="yes" Source="..\examples\foreign.ss" />
+      </Component>
+      <Component Id="cmp03C3321D21D01E0514380F00EDD73573" Guid="*">
+        <File Id="fil9E8E14967CE9934165AF69D58600FA60" KeyPath="yes" Source="..\examples\freq.ss" />
+      </Component>
+      <Component Id="cmpBD53B776B296A05B12B5AB59AD32357B" Guid="*">
+        <File Id="fil3B92FB8A3CF3538910BD29EB47AB67D2" KeyPath="yes" Source="..\examples\interpret.ss" />
+      </Component>
+      <Component Id="cmp41FFDBC25F7C3BAD06C2BA349D62C96B" Guid="*">
+        <File Id="fil1250E139F8ED07471C291E1B71980F17" KeyPath="yes" Source="..\examples\m4.ss" />
+      </Component>
+      <Component Id="cmp87BE0B0A340E034571FC4E2E667603A6" Guid="*">
+        <File Id="filA140F8687EE65E0D7CC1791B97AAEFD1" KeyPath="yes" Source="..\examples\macro.ss" />
+      </Component>
+      <Component Id="cmp295EC730034BD173AEF50DB37638E2F9" Guid="*">
+        <File Id="fil239094ABC70A10F472B72CE0AB122E37" KeyPath="yes" Source="..\examples\matrix.ss" />
+      </Component>
+      <Component Id="cmp4F9DE6905567D3F04491BCE965184C31" Guid="*">
+        <File Id="fil41C8170080E4903775AC7F58B987EDF6" KeyPath="yes" Source="..\examples\object.ss" />
+      </Component>
+      <Component Id="cmp4E91EF5543679C2290025EE5E25CB5AA" Guid="*">
+        <File Id="filD417B53DDE3509DF5D1B817DB4331702" KeyPath="yes" Source="..\examples\power.ss" />
+      </Component>
+      <Component Id="cmpEEE11EFB9AC675A85B9A674295AE58FD" Guid="*">
+        <File Id="fil88773EA0409EE2F8FD5E0C730B30428F" KeyPath="yes" Source="..\examples\queue.ss" />
+      </Component>
+      <Component Id="cmp9289E52AA6AB402D5D42C4BC68993B2F" Guid="*">
+        <File Id="filA2808E107EA8147AD046878CC1C84344" KeyPath="yes" Source="..\examples\rabbit.ss" />
+      </Component>
+      <Component Id="cmpB29DE046BFD68764C6EC7AFBE24D6E45" Guid="*">
+        <File Id="fil963C10BCC1280EE5CA55E36F4D95E92A" KeyPath="yes" Source="..\examples\rsa.ss" />
+      </Component>
+      <Component Id="cmpC61B5C6A5BF935B36B74B192133B72A2" Guid="*">
+        <File Id="fil8B3E9CEFDD4BA37D6E411DF5C5AA18E4" KeyPath="yes" Source="..\examples\scons.ss" />
+      </Component>
+      <Component Id="cmp2E7F31D3AE9D877DB28CD78387D5C8CF" Guid="*">
+        <File Id="fil2A8985F63706779DF7B4A32DD390D9E1" KeyPath="yes" Source="..\examples\setof.ss" />
+      </Component>
+      <Component Id="cmpF829DBD441E7B5773553400C3837269E" Guid="*">
+        <File Id="fil31651733E384D29FA91673FF47D4D518" KeyPath="yes" Source="..\examples\socket.ss" />
+      </Component>
+      <Component Id="cmpC7192FD77410E3499EFD6E8B81DE231D" Guid="*">
+        <File Id="fil63160D17A120C3EE5F22E4165CDF532B" KeyPath="yes" Source="..\examples\template.ss" />
+      </Component>
+      <Component Id="cmpC74EC2ADF0E2524CA8045B05D8D69FC0" Guid="*">
+        <File Id="fil5E6E81C352254963DD41AE894CF003E8" KeyPath="yes" Source="..\examples\unify.ss" />
+      </Component>
+    </DirectoryRef>
+    <ComponentGroup Id="examples">
+      <ComponentRef Id="cmpB577D6113A5B901F2580AFA28F34BFC3" />
+      <ComponentRef Id="cmp1BE7F0C8DD746D65C373D5232DEBC50B" />
+      <ComponentRef Id="cmp59DAEDDFDF5E03E332D2E3507E6C5EDA" />
+      <ComponentRef Id="cmp1B7E2428CFC451195D1CAC3712B6E2BD" />
+      <ComponentRef Id="cmp5C3868C89D4BAD18E2ECCED683DC8242" />
+      <ComponentRef Id="cmp1D234C979E3E81F4F17A030BEE7447C7" />
+      <ComponentRef Id="cmp7576F8739617A7D117337B02F17EE881" />
+      <ComponentRef Id="cmp5D91CD47E8B58823C19ADD710D092163" />
+      <ComponentRef Id="cmp6793B3FF110ADF1EB5DA6F05BC317D4A" />
+      <ComponentRef Id="cmp3EE81C49B9A25E22A870EC81819536AC" />
+      <ComponentRef Id="cmp03C3321D21D01E0514380F00EDD73573" />
+      <ComponentRef Id="cmpBD53B776B296A05B12B5AB59AD32357B" />
+      <ComponentRef Id="cmp41FFDBC25F7C3BAD06C2BA349D62C96B" />
+      <ComponentRef Id="cmp87BE0B0A340E034571FC4E2E667603A6" />
+      <ComponentRef Id="cmp295EC730034BD173AEF50DB37638E2F9" />
+      <ComponentRef Id="cmp4F9DE6905567D3F04491BCE965184C31" />
+      <ComponentRef Id="cmp4E91EF5543679C2290025EE5E25CB5AA" />
+      <ComponentRef Id="cmpEEE11EFB9AC675A85B9A674295AE58FD" />
+      <ComponentRef Id="cmp9289E52AA6AB402D5D42C4BC68993B2F" />
+      <ComponentRef Id="cmpB29DE046BFD68764C6EC7AFBE24D6E45" />
+      <ComponentRef Id="cmpC61B5C6A5BF935B36B74B192133B72A2" />
+      <ComponentRef Id="cmp2E7F31D3AE9D877DB28CD78387D5C8CF" />
+      <ComponentRef Id="cmpF829DBD441E7B5773553400C3837269E" />
+      <ComponentRef Id="cmpC7192FD77410E3499EFD6E8B81DE231D" />
+      <ComponentRef Id="cmpC74EC2ADF0E2524CA8045B05D8D69FC0" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>
