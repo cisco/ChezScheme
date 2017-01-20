@@ -326,3 +326,4 @@
   bfp to instead key off of both the bfp and efp.
     pdhtml.ss
 - added Windows installer using the WiX Toolset
+- fix typo in ordinal format for 12
