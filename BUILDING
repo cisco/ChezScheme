@@ -195,7 +195,7 @@ library.
 
 Making an Install for Windows
 
-cd install
+cd wininstall
 make workareas
 make
 
