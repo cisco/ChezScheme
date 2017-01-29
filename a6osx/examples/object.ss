@@ -1,0 +1,1 @@
+../../examples/object.ss
