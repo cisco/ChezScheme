@@ -3161,3 +3161,34 @@ rtd ;=> #<record type frob>
 \endschemedisplay
 
 
+\section{Procedures}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{procedure-arity-mask}{\categoryprocedure}{(procedure-arity-mask \var{proc})}
+\returns an exact integer bitmask identifying the accepted argument counts of \var{proc}
+\listlibraries
+\endentryheader
+
+\noindent
+The bitmask is represented as two's complement number with the bit
+at each index \var{n} set if and only if \var{proc} accepts \var{n}
+arguments.
+
+The two's complement encoding implies that if \var{proc} accepts
+\var{n} or more arguments, the encoding is a negative number,
+since all the bits from \var{n} and up are set. For example, if
+\var{proc} accepts any number of arguments, the two's complement
+encoding of all bits set is \scheme{-1}.
+
+\schemedisplay
+(procedure-arity-mask (lambda () 'none)) ;=> 1
+(procedure-arity-mask car) ;=> 2
+(procedure-arity-mask (case-lambda [() 'none] [(x) x])) ;=> 3
+(procedure-arity-mask (lambda x x)) ;=> -1
+(procedure-arity-mask (case-lambda [() 'none] [(x y . z) x])) ;=> -3
+(procedure-arity-mask (case-lambda)) ;=> 0
+(logbit? 1 (procedure-arity-mask pair?)) ;=> #t
+(logbit? 2 (procedure-arity-mask pair?)) ;=> #f
+(logbit? 2 (procedure-arity-mask cons)) ;=> #t
+\endschemedisplay

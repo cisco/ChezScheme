@@ -1602,6 +1602,7 @@ static void sweep_code_object(tc, co) ptr tc, co; {
 #endif
 
     relocate(&CODENAME(co))
+    relocate(&CODEARITYMASK(co))
     relocate(&CODEINFO(co))
     relocate(&CODEPINFOS(co))
 

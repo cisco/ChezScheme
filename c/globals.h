@@ -107,7 +107,6 @@ EXTERN struct {
     ptr nuate_id;
     ptr null_continuation_id;
     ptr collect_request_pending_id;
-    ptr dummy_continuation_code;
 
   /* gc.c */
     ptr guardians[static_generation+1];

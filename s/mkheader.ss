@@ -860,6 +860,7 @@
         (defref CODELEN code length)
         (defref CODERELOC code reloc)
         (defref CODENAME code name)
+        (defref CODEARITYMASK code arity-mask)
         (defref CODEFREE code closure-length)
         (defref CODEINFO code info)
         (defref CODEPINFOS code pinfo*)
