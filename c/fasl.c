@@ -97,6 +97,7 @@
  *                 <uptr free>       # number of free variables
  *                 <uptr n>          # length in bytes of code
  *                 <fasl name>
+ *                 <fasl arity-mask> # two's complement encoding of accepted argument counts
  *                 <fasl info>       # inspector info
  *                 <fasl pinfo*>     # profiling info
  *                 <byte code1>...<byte coden>
@@ -839,6 +840,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             faslin(tc, &name, t, pstrbuf, f);
             if (Sstringp(name)) name = SYMNAME(S_intern_sc(&STRIT(name, 0), Sstring_length(name), name));
             CODENAME(co) = name;
+            faslin(tc, &CODEARITYMASK(co), t, pstrbuf, f);
             faslin(tc, &CODEINFO(co), t, pstrbuf, f);
             faslin(tc, &CODEPINFOS(co), t, pstrbuf, f);
             bytesin((octet *)&CODEIT(co, 0), n, f);

@@ -35,7 +35,7 @@
     (large-integer sign vuptr)
     (eq-hashtable mutable? weak? minlen veclen vpfasl)
     (symbol-hashtable mutable? minlen equiv veclen vpfasl)
-    (code flags free name info pinfo* bytes m vreloc)
+    (code flags free name arity-mask info pinfo* bytes m vreloc)
     (atom ty uptr)
     (reloc type-etc code-offset item-offset fasl)
     (indirect g i)
@@ -244,6 +244,7 @@
                   [free (read-uptr p)]
                   [nbytes (read-uptr p)]
                   [name (read-fasl p g)]
+                  [arity-mask (read-fasl p g)]
                   [info (read-fasl p g)]
                   [pinfo* (read-fasl p g)]
                   [bytes (let ([bv (make-bytevector nbytes)])
@@ -260,7 +261,7 @@
                                   (loop
                                     (fx+ n (if (fxlogtest type-etc 1) 3 1))
                                     (cons (fasl-reloc type-etc code-offset item-offset (read-fasl p g)) rls)))))])
-             (fasl-code flags free name info pinfo* bytes m vreloc))]
+             (fasl-code flags free name arity-mask info pinfo* bytes m vreloc))]
           [(fasl-type-immediate fasl-type-entry fasl-type-library fasl-type-library-code)
            (fasl-atom ty (read-uptr p))]
           [(fasl-type-graph) (read-fasl p (make-vector (read-uptr p) #f))]
@@ -429,10 +430,11 @@
                    (build! (car pfasl) t)
                    (build! (cdr pfasl) t))
                  vpfasl)))]
-          [code (flags free name info pinfo* bytes m vreloc)
+          [code (flags free name arity-mask info pinfo* bytes m vreloc)
            (build-graph! x t
              (lambda ()
                (build! name t)
+               (build! arity-mask t)
                (unless strip-inspector-information? (build! info t))
                (unless strip-profile-information? (build! pinfo* t))
                (vector-for-each (lambda (reloc) (build! reloc t)) vreloc)))]
@@ -601,7 +603,7 @@
                    (write-fasl p t (car pfasl))
                    (write-fasl p t (cdr pfasl)))
                  vpfasl)))]
-          [code (flags free name info pinfo* bytes m vreloc)
+          [code (flags free name arity-mask info pinfo* bytes m vreloc)
            (write-graph p t x
              (lambda ()
                (write-byte p (constant fasl-type-code))
@@ -609,6 +611,7 @@
                (write-uptr p free)
                (write-uptr p (bytevector-length bytes))
                (write-fasl p t name)
+               (write-fasl p t arity-mask)
                (if strip-inspector-information?
                    (write-fasl p t (fasl-atom (constant fasl-type-immediate) (constant sfalse)))
                    (write-fasl p t info))
@@ -876,10 +879,11 @@
                                (vandmap (lambda (x y) (and (fasl=? (car x) (car y)) (fasl=? (cdr x) (cdr y))))
                                  (vector-sort keyval? vpfasl1)
                                  (vector-sort keyval? vpfasl2))))]
-                       [code (flags free name info pinfo* bytes m reloc)
+                       [code (flags free name arity-mask info pinfo* bytes m reloc)
                         (and (eqv? flags1 flags2)
                              (eqv? free1 free2)
                              (fasl=? name1 name2)
+                             (fasl=? arity-mask1 arity-mask2)
                              (fasl=? info1 info2)
                              (fasl=? pinfo*1 pinfo*2)
                              (bytevector=? bytes1 bytes2)

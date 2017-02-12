@@ -673,12 +673,10 @@ void S_schsig_init() {
         p = S_code(get_thread_context(), type_code | (code_flag_continuation << code_flags_offset), 0);
         CODERELOC(p) = S_relocation_table(0);
         CODENAME(p) = Sfalse;
+        CODEARITYMASK(p) = FIX(0);
         CODEFREE(p) = 0;
         CODEINFO(p) = Sfalse;
         CODEPINFOS(p) = Snil;
-
-        S_protect(&S_G.dummy_continuation_code);
-        S_G.dummy_continuation_code = p;
 
         S_set_symbol_value(S_G.null_continuation_id,
             S_mkcontinuation(space_new,

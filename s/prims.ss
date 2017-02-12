@@ -202,6 +202,11 @@
       ($oops '$procedure-name "~s is not a procedure" x))
     ($code-name ($closure-code x))))
 
+(define-who procedure-arity-mask
+  (lambda (x)
+    (unless (procedure? x) ($oops who "~s is not a procedure" x))
+    ($code-arity-mask ($closure-code x))))
+
 (let ()
   (define-syntax frob-proc
     (syntax-rules ()
@@ -369,13 +374,18 @@
 
 (define-who $make-code-object
   (foreign-procedure "(cs)s_make_code"
-     (iptr iptr ptr iptr ptr ptr)
+     (iptr iptr ptr ptr iptr ptr ptr)
      ptr))
 
 (define-who $code-name
   (lambda (x)
     (unless ($code? x) ($oops who "~s is not code" x))
     ($code-name x)))
+
+(define-who $code-arity-mask
+  (lambda (x)
+    (unless ($code? x) ($oops who "~s is not code" x))
+    ($code-arity-mask x)))
 
 (define-who $code-free-count
   (lambda (x)
