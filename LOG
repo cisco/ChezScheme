@@ -326,4 +326,10 @@
   bfp to instead key off of both the bfp and efp.
     pdhtml.ss
 - added Windows installer using the WiX Toolset
+    BUILDING, install/* (new)
 - fix typo in ordinal format for 12
+    format.ss,
+    format.ms
+- renamed install directory to wininstall to avoid conflict with
+  top-level Makefile
+    BUILDING, install/* (removed), wininstall/* (new)
