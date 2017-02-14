@@ -333,3 +333,5 @@
 - renamed install directory to wininstall to avoid conflict with
   top-level Makefile
     BUILDING, install/* (removed), wininstall/* (new)
+- updated zlib to version 1.2.11
+    configure
