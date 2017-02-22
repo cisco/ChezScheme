@@ -98,6 +98,7 @@ static void main_init() {
     p = S_code(tc, type_code, size_rp_header);
     CODERELOC(p) = S_relocation_table(0);
     CODENAME(p) = Sfalse;
+    CODEARITYMASK(p) = FIX(0);
     CODEFREE(p) = 0;
     CODEINFO(p) = Sfalse;
     CODEPINFOS(p) = Snil;

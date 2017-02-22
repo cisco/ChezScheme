@@ -57,7 +57,7 @@ static void s_set_code_long2 PROTO((ptr p, ptr n, ptr h, ptr l));
 static ptr s_set_code_quad PROTO((ptr p, ptr n, ptr x));
 static ptr s_set_reloc PROTO((ptr p, ptr n, ptr e));
 static ptr s_flush_instruction_cache PROTO((void));
-static ptr s_make_code PROTO((iptr flags, iptr free, ptr name, iptr n, ptr info, ptr pinfos));
+static ptr s_make_code PROTO((iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos));
 static ptr s_make_reloc_table PROTO((ptr codeobj, ptr n));
 static ptr s_make_closure PROTO((ptr offset, ptr codeobj));
 static ptr s_fxrandom PROTO((ptr n));
@@ -847,8 +847,8 @@ static ptr s_flush_instruction_cache() {
     return Svoid;
 }
 
-static ptr s_make_code(flags, free, name, n, info, pinfos)
-                       iptr flags, free, n; ptr name, info, pinfos; {
+static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
+                       iptr flags, free, n; ptr name, arity_mark, info, pinfos; {
     ptr co;
 
     tc_mutex_acquire()
@@ -856,6 +856,7 @@ static ptr s_make_code(flags, free, name, n, info, pinfos)
     tc_mutex_release()
     CODEFREE(co) = free;
     CODENAME(co) = name;
+    CODEARITYMASK(co) = arity_mark;
     CODEINFO(co) = info;
     CODEPINFOS(co) = pinfos;
     return co;

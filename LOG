@@ -335,3 +335,13 @@
     BUILDING, install/* (removed), wininstall/* (new)
 - updated zlib to version 1.2.11
     configure
+- added procedure-arity-mask to report the allowed argument counts of
+  a compiled function.  On a procedure from interpret or from one of
+  the trace procedures or syntactic forms, procedure-arity-mask
+  may report counts that are not actually allowed by the source
+  procedure.
+     cmacros.ss, compile.ss, cpnanopass.ss, mkheader.ss, primdata.ss,
+     prims.ss, strip.ss,
+     fasl.c, gc.c, globals.h, prim.c, prim5.c, scheme.c, schsig.c,
+     misc.ms, root-experr*,
+     objects.stex
