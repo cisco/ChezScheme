@@ -1208,6 +1208,7 @@
    [iptr length]
    [ptr reloc]
    [ptr name]
+   [ptr arity-mask]
    [iptr closure-length]
    [ptr info]
    [ptr pinfo*]

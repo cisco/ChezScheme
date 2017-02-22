@@ -211,6 +211,7 @@ static void s_instantiate_code_object() {
 
     CODERELOC(new) = newreloc;
     CODENAME(new) = CODENAME(old);
+    CODEARITYMASK(new) = CODEARITYMASK(old);
     CODEFREE(new) = CODEFREE(old);
     CODEINFO(new) = CODEINFO(old);
     CODEPINFOS(new) = CODEPINFOS(old);

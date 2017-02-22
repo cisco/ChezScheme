@@ -4852,6 +4852,7 @@
           (inline-accessor binary-port-output-buffer port-obuffer-disp)
           (inline-accessor textual-port-output-buffer port-obuffer-disp)
           (inline-accessor $code-name code-name-disp)
+          (inline-accessor $code-arity-mask code-arity-mask-disp)
           (inline-accessor $code-info code-info-disp)
           (inline-accessor $code-pinfo* code-pinfo*-disp)
           (inline-accessor $continuation-link continuation-link-disp)
@@ -13626,7 +13627,7 @@
             (lambda (funcrel)
               (let* ([l (cadr funcrel)] [code ($c-func-code-record (local-label-func l))])
                 (record-case code
-                  [(code) (func subtype free name size code-list info)
+                  [(code) (func subtype free name arity-mask size code-list info)
                    (set-car!
                      funcrel
                      (let ([offset (local-label-offset l)])
@@ -13728,6 +13729,7 @@
                (info-lambda-flags info)
                (length (info-lambda-fv* info))
                (info-lambda-name info)
+               (interface*->mask (info-lambda-interface* info))
                code-size
                code*
                (cond
@@ -13814,6 +13816,15 @@
           [(_ asm e1 e2 ...)
            (let ([ls (cons* e1 e2 ...)])
              (if aop (cons asm ls) ls))]))
+
+      (define interface*->mask
+        (lambda (i*)
+          (fold-left (lambda (mask i)
+                       (logor mask
+                         (if (< i 0)
+                             (- (ash 1 (- -1 i)))
+                             (ash 1 i))))
+            0 i*)))
 
       (architecture assembler)
 

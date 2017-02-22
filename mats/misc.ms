@@ -4889,3 +4889,41 @@
                         (fx+ success 1)
                         success)))))))
 )
+
+(mat procedure-arity-mask
+  (equal? (procedure-arity-mask (lambda () #f)) 1)
+  (equal? (procedure-arity-mask (lambda (x) x)) 2)
+  (equal? (procedure-arity-mask (lambda (x y z w) x)) 16)
+  (or (eq? (current-eval) interpret)
+      (equal? (procedure-arity-mask (lambda (x y z w a b c d e f g h i j) x)) (ash 1 14)))
+  (or (eq? (current-eval) interpret)
+      (and
+        (equal? (procedure-arity-mask (case-lambda)) 0)
+        (equal? (procedure-arity-mask (case-lambda [(x) x] [(x y) y])) 6)
+        (equal? (procedure-arity-mask (case-lambda [() x] [(x . y) y])) -1)
+        (equal? (procedure-arity-mask (case-lambda [() x] [(x y . z) y])) (bitwise-not 2))
+        (equal? (procedure-arity-mask (case-lambda [(x y . z) y] [() x])) (bitwise-not 2))
+        (equal? (procedure-arity-mask (case-lambda [(x) x] [(x y) y] [(x y z) z])) 14)))
+  (equal? (procedure-arity-mask list) -1)
+  (equal? (procedure-arity-mask cons) 4)
+  (equal? (procedure-arity-mask list*) (bitwise-not 1))
+
+  (equal? (procedure-arity-mask +) -1)
+  (equal? (procedure-arity-mask -) -2)
+  (equal? (procedure-arity-mask max) -2)
+
+  (equal? (call/cc procedure-arity-mask) -1)
+  (equal? (call/1cc procedure-arity-mask) -1)
+  (equal? (procedure-arity-mask #%$null-continuation) 0)
+  (equal?
+    (parameterize ([enable-cp0 #t]) (compile '(procedure-arity-mask
+                                                (case-lambda [a a] [(b) b]))))
+    -1)
+  (equal?
+    (parameterize ([enable-cp0 #f]) (compile '(procedure-arity-mask
+                                                (case-lambda [a a] [(b) b]))))
+    -1)
+
+  (error? ; invalid argument
+    (procedure-arity-mask 17))
+  )
