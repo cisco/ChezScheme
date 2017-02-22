@@ -173,8 +173,8 @@ EXPORT void Sinitframe PROTO((iptr));
 EXPORT void Sput_arg PROTO((iptr, ptr));
 EXPORT ptr Scall PROTO((ptr, iptr));
 /* Warning: Sforeign_callable_entry_point(x) returns a pointer into x. */
-#define Sforeign_callable_entry_point(x) ((void (*) PROTO((void)))((uptr)(x)+29))
-#define Sforeign_callable_code_object(x) ((ptr)((uptr)(x)-29))
+#define Sforeign_callable_entry_point(x) ((void (*) PROTO((void)))((uptr)(x)+33))
+#define Sforeign_callable_code_object(x) ((ptr)((uptr)(x)-33))
 
 /* Customization support. */
 EXPORT const char * Skernel_version PROTO((void));
