@@ -345,3 +345,8 @@
      fasl.c, gc.c, globals.h, prim.c, prim5.c, scheme.c, schsig.c,
      misc.ms, root-experr*,
      objects.stex
+- for non-win32 systems, now setting al register to a count of the
+  floating-point register arguments as required for varargs functions
+  by the System V ABI.
+     x86_64.ss,
+     foreign.ms
