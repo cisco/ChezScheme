@@ -2587,7 +2587,7 @@
         [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
          '(load-shared-object "libc.so.6")]
         [(i3nt ti3nt a6nt ta6nt)
-         (load-shared-object "msvcrt.dll")]
+         '(load-shared-object "msvcrt.dll")]
         [(i3osx ti3osx a6osx ta6osx)
          '(load-shared-object "libc.dylib")]
         [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
