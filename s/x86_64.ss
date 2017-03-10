@@ -2441,7 +2441,7 @@
                     (if-feature windows
                       (let loop ([types types] [locs '()] [regs '()] [i 0] [isp 0])
                         (if (null? types)
-                            (values isp locs regs)
+                            (values isp 0 locs regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< i 4)
@@ -2471,7 +2471,7 @@
                                      regs i (fx+ isp 8)))])))
                       (let loop ([types types] [locs '()] [regs '()] [iint 0] [ifp 0] [isp 0])
                         (if (null? types)
-                            (values isp locs regs)
+                            (values isp ifp locs regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< ifp 8)
@@ -2522,7 +2522,7 @@
                   [arg-type* (info-foreign-arg-type* info)]
                   [result-type (info-foreign-result-type info)])
               (with-values (do-args arg-type* (make-vint) (make-vfp))
-                (lambda (frame-size locs live*)
+                (lambda (frame-size nfp locs live*)
                   (returnem frame-size locs
                     (lambda (t0)
                       (if-feature windows
@@ -2530,7 +2530,11 @@
                           (set! ,%sp ,(%inline - ,%sp (immediate 32)))
                           (inline ,(make-info-kill*-live* (reg-list %rax) live*) ,%c-call ,t0)
                           (set! ,%sp ,(%inline + ,%sp (immediate 32))))
-                        `(inline ,(make-info-kill*-live* (reg-list %rax) live*) ,%c-call ,t0)))
+                        (%seq
+                          ; System V ABI varargs functions require count of fp regs used in %al register.
+                          ; since we don't know if the callee is a varargs function, we always set it.
+                          (set! ,%rax (immediate ,nfp))
+                          (inline ,(make-info-kill*-live* (reg-list %rax) (cons %rax live*)) ,%c-call ,t0))))
                     (nanopass-case (Ltype Type) result-type
                       [(fp-double-float)
                        (lambda (lvalue)

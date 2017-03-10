@@ -106,9 +106,9 @@
              (let ([p ($make-closure (constant code-data-disp) cp)])
                (set-$c-func-closure! func p)
                p)))]
-      [(code) (func subtype free name size code-list info pinfo*)
+      [(code) (func subtype free name arity-mask size code-list info pinfo*)
        (or ($c-func-code-object func)
-           (let ([p ($make-code-object subtype free name size info pinfo*)])
+           (let ([p ($make-code-object subtype free name arity-mask size info pinfo*)])
              (set-$c-func-code-object! func p)
              (let mkc0 ([c* code-list]
                         [a (constant code-data-disp)]
@@ -240,8 +240,9 @@
           ($fasl-bld-graph x t a?
             (lambda (x t a?)
               (record-case x
-                [(code) (func subtype free name size code-list info pinfo*)
+                [(code) (func subtype free name arity-mask size code-list info pinfo*)
                  ($fasl-enter name t a?)
+                 ($fasl-enter arity-mask t a?)
                  ($fasl-enter info t a?)
                  ($fasl-enter pinfo* t a?)
                  (for-each
@@ -275,12 +276,13 @@
 
 (define (c-faslcode x p t a?)
    (record-case x
-      [(code) (func subtype free name size code-list info pinfo*)
+      [(code) (func subtype free name arity-mask size code-list info pinfo*)
        (put-u8 p (constant fasl-type-code))
        (put-u8 p subtype)
        (put-uptr p free)
        (put-uptr p size)
        ($fasl-out name p t a?)
+       ($fasl-out arity-mask p t a?)
        ($fasl-out info p t a?)
        ($fasl-out pinfo* p t a?)
        (let prf0 ([c* code-list]
@@ -1354,13 +1356,14 @@
           (build-required-library-list node* lib*))))))
 
 (set! $c-make-code
-   (lambda (func subtype free name size code-list info pinfo*)
+   (lambda (func subtype free name arity-mask size code-list info pinfo*)
       (let ([code `(code ,func
                          ,subtype
                          ,free
                          ,(if (symbol? name)
                               (symbol->string name)
                               (and (string? name) name))
+                         ,arity-mask
                          ,size
                          ,code-list
                          ,info

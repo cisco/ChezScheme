@@ -97,15 +97,16 @@ typedef unsigned long long U64;
 #define char_factor 0x100
 #define closure_code_disp 0x3
 #define closure_data_disp 0x7
-#define code_closure_length_disp 0x11
-#define code_data_disp 0x1D
+#define code_arity_mask_disp 0x11
+#define code_closure_length_disp 0x15
+#define code_data_disp 0x21
 #define code_flag_continuation 0x2
 #define code_flag_system 0x1
 #define code_flags_offset 0x8
-#define code_info_disp 0x15
+#define code_info_disp 0x19
 #define code_length_disp 0x5
 #define code_name_disp 0xD
-#define code_pinfos_disp 0x19
+#define code_pinfos_disp 0x1D
 #define code_reloc_disp 0x9
 #define code_type_disp 0x1
 #define collect_interrupt_index 0x1
@@ -231,7 +232,7 @@ typedef unsigned long long U64;
 #define header_size_bignum 0x4
 #define header_size_bytevector 0x8
 #define header_size_closure 0x4
-#define header_size_code 0x1C
+#define header_size_code 0x20
 #define header_size_fxvector 0x4
 #define header_size_record 0x4
 #define header_size_reloc_table 0x8
@@ -777,10 +778,11 @@ typedef unsigned long long U64;
 #define CODELEN(x) (*((iptr *)((uptr)(x)+5)))
 #define CODERELOC(x) (*((ptr *)((uptr)(x)+9)))
 #define CODENAME(x) (*((ptr *)((uptr)(x)+13)))
-#define CODEFREE(x) (*((iptr *)((uptr)(x)+17)))
-#define CODEINFO(x) (*((ptr *)((uptr)(x)+21)))
-#define CODEPINFOS(x) (*((ptr *)((uptr)(x)+25)))
-#define CODEIT(x,i) (((octet *)((uptr)(x)+29))[i])
+#define CODEARITYMASK(x) (*((ptr *)((uptr)(x)+17)))
+#define CODEFREE(x) (*((iptr *)((uptr)(x)+21)))
+#define CODEINFO(x) (*((ptr *)((uptr)(x)+25)))
+#define CODEPINFOS(x) (*((ptr *)((uptr)(x)+29)))
+#define CODEIT(x,i) (((octet *)((uptr)(x)+33))[i])
 #define RELOCSIZE(x) (*((iptr *)((uptr)(x)+0)))
 #define RELOCCODE(x) (*((ptr *)((uptr)(x)+4)))
 #define RELOCIT(x,i) (((uptr *)((uptr)(x)+8))[i])

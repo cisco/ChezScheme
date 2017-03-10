@@ -58,6 +58,16 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{\protect\scheme{procedure-arity-mask} (9.4.1)}
+
+The new primitive procedure \scheme{procedure-arity-mask} takes a
+procedure \var{p} and returns a two's complement bitmask representing
+the argument counts accepted by \var{p}.
+For example, the arity mask for a two-argument procedure such as
+\var{cons} is $4$ (only bit two set),
+while the arity mask for a procedure that accepts one or more arguments,
+such as \var{list*}, is $-2$ (all but bit 0 set).
+
 \subsection{High-precision clock time in Windows 8 and up (9.4.1)}
 
 When running on Windows 8 and up, Chez Scheme uses the high-precision
