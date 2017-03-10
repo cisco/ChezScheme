@@ -370,3 +370,8 @@
     alloc.c, gc.c, scheme.c
 - fixed a few comments to refer to scheme.c rather than main.c
     externs.h, globals.h, thread.c
+- for 64-bit Windows systems, now copying foreign-procedure
+  double-precision floating-point register arguments to integer
+  registers as required for varargs functions. Windows does not
+  support single-precision floating-point arguments as varargs.
+    foreign.ms, np-languages.ss, x86_64.ss

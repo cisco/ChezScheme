@@ -794,6 +794,11 @@
     [(op (x ur) (y ur) (z imm32))
      `(asm ,info ,(asm-fl-load op (info-loadfl-flreg info)) ,x ,y ,z)])
 
+  (define-instruction value (get-double)
+    [(op (z ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,info ,(asm-get-double (info-loadfl-flreg info))))])
+
   (define-instruction effect (flt)
     [(op (x mem ur) (y ur)) `(asm ,info ,asm-flt ,x ,y)])
 
@@ -979,7 +984,7 @@
                      ; threaded version specific
                      asm-get-tc
                      ; machine dependent exports
-                     asm-sext-rax->rdx asm-store-single->double asm-kill)
+                     asm-sext-rax->rdx asm-store-single->double asm-kill asm-get-double)
 
   (define ax-register?
     (case-lambda
@@ -1781,6 +1786,11 @@
             [(load-single) (emit sse.movss src (cons 'reg flreg) code*)]
             [(load-double) (emit sse.movsd src (cons 'reg flreg) code*)])))))
 
+  (define asm-get-double
+    (lambda (flreg)
+      (lambda (code* dst)
+        (emit sse.movd (cons 'reg flreg) (cons 'reg dst) code*))))
+
   (define asm-flt
     (lambda (code* src flonumreg)
       (Trivit (src)
@@ -2420,6 +2430,12 @@
                   (lambda (fpreg)
                     (lambda (x) ; requires var
                       `(inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero ,(%constant flonum-data-disp))))]
+                 [load-double-reg2
+                  (lambda (fpreg ireg)
+                    (lambda (x) ; requires var
+                      (%seq
+                       (inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero ,(%constant flonum-data-disp))
+                       (set! ,ireg (inline ,(make-info-loadfl fpreg) ,%get-double)))))]
                  [load-single-reg
                   (lambda (fpreg)
                     (lambda (x) ; requires var
@@ -2445,9 +2461,10 @@
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< i 4)
-                                   (loop (cdr types)
-                                     (cons (load-double-reg (vector-ref vfp i)) locs)
-                                     regs (fx+ i 1) isp)
+                                   (let ([reg (vector-ref vint i)])
+                                     (loop (cdr types)
+                                       (cons (load-double-reg2 (vector-ref vfp i) reg) locs)
+                                       (cons reg regs) (fx+ i 1) isp))
                                    (loop (cdr types)
                                      (cons (load-double-stack isp) locs)
                                      regs i (fx+ isp 8)))]
