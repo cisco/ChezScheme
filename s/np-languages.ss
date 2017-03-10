@@ -540,6 +540,7 @@
   (declare-primitive -/eq value #f)
   (declare-primitive asmlibcall value #f)
   (declare-primitive fstpl value #f) ; x86 only
+  (declare-primitive get-double value #t) ; x86_64
   (declare-primitive get-tc value #f) ; threaded version only
   (declare-primitive lea1 value #t)
   (declare-primitive lea2 value #t)
