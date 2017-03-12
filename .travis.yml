@@ -1,9 +1,8 @@
 language: c
-sudo: required
 matrix:
   include:
-#    - os: osx
-#      env: TARGET_MACHINE=i3osx
+    - os: osx
+      env: TARGET_MACHINE=i3osx
 #    - os: osx
 #      env: TARGET_MACHINE=ti3osx
 #    - os: osx
@@ -18,8 +17,12 @@ matrix:
 #      env: TARGET_MACHINE=a6le
 #    - os: linux
 #      env: TARGET_MACHINE=ta6le
-install:
-  - if [[ "$TARGET_MACHINE" == "i3le" || "$TARGET_MACHINE" == "ti3le" ]] ; then sudo apt-get update -y ; fi
-  - if [[ "$TARGET_MACHINE" == "i3le" || "$TARGET_MACHINE" == "ti3le" ]] ; then sudo apt-get install -y ia32-libs lib32z1 lib32ncurses5 lib32bz2-1.0 ; fi
+dist: trusty
+addons:
+  apt:
+    packages:
+      - lib32z1
+      - lib32ncurses5
+      - lib32bz2
 script:
   - ./configure -m=$TARGET_MACHINE && make && ( cd ${TARGET_MACHINE}/mats && make partialx 2>&1 ) | tee Make.out | grep '^matting '
