@@ -17,5 +17,8 @@ matrix:
       env: TARGET_MACHINE=a6le
     - os: linux
       env: TARGET_MACHINE=ta6le
+install:
+  - if [[ "$TARGET_MACHINE" == "i3le" || "$TARGET_MACHINE" == "ti3le" ]] ; then apt-get update -y ; fi
+  - if [[ "$TARGET_MACHINE" == "i3le" || "$TARGET_MACHINE" == "ti3le" ]] ; then apt-get install -y libc6-dev-x32 libc6-x32 lib32ncurses5 lib32ncurses5-dev ; fi
 script:
   - ./configure -m=$TARGET_MACHINE && make && make test 2>&1 | tee Make.out | grep '^matting '
