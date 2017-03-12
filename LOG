@@ -350,3 +350,9 @@
   by the System V ABI.
      x86_64.ss,
      foreign.ms
+- added travis-ci automation script and a 'partialx' testing target to
+  allow us to perform more than a single run of testing without running
+  afoul of travis-ci's 50-minute build timeout.  'partialx' tests six
+  of the twelve configurations tested by 'allx'.
+     .travis.yml (new),
+     mats/Mf-base
