@@ -356,3 +356,7 @@
   of the twelve configurations tested by 'allx'.
      .travis.yml (new),
      mats/Mf-base
+- paired the 'partialx' down to just four test configurations, with one
+  interpreter run, to try to get the threaded builds into line with
+  travis-ci's timeout.
+     mats/Mf-base
