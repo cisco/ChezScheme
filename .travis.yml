@@ -1,7 +1,4 @@
 language: c
-os:
-  - linux
-  - osx
 matrix:
   include:
     - os: osx
@@ -21,4 +18,4 @@ matrix:
     - os: linux
       env: TARGET_MACHINE=ta6le
 script:
-  - ./configure $TARGET_MACHINE && make && make test 2>&1 | tee Make.out | grep '^matting '
+  - ./configure -m=$TARGET_MACHINE && make && make test 2>&1 | tee Make.out | grep '^matting '
