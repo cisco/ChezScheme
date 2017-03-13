@@ -206,7 +206,7 @@ extern s_thread_cond_t *S_make_condition PROTO((void));
 extern void S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m));
 #endif
 
-/* main.c */
+/* scheme.c */
 extern void S_generic_invoke PROTO((ptr tc, ptr code));
 
 /* number.c */

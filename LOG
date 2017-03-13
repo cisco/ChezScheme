@@ -368,3 +368,5 @@
   now treated essentially like fxvectors, strings, and bytevectors.
     cmacros.ss, cpnanopass.ss, prims.ss, mkheader.ss,
     alloc.c, gc.c, scheme.c
+- fixed a few comments to refer to scheme.c rather than main.c
+    externs.h, globals.h, thread.c
