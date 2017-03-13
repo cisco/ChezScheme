@@ -24,7 +24,7 @@ EXTERN uptr S_checkheap_errors;
 EXTERN ptr S_child_processes[static_generation+1];
 #endif /* WIN32 */
 
-/* main.c */
+/* scheme.c */
 EXTERN IBOOL S_boot_time;
 EXTERN IBOOL S_errors_to_console;
 EXTERN ptr S_threads;
@@ -64,7 +64,7 @@ EXTERN ptr S_foreign_dynamic;
 
 /* globals that do need to be preserved in a saved heap */
 EXTERN struct {
-  /* main.c */
+  /* scheme.c */
     double thread_context[size_tc / sizeof(double)];
     ptr active_threads_id;
     ptr error_invoke_code_object;

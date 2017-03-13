@@ -28,7 +28,7 @@ void S_thread_init() {
     S_G.threadno = FIX(0);
 
 #ifdef PTHREADS
-   /* this is also reset in main.c after heap restoration */
+   /* this is also reset in scheme.c after heap restoration */
     s_thread_mutex_init(&S_tc_mutex.pmutex);
     S_tc_mutex.owner = s_thread_self();
     S_tc_mutex.count = 0;
@@ -44,7 +44,7 @@ void S_thread_init() {
    when there is no current thread.  we have to avoid thread-local
    allocation in at least the latter case, so we call vector_in and
    cons_in and arrange for S_thread to use find_room rather than
-   thread_find_room.  main.c does part of the initialization of the
+   thread_find_room.  scheme.c does part of the initialization of the
    base thread (e.g., parameters, current input/output ports) in one
    or more places. */
 ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
