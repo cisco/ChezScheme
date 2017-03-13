@@ -238,7 +238,7 @@
         (deftypep "Sprocedurep" ($ mask-closure) ($ type-closure))
         (deftypep "Sflonump" ($ mask-flonum) ($ type-flonum))
   
-        (deftotypep "Svectorp" ($ mask-fixnum) ($ type-fixnum))
+        (deftotypep "Svectorp" ($ mask-vector) ($ type-vector))
         (deftotypep "Sfxvectorp" ($ mask-fxvector) ($ type-fxvector))
         (deftotypep "Sbytevectorp" ($ mask-bytevector) ($ type-bytevector))
         (deftotypep "Sstringp" ($ mask-string) ($ type-string))
@@ -265,7 +265,7 @@
         (def "Svector_length(x)"
           (format "((iptr)((uptr)~a>>~d))"
             (access "x" vector type)
-            ($ fixnum-offset)))
+            ($ vector-length-offset)))
         (defref Svector_ref vector data)
 
         (def "Sfxvector_length(x)"

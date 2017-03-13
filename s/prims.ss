@@ -286,10 +286,14 @@
 (define make-vector
    (case-lambda
       [(n x)
+       ; if this fails, we have to change the test and message below
+       (meta-assert (= (constant maximum-vector-length) (constant most-positive-fixnum)))
        (unless (and (fixnum? n) (fx>= n 0))
           ($oops 'make-vector "~s is not a nonnegative fixnum" n))
        (make-vector n x)]
       [(n)
+       ; if this fails, we have to change the test and message below
+       (meta-assert (= (constant maximum-vector-length) (constant most-positive-fixnum)))
        (unless (and (fixnum? n) (fx>= n 0))
           ($oops 'make-vector "~s is not a nonnegative fixnum" n))
        (make-vector n)]))
