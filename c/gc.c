@@ -258,8 +258,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
               if (m != n)
                   *((ptr *)((uptr)UNTYPE(p,type_typed_object) + m)) = FIX(0);
           }
-      } else if (TYPEP(tf, mask_fixnum, type_fixnum)) {
-        /* vector type/length field is a fixnum */
+      } else if (TYPEP(tf, mask_vector, type_vector)) {
           iptr len, n;
           len = Svector_length(pp);
           n = size_vector(len);
@@ -267,6 +266,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           S_G.countof[tg][countof_vector] += 1;
           S_G.bytesof[tg][countof_vector] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
+        /* assumes vector lengths look like fixnums; if not, vectors will need their own space */
           find_room(space_impure, tg, type_typed_object, n, p);
           copy_ptrs(type_typed_object, p, pp, n);
         /* pad if necessary */
@@ -546,8 +546,8 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   } else if (t == type_flonum) {
     /* nothing to sweep */;
  /* typed objects */
-  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_fixnum, type_fixnum)) {
-    sweep_ptrs(&INITVECTIT(p, 0), UNFIX(tf));
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
+    sweep_ptrs(&INITVECTIT(p, 0), Svector_length(p));
   } else if (TYPEP(tf, mask_string, type_string) || TYPEP(tf, mask_bytevector, type_bytevector) || TYPEP(tf, mask_fxvector, type_fxvector)) {
     /* nothing to sweep */;
   } else if (TYPEP(tf, mask_record, type_record)) {
@@ -1303,7 +1303,7 @@ static iptr size_object(p) ptr p; {
     } else if (t == type_flonum) {
         return size_flonum;
   /* typed objects */
-    } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_fixnum, type_fixnum)) {
+    } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
         return size_vector(Svector_length(p));
     } else if (TYPEP(tf, mask_string, type_string)) {
         return size_string(Sstring_length(p));

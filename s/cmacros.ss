@@ -700,7 +700,7 @@
 (define-constant ptr sbwp           #b01001110)
 
 ;;; vector type/length field is a fixnum
-;;; (define-constant type-vector (constant type-fixnum))
+(define-constant type-vector (constant type-fixnum))
 ; #b000 occupied by vectors on 32- and 64-bit machines
 (define-constant type-string                #b001)
 ; #b010 unused
@@ -749,6 +749,12 @@
        (constant most-positive-fixnum)))
 (define-constant bigit-bits                32)
 (define-constant bigit-bytes               (/ (constant bigit-bits) 8))
+
+; vector length field is a fixnum
+(define-constant vector-length-offset (constant fixnum-offset))
+(define-constant iptr maximum-vector-length
+  (min (- (expt 2 (fx- (constant ptr-bits) (constant vector-length-offset))) 1)
+       (constant most-positive-fixnum)))
 
 ; fxvector length field is stored with type
 (define-constant fxvector-length-offset 3)
@@ -829,7 +835,7 @@
 (define-constant mask-bwp     (constant byte-constant-mask))
 
 ;;; vector type/length field is a fixnum
-;;; (define-constant mask-vector (constant mask-fixnum))
+(define-constant mask-vector (constant mask-fixnum))
 (define-constant mask-string            #b111)
 (define-constant mask-fxvector          #b111)
 (define-constant mask-bytevector        #b111)
@@ -878,6 +884,7 @@
 (define-constant mask-positive-fixnum #x80000003)
 
 (define-constant fixnum-factor        (expt 2 (constant fixnum-offset)))
+(define-constant vector-length-factor (expt 2 (constant vector-length-offset)))
 (define-constant string-length-factor (expt 2 (constant string-length-offset)))
 (define-constant bignum-length-factor (expt 2 (constant bignum-length-offset)))
 (define-constant fxvector-length-factor (expt 2 (constant fxvector-length-offset)))
@@ -1140,7 +1147,7 @@
    [ptr denominator]))
 
 (define-primitive-structure-disps vector type-typed-object
-  ([ptr type]         ;; type is the fixnum length in ptrs
+  ([iptr type]
    [ptr data 0]))
 
 (define-primitive-structure-disps fxvector type-typed-object

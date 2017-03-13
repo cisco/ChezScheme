@@ -340,13 +340,21 @@
   the trace procedures or syntactic forms, procedure-arity-mask
   may report counts that are not actually allowed by the source
   procedure.
-     cmacros.ss, compile.ss, cpnanopass.ss, mkheader.ss, primdata.ss,
-     prims.ss, strip.ss,
-     fasl.c, gc.c, globals.h, prim.c, prim5.c, scheme.c, schsig.c,
-     misc.ms, root-experr*,
-     objects.stex
+    cmacros.ss, compile.ss, cpnanopass.ss, mkheader.ss, primdata.ss,
+    prims.ss, strip.ss,
+    fasl.c, gc.c, globals.h, prim.c, prim5.c, scheme.c, schsig.c,
+    misc.ms, root-experr*,
+    objects.stex
 - for non-win32 systems, now setting al register to a count of the
   floating-point register arguments as required for varargs functions
   by the System V ABI.
-     x86_64.ss,
-     foreign.ms
+    x86_64.ss,
+    foreign.ms
+- added a missing quote mark in new printf mat Windows case
+    foreign.ms
+- eliminated some direct assumptions that a vector's type/length field
+  is a fixnum and added meta-asserts to verify that it is in a couple of
+  others, to facilitate future changes to vector typing.  vectors are
+  now treated essentially like fxvectors, strings, and bytevectors.
+    cmacros.ss, cpnanopass.ss, prims.ss, mkheader.ss,
+    alloc.c, gc.c, scheme.c

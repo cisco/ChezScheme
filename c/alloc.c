@@ -47,8 +47,7 @@ void S_alloc_init() {
 
         S_protect(&S_G.null_vector);
         find_room(space_new, 0, type_typed_object, size_vector(0), S_G.null_vector);
-       /* vector type/length field is a fixnum */
-        VECTTYPE(S_G.null_vector) = FIX(0);
+        VECTTYPE(S_G.null_vector) = (0 << vector_length_offset) | type_vector;
 
         S_protect(&S_G.null_fxvector);
         find_room(space_new, 0, type_typed_object, size_fxvector(0), S_G.null_fxvector);
@@ -498,8 +497,7 @@ ptr S_vector_in(s, g, n) ISPC s; IGEN g; iptr n; {
     d = size_vector(n);
    /* S_vector_in always called with mutex */
     find_room(s, g, type_typed_object, d, p);
-   /* vector type/length field is a fixnum */
-    VECTTYPE(p) = FIX(n);
+    VECTTYPE(p) = (n << vector_length_offset) | type_vector;
     return p;
 }
 
@@ -516,8 +514,7 @@ ptr S_vector(n) iptr n; {
 
     d = size_vector(n);
     thread_find_room(tc, type_typed_object, d, p);
-   /* vector type/length field is a fixnum */
-    VECTTYPE(p) = FIX(n);
+    VECTTYPE(p) = (n << vector_length_offset) | type_vector;
     return p;
 }
 

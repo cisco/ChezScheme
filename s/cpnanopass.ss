@@ -3545,6 +3545,52 @@
                   (if (fx< delta 0)
                       (%inline sll ,e (immediate ,(fx- delta)))
                       (%inline srl ,e (immediate ,delta)))))))
+        (define extract-length
+          (lambda (t/l tag-bits length-offset)
+            (let ([e (translate t/l length-offset (constant fixnum-offset))])
+              (let ([k (fxarithmetic-shift-right tag-bits (fx- length-offset (constant fixnum-offset)))])
+                (if (fx= k 0)
+                    e
+                    (%inline logand ,e (immediate ,(fxlognot k))))))))
+        (define build-type/length
+          (lambda (e type current-shift target-shift)
+            (let ([e (translate e current-shift target-shift)])
+              (if (eqv? type 0)
+                  e
+                  (%inline logor ,e (immediate ,type))))))
+        (define-syntax build-ref-check
+          (syntax-rules ()
+            [(_ type-disp maximum-length length-offset type mask)
+             (lambda (e-v e-i maybe-e-new)
+               ; NB: caller must bind e-v, e-i, and maybe-e-new
+               (safe-assert (no-need-to-bind? #t e-v))
+               (safe-assert (no-need-to-bind? #t e-i))
+               (safe-assert (or (not maybe-e-new) (no-need-to-bind? #t maybe-e-new)))
+               (build-and
+                 (%type-check mask-typed-object type-typed-object ,e-v)
+                 (bind #t ([t (%mref ,e-v ,(constant type-disp))])
+                   (cond
+                     [(expr->index e-i 1 (constant maximum-length)) =>
+                      (lambda (index)
+                        (let ([e (%inline u<
+                                   (immediate ,(logor (ash index (constant length-offset)) (constant type)))
+                                   ,t)])
+                          (if (and (eqv? (constant type) (constant type-fixnum))
+                                   (eqv? (constant mask) (constant mask-fixnum)))
+                              (build-and e (build-fixnums? (if maybe-e-new (list t maybe-e-new) (list t))))
+                              (build-and
+                                (%type-check mask type ,t)
+                                (if maybe-e-new (build-and e (build-fixnums? (list maybe-e-new))) e)))))]
+                     [else
+                      (let ([e (%inline u< ,e-i ,(extract-length t (constant type) (constant length-offset)))])
+                        (if (and (eqv? (constant type) (constant type-fixnum))
+                                 (eqv? (constant mask) (constant mask-fixnum)))
+                            (build-and e (build-fixnums? (if maybe-e-new (list e-i t maybe-e-new) (list e-i t))))
+                            (build-and
+                              (%type-check mask type ,t)
+                              (build-and
+                                (build-fixnums? (if maybe-e-new (list e-i maybe-e-new) (list e-i)))
+                                e))))]))))]))
         (define inline-args-limit 10)
         (define reduce-equality
           (lambda (src sexpr moi e1 e2 e*)
@@ -4612,7 +4658,7 @@
           (typed-object-pred string? mask-string type-string)
           (typed-object-pred $system-code? mask-system-code type-system-code)
           (typed-object-pred $tlc? mask-tlc type-tlc)
-          (typed-object-pred vector? mask-fixnum type-fixnum)
+          (typed-object-pred vector? mask-vector type-vector)
           (typed-object-pred thread? mask-thread type-thread))
         (define-inline 3 $bigpositive?
           [(e) (%type-check mask-signed-bignum type-positive-bignum
@@ -4729,7 +4775,9 @@
                  (let loop ([e* e*] [i 0])
                    (if (null? e*)
                        `(seq
-                          (set! ,(%mref ,t ,(constant vector-type-disp)) (immediate ,(fix n)))
+                          (set! ,(%mref ,t ,(constant vector-type-disp))
+                            (immediate ,(+ (fx* n (constant vector-length-factor))
+                                           (constant type-vector))))
                           ,t)
                        `(seq
                           (set! ,(%mref ,t ,(fx+ i (constant vector-data-disp))) ,(car e*))
@@ -4745,7 +4793,7 @@
                         `(seq
                            (set! ,(%mref ,t ,(constant fxvector-type-disp))
                              (immediate ,(+ (fx* n (constant fxvector-length-factor))
-                                               (constant type-fxvector))))
+                                            (constant type-fxvector))))
                            ,t)
                         `(seq
                            (set! ,(%mref ,t ,(fx+ i (constant fxvector-data-disp))) ,(car e*))
@@ -4838,7 +4886,6 @@
                (define-inline 3 prim
                  [(e) (%mref ,e ,(constant disp))])]))
           (inline-accessor unbox box-ref-disp)
-          (inline-accessor vector-length vector-type-disp) ; assumes type/length field holds a fixnum
           (inline-accessor $symbol-name symbol-name-disp)
           (inline-accessor $symbol-property-list symbol-plist-disp)
           (inline-accessor $system-property-list symbol-splist-disp)
@@ -4871,25 +4918,13 @@
              `(if ,(%typed-object-check mask-box type-box ,e)
                   ,(%mref ,e ,(constant box-ref-disp))
                   ,(build-libcall #t src sexpr unbox e)))])
-        (define-inline 2 vector-length
-          [(e) (let ([Lerr (make-local-label 'Lerr)])
-                 (bind #t (e)
-                   `(if ,(%type-check mask-typed-object type-typed-object ,e)
-                        ,(bind #t ([t/l (%mref ,e ,(constant vector-type-disp))])
-                           `(if ,(%type-check mask-fixnum type-fixnum ,t/l)
-                                ,t/l
-                                (goto ,Lerr)))
-                        (label ,Lerr ,(build-libcall #t #f sexpr vector-length e)))))])
         (let ()
           (define-syntax def-len
             (syntax-rules ()
               [(_ prim mask type type-disp length-offset)
                (define-inline 3 prim
-                 [(e) (%inline logand
-                         ,(translate (%mref ,e ,(constant type-disp))
-                            (constant length-offset)
-                            (constant fixnum-offset))
-                         (immediate ,(- (constant fixnum-factor))))])]))
+                 [(e) (extract-length (%mref ,e ,(constant type-disp)) (constant type) (constant length-offset))])]))
+          (def-len vector-length mask-vector type-vector vector-type-disp vector-length-offset)
           (def-len fxvector-length mask-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
           (def-len string-length mask-string type-string string-type-disp string-length-offset)
           (def-len bytevector-length mask-bytevector type-bytevector bytevector-type-disp bytevector-length-offset)
@@ -4904,11 +4939,10 @@
                           `(if ,(%type-check mask-typed-object type-typed-object ,e)
                                ,(bind #t ([t/l (%mref ,e ,(constant type-disp))])
                                   `(if ,(%type-check mask type ,t/l)
-                                       ,(%inline logand
-                                         ,(translate t/l (constant length-offset) (constant fixnum-offset))
-                                         (immediate ,(- (constant fixnum-factor))))
+                                       ,(extract-length t/l (constant type) (constant length-offset))
                                        (goto ,Lerr)))
                                (label ,Lerr ,(build-libcall #t #f sexpr prim e)))))])]))
+          (def-len vector-length mask-vector type-vector vector-type-disp vector-length-offset)
           (def-len fxvector-length mask-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
           (def-len string-length mask-string type-string string-type-disp string-length-offset)
           (def-len bytevector-length mask-bytevector type-bytevector bytevector-type-disp bytevector-length-offset))
@@ -5252,7 +5286,7 @@
                        ,(%constant sfalse))
                    ,e
                    ,libcall)))
-          (safe-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
+          (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
           (define-inline 3 virtual-register
             [(e-idx)
              (or (constant-ref e-idx)
@@ -7612,33 +7646,7 @@
                 [(e-name e-handler e-ib e-ob) (go e-name e-handler e-ib e-ob `(quote #f))]
                 [(e-name e-handler e-ib e-ob e-info) (go e-name e-handler e-ib e-ob e-info)]))))
         (let ()
-          (define build-fxvector-ref-check
-            (lambda (e-fv e-i maybe-e-new)
-              ; NB: caller must bind e-fv, e-i, and maybe-e-new
-              (safe-assert (no-need-to-bind? #t e-fv))
-              (safe-assert (no-need-to-bind? #t e-i))
-              (safe-assert (or (not maybe-e-new) (no-need-to-bind? #t maybe-e-new)))
-              (build-and
-                (%type-check mask-typed-object type-typed-object ,e-fv)
-                (bind #t ([t (%mref ,e-fv ,(constant fxvector-type-disp))])
-                  (build-and
-                    (%type-check mask-fxvector type-fxvector ,t)
-                    (cond
-                      [(expr->index e-i 1 (constant maximum-fxvector-length)) =>
-                       (lambda (index)
-                         ((lambda (e) (if maybe-e-new (build-and (build-fixnums? (list maybe-e-new)) e) e))
-                          (%inline u<
-                             (immediate ,(logor (ash index (constant fxvector-length-offset)) (constant type-fxvector)))
-                             ,t)))]
-                      [else
-                       (build-and
-                         (build-fixnums? (if maybe-e-new (list e-i maybe-e-new) (list e-i)))
-                         (%inline u< ,e-i
-                            ,(%inline logand
-                              ,(translate t
-                                 (constant fxvector-length-offset)
-                                 (constant fixnum-offset))
-                              (immediate ,(- (constant fixnum-factor))))))]))))))
+          (define build-fxvector-ref-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-fxvector mask-fxvector))
           (define-inline 2 $fxvector-ref-check?
             [(e-fv e-i) (bind #t (e-fv e-i) (build-fxvector-ref-check e-fv e-i #f))])
           (let ()
@@ -7679,29 +7687,7 @@
         (let ()
           (define build-string-ref-check
             (lambda (e-s e-i)
-              ; NB: caller must bind e-s and e-i
-              (safe-assert (no-need-to-bind? #t e-s))
-              (safe-assert (no-need-to-bind? #t e-i))
-              (build-and
-                (%type-check mask-typed-object type-typed-object ,e-s)
-                (bind #t ([t (%mref ,e-s ,(constant string-type-disp))])
-                  (build-and
-                    (%type-check mask-string type-string ,t)
-                    (cond
-                      [(expr->index e-i 1 (constant maximum-string-length)) =>
-                       (lambda (index)
-                         (%inline u<
-                           (immediate ,(logor (ash index (constant string-length-offset)) (constant type-string)))
-                           ,t))]
-                      [else
-                        (build-and
-                          (%type-check mask-fixnum type-fixnum ,e-i)
-                          (%inline u< ,e-i
-                            ,(%inline logand
-                               ,(translate t
-                                  (constant string-length-offset)
-                                  (constant fixnum-offset))
-                               (immediate ,(- (constant fixnum-factor))))))]))))))
+              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-string mask-string) e-s e-i #f)))
           (define-inline 2 $string-ref-check?
             [(e-s e-i) (bind #t (e-s e-i) (build-string-ref-check e-s e-i))])
           (let ()
@@ -7752,18 +7738,7 @@
                       ,(go e-s e-i e-new)
                       ,(build-libcall #t src sexpr string-set! e-s e-i e-new)))])))
         (let ()
-          ; assumes vector type is a fixnum
-          (define build-vector-ref-check
-            (lambda (e-v e-i maybe-e-new)
-              ; NB: caller must bind e-v and e-i
-              (safe-assert (no-need-to-bind? #t e-v))
-              (safe-assert (no-need-to-bind? #t e-i))
-              (build-and
-                (%type-check mask-typed-object type-typed-object ,e-v)
-                (bind #t ([t (%mref ,e-v ,(constant vector-type-disp))])
-                  (build-and
-                    (%inline u< ,e-i ,t)
-                    (build-fixnums? (if maybe-e-new (list e-i t maybe-e-new) (list e-i t))))))))
+          (define build-vector-ref-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-vector mask-vector))
           (define-inline 2 $vector-ref-check?
             [(e-v e-i) (bind #t (e-v e-i) (build-vector-ref-check e-v e-i #f))])
           (let ()
@@ -7842,11 +7817,7 @@
                                 ,(if (fx= bytes 1)
                                      e-i
                                      (%inline + ,e-i (immediate ,(fix (fx- bytes 1)))))
-                                ,(%inline logand
-                                   ,(translate t
-                                      (constant bytevector-length-offset)
-                                      (constant fixnum-offset))
-                                   (immediate ,(- (constant fixnum-factor))))))]))))))]
+                                ,(extract-length t (constant type-bytevector) (constant bytevector-length-offset))))]))))))]
              [(seq (profile ,src) ,[e]) (and e `(seq (profile ,src) ,e))]
              [else #f])])
         (let ()
@@ -7886,10 +7857,10 @@
                                                     (immediate ,(- (constant byte-alignment)))))])
                                  (seq
                                    (set! ,(%mref ,t-vec ,(constant bytevector-type-disp))
-                                     ,(%inline logor
-                                       ,(%inline sll ,t-bytes
-                                         ,(%constant bytevector-length-offset))
-                                       ,(%constant type-bytevector)))
+                                     ,(build-type/length t-bytes
+                                        (constant type-bytevector)
+                                        0
+                                        (constant bytevector-length-offset)))
                                    ,(if maybe-e-fill
                                         (build-bytevector-fill t-vec t-bytes maybe-e-fill)
                                         t-vec))))))))))
@@ -7991,11 +7962,10 @@
                       (quote ,(bytevector))
                       (seq
                         (set! ,(%mref ,bv ,(constant bytevector-type-disp))
-                          ,(%inline logor
-                            ,(%inline sll
-                              ,(build-unfix len)
-                              ,(%constant bytevector-length-offset))
-                            ,(%constant type-bytevector)))
+                          ,(build-type/length len
+                             (constant type-bytevector)
+                             (constant fixnum-offset)
+                             (constant bytevector-length-offset)))
                         ,bv))))])
 
         (let ()
@@ -8307,11 +8277,10 @@
                       (quote ,(string))
                       (seq
                         (set! ,(%mref ,e-str ,(constant string-type-disp))
-                          ,(%inline logor
-                            ,(translate e-len
-                               (constant fixnum-offset)
-                               (constant string-length-offset))
-                            ,(%constant type-string)))
+                          ,(build-type/length e-len
+                             (constant type-string)
+                             (constant fixnum-offset)
+                             (constant string-length-offset)))
                         ,e-str))))])
 
         (let ()
@@ -8349,11 +8318,10 @@
                                                   (immediate ,(- (constant byte-alignment)))))])
                                  (seq
                                    (set! ,(%mref ,t-str ,(constant string-type-disp))
-                                     ,(%inline logor
-                                       ,(translate t-bytes
-                                          (constant string-char-offset)
-                                          (constant string-length-offset))
-                                       ,(%constant type-string)))
+                                     ,(build-type/length t-bytes
+                                        (constant type-string)
+                                        (constant string-char-offset)
+                                        (constant string-length-offset)))
                                    ,(build-string-fill t-str t-bytes e-fill))))))))))
             (define default-fill `(immediate ,(ptr->imm #\nul)))
             (define-inline 3 make-string
@@ -8391,7 +8359,7 @@
         (let ()
           (define build-fxvector-fill
             (make-build-fill (constant ptr-bytes) (constant fxvector-data-disp)))
-          (safe-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
+          (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
           (let ()
             (define do-make-fxvector
               (lambda (e-length e-fill)
@@ -8421,11 +8389,10 @@
                                                 (immediate ,(- (constant byte-alignment)))))])
                                (seq
                                  (set! ,(%mref ,t-fxv ,(constant fxvector-type-disp))
-                                   ,(%inline logor
-                                     ,(translate e-length
-                                        (constant fixnum-offset)
-                                        (constant fxvector-length-offset))
-                                     ,(%constant type-fxvector)))
+                                   ,(build-type/length e-length
+                                      (constant type-fxvector)
+                                      (constant fixnum-offset)
+                                      (constant fxvector-length-offset)))
                                  ,(build-fxvector-fill t-fxv e-length e-fill)))))))))
             (define default-fill `(immediate ,(fix 0)))
             (define-inline 3 make-fxvector
@@ -8463,7 +8430,7 @@
         (let ()
           (define build-vector-fill
             (make-build-fill (constant ptr-bytes) (constant vector-data-disp)))
-          (safe-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
+          (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
           (let ()
             (define do-make-vector
               (lambda (e-length e-fill)
@@ -8478,7 +8445,8 @@
                                            (fx+ (constant header-size-vector) bytes))])
                               `(seq
                                  (set! ,(%mref ,t ,(constant vector-type-disp))
-                                   (immediate ,(fix n)))
+                                   (immediate ,(+ (fx* n (constant vector-length-factor))
+                                                  (constant type-vector))))
                                  ,(build-vector-fill t `(immediate ,bytes) e-fill))))))
                     (bind #t (e-length) ; fixnum length doubles as byte count
                       (let ([t-vec (make-tmp 'tvec)])
@@ -8491,7 +8459,11 @@
                                                                     (fx- (constant byte-alignment) 1))))
                                                 (immediate ,(- (constant byte-alignment)))))])
                                (seq
-                                 (set! ,(%mref ,t-vec ,(constant vector-type-disp)) ,e-length)
+                                 (set! ,(%mref ,t-vec ,(constant vector-type-disp))
+                                   ,(build-type/length e-length
+                                      (constant type-vector)
+                                      (constant fixnum-offset)
+                                      (constant vector-length-offset)))
                                  ,(build-vector-fill t-vec e-length e-fill)))))))))
             (define default-fill `(immediate ,(fix 0)))
             (define-inline 3 make-vector
@@ -8512,7 +8484,7 @@
                       (do-make-vector e-length e-fill))]))))
 
         (let ()
-          (safe-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
+          (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
           (define-inline 3 $make-eqhash-vector
             [(e-length)
              (let ([t-vec (make-tmp 'tvec)]
@@ -8528,7 +8500,11 @@
                                                           (fx- (constant byte-alignment) 1))))
                                          (immediate ,(- (constant byte-alignment)))))])
                         (seq
-                          (set! ,(%mref ,t-vec ,(constant vector-type-disp)) ,t-idx)
+                          (set! ,(%mref ,t-vec ,(constant vector-type-disp))
+                            ,(build-type/length t-idx
+                               (constant type-vector)
+                               (constant fixnum-offset)
+                               (constant vector-length-offset)))
                           (label ,Ltop
                             ,(%seq
                                (set! ,t-idx ,(%inline - ,t-idx (immediate ,(fix 1))))
@@ -9908,7 +9884,7 @@
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
         [(case-lambda ,info ,cl* ...)
          (let-values ([(local* tlbody) (flatten-clauses info cl* (info-lambda-dcl* info))])
-             (safe-assert (nodups local*))
+           (safe-assert (nodups local*))
            (info-lambda-dcl*-set! info (filter direct-call-label-referenced (info-lambda-dcl* info)))
            `(lambda ,info (,local* ...) ,tlbody))])
       (Tail : Tail (ir) -> Tail ())
@@ -11839,9 +11815,21 @@
                         (set! ,%td ,(%inline + ,%ac0 (immediate ,(fx+ (constant ptr-bytes) (fx- (constant byte-alignment) 1)))))
                         (set! ,%td ,(%inline logand ,%td (immediate ,(- (constant byte-alignment)))))
                         (set! ,%xp (alloc ,(make-info-alloc (constant type-typed-object) #f #f) ,%td))
-                        ,(begin
-                           (safe-assert (fx= (constant log2-ptr-bytes) (constant fixnum-offset)))
-                           `(set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%ac0))
+                        ,(let ([delta (fx- (constant vector-length-offset) (constant log2-ptr-bytes))])
+                           (safe-assert (fx>= delta 0))
+                           (if (fx= delta 0)
+                               (if (fx= (constant type-vector) 0)
+                                   `(set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%ac0)
+                                   (%seq
+                                     (set! ,%td ,(%inline logor ,%ac0 (immediate ,(constant type-vector))))
+                                     (set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td)))
+                               (%seq
+                                 (set! ,%td ,(%inline sll ,%ac0 (immediate ,delta)))
+                                 ,(if (fx= (constant type-vector) 0)
+                                      `(set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td)
+                                      (%seq
+                                        (set! ,%td ,(%inline logor ,%td (immediate ,(constant type-vector))))
+                                        (set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td))))))
                         ,(let f ([reg* arg-registers] [i 0])
                            (if (null? reg*)
                                (%seq

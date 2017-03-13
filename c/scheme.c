@@ -293,6 +293,11 @@ static void idiot_checks() {
     fprintf(stderr, "dirty_bytes[0] is not iptr-aligned wrt to seginfo struct\n");
     oops = 1;
   }
+  if (!Sfixnump(type_vector | ~mask_vector)) {
+    /* gc counts on vector type/length looking like a fixnum, so it can put vectors in space_impure */
+    fprintf(stderr, "vector type/length field does not look like a fixnum\n");
+    oops = 1;
+  }
 
   if (oops) S_abnormal_exit();
 }

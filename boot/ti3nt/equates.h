@@ -345,6 +345,7 @@ typedef unsigned __int64 U64;
 #define mask_tlc 0xFFFFFFFF
 #define mask_typed_object 0x7
 #define mask_unbound 0xFFFFFFFF
+#define mask_vector 0x3
 #define max_float_alignment 0x8
 #define max_integer_alignment 0x8
 #define max_real_space 0xA
@@ -355,6 +356,7 @@ typedef unsigned __int64 U64;
 #define maximum_fxvector_length (iptr)0x1FFFFFFF
 #define maximum_interrupt_index 0x4
 #define maximum_string_length (iptr)0x1FFFFFFF
+#define maximum_vector_length (iptr)0x1FFFFFFF
 #define minimum_segment_request 0x80
 #define most_negative_fixnum (iptr)-0x20000000
 #define most_positive_fixnum (iptr)0x1FFFFFFF
@@ -622,6 +624,7 @@ typedef unsigned __int64 U64;
 #define type_thread 0x4E
 #define type_tlc 0x5E
 #define type_typed_object 0x7
+#define type_vector 0x0
 #define typed_object_type_disp 0x1
 #define typedef_i16 "short"
 #define typedef_i32 "int"
@@ -641,6 +644,8 @@ typedef unsigned __int64 U64;
 #define underflow_limit 0x40
 #define unscaled_shot_1_shot_flag -0x1
 #define vector_data_disp 0x5
+#define vector_length_factor 0x4
+#define vector_length_offset 0x2
 #define vector_type_disp 0x1
 #define virtual_register_count 0x10
 #define visit_tag 0x0
@@ -742,7 +747,7 @@ typedef unsigned __int64 U64;
 #define SETSYMNAME(x,y) DIRTYSET(((ptr *)((uptr)(x)+17)),(y))
 #define SETSYMSPLIST(x,y) DIRTYSET(((ptr *)((uptr)(x)+21)),(y))
 #define SETSYMHASH(x,y) DIRTYSET(((ptr *)((uptr)(x)+25)),(y))
-#define VECTTYPE(x) (*((ptr *)((uptr)(x)+1)))
+#define VECTTYPE(x) (*((iptr *)((uptr)(x)+1)))
 #define INITVECTIT(x,i) (((ptr *)((uptr)(x)+5))[i])
 #define SETVECTIT(x,i,y) DIRTYSET((((ptr *)((uptr)(x)+5))+i),(y))
 #define FXVECTOR_TYPE(x) (*((iptr *)((uptr)(x)+1)))

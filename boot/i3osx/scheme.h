@@ -99,7 +99,7 @@ typedef unsigned char octet;
 #define Scar(x) (*((ptr *)((uptr)(x)+7)))
 #define Scdr(x) (*((ptr *)((uptr)(x)+11)))
 #define Sflonum_value(x) (*((double *)((uptr)(x)+6)))
-#define Svector_length(x) ((iptr)((uptr)(*((ptr *)((uptr)(x)+1)))>>2))
+#define Svector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>2))
 #define Svector_ref(x,i) (((ptr *)((uptr)(x)+5))[i])
 #define Sfxvector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>3))
 #define Sfxvector_ref(x,i) (((ptr *)((uptr)(x)+5))[i])
