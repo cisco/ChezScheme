@@ -95,6 +95,7 @@
   (lambda (s1 i1 s2 i2 k)
     (unless (string? s1) ($oops who "~s is not a string" s1))
     (unless (string? s2) ($oops who "~s is not a string" s2))
+    (when (string-immutable? s2) ($oops who "~s is immutable" s2))
     (let ([n1 (string-length s1)] [n2 (string-length s2)])
       (unless (and (fixnum? i1) (fx>= i1 0))
         ($oops who "invalid start value ~s" i1))
@@ -109,10 +110,26 @@
     ; whew!
       (#3%string-copy! s1 i1 s2 i2 k))))
 
+(set-who! string->immutable-string
+  (let ([null-immutable-string ($null-immutable-string)])
+    (lambda (v)
+      (unless (string? v)
+        ($oops who "~s is not a string" v))
+      (cond
+       [(string-immutable? v) v]
+       [(fx= 0 (string-length v))
+        null-immutable-string]
+       [else
+        (let ([v2 (string-copy v)])
+          ($string-set-immutable! v2)
+          v2)]))))
+
 (define substring-fill!
    (lambda (s m n c)
       (unless (string? s)
          ($oops 'substring-fill! "~s is not a string" s))
+      (when (string-immutable? s)
+         ($oops 'substring-fill! "~s is immutable" s))
       (unless (char? c)
          ($oops 'substring-fill! "~s is not a character" c))
       (let ([k (string-length s)])

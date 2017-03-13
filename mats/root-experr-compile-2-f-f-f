@@ -2066,6 +2066,11 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string->list: "incorrect argument count in call (string->list)".
 5_5.mo:Expected error in mat string->list: "incorrect argument count in call (string->list "ab" "cd")".
 5_5.mo:Expected error in mat string->list: "string->list: a is not a string".
+5_5.mo:Expected error in mat string->immutable-string: "string-set!: abc is immutable".
+5_5.mo:Expected error in mat string->immutable-string: "string-fill!: abc is immutable".
+5_5.mo:Expected error in mat string->immutable-string: "substring-fill!: abc is immutable".
+5_5.mo:Expected error in mat string->immutable-string: "string-copy!: abc is immutable".
+5_5.mo:Expected error in mat string->immutable-string: "string-truncate!: abc is immutable".
 bytevector.mo:Expected error in mat native-endianness: "incorrect argument count in call (native-endianness (quote big))".
 bytevector.mo:Expected error in mat endianness: "invalid endianness spam".
 bytevector.mo:Expected error in mat endianness: "invalid endianness (quote big)".
@@ -3535,6 +3540,37 @@ bytevector.mo:Expected error in mat bytevector=?: "incorrect argument count in c
 bytevector.mo:Expected error in mat bytevector=?: "bytevector=?: a is not a bytevector".
 bytevector.mo:Expected error in mat bytevector=?: "bytevector=?: "a" is not a bytevector".
 bytevector.mo:Expected error in mat tspl/csug-examples: "invalid endianness "spam"".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-uint-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-sint-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u8-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s8-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u16-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s16-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u16-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s16-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u24-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s24-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u32-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s32-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u32-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s32-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u40-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s40-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u48-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s48-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u56-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s56-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u64-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s64-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u64-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s64-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-single-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-double-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-single-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-double-native-set!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-fill!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-copy!: #vu8(42 42 42 42 42 42 ...) is immutable".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-truncate!: #vu8(42 42 42 42 42 42 ...) is immutable".
 misc.mo:Expected error in mat compiler1: "variable i-am-not-bound is not bound".
 misc.mo:Expected error in mat compiler1: "attempt to apply non-procedure oops".
 misc.mo:Expected error in mat compiler1: "incorrect argument count in call (g (list))".
@@ -3858,6 +3894,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a vector".
 5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
 5_6.mo:Expected error in mat vector-sort!: ">: b is not a real number".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-set!: #(1 2 3) is immutable".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-set-fixnum!: #(1 2 3) is immutable".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-fill!: #(1 2 3) is immutable".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is immutable".
+5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-set!: #vfx(1 2 3) is immutable".
+5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-fill!: #vfx(1 2 3) is immutable".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: a is not a string".
 5_7.mo:Expected error in mat gensym: "gensym: #(a b c) is not a string".

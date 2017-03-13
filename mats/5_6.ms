@@ -1132,3 +1132,47 @@
                 (errorf #f "failed")))))))
     (make-string 200 #\.))
 )
+
+(mat vector->immutable-vector
+    (begin
+      (define immutable-123-vector
+        (vector->immutable-vector (vector 1 2 3)))
+      (vector-immutable? immutable-123-vector))
+    
+    (equal? '#(1 2 3) immutable-123-vector)
+    (eq? immutable-123-vector
+         (vector->immutable-vector immutable-123-vector))
+    
+    (not (vector-immutable? (make-vector 5)))
+    
+    (vector-immutable? (vector->immutable-vector (vector)))
+    (not (vector-immutable? (vector)))
+    
+    (not (vector-immutable? (vector-copy immutable-123-vector)))
+
+    (error? (vector-set! immutable-123-vector 0 1))
+    (error? (vector-set-fixnum! immutable-123-vector 0 1))
+    (error? (vector-fill! immutable-123-vector 0))
+    (error? (vector-sort! < immutable-123-vector))
+)
+
+(mat fxvector->immutable-fxvector
+    (begin
+      (define immutable-123-fxvector
+        (fxvector->immutable-fxvector (fxvector 1 2 3)))
+      (fxvector-immutable? immutable-123-fxvector))
+    
+    (equal? '#vfx(1 2 3) immutable-123-fxvector)
+    (eq? immutable-123-fxvector
+         (fxvector->immutable-fxvector immutable-123-fxvector))
+    
+    (not (fxvector-immutable? (make-fxvector 5)))
+    
+    (fxvector-immutable? (fxvector->immutable-fxvector (fxvector)))
+    (not (fxvector-immutable? (fxvector)))
+    
+    (not (fxvector-immutable? (fxvector-copy immutable-123-fxvector)))
+
+    (error? (fxvector-set! immutable-123-fxvector 0 1))
+    (error? (fxvector-fill! immutable-123-fxvector 0))
+)

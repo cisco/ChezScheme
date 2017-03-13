@@ -69,9 +69,24 @@
       ($oops 'vector-copy "~s is not a vector" v))
     ($vector-copy v (vector-length v))))
 
+(set-who! vector->immutable-vector
+  (let ([null-immutable-vector ($null-immutable-vector)])
+    (lambda (v)
+      (unless (vector? v)
+        ($oops who "~s is not a vector" v))
+      (cond
+       [(vector-immutable? v) v]
+       [(fx= 0 (vector-length v))
+        null-immutable-vector]
+       [else
+        (let ([v2 (vector-copy v)])
+          ($vector-set-immutable! v2)
+          v2)]))))
+
 (set-who! vector-fill!
   (lambda (v obj)
     (unless (vector? v) ($oops who "~s is not a vector" v))
+    (when (vector-immutable? v) ($oops who "~s is immutable" v))
     (let ([n (vector-length v)])
       (do ([i 0 (fx+ i 1)])
           ((fx= i n) v)
@@ -115,6 +130,20 @@
             ($ptr-copy! fxv1 (constant fxvector-data-disp) fxv2
               (constant fxvector-data-disp) n))
         fxv2))))
+
+(set-who! fxvector->immutable-fxvector
+  (let ([null-immutable-fxvector ($null-immutable-fxvector)])
+    (lambda (v)
+      (unless (fxvector? v)
+        ($oops who "~s is not a fxvector" v))
+      (cond
+       [(fxvector-immutable? v) v]
+       [(fx= 0 (fxvector-length v))
+        null-immutable-fxvector]
+       [else
+        (let ([v2 (fxvector-copy v)])
+          ($fxvector-set-immutable! v2)
+          v2)]))))
 
 (set! vector-map
   (case-lambda
@@ -348,6 +377,7 @@
     (lambda (elt< v)
       (unless (procedure? elt<) ($oops who "~s is not a procedure" elt<))
       (unless (vector? v) ($oops who "~s is not a vector" v))
+      (when (vector-immutable? v) ($oops who "~s is immutable" v))
       (let ([n (vector-length v)])
         (unless (fx<= n 1)
           (let ([outvec (dovsort! elt< v n)])

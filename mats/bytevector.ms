@@ -10923,3 +10923,53 @@
                         ($bytevector-xor bv1 bv1))
           (errorf #f "bytevector-xor failed on ~s and ~s" bv1 bv1)))))
 )
+
+(mat bytevector->immutable-bytevector
+    (begin
+      (define immutable-100-bytevector
+        (bytevector->immutable-bytevector (make-bytevector 100 42)))
+      (bytevector-immutable? immutable-100-bytevector))
+    
+    (equal? (make-bytevector 100 42) immutable-100-bytevector)
+    (eq? immutable-100-bytevector
+         (bytevector->immutable-bytevector immutable-100-bytevector))
+    
+    (not (bytevector-immutable? (make-bytevector 5)))
+    
+    (bytevector-immutable? (bytevector->immutable-bytevector (bytevector)))
+    (not (bytevector-immutable? (bytevector)))
+    
+    (not (bytevector-immutable? (bytevector-copy immutable-100-bytevector)))
+
+    (error? (bytevector-uint-set! immutable-100-bytevector 0 1 (endianness big) 4))
+    (error? (bytevector-sint-set! immutable-100-bytevector 0 1 (endianness big) 4))
+    (error? (bytevector-u8-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-s8-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-u16-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s16-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u16-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-s16-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-u24-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s24-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u32-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s32-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u32-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-s32-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-u40-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s40-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u48-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s48-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u56-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s56-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u64-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-s64-set! immutable-100-bytevector 0 1 (endianness big)))
+    (error? (bytevector-u64-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-s64-native-set! immutable-100-bytevector 0 1))
+    (error? (bytevector-ieee-single-set! immutable-100-bytevector 0 1.0 (endianness big)))
+    (error? (bytevector-ieee-double-set! immutable-100-bytevector 0 1.0 (endianness big)))
+    (error? (bytevector-ieee-single-native-set! immutable-100-bytevector 0 1.0))
+    (error? (bytevector-ieee-double-native-set! immutable-100-bytevector 0 1.0))
+    (error? (bytevector-fill! immutable-100-bytevector 0))
+    (error? (bytevector-copy! '#vu8(4 5 6) 0 immutable-100-bytevector 0 3))
+    (error? (bytevector-truncate! immutable-100-bytevector 1))
+)

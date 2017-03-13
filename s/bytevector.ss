@@ -65,6 +65,9 @@
   (define (invalid-index who v i)
     ($oops who "invalid index ~s for bytevector ~s" i v))
 
+  (define (invalid-immutable who v)
+    ($oops who "~s is immutable" v))
+
   (define (invalid-fill-value who fill)
     ($oops who "~s is not a valid fill value" fill))
 
@@ -453,6 +456,7 @@
              #`(let ([value-okay? (value-pred bits)])
                  (lambda (v i k eness who)
                    (unless (bytevector? v) (not-a-bytevector who v))
+                   (when (bytevector-immutable? v) (invalid-immutable who v))
                    (unaligned-ref-check who (fxquotient bits 8) v i)
                    (unless (value-okay? k) (invalid-value who k))
                    (case eness
@@ -499,15 +503,14 @@
   (set-who! make-bytevector
     (case-lambda
       [(n fill)
-      ; if this fails, we have to change the test and message below
-       (meta-assert (= (constant maximum-bytevector-length) (constant most-positive-fixnum)))
        (unless (and (fixnum? n) (fx>= n 0)) ($oops who "~s is not a nonnegative fixnum" n))
+       (unless (fx<= n (constant maximum-bytevector-length)) ($oops who "~s is too large" n))
        (unless (fill? fill) (invalid-fill-value who fill))
        (#3%make-bytevector n fill)]
       [(n)
       ; if this fails, we have to change the test and message below
-       (meta-assert (= (constant maximum-bytevector-length) (constant most-positive-fixnum)))
        (unless (and (fixnum? n) (fx>= n 0)) ($oops who "~s is not a nonnegative fixnum" n))
+       (unless (fx<= n (constant maximum-bytevector-length)) ($oops who "~s is too large" n))
        (#3%make-bytevector n)]))
 
   (set! bytevector? (lambda (x) (#2%bytevector? x)))
@@ -515,6 +518,18 @@
   (set! bytevector-length
     (lambda (v)
       (#2%bytevector-length v)))
+
+  (set-who! $bytevector-set-immutable!
+    (lambda (v)
+      (unless (bytevector? v)
+        ($oops who "~s is not a bytevector" v))
+      (#3%$bytevector-set-immutable! v)))
+
+  (set-who! bytevector-immutable?
+    (lambda (v)
+      (unless (bytevector? v)
+        ($oops who "~s is not a bytevector" v))
+      (#3%bytevector-immutable? v)))
 
   (set! bytevector-s8-ref
     (lambda (v i)
@@ -534,12 +549,14 @@
 
   (set-who! $bytevector-set!
     (lambda (v i fill)
-      (if ($bytevector-ref-check? 8 v i)
+      (if ($bytevector-set!-check? 8 v i)
           (begin
             (unless (fill? fill) (invalid-value who fill))
             (#3%$bytevector-set! v i fill))
           (if (bytevector? v)
-              (invalid-index who v i)
+              (if (bytevector-immutable? v)
+                  (invalid-immutable who v)
+                  (invalid-index who v i))
               (not-a-bytevector who v)))))
 
   (set-who! bytevector-s16-native-ref
@@ -561,23 +578,27 @@
   (set-who! bytevector-s16-native-set!
     (let ([value-okay? (signed-value-pred 16)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 16 v i)
+        (if ($bytevector-set!-check? 16 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (#3%bytevector-s16-native-set! v i k))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                  (invalid-immutable who v)
+                  (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-u16-native-set!
     (let ([value-okay? (unsigned-value-pred 16)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 16 v i)
+        (if ($bytevector-set!-check? 16 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (#3%bytevector-u16-native-set! v i k))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                    (invalid-immutable who v)
+                    (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-s32-native-ref
@@ -599,28 +620,32 @@
   (set-who! bytevector-s32-native-set!
     (let ([value-okay? (signed-value-pred 32)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 32 v i)
+        (if ($bytevector-set!-check? 32 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (#3%bytevector-s32-native-set! v i k))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                    (invalid-immutable who v)
+                    (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-u32-native-set!
     (let ([value-okay? (unsigned-value-pred 32)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 32 v i)
+        (if ($bytevector-set!-check? 32 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (#3%bytevector-u32-native-set! v i k))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                    (invalid-immutable who v)
+                    (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-s64-native-ref
     (lambda (v i)
-      (if ($bytevector-ref-check? 64 v i)
+      (if ($bytevector-set!-check? 64 v i)
           (constant-case ptr-bits
             [(64) (#3%bytevector-s64-native-ref v i)]
             [(32)
@@ -632,7 +657,9 @@
                 (logor (ash (#3%bytevector-s32-native-ref v (fx+ i 4)) 32)
                        (#3%bytevector-u32-native-ref v i))])])
           (if (bytevector? v)
-              (invalid-index who v i)
+              (if (bytevector-immutable? v)
+                  (invalid-immutable who v)
+                  (invalid-index who v i))
               (not-a-bytevector who v)))))
 
   (set-who! bytevector-u64-native-ref
@@ -655,7 +682,7 @@
   (set-who! bytevector-s64-native-set!
     (let ([value-okay? (signed-value-pred 64)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 64 v i)
+        (if ($bytevector-set!-check? 64 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (constant-case ptr-bits
@@ -669,13 +696,15 @@
                     (#3%bytevector-s32-native-set! v (fx+ i 4) (ash k -32))
                     (#3%bytevector-u32-native-set! v i (logand k (- (expt 2 32) 1)))])]))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                    (invalid-immutable who v)
+                    (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-u64-native-set!
     (let ([value-okay? (unsigned-value-pred 64)])
       (lambda (v i k)
-        (if ($bytevector-ref-check? 64 v i)
+        (if ($bytevector-set!-check? 64 v i)
             (begin
               (unless (value-okay? k) (invalid-value who k))
               (constant-case ptr-bits
@@ -689,7 +718,9 @@
                     (#3%bytevector-u32-native-set! v (fx+ i 4) (ash k -32))
                     (#3%bytevector-u32-native-set! v i (logand k (- (expt 2 32) 1)))])]))
             (if (bytevector? v)
-                (invalid-index who v i)
+                (if (bytevector-immutable? v)
+                    (invalid-immutable who v)
+                    (invalid-index who v i))
                 (not-a-bytevector who v))))))
 
   (set-who! bytevector-ieee-single-native-ref
@@ -710,20 +741,24 @@
 
   (set-who! bytevector-ieee-single-native-set!
     (lambda (v i x)
-      (if ($bytevector-ref-check? 32 v i)
+      (if ($bytevector-set!-check? 32 v i)
          ; inline routine checks to make sure x is a real number
           (#3%bytevector-ieee-single-native-set! v i x)
           (if (bytevector? v)
-              (invalid-index who v i)
+              (if (bytevector-immutable? v)
+                  (invalid-immutable who v)
+                  (invalid-index who v i))
               (not-a-bytevector who v)))))
 
   (set-who! bytevector-ieee-double-native-set!
     (lambda (v i x)
-      (if ($bytevector-ref-check? 64 v i)
+      (if ($bytevector-set!-check? 64 v i)
          ; inline routine checks to make sure x is a real number
           (#3%bytevector-ieee-double-native-set! v i x)
           (if (bytevector? v)
-              (invalid-index who v i)
+              (if (bytevector-immutable? v)
+                  (invalid-immutable who v)
+                  (invalid-index who v i))
               (not-a-bytevector who v)))))
 
   (set-who! bytevector-copy
@@ -741,6 +776,7 @@
     (lambda (v1 i1 v2 i2 k)
       (unless (bytevector? v1) (not-a-bytevector who v1))
       (unless (bytevector? v2) (not-a-bytevector who v2))
+      (when (bytevector-immutable? v2) (invalid-immutable who v2))
       (let ([n1 (bytevector-length v1)] [n2 (bytevector-length v2)])
         (unless (and (fixnum? i1) (fx>= i1 0))
           ($oops who "invalid start value ~s" i1))
@@ -754,10 +790,25 @@
           ($oops who "index ~s + count ~s is beyond the end of ~s" i2 k v2))
        ; whew!
         (#3%bytevector-copy! v1 i1 v2 i2 k))))
+  
+  (set-who! bytevector->immutable-bytevector
+    (let ([null-immutable-bytevector ($null-immutable-bytevector)])
+      (lambda (v)
+        (unless (bytevector? v)
+          ($oops who "~s is not a bytevector" v))
+        (cond
+         [(bytevector-immutable? v) v]
+         [(fx= 0 (bytevector-length v))
+          null-immutable-bytevector]
+         [else
+          (let ([v2 (bytevector-copy v)])
+            ($bytevector-set-immutable! v2)
+            v2)]))))
 
   (set-who! bytevector-fill!
     (lambda (v fill)
       (unless (bytevector? v) (not-a-bytevector who v))
+      (when (bytevector-immutable? v) (invalid-immutable who v))
       (unless (fill? fill) (invalid-fill-value who fill))
       (#3%bytevector-fill! v fill)))
 
@@ -775,6 +826,16 @@
         [(16) (#2%$bytevector-ref-check? 16 v i)]
         [(32) (#2%$bytevector-ref-check? 32 v i)]
         [(64) (#2%$bytevector-ref-check? 64 v i)]
+        [else ($oops who "invalid bits argument ~s" bits)])))
+
+  (set-who! $bytevector-set!-check?
+    (lambda (bits v i)
+     ; inlined handles only constant bits argument
+      (case bits
+        [(8) (#2%$bytevector-set!-check? 8 v i)]
+        [(16) (#2%$bytevector-set!-check? 16 v i)]
+        [(32) (#2%$bytevector-set!-check? 32 v i)]
+        [(64) (#2%$bytevector-set!-check? 64 v i)]
         [else ($oops who "invalid bits argument ~s" bits)])))
 
   (set-who! bytevector-s16-ref
@@ -986,6 +1047,7 @@
           (bytevector-u8-set! v (fx+ i 2) (bytevector-u8-ref v2 2))
           (bytevector-u8-set! v (fx+ i 3) (bytevector-u8-ref v2 3))))
       (unless (bytevector? v) (not-a-bytevector who v))
+      (when (bytevector-immutable? v) (invalid-immutable who v))
       (unaligned-ref-check who 4 v i)
       (let ([x ($real->flonum x who)])
         (if (or (constant unaligned-floats) (fx= (fxlogand i 3) 0))
@@ -1029,6 +1091,7 @@
           (bytevector-u8-set! v (fx+ i 6) (bytevector-u8-ref v2 6))
           (bytevector-u8-set! v (fx+ i 7) (bytevector-u8-ref v2 7))))
       (unless (bytevector? v) (not-a-bytevector who v))
+      (when (bytevector-immutable? v) (invalid-immutable who v))
       (unaligned-ref-check who 8 v i)
       (let ([x ($real->flonum x who)])
         (if (or (constant unaligned-floats) (fx= (fxlogand i 7) 0))
@@ -1102,25 +1165,29 @@
     (define $bytevector-s8-set!
       (let ([value-okay? (signed-value-pred 8)])
         (lambda (v i k eness who)
-          (if ($bytevector-ref-check? 8 v i)
+          (if ($bytevector-set!-check? 8 v i)
               (begin
                 (unless (value-okay? k) (invalid-value who k))
                 (unless (memq eness '(little big)) (unrecognized-endianness who eness))
                 (#3%bytevector-s8-set! v i k))
               (if (bytevector? v)
-                  (invalid-index who v i)
+                  (if (bytevector-immutable? v)
+                      (invalid-immutable who v)
+                      (invalid-index who v i))
                   (not-a-bytevector who v))))))
 
     (define $bytevector-u8-set!
       (let ([value-okay? (unsigned-value-pred 8)])
         (lambda (v i k eness who)
-          (if ($bytevector-ref-check? 8 v i)
+          (if ($bytevector-set!-check? 8 v i)
               (begin
                 (unless (value-okay? k) (invalid-value who k))
                 (unless (memq eness '(little big)) (unrecognized-endianness who eness))
                 (#3%bytevector-u8-set! v i k))
               (if (bytevector? v)
-                  (invalid-index who v i)
+                  (if (bytevector-immutable? v)
+                      (invalid-immutable who v)
+                      (invalid-index who v i))
                   (not-a-bytevector who v))))))
 
     (set-who! bytevector-sint-set!
@@ -1132,6 +1199,7 @@
           [(8) ($bytevector-s64-set! v i k eness who)]
           [else
            (unless (bytevector? v) (not-a-bytevector who v))
+           (when (bytevector-immutable? v) (invalid-immutable who v))
            (unless (and (fixnum? size) (fx> size 0)) (invalid-size who size))
            (unaligned-ref-check who size v i)
            (unless (and (or (fixnum? k) (bignum? k))
@@ -1152,6 +1220,7 @@
           [(8) ($bytevector-u64-set! v i k eness who)]
           [else
            (unless (bytevector? v) (not-a-bytevector who v))
+           (when (bytevector-immutable? v) (invalid-immutable who v))
            (unless (and (fixnum? size) (fx> size 0)) (invalid-size who size))
            (unaligned-ref-check who size v i)
            (unless (and (or (fixnum? k) (bignum? k))
