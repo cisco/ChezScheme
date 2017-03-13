@@ -352,6 +352,16 @@
     foreign.ms
 - added a missing quote mark in new printf mat Windows case
     foreign.ms
+- added travis-ci automation script and a 'partialx' testing target to
+  allow us to perform more than a single run of testing without running
+  afoul of travis-ci's 50-minute build timeout.  'partialx' tests six
+  of the twelve configurations tested by 'allx'.
+     .travis.yml (new),
+     mats/Mf-base
+- paired the 'partialx' down to just four test configurations, with one
+  interpreter run, to try to get the threaded builds into line with
+  travis-ci's timeout.
+     mats/Mf-base
 - eliminated some direct assumptions that a vector's type/length field
   is a fixnum and added meta-asserts to verify that it is in a couple of
   others, to facilitate future changes to vector typing.  vectors are
