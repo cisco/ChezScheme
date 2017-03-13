@@ -491,7 +491,7 @@ ptr S_vector_in(s, g, n) ISPC s; IGEN g; iptr n; {
 
     if (n == 0) return S_G.null_vector;
 
-    if ((uptr)n >= most_positive_fixnum)
+    if ((uptr)n >= maximum_vector_length)
         S_error("", "invalid vector size request");
 
     d = size_vector(n);
@@ -507,7 +507,7 @@ ptr S_vector(n) iptr n; {
 
     if (n == 0) return S_G.null_vector;
 
-    if ((uptr)n >= most_positive_fixnum)
+    if ((uptr)n >= maximum_vector_length)
         S_error("", "invalid vector size request");
 
     tc = get_thread_context();
@@ -550,6 +550,34 @@ ptr S_bytevector(n) iptr n; {
     thread_find_room(tc, type_typed_object, d, p);
     BYTEVECTOR_TYPE(p) = (n << bytevector_length_offset) | type_bytevector;
     return p;
+}
+
+ptr S_null_immutable_vector() {
+  ptr v;
+  find_room(space_new, 0, type_typed_object, size_vector(0), v);
+  VECTTYPE(v) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
+  return v;
+}
+
+ptr S_null_immutable_fxvector() {
+  ptr v;
+  find_room(space_new, 0, type_typed_object, size_fxvector(0), v);
+  VECTTYPE(v) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
+  return v;
+}
+
+ptr S_null_immutable_bytevector() {
+  ptr v;
+  find_room(space_new, 0, type_typed_object, size_bytevector(0), v);
+  VECTTYPE(v) = (0 << bytevector_length_offset) | type_bytevector | bytevector_immutable_flag;
+  return v;
+}
+
+ptr S_null_immutable_string() {
+  ptr v;
+  find_room(space_new, 0, type_typed_object, size_string(0), v);
+  VECTTYPE(v) = (0 << string_length_offset) | type_string | string_immutable_flag;
+  return v;
 }
 
 ptr S_record(n) iptr n; {

@@ -267,7 +267,7 @@
             (access "x" vector type)
             ($ vector-length-offset)))
         (defref Svector_ref vector data)
-
+        
         (def "Sfxvector_length(x)"
           (format "((iptr)((uptr)~a>>~d))"
             (access "x" fxvector type)
@@ -929,6 +929,23 @@
         (defref RPHEADERFRAMESIZE rp-header frame-size)
         (defref RPHEADERLIVEMASK rp-header livemask)
         (defref RPHEADERTOPLINK rp-header toplink)
+
+        (def "Svector_set_immutable(x)"
+          (format "~a |= ~d"
+            (access "x" vector type)
+            ($ vector-immutable-flag)))
+        (def "Sfxvector_set_immutable(x)"
+          (format "~a |= ~d"
+            (access "x" fxvector type)
+            ($ fxvector-immutable-flag)))
+        (def "Sbytevector_set_immutable(x)"
+          (format "~a |= ~d"
+            (access "x" bytevector type)
+            ($ bytevector-immutable-flag)))
+        (def "Sstring_set_immutable(x)"
+          (format "~a |= ~d"
+            (access "x" string type)
+            ($ string-immutable-flag)))
 
         (nl)
         (comment "machine types")

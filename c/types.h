@@ -235,6 +235,7 @@ typedef struct _bucket_pointer_list {
 #define UNFIX(x) Sfixnum_value(x)
 
 #define TYPEP(x,mask,type) (((iptr)(x) & (mask)) == (type))
+#define TYPE_IMMP(x,immutable_flag) ((iptr)(x) & (immutable_flag))
 
 /* reloc fields */
 #define RELOC_EXTENDED_FORMAT(x) ((x)&reloc_extended_format)
