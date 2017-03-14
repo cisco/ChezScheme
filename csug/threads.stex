@@ -221,24 +221,29 @@ Using \scheme{with-mutex} is generally more convenient and safer than using
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{condition-wait}{\categoryprocedure}{(condition-wait \var{cond} \var{mutex})}
-\returns unspecified
+\formdef{condition-wait}{\categoryprocedure}{(condition-wait \var{cond} \var{mutex} \var{timeout})}
+
+\returns \scheme{#t} if the calling thread was awakened by the condition, \scheme{#f} if the calling thread timed out waiting
 \listlibraries
 \endentryheader
 
 \noindent
 \var{cond} must be a condition object, and
 \var{mutex} must be a mutex.
+The optional argument \var{timeout} is a time record of type
+\scheme{time-duration} or \scheme{time-utc}, or \scheme{#f} for no
+timeout. It defaults to \scheme{#f}.
 
-\scheme{condition-wait} waits for the condition
-identified by the condition object \var{cond}.
+\scheme{condition-wait} waits up to the specified \var{timeout} for
+the condition identified by the condition object \var{cond}.
 The calling thread must have acquired the mutex identified by the mutex
 \var{mutex} at the time \scheme{condition-wait} is
 called.
 \var{mutex} is released as a side effect of the call to
 \scheme{condition-wait}.
-When a thread is later released from the condition variable by one
-of the procedures described below, \var{mutex} is reacquired
-and \scheme{condition-wait} returns.
+When a thread is later released from the condition variable by one of
+the procedures described below or the timeout expires, \var{mutex} is
+reacquired and \scheme{condition-wait} returns.
 
 
 %----------------------------------------------------------------------------

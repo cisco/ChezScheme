@@ -1200,7 +1200,7 @@
   (condition-broadcast [feature pthreads] [sig [(condition-object) -> (void)]] [flags true])
   (condition-continuation [sig [(continuation-condition) -> (ptr)]] [flags pure mifoldable discard])
   (condition-signal [feature pthreads] [sig [(condition-object) -> (void)]] [flags true])
-  (condition-wait [feature pthreads] [sig [(condition-object mutex) -> (void)]] [flags true])
+  (condition-wait [feature pthreads] [sig [(condition-object mutex) (condition-object mutex timeout) -> (boolean)]] [flags])
   (conjugate [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (continuation-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (copy-environment [sig [(environment) (environment ptr) (environment ptr sub-list) -> (environment)]] [flags alloc])

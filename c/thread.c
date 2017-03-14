@@ -306,10 +306,63 @@ s_thread_cond_t *S_make_condition() {
   return c;
 }
 
-void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
+#ifdef FEATURE_WINDOWS
+
+static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_t *mutex, int typeno, long sec, long nsec) {
+  if (typeno == time_utc) {
+    struct timespec now;
+    s_gettime(time_utc, &now);
+    sec -= (long)now.tv_sec;
+    nsec -= now.tv_nsec;
+    if (nsec < 0) {
+      sec -= 1;
+      nsec += 1000000000;
+    }
+  }
+  if (sec < 0) {
+    sec = 0;
+    nsec = 0;
+  }
+  if (SleepConditionVariableCS(cond, mutex, sec*1000 + nsec/1000000)) {
+    return 0;
+  } else if (GetLastError() == ERROR_TIMEOUT) {
+    return ETIMEDOUT;
+  } else {
+    return EINVAL;
+  }
+}
+
+#else /* FEATURE_WINDOWS */
+
+static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_t *mutex, int typeno, long sec, long nsec) {
+  struct timespec t;
+  if (typeno == time_duration) {
+    struct timespec now;
+    s_gettime(time_utc, &now);
+    t.tv_sec = now.tv_sec + sec;
+    t.tv_nsec = now.tv_nsec + nsec;
+    if (t.tv_nsec >= 1000000000) {
+      t.tv_sec += 1;
+      t.tv_nsec -= 1000000000;
+    }
+  } else {
+    t.tv_sec = sec;
+    t.tv_nsec = nsec;
+  }
+  return pthread_cond_timedwait(cond, mutex, &t);
+}
+
+#endif /* FEATURE_WINDOWS */
+
+#define Srecord_ref(x,i) (((ptr *)((uptr)(x)+record_data_disp))[i])
+
+IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   ptr tc = get_thread_context();
   s_thread_t self = s_thread_self();
   iptr count;
+  INT typeno;
+  long sec;
+  long nsec;
   INT status;
 
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
@@ -318,12 +371,20 @@ void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
   if (count != 1)
     S_error1("condition-wait", "mutex ~s is recursively locked", m);
 
+  if (t != Sfalse) {
+    /* Keep in sync with ts record in s/date.ss */
+    typeno = Sinteger32_value(Srecord_ref(t,0));
+    sec = Sinteger32_value(Scar(Srecord_ref(t,1)));
+    nsec = Sinteger32_value(Scdr(Srecord_ref(t,1)));
+  }
+
   if (c == &S_collect_cond || DISABLECOUNT(tc) == 0) {
     deactivate_thread(tc)
   }
 
   m->count = 0;
-  status = s_thread_cond_wait(c, &m->pmutex);
+  status = (t == Sfalse) ? s_thread_cond_wait(c, &m->pmutex) :
+    s_thread_cond_timedwait(c, &m->pmutex, typeno, sec, nsec);
   m->owner = self;
   m->count = 1;
 
@@ -331,8 +392,13 @@ void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
     reactivate_thread(tc)
   }
 
-  if (status != 0) {
+  if (status == 0) {
+    return 1;
+  } else if (status == ETIMEDOUT) {
+    return 0;
+  } else {
     S_error1("condition-wait", "failed: ~a", S_strerror(status));
+    return 0;
   }
 }
 #endif /* PTHREADS */

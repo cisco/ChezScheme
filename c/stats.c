@@ -38,8 +38,6 @@
 
 static struct timespec starting_mono_tp;
 
-static void s_gettime(INT typeno, struct timespec *tp);
-
 /********  unique-id  ********/
 
 #if (time_t_bits == 32)
@@ -119,7 +117,7 @@ typedef void (WINAPI *GetSystemTimeAsFileTime_t)(LPFILETIME lpSystemTimeAsFileTi
 
 static GetSystemTimeAsFileTime_t s_GetSystemTimeAsFileTime = GetSystemTimeAsFileTime;
 
-static void s_gettime(INT typeno, struct timespec *tp) {
+void s_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_process: {
       FILETIME ftKernel, ftUser, ftDummy;
@@ -228,7 +226,7 @@ static char *asctime_r(const struct tm *tm, char *buf) {
 
 #else /* WIN32 */
 
-static void s_gettime(INT typeno, struct timespec *tp) {
+void s_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_thread:
 #ifdef CLOCK_THREAD_CPUTIME_ID

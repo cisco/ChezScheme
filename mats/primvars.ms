@@ -242,7 +242,7 @@
         ; the test has several deficiencies:
         ;  - for arguments labeled sub-<type>, it cannot determine a 'good' value.  this can be
         ;    addressed only by refining the types given in primdata.ss, including adding
-        ;    dependent times for things like list-ref, the range of whose second argument
+        ;    dependent types for things like list-ref, the range of whose second argument
         ;    depends on its first.
         ;  - it doesn't verify that the raised condition is appropriate, other than ruling out
         ;    warning conditions, non-violation conditions, and invalid memory references.
@@ -448,6 +448,7 @@
               [(textual-input-port) (current-input-port) 0 *binary-input-port (transcoded-port *binary-output-port (native-transcoder)) #f]
               [(textual-output-port) (current-output-port) 0 *binary-output-port (transcoded-port *binary-input-port (native-transcoder)) #f]
               [(time) *time "no-time" #f]
+              [(timeout) *time "no-time"]
               [(transcoder) (native-transcoder) 0 #f]
               [(u16) 0 -1 (expt 2 16) "a" #f]
               [(u24) 0 -1 (expt 2 24) "a" #f]
