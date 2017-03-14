@@ -222,7 +222,6 @@ Using \scheme{with-mutex} is generally more convenient and safer than using
 \entryheader
 \formdef{condition-wait}{\categoryprocedure}{(condition-wait \var{cond} \var{mutex})}
 \formdef{condition-wait}{\categoryprocedure}{(condition-wait \var{cond} \var{mutex} \var{timeout})}
-
 \returns \scheme{#t} if the calling thread was awakened by the condition, \scheme{#f} if the calling thread timed out waiting
 \listlibraries
 \endentryheader
