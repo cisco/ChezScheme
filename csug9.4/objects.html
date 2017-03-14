@@ -21,7 +21,7 @@
 This chapter describes operations specific to <i>Chez&nbsp;Scheme</i> on
 nonnumeric objects, including standard objects such as pairs and
 numbers and <i>Chez&nbsp;Scheme</i> extensions such as boxes and records.
-Chapter&nbsp;<a href="./numeric.html#g62">8</a> describes operations on numbers.
+Chapter&nbsp;<a href="./numeric.html#g63">8</a> describes operations on numbers.
 See Chapter&nbsp;<a href="http://scheme.com/tspl4/./objects.html#g106">6</a> of <i>The Scheme Programming Language, 4th Edition</i> or the Revised<sup>6</sup> Report
 on Scheme for a description of standard operations on objects.
 
@@ -372,7 +372,7 @@ Second, it recognizes several nonstandard named characters:
 <tt>#\nel</tt> (the Unicode NEL character), and
 <tt>#\ls</tt> (the Unicode LS character).
 The set of nonstandard character names may be changed via the procedure
-<a name="./objects:s14"></a><tt>char-name</tt> (page <a href="./io.html#g84">9.14</a>).
+<a name="./objects:s14"></a><tt>char-name</tt> (page <a href="./io.html#g85">9.14</a>).
 
 <p>
 These extensions are disabled in an input stream after <tt>#!r6rs</tt> has
@@ -3495,16 +3495,58 @@ rtd&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;record&nbsp;type&
 
 (eq?&nbsp;(record-type-descriptor&nbsp;x)&nbsp;rtd)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>unspecified</i></tt>
 <p>
+<h3><a name="g62"></a><a name="./objects:h15"></a>Section 7.15. Procedures</h3>
+
+
+
+<p>
+<a name="./objects:s134"></a><span class=formdef><b>procedure</b>: <tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></span>
+<br>
+<b>returns: </b>an exact integer bitmask identifying the accepted argument counts of <tt><i>proc</i></tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>The bitmask is represented as two's complement number with the bit
+at each index <tt><i>n</i></tt> set if and only if <tt><i>proc</i></tt> accepts <tt><i>n</i></tt>
+arguments.
+
+<p>
+The two's complement encoding implies that if <tt><i>proc</i></tt> accepts
+<tt><i>n</i></tt> or more arguments, the encoding is a negative number,
+since all the bits from <tt><i>n</i></tt> and up are set. For example, if
+<tt><i>proc</i></tt> accepts any number of arguments, the two's complement
+encoding of all bits set is <tt>-1</tt>.
+
+<p>
+
+<p><tt>(procedure-arity-mask&nbsp;(lambda&nbsp;()&nbsp;'none))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1<br>
+
+(procedure-arity-mask&nbsp;car)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;2<br>
+
+(procedure-arity-mask&nbsp;(case-lambda&nbsp;[()&nbsp;'none]&nbsp;[(x)&nbsp;x]))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;3<br>
+
+(procedure-arity-mask&nbsp;(lambda&nbsp;x&nbsp;x))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;-1<br>
+
+(procedure-arity-mask&nbsp;(case-lambda&nbsp;[()&nbsp;'none]&nbsp;[(x&nbsp;y&nbsp;.&nbsp;z)&nbsp;x]))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;-3<br>
+
+(procedure-arity-mask&nbsp;(case-lambda))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;0<br>
+
+(logbit?&nbsp;1&nbsp;(procedure-arity-mask&nbsp;pair?))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
+
+(logbit?&nbsp;2&nbsp;(procedure-arity-mask&nbsp;pair?))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
+
+(logbit?&nbsp;2&nbsp;(procedure-arity-mask&nbsp;cons))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
+<p>
 
 
 
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
+Revised March 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

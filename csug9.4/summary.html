@@ -428,6 +428,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(condition-predicate&nbsp;<i>rtd</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s18">t365</a></td></tr>
  <tr><td nowrap><tt>(condition-signal&nbsp;<i>cond</i>)</tt></td><td>procedure</td><td align=right><a href="./threads.html#./threads:s14">404</a></td></tr>
  <tr><td nowrap><tt>(condition-wait&nbsp;<i>cond</i>&nbsp;<i>mutex</i>)</tt></td><td>procedure</td><td align=right><a href="./threads.html#./threads:s13">404</a></td></tr>
+ <tr><td nowrap><tt>(condition-wait&nbsp;<i>cond</i>&nbsp;<i>mutex</i>&nbsp;<i>timeout</i>)</tt></td><td>procedure</td><td align=right><a href="./threads.html#./threads:s13">404</a></td></tr>
  <tr><td nowrap><tt>(condition-who&nbsp;<i>condition</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s26">t369</a></td></tr>
  <tr><td nowrap><tt>(condition?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s14">t362</a></td></tr>
  <tr><td nowrap><tt>(conjugate&nbsp;<i>num</i>)</tt></td><td>procedure</td><td align=right><a href="./numeric.html#./numeric:s74">199</a></td></tr>
@@ -511,7 +512,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(define-record&nbsp;<i>name</i>&nbsp;<i>parent</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></td><td>syntax</td><td align=right><a href="./objects.html#./objects:s106">162</a></td></tr>
  <tr><td nowrap><tt>(define-record-type&nbsp;<i>record-name</i>&nbsp;<i>clause</i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./records.html#./records:s13">t328</a></td></tr>
  <tr><td nowrap><tt>(define-record-type&nbsp;(<i>record-name</i>&nbsp;<i>constructor</i>&nbsp;<i>pred</i>)&nbsp;<i>clause</i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./records.html#./records:s13">t328</a></td></tr>
- <tr><td nowrap><tt>(define-structure&nbsp;(<i>name</i>&nbsp;<i>id<sub>1</sub></i>&nbsp;...)&nbsp;((<i>id<sub>2</sub></i>&nbsp;<i>expr</i>)&nbsp;...))</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s25">419</a></td></tr>
+ <tr><td nowrap><tt>(define-structure&nbsp;(<i>name</i>&nbsp;<i>id<sub>1</sub></i>&nbsp;...)&nbsp;((<i>id<sub>2</sub></i>&nbsp;<i>expr</i>)&nbsp;...))</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s25">421</a></td></tr>
  <tr><td nowrap><tt>(define-syntax&nbsp;<i>keyword</i>&nbsp;<i>expr</i>)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./syntax.html#./syntax:s12">t292</a></td></tr>
  <tr><td nowrap><tt>(define-top-level-syntax&nbsp;<i>symbol</i>&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./binding.html#./binding:s32">117</a></td></tr>
  <tr><td nowrap><tt>(define-top-level-syntax&nbsp;<i>symbol</i>&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></td><td>procedure</td><td align=right><a href="./binding.html#./binding:s32">117</a></td></tr>
@@ -630,7 +631,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>expression-editor</tt></td><td>module</td><td align=right><a href="./expeditor.html#./expeditor:s0">389</a></td></tr>
  <tr><td nowrap><tt>(expt&nbsp;<i>num<sub>1</sub></i>&nbsp;<i>num<sub>2</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s111">t179</a></td></tr>
  <tr><td nowrap><tt>(expt-mod&nbsp;<i>int<sub>1</sub></i>&nbsp;<i>int<sub>2</sub></i>&nbsp;<i>int<sub>3</sub></i>)</tt></td><td>procedure</td><td align=right><a href="./numeric.html#./numeric:s69">197</a></td></tr>
- <tr><td nowrap><tt>(extend-syntax&nbsp;(<i>name</i>&nbsp;<i>key</i>&nbsp;...)&nbsp;(<i>pat</i>&nbsp;<i>fender</i>&nbsp;<i>template</i>)&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s8">413</a></td></tr>
+ <tr><td nowrap><tt>(extend-syntax&nbsp;(<i>name</i>&nbsp;<i>key</i>&nbsp;...)&nbsp;(<i>pat</i>&nbsp;<i>fender</i>&nbsp;<i>template</i>)&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s8">415</a></td></tr>
  <tr><td nowrap><tt>(fasl-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s126">246</a></td></tr>
  <tr><td nowrap><tt>(fasl-read&nbsp;<i>binary-input-port</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s125">246</a></td></tr>
  <tr><td nowrap><tt>(fasl-strip-options&nbsp;<i>symbol</i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="./system.html#./system:s79">326</a></td></tr>
@@ -757,14 +758,14 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(fresh-line&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s80">230</a></td></tr>
  <tr><td nowrap><tt>(ftype-&amp;ref&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./foreign.html#./foreign:s144">83</a></td></tr>
  <tr><td nowrap><tt>(ftype-&amp;ref&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./foreign.html#./foreign:s144">83</a></td></tr>
- <tr><td nowrap><tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-locked-decr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">406</a></td></tr>
- <tr><td nowrap><tt>(ftype-locked-decr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">406</a></td></tr>
- <tr><td nowrap><tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">406</a></td></tr>
- <tr><td nowrap><tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-locked-decr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">407</a></td></tr>
+ <tr><td nowrap><tt>(ftype-locked-decr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">407</a></td></tr>
+ <tr><td nowrap><tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">407</a></td></tr>
+ <tr><td nowrap><tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s18">407</a></td></tr>
  <tr><td nowrap><tt>(ftype-pointer-&gt;sexpr&nbsp;<i>fptr</i>)</tt></td><td>procedure</td><td align=right><a href="./foreign.html#./foreign:s149">87</a></td></tr>
  <tr><td nowrap><tt>(ftype-pointer-address&nbsp;<i>fptr</i>)</tt></td><td>procedure</td><td align=right><a href="./foreign.html#./foreign:s141">82</a></td></tr>
  <tr><td nowrap><tt>(ftype-pointer-ftype&nbsp;<i>fptr</i>)</tt></td><td>procedure</td><td align=right><a href="./foreign.html#./foreign:s148">86</a></td></tr>
@@ -777,10 +778,10 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(ftype-set!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>val-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./foreign.html#./foreign:s145">84</a></td></tr>
  <tr><td nowrap><tt>(ftype-set!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>&nbsp;<i>val-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./foreign.html#./foreign:s145">84</a></td></tr>
  <tr><td nowrap><tt>(ftype-sizeof&nbsp;<i>ftype-name</i>)</tt></td><td>syntax</td><td align=right><a href="./foreign.html#./foreign:s135">80</a></td></tr>
- <tr><td nowrap><tt>(ftype-spin-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-spin-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-unlock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
- <tr><td nowrap><tt>(ftype-unlock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">405</a></td></tr>
+ <tr><td nowrap><tt>(ftype-spin-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-spin-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-unlock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
+ <tr><td nowrap><tt>(ftype-unlock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></td><td>syntax</td><td align=right><a href="./threads.html#./threads:s17">406</a></td></tr>
  <tr><td nowrap><tt>(fx*&nbsp;<i>fixnum</i>&nbsp;...)</tt></td><td>procedure</td><td align=right><a href="./numeric.html#./numeric:s19">181</a></td></tr>
  <tr><td nowrap><tt>(fx*&nbsp;<i>fx<sub>1</sub></i>&nbsp;<i>fx<sub>2</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s159">t195</a></td></tr>
  <tr><td nowrap><tt>(fx*/carry&nbsp;<i>fx<sub>1</sub></i>&nbsp;<i>fx<sub>2</sub></i>&nbsp;<i>fx<sub>3</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s162">t197</a></td></tr>
@@ -883,7 +884,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(get-char&nbsp;<i>textual-input-port</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s61">t275</a></td></tr>
  <tr><td nowrap><tt>(get-datum&nbsp;<i>textual-input-port</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s67">t278</a></td></tr>
  <tr><td nowrap><tt>(get-datum/annotations&nbsp;<i>textual-input-port</i>&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>)</tt></td><td>procedure</td><td align=right><a href="./syntax.html#./syntax:s65">303</a></td></tr>
- <tr><td nowrap><tt>(get-hash-table&nbsp;<i>ht</i>&nbsp;<i>k</i>&nbsp;<i>d</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s3">412</a></td></tr>
+ <tr><td nowrap><tt>(get-hash-table&nbsp;<i>ht</i>&nbsp;<i>k</i>&nbsp;<i>d</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s3">414</a></td></tr>
  <tr><td nowrap><tt>(get-line&nbsp;<i>textual-input-port</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s66">t277</a></td></tr>
  <tr><td nowrap><tt>(get-mode&nbsp;<i>path</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s139">249</a></td></tr>
  <tr><td nowrap><tt>(get-mode&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s139">249</a></td></tr>
@@ -902,9 +903,9 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(getprop&nbsp;<i>symbol</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s64">149</a></td></tr>
  <tr><td nowrap><tt>(greatest-fixnum)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s151">t193</a></td></tr>
  <tr><td nowrap><tt>(guard&nbsp;(<i>var</i>&nbsp;<i>clause<sub>1</sub></i>&nbsp;<i>clause<sub>2</sub></i>&nbsp;...)&nbsp;<i>b1</i>&nbsp;<i>b2</i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s8">t361</a></td></tr>
- <tr><td nowrap><tt>(hash-table-for-each&nbsp;<i>ht</i>&nbsp;<i>p</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s6">412</a></td></tr>
- <tr><td nowrap><tt>(hash-table-map&nbsp;<i>ht</i>&nbsp;<i>p</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s5">412</a></td></tr>
- <tr><td nowrap><tt>(hash-table?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s1">411</a></td></tr>
+ <tr><td nowrap><tt>(hash-table-for-each&nbsp;<i>ht</i>&nbsp;<i>p</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s6">414</a></td></tr>
+ <tr><td nowrap><tt>(hash-table-map&nbsp;<i>ht</i>&nbsp;<i>p</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s5">414</a></td></tr>
+ <tr><td nowrap><tt>(hash-table?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s1">413</a></td></tr>
  <tr><td nowrap><tt>(hashtable-cell&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s73">152</a></td></tr>
  <tr><td nowrap><tt>(hashtable-clear!&nbsp;<i>hashtable</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s287">t249</a></td></tr>
  <tr><td nowrap><tt>(hashtable-clear!&nbsp;<i>hashtable</i>&nbsp;<i>size</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s287">t249</a></td></tr>
@@ -1075,8 +1076,8 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(make-fxvector&nbsp;<i>n</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s25">140</a></td></tr>
  <tr><td nowrap><tt>(make-fxvector&nbsp;<i>n</i>&nbsp;<i>fixnum</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s25">140</a></td></tr>
  <tr><td nowrap><tt>(make-guardian)</tt></td><td>procedure</td><td align=right><a href="./smgmt.html#./smgmt:s25">382</a></td></tr>
- <tr><td nowrap><tt>(make-hash-table)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s0">411</a></td></tr>
- <tr><td nowrap><tt>(make-hash-table&nbsp;<i>weak?</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s0">411</a></td></tr>
+ <tr><td nowrap><tt>(make-hash-table)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s0">413</a></td></tr>
+ <tr><td nowrap><tt>(make-hash-table&nbsp;<i>weak?</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s0">413</a></td></tr>
  <tr><td nowrap><tt>(make-hashtable&nbsp;<i>hash</i>&nbsp;<i>equiv?</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s276">t244</a></td></tr>
  <tr><td nowrap><tt>(make-hashtable&nbsp;<i>hash</i>&nbsp;<i>equiv?</i>&nbsp;<i>size</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s276">t244</a></td></tr>
  <tr><td nowrap><tt>(make-i/o-decoding-error&nbsp;<i>pobj</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s42">t375</a></td></tr>
@@ -1324,6 +1325,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>print-vector-length</tt></td><td>thread param</td><td align=right><a href="./io.html#./io:s120">244</a></td></tr>
  <tr><td nowrap><tt>(printf&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s98">238</a></td></tr>
  <tr><td nowrap><tt>(<i>expr<sub>0</sub></i>&nbsp;<i>expr<sub>1</sub></i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./control.html#./control:s1">t107</a></td></tr>
+ <tr><td nowrap><tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s134">176</a></td></tr>
  <tr><td nowrap><tt>(procedure?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s23">t155</a></td></tr>
  <tr><td nowrap><tt>(process&nbsp;<i>command</i>)</tt></td><td>procedure</td><td align=right><a href="./foreign.html#./foreign:s7">58</a></td></tr>
  <tr><td nowrap><tt>(profile&nbsp;<i>source-object</i>)</tt></td><td>syntax</td><td align=right><a href="./system.html#./system:s130">346</a></td></tr>
@@ -1352,7 +1354,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(put-bytevector-some&nbsp;<i>binary-output-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s75">229</a></td></tr>
  <tr><td nowrap><tt>(put-char&nbsp;<i>textual-output-port</i>&nbsp;<i>char</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s71">t279</a></td></tr>
  <tr><td nowrap><tt>(put-datum&nbsp;<i>textual-output-port</i>&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s73">t279</a></td></tr>
- <tr><td nowrap><tt>(put-hash-table!&nbsp;<i>ht</i>&nbsp;<i>k</i>&nbsp;<i>v</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s2">412</a></td></tr>
+ <tr><td nowrap><tt>(put-hash-table!&nbsp;<i>ht</i>&nbsp;<i>k</i>&nbsp;<i>v</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s2">414</a></td></tr>
  <tr><td nowrap><tt>(put-registry!&nbsp;<i>key</i>&nbsp;<i>val</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s236">375</a></td></tr>
  <tr><td nowrap><tt>(put-string&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s72">t279</a></td></tr>
  <tr><td nowrap><tt>(put-string&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s72">t279</a></td></tr>
@@ -1434,7 +1436,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(remove&nbsp;<i>obj</i>&nbsp;<i>list</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s53">t163</a></td></tr>
  <tr><td nowrap><tt>(remove!&nbsp;<i>obj</i>&nbsp;<i>list</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s10">134</a></td></tr>
  <tr><td nowrap><tt>(remove-foreign-entry&nbsp;<i>entry-name</i>)</tt></td><td>procedure</td><td align=right><a href="./foreign.html#./foreign:s155">91</a></td></tr>
- <tr><td nowrap><tt>(remove-hash-table!&nbsp;<i>ht</i>&nbsp;<i>k</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s4">412</a></td></tr>
+ <tr><td nowrap><tt>(remove-hash-table!&nbsp;<i>ht</i>&nbsp;<i>k</i>)</tt></td><td>procedure</td><td align=right><a href="./compat.html#./compat:s4">414</a></td></tr>
  <tr><td nowrap><tt>(remove-registry!&nbsp;<i>key</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s236">375</a></td></tr>
  <tr><td nowrap><tt>(remp&nbsp;<i>procedure</i>&nbsp;<i>list</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s54">t163</a></td></tr>
  <tr><td nowrap><tt>(remprop&nbsp;<i>symbol</i>&nbsp;<i>key</i>)</tt></td><td>procedure</td><td align=right><a href="./objects.html#./objects:s66">150</a></td></tr>
@@ -1770,7 +1772,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(weak-pair?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./smgmt.html#./smgmt:s23">382</a></td></tr>
  <tr><td nowrap><tt>(when&nbsp;<i>test-expr</i>&nbsp;<i>expr<sub>1</sub></i>&nbsp;<i>expr<sub>2</sub></i>&nbsp;...)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./control.html#./control:s17">t112</a></td></tr>
  <tr><td nowrap><tt>(who-condition?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s26">t369</a></td></tr>
- <tr><td nowrap><tt>(with&nbsp;((<i>pat</i>&nbsp;<i>expr</i>)&nbsp;...)&nbsp;<i>template</i>)</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s20">415</a></td></tr>
+ <tr><td nowrap><tt>(with&nbsp;((<i>pat</i>&nbsp;<i>expr</i>)&nbsp;...)&nbsp;<i>template</i>)</tt></td><td>syntax</td><td align=right><a href="./compat.html#./compat:s20">417</a></td></tr>
  <tr><td nowrap><tt>(with-cost-center&nbsp;<i>cost-center</i>&nbsp;<i>thunk</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s217">369</a></td></tr>
  <tr><td nowrap><tt>(with-cost-center&nbsp;<i>timed?</i>&nbsp;<i>cost-center</i>&nbsp;<i>thunk</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s217">369</a></td></tr>
  <tr><td nowrap><tt>(with-exception-handler&nbsp;<i>procedure</i>&nbsp;<i>thunk</i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./exceptions.html#./exceptions:s7">t360</a></td></tr>
@@ -1800,10 +1802,10 @@ in the electronic versions of these books.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
+Revised March 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

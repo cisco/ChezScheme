@@ -19,7 +19,7 @@
 
 <p>
 <i>Chez&nbsp;Scheme</i> is an implementation of the Revised<sup>6</sup> Report on
-Scheme&nbsp;[<a class=citation href="./bibliography.html#g173">27</a>] (R6RS) with numerous language and programming environment
+Scheme&nbsp;[<a class=citation href="./bibliography.html#g174">27</a>] (R6RS) with numerous language and programming environment
 extensions.
 
 <p>
@@ -29,7 +29,7 @@ and procedures, which gives the syntax of each form and the number and
 types of arguments accepted by each procedure.
 Details on standard Scheme features can be found in
 <a name="./intro:s0"></a><a  href=http://www.scheme.com/tspl4/><i>The
-Scheme Programming Language, 4th Edition</i></a> (TSPL4)&nbsp;[<a class=citation href="./bibliography.html#g157">11</a>] or
+Scheme Programming Language, 4th Edition</i></a> (TSPL4)&nbsp;[<a class=citation href="./bibliography.html#g158">11</a>] or
 the Revised<sup>6</sup> Report on Scheme.
 <i>The Scheme Programming Language, 4th Edition</i> also contains an
 extensive introduction to the Scheme language and numerous short and
@@ -68,25 +68,25 @@ separate processes or code written in other languages.
 Chapter&nbsp;<a href="./binding.html#g36">5</a> describes binding forms.
 Chapter&nbsp;<a href="./control.html#g42">6</a> documents control structures.
 Chapter&nbsp;<a href="./objects.html#g47">7</a> documents operations on nonnumeric objects,
-while Chapter&nbsp;<a href="./numeric.html#g62">8</a> documents various numeric operations,
+while Chapter&nbsp;<a href="./numeric.html#g63">8</a> documents various numeric operations,
 including efficient type-specific operations.
-Chapter&nbsp;<a href="./io.html#g70">9</a> describes input/output operations and
+Chapter&nbsp;<a href="./io.html#g71">9</a> describes input/output operations and
 generic ports, which allow the definition of ports with arbitrary
 input/output semantics.
-Chapter&nbsp;<a href="./libraries.html#g88">10</a> discusses how R6RS libraries and top-level
+Chapter&nbsp;<a href="./libraries.html#g89">10</a> discusses how R6RS libraries and top-level
 programs are loaded into <i>Chez&nbsp;Scheme</i> along with various features for
 controlling and tracking the loading process.
-Chapter&nbsp;<a href="./syntax.html#g95">11</a> describes syntactic extension and modules.
-Chapter&nbsp;<a href="./system.html#g107">12</a> describes system operations, such as operations
+Chapter&nbsp;<a href="./syntax.html#g96">11</a> describes syntactic extension and modules.
+Chapter&nbsp;<a href="./system.html#g108">12</a> describes system operations, such as operations
 for interacting with the operating system and customizing
 <i>Chez&nbsp;Scheme</i>'s user interface.
-Chapter&nbsp;<a href="./smgmt.html#g124">13</a> describes how to invoke and control the storage
+Chapter&nbsp;<a href="./smgmt.html#g125">13</a> describes how to invoke and control the storage
 management system and documents guardians and weak pairs.
-Chapter&nbsp;<a href="./expeditor.html#g128">14</a> describes <i>Chez&nbsp;Scheme</i>'s expression
+Chapter&nbsp;<a href="./expeditor.html#g129">14</a> describes <i>Chez&nbsp;Scheme</i>'s expression
 editor and how it can be customized.
-Chapter&nbsp;<a href="./threads.html#g133">15</a> documents the procedures and syntactic forms
+Chapter&nbsp;<a href="./threads.html#g134">15</a> documents the procedures and syntactic forms
 that comprise the interface to <i>Chez&nbsp;Scheme</i>'s native thread system.
-Finally, Chapter&nbsp;<a href="./compat.html#g142">16</a> describes various compatibility features.
+Finally, Chapter&nbsp;<a href="./compat.html#g143">16</a> describes various compatibility features.
 
 <p>
 The back of this book contains a bibliography, 
@@ -434,7 +434,7 @@ versions of <i>Chez&nbsp;Scheme</i>, while the values of parameters marked "glob
 parameters" are shared by all threads.
 Nonthreaded versions of <i>Chez&nbsp;Scheme</i> do not distinguish between
 thread and global parameters.
-See Sections&nbsp;<a href="./system.html#g120">12.13</a> and&nbsp;<a href="./threads.html#g139">15.6</a> for
+See Sections&nbsp;<a href="./system.html#g121">12.13</a> and&nbsp;<a href="./threads.html#g140">15.6</a> for
 more information on creating and manipulating parameters.
 
 
@@ -450,25 +450,25 @@ features of <i>Chez&nbsp;Scheme</i> and its implementation:
 
 <p>
 <ul>
-<li>syntactic abstraction&nbsp;[<a class=citation href="./bibliography.html#g160">14</a>,<a class=citation href="./bibliography.html#g154">8</a>,<a class=citation href="./bibliography.html#g163">17</a>],
-<li>modules&nbsp;[<a class=citation href="./bibliography.html#g177">31</a>],
-<li>libraries&nbsp;[<a class=citation href="./bibliography.html#g167">21</a>],
-<li>storage management&nbsp;[<a class=citation href="./bibliography.html#g158">12</a>,<a class=citation href="./bibliography.html#g159">13</a>],
-<li>threads&nbsp;[<a class=citation href="./bibliography.html#g156">10</a>],
-<li>multiple return values&nbsp;[<a class=citation href="./bibliography.html#g148">2</a>],
-<li>optional arguments&nbsp;[<a class=citation href="./bibliography.html#g162">16</a>],
-<li>continuations&nbsp;[<a class=citation href="./bibliography.html#g153">7</a>,<a class=citation href="./bibliography.html#g170">24</a>,<a class=citation href="./bibliography.html#g149">3</a>],
-<li>eq? hashtables&nbsp;[<a class=citation href="./bibliography.html#g166">20</a>],
-<li>internal definitions, <tt>letrec</tt>, and <tt>letrec*</tt>&nbsp;[<a class=citation href="./bibliography.html#g178">32</a>,<a class=citation href="./bibliography.html#g168">22</a>],
-<li><tt>equal?</tt>&nbsp;[<a class=citation href="./bibliography.html#g147">1</a>],
-<li>engines&nbsp;[<a class=citation href="./bibliography.html#g161">15</a>],
-<li>floating-point printing&nbsp;[<a class=citation href="./bibliography.html#g150">4</a>],
-<li>code generation&nbsp;[<a class=citation href="./bibliography.html#g164">18</a>],
-<li>register allocation&nbsp;[<a class=citation href="./bibliography.html#g152">6</a>],
-<li>procedure inlining&nbsp;[<a class=citation href="./bibliography.html#g176">30</a>],
-<li>profiling&nbsp;[<a class=citation href="./bibliography.html#g151">5</a>],
+<li>syntactic abstraction&nbsp;[<a class=citation href="./bibliography.html#g161">14</a>,<a class=citation href="./bibliography.html#g155">8</a>,<a class=citation href="./bibliography.html#g164">17</a>],
+<li>modules&nbsp;[<a class=citation href="./bibliography.html#g178">31</a>],
+<li>libraries&nbsp;[<a class=citation href="./bibliography.html#g168">21</a>],
+<li>storage management&nbsp;[<a class=citation href="./bibliography.html#g159">12</a>,<a class=citation href="./bibliography.html#g160">13</a>],
+<li>threads&nbsp;[<a class=citation href="./bibliography.html#g157">10</a>],
+<li>multiple return values&nbsp;[<a class=citation href="./bibliography.html#g149">2</a>],
+<li>optional arguments&nbsp;[<a class=citation href="./bibliography.html#g163">16</a>],
+<li>continuations&nbsp;[<a class=citation href="./bibliography.html#g154">7</a>,<a class=citation href="./bibliography.html#g171">24</a>,<a class=citation href="./bibliography.html#g150">3</a>],
+<li>eq? hashtables&nbsp;[<a class=citation href="./bibliography.html#g167">20</a>],
+<li>internal definitions, <tt>letrec</tt>, and <tt>letrec*</tt>&nbsp;[<a class=citation href="./bibliography.html#g179">32</a>,<a class=citation href="./bibliography.html#g169">22</a>],
+<li><tt>equal?</tt>&nbsp;[<a class=citation href="./bibliography.html#g148">1</a>],
+<li>engines&nbsp;[<a class=citation href="./bibliography.html#g162">15</a>],
+<li>floating-point printing&nbsp;[<a class=citation href="./bibliography.html#g151">4</a>],
+<li>code generation&nbsp;[<a class=citation href="./bibliography.html#g165">18</a>],
+<li>register allocation&nbsp;[<a class=citation href="./bibliography.html#g153">6</a>],
+<li>procedure inlining&nbsp;[<a class=citation href="./bibliography.html#g177">30</a>],
+<li>profiling&nbsp;[<a class=citation href="./bibliography.html#g152">5</a>],
 and
-<li>history of the implementation&nbsp;[<a class=citation href="./bibliography.html#g155">9</a>].
+<li>history of the implementation&nbsp;[<a class=citation href="./bibliography.html#g156">9</a>].
 </ul>
 <p>
 
@@ -483,10 +483,10 @@ available at the url
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
+Revised March 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

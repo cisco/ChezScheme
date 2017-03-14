@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g88"></a>
+<a name="g89"></a>
 <a name="./libraries:h0"></a>
 
 <h1>Chapter 10. Libraries and Top-level Programs<a name="CHPTLIBRARIES"></a></h1>
@@ -53,7 +53,7 @@ top-level program file.
 
 <p>
 
-<h3><a name="g89"></a><a name="./libraries:h1"></a>Section 10.1. Built-in Libraries<a name="SECTBUILTINLIBRARIES"></a></h3>
+<h3><a name="g90"></a><a name="./libraries:h1"></a>Section 10.1. Built-in Libraries<a name="SECTBUILTINLIBRARIES"></a></h3>
 
 
 
@@ -127,11 +127,11 @@ one of the RNRS libraries, the bindings are identical.
 In some cases, however, the <tt>(chezscheme)</tt> bindings extend the
 <tt>rnrs</tt> bindings in some way.
 For example, the <tt>(chezscheme)</tt> <tt>syntax-rules</tt> form allows
-its clauses to have fenders (Section&nbsp;<a href="./syntax.html#g97">11.2</a>), while the
+its clauses to have fenders (Section&nbsp;<a href="./syntax.html#g98">11.2</a>), while the
 <tt>(rnrs)</tt> <tt>syntax-rules</tt> form does not.
 Similarly, the <tt>(chezscheme)</tt> <tt>current-input-port</tt> procedure
 accepts an optional <tt><i>port</i></tt> argument that, when specified, sets the
-current input port to <tt><i>port</i></tt> (Section&nbsp;<a href="./io.html#g78">9.8</a>), while the
+current input port to <tt><i>port</i></tt> (Section&nbsp;<a href="./io.html#g79">9.8</a>), while the
 <tt>(rnrs)</tt> <tt>current-input-port</tt> procedure does not.
 When the <tt>(chezscheme)</tt> library extends an RNRS binding in some
 way, the <tt>(chezscheme)</tt> library also exports the RNRS version,
@@ -178,7 +178,7 @@ Section&nbsp;<a href="./use.html#g8">2.3</a>.
 
 <p>
 
-<h3><a name="g90"></a><a name="./libraries:h2"></a>Section 10.2. Running Top-level Programs<a name="SECTRUNNINGTOPLEVELPROGRAMS"></a></h3>
+<h3><a name="g91"></a><a name="./libraries:h2"></a>Section 10.2. Running Top-level Programs<a name="SECTRUNNINGTOPLEVELPROGRAMS"></a></h3>
 
 
 
@@ -210,7 +210,7 @@ This line may be replaced with
 <p>with <tt>/usr/bin</tt> replaced by the absolute path to the directory
 containing <tt>scheme-script</tt> if it is not in <tt>/usr/bin</tt>.
 The first form is recommended in the nonnormative appendices to the
-Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g174">28</a>], and works wherever
+Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g175">28</a>], and works wherever
 <tt>scheme-script</tt> appears in the path.
 
 <p>
@@ -240,7 +240,7 @@ resides, if not <tt>/usr/bin</tt>.
 
 <p>
 The <tt>load-program</tt> procedure, described in
-Section&nbsp;<a href="./system.html#g111">12.4</a>, is used like <tt>load</tt>:
+Section&nbsp;<a href="./system.html#g112">12.4</a>, is used like <tt>load</tt>:
 
 <p>
 
@@ -256,14 +256,14 @@ system starts up and begins to run the program.
 Thus, the line may be present even in a file loaded by <tt>load-program</tt>.
 In fact, <tt>load-program</tt> is ultimately used by the other two
 mechanisms described above, via the value of the <tt>scheme-program</tt>
-parameter described in Section&nbsp;<a href="./system.html#g115">12.8</a>, and it is
+parameter described in Section&nbsp;<a href="./system.html#g116">12.8</a>, and it is
 <tt>load-program</tt> that scans past the <tt>#!</tt> line, if present,
 before evaluating the program.
 
 <p>
 A top-level program may be compiled with the
 <a name="./libraries:s10"></a><tt>compile-program</tt>
-procedure described in Section&nbsp;<a href="./system.html#g111">12.4</a>.
+procedure described in Section&nbsp;<a href="./system.html#g112">12.4</a>.
 <tt>compile-program</tt> copies the <tt>#!</tt> line from the source
 file to the object file, followed by a compiled version of the source
 code.
@@ -299,7 +299,7 @@ programs to be enclosed in a
 
 <p>
 
-<h3><a name="g91"></a><a name="./libraries:h3"></a>Section 10.3. Library and Top-level Program Forms<a name="SECTLIBRARYFORMS"></a></h3>
+<h3><a name="g92"></a><a name="./libraries:h3"></a>Section 10.3. Library and Top-level Program Forms<a name="SECTLIBRARYFORMS"></a></h3>
 
 
 
@@ -357,7 +357,7 @@ accesses the bindings of the new instance of the library.
 (define&nbsp;f&nbsp;(lambda&nbsp;()&nbsp;x))<br>
 
 (f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;5</tt>
-<p>As with module imports (Section&nbsp;<a href="./syntax.html#g100">11.5</a>), a library
+<p>As with module imports (Section&nbsp;<a href="./syntax.html#g101">11.5</a>), a library
 <tt>import</tt> may appear anywhere a definition may appear, including at
 top level in the REPL, in a file to be loaded by <tt>load</tt>, or within
 a <tt>lambda</tt>, <tt>let</tt>, <tt>letrec</tt>, <tt>letrec*</tt>,
@@ -401,7 +401,7 @@ tested in the REPL.
 
 hello!</tt>
 <p>
-<h3><a name="g92"></a><a name="./libraries:h4"></a>Section 10.4. Standalone import and export forms<a name="SECTLIBRARYIMPORTEXPORTFORMS"></a></h3>
+<h3><a name="g93"></a><a name="./libraries:h4"></a>Section 10.4. Standalone import and export forms<a name="SECTLIBRARYIMPORTEXPORTFORMS"></a></h3>
 
 
 
@@ -411,7 +411,7 @@ Although not required by the Revised<sup>6</sup> Report,
 export forms.
 The import forms can appear anywhere other definitions
 can appear, including within a <tt>library</tt> body,
-<tt>module</tt> (Section&nbsp;<a href="./syntax.html#g100">11.5</a>) body,
+<tt>module</tt> (Section&nbsp;<a href="./syntax.html#g101">11.5</a>) body,
 <tt>lambda</tt> or other local body, and at top level.
 The export forms can appear within the definitions of a
 <tt>library</tt> or <tt>module</tt> body to specify additional
@@ -453,7 +453,7 @@ be imported, as permitted by the Revised<sup>6</sup> Report.
 This frees the programmer from the obligation
 to do so and results in more generality as well as more
 precision in the set of libraries actually imported
-at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g167">21</a>,<a class=citation href="./bibliography.html#g165">19</a>].
+at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g168">21</a>,<a class=citation href="./bibliography.html#g166">19</a>].
 
 <p>
 An <tt><i>import-set</i></tt> must take one of the following forms:
@@ -743,7 +743,7 @@ selective import of specific bindings---without the use of the built-in
 imports all exports of <tt>m</tt> then re-exports only the selected
 identifier.
 To rename on import the macro expands into an anonymous module that
-instead exports an alias (Section&nbsp;<a href="./syntax.html#g105">11.10</a>) bound to the new name.
+instead exports an alias (Section&nbsp;<a href="./syntax.html#g106">11.10</a>) bound to the new name.
 
 <p>
 If the output placed the definition of <tt>new</tt> in the same
@@ -1022,7 +1022,7 @@ This can result in significantly lower run-time performance.
 
 <p>
 
-<h3><a name="g93"></a><a name="./libraries:h5"></a>Section 10.5. Library Parameters<a name="SECTLIBRARYPARAMETERS"></a></h3>
+<h3><a name="g94"></a><a name="./libraries:h5"></a>Section 10.5. Library Parameters<a name="SECTLIBRARYPARAMETERS"></a></h3>
 
 
 
@@ -1131,7 +1131,7 @@ The default value of this parameter is <tt>#f</tt>.
 
 <p>
 
-<h3><a name="g94"></a><a name="./libraries:h6"></a>Section 10.6. Library Inspection<a name="SECTLIBRARYINSPECTION"></a></h3>
+<h3><a name="g95"></a><a name="./libraries:h6"></a>Section 10.6. Library Inspection<a name="SECTLIBRARYINSPECTION"></a></h3>
 
 
 
@@ -1143,7 +1143,7 @@ The default value of this parameter is <tt>#f</tt>.
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>The set of libraries initially defined includes those listed in
-Section&nbsp;<a href="./libraries.html#g89">10.1</a> above.
+Section&nbsp;<a href="./libraries.html#g90">10.1</a> above.
 
 <p>
 <a name="./libraries:s29"></a><span class=formdef><b>procedure</b>: <tt>(library-version&nbsp;<i>libref</i>)</tt></span>
@@ -1301,10 +1301,10 @@ is invoked.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
+Revised March 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

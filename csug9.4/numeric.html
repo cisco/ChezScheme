@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g62"></a>
+<a name="g63"></a>
 <a name="./numeric:h0"></a>
 
 <h1>Chapter 8. Numeric Operations<a name="CHPTNUMERIC"></a></h1>
@@ -109,7 +109,7 @@ while IEEE NANs are printed as <tt>+nan.0</tt> or <tt>-nan.0</tt>.
 (/&nbsp;+inf.0&nbsp;-inf.0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;+nan.0</tt>
 <p>The first section of this chapter describes type-specific numeric type
 predicates.
-Sections&nbsp;<a href="./numeric.html#g64">8.2</a> through&nbsp;<a href="./numeric.html#g66">8.4</a>
+Sections&nbsp;<a href="./numeric.html#g65">8.2</a> through&nbsp;<a href="./numeric.html#g67">8.4</a>
 describe fast, type-specific
 numeric operations on fixnums, flonums, and inexact complex numbers
 (flonums and/or inexact complexnums).
@@ -121,17 +121,17 @@ The flonum-specific versions should be used only when the
 inputs and outputs (where appropriate) are certain to be flonums.
 The mixed flonum/complexnum versions should be used only when the
 inputs are certain to be either flonums or inexact complexnums.
-Section&nbsp;<a href="./numeric.html#g67">8.5</a> describes operations, both
+Section&nbsp;<a href="./numeric.html#g68">8.5</a> describes operations, both
 arbitrary precision and fixnum-specific, that allow
 exact integers to be treated as sets or sequences of bits.
-Random number generation is covered Section&nbsp;<a href="./numeric.html#g68">8.6</a>,
+Random number generation is covered Section&nbsp;<a href="./numeric.html#g69">8.6</a>,
 and miscellaneous numeric operations are covered in the
-Section&nbsp;<a href="./numeric.html#g69">8.7</a>.
+Section&nbsp;<a href="./numeric.html#g70">8.7</a>.
 
 
 <p>
 
-<h3><a name="g63"></a><a name="./numeric:h1"></a>Section 8.1. Numeric Type Predicates</h3>
+<h3><a name="g64"></a><a name="./numeric:h1"></a>Section 8.1. Numeric Type Predicates</h3>
 
 
 
@@ -202,7 +202,7 @@ flonums or inexact complex numbers.
 
 (cflonum?&nbsp;+1.0i)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
 <p>
-<h3><a name="g64"></a><a name="./numeric:h2"></a>Section 8.2. Fixnum Operations<a name="SECTNUMERICFIXNUM"></a></h3>
+<h3><a name="g65"></a><a name="./numeric:h2"></a>Section 8.2. Fixnum Operations<a name="SECTNUMERICFIXNUM"></a></h3>
 
 
 
@@ -465,7 +465,7 @@ See the description of <tt>fx/</tt> above.
 
 (fxabs&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;0</tt>
 <p>
-<h3><a name="g65"></a><a name="./numeric:h3"></a>Section 8.3. Flonum Operations<a name="SECTNUMERICFLONUM"></a></h3>
+<h3><a name="g66"></a><a name="./numeric:h3"></a>Section 8.3. Flonum Operations<a name="SECTNUMERICFLONUM"></a></h3>
 
 
 
@@ -682,7 +682,7 @@ the number.
 
 (fllp&nbsp;#b1.0e-10000000000)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;0</tt>
 <p>
-<h3><a name="g66"></a><a name="./numeric:h4"></a>Section 8.4. Inexact Complex Operations<a name="SECTNUMERICCOMPLEXNUM"></a></h3>
+<h3><a name="g67"></a><a name="./numeric:h4"></a>Section 8.4. Inexact Complex Operations<a name="SECTNUMERICCOMPLEXNUM"></a></h3>
 
 
 
@@ -855,7 +855,7 @@ argument.
 
 (cfl-magnitude-squared&nbsp;3.0-4.0i)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;25.0</tt>
 <p>
-<h3><a name="g67"></a><a name="./numeric:h5"></a>Section 8.5. Bitwise and Logical Operators<a name="SECTNUMERICLOGICAL"></a></h3>
+<h3><a name="g68"></a><a name="./numeric:h5"></a>Section 8.5. Bitwise and Logical Operators<a name="SECTNUMERICLOGICAL"></a></h3>
 
 
 
@@ -1478,7 +1478,7 @@ bits in a fixnum, i.e.,
 
 (fxsra&nbsp;-64&nbsp;3)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;-8</tt>
 <p>
-<h3><a name="g68"></a><a name="./numeric:h6"></a>Section 8.6. Random Number Generation<a name="SECTNUMERICRANDOM"></a></h3>
+<h3><a name="g69"></a><a name="./numeric:h6"></a>Section 8.6. Random Number Generation<a name="SECTNUMERICRANDOM"></a></h3>
 
 
 
@@ -1523,7 +1523,7 @@ random seed to the argument.
 
 &nbsp;&nbsp;&nbsp;&nbsp;(eqv?&nbsp;(random&nbsp;1.0)&nbsp;r1)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
 <p>
-<h3><a name="g69"></a><a name="./numeric:h7"></a>Section 8.7. Miscellaneous Numeric Operations<a name="SECTNUMERICMISC"></a></h3>
+<h3><a name="g70"></a><a name="./numeric:h7"></a>Section 8.7. Miscellaneous Numeric Operations<a name="SECTNUMERICMISC"></a></h3>
 
 
 
@@ -1808,10 +1808,10 @@ The Revised<sup>6</sup> Report version requires radix to be in the set
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised Dec. 2016 for Chez Scheme Version 9.4.1<br>
+Revised March 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
