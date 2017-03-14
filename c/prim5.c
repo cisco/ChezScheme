@@ -115,6 +115,10 @@ static ptr s_iconv_to_string PROTO((uptr cd, ptr in, uptr i, uptr iend, ptr out,
 static ptr s_multibytetowidechar PROTO((unsigned cp, ptr inbv));
 static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
 #endif
+static ptr s_null_immutable_vector PROTO((void));
+static ptr s_null_immutable_fxvector PROTO((void));
+static ptr s_null_immutable_bytevector PROTO((void));
+static ptr s_null_immutable_string PROTO((void));
 
 #define require(test,who,msg,arg) if (!(test)) S_error1(who, msg, arg)
 
@@ -1635,6 +1639,11 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_multibytetowidechar", (void *)s_multibytetowidechar);
     Sforeign_symbol("(cs)s_widechartomultibyte", (void *)s_widechartomultibyte);
 #endif
+
+    Sforeign_symbol("(cs)null_immutable_vector", (void *)s_null_immutable_vector);
+    Sforeign_symbol("(cs)null_immutable_fxvector", (void *)s_null_immutable_fxvector);
+    Sforeign_symbol("(cs)null_immutable_bytevector", (void *)s_null_immutable_bytevector);
+    Sforeign_symbol("(cs)null_immutable_string", (void *)s_null_immutable_string);
 }
 
 static ptr find_pcode() {
@@ -2050,3 +2059,19 @@ static ptr s_widechartomultibyte(unsigned cp, ptr inbv) {
   return outbv;  
 }
 #endif /* WIN32 */
+
+static ptr s_null_immutable_vector() {
+  return S_G.null_immutable_vector;
+}
+
+static ptr s_null_immutable_fxvector() {
+  return S_G.null_immutable_fxvector;
+}
+
+static ptr s_null_immutable_bytevector() {
+  return S_G.null_immutable_bytevector;
+}
+
+static ptr s_null_immutable_string() {
+  return S_G.null_immutable_string;
+}

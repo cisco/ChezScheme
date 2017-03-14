@@ -31,3 +31,7 @@
      (set! mutex-release (lambda (m) (void)))
      (set! $tc-mutex (void))]))
 
+(define (immutable-string? x) #f)
+(define (immutable-vector? x) #f)
+(define (immutable-fxvector? x) #f)
+(define (immutable-bytevector? x) #f)
