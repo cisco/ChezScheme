@@ -4941,11 +4941,11 @@
                                       (bytevector->immutable-bytevector #vu8())
                                       (box-immutable 1)))
     (define (immutable? l)
-      (and (vector-immutable? (list-ref l 0))
-           (fxvector-immutable? (list-ref l 1))
-           (string-immutable? (list-ref l 2))
-           (bytevector-immutable? (list-ref l 3))
-           (box-immutable? (list-ref l 4))))
+      (and (immutable-vector? (list-ref l 0))
+           (immutable-fxvector? (list-ref l 1))
+           (immutable-string? (list-ref l 2))
+           (immutable-bytevector? (list-ref l 3))
+           (immutable-box? (list-ref l 4))))
     (define (round-trip l)
       (let-values ([(o get) (open-bytevector-output-port)])
         (fasl-write l o)
@@ -4959,9 +4959,9 @@
 
   ;; Make sure `fasl-read` didn't mark "mutable" null values
   ;; as immutable:
-  (not (vector-immutable? '#()))
-  (not (fxvector-immutable? '#vfx()))
-  (not (string-immutable? ""))
-  (not (bytevector-immutable? '#vu8()))
+  (mutable-vector? '#())
+  (mutable-fxvector? '#vfx())
+  (mutable-string? "")
+  (mutable-bytevector? '#vu8())
   
  )

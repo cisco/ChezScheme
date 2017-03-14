@@ -3600,15 +3600,6 @@
                        ,(%inline logor
                                  ,(%mref ,e-v ,(constant type-disp))
                                  (immediate ,(constant immutable-flag))))))]))
-        (define-syntax build-immutable?
-          (syntax-rules ()
-            [(_ type-disp immutable-flag)
-             (lambda (e-v)
-               (bind #t (e-v)
-                     `(if ,(%inline logtest ,(%mref ,e-v ,(constant type-disp))
-                                    (immediate ,(constant immutable-flag)))
-                       ,(%constant strue)
-                       ,(%constant sfalse))))]))
         (define inline-args-limit 10)
         (define reduce-equality
           (lambda (src sexpr moi e1 e2 e*)
@@ -4663,9 +4654,13 @@
           (typed-object-pred bignum? mask-bignum type-bignum)
           (typed-object-pred box? mask-box type-box)
           (typed-object-pred bytevector? mask-bytevector type-bytevector)
+          (typed-object-pred mutable-bytevector? mask-mutable-bytevector type-mutable-bytevector)
+          (typed-object-pred immutable-bytevector? mask-mutable-bytevector type-immutable-bytevector)
           (typed-object-pred $code? mask-code type-code)
           (typed-object-pred $exactnum? mask-exactnum type-exactnum)
           (typed-object-pred fxvector? mask-fxvector type-fxvector)
+          (typed-object-pred mutable-fxvector? mask-mutable-fxvector type-mutable-fxvector)
+          (typed-object-pred immutable-fxvector? mask-mutable-fxvector type-immutable-fxvector)
           (typed-object-pred $inexactnum? mask-inexactnum type-inexactnum)
           (typed-object-pred $rtd-counts? mask-rtd-counts type-rtd-counts)
           (typed-object-pred input-port? mask-input-port type-input-port)
@@ -4674,9 +4669,13 @@
           (typed-object-pred ratnum? mask-ratnum type-ratnum)
           (typed-object-pred $record? mask-record type-record)
           (typed-object-pred string? mask-string type-string)
+          (typed-object-pred mutable-string? mask-mutable-string type-mutable-string)
+          (typed-object-pred immutable-string? mask-mutable-string type-immutable-string)
           (typed-object-pred $system-code? mask-system-code type-system-code)
           (typed-object-pred $tlc? mask-tlc type-tlc)
           (typed-object-pred vector? mask-vector type-vector)
+          (typed-object-pred mutable-vector? mask-mutable-vector type-mutable-vector)
+          (typed-object-pred immutable-vector? mask-mutable-vector type-immutable-vector)
           (typed-object-pred thread? mask-thread type-thread))
         (define-inline 3 $bigpositive?
           [(e) (%type-check mask-signed-bignum type-positive-bignum
@@ -4990,7 +4989,10 @@
             [(e) (build-number? e)])
           (define-inline 2 complex?
             [(e) (build-number? e)]))
-        (define-inline 3 box-immutable?
+        (define-inline 3 mutable-box?
+          [(e) (bind #t (e)
+                 (%typed-object-check mask-immutable-box type-mutable-box ,e))])
+        (define-inline 3 immutable-box?
           [(e) (bind #t (e)
                  (%typed-object-check mask-immutable-box type-immutable-box ,e))])
         (define-inline 3 set-car!
@@ -7719,9 +7721,7 @@
                      ,(go e-fv e-i e-new)
                      ,(build-libcall #t src sexpr fxvector-set! e-fv e-i e-new)))])
           (define-inline 3 $fxvector-set-immutable!
-            [(e-fv) ((build-set-immutable! fxvector-type-disp fxvector-immutable-flag) e-fv)])
-          (define-inline 3 fxvector-immutable?
-            [(e-fv) ((build-immutable? fxvector-type-disp fxvector-immutable-flag) e-fv)])))
+            [(e-fv) ((build-set-immutable! fxvector-type-disp fxvector-immutable-flag) e-fv)])))
         (let ()
           (define build-string-ref-check
             (lambda (e-s e-i)
@@ -7785,9 +7785,7 @@
                       ,(go e-s e-i e-new)
                       ,(build-libcall #t src sexpr string-set! e-s e-i e-new)))])
             (define-inline 3 $string-set-immutable!
-              [(e-s) ((build-set-immutable! string-type-disp string-immutable-flag) e-s)])
-            (define-inline 3 string-immutable?
-              [(e-s) ((build-immutable? string-type-disp string-immutable-flag) e-s)])))
+              [(e-s) ((build-set-immutable! string-type-disp string-immutable-flag) e-s)])))
         (let ()
           (define build-vector-ref-check
             (build-ref-check vector-type-disp maximum-vector-length vector-length-offset
@@ -7830,9 +7828,7 @@
                       ,(go e-v e-i e-new)
                       ,(build-libcall #t src sexpr vector-set! e-v e-i e-new)))])
           (define-inline 3 $vector-set-immutable!
-            [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)])
-          (define-inline 3 vector-immutable?
-            [(e-fv) ((build-immutable? vector-type-disp vector-immutable-flag) e-fv)]))
+            [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)]))
           (let ()
             (define (go e-v e-i e-new)
               `(set!
@@ -8043,8 +8039,6 @@
 
         (define-inline 3 $bytevector-set-immutable!
           [(bv) ((build-set-immutable! bytevector-type-disp bytevector-immutable-flag) bv)])
-        (define-inline 3 bytevector-immutable?
-          [(bv) ((build-immutable? bytevector-type-disp bytevector-immutable-flag) bv)])
 
         (let ()
           (define bv-index-offset

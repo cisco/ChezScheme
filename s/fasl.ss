@@ -247,14 +247,14 @@
 
 (define wrf-string
    (lambda (x p t a?)
-      (put-u8 p (if (string-immutable? x)
+      (put-u8 p (if (immutable-string? x)
                     (constant fasl-type-immutable-string)
                     (constant fasl-type-string)))
       (wrf-string-help x p)))
 
 (define wrf-vector
    (lambda (x p t a?)
-      (put-u8 p (if (vector-immutable? x)
+      (put-u8 p (if (immutable-vector? x)
                     (constant fasl-type-immutable-vector)
                     (constant fasl-type-vector)))
       (let ([n (vector-length x)]) 
@@ -266,7 +266,7 @@
 
 (define wrf-fxvector
   (lambda (x p t a?)
-    (put-u8 p (if (fxvector-immutable? x)
+    (put-u8 p (if (immutable-fxvector? x)
                   (constant fasl-type-immutable-fxvector)
                   (constant fasl-type-fxvector)))
     (let ([n (fxvector-length x)])
@@ -278,7 +278,7 @@
 
 (define wrf-bytevector
   (lambda (x p t a?)
-    (put-u8 p (if (bytevector-immutable? x)
+    (put-u8 p (if (immutable-bytevector? x)
                   (constant fasl-type-immutable-bytevector)
                   (constant fasl-type-bytevector)))
     (let ([n (bytevector-length x)])
@@ -465,7 +465,7 @@
 
 (define wrf-box
    (lambda (x p t a?)
-      (put-u8 p (if (box-immutable? x)
+      (put-u8 p (if (immutable-box? x)
                     (constant fasl-type-immutable-box)
                     (constant fasl-type-box)))
       (wrf (unbox x) p t a?)))

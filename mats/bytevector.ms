@@ -10928,19 +10928,26 @@
     (begin
       (define immutable-100-bytevector
         (bytevector->immutable-bytevector (make-bytevector 100 42)))
-      (bytevector-immutable? immutable-100-bytevector))
+      #t)
+    
+    (immutable-bytevector? immutable-100-bytevector)
+    (not (mutable-bytevector? immutable-100-bytevector))
     
     (equal? (make-bytevector 100 42) immutable-100-bytevector)
     (eq? immutable-100-bytevector
          (bytevector->immutable-bytevector immutable-100-bytevector))
     
-    (not (bytevector-immutable? (make-bytevector 5)))
+    (not (immutable-bytevector? (make-bytevector 5)))
+    (mutable-bytevector? (make-bytevector 5))
     
-    (bytevector-immutable? (bytevector->immutable-bytevector (bytevector)))
-    (not (bytevector-immutable? (bytevector)))
+    (immutable-bytevector? (bytevector->immutable-bytevector (bytevector)))
+    (not (mutable-bytevector? (bytevector->immutable-bytevector (bytevector))))
+    (not (immutable-bytevector? (bytevector)))
+    (mutable-bytevector? (bytevector))
     
-    (not (bytevector-immutable? (bytevector-copy immutable-100-bytevector)))
+    (not (immutable-bytevector? (bytevector-copy immutable-100-bytevector)))
 
+    ;; Make sure `...set!` functions check for mutability:
     (error? (bytevector-uint-set! immutable-100-bytevector 0 1 (endianness big) 4))
     (error? (bytevector-sint-set! immutable-100-bytevector 0 1 (endianness big) 4))
     (error? (bytevector-u8-set! immutable-100-bytevector 0 1))
@@ -10969,7 +10976,38 @@
     (error? (bytevector-ieee-double-set! immutable-100-bytevector 0 1.0 (endianness big)))
     (error? (bytevector-ieee-single-native-set! immutable-100-bytevector 0 1.0))
     (error? (bytevector-ieee-double-native-set! immutable-100-bytevector 0 1.0))
+    
     (error? (bytevector-fill! immutable-100-bytevector 0))
     (error? (bytevector-copy! '#vu8(4 5 6) 0 immutable-100-bytevector 0 3))
     (error? (bytevector-truncate! immutable-100-bytevector 1))
+
+    ;; Make sure `...ref!` functions *don't* accidentally check for mutability:
+    (number? (bytevector-uint-ref immutable-100-bytevector 0 (endianness big) 4))
+    (number? (bytevector-sint-ref immutable-100-bytevector 0 (endianness big) 4))
+    (number? (bytevector-u8-ref immutable-100-bytevector 0))
+    (number? (bytevector-s8-ref immutable-100-bytevector 0))
+    (number? (bytevector-u16-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s16-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u16-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-s16-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-u24-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s24-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u32-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s32-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u32-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-s32-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-u40-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s40-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u48-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s48-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u56-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s56-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u64-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-s64-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-u64-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-s64-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-ieee-single-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-ieee-double-ref immutable-100-bytevector 0 (endianness big)))
+    (number? (bytevector-ieee-single-native-ref immutable-100-bytevector 0))
+    (number? (bytevector-ieee-double-native-ref immutable-100-bytevector 0))
 )

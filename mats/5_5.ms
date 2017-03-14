@@ -736,18 +736,24 @@
     (begin
       (define immutable-abc-string
         (string->immutable-string (string #\a #\b #\c)))
-      (string-immutable? immutable-abc-string))
+      #t)
+
+    (immutable-string? immutable-abc-string)
+    (not (mutable-string? immutable-abc-string))
     
     (equal? "abc" immutable-abc-string)
     (eq? immutable-abc-string
          (string->immutable-string immutable-abc-string))
     
-    (not (string-immutable? (make-string 5)))
+    (not (immutable-string? (make-string 5)))
+    (mutable-string? (make-string 5))
     
-    (string-immutable? (string->immutable-string (string)))
-    (not (string-immutable? (string)))
+    (immutable-string? (string->immutable-string (string)))
+    (not (mutable-string? (string->immutable-string (string))))
+    (not (immutable-string? (string)))
+    (mutable-string? (string))
     
-    (not (string-immutable? (string-copy immutable-abc-string)))
+    (not (immutable-string? (string-copy immutable-abc-string)))
 
     (error? (string-set! immutable-abc-string 0 #\a))
     (error? (string-fill! immutable-abc-string #\a))

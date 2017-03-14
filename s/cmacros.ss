@@ -785,8 +785,6 @@
   (min (- (expt 2 (fx- (constant ptr-bits) (constant bytevector-length-offset))) 1)
           (constant most-positive-fixnum)))
 
-(define-constant always-immutable-flag 0)
-
 (define-constant code-flags-offset         (constant ordinary-type-bits))
 
 (define-constant char-data-offset 8)
@@ -903,15 +901,23 @@
 (define-constant mask-positive-fixnum #x80000003)
 
 (define-constant type-mutable-vector (constant type-vector))
+(define-constant type-immutable-vector
+  (fxior (constant type-vector) (constant vector-immutable-flag)))
 (define-constant mask-mutable-vector
   (logior (constant mask-vector) (constant vector-immutable-flag)))
 (define-constant type-mutable-string (constant type-string))
+(define-constant type-immutable-string
+  (fxior (constant type-string) (constant string-immutable-flag)))
 (define-constant mask-mutable-string
   (logior (constant mask-string) (constant string-immutable-flag)))
 (define-constant type-mutable-fxvector (constant type-fxvector))
+(define-constant type-immutable-fxvector
+  (fxior (constant type-fxvector) (constant fxvector-immutable-flag)))
 (define-constant mask-mutable-fxvector
   (logior (constant mask-fxvector) (constant fxvector-immutable-flag)))
 (define-constant type-mutable-bytevector (constant type-bytevector))
+(define-constant type-immutable-bytevector
+  (fxior (constant type-bytevector) (constant fxvector-immutable-flag)))
 (define-constant mask-mutable-bytevector
   (logior (constant mask-bytevector) (constant bytevector-immutable-flag)))
 

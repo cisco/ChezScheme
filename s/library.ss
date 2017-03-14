@@ -240,21 +240,30 @@
   (define string-oops
     (lambda (who x)
       ($oops who "~s is not a string" x)))
+  (define mutable-string-oops
+    (lambda (who x)
+      ($oops who "~s is not a mutable string" x)))
   (define vector-oops
     (lambda (who x)
       ($oops who "~s is not a vector" x)))
+  (define mutable-vector-oops
+    (lambda (who x)
+      ($oops who "~s is not a mutable vector" x)))
   (define fxvector-oops
     (lambda (who x)
       ($oops who "~s is not an fxvector" x)))
+  (define mutable-fxvector-oops
+    (lambda (who x)
+      ($oops who "~s is not a mutable fxvector" x)))
   (define bytevector-oops
     (lambda (who x)
       ($oops who "~s is not a bytevector" x)))
+  (define mutable-bytevector-oops
+    (lambda (who x)
+      ($oops who "~s is not a mutable bytevector" x)))
   (define index-oops
     (lambda (who x i)
       ($oops who "~s is not a valid index for ~s" i x)))
-  (define mutable-oops
-    (lambda (who x)
-      ($oops who "~s is immutable" x)))
 
   (define-library-entry (char->integer x) (char-oops 'char->integer x))
 
@@ -268,11 +277,9 @@
         (if (char? c)
             (string-set! s i c)
             (char-oops 'string-set! c))
-        (if (string? s)
-            (if (string-immutable? s)
-                (mutable-oops 'string-set! s)
-                (index-oops 'string-set! s i))
-            (string-oops 'string-set! s))))
+        (if (mutable-string? s)
+            (index-oops 'string-set! s i)
+            (mutable-string-oops 'string-set! s))))
 
   (define-library-entry (string-length s)
     (string-oops 'string-length s))
@@ -283,19 +290,15 @@
         (vector-oops 'vector-ref v)))
 
   (define-library-entry (vector-set! v i x)
-    (if (vector? v)
-        (if (vector-immutable? v)
-            (mutable-oops 'vector-set! v)
-            (index-oops 'vector-set! v i))
-        (vector-oops 'vector-set! v)))
+    (if (mutable-vector? v)
+        (index-oops 'vector-set! v i)
+        (mutable-vector-oops 'vector-set! v)))
 
   (define-library-entry (vector-set-fixnum! v i x)
     (if (fixnum? x)
-        (if (vector? v)
-            (if (vector-immutable? v)
-                (mutable-oops 'vector-set-fixnum! v)
-                (index-oops 'vector-set-fixnum! v i))
-            (vector-oops 'vector-set-fixnum! v))
+        (if (mutable-vector? v)
+            (index-oops 'vector-set-fixnum! v i)
+            (mutable-vector-oops 'vector-set-fixnum! v))
         ($oops 'vector-set-fixnum! "~s is not a fixnum" x)))
 
   (define-library-entry (vector-length v)
@@ -307,13 +310,11 @@
         (fxvector-oops 'fxvector-ref v)))
 
   (define-library-entry (fxvector-set! v i x)
-    (if (fxvector? v)
-        (if (fxvector-immutable? v)
-            (mutable-oops 'fxvector-set! v)
-            (if (and (fixnum? i) ($fxu< i (fxvector-length v)))
-                (fixnum-oops 'fxvector-set! x)
-                (index-oops 'fxvector-set! v i)))
-        (fxvector-oops 'fxvector-set! v)))
+    (if (mutable-fxvector? v)
+        (if (and (fixnum? i) ($fxu< i (fxvector-length v)))
+            (fixnum-oops 'fxvector-set! x)
+            (index-oops 'fxvector-set! v i))
+        (mutable-fxvector-oops 'fxvector-set! v)))
 
   (define-library-entry (fxvector-length v)
     (fxvector-oops 'fxvector-length v))
@@ -333,22 +334,18 @@
         (if (and (fixnum? k) (fx<= -128 k 127))
             (bytevector-s8-set! v i k)
             ($oops 'bytevector-s8-set! "invalid value ~s" k))
-        (if (bytevector? v)
-            (if (bytevector-immutable? v)
-                (mutable-oops 'bytevector-s8-set! v)
-                (index-oops 'bytevector-s8-set! v i))
-            (bytevector-oops 'bytevector-s8-set! v))))
+        (if (mutable-bytevector? v)
+            (index-oops 'bytevector-s8-set! v i)
+            (mutable-bytevector-oops 'bytevector-s8-set! v))))
 
   (define-library-entry (bytevector-u8-set! v i k)
     (if ($bytevector-set!-check? 8 v i)
         (if (and (fixnum? k) (fx<= 0 k 255))
             (bytevector-u8-set! v i k)
             ($oops 'bytevector-u8-set! "invalid value ~s" k))
-        (if (bytevector? v)
-            (if (bytevector-immutable? v)
-                (mutable-oops 'bytevector-u8-set! v)
-                (index-oops 'bytevector-u8-set! v i))
-            (bytevector-oops 'bytevector-u8-set! v))))
+        (if (mutable-bytevector? v)
+            (index-oops 'bytevector-u8-set! v i)
+            (mutable-bytevector-oops 'bytevector-u8-set! v))))
 
   (define-library-entry (bytevector-length v)
     (bytevector-oops 'bytevector-length v))
@@ -418,9 +415,7 @@
 
 #;
 (define-library-entry (set-box! b v)
-  (if (box? b)
-      ($oops 'set-box! "~s is immutable" b)
-      ($oops 'set-box! "~s is not a box" b)))
+  ($oops 'set-box! "~s is not a mutable box" b))
 
 (let ()
 (define (fxnonfixnum1 who x)
