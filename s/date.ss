@@ -101,7 +101,7 @@
       (scheme-object)
       scheme-object))
 
-  (define-record-type ts
+  (define-record-type ts ; keep in sync with S_condition_wait in c/thread.c
     (fields (mutable typeno) (immutable pair))
     (nongenerative #{ts a5dq4nztnmq6xlgp-a})
     (sealed #t))

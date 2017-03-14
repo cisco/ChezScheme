@@ -58,6 +58,15 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Optional timeout for \protect\scheme{condition-wait} (9.4.1)}
+
+The \scheme{condition-wait} procedure now takes an optional
+\var{timeout} argument and returns a boolean indicating whether the
+thread was awakened by the condition before the timeout. The
+\var{timeout} can be a time record of type \scheme{time-duration} or
+\scheme{time-utc}, or it can be \scheme{#f} for no timeout (the
+default).
+
 \subsection{\protect\scheme{procedure-arity-mask} (9.4.1)}
 
 The new primitive procedure \scheme{procedure-arity-mask} takes a

@@ -375,3 +375,7 @@
   registers as required for varargs functions. Windows does not
   support single-precision floating-point arguments as varargs.
     foreign.ms, np-languages.ss, x86_64.ss
+- added an optional timeout argument to condition-wait
+    externs.h, stats.c, thread.c, thread.h, csug/threads.stex,
+    primvars.ms, thread.ms, release_notes.stex,
+    date.ss, primdata.ss, prims.ss

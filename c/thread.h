@@ -18,6 +18,7 @@
 #ifdef FEATURE_WINDOWS
 
 #include <process.h>
+#include <time.h>
 
 /* learned from http://locklessinc.com/articles/pthreads_on_windows/ which
  * Windows API types and functions to use to support mutexes and condition
