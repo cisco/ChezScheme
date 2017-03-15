@@ -329,7 +329,6 @@ typedef unsigned long long U64;
 #define mask_flonum 0x7
 #define mask_fxvector 0x7
 #define mask_immediate 0x7
-#define mask_immutable_box 0xFFFFFFFF
 #define mask_inexactnum 0xFFFFFFFF
 #define mask_input_port 0x1FF
 #define mask_mutable_box 0xFFFFFFFF
@@ -343,7 +342,6 @@ typedef unsigned long long U64;
 #define mask_output_port 0x2FF
 #define mask_pair 0x7
 #define mask_port 0xFF
-#define mask_positive_fixnum 0x80000003
 #define mask_ratnum 0xFFFFFFFF
 #define mask_record 0x7
 #define mask_rtd_counts 0xFFFFFFFF
@@ -865,10 +863,6 @@ typedef unsigned long long U64;
 #define RPHEADERFRAMESIZE(x) (*((iptr *)((uptr)(x)+8)))
 #define RPHEADERLIVEMASK(x) (*((ptr *)((uptr)(x)+0)))
 #define RPHEADERTOPLINK(x) (*((uptr *)((uptr)(x)+4)))
-#define Svector_set_immutable(x) (*((iptr *)((uptr)(x)+1))) |= 4
-#define Sfxvector_set_immutable(x) (*((iptr *)((uptr)(x)+1))) |= 8
-#define Sbytevector_set_immutable(x) (*((iptr *)((uptr)(x)+1))) |= 8
-#define Sstring_set_immutable(x) (*((iptr *)((uptr)(x)+1))) |= 8
 
 /* machine types */
 #define machine_type_names {"any", "i3le", "ti3le", "i3nt", "ti3nt", "i3fb", "ti3fb", "i3ob", "ti3ob", "i3osx", "ti3osx", "a6le", "ta6le", "a6osx", "ta6osx", "a6ob", "ta6ob", "a6s2", "ta6s2", "i3s2", "ti3s2", "a6fb", "ta6fb", "i3nb", "ti3nb", "a6nb", "ta6nb", "a6nt", "ta6nt", "i3qnx", "ti3qnx", "arm32le", "tarm32le", "ppc32le", "tppc32le"}

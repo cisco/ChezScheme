@@ -502,16 +502,13 @@
   (set-who! make-bytevector
     (case-lambda
       [(n fill)
-       (meta-assert (<= (constant maximum-bytevector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-bytevector-length) 1)))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
          ($oops who "~s is not a valid bytevector length" n))
        (unless (fill? fill) (invalid-fill-value who fill))
        (#3%make-bytevector n fill)]
       [(n)
-       (meta-assert (<= (constant maximum-bytevector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-bytevector-length) 1)))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
          ($oops who "~s is not a valid bytevector length" n))
-       (unless (fx<= n (constant maximum-bytevector-length)) ($oops who "~s is too large" n))
        (#3%make-bytevector n)]))
 
   (set! bytevector? (lambda (x) (#2%bytevector? x)))
@@ -775,12 +772,11 @@
   
   (set-who! bytevector->immutable-bytevector
     (lambda (v)
-      (unless (bytevector? v)
-        ($oops who "~s is not a bytevector" v))
       (cond
         [(immutable-bytevector? v) v]
-        [(fx= 0 (bytevector-length v)) ($tc-field 'null-immutable-bytevector ($tc))]
+        [(eqv? v '#vu8()) ($tc-field 'null-immutable-bytevector ($tc))]
         [else
+         (unless (bytevector? v) ($oops who "~s is not a bytevector" v))
          (let ([v2 (bytevector-copy v)])
            ($bytevector-set-immutable! v2)
            v2)])))

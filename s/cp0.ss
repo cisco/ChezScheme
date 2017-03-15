@@ -2411,7 +2411,14 @@
           (lambda (x y)
             (if (#2%< x 0)
                 (and (#2%< y 0) (#2%< x y))
-                (or (#2%< y 0) (#2%< x y)))))
+                (or (#2%< y 0) (#2%< x y))))
+          (lambda (level ctxt x y)
+            (let ([xval (value-visit-operand! x)]
+                  [yval (value-visit-operand! y)])
+              (and (cp0-constant? (lambda (obj) (eqv? obj (constant most-positive-fixnum))) (result-exp xval))
+                   (begin
+                     (residualize-seq (list y) (list x) ctxt)
+                     (build-primcall (app-preinfo ctxt) level 'fx< (list yval `(quote 0))))))))
 
         (fold (fxmax tfixnum? . tfixnum?) tfixnum? #2%max)
         (fold (fxmin tfixnum? . tfixnum?) tfixnum? #2%min)
