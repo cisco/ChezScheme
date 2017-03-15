@@ -243,7 +243,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat apply: "apply: (1 2 1 2 1 2 ...) is circular".
 4.mo:Expected error in mat begin: "invalid syntax (begin)".
 4.mo:Expected error in mat cond: "invalid syntax x".
+4.mo:Expected error in mat exclusive-cond: "invalid exclusive-cond clause (a . b)".
 4.mo:Expected error in mat exclusive-cond: "invalid syntax x".
+4.mo:Expected error in mat case: "invalid case clause (a . b)".
 4.mo:Expected error in mat r6rs:case: "invalid syntax (r6rs:case (quote a) (a (quote yes)) (b (quote no)))".
 4.mo:Expected error in mat r6rs:case: "invalid syntax (case (quote a) (a (quote yes)) (b (quote no)))".
 4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
@@ -1966,7 +1968,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat make-string: "incorrect argument count in call (make-string)".
 5_5.mo:Expected error in mat make-string: "incorrect argument count in call (make-string 2 #\a #\b)".
 5_5.mo:Expected error in mat make-string: "make-string: a is not a character".
-5_5.mo:Expected error in mat make-string: "make-string: a is not a nonnegative fixnum".
+5_5.mo:Expected error in mat make-string: "make-string: a is not a valid string length".
 5_5.mo:Expected error in mat string-length: "incorrect argument count in call (string-length)".
 5_5.mo:Expected error in mat string-length: "incorrect argument count in call (string-length "hi" "there")".
 5_5.mo:Expected error in mat string-length: "string-length: a is not a string".
@@ -1981,7 +1983,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string-set!: "incorrect argument count in call (string-set! "hi")".
 5_5.mo:Expected error in mat string-set!: "incorrect argument count in call (string-set! "hi" 1)".
 5_5.mo:Expected error in mat string-set!: "incorrect argument count in call (string-set! "hi" 3 #\a #\b)".
-5_5.mo:Expected error in mat string-set!: "string-set!: a is not a string".
+5_5.mo:Expected error in mat string-set!: "string-set!: a is not a mutable string".
 5_5.mo:Expected error in mat string-set!: "string-set!: a is not a valid index for "hi"".
 5_5.mo:Expected error in mat string-set!: "string-set!: 3 is not a valid index for "hi"".
 5_5.mo:Expected error in mat string-set!: "string-set!: -1 is not a valid index for "hi"".
@@ -1997,7 +1999,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string-copy!: "incorrect argument count in call (string-copy! $s2 3 $s1 1)".
 5_5.mo:Expected error in mat string-copy!: "incorrect argument count in call (string-copy! $s2 3 $s1 1 2 ...)".
 5_5.mo:Expected error in mat string-copy!: "string-copy!: 0 is not a string".
-5_5.mo:Expected error in mat string-copy!: "string-copy!: #vu8(1 2 3) is not a string".
+5_5.mo:Expected error in mat string-copy!: "string-copy!: #vu8(1 2 3) is not a mutable string".
 5_5.mo:Expected error in mat string-copy!: "string-copy!: invalid start value -1".
 5_5.mo:Expected error in mat string-copy!: "string-copy!: invalid start value -1".
 5_5.mo:Expected error in mat string-copy!: "string-copy!: invalid start value a".
@@ -2022,8 +2024,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string-truncate!: "incorrect argument count in call (string-truncate!)".
 5_5.mo:Expected error in mat string-truncate!: "incorrect argument count in call (string-truncate! $s)".
 5_5.mo:Expected error in mat string-truncate!: "incorrect argument count in call (string-truncate! $s 3 15)".
-5_5.mo:Expected error in mat string-truncate!: "string-truncate!: 0 is not a string".
-5_5.mo:Expected error in mat string-truncate!: "string-truncate!: #vu8(1 2 3) is not a string".
+5_5.mo:Expected error in mat string-truncate!: "string-truncate!: 0 is not a mutable string".
+5_5.mo:Expected error in mat string-truncate!: "string-truncate!: #vu8(1 2 3) is not a mutable string".
 5_5.mo:Expected error in mat string-truncate!: "string-truncate!: invalid new length -1 for "abcdefghi"".
 5_5.mo:Expected error in mat string-truncate!: "string-truncate!: invalid new length 10 for "abcdefghi"".
 5_5.mo:Expected error in mat string-truncate!: "string-truncate!: invalid new length 1000 for "abcdefghi"".
@@ -2047,14 +2049,14 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string-fill!: "incorrect argument count in call (string-fill! "hi")".
 5_5.mo:Expected error in mat string-fill!: "incorrect argument count in call (string-fill! "hi" #\a #\b)".
 5_5.mo:Expected error in mat string-fill!: "string-fill!: a is not a character".
-5_5.mo:Expected error in mat string-fill!: "string-fill!: a is not a string".
+5_5.mo:Expected error in mat string-fill!: "string-fill!: a is not a mutable string".
 5_5.mo:Expected error in mat substring-fill!: "incorrect argument count in call (substring-fill!)".
 5_5.mo:Expected error in mat substring-fill!: "incorrect argument count in call (substring-fill! "hi")".
 5_5.mo:Expected error in mat substring-fill!: "incorrect argument count in call (substring-fill! "hi" 0)".
 5_5.mo:Expected error in mat substring-fill!: "incorrect argument count in call (substring-fill! "hi" 0 2)".
 5_5.mo:Expected error in mat substring-fill!: "substring-fill!: 0 and 3 are not valid start/end indices for "hi"".
 5_5.mo:Expected error in mat substring-fill!: "substring-fill!: -1 and 3 are not valid start/end indices for "hi"".
-5_5.mo:Expected error in mat substring-fill!: "substring-fill!: a is not a string".
+5_5.mo:Expected error in mat substring-fill!: "substring-fill!: a is not a mutable string".
 5_5.mo:Expected error in mat substring-fill!: "substring-fill!: 0 and a are not valid start/end indices for "hi"".
 5_5.mo:Expected error in mat substring-fill!: "substring-fill!: 1 and 0 are not valid start/end indices for "hi"".
 5_5.mo:Expected error in mat list->string: "incorrect argument count in call (list->string)".
@@ -2066,6 +2068,11 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string->list: "incorrect argument count in call (string->list)".
 5_5.mo:Expected error in mat string->list: "incorrect argument count in call (string->list "ab" "cd")".
 5_5.mo:Expected error in mat string->list: "string->list: a is not a string".
+5_5.mo:Expected error in mat string->immutable-string: "string-set!: "abc" is not a mutable string".
+5_5.mo:Expected error in mat string->immutable-string: "string-fill!: "abc" is not a mutable string".
+5_5.mo:Expected error in mat string->immutable-string: "substring-fill!: "abc" is not a mutable string".
+5_5.mo:Expected error in mat string->immutable-string: "string-copy!: "abc" is not a mutable string".
+5_5.mo:Expected error in mat string->immutable-string: "string-truncate!: "abc" is not a mutable string".
 bytevector.mo:Expected error in mat native-endianness: "incorrect argument count in call (native-endianness (quote big))".
 bytevector.mo:Expected error in mat endianness: "invalid endianness spam".
 bytevector.mo:Expected error in mat endianness: "invalid endianness (quote big)".
@@ -2075,11 +2082,11 @@ bytevector.mo:Expected error in mat endianness: "invalid syntax (endianness . bi
 bytevector.mo:Expected error in mat endianness: "invalid syntax (endianness big little)".
 bytevector.mo:Expected error in mat make-bytevector: "incorrect argument count in call (make-bytevector)".
 bytevector.mo:Expected error in mat make-bytevector: "incorrect argument count in call (make-bytevector 0 0 0)".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a nonnegative fixnum".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a nonnegative fixnum".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a nonnegative fixnum".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a nonnegative fixnum".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: a is not a nonnegative fixnum".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: a is not a valid bytevector length".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: a is not a valid fill value".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: 256 is not a valid fill value".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -129 is not a valid fill value".
@@ -2115,8 +2122,8 @@ bytevector.mo:Expected error in mat bytevector-s8-set!: "incorrect argument coun
 bytevector.mo:Expected error in mat bytevector-s8-set!: "incorrect argument count in call (bytevector-s8-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s8-set!: "incorrect argument count in call (bytevector-s8-set! $v1 2)".
 bytevector.mo:Expected error in mat bytevector-s8-set!: "incorrect argument count in call (bytevector-s8-set! $v1 2 3 4)".
-bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: (3 4 5) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: 3 is not a valid index for #vu8(3 4 5)".
 bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: -1 is not a valid index for #vu8(3 4 5)".
 bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: a is not a valid index for #vu8(3 4 5)".
@@ -2127,8 +2134,8 @@ bytevector.mo:Expected error in mat bytevector-u8-set!: "incorrect argument coun
 bytevector.mo:Expected error in mat bytevector-u8-set!: "incorrect argument count in call (bytevector-u8-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-u8-set!: "incorrect argument count in call (bytevector-u8-set! $v1 2)".
 bytevector.mo:Expected error in mat bytevector-u8-set!: "incorrect argument count in call (bytevector-u8-set! $v1 2 3 4)".
-bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: (3 4 5) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: 3 is not a valid index for #vu8(3 4 5)".
 bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: -1 is not a valid index for #vu8(3 4 5)".
 bytevector.mo:Expected error in mat bytevector-u8-set!: "bytevector-u8-set!: a is not a valid index for #vu8(3 4 5)".
@@ -2159,8 +2166,8 @@ bytevector.mo:Expected error in mat bytevector-s16-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "incorrect argument count in call (bytevector-s16-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "incorrect argument count in call (bytevector-s16-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "incorrect argument count in call (bytevector-s16-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s16-native-set!: "bytevector-s16-native-set!: invalid index 3 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2176,8 +2183,8 @@ bytevector.mo:Expected error in mat bytevector-u16-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "incorrect argument count in call (bytevector-u16-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "incorrect argument count in call (bytevector-u16-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "incorrect argument count in call (bytevector-u16-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u16-native-set!: "bytevector-u16-native-set!: invalid index 3 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2217,8 +2224,8 @@ bytevector.mo:Expected error in mat bytevector-s16-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s16-set!: "incorrect argument count in call (bytevector-s16-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s16-set!: "incorrect argument count in call (bytevector-s16-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s16-set!: "incorrect argument count in call (bytevector-s16-set! $v1 0 0 0 (native-endianness))".
-bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: invalid index 10 for 2-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s16-set!: "bytevector-s16-set!: invalid index 11 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2236,8 +2243,8 @@ bytevector.mo:Expected error in mat bytevector-u16-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u16-set!: "incorrect argument count in call (bytevector-u16-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-u16-set!: "incorrect argument count in call (bytevector-u16-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u16-set!: "incorrect argument count in call (bytevector-u16-set! $v1 0 0 0 (native-endianness))".
-bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: invalid index 10 for 2-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u16-set!: "bytevector-u16-set!: invalid index 11 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2282,8 +2289,8 @@ bytevector.mo:Expected error in mat bytevector-s24-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s24-set!: "incorrect argument count in call (bytevector-s24-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s24-set!: "incorrect argument count in call (bytevector-s24-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s24-set!: "incorrect argument count in call (bytevector-s24-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: invalid index 21 for 3-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s24-set!: "bytevector-s24-set!: invalid index 22 for 3-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2300,8 +2307,8 @@ bytevector.mo:Expected error in mat bytevector-u24-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u24-set!: "incorrect argument count in call (bytevector-u24-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u24-set!: "incorrect argument count in call (bytevector-u24-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u24-set!: "incorrect argument count in call (bytevector-u24-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: invalid index 21 for 3-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u24-set!: "bytevector-u24-set!: invalid index 22 for 3-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2345,8 +2352,8 @@ bytevector.mo:Expected error in mat bytevector-s32-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "incorrect argument count in call (bytevector-s32-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "incorrect argument count in call (bytevector-s32-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "incorrect argument count in call (bytevector-s32-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s32-native-set!: "bytevector-s32-native-set!: invalid index 2 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2375,8 +2382,8 @@ bytevector.mo:Expected error in mat bytevector-u32-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "incorrect argument count in call (bytevector-u32-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "incorrect argument count in call (bytevector-u32-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "incorrect argument count in call (bytevector-u32-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u32-native-set!: "bytevector-u32-native-set!: invalid index 2 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2432,8 +2439,8 @@ bytevector.mo:Expected error in mat bytevector-s32-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s32-set!: "incorrect argument count in call (bytevector-s32-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s32-set!: "incorrect argument count in call (bytevector-s32-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s32-set!: "incorrect argument count in call (bytevector-s32-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: invalid index 20 for 4-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s32-set!: "bytevector-s32-set!: invalid index 21 for 4-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2451,8 +2458,8 @@ bytevector.mo:Expected error in mat bytevector-u32-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u32-set!: "incorrect argument count in call (bytevector-u32-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u32-set!: "incorrect argument count in call (bytevector-u32-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u32-set!: "incorrect argument count in call (bytevector-u32-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: invalid index 20 for 4-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u32-set!: "bytevector-u32-set!: invalid index 21 for 4-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2496,8 +2503,8 @@ bytevector.mo:Expected error in mat bytevector-s40-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s40-set!: "incorrect argument count in call (bytevector-s40-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s40-set!: "incorrect argument count in call (bytevector-s40-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s40-set!: "incorrect argument count in call (bytevector-s40-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: invalid index 19 for 5-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s40-set!: "bytevector-s40-set!: invalid index 22 for 5-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2514,8 +2521,8 @@ bytevector.mo:Expected error in mat bytevector-u40-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u40-set!: "incorrect argument count in call (bytevector-u40-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u40-set!: "incorrect argument count in call (bytevector-u40-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u40-set!: "incorrect argument count in call (bytevector-u40-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: invalid index 19 for 5-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u40-set!: "bytevector-u40-set!: invalid index 22 for 5-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2558,8 +2565,8 @@ bytevector.mo:Expected error in mat bytevector-s48-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s48-set!: "incorrect argument count in call (bytevector-s48-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s48-set!: "incorrect argument count in call (bytevector-s48-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s48-set!: "incorrect argument count in call (bytevector-s48-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: invalid index 18 for 6-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s48-set!: "bytevector-s48-set!: invalid index 22 for 6-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2576,8 +2583,8 @@ bytevector.mo:Expected error in mat bytevector-u48-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u48-set!: "incorrect argument count in call (bytevector-u48-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u48-set!: "incorrect argument count in call (bytevector-u48-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u48-set!: "incorrect argument count in call (bytevector-u48-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: invalid index 18 for 6-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u48-set!: "bytevector-u48-set!: invalid index 22 for 6-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2620,8 +2627,8 @@ bytevector.mo:Expected error in mat bytevector-s56-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s56-set!: "incorrect argument count in call (bytevector-s56-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s56-set!: "incorrect argument count in call (bytevector-s56-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s56-set!: "incorrect argument count in call (bytevector-s56-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: invalid index 17 for 7-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s56-set!: "bytevector-s56-set!: invalid index 22 for 7-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2638,8 +2645,8 @@ bytevector.mo:Expected error in mat bytevector-u56-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u56-set!: "incorrect argument count in call (bytevector-u56-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u56-set!: "incorrect argument count in call (bytevector-u56-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u56-set!: "incorrect argument count in call (bytevector-u56-set! $v1 0 0 (quote big) 0)".
-bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: invalid index 17 for 7-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u56-set!: "bytevector-u56-set!: invalid index 22 for 7-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2719,8 +2726,8 @@ bytevector.mo:Expected error in mat bytevector-s64-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "incorrect argument count in call (bytevector-s64-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "incorrect argument count in call (bytevector-s64-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "incorrect argument count in call (bytevector-s64-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s64-native-set!: "bytevector-s64-native-set!: invalid index 2 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2756,8 +2763,8 @@ bytevector.mo:Expected error in mat bytevector-u64-native-set!: "incorrect argum
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "incorrect argument count in call (bytevector-u64-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "incorrect argument count in call (bytevector-u64-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "incorrect argument count in call (bytevector-u64-native-set! $v1 0 0 15)".
-bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid index 1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u64-native-set!: "bytevector-u64-native-set!: invalid index 2 for bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2832,8 +2839,8 @@ bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1 0 0 (quote big) 15)".
-bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: invalid index <int> for 8-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "bytevector-s64-set!: invalid index <int> for 8-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2855,8 +2862,8 @@ bytevector.mo:Expected error in mat bytevector-u64-set!: "incorrect argument cou
 bytevector.mo:Expected error in mat bytevector-u64-set!: "incorrect argument count in call (bytevector-u64-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-u64-set!: "incorrect argument count in call (bytevector-u64-set! $v1 0 0)".
 bytevector.mo:Expected error in mat bytevector-u64-set!: "incorrect argument count in call (bytevector-u64-set! $v1 0 0 (quote big) 15)".
-bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: #(0 0 0 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: invalid index -1 for bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: invalid index <int> for 8-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
 bytevector.mo:Expected error in mat bytevector-u64-set!: "bytevector-u64-set!: invalid index <int> for 8-byte field of bytevector #vu8(173 173 173 173 173 173 ...)".
@@ -2957,8 +2964,8 @@ bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "incorre
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "incorrect argument count in call (bytevector-ieee-single-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "incorrect argument count in call (bytevector-ieee-single-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "incorrect argument count in call (bytevector-ieee-single-native-set! $v1 0 0.0 0.0)".
-bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: invalid index 1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-native-set!: "bytevector-ieee-single-native-set!: invalid index 2 for bytevector #vu8(235 235 235 235 235 235 ...)".
@@ -2994,8 +3001,8 @@ bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "incorre
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "incorrect argument count in call (bytevector-ieee-double-native-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "incorrect argument count in call (bytevector-ieee-double-native-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "incorrect argument count in call (bytevector-ieee-double-native-set! $v1 0 0.0 0.0)".
-bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: invalid index 1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-native-set!: "bytevector-ieee-double-native-set!: invalid index 2 for bytevector #vu8(235 235 235 235 235 235 ...)".
@@ -3078,8 +3085,8 @@ bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "incorrect argu
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "incorrect argument count in call (bytevector-ieee-single-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "incorrect argument count in call (bytevector-ieee-single-set! $v1 0 0.0)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "incorrect argument count in call (bytevector-ieee-single-set! $v1 0 0.0 (quote big) (quote bigger))".
-bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: invalid index 36 for 4-byte field of bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-single-set!: "bytevector-ieee-single-set!: invalid index 37 for 4-byte field of bytevector #vu8(235 235 235 235 235 235 ...)".
@@ -3099,8 +3106,8 @@ bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "incorrect argu
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "incorrect argument count in call (bytevector-ieee-double-set! $v1 0)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "incorrect argument count in call (bytevector-ieee-double-set! $v1 0 0.0)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "incorrect argument count in call (bytevector-ieee-double-set! $v1 0 0.0 (quote big) (quote bigger))".
-bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: invalid index -1 for bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: invalid index <int> for 8-byte field of bytevector #vu8(235 235 235 235 235 235 ...)".
 bytevector.mo:Expected error in mat bytevector-ieee-double-set!: "bytevector-ieee-double-set!: invalid index <int> for 8-byte field of bytevector #vu8(235 235 235 235 235 235 ...)".
@@ -3206,8 +3213,8 @@ bytevector.mo:Expected error in mat bytevector-sint-set!: "incorrect argument co
 bytevector.mo:Expected error in mat bytevector-sint-set!: "incorrect argument count in call (bytevector-sint-set! $v1 0 7)".
 bytevector.mo:Expected error in mat bytevector-sint-set!: "incorrect argument count in call (bytevector-sint-set! $v1 0 7 (quote big))".
 bytevector.mo:Expected error in mat bytevector-sint-set!: "incorrect argument count in call (bytevector-sint-set! $v1 0 7 (quote big) 5 ...)".
-bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-sint-set!: "bytevector-sint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3270,8 +3277,8 @@ bytevector.mo:Expected error in mat bytevector-uint-set!: "incorrect argument co
 bytevector.mo:Expected error in mat bytevector-uint-set!: "incorrect argument count in call (bytevector-uint-set! $v1 0 7)".
 bytevector.mo:Expected error in mat bytevector-uint-set!: "incorrect argument count in call (bytevector-uint-set! $v1 0 7 (quote big))".
 bytevector.mo:Expected error in mat bytevector-uint-set!: "incorrect argument count in call (bytevector-uint-set! $v1 0 7 (quote big) 5 ...)".
-bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: #(3 252 5 0 0 0 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-uint-set!: "bytevector-uint-set!: invalid index -1 for bytevector #vu8(0 0 0 0 0 0 ...)".
@@ -3339,7 +3346,7 @@ bytevector.mo:Expected error in mat bytevector-copy!: "incorrect argument count 
 bytevector.mo:Expected error in mat bytevector-copy!: "incorrect argument count in call (bytevector-copy! $v2 3 $v1 1)".
 bytevector.mo:Expected error in mat bytevector-copy!: "incorrect argument count in call (bytevector-copy! $v2 3 $v1 1 2 ...)".
 bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: 0 is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: #(1 2 3) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: #(1 2 3) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: invalid start value -1".
 bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: invalid start value -1".
 bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: invalid start value a".
@@ -3364,8 +3371,8 @@ bytevector.mo:Expected error in mat bytevector-copy!: "bytevector-copy!: index 5
 bytevector.mo:Expected error in mat bytevector-truncate!: "incorrect argument count in call (bytevector-truncate!)".
 bytevector.mo:Expected error in mat bytevector-truncate!: "incorrect argument count in call (bytevector-truncate! $v)".
 bytevector.mo:Expected error in mat bytevector-truncate!: "incorrect argument count in call (bytevector-truncate! $v 3 15)".
-bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: 0 is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: "abc" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: 0 is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: "abc" is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length -1 for #vu8(1 2 3 4 5 6 ...)".
 bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length 10 for #vu8(1 2 3 4 5 6 ...)".
 bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!: invalid new length 1000 for #vu8(1 2 3 4 5 6 ...)".
@@ -3374,8 +3381,8 @@ bytevector.mo:Expected error in mat bytevector-truncate!: "bytevector-truncate!:
 bytevector.mo:Expected error in mat bytevector-fill!: "incorrect argument count in call (bytevector-fill!)".
 bytevector.mo:Expected error in mat bytevector-fill!: "incorrect argument count in call (bytevector-fill! $v1)".
 bytevector.mo:Expected error in mat bytevector-fill!: "incorrect argument count in call (bytevector-fill! $v1 0 0)".
-bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: a is not a bytevector".
-bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: #(1) is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: a is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: #(1) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: -129 is not a valid fill value".
 bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: 256 is not a valid fill value".
 bytevector.mo:Expected error in mat bytevector-fill!: "bytevector-fill!: a is not a valid fill value".
@@ -3535,6 +3542,37 @@ bytevector.mo:Expected error in mat bytevector=?: "incorrect argument count in c
 bytevector.mo:Expected error in mat bytevector=?: "bytevector=?: a is not a bytevector".
 bytevector.mo:Expected error in mat bytevector=?: "bytevector=?: "a" is not a bytevector".
 bytevector.mo:Expected error in mat tspl/csug-examples: "invalid endianness "spam"".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-uint-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-sint-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u8-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s8-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u16-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s16-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u16-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s16-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u24-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s24-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u32-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s32-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u32-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s32-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u40-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s40-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u48-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s48-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u56-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s56-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u64-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s64-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-u64-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-s64-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-single-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-double-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-single-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-ieee-double-native-set!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-fill!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-copy!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-truncate!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
 misc.mo:Expected error in mat compiler1: "variable i-am-not-bound is not bound".
 misc.mo:Expected error in mat compiler1: "attempt to apply non-procedure oops".
 misc.mo:Expected error in mat compiler1: "incorrect argument count in call (g (list))".
@@ -3749,7 +3787,7 @@ cp0.mo:Expected error in mat expand-output: "expand-output: #t is not a textual 
 cp0.mo:Expected error in mat expand-output: "expand-output: #<binary output port bytevector> is not a textual output port or #f".
 cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #t is not a textual output port or #f".
 cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<binary output port bytevector> is not a textual output port or #f".
-5_6.mo:Expected error in mat make-vector: "make-vector: a is not a nonnegative fixnum".
+5_6.mo:Expected error in mat make-vector: "make-vector: a is not a valid vector length".
 5_6.mo:Expected error in mat vector-length: "vector-length: (a b c) is not a vector".
 5_6.mo:Expected error in mat vector-ref: "vector-ref: 3 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-ref: "vector-ref: -1 is not a valid index for #(a b c)".
@@ -3758,16 +3796,16 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-set!: "vector-set!: 3 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set!: "vector-set!: -1 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set!: "vector-set!: a is not a valid index for #(a b c)".
-5_6.mo:Expected error in mat vector-set!: "vector-set!: (a b c) is not a vector".
+5_6.mo:Expected error in mat vector-set!: "vector-set!: (a b c) is not a mutable vector".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: 3 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: -1 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: a is not a valid index for #(a b c)".
-5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: (a b c) is not a vector".
+5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: (a b c) is not a mutable vector".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: d is not a fixnum".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: #\d is not a fixnum".
 5_6.mo:Expected error in mat vector-set-fixnum!: "vector-set-fixnum!: (a b c) is not a fixnum".
 5_6.mo:Expected error in mat vector-copy: "vector-copy: (a b c) is not a vector".
-5_6.mo:Expected error in mat vector-fill!: "vector-fill!: #vfx() is not a vector".
+5_6.mo:Expected error in mat vector-fill!: "vector-fill!: #vfx() is not a mutable vector".
 5_6.mo:Expected error in mat list->vector: "list->vector: #(a b c) is not a proper list".
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b #\c #\b #\c #\b ...) is circular".
@@ -3788,11 +3826,11 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: -1 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: d is not a fixnum".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not a mutable fxvector".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <-int> is not a fixnum".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <int> is not a fixnum".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not an fxvector".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: #(3 4) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not a mutable fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: #(3 4) is not a mutable fxvector".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: 3 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: -3 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <int> is not a valid index for #vfx(3 4 5)".
@@ -3803,7 +3841,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a fixnum".
 5_6.mo:Expected error in mat fxvector-copy: "fxvector-copy: (a b c) is not an fxvector".
 5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: a is not a fixnum".
-5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: #(1) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: #(1) is not a mutable fxvector".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: #(a b c) is not a proper list".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 . 3) is not a proper list".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 3 2 3 2 ...) is circular".
@@ -3854,10 +3892,16 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-sort!: "incorrect argument count in call (vector-sort! >)".
 5_6.mo:Expected error in mat vector-sort!: "incorrect argument count in call (vector-sort! (quote #(a b c)))".
 5_6.mo:Expected error in mat vector-sort!: "incorrect argument count in call (vector-sort! > (quote #(1 2 3)) #t)".
-5_6.mo:Expected error in mat vector-sort!: "vector-sort!: 3 is not a vector".
-5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a vector".
+5_6.mo:Expected error in mat vector-sort!: "vector-sort!: 3 is not a mutable vector".
+5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a mutable vector".
 5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
 5_6.mo:Expected error in mat vector-sort!: ">: b is not a real number".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-set!: #(1 2 3) is not a mutable vector".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-set-fixnum!: #(1 2 3) is not a mutable vector".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-fill!: #(1 2 3) is not a mutable vector".
+5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is not a mutable vector".
+5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-set!: #vfx(1 2 3) is not a mutable fxvector".
+5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-fill!: #vfx(1 2 3) is not a mutable fxvector".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: a is not a string".
 5_7.mo:Expected error in mat gensym: "gensym: #(a b c) is not a string".

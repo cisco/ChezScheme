@@ -449,6 +449,12 @@
 (define-constant fasl-type-visit 34)
 (define-constant fasl-type-revisit 35)
 
+(define-constant fasl-type-immutable-vector 36)
+(define-constant fasl-type-immutable-string 37)
+(define-constant fasl-type-immutable-fxvector 38)
+(define-constant fasl-type-immutable-bytevector 39)
+(define-constant fasl-type-immutable-box 40)
+
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
 (define-constant fasl-fld-i16 2)
@@ -714,7 +720,8 @@
 (define-constant type-ratnum           #b00010110) ; bit 4 set for non-bignum numbers
 (define-constant type-inexactnum       #b00110110)
 (define-constant type-exactnum         #b01010110)
-(define-constant type-box              #b00001110) ; bit 3 set for non-numbers
+(define-constant type-box               #b0001110) ; bit 3 set for non-numbers
+(define-constant type-immutable-box    #b10001110) ; low 7 bits match `type-box`
 (define-constant type-port             #b00011110)
 ; #b00101110 (forward_marker) must not be used
 (define-constant type-code             #b00111110)
@@ -738,10 +745,14 @@
 
 (define-constant fixnum-offset (- (constant ptr-bits) (constant fixnum-bits)))
 
-(define-constant string-length-offset      3)
+; string length field (high bits) + immutabilty is stored with type
+(define-constant string-length-offset      4)
+(define-constant string-immutable-flag
+  (expt 2 (- (constant string-length-offset) 1)))
 (define-constant iptr maximum-string-length
   (min (- (expt 2 (fx- (constant ptr-bits) (constant string-length-offset))) 1)
        (constant most-positive-fixnum)))
+
 (define-constant bignum-sign-offset        5)
 (define-constant bignum-length-offset      6)
 (define-constant iptr maximum-bignum-length
@@ -750,20 +761,26 @@
 (define-constant bigit-bits                32)
 (define-constant bigit-bytes               (/ (constant bigit-bits) 8))
 
-; vector length field is a fixnum
-(define-constant vector-length-offset (constant fixnum-offset))
+; vector length field is a fixnum shifted by 1 for immutability bit
+(define-constant vector-length-offset (fx+ 1 (constant fixnum-offset)))
+(define-constant vector-immutable-flag
+  (expt 2 (- (constant vector-length-offset) 1)))
 (define-constant iptr maximum-vector-length
   (min (- (expt 2 (fx- (constant ptr-bits) (constant vector-length-offset))) 1)
        (constant most-positive-fixnum)))
 
-; fxvector length field is stored with type
-(define-constant fxvector-length-offset 3)
+; fxvector length field (high bits) + immutabilty is stored with type
+(define-constant fxvector-length-offset 4)
+(define-constant fxvector-immutable-flag
+  (expt 2 (- (constant fxvector-length-offset) 1)))
 (define-constant iptr maximum-fxvector-length
   (min (- (expt 2 (fx- (constant ptr-bits) (constant fxvector-length-offset))) 1)
        (constant most-positive-fixnum)))
 
-; bytevector length field is stored with type
-(define-constant bytevector-length-offset 3)
+; bytevector length field (high bits) + immutabilty is stored with type
+(define-constant bytevector-length-offset 4)
+(define-constant bytevector-immutable-flag
+  (expt 2 (- (constant bytevector-length-offset) 1)))
 (define-constant iptr maximum-bytevector-length
   (min (- (expt 2 (fx- (constant ptr-bits) (constant bytevector-length-offset))) 1)
           (constant most-positive-fixnum)))
@@ -870,7 +887,7 @@
   (fxlogor (fxsll (constant port-flag-binary) (constant port-flags-offset))
            (constant mask-output-port)))
 (define-constant mask-textual-output-port (constant mask-binary-output-port))
-(define-constant mask-box          (constant byte-constant-mask))
+(define-constant mask-box                #x7F)
 (define-constant mask-code               #xFF)
 (define-constant mask-system-code
   (fxlogor (fxsll (constant code-flag-system) (constant code-flags-offset))
@@ -882,6 +899,31 @@
 (define-constant mask-tlc          (constant byte-constant-mask))
 
 (define-constant mask-positive-fixnum #x80000003)
+
+(define-constant type-mutable-vector (constant type-vector))
+(define-constant type-immutable-vector
+  (fxior (constant type-vector) (constant vector-immutable-flag)))
+(define-constant mask-mutable-vector
+  (logior (constant mask-vector) (constant vector-immutable-flag)))
+(define-constant type-mutable-string (constant type-string))
+(define-constant type-immutable-string
+  (fxior (constant type-string) (constant string-immutable-flag)))
+(define-constant mask-mutable-string
+  (logior (constant mask-string) (constant string-immutable-flag)))
+(define-constant type-mutable-fxvector (constant type-fxvector))
+(define-constant type-immutable-fxvector
+  (fxior (constant type-fxvector) (constant fxvector-immutable-flag)))
+(define-constant mask-mutable-fxvector
+  (logior (constant mask-fxvector) (constant fxvector-immutable-flag)))
+(define-constant type-mutable-bytevector (constant type-bytevector))
+(define-constant type-immutable-bytevector
+  (fxior (constant type-bytevector) (constant fxvector-immutable-flag)))
+(define-constant mask-mutable-bytevector
+  (logior (constant mask-bytevector) (constant bytevector-immutable-flag)))
+
+(define-constant type-mutable-box (constant type-box))
+(define-constant mask-mutable-box (constant byte-constant-mask))
+(define-constant mask-immutable-box (constant byte-constant-mask))
 
 (define-constant fixnum-factor        (expt 2 (constant fixnum-offset)))
 (define-constant vector-length-factor (expt 2 (constant vector-length-offset)))
@@ -1291,6 +1333,10 @@
    [ptr target-machine]
    [ptr fxlength-bv]
    [ptr fxfirst-bit-set-bv]
+   [ptr null-immutable-vector]
+   [ptr null-immutable-fxvector]
+   [ptr null-immutable-bytevector]
+   [ptr null-immutable-string]
    [ptr meta-level]
    [ptr compile-profile]
    [ptr generate-inspector-information]
@@ -2260,6 +2306,7 @@
      (car #f 1 #t #t)
      (cdr #f 1 #t #t)
      (unbox #f 1 #t #t)
+     (set-box! #f 2 #t #t)
      (= #f 2 #f #t)
      (< #f 2 #f #t)
      (> #f 2 #f #t)

@@ -255,13 +255,13 @@
 )
 
 (define-who (bytevector-truncate! bv n)
-  (unless (bytevector? bv) ($oops who "~s is not a bytevector" bv))
+  (unless (mutable-bytevector? bv) ($oops who "~s is not a mutable bytevector" bv))
   (unless (and (fixnum? n) (not ($fxu< (bytevector-length bv) n)))
     ($oops who "invalid new length ~s for ~s" n bv))
   (bytevector-truncate! bv n))
 
 (define-who (string-truncate! st n)
-  (unless (string? st) ($oops who "~s is not a string" st))
+  (unless (mutable-string? st) ($oops who "~s is not a mutable string" st))
   (unless (and (fixnum? n) (not ($fxu< (string-length st) n)))
     ($oops who "invalid new length ~s for ~s" n st))
   (string-truncate! st n))
@@ -269,33 +269,31 @@
 (define-who make-string
   (case-lambda
     [(n c)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (meta-assert (<= (constant maximum-string-length) (constant most-positive-fixnum)))
+     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-string-length) 1)))
+       ($oops who "~s is not a valid string length" n))
      (unless (char? c)
        ($oops who "~s is not a character" c))
      (make-string n c)]
     [(n)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (meta-assert (<= (constant maximum-string-length) (constant most-positive-fixnum)))
+     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-string-length) 1)))
+       ($oops who "~s is not a valid string length" n))
+     (unless (fx<= n (constant maximum-string-length))
+       ($oops who "~s is too large" n))
      (make-string n)]))
 
-(define make-vector
+(define-who make-vector
    (case-lambda
       [(n x)
-       ; if this fails, we have to change the test and message below
-       (meta-assert (= (constant maximum-vector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) (fx>= n 0))
-          ($oops 'make-vector "~s is not a nonnegative fixnum" n))
+       (meta-assert (<= (constant maximum-vector-length) (constant most-positive-fixnum)))
+       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-vector-length) 1)))
+         ($oops who "~s is not a valid vector length" n))
        (make-vector n x)]
       [(n)
-       ; if this fails, we have to change the test and message below
-       (meta-assert (= (constant maximum-vector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) (fx>= n 0))
-          ($oops 'make-vector "~s is not a nonnegative fixnum" n))
+       (meta-assert (<= (constant maximum-vector-length) (constant most-positive-fixnum)))
+       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-vector-length) 1)))
+         ($oops who "~s is not a valid vector length" n))
        (make-vector n)]))
 
 (define $make-eqhash-vector
@@ -308,32 +306,32 @@
 (define-who make-fxvector
   (case-lambda
     [(n x)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (meta-assert (<= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
+     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-fxvector-length) 1)))
+       ($oops who "~s is not a valid fxvector length" n))
      (unless (fixnum? x)
        ($oops who "~s is not a fixnum" x))
      (make-fxvector n x)]
     [(n)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (meta-assert (<= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
+     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-fxvector-length) 1)))
+       ($oops who "~s is not a valid fxvector length" n))
+     (unless (fx<= n (constant maximum-fxvector-length))
+       ($oops who "~s is too large" n))
      (make-fxvector n)]))
 
 (define string-fill!
    (lambda (s c)
-      (unless (string? s)
-         ($oops 'string-fill! "~s is not a string" s))
+      (unless (mutable-string? s)
+         ($oops 'string-fill! "~s is not a mutable string" s))
       (unless (char? c)
          ($oops 'string-fill! "~s is not a character" c))
       (string-fill! s c)))
 
 (define fxvector-fill!
    (lambda (v n)
-      (unless (fxvector? v)
-         ($oops 'fxvector-fill! "~s is not an fxvector" v))
+      (unless (mutable-fxvector? v)
+         ($oops 'fxvector-fill! "~s is not a mutable fxvector" v))
       (unless (fixnum? n)
          ($oops 'fxvector-fill! "~s is not a fixnum" n))
       (fxvector-fill! v n)))
@@ -534,10 +532,13 @@
       ($bigpositive? x)))
 
 (define $string-ref-check? (lambda (s i) ($string-ref-check? s i)))
+(define $string-set!-check? (lambda (s i) ($string-set!-check? s i)))
 
 (define $vector-ref-check? (lambda (v i) ($vector-ref-check? v i)))
+(define $vector-set!-check? (lambda (v i) ($vector-set!-check? v i)))
 
 (define $fxvector-ref-check? (lambda (v i) ($fxvector-ref-check? v i)))
+(define $fxvector-set!-check? (lambda (v i) ($fxvector-set!-check? v i)))
 
 (define $ratio-numerator
    (lambda (q)
@@ -1031,6 +1032,20 @@
    (lambda (v i x)
       (#2%string-set! v i x)))
 
+(define-who $string-set-immutable!
+   (lambda (s)
+     (unless (string? s)
+       ($oops who "~s is not a string" s))
+     (#3%$string-set-immutable! s)))
+
+(define-who mutable-string?
+  (lambda (v)
+    (#3%mutable-string? v)))
+
+(define-who immutable-string?
+  (lambda (v)
+    (#3%immutable-string? v)))
+
 (define char->integer
    (lambda (x)
       (#2%char->integer x)))
@@ -1059,6 +1074,20 @@
   (lambda (v i x)
     (#2%vector-set-fixnum! v i x)))
 
+(define-who $vector-set-immutable!
+   (lambda (v)
+     (unless (vector? v)
+       ($oops who "~s is not a vector" v))
+     (#3%$vector-set-immutable! v)))
+
+(define mutable-vector?
+   (lambda (v)
+     (#3%mutable-vector? v)))
+
+(define immutable-vector?
+   (lambda (v)
+     (#3%immutable-vector? v)))
+
 (define fxvector-length
    (lambda (v)
       (#2%fxvector-length v)))
@@ -1070,6 +1099,20 @@
 (define fxvector-set!
    (lambda (v i x)
       (#2%fxvector-set! v i x)))
+
+(define-who $fxvector-set-immutable!
+   (lambda (s)
+     (unless (fxvector? s)
+       ($oops who "~s is not a fxvector" s))
+     (#3%$fxvector-set-immutable! s)))
+
+(define mutable-fxvector?
+  (lambda (s)
+    (#3%mutable-fxvector? s)))
+
+(define immutable-fxvector?
+  (lambda (s)
+    (#3%immutable-fxvector? s)))
 
 (define cons (lambda (x y) (cons x y)))
 
@@ -1091,6 +1134,8 @@
 
 (define box (lambda (x) (box x)))
 
+(define box-immutable (lambda (x) (box-immutable x)))
+
 (define unbox
    (lambda (b)
       (if (box? b)
@@ -1099,9 +1144,17 @@
 
 (define set-box!
    (lambda (b v)
-      (if (box? b)
+      (if (mutable-box? b)
           (set-box! b v)
-          ($oops 'set-box! "~s is not a box" b))))
+          ($oops 'set-box! "~s is not a mutable box" b))))
+
+(define mutable-box?
+  (lambda (b)
+    (#3%mutable-box? b)))
+
+(define immutable-box?
+  (lambda (b) 
+    (#3%immutable-box? b)))
 
 (define pair? (lambda (x) (pair? x)))
 
