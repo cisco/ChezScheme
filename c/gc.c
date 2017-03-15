@@ -267,7 +267,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           S_G.bytesof[tg][countof_vector] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
         /* assumes vector lengths look like fixnums; if not, vectors will need their own space */
-          if (TYPE_IMMP(tf, vector_immutable_flag)) {
+          if ((uptr)tf & vector_immutable_flag) {
             find_room(space_pure, tg, type_typed_object, n, p);
           } else {
             find_room(space_impure, tg, type_typed_object, n, p);
@@ -325,7 +325,11 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_box] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
-          find_room(space_impure, tg, type_typed_object, size_box, p);
+          if ((uptr)tf == type_immutable_box) {
+            find_room(space_pure, tg, type_typed_object, size_box, p);
+          } else {
+            find_room(space_impure, tg, type_typed_object, size_box, p);
+          }
           BOXTYPE(p) = (iptr)tf;
           INITBOXREF(p) = Sunbox(pp);
       } else if ((iptr)tf == type_ratnum) {

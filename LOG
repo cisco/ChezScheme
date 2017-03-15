@@ -383,5 +383,13 @@
     5_4.ss, 5_6.ss, bytevector.ss, cmacros.ss, cpnanopass.ss,
     fasl.ss, library.ss, mkheader.ss, primdata.ss, prims.ss,
     externs.h, types.h, alloc.c, fasl.c, gc.c, scheme.c,
-    5_5.ms, 5_6.ms, bytevector.ms, misc.ms, root-experr*, patch*,
+    5_5.ms, 5_6.ms, bytevector.ms, misc.ms, root-experr*
     objects.stex
+- various tweaks to the immutable object support; also taught cp0
+  to simplify ($fxu< (most-positive-fixnum) e) => (fx< e 0) so we
+  don't have any incentive in special casing length checks where
+  the maximum length happens to be (most-positive-fixnum).
+    5_4.ss, 5_6.ss, bytevector.ss, cmacros.ss, cp0.ss, cpnanopass.ss,
+    mkheader.ss, primdata.ss, prims.ss,
+    fasl.c, gc.c, types.h
+    root-experr*, patch*

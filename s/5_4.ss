@@ -111,12 +111,11 @@
 
 (set-who! string->immutable-string
   (lambda (v)
-    (unless (string? v)
-      ($oops who "~s is not a string" v))
     (cond
       [(immutable-string? v) v]
-      [(fx= 0 (string-length v)) ($tc-field 'null-immutable-string ($tc))]
+      [(eqv? v "") ($tc-field 'null-immutable-string ($tc))]
       [else
+       (unless (string? v) ($oops who "~s is not a string" v))
        (let ([v2 (string-copy v)])
          ($string-set-immutable! v2)
          v2)])))

@@ -930,23 +930,6 @@
         (defref RPHEADERLIVEMASK rp-header livemask)
         (defref RPHEADERTOPLINK rp-header toplink)
 
-        (def "Svector_set_immutable(x)"
-          (format "~a |= ~d"
-            (access "x" vector type)
-            ($ vector-immutable-flag)))
-        (def "Sfxvector_set_immutable(x)"
-          (format "~a |= ~d"
-            (access "x" fxvector type)
-            ($ fxvector-immutable-flag)))
-        (def "Sbytevector_set_immutable(x)"
-          (format "~a |= ~d"
-            (access "x" bytevector type)
-            ($ bytevector-immutable-flag)))
-        (def "Sstring_set_immutable(x)"
-          (format "~a |= ~d"
-            (access "x" string type)
-            ($ string-immutable-flag)))
-
         (nl)
         (comment "machine types")
         (pr "#define machine_type_names ")

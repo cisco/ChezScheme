@@ -705,7 +705,7 @@
 (define-constant ptr black-hole     #b01000110)
 (define-constant ptr sbwp           #b01001110)
 
-;;; vector type/length field is a fixnum
+;;; vector type/length field must look like a fixnum.  an immutable bit sits just above the fixnum tag, with the length above that.
 (define-constant type-vector (constant type-fixnum))
 ; #b000 occupied by vectors on 32- and 64-bit machines
 (define-constant type-string                #b001)
@@ -761,7 +761,7 @@
 (define-constant bigit-bits                32)
 (define-constant bigit-bytes               (/ (constant bigit-bits) 8))
 
-; vector length field is a fixnum shifted by 1 for immutability bit
+; vector length field (high bits) + immutabilty is stored with type
 (define-constant vector-length-offset (fx+ 1 (constant fixnum-offset)))
 (define-constant vector-immutable-flag
   (expt 2 (- (constant vector-length-offset) 1)))
@@ -828,8 +828,6 @@
 
 (define-constant byte-constant-mask (- (ash 1 (constant ptr-bits)) 1))
 
-;;; mask-fixnum is assumed to be all ones followed by some number of
-;;; zeros at least by vector, fxvector, and bytevector index checks
 (define-constant mask-fixnum (- (ash 1 (constant fixnum-offset)) 1))
 
 ;;; octets are fixnums in the range 0..255
@@ -851,7 +849,7 @@
 (define-constant mask-nil     (constant byte-constant-mask))
 (define-constant mask-bwp     (constant byte-constant-mask))
 
-;;; vector type/length field is a fixnum
+;;; vector type/length field must look like a fixnum.  an immutable bit sits just above the fixnum tag, with the length above that.
 (define-constant mask-vector (constant mask-fixnum))
 (define-constant mask-string            #b111)
 (define-constant mask-fxvector          #b111)
@@ -898,32 +896,32 @@
 (define-constant mask-thread       (constant byte-constant-mask))
 (define-constant mask-tlc          (constant byte-constant-mask))
 
-(define-constant mask-positive-fixnum #x80000003)
-
 (define-constant type-mutable-vector (constant type-vector))
 (define-constant type-immutable-vector
-  (fxior (constant type-vector) (constant vector-immutable-flag)))
+  (fxlogor (constant type-vector) (constant vector-immutable-flag)))
 (define-constant mask-mutable-vector
-  (logior (constant mask-vector) (constant vector-immutable-flag)))
+  (fxlogor (constant mask-vector) (constant vector-immutable-flag)))
+
 (define-constant type-mutable-string (constant type-string))
 (define-constant type-immutable-string
-  (fxior (constant type-string) (constant string-immutable-flag)))
+  (fxlogor (constant type-string) (constant string-immutable-flag)))
 (define-constant mask-mutable-string
-  (logior (constant mask-string) (constant string-immutable-flag)))
+  (fxlogor (constant mask-string) (constant string-immutable-flag)))
+
 (define-constant type-mutable-fxvector (constant type-fxvector))
 (define-constant type-immutable-fxvector
-  (fxior (constant type-fxvector) (constant fxvector-immutable-flag)))
+  (fxlogor (constant type-fxvector) (constant fxvector-immutable-flag)))
 (define-constant mask-mutable-fxvector
-  (logior (constant mask-fxvector) (constant fxvector-immutable-flag)))
+  (fxlogor (constant mask-fxvector) (constant fxvector-immutable-flag)))
+
 (define-constant type-mutable-bytevector (constant type-bytevector))
 (define-constant type-immutable-bytevector
-  (fxior (constant type-bytevector) (constant fxvector-immutable-flag)))
+  (fxlogor (constant type-bytevector) (constant fxvector-immutable-flag)))
 (define-constant mask-mutable-bytevector
-  (logior (constant mask-bytevector) (constant bytevector-immutable-flag)))
+  (fxlogor (constant mask-bytevector) (constant bytevector-immutable-flag)))
 
 (define-constant type-mutable-box (constant type-box))
 (define-constant mask-mutable-box (constant byte-constant-mask))
-(define-constant mask-immutable-box (constant byte-constant-mask))
 
 (define-constant fixnum-factor        (expt 2 (constant fixnum-offset)))
 (define-constant vector-length-factor (expt 2 (constant vector-length-offset)))

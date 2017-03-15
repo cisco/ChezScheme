@@ -649,7 +649,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (Svector_length(*x) == 0)
                 *x = NULLIMMUTABLEVECTOR(tc);
               else
-                Svector_set_immutable(*x);
+                VECTTYPE(*x) |= vector_immutable_flag;
             }
             return;
         }
@@ -668,7 +668,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (Sfxvector_length(*x) == 0)
                 *x = NULLIMMUTABLEFXVECTOR(tc);
               else
-                Sfxvector_set_immutable(*x);
+                FXVECTOR_TYPE(*x) |= fxvector_immutable_flag;
             }
             return;
         }
@@ -682,7 +682,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (Sbytevector_length(*x) == 0)
                 *x = NULLIMMUTABLEBYTEVECTOR(tc);
               else
-                Sbytevector_set_immutable(*x);
+                BYTEVECTOR_TYPE(*x) |= bytevector_immutable_flag;
             }
             return;
         }
@@ -837,7 +837,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (n == 0)
                 str = NULLIMMUTABLESTRING(tc);
               else
-                Sstring_set_immutable(str);
+                STRTYPE(str) |= string_immutable_flag;
             }
             *x = str;
             return;

@@ -269,55 +269,45 @@
 (define-who make-string
   (case-lambda
     [(n c)
-     (meta-assert (<= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-string-length) 1)))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-string-length) n)))
        ($oops who "~s is not a valid string length" n))
      (unless (char? c)
        ($oops who "~s is not a character" c))
      (make-string n c)]
     [(n)
-     (meta-assert (<= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-string-length) 1)))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-string-length) n)))
        ($oops who "~s is not a valid string length" n))
-     (unless (fx<= n (constant maximum-string-length))
-       ($oops who "~s is too large" n))
      (make-string n)]))
 
 (define-who make-vector
    (case-lambda
       [(n x)
-       (meta-assert (<= (constant maximum-vector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-vector-length) 1)))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
          ($oops who "~s is not a valid vector length" n))
        (make-vector n x)]
       [(n)
-       (meta-assert (<= (constant maximum-vector-length) (constant most-positive-fixnum)))
-       (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-vector-length) 1)))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
          ($oops who "~s is not a valid vector length" n))
        (make-vector n)]))
 
 (define $make-eqhash-vector
   (case-lambda
     [(n)
-     (unless (and (fixnum? n) (fx>= n 0))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
        ($oops '$make-eqhash-vector "~s is not a nonnegative fixnum" n))
      ($make-eqhash-vector n)]))
 
 (define-who make-fxvector
   (case-lambda
     [(n x)
-     (meta-assert (<= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-fxvector-length) 1)))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-fxvector-length) n)))
        ($oops who "~s is not a valid fxvector length" n))
      (unless (fixnum? x)
        ($oops who "~s is not a fixnum" x))
      (make-fxvector n x)]
     [(n)
-     (meta-assert (<= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) ($fxu< n (fx+ (constant maximum-fxvector-length) 1)))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-fxvector-length) n)))
        ($oops who "~s is not a valid fxvector length" n))
-     (unless (fx<= n (constant maximum-fxvector-length))
-       ($oops who "~s is too large" n))
      (make-fxvector n)]))
 
 (define string-fill!

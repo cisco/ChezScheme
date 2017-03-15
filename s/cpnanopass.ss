@@ -3546,12 +3546,10 @@
                       (%inline sll ,e (immediate ,(fx- delta)))
                       (%inline srl ,e (immediate ,delta)))))))
         (define extract-length
-          (lambda (t/l tag-bits length-offset)
-            (let ([e (translate t/l length-offset (constant fixnum-offset))])
-              (let ([k (fxarithmetic-shift-right tag-bits (fx- length-offset (constant fixnum-offset)))])
-                (if (fx= k 0)
-                    e
-                    (%inline logand ,e (immediate ,(fxlognot k))))))))
+          (lambda (t/l length-offset)
+            (%inline logand
+              ,(translate t/l length-offset (constant fixnum-offset))
+              (immediate ,(- (constant fixnum-factor))))))
         (define build-type/length
           (lambda (e type current-shift target-shift)
             (let ([e (translate e current-shift target-shift)])
@@ -3560,7 +3558,7 @@
                   (%inline logor ,e (immediate ,type))))))
         (define-syntax build-ref-check
           (syntax-rules ()
-            [(_ type-disp maximum-length length-offset type mask full-mask)
+            [(_ type-disp maximum-length length-offset type mask)
              (lambda (e-v e-i maybe-e-new)
                ; NB: caller must bind e-v, e-i, and maybe-e-new
                (safe-assert (no-need-to-bind? #t e-v))
@@ -3582,7 +3580,7 @@
                                 (%type-check mask type ,t)
                                 (if maybe-e-new (build-and e (build-fixnums? (list maybe-e-new))) e)))))]
                      [else
-                      (let ([e (%inline u< ,e-i ,(extract-length t (constant full-mask) (constant length-offset)))])
+                      (let ([e (%inline u< ,e-i ,(extract-length t (constant length-offset)))])
                         (if (and (eqv? (constant type) (constant type-fixnum))
                                  (eqv? (constant mask) (constant mask-fixnum)))
                             (build-and e (build-fixnums? (if maybe-e-new (list e-i t maybe-e-new) (list e-i t))))
@@ -4653,6 +4651,8 @@
           (type-pred $unbound-object? mask-unbound sunbound)
           (typed-object-pred bignum? mask-bignum type-bignum)
           (typed-object-pred box? mask-box type-box)
+          (typed-object-pred mutable-box? mask-mutable-box type-mutable-box)
+          (typed-object-pred immutable-box? mask-mutable-box type-immutable-box)
           (typed-object-pred bytevector? mask-bytevector type-bytevector)
           (typed-object-pred mutable-bytevector? mask-mutable-bytevector type-mutable-bytevector)
           (typed-object-pred immutable-bytevector? mask-mutable-bytevector type-immutable-bytevector)
@@ -4946,31 +4946,31 @@
         (let ()
           (define-syntax def-len
             (syntax-rules ()
-              [(_ prim full-mask type type-disp length-offset)
+              [(_ prim type-disp length-offset)
                (define-inline 3 prim
-                 [(e) (extract-length (%mref ,e ,(constant type-disp)) (constant full-mask) (constant length-offset))])]))
-          (def-len vector-length mask-mutable-vector type-vector vector-type-disp vector-length-offset)
-          (def-len fxvector-length mask-mutable-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
-          (def-len string-length mask-mutable-string type-string string-type-disp string-length-offset)
-          (def-len bytevector-length mask-mutable-bytevector type-bytevector bytevector-type-disp bytevector-length-offset)
-          (def-len $bignum-length mask-bignum type-bignum bignum-type-disp bignum-length-offset))
+                 [(e) (extract-length (%mref ,e ,(constant type-disp)) (constant length-offset))])]))
+          (def-len vector-length vector-type-disp vector-length-offset)
+          (def-len fxvector-length fxvector-type-disp fxvector-length-offset)
+          (def-len string-length string-type-disp string-length-offset)
+          (def-len bytevector-length bytevector-type-disp bytevector-length-offset)
+          (def-len $bignum-length bignum-type-disp bignum-length-offset))
         (let ()
           (define-syntax def-len
             (syntax-rules ()
-              [(_ prim mask full-mask type type-disp length-offset)
+              [(_ prim mask type type-disp length-offset)
                (define-inline 2 prim
                  [(e) (let ([Lerr (make-local-label 'Lerr)])
                         (bind #t (e)
                           `(if ,(%type-check mask-typed-object type-typed-object ,e)
                                ,(bind #t ([t/l (%mref ,e ,(constant type-disp))])
                                   `(if ,(%type-check mask type ,t/l)
-                                       ,(extract-length t/l (constant full-mask) (constant length-offset))
+                                       ,(extract-length t/l (constant length-offset))
                                        (goto ,Lerr)))
                                (label ,Lerr ,(build-libcall #t #f sexpr prim e)))))])]))
-          (def-len vector-length mask-vector mask-mutable-vector type-vector vector-type-disp vector-length-offset)
-          (def-len fxvector-length mask-fxvector mask-mutable-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
-          (def-len string-length mask-string mask-mutable-string type-string string-type-disp string-length-offset)
-          (def-len bytevector-length mask-bytevector mask-mutable-bytevector type-bytevector bytevector-type-disp bytevector-length-offset))
+          (def-len vector-length mask-vector type-vector vector-type-disp vector-length-offset)
+          (def-len fxvector-length mask-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
+          (def-len string-length mask-string type-string string-type-disp string-length-offset)
+          (def-len bytevector-length mask-bytevector type-bytevector bytevector-type-disp bytevector-length-offset))
         ; TODO: consider adding integer?, integer-valued?, rational?, rational-valued?,
         ; real?, and real-valued?
         (let ()
@@ -4989,12 +4989,6 @@
             [(e) (build-number? e)])
           (define-inline 2 complex?
             [(e) (build-number? e)]))
-        (define-inline 3 mutable-box?
-          [(e) (bind #t (e)
-                 (%typed-object-check mask-immutable-box type-mutable-box ,e))])
-        (define-inline 3 immutable-box?
-          [(e) (bind #t (e)
-                 (%typed-object-check mask-immutable-box type-immutable-box ,e))])
         (define-inline 3 set-car!
           [(e1 e2) (build-dirty-store e1 (constant pair-car-disp) e2)])
         (define-inline 3 set-cdr!
@@ -5014,7 +5008,7 @@
         (define-inline 2 set-box!
           [(e-box e-new)
            (bind #t (e-box e-new)
-             `(if ,(%typed-object-check mask-mutable-box type-box ,e-box)
+             `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
                   ,(build-dirty-store e-box (constant box-ref-disp) e-new)
                   ,(build-libcall #t src sexpr set-box! e-box e-new)))])
         (define-inline 2 set-car!
@@ -7676,10 +7670,8 @@
                 [(e-name e-handler e-ib e-ob) (go e-name e-handler e-ib e-ob `(quote #f))]
                 [(e-name e-handler e-ib e-ob e-info) (go e-name e-handler e-ib e-ob e-info)]))))
         (let ()
-          (define build-fxvector-ref-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset
-                                                            type-fxvector mask-fxvector mask-mutable-fxvector))
-          (define build-fxvector-set!-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset
-                                                             type-mutable-fxvector mask-mutable-fxvector mask-mutable-fxvector))
+          (define build-fxvector-ref-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-fxvector mask-fxvector))
+          (define build-fxvector-set!-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-mutable-fxvector mask-mutable-fxvector))
           (define-inline 2 $fxvector-ref-check?
             [(e-fv e-i) (bind #t (e-fv e-i) (build-fxvector-ref-check e-fv e-i #f))])
           (define-inline 2 $fxvector-set!-check?
@@ -7719,19 +7711,15 @@
                 `(if ,(build-fxvector-set!-check e-fv e-i e-new)
                      ,(go e-fv e-i e-new)
                      ,(build-libcall #t src sexpr fxvector-set! e-fv e-i e-new)))])
-          (define-inline 3 $fxvector-set-immutable!
-            [(e-fv) ((build-set-immutable! fxvector-type-disp fxvector-immutable-flag) e-fv)])))
+           (define-inline 3 $fxvector-set-immutable!
+             [(e-fv) ((build-set-immutable! fxvector-type-disp fxvector-immutable-flag) e-fv)])))
         (let ()
           (define build-string-ref-check
             (lambda (e-s e-i)
-              ((build-ref-check string-type-disp maximum-string-length string-length-offset
-                                type-string mask-string mask-mutable-string)
-               e-s e-i #f)))
+              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-string mask-string) e-s e-i #f)))
           (define build-string-set!-check
             (lambda (e-s e-i)
-              ((build-ref-check string-type-disp maximum-string-length string-length-offset
-                                type-mutable-string mask-mutable-string mask-mutable-string)
-               e-s e-i #f)))
+              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-mutable-string mask-mutable-string) e-s e-i #f)))
           (define-inline 2 $string-ref-check?
             [(e-s e-i) (bind #t (e-s e-i) (build-string-ref-check e-s e-i))])
           (define-inline 2 $string-set!-check?
@@ -7786,12 +7774,8 @@
             (define-inline 3 $string-set-immutable!
               [(e-s) ((build-set-immutable! string-type-disp string-immutable-flag) e-s)])))
         (let ()
-          (define build-vector-ref-check
-            (build-ref-check vector-type-disp maximum-vector-length vector-length-offset
-                             type-vector mask-vector mask-mutable-vector))
-          (define build-vector-set!-check
-            (build-ref-check vector-type-disp maximum-vector-length vector-length-offset
-                             type-mutable-vector mask-mutable-vector mask-mutable-vector))
+          (define build-vector-ref-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-vector mask-vector))
+          (define build-vector-set!-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-mutable-vector mask-mutable-vector))
           (define-inline 2 $vector-ref-check?
             [(e-v e-i) (bind #t (e-v e-i) (build-vector-ref-check e-v e-i #f))])
           (define-inline 2 $vector-set!-check?
@@ -7826,8 +7810,8 @@
                  `(if ,(build-vector-set!-check e-v e-i #f)
                       ,(go e-v e-i e-new)
                       ,(build-libcall #t src sexpr vector-set! e-v e-i e-new)))])
-          (define-inline 3 $vector-set-immutable!
-            [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)]))
+            (define-inline 3 $vector-set-immutable!
+              [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)]))
           (let ()
             (define (go e-v e-i e-new)
               `(set!

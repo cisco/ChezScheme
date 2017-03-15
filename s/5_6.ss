@@ -71,12 +71,11 @@
 
 (set-who! vector->immutable-vector
   (lambda (v)
-    (unless (vector? v)
-      ($oops who "~s is not a vector" v))
     (cond
       [(immutable-vector? v) v]
-      [(fx= 0 (vector-length v)) ($tc-field 'null-immutable-vector ($tc))]
+      [(eqv? v '#()) ($tc-field 'null-immutable-vector ($tc))]
       [else
+       (unless (vector? v) ($oops who "~s is not a vector" v))
        (let ([v2 (vector-copy v)])
          ($vector-set-immutable! v2)
          v2)])))
@@ -130,12 +129,11 @@
 
 (set-who! fxvector->immutable-fxvector
   (lambda (v)
-    (unless (fxvector? v)
-      ($oops who "~s is not a fxvector" v))
     (cond
       [(immutable-fxvector? v) v]
-      [(fx= 0 (fxvector-length v)) ($tc-field 'null-immutable-fxvector ($tc))]
+      [(eqv? v '#vfx()) ($tc-field 'null-immutable-fxvector ($tc))]
       [else
+       (unless (fxvector? v) ($oops who "~s is not a fxvector" v))
        (let ([v2 (fxvector-copy v)])
          ($fxvector-set-immutable! v2)
          v2)])))
