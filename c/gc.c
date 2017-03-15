@@ -267,7 +267,11 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           S_G.bytesof[tg][countof_vector] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
         /* assumes vector lengths look like fixnums; if not, vectors will need their own space */
-          find_room(space_impure, tg, type_typed_object, n, p);
+          if (TYPE_IMMP(tf, vector_immutable_flag)) {
+            find_room(space_pure, tg, type_typed_object, n, p);
+          } else {
+            find_room(space_impure, tg, type_typed_object, n, p);
+          }
           copy_ptrs(type_typed_object, p, pp, n);
         /* pad if necessary */
           if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
@@ -317,12 +321,12 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
          * swept already.  NB: assuming keyvals are always pairs. */
           if (next != Sfalse && SPACE(keyval) & space_old)
             tlcs_to_rehash = S_cons_in(space_new, 0, p, tlcs_to_rehash);
-      } else if ((iptr)tf == type_box) {
+      } else if (TYPEP(tf, mask_box, type_box)) {
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_box] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
           find_room(space_impure, tg, type_typed_object, size_box, p);
-          BOXTYPE(p) = type_box;
+          BOXTYPE(p) = (iptr)tf;
           INITBOXREF(p) = Sunbox(pp);
       } else if ((iptr)tf == type_ratnum) {
         /* not recursive: place in space_data and relocate fields immediately */
@@ -555,7 +559,7 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
     if (sweep_pure || RECORDDESCMPM(RECORDINSTTYPE(p)) != FIX(0)) {
       sweep_record(p);
     }
-  } else if ((iptr)tf == type_box) {
+  } else if (TYPEP(tf, mask_box, type_box)) {
     relocate(&INITBOXREF(p))
   } else if ((iptr)tf == type_ratnum) {
     if (sweep_pure) {
@@ -1313,7 +1317,7 @@ static iptr size_object(p) ptr p; {
         return size_record_inst(UNFIX(RECORDDESCSIZE(tf)));
     } else if (TYPEP(tf, mask_fxvector, type_fxvector)) {
         return size_fxvector(Sfxvector_length(p));
-    } else if ((iptr)tf == type_box) {
+    } else if (TYPEP(tf, mask_box, type_box)) {
         return size_box;
     } else if ((iptr)tf == type_ratnum) {
         return size_ratnum;
@@ -1426,6 +1430,10 @@ static void sweep_thread(p) ptr p; {
     relocate(&TARGETMACHINE(tc))
     relocate(&FXLENGTHBV(tc))
     relocate(&FXFIRSTBITSETBV(tc))
+    relocate(&NULLIMMUTABLEVECTOR(tc))
+    relocate(&NULLIMMUTABLEFXVECTOR(tc))
+    relocate(&NULLIMMUTABLEBYTEVECTOR(tc))
+    relocate(&NULLIMMUTABLESTRING(tc))
     /* immediate METALEVEL */
     relocate(&COMPILEPROFILE(tc))
     /* immediate GENERATEINSPECTORINFORMATION */

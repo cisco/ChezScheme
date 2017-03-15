@@ -731,3 +731,33 @@
     (equal? (string->list "abc") '(#\a #\b #\c))
     (equal? (string->list "") '())
  )
+
+(mat string->immutable-string
+    (begin
+      (define immutable-abc-string
+        (string->immutable-string (string #\a #\b #\c)))
+      #t)
+
+    (immutable-string? immutable-abc-string)
+    (not (mutable-string? immutable-abc-string))
+    
+    (equal? "abc" immutable-abc-string)
+    (eq? immutable-abc-string
+         (string->immutable-string immutable-abc-string))
+    
+    (not (immutable-string? (make-string 5)))
+    (mutable-string? (make-string 5))
+    
+    (immutable-string? (string->immutable-string (string)))
+    (not (mutable-string? (string->immutable-string (string))))
+    (not (immutable-string? (string)))
+    (mutable-string? (string))
+    
+    (not (immutable-string? (string-copy immutable-abc-string)))
+
+    (error? (string-set! immutable-abc-string 0 #\a))
+    (error? (string-fill! immutable-abc-string #\a))
+    (error? (substring-fill! immutable-abc-string 0 1 #\a))
+    (error? (string-copy! "xyz" 0 immutable-abc-string 0 3))
+    (error? (string-truncate! immutable-abc-string 1))
+)

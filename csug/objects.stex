@@ -540,6 +540,42 @@ s ;=> "$$$"
 \endschemedisplay
 
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-string?}{\categoryprocedure}{(mutable-string? \var{obj})}
+\formdef{immutable-string?}{\categoryprocedure}{(immutable-string? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable/immutable string, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+String-mutation operations, such as \scheme{string-set!}, fail when given an immutable string.
+Strings are mutable by default, but \scheme{string->immutable-string}
+creates immutable strings.
+
+\schemedisplay
+(mutable-string? (string #\a #\b #\c)) ;=> #t
+(mutable-string? (string->immutable-string "abc")) ;=> #f
+(immutable-string? (string #\a #\b #\c)) ;=> #f
+(immutable-string? (string->immutable-string "abc")) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string->immutable-string}{\categoryprocedure}{(string->immutable-string \var{string})}
+\returns either an immutable copy of \var{string} or \var{string} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\var{string} must be a string. The result is \var{string} itself if \var{string}
+is immutable, otherwise the result is an immutable string with the same content as \var{string}.
+
+\schemedisplay
+(define s (string->string-immutable "xyz"))
+(string-set! s 0 #\a) ;=> \var{exception: "xyz" is immutable}
+\endschemedisplay
+
 
 \section{Vectors}
 
@@ -602,6 +638,43 @@ See also the description of fixnum-only vectors (fxvectors) below.
   v) ;=> #(1 2 73 4 5)
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-vector?}{\categoryprocedure}{(mutable-vector? \var{obj})}
+\formdef{immutable-vector?}{\categoryprocedure}{(immutable-vector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable/immutable vector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+Vector-mutation operations, such as \scheme{vector-set!}, fail when given an immutable vector.
+Vectors are mutable by default, but \scheme{vector->immutable-vector}
+creates immutable vectors.
+
+\schemedisplay
+(mutable-vector? (vector 1 2 3)) ;=> #t
+(mutable-vector? (vector->immutable-vector (vector 1 2 3))) ;=> #f
+(immutable-vector? (vector 1 2 3)) ;=> #f
+(immutable-vector? (vector->immutable-vector (vector 1 2 3))) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector->immutable-vector}{\categoryprocedure}{(vector->immutable-vector \var{vector})}
+\returns either an immutable copy of \var{vector} or \var{vector} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\var{vector} must be a vector. The result is \var{vector} itself if \var{vector}
+is immutable, otherwise the result is an immutable vector with the same content as \var{vector}.
+
+\schemedisplay
+(define s (vector->vector-immutable (vector 1 2 3)))
+(vector-set! s 0 0) ;=> \var{exception: \#(1 2 3) is immutable}
+\endschemedisplay
+
+    
 \section{Fixnum-Only Vectors\label{SECTFXVECTORS}}
 
 Fixnum-only vectors, or ``fxvectors,'' are like vectors but contain
@@ -795,6 +868,43 @@ as \var{fxvector}.
   (eq? v (fxvector-copy v))) ;=> #f
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-fxvector?}{\categoryprocedure}{(mutable-fxvector? \var{obj})}
+\formdef{immutable-fxvector?}{\categoryprocedure}{(immutable-fxvector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable/immutable fxvector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+Fxvector-mutation operations, such as \scheme{fxvector-set!}, fail when given an immutable fxvector.
+Fxvectors are mutable by default, but \scheme{fxvector->immutable-fxvector}
+creates immutable fxvectors.
+
+\schemedisplay
+(mutable-fxvector? (fxvector 1 2 3)) ;=> #t
+(mutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #f
+(immutable-fxvector? (fxvector 1 2 3)) ;=> #f
+(immutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector->immutable-fxvector}{\categoryprocedure}{(fxvector->immutable-fxvector \var{fxvector})}
+\returns either an immutable copy of \var{fxvector} or \var{fxvector} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fxvector} must be a fxvector. The result is \var{fxvector} itself if \var{fxvector}
+is immutable, otherwise the result is an immutable fxvector with the same content as \var{fxvector}.
+
+\schemedisplay
+(define s (fxvector->fxvector-immutable (fxvector 1 2 3)))
+(fxvector-set! s 0 0) ;=> \var{exception: \#vfx(1 2 3) is immutable}
+\endschemedisplay
+
+    
 \section{Bytevectors\label{SECTBYTEVECTORS}}
 
 As with vectors, {\ChezScheme} extends the syntax of bytevectors to allow
@@ -971,6 +1081,44 @@ These procedures store the given value in the 3, 5, 6, or 7 bytes starting
 at index \var{n} (zero-based) of \var{bytevector}.
 Negative values are stored as their two's complement equivalent.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-bytevector?}{\categoryprocedure}{(mutable-bytevector? \var{obj})}
+\formdef{immutable-bytevector?}{\categoryprocedure}{(immutable-bytevector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable/immutable bytevector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+Bytevector-mutation operations, such as \scheme{bytevector-set!}, fail when given an immutable bytevector.
+Bytevectors are mutable by default, but \scheme{bytevector->immutable-bytevector}
+creates immutable bytevectors.
+
+\schemedisplay
+(mutable-bytevector? (bytevector 1 2 3)) ;=> #t
+(mutable-bytevector?
+ (bytevector->immutable-bytevector (bytevector 1 2 3))) ;=> #f
+(immutable-bytevector? (bytevector 1 2 3)) ;=> #f
+(immutable-bytevector?
+ (bytevector->immutable-bytevector (bytevector 1 2 3))) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector->immutable-bytevector}{\categoryprocedure}{(bytevector->immutable-bytevector \var{bytevector})}
+\returns either an immutable copy of \var{bytevector} or \var{bytevector} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\var{bytevector} must be a bytevector. The result is \var{bytevector} itself if \var{bytevector}
+is immutable, otherwise the result is an immutable bytevector with the same content as \var{bytevector}.
+
+\schemedisplay
+(define s (bytevector->bytevector-immutable (bytevector 1 2 3)))
+(bytevector-set! s 0 0) ;=> \var{exception: \#vu8(1 2 3) is immutable}
+\endschemedisplay
+
 
 \section{Boxes\label{SECTBOXES}}
 
@@ -1052,6 +1200,42 @@ recently.
   (let ([b (box 3)])
     (incr! b)
     (unbox b))) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-box?}{\categoryprocedure}{(mutable-box? \var{obj})}
+\formdef{immutable-box?}{\categoryprocedure}{(immutable-box? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable/immutable box, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+Box-mutation operations, such as \scheme{set-box!}, fail when given an immutable box.
+Boxes are mutable by default, but \scheme{box-immutable}
+creates immutable boxes.
+
+\schemedisplay
+(box-mutable? (box 1)) ;=> #t
+(box-mutable? (box-immutable 1) ;=> #f
+(box-immutable? (box 1)) ;=> #f
+(box-immutable? (box-immutable 1) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box-immutable}{\categoryprocedure}{(box-immutable \var{obj})}
+\returns a new immutable box containing \var{obj}
+\listlibraries
+\endentryheader
+
+\noindent
+Since boxes are intended to support a mutable level of indirection, imutable boxes
+are rarely useful, but they are provided for consistency with vectors.
+
+\schemedisplay
+(define s (box-immutable 1))
+(set-box! s 0) ;=> \var{exception: \#\&1 is immutable}
 \endschemedisplay
 
 

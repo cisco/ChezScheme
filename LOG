@@ -379,3 +379,9 @@
     externs.h, stats.c, thread.c, thread.h, csug/threads.stex,
     primvars.ms, thread.ms, release_notes.stex,
     date.ss, primdata.ss, prims.ss
+- added immutable strings, vectors, fxvector, bytevectors, and boxes
+    5_4.ss, 5_6.ss, bytevector.ss, cmacros.ss, cpnanopass.ss,
+    fasl.ss, library.ss, mkheader.ss, primdata.ss, prims.ss,
+    externs.h, types.h, alloc.c, fasl.c, gc.c, scheme.c,
+    5_5.ms, 5_6.ms, bytevector.ms, misc.ms, root-experr*, patch*,
+    objects.stex
