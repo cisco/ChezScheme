@@ -83,9 +83,9 @@ typedef unsigned long U64;
 #define bytes_per_card 0x200
 #define bytes_per_segment 0x4000
 #define bytevector_data_disp 0x9
-#define bytevector_immutable_flag 0x8
-#define bytevector_length_factor 0x10
-#define bytevector_length_offset 0x4
+#define bytevector_immutable_flag 0x4
+#define bytevector_length_factor 0x8
+#define bytevector_length_offset 0x3
 #define bytevector_type_disp 0x1
 #define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall->ptr Scall->fptr Scall->bytevector Scall->fixnum Scall->int32 Scall->uns32 Scall->double Scall->single Scall->int64 Scall->uns64 Scall->void)
 #define c_entry_vector_size 0x1F
@@ -316,7 +316,7 @@ typedef unsigned long U64;
 #define mask_boolean 0xF7
 #define mask_box 0x7F
 #define mask_bwp 0xFFFFFFFFFFFFFFFF
-#define mask_bytevector 0x7
+#define mask_bytevector 0x3
 #define mask_char 0xFF
 #define mask_closure 0x7
 #define mask_code 0xFF
@@ -331,7 +331,7 @@ typedef unsigned long U64;
 #define mask_inexactnum 0xFFFFFFFFFFFFFFFF
 #define mask_input_port 0x1FF
 #define mask_mutable_box 0xFFFFFFFFFFFFFFFF
-#define mask_mutable_bytevector 0xF
+#define mask_mutable_bytevector 0x7
 #define mask_mutable_fxvector 0xF
 #define mask_mutable_string 0xF
 #define mask_mutable_vector 0xF
@@ -609,7 +609,7 @@ typedef unsigned long U64;
 #define type_binary_port 0x41E
 #define type_boolean 0x6
 #define type_box 0xE
-#define type_bytevector 0x5
+#define type_bytevector 0x1
 #define type_char 0x16
 #define type_closure 0x5
 #define type_code 0x3E
@@ -620,17 +620,17 @@ typedef unsigned long U64;
 #define type_fxvector 0x3
 #define type_immediate 0x6
 #define type_immutable_box 0x8E
-#define type_immutable_bytevector 0xD
+#define type_immutable_bytevector 0x5
 #define type_immutable_fxvector 0xB
-#define type_immutable_string 0x9
+#define type_immutable_string 0xA
 #define type_immutable_vector 0x8
 #define type_inexactnum 0x36
 #define type_input_port 0x11E
 #define type_io_port 0x31E
 #define type_mutable_box 0xE
-#define type_mutable_bytevector 0x5
+#define type_mutable_bytevector 0x1
 #define type_mutable_fxvector 0x3
-#define type_mutable_string 0x1
+#define type_mutable_string 0x2
 #define type_mutable_vector 0x0
 #define type_negative_bignum 0x26
 #define type_octet 0x0
@@ -642,7 +642,7 @@ typedef unsigned long U64;
 #define type_ratnum 0x16
 #define type_record 0x7
 #define type_rtd_counts 0x6E
-#define type_string 0x1
+#define type_string 0x2
 #define type_symbol 0x3
 #define type_system_code 0x13E
 #define type_textual_input_port 0x11E

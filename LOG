@@ -404,3 +404,18 @@
     patch*
 - updated release notes and tweaked user's guide.
     release-notes.stex, objects.stex
+- fixed typo: fxvector-immutable-flag used in place of
+  bytevector-immutable-flag in computation of type-immutable-bytevector
+    cmacros.ss
+- reallocated typed-object types, using previously unused tag #b010
+  for strings and giving bytevectors both #b001 and #b101 (the
+  latter for immutable bytevectors) so that the maximum bytevector
+  length on 32-bit machines is once again the most-positive fixnum.
+  treating bytevectors rather than strings or fxvectors (or even
+  vectors) special in this regard is appropriate since the maximum
+  number of bytes in a bytevector is maximum-length x 1 rather than
+  maximum-length x 4 for strings, fxvectors, and vectors on 32-bit
+  machines.  with this change on 32-bit machines, a vector can
+  occupy up to 1/2 of virtual memory, strings and fxvectors 1/4,
+  and bytevectors 1/8.
+    cmacros.ss
