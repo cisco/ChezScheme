@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-03-15 00:21:57.000000000 -0400
---- errors-interpret-0-f-f-f	2017-03-15 00:06:40.000000000 -0400
+*** errors-compile-0-f-f-f	2017-03-15 13:19:08.859800901 -0400
+--- errors-interpret-0-f-f-f	2017-03-15 13:37:17.060462746 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".

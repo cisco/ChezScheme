@@ -12038,56 +12038,60 @@
                   (jump ,%ref-ret (,%ac0))))]
            [(bytevector=?)
             (let ([bv1 (make-tmp 'bv1)] [bv2 (make-tmp 'bv2)] [idx (make-tmp 'idx)] [len2 (make-tmp 'len2)])
-              (let ([Ltop (make-local-label 'Ltop)] [Lfail (make-local-label 'Lfail)])
+              (let ([Ltop (make-local-label 'Ltop)] [Ltrue (make-local-label 'Ltrue)] [Lfail (make-local-label 'Lfail)])
                 (define iptr-bytes (in-context Triv (%constant ptr-bytes)))
                 `(lambda ,(make-info "bytevector=?" '(2)) 0 (,bv1 ,bv2 ,idx ,len2)
                    ,(%seq
                       (set! ,bv1 ,(make-arg-opnd 1))
                       (set! ,bv2 ,(make-arg-opnd 2))
-                      (set! ,idx ,(%inline srl
-                                    ,(%mref ,bv1 ,(constant bytevector-type-disp))
-                                    ,(%constant bytevector-length-offset)))
-                      (set! ,len2 ,(%inline srl
-                                     ,(%mref ,bv2 ,(constant bytevector-type-disp))
-                                     ,(%constant bytevector-length-offset)))
-                      (if ,(%inline eq? ,len2 ,idx)
+                      (if ,(%inline eq? ,bv1 ,bv2)
+                          (goto ,Ltrue)
                           ,(%seq
-                             (label ,Ltop)
-                             (if ,(%inline >= ,idx ,iptr-bytes)
-                                 (if ,(%inline eq?
-                                        ,(%mref ,bv1 ,(constant bytevector-data-disp))
-                                        ,(%mref ,bv2 ,(constant bytevector-data-disp)))
-                                     ,(%seq
-                                        (set! ,idx ,(%inline - ,idx ,iptr-bytes))
-                                        (set! ,bv1 ,(%inline + ,bv1 ,iptr-bytes))
-                                        (set! ,bv2 ,(%inline + ,bv2 ,iptr-bytes))
-                                        (goto ,Ltop))
-                                     (goto ,Lfail))
-                                 (if (if ,(%inline eq? ,idx (immediate 0))
-                                         (true)
-                                         ,(%seq
-                                            (set! ,bv1 ,(%mref ,bv1 ,(constant bytevector-data-disp)))
-                                            (set! ,bv2 ,(%mref ,bv2 ,(constant bytevector-data-disp)))
-                                            (set! ,idx ,(%inline - ,iptr-bytes ,idx))
-                                            (set! ,idx ,(%inline sll ,idx (immediate 3)))
-                                            ,(constant-case native-endianness
-                                               [(little)
-                                                (%seq
-                                                  (set! ,bv1 ,(%inline sll ,bv1 ,idx))
-                                                  (set! ,bv2 ,(%inline sll ,bv2 ,idx)))]
-                                               [(big)
-                                                (%seq
-                                                  (set! ,bv1 ,(%inline srl ,bv1 ,idx))
-                                                  (set! ,bv2 ,(%inline srl ,bv2 ,idx)))])
-                                            ,(%inline eq? ,bv1 ,bv2)))
-                                     ,(%seq
-                                        (set! ,%ac0 ,(%constant strue))
-                                        (jump ,%ref-ret (,%ac0)))
-                                     (goto ,Lfail))))
-                          ,(%seq
-                             (label ,Lfail)
-                             (set! ,%ac0 ,(%constant sfalse))
-                             (jump ,%ref-ret (,%ac0))))))))]
+                             (set! ,idx ,(%inline srl
+                                           ,(%mref ,bv1 ,(constant bytevector-type-disp))
+                                           ,(%constant bytevector-length-offset)))
+                             (set! ,len2 ,(%inline srl
+                                            ,(%mref ,bv2 ,(constant bytevector-type-disp))
+                                            ,(%constant bytevector-length-offset)))
+                             (if ,(%inline eq? ,len2 ,idx)
+                                 ,(%seq
+                                    (label ,Ltop)
+                                    (if ,(%inline >= ,idx ,iptr-bytes)
+                                        (if ,(%inline eq?
+                                               ,(%mref ,bv1 ,(constant bytevector-data-disp))
+                                               ,(%mref ,bv2 ,(constant bytevector-data-disp)))
+                                            ,(%seq
+                                               (set! ,idx ,(%inline - ,idx ,iptr-bytes))
+                                               (set! ,bv1 ,(%inline + ,bv1 ,iptr-bytes))
+                                               (set! ,bv2 ,(%inline + ,bv2 ,iptr-bytes))
+                                               (goto ,Ltop))
+                                            (goto ,Lfail))
+                                        (if (if ,(%inline eq? ,idx (immediate 0))
+                                                (true)
+                                                ,(%seq
+                                                   (set! ,bv1 ,(%mref ,bv1 ,(constant bytevector-data-disp)))
+                                                   (set! ,bv2 ,(%mref ,bv2 ,(constant bytevector-data-disp)))
+                                                   (set! ,idx ,(%inline - ,iptr-bytes ,idx))
+                                                   (set! ,idx ,(%inline sll ,idx (immediate 3)))
+                                                   ,(constant-case native-endianness
+                                                      [(little)
+                                                       (%seq
+                                                         (set! ,bv1 ,(%inline sll ,bv1 ,idx))
+                                                         (set! ,bv2 ,(%inline sll ,bv2 ,idx)))]
+                                                      [(big)
+                                                       (%seq
+                                                         (set! ,bv1 ,(%inline srl ,bv1 ,idx))
+                                                         (set! ,bv2 ,(%inline srl ,bv2 ,idx)))])
+                                                   ,(%inline eq? ,bv1 ,bv2)))
+                                            ,(%seq
+                                               (label ,Ltrue)
+                                               (set! ,%ac0 ,(%constant strue))
+                                               (jump ,%ref-ret (,%ac0)))
+                                            (goto ,Lfail))))
+                                 ,(%seq
+                                    (label ,Lfail)
+                                    (set! ,%ac0 ,(%constant sfalse))
+                                    (jump ,%ref-ret (,%ac0))))))))))]
            [(dofargint32) (make-dofargint "dofargint32" 32 (intrinsic-entry-live* dofargint32) (intrinsic-return-live* dofargint32))]
            [(dofargint64) (make-dofargint "dofargint64" 64 (intrinsic-entry-live* dofargint64) (intrinsic-return-live* dofargint64))]
            [(dofretint32) (make-dofretint "doretint32" 32 (intrinsic-entry-live* dofretint32) (intrinsic-return-live* dofretint32))]

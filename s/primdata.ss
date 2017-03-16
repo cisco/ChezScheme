@@ -252,7 +252,7 @@
   ((r6rs: string->number) [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard ieee r5rs]) ; radix restricted to 2, 4, 8, 16
   (not [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs cp02])
   (boolean? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (boolean=? [sig [(boolean boolean boolean ...) -> (boolean)]] [flags pure mifoldable discard])
+  (boolean=? [sig [(boolean boolean boolean ...) -> (boolean)]] [flags pure mifoldable discard cp03])
   (pair? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (cons [sig [(ptr ptr) -> (#1=(ptr . ptr))]] [flags unrestricted alloc ieee r5rs])
  ; c..r non-alphabetic so marks come before references
@@ -298,14 +298,14 @@
   (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard ieee r5rs])
-  (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard])
+  (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03])
   (string->symbol [sig [(string) -> (symbol)]] [flags true mifoldable discard ieee r5rs])
   (char? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (char->integer [sig [(char) -> (fixnum)]] [flags pure mifoldable discard true ieee r5rs])
   (integer->char [sig [(sub-ufixnum) -> (char)]] [flags pure mifoldable discard true ieee r5rs])
   ((r6rs: char<=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs]) ; restricted to 2+ arguments
   ((r6rs: char<?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  ((r6rs: char=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: char=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs cp03])  ; restricted to 2+ arguments
   ((r6rs: char>=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs]) ; restricted to 2+ arguments
   ((r6rs: char>?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   (string? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
@@ -315,7 +315,7 @@
   (string-ref [sig [(string sub-index) -> (ptr)]] [flags true ieee r5rs mifoldable discard cp02])
   ((r6rs: string<=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: string<?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: string=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: string=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs cp03])   ; restricted to 2+ arguments
   ((r6rs: string>=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: string>?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
   (substring [sig [(string sub-length sub-length) -> (string)]] [flags alloc ieee r5rs])
@@ -354,7 +354,7 @@
   (bytevector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (make-bytevector [sig [(length) (length u8/s8) -> (bytevector)]] [flags alloc])
   (bytevector-length [sig [(bytevector) -> (length)]] [flags true mifoldable discard])
-  (bytevector=? [sig [(bytevector bytevector) -> (boolean)]] [flags mifoldable discard])
+  (bytevector=? [sig [(bytevector bytevector) -> (boolean)]] [flags mifoldable discard cp03])
   (bytevector-fill! [sig [(bytevector u8/s8) -> (void)]] [flags true])
   (bytevector-copy! [sig [(bytevector sub-length bytevector sub-length sub-length) -> (void)]] [flags true])
   (bytevector-copy [sig [(bytevector) -> (bytevector)]] [flags alloc])
@@ -431,7 +431,7 @@
   (enum-set->list [sig [(enum-set) -> (list)]] [flags pure mifoldable discard alloc])
   (enum-set-member? [sig [(symbol enum-set) -> (boolean)]] [flags pure mifoldable discard])
   (enum-set-subset? [sig [(enum-set enum-set) -> (boolean)]] [flags pure mifoldable discard])
-  (enum-set=? [sig [(enum-set enum-set) -> (boolean)]] [flags pure mifoldable discard])
+  (enum-set=? [sig [(enum-set enum-set) -> (boolean)]] [flags pure mifoldable discard cp03])
   (enum-set-union [sig [(enum-set enum-set) -> (enum-set)]] [flags pure alloc])
   (enum-set-intersection [sig [(enum-set enum-set) -> (enum-set)]] [flags pure alloc])
   (enum-set-difference [sig [(enum-set enum-set) -> (enum-set)]] [flags pure alloc])
@@ -795,8 +795,8 @@
 (define-symbol-flags* ([libraries (rnrs) (rnrs syntax-case)] [flags primitive proc])
   (make-variable-transformer [sig [(procedure) -> (ptr)]] [flags pure mifoldable discard])
   (identifier? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (bound-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard])
-  (free-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard])
+  (bound-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
+  (free-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
   (syntax->datum [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
   (datum->syntax [sig [(identifier ptr) -> (ptr)]] [flags pure mifoldable discard])
   (generate-temporaries [sig [(list) -> (list)]] [flags alloc])
@@ -810,7 +810,7 @@
   (char-foldcase [sig [(char) -> (char)]] [flags pure mifoldable discard])
   ((r6rs: char-ci<=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: char-ci<?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: char-ci=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: char-ci=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs cp03])   ; restricted to 2+ arguments
   ((r6rs: char-ci>=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: char-ci>?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
   (char-alphabetic? [sig [(char) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
@@ -826,7 +826,7 @@
   (string-foldcase [sig [(string) -> (string)]] [flags mifoldable discard])
   ((r6rs: string-ci<=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: string-ci<?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: string-ci=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: string-ci=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs cp03])   ; restricted to 2+ arguments
   ((r6rs: string-ci>=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: string-ci>?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
   (string-normalize-nfd [sig [(string) -> (string)]] [flags mifoldable discard])
@@ -874,7 +874,7 @@
   (subtract-duration (sig [(time time) -> (time)]) [flags alloc])
   (subtract-duration! (sig [(time time) -> (time)]) [flags alloc])
   (time? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (time=? [sig [(time time) -> (boolean)]] [flags mifoldable discard])
+  (time=? [sig [(time time) -> (boolean)]] [flags mifoldable discard cp03])
   (time<? [sig [(time time) -> (boolean)]] [flags mifoldable discard])
   (time<=? [sig [(time time) -> (boolean)]] [flags mifoldable discard])
   (time>=? [sig [(time time) -> (boolean)]] [flags mifoldable discard])
@@ -1171,13 +1171,13 @@
   (cflonum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (char<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])     ; not restricted to 2+ arguments
   (char<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])      ; not restricted to 2+ arguments
-  (char=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])      ; not restricted to 2+ arguments
+  (char=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03])      ; not restricted to 2+ arguments
   (char>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])     ; not restricted to 2+ arguments
   (char>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])      ; not restricted to 2+ arguments
   (char- [sig [(char char) -> (fixnum)]] [flags pure mifoldable discard true])
   (char-ci<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
   (char-ci<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
-  (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
+  (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03])   ; not restricted to 2+ arguments
   (char-ci>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
   (char-ci>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
   (char-name [sig [(sub-ptr) (sub-symbol maybe-char) -> (ptr)]] [flags])
@@ -1295,7 +1295,7 @@
   (format-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (fprintf [sig [(textual-output-port string sub-ptr ...) -> (void)]] [flags true])
   (fresh-line [sig [() (textual-output-port) -> (void)]] [flags true])
-  (ftype-pointer=? [sig [(ftype-pointer ftype-pointer) -> (boolean)]] [flags pure mifoldable discard])
+  (ftype-pointer=? [sig [(ftype-pointer ftype-pointer) -> (boolean)]] [flags pure mifoldable discard cp03])
   (ftype-pointer-address [sig [(ftype-pointer) -> (exact-integer)]] [flags mifoldable discard true])
   (ftype-pointer-ftype [sig [(ftype-pointer) -> (ptr)]] [flags mifoldable discard true])
   (ftype-pointer-null? [sig [(ftype-pointer) -> (boolean)]] [flags pure mifoldable discard])
@@ -1378,7 +1378,7 @@
   (list->fxvector [sig [(sub-list) -> (fxvector)]] [flags alloc])
   (list-copy [sig [(list) -> (list)]] [flags alloc])
   (list-head [sig [(sub-ptr sub-index) -> (ptr)]] [flags alloc])
-  (literal-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard])
+  (literal-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
   (load [sig [(pathname) (pathname procedure) -> (void)]] [flags true ieee r5rs])
   (load-library [sig [(pathname) (pathname procedure) -> (void)]] [flags true])
   (profile-load-data [sig [(pathname) -> (void)]] [flags true])
@@ -1598,12 +1598,12 @@
   (string->number [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard]) ; radix not restricted to 2, 4, 8, 16
   (string<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])        ; not restricted to 2+ arguments
   (string<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments
-  (string=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments
+  (string=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard cp03])         ; not restricted to 2+ arguments
   (string>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])        ; not restricted to 2+ arguments
   (string>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments
   (string-ci<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; not restricted to 2+ arguments
   (string-ci<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; not restricted to 2+ arguments
-  (string-ci=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; not restricted to 2+ arguments
+  (string-ci=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs cp03])   ; not restricted to 2+ arguments
   (string-ci>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; not restricted to 2+ arguments
   (string-ci>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; not restricted to 2+ arguments
   (string-copy! [sig [(string sub-length string sub-length sub-length) -> (void)]] [flags true])

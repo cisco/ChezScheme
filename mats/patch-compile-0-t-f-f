@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-03-15 00:21:57.000000000 -0400
---- errors-compile-0-t-f-f	2017-03-14 23:59:50.000000000 -0400
+*** errors-compile-0-f-f-f	2017-03-15 13:19:08.859800901 -0400
+--- errors-compile-0-t-f-f	2017-03-15 13:31:20.355212128 -0400
 ***************
 *** 93,99 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".

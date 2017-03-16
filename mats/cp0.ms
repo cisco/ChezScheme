@@ -2707,3 +2707,124 @@
          (#2%display "1")
          (#2%list q n))))
 )
+
+(mat equality-of-refs
+  (begin
+    (define-syntax eqtest
+      (syntax-rules ()
+        [(_ eqprim) (eqtest eqprim #f)]
+        [(_ eqprim generic?)
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+           (let ([arity-mask (procedure-arity-mask eqprim)] [primref `($primitive ,(if (= (optimize-level) 3) 3 2) eqprim)])
+             (define-syntax ifsafe
+               (syntax-rules ()
+                 [(_ n e1 e2)
+                  (if (and (fxbit-set? arity-mask n) (or generic? (= (optimize-level) 3))) e1 e2)]))
+             (and
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x)))
+                 (ifsafe 1
+                   `(lambda (x) #t)
+                   `(lambda (x) (,primref x))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim (begin (x) x))))
+                 (ifsafe 1
+                   `(lambda (x) (x) #t)
+                   `(lambda (x) (,primref (begin (x) x)))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (set! x (x x)) (x (eqprim x))))
+                 (ifsafe 1
+                   `(lambda (x) (set! x (x x)) (x #t))
+                   `(lambda (x) (set! x (x x)) (x (,primref x)))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim (x x))))
+                 (ifsafe 1
+                   `(lambda (x) (x x) #t)
+                   `(lambda (x) (,primref (x x)))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x x)))
+                 (ifsafe 2
+                   `(lambda (x) #t)
+                   `(lambda (x) (,primref x x))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim (begin (x) x) x)))
+                 (ifsafe 2
+                   `(lambda (x) (x) #t)
+                   `(lambda (x) (,primref (begin (x) x) x))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x (begin (x) x))))
+                 (ifsafe 2
+                   `(lambda (x) (x) #t)
+                   `(lambda (x) (,primref x (begin (x) x)))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim (begin (x) x) (begin (x x) x))))
+                 (ifsafe 2
+                   `(lambda (x) (x) (x x) #t)
+                   `(lambda (x) (,primref (begin (x) x) (begin (x x) x)))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x y) (eqprim x y)))
+                 `(lambda (x y) (,primref x y)))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x x x x x)))
+                 (ifsafe 5
+                   `(lambda (x) #t)
+                   `(lambda (x) (,primref x x x x x))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x y) (eqprim x x x x y)))
+                 `(lambda (x y) (,primref x x x x y)))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x x (begin (x) x) x x)))
+                 (ifsafe 5
+                   `(lambda (x) (x) #t)
+                   `(lambda (x) (,primref x x (begin (x) x) x x))))
+               (equivalent-expansion?
+                 (expand/optimize
+                   `(lambda (x) (eqprim x x (begin (set! x 15) x) x x)))
+                 `(lambda (x) (,primref x x (begin (set! x 15) x) x x)))
+               )))]))
+    #t)
+  (eqtest eq? #t)
+  (eqtest eqv? #t)
+  (eqtest equal? #t)
+  (eqtest bytevector=?)
+  (eqtest enum-set=?)
+  (eqtest bound-identifier=?)
+  (eqtest free-identifier=?)
+  (eqtest ftype-pointer=?)
+  (eqtest literal-identifier=?)
+  (eqtest time=?)
+  (eqtest boolean=?)
+  (eqtest symbol=?)
+  (eqtest char=?)
+  (eqtest char-ci=?)
+  (eqtest string=?)
+  (eqtest string-ci=?)
+  (eqtest r6rs:char=?)
+  (eqtest r6rs:char-ci=?)
+  (eqtest r6rs:string=?)
+  (eqtest r6rs:string-ci=?)
+  (eqtest fx=)
+  (eqtest fx=?)
+  (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (equivalent-expansion?
+      (expand/optimize
+        `(lambda (x) (fl= x x))) ; x could be +nan.0
+      `(lambda (x) (($primitive ,(if (fx= (optimize-level) 3) 3 2) fl=) x x))))
+  (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (equivalent-expansion?
+      (expand/optimize
+        `(lambda (x) (= x x))) ; x could be +nan.0
+      `(lambda (x) (($primitive ,(if (fx= (optimize-level) 3) 3 2) =) x x))))
+)
