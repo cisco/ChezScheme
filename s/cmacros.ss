@@ -705,14 +705,29 @@
 (define-constant ptr black-hole     #b01000110)
 (define-constant ptr sbwp           #b01001110)
 
+;;; on 32-bit machines, vectors get two primary tag bits, including
+;;; one for the immutable flag, and so do bytevectors, so their maximum
+;;; lengths are equal to the most-positive fixnum on 32-bit machines.
+;;; strings and fxvectors get only one primary tag bit each and have
+;;; to use a different bit for the immutable flag, so their maximum
+;;; lengths are equal to 1/2 of the most-positive fixnum on 32-bit
+;;; machines.  taking sizes of vector, bytevector, string, and fxvector
+;;; elements into account, a vector can occupy up to 1/2 of virtual
+;;; memory, a string or fxvector up to 1/4, and a bytevector up to 1/8.
+
+;;; on 64-bit machines, vectors get only one of the primary tag bits,
+;;; bytevectors still get two (but don't need two), and strings and
+;;; fxvectors still get one.  all have maximum lengths equal to the
+;;; most-positive fixnum.
+
 ;;; vector type/length field must look like a fixnum.  an immutable bit sits just above the fixnum tag, with the length above that.
 (define-constant type-vector (constant type-fixnum))
 ; #b000 occupied by vectors on 32- and 64-bit machines
-(define-constant type-string                #b001)
-; #b010 unused
+(define-constant type-bytevector             #b01)
+(define-constant type-string                #b010)
 (define-constant type-fxvector              #b011)
 ; #b100 occupied by vectors on 32-bit machines, unused on 64-bit machines
-(define-constant type-bytevector            #b101)
+; #b101 occupied by type-immutable-bytevector
 (define-constant type-other-number         #b0110) ; bit 3 reset for numbers
 (define-constant type-bignum              #b00110) ; bit 4 reset for bignums
 (define-constant type-positive-bignum    #b000110)
@@ -778,7 +793,7 @@
        (constant most-positive-fixnum)))
 
 ; bytevector length field (high bits) + immutabilty is stored with type
-(define-constant bytevector-length-offset 4)
+(define-constant bytevector-length-offset 3)
 (define-constant bytevector-immutable-flag
   (expt 2 (- (constant bytevector-length-offset) 1)))
 (define-constant iptr maximum-bytevector-length
@@ -851,9 +866,9 @@
 
 ;;; vector type/length field must look like a fixnum.  an immutable bit sits just above the fixnum tag, with the length above that.
 (define-constant mask-vector (constant mask-fixnum))
+(define-constant mask-bytevector         #b11)
 (define-constant mask-string            #b111)
 (define-constant mask-fxvector          #b111)
-(define-constant mask-bytevector        #b111)
 (define-constant mask-other-number     #b1111)
 (define-constant mask-bignum          #b11111)
 (define-constant mask-bignum-sign    #b100000)
@@ -916,7 +931,7 @@
 
 (define-constant type-mutable-bytevector (constant type-bytevector))
 (define-constant type-immutable-bytevector
-  (fxlogor (constant type-bytevector) (constant fxvector-immutable-flag)))
+  (fxlogor (constant type-bytevector) (constant bytevector-immutable-flag)))
 (define-constant mask-mutable-bytevector
   (fxlogor (constant mask-bytevector) (constant bytevector-immutable-flag)))
 
