@@ -4927,3 +4927,41 @@
   (error? ; invalid argument
     (procedure-arity-mask 17))
   )
+
+(mat fasl-immutable
+  (begin
+    (define immutable-objs (list (vector->immutable-vector '#(1 2 3))
+                                 (fxvector->immutable-fxvector '#vfx(1 2 3))
+                                 (string->immutable-string "abc")
+                                 (bytevector->immutable-bytevector #vu8(1 2 3))
+                                 (box-immutable 1)))
+    (define immutable-zero-objs (list (vector->immutable-vector '#())
+                                      (fxvector->immutable-fxvector '#vfx())
+                                      (string->immutable-string "")
+                                      (bytevector->immutable-bytevector #vu8())
+                                      (box-immutable 1)))
+    (define (immutable? l)
+      (and (immutable-vector? (list-ref l 0))
+           (immutable-fxvector? (list-ref l 1))
+           (immutable-string? (list-ref l 2))
+           (immutable-bytevector? (list-ref l 3))
+           (immutable-box? (list-ref l 4))))
+    (define (round-trip l)
+      (let-values ([(o get) (open-bytevector-output-port)])
+        (fasl-write l o)
+        (immutable? (fasl-read (open-bytevector-input-port (get))))))
+    #t)
+
+  (immutable? immutable-objs)
+  (immutable? immutable-zero-objs)
+  (round-trip immutable-objs)
+  (round-trip immutable-zero-objs)
+
+  ;; Make sure `fasl-read` didn't mark "mutable" null values
+  ;; as immutable:
+  (mutable-vector? '#())
+  (mutable-fxvector? '#vfx())
+  (mutable-string? "")
+  (mutable-bytevector? '#vu8())
+  
+ )

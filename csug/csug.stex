@@ -41,7 +41,7 @@
 \def\copyrightnotice{\raw{<hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2016 Cisco Systems, Inc.<br>
+Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
 Revised \INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version 9.4.1<br>

@@ -83,8 +83,9 @@ typedef unsigned __int64 U64;
 #define bytes_per_card 0x100
 #define bytes_per_segment 0x2000
 #define bytevector_data_disp 0x9
-#define bytevector_length_factor 0x8
-#define bytevector_length_offset 0x3
+#define bytevector_immutable_flag 0x8
+#define bytevector_length_factor 0x10
+#define bytevector_length_offset 0x4
 #define bytevector_pad_disp 0x5
 #define bytevector_type_disp 0x1
 #define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall->ptr Scall->fptr Scall->bytevector Scall->fixnum Scall->int32 Scall->uns32 Scall->double Scall->single Scall->int64 Scall->uns64 Scall->void)
@@ -193,6 +194,11 @@ typedef unsigned __int64 U64;
 #define fasl_type_group 0x21
 #define fasl_type_header 0x0
 #define fasl_type_immediate 0xC
+#define fasl_type_immutable_box 0x28
+#define fasl_type_immutable_bytevector 0x27
+#define fasl_type_immutable_fxvector 0x26
+#define fasl_type_immutable_string 0x25
+#define fasl_type_immutable_vector 0x24
 #define fasl_type_inexactnum 0x5
 #define fasl_type_large_integer 0xA
 #define fasl_type_library 0xE
@@ -221,8 +227,9 @@ typedef unsigned __int64 U64;
 #define forward_marker (ptr)0x2E
 #define forward_marker_disp 0x0
 #define fxvector_data_disp 0x5
-#define fxvector_length_factor 0x8
-#define fxvector_length_offset 0x3
+#define fxvector_immutable_flag 0x8
+#define fxvector_length_factor 0x10
+#define fxvector_length_offset 0x4
 #define fxvector_type_disp 0x1
 #define guardian_entry_next_disp 0xC
 #define guardian_entry_obj_disp 0x0
@@ -246,7 +253,7 @@ typedef unsigned __int64 U64;
 #define int_bits 0x20
 #define integer_divide_instruction 1
 #define keyboard_interrupt_index 0x3
-#define library_entry_vector_size 0x20A
+#define library_entry_vector_size 0x20C
 #define libspec_closure_index 0xD
 #define libspec_does_not_expect_headroom_index 0x0
 #define libspec_error_index 0xE
@@ -308,7 +315,7 @@ typedef unsigned __int64 U64;
 #define mask_binary_output_port 0x6FF
 #define mask_binary_port 0x4FF
 #define mask_boolean 0xF7
-#define mask_box 0xFFFFFFFF
+#define mask_box 0x7F
 #define mask_bwp 0xFFFFFFFF
 #define mask_bytevector 0x7
 #define mask_char 0xFF
@@ -324,13 +331,17 @@ typedef unsigned __int64 U64;
 #define mask_immediate 0x7
 #define mask_inexactnum 0xFFFFFFFF
 #define mask_input_port 0x1FF
+#define mask_mutable_box 0xFFFFFFFF
+#define mask_mutable_bytevector 0xF
+#define mask_mutable_fxvector 0xF
+#define mask_mutable_string 0xF
+#define mask_mutable_vector 0x7
 #define mask_nil 0xFFFFFFFF
 #define mask_octet -0x3FD
 #define mask_other_number 0xF
 #define mask_output_port 0x2FF
 #define mask_pair 0x7
 #define mask_port 0xFF
-#define mask_positive_fixnum 0x80000003
 #define mask_ratnum 0xFFFFFFFF
 #define mask_record 0x7
 #define mask_rtd_counts 0xFFFFFFFF
@@ -345,16 +356,18 @@ typedef unsigned __int64 U64;
 #define mask_tlc 0xFFFFFFFF
 #define mask_typed_object 0x7
 #define mask_unbound 0xFFFFFFFF
+#define mask_vector 0x3
 #define max_float_alignment 0x8
 #define max_integer_alignment 0x8
 #define max_real_space 0xA
 #define max_space 0xB
 #define max_sweep_space 0x9
 #define maximum_bignum_length (iptr)0x3FFFFFF
-#define maximum_bytevector_length (iptr)0x1FFFFFFF
-#define maximum_fxvector_length (iptr)0x1FFFFFFF
+#define maximum_bytevector_length (iptr)0xFFFFFFF
+#define maximum_fxvector_length (iptr)0xFFFFFFF
 #define maximum_interrupt_index 0x4
-#define maximum_string_length (iptr)0x1FFFFFFF
+#define maximum_string_length (iptr)0xFFFFFFF
+#define maximum_vector_length (iptr)0x1FFFFFFF
 #define minimum_segment_request 0x80
 #define most_negative_fixnum (iptr)-0x20000000
 #define most_positive_fixnum (iptr)0x1FFFFFFF
@@ -472,7 +485,7 @@ typedef unsigned __int64 U64;
 #define size_rp_header 0x10
 #define size_rtd_counts 0x410
 #define size_symbol 0x18
-#define size_tc 0x128
+#define size_tc 0x138
 #define size_thread 0x8
 #define size_tlc 0x10
 #define size_typed_object 0x8
@@ -501,8 +514,9 @@ typedef unsigned __int64 U64;
 #define string_char_bytes 0x4
 #define string_char_offset 0x2
 #define string_data_disp 0x5
-#define string_length_factor 0x8
-#define string_length_offset 0x3
+#define string_immutable_flag 0x8
+#define string_length_factor 0x10
+#define string_length_offset 0x4
 #define string_type_disp 0x1
 #define strue (ptr)0xE
 #define sunbound (ptr)0x1E
@@ -521,13 +535,13 @@ typedef unsigned __int64 U64;
 #define tc_ac0_disp 0x4
 #define tc_ac1_disp 0x8
 #define tc_active_disp 0x8C
-#define tc_alloc_counter_disp 0x118
+#define tc_alloc_counter_disp 0x128
 #define tc_ap_disp 0x18
 #define tc_arg_regs_disp 0x0
 #define tc_block_counter_disp 0xDC
 #define tc_cchain_disp 0x80
 #define tc_code_ranges_to_flush_disp 0x84
-#define tc_compile_profile_disp 0xF4
+#define tc_compile_profile_disp 0x104
 #define tc_cp_disp 0x10
 #define tc_current_error_disp 0xD8
 #define tc_current_input_disp 0xD0
@@ -537,14 +551,18 @@ typedef unsigned __int64 U64;
 #define tc_esp_disp 0x14
 #define tc_fxfirst_bit_set_bv_disp 0xEC
 #define tc_fxlength_bv_disp 0xE8
-#define tc_generate_inspector_information_disp 0xF8
-#define tc_generate_profile_forms_disp 0xFC
+#define tc_generate_inspector_information_disp 0x108
+#define tc_generate_profile_forms_disp 0x10C
 #define tc_guardian_entries_disp 0x7C
-#define tc_instr_counter_disp 0x110
+#define tc_instr_counter_disp 0x120
 #define tc_keyboard_interrupt_pending_disp 0xC8
-#define tc_meta_level_disp 0xF0
-#define tc_optimize_level_disp 0x100
-#define tc_parameters_disp 0x120
+#define tc_meta_level_disp 0x100
+#define tc_null_immutable_bytevector_disp 0xF8
+#define tc_null_immutable_fxvector_disp 0xF4
+#define tc_null_immutable_string_disp 0xFC
+#define tc_null_immutable_vector_disp 0xF0
+#define tc_optimize_level_disp 0x110
+#define tc_parameters_disp 0x130
 #define tc_random_seed_disp 0x88
 #define tc_real_eap_disp 0x38
 #define tc_ret_disp 0x20
@@ -556,8 +574,8 @@ typedef unsigned __int64 U64;
 #define tc_something_pending_disp 0xB8
 #define tc_stack_cache_disp 0x94
 #define tc_stack_link_disp 0x98
-#define tc_subset_mode_disp 0x104
-#define tc_suppress_primitive_inlining_disp 0x108
+#define tc_subset_mode_disp 0x114
+#define tc_suppress_primitive_inlining_disp 0x118
 #define tc_target_machine_disp 0xE4
 #define tc_td_disp 0x34
 #define tc_threadno_disp 0xCC
@@ -600,9 +618,19 @@ typedef unsigned __int64 U64;
 #define type_flonum 0x2
 #define type_fxvector 0x3
 #define type_immediate 0x6
+#define type_immutable_box 0x8E
+#define type_immutable_bytevector 0xD
+#define type_immutable_fxvector 0xB
+#define type_immutable_string 0x9
+#define type_immutable_vector 0x4
 #define type_inexactnum 0x36
 #define type_input_port 0x11E
 #define type_io_port 0x31E
+#define type_mutable_box 0xE
+#define type_mutable_bytevector 0x5
+#define type_mutable_fxvector 0x3
+#define type_mutable_string 0x1
+#define type_mutable_vector 0x0
 #define type_negative_bignum 0x26
 #define type_octet 0x0
 #define type_other_number 0x6
@@ -622,6 +650,7 @@ typedef unsigned __int64 U64;
 #define type_thread 0x4E
 #define type_tlc 0x5E
 #define type_typed_object 0x7
+#define type_vector 0x0
 #define typed_object_type_disp 0x1
 #define typedef_i16 "short"
 #define typedef_i32 "int"
@@ -641,6 +670,9 @@ typedef unsigned __int64 U64;
 #define underflow_limit 0x40
 #define unscaled_shot_1_shot_flag -0x1
 #define vector_data_disp 0x5
+#define vector_immutable_flag 0x4
+#define vector_length_factor 0x8
+#define vector_length_offset 0x3
 #define vector_type_disp 0x1
 #define virtual_register_count 0x10
 #define visit_tag 0x0
@@ -742,7 +774,7 @@ typedef unsigned __int64 U64;
 #define SETSYMNAME(x,y) DIRTYSET(((ptr *)((uptr)(x)+17)),(y))
 #define SETSYMSPLIST(x,y) DIRTYSET(((ptr *)((uptr)(x)+21)),(y))
 #define SETSYMHASH(x,y) DIRTYSET(((ptr *)((uptr)(x)+25)),(y))
-#define VECTTYPE(x) (*((ptr *)((uptr)(x)+1)))
+#define VECTTYPE(x) (*((iptr *)((uptr)(x)+1)))
 #define INITVECTIT(x,i) (((ptr *)((uptr)(x)+5))[i])
 #define SETVECTIT(x,i,y) DIRTYSET((((ptr *)((uptr)(x)+5))+i),(y))
 #define FXVECTOR_TYPE(x) (*((iptr *)((uptr)(x)+1)))
@@ -854,13 +886,13 @@ typedef unsigned __int64 U64;
 #define AC0(x) (*((void* *)((uptr)(x)+4)))
 #define AC1(x) (*((void* *)((uptr)(x)+8)))
 #define ACTIVE(x) (*((I32 *)((uptr)(x)+140)))
-#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+280)))
+#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+296)))
 #define AP(x) (*((void* *)((uptr)(x)+24)))
 #define ARGREGS(x,i) (((void* *)((uptr)(x)+0))[i])
 #define BLOCKCOUNTER(x) (*((ptr *)((uptr)(x)+220)))
 #define CCHAIN(x) (*((ptr *)((uptr)(x)+128)))
 #define CODERANGESTOFLUSH(x) (*((ptr *)((uptr)(x)+132)))
-#define COMPILEPROFILE(x) (*((ptr *)((uptr)(x)+244)))
+#define COMPILEPROFILE(x) (*((ptr *)((uptr)(x)+260)))
 #define CP(x) (*((void* *)((uptr)(x)+16)))
 #define CURRENTERROR(x) (*((ptr *)((uptr)(x)+216)))
 #define CURRENTINPUT(x) (*((ptr *)((uptr)(x)+208)))
@@ -870,14 +902,18 @@ typedef unsigned __int64 U64;
 #define ESP(x) (*((void* *)((uptr)(x)+20)))
 #define FXFIRSTBITSETBV(x) (*((ptr *)((uptr)(x)+236)))
 #define FXLENGTHBV(x) (*((ptr *)((uptr)(x)+232)))
-#define GENERATEINSPECTORINFORMATION(x) (*((ptr *)((uptr)(x)+248)))
-#define GENERATEPROFILEFORMS(x) (*((ptr *)((uptr)(x)+252)))
+#define GENERATEINSPECTORINFORMATION(x) (*((ptr *)((uptr)(x)+264)))
+#define GENERATEPROFILEFORMS(x) (*((ptr *)((uptr)(x)+268)))
 #define GUARDIANENTRIES(x) (*((ptr *)((uptr)(x)+124)))
-#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+272)))
+#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+288)))
 #define KEYBOARDINTERRUPTPENDING(x) (*((ptr *)((uptr)(x)+200)))
-#define METALEVEL(x) (*((ptr *)((uptr)(x)+240)))
-#define OPTIMIZELEVEL(x) (*((ptr *)((uptr)(x)+256)))
-#define PARAMETERS(x) (*((ptr *)((uptr)(x)+288)))
+#define METALEVEL(x) (*((ptr *)((uptr)(x)+256)))
+#define NULLIMMUTABLEBYTEVECTOR(x) (*((ptr *)((uptr)(x)+248)))
+#define NULLIMMUTABLEFXVECTOR(x) (*((ptr *)((uptr)(x)+244)))
+#define NULLIMMUTABLESTRING(x) (*((ptr *)((uptr)(x)+252)))
+#define NULLIMMUTABLEVECTOR(x) (*((ptr *)((uptr)(x)+240)))
+#define OPTIMIZELEVEL(x) (*((ptr *)((uptr)(x)+272)))
+#define PARAMETERS(x) (*((ptr *)((uptr)(x)+304)))
 #define RANDOMSEED(x) (*((U32 *)((uptr)(x)+136)))
 #define REAL_EAP(x) (*((void* *)((uptr)(x)+56)))
 #define RET(x) (*((void* *)((uptr)(x)+32)))
@@ -889,8 +925,8 @@ typedef unsigned __int64 U64;
 #define SOMETHINGPENDING(x) (*((ptr *)((uptr)(x)+184)))
 #define STACKCACHE(x) (*((ptr *)((uptr)(x)+148)))
 #define STACKLINK(x) (*((ptr *)((uptr)(x)+152)))
-#define SUBSETMODE(x) (*((ptr *)((uptr)(x)+260)))
-#define SUPPRESSPRIMITIVEINLINING(x) (*((ptr *)((uptr)(x)+264)))
+#define SUBSETMODE(x) (*((ptr *)((uptr)(x)+276)))
+#define SUPPRESSPRIMITIVEINLINING(x) (*((ptr *)((uptr)(x)+280)))
 #define TARGETMACHINE(x) (*((ptr *)((uptr)(x)+228)))
 #define TD(x) (*((void* *)((uptr)(x)+52)))
 #define THREADNO(x) (*((ptr *)((uptr)(x)+204)))
@@ -905,5 +941,5 @@ typedef unsigned __int64 U64;
 #define VIRTREG(x,i) (((ptr *)((uptr)(x)+60))[i])
 
 /* library entries we access from C code */
-#define library_nonprocedure_code 148
-#define library_dounderflow 150
+#define library_nonprocedure_code 150
+#define library_dounderflow 152

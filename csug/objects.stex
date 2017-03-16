@@ -427,6 +427,12 @@ These extensions are disabled in an input stream after \scheme{#!r6rs} has
 been seen by the reader, unless \scheme{#!chezscheme} has been seen more
 recently.
 
+\index{immutable strings}\index{mutable strings}%
+All strings are mutable by default, including constants.
+A program can create immutable strings via
+\index{\scheme{string->immutable-string}}\scheme{string->immutable-string}.
+Any attempt to modify an immutable string causes an exception to be raised.
+
 The length and indices of a string in {\ChezScheme} are always fixnums.
 
 
@@ -466,7 +472,7 @@ When passed one argument, each of these predicates returns \scheme{#t}.
 \endentryheader
 
 \noindent
-\var{src} and \var{dst} must be strings.
+\var{src} and \var{dst} must be strings, and \var{dst} must be mutable.
 \var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
 integers.
 The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
@@ -503,6 +509,7 @@ s2 ;=> "-bollolly-"
 \endentryheader
 
 \noindent
+\var{string} must be mutable.
 The characters of \var{string} from \var{start} (inclusive) to \var{end}
 (exclusive) are set to \var{char}.
 \var{start} and \var{end} must be nonnegative integers; \var{start}
@@ -525,6 +532,7 @@ If $end\le start$, the string is left unchanged.
 \endentryheader
 
 \noindent
+\var{string} must be mutable.
 \var{n} must be an exact nonnegative fixnum not greater than the length of
 \var{string}.
 If \var{n} is zero, \scheme{string-truncate!} returns the empty string.
@@ -540,6 +548,40 @@ s ;=> "$$$"
 \endschemedisplay
 
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-string?}{\categoryprocedure}{(mutable-string? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable string, \scheme{#f} otherwise
+\formdef{immutable-string?}{\categoryprocedure}{(immutable-string? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an immutable string, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(mutable-string? (string #\a #\b #\c)) ;=> #t
+(mutable-string? (string->immutable-string "abc")) ;=> #f
+(immutable-string? (string #\a #\b #\c)) ;=> #f
+(immutable-string? (string->immutable-string "abc")) ;=> #t
+(immutable-string? (cons 3 4)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string->immutable-string}{\categoryprocedure}{(string->immutable-string \var{string})}
+\returns an immutable string equal to \var{string}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{immutable strings}\index{mutable strings}%
+The result is \var{string} itself if \var{string}
+is immutable; otherwise, the result is an immutable string with the same content as \var{string}.
+
+\schemedisplay
+(define s (string->immutable-string (string #\x #\y #\z)))
+(string-set! s 0 #\a) ;=> \var{exception: not mutable}
+\endschemedisplay
+
 
 \section{Vectors}
 
@@ -554,6 +596,12 @@ been seen by the reader, unless \scheme{#!chezscheme} has been seen more
 recently.
 
 The length and indices of a vector in {\ChezScheme} are always fixnums.
+
+\index{immutable vectors}\index{mutable vectors}%
+All vectors are mutable by default, including constants.
+A program can create immutable vectors via
+\index{\scheme{vector->immutable-vector}}\scheme{vector->immutable-vector}.
+Any attempt to modify an immutable vector causes an exception to be raised.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -582,6 +630,7 @@ The elements themselves are not copied.
 \endentryheader
 
 \noindent
+\var{vector} must be mutable.
 \scheme{vector-set-fixnum!} changes the \var{n}th element of \var{vector} to \var{fixnum}.
 \var{n} must be an exact nonnegative integer strictly less than
 the length of \var{vector}.
@@ -602,8 +651,44 @@ See also the description of fixnum-only vectors (fxvectors) below.
   v) ;=> #(1 2 73 4 5)
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-vector?}{\categoryprocedure}{(mutable-vector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable vector, \scheme{#f} otherwise
+\formdef{immutable-vector?}{\categoryprocedure}{(immutable-vector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an immutable vector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(mutable-vector? (vector 1 2 3)) ;=> #t
+(mutable-vector? (vector->immutable-vector (vector 1 2 3))) ;=> #f
+(immutable-vector? (vector 1 2 3)) ;=> #f
+(immutable-vector? (vector->immutable-vector (vector 1 2 3))) ;=> #t
+(immutable-vector? (cons 3 4)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector->immutable-vector}{\categoryprocedure}{(vector->immutable-vector \var{vector})}
+\returns an immutable vector equal to \var{vector}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{immutable vectors}\index{mutable vectors}%
+The result is \var{vector} itself if \var{vector}
+is immutable; otherwise, the result is an immutable vector with the same content as \var{vector}.
+
+\schemedisplay
+(define v (vector->immutable-vector (vector 1 2 3)))
+(vector-set! v 0 0) ;=> \var{exception: not mutable}
+\endschemedisplay
+
+    
 \section{Fixnum-Only Vectors\label{SECTFXVECTORS}}
 
+\index{fxvectors}%
 Fixnum-only vectors, or ``fxvectors,'' are like vectors but contain
 only fixnums.
 Fxvectors are written with the \scheme{#vfx} prefix in place of the
@@ -621,6 +706,12 @@ younger objects to support generational garbage collection.
 The storage management system also takes advantage of the fact that
 fxvectors contain no pointers to place them in an area of memory that
 does not have to be traced during collection.
+
+\index{immutable fxvectors}\index{mutable fxvectors}%
+All fxvectors are mutable by default, including constants.
+A program can create immutable fxvectors via
+\index{\scheme{fxvector->immutable-fxvector}}\scheme{fxvector->immutable-fxvector}.
+Any attempt to modify an immutable fxvector causes an exception to be raised.
 
 See also \scheme{vector-set-fixnum!} above.
 
@@ -714,6 +805,7 @@ the length of \var{fxvector}.
 \endentryheader
 
 \noindent
+\var{fxvector} must be mutable.
 \var{n} must be a nonnegative fixnum strictly less than
 the length of \var{fxvector}.
 \scheme{fxvector-set!} changes the \var{n}th element of \var{fxvector} to \var{fixnum}.
@@ -733,6 +825,7 @@ the length of \var{fxvector}.
 \endentryheader
 
 \noindent
+\var{fxvector} must be mutable.
 \scheme{fxvector-fill!} replaces each element of \var{fxvector} with \var{fixnum}.
 
 \schemedisplay
@@ -795,6 +888,41 @@ as \var{fxvector}.
   (eq? v (fxvector-copy v))) ;=> #f
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-fxvector?}{\categoryprocedure}{(mutable-fxvector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable fxvector, \scheme{#f} otherwise
+\formdef{immutable-fxvector?}{\categoryprocedure}{(immutable-fxvector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an immutable fxvector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(mutable-fxvector? (fxvector 1 2 3)) ;=> #t
+(mutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #f
+(immutable-fxvector? (fxvector 1 2 3)) ;=> #f
+(immutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #t
+(immutable-fxvector? (cons 3 4)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector->immutable-fxvector}{\categoryprocedure}{(fxvector->immutable-fxvector \var{fxvector})}
+\returns either an immutable copy of \var{fxvector} or \var{fxvector} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\index{immutable fxvectors}\index{mutable fxvectors}%
+The result is \var{fxvector} itself if \var{fxvector}
+is immutable; otherwise, the result is an immutable fxvector with the same content as \var{fxvector}.
+
+\schemedisplay
+(define v (fxvector->immutable-fxvector (fxvector 1 2 3)))
+(fxvector-set! v 0 0) ;=> \var{exception: not mutable}
+\endschemedisplay
+
+    
 \section{Bytevectors\label{SECTBYTEVECTORS}}
 
 As with vectors, {\ChezScheme} extends the syntax of bytevectors to allow
@@ -811,6 +939,12 @@ recently.
 primitives for loading and storing 3, 5, 6, and 7-byte quantities.
 
 The length and indices of a bytevector in {\ChezScheme} are always fixnums.
+
+\index{immutable bytevectors}\index{mutable bytevectors}%
+All bytevectors are mutable by default, including constants.
+A program can create immutable bytevectors via
+\index{\scheme{bytevector->immutable-bytevector}}\scheme{bytevector->immutable-bytevector}.
+Any attempt to modify an immutable bytevector causes an exception to be raised.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -882,6 +1016,7 @@ are signed rather than unsigned.
 \endentryheader
 
 \noindent
+\var{bytevector} must be mutable.
 \var{n} must be an exact nonnegative fixnum not greater than the length of
 \var{bytevector}.
 If \var{n} is zero, \scheme{bytevector-truncate!} returns the empty bytevector.
@@ -945,6 +1080,7 @@ complement value.
 \endentryheader
 
 \noindent
+\var{bytevector} must be mutable.
 \var{n} must be an exact nonnegative integer and
 indexes the starting byte of the value.
 The sum of \var{n} and the number of bytes occupied by the value must
@@ -971,6 +1107,42 @@ These procedures store the given value in the 3, 5, 6, or 7 bytes starting
 at index \var{n} (zero-based) of \var{bytevector}.
 Negative values are stored as their two's complement equivalent.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-bytevector?}{\categoryprocedure}{(mutable-bytevector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable bytevector, \scheme{#f} otherwise
+\formdef{immutable-bytevector?}{\categoryprocedure}{(immutable-bytevector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an immutable bytevector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(mutable-bytevector? (bytevector 1 2 3)) ;=> #t
+(mutable-bytevector?
+  (bytevector->immutable-bytevector (bytevector 1 2 3))) ;=> #f
+(immutable-bytevector? (bytevector 1 2 3)) ;=> #f
+(immutable-bytevector?
+  (bytevector->immutable-bytevector (bytevector 1 2 3))) ;=> #t
+(immutable-bytevector? (cons 3 4)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector->immutable-bytevector}{\categoryprocedure}{(bytevector->immutable-bytevector \var{bytevector})}
+\returns an immutable \var{bytevector} equal to \var{bytevector}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{immutable bytevectors}\index{mutable bytevectors}%
+The result is \var{bytevector} itself if \var{bytevector}
+is immutable; otherwise, the result is an immutable bytevector with the same content as \var{bytevector}.
+
+\schemedisplay
+(define bv (bytevector->immutable-bytevector (bytevector 1 2 3)))
+(bytevector-u8-set! bv 0 0) ;=> \var{exception: not mutable}
+\endschemedisplay
+
 
 \section{Boxes\label{SECTBOXES}}
 
@@ -987,6 +1159,12 @@ For example, \scheme{#&(a b c)} is a box holding the list \scheme{(a b c)}.
 The box syntax is disabled in an input stream after \scheme{#!r6rs} has
 been seen by the reader, unless \scheme{#!chezscheme} has been seen more
 recently.
+
+\index{immutable boxes}\index{mutable boxes}%
+All boxes are mutable by default, including constants.
+A program can create immutable boxes via
+\index{\scheme{box-immutable}}\scheme{box-immutable}.
+Any attempt to modify an immutable box causes an exception to be raised.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1039,19 +1217,54 @@ recently.
 \endentryheader
 
 \noindent
+\var{box} must be mutable.
 \scheme{set-box!} sets the contents of \var{box} to \var{obj}.
 
 \schemedisplay
 (let ([b (box 'x)])
-    (set-box! b 'y)
-    b) ;=> #&y
+  (set-box! b 'y)
+  b) ;=> #&y
 
 (let ([incr!
        (lambda (x)
-          (set-box! x (+ (unbox x) 1)))])
+         (set-box! x (+ (unbox x) 1)))])
   (let ([b (box 3)])
     (incr! b)
     (unbox b))) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutable-box?}{\categoryprocedure}{(mutable-box? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a mutable box, \scheme{#f} otherwise
+\formdef{immutable-box?}{\categoryprocedure}{(immutable-box? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an immutable box, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(mutable-box? (box 1)) ;=> #t
+(mutable-box? (box-immutable 1)) ;=> #f
+(immutable-box? (box 1)) ;=> #f
+(immutable-box? (box-immutable 1)) ;=> #t
+(mutable-box? (cons 3 4)) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box-immutable}{\categoryprocedure}{(box-immutable \var{obj})}
+\returns a new immutable box containing \var{obj}
+\listlibraries
+\endentryheader
+
+\noindent
+\index{immutable boxes}\index{mutable boxes}%
+Boxes are typically intended to support shared, mutable structure, so immutable boxes
+are not often useful.
+
+\schemedisplay
+(define b (box-immutable 1))
+(set-box! b 0) ;=> \var{exception: not mutable}
 \endschemedisplay
 
 

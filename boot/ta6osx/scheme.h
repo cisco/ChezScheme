@@ -78,7 +78,7 @@ typedef unsigned char octet;
 #define Sbignump(x) ((((uptr)(x)&0x7)==0x7) &&\
     (((uptr)((*((ptr *)((uptr)(x)+1))))&0x1F)==0x6))
 #define Sboxp(x) ((((uptr)(x)&0x7)==0x7) &&\
-    ((uptr)((*((ptr *)((uptr)(x)+1))))==0xE))
+    (((uptr)((*((ptr *)((uptr)(x)+1))))&0x7F)==0xE))
 #define Sinexactnump(x) ((((uptr)(x)&0x7)==0x7) &&\
     ((uptr)((*((ptr *)((uptr)(x)+1))))==0x36))
 #define Sexactnump(x) ((((uptr)(x)&0x7)==0x7) &&\
@@ -99,15 +99,15 @@ typedef unsigned char octet;
 #define Scar(x) (*((ptr *)((uptr)(x)+7)))
 #define Scdr(x) (*((ptr *)((uptr)(x)+15)))
 #define Sflonum_value(x) (*((double *)((uptr)(x)+6)))
-#define Svector_length(x) ((iptr)((uptr)(*((ptr *)((uptr)(x)+1)))>>3))
+#define Svector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
 #define Svector_ref(x,i) (((ptr *)((uptr)(x)+9))[i])
-#define Sfxvector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>3))
+#define Sfxvector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
 #define Sfxvector_ref(x,i) (((ptr *)((uptr)(x)+9))[i])
-#define Sbytevector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>3))
+#define Sbytevector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
 #define Sbytevector_u8_ref(x,i) (((octet *)((uptr)(x)+9))[i])
 /* Warning: Sbytevector_data(x) returns a pointer into x. */
 #define Sbytevector_data(x) &Sbytevector_u8_ref(x,0)
-#define Sstring_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>3))
+#define Sstring_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
 #define Sstring_ref(x,i) Schar_value(((string_char *)((uptr)(x)+9))[i])
 #define Sunbox(x) (*((ptr *)((uptr)(x)+9)))
 EXPORT iptr Sinteger_value PROTO((ptr));

@@ -258,8 +258,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
               if (m != n)
                   *((ptr *)((uptr)UNTYPE(p,type_typed_object) + m)) = FIX(0);
           }
-      } else if (TYPEP(tf, mask_fixnum, type_fixnum)) {
-        /* vector type/length field is a fixnum */
+      } else if (TYPEP(tf, mask_vector, type_vector)) {
           iptr len, n;
           len = Svector_length(pp);
           n = size_vector(len);
@@ -267,7 +266,12 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           S_G.countof[tg][countof_vector] += 1;
           S_G.bytesof[tg][countof_vector] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-          find_room(space_impure, tg, type_typed_object, n, p);
+        /* assumes vector lengths look like fixnums; if not, vectors will need their own space */
+          if ((uptr)tf & vector_immutable_flag) {
+            find_room(space_pure, tg, type_typed_object, n, p);
+          } else {
+            find_room(space_impure, tg, type_typed_object, n, p);
+          }
           copy_ptrs(type_typed_object, p, pp, n);
         /* pad if necessary */
           if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
@@ -317,12 +321,16 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
          * swept already.  NB: assuming keyvals are always pairs. */
           if (next != Sfalse && SPACE(keyval) & space_old)
             tlcs_to_rehash = S_cons_in(space_new, 0, p, tlcs_to_rehash);
-      } else if ((iptr)tf == type_box) {
+      } else if (TYPEP(tf, mask_box, type_box)) {
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_box] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
-          find_room(space_impure, tg, type_typed_object, size_box, p);
-          BOXTYPE(p) = type_box;
+          if ((uptr)tf == type_immutable_box) {
+            find_room(space_pure, tg, type_typed_object, size_box, p);
+          } else {
+            find_room(space_impure, tg, type_typed_object, size_box, p);
+          }
+          BOXTYPE(p) = (iptr)tf;
           INITBOXREF(p) = Sunbox(pp);
       } else if ((iptr)tf == type_ratnum) {
         /* not recursive: place in space_data and relocate fields immediately */
@@ -546,8 +554,8 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   } else if (t == type_flonum) {
     /* nothing to sweep */;
  /* typed objects */
-  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_fixnum, type_fixnum)) {
-    sweep_ptrs(&INITVECTIT(p, 0), UNFIX(tf));
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
+    sweep_ptrs(&INITVECTIT(p, 0), Svector_length(p));
   } else if (TYPEP(tf, mask_string, type_string) || TYPEP(tf, mask_bytevector, type_bytevector) || TYPEP(tf, mask_fxvector, type_fxvector)) {
     /* nothing to sweep */;
   } else if (TYPEP(tf, mask_record, type_record)) {
@@ -555,7 +563,7 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
     if (sweep_pure || RECORDDESCMPM(RECORDINSTTYPE(p)) != FIX(0)) {
       sweep_record(p);
     }
-  } else if ((iptr)tf == type_box) {
+  } else if (TYPEP(tf, mask_box, type_box)) {
     relocate(&INITBOXREF(p))
   } else if ((iptr)tf == type_ratnum) {
     if (sweep_pure) {
@@ -1303,7 +1311,7 @@ static iptr size_object(p) ptr p; {
     } else if (t == type_flonum) {
         return size_flonum;
   /* typed objects */
-    } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_fixnum, type_fixnum)) {
+    } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
         return size_vector(Svector_length(p));
     } else if (TYPEP(tf, mask_string, type_string)) {
         return size_string(Sstring_length(p));
@@ -1313,7 +1321,7 @@ static iptr size_object(p) ptr p; {
         return size_record_inst(UNFIX(RECORDDESCSIZE(tf)));
     } else if (TYPEP(tf, mask_fxvector, type_fxvector)) {
         return size_fxvector(Sfxvector_length(p));
-    } else if ((iptr)tf == type_box) {
+    } else if (TYPEP(tf, mask_box, type_box)) {
         return size_box;
     } else if ((iptr)tf == type_ratnum) {
         return size_ratnum;
@@ -1426,6 +1434,10 @@ static void sweep_thread(p) ptr p; {
     relocate(&TARGETMACHINE(tc))
     relocate(&FXLENGTHBV(tc))
     relocate(&FXFIRSTBITSETBV(tc))
+    relocate(&NULLIMMUTABLEVECTOR(tc))
+    relocate(&NULLIMMUTABLEFXVECTOR(tc))
+    relocate(&NULLIMMUTABLEBYTEVECTOR(tc))
+    relocate(&NULLIMMUTABLESTRING(tc))
     /* immediate METALEVEL */
     relocate(&COMPILEPROFILE(tc))
     /* immediate GENERATEINSPECTORINFORMATION */
