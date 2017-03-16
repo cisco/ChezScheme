@@ -58,6 +58,16 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.4.1)}
+
+Support for immutable vectors, fxvectors, bytevectors, strings, and boxes
+has been added.
+Immutable vectors are created via \scheme{vector->immutable-vector},
+and immutable fxvectors, bytevectors, and strings are created by similarly named
+procedures.
+Immutable boxes are created via \scheme{box-immutable}.
+Any attempt to modify an immutable object causes an exception to be raised.
+
 \subsection{Optional timeout for \protect\scheme{condition-wait} (9.4.1)}
 
 The \scheme{condition-wait} procedure now takes an optional

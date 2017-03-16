@@ -1876,6 +1876,25 @@
                     xval]
                    [else #f])))))
 
+      ; could handle inequalies as well (returning #f), but that seems less likely to crop up
+      (define handle-equality
+        (lambda (ctxt arg arg*)
+          (and
+            (or (null? arg*)
+                (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! arg))
+                  [(ref ,maybe-src ,x0)
+                   (and (not (prelex-was-assigned x0))
+                        (andmap
+                          (lambda (arg)
+                            (and (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! arg))
+                                   [(ref ,maybe-src ,x) (eq? x x0)]
+                                   [else #f])))
+                          arg*))]
+                  [else #f]))
+            (begin
+              (residualize-seq '() (cons arg arg*) ctxt)
+              true-rec))))
+
       (define-inline 2 machine-type
         [() (begin
               (residualize-seq '() '() ctxt)
@@ -2128,19 +2147,16 @@
         [args #f])
 
       (define-inline 2 (eq? eqv? equal?)
-        [(x y)
-         (let ([xval (value-visit-operand! x)]
-               [yval (value-visit-operand! y)])
-           (and (nanopass-case (Lsrc Expr) (result-exp xval)
-                  [(ref ,maybe-src0 ,x0)
-                   (and (not (prelex-was-assigned x0))
-                        (nanopass-case (Lsrc Expr) (result-exp yval)
-                          [(ref ,maybe-src1 ,x1) (eq? x0 x1)]
-                          [else #f]))]
-                  [else #f])
-                (begin
-                  (residualize-seq '() (list x y) ctxt)
-                  true-rec)))])
+        [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
+
+      (define-inline 3 (bytevector=? enum-set=? bound-identifier=? free-identifier=? ftype-pointer=? literal-identifier=? time=?)
+        [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
+
+      (define-inline 3 (char=? char-ci=? string=? string-ci=?)
+        [(arg . arg*) (handle-equality ctxt arg arg*)])
+
+      (define-inline 3 (boolean=? symbol=? r6rs:char=? r6rs:char-ci=? r6rs:string=? r6rs:string-ci=?)
+        [(arg1 arg2 . arg*) (handle-equality ctxt arg1 (cons arg2 arg*))])
 
       (define-inline 3 (ash
                          bitwise-arithmetic-shift bitwise-arithmetic-shift-left
@@ -2343,41 +2359,37 @@
 
       (let ()
         (define $fold
-          (case-lambda
-            [(generic-op orig-opnd* pred* opred ctxt) ($fold generic-op orig-opnd* pred* opred ctxt #f)]
-            [(generic-op orig-opnd* pred* opred ctxt maybe-sc-handler)
-             (define cookie '(fig . newton))
-             (and (okay-to-handle?)
-                  (or (let loop ([opnd* orig-opnd*] [pred* pred*] [rval* '()])
-                        (if (null? opnd*)
-                            (let ([val (guard (c [#t cookie]) (apply generic-op (reverse rval*)))])
-                              (and (not (eq? val cookie))
-                                   (opred val)
-                                   (begin
-                                     (residualize-seq '() orig-opnd* ctxt)
-                                     `(quote ,val))))
-                            (let-values ([(pred pred*) (if (procedure? pred*) (values pred* pred*) (values (car pred*) (cdr pred*)))])
-                              (visit-and-maybe-extract* pred ([val (car opnd*)])
-                                (loop (cdr opnd*) pred* (cons val rval*))))))
-                      (and maybe-sc-handler (maybe-sc-handler))))]))
+          (lambda (generic-op orig-opnd* pred* opred level ctxt handler)
+            (define cookie '(fig . newton))
+            (and (okay-to-handle?)
+                 (or (let loop ([opnd* orig-opnd*] [pred* pred*] [rval* '()])
+                       (if (null? opnd*)
+                           (let ([val (guard (c [#t cookie]) (apply generic-op (reverse rval*)))])
+                             (and (not (eq? val cookie))
+                                  (opred val)
+                                  (begin
+                                    (residualize-seq '() orig-opnd* ctxt)
+                                    `(quote ,val))))
+                           (let-values ([(pred pred*) (if (procedure? pred*) (values pred* pred*) (values (car pred*) (cdr pred*)))])
+                             (visit-and-maybe-extract* pred ([val (car opnd*)])
+                               (loop (cdr opnd*) pred* (cons val rval*))))))
+                     (apply handler level ctxt orig-opnd*)))))
+        (define null-handler (lambda args #f))
         (define-syntax fold
           (lambda (x)
             (syntax-case x ()
-              [(_ (prim ipred ...) opred generic-op)
-               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
-                 #'(define-inline 2 prim
-                     [(arg ...) ($fold generic-op (list arg ...) (list ipred ...) opred ctxt)]))]
-              [(_ (prim ipred ... . rpred) opred generic-op)
-               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
-                 #'(define-inline 2 prim
-                     [(arg ... . rest) ($fold generic-op (cons* arg ... rest) (cons* ipred ... rpred) opred ctxt)]))]
-              [(_ (prim ipred ...) opred generic-op ?special-case-handler)
+              [(_ (prim ipred ...) opred generic-op) #'(fold (prim ipred ...) opred generic-op null-handler)]
+              [(_ (prim ipred ...) opred generic-op handler)
                (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
                  #'(define-inline 2 prim
                      [(arg ...)
-                      (let ([special-case-handler ?special-case-handler])
-                        ($fold generic-op (list arg ...) (list ipred ...) opred ctxt
-                          (lambda () (special-case-handler level ctxt arg ...))))]))])))
+                      ($fold generic-op (list arg ...) (list ipred ...) opred level ctxt handler)]))]
+              [(_ (prim ipred ... . rpred) opred generic-op) #'(fold (prim ipred ... . rpred) opred generic-op null-handler)]
+              [(_ (prim ipred ... . rpred) opred generic-op handler)
+               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
+                 #'(define-inline 2 prim
+                     [(arg ... . rest)
+                      ($fold generic-op (cons* arg ... rest) (cons* ipred ... rpred) opred level ctxt handler)]))])))
 
         (define tfixnum? target-fixnum?)
         (define u<=fxwidth?
@@ -2399,12 +2411,16 @@
 
         (fold (fx< tfixnum? . tfixnum?) boolean? #2%<)
         (fold (fx<= tfixnum? . tfixnum?) boolean? #2%<=)
-        (fold (fx= tfixnum? . tfixnum?) boolean? #2%=)
+        (fold (fx= tfixnum? . tfixnum?) boolean? #2%=
+          (lambda (level ctxt arg . arg*)
+            (and (fx= level 3) (handle-equality ctxt arg arg*))))
         (fold (fx> tfixnum? . tfixnum?) boolean? #2%>)
         (fold (fx>= tfixnum? . tfixnum?) boolean? #2%>=)
         (fold (fx<? tfixnum? tfixnum? . tfixnum?) boolean? #2%<)
         (fold (fx<=? tfixnum? tfixnum? . tfixnum?) boolean? #2%<=)
-        (fold (fx=? tfixnum? tfixnum? . tfixnum?) boolean? #2%=)
+        (fold (fx=? tfixnum? tfixnum? . tfixnum?) boolean? #2%=
+          (lambda (level ctxt arg . arg*)
+            (and (fx= level 3) (handle-equality ctxt arg arg*))))
         (fold (fx>? tfixnum? tfixnum? . tfixnum?) boolean? #2%>)
         (fold (fx>=? tfixnum? tfixnum? . tfixnum?) boolean? #2%>=)
         (fold ($fxu< tfixnum? tfixnum?) boolean?
