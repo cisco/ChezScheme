@@ -2260,6 +2260,208 @@ requires a nongenerative clause.
 The default value is \scheme{#f}.
 The lead-in above describes why one might want to set this to \scheme{#t}.
 
+\section{Record Equality and Hashing\label{SECTRECORDEQUALTYANDHASHING}}
+
+\index{record equality}\index{\scheme{equal?} on records}%
+By default, the \index{\scheme{equal?}}\scheme{equal?} primitive
+compares record instances using \scheme{eq?}, i.e., it distinguishes
+non-eq? instances even if they are of the same type and have equal
+contents.
+A program can override this behavior for instances of a
+record type (and its subtypes that do not have their own equality
+procedures) by using
+\index{\scheme{record-type-equal-procedure}}\scheme{record-type-equal-procedure}
+to associate an equality procedure with the record-type descriptor
+(\var{rtd}) that describes the record type.
+
+When comparing two eq? instances, \scheme{equal?} always returns
+\scheme{#t}.
+When comparing two non-eq? instances that share an equality procedure
+\var{equal-proc}, \scheme{equal?} uses \var{equal-proc} to compare
+the instances.
+Two instances \var{x} and \var{y} share an equality procedure if
+they inherit an equality procedure from the same point in the inheritance
+chain, i.e., if
+\index{\scheme{record-equal-procedure}}\scheme{(record-equal-procedure \var{x} \var{y})}
+returns a procedure (\var{equal-proc}) rather
+than \scheme{#f}.
+\var{equal?} passes \var{equal-proc} three arguments: the two
+instances plus a \var{eql?} procedure that should be used for
+recursive comparison of values within the two instances.
+Use of \var{eql?} for recursive comparison is necessary to allow
+comparison of potentially cyclic structure.
+When comparing two non-eq? instances that do not share an equality
+procedure, \scheme{equal?} returns \scheme{#f}.
+
+\index{record hashing}\index{\scheme{equal-hash} on records}%
+Similarly, when the \index{\scheme{equal-hash}}\scheme{equal-hash}
+primitive hashes a record instance, it defaults to a value that is
+independent of the record type and contents of the instance.
+A program can override this behavior for instances of a
+record type by using \index{\scheme{record-type-hash-procedure}}\scheme{record-type-hash-procedure}
+to associate a hash procedure with the record-type descriptor (\var{rtd})
+that describes the record type.
+The procedure \index{\scheme{record-hash-procedure}}\scheme{record-hash-procedure} can be used to find
+the hash procedure for a given record instance, following the inheritance
+chain.
+\var{equal-hash} passes \var{hash-proc} two arguments: the
+instance plus a \var{hash} procedure that should be used for
+recursive hashing of values within the instance.
+Use of \var{hash} for recursive hashing is necessary to allow
+hashing of potentially cyclic structure.
+
+The following example illustrates the setting of equality and hash
+procedures.
+
+\schemedisplay
+(define-record-type marble
+  (nongenerative)
+  (fields color quality))
+
+(record-type-equal-procedure (record-type-descriptor marble)) ;=> #f
+(equal? (make-marble 'blue 'medium) (make-marble 'blue 'medium)) ;=> #f
+(equal? (make-marble 'blue 'medium) (make-marble 'blue 'high)) ;=> #f
+
+; Treat marbles as equal when they have the same color
+(record-type-equal-procedure (record-type-descriptor marble)
+  (lambda (m1 m2 eql?)
+    (eql? (marble-color m1) (marble-color m2))))
+(record-type-hash-procedure (record-type-descriptor marble)
+  (lambda (m hash)
+    (hash (marble-color m))))
+
+(equal? (make-marble 'blue 'medium) (make-marble 'blue 'high)) ;=> #t
+(equal? (make-marble 'red 'high) (make-marble 'blue 'high)) ;=> #f
+
+(define ht (make-hashtable equal-hash equal?))
+(hashtable-set! ht (make-marble 'blue 'medium) "glass")
+(hashtable-ref ht (make-marble 'blue 'high) #f) ;=> "glass"
+
+(define-record-type shooter
+  (nongenerative)
+  (parent marble)
+  (fields size))
+
+(equal? (make-marble 'blue 'medium) (make-shooter 'blue 'large 17)) ;=> #t
+(equal? (make-shooter 'blue 'large 17) (make-marble 'blue 'medium)) ;=> #t
+(hashtable-ref ht (make-shooter 'blue 'high 17) #f) ;=> "glass"
+\endschemedisplay
+
+This example illustrates the application of equality and hash procedures
+to cyclic record structures.
+
+\schemedisplay
+(define-record-type node
+  (nongenerative)
+  (fields (mutable left) (mutable right)))
+
+(record-type-equal-procedure (record-type-descriptor node)
+  (lambda (x y e?)
+    (and
+      (e? (node-left x) (node-left y))
+      (e? (node-right x) (node-right y)))))
+(record-type-hash-procedure (record-type-descriptor node)
+  (lambda (x hash)
+    (+ (hash (node-left x)) (hash (node-right x)) 23)))
+
+(define graph1
+  (let ([x (make-node "a" (make-node #f "b"))])
+    (node-left-set! (node-right x) x)
+    x))
+(define graph2
+  (let ([x (make-node "a" (make-node (make-node "a" #f) "b"))])
+    (node-right-set! (node-left (node-right x)) (node-right x))
+    x))
+(define graph3
+  (let ([x (make-node "a" (make-node #f "c"))])
+    (node-left-set! (node-right x) x)
+    x))
+
+(equal? graph1 graph2) ;=> #t
+(equal? graph1 graph3) ;=> #f
+(equal? graph2 graph3) ;=> #f
+
+(define h (make-hashtable equal-hash equal?))
+(hashtable-set! h graph1 #t)
+(hashtable-ref h graph1 #f) ;=> #t
+(hashtable-ref h graph2 #f) ;=> #t
+(hashtable-ref h graph3 #f) ;=> #f
+\endschemedisplay
+
+\entryheader
+\formdef{record-type-equal-procedure}{\categoryprocedure}{(record-type-equal-procedure \var{rtd} \var{equal-proc})}
+\returns unspecified
+\formdef{record-type-equal-procedure}{\categoryprocedure}{(record-type-equal-procedure \var{rtd})}
+\returns equality procedure associated with \var{rtd}, if any, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+In the first form, \var{equal-proc} must be a procedure or \scheme{#f}.
+If \var{equal-proc} is a procedure, a new association between
+\var{rtd} and \var{equal-proc} is established, replacing any existing
+such association.
+If \var{equal-proc} is \scheme{#f}, any existing association between
+\var{rtd} and an equality procedure is dropped.
+
+In the second form, \scheme{record-type-equal-procedure} returns
+the equality procedure associated with \var{rtd}, if any, otherwise \scheme{#f}.
+
+When changing a record type's equality procedure, the record type's
+hash procedure, if any, should be updated if necessary to maintain
+the property that it produces the same hash value for any two
+instances the equality procedure considers equal.
+
+\entryheader
+\formdef{record-equal-procedure}{\categoryprocedure}{(record-equal-procedure \var{record_1} \var{record_2})}
+\returns the shared equality procedure for \var{record_1} and \var{record_2}, if there is one, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{record-equal-procedure} traverses the inheritance chains
+for both record instances in an attempt to find the most specific
+type for each that is associated with an equality procedure, if any.
+If such type is found and is the same for both instances, the
+equality procedure associated with the type is returned.
+Otherwise, \scheme{#f} is returned.
+
+\entryheader
+\formdef{record-type-hash-procedure}{\categoryprocedure}{(record-type-hash-procedure \var{rtd} \var{hash-proc})}
+\returns unspecified
+\formdef{record-type-hash-procedure}{\categoryprocedure}{(record-type-hash-procedure \var{rtd})}
+\returns hash procedure associated with \var{rtd}, if any, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+In the first form, \var{hash-proc} must be a procedure or \scheme{#f}.
+If \var{hash-proc} is a procedure, a new association between
+\var{rtd} and \var{hash-proc} is established, replacing any existing
+such association.
+If \var{hash-proc} is \scheme{#f}, any existing association between
+\var{rtd} and a hash procedure is dropped.
+
+In the second form, \scheme{record-type-hash-procedure} returns
+the hash procedure associated with \var{rtd}, if any, otherwise \scheme{#f}.
+
+A record type's hash procedure should produce the same hash value
+for any two instances the record type's equality procedure considers
+equal.
+
+\entryheader
+\formdef{record-hash-procedure}{\categoryprocedure}{(record-hash-procedure \var{record})}
+\returns the hash procedure for \var{record}, if there is one, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{record-hash-procedure} traverses the inheritance chain
+for the record instance in an attempt to find the most specific
+type that is associated with a hash procedure, if any.
+If such type is found, the hash procedure associated with the type
+is returned.
+Otherwise, \scheme{#f} is returned.
 
 \section{Legacy Record Types\label{SECTCSV7RECORDS}}
 
@@ -2423,7 +2625,7 @@ Otherwise, it is a gensym whose ``pretty'' name
 \scheme{define-record} or \scheme{make-record-type}.
 
 The default printing of records of a given type may be overridden
-with \var{record-writer}.
+with \scheme{record-writer}.
 
 The default syntax may be used as input to the reader as well, as long
 as the corresponding record type has already been defined in the Scheme
@@ -2792,7 +2994,7 @@ contexts where they are recognized as auxiliary keywords.
 
 \noindent
 \var{name} must name a record type defined by \scheme{define-record}
-of \scheme{define-record-type}.
+or \scheme{define-record-type}.
 
 This form is equivalent to the Revised$^6$ Report
 \scheme{record-type-descriptor} form.
