@@ -160,6 +160,23 @@
              (if (union-find ht x y)
                  0
                  (e? (unbox x) (unbox y) (fx- k 1))))]
+          [($record? x)
+           (and ($record? y)
+                (let ([rec-equal? ($record-equal-procedure x y)])
+                  (and rec-equal?
+                       (if (union-find ht x y)
+                           0
+                           (let ([next-k k] [decr 1])
+                             (and (rec-equal? x y
+                                    (lambda (x1 y1)
+                                      ; decrementing only on first subfield, if any, like vectors and pairs
+                                      (let ([k (e? x1 y1 (fx- next-k decr))])
+                                        (and k
+                                             (begin
+                                               (set! next-k k)
+                                               (set! decr 0)
+                                               #t)))))
+                                  next-k))))))]
           [else (and (eqv? x y) k)]))
       (define (fast? x y k)
         (let ([k (fx- k 1)])
@@ -198,6 +215,19 @@
                         (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                              (f (fx1- i))))))]
             [(box? x) (and (box? y) (e? (unbox x) (unbox y) k))]
+            [($record? x)
+             (and ($record? y)
+                  (let ([rec-equal? ($record-equal-procedure x y)])
+                    (and rec-equal?
+                         (let ([next-k k])
+                           (and (rec-equal? x y
+                                  (lambda (x1 y1)
+                                    (let ([k (e? x1 y1 next-k)])
+                                      (and k
+                                           (begin
+                                             (set! next-k k)
+                                             #t)))))
+                                next-k)))))]
             [else (and (eqv? x y) k)])))
       (and (e? x y k) #t)))
 
@@ -246,6 +276,22 @@
          (if (fx<= k 0)
              k
              (precheck? (unbox x) (unbox y) (fx- k 1))))]
+      [($record? x)
+       (and ($record? y)
+            (let ([rec-equal? ($record-equal-procedure x y)])
+              (and rec-equal?
+                   (if (fx<= k 0)
+                       k
+                       (let ([next-k k])
+                         (and (rec-equal? x y
+                                (lambda (x1 y1)
+                                  ; decrementing k for each field, like vectors but unlike pairs
+                                  (let ([k (precheck? x1 y1 (fx- next-k 1))])
+                                    (and k
+                                         (begin
+                                           (set! next-k k)
+                                           #t)))))
+                              next-k))))))]
       [else (and (eqv? x y) k)]))
 
   (let ([k (precheck? x y k0)])
