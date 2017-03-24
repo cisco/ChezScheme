@@ -1513,7 +1513,11 @@
   (record? [sig [(ptr) (ptr rtd) -> (boolean)]] [flags pure mifoldable discard cp02])
   (record-constructor [sig [(sub-ptr) -> (procedure)]] [flags cp02]) ; accepts rtd or rcd
   (record-constructor-descriptor? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02])
+  (record-equal-procedure [sig [(record record) -> (maybe-procedure)]] [flags discard])
+  (record-hash-procedure [sig [(record) -> (maybe-procedure)]] [flags discard])
   (record-reader [sig [(sub-ptr) -> (ptr)] [(sub-ptr sub-ptr) -> (void)]] [flags])
+  (record-type-equal-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
+  (record-type-hash-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (record-writer [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (register-signal-handler [sig [(sint procedure) -> (void)]] [flags])
   (remove-foreign-entry [sig [(string) -> (void)]] [flags true])
@@ -2098,6 +2102,8 @@
   ($recompile-importer-path [flags])
   ($record [flags cp02 unrestricted alloc]) ; first arg should be an rtd, but we don't check
   ($record? [flags pure mifoldable discard])
+  ($record-equal-procedure [flags discard])
+  ($record-hash-procedure [flags discard])
   ($record-oops #;[sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
   ($record-type-descriptor [flags pure mifoldable discard true])
   ($record-type-field-offsets [flags pure mifoldable discard true])

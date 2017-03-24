@@ -419,3 +419,10 @@
   occupy up to 1/2 of virtual memory, strings and fxvectors 1/4,
   and bytevectors 1/8.
     cmacros.ss
+- added record-type-equal-procedure, record-type-hash-procedure,
+  record-equal-procedure, and record-hash-procedure to enable
+  per-type customization of the behavior of equal? and equal-hash
+  for a record value
+     5_1.ss, newhash.ss, primdata.ss,
+     record.ms, root-experr*,
+     objects.stex
