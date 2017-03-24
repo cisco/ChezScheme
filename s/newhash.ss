@@ -914,6 +914,21 @@ Documentation notes:
               [(bytevector? x) (values (update hc (bytevector-hash x)) i)]
               [(boolean? x) (values (update hc (if x 336200167 307585980)) i)]
               [(char? x) (values (update hc (char->integer x)) i)]
+              [(and ($record? x) ($record-hash-procedure x))
+               => (lambda (rec-hash)
+                    (let ([new-i i])
+                      (let ([sub-hc (rec-hash
+                                      x
+                                      (lambda (v)
+                                        (if (fx<= new-i 0)
+                                            0
+                                            (let-values ([(sub-hc sub-i) (f v 0 i)])
+                                              (set! new-i sub-i)
+                                              sub-hc))))])
+                        (let ([hc (update hc (if (fixnum? sub-hc)
+                                                 sub-hc
+                                                 (modulo (abs sub-hc) (greatest-fixnum))))])
+                          (values hc new-i)))))]
               [else (values (update hc 120634730) i)])))
         (let-values ([(hc i) (f x 523658599 64)])
           (hcabs hc)))))
@@ -1023,4 +1038,108 @@ Documentation notes:
         (ht-size-set! h 0)
         (unless (fx= n minlen)
           (ht-vec-set! h ($make-eqhash-vector minlen))))))
+  
+  (let ()
+    ;; An equal/hash mapping contains an equal or hash procedure (or #f)
+    ;; plus the rtd where the procedure was installed. It also has a weak
+    ;; list of uids for child rtds that have inherited the setting, in
+    ;; case the rtd's setting changes.
+    (define-record-type equal/hash
+      (fields maybe-proc rtd (mutable inheritors))
+      (nongenerative)
+      (sealed #t)
+      (protocol
+        (lambda (new)
+          (lambda (maybe-proc rtd)
+            (new maybe-proc rtd '())))))
+
+    (let ()
+      (define (get-equal/hash who rtd key)
+        (unless (record-type-descriptor? rtd)
+          ($oops who "~s is not a record-type descriptor" rtd))
+        (let ([e/h ($sgetprop (record-type-uid  rtd) key #f)])
+          (and e/h
+               (eq? (equal/hash-rtd e/h) rtd)
+               (equal/hash-maybe-proc e/h))))
+      (define (set-equal/hash! who rtd key proc)
+        (unless (record-type-descriptor? rtd)
+          ($oops who "~s is not a record-type descriptor" rtd))
+        (unless (or (not proc) (procedure? proc))
+          ($oops who "~s is not a procedure or #f" proc))
+        (with-tc-mutex
+          (let* ([uid (record-type-uid rtd)]
+                 [old-e/h ($sgetprop uid key #f)])
+            ;; Remove the old record from anywhere that it's inherited,
+            ;; and a later lookup will re-inherit:
+            (when old-e/h
+              (for-each
+                (lambda (uid)
+                  (unless (bwp-object? uid)
+                    (when (eq? ($sgetprop uid key #f) old-e/h)
+                      ($sremprop uid key))))
+                (equal/hash-inheritors old-e/h)))
+            (if proc
+                ($sputprop uid key (make-equal/hash proc rtd))
+                ($sremprop uid key)))))
+      (set-who! record-type-equal-procedure
+        (case-lambda
+          [(rtd) (get-equal/hash who rtd 'equal-proc)]
+          [(rtd equal-proc) (set-equal/hash! who rtd 'equal-proc equal-proc)]))
+      (set-who! record-type-hash-procedure
+        (case-lambda
+          [(rtd) (get-equal/hash who rtd 'hash-proc)]
+          [(rtd hash-proc) (set-equal/hash! who rtd 'hash-proc hash-proc)])))
+
+    (let ()
+      ;; Gets an `equal/hash` record for the given rtd, finding
+      ;; it from a parent rtd and caching if necessary:
+      (define (lookup-equal/hash record key)
+        (let* ([rtd ($record-type-descriptor record)] [uid (record-type-uid rtd)])
+          ; Get out quick w/o mutex if equal/hash record is present
+          (or ($sgetprop uid key #f)
+              (with-tc-mutex
+                (let f ([uid uid] [rtd rtd])
+                  ;; Double-check first time around to avoid a race
+                  (or ($sgetprop uid key #f)
+                      (let ([parent-rtd (record-type-parent rtd)])
+                        (if parent-rtd
+                            ;; Cache parent's value, and register as an inheritor:
+                            (let ([e/h (f (record-type-uid parent-rtd) parent-rtd)])
+                              (equal/hash-inheritors-set! e/h (weak-cons uid (equal/hash-inheritors e/h)))
+                              ($sputprop uid key e/h)
+                              e/h)
+                            ;; Cache an empty `equal/hash` record:
+                            (let ([e/h (make-equal/hash #f rtd)])
+                              ($sputprop uid key e/h)
+                              e/h)))))))))
+      (let ()
+        (define (lookup-equal-procedure record1 record2)
+          (let ([e/h (lookup-equal/hash record1 'equal-proc)])
+            (and e/h
+                 (let ([proc (equal/hash-maybe-proc e/h)])
+                   (and proc
+                        (let ([rtd (equal/hash-rtd e/h)])
+                          (let ([e/h (lookup-equal/hash record2 'equal-proc)])
+                            (and e/h
+                                 (eq? (equal/hash-rtd e/h) rtd)
+                                 proc))))))))
+        (set-who! $record-equal-procedure
+          (lambda (record1 record2)
+            (lookup-equal-procedure record1 record2)))
+        (set-who! record-equal-procedure
+          (lambda (record1 record2)
+            (unless ($record? record1) ($oops who "~s is not a record" record1))
+            (unless ($record? record2) ($oops who "~s is not a record" record2))
+            (lookup-equal-procedure record1 record2))))
+      (let ()
+        (define (lookup-hash-procedure record)
+          (let ([e/h (lookup-equal/hash record 'hash-proc)])
+            (and e/h (equal/hash-maybe-proc e/h))))
+        (set-who! $record-hash-procedure
+          (lambda (record)
+            (lookup-hash-procedure record)))
+        (set-who! record-hash-procedure
+          (lambda (record)
+            (unless ($record? record) ($oops who "~s is not a record" record))
+            (lookup-hash-procedure record))))))
 )
