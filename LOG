@@ -426,3 +426,6 @@
      5_1.ss, newhash.ss, primdata.ss,
      record.ms, root-experr*,
      objects.stex
+- adding dropped changes
+    record.ss,
+    root-experr*
