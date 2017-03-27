@@ -58,6 +58,16 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Record equality and hashing (9.4.1)}
+
+The new procedures \scheme{record-type-equal-procedure} and
+\scheme{record-type-hash-procedure} can be used to customize the
+handling of records by \scheme{equal?} and \scheme{hash}, and
+the new procedures \scheme{record-equal-procedure} and
+\scheme{record-hash-procedure} can be used to look up the
+applicable (possibly inherited) equality and hashing procedures
+for specific record instances.
+
 \subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.4.1)}
 
 Support for immutable vectors, fxvectors, bytevectors, strings, and boxes
