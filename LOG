@@ -429,3 +429,5 @@
 - adding dropped changes
     record.ss,
     root-experr*
+- added entry for record-type-equal-procedure and friends
+    release_notes.stex
