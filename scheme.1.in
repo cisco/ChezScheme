@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "May 2016 Cisco Systems, Inc."
+.TH SCHEME 1 "April 2017 Cisco Systems, Inc."
 .SH NAME
 \fIChez Scheme\fP
 .br
@@ -783,6 +783,6 @@ Second Edition\fP,
 MIT press (1996).
 .in -5
 .SH AUTHOR
-Copyright 2016 Cisco Systems, Inc.  
+Copyright 2017 Cisco Systems, Inc.
 Licensed under the Apache License, Version 2.0
 (http://www.apache.org/licenses/LICENSE-2.0)
