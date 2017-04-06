@@ -431,3 +431,5 @@
     root-experr*
 - added entry for record-type-equal-procedure and friends
     release_notes.stex
+- changed copyright year to 2017
+    7.ss, scheme.1.in, comments of many files

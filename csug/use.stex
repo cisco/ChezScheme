@@ -1,4 +1,4 @@
-% Copyright 2005-2016 Cisco Systems, Inc.
+% Copyright 2005-2017 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ by an angle-bracket on a line by itself, like this:
 
 \schemedisplay
 Chez Scheme Version 9.4
-Copyright 1984-2016 Cisco Systems, Inc. 
+Copyright 1984-2017 Cisco Systems, Inc. 
 
 > 
 \endschemedisplay
