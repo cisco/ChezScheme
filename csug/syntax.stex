@@ -1448,6 +1448,23 @@ below.
   [else (safe-frob x)])
 \endschemedisplay
 
+\section{Feature-based conditional expansion\label{SECTSYNTAXCONDEXPAND}}
+
+Expansion-time feature detection can be done via \scheme{cond-expand},
+which is similar to \scheme{meta-cond} but is portable across a wide
+range of Scheme implementations.
+Chez Scheme defines a single feature: \scheme{chezscheme}
+
+\schemedisplay
+(cond-expand
+  [chezscheme (display "Chez Scheme")]
+  [chicken (display "Chicken Scheme")]
+  [guile (display "Guile Scheme")]
+  [else (display "Some other Scheme")])
+\endschemedisplay
+
+See also: \hyperlink{https://srfi.schemers.org/srfi-0/srfi-0.html}{SRFI-0}
+
 \section{Aliases\label{SECTSYNTAXALIAS}}
 
 %----------------------------------------------------------------------------

@@ -444,3 +444,6 @@
   $close-resurrected-mutexes&conditions, $keep-live primitive added
     externs.h, prim5.c, thread.c, 4.ms, thread.ms, release_notes.stex,
     7.ss, cpnanopass.ss, np-languages.ss, primdata.ss, prims.ss
+- added cond-expand from SRFI-0
+    pretty.ss, primdata.ss, syntax.ss,
+    8.ms, syntax.stex

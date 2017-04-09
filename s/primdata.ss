@@ -1020,6 +1020,7 @@
   (alias [flags])
   (annotation-options [flags])
   (case [flags])
+  (cond-expand [flags])
   (constructor [flags])
   (critical-section [flags])
   (datum [flags])

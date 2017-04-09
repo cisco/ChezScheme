@@ -8931,6 +8931,31 @@
   (lambda (x)
     (syntax-error x "misplaced aux keyword")))
 
+;;; cond-expand from SRFI-0: https://srfi.schemers.org/srfi-0/srfi-0.html
+(define-syntax cond-expand
+  (lambda (x)
+    (syntax-case x (and else not or)
+      [(_) (syntax-error x "unfulfilled")]
+      [(_ [else body ...]) #'(begin body ...)]
+      [(_ [(and) body ...] more ...) #'(begin body ...)]
+      [(_ [(and test rest ...) body ...] more ...)
+       #'(cond-expand
+           (test (cond-expand ([and rest ...] body ...) more ...))
+           more ...)]
+      [(_ [(or) body ...] more ...) #'(cond-expand more ...)]
+      [(_ [(or test rest ...) body ...] more ...)
+       #'(cond-expand
+           (test (begin body ...))
+           (else (cond-expand ([or rest ...] body ...) more ...)))]
+      [(_ [(not test) body ...] more ...)
+       #'(cond-expand
+           (test (cond-expand more ...))
+           (else body ...))]
+      [(_ [name body ...] more ...)
+       (if (eq? 'chezscheme (syntax->datum #'name))
+           #'(begin body ...)
+           #'(cond-expand more ...))])))
+
 ;;; (define-record name pname (field ...))
 ;;; (define-record name pname (field ...)
 ;;;   ((field init) ...))

@@ -681,6 +681,7 @@
 (pretty-format 'case '(_ exp #f [bracket (fill 0 k ...) 0 e ...] ...))
 (pretty-format 'case-lambda '(_ #f [bracket (fill 0 x ...) 0 e ...] ...))
 (pretty-format 'cond '(_ #f (alt [bracket test '=> 0 exp] [bracket test 0 exp ...]) ...))
+(pretty-format 'cond-expand '(_ #f (alt [bracket test '=> 0 exp] [bracket test 0 exp ...]) ...))
 (pretty-format 'critical-section '(_ #f e ...))
 (pretty-format 'datum '(_ x))
 (pretty-format 'define '(_ (fill 0 x ...) #f e ...))

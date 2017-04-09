@@ -6075,6 +6075,47 @@
       [else ""]))
 )
 
+(mat cond-expand
+  (error? (cond-expand))
+  (error? (cond-expand (faux 'unreachable)))
+  (eq?
+    (cond-expand
+      (chezscheme 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      (faux 'unreachable)
+      (chezscheme 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      (faux 'unreachable)
+      (else 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      ([or chezscheme faux] 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      ([and chezscheme faux] 'unreachable)
+      (else 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      ([not faux] 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      ([not chezscheme] 'unreachable)
+      (else 'ok))
+    'ok)
+  (eq?
+    (cond-expand
+      ([not (and chezscheme faux)] 'ok))
+    'ok)
+)
+
 (mat make-compile-time-value
   (error? ; incorrect number of arguments
     (let ()
