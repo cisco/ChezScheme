@@ -3576,7 +3576,7 @@
             ;           (list (p a11 t21 ... tn1)
             ;                 (p a12 t22 ... tn2)
             ;                   ...
-            ;                 (p a1m t2m ... tnm))))))
+            ;                 (p a1m t2m ... tnm)))))
             (let loop ([ls* (cons ?ls ?ls*)] [e** '()])
               (if (null? ls*)
                   (and (apply = (map length e**))
@@ -3624,7 +3624,11 @@
               ; input list is mutated, while for-each is not.
               [(and (eq? (app-ctxt ctxt) 'effect)
                     (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?p))
-                      [,pr (all-set? (prim-mask discard) (primref-flags pr))]
+                      [,pr (let ([flags (primref-flags pr)])
+                              (and (if (all-set? (prim-mask unsafe) flags)
+                                       (all-set? (prim-mask discard) flags)
+                                       (all-set? (prim-mask (or discard unrestricted)) flags))
+                                   (arity-okay? (primref-arity pr) (+ (length ?ls*) 1))))]
                       [else #f]))
                 ; discard effect-free calls to map in effect context
                 (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
@@ -3677,13 +3681,25 @@
                                                 ls*) ...)
                                       ropnd*))))))))
                     ctxt empty-env sc wd name moi))]
-              [else (inline-lists ?p ?ls ?ls* 3 ctxt sc wd name moi)])]))
+              [else (inline-lists ?p ?ls ?ls* 3 ctxt sc wd name moi)])])
 
+        (define-inline 2 for-each
+          [(?p ?ls . ?ls*)
+           (cond
+             [(andmap null-rec? (cons ?ls ?ls*))
+              (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
+              void-rec]
+             [else #f])])
+      )
       (define-inline 3 for-each
         [(?p ?ls . ?ls*)
          (cond
            [(nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?p))
-              [,pr (all-set? (prim-mask discard) (primref-flags pr))]
+              [,pr (let ([flags (primref-flags pr)])
+                     (and (if (all-set? (prim-mask unsafe) flags)
+                              (all-set? (prim-mask discard) flags)
+                              (all-set? (prim-mask (or discard unrestricted)) flags))
+                          (arity-okay? (primref-arity pr) (+ (length ?ls*) 1))))]
               [else #f])
             (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
             void-rec]
