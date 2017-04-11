@@ -13,9 +13,9 @@
 .br
 \fB{InstallPetiteName}\fP [ \fIoptions\fP ] \fIfile\fP ...
 .SH DESCRIPTION
-\*s is a high-performance implementation of R6RS Scheme with numerous 
-extensions.
-\*s compiles source expressions \fIincrementally\fP,
+\*s is a programming language, based on R6RS Scheme, and a
+high-performance implementation of that langauge.
+\*s compiles source expressions \fIincrementally\fP to machine code,
 providing the speed of compiled code in an interactive system.
 .LP
 \*p is an interpreted version of \*s that may be
@@ -98,6 +98,13 @@ error message and exit because saved heaps are not presently supported.
 .B -s[\fIlevel\fP] \fIfile\fP, --saveheap[\fIlevel\fP] \fIfile\fP
 .TP
 .B -c, --compact
+.LP
+Any remaining command-line arguments are treated as the names of
+files to be loaded before Chez Scheme begins interacting with the
+user (see COMMAND-LINE FILE ARGUMENTS), unless \*(lq--script\*(rq or
+\*(lq--program\*(rq is present, in which case the remaining arguments
+are made available to the script via the \fIcommand-line\fP parameter
+(see SCHEME SCRIPTS).
 .SH WAITERS and CAFES
 .LP
 Interaction of the system with the user is performed
@@ -132,13 +139,13 @@ Ordinarily, if an exception occurs during interactive use of the system,
 the default exception handler displays
 the condition with which the exception was raised, saves it for
 possibly later use by the debugger, and prints the message
-``type (debug) to enter the debugger.''
+"type (debug) to enter the debugger."
 Once in the debugger, the user has the option of inspecting the
 raise continuation, i.e., the stack frames of the pending calls.
 When an exception occurs in a script or top level program, or when the
 standard input and/or output ports are redirected, the default exception
 handler does not save the continuation of the exception and does not print
-the ``type (debug)'' message.
+the "type (debug)" message.
 .LP
 If the parameter debug-on-exception is set to #t, however, the default
 exception handler directly invokes debug, whether running interactively or
@@ -415,7 +422,7 @@ and some specific to \*s.
 Any initial identifier binding may be replaced by redefining
 the identifier with a normal top-level definition.
 For example, the initial binding for \fIcons\fP can be replaced
-with one that performs a ``reverse cons'' as follows.
+with one that performs a "reverse cons" as follows.
 .br
 .sp
 (define cons (lambda (x y) (import scheme) (cons y x)))
@@ -456,7 +463,7 @@ the definitions and name the resulting object file .schemerc).
 .LP
 Typically, a Scheme programmer creates a source file of
 definitions and other Scheme forms using an editor such as
-\fIvi\fP(1), \fIemacs\fP(1), or the SWL (Scheme Widget Library) user interface
+\fIvi\fP(1) or \fIemacs\fP(1)
 and loads the file into Scheme to test them.  The
 conventional filename extension for \*s source files
 is \fI.ss\fP.  Such a file may be loaded during a session by typing
@@ -724,9 +731,10 @@ from petite.boot) should be listed first among the input files.
 .LP
 Complete documentation for \*s is available in two parts:
 \fIThe Scheme Programming Language, 4th Edition\fP, and
-\fIThe Chez Scheme Version 8 User's Guide\fP.
-Both documents are available electronically at
-\fIwww.scheme.com\fP as well as in printed form.
+\fIThe Chez Scheme Version 9 User's Guide\fP.
+The first document is available in printed form from MIT Press,
+and links to online versions of both documents are available
+at https://cisco.github.io/ChezScheme/.
 .LP
 Several example Scheme programs, ranging from a simple factorial procedure
 to a somewhat complex unification algorithm, are in the examples directory
