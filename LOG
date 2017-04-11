@@ -433,3 +433,8 @@
     release_notes.stex
 - changed copyright year to 2017
     7.ss, scheme.1.in, comments of many files
+- expanded the CSUG description of the handling of command-line
+  arguments not recognized as standard options and added a description
+  of the same to the COMMAND-LINE OPTIONS section of the man page.
+  did a bit of minor cleanup elsewhere in the man page.
+    use.stex, scheme.1.in

@@ -1748,8 +1748,12 @@ error message and exit because saved heaps are no longer supported.
     & ~~toggle compaction flag\\
 \end{tabular}
 
-Any remaining command-line arguments are treated as the names of files
-to be loaded before {\ChezScheme} begins interacting with the user.
+With the default \scheme{scheme-start} procedure (Section~\ref{SECTUSEAPPLICATIONS}),
+any remaining command-line arguments are treated as the names of files
+to be loaded before {\ChezScheme} begins interacting with the user, unless
+the \scheme{--script} or \scheme{--program} is present, in which case the
+remaining arguments are made available to the script via the \scheme{command-line}
+parameter (Section~\ref{SECTUSEINTERACTION}).
 
 Most of the options are described elsewhere in this chapter, and a few
 are self-explanatory.
