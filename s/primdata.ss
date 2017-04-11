@@ -295,7 +295,7 @@
   (list-tail [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (list-ref [sig [(pair sub-index) -> (ptr)]] [flags mifoldable discard ieee r5rs cp02])
   (map [sig [(procedure list list ...) -> (list)]] [flags cp02 cp03 ieee r5rs true])
-  (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp03 ieee r5rs])
+  (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp02 cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03])
