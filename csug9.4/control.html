@@ -43,7 +43,7 @@ from <tt>cond</tt> in that the tests embedded within the clauses
 are assumed to be exclusive in the sense that if one of the tests
 is true, the others are not.
 This allows the implementation to reorder clauses when profiling
-information is available at expansion time (Section&nbsp;<a href="./system.html#g115">12.7</a>).
+information is available at expansion time (Section&nbsp;<a href="./system.html#g116">12.7</a>).
 
 <p>
 The <tt>(<i>test</i>)</tt> form of clause is not supported.
@@ -275,7 +275,7 @@ transparently in many applications.
 One-shot continuations may be more efficient for some applications than
 multishot continuations.
 See the paper "Representing control in the presence of one-shot
-continuations"&nbsp;[<a class=citation href="./bibliography.html#g150">3</a>] for more information about
+continuations"&nbsp;[<a class=citation href="./bibliography.html#g151">3</a>] for more information about
 one-shot continuations, including how they are implemented in
 <i>Chez&nbsp;Scheme</i>.
 
@@ -350,7 +350,7 @@ and automatic garbage collection disabled.
 
 <p>
 <a name="./control:s12"></a>Engines are a high-level process abstraction supporting
-<a name="./control:s13"></a><i>timed preemption</i>&nbsp;[<a class=citation href="./bibliography.html#g162">15</a>,<a class=citation href="./bibliography.html#g170">23</a>].
+<a name="./control:s13"></a><i>timed preemption</i>&nbsp;[<a class=citation href="./bibliography.html#g163">15</a>,<a class=citation href="./bibliography.html#g171">23</a>].
 Engines may be used to simulate <a name="./control:s14"></a>multiprocessing, implement operating
 system kernels, and perform <a name="./control:s15"></a>nondeterministic computations.
 
@@ -395,7 +395,7 @@ from the point of interruption.
 <p>
 When an engine is applied to its arguments, it sets up a timer
 to fire in <tt><i>ticks</i></tt> time units.
-(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">310</a>.)
+(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">316</a>.)
 If the engine computation completes before the timer expires, the
 system invokes <tt><i>complete</i></tt>, passing 
 it the number of <tt><i>ticks</i></tt> left over and
@@ -825,7 +825,7 @@ passed to <tt>engine-return</tt>.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2017 for Chez Scheme Version 9.4.1<br>
+Revised April 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g71"></a>
+<a name="g72"></a>
 <a name="./io:h0"></a>
 
 <h1>Chapter 9. Input/Output Operations<a name="CHPTIO"></a></h1>
@@ -24,7 +24,7 @@ standard set of input/output operations.
 See Chapter&nbsp;<a href="http://scheme.com/tspl4/./io.html#g121">7</a> of <i>The Scheme Programming Language, 4th Edition</i> or the Revised<sup>6</sup> Report
 on Scheme for a description of standard input/output operations.
 Definitions of a few sample generic ports are given in
-Section&nbsp;<a href="./io.html#g88">9.17</a>.
+Section&nbsp;<a href="./io.html#g89">9.17</a>.
 
 <p>
 <i>Chez&nbsp;Scheme</i> closes file ports automatically after they become
@@ -34,7 +34,7 @@ best to close ports explicitly whenever possible.
 
 <p>
 
-<h3><a name="g72"></a><a name="./io:h1"></a>Section 9.1. Generic Ports</h3>
+<h3><a name="g73"></a><a name="./io:h1"></a>Section 9.1. Generic Ports</h3>
 
 
 
@@ -43,7 +43,7 @@ best to close ports explicitly whenever possible.
 allows the programmer to add new types of textual ports with
 arbitrary input/output semantics.
 It may be used, for example, to define any of the built-in
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g176">29</a>] stream types, i.e.,
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g177">29</a>] stream types, i.e.,
 <a name="./io:s1"></a>synonym streams,
 <a name="./io:s2"></a>broadcast streams,
 <a name="./io:s3"></a>concatenated streams,
@@ -231,7 +231,7 @@ the handler is not required to return any particular value.
 
 <p>
 
-<h3><a name="g73"></a><a name="./io:h2"></a>Section 9.2. File Options<a name="SECTFILEOPTIONS"></a></h3>
+<h3><a name="g74"></a><a name="./io:h2"></a>Section 9.2. File Options<a name="SECTFILEOPTIONS"></a></h3>
 
 
 
@@ -338,7 +338,7 @@ set other execute bit unless masked by process umask.
 
 <p>
 
-<h3><a name="g74"></a><a name="./io:h3"></a>Section 9.3. Transcoders<a name="SECTTRANSCODERS"></a></h3>
+<h3><a name="g75"></a><a name="./io:h3"></a>Section 9.3. Transcoders<a name="SECTTRANSCODERS"></a></h3>
 
 
 
@@ -484,7 +484,7 @@ Its initial value is the value of the <tt>native-transcoder</tt> procedure.
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>
-<h3><a name="g75"></a><a name="./io:h4"></a>Section 9.4. Port Operations<a name="SECTPORTOPERATIONS"></a></h3>
+<h3><a name="g76"></a><a name="./io:h4"></a>Section 9.4. Port Operations<a name="SECTPORTOPERATIONS"></a></h3>
 
 
 
@@ -750,7 +750,7 @@ flag is cleared; otherwise, the port's BOL flag is set.
 
 <p>
 The BOL flag is consulted by <tt>fresh-line</tt>
-(page&nbsp;<a href="./io.html#desc:fresh-line">230</a>) to determine if it needs to emit a
+(page&nbsp;<a href="./io.html#desc:fresh-line">236</a>) to determine if it needs to emit a
 newline.
 This flag is maintained automatically for file output ports, string output
 ports, and transcript ports.
@@ -1062,7 +1062,7 @@ This procedure has no effect if the port is already set for compression.
 
 <p>
 
-<h3><a name="g76"></a><a name="./io:h5"></a>Section 9.5. String Ports<a name="SECTIOSTRINGPORTS"></a></h3>
+<h3><a name="g77"></a><a name="./io:h5"></a>Section 9.5. String Ports<a name="SECTIOSTRINGPORTS"></a></h3>
 
 
 
@@ -1163,7 +1163,7 @@ into a fresh string.
 &nbsp;&nbsp;(write&nbsp;'mom!&nbsp;p)<br>
 
 &nbsp;&nbsp;(get-output-string&nbsp;p))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"hi&nbsp;mom!"</tt>
-<p>An implementation of <tt>format</tt> (Section&nbsp;<a href="./io.html#g84">9.13</a>) might be
+<p>An implementation of <tt>format</tt> (Section&nbsp;<a href="./io.html#g85">9.13</a>) might be
 written using string-output ports to produce string output.
 
 
@@ -1191,7 +1191,7 @@ port is returned, as with <tt>get-output-from-string</tt>.
 
 &nbsp;&nbsp;&nbsp;&nbsp;(newline)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"Once&nbsp;upon&nbsp;a&nbsp;time&nbsp;...\n"</tt>
 <p>
-<h3><a name="g77"></a><a name="./io:h6"></a>Section 9.6. File Ports<a name="SECTIOFILEPORTS"></a></h3>
+<h3><a name="g78"></a><a name="./io:h6"></a>Section 9.6. File Ports<a name="SECTIOFILEPORTS"></a></h3>
 
 
 
@@ -1235,7 +1235,7 @@ returns <tt>#t</tt>.
 
 <p>
 
-<h3><a name="g78"></a><a name="./io:h7"></a>Section 9.7. Custom Ports<a name="SECTIOCUSTOMPORTS"></a></h3>
+<h3><a name="g79"></a><a name="./io:h7"></a>Section 9.7. Custom Ports<a name="SECTIOCUSTOMPORTS"></a></h3>
 
 
 
@@ -1253,7 +1253,7 @@ it sets the current buffer size to <tt><i>k</i></tt>.
 
 <p>
 
-<h3><a name="g79"></a><a name="./io:h8"></a>Section 9.8. Input Operations<a name="SECTIOINPUT"></a></h3>
+<h3><a name="g80"></a><a name="./io:h8"></a>Section 9.8. Input Operations<a name="SECTIOINPUT"></a></h3>
 
 
 
@@ -1850,7 +1850,7 @@ using the relative positions given by <tt><i>start</i></tt> and <tt><i>end</i></
 
 <p>
 
-<h3><a name="g80"></a><a name="./io:h9"></a>Section 9.9. Output Operations<a name="SECTIOOUTPUT"></a></h3>
+<h3><a name="g81"></a><a name="./io:h9"></a>Section 9.9. Output Operations<a name="SECTIOOUTPUT"></a></h3>
 
 
 
@@ -2295,12 +2295,12 @@ character to <tt><i>textual-output-port</i></tt>, unless it can determine that t
 is already positioned at the start of a line.
 It does this by flushing the port and consulting the
 "beginning-of-line" (BOL) flag associated with the port.
-(See page&nbsp;<a href="./io.html#desc:set-port-bol">210</a>.)
+(See page&nbsp;<a href="./io.html#desc:set-port-bol">216</a>.)
 
 
 <p>
 
-<h3><a name="g81"></a><a name="./io:h10"></a>Section 9.10. Input/Output Operations<a name="SECTIOINPUTOUTPUT"></a></h3>
+<h3><a name="g82"></a><a name="./io:h10"></a>Section 9.10. Input/Output Operations<a name="SECTIOINPUTOUTPUT"></a></h3>
 
 
 
@@ -2362,7 +2362,7 @@ The file descriptor is closed when the port is closed.
 
 <p>
 
-<h3><a name="g82"></a><a name="./io:h11"></a>Section 9.11. Non-Unicode Bytevector/String Conversions<a name="SECTMBCONVS"></a></h3>
+<h3><a name="g83"></a><a name="./io:h11"></a>Section 9.11. Non-Unicode Bytevector/String Conversions<a name="SECTMBCONVS"></a></h3>
 
 
 
@@ -2406,7 +2406,7 @@ meanings for the like-named constants.
 
 <p>
 
-<h3><a name="g83"></a><a name="./io:h12"></a>Section 9.12. Pretty Printing<a name="SECTPRETTY"></a></h3>
+<h3><a name="g84"></a><a name="./io:h12"></a>Section 9.12. Pretty Printing<a name="SECTPRETTY"></a></h3>
 
 
 
@@ -2424,7 +2424,7 @@ The pretty printer's operation can be controlled via the <tt>pretty-format</tt>
 procedure described later in this section, which allows the
 programmer to specify how specific forms are to be printed, various
 pretty-printer controls, also described later in this section, and also
-by the generic input/output controls described in Section&nbsp;<a href="./io.html#g85">9.14</a>.
+by the generic input/output controls described in Section&nbsp;<a href="./io.html#g86">9.14</a>.
 
 <p>
 <a name="./io:s85"></a><span class=formdef><b>procedure</b>: <tt>(pretty-print&nbsp;<i>obj</i>)</tt></span>
@@ -2549,7 +2549,7 @@ For forms that match, the pretty printer prints
 <p>
 <dt><tt>(meta)</tt>:<dd>
 This is a special case used for the <tt>meta</tt> keyword
-(Section&nbsp;<a href="./syntax.html#g104">11.8</a>) which is used as a keyword prefix of
+(Section&nbsp;<a href="./syntax.html#g105">11.8</a>) which is used as a keyword prefix of
 another form.
 
 <p>
@@ -2728,7 +2728,7 @@ nonnegative fixnum <tt><i>n</i></tt>, at most <tt><i>n</i></tt> lines are printe
 
 <p>
 
-<h3><a name="g84"></a><a name="./io:h13"></a>Section 9.13. Formatted Output<a name="SECTFORMAT"></a></h3>
+<h3><a name="g85"></a><a name="./io:h13"></a>Section 9.13. Formatted Output<a name="SECTFORMAT"></a></h3>
 
 
 
@@ -2763,7 +2763,7 @@ When the first argument is a port, output is sent to that port, as with
 
 <p>
 <i>Chez&nbsp;Scheme</i>'s implementation of <tt>format</tt> supports all of the
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g176">29</a>] format directives except for those specific
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g177">29</a>] format directives except for those specific
 to the Common Lisp pretty printer.
 Please consult a Common Lisp reference or the
 <a  href=http://www.lispworks.com/documentation/HyperSpec/Front/index.htm>Common Lisp Hyperspec</a>,
@@ -2926,7 +2926,7 @@ as when the first argument to <tt>format</tt> is a port.
 
 <p>
 
-<h3><a name="g85"></a><a name="./io:h14"></a>Section 9.14. Input/Output Control Operations<a name="SECTMISCIOCONTROL"></a></h3>
+<h3><a name="g86"></a><a name="./io:h14"></a>Section 9.14. Input/Output Control Operations<a name="SECTMISCIOCONTROL"></a></h3>
 
 
 
@@ -3506,7 +3506,7 @@ other printing characters, as if by <tt>put-char</tt>.
 
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;#\x3bb))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#\\x3BB"</tt>
 <p>
-<h3><a name="g86"></a><a name="./io:h15"></a>Section 9.15. Fasl Output<a name="SECTFASL"></a></h3>
+<h3><a name="g87"></a><a name="./io:h15"></a>Section 9.15. Fasl Output<a name="SECTFASL"></a></h3>
 
 
 
@@ -3597,7 +3597,7 @@ If the file named by <tt><i>ofn</i></tt> already exists, it is replaced.
 
 <p>
 
-<h3><a name="g87"></a><a name="./io:h16"></a>Section 9.16. File System Interface<a name="SECTIOFILESYSTEM"></a></h3>
+<h3><a name="g88"></a><a name="./io:h16"></a>Section 9.16. File System Interface<a name="SECTIOFILESYSTEM"></a></h3>
 
 
 
@@ -3716,7 +3716,7 @@ In this case, <tt><i>follow?</i></tt> is ignored.
 
 <p>
 The returned times are represented as time objects
-(Section&nbsp;<a href="./system.html#g118">12.10</a>).
+(Section&nbsp;<a href="./system.html#g119">12.10</a>).
 
 
 <p>
@@ -3991,7 +3991,7 @@ The following procedure can be used to reproduce the tables above.
 
 <p><tt>(print-table&nbsp;"c:"&nbsp;"c:/"&nbsp;"c:a/b"&nbsp;"//s/a/b.c"&nbsp;"//s.com")</tt>
 <p>
-<h3><a name="g88"></a><a name="./io:h17"></a>Section 9.17. Generic Port Examples<a name="SECTPORTEXAMPLES"></a></h3>
+<h3><a name="g89"></a><a name="./io:h17"></a>Section 9.17. Generic Port Examples<a name="SECTPORTEXAMPLES"></a></h3>
 
 
 
@@ -4792,7 +4792,7 @@ subprocess is terminated.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2017 for Chez Scheme Version 9.4.1<br>
+Revised April 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

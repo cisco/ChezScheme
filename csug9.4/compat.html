@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g143"></a>
+<a name="g144"></a>
 <a name="./compat:h0"></a>
 
 <h1>Chapter 16. Compatibility Features<a name="CHPTCOMPAT"></a></h1>
@@ -23,24 +23,24 @@ versions of <i>Chez&nbsp;Scheme</i> primarily for compatibility with older
 versions of the system.
 
 <p>
-Section&nbsp;<a href="./compat.html#g144">16.1</a> describes a hash-table interface
+Section&nbsp;<a href="./compat.html#g145">16.1</a> describes a hash-table interface
 that has since been replaced by the R6RS hashtable interface.
-Section&nbsp;<a href="./compat.html#g145">16.2</a>
+Section&nbsp;<a href="./compat.html#g146">16.2</a>
 describes <tt>extend-syntax</tt> macros.
 These features are supported directly by current versions of <i>Chez&nbsp;Scheme</i>,
 but support may be dropped in future versions.
 New programs should use the standard mechanisms described in
-in <i>The Scheme Programming Language, 4th Edition</i>&nbsp;[<a class=citation href="./bibliography.html#g158">11</a>]
+in <i>The Scheme Programming Language, 4th Edition</i>&nbsp;[<a class=citation href="./bibliography.html#g159">11</a>]
 instead.
 
 <p>
-Section&nbsp;<a href="./compat.html#g146">16.3</a> describes a mechanism for defining
+Section&nbsp;<a href="./compat.html#g147">16.3</a> describes a mechanism for defining
 record-like structures as vectors instead of new unique types.
 New programs should use <tt>define-record</tt>, which is described
-in Section&nbsp;<a href="./objects.html#g61">7.14</a>, instead.
+in Section&nbsp;<a href="./objects.html#g62">7.15</a>, instead.
 
 <p>
-Section&nbsp;<a href="./compat.html#g147">16.4</a>
+Section&nbsp;<a href="./compat.html#g148">16.4</a>
 describes a compatibility file distributed with
 <i>Chez&nbsp;Scheme</i> that contains definitions for forms and procedures no
 longer supported directly by <i>Chez&nbsp;Scheme</i>.
@@ -49,7 +49,7 @@ longer supported directly by <i>Chez&nbsp;Scheme</i>.
 
 <p>
 
-<h3><a name="g144"></a><a name="./compat:h1"></a>Section 16.1. Hash Tables<a name="SECTCOMPATHASHTABLES"></a></h3>
+<h3><a name="g145"></a><a name="./compat:h1"></a>Section 16.1. Hash Tables<a name="SECTCOMPATHASHTABLES"></a></h3>
 
 
 
@@ -153,14 +153,14 @@ instead, it's value is unspecified.
 
 <p>
 
-<h3><a name="g145"></a><a name="./compat:h2"></a>Section 16.2. Extend-Syntax Macros<a name="SECTCOMPATEXTENDSYNTAX"></a></h3>
+<h3><a name="g146"></a><a name="./compat:h2"></a>Section 16.2. Extend-Syntax Macros<a name="SECTCOMPATEXTENDSYNTAX"></a></h3>
 
 
 
 <p>
 This section describes <tt>extend-syntax</tt>, a powerful yet easy to use
 syntactic extension facility based on
-<a name="./compat:s7"></a>pattern matching&nbsp;[<a class=citation href="./bibliography.html#g173">26</a>].
+<a name="./compat:s7"></a>pattern matching&nbsp;[<a class=citation href="./bibliography.html#g174">26</a>].
 Syntactic transformations written using 
 <tt>extend-syntax</tt> are similar to those written using a
 <tt>define-syntax</tt> with <tt>syntax-case</tt>, except that the
@@ -642,13 +642,13 @@ is used to create a list of vector indexes, one for each field (starting at
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...)))])</tt>
 <p>
-<h3><a name="g146"></a><a name="./compat:h3"></a>Section 16.3. Structures<a name="SECTCOMPATSTRUCTURES"></a></h3>
+<h3><a name="g147"></a><a name="./compat:h3"></a>Section 16.3. Structures<a name="SECTCOMPATSTRUCTURES"></a></h3>
 
 
 
 <p>
 <a name="./compat:s24"></a>This section describes a mechanism, similar
-to the record-defining mechanisms of Section&nbsp;<a href="./objects.html#g61">7.14</a>,
+to the record-defining mechanisms of Section&nbsp;<a href="./objects.html#g62">7.15</a>,
 that permits the creation of data structures
 with fixed sets of named fields.
 Unlike record types, structure types are not unique types, but are
@@ -1001,7 +1001,7 @@ wherever definitions are valid.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...))))))</tt>
 <p>
-<h3><a name="g147"></a><a name="./compat:h4"></a>Section 16.4. Compatibility File<a name="SECTCOMPATOTHER"></a></h3>
+<h3><a name="g148"></a><a name="./compat:h4"></a>Section 16.4. Compatibility File<a name="SECTCOMPATOTHER"></a></h3>
 
 
 
@@ -1032,7 +1032,7 @@ features as well.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2017 for Chez Scheme Version 9.4.1<br>
+Revised April 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

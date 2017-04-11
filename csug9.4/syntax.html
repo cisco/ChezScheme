@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g96"></a>
+<a name="g97"></a>
 <a name="./syntax:h0"></a>
 
 <h1>Chapter 11. Syntactic Extension and Modules<a name="CHPTSYNTAX"></a></h1>
@@ -22,9 +22,9 @@ This chapter describes the <i>Chez&nbsp;Scheme</i> extensions to the
 syntax-case syntactic abstraction mechanism now standardized in
 the Revised<sup>6</sup> Report.
 These extensions include
-the module system (Section&nbsp;<a href="./syntax.html#g101">11.5</a>),
-meta definitions (Section&nbsp;<a href="./syntax.html#g104">11.8</a>),
-conditional expansion (Section&nbsp;<a href="./syntax.html#g105">11.9</a>)
+the module system (Section&nbsp;<a href="./syntax.html#g102">11.5</a>),
+meta definitions (Section&nbsp;<a href="./syntax.html#g105">11.8</a>),
+conditional expansion (Section&nbsp;<a href="./syntax.html#g106">11.9</a>)
 <tt>syntax-rules</tt> fenders,
 <tt>fluid-let-syntax</tt>,
 and <tt>include</tt>.
@@ -32,7 +32,7 @@ and <tt>include</tt>.
 
 <p>
 
-<h3><a name="g97"></a><a name="./syntax:h1"></a>Section 11.1. Fluid Keyword Bindings<a name="SECTSYNTAXDEFINITIONS"></a></h3>
+<h3><a name="g98"></a><a name="./syntax:h1"></a>Section 11.1. Fluid Keyword Bindings<a name="SECTSYNTAXDEFINITIONS"></a></h3>
 
 
 
@@ -202,7 +202,7 @@ integration does or does not take place.)
 
 <p>
 
-<h3><a name="g98"></a><a name="./syntax:h2"></a>Section 11.2. Syntax-Rules Transformers<a name="SECTSYNTAXRULES"></a></h3>
+<h3><a name="g99"></a><a name="./syntax:h2"></a>Section 11.2. Syntax-Rules Transformers<a name="SECTSYNTAXRULES"></a></h3>
 
 
 
@@ -231,7 +231,7 @@ Each clause must take the form below.
 
 <p>
 
-<h3><a name="g99"></a><a name="./syntax:h3"></a>Section 11.3. Syntax-Case Transformers<a name="SECTSYNTAXCASE"></a></h3>
+<h3><a name="g100"></a><a name="./syntax:h3"></a>Section 11.3. Syntax-Case Transformers<a name="SECTSYNTAXCASE"></a></h3>
 
 
 
@@ -486,7 +486,7 @@ those expressions are scoped where the <tt>include</tt> form appears.
 
 <p>
 In <i>Chez&nbsp;Scheme</i>'s implementation of <tt>include</tt>,
-the parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g113">12.5</a>)
+the parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
 determines the set of directories searched for source files not identified
 by absolute path names.
 
@@ -589,7 +589,7 @@ compatibility only.
 
 <p>
 
-<h3><a name="g100"></a><a name="./syntax:h4"></a>Section 11.4. Compile-time Values and Properties<a name="SECTSYNTAXCTVS"></a></h3>
+<h3><a name="g101"></a><a name="./syntax:h4"></a>Section 11.4. Compile-time Values and Properties<a name="SECTSYNTAXCTVS"></a></h3>
 
 
 
@@ -984,7 +984,7 @@ cannot be accessed or forged.
 
 prec&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception:&nbsp;invalid&nbsp;use&nbsp;of&nbsp;record&nbsp;name&nbsp;prec</i></tt>
 <p>
-<h3><a name="g101"></a><a name="./syntax:h5"></a>Section 11.5. Modules<a name="SECTSYNTAXMODULES"></a></h3>
+<h3><a name="g102"></a><a name="./syntax:h5"></a>Section 11.5. Modules<a name="SECTSYNTAXMODULES"></a></h3>
 
 
 
@@ -1016,7 +1016,7 @@ allowing the remaining bindings in the set to be visible.
 Some of the text and examples given in this section are
 adapted from the paper
 "Extending the scope of syntactic
-abstraction"&nbsp;[<a class=citation href="./bibliography.html#g178">31</a>], which describes modules and their
+abstraction"&nbsp;[<a class=citation href="./bibliography.html#g179">31</a>], which describes modules and their
 implementation in more detail.
 
 <p>
@@ -1037,7 +1037,7 @@ or of the form <tt>(<i>identifier</i>&nbsp;<i>export</i>&nbsp;...)</tt>.
 The first syntax for <tt>module</tt> establishes a named scope that
 encapsulates a set of identifier bindings.
 The exported bindings may be made visible via <tt>import</tt> or
-<tt>import-only</tt> (Section&nbsp;<a href="./libraries.html#g93">10.4</a>)
+<tt>import-only</tt> (Section&nbsp;<a href="./libraries.html#g94">10.4</a>)
 anywhere the module name is visible.
 The second syntax for <tt>module</tt> introduces an anonymous module
 whose bindings are implicitly imported (as if by <tt>import</tt> of a
@@ -1065,7 +1065,7 @@ When an interface contains an export of the form
 visible in the importing context.
 The identifiers within <tt><i>export</i>&nbsp;...</tt> are
 <i>indirect imports</i>, as if declared via an
-<tt>indirect-export</tt> form (Section&nbsp;<a href="./libraries.html#g93">10.4</a>).
+<tt>indirect-export</tt> form (Section&nbsp;<a href="./libraries.html#g94">10.4</a>).
 
 <p>
 Module names occupy the same namespace as other identifiers and follow
@@ -1502,18 +1502,18 @@ contexts where they are recognized as auxiliary keywords.
 
 <p>
 
-<h3><a name="g102"></a><a name="./syntax:h6"></a>Section 11.6. Standalone import and export forms<a name="SECTSYNTAXIMPORTEXPORTFORMS"></a></h3>
+<h3><a name="g103"></a><a name="./syntax:h6"></a>Section 11.6. Standalone import and export forms<a name="SECTSYNTAXIMPORTEXPORTFORMS"></a></h3>
 
 
 
 <p>
 The local import and export forms described in
-Section&nbsp;<a href="./libraries.html#g93">10.4</a> can be used
+Section&nbsp;<a href="./libraries.html#g94">10.4</a> can be used
 equally well for and within modules.
 
 <p>
 
-<h3><a name="g103"></a><a name="./syntax:h7"></a>Section 11.7. Built-in Modules<a name="SECTSYNTAXBUILTINMODULES"></a></h3>
+<h3><a name="g104"></a><a name="./syntax:h7"></a>Section 11.7. Built-in Modules<a name="SECTSYNTAXBUILTINMODULES"></a></h3>
 
 
 
@@ -1582,7 +1582,7 @@ into <i>Chez&nbsp;Scheme</i> along with various undocumented system bindings.
 
 <p>
 
-<h3><a name="g104"></a><a name="./syntax:h8"></a>Section 11.8. Meta Definitions<a name="SECTSYNTAXMETA"></a></h3>
+<h3><a name="g105"></a><a name="./syntax:h8"></a>Section 11.8. Meta Definitions<a name="SECTSYNTAXMETA"></a></h3>
 
 
 
@@ -1692,7 +1692,7 @@ It is also sometimes convenient to write
 
 <p>
 
-<h3><a name="g105"></a><a name="./syntax:h9"></a>Section 11.9. Conditional expansion<a name="SECTSYNTAXMETACOND"></a></h3>
+<h3><a name="g106"></a><a name="./syntax:h9"></a>Section 11.9. Conditional expansion<a name="SECTSYNTAXMETACOND"></a></h3>
 
 
 
@@ -1767,7 +1767,7 @@ below.
 
 &nbsp;&nbsp;[else&nbsp;(safe-frob&nbsp;x)])</tt>
 <p>
-<h3><a name="g106"></a><a name="./syntax:h10"></a>Section 11.10. Aliases<a name="SECTSYNTAXALIAS"></a></h3>
+<h3><a name="g107"></a><a name="./syntax:h10"></a>Section 11.10. Aliases<a name="SECTSYNTAXALIAS"></a></h3>
 
 
 
@@ -1839,7 +1839,7 @@ the definition of the right-hand-side identifier, e.g.:
 
 &nbsp;&nbsp;x)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception:&nbsp;unbound&nbsp;identifier</i></tt>
 <p>
-<h3><a name="g107"></a><a name="./syntax:h11"></a>Section 11.11. Annotations<a name="SECTSYNTAXANNOTATIONS"></a></h3>
+<h3><a name="g108"></a><a name="./syntax:h11"></a>Section 11.11. Annotations<a name="SECTSYNTAXANNOTATIONS"></a></h3>
 
 
 
@@ -1897,7 +1897,7 @@ for debugging purposes and mark only one of them <tt>profile</tt>
 to avoid duplicate counts.
 It might also be useful to mark no expressions <tt>profile</tt> and
 instead introduce explicit <tt>profile</tt> forms
-(Section&nbsp;<a href="./system.html#g115">12.7</a>) to identify the set of source
+(Section&nbsp;<a href="./system.html#g116">12.7</a>) to identify the set of source
 locations to be profiled.
 
 <p>
@@ -2261,7 +2261,7 @@ checksum recorded in <tt><i>sfd</i></tt>.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2017 for Chez Scheme Version 9.4.1<br>
+Revised April 2017 for Chez Scheme Version 9.4.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
