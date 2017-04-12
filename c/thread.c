@@ -172,6 +172,21 @@ static IBOOL destroy_thread(tc) ptr tc; {
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr **)EAP(tc), (ptr **)REAL_EAP(tc));
 
+     /* process guardian entries */
+      {
+	ptr target, ges, obj, next; seginfo *si;
+	target = S_G.guardians[0];
+	for (ges = GUARDIANENTRIES(tc); ges != Snil; ges = next) {
+	  obj = GUARDIANOBJ(ges);
+	  next = GUARDIANNEXT(ges);
+	  if (!IMMEDIATE(obj) && (si = MaybeSegInfo(ptr_get_segment(obj))) != NULL && si->generation != static_generation) {
+	    INITGUARDIANNEXT(ges) = target;
+	    target = ges;
+	  }
+	}
+	S_G.guardians[0] = target;
+      }
+
      /* deactivate thread */
       if (ACTIVE(tc)) {
         SETSYMVAL(S_G.active_threads_id,
@@ -185,6 +200,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       free((void *)THREADTC(thread));
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
+      break;
     }
     ls = &Scdr(*ls);
   }

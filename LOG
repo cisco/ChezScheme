@@ -438,3 +438,5 @@
   of the same to the COMMAND-LINE OPTIONS section of the man page.
   did a bit of minor cleanup elsewhere in the man page.
     use.stex, scheme.1.in
+- destroy_thread now processes guardian entries
+    thread.c, 4.ms, release_notes.stex
