@@ -2992,6 +2992,17 @@
              (collect 0 0)
              (list ((g1)) p)))))
      '((c d) (b)))
+
+   (or (not (threaded?))
+       (equal?
+         (parameterize ([collect-request-handler void])
+           (let ([g (make-guardian)])
+             (fork-thread (lambda () (g (list 'a 'b))))
+             (let f () (when (> #%$active-threads 1) (f)))
+             (collect)
+             (g)))
+         '(a b)))
+
    (parameterize ([collect-request-handler void] [enable-object-counts #t])
      (define-record-type fraz (fields zle))
      (define g (make-guardian))

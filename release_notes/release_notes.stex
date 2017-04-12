@@ -1490,6 +1490,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Missing guardian entries when a thread exits (9.4.1)}
+
+A bug that causes guardian entries for a thread to be lost when a
+thread exits has been fixed.
+[This bug dated back to Version 6.5.]
+
 \subsection{Incorrect code for certain nested \protect\scheme{if} patterns (9.4.1)}
 
 A bug in the source optimizer that produced incorrect code for certain
