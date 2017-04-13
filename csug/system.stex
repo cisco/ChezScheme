@@ -1330,7 +1330,7 @@ and requirements of libraries to be loaded at run time,
 \scheme{compile-whole-program} discards unused code and optimizes
 across program and library boundaries, potentially reducing program
 load time, run time, and memory requirements.
-Some optimization also occurs even accross the boundaries of libraries
+Some optimization also occurs even across the boundaries of libraries
 that are not incorporated into the output, though this optimization
 is limited in nature.
 
