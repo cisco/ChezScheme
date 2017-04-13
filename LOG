@@ -440,3 +440,7 @@
     use.stex, scheme.1.in
 - destroy_thread now processes guardian entries
     thread.c, 4.ms, release_notes.stex
+- mutexes and conditions are now freed when no longer used via
+  $close-resurrected-mutexes&conditions, $keep-live primitive added
+    externs.h, prim5.c, thread.c, 4.ms, thread.ms, release_notes.stex,
+    7.ss, cpnanopass.ss, np-languages.ss, primdata.ss, prims.ss

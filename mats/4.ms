@@ -2993,12 +2993,20 @@
              (list ((g1)) p)))))
      '((c d) (b)))
 
+   (eq? (with-interrupts-disabled
+          (let* ([g (make-guardian)] [x (list 'a 'b)])
+            (g x)
+            (collect 0 0)
+            (#%$keep-live x)
+            (g)))
+        #f)
+
    (or (not (threaded?))
        (equal?
          (parameterize ([collect-request-handler void])
            (let ([g (make-guardian)])
              (fork-thread (lambda () (g (list 'a 'b))))
-             (let f () (when (> #%$active-threads 1) (f)))
+             (let f () (when (> (length (#%$thread-list)) 1) (f)))
              (collect)
              (g)))
          '(a b)))

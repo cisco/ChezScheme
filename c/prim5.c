@@ -1447,12 +1447,14 @@ void S_prim5_init() {
 #ifdef PTHREADS
     Sforeign_symbol("(cs)fork_thread", (void *)S_fork_thread);
     Sforeign_symbol("(cs)make_mutex", (void *)S_make_mutex);
+    Sforeign_symbol("(cs)mutex_free", (void *)S_mutex_free);
     Sforeign_symbol("(cs)backdoor_thread", (void *)s_backdoor_thread);
     Sforeign_symbol("(cs)threads", (void *)s_threads);
     Sforeign_symbol("(cs)mutex_acquire", (void *)s_mutex_acquire);
     Sforeign_symbol("(cs)mutex_release", (void *)S_mutex_release);
     Sforeign_symbol("(cs)mutex_acquire_noblock", (void *)s_mutex_acquire_noblock);
     Sforeign_symbol("(cs)make_condition", (void *)S_make_condition);
+    Sforeign_symbol("(cs)condition_free", (void *)S_condition_free);
     Sforeign_symbol("(cs)condition_broadcast", (void *)s_condition_broadcast);
     Sforeign_symbol("(cs)condition_signal", (void *)s_condition_signal);
     Sforeign_symbol("(cs)condition_wait", (void *)S_condition_wait);

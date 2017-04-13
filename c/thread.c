@@ -259,6 +259,11 @@ scheme_mutex_t *S_make_mutex() {
   return m;
 }
 
+void S_mutex_free(m) scheme_mutex_t *m; {
+  s_thread_mutex_destroy(&m->pmutex);
+  free(m);
+}
+
 void S_mutex_acquire(m) scheme_mutex_t *m; {
   s_thread_t self = s_thread_self();
   iptr count;
@@ -320,6 +325,11 @@ s_thread_cond_t *S_make_condition() {
     S_error("make-condition", "unable to malloc condition");
   s_thread_cond_init(c);
   return c;
+}
+
+void S_condition_free(c) s_thread_cond_t *c; {
+  s_thread_cond_destroy(c);
+  free(c);
 }
 
 #ifdef FEATURE_WINDOWS

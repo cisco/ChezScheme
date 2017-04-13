@@ -1460,6 +1460,7 @@
 (define condition-wait)
 (define condition-signal)
 (define condition-broadcast)
+(define $close-resurrected-mutexes&conditions)
 (define $tc-mutex)
 (define $collect-cond)
 (let ()
@@ -1468,24 +1469,29 @@
 (define ft (foreign-procedure "(cs)fork_thread" (scheme-object)
               scheme-object))
 (define mm (foreign-procedure "(cs)make_mutex" () scheme-object))
+(define mf (foreign-procedure "(cs)mutex_free" (scheme-object) void))
 (define ma (foreign-procedure "(cs)mutex_acquire" (scheme-object) void))
 (define ma-nb (foreign-procedure "(cs)mutex_acquire_noblock" (scheme-object)
                   scheme-object))
 (define mr (foreign-procedure "(cs)mutex_release" (scheme-object) void))
 (define mc (foreign-procedure "(cs)make_condition" () scheme-object))
+(define cf (foreign-procedure "(cs)condition_free" (scheme-object) void))
 (define cw (foreign-procedure "(cs)condition_wait" (scheme-object scheme-object scheme-object) boolean))
 (define cb (foreign-procedure "(cs)condition_broadcast" (scheme-object) void))
 (define cs (foreign-procedure "(cs)condition_signal" (scheme-object) void))
 
 (define-record-type (condition $make-condition $condition?)
-  (fields (immutable addr $condition-addr))
+  (fields (mutable addr $condition-addr $condition-addr-set!))
   (nongenerative)
   (sealed #t))
 
 (define-record-type (mutex $make-mutex $mutex?)
-  (fields (immutable addr $mutex-addr))
+  (fields (mutable addr $mutex-addr $mutex-addr-set!))
   (nongenerative)
   (sealed #t))
+
+(define mutex-guardian (make-guardian))
+(define condition-guardian (make-guardian))
 
 (set! fork-thread
   (lambda (t)
@@ -1504,7 +1510,9 @@
 
 (set! make-mutex
   (lambda ()
-    ($make-mutex (mm))))
+    (let ([m ($make-mutex (mm))])
+      (mutex-guardian m)
+      m)))
 
 (set! mutex?
   (lambda (x)
@@ -1516,17 +1524,27 @@
     [(m block?)
      (unless (mutex? m)
        ($oops 'mutex-acquire "~s is not a mutex" m))
-     ((if block? ma ma-nb) ($mutex-addr m))]))
+     (let ([addr ($mutex-addr m)])
+       (when (eq? addr 0)
+         ($oops 'mutex-acquire "mutex is defunct"))
+       (let ([r ((if block? ma ma-nb) addr)])
+         ($keep-live m)
+         r))]))
 
 (set! mutex-release
   (lambda (m)
     (unless (mutex? m)
       ($oops 'mutex-release "~s is not a mutex" m))
-    (mr ($mutex-addr m))))
+    (let ([addr ($mutex-addr m)])
+      (when (eq? addr 0)
+        ($oops 'mutex-release "mutex is defunct"))
+      (mr addr))))
 
 (set! make-condition
   (lambda ()
-    ($make-condition (mc))))
+    (let ([c ($make-condition (mc))])
+      (condition-guardian c)
+      c)))
 
 (set! thread-condition?
   (lambda (x)
@@ -1543,19 +1561,53 @@
     (unless (or (not t)
 		(and (time? t) (memq (time-type t) '(time-duration time-utc))))
       ($oops 'condition-wait "~s is not a time record of type time-duration or time-utc" t))
-    (cw ($condition-addr c) ($mutex-addr m) t)]))
+    (let ([caddr ($condition-addr c)] [maddr ($mutex-addr m)])
+      (when (eq? caddr 0)
+        ($oops 'condition-wait "condition is defunct"))
+      (when (eq? maddr 0)
+        ($oops 'condition-wait "mutex is defunct"))
+      (let ([r (cw caddr maddr t)])
+        ($keep-live c)
+        ($keep-live m)
+        r))]))
 
 (set! condition-broadcast
   (lambda (c)
     (unless (thread-condition? c)
       ($oops 'condition-broadcast "~s is not a condition" c))
-    (cb ($condition-addr c))))
+    (let ([addr ($condition-addr c)])
+      (when (eq? addr 0)
+        ($oops 'condition-broadcast "condition is defunct"))
+      (cb addr))))
 
 (set! condition-signal
   (lambda (c)
     (unless (thread-condition? c)
       ($oops 'condition-signal "~s is not a condition" c))
-    (cs ($condition-addr c))))
+    (let ([addr ($condition-addr c)])
+      (when (eq? addr 0)
+        ($oops 'condition-signal "condition is defunct"))
+      (cs addr))))
+
+(set! $close-resurrected-mutexes&conditions
+  ; called from single-threaded docollect
+  (lambda ()
+    (let f ()
+      (let mg ([m (mutex-guardian)])
+        (when m
+          (let ([addr ($mutex-addr m)])
+	    (unless (eq? addr 0)
+	      (mf addr)
+              ($mutex-addr-set! m 0)))
+          (f))))
+    (let f ()
+      (let cg ([c (condition-guardian)])
+        (when c
+	  (let ([addr ($condition-addr c)])
+	    (unless (eq? addr 0)
+	      (cf addr)
+              ($condition-addr-set! c 0)))
+          (f))))))
 
 (set! $tc-mutex ($make-mutex ($raw-tc-mutex)))
 (set! $collect-cond ($make-condition ($raw-collect-cond)))
@@ -2134,6 +2186,10 @@
 (define $read-time-stamp-counter
   (lambda ()
     (#3%$read-time-stamp-counter)))
+
+(define $keep-live
+  (lambda (x)
+    (#2%$keep-live x)))
 
 (when-feature windows
 (let ()

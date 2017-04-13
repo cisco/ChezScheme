@@ -494,6 +494,7 @@
   (declare-primitive inc-cc-counter effect #f)
   (declare-primitive inc-profile-counter effect #f)
   (declare-primitive invoke-prelude effect #f)
+  (declare-primitive keep-live effect #f)
   (declare-primitive load-double effect #f)
   (declare-primitive load-double->single effect #f)
   (declare-primitive load-single effect #f)
@@ -1049,4 +1050,9 @@
           (_ var ('extends x) #f (_ _ #f ...) ...)))
      (pretty-format 'labels '(_ ([bracket x e] 0 ...) #f e ...))
      (pretty-format 'blocks '(_ #f [bracket (x ...) 0 e] ...))])
+
+  (primitive-handler-set! %keep-live
+    (lambda (info x)
+      (with-output-language (L15d Effect)
+        `(asm ,info ,(lambda (code*) code*)))))
 )

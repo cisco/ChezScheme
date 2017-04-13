@@ -1490,6 +1490,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
+
+The C heap storage for inaccessible mutexes and conditions is now reclaimed.
+[This bug dated back to Version 6.5.]
+
 \subsection{Missing guardian entries when a thread exits (9.4.1)}
 
 A bug that causes guardian entries for a thread to be lost when a
