@@ -1222,7 +1222,7 @@ command-line option.
 \endentryheader
 
 These procedures are like their non-\scheme{maybe} counterparts but
-do not compile the source file if the object file is out-of-date.
+compile the source file only if the object file is out-of-date.
 An object file \var{X} is considered out-of-date if it does not exist or
 if it is older than the source file or any files included (via \scheme{include})
 when \var{X} was created.
