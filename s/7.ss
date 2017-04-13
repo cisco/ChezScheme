@@ -671,6 +671,8 @@
                 (flush-output-port (console-output-port)))
               (do-gc g gtarget)
               ($close-resurrected-files)
+              (when-feature pthreads
+                ($close-resurrected-mutexes&conditions))
               (when (collect-notify)
                 (fprintf (console-output-port) "done]~%")
                 (flush-output-port (console-output-port)))
