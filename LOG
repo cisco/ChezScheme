@@ -444,3 +444,9 @@
   $close-resurrected-mutexes&conditions, $keep-live primitive added
     externs.h, prim5.c, thread.c, 4.ms, thread.ms, release_notes.stex,
     7.ss, cpnanopass.ss, np-languages.ss, primdata.ss, prims.ss
+- fix reduction for map and for-each with optimization level 3
+  to drop the expression, check that procedure has the correct
+  arity and is discardable or unsafe.
+  Also add a simplification for for-each with empty lists
+  with optimization level 2.
+    cp0.ss, 4.ms, primdata.ss
