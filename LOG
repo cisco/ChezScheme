@@ -450,3 +450,6 @@
   Also add a simplification for for-each with empty lists
   with optimization level 2.
     cp0.ss, 4.ms, primdata.ss
+- fix invalid memory reference when enum-set-indexer procedure is not
+  passed a symbol
+    enum.ss, enum.ms, root-experr*, release_notes.stex
