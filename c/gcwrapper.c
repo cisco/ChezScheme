@@ -128,6 +128,8 @@ void S_gc_init() {
     S_G.countof_size[countof_guardian] = size_guardian_entry;
   INITVECTIT(S_G.countof_names, countof_oblist) = S_intern((const unsigned char *)"oblist");
     S_G.countof_size[countof_guardian] = 0;
+  INITVECTIT(S_G.countof_names, countof_ephemeron) = S_intern((const unsigned char *)"ephemron");
+    S_G.countof_size[countof_ephemeron] = 0;
   for (i = 0; i < countof_types; i += 1) {
     if (Svector_ref(S_G.countof_names, i) == FIX(0)) {
       fprintf(stderr, "uninitialized countof_name at index %d\n", i);

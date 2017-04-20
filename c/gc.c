@@ -29,7 +29,7 @@ static uptr list_length PROTO((ptr ls));
 static ptr dosort PROTO((ptr ls, uptr n));
 static ptr domerge PROTO((ptr l1, ptr l2));
 static IBOOL search_locked PROTO((ptr p));
-static ptr copy PROTO((ptr pp, ISPC pps));
+static ptr copy PROTO((ptr pp, seginfo *si));
 static void sweep_ptrs PROTO((ptr *p, iptr n));
 static void sweep PROTO((ptr tc, ptr p, IBOOL sweep_pure));
 static ptr copy_stack PROTO((ptr old, iptr *length, iptr clength));
@@ -49,6 +49,10 @@ static void sweep_code_object PROTO((ptr tc, ptr co));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void sweep_dirty PROTO((void));
 static void resweep_dirty_weak_pairs PROTO((void));
+static void add_ephemeron_to_pending PROTO((ptr p));
+static void add_trigger_ephemerons_to_repending PROTO((ptr p));
+static void check_pending_ephemerons PROTO(());
+static void clear_trigger_ephemerons PROTO(());
 
 /* MAXPTR is used to pad the sorted_locked_object vector.  The pad value must be greater than any heap address */
 #define MAXPTR ((ptr)-1)
@@ -111,10 +115,10 @@ uptr list_length(ptr ls) {
  *   youngest = GENERATION(*ppp);
  */
 #define relocate_dirty(ppp,tg,youngest) {\
-  ptr PP = *ppp; seginfo *SI; ISPC S;\
+  ptr PP = *ppp; seginfo *SI;\
   if (!IMMEDIATE(PP) && (SI = MaybeSegInfo(ptr_get_segment(PP))) != NULL) {\
-    if ((S = SI->space) & space_old) {\
-      relocate_help_help(ppp, PP, S)\
+    if (SI->space & space_old) {\
+      relocate_help_help(ppp, PP, SI)\
       youngest = tg;\
     } else {\
       IGEN pg;\
@@ -126,38 +130,38 @@ uptr list_length(ptr ls) {
 }
 
 #define relocate_help(ppp, pp) {\
-  seginfo *SI; ISPC S;\
-  if (!IMMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL && (S = SI->space) & space_old)\
-    relocate_help_help(ppp, pp, S)\
+  seginfo *SI; \
+  if (!IMMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL && SI->space & space_old)\
+    relocate_help_help(ppp, pp, SI)\
 }
 
-#define relocate_help_help(ppp, pp, s) {\
+#define relocate_help_help(ppp, pp, si) {\
   if (FWDMARKER(pp) == forward_marker && TYPEBITS(pp) != type_flonum)\
     *ppp = FWDADDRESS(pp);\
   else\
-    *ppp = copy(pp, s);\
+    *ppp = copy(pp, si);\
 }
 
 #define relocate_return_addr(pcp) {\
-    ISPC S;\
+    seginfo *SI;\
     ptr XCP;\
     XCP = *(pcp);\
-    if ((S = SPACE(XCP)) & space_old) {\
+    if ((SI = SegInfo(ptr_get_segment(XCP)))->space & space_old) {      \
         iptr CO;\
         CO = ENTRYOFFSET(XCP) + ((uptr)XCP - (uptr)&ENTRYOFFSET(XCP));\
-        relocate_code(pcp,XCP,CO,S)\
+        relocate_code(pcp,XCP,CO,SI)\
     }\
 }
 
 /* in the call to copy below, assuming SPACE(PP) == SPACE(XCP) since
    PP and XCP point to/into the same object */
-#define relocate_code(pcp,XCP,CO,S) {\
+#define relocate_code(pcp,XCP,CO,SI) {\
     ptr PP;\
     PP = (ptr)((uptr)XCP - CO);\
     if (FWDMARKER(PP) == forward_marker)\
         PP = FWDADDRESS(PP);\
     else\
-        PP = copy(PP, S);\
+        PP = copy(PP, SI);\
     *pcp = (ptr)((uptr)PP + CO);\
 }
 
@@ -185,7 +189,19 @@ static IBOOL search_locked(ptr p) {
 
 #define locked(p) (sorted_locked_objects != FIX(0) && search_locked(p))
 
-static ptr copy(pp, pps) ptr pp; ISPC pps; {
+static void check_trigger_ephemerons(si) seginfo *si; {
+  /* Registering ephemerons to recheck at the gradularity of a segment
+     means that the worst-case complexity of GC is quadratic in the
+     number of objects that fit into a segment (but that only happens
+     if the objects are ephemeron keys that are reachable just through
+     a chain via the value field of the same ephemerons). */
+  if (si->trigger_ephemerons) {
+    add_trigger_ephemerons_to_repending(si->trigger_ephemerons);
+    si->trigger_ephemerons = NULL;
+  }
+}
+
+static ptr copy(pp, si) ptr pp; seginfo *si; {
     ptr p, tf; ITYPE t; IGEN tg;
 
     if (locked(pp)) return pp;
@@ -193,6 +209,8 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
     tg = target_generation;
 
     change = 1;
+
+    check_trigger_ephemerons(si);
 
     if ((t = TYPEBITS(pp)) == type_typed_object) {
       tf = TYPEFIELD(pp);
@@ -418,9 +436,18 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           return (ptr)0 /* not reached */;
       }
     } else if (t == type_pair) {
-        ptr qq = Scdr(pp); ptr q; seginfo *si;
-        if (qq != pp && TYPEBITS(qq) == type_pair && (si = MaybeSegInfo(ptr_get_segment(qq))) != NULL && si->space == pps && FWDMARKER(qq) != forward_marker && !locked(qq)) {
-          if (pps == (space_weakpair | space_old)) {
+      if (si->space == (space_ephemeron | space_old)) {
+#ifdef ENABLE_OBJECT_COUNTS
+        S_G.countof[tg][countof_ephemeron] += 1;
+#endif /* ENABLE_OBJECT_COUNTS */
+        find_room(space_ephemeron, tg, type_pair, size_ephemeron, p);
+        INITCAR(p) = Scar(pp);
+        INITCDR(p) = Scdr(pp);
+      } else {
+        ptr qq = Scdr(pp); ptr q; seginfo *qsi;
+        if (qq != pp && TYPEBITS(qq) == type_pair && (qsi = MaybeSegInfo(ptr_get_segment(qq))) != NULL && qsi->space == si->space && FWDMARKER(qq) != forward_marker && !locked(qq)) {
+          check_trigger_ephemerons(qsi);
+          if (si->space == (space_weakpair | space_old)) {
 #ifdef ENABLE_OBJECT_COUNTS
             S_G.countof[tg][countof_weakpair] += 2;
 #endif /* ENABLE_OBJECT_COUNTS */
@@ -439,7 +466,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           FWDMARKER(qq) = forward_marker;
           FWDADDRESS(qq) = q;
         } else {
-          if (pps == (space_weakpair | space_old)) {
+          if (si->space == (space_weakpair | space_old)) {
 #ifdef ENABLE_OBJECT_COUNTS
             S_G.countof[tg][countof_weakpair] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
@@ -453,6 +480,7 @@ static ptr copy(pp, pps) ptr pp; ISPC pps; {
           INITCAR(p) = Scar(pp);
           INITCDR(p) = qq;
         }
+      }
     } else if (t == type_closure) {
         ptr code;
 
@@ -533,10 +561,15 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   ptr tf; ITYPE t;
 
   if ((t = TYPEBITS(p)) == type_pair) {
-    if ((SPACE(p) & ~(space_locked | space_old)) != space_weakpair) {
-      relocate(&INITCAR(p))
+    ISPC s = SPACE(p) & ~(space_locked | space_old);
+    if (s == space_ephemeron)
+      add_ephemeron_to_pending(p);
+    else {
+      if (s != space_weakpair) {
+        relocate(&INITCAR(p))
+      }
+      relocate(&INITCDR(p))
     }
-    relocate(&INITCDR(p))
   } else if (t == type_closure) {
     if (sweep_pure) {
       ptr code;
@@ -827,7 +860,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
         if (FWDMARKER(sym) != forward_marker &&
             /* coordinate with alloc.c */
             (SYMVAL(sym) != sunbound || SYMPLIST(sym) != Snil || SYMSPLIST(sym) != Snil))
-          (void)copy(sym, SPACE(sym));
+          (void)copy(sym, SegInfo(ptr_get_segment(sym)));
       }
       S_G.buckets_of_generation[g] = NULL;
     }
@@ -958,6 +991,9 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
   /* handle weak pairs */
     resweep_dirty_weak_pairs();
     resweep_weak_pairs(tg);
+
+   /* still-pending ephemerons all go to bwp */
+    clear_trigger_ephemerons();
 
    /* forward car fields of locked and unlocked older weak pairs */
     for (g = mcg + 1; g <= static_generation; INCRGEN(g)) {
@@ -1262,6 +1298,12 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
         pp += 1;
     })
 
+    sweep_space(space_ephemeron, {
+        p = TYPE((ptr)pp, type_pair);
+        add_ephemeron_to_pending(p);
+        pp += size_ephemeron / sizeof(ptr);
+    })
+      
     sweep_space(space_pure, {
         relocate_help(pp, p)
         p = *(pp += 1);
@@ -1292,6 +1334,13 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
         pp = (ptr *)((iptr)pp +
                size_record_inst(UNFIX(RECORDDESCSIZE(RECORDINSTTYPE(p)))));
     })
+
+    /* Waiting until sweeping doesn't trigger a change reduces the
+       chance that an ephemeron must be reigistered as a
+       segment-specific trigger or gets triggered for recheck, but
+       it doesn't change the worst-case complexity. */
+    if (!change)
+      check_pending_ephemerons();
   } while (change);
 }
 
@@ -1299,7 +1348,11 @@ static iptr size_object(p) ptr p; {
     ITYPE t; ptr tf;
 
     if ((t = TYPEBITS(p)) == type_pair) {
-        return size_pair;
+        seginfo *si;
+        if ((si = MaybeSegInfo(ptr_get_segment(p))) != NULL && (si->space & ~(space_locked | space_old)) == space_ephemeron)
+            return size_ephemeron;
+        else
+            return size_pair;
     } else if (t == type_closure) {
         ptr code = CLOSCODE(p);
         if (CODETYPE(code) & (code_flag_continuation << code_flags_offset))
@@ -1873,6 +1926,12 @@ static void sweep_dirty(void) {
                     relocate_dirty(pp, tg, youngest)
                     pp += 1;
                   }
+                } else if (s == space_ephemeron) {
+                  while (pp < ppend && *pp != forward_marker) {
+                    ptr p = TYPE((ptr)pp, type_pair);
+                    add_ephemeron_to_pending(p);
+                    pp += size_ephemeron / sizeof(ptr);
+                  }
                 } else {
                   S_error_abort("sweep_dirty(gc): unexpected space");
                 }
@@ -1963,5 +2022,106 @@ static void resweep_dirty_weak_pairs() {
       }
     }
     record_dirty_segment(from_g, min_youngest, dirty_si);
+  }
+}
+
+static ptr pending_ephemerons = NULL;
+/* Ephemerons that we haven't looked at, chained through `next`. */
+
+static ptr trigger_ephemerons = NULL;
+/* Ephemerons that we've checked and added to segment triggers,
+   chained through `next`. Ephemerons attached to a segment are
+   chained through `trigger-next`. A #t in `trigger-next` means that
+   the ephemeron has been processed, so we don't need to remove it
+   from the trigger list in a segment. */
+
+static ptr repending_ephemerons = NULL;
+/* Ephemerons in `trigger_ephemerons` that we need to inspect again,
+   remove from the triggering segment and chained here through
+   `trigger-next`. */
+
+static void add_ephemeron_to_pending(ptr pe) {
+  EPHEMERONNEXT(pe) = pending_ephemerons;
+  pending_ephemerons = pe;
+}
+
+static void add_trigger_ephemerons_to_repending(ptr pe) {
+  ptr last_pe = pe, next_pe = EPHEMERONTRIGGERNEXT(pe);
+  while (next_pe != NULL) {
+    last_pe = next_pe;
+    next_pe = EPHEMERONTRIGGERNEXT(next_pe);
+  }
+  EPHEMERONTRIGGERNEXT(last_pe) = repending_ephemerons;
+  repending_ephemerons = pe;
+}
+
+static void check_pending_ephemeron(ptr pe, int add_to_trigger) {
+  ptr p;
+  seginfo *si;
+
+  p = Scar(pe);
+  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
+    if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+      INITCAR(pe) = FWDADDRESS(p);
+      relocate(&INITCDR(pe))
+      if (!add_to_trigger)
+        EPHEMERONTRIGGERNEXT(pe) = Strue; /* in trigger list, #t means "done" */
+    } else {
+      /* Not reached, so far; install as trigger */
+      EPHEMERONTRIGGERNEXT(pe) = si->trigger_ephemerons;
+      si->trigger_ephemerons = pe;
+      if (add_to_trigger) {
+        EPHEMERONNEXT(pe) = trigger_ephemerons;
+        trigger_ephemerons = pe;
+      }
+    }
+  } else {
+    relocate(&INITCDR(pe))
+  }
+}
+
+static void check_pending_ephemerons() {
+  ptr pe, next_pe;
+
+  pe = pending_ephemerons;
+  pending_ephemerons = NULL;
+  while (pe != NULL) {
+    next_pe = EPHEMERONNEXT(pe);
+    check_pending_ephemeron(pe, 1);
+    pe = next_pe;
+  }
+
+  pe = repending_ephemerons;
+  repending_ephemerons = NULL;
+  while (pe != NULL) {
+    next_pe = EPHEMERONTRIGGERNEXT(pe);
+    check_pending_ephemeron(pe, 0);
+    pe = next_pe;
+  }
+}
+
+static void clear_trigger_ephemerons() {
+  ptr pe;
+
+  if (pending_ephemerons != NULL)
+    S_error_abort("clear_trigger_ephemerons(gc): non-empty pending list");
+
+  pe = trigger_ephemerons;
+  trigger_ephemerons = NULL;
+  while (pe != NULL) {
+    if (EPHEMERONTRIGGERNEXT(pe) == Strue) {
+      /* The ephemeron was triggers and retains its key and value */
+    } else {
+      seginfo *si;
+      ptr p = Scar(pe);
+      /* Key never became reachable, so clear key and value */
+      INITCAR(pe) = Sbwp_object;
+      INITCDR(pe) = Sbwp_object;
+
+      /* Remove trigger */
+      si = SegInfo(ptr_get_segment(p));
+      si->trigger_ephemerons = NULL;
+    }
+    pe = EPHEMERONNEXT(pe);
   }
 }
