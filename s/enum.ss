@@ -116,7 +116,7 @@ an-enum-set:
              (let ([rtd (record-rtd enum-set)])
                (and (eq? (record-rtd rtd) enum-base-rtd)
                     rtd)))
-        ($oops who "~s isn't an enumeration" enum-set)))
+        ($oops who "~s is not an enumeration" enum-set)))
 
   (define (assert-symbol-list who symbol-list)
     (unless (and (list? symbol-list)
@@ -210,7 +210,9 @@ an-enum-set:
   (set! enum-set-indexer
     (lambda (enum-set)
       (let ([sym->index (get-sym->index (enum-set-rtd 'enum-set-indexer enum-set))])
-        (lambda (x) (symbol-hashtable-ref sym->index x #f)))))
+        (lambda (x)
+          (assert-symbol 'enum-set-indexer x)
+          (symbol-hashtable-ref sym->index x #f)))))
 
   (set! enum-set-constructor
     (lambda (enum-set)

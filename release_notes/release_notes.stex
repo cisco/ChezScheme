@@ -1490,6 +1490,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Invalid memory reference when \protect\scheme{enum-set-indexer} procedure is not passed a symbol}
+
+A bug that caused the procedure returned by \scheme{enum-set-indexer}
+to perform an invalid memory reference when passed an argument that is
+not a symbol has been fixed.
+
 \subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
 
 The C heap storage for inaccessible mutexes and conditions is now reclaimed.

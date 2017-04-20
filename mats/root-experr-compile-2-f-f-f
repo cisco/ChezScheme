@@ -7625,19 +7625,20 @@ hash.mo:Expected error in mat hash-functions: "string-ci-hash: hello is not a st
 hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
 hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
 enum.mo:Expected error in mat enumeration: "enum-set-intersection: #<enum-set> and #<enum-set> have different enumeration types".
-enum.mo:Expected error in mat enumeration: "enum-set-intersection: 1 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-intersection: 1 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "universe of foo does not include specified symbol d".
 enum.mo:Expected error in mat enumeration: "universe of foo does not include specified symbol d".
 enum.mo:Expected error in mat enumeration: "make-enumeration: 3 is not a list of symbols".
-enum.mo:Expected error in mat enumeration: "enum-set-universe: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-indexer: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set->list: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-union: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-union: 4 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-universe: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-indexer: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-indexer: 1 is not a symbol".
+enum.mo:Expected error in mat enumeration: "enum-set->list: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-union: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-union: 4 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "enum-set-union: #<enum-set> and #<enum-set> have different enumeration types".
-enum.mo:Expected error in mat enumeration: "enum-set-complement: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-projection: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-projection: 4 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-complement: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-projection: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-projection: 4 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration 3 () bar)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration foo baz bar)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration foo () 3)".
