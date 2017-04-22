@@ -456,3 +456,7 @@
 - fix overflow detection for fxsll, fxarithmetic-shift-left, and
   fxarithmetic-shift
     library.ss, fx.ms, release_notes.stex
+- more optimizations for map and for-each with explicit list
+  extend the reductions for map and for-each when the arguments are
+  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
+    cp0.ss 4.ms
