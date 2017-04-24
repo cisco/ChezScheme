@@ -1,5 +1,5 @@
 ;;; 6.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -1085,6 +1085,16 @@
                  (pretty-print '#(1 2 3 3 3))
                  (pretty-print '#vfx(5 7 9 8 8 9 -1 -1)))))
            "#5(1 2 3)\n#8vfx(5 7 9 8 8 9 -1)\n")
+   (equal? (parameterize ([print-extended-identifiers #f])
+             (with-output-to-string
+               (lambda ()
+                 (for-each pretty-print '(1+ +++ .. |12| xyz aBc |-155| |.5e7| |.5e|)))))
+           "\\x31;+\n\\x2B;++\n\\x2E;.\n\\x31;2\nxyz\naBc\n\\x2D;155\n\\x2E;5e7\n\\x2E;5e\n")
+   (equal? (parameterize ([print-extended-identifiers #t])
+             (with-output-to-string
+               (lambda ()
+                 (for-each pretty-print '(1+ +++ .. |12| xyz aBc |-155| |.5e7| |.5e|)))))
+           "1+\n+++\n..\n\\x31;2\nxyz\naBc\n\\x2D;155\n\\x2E;5e7\n.5e\n")
    (equal? (parameterize ([print-gensym #f])
               (format "~s" '(#3# #3=#{g0 fool})))
            "(g0 g0)")
@@ -2618,12 +2628,13 @@
       (lambda () (((inspect/object fatfib) 'code) 'source-path))
       list)
     '("../examples/fatfib.ss" 16 4))
-  (equal?
-    (parameterize ([cd "/"] [source-directories (list (cd))])
-      (call-with-values
-        (lambda () (((inspect/object fatfib) 'code) 'source-path))
-        list))
-    (list (format "~a/../examples/fatfib.ss" (cd)) 16 4))
+  (or (windows?)
+      (equal?
+       (parameterize ([cd "/"] [source-directories (list (cd))])
+         (call-with-values
+           (lambda () (((inspect/object fatfib) 'code) 'source-path))
+           list))
+       (list (format "~a/../examples/fatfib.ss" (cd)) 16 4)))
   (begin
     (parameterize ([source-directories (list (parameterize ([cd ".."]) (cd)))])
       (load "examples/fatfib.ss" compile))
@@ -2926,11 +2937,11 @@
       (and (time? (file-access-time "\\\\?\\c:\\"))
            (time? (file-change-time "\\\\?\\c:\\"))
            (time? (file-modification-time "\\\\?\\c:\\"))))
-  (or (embedded?)
+  (or (windows?) (embedded?)
       (time=? (file-access-time "Makefile") (file-access-time (format "Mf-~a" (machine-type)))))
-  (or (embedded?)
+  (or (windows?) (embedded?)
       (time=? (file-change-time "Makefile") (file-change-time (format "Mf-~a" (machine-type)))))
-  (or (embedded?)
+  (or (windows?) (embedded?)
       (time=? (file-modification-time "Makefile") (file-modification-time (format "Mf-~a" (machine-type)))))
   (error? (file-access-time "probably/not/there"))
   (error? (file-access-time "probably/not/there" #f))
@@ -3456,14 +3467,14 @@
    (begin (display "hello " (cadr p))
           (flush-output-port (cadr p))
           #t)
-   (begin (sleep (make-time 'time-duration 0 (if (embedded?) 3 1))) #t) ; wait for subprocess to catch up
+   (begin (sleep (make-time 'time-duration 0 3)) #t) ; wait for subprocess to catch up
    (char-ready? (car p))
    (eq? (read (car p)) 'hello)
    (char-ready? (car p))
    (char=? (read-char (car p)) #\space)
    (not (char-ready? (car p)))
    (begin (close-output-port (cadr p)) #t)
-   (begin (sleep (make-time 'time-duration 0 (if (embedded?) 3 1))) #t) ; wait for subprocess to catch up
+   (begin (sleep (make-time 'time-duration 0 3)) #t) ; wait for subprocess to catch up
    (sanitized-error? (write-char #\a (cadr p)))
    (sanitized-error? (write-char #\newline (cadr p)))
    (sanitized-error? (flush-output-port (cadr p)))

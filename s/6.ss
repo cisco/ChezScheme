@@ -1,6 +1,6 @@
 "6.ss"
 ;;; 6.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -358,6 +358,7 @@
   (define directory-separator-predicate
     (lambda (s)
       (if (and windows?
+               (string? s)
                (let ([n (string-length s)])
                  (and (fx>= n 4)
                       (char=? (string-ref s 0) #\\)

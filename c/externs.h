@@ -1,5 +1,5 @@
 /* externs.h
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,10 @@ extern ptr S_vector_in PROTO((ISPC s, IGEN g, iptr n));
 extern ptr S_vector PROTO((iptr n));
 extern ptr S_fxvector PROTO((iptr n));
 extern ptr S_bytevector PROTO((iptr n));
+extern ptr S_null_immutable_vector PROTO((void));
+extern ptr S_null_immutable_fxvector PROTO((void));
+extern ptr S_null_immutable_bytevector PROTO((void));
+extern ptr S_null_immutable_string PROTO((void));
 extern ptr S_record PROTO((iptr n));
 extern ptr S_closure PROTO((ptr cod, iptr n));
 extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,
@@ -149,20 +153,20 @@ extern void S_intern_gensym PROTO((ptr g));
 extern void S_retrofit_nonprocedure_code PROTO((void));
 
 /* io.c */
-extern IBOOL S_file_existsp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_regularp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_directoryp PROTO((const char *path, IBOOL followp));
-extern IBOOL S_file_symbolic_linkp PROTO((const char *path));
-extern const char *S_pathname_impl PROTO((const char *inpath, char *buffer));
-
+extern IBOOL S_file_existsp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_regularp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_directoryp PROTO((const char *inpath, IBOOL followp));
+extern IBOOL S_file_symbolic_linkp PROTO((const char *inpath));
 #ifdef WIN32
 extern ptr S_find_files PROTO((const char *wildpath));
 #else
-extern ptr S_directory_list PROTO((const char *path));
+extern ptr S_directory_list PROTO((const char *inpath));
 #endif
-extern const char *S_homedir PROTO((void));
-extern const char *S_pathname PROTO((const char *who, const char *inpath, IBOOL errorp, char *buf));
-extern IBOOL S_fixedpathp PROTO((const char *p));
+extern char *S_malloc_pathname PROTO((const char *inpath));
+#ifdef WIN32
+extern wchar_t *S_malloc_wide_pathname PROTO((const char *inpath));
+#endif
+extern IBOOL S_fixedpathp PROTO((const char *inpath));
 
 /* new-io.c */
 extern INT S_gzxfile_fd PROTO((ptr x));
@@ -195,18 +199,20 @@ extern void S_new_io_init PROTO((void));
 
 /* thread.c */
 extern void S_thread_init PROTO((void));
-extern ptr S_create_thread_object PROTO((void));
+extern ptr S_create_thread_object PROTO((const char *who, ptr p_tc));
 #ifdef PTHREADS
 extern ptr S_fork_thread PROTO((ptr thunk));
 extern scheme_mutex_t *S_make_mutex PROTO((void));
+extern void S_mutex_free PROTO((scheme_mutex_t *m));
 extern void S_mutex_acquire PROTO((scheme_mutex_t *m));
 extern INT S_mutex_tryacquire PROTO((scheme_mutex_t *m));
 extern void S_mutex_release PROTO((scheme_mutex_t *m));
 extern s_thread_cond_t *S_make_condition PROTO((void));
-extern void S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m));
+extern void S_condition_free PROTO((s_thread_cond_t *c));
+extern IBOOL S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m, ptr t));
 #endif
 
-/* main.c */
+/* scheme.c */
 extern void S_generic_invoke PROTO((ptr tc, ptr code));
 
 /* number.c */
@@ -309,6 +315,7 @@ extern ptr S_gmtime PROTO((ptr tzoff, ptr tspair));
 extern ptr S_asctime PROTO((ptr dtvec));
 extern ptr S_mktime PROTO((ptr dtvec));
 extern ptr S_unique_id PROTO((void));
+extern void s_gettime PROTO((INT typeno, struct timespec *tp));
 
 /* symbol.c */
 extern ptr S_symbol_value PROTO((ptr sym));

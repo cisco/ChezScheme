@@ -1,6 +1,6 @@
 "date.ss"
 ;;; date.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@
       (scheme-object)
       scheme-object))
 
-  (define-record-type ts
+  (define-record-type ts ; keep in sync with S_condition_wait in c/thread.c
     (fields (mutable typeno) (immutable pair))
     (nongenerative #{ts a5dq4nztnmq6xlgp-a})
     (sealed #t))

@@ -1,5 +1,5 @@
 ;;; foreign.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -204,21 +204,7 @@
    (mat load-shared-object
       (file-exists? "foreign1.so")
       (begin (load-shared-object "foreign1.so") #t)
-      (begin
-        (load-shared-object
-          (let ([bindir (format "../bin/~a" (machine-type))])
-            (define prefix?
-              (lambda (x y)
-                (let ([n (string-length x)])
-                  (and (fx<= n (string-length y))
-                       (let prefix? ([i 0])
-                         (or (fx= i n)
-                             (and (char=? (string-ref x i) (string-ref y i))
-                                  (prefix? (fx+ i 1)))))))))
-            (format "~a/~a" bindir
-              (or (find (lambda (s) (prefix? "vcruntime" s)) (directory-list bindir))
-                  (errorf #f "did not find C runtime vcruntime*.dll in ~a" bindir)))))
-        #t)
+      (begin (load-shared-object "msvcrt.dll") #t)
       (begin (load-shared-object "kernel32.dll") #t)
       (error? (load-shared-object 3))
     )
@@ -2590,4 +2576,60 @@
               (equal? s2 "61")
               (equal? s3 "#<procedure abort>")
               (eqv? pid^ pid)))))))
+)
+
+(mat varargs
+  (begin
+    (define load-libc
+      (machine-case
+        [(i3ob ti3ob a6ob ta6ob i3fb ti3fb a6fb ta6fb a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
+         '(load-shared-object "libc.so")]
+        [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
+         '(load-shared-object "libc.so.6")]
+        [(i3nt ti3nt a6nt ta6nt)
+         '(load-shared-object "msvcrt.dll")]
+        [(i3osx ti3osx a6osx ta6osx)
+         '(load-shared-object "libc.dylib")]
+        [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
+    #t)
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        `(begin
+           ,load-libc
+           (define f (foreign-procedure "printf" (string double) int))
+           (f "(%g)" 3.5)
+           (void)))
+      read)
+    '(3.5))
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        `(begin
+           ,load-libc
+           (define f (foreign-procedure "printf" (string double double double double double double) int))
+           (f "(%g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5)
+           (void)))
+      read)
+    '(3.5 2.5 -1.5 6.75 8.25 -9.5))
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        `(begin
+           ,load-libc
+           (define f (foreign-procedure "printf" (string double double double double double double double double) int))
+           (f "(%g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5)
+           (void)))
+      read)
+    '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5))
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        `(begin
+           ,load-libc
+           (define f (foreign-procedure "printf" (string double double double double double double double double double double) int))
+           (f "(%g %g %g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5)
+           (void)))
+      read)
+    '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5))
 )

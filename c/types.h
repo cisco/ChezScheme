@@ -1,5 +1,5 @@
 /* types.h
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,8 +277,8 @@ typedef struct _bucket_pointer_list {
 
 #ifdef PTHREADS
 typedef struct {
-  s_thread_t owner;
-  uptr count;
+  volatile s_thread_t owner;
+  volatile uptr count;
   s_thread_mutex_t pmutex;
 } scheme_mutex_t;
 

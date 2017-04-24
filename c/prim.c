@@ -1,5 +1,5 @@
 /* prim.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,6 @@ void S_prim_init() {
     create_c_entry_vector();
 
     Sforeign_symbol("(cs)fixedpathp", (void *)S_fixedpathp);
-    Sforeign_symbol("(cs)pathname", (void *)S_pathname);
     Sforeign_symbol("(cs)bytes_allocated", (void *)S_compute_bytes_allocated);
     Sforeign_symbol("(cs)curmembytes", (void *)S_curmembytes);
     Sforeign_symbol("(cs)maxmembytes", (void *)S_maxmembytes);
@@ -212,6 +211,7 @@ static void s_instantiate_code_object() {
 
     CODERELOC(new) = newreloc;
     CODENAME(new) = CODENAME(old);
+    CODEARITYMASK(new) = CODEARITYMASK(old);
     CODEFREE(new) = CODEFREE(old);
     CODEINFO(new) = CODEINFO(old);
     CODEPINFOS(new) = CODEPINFOS(old);

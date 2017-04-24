@@ -1,6 +1,6 @@
 "cp0"
 ;;; cp0.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -747,9 +747,8 @@
                       (cond
                         [(and d12 d13) (make-seq ctxt (make-if 'effect sc e11 e12 e13) e2)]
                         [(not (or d12 d13)) (make-seq ctxt (make-if 'effect sc e11 e12 e13) e3)]
-                        [else (let ([e2 (non-result-exp e12 e2)] [e3 (non-result-exp e13 e3)])
-                                (let-values ([(e2 e3) (if d12 (values e2 e3) (values e3 e2))])
-                                  (make-if ctxt sc e11 e2 e3)))])))
+                        [else (let-values ([(e2 e3) (if d12 (values e2 e3) (values e3 e2))])
+                                (make-if ctxt sc e11 (non-result-exp e12 e2) (non-result-exp e13 e3)))])))
                   #f)]
              [else #f])]
           [else
@@ -1877,6 +1876,25 @@
                     xval]
                    [else #f])))))
 
+      ; could handle inequalies as well (returning #f), but that seems less likely to crop up
+      (define handle-equality
+        (lambda (ctxt arg arg*)
+          (and
+            (or (null? arg*)
+                (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! arg))
+                  [(ref ,maybe-src ,x0)
+                   (and (not (prelex-was-assigned x0))
+                        (andmap
+                          (lambda (arg)
+                            (and (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! arg))
+                                   [(ref ,maybe-src ,x) (eq? x x0)]
+                                   [else #f])))
+                          arg*))]
+                  [else #f]))
+            (begin
+              (residualize-seq '() (cons arg arg*) ctxt)
+              true-rec))))
+
       (define-inline 2 machine-type
         [() (begin
               (residualize-seq '() '() ctxt)
@@ -2129,19 +2147,16 @@
         [args #f])
 
       (define-inline 2 (eq? eqv? equal?)
-        [(x y)
-         (let ([xval (value-visit-operand! x)]
-               [yval (value-visit-operand! y)])
-           (and (nanopass-case (Lsrc Expr) (result-exp xval)
-                  [(ref ,maybe-src0 ,x0)
-                   (and (not (prelex-was-assigned x0))
-                        (nanopass-case (Lsrc Expr) (result-exp yval)
-                          [(ref ,maybe-src1 ,x1) (eq? x0 x1)]
-                          [else #f]))]
-                  [else #f])
-                (begin
-                  (residualize-seq '() (list x y) ctxt)
-                  true-rec)))])
+        [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
+
+      (define-inline 3 (bytevector=? enum-set=? bound-identifier=? free-identifier=? ftype-pointer=? literal-identifier=? time=?)
+        [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
+
+      (define-inline 3 (char=? char-ci=? string=? string-ci=?)
+        [(arg . arg*) (handle-equality ctxt arg arg*)])
+
+      (define-inline 3 (boolean=? symbol=? r6rs:char=? r6rs:char-ci=? r6rs:string=? r6rs:string-ci=?)
+        [(arg1 arg2 . arg*) (handle-equality ctxt arg1 (cons arg2 arg*))])
 
       (define-inline 3 (ash
                          bitwise-arithmetic-shift bitwise-arithmetic-shift-left
@@ -2344,41 +2359,37 @@
 
       (let ()
         (define $fold
-          (case-lambda
-            [(generic-op orig-opnd* pred* opred ctxt) ($fold generic-op orig-opnd* pred* opred ctxt #f)]
-            [(generic-op orig-opnd* pred* opred ctxt maybe-sc-handler)
-             (define cookie '(fig . newton))
-             (and (okay-to-handle?)
-                  (or (let loop ([opnd* orig-opnd*] [pred* pred*] [rval* '()])
-                        (if (null? opnd*)
-                            (let ([val (guard (c [#t cookie]) (apply generic-op (reverse rval*)))])
-                              (and (not (eq? val cookie))
-                                   (opred val)
-                                   (begin
-                                     (residualize-seq '() orig-opnd* ctxt)
-                                     `(quote ,val))))
-                            (let-values ([(pred pred*) (if (procedure? pred*) (values pred* pred*) (values (car pred*) (cdr pred*)))])
-                              (visit-and-maybe-extract* pred ([val (car opnd*)])
-                                (loop (cdr opnd*) pred* (cons val rval*))))))
-                      (and maybe-sc-handler (maybe-sc-handler))))]))
+          (lambda (generic-op orig-opnd* pred* opred level ctxt handler)
+            (define cookie '(fig . newton))
+            (and (okay-to-handle?)
+                 (or (let loop ([opnd* orig-opnd*] [pred* pred*] [rval* '()])
+                       (if (null? opnd*)
+                           (let ([val (guard (c [#t cookie]) (apply generic-op (reverse rval*)))])
+                             (and (not (eq? val cookie))
+                                  (opred val)
+                                  (begin
+                                    (residualize-seq '() orig-opnd* ctxt)
+                                    `(quote ,val))))
+                           (let-values ([(pred pred*) (if (procedure? pred*) (values pred* pred*) (values (car pred*) (cdr pred*)))])
+                             (visit-and-maybe-extract* pred ([val (car opnd*)])
+                               (loop (cdr opnd*) pred* (cons val rval*))))))
+                     (apply handler level ctxt orig-opnd*)))))
+        (define null-handler (lambda args #f))
         (define-syntax fold
           (lambda (x)
             (syntax-case x ()
-              [(_ (prim ipred ...) opred generic-op)
-               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
-                 #'(define-inline 2 prim
-                     [(arg ...) ($fold generic-op (list arg ...) (list ipred ...) opred ctxt)]))]
-              [(_ (prim ipred ... . rpred) opred generic-op)
-               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
-                 #'(define-inline 2 prim
-                     [(arg ... . rest) ($fold generic-op (cons* arg ... rest) (cons* ipred ... rpred) opred ctxt)]))]
-              [(_ (prim ipred ...) opred generic-op ?special-case-handler)
+              [(_ (prim ipred ...) opred generic-op) #'(fold (prim ipred ...) opred generic-op null-handler)]
+              [(_ (prim ipred ...) opred generic-op handler)
                (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
                  #'(define-inline 2 prim
                      [(arg ...)
-                      (let ([special-case-handler ?special-case-handler])
-                        ($fold generic-op (list arg ...) (list ipred ...) opred ctxt
-                          (lambda () (special-case-handler level ctxt arg ...))))]))])))
+                      ($fold generic-op (list arg ...) (list ipred ...) opred level ctxt handler)]))]
+              [(_ (prim ipred ... . rpred) opred generic-op) #'(fold (prim ipred ... . rpred) opred generic-op null-handler)]
+              [(_ (prim ipred ... . rpred) opred generic-op handler)
+               (with-syntax ([(arg ...) (generate-temporaries #'(ipred ...))])
+                 #'(define-inline 2 prim
+                     [(arg ... . rest)
+                      ($fold generic-op (cons* arg ... rest) (cons* ipred ... rpred) opred level ctxt handler)]))])))
 
         (define tfixnum? target-fixnum?)
         (define u<=fxwidth?
@@ -2400,19 +2411,30 @@
 
         (fold (fx< tfixnum? . tfixnum?) boolean? #2%<)
         (fold (fx<= tfixnum? . tfixnum?) boolean? #2%<=)
-        (fold (fx= tfixnum? . tfixnum?) boolean? #2%=)
+        (fold (fx= tfixnum? . tfixnum?) boolean? #2%=
+          (lambda (level ctxt arg . arg*)
+            (and (fx= level 3) (handle-equality ctxt arg arg*))))
         (fold (fx> tfixnum? . tfixnum?) boolean? #2%>)
         (fold (fx>= tfixnum? . tfixnum?) boolean? #2%>=)
         (fold (fx<? tfixnum? tfixnum? . tfixnum?) boolean? #2%<)
         (fold (fx<=? tfixnum? tfixnum? . tfixnum?) boolean? #2%<=)
-        (fold (fx=? tfixnum? tfixnum? . tfixnum?) boolean? #2%=)
+        (fold (fx=? tfixnum? tfixnum? . tfixnum?) boolean? #2%=
+          (lambda (level ctxt arg . arg*)
+            (and (fx= level 3) (handle-equality ctxt arg arg*))))
         (fold (fx>? tfixnum? tfixnum? . tfixnum?) boolean? #2%>)
         (fold (fx>=? tfixnum? tfixnum? . tfixnum?) boolean? #2%>=)
         (fold ($fxu< tfixnum? tfixnum?) boolean?
           (lambda (x y)
             (if (#2%< x 0)
                 (and (#2%< y 0) (#2%< x y))
-                (or (#2%< y 0) (#2%< x y)))))
+                (or (#2%< y 0) (#2%< x y))))
+          (lambda (level ctxt x y)
+            (let ([xval (value-visit-operand! x)]
+                  [yval (value-visit-operand! y)])
+              (and (cp0-constant? (lambda (obj) (eqv? obj (constant most-positive-fixnum))) (result-exp xval))
+                   (begin
+                     (residualize-seq (list y) (list x) ctxt)
+                     (build-primcall (app-preinfo ctxt) level 'fx< (list yval `(quote 0))))))))
 
         (fold (fxmax tfixnum? . tfixnum?) tfixnum? #2%max)
         (fold (fxmin tfixnum? . tfixnum?) tfixnum? #2%min)
@@ -2476,7 +2498,7 @@
           (lambda (x)
             (and (char? x)
                  (constant-case wchar-bits
-                   [(16) (< (integer->char x) #x10000)]
+                   [(16) (< (char->integer x) #x10000)]
                    [(32) #t]))))
         ; NB: is this sufficiently tested by ftype.ms and record.ms?
         (define-inline 2 $foreign-wchar?
@@ -3554,7 +3576,7 @@
             ;           (list (p a11 t21 ... tn1)
             ;                 (p a12 t22 ... tn2)
             ;                   ...
-            ;                 (p a1m t2m ... tnm))))))
+            ;                 (p a1m t2m ... tnm)))))
             (let loop ([ls* (cons ?ls ?ls*)] [e** '()])
               (if (null? ls*)
                   (and (apply = (map length e**))
@@ -3602,7 +3624,11 @@
               ; input list is mutated, while for-each is not.
               [(and (eq? (app-ctxt ctxt) 'effect)
                     (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?p))
-                      [,pr (all-set? (prim-mask discard) (primref-flags pr))]
+                      [,pr (let ([flags (primref-flags pr)])
+                              (and (if (all-set? (prim-mask unsafe) flags)
+                                       (all-set? (prim-mask discard) flags)
+                                       (all-set? (prim-mask (or discard unrestricted)) flags))
+                                   (arity-okay? (primref-arity pr) (+ (length ?ls*) 1))))]
                       [else #f]))
                 ; discard effect-free calls to map in effect context
                 (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
@@ -3655,13 +3681,25 @@
                                                 ls*) ...)
                                       ropnd*))))))))
                     ctxt empty-env sc wd name moi))]
-              [else (inline-lists ?p ?ls ?ls* 3 ctxt sc wd name moi)])]))
+              [else (inline-lists ?p ?ls ?ls* 3 ctxt sc wd name moi)])])
 
+        (define-inline 2 for-each
+          [(?p ?ls . ?ls*)
+           (cond
+             [(andmap null-rec? (cons ?ls ?ls*))
+              (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
+              void-rec]
+             [else #f])])
+      )
       (define-inline 3 for-each
         [(?p ?ls . ?ls*)
          (cond
            [(nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?p))
-              [,pr (all-set? (prim-mask discard) (primref-flags pr))]
+              [,pr (let ([flags (primref-flags pr)])
+                     (and (if (all-set? (prim-mask unsafe) flags)
+                              (all-set? (prim-mask discard) flags)
+                              (all-set? (prim-mask (or discard unrestricted)) flags))
+                          (arity-okay? (primref-arity pr) (+ (length ?ls*) 1))))]
               [else #f])
             (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
             void-rec]
@@ -4635,7 +4673,7 @@
                        [else #f])))]
              [else (void)])))
        `(cte-optimization-loc ,box ,e)]
-      [(cpvalid-defer ,e) (sorry! who "np-valid leaked a cpvalid-defer form ~s" ir)]
+      [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) ir]
       [else ($oops who "unrecognized record ~s" ir)])
     (begin

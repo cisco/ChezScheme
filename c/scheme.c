@@ -1,5 +1,5 @@
 /* scheme.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,11 @@ static void main_init() {
                  i & 0x10 ? 4 : i & 0x20 ? 5 : i & 0x40 ? 6 : i & 0x80 ? 7 : 0);
     }
 
+    NULLIMMUTABLEVECTOR(tc) = S_null_immutable_vector();
+    NULLIMMUTABLEFXVECTOR(tc) = S_null_immutable_fxvector();
+    NULLIMMUTABLEBYTEVECTOR(tc) = S_null_immutable_bytevector();
+    NULLIMMUTABLESTRING(tc) = S_null_immutable_string();
+
     PARAMETERS(tc) = S_G.null_vector;
     for (i = 0 ; i < virtual_register_count ; i += 1) {
       VIRTREG(tc, i) = FIX(0);
@@ -98,6 +103,7 @@ static void main_init() {
     p = S_code(tc, type_code, size_rp_header);
     CODERELOC(p) = S_relocation_table(0);
     CODENAME(p) = Sfalse;
+    CODEARITYMASK(p) = FIX(0);
     CODEFREE(p) = 0;
     CODEINFO(p) = Sfalse;
     CODEPINFOS(p) = Snil;
@@ -290,6 +296,11 @@ static void idiot_checks() {
   if (((uptr)(&((seginfo *)0)->dirty_bytes[0]) & (sizeof(iptr) - 1)) != 0) {
     /* gc sometimes processes dirty bytes sizeof(iptr) bytes at a time */
     fprintf(stderr, "dirty_bytes[0] is not iptr-aligned wrt to seginfo struct\n");
+    oops = 1;
+  }
+  if (!Sfixnump(type_vector | ~mask_vector)) {
+    /* gc counts on vector type/length looking like a fixnum, so it can put vectors in space_impure */
+    fprintf(stderr, "vector type/length field does not look like a fixnum\n");
     oops = 1;
   }
 
@@ -541,6 +552,7 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n; INT c;
   const char *path;
+  char *expandedpath;
   gzFile file;
 
   if (S_fixedpathp(name)) {
@@ -551,7 +563,12 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
 
     path = name;
 
-    if (!(file = gzopen(S_pathname("", path, 0, (char *)0), "rb"))) {
+    expandedpath = S_malloc_pathname(path);
+    file = gzopen(expandedpath, "rb");
+    /* assumption (seemingly true based on a glance at the source code):
+       gzopen doesn't squirrel away a pointer to expandedpath. */
+    free(expandedpath);
+    if (!file) {
       if (errorp) {
         fprintf(stderr, "cannot open boot file %s\n", path);
         S_abnormal_exit();
@@ -621,7 +638,12 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
         }
       }
 
-      if (!(file = gzopen(S_pathname("", path, 0, (char *)0), "rb"))) {
+      expandedpath = S_malloc_pathname(path);
+      file = gzopen(expandedpath, "rb");
+      /* assumption (seemingly true based on a glance at the source code):
+         gzopen doesn't squirrel away a pointer to expandedpath. */
+      free(expandedpath);
+      if (!file) {
         if (verbose) fprintf(stderr, "trying %s...cannot open\n", path);
         continue;
       }
@@ -1042,7 +1064,9 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     S_threads = Snil;
     S_nthreads = 0;
     S_set_symbol_value(S_G.active_threads_id, FIX(0));
-    tc = (ptr)THREADTC(S_create_thread_object());
+    /* pass a parent tc of Svoid, since this call establishes the initial
+     * thread context and hence there is no parent thread context.  */
+    tc = (ptr)THREADTC(S_create_thread_object("startup", tc));
 #ifdef PTHREADS
     s_thread_setspecific(S_tc_key, tc);
 #endif

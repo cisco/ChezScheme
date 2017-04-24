@@ -1,5 +1,5 @@
 ;;; x86_64.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -794,6 +794,11 @@
     [(op (x ur) (y ur) (z imm32))
      `(asm ,info ,(asm-fl-load op (info-loadfl-flreg info)) ,x ,y ,z)])
 
+  (define-instruction value (get-double)
+    [(op (z ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,info ,(asm-get-double (info-loadfl-flreg info))))])
+
   (define-instruction effect (flt)
     [(op (x mem ur) (y ur)) `(asm ,info ,asm-flt ,x ,y)])
 
@@ -979,7 +984,7 @@
                      ; threaded version specific
                      asm-get-tc
                      ; machine dependent exports
-                     asm-sext-rax->rdx asm-store-single->double asm-kill)
+                     asm-sext-rax->rdx asm-store-single->double asm-kill asm-get-double)
 
   (define ax-register?
     (case-lambda
@@ -1781,6 +1786,11 @@
             [(load-single) (emit sse.movss src (cons 'reg flreg) code*)]
             [(load-double) (emit sse.movsd src (cons 'reg flreg) code*)])))))
 
+  (define asm-get-double
+    (lambda (flreg)
+      (lambda (code* dst)
+        (emit sse.movd (cons 'reg flreg) (cons 'reg dst) code*))))
+
   (define asm-flt
     (lambda (code* src flonumreg)
       (Trivit (src)
@@ -2420,6 +2430,12 @@
                   (lambda (fpreg)
                     (lambda (x) ; requires var
                       `(inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero ,(%constant flonum-data-disp))))]
+                 [load-double-reg2
+                  (lambda (fpreg ireg)
+                    (lambda (x) ; requires var
+                      (%seq
+                       (inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero ,(%constant flonum-data-disp))
+                       (set! ,ireg (inline ,(make-info-loadfl fpreg) ,%get-double)))))]
                  [load-single-reg
                   (lambda (fpreg)
                     (lambda (x) ; requires var
@@ -2441,13 +2457,14 @@
                     (if-feature windows
                       (let loop ([types types] [locs '()] [regs '()] [i 0] [isp 0])
                         (if (null? types)
-                            (values isp locs regs)
+                            (values isp 0 locs regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< i 4)
-                                   (loop (cdr types)
-                                     (cons (load-double-reg (vector-ref vfp i)) locs)
-                                     regs (fx+ i 1) isp)
+                                   (let ([reg (vector-ref vint i)])
+                                     (loop (cdr types)
+                                       (cons (load-double-reg2 (vector-ref vfp i) reg) locs)
+                                       (cons reg regs) (fx+ i 1) isp))
                                    (loop (cdr types)
                                      (cons (load-double-stack isp) locs)
                                      regs i (fx+ isp 8)))]
@@ -2471,7 +2488,7 @@
                                      regs i (fx+ isp 8)))])))
                       (let loop ([types types] [locs '()] [regs '()] [iint 0] [ifp 0] [isp 0])
                         (if (null? types)
-                            (values isp locs regs)
+                            (values isp ifp locs regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< ifp 8)
@@ -2522,7 +2539,7 @@
                   [arg-type* (info-foreign-arg-type* info)]
                   [result-type (info-foreign-result-type info)])
               (with-values (do-args arg-type* (make-vint) (make-vfp))
-                (lambda (frame-size locs live*)
+                (lambda (frame-size nfp locs live*)
                   (returnem frame-size locs
                     (lambda (t0)
                       (if-feature windows
@@ -2530,7 +2547,11 @@
                           (set! ,%sp ,(%inline - ,%sp (immediate 32)))
                           (inline ,(make-info-kill*-live* (reg-list %rax) live*) ,%c-call ,t0)
                           (set! ,%sp ,(%inline + ,%sp (immediate 32))))
-                        `(inline ,(make-info-kill*-live* (reg-list %rax) live*) ,%c-call ,t0)))
+                        (%seq
+                          ; System V ABI varargs functions require count of fp regs used in %al register.
+                          ; since we don't know if the callee is a varargs function, we always set it.
+                          (set! ,%rax (immediate ,nfp))
+                          (inline ,(make-info-kill*-live* (reg-list %rax) (cons %rax live*)) ,%c-call ,t0))))
                     (nanopass-case (Ltype Type) result-type
                       [(fp-double-float)
                        (lambda (lvalue)

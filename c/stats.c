@@ -1,5 +1,5 @@
 /* stats.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@
 #include <time.h>
 
 static struct timespec starting_mono_tp;
-
-static void s_gettime(INT typeno, struct timespec *tp);
 
 /********  unique-id  ********/
 
@@ -115,7 +113,11 @@ ptr S_unique_id() {
 
 static __int64 hires_cps = 0;
 
-static void s_gettime(INT typeno, struct timespec *tp) {
+typedef void (WINAPI *GetSystemTimeAsFileTime_t)(LPFILETIME lpSystemTimeAsFileTime);
+
+static GetSystemTimeAsFileTime_t s_GetSystemTimeAsFileTime = GetSystemTimeAsFileTime;
+
+void s_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_process: {
       FILETIME ftKernel, ftUser, ftDummy;
@@ -189,7 +191,7 @@ static void s_gettime(INT typeno, struct timespec *tp) {
     case time_utc: {
       FILETIME ft; __int64 total;
 
-      GetSystemTimeAsFileTime(&ft);
+      s_GetSystemTimeAsFileTime(&ft);
       total = ft.dwHighDateTime;
       total <<= 32;
       total |= ft.dwLowDateTime;
@@ -224,7 +226,7 @@ static char *asctime_r(const struct tm *tm, char *buf) {
 
 #else /* WIN32 */
 
-static void s_gettime(INT typeno, struct timespec *tp) {
+void s_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_thread:
 #ifdef CLOCK_THREAD_CPUTIME_ID
@@ -459,5 +461,16 @@ ptr S_realtime(void) {
 /********  initialization  ********/
 
 void S_stats_init() {
+#ifdef WIN32
+  /* Use GetSystemTimePreciseAsFileTime when available (Windows 8 and later). */
+  HMODULE h = LoadLibrary("kernel32.dll");
+  if (h != NULL) {
+    GetSystemTimeAsFileTime_t proc = (GetSystemTimeAsFileTime_t)GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
+    if (proc != NULL)
+      s_GetSystemTimeAsFileTime = proc;
+    else
+      FreeLibrary(h);
+  }
+#endif
   s_gettime(time_monotonic, &starting_mono_tp);
 }

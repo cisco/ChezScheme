@@ -1,5 +1,5 @@
 /* schlib.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,8 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
     CP(tc) = AC1(tc);
 
     jb = CREATEJMPBUF();
+    if (jb == NULL)
+      S_error_abort("unable to allocate memory for jump buffer");
     FRAME(tc, -1) = CCHAIN(tc) = Scons(Scons(jb, code), CCHAIN(tc));
 
     switch (SETJMP(jb)) {

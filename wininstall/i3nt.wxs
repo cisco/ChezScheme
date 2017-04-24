@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="D_bin">
+      <Directory Id="D_bin_i3nt" Name="i3nt">
+        <Component Id="cmp3EAD5F342D86023E323C2F3E96A596B9" Guid="*">
+          <File Id="filF35C82CDA44DE51CEFA9FF8CA1B38AAA" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv941.dll" />
+        </Component>
+        <Component Id="cmpF2410A7AF5FB7C10A33DA57476B0E56B" Guid="*">
+          <File Id="filFE4E60D4DD4AEF0DDA574E6EF117FEC0" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv941.exp" />
+        </Component>
+        <Component Id="cmp905F254ECBC3BCB861BBBF60B0F34D73" Guid="*">
+          <File Id="fil811C8A53860477F59CD4D11BF7C36A5E" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv941.lib" />
+        </Component>
+        <Component Id="cmp2660425B08191D07FD2B8E4D12C25CAF" Guid="*">
+          <File Id="fil6C14AF587FDAABD1440BADC640EEF64E" KeyPath="yes" Source="..\i3nt\bin\i3nt\petite.exe" />
+        </Component>
+        <Component Id="cmpE28E1FD7F26C181DE59FFBF90644FC76" Guid="*">
+          <File Id="filC9140B162E813FF1382AAFCAD00F39F7" KeyPath="yes" Source="..\i3nt\bin\i3nt\scheme.exe">
+            <Shortcut Id="cs_i3nt_shortcut"
+                      Advertise="yes"
+                      Name="Chez Scheme 32-bit nonthreaded"
+                      Description="Chez Scheme Version $(var.Version) 32-bit nonthreaded"
+                      Directory="D_shortcuts"
+                      Icon="cs.ico"
+                      WorkingDirectory="APPLICATIONFOLDER"/>
+          </File>
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <DirectoryRef Id="D_boot">
+      <Directory Id="D_boot_i3nt" Name="i3nt">
+        <Component Id="cmp47E339F22F1D268C3D889C89DC04B1EC" Guid="*">
+          <File Id="filFAE795432021A108F72A5A1763549848" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv941md.lib" />
+        </Component>
+        <Component Id="cmp97E86E3E78EC5C1E35333413F9D239A9" Guid="*">
+          <File Id="filC2A38DD4D83F793279D6D10E8D553145" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv941mt.lib" />
+        </Component>
+        <Component Id="cmpA984DD6C19B2AF6FB1CF1EB8B82265F7" Guid="*">
+          <File Id="fil01A92E9B0A1BED208B24F65BE7808680" KeyPath="yes" Source="..\i3nt\boot\i3nt\equates.h" />
+        </Component>
+        <Component Id="cmp4EC08D9AF0D6DADE3077A7EB099476B4" Guid="*">
+          <File Id="fil47E4EBA05B181E80FAF43A5B84DCC1D6" KeyPath="yes" Source="..\i3nt\boot\i3nt\mainmd.obj" />
+        </Component>
+        <Component Id="cmp919AB6246AC9B090D079FECBCF9B3758" Guid="*">
+          <File Id="filD9207D489031910033ACA82F263B873C" KeyPath="yes" Source="..\i3nt\boot\i3nt\mainmt.obj" />
+        </Component>
+        <Component Id="cmpAA816697285A56C59BE524C8F381935D" Guid="*">
+          <File Id="fil684EC0417E3393463BE347CAEDA3D81D" KeyPath="yes" Source="..\i3nt\boot\i3nt\petite.boot" />
+        </Component>
+        <Component Id="cmp155E5F6F7512A742AA9C3889EAB1E514" Guid="*">
+          <File Id="fil3E70C55066509597272FE8D922C4D1FE" KeyPath="yes" Source="..\i3nt\boot\i3nt\scheme.boot" />
+        </Component>
+        <Component Id="cmpC59467C5684EC25FD89D53A93AECC3BB" Guid="*">
+          <File Id="filC585B1EE955B35A72CA191136AB2B4D8" KeyPath="yes" Source="..\i3nt\boot\i3nt\scheme.h" />
+        </Component>
+        <Component Id="cmpA1A08D93E33D200E737ED7E9673100F8" Guid="*">
+          <File Id="filF377753EF1FFEC581D561C6EB05D2FB0" KeyPath="yes" Source="..\i3nt\boot\i3nt\scheme.res" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <ComponentGroup Id="i3nt">
+      <ComponentRef Id="cmp3EAD5F342D86023E323C2F3E96A596B9" />
+      <ComponentRef Id="cmpF2410A7AF5FB7C10A33DA57476B0E56B" />
+      <ComponentRef Id="cmp905F254ECBC3BCB861BBBF60B0F34D73" />
+      <ComponentRef Id="cmp2660425B08191D07FD2B8E4D12C25CAF" />
+      <ComponentRef Id="cmpE28E1FD7F26C181DE59FFBF90644FC76" />
+      <ComponentRef Id="cmp47E339F22F1D268C3D889C89DC04B1EC" />
+      <ComponentRef Id="cmp97E86E3E78EC5C1E35333413F9D239A9" />
+      <ComponentRef Id="cmpA984DD6C19B2AF6FB1CF1EB8B82265F7" />
+      <ComponentRef Id="cmp4EC08D9AF0D6DADE3077A7EB099476B4" />
+      <ComponentRef Id="cmp919AB6246AC9B090D079FECBCF9B3758" />
+      <ComponentRef Id="cmpAA816697285A56C59BE524C8F381935D" />
+      <ComponentRef Id="cmp155E5F6F7512A742AA9C3889EAB1E514" />
+      <ComponentRef Id="cmpC59467C5684EC25FD89D53A93AECC3BB" />
+      <ComponentRef Id="cmpA1A08D93E33D200E737ED7E9673100F8" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

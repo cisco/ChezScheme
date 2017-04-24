@@ -1,5 +1,5 @@
 ;;; io.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -1040,6 +1040,11 @@
           (define op (transcoded-port bp transcoder))
           (newline op)
           (close-port op)))
+      ; NB: keep this last among the iconv-codec mats
+      ; close any files left open by failing iconv tests.  this is particulary
+      ; important on windows when the iconv dll isn't available and where keeping
+      ; file open can prevent it from being reopened.
+      (begin (collect (collect-maximum-generation)) #t)
       ))
 
 (mat port-operations4

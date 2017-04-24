@@ -1,5 +1,5 @@
 /* segment.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ Low-level Memory management strategy:
   * maintain getmem-allocated segment info and dirty vector tables
   * after each collection, run through the list of chunks.  If all
     segments in a chunk are empty, the chunk is a candidate for return
-    to the O/S.  Return (freeem) as many chunks as possible without going
-    below a user-defined threshhold of empty segments (determined as a
+    to the O/S.  Return (freemem) as many chunks as possible without going
+    below a user-defined threshold of empty segments (determined as a
     multiple of the occupied nonstatic segments).  Bias return to the
     most recently allocated chunks.
   * getmem/freemem may be implemented with malloc/free; we use them

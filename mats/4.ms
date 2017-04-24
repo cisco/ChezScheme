@@ -1,5 +1,5 @@
 ;;; 4.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -336,7 +336,7 @@
   (equivalent-expansion? 
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) (begin (set! l z) #f) (begin (set! l y) #t))) e1 e2)))
-     '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (begin (set! l y) e2) (begin (set! l z) e1))))
+     '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (begin (set! l z) e2) (begin (set! l y) e1))))
 
  )
 
@@ -393,6 +393,8 @@
  )
 
 (mat exclusive-cond
+   (error? ; invalid syntax
+     (exclusive-cond [a . b]))
    (let ((a 'a))
       (and (begin (set! a 3)
                   (exclusive-cond ((= a 4) #f) ((= a 3) #t) (else #f)))
@@ -464,6 +466,8 @@
  )
 
 (mat case
+   (error? ; invalid syntax
+     (case 3 [a . b]))
    (eq? (case 'a [a 'yes] [b 'no]) 'yes)
    (let ((a 'a))
       (and
@@ -1076,6 +1080,28 @@
     (test-cp0-expansion equal? '(map (lambda (x) x) '()) ''()))
   (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
     (test-cp0-expansion equal? '(map add1 '() '() '() '()) ''()))
+  ;; if map is called only for effects, remove the expression only if the procedure
+  ;; has the correct arity and can't raise an error
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(begin (#3%map list '(5 4 3 2 1 0)) 7)))
+    7)
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(begin (#3%map box? '(5 4 3 2 1 0)) 7)))
+    7)
+  (not (equivalent-expansion?
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+           (expand/optimize
+             '(begin (#3%map unbox '(5 4 3 2 1 0)) 7)))
+           7))
+  (not (equivalent-expansion?
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+           (expand/optimize
+             '(begin (#3%map cons '(5 4 3 2 1 0)) 7)))
+           7))
   ;; map with lambda exp as procedure and lists in the form (list e0 e1 ... en)
   ;; avoid creating each list and doing the actual map
   (equivalent-expansion?
@@ -1817,6 +1843,38 @@
       (u a p k f 1) (v b q l g 2) (w c r m h 3) (x d s n i 4)
       (y e t o j 5) (a u p k f 1) (b v q l g 2) (c w r m h 3)
       (d x s n i 4) (e y t o j 5)))
+  ;; cp0 optimizations for for-each
+  ;; for-each with an empty list(s) always (void)
+  (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (test-cp0-expansion equal? '(for-each (lambda (x) x) '()) '(#2%void)))
+  (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (test-cp0-expansion equal? '(for-each add1 '() '() '() '()) '(#2%void)))
+  (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (test-cp0-expansion equal? '(for-each (lambda (x) x) '()) '(#2%void)))
+  (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (test-cp0-expansion equal? '(for-each add1 '() '() '() '()) '(#2%void)))
+  ;; remove for-each the expression only if the procedure
+  ;; has the correct arity and can't raise an error
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(#3%for-each list '(5 4 3 2 1 0))))
+    '(#2%void))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(#3%for-each box? '(5 4 3 2 1 0))))
+    '(#2%void))
+  (not (equivalent-expansion?
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+           (expand/optimize
+             '(#3%for-each unbox '(5 4 3 2 1 0))))
+           '(#2%void)))
+  (not (equivalent-expansion?
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+           (expand/optimize
+             '(#3%for-each cons '(5 4 3 2 1 0))))
+           '(#2%void)))
  )
 
 (mat ormap
@@ -2988,6 +3046,25 @@
              (collect 0 0)
              (list ((g1)) p)))))
      '((c d) (b)))
+
+   (eq? (with-interrupts-disabled
+          (let* ([g (make-guardian)] [x (list 'a 'b)])
+            (g x)
+            (collect 0 0)
+            (#%$keep-live x)
+            (g)))
+        #f)
+
+   (or (not (threaded?))
+       (equal?
+         (parameterize ([collect-request-handler void])
+           (let ([g (make-guardian)])
+             (fork-thread (lambda () (g (list 'a 'b))))
+             (let f () (when (> (length (#%$thread-list)) 1) (f)))
+             (collect)
+             (g)))
+         '(a b)))
+
    (parameterize ([collect-request-handler void] [enable-object-counts #t])
      (define-record-type fraz (fields zle))
      (define g (make-guardian))

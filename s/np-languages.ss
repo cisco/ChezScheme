@@ -1,5 +1,5 @@
 ;;; np-languages.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -494,6 +494,7 @@
   (declare-primitive inc-cc-counter effect #f)
   (declare-primitive inc-profile-counter effect #f)
   (declare-primitive invoke-prelude effect #f)
+  (declare-primitive keep-live effect #f)
   (declare-primitive load-double effect #f)
   (declare-primitive load-double->single effect #f)
   (declare-primitive load-single effect #f)
@@ -540,6 +541,7 @@
   (declare-primitive -/eq value #f)
   (declare-primitive asmlibcall value #f)
   (declare-primitive fstpl value #f) ; x86 only
+  (declare-primitive get-double value #t) ; x86_64
   (declare-primitive get-tc value #f) ; threaded version only
   (declare-primitive lea1 value #t)
   (declare-primitive lea2 value #t)
@@ -1048,4 +1050,9 @@
           (_ var ('extends x) #f (_ _ #f ...) ...)))
      (pretty-format 'labels '(_ ([bracket x e] 0 ...) #f e ...))
      (pretty-format 'blocks '(_ #f [bracket (x ...) 0 e] ...))])
+
+  (primitive-handler-set! %keep-live
+    (lambda (info x)
+      (with-output-language (L15d Effect)
+        `(asm ,info ,(lambda (code*) code*)))))
 )

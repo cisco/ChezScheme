@@ -1,6 +1,6 @@
 "prims.ss"
 ;;; prims.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -202,6 +202,11 @@
       ($oops '$procedure-name "~s is not a procedure" x))
     ($code-name ($closure-code x))))
 
+(define-who procedure-arity-mask
+  (lambda (x)
+    (unless (procedure? x) ($oops who "~s is not a procedure" x))
+    ($code-arity-mask ($closure-code x))))
+
 (let ()
   (define-syntax frob-proc
     (syntax-rules ()
@@ -250,13 +255,13 @@
 )
 
 (define-who (bytevector-truncate! bv n)
-  (unless (bytevector? bv) ($oops who "~s is not a bytevector" bv))
+  (unless (mutable-bytevector? bv) ($oops who "~s is not a mutable bytevector" bv))
   (unless (and (fixnum? n) (not ($fxu< (bytevector-length bv) n)))
     ($oops who "invalid new length ~s for ~s" n bv))
   (bytevector-truncate! bv n))
 
 (define-who (string-truncate! st n)
-  (unless (string? st) ($oops who "~s is not a string" st))
+  (unless (mutable-string? st) ($oops who "~s is not a mutable string" st))
   (unless (and (fixnum? n) (not ($fxu< (string-length st) n)))
     ($oops who "invalid new length ~s for ~s" n st))
   (string-truncate! st n))
@@ -264,67 +269,59 @@
 (define-who make-string
   (case-lambda
     [(n c)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-string-length) n)))
+       ($oops who "~s is not a valid string length" n))
      (unless (char? c)
        ($oops who "~s is not a character" c))
      (make-string n c)]
     [(n)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-string-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-string-length) n)))
+       ($oops who "~s is not a valid string length" n))
      (make-string n)]))
 
-(define make-vector
+(define-who make-vector
    (case-lambda
       [(n x)
-       (unless (and (fixnum? n) (fx>= n 0))
-          ($oops 'make-vector "~s is not a nonnegative fixnum" n))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
        (make-vector n x)]
       [(n)
-       (unless (and (fixnum? n) (fx>= n 0))
-          ($oops 'make-vector "~s is not a nonnegative fixnum" n))
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
        (make-vector n)]))
 
 (define $make-eqhash-vector
   (case-lambda
     [(n)
-     (unless (and (fixnum? n) (fx>= n 0))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
        ($oops '$make-eqhash-vector "~s is not a nonnegative fixnum" n))
      ($make-eqhash-vector n)]))
 
 (define-who make-fxvector
   (case-lambda
     [(n x)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-fxvector-length) n)))
+       ($oops who "~s is not a valid fxvector length" n))
      (unless (fixnum? x)
        ($oops who "~s is not a fixnum" x))
      (make-fxvector n x)]
     [(n)
-    ; if this fails, we have to change the test and message below
-     (meta-assert (= (constant maximum-fxvector-length) (constant most-positive-fixnum)))
-     (unless (and (fixnum? n) (fx>= n 0))
-       ($oops who "~s is not a nonnegative fixnum" n))
+     (unless (and (fixnum? n) (not ($fxu< (constant maximum-fxvector-length) n)))
+       ($oops who "~s is not a valid fxvector length" n))
      (make-fxvector n)]))
 
 (define string-fill!
    (lambda (s c)
-      (unless (string? s)
-         ($oops 'string-fill! "~s is not a string" s))
+      (unless (mutable-string? s)
+         ($oops 'string-fill! "~s is not a mutable string" s))
       (unless (char? c)
          ($oops 'string-fill! "~s is not a character" c))
       (string-fill! s c)))
 
 (define fxvector-fill!
    (lambda (v n)
-      (unless (fxvector? v)
-         ($oops 'fxvector-fill! "~s is not an fxvector" v))
+      (unless (mutable-fxvector? v)
+         ($oops 'fxvector-fill! "~s is not a mutable fxvector" v))
       (unless (fixnum? n)
          ($oops 'fxvector-fill! "~s is not a fixnum" n))
       (fxvector-fill! v n)))
@@ -369,13 +366,18 @@
 
 (define-who $make-code-object
   (foreign-procedure "(cs)s_make_code"
-     (iptr iptr ptr iptr ptr ptr)
+     (iptr iptr ptr ptr iptr ptr ptr)
      ptr))
 
 (define-who $code-name
   (lambda (x)
     (unless ($code? x) ($oops who "~s is not code" x))
     ($code-name x)))
+
+(define-who $code-arity-mask
+  (lambda (x)
+    (unless ($code? x) ($oops who "~s is not code" x))
+    ($code-arity-mask x)))
 
 (define-who $code-free-count
   (lambda (x)
@@ -520,10 +522,13 @@
       ($bigpositive? x)))
 
 (define $string-ref-check? (lambda (s i) ($string-ref-check? s i)))
+(define $string-set!-check? (lambda (s i) ($string-set!-check? s i)))
 
 (define $vector-ref-check? (lambda (v i) ($vector-ref-check? v i)))
+(define $vector-set!-check? (lambda (v i) ($vector-set!-check? v i)))
 
 (define $fxvector-ref-check? (lambda (v i) ($fxvector-ref-check? v i)))
+(define $fxvector-set!-check? (lambda (v i) ($fxvector-set!-check? v i)))
 
 (define $ratio-numerator
    (lambda (q)
@@ -1017,6 +1022,20 @@
    (lambda (v i x)
       (#2%string-set! v i x)))
 
+(define-who $string-set-immutable!
+   (lambda (s)
+     (unless (string? s)
+       ($oops who "~s is not a string" s))
+     (#3%$string-set-immutable! s)))
+
+(define-who mutable-string?
+  (lambda (v)
+    (#3%mutable-string? v)))
+
+(define-who immutable-string?
+  (lambda (v)
+    (#3%immutable-string? v)))
+
 (define char->integer
    (lambda (x)
       (#2%char->integer x)))
@@ -1045,6 +1064,20 @@
   (lambda (v i x)
     (#2%vector-set-fixnum! v i x)))
 
+(define-who $vector-set-immutable!
+   (lambda (v)
+     (unless (vector? v)
+       ($oops who "~s is not a vector" v))
+     (#3%$vector-set-immutable! v)))
+
+(define mutable-vector?
+   (lambda (v)
+     (#3%mutable-vector? v)))
+
+(define immutable-vector?
+   (lambda (v)
+     (#3%immutable-vector? v)))
+
 (define fxvector-length
    (lambda (v)
       (#2%fxvector-length v)))
@@ -1056,6 +1089,20 @@
 (define fxvector-set!
    (lambda (v i x)
       (#2%fxvector-set! v i x)))
+
+(define-who $fxvector-set-immutable!
+   (lambda (s)
+     (unless (fxvector? s)
+       ($oops who "~s is not a fxvector" s))
+     (#3%$fxvector-set-immutable! s)))
+
+(define mutable-fxvector?
+  (lambda (s)
+    (#3%mutable-fxvector? s)))
+
+(define immutable-fxvector?
+  (lambda (s)
+    (#3%immutable-fxvector? s)))
 
 (define cons (lambda (x y) (cons x y)))
 
@@ -1077,6 +1124,8 @@
 
 (define box (lambda (x) (box x)))
 
+(define box-immutable (lambda (x) (box-immutable x)))
+
 (define unbox
    (lambda (b)
       (if (box? b)
@@ -1085,9 +1134,17 @@
 
 (define set-box!
    (lambda (b v)
-      (if (box? b)
+      (if (mutable-box? b)
           (set-box! b v)
-          ($oops 'set-box! "~s is not a box" b))))
+          ($oops 'set-box! "~s is not a mutable box" b))))
+
+(define mutable-box?
+  (lambda (b)
+    (#3%mutable-box? b)))
+
+(define immutable-box?
+  (lambda (b) 
+    (#3%immutable-box? b)))
 
 (define pair? (lambda (x) (pair? x)))
 
@@ -1403,6 +1460,7 @@
 (define condition-wait)
 (define condition-signal)
 (define condition-broadcast)
+(define $close-resurrected-mutexes&conditions)
 (define $tc-mutex)
 (define $collect-cond)
 (let ()
@@ -1411,24 +1469,29 @@
 (define ft (foreign-procedure "(cs)fork_thread" (scheme-object)
               scheme-object))
 (define mm (foreign-procedure "(cs)make_mutex" () scheme-object))
+(define mf (foreign-procedure "(cs)mutex_free" (scheme-object) void))
 (define ma (foreign-procedure "(cs)mutex_acquire" (scheme-object) void))
 (define ma-nb (foreign-procedure "(cs)mutex_acquire_noblock" (scheme-object)
                   scheme-object))
 (define mr (foreign-procedure "(cs)mutex_release" (scheme-object) void))
 (define mc (foreign-procedure "(cs)make_condition" () scheme-object))
-(define cw (foreign-procedure "(cs)condition_wait" (scheme-object scheme-object) void))
+(define cf (foreign-procedure "(cs)condition_free" (scheme-object) void))
+(define cw (foreign-procedure "(cs)condition_wait" (scheme-object scheme-object scheme-object) boolean))
 (define cb (foreign-procedure "(cs)condition_broadcast" (scheme-object) void))
 (define cs (foreign-procedure "(cs)condition_signal" (scheme-object) void))
 
 (define-record-type (condition $make-condition $condition?)
-  (fields (immutable addr $condition-addr))
+  (fields (mutable addr $condition-addr $condition-addr-set!))
   (nongenerative)
   (sealed #t))
 
 (define-record-type (mutex $make-mutex $mutex?)
-  (fields (immutable addr $mutex-addr))
+  (fields (mutable addr $mutex-addr $mutex-addr-set!))
   (nongenerative)
   (sealed #t))
+
+(define mutex-guardian (make-guardian))
+(define condition-guardian (make-guardian))
 
 (set! fork-thread
   (lambda (t)
@@ -1447,7 +1510,9 @@
 
 (set! make-mutex
   (lambda ()
-    ($make-mutex (mm))))
+    (let ([m ($make-mutex (mm))])
+      (mutex-guardian m)
+      m)))
 
 (set! mutex?
   (lambda (x)
@@ -1459,41 +1524,90 @@
     [(m block?)
      (unless (mutex? m)
        ($oops 'mutex-acquire "~s is not a mutex" m))
-     ((if block? ma ma-nb) ($mutex-addr m))]))
+     (let ([addr ($mutex-addr m)])
+       (when (eq? addr 0)
+         ($oops 'mutex-acquire "mutex is defunct"))
+       (let ([r ((if block? ma ma-nb) addr)])
+         ($keep-live m)
+         r))]))
 
 (set! mutex-release
   (lambda (m)
     (unless (mutex? m)
       ($oops 'mutex-release "~s is not a mutex" m))
-    (mr ($mutex-addr m))))
+    (let ([addr ($mutex-addr m)])
+      (when (eq? addr 0)
+        ($oops 'mutex-release "mutex is defunct"))
+      (mr addr))))
 
 (set! make-condition
   (lambda ()
-    ($make-condition (mc))))
+    (let ([c ($make-condition (mc))])
+      (condition-guardian c)
+      c)))
 
 (set! thread-condition?
   (lambda (x)
     ($condition? x)))
 
 (set! condition-wait
-  (lambda (c m)
+  (case-lambda
+   [(c m) (condition-wait c m #f)]
+   [(c m t)
     (unless (thread-condition? c)
       ($oops 'condition-wait "~s is not a condition" c))
     (unless (mutex? m)
       ($oops 'condition-wait "~s is not a mutex" m))
-    (cw ($condition-addr c) ($mutex-addr m))))
+    (unless (or (not t)
+		(and (time? t) (memq (time-type t) '(time-duration time-utc))))
+      ($oops 'condition-wait "~s is not a time record of type time-duration or time-utc" t))
+    (let ([caddr ($condition-addr c)] [maddr ($mutex-addr m)])
+      (when (eq? caddr 0)
+        ($oops 'condition-wait "condition is defunct"))
+      (when (eq? maddr 0)
+        ($oops 'condition-wait "mutex is defunct"))
+      (let ([r (cw caddr maddr t)])
+        ($keep-live c)
+        ($keep-live m)
+        r))]))
 
 (set! condition-broadcast
   (lambda (c)
     (unless (thread-condition? c)
       ($oops 'condition-broadcast "~s is not a condition" c))
-    (cb ($condition-addr c))))
+    (let ([addr ($condition-addr c)])
+      (when (eq? addr 0)
+        ($oops 'condition-broadcast "condition is defunct"))
+      (cb addr))))
 
 (set! condition-signal
   (lambda (c)
     (unless (thread-condition? c)
       ($oops 'condition-signal "~s is not a condition" c))
-    (cs ($condition-addr c))))
+    (let ([addr ($condition-addr c)])
+      (when (eq? addr 0)
+        ($oops 'condition-signal "condition is defunct"))
+      (cs addr))))
+
+(set! $close-resurrected-mutexes&conditions
+  ; called from single-threaded docollect
+  (lambda ()
+    (let f ()
+      (let mg ([m (mutex-guardian)])
+        (when m
+          (let ([addr ($mutex-addr m)])
+	    (unless (eq? addr 0)
+	      (mf addr)
+              ($mutex-addr-set! m 0)))
+          (f))))
+    (let f ()
+      (let cg ([c (condition-guardian)])
+        (when c
+	  (let ([addr ($condition-addr c)])
+	    (unless (eq? addr 0)
+	      (cf addr)
+              ($condition-addr-set! c 0)))
+          (f))))))
 
 (set! $tc-mutex ($make-mutex ($raw-tc-mutex)))
 (set! $collect-cond ($make-condition ($raw-collect-cond)))
@@ -2072,6 +2186,10 @@
 (define $read-time-stamp-counter
   (lambda ()
     (#3%$read-time-stamp-counter)))
+
+(define $keep-live
+  (lambda (x)
+    (#2%$keep-live x)))
 
 (when-feature windows
 (let ()
