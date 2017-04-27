@@ -1,5 +1,5 @@
 "record.ss"
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -454,7 +454,7 @@
             [else
              (let ([rtd (apply #%$record base-rtd parent size pm mpm name
                           (cdr flds) flags uid #f extras)])
-               ($sputprop uid '*rtd* rtd)
+               (with-tc-mutex ($sputprop uid '*rtd* rtd))
                rtd)]))))
 
     (set-who! $remake-rtd
@@ -479,7 +479,7 @@
                                        '()
                                        (cons ((csv7:record-field-accessor base-rtd n) rtd)
                                          (f (fx+ n 1) (cdr ls)))))))])
-                    ($sputprop uid key rtd)
+                    (with-tc-mutex ($sputprop uid key rtd))
                     rtd)))))))
 
     (let ()

@@ -72,9 +72,9 @@ typedef unsigned char octet;
 #define Sfxvectorp(x) ((((uptr)(x)&0x7)==0x7) &&\
     (((uptr)((*((ptr *)((uptr)(x)+1))))&0x7)==0x3))
 #define Sbytevectorp(x) ((((uptr)(x)&0x7)==0x7) &&\
-    (((uptr)((*((ptr *)((uptr)(x)+1))))&0x7)==0x5))
+    (((uptr)((*((ptr *)((uptr)(x)+1))))&0x3)==0x1))
 #define Sstringp(x) ((((uptr)(x)&0x7)==0x7) &&\
-    (((uptr)((*((ptr *)((uptr)(x)+1))))&0x7)==0x1))
+    (((uptr)((*((ptr *)((uptr)(x)+1))))&0x7)==0x2))
 #define Sbignump(x) ((((uptr)(x)&0x7)==0x7) &&\
     (((uptr)((*((ptr *)((uptr)(x)+1))))&0x1F)==0x6))
 #define Sboxp(x) ((((uptr)(x)&0x7)==0x7) &&\
@@ -103,7 +103,7 @@ typedef unsigned char octet;
 #define Svector_ref(x,i) (((ptr *)((uptr)(x)+5))[i])
 #define Sfxvector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
 #define Sfxvector_ref(x,i) (((ptr *)((uptr)(x)+5))[i])
-#define Sbytevector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>4))
+#define Sbytevector_length(x) ((iptr)((uptr)(*((iptr *)((uptr)(x)+1)))>>3))
 #define Sbytevector_u8_ref(x,i) (((octet *)((uptr)(x)+9))[i])
 /* Warning: Sbytevector_data(x) returns a pointer into x. */
 #define Sbytevector_data(x) &Sbytevector_u8_ref(x,0)

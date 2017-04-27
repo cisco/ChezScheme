@@ -58,6 +58,16 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Record equality and hashing (9.4.1)}
+
+The new procedures \scheme{record-type-equal-procedure} and
+\scheme{record-type-hash-procedure} can be used to customize the
+handling of records by \scheme{equal?} and \scheme{hash}, and
+the new procedures \scheme{record-equal-procedure} and
+\scheme{record-hash-procedure} can be used to look up the
+applicable (possibly inherited) equality and hashing procedures
+for specific record instances.
+
 \subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.4.1)}
 
 Support for immutable vectors, fxvectors, bytevectors, strings, and boxes
@@ -1479,6 +1489,17 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
+
+The C heap storage for inaccessible mutexes and conditions is now reclaimed.
+[This bug dated back to Version 6.5.]
+
+\subsection{Missing guardian entries when a thread exits (9.4.1)}
+
+A bug that causes guardian entries for a thread to be lost when a
+thread exits has been fixed.
+[This bug dated back to Version 6.5.]
 
 \subsection{Incorrect code for certain nested \protect\scheme{if} patterns (9.4.1)}
 

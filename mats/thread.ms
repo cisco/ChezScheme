@@ -1,5 +1,5 @@
 ;;; thread.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -1435,6 +1435,27 @@
                 (condition-wait c m)
                 (loop))))))
     -1.5)
+  ($thread-check)
+  (parameterize ([collect-request-handler void])
+    (define (expect-error what thunk)
+      (guard (c [(and (message-condition? c)
+                      (equal? (condition-message c)
+                        (format "~a is defunct" what)))])
+        (thunk)
+        (error #f "error expected")))
+    (let ([g (make-guardian)])
+      (g (make-mutex))
+      (collect)
+      (let ([m (g)])
+        (expect-error 'mutex (lambda () (mutex-acquire m)))
+        (expect-error 'mutex (lambda () (mutex-release m)))
+        (expect-error 'mutex (lambda () (condition-wait (make-condition) m))))
+      (g (make-condition))
+      (collect)
+      (let ([c (g)])
+        (expect-error 'condition (lambda () (condition-wait c (make-mutex))))
+        (expect-error 'condition (lambda () (condition-broadcast c)))
+        (expect-error 'condition (lambda () (condition-signal c))))))
  )
 
 (mat make-thread-parameter

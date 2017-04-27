@@ -1,5 +1,5 @@
 ;;; primdata.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -295,7 +295,7 @@
   (list-tail [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (list-ref [sig [(pair sub-index) -> (ptr)]] [flags mifoldable discard ieee r5rs cp02])
   (map [sig [(procedure list list ...) -> (list)]] [flags cp02 cp03 ieee r5rs true])
-  (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp03 ieee r5rs])
+  (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp02 cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03])
@@ -1513,7 +1513,11 @@
   (record? [sig [(ptr) (ptr rtd) -> (boolean)]] [flags pure mifoldable discard cp02])
   (record-constructor [sig [(sub-ptr) -> (procedure)]] [flags cp02]) ; accepts rtd or rcd
   (record-constructor-descriptor? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02])
+  (record-equal-procedure [sig [(record record) -> (maybe-procedure)]] [flags discard])
+  (record-hash-procedure [sig [(record) -> (maybe-procedure)]] [flags discard])
   (record-reader [sig [(sub-ptr) -> (ptr)] [(sub-ptr sub-ptr) -> (void)]] [flags])
+  (record-type-equal-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
+  (record-type-hash-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (record-writer [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (register-signal-handler [sig [(sint procedure) -> (void)]] [flags])
   (remove-foreign-entry [sig [(string) -> (void)]] [flags true])
@@ -1706,6 +1710,7 @@
   ($clear-pass-stats [flags])
   ($close-files [flags])
   ($close-resurrected-files [flags])
+  ($close-resurrected-mutexes&conditions [feature pthreads] [flags])
   ($closure-code [flags])
   ($closure-length [flags])
   ($closure-ref [flags])
@@ -1995,6 +2000,7 @@
   ($invoke-library [flags])
   ($invoke-program [flags])
   ($io-init [flags])
+  ($keep-live [flags])
   ($last-new-vector-element [flags])
   ($lexical-error [flags])
   ($library-requirements-options [flags])
@@ -2098,6 +2104,8 @@
   ($recompile-importer-path [flags])
   ($record [flags cp02 unrestricted alloc]) ; first arg should be an rtd, but we don't check
   ($record? [flags pure mifoldable discard])
+  ($record-equal-procedure [flags discard])
+  ($record-hash-procedure [flags discard])
   ($record-oops #;[sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
   ($record-type-descriptor [flags pure mifoldable discard true])
   ($record-type-field-offsets [flags pure mifoldable discard true])

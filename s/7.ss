@@ -1,6 +1,6 @@
 "7.ss"
 ;;; 7.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -631,7 +631,7 @@
 
 (define $scheme-greeting
   (lambda ()
-    (format "~a\nCopyright 1984-2016 Cisco Systems, Inc.\n"
+    (format "~a\nCopyright 1984-2017 Cisco Systems, Inc.\n"
       (scheme-version))))
 
 (define $session-key #f)
@@ -671,6 +671,8 @@
                 (flush-output-port (console-output-port)))
               (do-gc g gtarget)
               ($close-resurrected-files)
+              (when-feature pthreads
+                ($close-resurrected-mutexes&conditions))
               (when (collect-notify)
                 (fprintf (console-output-port) "done]~%")
                 (flush-output-port (console-output-port)))

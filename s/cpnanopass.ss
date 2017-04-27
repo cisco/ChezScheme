@@ -1,6 +1,6 @@
 "cpnanopass.ss"
 ;;; cpnanopass.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -3729,6 +3729,8 @@
           [e* `(values ,(make-info-call src sexpr #f #f #f) ,e* ...)])
         (define-inline 2 eq?
           [(e1 e2) (%inline eq? ,e1 ,e2)])
+        (define-inline 2 $keep-live
+          [(e) (%seq ,(%inline keep-live ,e) ,(%constant svoid))])
         (let ()
           (define (zgo src sexpr e e1 e2 r6rs?)
             (build-simple-or

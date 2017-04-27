@@ -1,5 +1,5 @@
 /* thread.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,21 @@ static IBOOL destroy_thread(tc) ptr tc; {
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr **)EAP(tc), (ptr **)REAL_EAP(tc));
 
+     /* process guardian entries */
+      {
+	ptr target, ges, obj, next; seginfo *si;
+	target = S_G.guardians[0];
+	for (ges = GUARDIANENTRIES(tc); ges != Snil; ges = next) {
+	  obj = GUARDIANOBJ(ges);
+	  next = GUARDIANNEXT(ges);
+	  if (!IMMEDIATE(obj) && (si = MaybeSegInfo(ptr_get_segment(obj))) != NULL && si->generation != static_generation) {
+	    INITGUARDIANNEXT(ges) = target;
+	    target = ges;
+	  }
+	}
+	S_G.guardians[0] = target;
+      }
+
      /* deactivate thread */
       if (ACTIVE(tc)) {
         SETSYMVAL(S_G.active_threads_id,
@@ -185,6 +200,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       free((void *)THREADTC(thread));
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
+      break;
     }
     ls = &Scdr(*ls);
   }
@@ -241,6 +257,11 @@ scheme_mutex_t *S_make_mutex() {
   m->count = 0;
 
   return m;
+}
+
+void S_mutex_free(m) scheme_mutex_t *m; {
+  s_thread_mutex_destroy(&m->pmutex);
+  free(m);
 }
 
 void S_mutex_acquire(m) scheme_mutex_t *m; {
@@ -304,6 +325,11 @@ s_thread_cond_t *S_make_condition() {
     S_error("make-condition", "unable to malloc condition");
   s_thread_cond_init(c);
   return c;
+}
+
+void S_condition_free(c) s_thread_cond_t *c; {
+  s_thread_cond_destroy(c);
+  free(c);
 }
 
 #ifdef FEATURE_WINDOWS

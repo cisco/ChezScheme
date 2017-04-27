@@ -7248,6 +7248,15 @@ record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 fo
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type single-float".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double-float".
+record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a record-type descriptor".
+record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a record-type descriptor".
+record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a procedure or #f".
+record.mo:Expected error in mat record-equal/hash: "record-type-hash-procedure: 7 is not a record-type descriptor".
+record.mo:Expected error in mat record-equal/hash: "record-type-hash-procedure: 7 is not a record-type descriptor".
+record.mo:Expected error in mat record-equal/hash: "record-type-hash-procedure: 7 is not a procedure or #f".
+record.mo:Expected error in mat record-equal/hash: "record-equal-procedure: 7 is not a record".
+record.mo:Expected error in mat record-equal/hash: "record-equal-procedure: 7 is not a record".
+record.mo:Expected error in mat record-equal/hash: "record-hash-procedure: 7 is not a record".
 record.mo:Expected error in mat record21: "duplicate field names in record definition (define-record foo (x x))".
 record.mo:Expected error in mat record21: "duplicate field names in record definition (define-record foo (x (mutable x)))".
 record.mo:Expected error in mat record21: "duplicate field names in record definition (define-record foo (x) ((x 3)))".

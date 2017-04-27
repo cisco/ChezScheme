@@ -1,4 +1,4 @@
-% Copyright 2005-2016 Cisco Systems, Inc.
+% Copyright 2005-2017 Cisco Systems, Inc.
 %
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -1222,7 +1222,7 @@ command-line option.
 \endentryheader
 
 These procedures are like their non-\scheme{maybe} counterparts but
-do not compile the source file if the object file is out-of-date.
+compile the source file only if the object file is out-of-date.
 An object file \var{X} is considered out-of-date if it does not exist or
 if it is older than the source file or any files included (via \scheme{include})
 when \var{X} was created.
@@ -1330,7 +1330,7 @@ and requirements of libraries to be loaded at run time,
 \scheme{compile-whole-program} discards unused code and optimizes
 across program and library boundaries, potentially reducing program
 load time, run time, and memory requirements.
-Some optimization also occurs even accross the boundaries of libraries
+Some optimization also occurs even across the boundaries of libraries
 that are not incorporated into the output, though this optimization
 is limited in nature.
 

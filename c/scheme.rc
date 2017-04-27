@@ -15,7 +15,7 @@ VS_VERSION_INFO VERSIONINFO
    VALUE "FileDescription", "Chez Scheme Version 9.4.1"
    VALUE "FileVersion", "9.4.1"
    VALUE "InternalName", "scheme.exe"
-   VALUE "LegalCopyright", "Copyright 1984-2016 Cisco Systems, Inc.  Licensed under the Apache License, Version 2.0."
+   VALUE "LegalCopyright", "Copyright 1984-2017 Cisco Systems, Inc.  Licensed under the Apache License, Version 2.0."
    VALUE "OriginalFilename", "scheme.exe"
    VALUE "ProductName", "Chez Scheme"
    VALUE "ProductVersion", "9.4.1"
