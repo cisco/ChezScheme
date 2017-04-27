@@ -1,5 +1,5 @@
 # Mf-base
-# Copyright 1984-2016 Cisco Systems, Inc.
+# Copyright 1984-2017 Cisco Systems, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ checkboot:
                  '(#%$$fasl-file-equal? "../boot/$m/sbb" "../boot/$m/petite.boot" #t)'\
                  '(#%$$fasl-file-equal? "../boot/$m/scb" "../boot/$m/scheme.boot" #t)'\
                  '(printf "bootfile comparison succeeded\n"))'\
-             | ../bin/scheme -b ../boot/$m/sbb -q
+             | ../bin/$m/scheme -b ../boot/$m/sbb -q
 
 xcheckboot: ${macroobj} ${patchfile}
 	@echo '(reset-handler abort)'\

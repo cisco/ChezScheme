@@ -1,5 +1,5 @@
 /* prim.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,6 +211,7 @@ static void s_instantiate_code_object() {
 
     CODERELOC(new) = newreloc;
     CODENAME(new) = CODENAME(old);
+    CODEARITYMASK(new) = CODEARITYMASK(old);
     CODEFREE(new) = CODEFREE(old);
     CODEINFO(new) = CODEINFO(old);
     CODEPINFOS(new) = CODEPINFOS(old);

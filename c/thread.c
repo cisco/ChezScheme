@@ -1,5 +1,5 @@
 /* thread.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ void S_thread_init() {
     S_G.threadno = FIX(0);
 
 #ifdef PTHREADS
-   /* this is also reset in main.c after heap restoration */
+   /* this is also reset in scheme.c after heap restoration */
     s_thread_mutex_init(&S_tc_mutex.pmutex);
     S_tc_mutex.owner = s_thread_self();
     S_tc_mutex.count = 0;
@@ -44,10 +44,10 @@ void S_thread_init() {
    when there is no current thread.  we have to avoid thread-local
    allocation in at least the latter case, so we call vector_in and
    cons_in and arrange for S_thread to use find_room rather than
-   thread_find_room.  main.c does part of the initialization of the
+   thread_find_room.  scheme.c does part of the initialization of the
    base thread (e.g., parameters, current input/output ports) in one
    or more places. */
-ptr S_create_thread_object() {
+ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   ptr thread, tc;
   INT i;
 
@@ -56,13 +56,14 @@ ptr S_create_thread_object() {
   if (S_threads == Snil) {
     tc = (ptr)S_G.thread_context;
   } else { /* clone parent */
-    ptr p_tc = get_thread_context();
     ptr p_v = PARAMETERS(p_tc);
     iptr i, n = Svector_length(p_v);
    /* use S_vector_in to avoid thread-local allocation */
     ptr v = S_vector_in(space_new, 0, n);
 
     tc = (ptr)malloc(size_tc);
+    if (tc == (ptr)0)
+      S_error(who, "unable to malloc thread data structure");
     memcpy((void *)tc, (void *)p_tc, size_tc);
 
     for (i = 0; i < n; i += 1)
@@ -128,14 +129,12 @@ ptr S_create_thread_object() {
 #ifdef PTHREADS
 IBOOL Sactivate_thread() { /* create or reactivate current thread */
   ptr tc = get_thread_context();
+
   if (tc == (ptr)0) { /* thread created by someone else */
     ptr thread;
 
    /* borrow base thread for now */
-    tc = (ptr)S_G.thread_context;
-    s_thread_setspecific(S_tc_key, tc);
-
-    thread = S_create_thread_object();
+    thread = S_create_thread_object("Sactivate_thread", S_G.thread_context);
     s_thread_setspecific(S_tc_key, (ptr)THREADTC(thread));
     return 1;
   } else {
@@ -173,6 +172,21 @@ static IBOOL destroy_thread(tc) ptr tc; {
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr **)EAP(tc), (ptr **)REAL_EAP(tc));
 
+     /* process guardian entries */
+      {
+	ptr target, ges, obj, next; seginfo *si;
+	target = S_G.guardians[0];
+	for (ges = GUARDIANENTRIES(tc); ges != Snil; ges = next) {
+	  obj = GUARDIANOBJ(ges);
+	  next = GUARDIANNEXT(ges);
+	  if (!IMMEDIATE(obj) && (si = MaybeSegInfo(ptr_get_segment(obj))) != NULL && si->generation != static_generation) {
+	    INITGUARDIANNEXT(ges) = target;
+	    target = ges;
+	  }
+	}
+	S_G.guardians[0] = target;
+      }
+
      /* deactivate thread */
       if (ACTIVE(tc)) {
         SETSYMVAL(S_G.active_threads_id,
@@ -186,6 +200,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       free((void *)THREADTC(thread));
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
+      break;
     }
     ls = &Scdr(*ls);
   }
@@ -197,7 +212,8 @@ ptr S_fork_thread(thunk) ptr thunk; {
   ptr thread;
   int status;
 
-  thread = S_create_thread_object();
+  /* pass the current thread's context as the parent thread */
+  thread = S_create_thread_object("fork-thread", get_thread_context());
   CP(THREADTC(thread)) = thunk;
 
   if ((status = s_thread_create(start_thread, (void *)THREADTC(thread))) != 0) {
@@ -241,6 +257,11 @@ scheme_mutex_t *S_make_mutex() {
   m->count = 0;
 
   return m;
+}
+
+void S_mutex_free(m) scheme_mutex_t *m; {
+  s_thread_mutex_destroy(&m->pmutex);
+  free(m);
 }
 
 void S_mutex_acquire(m) scheme_mutex_t *m; {
@@ -306,10 +327,68 @@ s_thread_cond_t *S_make_condition() {
   return c;
 }
 
-void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
+void S_condition_free(c) s_thread_cond_t *c; {
+  s_thread_cond_destroy(c);
+  free(c);
+}
+
+#ifdef FEATURE_WINDOWS
+
+static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_t *mutex, int typeno, long sec, long nsec) {
+  if (typeno == time_utc) {
+    struct timespec now;
+    s_gettime(time_utc, &now);
+    sec -= (long)now.tv_sec;
+    nsec -= now.tv_nsec;
+    if (nsec < 0) {
+      sec -= 1;
+      nsec += 1000000000;
+    }
+  }
+  if (sec < 0) {
+    sec = 0;
+    nsec = 0;
+  }
+  if (SleepConditionVariableCS(cond, mutex, sec*1000 + nsec/1000000)) {
+    return 0;
+  } else if (GetLastError() == ERROR_TIMEOUT) {
+    return ETIMEDOUT;
+  } else {
+    return EINVAL;
+  }
+}
+
+#else /* FEATURE_WINDOWS */
+
+static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_t *mutex, int typeno, long sec, long nsec) {
+  struct timespec t;
+  if (typeno == time_duration) {
+    struct timespec now;
+    s_gettime(time_utc, &now);
+    t.tv_sec = now.tv_sec + sec;
+    t.tv_nsec = now.tv_nsec + nsec;
+    if (t.tv_nsec >= 1000000000) {
+      t.tv_sec += 1;
+      t.tv_nsec -= 1000000000;
+    }
+  } else {
+    t.tv_sec = sec;
+    t.tv_nsec = nsec;
+  }
+  return pthread_cond_timedwait(cond, mutex, &t);
+}
+
+#endif /* FEATURE_WINDOWS */
+
+#define Srecord_ref(x,i) (((ptr *)((uptr)(x)+record_data_disp))[i])
+
+IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   ptr tc = get_thread_context();
   s_thread_t self = s_thread_self();
   iptr count;
+  INT typeno;
+  long sec;
+  long nsec;
   INT status;
 
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
@@ -318,12 +397,20 @@ void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
   if (count != 1)
     S_error1("condition-wait", "mutex ~s is recursively locked", m);
 
+  if (t != Sfalse) {
+    /* Keep in sync with ts record in s/date.ss */
+    typeno = Sinteger32_value(Srecord_ref(t,0));
+    sec = Sinteger32_value(Scar(Srecord_ref(t,1)));
+    nsec = Sinteger32_value(Scdr(Srecord_ref(t,1)));
+  }
+
   if (c == &S_collect_cond || DISABLECOUNT(tc) == 0) {
     deactivate_thread(tc)
   }
 
   m->count = 0;
-  status = s_thread_cond_wait(c, &m->pmutex);
+  status = (t == Sfalse) ? s_thread_cond_wait(c, &m->pmutex) :
+    s_thread_cond_timedwait(c, &m->pmutex, typeno, sec, nsec);
   m->owner = self;
   m->count = 1;
 
@@ -331,8 +418,13 @@ void S_condition_wait(c, m) s_thread_cond_t *c; scheme_mutex_t *m; {
     reactivate_thread(tc)
   }
 
-  if (status != 0) {
+  if (status == 0) {
+    return 1;
+  } else if (status == ETIMEDOUT) {
+    return 0;
+  } else {
     S_error1("condition-wait", "failed: ~a", S_strerror(status));
+    return 0;
   }
 }
 #endif /* PTHREADS */

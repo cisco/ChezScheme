@@ -1,5 +1,5 @@
 ;;; misc.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -1474,6 +1474,23 @@
            (define x (f))
            x)))
     '17)
+  ; check for regression: cpvalid leaving behind a cpvalid-defer form
+  (equivalent-expansion?
+    (parameterize ([run-cp0 (lambda (cp0 x) x)]
+                   [optimize-level 2])
+      (expand/optimize '(letrec* ([f (letrec ([x x]) (lambda () x))]) 0)))
+    '(let ([f (let ([valid? #f])
+                (let ([x (#2%void)])
+                  (set! x
+                    (begin
+                      (if valid?
+                          (#2%void)
+                          (#2%$source-violation #f #f #t
+                            "attempt to reference undefined variable ~s" 'x))
+                      x))
+                  (set! valid? #t)
+                  (lambda () x)))])
+       0))
 )
 
 (mat compile-profile
@@ -4872,3 +4889,79 @@
                         (fx+ success 1)
                         success)))))))
 )
+
+(mat procedure-arity-mask
+  (equal? (procedure-arity-mask (lambda () #f)) 1)
+  (equal? (procedure-arity-mask (lambda (x) x)) 2)
+  (equal? (procedure-arity-mask (lambda (x y z w) x)) 16)
+  (or (eq? (current-eval) interpret)
+      (equal? (procedure-arity-mask (lambda (x y z w a b c d e f g h i j) x)) (ash 1 14)))
+  (or (eq? (current-eval) interpret)
+      (and
+        (equal? (procedure-arity-mask (case-lambda)) 0)
+        (equal? (procedure-arity-mask (case-lambda [(x) x] [(x y) y])) 6)
+        (equal? (procedure-arity-mask (case-lambda [() x] [(x . y) y])) -1)
+        (equal? (procedure-arity-mask (case-lambda [() x] [(x y . z) y])) (bitwise-not 2))
+        (equal? (procedure-arity-mask (case-lambda [(x y . z) y] [() x])) (bitwise-not 2))
+        (equal? (procedure-arity-mask (case-lambda [(x) x] [(x y) y] [(x y z) z])) 14)))
+  (equal? (procedure-arity-mask list) -1)
+  (equal? (procedure-arity-mask cons) 4)
+  (equal? (procedure-arity-mask list*) (bitwise-not 1))
+
+  (equal? (procedure-arity-mask +) -1)
+  (equal? (procedure-arity-mask -) -2)
+  (equal? (procedure-arity-mask max) -2)
+
+  (equal? (call/cc procedure-arity-mask) -1)
+  (equal? (call/1cc procedure-arity-mask) -1)
+  (equal? (procedure-arity-mask #%$null-continuation) 0)
+  (equal?
+    (parameterize ([enable-cp0 #t]) (compile '(procedure-arity-mask
+                                                (case-lambda [a a] [(b) b]))))
+    -1)
+  (equal?
+    (parameterize ([enable-cp0 #f]) (compile '(procedure-arity-mask
+                                                (case-lambda [a a] [(b) b]))))
+    -1)
+
+  (error? ; invalid argument
+    (procedure-arity-mask 17))
+  )
+
+(mat fasl-immutable
+  (begin
+    (define immutable-objs (list (vector->immutable-vector '#(1 2 3))
+                                 (fxvector->immutable-fxvector '#vfx(1 2 3))
+                                 (string->immutable-string "abc")
+                                 (bytevector->immutable-bytevector #vu8(1 2 3))
+                                 (box-immutable 1)))
+    (define immutable-zero-objs (list (vector->immutable-vector '#())
+                                      (fxvector->immutable-fxvector '#vfx())
+                                      (string->immutable-string "")
+                                      (bytevector->immutable-bytevector #vu8())
+                                      (box-immutable 1)))
+    (define (immutable? l)
+      (and (immutable-vector? (list-ref l 0))
+           (immutable-fxvector? (list-ref l 1))
+           (immutable-string? (list-ref l 2))
+           (immutable-bytevector? (list-ref l 3))
+           (immutable-box? (list-ref l 4))))
+    (define (round-trip l)
+      (let-values ([(o get) (open-bytevector-output-port)])
+        (fasl-write l o)
+        (immutable? (fasl-read (open-bytevector-input-port (get))))))
+    #t)
+
+  (immutable? immutable-objs)
+  (immutable? immutable-zero-objs)
+  (round-trip immutable-objs)
+  (round-trip immutable-zero-objs)
+
+  ;; Make sure `fasl-read` didn't mark "mutable" null values
+  ;; as immutable:
+  (mutable-vector? '#())
+  (mutable-fxvector? '#vfx())
+  (mutable-string? "")
+  (mutable-bytevector? '#vu8())
+  
+ )

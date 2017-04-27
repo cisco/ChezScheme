@@ -1,5 +1,5 @@
 /* thread.h
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #ifdef FEATURE_WINDOWS
 
 #include <process.h>
+#include <time.h>
 
 /* learned from http://locklessinc.com/articles/pthreads_on_windows/ which
  * Windows API types and functions to use to support mutexes and condition

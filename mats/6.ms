@@ -1,5 +1,5 @@
 ;;; 6.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -1085,6 +1085,16 @@
                  (pretty-print '#(1 2 3 3 3))
                  (pretty-print '#vfx(5 7 9 8 8 9 -1 -1)))))
            "#5(1 2 3)\n#8vfx(5 7 9 8 8 9 -1)\n")
+   (equal? (parameterize ([print-extended-identifiers #f])
+             (with-output-to-string
+               (lambda ()
+                 (for-each pretty-print '(1+ +++ .. |12| xyz aBc |-155| |.5e7| |.5e|)))))
+           "\\x31;+\n\\x2B;++\n\\x2E;.\n\\x31;2\nxyz\naBc\n\\x2D;155\n\\x2E;5e7\n\\x2E;5e\n")
+   (equal? (parameterize ([print-extended-identifiers #t])
+             (with-output-to-string
+               (lambda ()
+                 (for-each pretty-print '(1+ +++ .. |12| xyz aBc |-155| |.5e7| |.5e|)))))
+           "1+\n+++\n..\n\\x31;2\nxyz\naBc\n\\x2D;155\n\\x2E;5e7\n.5e\n")
    (equal? (parameterize ([print-gensym #f])
               (format "~s" '(#3# #3=#{g0 fool})))
            "(g0 g0)")
@@ -2622,8 +2632,8 @@
       (equal?
        (parameterize ([cd "/"] [source-directories (list (cd))])
          (call-with-values
-	   (lambda () (((inspect/object fatfib) 'code) 'source-path))
-	   list))
+           (lambda () (((inspect/object fatfib) 'code) 'source-path))
+           list))
        (list (format "~a/../examples/fatfib.ss" (cd)) 16 4)))
   (begin
     (parameterize ([source-directories (list (parameterize ([cd ".."]) (cd)))])

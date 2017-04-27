@@ -1,0 +1,2 @@
+*.h linguist-language=C
+*.ms linguist-language=Scheme

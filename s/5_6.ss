@@ -1,6 +1,6 @@
 "5_6.ss"
 ;;; 5_6.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -69,9 +69,20 @@
       ($oops 'vector-copy "~s is not a vector" v))
     ($vector-copy v (vector-length v))))
 
+(set-who! vector->immutable-vector
+  (lambda (v)
+    (cond
+      [(immutable-vector? v) v]
+      [(eqv? v '#()) ($tc-field 'null-immutable-vector ($tc))]
+      [else
+       (unless (vector? v) ($oops who "~s is not a vector" v))
+       (let ([v2 (vector-copy v)])
+         ($vector-set-immutable! v2)
+         v2)])))
+
 (set-who! vector-fill!
   (lambda (v obj)
-    (unless (vector? v) ($oops who "~s is not a vector" v))
+    (unless (mutable-vector? v) ($oops who "~s is not a mutable vector" v))
     (let ([n (vector-length v)])
       (do ([i 0 (fx+ i 1)])
           ((fx= i n) v)
@@ -115,6 +126,17 @@
             ($ptr-copy! fxv1 (constant fxvector-data-disp) fxv2
               (constant fxvector-data-disp) n))
         fxv2))))
+
+(set-who! fxvector->immutable-fxvector
+  (lambda (v)
+    (cond
+      [(immutable-fxvector? v) v]
+      [(eqv? v '#vfx()) ($tc-field 'null-immutable-fxvector ($tc))]
+      [else
+       (unless (fxvector? v) ($oops who "~s is not a fxvector" v))
+       (let ([v2 (fxvector-copy v)])
+         ($fxvector-set-immutable! v2)
+         v2)])))
 
 (set! vector-map
   (case-lambda
@@ -347,7 +369,7 @@
   (set-who! vector-sort!
     (lambda (elt< v)
       (unless (procedure? elt<) ($oops who "~s is not a procedure" elt<))
-      (unless (vector? v) ($oops who "~s is not a vector" v))
+      (unless (mutable-vector? v) ($oops who "~s is not a mutable vector" v))
       (let ([n (vector-length v)])
         (unless (fx<= n 1)
           (let ([outvec (dovsort! elt< v n)])

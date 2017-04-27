@@ -1,5 +1,5 @@
 ;;; 7.ms
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -3300,6 +3300,25 @@ evaluating module init
              (new-cafe))
            (get))))
      "Huh? \nException: invalid syntax (if)\nHuh? \n")
+   (equal?
+     (separate-eval
+       `(let ([ip (open-string-input-port "
+                    (base-exception-handler
+                      (lambda (c)
+                        (fprintf (console-output-port) \"~%>>> \")
+                        (display-condition c (console-output-port))
+                        (fprintf (console-output-port) \" <<<~%\")
+                        (reset)))
+                    (if)")])
+          (let-values ([(op get) (open-string-output-port)])
+            (parameterize ([console-input-port ip]
+                           [console-output-port op]
+                           [console-error-port op]
+                           [#%$cafe 0]
+                           [waiter-prompt-string "Huh?"])
+              (new-cafe))
+            (get))))
+     "\"Huh? Huh? \\n>>> Exception: invalid syntax (if) <<<\\nHuh? \\n\"\n")
  )
 
 (mat reset

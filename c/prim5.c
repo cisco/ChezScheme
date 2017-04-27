@@ -1,5 +1,5 @@
 /* prim5.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ static void s_set_code_long2 PROTO((ptr p, ptr n, ptr h, ptr l));
 static ptr s_set_code_quad PROTO((ptr p, ptr n, ptr x));
 static ptr s_set_reloc PROTO((ptr p, ptr n, ptr e));
 static ptr s_flush_instruction_cache PROTO((void));
-static ptr s_make_code PROTO((iptr flags, iptr free, ptr name, iptr n, ptr info, ptr pinfos));
+static ptr s_make_code PROTO((iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos));
 static ptr s_make_reloc_table PROTO((ptr codeobj, ptr n));
 static ptr s_make_closure PROTO((ptr offset, ptr codeobj));
 static ptr s_fxrandom PROTO((ptr n));
@@ -847,8 +847,8 @@ static ptr s_flush_instruction_cache() {
     return Svoid;
 }
 
-static ptr s_make_code(flags, free, name, n, info, pinfos)
-                       iptr flags, free, n; ptr name, info, pinfos; {
+static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
+                       iptr flags, free, n; ptr name, arity_mark, info, pinfos; {
     ptr co;
 
     tc_mutex_acquire()
@@ -856,6 +856,7 @@ static ptr s_make_code(flags, free, name, n, info, pinfos)
     tc_mutex_release()
     CODEFREE(co) = free;
     CODENAME(co) = name;
+    CODEARITYMASK(co) = arity_mark;
     CODEINFO(co) = info;
     CODEPINFOS(co) = pinfos;
     return co;
@@ -1446,12 +1447,14 @@ void S_prim5_init() {
 #ifdef PTHREADS
     Sforeign_symbol("(cs)fork_thread", (void *)S_fork_thread);
     Sforeign_symbol("(cs)make_mutex", (void *)S_make_mutex);
+    Sforeign_symbol("(cs)mutex_free", (void *)S_mutex_free);
     Sforeign_symbol("(cs)backdoor_thread", (void *)s_backdoor_thread);
     Sforeign_symbol("(cs)threads", (void *)s_threads);
     Sforeign_symbol("(cs)mutex_acquire", (void *)s_mutex_acquire);
     Sforeign_symbol("(cs)mutex_release", (void *)S_mutex_release);
     Sforeign_symbol("(cs)mutex_acquire_noblock", (void *)s_mutex_acquire_noblock);
     Sforeign_symbol("(cs)make_condition", (void *)S_make_condition);
+    Sforeign_symbol("(cs)condition_free", (void *)S_condition_free);
     Sforeign_symbol("(cs)condition_broadcast", (void *)s_condition_broadcast);
     Sforeign_symbol("(cs)condition_signal", (void *)s_condition_signal);
     Sforeign_symbol("(cs)condition_wait", (void *)S_condition_wait);

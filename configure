@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # configure
-# Copyright 1984-2016 Cisco Systems, Inc.
+# Copyright 1984-2017 Cisco Systems, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -306,7 +306,7 @@ else
   fi
 
   if [ ! -f 'zlib/configure' ] ; then
-    rmdir zlib && (curl -L -o v1.2.8.tar.gz https://github.com/madler/zlib/archive/v1.2.8.tar.gz && tar -xzf v1.2.8.tar.gz && mv zlib-1.2.8 zlib && rm v1.2.8.tar.gz) || exit 1
+    rmdir zlib && (curl -L -o v1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz && tar -xzf v1.2.11.tar.gz && mv zlib-1.2.11 zlib && rm v1.2.11.tar.gz) || exit 1
   fi
 
   if [ ! -f 'stex/Mf-stex' ] ; then

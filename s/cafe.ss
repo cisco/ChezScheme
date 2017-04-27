@@ -1,6 +1,6 @@
 "cafe.ss"
 ;;; cafe.ss
-;;; Copyright 1984-2016 Cisco Systems, Inc.
+;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -209,7 +209,8 @@ Type e to exit interrupt handler and continue
                  (reset-handler (lambda () (k2)))
                  (call/cc (lambda (k) (set! k2 k)))
                  (parameterize ([$cafe (+ ($cafe) 1)] [$interrupt reset])
-                   (with-exception-handler default-exception-handler
+                   (with-exception-handler
+                     (lambda (c) ((base-exception-handler) c))
                      (lambda ()
                        (waiter ($cafe) eval))))))))]))))
 )

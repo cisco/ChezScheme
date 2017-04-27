@@ -1,5 +1,5 @@
 /* expeditor.c
- * Copyright 1984-2016 Cisco Systems, Inc.
+ * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 /* locally defined functions */
 static IBOOL s_ee_init_term(void);
 static ptr s_ee_read_char(IBOOL blockp);
-static void s_ee_write_char(INT c);
+static void s_ee_write_char(wchar_t c);
 static void s_ee_flush(void);
 static ptr s_ee_get_screen_size(void);
 static void s_ee_raw(void);
@@ -521,6 +521,11 @@ static ptr s_ee_get_clipboard(void) {
   return x;
 }
 
+static void s_ee_write_char(wchar_t c) {
+  if (c > 255) c = '?';
+  putchar(c);
+}
+
 #else /* WIN32 */
 #ifdef SOLARIS
 #define NCURSES_CONST
@@ -539,6 +544,9 @@ static ptr s_ee_get_clipboard(void) {
 #include <time.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <wchar.h>
+#include <locale.h>
+#include <xlocale.h>
 
 #if defined(TIOCGWINSZ) && defined(SIGWINCH) && defined(EINTR)
 #define HANDLE_SIGWINCH
@@ -561,6 +569,9 @@ static void handle_sigwinch(UNUSED int sig) {
 #define STDOUT_FD 1
 
 static IBOOL disable_auto_margin = 0, avoid_last_column = 0;
+static locale_t term_locale;
+static mbstate_t term_in_mbs;
+static mbstate_t term_out_mbs;
 
 static IBOOL s_ee_init_term(void) {
   int errret;
@@ -613,6 +624,10 @@ static IBOOL s_ee_init_term(void) {
     sigaction(SIGWINCH, &act, (struct sigaction *)0);
 #endif
 
+    term_locale = newlocale(LC_ALL_MASK, "", NULL);
+    memset(&term_out_mbs, 0, sizeof(term_out_mbs));
+    memset(&term_in_mbs, 0, sizeof(term_in_mbs));
+
     init_status = 1;
   } else {
     init_status = 0;
@@ -624,7 +639,8 @@ static IBOOL s_ee_init_term(void) {
 /* returns char, eof, #t (winched), or #f (nothing ready), the latter
    only if blockp is false */
 static ptr s_ee_read_char(IBOOL blockp) {
-  ptr msg; int fd = STDIN_FD; int n; char buf[1];
+  ptr msg; int fd = STDIN_FD; int n; char buf[1]; wchar_t wch; size_t sz;
+  locale_t old_locale;
 #ifdef PTHREADS
   ptr tc = get_thread_context();
 #endif
@@ -657,18 +673,24 @@ static ptr s_ee_read_char(IBOOL blockp) {
       n = READ(fd, buf, 1);
     }
 #endif /* PTHREADS */
-  } while (n < 0 && errno == EINTR);
 
-  if (n == 1) return Schar(buf[0]);
+    if (n == 1) {
+      old_locale = uselocale(term_locale);
+      sz = mbrtowc(&wch, buf, 1, &term_out_mbs);
+      uselocale(old_locale);
+      if (sz == 1) {
+        return Schar(wch);
+      }
+    }
+
+  } while ((n < 0 && errno == EINTR) || (n == 1 && sz == (size_t)-2));
+
   if (n == 0) return Seof_object;
 
-  msg = n < 0 ? S_strerror(errno) : Sfalse;
+  msg = S_strerror(errno);
+  S_error1("expeditor", "error reading from console: ~a", msg);
 
-  if (msg != Sfalse)
-    S_error1("expeditor", "error reading from console: ~a", msg);
-  else
-    S_error("expeditor", "error reading from console");
-
+  memset(&term_out_mbs, 0, sizeof(term_out_mbs));
   return Svoid;
 }
 
@@ -995,12 +1017,20 @@ static ptr s_ee_get_clipboard(void) {
 }
 #endif
 
-#endif /* WIN32 */
+static void s_ee_write_char(wchar_t wch) {
+  locale_t old; char buf[MB_LEN_MAX]; size_t n;
 
-static void s_ee_write_char(INT c) {
-  if ((unsigned)c > 255) c = '?';
-  putchar(c);
+  old = uselocale(term_locale);
+  n = wcrtomb(buf, wch, &term_in_mbs);
+  if (n == (size_t)-1) {
+    putchar('?');
+  } else {
+    fwrite(buf, 1, n, stdout);
+  }
+  uselocale(old);
 }
+
+#endif /* WIN32 */
 
 static void s_ee_flush(void) {
   fflush(stdout);
