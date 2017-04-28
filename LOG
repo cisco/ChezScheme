@@ -450,3 +450,4 @@
   Also add a simplification for for-each with empty lists
   with optimization level 2.
     cp0.ss, 4.ms, primdata.ss
+- added CC option to configure for selecting the compiler
