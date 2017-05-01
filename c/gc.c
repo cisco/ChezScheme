@@ -52,6 +52,7 @@ static void resweep_dirty_weak_pairs PROTO((void));
 static void add_ephemeron_to_pending PROTO((ptr p));
 static void add_trigger_ephemerons_to_repending PROTO((ptr p));
 static void check_pending_ephemerons PROTO(());
+static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
 static void clear_trigger_ephemerons PROTO(());
 
 /* MAXPTR is used to pad the sorted_locked_object vector.  The pad value must be greater than any heap address */
@@ -1929,7 +1930,7 @@ static void sweep_dirty(void) {
                 } else if (s == space_ephemeron) {
                   while (pp < ppend && *pp != forward_marker) {
                     ptr p = TYPE((ptr)pp, type_pair);
-                    add_ephemeron_to_pending(p);
+                    youngest = check_dirty_ephemeron(p, tg, youngest);
                     pp += size_ephemeron / sizeof(ptr);
                   }
                 } else {
@@ -2098,6 +2099,49 @@ static void check_pending_ephemerons() {
     check_pending_ephemeron(pe, 0);
     pe = next_pe;
   }
+}
+
+/* Like check_pending_ephemeron(), but for a dirty, old-generation
+   ephemeron (that was not yet added to the pending list), so we can
+   be less pessimistic than setting `youngest` to the target
+   generation: */
+static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
+  ptr p;
+  seginfo *si;
+
+  p = Scar(pe);
+  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+    if (si->space & space_old && !locked(p)) {
+      if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+        INITCAR(pe) = FWDADDRESS(p);
+        relocate(&INITCDR(pe))
+        youngest = tg;
+      } else {
+        /* Not reached, so far; install as trigger */
+        EPHEMERONTRIGGERNEXT(pe) = si->trigger_ephemerons;
+        si->trigger_ephemerons = pe;
+        EPHEMERONNEXT(pe) = trigger_ephemerons;
+        trigger_ephemerons = pe;
+        /* Make the consistent (but pessimistic w.r.t. to wrong-way
+           pointers) assumption that the key will stay live and move
+           to the target generation. That assumption covers the value
+           part, too, since it can't end up younger than the target
+           generation. */
+        youngest = tg;
+      }
+    } else {
+      int pg;
+      if ((pg = si->generation) < youngest)
+        youngest = pg;
+      relocate_dirty(&INITCDR(pe), tg, youngest)
+    }
+  } else {
+    /* Non-collectable key means that the value determines
+       `youngest`: */
+    relocate_dirty(&INITCDR(pe), tg, youngest)
+  }
+
+  return youngest;
 }
 
 static void clear_trigger_ephemerons() {
