@@ -485,7 +485,7 @@ syntax for ephemeron pairs.
 \endschemedisplay
 
 \noindent
-As for weak pairs, the last two expressions of the middle example
+As with weak pairs, the last two expressions of the middle example
 above may in fact return \scheme{(a . b)} if a garbage collection
 promoting the pair into an older generation occurs prior to the
 assignment of \scheme{x} to \scheme{*}. In the last example above,
@@ -504,7 +504,7 @@ reference, and that non-weak reference prevents the car field from becoming
 \schemedisplay
 (ephemeron-pair? (ephemeron-cons 'a 'b)) ;=> #t
 (ephemeron-pair? (cons 'a 'b)) ;=> #f
-(ephemeron-pair? (weaj-cons 'a 'b)) ;=> #f
+(ephemeron-pair? (weak-cons 'a 'b)) ;=> #f
 (ephemeron-pair? "oops") ;=> #f
 \endschemedisplay
 
