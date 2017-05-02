@@ -450,3 +450,6 @@
   Also add a simplification for for-each with empty lists
   with optimization level 2.
     cp0.ss, 4.ms, primdata.ss
+- support Windows build on Bash/WSL
+    BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
+    c/Mf-*nt, mats/Mf-*, s/Mf-base

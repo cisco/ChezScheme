@@ -41,7 +41,15 @@ installscriptname="scheme-script"
 : ${CFLAGS:=""}
 : ${LDFLAGS:=""}
 
-case `uname` in
+# On WSL, set OS to "Windows_NT" to create a Windows
+# build instead of a Linux (on Windows) build:
+if [ "$OS" = "Windows_NT" ] ; then
+    CONFIG_UNAME="CYGWIN_NT-"
+else
+    CONFIG_UNAME=`uname`
+fi
+
+case "${CONFIG_UNAME}" in
   Linux)
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
       m32=i3le
