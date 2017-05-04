@@ -191,7 +191,7 @@ static IBOOL search_locked(ptr p) {
 #define locked(p) (sorted_locked_objects != FIX(0) && search_locked(p))
 
 static void check_trigger_ephemerons(si) seginfo *si; {
-  /* Registering ephemerons to recheck at the gradularity of a segment
+  /* Registering ephemerons to recheck at the granularity of a segment
      means that the worst-case complexity of GC is quadratic in the
      number of objects that fit into a segment (but that only happens
      if the objects are ephemeron keys that are reachable just through
