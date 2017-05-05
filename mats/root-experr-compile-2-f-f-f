@@ -8572,24 +8572,25 @@ fx.mo:Expected error in mat fxnot: "fxnot: "hello" is not a fixnum".
 fx.mo:Expected error in mat fxnot: "fxnot: <int> is not a fixnum".
 fx.mo:Expected error in mat fxnot: "fxnot: <-int> is not a fixnum".
 fx.mo:Expected error in mat fxsll: "fxsll: invalid shift count -1".
+fx.mo:Expected error in mat fxsll: "fxsll: invalid shift count <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments -1 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count <int>".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: a is not a fixnum".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: 1e23 is not a fixnum".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: <int> is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: a is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: 1e23 is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: <int> is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count -1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count -1".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count <int>".
@@ -8614,11 +8615,11 @@ fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: a is not a 
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: a is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: <int> is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: invalid shift count <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxbit-field: "incorrect argument count in call (fxbit-field)".
 fx.mo:Expected error in mat fxbit-field: "incorrect argument count in call (fxbit-field 35)".

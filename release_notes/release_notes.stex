@@ -1490,6 +1490,15 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Overflow detection for \protect\scheme{fxsll},
+\protect\scheme{fxarithmetic-shift-left}, and
+\protect\scheme{fxarithmetic-shift}}
+
+A bug that caused \scheme{fxsll}, \scheme{fxarithmetic-shift-left},
+and \scheme{fxarithmetic-shift} to fail to detect overflow in certain
+cases was fixed.
+[This bug dated back to Version 7.1 or earlier.]
+
 \subsection{Invalid memory reference when \protect\scheme{enum-set-indexer} procedure is not passed a symbol}
 
 A bug that caused the procedure returned by \scheme{enum-set-indexer}
@@ -1503,7 +1512,7 @@ The C heap storage for inaccessible mutexes and conditions is now reclaimed.
 
 \subsection{Missing guardian entries when a thread exits (9.4.1)}
 
-A bug that causes guardian entries for a thread to be lost when a
+A bug that caused guardian entries for a thread to be lost when a
 thread exits has been fixed.
 [This bug dated back to Version 6.5.]
 

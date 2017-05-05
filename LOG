@@ -453,3 +453,6 @@
 - fix invalid memory reference when enum-set-indexer procedure is not
   passed a symbol
     enum.ss, enum.ms, root-experr*, release_notes.stex
+- fix overflow detection for fxsll, fxarithmetic-shift-left, and
+  fxarithmetic-shift
+    library.ss, fx.ms, release_notes.stex
