@@ -18,7 +18,7 @@ Cpu = I386
 
 mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include
 mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a
-C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
+C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
