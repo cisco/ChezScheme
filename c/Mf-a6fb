@@ -18,7 +18,7 @@ Cpu = X86_64
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
 mdclib = -L/usr/local/lib -liconv -lm -lncurses
-C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
+C = gcc ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o

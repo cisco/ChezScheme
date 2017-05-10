@@ -17,7 +17,7 @@ m = i3s2
 Cpu = I386
 
 mdclib = -lnsl -ldl -lm -lcurses -lrt
-C = gcc ${CFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O ${CPPFLAGS}
+C = gcc ${CFLAGS} -m32 -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O ${CPPFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o

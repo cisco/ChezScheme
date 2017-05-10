@@ -17,7 +17,7 @@ m = tppc32le
 Cpu = PPC32
 
 mdclib = -lm -ldl -lncurses -lpthread -lrt
-C = gcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -D_REENTRANT -pthread ${CFLAGS}
+C = gcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 -D_REENTRANT -pthread ${CFLAGS}
 o = o
 mdsrc = ppc32le.c
 mdobj = ppc32le.o
