@@ -7625,19 +7625,20 @@ hash.mo:Expected error in mat hash-functions: "string-ci-hash: hello is not a st
 hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
 hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
 enum.mo:Expected error in mat enumeration: "enum-set-intersection: #<enum-set> and #<enum-set> have different enumeration types".
-enum.mo:Expected error in mat enumeration: "enum-set-intersection: 1 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-intersection: 1 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "universe of foo does not include specified symbol d".
 enum.mo:Expected error in mat enumeration: "universe of foo does not include specified symbol d".
 enum.mo:Expected error in mat enumeration: "make-enumeration: 3 is not a list of symbols".
-enum.mo:Expected error in mat enumeration: "enum-set-universe: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-indexer: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set->list: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-union: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-union: 4 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-universe: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-indexer: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-indexer: 1 is not a symbol".
+enum.mo:Expected error in mat enumeration: "enum-set->list: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-union: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-union: 4 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "enum-set-union: #<enum-set> and #<enum-set> have different enumeration types".
-enum.mo:Expected error in mat enumeration: "enum-set-complement: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-projection: 3 isn't an enumeration".
-enum.mo:Expected error in mat enumeration: "enum-set-projection: 4 isn't an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-complement: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-projection: 3 is not an enumeration".
+enum.mo:Expected error in mat enumeration: "enum-set-projection: 4 is not an enumeration".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration 3 () bar)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration foo baz bar)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration foo () 3)".
@@ -8571,24 +8572,25 @@ fx.mo:Expected error in mat fxnot: "fxnot: "hello" is not a fixnum".
 fx.mo:Expected error in mat fxnot: "fxnot: <int> is not a fixnum".
 fx.mo:Expected error in mat fxnot: "fxnot: <-int> is not a fixnum".
 fx.mo:Expected error in mat fxsll: "fxsll: invalid shift count -1".
+fx.mo:Expected error in mat fxsll: "fxsll: invalid shift count <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments -1 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count <int>".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: a is not a fixnum".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: 1e23 is not a fixnum".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxsll: <int> is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: a is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: 1e23 is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: <int> is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count -1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count -1".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count <int>".
@@ -8613,11 +8615,11 @@ fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: a is not a 
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: a is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: <int> is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 1 and <int>".
-fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: invalid shift count <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
-fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments 4096 and <int>".
+fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxbit-field: "incorrect argument count in call (fxbit-field)".
 fx.mo:Expected error in mat fxbit-field: "incorrect argument count in call (fxbit-field 35)".
