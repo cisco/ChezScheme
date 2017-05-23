@@ -456,3 +456,6 @@
 - fix overflow detection for fxsll, fxarithmetic-shift-left, and
   fxarithmetic-shift
     library.ss, fx.ms, release_notes.stex
+- fix strip-fasl-file for immutable strings and vectors,
+  fix an $oops call, and fix a vector-index increment in hashing
+    strip.ss, 7.ss, newhash.ss, misc.ms
