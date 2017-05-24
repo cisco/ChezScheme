@@ -51,6 +51,8 @@ static void sweep_dirty PROTO((void));
 static void resweep_dirty_weak_pairs PROTO((void));
 static void add_ephemeron_to_pending PROTO((ptr p));
 static void add_trigger_ephemerons_to_repending PROTO((ptr p));
+static void check_trigger_ephemerons PROTO((seginfo *si));
+static void check_ephemeron PROTO((ptr pe, int add_to_trigger));
 static void check_pending_ephemerons PROTO(());
 static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
 static void clear_trigger_ephemerons PROTO(());
@@ -190,7 +192,7 @@ static IBOOL search_locked(ptr p) {
 
 #define locked(p) (sorted_locked_objects != FIX(0) && search_locked(p))
 
-static void check_trigger_ephemerons(si) seginfo *si; {
+FORCEINLINE void check_trigger_ephemerons(seginfo *si) {
   /* Registering ephemerons to recheck at the granularity of a segment
      means that the worst-case complexity of GC is quadratic in the
      number of objects that fit into a segment (but that only happens
@@ -2038,10 +2040,15 @@ static ptr trigger_ephemerons = NULL;
 
 static ptr repending_ephemerons = NULL;
 /* Ephemerons in `trigger_ephemerons` that we need to inspect again,
-   remove from the triggering segment and chained here through
+   removed from the triggering segment and chained here through
    `trigger-next`. */
 
 static void add_ephemeron_to_pending(ptr pe) {
+  /* We could call check_ephemeron directly here, but the indirection
+     through `pending_ephemerons` can dramatically decrease the number
+     of times that we have to trigger re-checking, especially since
+     check_pending_pehemerons() is run only after all other sweep
+     opportunities are exhausted. */
   EPHEMERONNEXT(pe) = pending_ephemerons;
   pending_ephemerons = pe;
 }
@@ -2056,7 +2063,7 @@ static void add_trigger_ephemerons_to_repending(ptr pe) {
   repending_ephemerons = pe;
 }
 
-static void check_pending_ephemeron(ptr pe, int add_to_trigger) {
+static void check_ephemeron(ptr pe, int add_to_trigger) {
   ptr p;
   seginfo *si;
 
@@ -2088,7 +2095,7 @@ static void check_pending_ephemerons() {
   pending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONNEXT(pe);
-    check_pending_ephemeron(pe, 1);
+    check_ephemeron(pe, 1);
     pe = next_pe;
   }
 
@@ -2096,12 +2103,12 @@ static void check_pending_ephemerons() {
   repending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONTRIGGERNEXT(pe);
-    check_pending_ephemeron(pe, 0);
+    check_ephemeron(pe, 0);
     pe = next_pe;
   }
 }
 
-/* Like check_pending_ephemeron(), but for a dirty, old-generation
+/* Like check_ephemeron(), but for a dirty, old-generation
    ephemeron (that was not yet added to the pending list), so we can
    be less pessimistic than setting `youngest` to the target
    generation: */
@@ -2154,7 +2161,7 @@ static void clear_trigger_ephemerons() {
   trigger_ephemerons = NULL;
   while (pe != NULL) {
     if (EPHEMERONTRIGGERNEXT(pe) == Strue) {
-      /* The ephemeron was triggers and retains its key and value */
+      /* The ephemeron was triggered and retains its key and value */
     } else {
       seginfo *si;
       ptr p = Scar(pe);
