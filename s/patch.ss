@@ -15,8 +15,6 @@
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
-(define (ephemeron-pair? v) #f)
-
 ; (current-expand (lambda args (apply sc-expand args)))
 ; (current-eval (lambda args (apply interpret args)))
 
