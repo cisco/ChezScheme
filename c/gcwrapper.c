@@ -128,6 +128,8 @@ void S_gc_init() {
     S_G.countof_size[countof_guardian] = size_guardian_entry;
   INITVECTIT(S_G.countof_names, countof_oblist) = S_intern((const unsigned char *)"oblist");
     S_G.countof_size[countof_guardian] = 0;
+  INITVECTIT(S_G.countof_names, countof_ephemeron) = S_intern((const unsigned char *)"ephemron");
+    S_G.countof_size[countof_ephemeron] = 0;
   for (i = 0; i < countof_types; i += 1) {
     if (Svector_ref(S_G.countof_names, i) == FIX(0)) {
       fprintf(stderr, "uninitialized countof_name at index %d\n", i);
@@ -505,7 +507,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
             S_checkheap_errors += 1;
             printf("!!! unexpected generation %d segment %#tx in space_new\n", g, (ptrdiff_t)seg);
           }
-        } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair) {
+        } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair || s == space_ephemeron) {
           /* out of date: doesn't handle space_port, space_continuation, space_code, space_pure_typed_object, space_impure_record */
           nl = (ptr *)S_G.next_loc[s][g];
 
@@ -530,7 +532,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
           /* verify that dirty bits are set appropriately */
           /* out of date: doesn't handle space_impure_record, space_port, and maybe others */
           /* also doesn't check the SYMCODE for symbols */
-          if (s == space_impure || s == space_symbol || s == space_weakpair) {
+          if (s == space_impure || s == space_symbol || s == space_weakpair || s == space_ephemeron) {
             found_eos = 0;
             pp2 = pp1 = build_ptr(seg, 0);
             for (d = 0; d < cards_per_segment; d += 1) {
@@ -588,7 +590,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
             }
           }
         }
-        if (aftergc && s != space_empty && !(s & space_locked) && (g == 0 || (s != space_impure && s != space_symbol && s != space_port && s != space_weakpair && s != space_impure_record))) {
+        if (aftergc && s != space_empty && !(s & space_locked) && (g == 0 || (s != space_impure && s != space_symbol && s != space_port && s != space_weakpair && s != space_ephemeron && s != space_impure_record))) {
           for (d = 0; d < cards_per_segment; d += 1) {
             if (si->dirty_bytes[d] != 0xff) {
               S_checkheap_errors += 1;
@@ -669,7 +671,7 @@ static void check_dirty() {
             S_checkheap_errors += 1;
             printf("!!! (check_dirty): dirty byte = %d for segment %#tx in %d -> %d dirty list\n", mingval, (ptrdiff_t)(si->number), from_g, to_g);
           }
-          if (s != space_new && s != space_impure && s != space_symbol && s != space_port && s != space_impure_record && s != space_weakpair) {
+          if (s != space_new && s != space_impure && s != space_symbol && s != space_port && s != space_impure_record && s != space_weakpair && s != space_ephemeron) {
             S_checkheap_errors += 1;
             printf("!!! (check_dirty): unexpected space %d for dirty segment %#tx\n", s, (ptrdiff_t)(si->number));
           }
@@ -684,6 +686,7 @@ static void check_dirty() {
   check_dirty_space(space_port);
   check_dirty_space(space_impure_record);
   check_dirty_space(space_weakpair);
+  check_dirty_space(space_ephemeron);
 
   fflush(stdout);
 }
