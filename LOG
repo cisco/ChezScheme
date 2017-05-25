@@ -456,3 +456,9 @@
 - fix overflow detection for fxsll, fxarithmetic-shift-left, and
   fxarithmetic-shift
     library.ss, fx.ms, release_notes.stex
+- added ephemeron pairs and changed weak hashtables to use
+  ephemeron pairs for key--value mapping to avoid the key-in-value
+  problem
+    prims.ss, primdata.ss, newhash.ss, fasl.ss, mkheader.ss
+    cmacro.ss, prim5.c, fasl.c, gc.c, gcwrapper.c, types.h,
+    4.ms, hash.ms, objects.stex, smgmt.stex, csug.bib
