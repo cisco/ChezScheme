@@ -214,6 +214,7 @@
 (package-stubs compiler-support
   $cp0
   $cpvalid
+  $cptypes
   $cpletrec
   $cpcheck)
 (package-stubs syntax-support

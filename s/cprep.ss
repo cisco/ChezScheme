@@ -222,7 +222,7 @@
                   (let ([x ((run-cp0)
                             (lambda (x)
                               (set! cpletrec-ran? #t)
-                              ($cpletrec ($cp0 x $compiler-is-loaded?)))
+                              ($cpletrec ($cptypes ($cp0 x $compiler-is-loaded?))))
                             ($cpvalid x))])
                     (if cpletrec-ran? x ($cpletrec x))))))))
         (unless (environment? env)

@@ -1765,6 +1765,7 @@
   ($continuation-winders [flags])
   ($cp0 [flags])
   ($cpcheck [flags])
+  ($cptypes [flags])
   ($cpcheck-prelex-flags [flags])
   ($cpcommonize [flags])
   ($cpletrec [flags])

@@ -6375,9 +6375,7 @@
              (#3%$object-set! 'scheme-object b ,fixnum? g7))
            (#2%list
              (#3%record? b g5)
-             (begin
-               (if (#3%record? b g6) (#2%void) (#3%$record-oops 'unbox b g6))
-               (#3%$object-ref 'scheme-object b ,fixnum?)))))))
+             (#3%$object-ref 'scheme-object b ,fixnum?))))))
     (equal?
       (let ()
         (define build-box
@@ -6407,13 +6405,9 @@
                  (record-mutator (make-record-type-descriptor
                                    name #f #f #f #f '#((mutable x))) 0)))
              (procedure? (useless 'useless-box-setter)))))
-      `(#2%procedure?
-         (let ([g0 (#2%make-record-type-descriptor 'useless-box-setter #f #f #f #f '#((mutable x)))])
-           (lambda (g1 g2)
-             (if (#3%record? g1 g0)
-                 (#2%void)
-                 (#3%$record-oops 'moi g1 g0))
-             (#3%$object-set! 'scheme-object g1 ,fixnum? g2)))))
+      `(begin
+         (#2%make-record-type-descriptor 'useless-box-setter #f #f #f #f '#((mutable x)))
+         #t))
     (let ()
       (define useless
         (lambda (name)
@@ -8592,9 +8586,7 @@
              (if b (frob-x x) 72)))))
     `(lambda (b)
        (if b
-           (begin
-             (#3%$record-oops 'frob-x 'x ',record-type-descriptor?)
-             (#3%$object-ref 'scheme-object 'x ,fixnum?))
+          (#3%$record-oops 'frob-x 'x ',record-type-descriptor?)
            72)))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])

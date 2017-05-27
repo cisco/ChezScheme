@@ -105,7 +105,7 @@ patch = patch
 
 # putting cpnanopass.patch early for maximum make --jobs=2 benefit
 patchobj = patch.patch cpnanopass.patch cprep.patch cpcheck.patch\
- cp0.patch cpvalid.patch cpcommonize.patch cpletrec.patch\
+ cp0.patch cpvalid.patch cptypes.patch cpcommonize.patch cpletrec.patch\
  reloc.patch\
  compile.patch fasl.patch syntax.patch env.patch\
  read.patch interpret.patch ftype.patch strip.patch\
@@ -127,7 +127,7 @@ basesrc =\
  strnum.ss bytevector.ss 5_4.ss 5_6.ss 5_7.ss\
  event.ss 4.ss front.ss foreign.ss 6.ss print.ss newhash.ss\
  format.ss date.ss 7.ss cafe.ss trace.ss engine.ss\
- interpret.ss cprep.ss cpcheck.ss cp0.ss cpvalid.ss cpcommonize.ss cpletrec.ss inspect.ss\
+ interpret.ss cprep.ss cpcheck.ss cp0.ss cpvalid.ss  cptypes.ss cpcommonize.ss cpletrec.ss inspect.ss\
  enum.ss io.ss read.ss primvars.ss syntax.ss costctr.ss expeditor.ss\
  exceptions.ss pretty.ss env.ss\
  fasl.ss reloc.ss pdhtml.ss strip.ss ftype.ss back.ss
