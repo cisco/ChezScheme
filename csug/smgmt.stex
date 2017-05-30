@@ -309,7 +309,7 @@ memory footprint, while setting it to a larger value may result in fewer
 calls into the operating system to request and free memory space.
 
 
-\section{Weak Pairs and Guardians\label{SECTGUARDWEAKPAIRS}}
+\section{Weak Pairs, Ephemeron Pairs, and Guardians\label{SECTGUARDWEAKPAIRS}}
 
 \index{weak pairs}\index{weak pointers}\emph{Weak pairs} allow programs
 to maintain \emph{weak pointers} to objects.
@@ -317,21 +317,30 @@ A weak pointer to an object does not prevent the object from being
 reclaimed by the storage management system, but it does remain valid as
 long as the object is otherwise accessible in the system.
 
+\index{ephemeron pairs}\emph{Ephemeron pairs} are like weak pairs, but
+ephemeron pairs combine two pointers where the second is retained only
+as long as the first is retained.
+
 \index{guardians}\emph{Guardians}
 allow programs to protect objects from deallocation
 by the garbage collector and to determine when the objects would
 otherwise have been deallocated.
 
-Weak pairs and guardians allow programs to retain
+Weak pairs, ephemeron pairs, and guardians allow programs to retain
 information about objects in separate data structures (such as hash
 tables) without concern that maintaining this information will cause
-the objects to remain indefinitely in the system.
+the objects to remain indefinitely in the system. Ephemeron pairs
+allow such data structures to retain key--value combinations
+where a value may refer to its key, but the combination
+can be reclaimed if neither must be saved otherwise.
 In addition, guardians allow objects to be saved from deallocation
 indefinitely so that they can be reused or so that clean-up or other
 actions can be performed using the data stored within the objects.
 
 The implementation of guardians and weak pairs used by {\ChezScheme}
-is described in~\cite{Dybvig:guardians}.
+is described in~\cite{Dybvig:guardians}. Ephemerons are described
+in~\cite{Hayes:ephemerons}, but the implementation in {\ChezScheme}
+avoids quadratic-time worst-case behavior.
 
 %----------------------------------------------------------------------------
 \entryheader\label{desc:weak-cons}
@@ -418,6 +427,89 @@ dropped, but makes no guarantees about when this will occur.
 
 
 %----------------------------------------------------------------------------
+\entryheader\label{desc:ephemeron-cons}
+\formdef{ephemeron-cons}{\categoryprocedure}{(ephemeron-cons \var{obj_1} \var{obj_2})}
+\returns a new ephemeron pair
+\listlibraries
+\endentryheader
+
+\noindent
+\var{obj_1} becomes the car and \var{obj_2} becomes the cdr of the
+new pair.
+Ephemeron pairs are indistinguishable from ordinary pairs in all but two ways:
+
+\begin{itemize}
+\item ephemeron pairs can be distinguished from pairs using the
+\scheme{ephemeron-pair?} predicate, and
+
+\item ephemeron pairs maintain a weak pointer to the object in the
+car of the pair, and the cdr of the pair is preserved only as long
+as the car of the pair is preserved.
+\end{itemize}
+
+\noindent
+
+An ephemeron pair behaves like a weak pair, but the cdr is treated
+specially in addition to the car: the cdr of an ephemeron is set to
+\scheme{#!bwp} at the same time that the car is set to \scheme{#!bwp}.
+Since the car and cdr fields are set to \scheme{#!bwp} at the same
+time, then the fact that the car object may be referenced through the
+cdr object does not by itself imply that car must be preserved (unlike
+a weak pair); instead, the car must be saved for some reason
+independent of the cdr object.
+
+Like weak pairs and other pairs, ephemeron pairs may be altered using
+\scheme{set-car!} and \scheme{set-cdr!}, and ephemeron pairs are
+printed in the same manner as ordinary pairs; there is no reader
+syntax for ephemeron pairs.
+
+\schemedisplay
+(define x (cons 'a 'b))
+(define p (ephemeron-cons x x))
+(car p) ;=> (a . b)
+(cdr p) ;=> (a . b)
+
+(define x (cons 'a 'b))
+(define p (ephemeron-cons x x))
+(set! x '*)
+(collect)
+(car p) ;=> #!bwp
+(cdr p) ;=> #!bwp
+
+(define x (cons 'a 'b))
+(define p (weak-cons x x)) ; \var{not an ephemeron pair}
+(set! x '*)
+(collect)
+(car p) ;=> (a . b)
+(cdr p) ;=> (a . b)
+\endschemedisplay
+
+\noindent
+As with weak pairs, the last two expressions of the middle example
+above may in fact return \scheme{(a . b)} if a garbage collection
+promoting the pair into an older generation occurs prior to the
+assignment of \scheme{x} to \scheme{*}. In the last example above,
+however, the results of the last two expressions will always be
+\scheme{(a . b)}, because the cdr of a weak pair holds a non-weak
+reference, and that non-weak reference prevents the car field from becoming
+\scheme{#!bwp}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ephemeron-pair?}{\categoryprocedure}{(ephemeron-pair? \var{obj})}
+\returns \scheme{#t} if obj is a ephemeron pair, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(ephemeron-pair? (ephemeron-cons 'a 'b)) ;=> #t
+(ephemeron-pair? (cons 'a 'b)) ;=> #f
+(ephemeron-pair? (weak-cons 'a 'b)) ;=> #f
+(ephemeron-pair? "oops") ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
 \entryheader
 \formdef{bwp-object?}{\categoryprocedure}{(bwp-object? \var{obj})}
 \returns \scheme{#t} if obj is the broken weak-pair object, \scheme{#f} otherwise
@@ -473,7 +565,7 @@ subdivided into two disjoint subgroups: a subgroup referred to
 as ``accessible'' objects, and one referred to ``inaccessible'' objects.
 Inaccessible objects are objects that have been proven to be
 inaccessible (except through the guardian mechanism itself or through
-the car field of a weak pair), and
+the car field of a weak or ephemeron pair), and
 accessible objects are objects that have not been proven so.
 The word ``proven'' is important here: it may be that some objects in
 the accessible group are indeed inaccessible but
@@ -516,7 +608,7 @@ migrated into an older generation.)
 
 Although an object registered without a representative and returned from
 a guardian has been proven otherwise
-inaccessible (except possibly via the car field of a weak pair), it has
+inaccessible (except possibly via the car field of a weak or ephemeron pair), it has
 not yet been reclaimed by the storage management system and will not be
 reclaimed until after the last nonweak pointer to it within or outside
 of the guardian system has been dropped.
@@ -550,8 +642,8 @@ themselves can be registered with other guardians.
 
 An object that has been registered with a guardian without a
 representative and placed in
-the car field of a weak pair remains in the car field of the
-weak pair until after it has been returned from the guardian and
+the car field of a weak or ephemeron pair remains in the car field of the
+weak or ephemeron pair until after it has been returned from the guardian and
 dropped by the program or until the guardian itself is dropped.
 
 \schemedisplay
@@ -577,7 +669,7 @@ This can also be forced by invoking \scheme{collect} several times.)
 
 On the other hand, if a representative (other than the object itself)
 is specified, the guarded object is dropped from the car field of the
-weak pair at the same time as the representative becomes available
+weak or ephemeron pair at the same time as the representative becomes available
 from the guardian.
 
 \schemedisplay
@@ -592,7 +684,7 @@ from the guardian.
 \endschemedisplay
 
 The following example illustrates that the object is deallocated and
-the car field of the weak pointer set to \scheme{#!bwp} when the guardian
+the car field of the weak pair set to \scheme{#!bwp} when the guardian
 itself is dropped:
 
 \schemedisplay

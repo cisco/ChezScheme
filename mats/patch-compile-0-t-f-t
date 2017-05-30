@@ -1,5 +1,5 @@
-*** errors-compile-0-t-f-f	2017-03-15 13:31:20.355212128 -0400
---- errors-compile-0-t-f-t	2017-03-15 13:21:31.790099674 -0400
+*** errors-compile-0-t-f-f	2017-05-28 20:58:24.000000000 -0400
+--- errors-compile-0-t-f-t	2017-05-28 20:41:04.000000000 -0400
 ***************
 *** 3603,3609 ****
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".

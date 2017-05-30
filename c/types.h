@@ -125,6 +125,7 @@ typedef struct _seginfo {
   struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs */
   struct _seginfo **dirty_prev;             /* pointer to the next pointer on the previous seginfo in the DirtySegments list */
   struct _seginfo *dirty_next;              /* pointer to the next seginfo on the DirtySegments list */
+  ptr trigger_ephemerons;                   /* ephemerons to re-check if object in segment is copied out */
   octet dirty_bytes[cards_per_segment];     /* one dirty byte per card */
 } seginfo;
 

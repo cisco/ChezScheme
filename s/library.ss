@@ -1435,7 +1435,7 @@
              [b (vector-ref vec idx)])
         (lookup-keyval x b
           values
-          (let ([keyval (if (eq-ht-weak? h) (weak-cons x v) (cons x v))])
+          (let ([keyval (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))])
             (vector-set! vec idx ($make-tlc h keyval b))
             (incr-size! h vec)
             keyval))))
@@ -1451,7 +1451,7 @@
               (begin
                 (vector-set! vec idx
                   ($make-tlc h
-                    (if (eq-ht-weak? h) (weak-cons x v) (cons x v))
+                    (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))
                     b))
                 (incr-size! h vec))))))
   
