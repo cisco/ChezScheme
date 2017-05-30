@@ -474,3 +474,6 @@
     4.ms
 - updated allx and bullyx patches
     patch*
+- fix strip-fasl-file for immutable strings and vectors,
+  fix an $oops call, and fix a vector-index increment in hashing
+    strip.ss, 7.ss, newhash.ss, misc.ms
