@@ -507,7 +507,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
             S_checkheap_errors += 1;
             printf("!!! unexpected generation %d segment %#tx in space_new\n", g, (ptrdiff_t)seg);
           }
-        } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair || s == space_ephemeron) {
+        } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair /* || s == space_ephemeron */) {
           /* out of date: doesn't handle space_port, space_continuation, space_code, space_pure_typed_object, space_impure_record */
           nl = (ptr *)S_G.next_loc[s][g];
 
@@ -532,7 +532,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
           /* verify that dirty bits are set appropriately */
           /* out of date: doesn't handle space_impure_record, space_port, and maybe others */
           /* also doesn't check the SYMCODE for symbols */
-          if (s == space_impure || s == space_symbol || s == space_weakpair || s == space_ephemeron) {
+          if (s == space_impure || s == space_symbol || s == space_weakpair /* || s == space_ephemeron */) {
             found_eos = 0;
             pp2 = pp1 = build_ptr(seg, 0);
             for (d = 0; d < cards_per_segment; d += 1) {

@@ -2124,11 +2124,8 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
         relocate(&INITCDR(pe))
         youngest = tg;
       } else {
-        /* Not reached, so far; install as trigger */
-        EPHEMERONTRIGGERNEXT(pe) = si->trigger_ephemerons;
-        si->trigger_ephemerons = pe;
-        EPHEMERONNEXT(pe) = trigger_ephemerons;
-        trigger_ephemerons = pe;
+        /* Not reached, so far; add to pending list */
+	add_ephemeron_to_pending(pe);
         /* Make the consistent (but pessimistic w.r.t. to wrong-way
            pointers) assumption that the key will stay live and move
            to the target generation. That assumption covers the value

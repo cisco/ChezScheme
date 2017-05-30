@@ -3251,24 +3251,24 @@
    ;; This check disables interrups so that a garbage collection
    ;; happens only for the explicit `collect` request.
    (with-interrupts-disabled
-    (let ([e (ephemeron-cons (gensym) 'ok)])
-      (collect) ; => `e` is moved to generation 1
-      (and
-       (eq? #!bwp (ephemeron-key e))
-       (eq? #!bwp (ephemeron-value e))
-       (let ([s (gensym)])
-         (set-car! e s)
-         (set-cdr! e 'ok-again)
-         (collect) ; => `s` is moved to generation 1
-         (and
-          (eq? s (ephemeron-key e))
-          (eq? 'ok-again (ephemeron-value e))
-          (begin
-            (set! s #f)
-            (collect 1) ; collect former `s`
-            (and
-             (eq? #!bwp (ephemeron-key e))
-             (eq? #!bwp (ephemeron-value e)))))))))
+     (let ([e (ephemeron-cons (gensym) 'ok)])
+       (collect 0) ; => `e` is moved to generation 1
+       (and
+         (eq? #!bwp (ephemeron-key e))
+         (eq? #!bwp (ephemeron-value e))
+         (let ([s (gensym)])
+           (set-car! e s)
+           (set-cdr! e 'ok-again)
+           (collect 0) ; => `s` is moved to generation 1
+           (and
+             (eq? s (ephemeron-key e))
+             (eq? 'ok-again (ephemeron-value e))
+             (begin
+               (set! s #f)
+               (collect 1) ; collect former `s`
+               (and
+                 (eq? #!bwp (ephemeron-key e))
+                 (eq? #!bwp (ephemeron-value e)))))))))
 
    ;; ----------------------------------------
    ;; Check fasl:
