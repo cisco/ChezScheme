@@ -1820,7 +1820,9 @@ except the keys of the hashtable are held weakly, i.e., they are not
 protected from the garbage collector.
 Keys reclaimed by the garbage collector are removed from the table,
 and their associated values are dropped the next time the table
-is modified, if not sooner.
+is modified, if not sooner. A value in the hashtable can refer to a
+key in the hashtable without preventing the garbage collector from
+reclaiming the key (because keys are paired values using ephemeron pairs).
 
 A copy of a weak eq or eqv hashtable created by \scheme{hashtable-copy} is
 also weak.

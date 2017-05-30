@@ -1019,7 +1019,7 @@ Documentation notes:
                           b
                           ($make-tlc h2
                             (let* ([keyval ($tlc-keyval b)] [key (car keyval)] [val (cdr keyval)])
-                              (if weak?  (weak-cons key val) (cons key val)))
+                              (if weak?  (ephemeron-cons key val) (cons key val)))
                             (inner ($tlc-next b))))))
                   (outer (fx+ i 1)))))
           h2))))

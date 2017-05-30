@@ -63,6 +63,16 @@
     (scheme-object)
     scheme-object))
 
+(define ephemeron-cons
+  (foreign-procedure "(cs)s_ephemeron_cons"
+    (scheme-object scheme-object)
+    scheme-object))
+
+(define ephemeron-pair?
+  (foreign-procedure "(cs)s_ephemeron_pairp"
+    (scheme-object)
+    scheme-object))
+
 (define $split-continuation
   (foreign-procedure "(cs)single_continuation"
     (scheme-object iptr)
