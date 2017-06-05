@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-03-15 13:19:08.859800901 -0400
---- errors-compile-0-f-f-t	2017-03-15 13:25:14.618006463 -0400
+*** errors-compile-0-f-f-f	2017-05-28 20:37:09.000000000 -0400
+--- errors-compile-0-f-f-t	2017-05-28 20:47:43.000000000 -0400
 ***************
 *** 3603,3609 ****
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".
@@ -43,7 +43,7 @@
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
 ***************
-*** 8451,8463 ****
+*** 8461,8473 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -57,7 +57,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8451,8463 ----
+--- 8461,8473 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".

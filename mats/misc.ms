@@ -4950,12 +4950,21 @@
       (let-values ([(o get) (open-bytevector-output-port)])
         (fasl-write l o)
         (immutable? (fasl-read (open-bytevector-input-port (get))))))
+    (define (round-trip-via-strip l)
+      (compile-to-file (list `(set! fasl-immutable-round-trip ',l)) "testfile-immut-sff.so")
+      (strip-fasl-file "testfile-immut-sff.so" "testfile-immut-sff.so" (fasl-strip-options))
+      (load "testfile-immut-sff.so")
+      (let ([l2 (eval 'fasl-immutable-round-trip)])
+        (and (equal? l l2)
+             (immutable? l2))))
     #t)
 
   (immutable? immutable-objs)
   (immutable? immutable-zero-objs)
   (round-trip immutable-objs)
   (round-trip immutable-zero-objs)
+  (round-trip-via-strip immutable-objs)
+  (round-trip-via-strip immutable-zero-objs)
 
   ;; Make sure `fasl-read` didn't mark "mutable" null values
   ;; as immutable:

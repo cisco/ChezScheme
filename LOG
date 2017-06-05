@@ -450,4 +450,31 @@
   Also add a simplification for for-each with empty lists
   with optimization level 2.
     cp0.ss, 4.ms, primdata.ss
+- fix invalid memory reference when enum-set-indexer procedure is not
+  passed a symbol
+    enum.ss, enum.ms, root-experr*, release_notes.stex
+- fix overflow detection for fxsll, fxarithmetic-shift-left, and
+  fxarithmetic-shift
+    library.ss, fx.ms, release_notes.stex
+- added ephemeron pairs and changed weak hashtables to use
+  ephemeron pairs for key--value mapping to avoid the key-in-value
+  problem
+    prims.ss, primdata.ss, newhash.ss, fasl.ss, mkheader.ss
+    cmacro.ss, prim5.c, fasl.c, gc.c, gcwrapper.c, types.h,
+    4.ms, hash.ms, objects.stex, smgmt.stex, csug.bib
+- check_dirty_ephemeron now puts ephemerons whose keys haven't yet
+  been seen on the pending list rather than the trigger lists.
+    gc.c
+- removed scan of space_ephemeron from check_heap because check_heap
+  as written can't handle the two link fields properly.
+    gcwrapper.c
+- in the ephemerons mat that checks interaction between mutation and
+  collection, added generation arguments to the first two collect
+  calls so they always collect into the intended generation.
+    4.ms
+- updated allx and bullyx patches
+    patch*
+- fix strip-fasl-file for immutable strings and vectors,
+  fix an $oops call, and fix a vector-index increment in hashing
+    strip.ss, 7.ss, newhash.ss, misc.ms
 - added CC option to configure for selecting the compiler

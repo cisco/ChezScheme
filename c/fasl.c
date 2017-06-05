@@ -860,6 +860,11 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             faslin(tc, &INITCAR(*x), t, pstrbuf, f);
             faslin(tc, &INITCDR(*x), t, pstrbuf, f);
             return;
+        case fasl_type_ephemeron:
+            *x = S_cons_in(space_ephemeron, 0, FIX(0), FIX(0));
+            faslin(tc, &INITCAR(*x), t, pstrbuf, f);
+            faslin(tc, &INITCDR(*x), t, pstrbuf, f);
+            return;
         case fasl_type_code: {
             iptr n, m, a; INT flags; iptr free;
             ptr co, reloc, name;

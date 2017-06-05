@@ -475,22 +475,31 @@
   (cond
     [(not (fixnum? x)) (fxnonfixnum1 'fxsll x)]
     [(not (fixnum? y)) (fxnonfixnum1 'fxsll y)]
-    [(fx<= 0 y (constant fixnum-bits))
-     (let ([n (#3%fxsll x y)])
-       (if (if (fx< x 0) (fx> n x) (fx< n x))
-           (fxoops2 'fxsll x y)
-           n))]
+    [(fx= 0 y) x]
+    [($fxu< y (constant fixnum-bits))
+     (if (fx>= x 0)
+         (if (fx< x (fxsll 1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxsll x y))
+         (if (fx>= x (fxsll -1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxsll x y)))]
+    [(fx= y (constant fixnum-bits)) (if (fx= x 0) x (fxoops2 'fxsll x y))]
     [else (shift-count-oops 'fxsll y)]))
 
 (define-library-entry (fxarithmetic-shift-left x y)
   (cond
-    [(not (fixnum? x)) (fxnonfixnum1 'fxsll x)]
-    [(not (fixnum? y)) (fxnonfixnum1 'fxsll y)]
-    [(fx<= 0 y (- (constant fixnum-bits) 1))
-     (let ([n (#3%fxarithmetic-shift-left x y)])
-       (if (if (fx< x 0) (fx> n x) (fx< n x))
-           (fxoops2 'fxarithmetic-shift-left x y)
-           n))]
+    [(not (fixnum? x)) (fxnonfixnum1 'fxarithmetic-shift-left x)]
+    [(not (fixnum? y)) (fxnonfixnum1 'fxarithmetic-shift-left y)]
+    [(fx= 0 y) x]
+    [($fxu< y (constant fixnum-bits))
+     (if (fx>= x 0)
+         (if (fx< x (fxsll 1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxarithmetic-shift-left x y))
+         (if (fx>= x (fxsll -1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxarithmetic-shift-left x y)))]
     [else (shift-count-oops 'fxarithmetic-shift-left y)]))
 
 (define-library-entry (fxsrl x y)
@@ -515,11 +524,15 @@
   (cond
     [(not (fixnum? x)) (fxnonfixnum1 'fxarithmetic-shift x)]
     [(not (fixnum? y)) (fxnonfixnum1 'fxarithmetic-shift y)]
+    [(fx= 0 y) x]
     [($fxu< y (constant fixnum-bits))
-     (let ([n (#3%fxsll x y)])
-       (if (if (fx< x 0) (fx> n x) (fx< n x))
-           (fxoops2 'fxarithmetic-shift x y)
-           n))]
+     (if (fx>= x 0)
+         (if (fx< x (fxsll 1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxarithmetic-shift x y))
+         (if (fx>= x (fxsll -1 (fx- (- (constant fixnum-bits) 1) y)))
+             (fxsll x y)
+             (fxoops2 'fxarithmetic-shift x y)))]
     [(fx< (fx- (constant fixnum-bits)) y 0) (fxsra x (fx- y))]
     [else (shift-count-oops 'fxarithmetic-shift y)]))
 
@@ -1422,7 +1435,7 @@
              [b (vector-ref vec idx)])
         (lookup-keyval x b
           values
-          (let ([keyval (if (eq-ht-weak? h) (weak-cons x v) (cons x v))])
+          (let ([keyval (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))])
             (vector-set! vec idx ($make-tlc h keyval b))
             (incr-size! h vec)
             keyval))))
@@ -1438,7 +1451,7 @@
               (begin
                 (vector-set! vec idx
                   ($make-tlc h
-                    (if (eq-ht-weak? h) (weak-cons x v) (cons x v))
+                    (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))
                     b))
                 (incr-size! h vec))))))
   
