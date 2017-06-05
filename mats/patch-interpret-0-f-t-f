@@ -1,5 +1,5 @@
-*** errors-compile-0-f-t-f	2017-03-15 13:34:41.791223868 -0400
---- errors-interpret-0-f-t-f	2017-03-15 13:39:51.605705652 -0400
+*** errors-compile-0-f-t-f	2017-05-29 02:30:33.000000000 -0400
+--- errors-interpret-0-f-t-f	2017-05-29 02:54:57.000000000 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -312,7 +312,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7266,7304 ****
+*** 7275,7313 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -352,7 +352,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7266,7304 ----
+--- 7275,7313 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -393,7 +393,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7313,7369 ****
+*** 7322,7378 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -451,7 +451,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7313,7369 ----
+--- 7322,7378 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -510,7 +510,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
 ***************
-*** 8451,8463 ****
+*** 8461,8473 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -524,7 +524,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8451,8463 ----
+--- 8461,8473 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -539,7 +539,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 9921,9930 ****
+*** 9932,9941 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -550,7 +550,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 9921,9930 ----
+--- 9932,9941 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

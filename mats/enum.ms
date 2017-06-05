@@ -101,6 +101,8 @@
   (error? (make-enumeration 3))
   (error? (enum-set-universe 3))
   (error? (enum-set-indexer 3))
+  (error? (let ([e (make-enumeration '(a b c))])
+            ((enum-set-indexer e) 1)))
   (error? (enum-set->list 3))
   (equal? '(a b)
           (let ()
