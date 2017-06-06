@@ -72,7 +72,7 @@
   (fxbit-count [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxlength [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxfirst-bit-set [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxbit-set? [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags pure cp02])
+  (fxbit-set? [sig [(fixnum sub-ufixnum) -> (boolean)]] [flags pure cp02])
   (fxcopy-bit [sig [(fixnum sub-ufixnum bit) -> (fixnum)]] [flags arith-op cp02])
   (fxbit-field [sig [(fixnum sub-ufixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02 cp03])
   (fxcopy-bit-field [sig [(fixnum sub-ufixnum sub-ufixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
