@@ -493,3 +493,7 @@
   evaluation-order bug.
     cp0.ss,
     4.ms
+- added date-dst? to access the previously-hidden DST information in
+  date records, and added date-zone-name to provide a time zone name.
+     date.ss, primdata.ss, stats.c, date.ms, root-experr*,
+     patch-compile*, system.stex

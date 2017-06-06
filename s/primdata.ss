@@ -863,10 +863,14 @@
   (date-second [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-week-day [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-year-day [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
+  (date-dst? [sig [(date) -> (boolean)]] [flags pure mifoldable discard])
   (date-year [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-zone-offset [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
+  (date-zone-name [sig [(date) -> (ptr)]] [flags pure mifoldable discard])
   (date->time-utc [sig [(date) -> (time)]] [flags alloc])
-  (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]] [flags alloc])
+  (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]
+                  [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]]
+             [flags alloc])
   (make-time [sig [(sub-symbol sub-ufixnum sub-fixnum) -> (time)]] [flags alloc])
   (set-time-nanosecond! [sig [(time sub-uint) -> (void)]] [flags true])
   (set-time-second! [sig [(time sub-fixnum) -> (void)]] [flags true])
