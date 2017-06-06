@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-06-06 15:52:54.089820649 -0400
---- errors-compile-0-f-f-t	2017-06-06 15:55:15.167428881 -0400
+*** errors-compile-0-f-t-f	2017-06-06 15:57:35.377030441 -0400
+--- errors-compile-0-f-t-t	2017-06-06 15:59:53.402609438 -0400
 ***************
 *** 8461,8473 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".

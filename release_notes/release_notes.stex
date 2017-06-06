@@ -87,6 +87,14 @@ thread was awakened by the condition before the timeout. The
 \scheme{time-utc}, or it can be \scheme{#f} for no timeout (the
 default).
 
+\subsection{\protect\scheme{date-dst?} and \protect\scheme{date-zone-name} (9.4.1)}
+
+The new primitive procedures \scheme{date-dst?} and
+\scheme{date-zone-name} access time-zone information for a
+\scheme{date} record that is created without an explicit
+zone offset. The zone-offset argument to \scheme{make-date}
+is now optional.
+
 \subsection{\protect\scheme{procedure-arity-mask} (9.4.1)}
 
 The new primitive procedure \scheme{procedure-arity-mask} takes a
