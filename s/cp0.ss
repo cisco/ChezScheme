@@ -214,12 +214,7 @@
                           (loop1 (env-next env))
                           (if (eq? (vector-ref old-rib i) id)
                               (vector-ref new-rib i)
-                              (let ([i (fx+ i 1)])
-                                (if (fx= i n)
-                                    (loop1 (env-next env))
-                                    (if (eq? (vector-ref old-rib i) id)
-                                        (vector-ref new-rib i)
-                                        (loop2 (fx+ i 1)))))))))))))))
+                              (loop2 (fx+ i 1))))))))))))
 
     (define cp0-make-temp ; returns an unassigned temporary
       (lambda (multiply-referenced?)
