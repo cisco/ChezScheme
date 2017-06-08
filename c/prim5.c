@@ -34,6 +34,8 @@ static ptr s_trunc_rem PROTO((ptr x, ptr y));
 static ptr s_fltofx PROTO((ptr x));
 static ptr s_weak_cons PROTO((ptr car, ptr cdr));
 static ptr s_weak_pairp PROTO((ptr p));
+static ptr s_ephemeron_cons PROTO((ptr car, ptr cdr));
+static ptr s_ephemeron_pairp PROTO((ptr p));
 static ptr s_oblist PROTO((void));
 static ptr s_bigoddp PROTO((ptr n));
 static ptr s_float PROTO((ptr x));
@@ -174,6 +176,20 @@ static ptr s_weak_cons(car, cdr) ptr car, cdr; {
 static ptr s_weak_pairp(p) ptr p; {
   seginfo *si;
   return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && (si->space & ~space_locked) == space_weakpair ? Strue : Sfalse;
+}
+
+static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
+  ptr p;
+
+  tc_mutex_acquire()
+  p = S_cons_in(space_ephemeron, 0, car, cdr);
+  tc_mutex_release()
+  return p;
+}
+
+static ptr s_ephemeron_pairp(p) ptr p; {
+  seginfo *si;
+  return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && (si->space & ~space_locked) == space_ephemeron ? Strue : Sfalse;
 }
 
 static ptr s_oblist() {
@@ -1465,6 +1481,8 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_fltofx", (void *)s_fltofx);
     Sforeign_symbol("(cs)s_weak_cons", (void *)s_weak_cons);
     Sforeign_symbol("(cs)s_weak_pairp", (void *)s_weak_pairp);
+    Sforeign_symbol("(cs)s_ephemeron_cons", (void *)s_ephemeron_cons);
+    Sforeign_symbol("(cs)s_ephemeron_pairp", (void *)s_ephemeron_pairp);
     Sforeign_symbol("(cs)continuation_depth", (void *)S_continuation_depth);
     Sforeign_symbol("(cs)single_continuation", (void *)S_single_continuation);
     Sforeign_symbol("(cs)c_exit", (void *)c_exit);

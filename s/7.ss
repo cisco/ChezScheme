@@ -129,7 +129,7 @@
               (let ([k (get-u8 p)])
                 (f k (logor (ash n 7) (fxsrl k 1))))
               n))))
-    (define (malformed p) ($oops "malformed fasl-object header found in ~s" p))
+    (define (malformed p) ($oops 'fasl-read "malformed fasl-object header found in ~s" p))
     (define (check-header p)
       (let ([bv (make-bytevector 8 (constant fasl-type-header))])
         (unless (and (eqv? (get-bytevector-n! p bv 1 7) 7)

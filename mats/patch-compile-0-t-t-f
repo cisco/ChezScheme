@@ -1,5 +1,5 @@
-*** errors-compile-0-t-f-f	2017-03-15 13:31:20.355212128 -0400
---- errors-compile-0-t-t-f	2017-03-15 13:27:50.847239990 -0400
+*** errors-compile-0-t-f-f	2017-05-28 20:58:24.000000000 -0400
+--- errors-compile-0-t-t-f	2017-05-28 20:52:16.000000000 -0400
 ***************
 *** 144,150 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
@@ -142,7 +142,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7266,7304 ****
+*** 7275,7313 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -182,7 +182,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7266,7304 ----
+--- 7275,7313 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -223,7 +223,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7324,7359 ****
+*** 7333,7368 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -260,7 +260,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
---- 7324,7359 ----
+--- 7333,7368 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
