@@ -484,3 +484,8 @@
   explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
     cp0.ss,
     4.ms
+- reverted to the preceding version of cp0 due to failure to preserve
+  the expected evaluation order in one of the mats; removed the
+  corresponding equivalent-expansion tests.
+    cp0.ss,
+    4.ms
