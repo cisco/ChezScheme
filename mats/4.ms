@@ -1121,6 +1121,30 @@
            (list '(7) '(8) '(9)))))
     '(#3%list 12 15 18))
   (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#3%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize 
         '(map (lambda (x y z) (apply + x y z)) 
@@ -1924,6 +1948,46 @@
            '(#2%void)))
   ;; for-each with lambda exp as procedure and lists in the form (list e0 e1 ... en) or '(e0 e1 ... en)
   ;; avoid creating each list and doing the actual for-each
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize 
