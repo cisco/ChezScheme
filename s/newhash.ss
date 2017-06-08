@@ -905,7 +905,7 @@ Documentation notes:
                            (values hc i)
                            (let ([i/2 (fxsrl (fx+ i 1) 1)])
                              (let-values ([(hc i^) (f (vector-ref x j) hc i/2)])
-                               (g (fx+ j 0) hc (fx+ (fx- i i/2) i^))))))))]
+                               (g (fx+ j 1) hc (fx+ (fx- i i/2) i^))))))))]
               [(null? x) (values (update hc 496904691) i)]
               [(box? x) (f (unbox x) (update hc 410225874) i)]
               [(symbol? x) (values (update hc (symbol-hash x)) i)]
@@ -1019,7 +1019,7 @@ Documentation notes:
                           b
                           ($make-tlc h2
                             (let* ([keyval ($tlc-keyval b)] [key (car keyval)] [val (cdr keyval)])
-                              (if weak?  (weak-cons key val) (cons key val)))
+                              (if weak?  (ephemeron-cons key val) (cons key val)))
                             (inner ($tlc-next b))))))
                   (outer (fx+ i 1)))))
           h2))))

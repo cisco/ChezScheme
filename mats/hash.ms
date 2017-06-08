@@ -1173,6 +1173,37 @@
       (hashtable-delete! ht 'a)
       (list (hashtable-size ht) (= (#%$hashtable-veclen ht) len)))
     '(0 #t))
+
+  ; test that weak-hashtable values do not imply that values
+  ; are reachable
+  (let ([wk1 (list 1)]
+        [wk2 (list 2)]
+        [wk3 (list 3)]
+        [wk4 (list 4)]
+        [ht (make-weak-eq-hashtable)])
+    (hashtable-set! ht wk1 wk1)
+    (hashtable-set! ht wk2 wk1)
+    (hashtable-set! ht wk3 wk3)
+    (hashtable-set! ht wk4 wk2)
+    (collect (collect-maximum-generation))
+    (and
+     (same-elements? (hashtable-keys ht) '#((1) (2) (3) (4)))
+     (equal? (hashtable-ref ht wk1 #f) wk1)
+     (equal? (hashtable-ref ht wk2 #f) wk1)
+     (equal? (hashtable-ref ht wk3 #f) wk3)
+     (equal? (hashtable-ref ht wk4 #f) wk2)
+     (begin
+       (set! wk1 #f)
+       (set! wk2 #f)
+       (set! wk3 #f)
+       (collect (collect-maximum-generation))
+       (and
+        (same-elements? (hashtable-keys ht) '#((1) (2) (4)))
+        (equal? (hashtable-ref ht wk4 #f) '(2))
+        (begin
+          (set! wk4 #f)
+          (collect (collect-maximum-generation))
+          (same-elements? (hashtable-keys ht) '#()))))))
 )
 
 (mat eq-hashtable-cell

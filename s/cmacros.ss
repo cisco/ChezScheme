@@ -440,7 +440,7 @@
 (define-constant fasl-type-small-integer 25)
 (define-constant fasl-type-base-rtd 26)
 (define-constant fasl-type-fxvector 27)
-; 28
+(define-constant fasl-type-ephemeron 28)
 (define-constant fasl-type-bytevector 29)
 (define-constant fasl-type-weak-pair 30)
 (define-constant fasl-type-eq-hashtable 31)
@@ -640,15 +640,16 @@
       (symbol "symbol" #\x 2)            ;
       (port "port" #\q 3)                ;
       (weakpair "weakpr" #\w 4)          ;
-      (pure "pure" #\p 5)                ; swept immutable objects allocated here (all ptrs)
-      (continuation "cont" #\k 6)        ;
-      (code "code" #\c 7)                ;
-      (pure-typed-object "p-tobj" #\r 8) ;
-      (impure-record "ip-rec" #\s 9))    ;
+      (ephemeron "emph" #\e 5)           ;
+      (pure "pure" #\p 6)                ; swept immutable objects allocated here (all ptrs)
+      (continuation "cont" #\k 7)        ;
+      (code "code" #\c 8)                ;
+      (pure-typed-object "p-tobj" #\r 9) ;
+      (impure-record "ip-rec" #\s 10))   ;
     (unswept
-      (data "data" #\d 10)))             ; unswept objects allocated here
+      (data "data" #\d 11)))             ; unswept objects allocated here
   (unreal
-    (empty "empty" #\e 11)))             ; available segments
+    (empty "empty" #\e 12)))             ; available segments
 
 ;;; enumeration of types for which gc tracks object counts
 ;;; also update gc.c
@@ -678,7 +679,8 @@
 (define-constant countof-locked 22)
 (define-constant countof-guardian 23)
 (define-constant countof-oblist 24)
-(define-constant countof-types 25)
+(define-constant countof-ephemeron 25)
+(define-constant countof-types 26)
 
 ;;; type-fixnum is assumed to be all zeros by at least by vector, fxvector,
 ;;; and bytevector index checks
@@ -1181,6 +1183,12 @@
 (define-primitive-structure-disps box type-typed-object
   ([iptr type]
    [ptr ref]))
+
+(define-primitive-structure-disps ephemeron type-pair
+  ([ptr car]
+   [ptr cdr]
+   [ptr next] ; `next` is needed by the GC to keep track of pending ephemerons
+   [ptr trigger-next])) ; `trigger-next` is similar, but for segment-specific lists
 
 (define-primitive-structure-disps tlc type-typed-object
   ([iptr type]
