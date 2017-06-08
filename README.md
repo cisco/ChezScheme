@@ -53,6 +53,6 @@ The latter includes a shared index and a shared summary of forms,
 with links where appropriate to the former, so it is often the best
 starting point.
 
-Get started with Chez Scheme by [Building Chez Scheme](BUILDING).
+Get started with Chez Scheme by [Building Chez Scheme](Build.md).
 
 For more information see the [Chez Scheme Project Page](https://cisco.github.io/ChezScheme/).
