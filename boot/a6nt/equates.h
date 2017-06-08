@@ -156,7 +156,8 @@ typedef unsigned long long U64;
 #define dtvec_mon 0x5
 #define dtvec_nsec 0x0
 #define dtvec_sec 0x1
-#define dtvec_size 0xB
+#define dtvec_size 0xC
+#define dtvec_tzname 0xB
 #define dtvec_tzoff 0xA
 #define dtvec_wday 0x7
 #define dtvec_yday 0x8
