@@ -489,3 +489,7 @@
   corresponding equivalent-expansion tests.
     cp0.ss,
     4.ms
+- restored the map and for-each optimizations with a fix for the
+  evaluation-order bug.
+    cp0.ss,
+    4.ms
