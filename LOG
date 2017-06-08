@@ -479,3 +479,8 @@
     strip.ss, 7.ss, newhash.ss, misc.ms
 - fix signature of fxbit-set?
     primdata.ss
+- more optimizations for map and for-each with explicit list
+  extend the reductions for map and for-each when the arguments are
+  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
+    cp0.ss,
+    4.ms
