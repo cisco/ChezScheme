@@ -1498,20 +1498,25 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Overflow detection for \protect\scheme{fxsll},
-\protect\scheme{fxarithmetic-shift-left}, and
-\protect\scheme{fxarithmetic-shift}}
+\subsection{Invalid memory references involving complex numbers (9.4.1)} 
+
+A bug on 64-bit platforms that occasionally caused invalid memory
+references when operating on inexact complex numbers or the imaginary parts
+of inexact complex numbers has been fixed.
+[This bug dated back to Version 8.9.1.]
+
+\subsection{Overflow detection for left-shift operations on fixnums (9.4.1)}
 
 A bug that caused \scheme{fxsll}, \scheme{fxarithmetic-shift-left},
 and \scheme{fxarithmetic-shift} to fail to detect overflow in certain
-cases was fixed.
-[This bug dated back to Version 7.1 or earlier.]
+cases has been fixed.
+[This bug dated back to Version 4.0.]
 
-\subsection{Invalid memory reference when \protect\scheme{enum-set-indexer} procedure is not passed a symbol}
+\subsection{Missing \protect\scheme{enum-set-indexer} argument check (9.4.1)}
 
-A bug that caused the procedure returned by \scheme{enum-set-indexer}
-to perform an invalid memory reference when passed an argument that is
-not a symbol has been fixed.
+A missing argument check that resulted in the procedure returned by \scheme{enum-set-indexer}
+causing an invalid memory reference when passed a non-symbol argument has been fixed.
+[This bug dated back to Version 7.5.]
 
 \subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
 
