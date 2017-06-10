@@ -1,5 +1,5 @@
-*** errors-compile-0-t-f-f	2017-05-28 20:58:24.000000000 -0400
---- errors-compile-0-t-t-f	2017-05-28 20:52:16.000000000 -0400
+*** errors-compile-0-t-f-f	2017-06-06 16:02:22.028311707 -0400
+--- errors-compile-0-t-t-f	2017-06-06 16:07:14.499665698 -0400
 ***************
 *** 144,150 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".

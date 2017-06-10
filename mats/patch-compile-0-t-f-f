@@ -5932,7 +5932,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 9843,9857 ****
+*** 9843,9856 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -5944,15 +5944,13 @@
 ! date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1)".
 ! date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
 ! date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
-! date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 9843,9857 ----
+--- 9843,9856 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
-! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure make-date>".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure make-date>".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure make-date>".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure make-date>".
@@ -5965,7 +5963,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 9877,9929 ****
+*** 9876,9936 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6011,15 +6009,23 @@
 ! date.mo:Expected error in mat date: "incorrect argument count in call (date-year-day $date-d1 #t)".
   date.mo:Expected error in mat date: "date-year-day: 17 is not a date record".
   date.mo:Expected error in mat date: "date-year-day: <time> is not a date record".
+! date.mo:Expected error in mat date: "incorrect argument count in call (date-dst?)".
+! date.mo:Expected error in mat date: "incorrect argument count in call (date-dst? $date-d1 #t)".
+  date.mo:Expected error in mat date: "date-dst?: 17 is not a date record".
+  date.mo:Expected error in mat date: "date-dst?: <time> is not a date record".
 ! date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset)".
 ! date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset $date-d1 #t)".
   date.mo:Expected error in mat date: "date-zone-offset: 17 is not a date record".
   date.mo:Expected error in mat date: "date-zone-offset: <time> is not a date record".
+! date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name)".
+! date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name $date-d1 #t)".
+  date.mo:Expected error in mat date: "date-zone-name: 17 is not a date record".
+  date.mo:Expected error in mat date: "date-zone-name: <time> is not a date record".
 ! date.mo:Expected error in mat date: "incorrect argument count in call (current-date 0 #t)".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 9877,9929 ----
+--- 9876,9936 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6065,10 +6071,18 @@
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-year-day>".
   date.mo:Expected error in mat date: "date-year-day: 17 is not a date record".
   date.mo:Expected error in mat date: "date-year-day: <time> is not a date record".
+! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-dst?>".
+! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-dst?>".
+  date.mo:Expected error in mat date: "date-dst?: 17 is not a date record".
+  date.mo:Expected error in mat date: "date-dst?: <time> is not a date record".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-zone-offset>".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-zone-offset>".
   date.mo:Expected error in mat date: "date-zone-offset: 17 is not a date record".
   date.mo:Expected error in mat date: "date-zone-offset: <time> is not a date record".
+! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-zone-name>".
+! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure date-zone-name>".
+  date.mo:Expected error in mat date: "date-zone-name: 17 is not a date record".
+  date.mo:Expected error in mat date: "date-zone-name: <time> is not a date record".
 ! date.mo:Expected error in mat date: "incorrect number of arguments to #<procedure current-date>".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".

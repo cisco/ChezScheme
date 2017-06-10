@@ -6313,9 +6313,10 @@
               (let ([cnt (- pos (constant fixnum-offset))]
                     [mask (* (- (expt 2 size) 1) (expt 2 (constant fixnum-offset)))])
                 (%inline logand
-                  ,(let ([body (%mref ,e1 ,(constant-case native-endianness
-                                             [(little) (fx+ (constant flonum-data-disp) 4)]
-                                             [(big) (constant flonum-data-disp)]))])
+                  ,(let ([body `(inline ,(make-info-load 'integer-32 #f) ,%load ,e1 ,%zero
+                                  (immediate ,(constant-case native-endianness
+                                                [(little) (fx+ (constant flonum-data-disp) 4)]
+                                                [(big) (constant flonum-data-disp)])))])
                      (let ([body (if (fx> cnt 0)
                                      (%inline srl ,body (immediate ,cnt))
                                      body)])
