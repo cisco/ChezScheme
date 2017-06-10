@@ -493,3 +493,21 @@
   evaluation-order bug.
     cp0.ss,
     4.ms
+- added date-dst? to access the previously-hidden DST information in
+  date records, and added date-zone-name to provide a time zone name.
+    date.ss, primdata.ss,
+    stats.c,
+    date.ms, root-experr*, patch-compile*,
+    system.stex
+- fixed a bug in flonum-extractor, which on 64-bit machines was using an
+  8-byte read instead of a 4-byte read to pick up the 4 highest-order
+  bytes of a little-endian flonum, potentially reading past the end of
+  mapped memory for flonums produced by taking the imaginary part of an
+  inexact complexnum (which, unlike other flonums, are not aligned on
+  16-byte boundaries).  The 8-byte load would also have failed to produce
+  correct results on 64-bit big-endian machines (of which we presently
+  have none) because the offsets passed to flonum-extractor assume the
+  bits are in the lowest-order 4 bytes of the extracted field.
+    cp0.ss,
+    misc.ms,
+    release_notes.stex

@@ -324,8 +324,6 @@
   (error? ; wrong number of arguments
     (make-date 0 0 0 0 1 1))
   (error? ; wrong number of arguments
-    (make-date 0 0 0 0 1 1 2007))
-  (error? ; wrong number of arguments
     (make-date 0 0 0 0 1 1 2007 0 0))
   (error? ; invalid nanosecond
     (make-date -1 0 0 0 1 1 2007 0))
@@ -465,6 +463,14 @@
   (error? ; not a date record
     (date-year-day $time-t1))
   (error? ; wrong number of arguments
+    (date-dst?))
+  (error? ; wrong number of arguments
+    (date-dst? $date-d1 #t))
+  (error? ; not a date record
+    (date-dst? 17))
+  (error? ; not a date record
+    (date-dst? $time-t1))
+  (error? ; wrong number of arguments
     (date-zone-offset))
   (error? ; wrong number of arguments
     (date-zone-offset $date-d1 #t))
@@ -472,6 +478,14 @@
     (date-zone-offset 17))
   (error? ; not a date record
     (date-zone-offset $time-t1))
+  (error? ; wrong number of arguments
+    (date-zone-name))
+  (error? ; wrong number of arguments
+    (date-zone-name $date-d1 #t))
+  (error? ; not a date record
+    (date-zone-name 17))
+  (error? ; not a date record
+    (date-zone-name $time-t1))
   (error?  ; wrong number of arguments
     (current-date 0 #t))
   (error?  ; invalid offset
@@ -486,7 +500,10 @@
     (and (date? $date-d3) (not (time? $date-d3))))
   (begin
     (define $date-d4 (current-date (* 10 60 60)))
-    (and (date? $date-d4) (not (time? $date-d3))))
+    (and (date? $date-d4) (not (time? $date-d4))))
+  (begin
+    (define $date-d5 (make-date 0 1 1 1 15 6 2016))
+    (and (date? $date-d5) (not (time? $date-d5))))
   (date? (make-date 0 0 0 0 1 1 1970 -24))
   (date? (make-date 999999999 59 59 23 31 12 2007 24))
   (eqv? (date-nanosecond $date-d1) 1)
@@ -497,6 +514,54 @@
   (eqv? (date-month $date-d1) 6)
   (eqv? (date-year $date-d1) 1970)
   (eqv? (date-zone-offset $date-d1) 8)
+  (boolean? (date-dst? $date-d5))
+  (fixnum? (date-zone-offset $date-d5))
+  (eqv? (date-zone-name $date-d1) #f)
+  (or (string? (date-zone-name $date-d2))
+      (not (date-zone-name $date-d2)))
+  (eqv? (date-zone-name $date-d3) #f)
+  (eqv? (date-zone-name $date-d4) #f)
+  (or (string? (date-zone-name $date-d5))
+      (not (date-zone-name $date-d5)))
+  (begin
+    (define (plausible-dst? d)
+      ;; Recognize a few time zone names and correlate with the DST field.
+      ;; Names like "EST" appear on Unix variants, while the long names
+      ;; show up on Windows.
+      (cond
+       [(member (date-zone-name d) '("EST" "CST" "MST" "PST"
+				     "Eastern Standard Time"
+				     "Central Standard Time"
+				     "Mountain Standard Time"
+				     "Pacific Standard Time"))
+        (eqv? (date-dst? d) #f)]
+       [(member (date-zone-name d) '("EDT" "CDT" "MDT" "PDT"
+				     "Eastern Daylight Time"
+				     "Central Daylight Time"
+				     "Mountain Daylight Time"
+				     "Pacific Daylight Time"))
+        (eqv? (date-dst? d) #t)]
+       [else #t]))
+    (plausible-dst? $date-d5))
+  (begin
+    (define $date-d6 (make-date 0 1 1 1 15 1 2016))
+    (plausible-dst? $date-d6))
+ ; check whether tz offsets are set according to DST, assuming that
+ ; DST always means a 1-hour shift
+  (let ([delta (time-second (time-difference (date->time-utc $date-d5)
+                                             (date->time-utc $date-d6)))]
+        [no-dst-delta (* 152 24 60 60)]; 152 days
+        [hour-delta (* 60 60)])
+    (cond
+     [(and (date-dst? $date-d5) (not (date-dst? $date-d6)))
+      ;; Northern-hemisphere DST reduces delta
+      (= delta (- no-dst-delta hour-delta))]
+     [(and (not (date-dst? $date-d5)) (date-dst? $date-d6))
+      ;; Southern-hemisphere DST increases delta
+      (= delta (+ no-dst-delta hour-delta))]
+     [else
+      ;; No DST or always DST
+      (= delta no-dst-delta)]))
  ; check to make sure dst isn't screwing with our explicitly created dates
  ; when we call mktime to fill in wday and yday
   (let f ([mon 1])
