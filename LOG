@@ -511,3 +511,8 @@
     cp0.ss,
     misc.ms,
     release_notes.stex
+- Suppress warnings from implicit fallthrough in case labels.
+    Mf-a6{fb,le,nb,ob,osx,s2}, Mf-arm32le,
+    Mf-i3{fb,le,nb,ob,osx,s2}, Mf-ppc32le,
+    Mf-ta6{fb,le,nb,ob,osx,s2},
+    Mf-ti3{fb,le,nb,ob,osx,s2}, Mf-tpp32le
