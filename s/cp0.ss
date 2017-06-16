@@ -1943,6 +1943,11 @@
                      (residualize-seq '() (list who e) ctxt)
                      true-rec)]))
 
+      (define-inline 3 (void)
+        [args
+         (residualize-seq '() args ctxt)
+         void-rec])
+
       (define-inline 2 (memq memv member assq assv assoc)
         [(x ls)
          (and (cp0-constant? null? (result-exp (value-visit-operand! ls)))
