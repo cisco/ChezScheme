@@ -176,7 +176,7 @@
                       (+ v ...)))))))))
 
 (machine-case
-  [(i3ob ti3ob a6ob ta6ob i3fb ti3fb a6fb ta6fb a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
+  [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
    (mat load-shared-object
       (file-exists? "foreign1.so")
       (begin (load-shared-object "./foreign1.so") #t)
@@ -189,6 +189,14 @@
       (file-exists? "foreign1.so")
       (begin (load-shared-object "./foreign1.so") #t)
       (begin (load-shared-object "libc.so.6") #t)
+      (error? (load-shared-object 3))
+    )
+   ]
+  [(i3fb ti3fb a6fb ta6fb)
+   (mat load-shared-object
+      (file-exists? "foreign1.so")
+      (begin (load-shared-object "./foreign1.so") #t)
+      (begin (load-shared-object "libc.so.7") #t)
       (error? (load-shared-object 3))
     )
    ]
@@ -2582,10 +2590,12 @@
   (begin
     (define load-libc
       (machine-case
-        [(i3ob ti3ob a6ob ta6ob i3fb ti3fb a6fb ta6fb a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
+        [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
          '(load-shared-object "libc.so")]
         [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
          '(load-shared-object "libc.so.6")]
+        [(i3fb ti3fb a6fb ta6fb)
+         '(load-shared-object "libc.so.7")]
         [(i3nt ti3nt a6nt ta6nt)
          '(load-shared-object "msvcrt.dll")]
         [(i3osx ti3osx a6osx ta6osx)
