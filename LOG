@@ -514,3 +514,6 @@
 - support Windows build on Bash/WSL
     BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
     c/Mf-*nt, mats/Mf-*, s/Mf-base
+- drop the arguments of void in cp0
+    cp0.ss
+    primdata.ss

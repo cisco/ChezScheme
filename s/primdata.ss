@@ -1677,7 +1677,7 @@
   (virtual-register [sig [(sub-index) -> (ptr)]] [flags discard])
   (virtual-register-count [sig [() -> (length)]] [flags pure unrestricted true cp02])
   (visit [sig [(pathname) -> (void)]] [flags true])
-  (void [sig [() -> (void)]] [flags pure unrestricted mifoldable discard true])
+  (void [sig [() -> (void)]] [flags pure unrestricted mifoldable discard true cp03])
   (warning [sig [(who string sub-ptr ...) -> (ptr ...)]] [flags])
   (warningf [sig [(who string sub-ptr ...) -> (ptr ...)]] [flags])
   (weak-cons [sig [(ptr ptr) -> (ptr)]] [flags unrestricted alloc])
