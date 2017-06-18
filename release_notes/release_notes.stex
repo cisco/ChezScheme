@@ -87,6 +87,14 @@ thread was awakened by the condition before the timeout. The
 \scheme{time-utc}, or it can be \scheme{#f} for no timeout (the
 default).
 
+\subsection{\protect\scheme{date-dst?} and \protect\scheme{date-zone-name} (9.4.1)}
+
+The new primitive procedures \scheme{date-dst?} and
+\scheme{date-zone-name} access time-zone information for a
+\scheme{date} record that is created without an explicit
+zone offset. The zone-offset argument to \scheme{make-date}
+is now optional.
+
 \subsection{\protect\scheme{procedure-arity-mask} (9.4.1)}
 
 The new primitive procedure \scheme{procedure-arity-mask} takes a
@@ -1490,20 +1498,25 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Overflow detection for \protect\scheme{fxsll},
-\protect\scheme{fxarithmetic-shift-left}, and
-\protect\scheme{fxarithmetic-shift}}
+\subsection{Invalid memory references involving complex numbers (9.4.1)} 
+
+A bug on 64-bit platforms that occasionally caused invalid memory
+references when operating on inexact complex numbers or the imaginary parts
+of inexact complex numbers has been fixed.
+[This bug dated back to Version 8.9.1.]
+
+\subsection{Overflow detection for left-shift operations on fixnums (9.4.1)}
 
 A bug that caused \scheme{fxsll}, \scheme{fxarithmetic-shift-left},
 and \scheme{fxarithmetic-shift} to fail to detect overflow in certain
-cases was fixed.
-[This bug dated back to Version 7.1 or earlier.]
+cases has been fixed.
+[This bug dated back to Version 4.0.]
 
-\subsection{Invalid memory reference when \protect\scheme{enum-set-indexer} procedure is not passed a symbol}
+\subsection{Missing \protect\scheme{enum-set-indexer} argument check (9.4.1)}
 
-A bug that caused the procedure returned by \scheme{enum-set-indexer}
-to perform an invalid memory reference when passed an argument that is
-not a symbol has been fixed.
+A missing argument check that resulted in the procedure returned by \scheme{enum-set-indexer}
+causing an invalid memory reference when passed a non-symbol argument has been fixed.
+[This bug dated back to Version 7.5.]
 
 \subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
 
