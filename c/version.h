@@ -140,7 +140,7 @@ typedef int tputsputcchar;
 #define NSECATIME(sb) (sb).st_atimespec.tv_nsec
 #define NSECCTIME(sb) (sb).st_ctimespec.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
-#define ICONV_INBUF_TYPE const char **
+#define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
 #endif
 
