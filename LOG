@@ -514,3 +514,4 @@
 - support Windows build on Bash/WSL
     BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
     c/Mf-*nt, mats/Mf-*, s/Mf-base
+- fix c/version.h for FreeBDS (machine types i3fb, ti3fb, a6fb, ta6fb)
