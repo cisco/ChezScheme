@@ -167,15 +167,18 @@ The make file supports several targets:
 
 WINDOWS
 
-Building Chez Scheme under Windows with Cygwin follows the
-instructions above except that make install is not supported:
+Building Chez Scheme under Windows with Cygwin or Bash/WSL follows the
+instructions above, except that 'make install' is not supported, and
+the 'OS' environment variable must be set to 'Windows_NT' on Bash/WSL
+(to indicate a build for Windows, as opposed to a build for Linux on
+Windows):
 
-./configure
-make
+env OS=Windows_NT ./configure
+env OS=Windows_NT make
 
 Prerequisites:
 
-* Cygwin with bash, grep, make, sed, etc.
+* Cygwin or Bash/WSL with bash, grep, make, sed, etc.
 * Microsoft Visual Studio 2015
 * WiX Toolset (for making an install)
 

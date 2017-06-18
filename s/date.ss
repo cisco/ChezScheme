@@ -96,7 +96,7 @@
       (scheme-object)
       scheme-object))
 
-  (define $mktime ; dtvec -> tspair                (returns #f on error)
+  (define $mktime ; dtvec -> tspair        (returns #f on error)
     (foreign-procedure "(cs)mktime"
       (scheme-object)
       scheme-object))
@@ -369,23 +369,30 @@
            ($oops 'date-and-time "failed for date record ~s" dt))]))
 
   (set! make-date
-    (lambda (nsec sec min hour day mon year tz)
-      (check-nsec 'make-date nsec)
-      (check-sec 'make-date sec)
-      (check-min 'make-date min)
-      (check-hour 'make-date hour)
-     ; need more accurate check for day based on year and month
-      (check-day 'make-date day)
-      (check-mon 'make-date mon)
-      (check-year 'make-date year)
-      (check-tz 'make-date tz)
-     ; keep in sync with cmacros.ss declarations of dtvec-nsec, etc.
-      (let ([dtvec (vector nsec sec min hour day mon (- year 1900) 0 0 0 tz)])
-        (unless ($mktime dtvec) ; for effect on dtvec
-          ($oops 'make-date "invalid combination of arguments"))
-        (unless (fx= (vector-ref dtvec (constant dtvec-mday)) day)
-          ($oops 'make-date "invalid day ~s for month ~s and year ~s" day mon year))
-        (make-dt dtvec))))
+    (let ([do-make-date
+           (lambda (nsec sec min hour day mon year tz tz-provided?)
+             (check-nsec 'make-date nsec)
+             (check-sec 'make-date sec)
+             (check-min 'make-date min)
+             (check-hour 'make-date hour)
+            ; need more accurate check for day based on year and month
+             (check-day 'make-date day)
+             (check-mon 'make-date mon)
+             (check-year 'make-date year)
+             (when tz-provided?
+               (check-tz 'make-date tz))
+            ; keep in sync with cmacros.ss declarations of dtvec-nsec, etc.
+             (let ([dtvec (vector nsec sec min hour day mon (- year 1900) 0 #f 0 tz #f)])
+               (unless ($mktime dtvec) ; for effect on dtvec
+                 ($oops 'make-date "invalid combination of arguments"))
+               (unless (fx= (vector-ref dtvec (constant dtvec-mday)) day)
+                 ($oops 'make-date "invalid day ~s for month ~s and year ~s" day mon year))
+               (make-dt dtvec)))])
+      (case-lambda
+       [(nsec sec min hour day mon year tz)
+        (do-make-date nsec sec min hour day mon year tz #t)]
+       [(nsec sec min hour day mon year)
+        (do-make-date nsec sec min hour day mon year #f #f)])))
 
   (set! date? (lambda (x) (dt? x)))
 
@@ -407,7 +414,9 @@
    ; date-year is below
     (date-getter date-week-day (constant dtvec-wday))
     (date-getter date-year-day (constant dtvec-yday))
-    (date-getter date-zone-offset (constant dtvec-tzoff)))
+    (date-getter date-dst? (constant dtvec-isdst))
+    (date-getter date-zone-offset (constant dtvec-tzoff))
+    (date-getter date-zone-name (constant dtvec-tzname)))
 
   (set! date-year
     (lambda (dt)
@@ -439,7 +448,7 @@
   (set-who! date->time-utc
     (lambda (dt)
       (check-dt who dt)
-      (let ([p ($mktime (dt-vec dt))])
+      (let ([p ($mktime (vector-copy (dt-vec dt)))])
         (unless p ($oops who "conversion failed for ~s" dt))
         (make-ts (constant time-utc) p))))
 )
