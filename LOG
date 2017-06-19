@@ -518,3 +518,6 @@
 - fix reference to libc.so to be libc.so.7 for FreeBSD (machine types
   i3fb, ti3fb, a6fb, ta6fb)
     foreign.ms
+- added CC option to configure for selecting the compiler
+    configure,
+    c/Mf-*
