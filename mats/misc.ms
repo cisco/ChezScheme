@@ -604,6 +604,12 @@
                   17)))])
         (cons v ls)))
     '(3 17 17))
+  ; regression test for bug in which $flonum-exponent read past mapped memory
+  (eq?
+    (do ([n 2000 (- n 1)] [ls (iota 2000)])
+        ((= n 0) 'fini)
+      (map (lambda (x) (let ([x (exact (sqrt -2.0))]) x)) ls))
+    'fini)
 )
 
 (mat compiler3

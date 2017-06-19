@@ -67,10 +67,17 @@ gic = f
 # pps determines whether pass timings are printed
 pps = f
 
+# Explicit ".exe" needed for WSL
+ifeq ($(OS),Windows_NT)
+  ExeSuffix = .exe
+else
+  ExeSuffix =
+endif
+
 # The following control where files sit and typically don't need to be changed, except
 # that Scheme and SCHEMEHEAPDIRS are set by Mf-cross to point to the host Scheme
 # implementation
-Scheme = ../bin/$m/scheme
+Scheme = ../bin/$m/scheme${ExeSuffix}
 export SCHEMEHEAPDIRS=../boot/%m
 
 # Define the libdirs separator character
@@ -278,7 +285,7 @@ checkboot:
                  '(#%$$fasl-file-equal? "../boot/$m/sbb" "../boot/$m/petite.boot" #t)'\
                  '(#%$$fasl-file-equal? "../boot/$m/scb" "../boot/$m/scheme.boot" #t)'\
                  '(printf "bootfile comparison succeeded\n"))'\
-             | ../bin/$m/scheme -b ../boot/$m/sbb -q
+             | ../bin/$m/scheme${ExeSuffix} -b ../boot/$m/sbb -q
 
 xcheckboot: ${macroobj} ${patchfile}
 	@echo '(reset-handler abort)'\
