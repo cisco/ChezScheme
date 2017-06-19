@@ -37,6 +37,7 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+: ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
 : ${LDFLAGS:=""}
@@ -199,6 +200,9 @@ while [ $# != 0 ] ; do
     --help)
       help=yes
       ;;
+    CC=*)
+      CC=`echo $1 | sed -e 's/^CC=//'`
+      ;;
     CPPFLAGS=*)
       CPPFLAGS=`echo $1 | sed -e 's/^CPPFLAGS=//'`
       ;;
@@ -356,6 +360,7 @@ cat > $w/c/config.h << END
 END
 
 cat > $w/c/Mf-config << END
+CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
 LDFLAGS=$LDFLAGS
