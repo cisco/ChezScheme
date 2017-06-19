@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-05-29 03:04:27.000000000 -0400
---- errors-compile-0-f-t-f	2017-05-29 02:30:33.000000000 -0400
+*** errors-compile-0-f-f-f	2017-06-08 02:10:03.000000000 -0400
+--- errors-compile-0-f-t-f	2017-06-08 01:38:37.000000000 -0400
 ***************
 *** 125,131 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
@@ -57,6 +57,40 @@
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
   3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
   3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+***************
+*** 249,255 ****
+  4.mo:Expected error in mat r6rs:case: "invalid syntax (r6rs:case (quote a) (a (quote yes)) (b (quote no)))".
+  4.mo:Expected error in mat r6rs:case: "invalid syntax (case (quote a) (a (quote yes)) (b (quote no)))".
+  4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
+! 4.mo:Expected error in mat map: "map: 3 is not a procedure".
+  4.mo:Expected error in mat map: "map: a is not a proper list".
+  4.mo:Expected error in mat map: "map: (a . b) is not a proper list".
+  4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
+--- 249,255 ----
+  4.mo:Expected error in mat r6rs:case: "invalid syntax (r6rs:case (quote a) (a (quote yes)) (b (quote no)))".
+  4.mo:Expected error in mat r6rs:case: "invalid syntax (case (quote a) (a (quote yes)) (b (quote no)))".
+  4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
+! 4.mo:Expected error in mat map: "attempt to apply non-procedure 3".
+  4.mo:Expected error in mat map: "map: a is not a proper list".
+  4.mo:Expected error in mat map: "map: (a . b) is not a proper list".
+  4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
+***************
+*** 319,325 ****
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+! 4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+  4.mo:Expected error in mat for-each: "for-each: a is not a proper list".
+  4.mo:Expected error in mat for-each: "for-each: (a . b) is not a proper list".
+  4.mo:Expected error in mat for-each: "for-each: (a a a a a a ...) is circular".
+--- 319,325 ----
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+  4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+! 4.mo:Expected error in mat for-each: "attempt to apply non-procedure 3".
+  4.mo:Expected error in mat for-each: "for-each: a is not a proper list".
+  4.mo:Expected error in mat for-each: "for-each: (a . b) is not a proper list".
+  4.mo:Expected error in mat for-each: "for-each: (a a a a a a ...) is circular".
 ***************
 *** 3645,3651 ****
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".

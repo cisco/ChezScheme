@@ -1857,7 +1857,8 @@
 (define-constant dtvec-yday 8)
 (define-constant dtvec-isdst 9)
 (define-constant dtvec-tzoff 10)
-(define-constant dtvec-size 11)
+(define-constant dtvec-tzname 11)
+(define-constant dtvec-size 12)
 
 (define-constant time-process 0)
 (define-constant time-thread 1)

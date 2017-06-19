@@ -133,6 +133,12 @@ fi
 if [ ! -e $W/c/Mf-config ] ; then
   touch $W/c/Mf-config
 fi
+case $M in
+  *nt)
+    (cd $W/c; workln ../../c/vs.bat vs.bat)
+    ;;
+esac
+
 
 workdir $W/s
 (cd $W/s; workln ../../s/Mf-$M Mf-$M)
@@ -147,6 +153,11 @@ workdir $W/mats
 (cd $W/mats; forceworkln Mf-$M Makefile)
 (cd $W/mats; workln ../../mats/Mf-base Mf-base)
 (cd $W/mats; workln ../../mats/Mf-exobj Mf-exobj)
+case $M in
+  *nt)
+    (cd $W/mats; workln ../../mats/vs.bat vs.bat)
+    ;;
+esac
 
 for dir in `echo examples unicode` ; do
   workdir $W/$dir

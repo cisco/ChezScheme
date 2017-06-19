@@ -1102,7 +1102,7 @@
            (expand/optimize
              '(begin (#3%map cons '(5 4 3 2 1 0)) 7)))
            7))
-  ;; map with lambda exp as procedure and lists in the form (list e0 e1 ... en)
+  ;; map with lambda exp as procedure and lists in the form (list e0 e1 ... en) or '(e0 e1 ... en)
   ;; avoid creating each list and doing the actual map
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -1119,6 +1119,38 @@
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
+    '(#3%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#3%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
     '(#3%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -1179,12 +1211,51 @@
                         (begin (write 'a) (list (begin (write 'b) 'g) 'j))
                         (begin (write 'c) (list (begin (write 'd) 'h) 'k))
                         (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
-      '("abcdef((g h . i) (j k . l))\n"
-        "abefcd((g h . i) (j k . l))\n"
-        "cdabef((g h . i) (j k . l))\n"
-        "cdefab((g h . i) (j k . l))\n"
-        "efabcd((g h . i) (j k . l))\n"
-        "efcdab((g h . i) (j k . l))\n"))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'ab) '(g j))
+                        (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+                        (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+                        (begin (write 'cd) '(h k))
+                        (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+                        (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+                        (begin (write 'ef) '(i l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
  )
 
 (mat fold-left
@@ -1875,6 +1946,130 @@
            (expand/optimize
              '(#3%for-each cons '(5 4 3 2 1 0))))
            '(#2%void)))
+  ;; for-each with lambda exp as procedure and lists in the form (list e0 e1 ... en) or '(e0 e1 ... en)
+  ;; avoid creating each list and doing the actual for-each
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (for-each (begin (write 'ab) (lambda (x y) (write (cons x y))))
+          (begin (write 'a) (list (begin (write 'b) 'c)))
+          (begin (write 'a) (list (begin (write 'b) 'd))))))
+    "ababab(c . d)")
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y) (write (cons x y)))
+          (list (begin (write 'a) 'c) (begin (write 'b) 'd))
+          (list (begin (write 'x) 'e) (begin (write 'y) 'f)))))
+    ; lots of valid possibilities, but make sure we don't interleave and get, e.g., axby
+    '("abxy(c . e)(d . f)"
+      "abyx(c . e)(d . f)"
+      "baxy(c . e)(d . f)"
+      "bayx(c . e)(d . f)"
+      "xyab(c . e)(d . f)"
+      "yxab(c . e)(d . f)"
+      "xyba(c . e)(d . f)"
+      "yxba(c . e)(d . f)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'ab) '(g j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'cd) '(h k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'ef) '(i l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
  )
 
 (mat ormap

@@ -3984,15 +3984,25 @@ It must be an exact integer in the range $-86400$ to
 $+86400$, inclusive and defaults to the local time-zone offset.
 UTC may be obtained by passing an offset of zero.
 
+If \var{offset} is not provided, then the current time zone's offset
+is used, and \scheme{date-dst?} and \scheme{date-zone-name} report
+information about the time zone. If \var{offset} is provided, then
+\scheme{date-dst?} and \scheme{date-zone-name} on the resulting date
+object produce \scheme{#f}.
+
 The following examples assume the local time zone is EST.
 
 \schemedisplay
 (current-date) ;=> #<date Thu Dec 27 23:23:20 2007>
 (current-date 0) ;=> #<date Fri Dec 28 04:23:20 2007>
+
+(date-zone-name (current-date)) ;=> "EST" \var{or other system-provided string}
+(date-zone-name (current-date 0)) ;=> #f
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{make-date}{\categoryprocedure}{(make-date \var{nsec} \var{sec} \var{min} \var{hour} \var{day} \var{mon} \var{year})}
 \formdef{make-date}{\categoryprocedure}{(make-date \var{nsec} \var{sec} \var{min} \var{hour} \var{day} \var{mon} \var{year} \var{offset})}
 \returns a date object
 \listlibraries
@@ -4015,9 +4025,18 @@ as described above.
 It must be an exact integer in the range $-86400$ to $+86400$, inclusive.
 UTC may be specified by passing an offset of zero.
 
+If \var{offset} is not provided, then the current time zone's offset
+is used, and \scheme{date-dst?} and \scheme{date-zone-name} report
+information about the time zone. If \var{offset} is provided, then
+\scheme{date-dst?} and \scheme{date-zone-name} on the resulting date
+object produce \scheme{#f}.
+
 \schemedisplay
 (make-date 0 0 0 0 1 1 1970 0) ;=> #<date Thu Jan  1 00:00:00 1970>
 (make-date 0 30 7 9 23 9 2007 -14400) ;=> #<date Sun Sep 23 09:07:30 2007>
+
+(date-zone-name (make-date 0 30 7 9 23 9 2007 -14400)) ;=> #f
+(date-zone-name (make-date 0 30 7 9 23 9 2007)) ;=> "EDT" \var{or other system-provided string}
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -4099,6 +4118,32 @@ d2 ;=> #<date Sun Sep 23 09:07:30 2007>
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{date-dst?}{\categoryprocedure}{(date-dst? \var{date})}
+\returns whether \var{date} is in Daylight Saving Time
+\formdef{date-zone-name}{\categoryprocedure}{(date-zone-name \var{date})}
+\returns \scheme{#f} or a string naming the time zone of \var{date}
+\listlibraries
+\endentryheader
+
+These procedures report time-zone information for
+the date represented by \var{date} for a date object that
+is constructed without an explicit time-zone offset. When
+a date object is created instead with explicit time-zone offset,
+these procedures produce \scheme{#f}.
+
+Daylight Saving Time status for the current time zone and a name
+string for the time zone are computed using platform-specific routines.
+In particular, the format of the zone name is platform-specific.
+
+\schemedisplay
+(define d (make-date 0 30 7 9 23 9 2007))
+(date-zone-offset d) ;=> -14400 \var{assuming Eastern U.S. time zone}
+(date-dst? d) ;=> #t
+(date-zone-name d) ;=> "EDT" \var{or some system-provided string}
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{time-utc->date}{\categoryprocedure}{(time-utc->date \var{time})}
 \formdef{time-utc->date}{\categoryprocedure}{(time-utc->date \var{time} \var{offset})}
 \returns a date object corresponding to \var{time}
@@ -4118,6 +4163,12 @@ as described at the beginning of this section.
 It must be an exact integer in the range $-86400$ to
 $+86400$, inclusive and defaults to the local time-zone offset.
 UTC may be obtained by passing an offset of zero.
+
+If \var{offset} is not provided to \scheme{time-utc->date}, then the current time zone's offset
+is used, and \scheme{date-dst?} and \scheme{date-zone-name} report
+information about the time zone. If \var{offset} is provided, then
+\scheme{date-dst?} and \scheme{date-zone-name} on the resulting date
+object produce \scheme{#f}.
 
 \schemedisplay
 (define d (make-date 0 30 7 9 23 9 2007 -14400))

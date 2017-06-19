@@ -1,5 +1,5 @@
-*** errors-compile-0-f-t-f	2017-06-08 01:38:37.000000000 -0400
---- errors-interpret-0-f-t-f	2017-06-08 02:00:50.000000000 -0400
+*** errors-compile-2-t-t-f	2017-06-06 16:26:19.869420768 -0400
+--- errors-interpret-2-t-t-f	2017-06-06 17:27:13.666434240 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -93,7 +93,7 @@
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-  3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) (eq? x (...))))".
+  3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) ((...) x (...))))".
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 --- 34,104 ----
@@ -165,12 +165,12 @@
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure>".
-  3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) (eq? x (...))))".
+  3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) ((...) x (...))))".
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
 *** 4004,4019 ****
-  6.mo:Expected error in mat pretty-print: "incorrect argument count in call (pretty-format (quote foo) (quote x) (quote x))".
+  6.mo:Expected error in mat pretty-print: "incorrect number of arguments to #<procedure pretty-format>".
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
 - 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
@@ -393,18 +393,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7322,7378 ****
-  record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
-  record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
-  record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1)".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1 2 3)".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (n (+ z 7) w "what?")".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call ((p x 17) y (quote #(oops)))".
+*** 7333,7368 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -441,28 +430,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
-! record.mo:Expected error in mat r6rs-records-syntactic: "point-x: #<record of type point> is not of type #<record type point>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "point-x: #<record of type cpoint> is not of type #<record type point>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "cpoint-rgb: #<record of type cpoint> is not of type #<record type cpoint>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "cpoint-rgb: #<record of type cpoint> is not of type #<record type cpoint>".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-! record.mo:Expected error in mat r6rs-records-syntactic: "cpoint-rgb: #<record of type cpoint> is not of type #<record type cpoint>".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7322,7378 ----
-  record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
-  record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
-  record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
+--- 7333,7368 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -499,45 +467,6 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
-! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type point> is not of type #<record type point>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type point>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type cpoint>".
-! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type cpoint>".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type cpoint>".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
-***************
-*** 8461,8473 ****
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
-! fx.mo:Expected error in mat fx*: "fx*: fixnum overflow with arguments <int> and 2".
-  fx.mo:Expected error in mat fx*: "fx*: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: <-int> is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: #f is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: (a . b) is not a fixnum".
-! fx.mo:Expected error in mat r6rs:fx*: "fx*: fixnum overflow with arguments <int> and 2".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8461,8473 ----
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
-! fx.mo:Expected error in mat fx*: "fx*: fixnum overflow computing (fx* <int> 2)".
-  fx.mo:Expected error in mat fx*: "fx*: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: <-int> is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: #f is not a fixnum".
-  fx.mo:Expected error in mat fx*: "fx*: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: (a . b) is not a fixnum".
-! fx.mo:Expected error in mat r6rs:fx*: "fx*: fixnum overflow computing (fx* <int> 2)".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
 *** 9939,9948 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".

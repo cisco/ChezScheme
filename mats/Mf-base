@@ -39,9 +39,17 @@ ifeq (${OS},Windows_NT)
 else
   dirsep = :
 endif
+
+# Explicit ".exe" needed for WSL
+ifeq ($(OS),Windows_NT)
+  ExeSuffix = .exe
+else
+  ExeSuffix =
+endif
+
 # Scheme is the scheme executable to test, and SCHEMEHEAPDIRS tells
 # it where to find its boot files
-Scheme = ../bin/$m/scheme
+Scheme = ../bin/$m/scheme${ExeSuffix}
 export SCHEMEHEAPDIRS=.${dirsep}../boot/%m
 
 # Include is the directory holding scheme.h.

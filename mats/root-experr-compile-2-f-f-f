@@ -9851,7 +9851,6 @@ date.mo:Expected error in mat date: "incorrect argument count in call (make-date
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1)".
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
-date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
@@ -9919,10 +9918,18 @@ date.mo:Expected error in mat date: "incorrect argument count in call (date-year
 date.mo:Expected error in mat date: "incorrect argument count in call (date-year-day $date-d1 #t)".
 date.mo:Expected error in mat date: "date-year-day: 17 is not a date record".
 date.mo:Expected error in mat date: "date-year-day: <time> is not a date record".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-dst?)".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-dst? $date-d1 #t)".
+date.mo:Expected error in mat date: "date-dst?: 17 is not a date record".
+date.mo:Expected error in mat date: "date-dst?: <time> is not a date record".
 date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset)".
 date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset $date-d1 #t)".
 date.mo:Expected error in mat date: "date-zone-offset: 17 is not a date record".
 date.mo:Expected error in mat date: "date-zone-offset: <time> is not a date record".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name)".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name $date-d1 #t)".
+date.mo:Expected error in mat date: "date-zone-name: 17 is not a date record".
+date.mo:Expected error in mat date: "date-zone-name: <time> is not a date record".
 date.mo:Expected error in mat date: "incorrect argument count in call (current-date 0 #t)".
 date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
 date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
