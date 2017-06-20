@@ -511,8 +511,15 @@
     cp0.ss,
     misc.ms,
     release_notes.stex
+- support Windows build on Bash/WSL
+    BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
+    c/Mf-*nt, mats/Mf-*, s/Mf-base
+- fix c/version.h for FreeBDS (machine types i3fb, ti3fb, a6fb, ta6fb)
+- fix reference to libc.so to be libc.so.7 for FreeBSD (machine types
+  i3fb, ti3fb, a6fb, ta6fb)
+    foreign.ms
+- added CC option to configure for selecting the compiler
+    configure,
+    c/Mf-*
 - Suppress warnings from implicit fallthrough in case labels.
-    Mf-a6{fb,le,nb,ob,osx,s2}, Mf-arm32le,
-    Mf-i3{fb,le,nb,ob,osx,s2}, Mf-ppc32le,
-    Mf-ta6{fb,le,nb,ob,osx,s2},
-    Mf-ti3{fb,le,nb,ob,osx,s2}, Mf-tpp32le
+    Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
