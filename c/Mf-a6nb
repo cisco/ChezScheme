@@ -1,12 +1,12 @@
 # Mf-a6nb
 # Copyright 1984-2017 Cisco Systems, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ Cpu = X86_64
 
 mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/local/include -I/usr/X11R6/include
 mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a
-C = gcc ${CPPFLAGS} -m64 -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O ${CFLAGS}
+C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o
