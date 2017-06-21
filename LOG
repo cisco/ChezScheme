@@ -523,3 +523,7 @@
     c/Mf-*
 - Suppress warnings from implicit fallthrough in case labels.
     Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
+- added bytevector-compress and bytevector-uncompress
+    bytevector.ss, primdata.ss, new-io.c, prim5.c, externs.h,
+    objects.stex, release_notes.stex,
+    bytevector.ms, root-experr*

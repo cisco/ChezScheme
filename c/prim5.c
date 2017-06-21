@@ -1554,6 +1554,10 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)get_fd_length", (void*)S_get_fd_length);
     Sforeign_symbol("(cs)set_fd_length", (void*)S_set_fd_length);
 
+    Sforeign_symbol("(cs)bytevector_compress_size", (void*)S_bytevector_compress_size);
+    Sforeign_symbol("(cs)bytevector_compress", (void*)S_bytevector_compress);
+    Sforeign_symbol("(cs)bytevector_uncompress", (void*)S_bytevector_uncompress);
+
     Sforeign_symbol("(cs)logand", (void *)S_logand);
     Sforeign_symbol("(cs)logbitp", (void *)S_logbitp);
     Sforeign_symbol("(cs)logbit0", (void *)S_logbit0);
