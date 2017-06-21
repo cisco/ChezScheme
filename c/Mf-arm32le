@@ -17,7 +17,7 @@ m = arm32le
 Cpu = ARMV6
 
 mdclib = -lm -ldl -lncurses -lrt
-C = ${CC} ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -O2 ${CFLAGS}
+C = ${CC} ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 ${CFLAGS}
 o = o
 mdsrc = arm32le.c
 mdobj = arm32le.o

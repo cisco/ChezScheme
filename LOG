@@ -521,3 +521,5 @@
 - added CC option to configure for selecting the compiler
     configure,
     c/Mf-*
+- Suppress warnings from implicit fallthrough in case labels.
+    Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
