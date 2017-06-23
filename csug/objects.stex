@@ -1129,7 +1129,7 @@ Negative values are stored as their two's complement equivalent.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{bytevector->immutable-bytevector}{\categoryprocedure}{(bytevector->immutable-bytevector \var{bytevector})}
-\returns an immutable \var{bytevector} equal to \var{bytevector}
+\returns an immutable bytevector equal to \var{bytevector}
 \listlibraries
 \endentryheader
 
@@ -1142,6 +1142,33 @@ is immutable; otherwise, the result is an immutable bytevector with the same con
 (define bv (bytevector->immutable-bytevector (bytevector 1 2 3)))
 (bytevector-u8-set! bv 0 0) ;=> \var{exception: not mutable}
 \endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-compress}{\categoryprocedure}{(bytevector-compress \var{bytevector})}
+\returns a new bytevector containing compressed content of \var{bytevector}
+\listlibraries
+\endentryheader
+
+\noindent
+The result is the raw compressed data with a minimal header to record
+the uncompressed size and the compression mode. The result does not include
+the header that is written by port-based compression using the
+\scheme{compressed} option.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-uncompress}{\categoryprocedure}{(bytevector-uncompress \var{bytevector})}
+\returns a bytevector containing uncompressed content of \var{bytevector}
+\listlibraries
+\endentryheader
+
+\noindent
+Uncompresses a \var{bytevector} produced by
+\scheme{bytevector-compress} to a new bytevector with the same content
+as the original given to \scheme{bytevector-compress}.
 
 
 \section{Boxes\label{SECTBOXES}}
