@@ -15,7 +15,7 @@
  */
 
 #include "system.h"
-
+#include <limits.h>
 #ifdef FEATURE_EXPEDITOR
 
 /* locally defined functions */
