@@ -11011,3 +11011,45 @@
     (number? (bytevector-ieee-single-native-ref immutable-100-bytevector 0))
     (number? (bytevector-ieee-double-native-ref immutable-100-bytevector 0))
 )
+
+
+(mat bytevector-compress
+    (error? (bytevector-compress 7))
+    (error? (bytevector-compress "hello"))
+    (error? (bytevector-uncompress 7))
+    (error? (bytevector-uncompress "hello"))
+    (begin
+      (define (round-trip-bytevector-compress bv)
+        (equal? (bytevector-uncompress (bytevector-compress bv))
+                bv))
+      (round-trip-bytevector-compress (string->utf8 "hello")))
+    (round-trip-bytevector-compress '#vu8())
+    (round-trip-bytevector-compress (apply bytevector
+                                           (let loop ([i 0])
+                                             (if (= i 4096)
+                                                 '()
+                                                 (cons (bitwise-and i 255)
+                                                       (loop (+ i 1)))))))
+    (error?
+     ;; Need at least 8 bytes for result size
+     (bytevector-uncompress '#vu8()))
+    (error?
+     ;; Need at least 8 bytes for result size
+     (bytevector-uncompress '#vu8(0 0 0 0 0 0 255)))
+    (error?
+     ;; Fail if the uncompressed result is too big
+     (bytevector-uncompress (let ([bv (bytevector-compress (string->utf8 "hello"))])
+                              (bytevector-u64-set! bv 0 (sub1 (bytevector-u64-ref bv 0 (endianness big))) (endianness big))
+                              bv)))
+    (error?
+     ;; Fail if the uncompressed result is too small
+     (bytevector-uncompress (let ([bv (bytevector-compress (string->utf8 "hello"))])
+                              (bytevector-u64-set! bv 0 (add1 (bytevector-u64-ref bv 0 (endianness big)))  (endianness big))
+                              bv)))
+    (error?
+     ;; Compressed data always starts with 0x78, so this one isn't valid:
+     (bytevector-uncompress '#vu8(0 0 0 0 0 0 0 255 1 2 3)))
+    (error?
+     ;; Claming a too-large size in the header should fail with a suitable message:
+     (bytevector-uncompress '#vu8(255 255 255 255 255 255 255 255 1 2 3)))
+)

@@ -54,6 +54,7 @@ static ptr new_open_output_fd_helper PROTO((const char *filename, INT mode,
              INT append, INT lock, INT replace, INT compressed));
 static INT lockfile PROTO((INT fd));
 static ptr make_gzxfile PROTO((int fd, gzFile file));
+static int is_valid_zlib_length(iptr count);
 
 /*
  not_ok_is_fatal: !ok definitely implies error, so ignore gzerror
@@ -782,4 +783,66 @@ void S_new_io_init() {
   _setmode(_fileno(stdout), O_BINARY);
   _setmode(_fileno(stderr), O_BINARY);
 #endif /* WIN32 */
+}
+
+static int is_valid_zlib_length(iptr count) {
+  /* A zlib `uLong` may be the same as `unsigned long`,
+     which is not as big as `iptr` on 64-bit Windows. */
+  return count == (iptr)(uLong)count;
+}
+
+/* Accept `iptr` because we expect it to represent a bytevector size,
+   which always fits in `iptr`. Return `uptr`, because the result might
+   not fit in `iptr`. */
+uptr S_bytevector_compress_size(iptr s_count) {
+  if (is_valid_zlib_length(s_count))
+    return compressBound(s_count);
+  else {
+    /* Compression will report "source too long" */
+    return 0;
+  }
+}
+
+ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
+                          ptr src_bv, iptr s_start, iptr s_count) {
+  /* On error, an message-template string with ~s for the bytevector */
+  int r;
+  uLong destLen;
+
+  if (!is_valid_zlib_length(s_count))
+    return Sstring("source bytevector ~s is too large");
+
+  destLen = d_count;
+
+  r = compress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), s_count);
+
+  if (r == Z_OK)
+    return FIX(destLen);
+  else if (r == Z_BUF_ERROR)
+    return Sstring("destination bytevector is too small for compressed form of ~s");
+  else
+    return Sstring("internal error compressing ~s");
+}
+
+ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
+                            ptr src_bv, iptr s_start, iptr s_count) {
+  /* On error, an message-template string with ~s for the bytevector */
+  int r;
+  uLongf destLen;
+
+  if (!is_valid_zlib_length(d_count))
+    return Sstring("expected result size of uncompressed source ~s is too large");
+
+  destLen = d_count;
+
+  r = uncompress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), s_count);
+
+  if (r == Z_OK)
+    return FIX(destLen);
+  else if (r == Z_BUF_ERROR)
+    return Sstring("uncompressed ~s is larger than expected size");
+  else if (r == Z_DATA_ERROR)
+    return Sstring("invalid data in source bytevector ~s");
+  else
+    return Sstring("internal error uncompressing ~s");
 }

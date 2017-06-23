@@ -105,6 +105,13 @@ For example, the arity mask for a two-argument procedure such as
 while the arity mask for a procedure that accepts one or more arguments,
 such as \var{list*}, is $-2$ (all but bit 0 set).
 
+\subsection{Bytevector compression (9.4.1)}
+
+The new primitive procedures \scheme{bytevector-compress} and
+\scheme{bytevector-decompress} exposes for bytevectors the kind of
+compression functionality that is used for files with the
+\scheme{compressed} option.
+
 \subsection{High-precision clock time in Windows 8 and up (9.4.1)}
 
 When running on Windows 8 and up, Chez Scheme uses the high-precision

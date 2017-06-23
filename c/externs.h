@@ -197,6 +197,12 @@ extern ptr S_get_fd_length PROTO((ptr file, IBOOL gzflag));
 extern ptr S_set_fd_length PROTO((ptr file, ptr length, IBOOL gzflag));
 extern void S_new_io_init PROTO((void));
 
+extern uptr S_bytevector_compress_size PROTO((iptr s_count));
+extern ptr S_bytevector_compress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
+                                        ptr src_bv, iptr s_start, iptr s_count));
+extern ptr S_bytevector_uncompress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
+                                          ptr src_bv, iptr s_start, iptr s_count));
+
 /* thread.c */
 extern void S_thread_init PROTO((void));
 extern ptr S_create_thread_object PROTO((const char *who, ptr p_tc));
