@@ -796,7 +796,7 @@ static int is_valid_zlib_length(iptr count) {
    not fit in `iptr`. */
 uptr S_bytevector_compress_size(iptr s_count) {
   if (is_valid_zlib_length(s_count))
-    return compressBound(s_count);
+    return compressBound((uLong)s_count);
   else {
     /* Compression will report "source too long" */
     return 0;
@@ -812,9 +812,9 @@ ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
   if (!is_valid_zlib_length(s_count))
     return Sstring("source bytevector ~s is too large");
 
-  destLen = d_count;
+  destLen = (uLong)d_count;
 
-  r = compress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), s_count);
+  r = compress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), (uLong)s_count);
 
   if (r == Z_OK)
     return FIX(destLen);
@@ -833,9 +833,9 @@ ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
   if (!is_valid_zlib_length(d_count))
     return Sstring("expected result size of uncompressed source ~s is too large");
 
-  destLen = d_count;
+  destLen = (uLongf)d_count;
 
-  r = uncompress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), s_count);
+  r = uncompress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), (uLong)s_count);
 
   if (r == Z_OK)
     return FIX(destLen);
