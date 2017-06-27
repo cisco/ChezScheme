@@ -527,3 +527,5 @@
     bytevector.ss, primdata.ss, new-io.c, prim5.c, externs.h,
     objects.stex, release_notes.stex,
     bytevector.ms, root-experr*
+- fixed typo in S_abnormal_exit
+    schsig.c
