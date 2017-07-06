@@ -722,7 +722,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_eq_hashtable: {
-            ptr rtd, ht, v; IBOOL weakp; uptr veclen, i, n;
+            ptr rtd, ht, v; uptr subtype; uptr veclen, i, n;
             if ((rtd = S_G.eq_ht_rtd) == Sfalse) {
               S_G.eq_ht_rtd = rtd = SYMVAL(S_intern((const unsigned char *)"$eq-ht-rtd"));
               if (!Srecordp(rtd)) S_error_abort("$eq-ht-rtd has not been set");
@@ -731,7 +731,15 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             RECORDINSTTYPE(ht) = rtd;
             INITPTRFIELD(ht,eq_hashtable_type_disp) = S_G.eq_symbol;
             INITPTRFIELD(ht,eq_hashtable_mutablep_disp) = bytein(f) ? Strue : Sfalse;
-            INITPTRFIELD(ht,eq_hashtable_weakp_disp) = (weakp = bytein(f)) ? Strue : Sfalse;
+            switch ((subtype = bytein(f))) {
+            case eq_hashtable_subtype_normal:
+            case eq_hashtable_subtype_weak:
+            case eq_hashtable_subtype_ephemeron:
+              INITPTRFIELD(ht,eq_hashtable_subtype_disp) = FIX(subtype);
+              break;
+            default:
+              S_error2("", "invalid eq-hashtable subtype code", FIX(subtype), f->uf->path);
+            }
             INITPTRFIELD(ht,eq_hashtable_minlen_disp) = FIX(uptrin(f));
             veclen = uptrin(f);
             INITPTRFIELD(ht,eq_hashtable_vec_disp) = v = S_vector(veclen);
@@ -740,7 +748,18 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             for (i = 0; i < veclen ; i += 1) { INITVECTIT(v, i) = FIX(i); }
             while (n > 0) {
               ptr keyval;
-              keyval = weakp ? S_cons_in(space_weakpair, 0, FIX(0), FIX(0)) : Scons(FIX(0), FIX(0));
+              switch (subtype) {
+              case eq_hashtable_subtype_normal:
+                keyval = Scons(FIX(0), FIX(0));
+                break;
+              case eq_hashtable_subtype_weak:
+                keyval = S_cons_in(space_weakpair, 0, FIX(0), FIX(0));
+                break;
+              case eq_hashtable_subtype_ephemeron:
+              default:
+                keyval = S_cons_in(space_ephemeron, 0, FIX(0), FIX(0));
+                break;
+              }
               faslin(tc, &INITCAR(keyval), t, pstrbuf, f);
               faslin(tc, &INITCDR(keyval), t, pstrbuf, f);
               i = ((uptr)Scar(keyval) >> primary_type_bits) & (veclen - 1);

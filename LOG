@@ -529,3 +529,8 @@
     bytevector.ms, root-experr*
 - fixed typo in S_abnormal_exit
     schsig.c
+- revert use of ephemerons in weak hashtables, add ephemeron
+  hashtables
+    newhash.ss, hashtable-types.ss, library.ss, primdata.ss,
+    fasl.ss, fasl.c, gc.c, globals.h,
+    hash.ms, objects.stex, release_notes.stex

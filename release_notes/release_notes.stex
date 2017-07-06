@@ -78,6 +78,19 @@ procedures.
 Immutable boxes are created via \scheme{box-immutable}.
 Any attempt to modify an immutable object causes an exception to be raised.
 
+\subsection{Ephemeron pairs and hashtables (9.4.1)}
+
+Support for ephemeron pairs has been added, along with eq and eqv
+hashtables that use ephemeron pairs to combine keys and values. An
+ephemeron pair avoids the ``key in value'' problem of weak pairs,
+where a weakly held key is paired to a value that refers back to the
+key, in which case the key remains reachable as long as the pair is
+reachable. In an ephemeron pair, the cdr of the pair is not considered
+reachable by the garbage collector until both the pair and the car of
+the pair have been found reachable. An ephemeron hashtable implements
+a weak mapping where referencing a key in a value does not prevent the
+mapping from being removed from the table.
+
 \subsection{Optional timeout for \protect\scheme{condition-wait} (9.4.1)}
 
 The \scheme{condition-wait} procedure now takes an optional
