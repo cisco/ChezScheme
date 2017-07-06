@@ -1847,9 +1847,13 @@ except the keys of the hashtable are held weakly, i.e., they are not
 protected from the garbage collector.
 Keys reclaimed by the garbage collector are removed from the table,
 and their associated values are dropped the next time the table
-is modified, if not sooner. A value in the hashtable can refer to a
-key in the hashtable without preventing the garbage collector from
-reclaiming the key (because keys are paired values using ephemeron pairs).
+is modified, if not sooner.
+
+Values in the hashtable are referenced normally as long as the key is
+not reclaimed, since keys are paired values using weak pairs. Consequently,
+if a value in the hashtable refers to its own key, then
+garbage collection is prevented from reclaiming the key. See
+\scheme{make-ephemeron-eq-hashtable} and \scheme{make-ephemeron-eqv-hashtable}.
 
 A copy of a weak eq or eqv hashtable created by \scheme{hashtable-copy} is
 also weak.
@@ -1866,6 +1870,32 @@ The effect of this can be observed via \scheme{hashtable-keys} and
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{make-ephemeron-eq-hashtable}{\categoryprocedure}{(make-ephemeron-eq-hashtable)}
+\formdef{make-ephemeron-eq-hashtable}{\categoryprocedure}{(make-ephemeron-eq-hashtable \var{size})}
+\formdef{make-ephemeron-eqv-hashtable}{\categoryprocedure}{(make-ephemeron-eqv-hashtable)}
+\formdef{make-ephemeron-eqv-hashtable}{\categoryprocedure}{(make-ephemeron-eqv-hashtable \var{size})}
+\returns a new ephemeron eq hashtable
+\listlibraries
+\endentryheader
+
+These procedures are like \scheme{make-weak-eq-hashtable} and
+\scheme{make-weak-eqv-hashtable}, but a value in the hashtable can refer to a
+key in the hashtable without preventing garbage collection from
+reclaiming the key, because keys are paired with values using ephemeron pairs.
+
+A copy of an ephemeron eq or eqv hashtable created by
+\scheme{hashtable-copy} is also an ephemeron table, and inaccesible
+key can be dropped from an immutable ephemeron hashtable in the same
+way as for an immutable weak hashtable.
+
+\schemedisplay
+(define ht1 (make-ephemeron-eq-hashtable))
+(define ht2 (make-ephemeron-eq-hashtable 32))
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{hashtable-weak?}{\categoryprocedure}{(hashtable-weak? \var{obj})}
 \returns \scheme{#t} if \var{obj} is a weak eq or eqv hashtable, \scheme{#f} otherwise
 \listlibraries
@@ -1875,6 +1905,20 @@ The effect of this can be observed via \scheme{hashtable-keys} and
 (define ht1 (make-weak-eq-hashtable))
 (define ht2 (hashtable-copy ht1))
 (hashtable-weak? ht2) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-ephemeron?}{\categoryprocedure}{(hashtable-ephemeron? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an ephemeron eq or eqv hashtable, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define ht1 (make-ephemeron-eq-hashtable))
+(define ht2 (hashtable-copy ht1))
+(hashtable-ephemeron? ht2) ;=> #t
 \endschemedisplay
 
 
@@ -1902,6 +1946,20 @@ The effect of this can be observed via \scheme{hashtable-keys} and
 \schemedisplay
 (eq-hashtable-weak? (make-eq-hashtable)) ;=> #f
 (eq-hashtable-weak? (make-weak-eq-hashtable)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{eq-hashtable-ephemeron?}{\categoryprocedure}{(eq-hashtable-ephemeron? \var{hashtable})}
+\returns \scheme{#t} if \var{hashtable} uses ephemeron pairs, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+
+\schemedisplay
+(eq-hashtable-ephemeron? (make-eq-hashtable)) ;=> #f
+(eq-hashtable-ephemeron? (make-ephemeron-eq-hashtable)) ;=> #t
 \endschemedisplay
 
 %----------------------------------------------------------------------------

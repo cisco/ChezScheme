@@ -1435,7 +1435,11 @@
              [b (vector-ref vec idx)])
         (lookup-keyval x b
           values
-          (let ([keyval (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))])
+          (let ([keyval (let ([subtype (eq-ht-subtype h)])
+                          (cond
+                           [(eq? subtype (constant eq-hashtable-subtype-normal)) (cons x v)]
+                           [(eq? subtype (constant eq-hashtable-subtype-weak)) (weak-cons x v)]
+                           [else (ephemeron-cons x v)]))])
             (vector-set! vec idx ($make-tlc h keyval b))
             (incr-size! h vec)
             keyval))))
@@ -1451,7 +1455,11 @@
               (begin
                 (vector-set! vec idx
                   ($make-tlc h
-                    (if (eq-ht-weak? h) (ephemeron-cons x v) (cons x v))
+                    (let ([subtype (eq-ht-subtype h)])
+                      (cond
+                       [(eq? subtype (constant eq-hashtable-subtype-normal)) (cons x v)]
+                       [(eq? subtype (constant eq-hashtable-subtype-weak)) (weak-cons x v)]
+                       [else (ephemeron-cons x v)]))
                     b))
                 (incr-size! h vec))))))
   
