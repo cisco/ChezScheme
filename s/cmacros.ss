@@ -1440,7 +1440,9 @@
   ([ptr obj]
    [ptr rep]
    [ptr tconc]
-   [ptr next]))
+   [ptr next]
+   [ptr ordered?]  ; boolean to indicate finalization mode
+   [ptr pending])) ; for the GC's use
 
 ;;; forwarding addresses are recorded with a single forward-marker
 ;;; bit pattern (a special Scheme object) followed by the forwarding
