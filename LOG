@@ -1042,3 +1042,7 @@
 - clarified required use of scheme-start to start an application
   packaged as a boot file and added a short "myecho" example.
     use.stex
+- add ordered guardians through a new optional argument to make-guardian
+    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
+    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
+    4.ms, smgmt.stex, release_notes.stex
