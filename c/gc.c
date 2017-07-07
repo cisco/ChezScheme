@@ -49,9 +49,11 @@ static void sweep_code_object PROTO((ptr tc, ptr co));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void sweep_dirty PROTO((void));
 static void resweep_dirty_weak_pairs PROTO((void));
+static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
+static void add_trigger_guardians_to_recheck PROTO((ptr ls));
 static void add_ephemeron_to_pending PROTO((ptr p));
 static void add_trigger_ephemerons_to_repending PROTO((ptr p));
-static void check_trigger_ephemerons PROTO((seginfo *si));
+static void check_triggers PROTO((seginfo *si));
 static void check_ephemeron PROTO((ptr pe, int add_to_trigger));
 static void check_pending_ephemerons PROTO(());
 static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
@@ -72,6 +74,14 @@ static ptr sweep_loc[max_real_space+1];
 static ptr orig_next_loc[max_real_space+1];
 static ptr sorted_locked_objects;
 static ptr tlcs_to_rehash;
+static ptr recheck_guardians_ls;
+
+/* Values for a guardian entry's `pending` field when it's added to a
+   seginfo's pending list: */
+enum {
+  GUARDIAN_PENDING_HOLD,
+  GUARDIAN_PENDING_FINAL
+};
 
 static ptr append_bang(ptr ls1, ptr ls2) { /* assumes ls2 pairs are older than ls1 pairs, or that we don't car */
   if (ls2 == Snil) {
@@ -192,15 +202,23 @@ static IBOOL search_locked(ptr p) {
 
 #define locked(p) (sorted_locked_objects != FIX(0) && search_locked(p))
 
-FORCEINLINE void check_trigger_ephemerons(seginfo *si) {
-  /* Registering ephemerons to recheck at the granularity of a segment
-     means that the worst-case complexity of GC is quadratic in the
-     number of objects that fit into a segment (but that only happens
-     if the objects are ephemeron keys that are reachable just through
-     a chain via the value field of the same ephemerons). */
-  if (si->trigger_ephemerons) {
-    add_trigger_ephemerons_to_repending(si->trigger_ephemerons);
-    si->trigger_ephemerons = NULL;
+FORCEINLINE void check_triggers(seginfo *si) {
+  /* Registering ephemerons and guardians to recheck at the
+     granularity of a segment means that the worst-case complexity of
+     GC is quadratic in the number of objects that fit into a segment
+     (but that only happens if the objects are ephemeron keys that are
+     reachable just through a chain via the value field of the same
+     ephemerons). */
+  if (si->has_triggers) {
+    if (si->trigger_ephemerons) {
+      add_trigger_ephemerons_to_repending(si->trigger_ephemerons);
+      si->trigger_ephemerons = NULL;
+    }
+    if (si->trigger_guardians) {
+      add_trigger_guardians_to_recheck(si->trigger_guardians);
+      si->trigger_guardians = NULL;
+    }
+    si->has_triggers = 0;
   }
 }
 
@@ -213,7 +231,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
 
     change = 1;
 
-    check_trigger_ephemerons(si);
+    check_triggers(si);
 
     if ((t = TYPEBITS(pp)) == type_typed_object) {
       tf = TYPEFIELD(pp);
@@ -449,7 +467,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
       } else {
         ptr qq = Scdr(pp); ptr q; seginfo *qsi;
         if (qq != pp && TYPEBITS(qq) == type_pair && (qsi = MaybeSegInfo(ptr_get_segment(qq))) != NULL && qsi->space == si->space && FWDMARKER(qq) != forward_marker && !locked(qq)) {
-          check_trigger_ephemerons(qsi);
+          check_triggers(qsi);
           if (si->space == (space_weakpair | space_old)) {
 #ifdef ENABLE_OBJECT_COUNTS
             S_G.countof[tg][countof_weakpair] += 2;
@@ -880,14 +898,29 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     sweep_generation(tc, tg);
 
   /* handle guardians */
-    {   ptr hold_ls, pend_hold_ls, final_ls, pend_final_ls;
+    {   ptr hold_ls, pend_hold_ls, final_ls, pend_final_ls, maybe_final_ordered_ls;
         ptr obj, rep, tconc, next;
+        IBOOL do_ordered = 0;
 
       /* move each entry in guardian lists into one of:
        *   pend_hold_ls     if obj accessible
        *   final_ls         if obj not accessible and tconc accessible
-       *   pend_final_ls    if obj not accessible and tconc not accessible */
-        pend_hold_ls = final_ls = pend_final_ls = Snil;
+       *   pend_final_ls    if obj not accessible and tconc not accessible
+       * When a pend_hold_ls or pend_final_ls entry is tconc is
+       * determined to be accessible, then it moves to hold_ls or
+       * final_ls. When an entry in pend_hold_ls or pend_final_ls can't
+       * be moved to final_ls or hold_ls, the entry moves into a
+       * seginfo's trigger list (to avoid quadratic-time processing of
+       * guardians). When the trigger fires, the entry is added to
+       * recheck_guardians_ls, which is sorted back into pend_hold_ls
+       * and pend_final_ls for another iteration.
+       * Ordered and unordered guardian entries start out together;
+       * when final_ls is processed, ordered entries are delayed by
+       * moving them into maybe_final_ordered_ls, which is split back
+       * into final_ls and pend_hold_ls after all unordered entries
+       * have been handled. */
+        pend_hold_ls = final_ls = pend_final_ls = maybe_final_ordered_ls = Snil;
+        recheck_guardians_ls = Snil;
 
         for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
           ptr tc = (ptr)THREADTC(Scar(ls));
@@ -912,25 +945,51 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
             IBOOL relocate_rep = final_ls != Snil;
 
           /* relocate & add the final objects to their tconcs */
-            for (ls = final_ls; ls != Snil; ls = GUARDIANNEXT(ls)) {
+            ls = final_ls; final_ls = Snil;
+            for (; ls != Snil; ls = next) {
                 ptr old_end, new_end;
 
+                next = GUARDIANNEXT(ls);
+
                 rep = GUARDIANREP(ls);
-                relocate(&rep);
+                if (!do_ordered && (GUARDIANORDERED(ls) == Strue)) {
+                  /* Sweep from the representative, but don't copy the
+                     representative itself; if the object stays uncopied by
+                     the end, then the entry is really final, and we copy the
+                     representative only at that point; crucially, the
+                     representative can't itself be a tconc, so we
+                     won't discover any new tconcs at that point. */
+                  ptr obj = GUARDIANOBJ(ls);
+                  if (FWDMARKER(obj) == forward_marker && TYPEBITS(obj) != type_flonum) {
+                    /* Object is reachable, so we might as well move
+                       this one to the hold list --- via pend_hold_ls, which
+                       leads to a copy to move to hold_ls */
+                    INITGUARDIANNEXT(ls) = pend_hold_ls;
+                    pend_hold_ls = ls;
+                  } else {
+                    seginfo *si;
+                    if (!IMMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && (si->space & space_old) && !locked(rep))
+                      sweep(tc, rep, 1);
+                    INITGUARDIANNEXT(ls) = maybe_final_ordered_ls;
+                    maybe_final_ordered_ls = ls;
+                  }
+                } else {
+                  relocate(&rep);
 
-              /* if tconc was old it's been forwarded */
-                tconc = GUARDIANTCONC(ls);
-
-                old_end = Scdr(tconc);
+                /* if tconc was old it's been forwarded */
+                  tconc = GUARDIANTCONC(ls);
+                  
+                  old_end = Scdr(tconc);
                 /* allocating pair in tg means it will be swept, which is wasted effort, but should cause no harm */
-                new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
+                  new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
 #ifdef ENABLE_OBJECT_COUNTS
-                S_G.countof[tg][countof_pair] += 1;
+                  S_G.countof[tg][countof_pair] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
-
-                SETCAR(old_end,rep);
-                SETCDR(old_end,new_end);
-                SETCDR(tconc,new_end);
+                  
+                  SETCAR(old_end,rep);
+                  SETCDR(old_end,new_end);
+                  SETCDR(tconc,new_end);
+                }
             }
 
             /* discard static pend_hold_ls entries */
@@ -944,12 +1003,12 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                         if (FWDMARKER(tconc) == forward_marker)
                             tconc = FWDADDRESS(tconc);
                         else {
-                            INITGUARDIANNEXT(ls) = pend_hold_ls;
-                            pend_hold_ls = ls;
+                            INITGUARDIANPENDING(ls) = FIX(GUARDIAN_PENDING_HOLD);
+                            add_pending_guardian(ls, tconc);
                             continue;
                         }
                     }
-        
+
                     rep = GUARDIANREP(ls);
                     relocate(&rep);
                     relocate_rep = 1;
@@ -962,18 +1021,54 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     INITGUARDIANREP(p) = rep;
                     INITGUARDIANTCONC(p) = tconc;
                     INITGUARDIANNEXT(p) = hold_ls;
+                    INITGUARDIANORDERED(p) = GUARDIANORDERED(ls);
+                    INITGUARDIANPENDING(p) = FIX(0);
                     hold_ls = p;
                 }
+            }
+
+            if (!relocate_rep && !do_ordered && maybe_final_ordered_ls != Snil) {
+              /* Switch to finishing up ordered. Move all maybe-final
+                 ordered entries to final_ls and pend_hold_ls */
+              do_ordered = relocate_rep = 1;
+              ls = maybe_final_ordered_ls; maybe_final_ordered_ls = Snil;
+              for (; ls != Snil; ls = next) {
+                ptr obj = GUARDIANOBJ(ls);
+                next = GUARDIANNEXT(ls);
+                if (FWDMARKER(obj) == forward_marker && TYPEBITS(obj) != type_flonum) {
+                  /* Will defintely move to hold_ls, but the entry
+                     must be copied to move from pend_hold_ls to
+                     hold_ls: */
+                  INITGUARDIANNEXT(ls) = pend_hold_ls;
+                  pend_hold_ls = ls;
+                } else {
+                  INITGUARDIANNEXT(ls) = final_ls;
+                  final_ls = ls;
+                }
+              }
             }
 
             if (!relocate_rep) break;
 
             sweep_generation(tc, tg);
 
+            ls = recheck_guardians_ls; recheck_guardians_ls = Snil;
+            for ( ; ls != Snil; ls = next) {
+              next = GUARDIANNEXT(ls);
+              if (GUARDIANPENDING(ls) == FIX(GUARDIAN_PENDING_HOLD)) {
+                INITGUARDIANNEXT(ls) = pend_hold_ls;
+                pend_hold_ls = ls;
+              } else {
+                INITGUARDIANNEXT(ls) = pend_final_ls;
+                pend_final_ls = ls;
+              }
+            }
+            
           /* move each entry in pend_final_ls into one of:
            *   final_ls         if tconc forwarded
-           *   pend_final_ls    if tconc not forwarded */
-            ls = pend_final_ls; final_ls = pend_final_ls = Snil;
+           *   pend_final_ls    if tconc not forwarded
+           * where the output pend_final_ls coresponds to pending in a segment */
+            ls = pend_final_ls; pend_final_ls = Snil;
             for ( ; ls != Snil; ls = next) {
                 tconc = GUARDIANTCONC(ls); next = GUARDIANNEXT(ls);
 
@@ -982,8 +1077,8 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     INITGUARDIANNEXT(ls) = final_ls;
                     final_ls = ls;
                 } else {
-                    INITGUARDIANNEXT(ls) = pend_final_ls;
-                    pend_final_ls = ls;
+                    INITGUARDIANPENDING(ls) = FIX(GUARDIAN_PENDING_FINAL);
+                    add_pending_guardian(ls, tconc);
                 }
             }
         }
@@ -2028,6 +2123,25 @@ static void resweep_dirty_weak_pairs() {
   }
 }
 
+static void add_pending_guardian(ptr gdn, ptr tconc)
+{
+  seginfo *si = SegInfo(ptr_get_segment(tconc));
+  INITGUARDIANNEXT(gdn) = si->trigger_guardians;
+  si->trigger_guardians = gdn;
+  si->has_triggers = 1;
+}
+
+static void add_trigger_guardians_to_recheck(ptr ls)
+{
+  ptr last = ls, next = GUARDIANNEXT(ls);
+  while (next != NULL) {
+    last = next;
+    next = GUARDIANNEXT(next);
+  }
+  INITGUARDIANNEXT(last) = recheck_guardians_ls;
+  recheck_guardians_ls = ls;
+}
+
 static ptr pending_ephemerons = NULL;
 /* Ephemerons that we haven't looked at, chained through `next`. */
 
@@ -2078,6 +2192,7 @@ static void check_ephemeron(ptr pe, int add_to_trigger) {
       /* Not reached, so far; install as trigger */
       EPHEMERONTRIGGERNEXT(pe) = si->trigger_ephemerons;
       si->trigger_ephemerons = pe;
+      si->has_triggers = 1;
       if (add_to_trigger) {
         EPHEMERONNEXT(pe) = trigger_ephemerons;
         trigger_ephemerons = pe;
@@ -2160,15 +2275,9 @@ static void clear_trigger_ephemerons() {
     if (EPHEMERONTRIGGERNEXT(pe) == Strue) {
       /* The ephemeron was triggered and retains its key and value */
     } else {
-      seginfo *si;
-      ptr p = Scar(pe);
       /* Key never became reachable, so clear key and value */
       INITCAR(pe) = Sbwp_object;
       INITCDR(pe) = Sbwp_object;
-
-      /* Remove trigger */
-      si = SegInfo(ptr_get_segment(p));
-      si->trigger_ephemerons = NULL;
     }
     pe = EPHEMERONNEXT(pe);
   }

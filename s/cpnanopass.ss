@@ -5281,14 +5281,16 @@
           )
 
         (define-inline 3 $install-guardian
-          [(e-obj e-rep e-tconc)
-           (bind #f (e-obj e-rep e-tconc)
+          [(e-obj e-rep e-tconc ordered?)
+           (bind #f (e-obj e-rep e-tconc ordered?)
              (bind #t ([t (%constant-alloc typemod (constant size-guardian-entry))])
                (%seq
                  (set! ,(%mref ,t ,(constant guardian-entry-obj-disp)) ,e-obj)
                  (set! ,(%mref ,t ,(constant guardian-entry-rep-disp)) ,e-rep)
                  (set! ,(%mref ,t ,(constant guardian-entry-tconc-disp)) ,e-tconc)
                  (set! ,(%mref ,t ,(constant guardian-entry-next-disp)) ,(%tc-ref guardian-entries))
+                 (set! ,(%mref ,t ,(constant guardian-entry-ordered?-disp)) ,ordered?)
+                 (set! ,(%mref ,t ,(constant guardian-entry-pending-disp)) ,(%constant snil))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
 
         (define-inline 2 virtual-register-count

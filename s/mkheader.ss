@@ -919,11 +919,15 @@
         (defref GUARDIANREP guardian-entry rep)
         (defref GUARDIANTCONC guardian-entry tconc)
         (defref GUARDIANNEXT guardian-entry next)
+        (defref GUARDIANORDERED guardian-entry ordered?)
+        (defref GUARDIANPENDING guardian-entry pending)
 
         (definit INITGUARDIANOBJ guardian-entry obj)
         (definit INITGUARDIANREP guardian-entry rep)
         (definit INITGUARDIANTCONC guardian-entry tconc)
         (definit INITGUARDIANNEXT guardian-entry next)
+        (definit INITGUARDIANORDERED guardian-entry ordered?)
+        (definit INITGUARDIANPENDING guardian-entry pending)
 
         (defref FORWARDMARKER forward marker)
         (defref FORWARDADDRESS forward address)

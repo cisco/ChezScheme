@@ -234,6 +234,9 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
     /* fill sizeof(iptr) bytes at a time with 0xff */
     *dp = -1;
   }
+  si->has_triggers = 0;
+  si->trigger_ephemerons = 0;
+  si->trigger_guardians = 0;
 }
 
 iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {

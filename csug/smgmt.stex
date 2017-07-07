@@ -532,7 +532,8 @@ reference, and that non-weak reference prevents the car field from becoming
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{make-guardian}{\categoryprocedure}{(make-guardian)}
-\returns a new guardian
+\formdef{make-guardian}{\categoryprocedure}{(make-guardian \var{ordered?})}
+\returns a new guardian that is unordered unless \var{ordered?} is true
 \listlibraries
 \endentryheader
 
@@ -618,9 +619,25 @@ This feature circumvents the problems that might otherwise arise with
 shared or cyclic structure.
 A shared or cyclic structure consisting of inaccessible objects is
 preserved in its entirety, and each piece registered for preservation
-with any guardian is placed in the inaccessible set for that guardian.
+with any unordered guardian is placed in the inaccessible set for that guardian.
 The programmer then has complete control over the order in which pieces
 of the structure are processed.
+
+An ordered guardian, as created by providing a true value for
+\var{ordered?}, treats an object as inaccessible only when it is not
+accessible from any representative of an object that is in any
+usable guardian's inaccessible group and that is distinct from the
+object itself. Cycles among objects registered with ordered guardians
+can never become inaccessible unless the cycle is broken or some of
+the relevant guardians are dropped by the program, and each
+registered object's representative (if different from the object) can
+contribute to such cycles. If an object is registered to an ordered
+custodian with a representative that is different from the object but
+that references the object, then the object is in a cycle and will not
+become inaccessible unless the reference from the representative to
+the object is destroyed. Weak references do not count, so objects that
+form a cycle only when counting weak references may still become
+inaccessible.
 
 An object may be registered with a guardian more than once, in which
 case it will be retrievable more than once:
@@ -638,7 +655,12 @@ case it will be retrievable more than once:
 
 \noindent
 It may also be registered with more than one guardian, and guardians
-themselves can be registered with other guardians.
+themselves can be registered with other guardians. If an object
+is registered to both an unordered guardian and an ordered guardian
+and neither guardians is dropped, the object can become
+inaccessible for the ordered guardian only after it has been
+determined inaccessible for the unordered guardian and then
+retrieved and dropped again by the program.
 
 An object that has been registered with a guardian without a
 representative and placed in
