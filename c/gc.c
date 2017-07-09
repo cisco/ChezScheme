@@ -32,6 +32,8 @@ static IBOOL search_locked PROTO((ptr p));
 static ptr copy PROTO((ptr pp, seginfo *si));
 static void sweep_ptrs PROTO((ptr *p, iptr n));
 static void sweep PROTO((ptr tc, ptr p, IBOOL sweep_pure));
+static void sweep_in_old PROTO((ptr tc, ptr p));
+static int scan_ptrs_for_self PROTO((ptr *pp, iptr len, ptr p));
 static ptr copy_stack PROTO((ptr old, iptr *length, iptr clength));
 static void resweep_weak_pairs PROTO((IGEN g));
 static void forward_or_bwp PROTO((ptr *pp, ptr p));
@@ -44,6 +46,7 @@ static void sweep_thread PROTO((ptr p));
 static void sweep_continuation PROTO((ptr p));
 static void sweep_stack PROTO((uptr base, uptr size, uptr ret));
 static void sweep_record PROTO((ptr x));
+static int scan_record_for_self PROTO((ptr x));
 static IGEN sweep_dirty_record PROTO((ptr x));
 static void sweep_code_object PROTO((ptr tc, ptr co));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
@@ -648,6 +651,113 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   }
 }
 
+/* sweep_in_old() is like sweep(), but the goal is to sweep the
+   object's content without copying the object itself, so we're sweep
+   an object while it's still in old space. If an object refers back
+   to itself, naively sweeping might copy the object while we're
+   trying to sweep the old copy, which interacts badly with the words
+   set to a forwarding marker and pointer. To handle that problem,
+   sweep_in_old() is allowed to copy the object, since the object
+   is going to get copied anyway. */
+static void sweep_in_old(ptr tc, ptr p) {
+  ptr tf; ITYPE t;
+
+  /* Detect all the cases when we need to give up on in-place
+     sweeping: */
+  if ((t = TYPEBITS(p)) == type_pair) {
+    ISPC s = SPACE(p) & ~(space_locked | space_old);
+    if (s == space_ephemeron) {
+      /* Weak reference can be ignored, so we do nothing */
+      return;
+    } else if (s != space_weakpair) {
+      if (p == Scar(p)) {
+        relocate(&p)
+        return;
+      }
+    }
+    if (p == Scdr(p)) {
+      relocate(&p)
+      return;
+    }
+  } else if (t == type_closure) {
+    /* A closure can refer back to itself in its closure */
+    ptr code = CLOSCODE(p);
+    if (!(CODETYPE(code) & (code_flag_continuation << code_flags_offset))) {
+      if (scan_ptrs_for_self(&CLOSIT(p, 0), CLOSLEN(p), p)) {
+        relocate(&p)
+        return;
+      }
+    }
+  } else if (t == type_symbol) {
+    /* no field of a symbol can refer back to the symbol itself */
+  } else if (t == type_flonum) {
+    /* nothing to sweep */
+    return;
+ /* typed objects */
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
+    if (scan_ptrs_for_self(&INITVECTIT(p, 0), Svector_length(p), p)) {
+      relocate(&p)
+      return;
+    }
+  } else if (TYPEP(tf, mask_string, type_string) || TYPEP(tf, mask_bytevector, type_bytevector) || TYPEP(tf, mask_fxvector, type_fxvector)) {
+    /* nothing to sweep */
+    return;
+  } else if (TYPEP(tf, mask_record, type_record)) {
+    relocate(&RECORDINSTTYPE(p));
+    if (scan_record_for_self(p)) {
+      relocate(&p)
+      return;
+    }
+  } else if (TYPEP(tf, mask_box, type_box)) {
+    if (Sunbox(p) == p) {
+      relocate(&p)
+      return;
+    }
+  } else if ((iptr)tf == type_ratnum) {
+    /* can't refer back to itself */
+  } else if ((iptr)tf == type_exactnum) {
+    /* can't refer back to itself */
+  } else if ((iptr)tf == type_inexactnum) {
+    /* nothing to sweep */
+    return;
+  } else if (TYPEP(tf, mask_bignum, type_bignum)) {
+    /* nothing to sweep */
+    return;
+  } else if (TYPEP(tf, mask_port, type_port)) {
+    /* can't refer immediately back to itself */
+  } else if (TYPEP(tf, mask_code, type_code)) {
+    /* shouldn't get here, but treat all code as a self-reference,
+       just in case */
+    relocate(&p)
+    return;
+  } else if ((iptr)tf == type_thread) {
+    /* it doesn't seem likely that a thread could be finalized as
+       ordered, since a thread seems likely to refer to itself in some
+       way and application programmers likely don't have enough
+       control over that, so just impose the restriction that it won't
+       work */
+    relocate(&p)
+    return;
+  } else if ((iptr)tf == type_rtd_counts) {
+    /* nothing to sweep */
+    return;
+  } else {
+    S_error_abort("sweep_in_old(gc): illegal type");
+  }
+
+  /* We've determined that `p` won't refer immediately back to itself,
+     so it's ok to use sweep(). */
+  sweep(tc, p, 1);
+}
+
+static int scan_ptrs_for_self(ptr *pp, iptr len, ptr p) {
+  while (len--) {
+    if (*pp == p)
+      return 1;
+  }
+  return 0;
+}
+
 static ptr copy_stack(old, length, clength) ptr old; iptr *length, clength; {
   iptr n, m; ptr new;
 
@@ -969,7 +1079,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                   } else {
                     seginfo *si;
                     if (!IMMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && (si->space & space_old) && !locked(rep))
-                      sweep(tc, rep, 1);
+                      sweep_in_old(tc, rep);
                     INITGUARDIANNEXT(ls) = maybe_final_ordered_ls;
                     maybe_final_ordered_ls = ls;
                   }
@@ -1707,6 +1817,63 @@ static void sweep_record(x) ptr x; {
             bits = bigit_bits;
         }
     }
+}
+
+static int scan_record_for_self(x) ptr x; {
+    ptr *pp; ptr num; ptr rtd;
+
+  /* record-type descriptor was forwarded in sweep_in_old */
+    rtd = RECORDINSTTYPE(x);
+    num = RECORDDESCPM(rtd);
+    pp = &RECORDINSTIT(x,0);
+
+  /* scan cells for which bit in pm is set; quit when pm == 0. */
+    if (Sfixnump(num)) {
+       /* ignore bit for already forwarded rtd */
+        uptr mask = (uptr)UNFIX(num) >> 1;
+        if (mask == (uptr)-1 >> 1) {
+            ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1;
+            while (pp < ppend) {
+                if (*pp == x)
+                  return 1;
+                pp += 1;
+            }
+        } else {
+            while (mask != 0) {
+                if (mask & 1) {
+                  if (*pp == x)
+                    return 1;
+                }
+                mask >>= 1;
+                pp += 1;
+            }
+        }
+    } else {
+        iptr index; bigit mask; INT bits;
+
+       /* bignum pointer mask may have been forwarded */
+        relocate(&RECORDDESCPM(rtd))
+        num = RECORDDESCPM(rtd);
+        index = BIGLEN(num) - 1;
+       /* ignore bit for already forwarded rtd */
+        mask = BIGIT(num,index) >> 1;
+        bits = bigit_bits - 1;
+        for (;;) {
+            do {
+                if (mask & 1) {
+                  if (*pp == x)
+                    return 1;
+                }
+                mask >>= 1;
+                pp += 1;
+            } while (--bits > 0);
+            if (index-- == 0) break;
+            mask = BIGIT(num,index);
+            bits = bigit_bits;
+        }
+    }
+
+    return 0;
 }
 
 static IGEN sweep_dirty_record(x) ptr x; {

@@ -3505,6 +3505,38 @@
              (and (not (g1))
                   (not (g2)))))))
 
+   ;; check ordered finalization on objects that immediately
+   ;; refers to themselves, which can create trouble for a naive
+   ;; approach to determining accessibility
+   (begin
+     (define (check-self-referencing p extract)
+       (with-interrupts-disabled
+        (let ([g (make-guardian #t)])
+          (g p)
+          (let ([wb (weak-cons p #f)])
+            (set! p #f)
+            (collect 0 0)
+            (let ([p (car wb)])
+              (and (not (g))
+                   (eq? p (extract p))))))))
+     (let ([p (cons #f #f)])
+       (set-car! p p)
+       (check-self-referencing p car)))
+   (let ([p (cons #f #f)])
+     (set-cdr! p p)
+     (check-self-referencing p cdr))
+   (let ([p (cons #f #f)])
+     (set-car! p p)
+     (set-cdr! p p)
+     (check-self-referencing p (lambda (p)
+                                 (and (eq? (car p) (cdr p))
+                                      (car p)))))
+   (let ([b (box #f)])
+     (set-box! b b)
+     (check-self-referencing b unbox))
+   (let ([f (letrec ([f (lambda () f)]) f)])
+     (check-self-referencing f (lambda (f) (f))))
+
   )
 
 
