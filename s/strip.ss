@@ -33,7 +33,7 @@
     (flonum high low)
     (small-integer iptr)
     (large-integer sign vuptr)
-    (eq-hashtable mutable? weak? minlen veclen vpfasl)
+    (eq-hashtable mutable? subtype minlen veclen vpfasl)
     (symbol-hashtable mutable? minlen equiv veclen vpfasl)
     (code flags free name arity-mask info pinfo* bytes m vreloc)
     (atom ty uptr)
@@ -229,11 +229,11 @@
                    (vector-set! v i (read-uptr p))))))]
           [(fasl-type-eq-hashtable)
            (let* ([mutable? (read-byte p)]
-                  [weak? (read-byte p)]
+                  [subtype (read-byte p)]
                   [minlen (read-uptr p)]
                   [veclen (read-uptr p)]
                   [v (read-vpfasl p g)])
-             (fasl-eq-hashtable mutable? weak? minlen veclen v))]
+             (fasl-eq-hashtable mutable? subtype minlen veclen v))]
           [(fasl-type-symbol-hashtable)
            (let* ([mutable? (read-byte p)]
                   [minlen (read-uptr p)]
@@ -416,7 +416,7 @@
           [flonum (high low) (build-graph! x t void)]
           [small-integer (iptr) (void)]
           [large-integer (sign vuptr) (build-graph! x t void)]
-          [eq-hashtable (mutable? weak? minlen veclen vpfasl)
+          [eq-hashtable (mutable? subtype minlen veclen vpfasl)
            (build-graph! x t
              (lambda ()
                (vector-for-each
@@ -577,12 +577,12 @@
                (write-byte p sign)
                (write-uptr p (vector-length vuptr))
                (vector-for-each (lambda (uptr) (write-uptr p uptr)) vuptr)))]
-          [eq-hashtable (mutable? weak? minlen veclen vpfasl)
+          [eq-hashtable (mutable? subtype minlen veclen vpfasl)
            (write-graph p t x
              (lambda ()
                (write-byte p (constant fasl-type-eq-hashtable))
                (write-byte p mutable?)
-               (write-byte p weak?)
+               (write-byte p subtype)
                (write-uptr p minlen)
                (write-uptr p veclen)
                (write-uptr p (vector-length vpfasl))
@@ -843,9 +843,9 @@
                         (and (eqv? high1 high2)
                              (eqv? low1 low2))]
                        [large-integer (sign vuptr) (and (eqv? sign1 sign2) (vandmap = vuptr1 vuptr2))]
-                       [eq-hashtable (mutable? weak? minlen veclen vpfasl)
+                       [eq-hashtable (mutable? subtype minlen veclen vpfasl)
                         (and (eqv? mutable?1 mutable?2)
-                             (eqv? weak?1 weak?2)
+                             (eqv? subtype1 subtype2)
                              (eqv? minlen1 minlen2)
                              ; don't care if veclens differ
                              #;(eqv? veclen1 veclen2)

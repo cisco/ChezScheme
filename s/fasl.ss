@@ -432,7 +432,10 @@
   (lambda (x p t a?)
     (put-u8 p (constant fasl-type-eq-hashtable))
     (put-u8 p (if (hashtable-mutable? x) 1 0))
-    (put-u8 p (if (eq-hashtable-weak? x) 1 0))
+    (put-u8 p (cond
+               [(eq-hashtable-weak? x) (constant eq-hashtable-subtype-weak)]
+               [(eq-hashtable-ephemeron? x) (constant eq-hashtable-subtype-ephemeron)]
+               [else  (constant eq-hashtable-subtype-normal)]))
     (put-uptr p ($ht-minlen x))
     (put-uptr p ($ht-veclen x))
     (let-values ([(keyvec valvec) (hashtable-entries x)])

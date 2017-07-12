@@ -532,3 +532,8 @@
 - don't remove the pariah form in the cp0 pass
     cp0.ss,
     misc.ms
+- revert use of ephemerons in weak hashtables, add ephemeron
+  hashtables
+    newhash.ss, hashtable-types.ss, library.ss, primdata.ss,
+    fasl.ss, fasl.c, gc.c, globals.h,
+    hash.ms, objects.stex, release_notes.stex

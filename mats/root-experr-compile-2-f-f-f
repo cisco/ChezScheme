@@ -7506,6 +7506,9 @@ hash.mo:Expected error in mat hashtable-arguments: "hashtable-equivalence-functi
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-weak?)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-weak?: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ephemeron?)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ephemeron? $ht 3)".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-ephemeron?: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 1+2i for any".
@@ -7528,6 +7531,10 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count 
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument #t".
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument #f".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (make-ephemeron-eq-hashtable 3 #t)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument -1".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument #t".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument #f".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref $wht)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref $wht (quote a))".
@@ -7563,6 +7570,9 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: (hash 
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak?)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-weak?: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ephemeron?)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ephemeron? $ht 3)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-ephemeron?: (hash . table) is not an eq hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref $symht)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref $symht (quote a))".
@@ -7617,6 +7627,10 @@ hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #t".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #f".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count in call (make-ephemeron-eqv-hashtable 3 #t)".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument -1".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #t".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #f".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-clear!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".

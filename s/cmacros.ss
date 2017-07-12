@@ -1845,6 +1845,10 @@
 
 (define-constant hashtable-default-size 8)
 
+(define-constant eq-hashtable-subtype-normal 0)
+(define-constant eq-hashtable-subtype-weak 1)
+(define-constant eq-hashtable-subtype-ephemeron 2)
+
 ; keep in sync with make-date
 (define-constant dtvec-nsec 0)
 (define-constant dtvec-sec 1)
