@@ -1055,7 +1055,7 @@
               [(foreign ,conv ,name ,e (,arg-type* ...) ,result-type) (memoize (simple? e))]
               [(record-type ,rtd ,e) (memoize (simple? e))]
               [(record ,rtd ,rtd-expr ,e* ...) (memoize (and (simple? rtd-expr) (andmap simple? e*)))]
-              [(pariah) #t]
+              [(pariah) #f]
               [(profile ,src) #f]
               [(cte-optimization-loc ,box ,e) (memoize (simple? e))]
               [(moi) #t]

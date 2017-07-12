@@ -529,3 +529,6 @@
     bytevector.ms, root-experr*
 - fixed typo in S_abnormal_exit
     schsig.c
+- don't remove the pariah form in the cp0 pass
+    cp0.ss,
+    misc.ms
