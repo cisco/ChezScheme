@@ -537,3 +537,5 @@
     newhash.ss, hashtable-types.ss, library.ss, primdata.ss,
     fasl.ss, fasl.c, gc.c, globals.h,
     hash.ms, objects.stex, release_notes.stex
+- fixed pariah mat
+    misc.ms

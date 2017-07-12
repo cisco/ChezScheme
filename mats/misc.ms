@@ -4866,16 +4866,19 @@
           (* n (f (fx- n 1)))))
     3628800)
   ; make sure that cp0 doesn't remove the pariah form
-  (not (equivalent-expansion?
-        (parameterize ([run-cp0 (lambda (cp0 x) (cp0 x))])
-          (expand/optimize
-            '(if (zero? (random 1000))
-               (pariah (display 0))
-               (display 1)))
-          (expand/optimize
-            '(if (zero? (random 1000))
-               (display 0)
-               (display 1))))))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(if (zero? (random 1000))
+             (pariah (display 0))
+             (display 1))))
+    (if (= (optimize-level) 3)
+        '(if (#3%zero? (#3%random 1000))
+             (begin (pariah (void)) (#3%display 0))
+             (#3%display 1))
+        '(if (#2%zero? (#2%random 1000))
+             (begin (pariah (void)) (#2%display 0))
+             (#2%display 1))))
 )
 
 (mat $read-time-stamp-counter
