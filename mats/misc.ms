@@ -4865,6 +4865,17 @@
           (pariah 1)
           (* n (f (fx- n 1)))))
     3628800)
+  ; make sure that cp0 doesn't remove the pariah form
+  (not (equivalent-expansion?
+        (parameterize ([run-cp0 (lambda (cp0 x) (cp0 x))])
+          (expand/optimize
+            '(if (zero? (random 1000))
+               (pariah (display 0))
+               (display 1)))
+          (expand/optimize
+            '(if (zero? (random 1000))
+               (display 0)
+               (display 1))))))
 )
 
 (mat $read-time-stamp-counter
