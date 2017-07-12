@@ -167,6 +167,9 @@ typedef unsigned long long U64;
 #define ephemeron_cdr_disp 0xB
 #define ephemeron_next_disp 0xF
 #define ephemeron_trigger_next_disp 0x13
+#define eq_hashtable_subtype_ephemeron 0x2
+#define eq_hashtable_subtype_normal 0x0
+#define eq_hashtable_subtype_weak 0x1
 #define exactnum_imag_disp 0x9
 #define exactnum_real_disp 0x5
 #define exactnum_type_disp 0x1
@@ -726,7 +729,7 @@ typedef unsigned long long U64;
 #define eq_hashtable_vec_disp 13
 #define eq_hashtable_minlen_disp 17
 #define eq_hashtable_size_disp 21
-#define eq_hashtable_weakp_disp 25
+#define eq_hashtable_subtype_disp 25
 #define symbol_hashtable_rtd_disp 1
 #define symbol_hashtable_type_disp 5
 #define symbol_hashtable_mutablep_disp 9
