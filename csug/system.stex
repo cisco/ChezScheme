@@ -4036,7 +4036,7 @@ object produce \scheme{#f}.
 (make-date 0 30 7 9 23 9 2007 -14400) ;=> #<date Sun Sep 23 09:07:30 2007>
 
 (date-zone-name (make-date 0 30 7 9 23 9 2007 -14400)) ;=> #f
-(date-zone-name (make-date 0 30 7 9 23 9 2007)) ;=> "EDT" \var{or other system-provided string}
+(string? (date-zone-name (make-date 0 30 7 9 23 9 2007))) ;=> #t
 \endschemedisplay
 
 %----------------------------------------------------------------------------
