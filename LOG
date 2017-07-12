@@ -539,3 +539,5 @@
     hash.ms, objects.stex, release_notes.stex
 - fixed pariah mat
     misc.ms
+- minor wordsmithing and fix for an overfull hbox
+    objects.stex, system.stex

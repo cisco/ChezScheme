@@ -1880,11 +1880,11 @@ The effect of this can be observed via \scheme{hashtable-keys} and
 
 These procedures are like \scheme{make-weak-eq-hashtable} and
 \scheme{make-weak-eqv-hashtable}, but a value in the hashtable can refer to a
-key in the hashtable without preventing garbage collection from
+key in the hashtable (directly or indirectly) without preventing garbage collection from
 reclaiming the key, because keys are paired with values using ephemeron pairs.
 
 A copy of an ephemeron eq or eqv hashtable created by
-\scheme{hashtable-copy} is also an ephemeron table, and inaccesible
+\scheme{hashtable-copy} is also an ephemeron table, and an inaccesible
 key can be dropped from an immutable ephemeron hashtable in the same
 way as for an immutable weak hashtable.
 
