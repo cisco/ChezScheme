@@ -61,6 +61,7 @@ Documentation notes:
 ;;; other generic hash operators
 (define hashtable-cell)
 (define hashtable-weak?)                 ; hashtable
+(define hashtable-ephemeron?)            ; hashtable
 
 ;;; eq-hashtable operators
 (define make-weak-eq-hashtable)          ; [k], k >= 0
@@ -71,6 +72,7 @@ Documentation notes:
 (define eq-hashtable-cell)               ; eq-hashtable key default
 (define eq-hashtable-delete!)            ; eq-hashtable key
 (define eq-hashtable-weak?)              ; eq-hashtable
+(define eq-hashtable-ephemeron?)         ; eq-hashtable
 
 ;;; eq-hashtable operators
 (define make-symbol-hashtable)           ; [k], k >= 0
@@ -85,7 +87,7 @@ Documentation notes:
 (define make-weak-eqv-hashtable)         ; [k], k >= 0
   
 ;;; unsafe eq-hashtable operators
-(define $make-eq-hashtable)              ; fxminlen weak?, fxminlen = 2^n, n >= 0
+(define $make-eq-hashtable)              ; fxminlen subtype, fxminlen = 2^n, n >= 0
 (define $eq-hashtable-keys)              ; eq-hashtable
 (define $eq-hashtable-values)            ; eq-hashtable
 (define $eq-hashtable-entries)           ; eq-hashtable
@@ -393,8 +395,8 @@ Documentation notes:
         [else (logxor (lognot (number-hash (real-part z))) (number-hash (imag-part z)))])))
 
   (set! $make-eq-hashtable ; assumes minlen is a power of two >= 1
-    (lambda (minlen weak?)
-      (make-eq-ht 'eq #t ($make-eqhash-vector minlen) minlen 0 weak?)))
+    (lambda (minlen subtype)
+      (make-eq-ht 'eq #t ($make-eqhash-vector minlen) minlen 0 subtype)))
 
   (set-who! $hashtable-veclen
     (lambda (h)
@@ -444,8 +446,11 @@ Documentation notes:
  ; csv7 interface
   (set! make-hash-table
     (case-lambda
-      [() ($make-eq-hashtable (constant hashtable-default-size) #f)]
-      [(weak?) ($make-eq-hashtable (constant hashtable-default-size) weak?)]))
+      [() ($make-eq-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-normal))]
+      [(weak?) ($make-eq-hashtable (constant hashtable-default-size)
+                                   (if weak?
+                                       (constant eq-hashtable-subtype-weak)
+                                       (constant eq-hashtable-subtype-normal)))]))
 
   (set! hash-table?
     (lambda (x)
@@ -488,13 +493,18 @@ Documentation notes:
 
   (set-who! make-eq-hashtable
     (case-lambda
-      [() ($make-eq-hashtable (constant hashtable-default-size) #f)]
-      [(k) ($make-eq-hashtable (size->minlen who k) #f)]))
+      [() ($make-eq-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-normal))]
+      [(k) ($make-eq-hashtable (size->minlen who k) (constant eq-hashtable-subtype-normal))]))
 
   (set-who! make-weak-eq-hashtable
     (case-lambda
-      [() ($make-eq-hashtable (constant hashtable-default-size) #t)]
-      [(k) ($make-eq-hashtable (size->minlen who k) #t)]))
+      [() ($make-eq-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-weak))]
+      [(k) ($make-eq-hashtable (size->minlen who k) (constant eq-hashtable-subtype-weak))]))
+
+  (set-who! make-ephemeron-eq-hashtable
+    (case-lambda
+      [() ($make-eq-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-ephemeron))]
+      [(k) ($make-eq-hashtable (size->minlen who k) (constant eq-hashtable-subtype-ephemeron))]))
 
   (let ()
     (define $make-hashtable
@@ -507,9 +517,9 @@ Documentation notes:
             (make-symbol-ht 'symbol #t (make-vector minlen '()) minlen 0 equiv?)
             (make-gen-ht 'generic #t (make-vector minlen '()) minlen 0 hash equiv?))))
     (define $make-eqv-hashtable
-      (lambda (minlen weak?)
+      (lambda (minlen subtype)
         (make-eqv-ht 'eqv #t
-          ($make-eq-hashtable minlen weak?)
+          ($make-eq-hashtable minlen subtype)
           ($make-hashtable minlen number-hash eqv?))))
     (set-who! make-hashtable
       (case-lambda
@@ -523,12 +533,16 @@ Documentation notes:
          ($make-hashtable (size->minlen who k) hash equiv?)]))
     (set-who! make-eqv-hashtable
       (case-lambda
-        [() ($make-eqv-hashtable (constant hashtable-default-size) #f)]
-        [(k) ($make-eqv-hashtable (size->minlen who k) #f)]))
+        [() ($make-eqv-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-normal))]
+        [(k) ($make-eqv-hashtable (size->minlen who k) (constant eq-hashtable-subtype-normal))]))
     (set-who! make-weak-eqv-hashtable
       (case-lambda
-        [() ($make-eqv-hashtable (constant hashtable-default-size) #t)]
-        [(k) ($make-eqv-hashtable (size->minlen who k) #t)])))
+        [() ($make-eqv-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-weak))]
+        [(k) ($make-eqv-hashtable (size->minlen who k) (constant eq-hashtable-subtype-weak))]))
+    (set-who! make-ephemeron-eqv-hashtable
+      (case-lambda
+        [() ($make-eqv-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-ephemeron))]
+        [(k) ($make-eqv-hashtable (size->minlen who k) (constant eq-hashtable-subtype-ephemeron))])))
 
   (set! eq-hashtable-ref
     (lambda (h x v)
@@ -577,14 +591,27 @@ Documentation notes:
   (set-who! eq-hashtable-weak?
     (lambda (h)
       (unless (eq-ht? h) ($oops who "~s is not an eq hashtable" h))
-      (eq-ht-weak? h)))
+      (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype h))))
+
+  (set-who! eq-hashtable-ephemeron?
+    (lambda (h)
+      (unless (eq-ht? h) ($oops who "~s is not an eq hashtable" h))
+      (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype h))))
 
   (set-who! hashtable-weak?
     (lambda (h)
       (unless (xht? h) ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
-        [(eq) (eq-ht-weak? h)]
-        [(eqv) (eq-ht-weak? (eqv-ht-eqht h))]
+        [(eq) (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype h))]
+        [(eqv) (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype (eqv-ht-eqht h)))]
+        [else #f])))
+
+  (set-who! hashtable-ephemeron?
+    (lambda (h)
+      (unless (xht? h) ($oops who "~s is not a hashtable" h))
+      (case (xht-type h)
+        [(eq) (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype h))]
+        [(eqv) (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype (eqv-ht-eqht h)))]
         [else #f])))
 
   (set-who! symbol-hashtable-ref
@@ -1004,11 +1031,11 @@ Documentation notes:
 
   (set! $eq-hashtable-copy
     (lambda (h1 mutable?)
-      (let ([weak? (eq-ht-weak? h1)])
+      (let ([subtype (eq-ht-subtype h1)])
         (let* ([vec1 (ht-vec h1)]
                [n (vector-length vec1)]
                [vec2 ($make-eqhash-vector n)]
-               [h2 (make-eq-ht 'eq mutable? vec2 (ht-minlen h1) (ht-size h1) weak?)])
+               [h2 (make-eq-ht 'eq mutable? vec2 (ht-minlen h1) (ht-size h1) subtype)])
           (let outer ([i 0])
             (if (fx= i n)
                 h2
@@ -1019,7 +1046,10 @@ Documentation notes:
                           b
                           ($make-tlc h2
                             (let* ([keyval ($tlc-keyval b)] [key (car keyval)] [val (cdr keyval)])
-                              (if weak?  (ephemeron-cons key val) (cons key val)))
+                              (cond
+                               [(eq? subtype (constant eq-hashtable-subtype-normal)) (cons key val)]
+                               [(eq? subtype (constant eq-hashtable-subtype-weak)) (weak-cons key val)]
+                               [else (ephemeron-cons key val)]))
                             (inner ($tlc-next b))))))
                   (outer (fx+ i 1)))))
           h2))))

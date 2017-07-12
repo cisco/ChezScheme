@@ -1205,7 +1205,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
       for (b = TLCNEXT(tlc); !Sfixnump(b); b = TLCNEXT(b));
       old_idx = UNFIX(b);
 
-      if (key == Sbwp_object && PTRFIELD(ht,eq_hashtable_weakp_disp) != Sfalse) {
+      if (key == Sbwp_object && PTRFIELD(ht,eq_hashtable_subtype_disp) != FIX(eq_hashtable_subtype_normal)) {
        /* remove tlc */
         b = Svector_ref(vec, old_idx);
         if (b == tlc) {
