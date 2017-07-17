@@ -7848,14 +7848,15 @@
     (syntax-case x ()
       [(_ () expr)
        (if (= (optimize-level) 3)
-           #'(begin expr (void))
-           #`(call-with-values
-               (lambda () expr)
-               (case-lambda
-                 [() (void)]
-                 [args #,($make-source-oops #'define-values
-                           "incorrect number of values from rhs"
-                           #'expr)])))]
+           #'(define unused (begin expr (void)))
+           #`(define unused
+               (call-with-values
+                 (lambda () expr)
+                 (case-lambda
+                   [() (void)]
+                   [args #,($make-source-oops #'define-values
+                             "incorrect number of values from rhs"
+                             #'expr)]))))]
       [(_ (x) expr)
        (identifier? #'x)
        (if (= (optimize-level) 3)
