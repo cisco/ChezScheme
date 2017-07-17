@@ -541,3 +541,5 @@
     misc.ms
 - minor wordsmithing and fix for an overfull hbox
     objects.stex, system.stex
+- fix (define-values () ....) to expand to a definition
+    syntax.ss, 3.ms
