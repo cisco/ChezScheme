@@ -8375,12 +8375,20 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat annotations: "make-source-object: ending file position 2 is less than beginning file position 3".
 8.mo:Expected error in mat annotations: "make-source-object: -7 is not an exact nonnegative integer".
 8.mo:Expected error in mat annotations: "make-source-object: -7 is not an exact nonnegative integer".
+8.mo:Expected error in mat annotations: "make-source-object: -7 is not an exact nonnegative integer".
+8.mo:Expected error in mat annotations: "make-source-object: one is not an exact positive integer".
+8.mo:Expected error in mat annotations: "make-source-object: one is not an exact positive integer".
+8.mo:Expected error in mat annotations: "make-source-object: 0 is not an exact positive integer".
+8.mo:Expected error in mat annotations: "make-source-object: 0 is not an exact positive integer".
+8.mo:Expected error in mat annotations: "make-source-object: ending file position 2 is less than beginning file position 3".
 8.mo:Expected error in mat annotations: "make-annotation: source is not a source object".
 8.mo:Expected error in mat annotations: "source-file-descriptor-path: #<source foo[2:3]> is not a source-file descriptor".
 8.mo:Expected error in mat annotations: "source-file-descriptor-checksum: #<annotation foo[2:3] (if I were a rich man)> is not a source-file descriptor".
 8.mo:Expected error in mat annotations: "source-object-sfd: #<sfd foo> is not a source object".
 8.mo:Expected error in mat annotations: "source-object-bfp: #<annotation foo[2:3] (if I were a rich man)> is not a source object".
 8.mo:Expected error in mat annotations: "source-object-efp: 3 is not a source object".
+8.mo:Expected error in mat annotations: "source-object-line: 3 is not a source object".
+8.mo:Expected error in mat annotations: "source-object-column: 3 is not a source object".
 8.mo:Expected error in mat annotations: "annotation-expression: 3 is not an annotation".
 8.mo:Expected error in mat annotations: "annotation-stripped: #<source foo[2:3]> is not an annotation".
 8.mo:Expected error in mat annotations: "annotation-source: #<sfd foo> is not an annotation".
@@ -8391,13 +8399,18 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat annotations: "invalid fasl strip option fig".
 8.mo:Expected error in mat annotations: "invalid fasl strip option fig".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at char 2 of foo".
+8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at line 2, char 1 of foo".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at char 2 of foo".
+8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at line 2, char 1 of foo".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at char 2 of foo".
+8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at line 2, char 1 of foo".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at char 2 of foo".
+8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at line 2, char 1 of foo".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at char 2 of foo".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man)".
 8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man)".
 8.mo:Expected error in mat annotations: "incorrect argument count in call (f) at char 2 of foo".
+8.mo:Expected error in mat annotations: "incorrect argument count in call (f) at line 2, char 1 of foo".
 8.mo:Expected error in mat annotations: "incorrect argument count in call (f) at char 2 of foo".
 8.mo:Expected error in mat annotations: "incorrect argument count in call (f)".
 8.mo:Expected error in mat annotations: "incorrect argument count in call (f)".
@@ -8412,6 +8425,13 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat annotations: "locate-source: "spam" is not a source-file descriptor".
 8.mo:Expected error in mat annotations: "locate-source: -1 is not an exact nonnegative integer".
 8.mo:Expected error in mat annotations: "locate-source: a is not an exact nonnegative integer".
+8.mo:Expected error in mat annotations: "locate-source-object-source: "spam" is not a source object".
+8.mo:Expected error in mat annotations: "current-locate-source-object-source: 7 is not a procedure".
+8.mo:Expected error in mat annotations: "current-locate-source-object-source: "string" is not a procedure".
+8.mo:Expected error in mat annotations: "locate-source-object-source: "spam" is not a source object".
+8.mo:Expected error in mat annotations: "invalid syntax (if I were a rich man) at line 200, char 17 of foo".
+8.mo:Expected error in mat annotations-via-recorded-lines: "current-make-source-object: 7 is not a procedure".
+8.mo:Expected error in mat annotations-via-recorded-lines: "current-make-source-object: "string" is not a procedure".
 8.mo:Expected error in mat include: "invalid syntax (include spam)".
 8.mo:Expected error in mat include: "invalid syntax (include spam)".
 8.mo:Expected error in mat extend-syntax: "extend-syntax: invalid keyword ... in keyword list (foo ...)".

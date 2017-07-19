@@ -1559,17 +1559,20 @@ locations to be profiled.
 
 \index{source objects}%
 Source objects are also values of a type distinct from other types and
-also have three components: a \emph{source-file descriptor} (sfd),
-a beginning file position (bfp), and an ending file position (efp).
-The sfd identifies the file from which an expression is read and the
-bfp identify the range of character positions occupied by the object
+also have three or five components: a \emph{source-file descriptor} (sfd),
+a beginning file position (bfp), an ending file position (efp),
+an optional beginning line, and an optional beginning
+column. The sfd identifies the file from which an expression is read and the
+bfp and efp identify the range of character positions occupied by the object
 in the file, with the bfp being inclusive and the efp being exclusive.
+The line and column are either both numbers or both not present.
 A source object can be created via
 \index{\scheme{make-source-object}}\scheme{make-source-object}, which
-takes three arguments corresponding to these components.
+takes either three or five arguments corresponding to these components.
 The first argument must be a source-file descriptor, the second and
-third must be nonnegative exact integers, and the second must not be
-greater than the third.
+third must be nonnegative exact integers, the second must not be
+greater than the third, and the fourth and fifth (if provided) must
+be positive exact integers.
 
 \index{source-file descriptors}%
 Source-file descriptors are also values of a type distinct
@@ -1605,10 +1608,13 @@ and described in more detail later in this section.
 (annotation-stripped \var{annotation}) ;-> \var{obj}
 
 (make-source-object \var{sfd} \var{uint} \var{uint}) ;-> \var{source-object}
+(make-source-object \var{sfd} \var{uint} \var{uint} \var{uint} \var{uint}) ;-> \var{source-object}
 (source-object? \var{obj}) ;-> \var{boolean}
+(source-object-sfd \var{source-object}) ;-> \var{sfd}
 (source-object-bfp \var{source-object}) ;-> \var{uint}
 (source-object-efp \var{source-object}) ;-> \var{uint}
-(source-object-sfd \var{source-object}) ;-> \var{sfd}
+(source-object-line \var{source-object}) ;-> \var{uint} or #f
+(source-object-column \var{source-object}) ;-> \var{uint} or #f
 
 (make-source-file-descriptor \var{string} \var{binary-input-port}) ;-> \var{sfd}
 (make-source-file-descriptor \var{string} \var{binary-input-port} \var{reset?}) ;-> \var{sfd}
@@ -1734,6 +1740,7 @@ marked \scheme{profile} are used for profiling.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{make-source-object}{\categoryprocedure}{(make-source-object \var{sfd} \var{bfp} \var{efp})}
+\formdef{make-source-object}{\categoryprocedure}{(make-source-object \var{sfd} \var{bfp} \var{efp} \var{line} \var{column})}
 \returns a source-object
 \listlibraries
 \endentryheader
@@ -1741,11 +1748,19 @@ marked \scheme{profile} are used for profiling.
 \var{sfd} must be a source-file descriptor.
 \var{bfp} and \var{efp} must be exact nonnegative integers, and \var{bfp}
 should not be greater than \var{efp}.
+\var{line} and \var{column} must be exact positive integers.
 
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{source-object?}{\categoryprocedure}{(source-object? \var{obj})}
 \returns \scheme{#t} if \var{obj} is a source object, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object-sfd}{\categoryprocedure}{(source-object-sfd \var{source-object})}
+\returns the sfd component of \var{source-object}
 \listlibraries
 \endentryheader
 
@@ -1765,10 +1780,33 @@ should not be greater than \var{efp}.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{source-object-sfd}{\categoryprocedure}{(source-object-sfd \var{source-object})}
-\returns the sfd component of \var{source-object}
+\formdef{source-object-line}{\categoryprocedure}{(source-object-line \var{source-object})}
+\returns the line component of \var{source-object} if present, otherwise \scheme{#f}
 \listlibraries
 \endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-object-column}{\categoryprocedure}{(source-object-column \var{source-object})}
+\returns the column component of \var{source-object} if present, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-make-source-object}{\categorythreadparameter}{current-make-source-object}
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{current-make-source-object} is used by the reader to construct
+a source object for an annotation. \scheme{current-make-source-object}
+is initially bound to \scheme{make-source-object}, and the reader always
+calls the function bound to the paramater with three arguments.
+
+Adjust this parameter to, for example, eagerly convert a position integer
+to a file-position object, instead of delaying the conversion to
+\scheme{locate-source}.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1883,6 +1921,7 @@ checksum recorded in \var{sfd}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{locate-source}{\categoryprocedure}{(locate-source \var{sfd} \var{pos})}
+\formdef{locate-source}{\categoryprocedure}{(locate-source \var{sfd} \var{pos} \var{use-cache?})}
 \returns see below
 \listlibraries
 \endentryheader
@@ -1890,7 +1929,9 @@ checksum recorded in \var{sfd}.
 \var{sfd} must be a source-file descriptor, and \var{pos} must be an
 exact nonnegative integer.
 
-This procedure attempts to locate and open the source file identified
+This procedure either uses cached information from a previous
+request for \var{sfd} (only when \var{use-cache?} is provided as true)
+or attempts to locate and open the source file identified
 by \var{sfd}.
 If successful, it returns three values: a string \var{path}, an exact
 nonnegative integer \var{line}, and an exact nonnegative integer \var{char}
@@ -1901,3 +1942,42 @@ If unsuccessful, it returns zero values.
 It can fail even if a file with the correct name exists in one of
 the source directories when the file's checksum does not match the
 checksum recorded in \var{sfd}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{locate-source-object-source}{\categoryprocedure}{(locate-source-object-source \var{source-object} \var{get-start?} \var{use-cache?})}
+\returns see below
+\listlibraries
+\endentryheader
+
+This procedure is similar to \scheme{locate-source}, but instead of
+taking an sfd and a position, it takes a source object plus a request
+for either the start or end location.
+
+If \var{get-start?} is true and \var{source-object} has a line and column,
+\scheme{locate-source-object-source} returns the path in
+\var{source-objects}'s sfd, \var{source-object}'s line, and
+\var{source-objects}'s column.
+
+If \var{source-object} has no line and column, then
+\scheme{locate-source-object-source} calls \scheme{locate-source} on
+\var{source-object}'s sfd, either \var{source-object}'s bfp or efp
+depending on \var{get-start?}, and \var{use-cache?}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-locate-source-object-source}{\categorythreadparameter}{current-locate-source-object-source}
+\listlibraries
+\endentryheader
+
+\noindent
+
+\scheme{current-locate-source-object-source} determines the
+source-location lookup function that is used by the system to report
+errors based on source objects. This parameter is initially bound to
+\scheme{locate-source-object-object}.
+
+Adjust this parameter to control the way that source locations are
+extracted from source objects, possibly using recorded information,
+caches, and the filesystem in a way different from
+\scheme{locate-source-object-object}.

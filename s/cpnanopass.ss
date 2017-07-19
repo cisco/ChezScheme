@@ -5275,6 +5275,7 @@
           (define-tc-parameter $suppress-primitive-inlining suppress-primitive-inlining)
           (define-tc-parameter $block-counter block-counter)
           (define-tc-parameter $sfd sfd)
+          (define-tc-parameter $current-mso current-mso)
           (define-tc-parameter $target-machine target-machine)
           (define-tc-parameter $current-stack-link stack-link)
           (define-tc-parameter $current-winders winders)

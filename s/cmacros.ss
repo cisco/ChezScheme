@@ -1351,6 +1351,7 @@
    [ptr current-error]
    [ptr block-counter]
    [ptr sfd]
+   [ptr current-mso]
    [ptr target-machine]
    [ptr fxlength-bv]
    [ptr fxfirst-bit-set-bv]
