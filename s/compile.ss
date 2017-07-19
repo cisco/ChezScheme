@@ -550,6 +550,7 @@
     (include "types.ss")
     (parameterize ([$target-machine machine]
                    [$sfd sfd]
+                   [$current-mso ($current-mso)]
                    [$block-counter 0]
                    [optimize-level (optimize-level)]
                    [debug-level (debug-level)]
@@ -577,7 +578,7 @@
                          (when (and (annotation? x0) (fxlogtest (annotation-flags x0) (constant annotation-debug)))
                            (let ((s (annotation-source x0)))
                              (call-with-values
-                               (lambda () ($locate-source (source-sfd s) (source-bfp s)))
+                               (lambda () ((current-locate-source-object-source) s #t #t))
                                (case-lambda
                                  [() (void)]
                                  [(path line char) (printf " on line ~s" line)]))))))))

@@ -162,7 +162,7 @@
           (let ()
             (let ([sfd (source-object-sfd src)] [fp (source-object-bfp src)])
               (call-with-values
-                (lambda () (#%$locate-source sfd fp))
+                (lambda () (#%$locate-source sfd fp #t))
                 (case-lambda
                   [() (fprintf *mat-output* "~a at char ~a of ~a~%" msg fp (source-file-descriptor-path sfd))]
                   [(path line char) (fprintf *mat-output* "~a at line ~a, char ~a of ~a~%" msg line char path)]))))

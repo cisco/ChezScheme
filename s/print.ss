@@ -709,9 +709,11 @@ floating point returns with (1 0 -1 ...).
         [(let ([info ($code-info x)])
            (and (code-info? info) (code-info-src info))) =>
          (lambda (src)
-           (fprintf p " at ~a:~s"
+           (fprintf p " at ~a:~a"
              (path-last (source-file-descriptor-name (source-sfd src)))
-             (source-bfp src)))])))
+             (if (source-2d? src)
+                 (format "~a.~a" (source-2d-line src) (source-2d-column src))
+                 (source-bfp src))))])))
 
   (define wrprocedure
     (lambda (x p)

@@ -6416,15 +6416,15 @@
   (lambda (x p wr)
     (define get-source
       (lambda (src)
-        (let ([sfd (source-sfd src)] [fp (source-bfp src)])
-          (call-with-values
-            (lambda () ($locate-source sfd fp))
-            (case-lambda
-              [() (format "[char ~a of ~a]"
-                    fp
-                    (source-file-descriptor-name sfd))]
-              [(path line char)
-               (format "[line ~a, char ~a of ~a]" line char path)])))))
+        (call-with-values
+          (lambda () ((current-locate-source-object-source) src #t #t))
+          (case-lambda
+            [() (let ([sfd (source-sfd src)] [fp (source-bfp src)])
+                  (format "[char ~a of ~a]"
+                          fp
+                          (source-file-descriptor-name sfd)))]
+            [(path line char)
+             (format "[line ~a, char ~a of ~a]" line char path)]))))
     (display "#<syntax " p)
     (wr (syntax->datum x) p)
     (let f ([x x])
@@ -9635,6 +9635,7 @@
 
 (let ()
   (module types (source make-source source? source-sfd source-bfp source-efp
+                 source-2d? make-source-2d source-2d-line source-2d-column
                  annotation make-annotation annotation? annotation-expression annotation-source annotation-stripped annotation-flags
                  make-source-file-descriptor source-file-descriptor source-file-descriptor? source-file-descriptor-name
                  source-file-descriptor-length source-file-descriptor-crc
@@ -9665,7 +9666,8 @@
         (wr (%annotation-stripped x) p)
         (display-string ">" p))))
   (set-who! make-source-object
-    (lambda (sfd bfp efp)
+    (case-lambda
+     [(sfd bfp efp)
       (unless (%source-file-descriptor? sfd)
         ($oops who "~s is not a source file descriptor" sfd))
       (unless (if (fixnum? bfp) (fx>= bfp 0) (and (bignum? bfp) ($bigpositive? bfp)))
@@ -9674,7 +9676,27 @@
         ($oops who "~s is not an exact nonnegative integer" efp))
       (unless (<= bfp efp)
         ($oops who "ending file position ~s is less than beginning file position ~s" efp bfp))
-      (%make-source sfd bfp efp)))
+      (%make-source sfd bfp efp)]
+     [(sfd bfp efp line column)
+      (unless (%source-file-descriptor? sfd)
+        ($oops who "~s is not a source file descriptor" sfd))
+      (unless (if (fixnum? bfp) (fx>= bfp 0) (and (bignum? bfp) ($bigpositive? bfp)))
+        ($oops who "~s is not an exact nonnegative integer" bfp))
+      (unless (if (fixnum? efp) (fx>= efp 0) (and (bignum? efp) ($bigpositive? efp)))
+        ($oops who "~s is not an exact nonnegative integer" efp))
+      (unless (if (fixnum? line) (fx>= line 1) (and (bignum? line) ($bigpositive? line)))
+        ($oops who "~s is not an exact positive integer" line))
+      (unless (if (fixnum? column) (fx>= column 1) (and (bignum? column) ($bigpositive? column)))
+        ($oops who "~s is not an exact positive integer" column))
+      (unless (<= bfp efp)
+        ($oops who "ending file position ~s is less than beginning file position ~s" efp bfp))
+      (%make-source-2d sfd bfp efp line column)]))
+  (set-who! current-make-source-object
+    (case-lambda
+     [() (or ($current-mso) make-source-object)]
+     [(x)
+      (unless (procedure? x) ($oops who "~s is not a procedure" x))
+      ($current-mso (if (eq? x make-source-object) #f x))]))
   (set-who! source-object?
     (lambda (x)
       (%source? x)))
@@ -9690,6 +9712,18 @@
     (lambda (x)
       (unless (%source? x) ($oops who "~s is not a source object" x))
       (%source-efp x)))
+  (set-who! source-object-line
+    (lambda (x)
+      (cond
+       [(%source-2d? x) (%source-2d-line x)]
+       [(%source? x) #f]
+       [else ($oops who "~s is not a source object" x)])))
+  (set-who! source-object-column
+    (lambda (x)
+      (cond
+       [(%source-2d? x) (%source-2d-column x)]
+       [(%source? x) #f]
+       [else ($oops who "~s is not a source object" x)])))
   (set-who! make-annotation
     (case-lambda
       [(expression source stripped)
@@ -9769,10 +9803,36 @@
       (unless (%source-file-descriptor? sfd) ($oops who "~s is not a source-file descriptor" sfd))
       ($open-source-file sfd)))
   (set-who! locate-source
-    (lambda (sfd fp)
-      (unless (%source-file-descriptor? sfd) ($oops who "~s is not a source-file descriptor" sfd))
-      (unless (if (fixnum? fp) (fx>= fp 0) (and (bignum? fp) ($bigpositive? fp))) ($oops who "~s is not an exact nonnegative integer" fp))
-      ($locate-source sfd fp)))
+    (rec locate-source
+      (case-lambda
+       [(sfd fp) (locate-source sfd fp #f)]
+       [(sfd fp use-cache?)
+        (unless (%source-file-descriptor? sfd) ($oops who "~s is not a source-file descriptor" sfd))
+        (unless (if (fixnum? fp) (fx>= fp 0) (and (bignum? fp) ($bigpositive? fp)))
+          ($oops who "~s is not an exact nonnegative integer" fp))
+        ($locate-source sfd fp use-cache?)])))
+  (set-who! locate-source-object-source
+    (lambda (src start? cache?)
+      (cond
+       [(and start?
+             (%source-2d? src))
+        (values (%source-file-descriptor-name (%source-sfd src))
+                (%source-2d-line src)
+                (%source-2d-column src))]
+       [(%source? src)
+        ($locate-source (%source-sfd src)
+                        (if start?
+                            (%source-bfp src)
+                            (%source-efp src))
+                        cache?)]
+       [else
+        ($oops who "~s is not a source object" src)])))
+  (set-who! current-locate-source-object-source
+    ($make-thread-parameter
+     locate-source-object-source
+     (lambda (x)
+       (unless (procedure? x) ($oops who "~s is not a procedure" x))
+       x)))
   (set-who! syntax->annotation
     (lambda (x)
       (cond
