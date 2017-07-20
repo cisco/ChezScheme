@@ -6313,9 +6313,10 @@
               (let ([cnt (- pos (constant fixnum-offset))]
                     [mask (* (- (expt 2 size) 1) (expt 2 (constant fixnum-offset)))])
                 (%inline logand
-                  ,(let ([body (%mref ,e1 ,(constant-case native-endianness
-                                             [(little) (fx+ (constant flonum-data-disp) 4)]
-                                             [(big) (constant flonum-data-disp)]))])
+                  ,(let ([body `(inline ,(make-info-load 'integer-32 #f) ,%load ,e1 ,%zero
+                                  (immediate ,(constant-case native-endianness
+                                                [(little) (fx+ (constant flonum-data-disp) 4)]
+                                                [(big) (constant flonum-data-disp)])))])
                      (let ([body (if (fx> cnt 0)
                                      (%inline srl ,body (immediate ,cnt))
                                      body)])
@@ -8939,11 +8940,11 @@
                [(quote ,d) (and (and (fixnum? d) (fx<= d 4)) (add-cdrs d e-ls))]
                [else #f])]))
         (let ()
-          (define (go0 src sexpr weak?)
+          (define (go0 src sexpr subtype)
             (%primcall src sexpr $make-eq-hashtable
               (immediate ,(fix (constant hashtable-default-size)))
-              (immediate ,weak?)))
-          (define (go1 src sexpr e-size weak?)
+              (immediate ,(fix subtype))))
+          (define (go1 src sexpr e-size subtype)
             (nanopass-case (L7 Expr) e-size
               [(quote ,d)
                ; d must be a fixnum? for $hashtable-size-minlen and a
@@ -8951,14 +8952,17 @@
                (and (and (fixnum? d) (target-fixnum? d) (fx>= d 0))
                     (%primcall src sexpr $make-eq-hashtable
                       (immediate ,(fix ($hashtable-size->minlen d)))
-                      (immediate ,weak?)))]
+                      (immediate ,(fix subtype))))]
               [else #f]))
           (define-inline 3 make-eq-hashtable
-            [() (go0 src sexpr (constant sfalse))]
-            [(e-size) (go1 src sexpr e-size (constant sfalse))])
+            [() (go0 src sexpr (constant eq-hashtable-subtype-normal))]
+            [(e-size) (go1 src sexpr e-size (constant eq-hashtable-subtype-normal))])
           (define-inline 3 make-weak-eq-hashtable
-            [() (go0 src sexpr (constant strue))]
-            [(e-size) (go1 src sexpr e-size (constant strue))]))
+            [() (go0 src sexpr (constant eq-hashtable-subtype-weak))]
+            [(e-size) (go1 src sexpr e-size (constant eq-hashtable-subtype-weak))])
+          (define-inline 3 make-ephemeron-eq-hashtable
+            [() (go0 src sexpr (constant eq-hashtable-subtype-ephemeron))]
+            [(e-size) (go1 src sexpr e-size (constant eq-hashtable-subtype-ephemeron))]))
         (let ()
           (define-syntax def-put-x
             (syntax-rules ()

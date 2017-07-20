@@ -1087,6 +1087,16 @@
          (define-values (args . rot) (values #'(x ...) #'(x ...) 3))
          (list args rot))])
     '((a b c) ((a b c) 3)))
+  (equal?
+   (let ()
+     (define x 1)
+     (define-values ()
+       (begin
+         "don't interrupt definitions"
+         (values)))
+     (define y 2)
+     (list x y))
+   '(1 2))
 )
 
 (mat assimilation

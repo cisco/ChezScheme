@@ -204,26 +204,32 @@
 
 (define wrf-pair
   (lambda (x p t a?)
-    (if (weak-pair? x)
-        (begin
-          (put-u8 p (constant fasl-type-weak-pair))
-          (wrf (car x) p t a?)
-          (wrf (cdr x) p t a?))
-        (begin ; more like list*
-          (put-u8 p (constant fasl-type-pair))
-          (let ([n (let wrf-pair-loop0 ([n 1] [x (cdr x)])
-                     ; cut off at end or at shared structure
-                      (if (and (pair? x)
-                               (not (weak-pair? x))
-                               (not (eq-hashtable-ref (table-hash t) x #f)))
-                          (wrf-pair-loop0 (fx+ n 1) (cdr x))
-                          n))])
-             (put-uptr p n)
-             (let wrf-pair-loop1 ([x x] [n n])
-                (wrf (car x) p t a?)
-                (if (fx= n 1)
-                    (wrf (cdr x) p t a?)
-                    (wrf-pair-loop1 (cdr x) (fx- n 1)))))))))
+    (cond
+      [(weak-pair? x)
+       (put-u8 p (constant fasl-type-weak-pair))
+       (wrf (car x) p t a?)
+       (wrf (cdr x) p t a?)]
+      [(ephemeron-pair? x)
+       (put-u8 p (constant fasl-type-ephemeron))
+       (wrf (car x) p t a?)
+       (wrf (cdr x) p t a?)]
+      [else
+       ; more like list*
+       (put-u8 p (constant fasl-type-pair))
+       (let ([n (let wrf-pair-loop0 ([n 1] [x (cdr x)])
+                  ; cut off at end or at shared structure
+                  (if (and (pair? x)
+                           (not (weak-pair? x))
+                           (not (ephemeron-pair? x))
+                           (not (eq-hashtable-ref (table-hash t) x #f)))
+                      (wrf-pair-loop0 (fx+ n 1) (cdr x))
+                      n))])
+         (put-uptr p n)
+         (let wrf-pair-loop1 ([x x] [n n])
+           (wrf (car x) p t a?)
+           (if (fx= n 1)
+               (wrf (cdr x) p t a?)
+               (wrf-pair-loop1 (cdr x) (fx- n 1)))))])))
 
 (define wrf-symbol
   (lambda (x p t a?)
@@ -426,7 +432,10 @@
   (lambda (x p t a?)
     (put-u8 p (constant fasl-type-eq-hashtable))
     (put-u8 p (if (hashtable-mutable? x) 1 0))
-    (put-u8 p (if (eq-hashtable-weak? x) 1 0))
+    (put-u8 p (cond
+               [(eq-hashtable-weak? x) (constant eq-hashtable-subtype-weak)]
+               [(eq-hashtable-ephemeron? x) (constant eq-hashtable-subtype-ephemeron)]
+               [else  (constant eq-hashtable-subtype-normal)]))
     (put-uptr p ($ht-minlen x))
     (put-uptr p ($ht-veclen x))
     (let-values ([(keyvec valvec) (hashtable-entries x)])

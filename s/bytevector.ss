@@ -1452,4 +1452,63 @@
                    (list->little ls size)
                    (unrecognized-endianness who eness))]))))
   )
+
+  (let ()
+    ;; Store uncompressed size as u64:
+    (define uncompressed-length-length (ftype-sizeof integer-64))
+    ;; Always big-endian, so that compressed data is portable.
+    ;; It might be useful somehow that valid compressed data always starts
+    ;; with a 0 byte; otherwise, the expected size would be unrealistically big.
+    (define uncompressed-length-endianness (endianness big))
+
+    (define $bytevector-compress-size
+      (foreign-procedure "(cs)bytevector_compress_size" (iptr) uptr))
+    (define $bytevector-compress
+      (foreign-procedure "(cs)bytevector_compress" (scheme-object iptr iptr scheme-object iptr iptr) scheme-object))
+    (define $bytevector-uncompress
+      (foreign-procedure "(cs)bytevector_uncompress" (scheme-object iptr iptr scheme-object iptr iptr) scheme-object))
+
+    (set-who! bytevector-compress
+      (lambda (bv)
+        (unless (bytevector? bv) (not-a-bytevector who bv))
+        (let* ([dest-max-len ($bytevector-compress-size (bytevector-length bv))]
+               [dest-alloc-len (min (+ dest-max-len uncompressed-length-length)
+                                    ;; In the unlikely event of a non-fixnum requested size...
+                                    (constant maximum-bytevector-length))]
+               [dest-bv (make-bytevector dest-alloc-len)])
+          (let ([r ($bytevector-compress dest-bv
+                                         uncompressed-length-length
+                                         (fx- dest-alloc-len uncompressed-length-length)
+                                         bv
+                                         0
+                                         (bytevector-length bv))])
+            (cond
+             [(string? r)
+              ($oops who r bv)]
+             [else
+              ($bytevector-u64-set! dest-bv 0 (bytevector-length bv) uncompressed-length-endianness who)
+              (bytevector-truncate! dest-bv (fx+ r uncompressed-length-length))])))))
+
+    (set-who! bytevector-uncompress
+      (lambda (bv)
+        (unless (bytevector? bv) (not-a-bytevector who bv))
+        (unless (>= (bytevector-length bv) uncompressed-length-length)
+          ($oops who "invalid data in source bytevector ~s" bv))
+        (let ([dest-length ($bytevector-u64-ref bv 0 uncompressed-length-endianness who)])
+          (unless (and (fixnum? dest-length)
+                       ($fxu< dest-length (constant maximum-bytevector-length)))
+            ($oops who "bytevector ~s claims invalid uncompressed size ~s" bv dest-length))
+          (let* ([dest-bv (make-bytevector dest-length)]
+                 [r ($bytevector-uncompress dest-bv
+                                            0
+                                            dest-length
+                                            bv
+                                            uncompressed-length-length
+                                            (fx- (bytevector-length bv) uncompressed-length-length))])
+            (cond
+             [(string? r) ($oops who r bv)]
+             [(fx= r dest-length) dest-bv]
+             [else
+              ($oops who "uncompressed size ~s for ~s is smaller than expected size ~a" r bv dest-length)]))))))
+
 )

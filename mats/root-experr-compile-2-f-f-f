@@ -3573,6 +3573,16 @@ bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevecto
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-fill!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-copy!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-truncate!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: uncompressed #vu8(0 0 0 0 0 0 ...) is larger than expected size".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: uncompressed size 5 for #vu8(0 0 0 0 0 0 ...) is smaller than expected size 6".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
 misc.mo:Expected error in mat compiler1: "variable i-am-not-bound is not bound".
 misc.mo:Expected error in mat compiler1: "attempt to apply non-procedure oops".
 misc.mo:Expected error in mat compiler1: "incorrect argument count in call (g (list))".
@@ -7496,6 +7506,9 @@ hash.mo:Expected error in mat hashtable-arguments: "hashtable-equivalence-functi
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-weak?)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-weak?: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ephemeron?)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ephemeron? $ht 3)".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-ephemeron?: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 1+2i for any".
@@ -7518,6 +7531,10 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count 
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument #t".
 hash.mo:Expected error in mat eq-hashtable-arguments: "make-weak-eq-hashtable: invalid size argument #f".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (make-ephemeron-eq-hashtable 3 #t)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument -1".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument #t".
+hash.mo:Expected error in mat eq-hashtable-arguments: "make-ephemeron-eq-hashtable: invalid size argument #f".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref $wht)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref $wht (quote a))".
@@ -7553,6 +7570,9 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: (hash 
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak?)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-weak?: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ephemeron?)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ephemeron? $ht 3)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-ephemeron?: (hash . table) is not an eq hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref $symht)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref $symht (quote a))".
@@ -7607,6 +7627,10 @@ hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #t".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #f".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count in call (make-ephemeron-eqv-hashtable 3 #t)".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument -1".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #t".
+hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #f".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-clear!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
@@ -9851,7 +9875,6 @@ date.mo:Expected error in mat date: "incorrect argument count in call (make-date
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1)".
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
 date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
-date.mo:Expected error in mat date: "incorrect argument count in call (make-date 0 0 0 0 1 ...)".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
 date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
@@ -9919,10 +9942,18 @@ date.mo:Expected error in mat date: "incorrect argument count in call (date-year
 date.mo:Expected error in mat date: "incorrect argument count in call (date-year-day $date-d1 #t)".
 date.mo:Expected error in mat date: "date-year-day: 17 is not a date record".
 date.mo:Expected error in mat date: "date-year-day: <time> is not a date record".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-dst?)".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-dst? $date-d1 #t)".
+date.mo:Expected error in mat date: "date-dst?: 17 is not a date record".
+date.mo:Expected error in mat date: "date-dst?: <time> is not a date record".
 date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset)".
 date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-offset $date-d1 #t)".
 date.mo:Expected error in mat date: "date-zone-offset: 17 is not a date record".
 date.mo:Expected error in mat date: "date-zone-offset: <time> is not a date record".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name)".
+date.mo:Expected error in mat date: "incorrect argument count in call (date-zone-name $date-d1 #t)".
+date.mo:Expected error in mat date: "date-zone-name: 17 is not a date record".
+date.mo:Expected error in mat date: "date-zone-name: <time> is not a date record".
 date.mo:Expected error in mat date: "incorrect argument count in call (current-date 0 #t)".
 date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
 date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".

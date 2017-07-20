@@ -1102,7 +1102,7 @@
            (expand/optimize
              '(begin (#3%map cons '(5 4 3 2 1 0)) 7)))
            7))
-  ;; map with lambda exp as procedure and lists in the form (list e0 e1 ... en)
+  ;; map with lambda exp as procedure and lists in the form (list e0 e1 ... en) or '(e0 e1 ... en)
   ;; avoid creating each list and doing the actual map
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -1119,6 +1119,38 @@
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
+    '(#3%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(#3%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(#2%list 12 15 18))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(map (lambda (x y z) (apply + x y z)) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
     '(#3%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -1179,12 +1211,51 @@
                         (begin (write 'a) (list (begin (write 'b) 'g) 'j))
                         (begin (write 'c) (list (begin (write 'd) 'h) 'k))
                         (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
-      '("abcdef((g h . i) (j k . l))\n"
-        "abefcd((g h . i) (j k . l))\n"
-        "cdabef((g h . i) (j k . l))\n"
-        "cdefab((g h . i) (j k . l))\n"
-        "efabcd((g h . i) (j k . l))\n"
-        "efcdab((g h . i) (j k . l))\n"))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'ab) '(g j))
+                        (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+                        (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+                        (begin (write 'cd) '(h k))
+                        (begin (write 'e) (list (begin (write 'f) 'i) 'l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (pretty-print (map (lambda (x y z) (cons* x y z))
+                        (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+                        (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+                        (begin (write 'ef) '(i l))))))
+    '("abcdef((g h . i) (j k . l))\n"
+      "abefcd((g h . i) (j k . l))\n"
+      "cdabef((g h . i) (j k . l))\n"
+      "cdefab((g h . i) (j k . l))\n"
+      "efabcd((g h . i) (j k . l))\n"
+      "efcdab((g h . i) (j k . l))\n"))
  )
 
 (mat fold-left
@@ -1875,6 +1946,130 @@
            (expand/optimize
              '(#3%for-each cons '(5 4 3 2 1 0))))
            '(#2%void)))
+  ;; for-each with lambda exp as procedure and lists in the form (list e0 e1 ... en) or '(e0 e1 ... en)
+  ;; avoid creating each list and doing the actual for-each
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           (list 1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           (list 4 5 6)
+           (list '(7) '(8) '(9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize 
+        '(for-each (lambda (x y z) (display (apply + x y z))) 
+           '(1 2 3)
+           '(4 5 6)
+           '((7) (8) (9)))))
+    '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (for-each (begin (write 'ab) (lambda (x y) (write (cons x y))))
+          (begin (write 'a) (list (begin (write 'b) 'c)))
+          (begin (write 'a) (list (begin (write 'b) 'd))))))
+    "ababab(c . d)")
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y) (write (cons x y)))
+          (list (begin (write 'a) 'c) (begin (write 'b) 'd))
+          (list (begin (write 'x) 'e) (begin (write 'y) 'f)))))
+    ; lots of valid possibilities, but make sure we don't interleave and get, e.g., axby
+    '("abxy(c . e)(d . f)"
+      "abyx(c . e)(d . f)"
+      "baxy(c . e)(d . f)"
+      "bayx(c . e)(d . f)"
+      "xyab(c . e)(d . f)"
+      "yxab(c . e)(d . f)"
+      "xyba(c . e)(d . f)"
+      "yxba(c . e)(d . f)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'ab) '(g j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'cd) '(h k))
+          (begin (write 'e) (list (begin (write 'f) 'i) 'l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
+  ((lambda (x ls) (and (member x ls) #t))
+    (with-output-to-string
+      (lambda ()
+        (for-each (lambda (x y z) (write (cons* x y z)))
+          (begin (write 'a) (list (begin (write 'b) 'g) 'j))
+          (begin (write 'c) (list (begin (write 'd) 'h) 'k))
+          (begin (write 'ef) '(i l)))))
+    '("abcdef(g h . i)(j k . l)"
+      "abefcd(g h . i)(j k . l)"
+      "cdabef(g h . i)(j k . l)"
+      "cdefab(g h . i)(j k . l)"
+      "efabcd(g h . i)(j k . l)"
+      "efcdab(g h . i)(j k . l)"))
  )
 
 (mat ormap
@@ -3106,6 +3301,189 @@
               (begin (collect (collect-maximum-generation))
                      (bwp-object? (car x))))))
  )
+
+(mat ephemeron
+   (begin
+     (define ephemeron-key car)
+     (define ephemeron-value cdr)
+     
+     (define gdn (make-guardian))
+     #t)
+
+   (ephemeron-pair? (ephemeron-cons 1 2))
+
+   (begin
+     ;; ----------------------------------------
+     ;; Check that the ephemeron value doesn't retain
+     ;; itself as an epehemeron key
+     (define-values (es wps saved)
+       (let loop ([n 1000] [es '()] [wps '()] [saved '()])
+         (cond
+          [(zero? n)
+           (values es wps saved)]
+          [else
+           (let ([k1 (gensym)]
+                 [k2 (gensym)])
+             (gdn k2)
+             (loop (sub1 n)
+                   (cons (ephemeron-cons k1 (box k1))
+                         (cons (ephemeron-cons k2 (box k2))
+                               es))
+                   (weak-cons k1 (weak-cons k2 wps))
+                   (cons k1 saved)))])))
+     
+     (collect (collect-maximum-generation))
+
+     ;; All now waiting to be reported by the guardian
+     (let loop ([es es] [wps wps] [saved saved])
+       (cond
+        [(null? saved) #t]
+        [else
+         (and
+          (eq? (car saved) (car wps))
+          (eq? (car saved) (ephemeron-key (car es)))
+          (eq? (car saved) (unbox (ephemeron-value (car es))))
+          (eq? (cadr wps) (ephemeron-key (cadr es)))
+          (eq? (cadr wps) (unbox (ephemeron-value (cadr es))))
+          (loop (cddr es) (cddr wps) (cdr saved)))])))
+
+   (begin
+     ;; Report each from the guardian:
+     (let loop ([saved saved])
+       (unless (null? saved)
+         (gdn)
+         (loop (cdr saved))))
+
+     (collect (collect-maximum-generation))
+
+     (let loop ([es es] [wps wps] [saved saved])
+       (cond
+        [(null? saved) #t]
+        [else
+         (and
+          (eq? (car saved) (car wps))
+          (eq? (car saved) (ephemeron-key (car es)))
+          (eq? (car saved) (unbox (ephemeron-value (car es))))
+          (eq? #!bwp (cadr wps))
+          (eq? #!bwp (ephemeron-key (cadr es)))
+          (eq? #!bwp (ephemeron-value (cadr es)))
+          (loop (cddr es) (cddr wps) (cdr saved)))])))
+
+   ;; ----------------------------------------
+   ;; Stress test to check that the GC doesn't suffer from quadratic
+   ;; behavior
+   (begin
+     (define (wrapper v) (list 1 2 3 4 5 v))
+     
+     ;; Create a chain of ephemerons where we have all
+     ;; the the ephemerons immediately in a list,
+     ;; but we discover the keys one at a time
+     (define (mk n prev-key es)
+       (cond
+        [(zero? n)
+         (values prev-key es)]
+        [else
+         (let ([key (gensym)])
+           (mk (sub1 n)
+               key
+               (cons (ephemeron-cons key (wrapper prev-key))
+                     es)))]))
+
+     ;; Create a chain of ephemerons where we have all
+     ;; of the keys immediately in a list,
+     ;; but we discover the ephemerons one at a time
+     (define (mk* n prev-e keys)
+       (cond
+        [(zero? n)
+         (values prev-e keys)]
+        [else
+         (let ([key (gensym)])
+           (mk* (sub1 n)
+                (ephemeron-cons key (wrapper prev-e))
+                (cons key
+                      keys)))]))
+
+     (define (measure-time n keep-alive)
+       ;; Hang the discover-keys-one-at-a-time chain
+       ;; off the end of the discover-ephemerons-one-at-a-time
+       ;; chain, which is the most complex case for avoiding
+       ;; quadratic GC times
+       (define-values (key es) (mk n (gensym) '()))
+       (define-values (root holds) (mk* n key es))
+
+       (define start (current-time))
+       (collect (collect-maximum-generation))
+       (let ([delta (time-difference (current-time) start)])
+         ;; Sanity check on ephemerons
+         (for-each (lambda (e)
+                     (when (eq? #!bwp (ephemeron-key e))
+                       (error 'check "oops")))
+                   es)
+         ;; Keep `root` and `holds` live:
+         (keep-alive (cons root holds))
+         ;; Return duration:
+         delta))
+
+     (define N 10000)
+
+     ;; The first time should be roughy x10 the second (not x100)
+     (let loop ([tries 3])
+       (define dummy #f)
+       (define (keep-alive v) (set! dummy (cons dummy v)))
+       (define t1 (measure-time (* 10 N) keep-alive))
+       (define dummy2 (set! dummy #f))
+       (define t2 (measure-time N keep-alive))
+       (define (duration->inexact t) (+ (* (time-second t) 1e9)
+                                        (time-nanosecond t)))
+       (set! dummy #f)
+       (or (< (/ (duration->inexact t1) (duration->inexact t2)) 20)
+           (and (positive? tries)
+                (loop (sub1 tries))))))
+
+   ;; ----------------------------------------
+   ;; Check interaction of mutation and generations
+   
+   ;; This check disables interrups so that a garbage collection
+   ;; happens only for the explicit `collect` request.
+   (with-interrupts-disabled
+     (let ([e (ephemeron-cons (gensym) 'ok)])
+       (collect 0) ; => `e` is moved to generation 1
+       (and
+         (eq? #!bwp (ephemeron-key e))
+         (eq? #!bwp (ephemeron-value e))
+         (let ([s (gensym)])
+           (set-car! e s)
+           (set-cdr! e 'ok-again)
+           (collect 0) ; => `s` is moved to generation 1
+           (and
+             (eq? s (ephemeron-key e))
+             (eq? 'ok-again (ephemeron-value e))
+             (begin
+               (set! s #f)
+               (collect 1) ; collect former `s`
+               (and
+                 (eq? #!bwp (ephemeron-key e))
+                 (eq? #!bwp (ephemeron-value e)))))))))
+
+   ;; ----------------------------------------
+   ;; Check fasl:
+   (let ([s (gensym)])
+     (define-values (o get) (open-bytevector-output-port))
+     (fasl-write (list s
+                       (ephemeron-cons s 'ok))
+                 o)
+     (let* ([l (fasl-read (open-bytevector-input-port (get)))]
+            [e (cadr l)])
+       (and
+        (eq? (car l) (ephemeron-key e))
+        (eq? 'ok (ephemeron-value e))
+        (begin
+          (set! s #f)
+          (set! l #f)
+          (collect (collect-maximum-generation))
+          (and
+           (eq? #!bwp (ephemeron-key e))
+           (eq? #!bwp (ephemeron-value e))))))))
 
 (mat $primitive
    (procedure? #%car)

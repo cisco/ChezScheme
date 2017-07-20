@@ -25,24 +25,11 @@ mdclean=vs.bat make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
 include Mf-base
 
 ${Scheme}: make.bat
-	./make.bat
+	cmd.exe /c make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
-
-vs.bat:
-	echo '@echo off' > $@
-	echo 'if "%VS140COMNTOOLS%" neq "" goto :VS' >> $@
-	echo 'echo Visual Studio 2015 must be installed.' >> $@
-	echo 'exit 1' >> $@
-	echo ':VS' >> $@
-	echo 'set INCLUDE=' >> $@
-	echo 'set LIB=' >> $@
-	echo 'set LIBPATH=' >> $@
-	echo 'call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" x86' >> $@
-	echo '%*' >> $@
-	chmod +x $@
 
 make.bat: vs.bat
 	echo '@echo off' > $@
 	echo 'set MAKEFLAGS=' >> $@
-	echo 'call vs.bat nmake /f Makefile.$m /nologo %*' >> $@
+	echo 'vs.bat x86 && nmake /f Makefile.$m /nologo %*' >> $@
 	chmod +x $@

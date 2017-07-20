@@ -456,3 +456,90 @@
 - fix overflow detection for fxsll, fxarithmetic-shift-left, and
   fxarithmetic-shift
     library.ss, fx.ms, release_notes.stex
+- added ephemeron pairs and changed weak hashtables to use
+  ephemeron pairs for key--value mapping to avoid the key-in-value
+  problem
+    prims.ss, primdata.ss, newhash.ss, fasl.ss, mkheader.ss
+    cmacro.ss, prim5.c, fasl.c, gc.c, gcwrapper.c, types.h,
+    4.ms, hash.ms, objects.stex, smgmt.stex, csug.bib
+- check_dirty_ephemeron now puts ephemerons whose keys haven't yet
+  been seen on the pending list rather than the trigger lists.
+    gc.c
+- removed scan of space_ephemeron from check_heap because check_heap
+  as written can't handle the two link fields properly.
+    gcwrapper.c
+- in the ephemerons mat that checks interaction between mutation and
+  collection, added generation arguments to the first two collect
+  calls so they always collect into the intended generation.
+    4.ms
+- updated allx and bullyx patches
+    patch*
+- fix strip-fasl-file for immutable strings and vectors,
+  fix an $oops call, and fix a vector-index increment in hashing
+    strip.ss, 7.ss, newhash.ss, misc.ms
+- fix signature of fxbit-set?
+    primdata.ss
+- more optimizations for map and for-each with explicit list
+  extend the reductions for map and for-each when the arguments are
+  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
+    cp0.ss,
+    4.ms
+- reverted to the preceding version of cp0 due to failure to preserve
+  the expected evaluation order in one of the mats; removed the
+  corresponding equivalent-expansion tests.
+    cp0.ss,
+    4.ms
+- restored the map and for-each optimizations with a fix for the
+  evaluation-order bug.
+    cp0.ss,
+    4.ms
+- added date-dst? to access the previously-hidden DST information in
+  date records, and added date-zone-name to provide a time zone name.
+    date.ss, primdata.ss,
+    stats.c,
+    date.ms, root-experr*, patch-compile*,
+    system.stex
+- fixed a bug in flonum-extractor, which on 64-bit machines was using an
+  8-byte read instead of a 4-byte read to pick up the 4 highest-order
+  bytes of a little-endian flonum, potentially reading past the end of
+  mapped memory for flonums produced by taking the imaginary part of an
+  inexact complexnum (which, unlike other flonums, are not aligned on
+  16-byte boundaries).  The 8-byte load would also have failed to produce
+  correct results on 64-bit big-endian machines (of which we presently
+  have none) because the offsets passed to flonum-extractor assume the
+  bits are in the lowest-order 4 bytes of the extracted field.
+    cp0.ss,
+    misc.ms,
+    release_notes.stex
+- support Windows build on Bash/WSL
+    BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
+    c/Mf-*nt, mats/Mf-*, s/Mf-base
+- fix c/version.h for FreeBDS (machine types i3fb, ti3fb, a6fb, ta6fb)
+- fix reference to libc.so to be libc.so.7 for FreeBSD (machine types
+  i3fb, ti3fb, a6fb, ta6fb)
+    foreign.ms
+- added CC option to configure for selecting the compiler
+    configure,
+    c/Mf-*
+- Suppress warnings from implicit fallthrough in case labels.
+    Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
+- added bytevector-compress and bytevector-uncompress
+    bytevector.ss, primdata.ss, new-io.c, prim5.c, externs.h,
+    objects.stex, release_notes.stex,
+    bytevector.ms, root-experr*
+- fixed typo in S_abnormal_exit
+    schsig.c
+- don't remove the pariah form in the cp0 pass
+    cp0.ss,
+    misc.ms
+- revert use of ephemerons in weak hashtables, add ephemeron
+  hashtables
+    newhash.ss, hashtable-types.ss, library.ss, primdata.ss,
+    fasl.ss, fasl.c, gc.c, globals.h,
+    hash.ms, objects.stex, release_notes.stex
+- fixed pariah mat
+    misc.ms
+- minor wordsmithing and fix for an overfull hbox
+    objects.stex, system.stex
+- fix (define-values () ....) to expand to a definition
+    syntax.ss, 3.ms

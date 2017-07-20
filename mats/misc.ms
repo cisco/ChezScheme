@@ -604,6 +604,12 @@
                   17)))])
         (cons v ls)))
     '(3 17 17))
+  ; regression test for bug in which $flonum-exponent read past mapped memory
+  (eq?
+    (do ([n 2000 (- n 1)] [ls (iota 2000)])
+        ((= n 0) 'fini)
+      (map (lambda (x) (let ([x (exact (sqrt -2.0))]) x)) ls))
+    'fini)
 )
 
 (mat compiler3
@@ -4859,6 +4865,20 @@
           (pariah 1)
           (* n (f (fx- n 1)))))
     3628800)
+  ; make sure that cp0 doesn't remove the pariah form
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(if (zero? (random 1000))
+             (pariah (display 0))
+             (display 1))))
+    (if (= (optimize-level) 3)
+        '(if (#3%zero? (#3%random 1000))
+             (begin (pariah (void)) (#3%display 0))
+             (#3%display 1))
+        '(if (#2%zero? (#2%random 1000))
+             (begin (pariah (void)) (#2%display 0))
+             (#2%display 1))))
 )
 
 (mat $read-time-stamp-counter
@@ -4950,12 +4970,21 @@
       (let-values ([(o get) (open-bytevector-output-port)])
         (fasl-write l o)
         (immutable? (fasl-read (open-bytevector-input-port (get))))))
+    (define (round-trip-via-strip l)
+      (compile-to-file (list `(set! fasl-immutable-round-trip ',l)) "testfile-immut-sff.so")
+      (strip-fasl-file "testfile-immut-sff.so" "testfile-immut-sff.so" (fasl-strip-options))
+      (load "testfile-immut-sff.so")
+      (let ([l2 (eval 'fasl-immutable-round-trip)])
+        (and (equal? l l2)
+             (immutable? l2))))
     #t)
 
   (immutable? immutable-objs)
   (immutable? immutable-zero-objs)
   (round-trip immutable-objs)
   (round-trip immutable-zero-objs)
+  (round-trip-via-strip immutable-objs)
+  (round-trip-via-strip immutable-zero-objs)
 
   ;; Make sure `fasl-read` didn't mark "mutable" null values
   ;; as immutable:
