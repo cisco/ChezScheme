@@ -543,3 +543,14 @@
     objects.stex, system.stex
 - fix (define-values () ....) to expand to a definition
     syntax.ss, 3.ms
+- added optional line and column components to a source object, a
+  locate-source-object-source function that uses the new components,
+  a current-locate-source-object-source parameter to control looking up
+  line and column information, a current-make-source-object parameter to
+  control loation recording, an optional use-cache argument to
+  locate-source, and a 'source-object message for code and continuation
+  inspectors
+    read.ss, syntax.ss, 7.ss, compile.ss, cpnanopass.ss, exceptions.ss,
+    inspect.ss, primdata.ss, prims.ss, print.ss, cmacros.ss, types.ss,
+    mat.ss, 8.ms, root-experr*,
+    syntax.stex, debug.stex, system.stex, release_notes.stex

@@ -669,6 +669,8 @@
                   "~%[collecting generation ~s into generation ~s..."
                   g gtarget)
                 (flush-output-port (console-output-port)))
+              (when (eqv? g (collect-maximum-generation))
+                ($clear-source-lines-cache))
               (do-gc g gtarget)
               ($close-resurrected-files)
               (when-feature pthreads
