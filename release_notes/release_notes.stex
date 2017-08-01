@@ -125,6 +125,23 @@ The new primitive procedures \scheme{bytevector-compress} and
 compression functionality that is used for files with the
 \scheme{compressed} option.
 
+\subsection{Line caching and source objects (9.4.1)}
+
+The \scheme{locate-source} function accepts an optional argument that
+enables the use of a cache for line information, so that a source file
+does not have to be consulted each time to compute line information.
+To further avoid file and caching issues, a source object has optional
+beginning-line and beginning-column components. Source objects with line
+and column components take more space, but they allow reporting of line and column
+information even if a source file is later modified or becomes unavailable.
+The value of the \scheme{current-make-source-object} parameter is used by the
+reader to construct source objects for programs, and the parameter can be
+modified to collect line and column information eagerly. The value of the
+\scheme{current-locate-source-object-source} parameter is used for
+error reporting, instead of calling \scheme{locate-source} or
+\scheme{locate-source-object-source} directly, so that just-in-time
+source-location lookup can be adjusted, too.
+
 \subsection{High-precision clock time in Windows 8 and up (9.4.1)}
 
 When running on Windows 8 and up, Chez Scheme uses the high-precision

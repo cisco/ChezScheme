@@ -1487,6 +1487,7 @@ static void sweep_thread(p) ptr p; {
     relocate(&CURRENTERROR(tc))
     /* immediate BLOCKCOUNTER */
     relocate(&SFD(tc))
+    relocate(&CURRENTMSO(tc))
     relocate(&TARGETMACHINE(tc))
     relocate(&FXLENGTHBV(tc))
     relocate(&FXFIRSTBITSETBV(tc))

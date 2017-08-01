@@ -1181,6 +1181,11 @@ to the continuation (representing the source for the application that
 resulted in the formation of the continuation)
 or \scheme{#f} if no source information is attached.
 
+\insmsg{continuation}{\scheme{'source-object}}
+returns an inspector object containing the source object for the
+procedure application that resulted in the formation of the continuation
+or \scheme{#f} if no source object is attached.
+
 \insmsg{continuation}{\scheme{'source-path}}
 attempts to find the pathname of the file containing the source for
 the procedure application that resulted in the formation of the continuation.
@@ -1215,6 +1220,10 @@ procedure.
 \insmsg{code}{\scheme{'source}}
 returns an inspector object containing the source information attached
 to the code object or \scheme{#f} if no source information is attached.
+
+\insmsg{continuation}{\scheme{'source-object}}
+returns an inspector object containing the source object for the
+code object or \scheme{#f} if no source object is attached.
 
 \insmsg{code}{\scheme{'source-path}}
 attempts to find the pathname of the file containing the source for

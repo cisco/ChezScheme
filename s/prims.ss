@@ -1642,6 +1642,7 @@
   (define-tc-parameter current-error-port (lambda (x) (and (output-port? x) (textual-port? x))) "a textual output port")
   (define-tc-parameter $block-counter (lambda (x) (and (fixnum? x) (fx<= x 0))) "a nonpositive fixnum" 0)
   (define-tc-parameter $sfd (lambda (x) (or (eq? x #f) (source-file-descriptor? x))) "a source-file descriptor or #f" #f)
+  (define-tc-parameter $current-mso (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
   (define-tc-parameter $target-machine symbol? "a symbol")
   (define-tc-parameter optimize-level (lambda (x) (and (fixnum? x) (fx<= 0 x 3))) "valid optimize level" 0)
   (define-tc-parameter $compile-profile (lambda (x) (memq x '(#f source block))) "valid compile-profile flag" #f)
