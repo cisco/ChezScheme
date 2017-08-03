@@ -554,3 +554,5 @@
     inspect.ss, primdata.ss, prims.ss, print.ss, cmacros.ss, types.ss,
     mat.ss, 8.ms, root-experr*,
     syntax.stex, debug.stex, system.stex, release_notes.stex
+- fixed broken mats on Windows caused by Bash/WSL changes
+    7.ms, ftype.ms
