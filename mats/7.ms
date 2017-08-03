@@ -892,9 +892,9 @@
     "hello 1\nhello 2\nhello 3\nhello 4\nhello 5\n")
   (equal?
     (begin
-      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme" (machine-type))))
-        (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme"
-          (machine-type) (machine-type)))
+      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+        (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
+          (machine-type) (machine-type) (if (windows?) ".exe" "")))
       (parameterize ([optimize-level 2])
         (make-boot-file "testfile.boot" '()
           (format "../boot/~a/petite.boot" (machine-type))
