@@ -556,3 +556,6 @@
     syntax.stex, debug.stex, system.stex, release_notes.stex
 - fixed broken mats on Windows caused by Bash/WSL changes
     7.ms, ftype.ms
+- added "ez-grammar" example program
+    examples/ez-grammar.ss, examples/ez-grammar-test.ss,
+    examples/Makefile, examples.ms

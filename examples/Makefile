@@ -12,7 +12,7 @@
 
 src = def.ss edit.ss fact.ss fatfib.ss fft.ss fib.ss freq.ss interpret.ss\
  m4.ss macro.ss matrix.ss object.ss power.ss queue.ss rabbit.ss rsa.ss\
- scons.ss setof.ss socket.ss unify.ss compat.ss
+ scons.ss setof.ss socket.ss unify.ss compat.ss ez-grammar-test.ss
 obj = ${src:%.ss=%.so}
 
 Scheme = ../bin/scheme -q

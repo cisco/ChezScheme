@@ -585,3 +585,9 @@ edit>
 
   (begin (define-struct! caramel x y z) (eqv? (caramel-x (caramel 1 2 3)) 1))
 )
+
+(examples-mat ez-grammar-test ("ez-grammar-test")
+  (equal?
+    (with-output-to-string ez-grammar-test)
+    "end of tests\n")
+)
