@@ -348,25 +348,29 @@
   (define parse
     (lambda (fn)
       (let ([ip (open-input-file fn)])
-        (let ([token-stream (lexer fn ip)])
-          (define (oops)
-            (let ([last-token (stream-last-forced token-stream)])
-              (if last-token
-                  (errorf 'parse "parse error at or before character ~s of ~a" (token-bfp last-token) fn)
-                  (errorf 'parse "no expressions found in ~a" fn))))
-          ;;; return the first result, if any, for which the input stream was entirely consumed.
-          (let loop ([res* (expr token-stream)])
-            (if (null? res*)
-                (oops)
-                (let ([res (car res*)])
-                  (if (parse-consumed-all? res)
-                      (parse-result-value res)
-                      (loop (cdr res*))))))))))
+        (dynamic-wind
+          void
+          (lambda ()
+            (let ([token-stream (lexer fn ip)])
+              (define (oops)
+                (let ([last-token (stream-last-forced token-stream)])
+                  (if last-token
+                      (errorf 'parse "parse error at or before character ~s of ~a" (token-bfp last-token) fn)
+                      (errorf 'parse "no expressions found in ~a" fn))))
+;;; return the first result, if any, for which the input stream was entirely consumed.
+              (let loop ([res* (expr token-stream)])
+                (if (null? res*)
+                    (oops)
+                    (let ([res (car res*)])
+                      (if (parse-consumed-all? res)
+                          (parse-result-value res)
+                          (loop (cdr res*))))))))
+          (lambda () (close-input-port ip))))))
   )
 
 (define (ez-grammar-test)
   (import (parser))
-  (with-output-to-file "/tmp/t1"
+  (with-output-to-file "ez-grammar-test1"
     (lambda ()
       (for-each display
         '(
@@ -374,7 +378,7 @@
            )))
     'replace)
 
-  (with-output-to-file "/tmp/t2"
+  (with-output-to-file "ez-grammar-test2"
     (lambda ()
       (for-each display
         '(
@@ -386,7 +390,7 @@
            )))
     'replace)
 
-  (with-output-to-file "/tmp/t3err"
+  (with-output-to-file "ez-grammar-test3err"
     (lambda ()
       (for-each display
         '(
@@ -398,7 +402,7 @@
            )))
     'replace)
 
-  (with-output-to-file "/tmp/t4err"
+  (with-output-to-file "ez-grammar-test4err"
     (lambda ()
       (for-each display
         '(
@@ -406,14 +410,18 @@
            )))
     'replace)
 
-  (unless (guard (c [else #f]) (equal? (parse "/tmp/t1") (quote (int (0 . 3) 1347))))
+  (unless (guard (c [else #f]) (equal? (parse "ez-grammar-test1") (quote (int (0 . 3) 1347))))
     (printf "test 1 failed\n"))
-  (unless (guard (c [else #f]) (equal? (parse "/tmp/t2") (quote (=> (13 . 25) (group (16 . 25) (=> (18 . 24) (int (21 . 24) 1253)))))))
+  (delete-file "ez-grammar-test1")
+  (unless (guard (c [else #f]) (equal? (parse "ez-grammar-test2") (quote (=> (13 . 25) (group (16 . 25) (=> (18 . 24) (int (21 . 24) 1253)))))))
     (printf "test 2 failed\n"))
-  (unless (guard (c [else (and (equal? (condition-message c) "parse error at or before character ~s of ~a") (equal? (condition-irritants c) (quote (25 "/tmp/t3err"))))]) (parse "/tmp/t3err") #f)
+  (delete-file "ez-grammar-test2")
+  (unless (guard (c [else (and (equal? (condition-message c) "parse error at or before character ~s of ~a") (equal? (condition-irritants c) (quote (25 "ez-grammar-test3err"))))]) (parse "ez-grammar-test3err") #f)
     (printf "test 3 failed\n"))
-  (unless (guard (c [else (and (equal? (condition-message c) "unexpected ~a at character ~s of ~a") (equal? (condition-irritants c) (quote ("eof" 6 "/tmp/t4err"))))]) (parse "/tmp/t4err") #f)
+  (delete-file "ez-grammar-test3err")
+  (unless (guard (c [else (and (equal? (condition-message c) "unexpected ~a at character ~s of ~a") (equal? (condition-irritants c) (quote ("eof" 6 "ez-grammar-test4err"))))]) (parse "ez-grammar-test4err") #f)
     (printf "test 4 failed\n"))
+  (delete-file "ez-grammar-test4err")
   (printf "end of tests\n"))
 
 #!eof
