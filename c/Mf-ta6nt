@@ -31,5 +31,5 @@ ${Scheme}: make.bat
 make.bat: vs.bat
 	echo '@echo off' > $@
 	echo 'set MAKEFLAGS=' >> $@
-	echo 'vs.bat x86_amd64 amd64 && nmake /f Makefile.$m /nologo %*' >> $@
+	echo 'vs.bat amd64 && nmake /f Makefile.$m /nologo %*' >> $@
 	chmod +x $@

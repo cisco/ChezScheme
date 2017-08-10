@@ -167,11 +167,11 @@ The make file supports several targets:
 
 WINDOWS
 
-Building Chez Scheme under Windows with Cygwin or Bash/WSL follows the
-instructions above, except that 'make install' is not supported, and
-the 'OS' environment variable must be set to 'Windows_NT' on Bash/WSL
-(to indicate a build for Windows, as opposed to a build for Linux on
-Windows):
+Building Chez Scheme under 64-bit Windows with Cygwin or Bash/WSL
+follows the instructions above, except that 'make install' is not
+supported, and the 'OS' environment variable must be set to
+'Windows_NT' on Bash/WSL (to indicate a build for Windows, as opposed
+to a build for Linux on Windows):
 
 env OS=Windows_NT ./configure
 env OS=Windows_NT make
@@ -179,7 +179,7 @@ env OS=Windows_NT make
 Prerequisites:
 
 * Cygwin or Bash/WSL with bash, grep, make, sed, etc.
-* Microsoft Visual Studio 2015
+* Microsoft Visual Studio 2017 or 2015
 * WiX Toolset (for making an install)
 
 To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
@@ -191,10 +191,10 @@ again with $W and $M replaced with the workarea name and machine
 type, and start Chez Scheme with the command "scheme" or Petite
 Chez with the command "petite".
 
-The executables are linked against the Microsoft Visual C++ run-time
-library vcruntime140.dll. If you distribute the executables to a
-different system, be sure to include the redistributable run-time
-library.
+The executables are dynamically linked against the Microsoft Visual
+C++ run-time library vcruntime140.dll. If you distribute the
+executables to a different system, be sure to include the
+redistributable run-time library.
 
 Making an Install for Windows
 
@@ -229,4 +229,3 @@ the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
 
 Use 'make test' described above to run the tests.
-

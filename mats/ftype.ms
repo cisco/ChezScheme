@@ -557,7 +557,7 @@
                        [(a6osx a6osx)
                         (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
                        [(a6nt ta6nt)
-                        (system (format "..\\c\\vs.bat x86_amd64 amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
+                        (system (format "..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
                        [(i3nt ti3nt)
                         (system (format "..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
                        [(arm32le tarm32le)
