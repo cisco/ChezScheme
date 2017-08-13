@@ -680,7 +680,7 @@ static void sweep_in_old(ptr tc, ptr p) {
       return;
     }
   } else if (t == type_closure) {
-    /* A closure can refer back to itself in its closure */
+    /* A closure can refer back to itself */
     ptr code = CLOSCODE(p);
     if (!(CODETYPE(code) & (code_flag_continuation << code_flags_offset))) {
       if (scan_ptrs_for_self(&CLOSIT(p, 0), CLOSLEN(p), p)) {
@@ -689,7 +689,11 @@ static void sweep_in_old(ptr tc, ptr p) {
       }
     }
   } else if (t == type_symbol) {
-    /* no field of a symbol can refer back to the symbol itself */
+    /* a symbol can refer back to itself as its own value */
+    if (p == SYMVAL(p)) {
+      relocate(&p)
+      return;
+    }
   } else if (t == type_flonum) {
     /* nothing to sweep */
     return;
@@ -724,20 +728,21 @@ static void sweep_in_old(ptr tc, ptr p) {
     /* nothing to sweep */
     return;
   } else if (TYPEP(tf, mask_port, type_port)) {
-    /* can't refer immediately back to itself */
+    /* a symbol can refer back to itself as info */
+    if (p == PORTINFO(p)) {
+      relocate(&p)
+      return;
+    }
   } else if (TYPEP(tf, mask_code, type_code)) {
-    /* shouldn't get here, but treat all code as a self-reference,
-       just in case */
+    /* We don't expect code to be accessible to a layer that registers
+       an ordered finalizer, but just in case, assume that code
+       includes a self-reference */
     relocate(&p)
     return;
   } else if ((iptr)tf == type_thread) {
-    /* it doesn't seem likely that a thread could be finalized as
-       ordered, since a thread seems likely to refer to itself in some
-       way and application programmers likely don't have enough
-       control over that, so just impose the restriction that it won't
-       work */
-    relocate(&p)
-    return;
+    /* threads are allocated with plain malloc(), so ordered
+       finalization cannot work on them */
+    S_error_abort("sweep_in_old(gc): cannot check thread");
   } else if ((iptr)tf == type_rtd_counts) {
     /* nothing to sweep */
     return;
@@ -754,6 +759,7 @@ static int scan_ptrs_for_self(ptr *pp, iptr len, ptr p) {
   while (len--) {
     if (*pp == p)
       return 1;
+    pp += 1;
   }
   return 0;
 }
@@ -1771,109 +1777,62 @@ static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
   }
 }
 
+#define sweep_or_check_record(x, sweep_or_check)                 \
+    ptr *pp; ptr num; ptr rtd;                 \
+                                                        \
+    /* record-type descriptor was forwarded already */  \
+    rtd = RECORDINSTTYPE(x);                            \
+    num = RECORDDESCPM(rtd);                            \
+    pp = &RECORDINSTIT(x,0);                                            \
+                                                                        \
+    /* process cells for which bit in pm is set; quit when pm == 0. */  \
+    if (Sfixnump(num)) {                                                \
+      /* ignore bit for already forwarded rtd */                        \
+        uptr mask = (uptr)UNFIX(num) >> 1;                                \
+        if (mask == (uptr)-1 >> 1) {                                    \
+          ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1; \
+          while (pp < ppend) {                                          \
+            sweep_or_check(pp)                                          \
+            pp += 1;                                                    \
+          }                                                             \
+        } else {                                                        \
+          while (mask != 0) {                                           \
+            if (mask & 1) sweep_or_check(pp)                            \
+            mask >>= 1;                                                 \
+            pp += 1;                                                    \
+          }                                                             \
+        }                                                               \
+    } else {                                                            \
+      iptr index; bigit mask; INT bits;                                 \
+                                                                        \
+      /* bignum pointer mask may have been forwarded */                 \
+      relocate(&RECORDDESCPM(rtd))                                      \
+      num = RECORDDESCPM(rtd);                                          \
+      index = BIGLEN(num) - 1;                                          \
+      /* ignore bit for already forwarded rtd */                        \
+      mask = BIGIT(num,index) >> 1;                                     \
+      bits = bigit_bits - 1;                                            \
+      for (;;) {                                                        \
+        do {                                                            \
+          if (mask & 1) sweep_or_check(pp)                              \
+          mask >>= 1;                                                   \
+          pp += 1;                                                      \
+        } while (--bits > 0);                                           \
+        if (index-- == 0) break;                                        \
+        mask = BIGIT(num,index);                                        \
+        bits = bigit_bits;                                              \
+      }                                                                 \
+    }                                                                   \
+
 static void sweep_record(x) ptr x; {
-    ptr *pp; ptr num; ptr rtd;
-
-  /* record-type descriptor was forwarded in copy */
-    rtd = RECORDINSTTYPE(x);
-    num = RECORDDESCPM(rtd);
-    pp = &RECORDINSTIT(x,0);
-
-  /* sweep cells for which bit in pm is set; quit when pm == 0. */
-    if (Sfixnump(num)) {
-       /* ignore bit for already forwarded rtd */
-        uptr mask = (uptr)UNFIX(num) >> 1;
-        if (mask == (uptr)-1 >> 1) {
-            ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1;
-            while (pp < ppend) {
-                relocate(pp)
-                pp += 1;
-            }
-        } else {
-            while (mask != 0) {
-                if (mask & 1) relocate(pp)
-                mask >>= 1;
-                pp += 1;
-            }
-        }
-    } else {
-        iptr index; bigit mask; INT bits;
-
-       /* bignum pointer mask may have been forwarded */
-        relocate(&RECORDDESCPM(rtd))
-        num = RECORDDESCPM(rtd);
-        index = BIGLEN(num) - 1;
-       /* ignore bit for already forwarded rtd */
-        mask = BIGIT(num,index) >> 1;
-        bits = bigit_bits - 1;
-        for (;;) {
-            do {
-                if (mask & 1) relocate(pp)
-                mask >>= 1;
-                pp += 1;
-            } while (--bits > 0);
-            if (index-- == 0) break;
-            mask = BIGIT(num,index);
-            bits = bigit_bits;
-        }
-    }
+  sweep_or_check_record(x, relocate)
 }
 
+#define check_self(pp) if (*(pp) == x) return 1;
+
 static int scan_record_for_self(x) ptr x; {
-    ptr *pp; ptr num; ptr rtd;
-
-  /* record-type descriptor was forwarded in sweep_in_old */
-    rtd = RECORDINSTTYPE(x);
-    num = RECORDDESCPM(rtd);
-    pp = &RECORDINSTIT(x,0);
-
-  /* scan cells for which bit in pm is set; quit when pm == 0. */
-    if (Sfixnump(num)) {
-       /* ignore bit for already forwarded rtd */
-        uptr mask = (uptr)UNFIX(num) >> 1;
-        if (mask == (uptr)-1 >> 1) {
-            ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1;
-            while (pp < ppend) {
-                if (*pp == x)
-                  return 1;
-                pp += 1;
-            }
-        } else {
-            while (mask != 0) {
-                if (mask & 1) {
-                  if (*pp == x)
-                    return 1;
-                }
-                mask >>= 1;
-                pp += 1;
-            }
-        }
-    } else {
-        iptr index; bigit mask; INT bits;
-
-       /* bignum pointer mask may have been forwarded */
-        relocate(&RECORDDESCPM(rtd))
-        num = RECORDDESCPM(rtd);
-        index = BIGLEN(num) - 1;
-       /* ignore bit for already forwarded rtd */
-        mask = BIGIT(num,index) >> 1;
-        bits = bigit_bits - 1;
-        for (;;) {
-            do {
-                if (mask & 1) {
-                  if (*pp == x)
-                    return 1;
-                }
-                mask >>= 1;
-                pp += 1;
-            } while (--bits > 0);
-            if (index-- == 0) break;
-            mask = BIGIT(num,index);
-            bits = bigit_bits;
-        }
-    }
-
-    return 0;
+  sweep_or_check_record(x, check_self)
+  return 0;
 }
 
 static IGEN sweep_dirty_record(x) ptr x; {

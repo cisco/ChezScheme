@@ -3506,7 +3506,7 @@
                   (not (g2)))))))
 
    ;; check ordered finalization on objects that immediately
-   ;; refers to themselves, which can create trouble for a naive
+   ;; refer to themselves, which can create trouble for a naive
    ;; approach to determining accessibility
    (begin
      (define (check-self-referencing p extract)
@@ -3536,7 +3536,11 @@
      (check-self-referencing b unbox))
    (let ([f (letrec ([f (lambda () f)]) f)])
      (check-self-referencing f (lambda (f) (f))))
-
+   (let ()
+     (define-record-type self (fields (mutable v)))
+     (let ([v (make-self #f)])
+       (self-v-set! v v)
+       (check-self-referencing v self-v)))
   )
 
 
