@@ -1,12 +1,11 @@
 VERSION := 9.4.1
-WIXBIN := $(shell cygpath "$(WIX)bin/")
 WIXEXTENSIONS := -ext WixUIExtension
 
 Chez\ Scheme.msi: product.wixobj a6nt.wixobj examples.wixobj i3nt.wixobj ta6nt.wixobj ti3nt.wixobj
-	"$(WIXBIN)light" -nologo $(WIXEXTENSIONS) product.wixobj a6nt.wixobj examples.wixobj i3nt.wixobj ta6nt.wixobj ti3nt.wixobj -sice:ICE64 -out "$@"
+	cmd.exe /c light.bat -nologo $(WIXEXTENSIONS) product.wixobj a6nt.wixobj examples.wixobj i3nt.wixobj ta6nt.wixobj ti3nt.wixobj -sice:ICE64 -out "$@"
 
 %.wixobj: %.wxs
-	"$(WIXBIN)candle" -nologo -dVersion="$(VERSION)" $(WIXEXTENSIONS) $<
+	cmd.exe /c candle.bat -nologo -dVersion=$(VERSION) $(WIXEXTENSIONS) $<
 
 .PHONY: workareas
 workareas:
