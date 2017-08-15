@@ -29,4 +29,6 @@ set INCLUDE=
 set LIB=
 set LIBPATH=
 
+:: Visual Studio 2017's vcvarsall.bat changes the directory to %USERPROFILE%\Source if the directory exists. See https://developercommunity.visualstudio.com/content/problem/26780/vsdevcmdbat-changes-the-current-working-directory.html
+set VSCMD_START_DIR=%CD%
 "%BATDIR%\vcvarsall.bat" %1
