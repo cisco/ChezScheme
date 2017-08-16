@@ -2,7 +2,7 @@
 .ds p \fIPetite Chez Scheme\fP
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
-.ds ]W 
+.ds ]W
 .TH SCHEME 1 "April 2017 Cisco Systems, Inc."
 .SH NAME
 \fIChez Scheme\fP
@@ -33,7 +33,7 @@ the user with a right angle bracket (\*(lq>\*(rq) at the beginning of each
 input line.  Any Scheme expression may be entered.  The system evaluates
 the expression and prints the result.  After printing
 the result, the system prompts again for more input.
-The user can exit the system by typing 
+The user can exit the system by typing
 Control-D or by using the procedure \fIexit\fP.
 .SH COMMAND-LINE OPTIONS
 .LP
@@ -60,7 +60,7 @@ Compile libraries before loading them.
 .B --import-notify
 Enable import search messages.
 .TP
-.B --optimize-level 0 | 1 | 2 | 3
+.B --optimize-level 0 | 1 | 2 | 3, -O0, -O1, -O2, -O3
 Set optimize level to 0, 1, 2, or 3.
 .TP
 .B --debug-on-exception
@@ -174,7 +174,7 @@ While typing an expression to the waiter, the interrupt character
 simply resets to the current \*c.
 .SH EXPRESSION EDITOR
 .LP
-When \*s is used interactively in a 
+When \*s is used interactively in a
 shell window, the waiter's \*(lqprompt and read\*(rq
 procedure employs an expression editor that permits entry and editing of
 single- and multiple-line expressions, automatically indents expressions
@@ -456,7 +456,7 @@ load the file \*(lq.schemerc\*(rq from your home directory:
      {InstallSchemeName} ${HOME}/.schemerc $*
 .sp
 .br
-If you have a 
+If you have a
 substantial number of definitions to load each time, it might
 be worthwhile to compile the .schemerc file (that is, compile
 the definitions and name the resulting object file .schemerc).
@@ -554,7 +554,7 @@ specified pairs replace the existing list.
 The parameters are set after all boot files have been loaded.
 .LP
 If multiple \*(lq--libdirs\*(rq options appear, all but the final
-one are ignored, and if 
+one are ignored, and if
 If multiple \*(lq--libexts\*(rq options appear, all but the final
 are ignored.
 If no \*(lq--libdirs\*(rq option appears and the CHEZSCHEMELIBDIRS
@@ -628,7 +628,7 @@ with the output placed in an object file.
 \*(lqfoo.ss\*(rq and places the resulting object code on the file
 \*(lqfoo.so\*(rq.  Loading a pre-compiled file is no different from
 loading the source file, except that loading is faster since
-compilation is already done.  
+compilation is already done.
 .LP
 To compile a program to be run with --program, use
 compile-program instead of compile-file.

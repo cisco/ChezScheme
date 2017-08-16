@@ -1,12 +1,12 @@
 /* main.c
  * Copyright 1984-2017 Cisco Systems, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -203,6 +203,14 @@ int main(int argc, const char *argv[]) {
           (void) fprintf(stderr,"invalid optimize-level %s\n", nextarg);
           exit(1);
         }
+      } else if (strcmp(arg,"-O0") == 0) {
+          optlevel = 0;
+      } else if (strcmp(arg,"-O1") == 0) {
+          optlevel = 1;
+      } else if (strcmp(arg,"-O2") == 0) {
+          optlevel = 2;
+      } else if (strcmp(arg,"-O3") == 0) {
+          optlevel = 3;
       } else if (strcmp(arg,"--debug-on-exception") == 0) {
         debug_on_exception = 1;
       } else if (strcmp(arg,"--import-notify") == 0) {
@@ -244,6 +252,7 @@ int main(int argc, const char *argv[]) {
         fprintf(stderr,"  --compile-imported-libraries            compile libraries before loading\n");
         fprintf(stderr,"  --import-notify                         enable import search messages\n");
         fprintf(stderr,"  --optimize-level <0 | 1 | 2 | 3>        set optimize-level\n");
+        fprintf(stderr,"  -O0, -O1, -O2, -O3                      set optimize-level\n");
         fprintf(stderr,"  --debug-on-exception                    on uncaught exception, call debug\n");
         fprintf(stderr,"  --eedisable                             disable expression editor\n");
         fprintf(stderr,"  --eehistory <off | path>                expression-editor history file\n");
@@ -259,7 +268,7 @@ int main(int argc, const char *argv[]) {
         fprintf(stderr,"  --                                      pass through remaining args\n");
         exit(0);
       } else if (strcmp(arg,"--verbose") == 0) {
-        Sset_verbose(1);     
+        Sset_verbose(1);
       } else if (strcmp(arg,"--version") == 0) {
         fprintf(stderr,"%s\n", VERSION);
         exit(0);
