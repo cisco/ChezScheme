@@ -566,3 +566,4 @@
     mats/Mf-a6nt, mats/Mf-ta6nt, mats/ftype.ms
 - added support for building Windows installs with Bash/WSL
     wininstall/Makefile, candle.bat, light.bat
+- added support for building with Visual Studio 2017's BuildTools in c/vs.bat
