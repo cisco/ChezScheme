@@ -15,6 +15,10 @@ if exist "%BATDIR%\vcvarsall.bat" goto found
 set BATDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build
 if exist "%BATDIR%\vcvarsall.bat" goto found
 
+:: Visual Studio 2017 BuildTools
+set BATDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
 :: Visual Studio 2015
 set BATDIR=%VS140COMNTOOLS%..\..\VC
 if exist "%BATDIR%\vcvarsall.bat" goto found
