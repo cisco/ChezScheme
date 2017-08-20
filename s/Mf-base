@@ -149,7 +149,7 @@ macroobj =\
 allsrc =\
  ${basesrc} ${compilersrc} cmacros.ss ${archincludes} setup.ss debug.ss priminfo.ss primdata.ss layout.ss\
  base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss\
- np-languages.ss
+ np-languages.ss fxmap.ss
 
 # doit uses a different Scheme process to compile each target
 doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates}
@@ -393,7 +393,7 @@ endif
 
 script.all: Mf-base
 
-script.all makescript: 
+script.all makescript:
 	echo '(reset-handler abort)'\
              '(for-each load (command-line-arguments))'\
              '(optimize-level $o)'\
@@ -491,7 +491,7 @@ primvars.so setup.so mkheader.so env.so: cmacros.so priminfo.so primref.ss
 setup.so: debug.ss
 
 ${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss env.ss
-cpnanopass.$m cpnanopass.patch: nanopass.so np-languages.ss ${archincludes}
+cpnanopass.$m cpnanopass.patch: nanopass.so np-languages.ss fxmap.ss ${archincludes}
 5_4.$m: ../unicode/unicode-char-cases.ss ../unicode/unicode-charinfo.ss
 
 ${Cheader}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
