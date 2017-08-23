@@ -172,7 +172,7 @@ ftype operators:
    returns #t if the address encapsulated within fptr is 0,
    otherwise #f.
 
-(ftype-pointer-null? fptr1 fptr2) [procedure]
+(ftype-pointer=? fptr1 fptr2) [procedure]
 
    returns #t if the addresses encapsulated within fptr are
    the same, otherwise #f.
