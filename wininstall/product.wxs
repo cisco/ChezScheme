@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?define ProductName = "Chez Scheme Version $(var.Version)"?>
+
+<?define ProductName = "Chez Scheme"?>
 <?define Manufacturer = "Cisco Systems, Inc."?>
+
+<?if $(sys.BUILDARCH)="x86"?>
+    <?define UpgradeCode="e183c83e-1216-446f-bee1-f25db3297efa"?>
+    <?define PlatformProgramFilesFolder="ProgramFilesFolder"?>
+<?elseif $(sys.BUILDARCH)="x64"?>
+    <?define UpgradeCode="07a89f71-9c12-4e7d-b618-f7c255337640"?>
+    <?define PlatformProgramFilesFolder="ProgramFiles64Folder"?>
+<?else?>
+    <?error Unsupported value of sys.BUILDARCH=$(sys.BUILDARCH)?>
+<?endif?>
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product
-      Name="$(var.ProductName)"
-      Id="49f75024-1225-42e4-aa8d-15ddb60a13d2"
-      UpgradeCode="e183c83e-1216-446f-bee1-f25db3297efa"
+      Name="$(var.ProductName) $(var.Version) $(sys.BUILDARCH)"
+      Id="*"
+      UpgradeCode="$(var.UpgradeCode)"
       Language="1033"
       Codepage="1252"
       Version="$(var.Version)"
       Manufacturer="$(var.Manufacturer)">
     <Package
+        InstallerVersion="301"
         Keywords="Installer"
         Description="$(var.ProductName) Installer"
         Manufacturer="$(var.Manufacturer)"
@@ -18,75 +31,54 @@
         Languages="1033"
         Compressed="yes"
         SummaryCodepage="1252"/>
+
+    <MajorUpgrade
+        AllowDowngrades="no"
+        DowngradeErrorMessage="A newer version is already installed."
+        AllowSameVersionUpgrades="yes" />
+
     <MediaTemplate EmbedCab="yes"/>
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder" Name="Program Files">
-        <Directory Id="APPLICATIONFOLDER" Name="$(var.ProductName)">
+
+    <Directory Id="TARGETDIR" Name="SourceDir" DiskId="1">
+      <Directory Id="$(var.PlatformProgramFilesFolder)">
+        <Directory Id="APPLICATIONFOLDER" Name="$(var.ProductName) $(var.Version)">
           <Directory Id="D_bin" Name="bin"/>
           <Directory Id="D_boot" Name="boot"/>
           <Directory Id="D_examples" Name="examples"/>
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="D_shortcuts" Name="$(var.ProductName)"/>
+        <Directory Id="D_shortcuts" Name="$(var.ProductName) $(var.Version)"/>
       </Directory>
     </Directory>
+
     <Feature Id="Examples" Level="1" Title="Chez Scheme examples">
       <ComponentGroupRef Id="examples"/>
     </Feature>
-    <Feature Id="i3nt" Level="1" Title="Chez Scheme 32-bit nonthreaded">
-      <ComponentGroupRef Id="i3nt"/>
-    </Feature>
-    <Feature Id="ti3nt" Level="1" Title="Chez Scheme 32-bit threaded">
-      <ComponentGroupRef Id="ti3nt"/>
-    </Feature>
-    <Feature Id="a6nt" Level="1" Title="Chez Scheme 64-bit nonthreaded">
-      <ComponentGroupRef Id="a6nt"/>
-      <Condition Level="0">NOT VersionNT64</Condition>
-    </Feature>
-    <Feature Id="ta6nt" Level="1" Title="Chez Scheme 64-bit threaded">
-      <ComponentGroupRef Id="ta6nt"/>
-      <Condition Level="0">NOT VersionNT64</Condition>
-    </Feature>
+
+    <?if $(sys.BUILDARCH)="x86"?>
+      <Feature Id="i3nt" Level="1" Title="Chez Scheme 32-bit nonthreaded">
+        <ComponentGroupRef Id="i3nt"/>
+      </Feature>
+      <Feature Id="ti3nt" Level="1" Title="Chez Scheme 32-bit threaded">
+        <ComponentGroupRef Id="ti3nt"/>
+      </Feature>
+      <FeatureRef Id="VCRedist32"/>
+    <?endif?>
+
+    <?if $(sys.BUILDARCH)="x64"?>
+      <Feature Id="a6nt" Level="1" Title="Chez Scheme 64-bit nonthreaded">
+        <ComponentGroupRef Id="a6nt"/>
+      </Feature>
+      <Feature Id="ta6nt" Level="1" Title="Chez Scheme 64-bit threaded">
+        <ComponentGroupRef Id="ta6nt"/>
+      </Feature>
+      <FeatureRef Id="VCRedist64"/>
+    <?endif?>
+
     <Icon Id="cs.ico" SourceFile="../c/cs.ico"/>
-    <Property Id="VCRUNTIME_X86_DLL">
-      <ComponentSearch
-          Id="vcruntime_x86"
-          Guid="E8E39D3B-4F35-36D8-B892-4B28336FE041"/>
-    </Property>
-    <Property Id="VCRUNTIME_X64_DLL">
-      <ComponentSearch
-          Id="vcruntime_x64"
-          Guid="B33258FD-750C-3B42-8BE4-535B48E97DB4"/>
-    </Property>
-    <Binary Id="vcredist_x86" SourceFile="vc_redist.x86.exe"/>
-    <CustomAction
-        Id="vcredist_x86_CA"
-        BinaryKey="vcredist_x86"
-        Impersonate="yes"
-        Execute="deferred"
-        ExeCommand="/quiet"
-        Return="check"/>
-    <Binary Id="vcredist_x64" SourceFile="vc_redist.x64.exe"/>
-    <CustomAction
-        Id="vcredist_x64_CA"
-        BinaryKey="vcredist_x64"
-        Impersonate="yes"
-        Execute="deferred"
-        ExeCommand="/quiet"
-        Return="check"/>
-    <InstallExecuteSequence>
-      <Custom Action="vcredist_x86_CA" Before="InstallFinalize">
-        NOT VCRUNTIME_X86_DLL
-      </Custom>
-      <Custom Action="vcredist_x64_CA" Before="InstallFinalize">
-        NOT VCRUNTIME_X64_DLL AND VersionNT64
-      </Custom>
-    </InstallExecuteSequence>
     <Property Id="ARPPRODUCTICON" Value="cs.ico"/>
-    <UIRef Id="WixUI_Advanced"/>
-    <WixVariable Id="WixUILicenseRtf" Value="license.rtf"/>
-    <Property Id="ApplicationFolderName" Value="$(var.ProductName)"/>
-    <Property Id="WixAppFolder" Value="WixPerMachineFolder"/>
+
+    <UIRef Id="SimpleUI"/>
   </Product>
 </Wix>
