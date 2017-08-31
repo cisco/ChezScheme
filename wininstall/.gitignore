@@ -1,3 +1,5 @@
-/*.wixobj
-/*.wixpdb
-/Chez Scheme.msi
+*.exe
+*.msi
+*.wixobj
+*.wixpdb
+/vcredist.wxs
