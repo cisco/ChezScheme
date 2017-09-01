@@ -9756,7 +9756,7 @@
            (tail (mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...)))
            (true))]
         [(set! ,[lvalue] ,[rhs]) `(seq (set! ,lvalue ,rhs) (true))]
-        [(mvset ,info (,mdcl ,[t0?] ,[t1] ...) (,t* ...) ((,x** ...) ,interface* ,l*) ...)
+        [(mvset ,info (,mdcl ,[t0?] ,[t1] ...) (,[t*] ...) ((,x** ...) ,interface* ,l*) ...)
          `(seq
             (mvset ,info (,mdcl ,t0? ,t1 ...) (,t* ...) ((,x** ...) ,interface* ,l*) ...)
             (true))]
@@ -9826,7 +9826,7 @@
          (guard (info-call-error? info) (fx< (debug-level) 2))
          `(mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...))]
         [(set! ,[lvalue] ,[rhs]) `(seq (set! ,lvalue ,rhs) ,(%constant svoid))]
-        [(mvset ,info (,mdcl ,[t0?] ,[t1] ...) (,t* ...) ((,x** ...) ,interface* ,l*) ...)
+        [(mvset ,info (,mdcl ,[t0?] ,[t1] ...) (,[t*] ...) ((,x** ...) ,interface* ,l*) ...)
          `(seq
             (mvset ,info (,mdcl ,t0? ,t1 ...) (,t* ...) ((,x** ...) ,interface* ,l*) ...)
             ,(%constant svoid))]

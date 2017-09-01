@@ -576,3 +576,9 @@
   added a batch script for locating Visual Studio's vcredist merge
   modules, updated installer paths and names.
     wininstall/*
+- fixed np-normalize-context pass to process trivs list in mvset forms
+  in tail and predicate context and added regression tests.  Thanks to
+  @marcomaggi for reporting the bug and @yjqww6 for providing a
+  simplified test and finding the initial solution.
+    cpnanopass.ss,
+    3.ms
