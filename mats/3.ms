@@ -2049,6 +2049,26 @@
     (let ()
       (import $mrvs-double-call)
       (double-call 'a)))
+
+  ; regression testing for handling mvset in tail context
+  (call-with-values
+    (lambda ()
+      (call-with-values
+        (lambda ()
+          (+ (random 1) 7))
+        list))
+    (lambda l (equal? l '((7)))))
+
+  ; regression testing for handling mvset in predicate context
+  (if (call-with-values
+        (lambda ()
+          (call-with-values
+            (lambda ()
+              (+ (random 1) 7))
+            list))
+        (lambda l (equal? l '((7)))))
+      #t
+      #f)
 )
 
 (mat let-values
