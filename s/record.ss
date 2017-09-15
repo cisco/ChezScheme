@@ -51,10 +51,7 @@
         (lambda (n)
           (unless (and (fixnum? n) (fx> n 0))
             ($oops who "~s is not a positive fixnum" n))
-          (let ([x (malloc n)])
-            (if (string? x)
-                ($oops who "system call failed: ~(~a~)" x)
-                x)))))
+          (malloc n))))
 
     (set-who! foreign-free
       (let ([free (foreign-procedure "(cs)free" (uptr) void)])

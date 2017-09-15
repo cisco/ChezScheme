@@ -582,3 +582,5 @@
   simplified test and finding the initial solution.
     cpnanopass.ss,
     3.ms
+- removed a useless check in foreign-alloc
+    record.ss
