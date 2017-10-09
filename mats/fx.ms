@@ -2600,6 +2600,12 @@
               (errorf #f "failed for ~s, ~s, ~s" x y z)))
           (f (fx- n 1)))))
     #t)
+  (let-values ([(r c) (fx+/carry 100 20 3)])
+    (and (= r 123) (= c 0)))
+  (equal?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(fx+/carry 100 20 3)))
+      '(#3%values 123 0))
 )
 
 (mat fx-/carry
@@ -2642,6 +2648,12 @@
               (errorf #f "failed for ~s, ~s, ~s" x y z)))
           (f (fx- n 1)))))
     #t)
+  (let-values ([(r c) (fx-/carry 100 20 3)])
+    (and (= r 77) (= c 0)))
+  (equal?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(fx-/carry 100 20 3)))
+      '(#3%values 77 0))
 )
 
 (mat fx*/carry
@@ -2684,6 +2696,12 @@
               (errorf #f "failed for ~s, ~s, ~s" x y z)))
           (f (fx- n 1)))))
     #t)
+  (let-values ([(r c) (fx*/carry 100 20 3)])
+    (and (= r 2003) (= c 0)))
+  (equal?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(fx*/carry 100 20 3)))
+      '(#3%values 2003 0))
 )
 
 (mat fxrotate-bit-field
