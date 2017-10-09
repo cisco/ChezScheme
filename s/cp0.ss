@@ -2583,8 +2583,8 @@
                    (build-primcall 3 'values
                      (let ([s (base-op dx dy dz)])
                        (list
-                         (mod0 s (expt 2 (constant fixnum-bits)))
-                         (div0 s (expt 2 (constant fixnum-bits))))))))))
+                         `(quote ,(mod0 s (expt 2 (constant fixnum-bits))))
+                         `(quote ,(div0 s (expt 2 (constant fixnum-bits)))))))))))
         (define-syntax define-inline-carry-op
           (syntax-rules ()
             [(_ op base-op)
