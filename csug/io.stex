@@ -2729,7 +2729,7 @@ format string with the \scheme{~@(} and \scheme{~)} directives.
 
 \schemedisplay
 (format "~@(~r~)" 2599) ;=>  "Two thousand five hundred ninety-nine"
-(format "~@:(~a~)" "Ouch!") ;=>  "ouch!"
+(format "~@:(~a~)" "Ouch!") ;=>  "OUCH!"
 \endschemedisplay
 
 \noindent
