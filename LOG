@@ -588,3 +588,7 @@
     cp0.ss
     primdata.ss
     fx.ms
+- renamed s_gettime => S_gettime to remain consistent with the
+  convention that the only undocumented externs are prefixed with
+  S_.
+    externs.h, stats.c, thread.c

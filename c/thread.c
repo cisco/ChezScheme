@@ -337,7 +337,7 @@ void S_condition_free(c) s_thread_cond_t *c; {
 static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_t *mutex, int typeno, long sec, long nsec) {
   if (typeno == time_utc) {
     struct timespec now;
-    s_gettime(time_utc, &now);
+    S_gettime(time_utc, &now);
     sec -= (long)now.tv_sec;
     nsec -= now.tv_nsec;
     if (nsec < 0) {
@@ -364,7 +364,7 @@ static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_
   struct timespec t;
   if (typeno == time_duration) {
     struct timespec now;
-    s_gettime(time_utc, &now);
+    S_gettime(time_utc, &now);
     t.tv_sec = now.tv_sec + sec;
     t.tv_nsec = now.tv_nsec + nsec;
     if (t.tv_nsec >= 1000000000) {
