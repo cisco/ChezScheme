@@ -70,8 +70,8 @@ if ($status != 0) exit 1
 cd $W
 
 /bin/rm -f bintar
-sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$ZR/g" \
-    -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" \
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$ZR/g" \
+    -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" \
     ../bintar > bintar
 set updatedfiles = ($updatedfiles bintar)
 
@@ -88,25 +88,21 @@ sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
 set updatedfiles = ($updatedfiles NOTICE)
 
 mkdir makefiles
-sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
 set updatedfiles = ($updatedfiles makefiles/Mf-install.in)
 
 /bin/rm scheme.1.in
-sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)\?/csv$R/" ../scheme.1.in > scheme.1.in
+sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)*/Chez Scheme Version $R/" ../scheme.1.in > scheme.1.in
 set updatedfiles = ($updatedfiles scheme.1.in)
 
 /bin/rm -f c/Makefile.{,t}{i3,a6}nt
-sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.i3nt > c/Makefile.i3nt
-sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.ti3nt > c/Makefile.ti3nt
-sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.a6nt > c/Makefile.a6nt
-sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../c/Makefile.ta6nt > c/Makefile.ta6nt
+sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../c/Makefile.i3nt > c/Makefile.i3nt
+sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../c/Makefile.ti3nt > c/Makefile.ti3nt
+sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../c/Makefile.a6nt > c/Makefile.a6nt
+sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../c/Makefile.ta6nt > c/Makefile.ta6nt
 set updatedfiles = ($updatedfiles c/Makefile.{,t}{i3,a6}nt)
 
-/bin/rm -f mats/bldnt.bat
-sed -e "s/csv[0-9][0-9][0-9]\?/csv$ZR/g" ../mats/bldnt.bat > mats/bldnt.bat
-set updatedfiles = ($updatedfiles mats/bldnt.bat)
-
-sed -e "s/csv[0-9][.0-9][0-9]\?/csv$ZR/g" ../workarea > workarea
+sed -e "s/csv[0-9][.0-9][0-9]*/csv$ZR/g" ../workarea > workarea
 chmod +x workarea
 set updatedfiles = ($updatedfiles workarea)
 

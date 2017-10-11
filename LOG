@@ -592,3 +592,20 @@
   convention that the only undocumented externs are prefixed with
   S_.
     externs.h, stats.c, thread.c
+- added version number to scheme.1.in trailer; updated date.
+    scheme.1.in, newrelease
+- removed version update of no-longer-existing bldnt.bat.  "fixed"
+  sed patterns to replace \? with * for the benefit of the deficient
+  mac sed.
+    newrelease
+
+9.5 changes:
+- updated version to 9.5
+    bintar BUILDING NOTICE makefiles/Mf-install.in scheme.1.in
+    c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
+    workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/csug.stex
+- updated release notes and fixed user's guide overfull hbox.
+    release-notes.stex, syntax.stex
+- updated install target to do something more sensible
+    release_notes/Makefile

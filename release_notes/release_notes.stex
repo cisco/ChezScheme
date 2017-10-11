@@ -1,8 +1,8 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.4.1}
+\thisversion{Version 9.5}
 \thatversion{Version 8.4}
-\pubmonth{March}
+\pubmonth{October}
 \pubyear{2017}
 
 \begin{document}
@@ -58,7 +58,7 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Record equality and hashing (9.4.1)}
+\subsection{Record equality and hashing (9.5)}
 
 The new procedures \scheme{record-type-equal-procedure} and
 \scheme{record-type-hash-procedure} can be used to customize the
@@ -68,7 +68,7 @@ the new procedures \scheme{record-equal-procedure} and
 applicable (possibly inherited) equality and hashing procedures
 for specific record instances.
 
-\subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.4.1)}
+\subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.5)}
 
 Support for immutable vectors, fxvectors, bytevectors, strings, and boxes
 has been added.
@@ -78,7 +78,7 @@ procedures.
 Immutable boxes are created via \scheme{box-immutable}.
 Any attempt to modify an immutable object causes an exception to be raised.
 
-\subsection{Ephemeron pairs and hashtables (9.4.1)}
+\subsection{Ephemeron pairs and hashtables (9.5)}
 
 Support for ephemeron pairs has been added, along with eq and eqv
 hashtables that use ephemeron pairs to combine keys and values. An
@@ -91,7 +91,7 @@ the pair have been found reachable. An ephemeron hashtable implements
 a weak mapping where referencing a key in a value does not prevent the
 mapping from being removed from the table.
 
-\subsection{Optional timeout for \protect\scheme{condition-wait} (9.4.1)}
+\subsection{Optional timeout for \protect\scheme{condition-wait} (9.5)}
 
 The \scheme{condition-wait} procedure now takes an optional
 \var{timeout} argument and returns a boolean indicating whether the
@@ -100,7 +100,7 @@ thread was awakened by the condition before the timeout. The
 \scheme{time-utc}, or it can be \scheme{#f} for no timeout (the
 default).
 
-\subsection{\protect\scheme{date-dst?} and \protect\scheme{date-zone-name} (9.4.1)}
+\subsection{\protect\scheme{date-dst?} and \protect\scheme{date-zone-name} (9.5)}
 
 The new primitive procedures \scheme{date-dst?} and
 \scheme{date-zone-name} access time-zone information for a
@@ -108,7 +108,7 @@ The new primitive procedures \scheme{date-dst?} and
 zone offset. The zone-offset argument to \scheme{make-date}
 is now optional.
 
-\subsection{\protect\scheme{procedure-arity-mask} (9.4.1)}
+\subsection{\protect\scheme{procedure-arity-mask} (9.5)}
 
 The new primitive procedure \scheme{procedure-arity-mask} takes a
 procedure \var{p} and returns a two's complement bitmask representing
@@ -118,14 +118,14 @@ For example, the arity mask for a two-argument procedure such as
 while the arity mask for a procedure that accepts one or more arguments,
 such as \var{list*}, is $-2$ (all but bit 0 set).
 
-\subsection{Bytevector compression (9.4.1)}
+\subsection{Bytevector compression (9.5)}
 
 The new primitive procedures \scheme{bytevector-compress} and
 \scheme{bytevector-decompress} exposes for bytevectors the kind of
 compression functionality that is used for files with the
 \scheme{compressed} option.
 
-\subsection{Line caching and source objects (9.4.1)}
+\subsection{Line caching and source objects (9.5)}
 
 The \scheme{locate-source} function accepts an optional argument that
 enables the use of a cache for line information, so that a source file
@@ -142,24 +142,24 @@ error reporting, instead of calling \scheme{locate-source} or
 \scheme{locate-source-object-source} directly, so that just-in-time
 source-location lookup can be adjusted, too.
 
-\subsection{High-precision clock time in Windows 8 and up (9.4.1)}
+\subsection{High-precision clock time in Windows 8 and up (9.5)}
 
 When running on Windows 8 and up, Chez Scheme uses the high-precision
 clock time function for the current date and time.
 
-\subsection{Printing of non-standard (extended) identifiers (9.4.1)}
+\subsection{Printing of non-standard (extended) identifiers (9.5)}
 
 Chez Scheme extends the syntax of identifiers as described in the
 introduction to the Chez Scheme User's Guide, except within forms prefixed
 by \scheme{#!r6rs}, which is implied by in a library or top-level program.
-Prior to Version~9.4.1, the printer always printed such identifiers using
+Prior to Version~9.5, the printer always printed such identifiers using
 hex scalar value escapes as necessary to render them with valid R6RS identifier syntax.
 When the new parameter \scheme{print-extended-identifiers} is set
 to \scheme{#t}, these identifiers are printed without escapes, e.g.,
 \scheme{1+} prints as \scheme{1+} rather than as \scheme{\x31;+}.
 The default value of this parameter is \scheme{#f}.
 
-\subsection{Expression-editor Unicode support (9.4.1)}
+\subsection{Expression-editor Unicode support (9.5)}
 
 The expression editor now supports Unicode characters under Linux and MacOS~X
 except that combining characters are not treated correctly for
@@ -1535,38 +1535,63 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Invalid memory references involving complex numbers (9.4.1)} 
+\subsection{Compiler mishandling of fx /carry operations (9.5)}
+
+A bug in the source optimizer that caused an internal compiler error when
+folding certain calls to \scheme{fx+/carry}, \scheme{fx-/carry}, and
+\scheme{fx*/carry} has been fixed.
+[This bug dated back to Version 9.1.]
+
+\subsection{Compiler mishandling of nested \protect\scheme{call-with-values} calls (9.5)}
+
+A bug in that caused an internal compiler error when optimizing certain
+nested calls to \scheme{call-with-values} has been fixed.
+[This bug dated back to Version 8.9.1.]
+
+\subsection{Incorrect expansion of \protect\scheme{define-values} of no values (9.5)}
+
+A bug in the expansion of \scheme{define-values} that caused it to produce
+a non-definition form when used to define no values has been fixed.
+[This bug dated back to at least Version 8.4.]
+
+\subsection{Optimizer dropping \protect\scheme{pariah} forms (9.5)}
+
+A bug in the source optimizer that caused pariah forms to be ignored
+has been fixed.
+[This bug dated back to at least Version 9.3.1.]
+
+\subsection{Invalid memory references involving complex numbers (9.5)} 
 
 A bug on 64-bit platforms that occasionally caused invalid memory
 references when operating on inexact complex numbers or the imaginary parts
 of inexact complex numbers has been fixed.
 [This bug dated back to Version 8.9.1.]
 
-\subsection{Overflow detection for left-shift operations on fixnums (9.4.1)}
+\subsection{Overflow detection for left-shift operations on fixnums (9.5)}
 
 A bug that caused \scheme{fxsll}, \scheme{fxarithmetic-shift-left},
 and \scheme{fxarithmetic-shift} to fail to detect overflow in certain
 cases has been fixed.
 [This bug dated back to Version 4.0.]
 
-\subsection{Missing \protect\scheme{enum-set-indexer} argument check (9.4.1)}
+\subsection{Missing \protect\scheme{enum-set-indexer} argument check (9.5)}
 
 A missing argument check that resulted in the procedure returned by \scheme{enum-set-indexer}
 causing an invalid memory reference when passed a non-symbol argument has been fixed.
 [This bug dated back to Version 7.5.]
 
-\subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.4.1)}
+\subsection{Storage for inaccessible mutexes and conditions is reclaimed (9.5)}
 
 The C heap storage for inaccessible mutexes and conditions is now reclaimed.
 [This bug dated back to Version 6.5.]
 
-\subsection{Missing guardian entries when a thread exits (9.4.1)}
+\subsection{Missing guardian entries when a thread exits (9.5)}
 
 A bug that caused guardian entries for a thread to be lost when a
 thread exits has been fixed.
 [This bug dated back to Version 6.5.]
 
-\subsection{Incorrect code for certain nested \protect\scheme{if} patterns (9.4.1)}
+\subsection{Incorrect code for certain nested \protect\scheme{if} patterns (9.5)}
 
 A bug in the source optimizer that produced incorrect code for certain
 nested \scheme{if} patterns has been fixed.
@@ -1585,7 +1610,7 @@ subexpression \scheme{(a)} evaluates to 0 and not when \scheme{(a)}
 evaluates to 1.
 [This bug dated back to Version 9.0.]
 
-\subsection{Leaked or unexpected \protect\scheme{cpvalid-defer} form (9.4.1)}
+\subsection{Leaked or unexpected \protect\scheme{cpvalid-defer} form (9.5)}
 
 A bug in the pass of the compiler that inserts valid checks for
 \scheme{letrec} and \scheme{letrec*} bindings has been fixed.
