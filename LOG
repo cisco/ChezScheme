@@ -609,3 +609,10 @@
     release-notes.stex, syntax.stex
 - updated install target to do something more sensible
     release_notes/Makefile
+
+9.5.1 changes:
+- updated version to 9.5.1
+    bintar BUILDING NOTICE makefiles/Mf-install.in scheme.1.in
+    c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
+    workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/csug.stex
