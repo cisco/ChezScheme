@@ -1955,12 +1955,12 @@ taking an sfd and a position, it takes a source object plus a request
 for either the start or end location.
 
 If \var{get-start?} is true and \var{source-object} has a line and column,
-\scheme{locate-source-object-source} returns the path in
+this procedure returns the path in
 \var{source-objects}'s sfd, \var{source-object}'s line, and
 \var{source-objects}'s column.
 
 If \var{source-object} has no line and column, then
-\scheme{locate-source-object-source} calls \scheme{locate-source} on
+this procedure calls \scheme{locate-source} on
 \var{source-object}'s sfd, either \var{source-object}'s bfp or efp
 depending on \var{get-start?}, and \var{use-cache?}.
 

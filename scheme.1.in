@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "April 2017 Cisco Systems, Inc."
+.TH SCHEME 1 "Chez Scheme Version 9.5 October 2017"
 .SH NAME
 \fIChez Scheme\fP
 .br

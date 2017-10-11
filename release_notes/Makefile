@@ -1,13 +1,12 @@
 m = a6le
 Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
 STEXLIB=../stex
+installdir=/tmp/csv9
+INSTALL=../$m/installsh
 
 # define default document pathname here
 # override on command line with 'make x=newdoc'
 x = release_notes
-
-distdir=../release/dist$(x)
-commondir=$(distdir)/common
 
 # define latex processor: latex or pdflatex
 latex = pdflatex
@@ -28,21 +27,20 @@ include $(STEXLIB)/Mf-stex
 # define any additional targets here
 
 install: $x.pdf $x.html
-	installsh -m 2755 -d $(distdir)
-	installsh -m 2755 -d $(commondir)
-	installsh -m 0644 --ifdiff $x.html $x.pdf $(commondir)
-	installsh -m 0644 --ifdiff releasenotes.css $(commondir)
+	$(INSTALL) -m 2755 -d $(installdir)
+	$(INSTALL) -m 0644 --ifdiff $x.html $x.pdf $(installdir)
+	$(INSTALL) -m 0644 --ifdiff releasenotes.css $(installdir)
 	(X=`echo canned/*` ;\
          if [ "$$X" != "canned/*" ] ; then\
-           installsh -m 2755 -d $(commondir)/canned ;\
-           installsh -m 0644 --ifdiff canned/* $(commondir)/canned ;\
+           $(INSTALL) -m 2755 -d $(installdir)/canned ;\
+           $(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned ;\
          fi)
-	installsh -m 2755 -d $(commondir)/gifs
-	installsh -m 0644 --ifdiff gifs/*.gif $(commondir)/gifs
-	installsh -m 2755 -d $(commondir)/math
-	-/bin/rm -rf $(commondir)/$(mathdir)
-	installsh -m 2755 -d $(commondir)/$(mathdir)
-	if [ -e $(mathdir)/0.gif ] ; then installsh -m 0644 $(mathdir)/*.gif $(commondir)/$(mathdir) ; fi
+	$(INSTALL) -m 2755 -d $(installdir)/gifs
+	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
+	$(INSTALL) -m 2755 -d $(installdir)/math
+	-/bin/rm -rf $(installdir)/$(mathdir)
+	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
+	if [ -e $(mathdir)/0.gif ] ; then $(INSTALL) -m 0644 $(mathdir)/*.gif $(installdir)/$(mathdir) ; fi
 
 # define any dependencies here
 
