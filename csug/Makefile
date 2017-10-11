@@ -12,11 +12,11 @@ index=yes
 TSPL=tspl4
 DIR=$(shell basename `pwd`)
 
-target: logcheck1 logcheck2 checklibs $(x).html
+target: logcheck1 logcheck2 checklibs $(x).html $(x).pdf
 
 install: target
 	$(INSTALL) -m 2755 -d $(installdir)
-	$(INSTALL) -m 0644 --ifdiff *.html *.css $(installdir)
+	$(INSTALL) -m 0644 --ifdiff *.html *.pdf *.css $(installdir)
 	$(INSTALL) -m 2755 -d $(installdir)/canned
 	$(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned
 	$(INSTALL) -m 2755 -d $(installdir)/gifs
