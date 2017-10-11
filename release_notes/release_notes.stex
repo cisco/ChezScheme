@@ -1,6 +1,6 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5}
+\thisversion{Version 9.5.1}
 \thatversion{Version 8.4}
 \pubmonth{October}
 \pubyear{2017}
