@@ -321,7 +321,7 @@ extern ptr S_gmtime PROTO((ptr tzoff, ptr tspair));
 extern ptr S_asctime PROTO((ptr dtvec));
 extern ptr S_mktime PROTO((ptr dtvec));
 extern ptr S_unique_id PROTO((void));
-extern void s_gettime PROTO((INT typeno, struct timespec *tp));
+extern void S_gettime PROTO((INT typeno, struct timespec *tp));
 
 /* symbol.c */
 extern ptr S_symbol_value PROTO((ptr sym));

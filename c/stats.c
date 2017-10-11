@@ -119,7 +119,7 @@ typedef void (WINAPI *GetSystemTimeAsFileTime_t)(LPFILETIME lpSystemTimeAsFileTi
 
 static GetSystemTimeAsFileTime_t s_GetSystemTimeAsFileTime = GetSystemTimeAsFileTime;
 
-void s_gettime(INT typeno, struct timespec *tp) {
+void S_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_process: {
       FILETIME ftKernel, ftUser, ftDummy;
@@ -205,7 +205,7 @@ void s_gettime(INT typeno, struct timespec *tp) {
     }
 
     default:
-      S_error1("s_gettime", "unexpected typeno ~s", Sinteger(typeno));
+      S_error1("S_gettime", "unexpected typeno ~s", Sinteger(typeno));
       break;
   }
 }
@@ -228,7 +228,7 @@ static char *asctime_r(const struct tm *tm, char *buf) {
 
 #else /* WIN32 */
 
-void s_gettime(INT typeno, struct timespec *tp) {
+void S_gettime(INT typeno, struct timespec *tp) {
   switch (typeno) {
     case time_thread:
 #ifdef CLOCK_THREAD_CPUTIME_ID
@@ -244,7 +244,7 @@ void s_gettime(INT typeno, struct timespec *tp) {
         struct rusage rbuf;
 
         if (getrusage(RUSAGE_SELF,&rbuf) != 0)
-          S_error1("s_gettime", "failed: ~s", S_strerror(errno));
+          S_error1("S_gettime", "failed: ~s", S_strerror(errno));
         tp->tv_sec = rbuf.ru_utime.tv_sec + rbuf.ru_stime.tv_sec;
         tp->tv_nsec = (rbuf.ru_utime.tv_usec + rbuf.ru_stime.tv_usec) * 1000;
         if (tp->tv_nsec >= 1000000000) {
@@ -277,13 +277,13 @@ void s_gettime(INT typeno, struct timespec *tp) {
         struct timeval tvtp;
 
         if (gettimeofday(&tvtp,NULL) != 0)
-          S_error1("s_gettime", "failed: ~s", S_strerror(errno));
+          S_error1("S_gettime", "failed: ~s", S_strerror(errno));
         tp->tv_sec = (time_t)tvtp.tv_sec;
         tp->tv_nsec = (long)(tvtp.tv_usec * 1000);
         return;
       }
     default:
-      S_error1("s_gettime", "unexpected typeno ~s", Sinteger(typeno));
+      S_error1("S_gettime", "unexpected typeno ~s", Sinteger(typeno));
       break;
   }
 }
@@ -294,7 +294,7 @@ ptr S_clock_gettime(I32 typeno) {
   struct timespec tp;
   time_t sec; I32 nsec;
 
-  s_gettime(typeno, &tp);
+  S_gettime(typeno, &tp);
 
   sec = tp.tv_sec;
   nsec = tp.tv_nsec;
@@ -319,7 +319,7 @@ ptr S_gmtime(ptr tzoff, ptr tspair) {
   if (tspair == Sfalse) {
     struct timespec tp;
 
-    s_gettime(time_utc, &tp);
+    S_gettime(time_utc, &tp);
     tx = tp.tv_sec;
     INITVECTIT(dtvec, dtvec_nsec) = Sinteger(tp.tv_nsec);
   } else {
@@ -472,7 +472,7 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
 ptr S_cputime(void) {
   struct timespec tp;
 
-  s_gettime(time_process, &tp);
+  S_gettime(time_process, &tp);
   return S_add(S_mul(S_integer_time_t(tp.tv_sec), FIX(1000)),
                Sinteger((tp.tv_nsec + 500000) / 1000000));
 }
@@ -481,7 +481,7 @@ ptr S_realtime(void) {
   struct timespec tp;
   time_t sec; I32 nsec;
 
-  s_gettime(time_monotonic, &tp);
+  S_gettime(time_monotonic, &tp);
 
   sec = tp.tv_sec - starting_mono_tp.tv_sec;
   nsec = tp.tv_nsec - starting_mono_tp.tv_nsec;
@@ -507,5 +507,5 @@ void S_stats_init() {
       FreeLibrary(h);
   }
 #endif
-  s_gettime(time_monotonic, &starting_mono_tp);
+  S_gettime(time_monotonic, &starting_mono_tp);
 }
