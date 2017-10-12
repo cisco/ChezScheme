@@ -47,10 +47,12 @@ else
   ExeSuffix =
 endif
 
-# Scheme is the scheme executable to test, and SCHEMEHEAPDIRS tells
-# it where to find its boot files
+# Scheme is the scheme executable to test, SCHEMEHEAPDIRS tells
+# it where to find its boot files, and CHEZSCHEMELIBDIRS tells
+# it where to find libraries.
 Scheme = ../bin/$m/scheme${ExeSuffix}
 export SCHEMEHEAPDIRS=.${dirsep}../boot/%m
+export CHEZSCHEMELIBDIRS=.
 
 # Include is the directory holding scheme.h.
 Include = ../boot/$m

@@ -79,6 +79,7 @@ endif
 # implementation
 Scheme = ../bin/$m/scheme${ExeSuffix}
 export SCHEMEHEAPDIRS=../boot/%m
+export CHEZSCHEMELIBDIRS=.
 
 # Define the libdirs separator character
 ifeq ($(OS),Windows_NT)
