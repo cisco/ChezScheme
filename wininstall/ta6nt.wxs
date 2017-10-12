@@ -4,13 +4,13 @@
     <DirectoryRef Id="D_bin">
       <Directory Id="D_bin_ta6nt" Name="ta6nt">
         <Component Id="cmpA67EF6318D00B4209BFCD0BFDCDF781C" Guid="*">
-          <File Id="fil6AE7892DB37FF6D2C21B5EC064C90DE5" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.dll" />
+          <File Id="fil6AE7892DB37FF6D2C21B5EC064C90DE5" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.dll" />
         </Component>
         <Component Id="cmpF41FF9DE554F79FB6FBD85E5B80A5221" Guid="*">
-          <File Id="fil9157F8FB18F1F75BE50A64A9C227BF61" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.exp" />
+          <File Id="fil9157F8FB18F1F75BE50A64A9C227BF61" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.exp" />
         </Component>
         <Component Id="cmp372F759C97C3C69E4C336B81D807E4F5" Guid="*">
-          <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv941.lib" />
+          <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.lib" />
         </Component>
         <Component Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" Guid="*">
           <File Id="fil8A260A0B8935F8F9011AA2EDB9147BDE" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\petite.exe" />
@@ -31,10 +31,10 @@
     <DirectoryRef Id="D_boot">
       <Directory Id="D_boot_ta6nt" Name="ta6nt">
         <Component Id="cmpCBDB945622604667783C3C57A0427DF5" Guid="*">
-          <File Id="filD3E4E45F8404EE812C5DAFCBEB2502AA" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv941md.lib" />
+          <File Id="filD3E4E45F8404EE812C5DAFCBEB2502AA" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv951md.lib" />
         </Component>
         <Component Id="cmpD7880184C113065E511275EFD531D589" Guid="*">
-          <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv941mt.lib" />
+          <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv951mt.lib" />
         </Component>
         <Component Id="cmp19832A9F8ABA24EE5E11B447538AC375" Guid="*">
           <File Id="fil7626314F25A516DCC7C61AC8BA501397" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\equates.h" />
