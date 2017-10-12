@@ -615,7 +615,9 @@
     bintar BUILDING NOTICE makefiles/Mf-install.in scheme.1.in
     c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
     workarea c/scheme.rc s/7.ss s/cmacros.ss
-    release_notes/release_notes.stex csug/csug.stex
+    release_notes/release_notes.stex csug/csug.stex csug/use.stex
+    examples/ez-grammar-test.ss examples/socket.ss
+    wininstall/Makefile wininstall/*nt.wxs
 - Added setting of CHEZSCHEMELIBDIRS to s and mats make files so that
   an existing setting will not interfere with the build process, and
   added a note to BUILDING that CHEZSCHEMELIBDIRS should be unset in

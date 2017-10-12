@@ -97,7 +97,7 @@
   (export state-case eof)
   (import (chezscheme))
 
-  ;;; from Chez Scheme Version 9.4 cmacros.ss
+  ;;; from Chez Scheme Version 9.5.1 cmacros.ss
   (define-syntax state-case
     (lambda (x)
       (define state-case-test

@@ -55,7 +55,7 @@ After entering this command, you should see a short greeting followed
 by an angle-bracket on a line by itself, like this:
 
 \schemedisplay
-Chez Scheme Version 9.4
+Chez Scheme Version 9.5.1
 Copyright 1984-2017 Cisco Systems, Inc. 
 
 > 
