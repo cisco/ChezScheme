@@ -616,3 +616,8 @@
     c/Makefile.i3nt c/Makefile.a6nt c/Makefile.ti3nt c/Makefile.ta6nt
     workarea c/scheme.rc s/7.ss s/cmacros.ss
     release_notes/release_notes.stex csug/csug.stex
+- Added setting of CHEZSCHEMELIBDIRS to s and mats make files so that
+  an existing setting will not interfere with the build process, and
+  added a note to BUILDING that CHEZSCHEMELIBDIRS should be unset in
+  Version 9.5 and before.
+    s/Mf-base, mats/Mf-base, BUILDING

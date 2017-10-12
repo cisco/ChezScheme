@@ -43,6 +43,12 @@ Prerequisites:
 * Header files and libraries for ncurses
 * Header files and libraries for X windows
 
+BUILDING VERSION 9.5 AND EARLIER
+
+If the environment variable CHEZSCHEMELIBDIRS is set, please unset
+it before running make.  Depending on the variable's value, it can
+cause the build process to fail.
+
 DETAILS
 
 The sources for Chez Scheme come in two parts:
