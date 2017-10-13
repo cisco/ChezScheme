@@ -7252,7 +7252,7 @@
         #`(cond #,@(map clause-clause (sort-em (map parse-clause clause*))) . #,els?)))
     (syntax-case x (else)
       [(_ m1 ... [else e1 e2 ...]) (helper #'(m1 ...) #'([else e1 e2 ...]))]
-      [(_ m1 ...) (helper #'(m1 ...) #'())])))
+      [(_ m1 m2 ...) (helper #'(m1 m2 ...) #'())])))
 
 (define-syntax do
    (lambda (orig-x)
@@ -7520,62 +7520,71 @@
 
 (define-syntax $case
   (lambda (x)
+    (define-record-type clause
+      (nongenerative)
+      (fields (mutable keys) (immutable body)))
+    (define parse-clause
+      (lambda (atomic-keys?)
+        (lambda (clause)
+          (syntax-case clause ()
+            ; a case clause eventually expands into an exclusive-cond clause.  the e1 e2 ... body
+            ; structure must remain intact so exclusive-cond can use e1's profile count, if any,
+            ; to determine the clause's position in the output.  but naively leaving e1 e2 ...
+            ; in place results in case inappropriately supporting cond's => syntax, so we explicitly
+            ; weed out uses of => here.
+            [(k arrow e1 e2 ...)
+             (and (identifier? #'arrow) (free-identifier=? #'arrow #'=>))
+             (syntax-error #'arrow "misplaced aux keyword")]
+            [((k ...) e1 e2 ...) (make-clause #'(k ...) #'(e1 e2 ...))]
+            [(k e1 e2 ...) atomic-keys? (make-clause #'(k) #'(e1 e2 ...))]
+            [_ (syntax-error clause "invalid case clause")]))))
+    (define trim-keys!
+      (let ([ht (make-hashtable equal-hash equal?)])
+        (lambda (clause)
+          ; remove keys already seen in the same or a previous clause.  we must remove
+          ; keys seen in a previous clause before expanding to exclusive-cond, which
+          ; might reorder clauses, and removing those in the same clause doesn't do any
+          ; harm and might be beneficial if the compiler doesn't do it for us.
+          (clause-keys-set! clause
+            (let f ([keys (clause-keys clause)])
+              (if (null? keys)
+                  '()
+                  (let ([key (car keys)])
+                    (let ([datum-key (syntax->datum key)])
+                      (if (hashtable-ref ht datum-key #f)
+                          (f (cdr keys))
+                          (begin
+                            (hashtable-set! ht datum-key #t)
+                            (cons key (f (cdr keys)))))))))))))
     (define helper
-      (lambda (mem key-expr clause* els?)
-        (define-record-type clause
-          (nongenerative)
-          (fields (mutable keys) (immutable body)))
-        (define parse-clause
-          (lambda (clause)
-            (syntax-case clause ()
-              [((k ...) e1 e2 ...) (make-clause #'(k ...) #'(e1 e2 ...))]
-              [(k e1 e2 ...) (make-clause #'(k) #'(e1 e2 ...))]
-              [_ (syntax-error clause "invalid case clause")])))
-        (define emit
-          (lambda (kcond clause*)
-            #`(let ([t #,key-expr])
-                (#,kcond
-                  #,@(map (lambda (clause)
-                            #`[(#,mem t '#,(clause-keys clause)) #,@(clause-body clause)])
-                       clause*)
-                  . #,els?))))
-        (let ([clause* (map parse-clause clause*)])
-          (if ($profile-source-data?)
-              (let ()
-                (define ht (make-hashtable equal-hash equal?))
-                (define trim-keys!
-                  (lambda (clause)
-                    (clause-keys-set! clause
-                      (let f ([keys (clause-keys clause)])
-                        (if (null? keys)
-                            '()
-                            (let ([key (car keys)])
-                              (let ([datum-key (syntax->datum key)])
-                                (if (hashtable-ref ht datum-key #f)
-                                    (f (cdr keys))
-                                    (begin
-                                      (hashtable-set! ht datum-key #t)
-                                      (cons key (f (cdr keys))))))))))))
-                (for-each trim-keys! clause*)
-                (emit #'exclusive-cond clause*))
-              (emit #'cond clause*)))))
+      (lambda (mem atomic-keys? key-expr clause* else*)
+        (let ([clause* (map (parse-clause atomic-keys?) clause*)])
+          (for-each trim-keys! clause*)
+          #`(let ([t #,key-expr])
+             (exclusive-cond
+               #,@(map (lambda (clause)
+                         ; the compiler reduces memv or member calls like those we produce here
+                         ; to less expensive code (using memq or eqv? or eq?) when the elements
+                         ; of the constant second argument (keys in this case) allow.
+                         #`[(#,mem t '#,(clause-keys clause)) #,@(clause-body clause)])
+                    ; we could remove keyless clauses here but don't because that would suppress
+                    ; various compile-time errors in the clause body.  cp0 will optimize away the
+                    ; code we produce for keyless clauses anyway.
+                    clause*)
+               #,@else*)))))
     (syntax-case x (else)
-      [(_ mem e clause ... [else e1 e2 ...])
-       (helper #'mem #'e #'(clause ...) #'([else e1 e2 ...]))]
-      [(_ mem e clause ...)
-       (helper #'mem #'e #'(clause ...) #'())])))
+      [(_ mem atomic-keys? e clause ... [else e1 e2 ...])
+       (helper #'mem (datum atomic-keys?) #'e #'(clause ...) #'([else e1 e2 ...]))]
+      [(_ mem atomic-keys? e clause1 clause2 ...)
+       (helper #'mem (datum atomic-keys?) #'e #'(clause1 clause2 ...) #'())])))
 
 (define-syntax r6rs:case
- ; case in Chez Scheme allows atomic keys.  rule them out here.
-  (syntax-rules (else)
-    [(_ e [(k** ...) e1* e2* ...] ... [else e1 e2 ...])
-     ($case memv e [(k** ...) e1* e2* ...] ... [else e1 e2 ...])]
-    [(_ e [(k** ...) e1* e2* ...] ...)
-     ($case memv e [(k** ...) e1* e2* ...] ...)]))
+  (syntax-rules ()
+    [(_ e clause1 clause2 ...) ($case memv #f e clause1 clause2 ...)]))
 
 (define-syntax case
   (syntax-rules ()
-    [(_ e clause ...) ($case member e clause ...)]))
+    [(_ e clause1 clause2 ...) ($case member #t e clause1 clause2 ...)]))
 
 ;;; case aux keywords
 #;(define-syntax else ; defined above for cond
