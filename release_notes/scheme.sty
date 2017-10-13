@@ -12,14 +12,14 @@
 \newskip\schemeindent
 \schemeindent=0pt
 {\obeyspaces\global\let =\ }
-\def\schtilde{\raisebox{-.5ex}{\hbox to .5em{\hss\large\rm\char`\~\hss}}}
-\def\schdot{\hbox to .5em{\hfil\large\bf.\hfil}}
+\def\schtilde{\raisebox{-.5ex}{\hbox{\char`\~}}}
+\def\schdot{.}
 \def\schcarat{\char`\^}
 \def\schbackslash{\char`\\}
-\def\schatsign{\hbox to .5em{\hss\footnotesize\rm\char`\@\hss}}
-\def\schunderscore{\hbox to .5em{\hss\large\_\hss}}
-\def\schlbrace{$\{$}
-\def\schrbrace{$\}$}
+\def\schatsign{\char`\@}
+\def\schunderscore{\char`\_}
+\def\schlbrace{\char`\{}
+\def\schrbrace{\char`\}}
 \def\scheme#1{\mbox{\ttfamily\ninefivett\frenchspacing\spaceskip=\ttglue#1}}
 
 \def\schemeblankline{\par\beforeschemedisplay}
