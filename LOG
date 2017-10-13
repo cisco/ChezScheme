@@ -633,3 +633,6 @@
   than leaving the enforcement to cond.
     syntax.ss,
     4.ms, root-experr*, patch*
+- ifdef'd out include of xlocale.h for glibc, since the glibc
+  locale.h includes xlocale.h or, in glibc 2.26, its replacement.
+    expeditor.c
