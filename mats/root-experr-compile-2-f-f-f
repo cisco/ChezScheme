@@ -242,12 +242,30 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat apply: "apply: (3 4 5 6 7 8 ...) is not a proper list".
 4.mo:Expected error in mat apply: "apply: (1 2 1 2 1 2 ...) is circular".
 4.mo:Expected error in mat begin: "invalid syntax (begin)".
+4.mo:Expected error in mat cond: "invalid syntax (cond)".
 4.mo:Expected error in mat cond: "invalid syntax x".
 4.mo:Expected error in mat exclusive-cond: "invalid exclusive-cond clause (a . b)".
+4.mo:Expected error in mat exclusive-cond: "invalid syntax (exclusive-cond)".
 4.mo:Expected error in mat exclusive-cond: "invalid syntax x".
 4.mo:Expected error in mat case: "invalid case clause (a . b)".
-4.mo:Expected error in mat r6rs:case: "invalid syntax (r6rs:case (quote a) (a (quote yes)) (b (quote no)))".
-4.mo:Expected error in mat r6rs:case: "invalid syntax (case (quote a) (a (quote yes)) (b (quote no)))".
+4.mo:Expected error in mat case: "invalid syntax (if)".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "misplaced aux keyword =>".
+4.mo:Expected error in mat case: "invalid syntax (case)".
+4.mo:Expected error in mat r6rs:case: "invalid case clause (a (quote yes))".
+4.mo:Expected error in mat r6rs:case: "invalid case clause (a (quote yes))".
+4.mo:Expected error in mat r6rs:case: "invalid syntax (if)".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "misplaced aux keyword =>".
+4.mo:Expected error in mat r6rs:case: "invalid syntax (case)".
 4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
 4.mo:Expected error in mat map: "map: 3 is not a procedure".
 4.mo:Expected error in mat map: "map: a is not a proper list".
