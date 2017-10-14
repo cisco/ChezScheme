@@ -54,14 +54,14 @@
 \newskip\schemeindent
 \schemeindent=0pt
 {\obeyspaces\global\let =\ }
-\def\schtilde{\raisebox{-.5ex}{\hbox to .5em{\hss\schemelarger\rm\char`\~\hss}}}
-\def\schdot{\hbox to .5em{\hfil\schemelarger\bf.\hfil}}
+\def\schtilde{\raisebox{-.5ex}{\hbox{\char`\~}}}
+\def\schdot{.}
 \def\schcarat{\char`\^}
 \def\schbackslash{\char`\\}
-\def\schatsign{\hbox to .5em{\hss\schemesmaller\rm\char`\@\hss}}
-\def\schunderscore{\hbox to .5em{\hss\schemelarger\_\hss}}
-\def\schlbrace{$\{$}
-\def\schrbrace{$\}$}
+\def\schatsign{\char`\@}
+\def\schunderscore{\char`\_}
+\def\schlbrace{\char`\{}
+\def\schrbrace{\char`\}}
 \def\scheme#1{\mbox{\tt\frenchspacing\spaceskip=\ttglue#1}}
 
 \def\schemeblankline{\par\penalty-100\vskip .7\baselineskip}

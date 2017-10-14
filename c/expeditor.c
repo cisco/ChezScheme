@@ -546,7 +546,9 @@ static void s_ee_write_char(wchar_t c) {
 #include <sys/ioctl.h>
 #include <wchar.h>
 #include <locale.h>
+#ifndef __GLIBC__
 #include <xlocale.h>
+#endif
 
 #if defined(TIOCGWINSZ) && defined(SIGWINCH) && defined(EINTR)
 #define HANDLE_SIGWINCH

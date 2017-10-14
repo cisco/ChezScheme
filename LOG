@@ -623,6 +623,19 @@
   added a note to BUILDING that CHEZSCHEMELIBDIRS should be unset in
   Version 9.5 and before.
     s/Mf-base, mats/Mf-base, BUILDING
+- the $case macro used by r6rs:case and case now unconditionally trims
+  redundant keys and expands into exclusive-cond rather than cond.
+  it catches references to => before expanding into exclusive-cond
+  to avoid supporting => as an undocumented and useless extension
+  of the case syntax.  the r6rs:case and case macros now require
+  multiple clauses rather than leaving the enforcement to exclusive-cond,
+  and the exclusive-cond macro now requires multiple clauses rather
+  than leaving the enforcement to cond.
+    syntax.ss,
+    4.ms, root-experr*, patch*
+- ifdef'd out include of xlocale.h for glibc, since the glibc
+  locale.h includes xlocale.h or, in glibc 2.26, its replacement.
+    expeditor.c
 - Updated CSUG to replace \INSERTREVISIONMONTHSPACEYEAR with the current
   month and year at the time of generation.
     csug.stex, copyright.stex
@@ -632,3 +645,4 @@
     makefiles/Makefile-release_notes.in
       (renamed from release_notes/Makefile),
     makefiles/Makefile
+
