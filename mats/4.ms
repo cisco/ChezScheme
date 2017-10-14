@@ -370,6 +370,8 @@
  )
 
 (mat cond
+  (error? ; invalid syntax
+    (cond))
    (let ((a 'a))
       (and (begin (set! a 3)
                   (cond ((= a 4) #f) ((= a 3) #t) (else #f)))
@@ -395,6 +397,8 @@
 (mat exclusive-cond
    (error? ; invalid syntax
      (exclusive-cond [a . b]))
+   (error? ; invalid syntax
+     (exclusive-cond))
    (let ((a 'a))
       (and (begin (set! a 3)
                   (exclusive-cond ((= a 4) #f) ((= a 3) #t) (else #f)))
@@ -466,165 +470,285 @@
  )
 
 (mat case
-   (error? ; invalid syntax
-     (case 3 [a . b]))
-   (eq? (case 'a [a 'yes] [b 'no]) 'yes)
-   (let ((a 'a))
-      (and
-        (begin (set! a 'a)
-               (case a (a #t) ((b c) #f))
-               (case a (a #t) ((b c) #f) (else #f)))
-        (begin (set! a 'b)
-               (case a (a #f) ((b c) #t))
-               (case a (a #f) ((b c) #t) (else #f)))
-        (begin (set! a 'c)
-               (case a (a #f) ((b c) #t))
-               (case a (a #f) ((b c) #t) (else #f)))
-        (begin (set! a 'd)
-               (case a (a #f) ((b c) #f) (else #t)))))
-    (let ([f (lambda (x)
-                (case x
-                   (#\a 'case1)
-                   (1/2 'case2)
-                   (999999999999999 'case3)
-                   (3.4 'case4)
-                   (else 'oops)))])
-       (and (eq? (f (string-ref "abc" 0)) 'case1)
-            (eq? (f (exact 0.5)) 'case2)
-            (eq? (f (- 1000000000000000 1)) 'case3)
-            (eq? (f (+ 3.0 4/10)) 'case4)
-            (eq? (f 'b) 'oops)))
-    (case '() [() #f] [else #t])
-    (case '() [(()) #t] [else #f])
-    (case "meow" ["meow" #t] [else #f])
-    (case '(1 2 3) [((1 2 3) (3 2 1)) #t] [else #f])
-    (case 'a [1 6] ["meow" #f] [(a b c) #t])
-    (case #\: [1 6] ["meow" #f] [(a b c) #f] [(#\; #\9 #\: #\4) #t])
-    (case (/ 12.0 3.0) [(4 5 6) #f] [("bla") #f] [(a b c) #f] [(1 5.8 4.9 4.0) #t] [else #f])
-   (begin
-     (with-output-to-file "testfile.ss"
-       (lambda ()
-         (pretty-print
-           '(define foo
-              (lambda (x)
-                (case x
-                  [("three" 4) 'B]
-                  [("three" 5) 'A]
-                  [else #f]))))
-         (pretty-print
-           '(begin
-              (do ([i 10 (fx- i 1)]) ((fx= i 0)) (write (foo 5)))
-              (write (foo "three")))))
-       'replace)
-     (profile-clear-database)
-     #t)
-   ; verify no reordering w/no profile information
-   (let ([x (let* ([ip (open-file-input-port "testfile.ss")]
-                   [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
-                   [ip (transcoded-port ip (native-transcoder))])
-              (let-values ([(x efp) (get-datum/annotations ip sfd 0)])
-                (close-port ip)
-                (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f]) (expand/optimize x))))])
-     ; redundant keys might or might not be pruned, so allow it both ways
-     (or (equivalent-expansion?
-           x
-           '(begin
-              (set! foo
-                (lambda (x)
-                  (let ([t x])
-                    (if (#2%member t '("three" 4))
-                        'B
-                        (if (#2%member t '("three" 5))
-                            'A
-                            #f)))))
-              (#2%void)))
-         (equivalent-expansion?
-           x
-           '(begin
-              (set! foo
-                (lambda (x)
-                  (let ([t x])
-                    (if (#2%member t '("three" 4))
-                        'B
-                        (if (#2%member t '(5))
-                            'A
-                            #f)))))
-              (#2%void)))))
-   (equal?
-     (with-output-to-string
-       (lambda ()
-         (parameterize ([compile-profile #t]) (load "testfile.ss" compile))))
-     "AAAAAAAAAAB")
-   (begin
-     (profile-dump-data "testfile.pd")
-     (profile-load-data "testfile.pd")
-     #t)
-   (equal?
-     (with-output-to-string
-       (lambda ()
-         (load "testfile.ss" compile)))
-     "AAAAAAAAAAB")
-   ; verify reordering based on profile information
-   (equivalent-expansion?
-     (let* ([ip (open-file-input-port "testfile.ss")]
-            [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
-            [ip (transcoded-port ip (native-transcoder))])
-       (let-values ([(x efp) (get-datum/annotations ip sfd 0)])
-         (close-port ip)
-         (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f]) (expand/optimize x))))
-     '(begin
-        (set! foo
-          (lambda (x)
-            (let ([t x])
-              (if (#2%member t '(5))
-                  'A
-                  (if (#2%member t '("three" 4))
-                      'B
-                      #f)))))
-        (#2%void)))
-   (begin
-     (profile-clear-database)
-     #t)
+  (error? ; invalid syntax
+    (case 3 [a . b]))
+  (eq? (case 'a [a 'yes] [b 'no]) 'yes)
+  (let ((a 'a))
+    (and
+      (begin (set! a 'a)
+        (case a (a #t) ((b c) #f))
+        (case a (a #t) ((b c) #f) (else #f)))
+      (begin (set! a 'b)
+        (case a (a #f) ((b c) #t))
+        (case a (a #f) ((b c) #t) (else #f)))
+      (begin (set! a 'c)
+        (case a (a #f) ((b c) #t))
+        (case a (a #f) ((b c) #t) (else #f)))
+      (begin (set! a 'd)
+        (case a (a #f) ((b c) #f) (else #t)))))
+  (let ([f (lambda (x)
+             (case x
+               (#\a 'case1)
+               (1/2 'case2)
+               (999999999999999 'case3)
+               (3.4 'case4)
+               (else 'oops)))])
+    (and (eq? (f (string-ref "abc" 0)) 'case1)
+         (eq? (f (exact 0.5)) 'case2)
+         (eq? (f (- 1000000000000000 1)) 'case3)
+         (eq? (f (+ 3.0 4/10)) 'case4)
+         (eq? (f 'b) 'oops)))
+  (case '() [() #f] [else #t])
+  (case '() [(()) #t] [else #f])
+  (case "meow" ["meow" #t] [else #f])
+  (case '(1 2 3) [((1 2 3) (3 2 1)) #t] [else #f])
+  (case 'a [1 6] ["meow" #f] [(a b c) #t])
+  (case #\: [1 6] ["meow" #f] [(a b c) #f] [(#\; #\9 #\: #\4) #t])
+  (case (/ 12.0 3.0) [(4 5 6) #f] [("bla") #f] [(a b c) #f] [(1 5.8 4.9 4.0) #t] [else #f])
+  (begin
+    (with-output-to-file "testfile.ss"
+      (lambda ()
+        (pretty-print
+          '(define foo
+             (lambda (x)
+               (case x
+                 [("three" 4) 'B]
+                 [("three" 5) 'A]
+                 [else #f]))))
+        (pretty-print
+          '(begin
+             (do ([i 10 (fx- i 1)]) ((fx= i 0)) (write (foo 5)))
+             (write (foo "three")))))
+      'replace)
+    (profile-clear-database)
+    #t)
+  ; verify no reordering w/no profile information
+  (let ([x (let* ([ip (open-file-input-port "testfile.ss")]
+                  [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
+                  [ip (transcoded-port ip (native-transcoder))])
+             (let-values ([(x efp) (get-datum/annotations ip sfd 0)])
+               (close-port ip)
+               (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f]) (expand/optimize x))))])
+    ; redundant keys might or might not be pruned, so allow it both ways
+    (or (equivalent-expansion?
+          x
+          '(begin
+             (set! foo
+               (lambda (x)
+                 (let ([t x])
+                   (if (#2%member t '("three" 4))
+                       'B
+                       (if (#2%member t '("three" 5))
+                           'A
+                           #f)))))
+             (#2%void)))
+        (equivalent-expansion?
+          x
+          '(begin
+             (set! foo
+               (lambda (x)
+                 (let ([t x])
+                   (if (#2%member t '("three" 4))
+                       'B
+                       (if (#2%member t '(5))
+                           'A
+                           #f)))))
+             (#2%void)))))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (parameterize ([compile-profile #t]) (load "testfile.ss" compile))))
+    "AAAAAAAAAAB")
+  (begin
+    (profile-dump-data "testfile.pd")
+    (profile-load-data "testfile.pd")
+    #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (load "testfile.ss" compile)))
+    "AAAAAAAAAAB")
+  ; verify reordering based on profile information
+  (equivalent-expansion?
+    (let* ([ip (open-file-input-port "testfile.ss")]
+           [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
+           [ip (transcoded-port ip (native-transcoder))])
+      (let-values ([(x efp) (get-datum/annotations ip sfd 0)])
+        (close-port ip)
+        (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f]) (expand/optimize x))))
+    '(begin
+       (set! foo
+         (lambda (x)
+           (let ([t x])
+             (if (#2%member t '(5))
+                 'A
+                 (if (#2%member t '("three" 4))
+                     'B
+                     #f)))))
+       (#2%void)))
+  (begin
+    (profile-clear-database)
+    #t)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(lambda (x) (case x [(a b a 7) 'one] [(c a 7 9) 'two] [else 'three]))))
+    '(lambda (x)
+       (let ([t x])
+         (if (#2%member t '(a b 7))
+             'one
+             (if (#2%member t '(c 9))
+                 'two
+                 'three)))))
+  ; ensure we don't miss syntax errors through case discarding unreachable clause bodies
+  (error? ; invalid syntax (if)
+    (lambda (x)
+      (case x
+        [(a) 'one]
+        [(b c) 'two]
+        [(a b c) (if)]
+        [else #f])))
+  ; ensure expansion into cond doesn't cause => to "work" for case
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) #f]
+        [(d e f) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) #f]
+        [(a b c) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) => values]
+        [else #f])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) #f]
+        [(d e f) => values]
+        [else #f])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (case x
+        [(a b c) #f]
+        [(a b c) => values]
+        [else #f])))
+  (error? ; invalid syntax (case)
+    (case))
 )
 
-
 (mat r6rs:case
-   (error? ; invalid syntax
-     (r6rs:case 'a [a 'yes] [b 'no]))
-   (error? ; invalid syntax
-     (let ()
-       (import (only (rnrs) case))
-       (case 'a [a 'yes] [b 'no])))
-   (let ((a 'a))
+  (error? ; invalid syntax
+    (let ()
       (import (only (rnrs) case))
-      (and
-        (begin (set! a 'a)
-               (case a ((a) #t) ((b c) #f))
-               (case a ((a) #t) ((b c) #f) (else #f)))
-        (begin (set! a 'b)
-               (case a ((a) #f) ((b c) #t))
-               (case a ((a) #f) ((b c) #t) (else #f)))
-        (begin (set! a 'c)
-               (case a ((a) #f) ((b c) #t))
-               (case a ((a) #f) ((b c) #t) (else #f)))
-        (begin (set! a 'd)
-               (case a ((a) #f) ((b c) #f) (else #t)))))
-    (let ([f (lambda (x)
-                (import (only (rnrs) case))
-                (case x
-                   ((#\a) 'case1)
-                   ((1/2) 'case2)
-                   ((999999999999999) 'case3)
-                   ((3.4) 'case4)
-                   (else 'oops)))])
-       (and (eq? (f (string-ref "abc" 0)) 'case1)
-            (eq? (f (exact 0.5)) 'case2)
-            (eq? (f (- 1000000000000000 1)) 'case3)
-            (eq? (f (+ 3.0 4/10)) 'case4)
-            (eq? (f 'b) 'oops)))
-    (case '() [() #f] [else #t])
-    (case '() [(()) #t] [else #f])
- )
+      (case 'a [a 'yes] [b 'no])))
+  (error? ; invalid syntax
+    (let ()
+      (import (only (rnrs) case))
+      (case 'a [a 'yes] [b 'no])))
+  (let ((a 'a))
+    (import (only (rnrs) case))
+    (and
+      (begin (set! a 'a)
+        (case a ((a) #t) ((b c) #f))
+        (case a ((a) #t) ((b c) #f) (else #f)))
+      (begin (set! a 'b)
+        (case a ((a) #f) ((b c) #t))
+        (case a ((a) #f) ((b c) #t) (else #f)))
+      (begin (set! a 'c)
+        (case a ((a) #f) ((b c) #t))
+        (case a ((a) #f) ((b c) #t) (else #f)))
+      (begin (set! a 'd)
+        (case a ((a) #f) ((b c) #f) (else #t)))))
+  (let ([f (lambda (x)
+             (import (only (rnrs) case))
+             (case x
+               ((#\a) 'case1)
+               ((1/2) 'case2)
+               ((999999999999999) 'case3)
+               ((3.4) 'case4)
+               (else 'oops)))])
+    (and (eq? (f (string-ref "abc" 0)) 'case1)
+         (eq? (f (exact 0.5)) 'case2)
+         (eq? (f (- 1000000000000000 1)) 'case3)
+         (eq? (f (+ 3.0 4/10)) 'case4)
+         (eq? (f 'b) 'oops)))
+  (let ()
+    (import (only (rnrs) case))
+    (case '() [() #f] [else #t]))
+  (let ()
+    (import (only (rnrs) case))
+    (case '() [(()) #t] [else #f]))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #f] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(lambda (x)
+                          (import (only (rnrs) case))
+                          (case x [(a b a 7) 'one] [(c a 7 9) 'two] [else 'three]))))
+    '(lambda (x)
+       (let ([t x])
+         (if (#2%memv t '(a b 7))
+             'one
+             (if (#2%memv t '(c 9))
+                 'two
+                 'three)))))
+  ; ensure we don't miss syntax errors through case discarding unreachable clause bodies
+  (error? ; invalid syntax (if)
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a) 'one]
+        [(b c) 'two]
+        [(a b c) (if)]
+        [else #f])))
+  ; ensure expansion into cond doesn't cause => to "work" for case
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) #f]
+        [(d e f) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) #f]
+        [(a b c) => values])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) => values]
+        [else #f])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) #f]
+        [(d e f) => values]
+        [else #f])))
+  (error? ; invalid syntax =>
+    (lambda (x)
+      (import (only (rnrs) case))
+      (case x
+        [(a b c) #f]
+        [(a b c) => values]
+        [else #f])))
+  (error? ; invalid syntax (case)
+    (let ()
+      (import (only (rnrs) case))
+      (case)))
+)
 
 (mat record-case
    (record-case '(a b c)
