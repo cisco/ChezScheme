@@ -1,4 +1,4 @@
-m = a6le
+m = $(m)
 Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
 STEXLIB=../stex
 installdir=/tmp/csug9

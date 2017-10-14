@@ -623,3 +623,12 @@
   added a note to BUILDING that CHEZSCHEMELIBDIRS should be unset in
   Version 9.5 and before.
     s/Mf-base, mats/Mf-base, BUILDING
+- Updated CSUG to replace \INSERTREVISIONMONTHSPACEYEAR with the current
+  month and year at the time of generation.
+    csug.stex, copyright.stex
+- Updated configuration to set machine types in the CSUG and release notes 
+  make files, and updated distclean target to remove these files.
+    configure, makefiles/Makefile-csug.in (renamed from csug/Makefile),
+    makefiles/Makefile-release_notes.in
+      (renamed from release_notes/Makefile),
+    makefiles/Makefile
