@@ -332,6 +332,12 @@ sed -e 's/$(m)/'$m'/g'\
     -e 's/$(workarea)/'$w'/g'\
   makefiles/Makefile.in > Makefile
 
+sed -e 's/$(m)/'$m'/g'\
+    makefiles//Makefile-csug.in > csug/Makefile
+
+sed -e 's/$(m)/'$m'/g'\
+    makefiles//Makefile-release_notes.in > release_notes/Makefile
+
 cat makefiles/Makefile-workarea.in > $w/Makefile
 
 sed -e 's/$(m)/'$m'/g'\
