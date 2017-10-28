@@ -1403,20 +1403,20 @@
            [else (sorry! who "unexpected Lexpand record ~s" ir)]))
        (unless (environment? env-spec) ($oops who "~s is not an environment" env-spec))
        ((parameterize ([$target-machine (constant machine-type-name)] [$sfd #f])
-          (let* ([x1 (expand-Lexpand (expand x0 env-spec #t))]
+          (let* ([x1 (expand-Lexpand ($pass-time 'expand (lambda () (expand x0 env-spec #t))))]
                  [waste ($uncprep x1 #t)] ; populate preinfo sexpr fields
                  [waste (when (and (expand-output) (not ($noexpand? x0)))
                           (pretty-print ($uncprep x1) (expand-output)))]
-                 [x2 ($cpvalid x1)]
+                 [x2 ($pass-time 'cpvalid (lambda () ($cpvalid x1)))]
                  [x2a (let ([cpletrec-ran? #f])
                         (let ([x ((run-cp0)
                                   (lambda (x)
                                     (set! cpletrec-ran? #t)
-                                    (let ([x ($cp0 x)])
-                                      ($cpletrec x)))
+                                    (let ([x ($pass-time 'cp0 (lambda () ($cp0 x)))])
+                                      ($pass-time 'cpletrec (lambda () ($cpletrec x)))))
                                   x2)])
-                          (if cpletrec-ran? x ($cpletrec x))))]
-                 [x2b ($cpcheck x2a)])
+                          (if cpletrec-ran? x ($pass-time 'cpletrec (lambda () ($cpletrec x))))))]
+                 [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))])
             (when (and (expand/optimize-output) (not ($noexpand? x0)))
               (pretty-print ($uncprep x2b) (expand/optimize-output)))
             (if (and (compile-interpret-simple)

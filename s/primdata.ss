@@ -55,7 +55,7 @@
   ((r6rs: fx*) [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 2 arguments
   ((r6rs: fx+) [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 2 arguments
   ((r6rs: fx-) [sig [(fixnum) (fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 1 or 2 arguments
-  (fxdiv-and-mod [sig [(fixnum fixnum) -> (fixnum fixnum)]] [flags discard])
+  (fxdiv-and-mod [sig [(fixnum fixnum) -> (fixnum fixnum)]] [flags discard cp03])
   (fxdiv [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxmod [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxdiv0-and-mod0 [sig [(fixnum fixnum) -> (fixnum fixnum)]] [flags discard])

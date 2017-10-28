@@ -250,11 +250,16 @@
                                  (bytevector-u16-native-ref bv n))
                             count))))))))
 
-    (module (empty-tree tree-extract tree-for-each tree-fold-left tree-bit-set? tree-bit-set tree-bit-unset tree-bit-count tree-same? tree-merge)
+    (module (empty-tree full-tree tree-extract tree-for-each tree-fold-left tree-bit-set? tree-bit-set tree-bit-unset tree-bit-count tree-same? tree-merge)
       ; tree -> fixnum | (tree-node tree tree)
       ; 0 represents any tree or subtree with no bits set, and a tree or subtree
       ; with no bits set is always 0
       (define empty-tree 0)
+
+      ; any tree or subtree with all bits set
+      (define full-tree #t)
+
+      (define (full-fixnum size) (fxsrl (most-positive-fixnum) (fx- (fx- (fixnum-width) 1) size)))
 
       (define compute-split
         (lambda (size)
@@ -269,7 +274,7 @@
 
       (meta-cond
         [(fx= (optimize-level) 3)
-         (module (make-tree-node tree-node-left tree-node-right)
+         (module (make-tree-node tree-node? tree-node-left tree-node-right)
            (define make-tree-node cons)
            (define tree-node? pair?)
            (define tree-node-left car)
@@ -298,55 +303,87 @@
       (define tree-extract ; assumes empty-tree is 0
         (lambda (st size v)
           (let extract ([st st] [size size] [offset 0] [x* '()])
-            (if (fixnum? st)
+            (cond
+              [(fixnum? st)
                 (do ([st st (fxsrl st 1)]
                      [offset offset (fx+ offset 1)]
                      [x* x* (if (fxodd? st) (cons (vector-ref v offset) x*) x*)])
-                  ((fx= st 0) x*))
+                 ((fx= st 0) x*))]
+              [(eq? st full-tree)
+               (do ([size size (fx- size 1)]
+                    [offset offset (fx+ offset 1)]
+                    [x* x* (cons (vector-ref v offset) x*)])
+                 ((fx= size 0) x*))]
+              [else
                 (let ([split (compute-split size)])
                   (extract (tree-node-right st) (fx- size split) (fx+ offset split)
-                    (extract (tree-node-left st) split offset x*)))))))
+                    (extract (tree-node-left st) split offset x*)))]))))
 
       (define tree-for-each ; assumes empty-tree is 0
-        (lambda (st size action)
-          (let f ([st st] [size size] [offset 0])
-            (if (fixnum? st)
-                (do ([st st (fxsrl st 1)] [offset offset (fx+ offset 1)])
-                  ((fx= st 0))
-                  (when (fxodd? st) (action offset)))
-                (let ([split (compute-split size)])
-                  (f (tree-node-left st) split offset)
-                  (f (tree-node-right st) (fx- size split) (fx+ offset split)))))))
+        (lambda (st size start end action)
+          (let f ([st st] [size size] [start start] [end end] [offset 0])
+            (cond
+              [(fixnum? st)
+               (unless (eq? st empty-tree)
+                 (do ([st (fxbit-field st start end) (fxsrl st 1)] [offset (fx+ offset start) (fx+ offset 1)])
+                     ((fx= st 0))
+                   (when (fxodd? st) (action offset))))]
+              [(eq? st full-tree)
+               (do ([start start (fx+ start 1)] [offset offset (fx+ offset 1)])
+                   ((fx= start end))
+                 (action offset))]
+              [else
+               (let ([split (compute-split size)])
+                 (when (fx< start split)
+                   (f (tree-node-left st) split start (fxmin end split) offset))
+                 (when (fx> end split)
+                   (f (tree-node-right st) (fx- size split) (fxmax (fx- start split) 0) (fx- end split) (fx+ offset split))))]))))
 
       (define tree-fold-left ; assumes empty-tree is 0
         (lambda (proc size init st)
           (let f ([st st] [size size] [offset 0] [init init])
-            (if (fixnum? st)
+            (cond
+              [(fixnum? st)
                 (do ([st st (fxsrl st 1)]
                      [offset offset (fx+ offset 1)]
                      [init init (if (fxodd? st) (proc init offset) init)])
-                  ((fx= st 0) init))
+                 ((fx= st 0) init))]
+              [(eq? st full-tree)
+               (do ([size size (fx- size 1)]
+                    [offset offset (fx+ offset 1)]
+                    [init init (proc init offset)])
+                 ((fx= size 0) init))]
+              [else
                 (let ([split (compute-split size)])
                   (f (tree-node-left st) split offset
-                    (f (tree-node-right st) (fx- size split) (fx+ offset split) init)))))))
+                    (f (tree-node-right st) (fx- size split) (fx+ offset split) init)))]))))
 
       (define tree-bit-set? ; assumes empty-tree is 0
         (lambda (st size bit)
           (let loop ([st st] [size size] [bit bit])
-            (if (fixnum? st)
+            (cond
+              [(fixnum? st)
                 (and (not (eqv? st empty-tree))
                      ; fxlogbit? is unnecessarily general, so roll our own
-                     (fxlogtest st (fxsll 1 bit)))
+                    (fxlogtest st (fxsll 1 bit)))]
+              [(eq? st full-tree) #t]
+              [else
                 (let ([split (compute-split size)])
                   (if (fx< bit split)
                       (loop (tree-node-left st) split bit)
-                      (loop (tree-node-right st) (fx- size split) (fx- bit split))))))))
+                      (loop (tree-node-right st) (fx- size split) (fx- bit split))))]))))
 
       (define tree-bit-set ; assumes empty-tree is 0
         (lambda (st size bit)
           ; set bit in tree.  result is eq? to tr if result is same as tr.
-          (if (fx< size (fixnum-width))
-              (fxlogbit1 bit st)
+          (cond
+            [(eq? st full-tree) st]
+            [(fx< size (fixnum-width))
+             (let ([st (fxlogbit1 bit st)])
+               (if (fx= st (full-fixnum size))
+                   full-tree
+                   st))]
+            [else
               (let ([split (compute-split size)])
                 (if (eqv? st empty-tree)
                     (if (fx< bit split)
@@ -357,19 +394,32 @@
                           (let ([new-lst (tree-bit-set lst split bit)])
                             (if (eq? new-lst lst)
                                 st
-                                (make-tree-node new-lst rst)))
+                                (if (and (eq? new-lst full-tree) (eq? rst full-tree))
+                                    full-tree
+                                    (make-tree-node new-lst rst))))
                           (let ([new-rst (tree-bit-set rst (fx- size split) (fx- bit split))])
                             (if (eq? new-rst rst)
                                 st
-                                (make-tree-node lst new-rst))))))))))
+                                (if (and (eq? lst full-tree) (eq? new-rst full-tree))
+                                    full-tree
+                                    (make-tree-node lst new-rst))))))))])))
 
       (define tree-bit-unset ; assumes empty-tree is 0
         (lambda (st size bit)
           ; reset bit in tree.  result is eq? to tr if result is same as tr.
-          (if (fixnum? st)
-              (if (eqv? st empty-tree)
-                  empty-tree
-                  (fxlogbit0 bit st))
+          (cond
+            [(fixnum? st)
+             (if (eqv? st empty-tree)
+                 empty-tree
+                 (fxlogbit0 bit st))]
+            [(eq? st full-tree)
+             (if (fx< size (fixnum-width))
+                 (fxlogbit0 bit (full-fixnum size))
+                 (let ([split (compute-split size)])
+                   (if (fx< bit split)
+                       (make-tree-node (tree-bit-unset full-tree split bit) full-tree)
+                       (make-tree-node full-tree (tree-bit-unset full-tree (fx- size split) (fx- bit split))))))]
+            [else
               (let ([split (compute-split size)] [lst (tree-node-left st)] [rst (tree-node-right st)])
                 (if (fx< bit split)
                     (let ([new-lst (tree-bit-unset lst split bit)])
@@ -383,40 +433,52 @@
                           st
                           (if (and (eq? lst empty-tree) (eq? new-rst empty-tree))
                               empty-tree
-                              (make-tree-node lst new-rst)))))))))
+                              (make-tree-node lst new-rst))))))])))
 
       (define tree-bit-count ; assumes empty-tree is 0
-        (lambda (st)
-          (if (fixnum? st)
-              (fxbit-count st)
-              (fx+ (tree-bit-count (tree-node-left st))
-                   (tree-bit-count (tree-node-right st))))))
+        (lambda (st size)
+          (cond
+            [(fixnum? st) (fxbit-count st)]
+            [(eq? st full-tree) size]
+            [else
+              (let ([split (compute-split size)])
+                (fx+
+                  (tree-bit-count (tree-node-left st) split)
+                  (tree-bit-count (tree-node-right st) (fx- size split))))])))
 
       (define tree-same? ; assumes empty-tree is 0
         (lambda (st1 st2)
-          (or (eq? st1 st2) ; assuming fixnums are eq-comparable
-              (and (not (fixnum? st1))
-                   (not (fixnum? st2))
+          (or (eq? st1 st2) ; assuming fixnums and full trees are eq-comparable
+              (and (tree-node? st1)
+                   (tree-node? st2)
                    (tree-same? (tree-node-left st1) (tree-node-left st2))
                    (tree-same? (tree-node-right st1) (tree-node-right st2))))))
 
-      (define tree-merge ; assumes empty-tree is 0
+      (define tree-merge
        ; merge tr1 and tr2.  result is eq? to tr1 if result is same as tr1.
-        (lambda (st1 st2)
+        (lambda (st1 st2 size)
           (cond
-            [(eq? st1 st2) st1]
-            [(fixnum? st1) (if (fixnum? st2) (fxlogor st1 st2) st2)]
-            [(eq? st2 empty-tree) st1]
+            [(or (eq? st1 st2) (eq? st2 empty-tree)) st1]
+            [(eq? st1 empty-tree) st2]
+            [(or (eq? st1 full-tree) (eq? st2 full-tree)) full-tree]
+            [(fixnum? st1)
+             (safe-assert (fixnum? st2))
+             (let ([st (fxlogor st1 st2)])
+               (if (fx= st (full-fixnum size))
+                   full-tree
+                   st))]
             [else
              (let ([lst1 (tree-node-left st1)]
                    [rst1 (tree-node-right st1)]
                    [lst2 (tree-node-left st2)]
                    [rst2 (tree-node-right st2)])
-               (let ([l (tree-merge lst1 lst2)] [r (tree-merge rst1 rst2)])
+               (let ([split (compute-split size)])
+                 (let ([l (tree-merge lst1 lst2 split)] [r (tree-merge rst1 rst2 (fx- size split))])
                  (cond
                    [(and (eq? l lst1) (eq? r rst1)) st1]
                    [(and (eq? l lst2) (eq? r rst2)) st2]
-                   [else (make-tree-node l r)])))]))))
+                   [(and (eq? l full-tree) (eq? r full-tree)) full-tree]
+                   [else (make-tree-node l r)]))))]))))
 
     (define-syntax tc-disp
       (lambda (x)
@@ -546,12 +608,6 @@
           [else (with-syntax ([%mref (datum->syntax x '%mref)])
                   #'(%mref ,%sfp 0))])))
 
-    ; asm-return-registsrs, L-doargerr, etc., encapsulate registers and must be
-    ; created fresh for each compiler run, so we just define makers here.
-    (define make-asm-return-registers
-      (lambda ()
-        ; these registers are preserved by each hand-coded library routine that returns to its caller
-        (reg-cons* %cp %ret (append arg-registers extra-registers))))
     (define make-Ldoargerr
       (lambda ()
         (make-libspec-label 'doargerr (lookup-libspec doargerr)
@@ -9960,7 +10016,6 @@
         (import (only asm-module asm-foreign-call asm-foreign-callable asm-enter))
         (define newframe-info-for-mventry-point)
         (define Lcall-error (make-Lcall-error))
-        (define asm-return-registers (make-asm-return-registers))
         (define dcl*)
         (define local*)
         (define max-fv)
@@ -10298,6 +10353,7 @@
                                    (safe-assert cnfv)
                                    (%seq
                                      (remove-frame ,newframe-info)
+                                     (restore-local-saves ,newframe-info)
                                      (set! ,(ref-reg %cp) ,cnfv)
                                      ,(build-shift-args newframe-info))))
                               ,(build-consumer-call tc (in-context Triv (ref-reg %cp)) #f))
@@ -10305,9 +10361,10 @@
                               `(seq
                                  ,(build-nontail-call info mdcl t0 t1* tc* '() mrvl #t
                                     (lambda (newframe-info)
-                                      `(seq
-                                         (remove-frame ,newframe-info)
-                                         ,(build-shift-args newframe-info))))
+                                      (%seq
+                                        (remove-frame ,newframe-info)
+                                        (restore-local-saves ,newframe-info)
+                                        ,(build-shift-args newframe-info))))
                                  ,(build-consumer-call tc #f #f))))))))
               (define build-mv-return
                 (lambda (t*)
@@ -11154,20 +11211,22 @@
              (handle-do-rest fixed-args frame-args-offset #f))]
         ; TODO: get internal error when , is missing from ,l
         [(mventry-point (,x* ...) ,l)
-         (let f ([x* x*])
-           (if (null? x*)
-               (%seq
-                 (remove-frame ,newframe-info-for-mventry-point)
-                 (goto ,l))
-               (let ([x (car x*)])
-                 (if (uvar-referenced? x)
-                     `(seq (set! ,x ,(uvar-location x)) ,(f (cdr x*)))
-                     (f (cdr x*))))))]
+         (%seq
+           (remove-frame ,newframe-info-for-mventry-point)
+           ,(let f ([x* x*])
+              (if (null? x*)
+                  (%seq
+                    (restore-local-saves ,newframe-info-for-mventry-point)
+                    (goto ,l))
+                  (let ([x (car x*)])
+                    (if (uvar-referenced? x)
+                        `(seq (set! ,x ,(uvar-location x)) ,(f (cdr x*)))
+                        (f (cdr x*)))))))]
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
          (let ([mrvl (make-local-label 'mrvl)])
            (build-nontail-call info mdcl t0? t1* t* '() mrvl #f
              (lambda (newframe-info)
-               `(seq (label ,mrvl) (remove-frame ,newframe-info)))))]
+               (%seq (label ,mrvl) (remove-frame ,newframe-info) (restore-local-saves ,newframe-info)))))]
         [(mvset ,info (,mdcl ,t0? ,t1* ...) (,t* ...) ((,x** ...) ...) ,ebody)
          (let* ([frame-x** (map (lambda (x*) (set-formal-registers! x*)) x**)]
                 [nfv** (map (lambda (x*) (map (lambda (x)
@@ -11184,7 +11243,7 @@
         [(set! ,[lvalue] (mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...)))
          (build-nontail-call info mdcl t0? t1* t* '() #f #f
            (lambda (newframe-info)
-             `(seq (set! ,lvalue ,%ac0) (remove-frame ,newframe-info))))]
+             (%seq (remove-frame ,newframe-info) (set! ,lvalue ,%ac0) (restore-local-saves ,newframe-info))))]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
          (build-foreign-call info t0 t1* #f #t)]
         [(set! ,[lvalue] (foreign-call ,info ,[t0] ,[t1*] ...))
@@ -11247,7 +11306,6 @@
       (definitions
         (import (only asm-module asm-enter))
         (define Ldoargerr (make-Ldoargerr))
-        (define asm-return-registers (make-asm-return-registers))
         (define-$type-check (L13.5 Pred))
         (define make-info
           (lambda (name interface*)
@@ -12045,9 +12103,10 @@
                   (jump ,%ref-ret (,%ac0))))]
            [(bytevector=?)
             (let ([bv1 (make-tmp 'bv1)] [bv2 (make-tmp 'bv2)] [idx (make-tmp 'idx)] [len2 (make-tmp 'len2)])
+              (define (argcnt->max-fv n) (max (- n (length arg-registers)) 0))
               (let ([Ltop (make-local-label 'Ltop)] [Ltrue (make-local-label 'Ltrue)] [Lfail (make-local-label 'Lfail)])
                 (define iptr-bytes (in-context Triv (%constant ptr-bytes)))
-                `(lambda ,(make-info "bytevector=?" '(2)) 0 (,bv1 ,bv2 ,idx ,len2)
+                `(lambda ,(make-info "bytevector=?" '(2)) ,(argcnt->max-fv 2) (,bv1 ,bv2 ,idx ,len2)
                    ,(%seq
                       (set! ,bv1 ,(make-arg-opnd 1))
                       (set! ,bv2 ,(make-arg-opnd 2))
@@ -12464,6 +12523,9 @@
                (values block (cons block block*)))]
             [(remove-frame ,info)
              (add-instr! target (with-output-language (L15a Effect) `(remove-frame ,(make-live-info) ,info)))
+             (values target block*)]
+            [(restore-local-saves ,info)
+             (add-instr! target (with-output-language (L15a Effect) `(restore-local-saves ,(make-live-info) ,info)))
              (values target block*)]
             [(return-point ,info ,rpl ,mrvl (,cnfv* ...))
              (add-instr! target (with-output-language (L15a Effect) `(return-point ,info ,rpl ,mrvl (,cnfv* ...))))
@@ -13350,11 +13412,11 @@
                                          [(if-block? b)
                                           ; must follow same order as loop above so we find the same loop headers
                                           (let ([lhs (f (if-block-true b))])
-                                            (tree-merge lhs (f (if-block-false b))))]
+                                            (tree-merge lhs (f (if-block-false b)) tree-size))]
                                          [(newframe-block? b)
                                           ; must follow same order as loop above so we find the same loop headers
-                                          (fold-left (lambda (lhs b) (tree-merge lhs (f b)))
-                                            (let ([lhs (f (newframe-block-next b))]) (tree-merge lhs (f (newframe-block-rp b))))
+                                          (fold-left (lambda (lhs b) (tree-merge lhs (f b) tree-size))
+                                            (let ([lhs (f (newframe-block-next b))]) (tree-merge lhs (f (newframe-block-rp b)) tree-size))
                                             (newframe-block-rp* b))]
                                          [else (sorry! who "unrecognized block ~s" b)]))])
                             (unless (or (block-loop-header? b) (eqv? (block-loop-headers b) empty-tree))
@@ -13891,13 +13953,14 @@
       (define-threaded unspillable*)
       (define-threaded max-fv)
       (define-threaded max-fs@call)
+      (define-threaded poison-cset)
 
       (define no-live* empty-tree)
 
       (define union-live
        ; union live1 and live2.  result is eq? to live1 if result is same as live1.
-        (lambda (live1 live2)
-          (tree-merge live1 live2)))
+        (lambda (live1 live2 live-size)
+          (tree-merge live1 live2 live-size)))
 
       (define same-live?
         (lambda (live1 live2)
@@ -13933,15 +13996,22 @@
                     new)
                   live*)))))
 
-      (module (make-cset conflict-bit-set! conflict-bit-unset! conflict-bit-set? conflict-bit-count cset-merge! cset-copy cset-for-each extract-conflicts)
+      (module (make-empty-cset make-full-cset cset-full? conflict-bit-set! conflict-bit-unset! conflict-bit-set? conflict-bit-count cset-merge! cset-copy cset-for-each extract-conflicts)
         (define-record-type cset
           (nongenerative)
-          (fields size (mutable tree))
-          (protocol
-            (lambda (n)
-              (case-lambda
-                [(size) (n size empty-tree)]
-                [(size tree) (n size tree)]))))
+          (fields size (mutable tree)))
+
+        (define make-empty-cset
+          (lambda (size)
+            (make-cset size empty-tree)))
+
+        (define make-full-cset
+          (lambda (size)
+            (make-cset size full-tree)))
+
+        (define cset-full?
+          (lambda (cset)
+            (eq? (cset-tree cset) full-tree)))
 
         (define conflict-bit-set!
           (lambda (cset offset)
@@ -13959,11 +14029,11 @@
 
         (define conflict-bit-count
           (lambda (cset)
-            (tree-bit-count (cset-tree cset))))
+            (tree-bit-count (cset-tree cset) (cset-size cset))))
 
         (define cset-merge!
           (lambda (cset1 cset2)
-            (cset-tree-set! cset1 (tree-merge (cset-tree cset1) (cset-tree cset2)))))
+            (cset-tree-set! cset1 (tree-merge (cset-tree cset1) (cset-tree cset2) (cset-size cset1)))))
 
         (define cset-copy
           (lambda (cset)
@@ -13971,7 +14041,7 @@
 
         (define cset-for-each
           (lambda (cset proc)
-            (tree-for-each (cset-tree cset) (cset-size cset) proc)))
+            (tree-for-each (cset-tree cset) (cset-size cset) 0 (cset-size cset) proc)))
 
         (define extract-conflicts
           (lambda (cset v)
@@ -14061,6 +14131,7 @@
                                  (fold-left add-var out (info-kill*-live*-live* info))
                                  out)))]
                         [(remove-frame ,live-info ,info) (live-info-live-set! live-info out) out]
+                        [(restore-local-saves ,live-info ,info) (live-info-live-set! live-info out) out]
                         [(shift-arg ,live-info ,reg ,imm ,info) (live-info-live-set! live-info out) out]
                         [(overflow-check ,live-info) (live-info-live-set! live-info out) out]
                         [(overflood-check ,live-info) (live-info-live-set! live-info out) out]
@@ -14121,7 +14192,7 @@
                    (force-live-in! true-block)
                    (force-live-in! false-block)
                    (block-seen! block #f)
-                   (let ([out (union-live (block-live-in true-block) (block-live-in false-block))])
+                   (let ([out (union-live (block-live-in true-block) (block-live-in false-block) live-size)])
                      (when (different? out (if-block-live-out block))
                        (if-block-live-out-set! block out)
                        (propagate-live! block out))))]
@@ -14164,9 +14235,10 @@
                                          (newframe-block-live-call-set! block call)
                                          call)))])
                        (let ([out (union-live
-                                    (fold-left (lambda (live b) (union-live (block-live-in b) live))
+                                    (fold-left (lambda (live b) (union-live (block-live-in b) live live-size))
                                       (block-live-in next-block) rp-block*)
-                                    (fold-left add-var call (info-newframe-cnfv* newframe-info)))])
+                                    (fold-left add-var call (info-newframe-cnfv* newframe-info))
+                                    live-size)])
                          (when (different? out (newframe-block-live-out block))
                            (newframe-block-live-out-set! block out)
                            (propagate-live! block out))))))]
@@ -14234,23 +14306,55 @@
       (define $add-move!
         (lambda (x1 x2 weight)
           (when (uvar? x1)
-            (uvar-move*-set! x1
-              (call-with-values
-                (lambda ()
-                  (let f ([move* (uvar-move* x1)])
-                    (if (null? move*)
-                        (values (cons x2 weight) move*)
-                        (let ([move (car move*)] [move* (cdr move*)])
-                          (if (eq? (car move) x2)
-                              (values (cons (car move) (fx+ (cdr move) weight)) move*)
-                              (let-values ([(move2 move*) (f move*)])
-                                (if (fx> (cdr move2) (cdr move))
-                                    (values move2 (cons move move*))
-                                    (values move (cons move2 move*)))))))))
-                cons)))))
+            (when (or (not (uvar-poison? x1)) (fv? x2))
+              (uvar-move*-set! x1
+                (call-with-values
+                  (lambda ()
+                    (let f ([move* (uvar-move* x1)])
+                      (if (null? move*)
+                          (values (cons x2 weight) move*)
+                          (let ([move (car move*)] [move* (cdr move*)])
+                            (if (eq? (car move) x2)
+                                (values (cons (car move) (fx+ (cdr move) weight)) move*)
+                                (let-values ([(move2 move*) (f move*)])
+                                  (if (fx> (cdr move2) (cdr move))
+                                      (values move2 (cons move move*))
+                                      (values move (cons move2 move*)))))))))
+                  cons))))))
+
+      (define-who identify-poison!
+        (lambda (kspillable varvec live-size block*)
+          (define kpoison 0)
+          (define increment-live-counts!
+            (lambda (live)
+              (tree-for-each live live-size 0 kspillable
+                (lambda (offset)
+                  (let ([x (vector-ref varvec offset)])
+                    (let ([range (fx+ (uvar-live-count x) 1)])
+                      (when (fx= range 2)
+                        (uvar-poison! x #t)
+                        (set! kpoison (fx+ kpoison 1)))
+                      (uvar-live-count-set! x range)))))))
+          (define Effect
+            (lambda (live* e)
+              (nanopass-case (L15a Effect) e
+                [(set! ,live-info ,x ,rhs)
+                 (guard (uvar? x))
+                 (if (live-info-useless live-info)
+                     live*
+                     (cons (live-info-live live-info) live*))]
+                [else live*])))
+          (let ([vlive (list->vector (fold-left (lambda (live* block) (fold-left Effect live* (block-effect* block))) '() block*))])
+            (let ([nvlive (vector-length vlive)])
+              (let refine ([skip 64] [stride 64])
+                (do ([i (fx- skip 1) (fx+ i stride)])
+                    ((fx>= i nvlive))
+                  (increment-live-counts! (vector-ref vlive i)))
+                (unless (or (fx= stride 16) (< (* (fx- kspillable kpoison) (fx* stride 2)) 1000000))
+                  (refine (fxsrl skip 1) skip)))))))
 
       (define-who do-spillable-conflict!
-        (lambda (kspillable varvec live-size block*)
+        (lambda (kspillable kfv varvec live-size block*)
           (define remove-var (make-remove-var live-size))
           (define add-move!
             (lambda (x1 x2)
@@ -14259,19 +14363,42 @@
                 ($add-move! x2 x1 2))))
           (define add-conflict!
             (lambda (x out)
+              ; invariants:
+              ;   all poison spillables explicitly point to all spillables
+              ;   all non-poison spillables implicitly point to all poison spillables via poison-cset
               (let ([x-offset (var-index x)])
                 (when x-offset
-                  (tree-for-each out live-size
-                    (let ([cset (var-spillable-conflict* x)])
-                      (if (fx< x-offset kspillable)
-                          (lambda (y-offset)
-                            ; x is a spillable.  if y is also a spillable, point x at y
-                            (when (fx< y-offset kspillable) (conflict-bit-set! cset y-offset))
-                            ; point y at the spillable x regardless
-                            (conflict-bit-set! (var-spillable-conflict* (vector-ref varvec y-offset)) x-offset))
-                          (lambda (y-offset)
-                            ; x is fixed.  if y is a spillable, point x at y
-                            (when (fx< y-offset kspillable) (conflict-bit-set! cset y-offset))))))))))
+                  (if (and (fx< x-offset kspillable) (uvar-poison? x))
+                      (tree-for-each out live-size kspillable (fx+ kspillable kfv)
+                        (lambda (y-offset)
+                          ; frame y -> poison spillable x
+                          (conflict-bit-set! (var-spillable-conflict* (vector-ref varvec y-offset)) x-offset)))
+                      (let ([cset (var-spillable-conflict* x)])
+                        (if (fx< x-offset kspillable)
+                            (begin
+                              (tree-for-each out live-size 0 kspillable
+                                (lambda (y-offset)
+                                  (let ([y (vector-ref varvec y-offset)])
+                                    (unless (uvar-poison? y)
+                                      ; non-poison spillable x -> non-poison spillable y
+                                      (conflict-bit-set! cset y-offset)
+                                      ; and vice versa
+                                      (conflict-bit-set! (var-spillable-conflict* y) x-offset)))))
+                              (tree-for-each out live-size kspillable live-size
+                                (lambda (y-offset)
+                                  (let ([y (vector-ref varvec y-offset)])
+                                    ; frame or register y -> non-poison spillable x
+                                    (conflict-bit-set! (var-spillable-conflict* y) x-offset)))))
+                            (if (fx< x-offset (fx+ kspillable kfv))
+                                (tree-for-each out live-size 0 kspillable
+                                  (lambda (y-offset)
+                                    ; frame x -> poison or non-poison spillable y
+                                    (conflict-bit-set! cset y-offset)))
+                                (tree-for-each out live-size 0 kspillable
+                                  (lambda (y-offset)
+                                    (unless (uvar-poison? (vector-ref varvec y-offset))
+                                      ; register x -> non-poison spillable y
+                                      (conflict-bit-set! cset y-offset))))))))))))
           (define Rhs
             (lambda (rhs live)
               (nanopass-case (L15a Rhs) rhs
@@ -14301,7 +14428,19 @@
                    (for-each (lambda (x) (add-conflict! x live)) (info-kill*-kill* info)))
                  (cons e new-effect*)]
                 [else (cons e new-effect*)])))
-          (vector-for-each (lambda (x) (var-spillable-conflict*-set! x (make-cset kspillable))) varvec)
+          (do ([i 0 (fx+ i 1)])
+              ((fx= i kspillable))
+            (let ([x (vector-ref varvec i)])
+              (if (uvar-poison? x)
+                  (begin
+                    (conflict-bit-set! poison-cset i)
+                    ; leaving each poison spillable in conflict with itself, but this shouldn't matter
+                    ; since we never ask for the degree of a poison spillable
+                    (var-spillable-conflict*-set! x (make-full-cset kspillable)))
+                  (var-spillable-conflict*-set! x (make-empty-cset kspillable)))))
+          (do ([i kspillable (fx+ i 1)])
+              ((fx= i live-size))
+            (var-spillable-conflict*-set! (vector-ref varvec i) (make-empty-cset kspillable)))
           (for-each
             (lambda (block)
               (block-effect*-set! block
@@ -14334,13 +14473,11 @@
                   ; tempting to set to cset2 rather than (cset-copy cset2), but this would not be
                   ; correct for local saves, which need their unaltered sets for later, and copying
                   ; is cheap anyway.
-                  (var-spillable-conflict*-set! fv (cset-copy cset2))))))
+                  (var-spillable-conflict*-set! fv (cset-copy cset2))))
+            (unless (uvar-poison? spill) (cset-merge! (var-spillable-conflict* fv) poison-cset))))
 
         (define assign-frame!
-          (lambda ()
-            (define spillable?
-              (lambda (x)
-                (and (uvar? x) (not (uvar-unspillable? x)))))
+          (lambda (spill*)
             (define sort-spill*
               ; NB: sorts based on likelihood of successfully assigning move-related vars to the same location
               ; NB: probably should sort based on value of assigning move-related vars to the same location,
@@ -14360,15 +14497,12 @@
                                            w))])
                              ((null? move*) (cons x w))))
                       spill*)))))
-            (define conflict?
-              (lambda (x fv-offset)
-                (conflict-fv? x (get-fv fv-offset))))
-            (define conflict-fv?
-              (lambda (x fv)
-                (let ([cset (var-spillable-conflict* fv)])
-                  (and cset (conflict-bit-set? cset (var-index x))))))
             (define find-move-related-home
               (lambda (x0 succ fail)
+                (define conflict-fv?
+                  (lambda (x fv)
+                    (let ([cset (var-spillable-conflict* fv)])
+                      (and cset (conflict-bit-set? cset (var-index x))))))
                 (let f ([x x0] [work* '()] [clear-seen! void])
                   (if (uvar-seen? x)
                       (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
@@ -14394,31 +14528,36 @@
                                               (loop move* (cons var work*))))
                                         (loop move* work*)))))))))))
             (define find-home!
-              (lambda (spill max-fv)
+              (lambda (spill max-fv first-open)
                 (define return
-                  (lambda (home max-fv)
+                  (lambda (home max-fv first-open)
                     (uvar-location-set! spill home)
                     (update-conflict! home spill)
-                    max-fv))
+                    (values max-fv first-open)))
                 (find-move-related-home spill
-                  (lambda (home) (return home max-fv))
+                  (lambda (home) (return home max-fv first-open))
                   (lambda ()
-                    (let f ([fv-offset 1])
-                      (if (conflict? spill fv-offset)
-                          (f (fx+ fv-offset 1))
-                          (return (get-fv fv-offset) (fxmax fv-offset max-fv))))))))
+                    (let f ([first-open first-open])
+                      (let* ([fv (get-fv first-open)] [cset (var-spillable-conflict* fv)])
+                        (if (and cset (cset-full? cset))
+                            (f (fx+ first-open 1))
+                            (let ([spill-offset (var-index spill)])
+                              (let f ([fv-offset first-open] [fv fv] [cset cset])
+                                (if (and cset (conflict-bit-set? cset spill-offset))
+                                    (let* ([fv-offset (fx+ fv-offset 1)] [fv (get-fv fv-offset)] [cset (var-spillable-conflict* fv)])
+                                      (f fv-offset fv cset))
+                                    (return fv (fxmax fv-offset max-fv) first-open)))))))))))
             (define find-homes!
-              (lambda (spill* max-fv)
-                (let f ([spill* spill*] [max-fv max-fv])
-                  (if (null? spill*)
-                      max-fv
-                      (let ([spill (car spill*)])
-                        (f (cdr spill*) (find-home! spill max-fv)))))))
+              (lambda (spill* max-fv first-open)
+                (if (null? spill*)
+                    max-fv
+                    (let-values ([(max-fv first-open) (find-home! (car spill*) max-fv first-open)])
+                      (find-homes! (cdr spill*) max-fv first-open)))))
             ; NOTE: call-live uvars should be sorted so that those that are call-live with few other
             ; variables are earlier in the list (and more likely to get a low frame location);
             ; additionally if they are live across many frames they should be prioritized over those
             ; live across only a few (only when setup-nfv?)
-            (set! max-fv (find-homes! (sort-spill* (filter uvar-spilled? spillable*)) max-fv))))
+            (set! max-fv (find-homes! (sort-spill* spill*) max-fv 1))))
 
         (define-pass assign-new-frame! : (L15a Dummy) (ir lambda-info live-size varvec block*) -> (L15b Dummy) ()
           (definitions
@@ -14457,25 +14596,41 @@
                             (for-each (lambda (nfv*) (set-offsets! nfv* arg-base)) nfv**)
                             base)
                           (loop (fx+ base 1))))))))
+            (define build-mask
+              (lambda (index*)
+                (define bucket-width (if (fx> (fixnum-width) 32) 32 16))
+                (let* ([nbits (fx+ (fold-left (lambda (m index) (fxmax m index)) -1 index*) 1)]
+                       [nbuckets (fxdiv (fx+ nbits (fx- bucket-width 1)) bucket-width)]
+                       [buckets (make-fxvector nbuckets 0)])
+                  (for-each
+                    (lambda (index)
+                      (let-values ([(i j) (fxdiv-and-mod index bucket-width)])
+                        (fxvector-set! buckets i (fxlogbit1 j (fxvector-ref buckets i)))))
+                    index*)
+                  (let f ([base 0] [len nbuckets])
+                    (if (fx< len 2)
+                        (if (fx= len 0)
+                            0
+                            (fxvector-ref buckets base))
+                        (let ([half (fxsrl len 1)])
+                          (logor
+                            (bitwise-arithmetic-shift-left (f (fx+ base half) (fx- len half)) (fx* half bucket-width))
+                            (f base half))))))))
             (define build-live-pointer-mask
               (lambda (live*)
-                (define set-lpm-bit
-                  (lambda (fv lpm)
-                    (let ([i (fv-offset fv)])
-                      (if (fx= i 0)
-                          lpm
-                          (logbit1 (fx- i 1) lpm)))))
-                (fold-left
-                  (lambda (lpm live)
-                    (cond
-                      [(fv? live)
-                       ; assuming call-live frame variables are ptrs for the time being
-                       ; they should all be products of tail-frame optimization on (ptr) arguments
-                       (set-lpm-bit live lpm)]
-                      [(and live (eq? (uvar-type live) 'ptr))
-                       (set-lpm-bit (uvar-location live) lpm)]
-                      [else lpm]))
-                  0 live*)))
+                (build-mask
+                  (fold-left
+                    (lambda (index* live)
+                      (define (cons-fv fv index*)
+                        (let ([offset (fv-offset fv)])
+                          (if (fx= offset 0) ; no bit for fv0
+                              index*
+                              (cons (fx- offset 1) index*))))
+                      (cond
+                        [(fv? live) (cons-fv live index*)]
+                        [(eq? (uvar-type live) 'ptr) (cons-fv (uvar-location live) index*)]
+                        [else index*]))
+                    '() live*))))
             (define (process-info-newframe! info)
               (unless (info-newframe-frame-words info)
                 (let ([call-live* (info-newframe-call-live* info)])
@@ -14491,17 +14646,18 @@
                 (cond
                   [(and call-live* (info-lambda-ctci lambda-info)) =>
                    (lambda (ctci)
-                     (let ([mask (fold-left
-                                   (lambda (mask x)
-                                     (cond
-                                       [(and (uvar? x) (uvar-iii x)) =>
-                                        (lambda (index)
-                                          (let ([name.offset (vector-ref (ctci-live ctci) index)])
-                                            (unless (logbit? (fx- (cdr name.offset) 1) lpm)
-                                              (sorry! who "bit ~s not set for ~s in ~s" (cdr name.offset) (car name.offset) lpm)))
-                                          (logor (ash 1 index) mask))]
-                                       [else mask]))
-                                   0 call-live*)])
+                     (let ([mask (build-mask
+                                   (fold-left
+                                     (lambda (i* x)
+                                       (cond
+                                         [(and (uvar? x) (uvar-iii x)) =>
+                                          (lambda (index)
+                                            (safe-assert
+                                              (let ([name.offset (vector-ref (ctci-live ctci) index)])
+                                                (logbit? (fx- (cdr name.offset) 1) lpm)))
+                                            (cons index i*))]
+                                         [else i*]))
+                                     '() call-live*))])
                        (when (or src sexpr (not (eqv? mask 0)))
                          (ctci-rpi*-set! ctci (cons (make-ctrpi rpl src sexpr mask) (ctci-rpi* ctci))))))]))))
           (Pred : Pred (ir) -> Pred ())
@@ -14521,12 +14677,16 @@
              (process-info-newframe! info)
              (with-output-language (L15b Effect)
                (let ([live (live-info-live live-info)])
+                 (cons*
+                   `(fp-offset ,live-info ,(fx- (fx* (info-newframe-frame-words info) (constant ptr-bytes))))
+                   `(overflood-check ,(make-live-info live))
+                   new-effect*)))]
+            [(restore-local-saves ,live-info ,info)
+             (with-output-language (L15b Effect)
+               (let ([live (live-info-live live-info)])
                  (let loop ([x* (filter (lambda (x) (live? live live-size x)) (info-newframe-local-save* info))]
                             [live live]
-                            [new-effect* (cons*
-                                           `(fp-offset ,live-info ,(fx- (fx* (info-newframe-frame-words info) (constant ptr-bytes))))
-                                           `(overflood-check ,(make-live-info live))
-                                           new-effect*)])
+                            [new-effect* new-effect*])
                    (if (null? x*)
                        new-effect*
                        (let* ([x (car x*)] [live (remove-var live x)])
@@ -14556,7 +14716,7 @@
               (lambda (x)
                 ; NB: experiment with different comparisions.  might want ref weight
                 ; NB: to be at least more than save weight to relieve register pressure.
-                (when (and (uvar-spilled? x) (fx>= (uvar-ref-weight x) (uvar-save-weight x)))
+                (when (and (uvar-spilled? x) (not (uvar-poison? x)) (fx>= (uvar-ref-weight x) (uvar-save-weight x)))
                   (uvar-local-save! x #t)))
               spillable*)
             (for-each
@@ -14587,7 +14747,8 @@
               (lambda (x)
                 (when (uvar-local-save? x)
                   (uvar-location-set! x #f)
-                  (uvar-spilled! x #f)))
+                  (uvar-spilled! x #f)
+                  (uvar-save-weight-set! x 0)))
               spillable*)
             `(dummy))))
 
@@ -14986,7 +15147,7 @@
           (define add-us->s-conflicts!
             (lambda (x out) ; x is an unspillable
               (let ([x-offset (var-index x)] [cset (var-spillable-conflict* x)])
-                (tree-for-each out live-size
+                (tree-for-each out live-size 0 live-size
                   (lambda (y-offset)
                     (let* ([y (vector-ref varvec y-offset)] [y-cset (var-unspillable-conflict* y)])
                       (when y-cset
@@ -15074,8 +15235,8 @@
                       [(move-related ,x1 ,x2) (add-move-hint! x1 x2) unspillable*]
                       [(overflow-check ,p ,e* ...) (Effect* (reverse e*) '()) (Pred p)]
                       [else unspillable*])))))
-          (for-each (lambda (x) (var-spillable-conflict*-set! x (make-cset kspillable))) unspillable*)
-          (let ([f (lambda (x) (var-unspillable-conflict*-set! x (make-cset kunspillable)))])
+          (for-each (lambda (x) (var-spillable-conflict*-set! x (make-empty-cset kspillable))) unspillable*)
+          (let ([f (lambda (x) (var-unspillable-conflict*-set! x (make-empty-cset kunspillable)))])
             (vector-for-each f regvec)
             (for-each f spillable*)
             (vector-for-each f unvarvec))
@@ -15091,75 +15252,73 @@
             block*)))
 
       (define-who assign-registers!
-        (lambda (lambda-info)
+        (lambda (lambda-info varvec unvarvec)
+          (define k (vector-length regvec))
+          (define uvar-weight
+            (lambda (x)
+              (fx- (uvar-ref-weight x) (uvar-save-weight x))))
           ; could also be calculated when the conflict set is built, which would be more
           ; efficient for low-degree variables
-          (define compute-degree!
-            ; NB: it would probably be faster to go through the registers and
-            ; NB: increment the degrees for each spillable and unspillable with
-            ; NB: which it conflicts, rather than go through each register for
-            ; NB: each uvar as we are currently doing
-            (lambda (x)
-              (let ([x-offset (var-index x)])
-                (let loop ([n (vector-length regvec)] [degree 0])
-                  (if (fx= n 0)
-                      (uvar-degree-set! x
-                        (fx+ degree
-                             ; spills have been trimmed from the var-spillable-conflict* sets
-                             (conflict-bit-count (var-spillable-conflict* x))
-                             (conflict-bit-count (var-unspillable-conflict* x))))
-                      (let ([n (fx- n 1)])
-                        (let ([reg (vector-ref regvec n)])
-                          (let ([cset (if (uvar-unspillable? x) (var-unspillable-conflict* reg) (var-spillable-conflict* reg))])
-                            (if (and cset (conflict-bit-set? cset x-offset))
-                                (loop n (fx+ degree 1))
-                                (loop n degree))))))))))
-          (define conflict?
-            (lambda (reg x)
-              (let ([cset (if (uvar-unspillable? x) (var-unspillable-conflict* reg) (var-spillable-conflict* reg))])
-                (and cset (conflict-bit-set? cset (var-index x))))))
-          (define update-conflict!
-            (lambda (reg x)
-              (let ([cset1 (var-spillable-conflict* reg)]
-                    [cset2 (var-spillable-conflict* x)])
-                (if cset1
-                    (cset-merge! cset1 cset2)
-                    ; we copy spillable conflicts to avoid ruining a uvar's cset for the next iteration of the big loop
-                    (var-spillable-conflict*-set! reg (cset-copy cset2))))
-              (let ([cset1 (var-unspillable-conflict* reg)]
-                    [cset2 (var-unspillable-conflict* x)])
-                (if cset1
-                    (cset-merge! cset1 cset2)
-                    ; NB: do we need to copy unspillable conflicts?  we recreate them each time through the big loop
-                    (var-unspillable-conflict*-set! reg (cset-copy cset2))))))
-          (define find-move-related-home
-            (lambda (x0 succ fail)
-              (let f ([x x0] [work* '()] [clear-seen! void])
-                (if (uvar-seen? x)
-                    (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
-                    (let ([clear-seen! (lambda () (uvar-seen! x #f) (clear-seen!))])
-                      (uvar-seen! x #t)
-                      (let loop ([move* (uvar-move* x)] [work* work*])
-                        (if (null? move*)
-                            (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
-                            (let ([var (caar move*)] [move* (cdr move*)])
-                              (define try-reg
-                                (lambda (reg)
-                                  (if (conflict? reg x0)
-                                      (loop move* work*)
-                                      (begin (clear-seen!) (succ reg)))))
-                              (if (reg? var)
-                                  (try-reg var)
-                                  (if (uvar? var)
-                                      (let ([reg (uvar-location var)])
-                                        (if (reg? reg)
-                                            (try-reg reg)
-                                            (loop move* (cons var work*))))
-                                      (loop move* work*)))))))))))
+          (define compute-degrees!
+            (lambda (x*)
+              ; account for uvar -> uvar conflicts
+              (for-each
+                (lambda (x)
+                  (uvar-degree-set! x
+                    (fx+
+                      ; spills have been trimmed from the var-spillable-conflict* sets
+                      (conflict-bit-count (var-spillable-conflict* x))
+                      (conflict-bit-count (var-unspillable-conflict* x)))))
+                x*)
+              ; account for reg -> uvar conflicts
+              (vector-for-each
+                (lambda (reg)
+                  (cset-for-each (var-spillable-conflict* reg)
+                    (lambda (x-offset)
+                      (let ([x (vector-ref varvec x-offset)])
+                        (unless (uvar-location x)
+                          (uvar-degree-set! x (fx+ (uvar-degree x) 1))))))
+                  (cset-for-each (var-unspillable-conflict* reg)
+                    (lambda (x-offset)
+                      (let ([x (vector-ref unvarvec x-offset)])
+                        (uvar-degree-set! x (fx+ (uvar-degree x) 1))))))
+                regvec)))
           (define-who find-home!
             (lambda (x)
+              (define conflict?
+                (lambda (reg x)
+                  (let ([cset (if (uvar-unspillable? x) (var-unspillable-conflict* reg) (var-spillable-conflict* reg))])
+                    (conflict-bit-set? cset (var-index x)))))
+              (define find-move-related-home
+                (lambda (x0 succ fail)
+                  (let f ([x x0] [work* '()] [clear-seen! void])
+                    (if (uvar-seen? x)
+                        (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
+                        (let ([clear-seen! (lambda () (uvar-seen! x #f) (clear-seen!))])
+                          (uvar-seen! x #t)
+                          (let loop ([move* (uvar-move* x)] [work* work*])
+                            (if (null? move*)
+                                (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
+                                (let ([var (caar move*)] [move* (cdr move*)])
+                                  (define try-reg
+                                    (lambda (reg)
+                                      (if (conflict? reg x0)
+                                          (loop move* work*)
+                                          (begin (clear-seen!) (succ reg)))))
+                                  (if (reg? var)
+                                      (try-reg var)
+                                      (if (uvar? var)
+                                          (let ([reg (uvar-location var)])
+                                            (if (reg? reg)
+                                                (try-reg reg)
+                                                (loop move* (cons var work*))))
+                                          (loop move* work*)))))))))))
               (define set-home!
                 (lambda (home)
+                  (define update-conflict!
+                    (lambda (reg x)
+                      (cset-merge! (var-spillable-conflict* reg) (var-spillable-conflict* x))
+                      (cset-merge! (var-unspillable-conflict* reg) (var-unspillable-conflict* x))))
                   (uvar-location-set! x home)
                   (update-conflict! home x)))
               (find-move-related-home x
@@ -15173,99 +15332,73 @@
                          (sorry! who "spilled unspillable ~s" x))]
                       [(conflict? (vector-ref regvec offset) x) (f (fx- offset 1))]
                       [else (set-home! (vector-ref regvec offset))]))))))
-          (define k (vector-length regvec))
-          (define low-degree? (lambda (x) (fx< (uvar-degree x) k)))
-          (define update-spillable-degree!
-            (lambda (x offset)
-              (when (conflict-bit-set? (var-spillable-conflict* x) offset)
-                (uvar-degree-set! x (fx- (uvar-degree x) 1)))))
-          (define update-unspillable-degree!
-            (lambda (x offset)
-              (when (conflict-bit-set? (var-unspillable-conflict* x) offset)
-                (uvar-degree-set! x (fx- (uvar-degree x) 1)))))
-          (define remove-victim!
-            (lambda (victim x*)
-              (let ([offset (var-index victim)])
-                (if (uvar-unspillable? victim)
-                    (for-each (lambda (x) (update-unspillable-degree! x offset)) x*)
-                    (for-each (lambda (x) (update-spillable-degree! x offset)) x*)))))
-          (define sort-victims
-            ; NB: sorts based on likelihood of successfully assigning move-related vars to the same register
-            ; NB: probably should sort based on value of assigning move-related vars to the same register,
-            ; NB: i.e., taking into account the ref-weight or uvar-weight
-            (lambda (victim*)
-              (map car
-                (list-sort
-                  (lambda (x y) (fx> (cdr x) (cdr y)))
-                  (map (lambda (x)
-                         (define relevant?
-                           (lambda (x)
-                             (or (reg? x) (and (uvar? x) (not (uvar-spilled? x))))))
-                         (do ([move* (uvar-move* x) (cdr move*)]
-                              [w 0 (let ([move (car move*)])
-                                     (if (relevant? (car move))
-                                         (fx+ w (cdr move))
-                                         w))])
-                           ((null? move*) (cons x w))))
-                    victim*)))))
-          (define uvar-weight
-            (lambda (x)
-              (fx- (uvar-ref-weight x) (uvar-save-weight x))))
-          (define pick-potential-spill
-            ; x* is already sorted by ref weight, so this effectively picks uvar with
-            ; the highest degree among those with the lowest ref weight
-            (lambda (x*)
-              (let ([x (let f ([x* (cdr x*)] [max-degree (uvar-degree (car x*))] [max-x (car x*)])
-                         (if (null? x*)
-                             max-x
-                             (let ([x (car x*)] [x* (cdr x*)])
-                               (if (or (uvar-unspillable? x) (fx> (uvar-weight x) (uvar-weight max-x)))
-                                   max-x
-                                   (let ([degree (uvar-degree x)])
-                                     (if (fx> degree max-degree)
-                                         (f x* degree x)
-                                         (f x* max-degree max-x)))))))])
-                (values x (remq x x*)))))
           (define pick-victims
             (lambda (x*)
+              (define low-degree? (lambda (x) (fx< (uvar-degree x) k)))
+              (define pick-potential-spill
+                ; x* is already sorted by weight, so this effectively picks uvar with
+                ; the highest degree among those with the lowest weight
+                (lambda (x*)
+                  (let ([x (let f ([x* (cdr x*)] [max-degree (uvar-degree (car x*))] [max-x (car x*)])
+                             (if (null? x*)
+                                 max-x
+                                 (let ([x (car x*)] [x* (cdr x*)])
+                                   (if (or (uvar-unspillable? x) (fx> (uvar-weight x) (uvar-weight max-x)))
+                                       max-x
+                                       (let ([degree (uvar-degree x)])
+                                         (if (fx> degree max-degree)
+                                             (f x* degree x)
+                                             (f x* max-degree max-x)))))))])
+                    (values x (remq x x*)))))
+              (define remove-victim!
+                (lambda (victim)
+                  (cset-for-each (var-spillable-conflict* victim)
+                    (lambda (offset)
+                      (let ([x (vector-ref varvec offset)])
+                        (uvar-degree-set! x (fx- (uvar-degree x) 1)))))
+                  (cset-for-each (var-unspillable-conflict* victim)
+                    (lambda (offset)
+                      (let ([x (vector-ref unvarvec offset)])
+                        (uvar-degree-set! x (fx- (uvar-degree x) 1)))))))
+              (define sort-victims
+                ; NB: sorts based on likelihood of successfully assigning move-related vars to the same register
+                ; NB: probably should sort based on value of assigning move-related vars to the same register,
+                ; NB: i.e., taking into account the ref-weight
+                (lambda (victim*)
+                  (map car
+                    (list-sort
+                      (lambda (x y) (fx> (cdr x) (cdr y)))
+                      (map (lambda (x)
+                             (define relevant?
+                               (lambda (x)
+                                 (or (reg? x) (and (uvar? x) (not (uvar-spilled? x))))))
+                             (do ([move* (uvar-move* x) (cdr move*)]
+                                  [w 0 (let ([move (car move*)])
+                                         (if (relevant? (car move))
+                                             (fx+ w (cdr move))
+                                             w))])
+                               ((null? move*) (cons x w))))
+                        victim*)))))
               (let-values ([(victim* keeper*) (partition low-degree? x*)])
                 (if (null? victim*)
                     (let-values ([(victim keeper*) (pick-potential-spill x*)])
                       ; note: victim can be an unspillable if x* contains only precolored unspillables
-                      (remove-victim! victim keeper*)
+                      (remove-victim! victim)
                       (values (list victim) keeper*))
                     (begin
                       (unless (null? keeper*)
                         ; tried creating a mask from victim*, logand with bv for each x, count the bits,
                         ; and subtract from x's uvar-degree-set!.  code in chaff.  didn't help at this point.
                         ; perhaps if fxbit-count were implemented better it would
-                        (for-each (lambda (victim) (remove-victim! victim keeper*)) victim*))
+                        (for-each remove-victim! victim*))
                       (values (sort-victims victim*) keeper*))))))
-          (define find-homes!
-            (lambda (x*)
-              (for-each compute-degree! x*)
-              (let f ([x* x*])
-                (unless (null? x*)
-                  (let-values ([(victim* x*) (pick-victims x*)])
-                    (f x*)
-                    (for-each find-home! victim*))))))
-          (let (#;[time0 (cpu-time)])
-            ; NB: consider taking into account the size of the live region, perhaps
-            ; NB: estimated by the length of the uvar's name :).
-            (let ([x* (append (sort (lambda (x y) (fx< (uvar-weight x) (uvar-weight y))) spillable*) unspillable*)])
-              (find-homes! x*)
-              #;(let ([ms (- (cpu-time) time0)])
-                (define lengths
-                  (lambda (x*)
-                    (let f ([x* x*] [ulen 0] [slen 0])
-                      (cond
-                        [(null? x*) (values ulen slen)]
-                        [(uvar-unspillable? (car x*)) (f (cdr x*) (fx+ ulen 1) slen)]
-                        [else (f (cdr x*) ulen (fx+ slen 1))]))))
-                (let-values ([(ulen slen) (lengths x*)])
-                  (when (> (fx+ ulen slen) 1000)
-                    (printf "ran assign-registers for ~a (~d unspillables, ~d spillables, ~d spilled) in ~d ms\n"
-                      (info-lambda-name lambda-info) ulen slen (- (length spillable*) slen) ms))))))))
+          (let ([x* (append (sort (lambda (x y) (fx< (uvar-weight x) (uvar-weight y))) spillable*) unspillable*)])
+            (compute-degrees! x*)
+            (let f ([x* x*])
+              (unless (null? x*)
+                (let-values ([(victim* x*) (pick-victims x*)])
+                  (f x*)
+                  (for-each find-home! victim*)))))))
 
       (define everybody-home?
         (lambda ()
@@ -15322,7 +15455,8 @@
                                      (let ([v (f (fx+ i 1) (cdr spillable*))])
                                        (uvar-iii-set! spillable i)
                                        (vector-set! v i (cons (unannotate source) (fv-offset (uvar-location spillable))))
-                                       v)])
+                                       v)]
+                                    [else (f i (cdr spillable*))])
                                   (let ([v (f (fx+ i 1) (cdr spillable*))])
                                     (uvar-iii-set! spillable i)
                                     (vector-set! v i (cons (unannotate source) (fv-offset (uvar-location spillable))))
@@ -15474,8 +15608,8 @@
                    [(_ ?unparser pass-name ?arg ...)
                     #'(xpass pass-name (RAprinter ?unparser) (list ?arg ...))]))))
            (safe-assert (andmap (lambda (x) (eq? (uvar-location x) #f)) local*))
-           (fluid-let ([spillable* local*] [unspillable* '()] [max-fv max-fv0] [max-fs@call 0])
-             (let ([kfv (fx+ max-fv 1)] [kreg (vector-length regvec)] [kspillable (length spillable*)])
+           (let ([kspillable (length local*)] [kfv (fx+ max-fv0 1)] [kreg (vector-length regvec)])
+             (fluid-let ([spillable* local*] [unspillable* '()] [max-fv max-fv0] [max-fs@call 0] [poison-cset (make-empty-cset kspillable)])
                (let* ([live-size (fx+ kfv kreg kspillable)] [varvec (make-vector live-size)])
                  ; set up var indices & varvec mapping from indices to vars
                  (fold-left (lambda (i x) (var-index-set! x i) (vector-set! varvec i x) (fx+ i 1)) 0 spillable*)
@@ -15489,10 +15623,12 @@
                    ; rerun intra-block live analysis and record (fv v reg v spillable) x spillable conflicts
                    (RApass unparse-L15a record-call-live! block* varvec)
                    ;; NB: we could just use (vector-length varvec) to get live-size
-                   (RApass unparse-L15a do-spillable-conflict! kspillable varvec live-size block*)
+                   (when (fx> kspillable 1000) ; NB: parameter?
+                     (RApass unparse-L15a identify-poison! kspillable varvec live-size block*))
+                   (RApass unparse-L15a do-spillable-conflict! kspillable kfv varvec live-size block*)
                    #;(show-conflicts (info-lambda-name info) varvec '#())
                    ; find frame homes for call-live variables; adds new fv x spillable conflicts
-                   (RApass unparse-L15a assign-frame!)
+                   (RApass unparse-L15a assign-frame! (filter uvar-spilled? spillable*))
                    #;(show-homes)
                    (RApass unparse-L15a record-inspector-information! info)
                    ; determine frame sizes at nontail-call sites and assign homes to new-frame variables
@@ -15500,19 +15636,25 @@
                    (let ([dummy (RApass unparse-L15b assign-new-frame! (with-output-language (L15a Dummy) `(dummy)) info live-size varvec block*)])
                      ; record fp offset on entry to each block
                      (RApass unparse-L15b record-fp-offsets! entry-block*)
+                     ; assign frame homes to poison variables
+                     (let ([spill* (filter (lambda (x) (and (not (uvar-location x)) (uvar-poison? x))) spillable*)])
+                       (unless (null? spill*)
+                         (for-each (lambda (x) (uvar-spilled! x #t)) spill*)
+                         (RApass unparse-L15b assign-frame! spill*)))
                      ; on entry to loop, have assigned call-live and new-frame variables to frame homes, determined frame sizes, and computed block-entry fp offsets
-                     (let ([v (vector-map var-spillable-conflict* regvec)]
+                     (let ([saved-reg-csets (vector-map (lambda (reg) (cset-copy (var-spillable-conflict* reg))) regvec)]
                            [bcache* (map cache-block-info block*)])
                        (let loop ()
                          (for-each
                            (lambda (spill)
                              ; remove each spill from each other spillable's spillable conflict set
-                             (let ([spill-index (var-index spill)] [cset (var-spillable-conflict* spill)])
-                               (cset-for-each cset
-                                 (lambda (i)
-                                   (let ([x (vector-ref varvec i)])
-                                     (unless (uvar-location x)
-                                       (conflict-bit-unset! (var-spillable-conflict* x) spill-index))))))
+                             (unless (uvar-poison? spill)
+                               (let ([spill-index (var-index spill)])
+                                 (cset-for-each (var-spillable-conflict* spill)
+                                   (lambda (i)
+                                     (let ([x (vector-ref varvec i)])
+                                       (unless (uvar-location x)
+                                         (conflict-bit-unset! (var-spillable-conflict* x) spill-index)))))))
                              ; release the spill's conflict* set
                              (var-spillable-conflict*-set! spill #f))
                            (filter uvar-location spillable*))
@@ -15530,7 +15672,7 @@
                                  ; rerun intra-block live analysis and record (reg v spillable v unspillable) x unspillable conflicts
                                  (RApass unparse-L15d do-unspillable-conflict! kfv kspillable varvec live-size kunspillable unvarvec block*)
                                  #;(show-conflicts (info-lambda-name info) varvec unvarvec)
-                                 (RApass unparse-L15d assign-registers! info)
+                                 (RApass unparse-L15d assign-registers! info varvec unvarvec)
                                  ; release the unspillable conflict sets
                                  (for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) spillable*)
                                  (vector-for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) regvec)
@@ -15552,11 +15694,11 @@
                                          `(lambda ,info (,entry-block* ...) (,block* ...))))
                                      (begin
                                        (for-each restore-block-info! block* bcache*)
-                                       (vector-for-each var-spillable-conflict*-set! regvec v)
+                                       (vector-for-each var-spillable-conflict*-set! regvec saved-reg-csets)
                                        (for-each (lambda (x) (uvar-location-set! x #f)) spillable*)
                                        (for-each uvar-move*-set! spillable* saved-move*)
                                        (set! unspillable* '())
-                                       (RApass unparse-L15b assign-frame!)
+                                       (RApass unparse-L15b assign-frame! (filter uvar-spilled? spillable*))
                                        (loop)))))))))))))))])))
 
     ; NB: commonize with earlier

@@ -21,12 +21,13 @@
     uvar-referenced? uvar-referenced! uvar-assigned? uvar-assigned!
     uvar-was-closure-ref? uvar-was-closure-ref!
     uvar-unspillable? uvar-spilled? uvar-spilled! uvar-local-save? uvar-local-save!
-    uvar-seen? uvar-seen! uvar-loop? uvar-loop!
+    uvar-seen? uvar-seen! uvar-loop? uvar-loop! uvar-poison? uvar-poison!
     uvar-in-prefix? uvar-in-prefix!
     uvar-location uvar-location-set!
     uvar-move* uvar-move*-set!
     uvar-conflict*
     uvar-ref-weight uvar-ref-weight-set! uvar-save-weight uvar-save-weight-set!
+    uvar-live-count uvar-live-count-set!
     uvar
     fv-offset
     var-spillable-conflict* var-spillable-conflict*-set!
@@ -161,6 +162,7 @@
     (loop               #b00001000000)
     (in-prefix          #b00010000000)
     (local-save         #b00100000000)
+    (poison             #b01000000000)
   )
 
   (define-record-type (uvar $make-uvar uvar?)
@@ -178,13 +180,14 @@
       (mutable iii)           ; inspector info index
       (mutable ref-weight)    ; must be a fixnum!
       (mutable save-weight)   ; must be a fixnum!
+      (mutable live-count)    ; must be a fixnum!
      )
     (nongenerative)
     (sealed #t)
     (protocol
       (lambda (pargs->new)
         (lambda (name source type conflict* flags)
-          ((pargs->new) name source type conflict* flags #f #f '() #f #f 0 0)))))
+          ((pargs->new) name source type conflict* flags #f #f '() #f #f 0 0 0)))))
   (define prelex->uvar
     (lambda (x)
       ($make-uvar (prelex-name x) (prelex-source x) 'ptr '()
@@ -829,6 +832,7 @@
       (return-point info rpl mrvl (cnfv* ...))
       (rp-header mrvl fs lpm)
       (remove-frame info)
+      (restore-local-saves info)
       (shift-arg reg imm info)
       (set! lvalue rhs)
       (inline info effect-prim t* ...)            => (inline info effect-prim t* ...)
@@ -949,6 +953,7 @@
       (return-point info rpl mrvl (cnfv* ...))
       (rp-header mrvl fs lpm)
       (remove-frame live-info info)
+      (restore-local-saves live-info info)
       (shift-arg live-info reg imm info)
       (set! live-info lvalue rhs)
       (inline live-info info effect-prim t* ...)
@@ -967,6 +972,7 @@
          (label (l))))
     (Effect (e)
       (- (remove-frame live-info info)
+         (restore-local-saves live-info info)
          (return-point info rpl mrvl (cnfv* ...))
          (shift-arg live-info reg imm info)
          (check-live live-info reg* ...))

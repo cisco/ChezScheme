@@ -11094,7 +11094,7 @@
          (pretty-print (make-expr n)))
        'truncate)
      (let ([start (current-time)])
-       (load "testfile.ss")
+       (load "testfile.ss" expand)
        (let ([delta (time-difference (current-time) start)])
          (+ (time-second delta)
             (* 1e-9 (time-nanosecond delta))))))
@@ -11102,7 +11102,7 @@
    (let loop ([tries 3])
      (when (zero? tries)
        (error 'source-cache-test "loading lots of `let-values` forms seems to take too long"))
-     (or (> (* 20 (time-expr 100))
+     (or (> (* 30 (time-expr 100))
             (time-expr 1000))
          (loop (sub1 tries)))))
 
