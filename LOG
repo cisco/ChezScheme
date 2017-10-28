@@ -660,7 +660,7 @@
   hand-coded bytevector=? handler.
     cpnanopass.ss
 - reduced live-pointer and inspector free-variable mask computation
-  overhead for live masks.
+  overhead
     cpnanopass.ss
 - moved regvec cset copies to driver so they aren't copied each
   time a uvar is assigned to a register.  removed checks for
