@@ -61,7 +61,7 @@ pdhtml = f
 # gac determines whether cost-center allocation counts are generated: f for false, t for true
 gac = f
 
-# gac determines whether cost-center instruction counts are generated: f for false, t for true
+# gic determines whether cost-center instruction counts are generated: f for false, t for true
 gic = f
 
 # pps determines whether pass timings are printed
@@ -151,7 +151,7 @@ allsrc =\
 # doit uses a different Scheme process to compile each target
 doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates}
 
-# doit uses a single Scheme process to compile all targets.  this is typically
+# all uses a single Scheme process to compile all targets.  this is typically
 # faster when most of the targets need to be recompiled.
 all: bootall ${Cheader} ${Cequates}
 

@@ -3496,7 +3496,7 @@
    ;; ----------------------------------------
    ;; Stress test to check that the GC doesn't suffer from quadratic
    ;; behavior
-   (begin
+   (let ()
      (define (wrapper v) (list 1 2 3 4 5 v))
      
      ;; Create a chain of ephemerons where we have all
@@ -3532,21 +3532,24 @@
        ;; off the end of the discover-ephemerons-one-at-a-time
        ;; chain, which is the most complex case for avoiding
        ;; quadratic GC times
-       (define-values (key es) (mk n (gensym) '()))
-       (define-values (root holds) (mk* n key es))
-
-       (define start (current-time))
-       (collect (collect-maximum-generation))
-       (let ([delta (time-difference (current-time) start)])
-         ;; Sanity check on ephemerons
-         (for-each (lambda (e)
-                     (when (eq? #!bwp (ephemeron-key e))
-                       (error 'check "oops")))
-                   es)
-         ;; Keep `root` and `holds` live:
-         (keep-alive (cons root holds))
-         ;; Return duration:
-         delta))
+       (parameterize ([collect-request-handler void] [collect-maximum-generation (max (collect-maximum-generation) 2)])
+         (collect 2)
+         (let*-values ([(key es) (mk n (gensym) '())]
+                       [(root holds) (mk* n key es)])
+           (let ([start (current-time)])
+             (collect 0 1)
+             (collect 1 2)
+             (collect 2 2)
+             (let ([delta (time-difference (current-time) start)])
+               ;; Sanity check on ephemerons
+               (for-each (lambda (e)
+                           (when (eq? #!bwp (ephemeron-key e))
+                             (error 'check "oops")))
+                         es)
+               ;; Keep `root` and `holds` live:
+               (keep-alive (cons root holds))
+               ;; Return duration:
+               delta)))))
 
      (define N 10000)
 
@@ -3558,11 +3561,14 @@
        (define dummy2 (set! dummy #f))
        (define t2 (measure-time N keep-alive))
        (define (duration->inexact t) (+ (* (time-second t) 1e9)
-                                        (time-nanosecond t)))
+                                        (inexact (time-nanosecond t))))
        (set! dummy #f)
-       (or (< (/ (duration->inexact t1) (duration->inexact t2)) 20)
-           (and (positive? tries)
-                (loop (sub1 tries))))))
+       (let ([t1 (duration->inexact t1)] [t2 (duration->inexact t2)])
+         (or (< (/ t1 t2) 20)
+           (begin
+             (printf "t1 = ~s, t2 = ~s, t1/t2 = ~s\n" t1 t2 (/ t1 t2))
+             (and (positive? tries)
+               (loop (sub1 tries))))))))
 
    ;; ----------------------------------------
    ;; Check interaction of mutation and generations

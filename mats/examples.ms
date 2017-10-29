@@ -1,4 +1,3 @@
-;; examples .ms
 ;;; examples.ms
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 

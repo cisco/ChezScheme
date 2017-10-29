@@ -33,10 +33,10 @@ fi
 case "$M" in
   a6fb) ;;
   a6le) ;;
-  a6ob) ;;
-  a6osx) ;;
   a6nb) ;;
   a6nt) ;;
+  a6ob) ;;
+  a6osx) ;;
   a6s2) ;;
   arm32le) ;;
   i3fb) ;;
@@ -50,10 +50,10 @@ case "$M" in
   ppc32le) ;;
   ta6fb) ;;
   ta6le) ;;
+  ta6nb) ;;
   ta6nt) ;;
   ta6ob) ;;
   ta6osx) ;;
-  ta6nb) ;;
   ta6s2) ;;
   tarm32le) ;;
   ti3fb) ;;
@@ -138,7 +138,6 @@ case $M in
     (cd $W/c; workln ../../c/vs.bat vs.bat)
     ;;
 esac
-
 
 workdir $W/s
 (cd $W/s; workln ../../s/Mf-$M Mf-$M)

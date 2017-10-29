@@ -1,13 +1,13 @@
 "bytevector.ss"
 ;;; bytevector.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -320,7 +320,7 @@
                                (little-ref v i))]
                         [else #`(little-ref v i)])]
                    [else (unrecognized-endianness who eness)])))])))
- 
+
     (define $bytevector-s16-ref (bytevector-*-ref s 16))
     (define $bytevector-u16-ref (bytevector-*-ref u 16))
     (define $bytevector-s24-ref (bytevector-*-ref s 24))
@@ -769,7 +769,7 @@
           ($oops who "index ~s + count ~s is beyond the end of ~s" i2 k v2))
        ; whew!
         (#3%bytevector-copy! v1 i1 v2 i2 k))))
-  
+
   (set-who! bytevector->immutable-bytevector
     (lambda (v)
       (cond
@@ -829,11 +829,11 @@
     (lambda (v i eness)
       ($bytevector-u24-ref v i eness who)))
 
-  (set-who! bytevector-s32-ref 
+  (set-who! bytevector-s32-ref
     (lambda (v i eness)
       ($bytevector-s32-ref v i eness who)))
 
-  (set-who! bytevector-u32-ref 
+  (set-who! bytevector-u32-ref
     (lambda (v i eness)
       ($bytevector-u32-ref v i eness who)))
 
@@ -861,67 +861,67 @@
     (lambda (v i eness)
       ($bytevector-u56-ref v i eness who)))
 
-  (set-who! bytevector-s64-ref 
+  (set-who! bytevector-s64-ref
     (lambda (v i eness)
       ($bytevector-s64-ref v i eness who)))
 
-  (set-who! bytevector-u64-ref 
+  (set-who! bytevector-u64-ref
     (lambda (v i eness)
       ($bytevector-u64-ref v i eness who)))
 
-  (set-who! bytevector-s16-set! 
+  (set-who! bytevector-s16-set!
     (lambda (v i k eness)
       ($bytevector-s16-set! v i k eness who)))
 
-  (set-who! bytevector-u16-set! 
+  (set-who! bytevector-u16-set!
     (lambda (v i k eness)
       ($bytevector-u16-set! v i k eness who)))
 
-  (set-who! bytevector-s24-set! 
+  (set-who! bytevector-s24-set!
     (lambda (v i k eness)
       ($bytevector-s24-set! v i k eness who)))
 
-  (set-who! bytevector-u24-set! 
+  (set-who! bytevector-u24-set!
     (lambda (v i k eness)
       ($bytevector-u24-set! v i k eness who)))
 
-  (set-who! bytevector-s32-set! 
+  (set-who! bytevector-s32-set!
     (lambda (v i k eness)
       ($bytevector-s32-set! v i k eness who)))
 
-  (set-who! bytevector-u32-set! 
+  (set-who! bytevector-u32-set!
     (lambda (v i k eness)
       ($bytevector-u32-set! v i k eness who)))
 
-  (set-who! bytevector-s40-set! 
+  (set-who! bytevector-s40-set!
     (lambda (v i k eness)
       ($bytevector-s40-set! v i k eness who)))
 
-  (set-who! bytevector-u40-set! 
+  (set-who! bytevector-u40-set!
     (lambda (v i k eness)
       ($bytevector-u40-set! v i k eness who)))
 
-  (set-who! bytevector-s48-set! 
+  (set-who! bytevector-s48-set!
     (lambda (v i k eness)
       ($bytevector-s48-set! v i k eness who)))
 
-  (set-who! bytevector-u48-set! 
+  (set-who! bytevector-u48-set!
     (lambda (v i k eness)
       ($bytevector-u48-set! v i k eness who)))
 
-  (set-who! bytevector-s56-set! 
+  (set-who! bytevector-s56-set!
     (lambda (v i k eness)
       ($bytevector-s56-set! v i k eness who)))
 
-  (set-who! bytevector-u56-set! 
+  (set-who! bytevector-u56-set!
     (lambda (v i k eness)
       ($bytevector-u56-set! v i k eness who)))
 
-  (set-who! bytevector-s64-set! 
+  (set-who! bytevector-s64-set!
     (lambda (v i k eness)
       ($bytevector-s64-set! v i k eness who)))
 
-  (set-who! bytevector-u64-set! 
+  (set-who! bytevector-u64-set!
     (lambda (v i k eness)
       ($bytevector-u64-set! v i k eness who)))
 

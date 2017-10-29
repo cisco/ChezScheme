@@ -720,3 +720,10 @@
     8.ms
 - updated allx, bullyx patches
     patch*
+- attempt to stabilize timing tests let-values source-caching
+  test and ephemeron gc test while resensitizing the former
+    8.ms, 4.ms
+- various formatting and comment corrections
+    workarea,
+    s/Mf-base, bytevector.ss, cpnanopass.ss, date.ss,
+    5_6.ms, examples.ms
