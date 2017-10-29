@@ -11093,18 +11093,22 @@
        (lambda ()
          (pretty-print (make-expr n)))
        'truncate)
-     (let ([start (current-time)])
-       (load "testfile.ss" expand)
-       (let ([delta (time-difference (current-time) start)])
-         (+ (time-second delta)
-            (* 1e-9 (time-nanosecond delta))))))
+     (collect)
+     (parameterize ([collect-request-handler void])
+       (let ([start (current-time)])
+         (load "testfile.ss" expand)
+         (let ([delta (time-difference (current-time) start)])
+           (+ (* #e1e9 (time-second delta))
+              (time-nanosecond delta))))))
 
    (let loop ([tries 3])
      (when (zero? tries)
        (error 'source-cache-test "loading lots of `let-values` forms seems to take too long"))
-     (or (> (* 30 (time-expr 100))
-            (time-expr 1000))
-         (loop (sub1 tries)))))
+     (let ([t1000 (time-expr 1000)] [t10000 (time-expr 10000)])
+       (or (> (* 20 t1000) t10000)
+         (begin
+           (printf "t1000 = ~s, t10000 = ~s, t10000 / t1000 = ~s\n" t1000 t10000 (inexact (/ t10000 t1000)))
+           (loop (sub1 tries)))))))
 
   (begin
     (define sfd-to-cache

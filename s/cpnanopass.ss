@@ -1,13 +1,13 @@
 "cpnanopass.ss"
 ;;; cpnanopass.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -824,7 +824,7 @@
     (define-record-type info-kill*-live* (nongenerative)
       (parent info-kill*)
       (fields live*)
-      (protocol 
+      (protocol
         (lambda (new)
           (case-lambda
             [(kill* live*)
@@ -838,7 +838,7 @@
       (fields libspec save-ra?)
       (protocol
         (lambda (new)
-          (case-lambda 
+          (case-lambda
             [(kill* libspec save-ra? live*)
              ((new kill* live*) libspec save-ra?)]
             [(kill* libspec save-ra?)
@@ -914,7 +914,7 @@
       (export dorest-intrinsic-max)
       (define (list-xtail ls n)
         (if (or (null? ls) (fx= n 0))
-            ls 
+            ls
             (list-xtail (cdr ls) (fx1- n))))
       (define dorest-intrinsics
         (let ()
@@ -1190,7 +1190,7 @@
             ; can't use a guard, since body isn't bound in guard.
             (if (eq? body x1)
                 (build-seq* profile1*
-                  (build-seq* profile2* 
+                  (build-seq* profile2*
                     `(letrec ([,x1 ,le*]) (call ,info1 ,x1 ,e* ...))))
                 `(call ,info1 ,(build-seq* profile1* (Expr e)) ,e* ...))]
            [else
@@ -1933,9 +1933,9 @@
             (define add-raw-counters
               (lambda (free** e)
                 (if (track-dynamic-closure-counts)
-                    (let f ([x** free**] [alloc 0] [raw 0]) 
+                    (let f ([x** free**] [alloc 0] [raw 0])
                       (if (null? x**)
-                          (add-counter '#{raw-create-count bhowt6w0coxl0s2y-2} (length free**) 
+                          (add-counter '#{raw-create-count bhowt6w0coxl0s2y-2} (length free**)
                             (add-counter '#{raw-alloc-count bhowt6w0coxl0s2y-3} alloc
                               (add-counter '#{raw-ref-count bhowt6w0coxl0s2y-1} raw e)))
                           (let ([x* (car x**)])
@@ -1998,7 +1998,7 @@
                                      (+ (static-closure-info-wk-borrowed-count ci) 1))]
                                  [(closure)
                                    (static-closure-info-nwk-closure-count-set! ci
-                                     (+ (static-closure-info-nwk-closure-count ci) 1)) 
+                                     (+ (static-closure-info-nwk-closure-count ci) 1))
                                    (static-closure-info-nwk-closure-free-var-count-set! ci
                                      (+ (static-closure-info-nwk-closure-free-var-count ci)
                                         (length (closure-free* c))))]
@@ -2112,7 +2112,7 @@
                          `(let ([,(closure-name c) ,(%primcall #f #f cons ,(map build-free-ref (closure-free* c)) ...)])
                             ,body)]
                         [(vector)
-                         `(let ([,(closure-name c) ,(%primcall #f #f vector ,(map build-free-ref (closure-free* c)) ...)]) 
+                         `(let ([,(closure-name c) ,(%primcall #f #f vector ,(map build-free-ref (closure-free* c)) ...)])
                             ,body)]
                         [else
                           (safe-assert (eq? (closure-type c) 'closure))
@@ -2156,7 +2156,7 @@
                      (with-frob-location (cadr free*) (add-ref-counter (%mref ,mcp ,(constant pair-cdr-disp)))
                        (Expr body index bank)))]
                   [else
-                    (safe-assert (memq type '(vector closure))) 
+                    (safe-assert (memq type '(vector closure)))
                     (let f ([free* free*] [i (if (eq? type 'vector) (constant vector-data-disp) (constant closure-data-disp))])
                       (if (null? free*)
                           (Expr body index bank)
@@ -2244,7 +2244,7 @@
                ; find closures w/free variables (non-constant closures) and propagate
                (when (ormap (lambda (c) (not (null? (closure-free* c)))) c*)
                  (for-each
-                   (lambda (c) 
+                   (lambda (c)
                      (closure-free*-set! c (append (closure-sibling* c) (closure-free* c))))
                    c*))
 
@@ -2416,7 +2416,7 @@
                              (let-values ([(out ...) (proc (car ls1) (car ls2) ...)]
                                           [(out* ...) (f (cdr ls1) (cdr ls2) ...)])
                                (values (cons out out*) ...))))))))])))
-      (define-who loop-unroll-limit 
+      (define-who loop-unroll-limit
         ($make-thread-parameter
           0 ; NB: disabling loop unrolling for now
           (lambda (x)
@@ -2428,14 +2428,14 @@
       ;; Code growth computation is a little restrictive since it's measured
       ;; per loop... but maybe since new-size is weighted when profiling is
       ;; enabled it's fine.
-      #;(define CODE-GROWTH-FACTOR (fx1+ (loop-unroll-limit))) 
+      #;(define CODE-GROWTH-FACTOR (fx1+ (loop-unroll-limit)))
       (define-syntax delay
         (syntax-rules ()
           [(_ x) (lambda () x)]))
       (define (force x) (if (procedure? x) (x) x))
       (define-who analyze-loops ;; -> (lambda () body) size new-weighted-size
         (lambda (body path-size unroll-count)
-          (with-output-language (L7 Expr) 
+          (with-output-language (L7 Expr)
             ;; Not really a loop, just didn't want to pass around path-size and unroll-count when unnecessary
             (let loop ([body body])
               (if (not body)
@@ -2449,7 +2449,7 @@
                      (values (delay `(mref ,(force e1-promise) ,(force e2-promise) ,imm))
                        (fx+ e1-size e2-size 1)
                        (fx+ e1-new-size e2-new-size 1))]
-                    [,lvalue (values body 1 1)] 
+                    [,lvalue (values body 1 1)]
                     [(profile ,src) (values body 0 0)]
                     [(pariah) (values body 0 0)]
                     [(label-ref ,l ,offset) (values body 0 0)]
@@ -2471,23 +2471,23 @@
                             [query-count (if (or (not query-count) (< query-count .1)) 0 (exact (truncate (* query-count 1000))))]
                             ;; allow path-size to increase up to 300
                             [adjusted-path-size-limit (fx+ PATH-SIZE-LIMIT (fx/ (or query-count 0) 5))]
-                            ;; allow unroll limit to increase up to 4 
+                            ;; allow unroll limit to increase up to 4
                             [adjusted-unroll-limit (fx+ (loop-unroll-limit) (fx/ (or query-count 0) 300))])
                        (if (or (fxzero? query-count)
                                (fxzero? (fx+ unroll-count adjusted-unroll-limit))
                                (fx> path-size adjusted-path-size-limit))
-                           (begin 
+                           (begin
                              (values (delay `(call ,info ,mdcl ,x ,(map force e*-promise) ...))
                                (fx1+ (apply fx+ size*))
-                               (fx1+ (apply fx+ new-size*)))) 
+                               (fx1+ (apply fx+ new-size*))))
                            (let*-values ([(var*) (car (uvar-location x))]
                                          [(loop-body-promise body-size new-size) (analyze-loops (cdr (uvar-location x)) (fx1+ path-size) (fx1- unroll-count))]
                                          [(new-size) ((lambda (x) (if query-count (fx/ x query-count) x)) (fx+ (length e*-promise) new-size))]
                                          [(acceptable-new-size) (fx* (fx1+ adjusted-unroll-limit) body-size)])
                              ;; NB: trying code growth computation here, where it could be per call site.
-                             (values 
+                             (values
                                (if (<= new-size acceptable-new-size)
-                                   (delay (fold-left 
+                                   (delay (fold-left
                                             (lambda (body var e-promise)
                                               `(seq (set! ,var ,(force e-promise)) ,body))
                                             (rename-loop-body (force loop-body-promise))
@@ -2511,7 +2511,7 @@
                      (values (delay `(foreign-call ,info ,(force e-promise) ,(map force e*-promise) ...))
                        (fx+ 5 e-size (apply fx+ size*))
                        (fx+ 5 e-new-size (apply fx+ new-size*)))]
-                    [(label ,l ,[loop : body -> e size new-size]) 
+                    [(label ,l ,[loop : body -> e size new-size])
                      (values (delay `(label ,l ,(force e))) size new-size)]
                     [(mvlet ,[loop : e -> e-promise e-size e-new-size] ((,x** ...) ,interface* ,body*) ...)
                      (let-values ([(body*-promise body*-size body*-new-size) (mvmap 3 (lambda (e) (analyze-loops e (fx+ e-size path-size) unroll-count)) body*)])
@@ -2529,7 +2529,7 @@
                        (values (delay `(let ([,x* ,(map force e*-promise)] ...) ,(force body-promise)))
                          (fx+ 1 body-size (apply fx+ size*))
                          (fx+ 1 body-new-size (apply fx+ new-size*))))]
-                    [(if ,[loop : e0 -> e0-promise e0-size e0-new-size] ,e1 ,e2) 
+                    [(if ,[loop : e0 -> e0-promise e0-size e0-new-size] ,e1 ,e2)
                      (let-values ([(e1-promise e1-size e1-new-size) (analyze-loops e1 (fx+ path-size e0-size) unroll-count)]
                                   [(e2-promise e2-size e2-new-size) (analyze-loops e2 (fx+ path-size e0-size) unroll-count)])
                        (values (delay `(if ,(force e0-promise) ,(force e1-promise) ,(force e2-promise)))
@@ -2556,7 +2556,7 @@
                     [else ($oops who "forgot a case: ~a" body)]))))))
 
       (define-pass rename-loop-body : (L7 Expr) (ir) -> (L7 Expr) ()
-        (definitions 
+        (definitions
           (define-syntax with-fresh
             (syntax-rules ()
               [(_ rename-ht x* body)
@@ -2570,15 +2570,15 @@
           [,x (eq-hashtable-ref rename-ht x x)]
           [(mref ,[e1] ,[e2] ,imm) `(mref ,e1 ,e2 ,imm)])
         (Expr : Expr (ir rename-ht) -> Expr ()
-          [(loop ,x (,[Lvalue : x* rename-ht -> x*] ...) ,body) 
-           ;; NB: with-fresh is so well designed that it can't handle this case 
+          [(loop ,x (,[Lvalue : x* rename-ht -> x*] ...) ,body)
+           ;; NB: with-fresh is so well designed that it can't handle this case
            (let*-values ([(x) (list x)]
                          [(x body) (with-fresh rename-ht x (values (car x) (Expr body rename-ht)))])
              `(loop ,x (,x* ...) ,body))]
-          [(let ([,x* ,[e*]] ...) ,body) 
-           (with-fresh rename-ht x* 
+          [(let ([,x* ,[e*]] ...) ,body)
+           (with-fresh rename-ht x*
              `(let ([,x* ,e*] ...) ,(Expr body rename-ht)))]
-          [(mvlet ,[e] ((,x** ...) ,interface* ,body*) ...) 
+          [(mvlet ,[e] ((,x** ...) ,interface* ,body*) ...)
            (let* ([x**/body* (map (lambda (x* body)
                                     (with-fresh rename-ht x* (cons x* (Expr body rename-ht))))
                                x** body*)]
@@ -2600,7 +2600,7 @@
                    (begin
                      #;(printf "Opt: ~a\n" x)
                      `(loop ,x (,x* ...) ,(force e-promise)))
-                   (begin 
+                   (begin
                      #;(printf "New size: ~a, old size: ~a\n" new-size size)
                      ir)))]))
       (set! $loop-unroll-limit loop-unroll-limit))
@@ -3194,7 +3194,7 @@
                          (goto ,Lbig)
                          ,(build-fix lo))
                      (label ,Lbig
-                       ,(%seq 
+                       ,(%seq
                           (set! ,%ac0 ,lo)
                           (set! ,(ref-reg %ac1) ,hi)
                           (set! ,%ac0 (inline ,(intrinsic-info-asmlib dofretuns64 #f) ,%asmlibcall))
@@ -3926,7 +3926,7 @@
                    [() `(immediate ,(fix base))]
                    [e* (and (fx<= (length e*) (fx- inline-args-limit 1))
                             (list-bind #t (e*)
-                              ;; NB: using inline-op here because it works when target's 
+                              ;; NB: using inline-op here because it works when target's
                               ;; NB: fixnum range is larger than the host's fixnum range
                               ;; NB: during cross compile
                               (let-values ([(e e* nc*) (log-partition inline-op base e*)])
@@ -5128,7 +5128,7 @@
               `(seq
                  ,(build-dirty-store e-sym (constant symbol-value-disp) e-value)
                  (set! ,(%mref ,e-sym ,(constant symbol-pvalue-disp))
-                   (literal 
+                   (literal
                      ,(make-info-literal #f 'library
                         (lookup-libspec nonprocedure-code)
                         (constant code-data-disp)))))))
@@ -5460,7 +5460,7 @@
                  (define (go3 e1 e2 e3)
                    (bind #t (e2)
                      (bind #f (e3)
-                       (build-and 
+                       (build-and
                          (go2 e1 e2)
                          (go2 e2 e3)))))
                  (define-inline 3 op
@@ -7892,42 +7892,42 @@
           (let ()
             (define build-bytevector-ref-check
               (lambda (e-bits e-bv e-i check-mutable?)
-               (nanopass-case (L7 Expr) e-bits
-                 [(quote ,d)
-                  (guard (and (fixnum? d) (fx> d 0) (fx= (* (fxquotient d 8) 8) d)))
-                  (let ([bits d] [bytes (fxquotient d 8)])
-                    (bind #t (e-bv e-i)
-                      (build-and
-                        (%type-check mask-typed-object type-typed-object ,e-bv)
-                        (bind #t ([t (%mref ,e-bv ,(constant bytevector-type-disp))])
-                          (build-and
-                            (if check-mutable?
-                                (%type-check mask-mutable-bytevector type-mutable-bytevector ,t)
-                                (%type-check mask-bytevector type-bytevector ,t))
-                            (cond
-                              [(expr->index e-i bytes (constant maximum-bytevector-length)) =>
-                               (lambda (index)
-                                 (%inline u<
-                                   (immediate ,(logor (ash (+ index (fx- bytes 1)) (constant bytevector-length-offset))
-                                                 (constant type-bytevector)))
-                                   ,t))]  
-                              [else
-                                (build-and
-                                  ($type-check (fxlogor (fix (fx- bytes 1)) (constant mask-fixnum)) (constant type-fixnum) e-i)
+                (nanopass-case (L7 Expr) e-bits
+                  [(quote ,d)
+                   (guard (and (fixnum? d) (fx> d 0) (fx= (* (fxquotient d 8) 8) d)))
+                   (let ([bits d] [bytes (fxquotient d 8)])
+                     (bind #t (e-bv e-i)
+                       (build-and
+                         (%type-check mask-typed-object type-typed-object ,e-bv)
+                         (bind #t ([t (%mref ,e-bv ,(constant bytevector-type-disp))])
+                           (build-and
+                             (if check-mutable?
+                                 (%type-check mask-mutable-bytevector type-mutable-bytevector ,t)
+                                 (%type-check mask-bytevector type-bytevector ,t))
+                             (cond
+                               [(expr->index e-i bytes (constant maximum-bytevector-length)) =>
+                                (lambda (index)
                                   (%inline u<
-                                    ; NB. add cannot overflow or change negative to positive when
-                                    ; low-order (log2 bytes) bits of fixnum value are zero, as
-                                    ; guaranteed by type-check above
-                                    ,(if (fx= bytes 1)
-                                         e-i
-                                         (%inline + ,e-i (immediate ,(fix (fx- bytes 1)))))
-                                    ,(%inline logand
-                                       ,(translate t
-                                          (constant bytevector-length-offset)
-                                          (constant fixnum-offset))
-                                       (immediate ,(- (constant fixnum-factor))))))]))))))]
-                 [(seq (profile ,src) ,[e]) (and e `(seq (profile ,src) ,e))]
-                 [else #f])))
+                                    (immediate ,(logor (ash (+ index (fx- bytes 1)) (constant bytevector-length-offset))
+                                                  (constant type-bytevector)))
+                                    ,t))]
+                               [else
+                                 (build-and
+                                   ($type-check (fxlogor (fix (fx- bytes 1)) (constant mask-fixnum)) (constant type-fixnum) e-i)
+                                   (%inline u<
+                                     ; NB. add cannot overflow or change negative to positive when
+                                     ; low-order (log2 bytes) bits of fixnum value are zero, as
+                                     ; guaranteed by type-check above
+                                     ,(if (fx= bytes 1)
+                                          e-i
+                                          (%inline + ,e-i (immediate ,(fix (fx- bytes 1)))))
+                                     ,(%inline logand
+                                        ,(translate t
+                                           (constant bytevector-length-offset)
+                                           (constant fixnum-offset))
+                                        (immediate ,(- (constant fixnum-factor))))))]))))))]
+                  [(seq (profile ,src) ,[e]) (and e `(seq (profile ,src) ,e))]
+                  [else #f])))
             (define-inline 2 $bytevector-ref-check?
               [(e-bits e-bv e-i) (build-bytevector-ref-check e-bits e-bv e-i #f)])
             (define-inline 2 $bytevector-set!-check?
@@ -9065,7 +9065,7 @@
                    ,(u32xu32->ptr t-hi %real-zero)))])])
 
         (define-inline 3 $read-performance-monitoring-counter
-          [(e) 
+          [(e)
            (constant-case architecture
              [(x86)
               (%seq
@@ -9275,7 +9275,7 @@
               (unless (uvar-in-prefix? x)
                 (uvar-in-prefix! x #t)
                 (set! prefix* (cons x prefix*))))))
-        (define add-prefix*! (lambda (x*) (for-each add-prefix! x*))) 
+        (define add-prefix*! (lambda (x*) (for-each add-prefix! x*)))
         (define reset-prefix*!
           (lambda (orig-prefix*)
             (let loop ([ls prefix*] [diff* '()])
@@ -9440,7 +9440,7 @@
         (define build-seq* (lambda (x* y) (fold-right build-seq y x*)))
         (with-output-language (L10 Expr)
           (define build-seq (lambda (x y) `(seq ,x ,y)))
-          (define Rhs 
+          (define Rhs
             (lambda (ir lvalue)
               (Expr ir
                 (lambda (e)
@@ -9714,7 +9714,7 @@
                              ,(Pvalues #f (list tmp))))]
                       [else ; set! & mvset
                         `(seq ,e ,(Pvalues #f (list (%constant svoid))))])])
-             (let-values ([(label* body*) 
+             (let-values ([(label* body*)
                            (let loop ([label* label*] [body* body*] [rlabel* '()] [rbody* '()])
                              (if (null? label*)
                                  (values rlabel* rbody*)
@@ -9909,7 +9909,7 @@
                    (pariah)
                    (mvcall ,(make-info-call #f #f #f #t #f) #f
                      (literal ,(make-info-literal #f 'library
-                                 (if ioc 
+                                 (if ioc
                                      (lookup-does-not-expect-headroom-libspec event)
                                      (lookup-libspec event))
                                  0))
@@ -12090,7 +12090,7 @@
             `(lambda ,(make-info "$install-library-entry" '(2)) 0 ()
                ,(%seq
                   ,(with-saved-ret-reg
-                     (%seq 
+                     (%seq
                        ,(save-scheme-state
                           (in scheme-args)
                           (out %ac0 %ac1 %cp %xp %yp %ts %td extra-regs))
@@ -12429,7 +12429,7 @@
         (define add-instr!
           (lambda (block ir)
             (block-effect*-set! block (cons ir (block-effect* block)))))
-  
+
         (define add-label-link!
           (lambda (from l setter)
             (let ([x (local-label-block l)])
@@ -12443,7 +12443,7 @@
               (safe-assert (not (block? x)))
               (when x (for-each (lambda (add-link!) (add-link! to)) x))
               (local-label-block-set! l to))))
-  
+
         (define-pass build-graph : (L14 Tail) (ir) -> * (block block*)
           (definitions
             (define add-goto-block
@@ -12653,7 +12653,7 @@
              (include "types.ss")
              (let ([n (fx- ($block-counter) 1)])
                ($block-counter n)
-               (block-pseudo-src-set! block 
+               (block-pseudo-src-set! block
                  (make-source ($sfd) n (block-checksum block)))))
            block*)
          ir]))
@@ -12736,7 +12736,7 @@
         [(lambda ,info ,max-fv (,local* ...) (,entry-block* ...) (,block* ...))
          (safe-assert (not (ormap block-seen? block*)))
          ; optimistically assume all blocks are pariahs, then un-pariah anything reachable from
-         ; the entry block without going through a known pariah block 
+         ; the entry block without going through a known pariah block
          (for-each (lambda (b) (if (block-pariah? b) (block-seen! b #t) (block-pariah! b #t))) block*)
          (for-each propagate! entry-block*)
          (for-each (lambda (b) (block-seen! b #f)) block*)
@@ -12863,7 +12863,7 @@
                              [else (sorry! who "unrecognized block ~s" block)])])
                 (safe-assert (not (null? links)))
                 ; AWK: we are missing the notion of those instructions that usually
-                ; succeed (dooverflow, dooverflood, call-error, fx+? and fx-? in 
+                ; succeed (dooverflow, dooverflood, call-error, fx+? and fx-? in
                 ; the original blocks.ss code)
                 (let-values ([(pariah* non-pariah*)
                               (partition (lambda (link) (block-pariah? (link-to link))) links)])
@@ -13010,7 +13010,7 @@
                           (cons* (car effect*) ir (cdr effect*))
                           (cons ir effect*))))))
               (with-output-language (L15a Effect)
-                (add-instr! block 
+                (add-instr! block
                   `(inline ,(make-live-info) ,null-info ,%inc-profile-counter
                      (literal ,(make-info-literal #t 'object counter (constant record-data-disp)))
                      (immediate 1))))))
@@ -13068,8 +13068,8 @@
           ; op -> counter | (plus-counter* . minus-counter*)
           ; plus-counter* -> (op ...)
           ; minus-counter* -> (op ...)
-          (define make-op 
-            (lambda (plus minus) 
+          (define make-op
+            (lambda (plus minus)
               ; optimize ((op) . ()) => op
               (if (and (null? minus) (fx= (length plus) 1))
                   (car plus)
@@ -13109,7 +13109,7 @@
                        (link-op-set! l counter)
                        counter))])))
           (define (filter-src* block)
-            (cond 
+            (cond
               [(eq? ($compile-profile) 'source) (block-src* block)]
               [(block-pseudo-src block) => list]
               [else '()]))
@@ -13327,7 +13327,7 @@
                   [(newframe-block? block) (fprintf p "   ~s\n" `(goto ,(block->pretty-name (newframe-block-next block))))]
                   [else (sorry! who "unrecognized block ~s" block)]))
               block*)))))
-  
+
     (define-pass np-add-in-links! : L15a (ir) -> L15a ()
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
         [(lambda ,info ,max-fv (,local* ...) (,entry-block* ...) (,block* ...))
@@ -13360,7 +13360,7 @@
                (lambda (b)
                  (unless (block-finished? b)
                    (if (block-seen? b)
-                       (begin 
+                       (begin
                          (block-loop-header! b #t)
                          (set! lh* (cons b lh*)))
                        (begin
@@ -14127,7 +14127,7 @@
                          (let ([out (if (info-kill*? info) (fold-left remove-var out (info-kill*-kill* info)) out)])
                            (live-info-live-set! live-info out)
                            (let ([out (fold-left Triv out t*)])
-                             (if (info-kill*-live*? info) 
+                             (if (info-kill*-live*? info)
                                  (fold-left add-var out (info-kill*-live*-live* info))
                                  out)))]
                         [(remove-frame ,live-info ,info) (live-info-live-set! live-info out) out]
@@ -14225,7 +14225,7 @@
                                        (let ([call (add-var
                                                      (fold-left
                                                        (lambda (live* x*) (fold-left remove-var live* x*))
-                                                       rp 
+                                                       rp
                                                        (cons*
                                                          ; could base set of registers to kill on expected return values
                                                          (reg-cons* %ret %ac0 arg-registers)
@@ -14293,7 +14293,7 @@
                           (uvar-spilled! x #t)
                           (unless (block-pariah? block)
                             (uvar-save-weight-set! x
-                              (fixnum 
+                              (fixnum
                                 (+ (uvar-save-weight x)
                                    (* (info-newframe-weight newframe-info) 2)))))))
                       call-live*)
@@ -14771,7 +14771,7 @@
                     (let ([effect* (block-effect* block)])
                       (block-fp-offset-set! block cur-off)
                       (cond
-                        [(goto-block? block) 
+                        [(goto-block? block)
                          (record-fp-offsets! (goto-block-next block) (fold-left Effect cur-off effect*))]
                         [(joto-block? block)
                          (record-fp-offsets! (joto-block-next block) 0)]
@@ -14932,7 +14932,7 @@
         (define-pass literal@->literal : (L15c Triv) (ir) -> (L15d Triv) ()
           (Triv : Triv (ir) -> Triv ()
             [(literal ,info)
-             `(literal 
+             `(literal
                 ,(make-info-literal #f (info-literal-type info)
                    (info-literal-addr info) (info-literal-offset info)))]
             [else (sorry! who "unexpected literal ~s" ir)]))
@@ -15001,7 +15001,7 @@
                 (if force-overflow?
                     (fxmax
                       (fx- (fx* max-fs@call (constant ptr-bytes)) 0)
-                      (fx- (fx* (fx+ max-fv 1) (constant ptr-bytes)) (fx- (constant stack-slop) (fx* (constant stack-frame-limit) 2)))) 
+                      (fx- (fx* (fx+ max-fv 1) (constant ptr-bytes)) (fx- (constant stack-slop) (fx* (constant stack-frame-limit) 2))))
                     (fxmax
                       (fx- (fx* max-fs@call (constant ptr-bytes)) (constant stack-frame-limit))
                       (fx- (fx* (fx+ max-fv 1) (constant ptr-bytes)) (fx- (constant stack-slop) (constant stack-frame-limit)))))))

@@ -96,7 +96,7 @@
       (scheme-object)
       scheme-object))
 
-  (define $mktime ; dtvec -> tspair        (returns #f on error)
+  (define $mktime ; dtvec -> tspair                (returns #f on error)
     (foreign-procedure "(cs)mktime"
       (scheme-object)
       scheme-object))
@@ -389,10 +389,10 @@
                  ($oops 'make-date "invalid day ~s for month ~s and year ~s" day mon year))
                (make-dt dtvec)))])
       (case-lambda
-       [(nsec sec min hour day mon year tz)
-        (do-make-date nsec sec min hour day mon year tz #t)]
-       [(nsec sec min hour day mon year)
-        (do-make-date nsec sec min hour day mon year #f #f)])))
+        [(nsec sec min hour day mon year tz)
+         (do-make-date nsec sec min hour day mon year tz #t)]
+        [(nsec sec min hour day mon year)
+         (do-make-date nsec sec min hour day mon year #f #f)])))
 
   (set! date? (lambda (x) (dt? x)))
 
