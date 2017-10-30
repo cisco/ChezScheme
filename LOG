@@ -727,3 +727,5 @@
     workarea,
     s/Mf-base, bytevector.ss, cpnanopass.ss, date.ss,
     5_6.ms, examples.ms
+- updated newrelease to handle mats/Mf-*nt
+    newrelease mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt
