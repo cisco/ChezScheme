@@ -99,6 +99,12 @@ foreach fn (c/Makefile.{,t}{a6,i3}nt)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
 end
 
+/bin/rm -f mats/Mf-{,t}{i3,a6}nt
+foreach fn (mats/Mf-{,t}{a6,i3}nt)
+  set updatedfiles = ($updatedfiles $fn)
+  sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
+end
+
 sed -e "s/csv[0-9][.0-9][0-9]*/csv$ZR/g" ../workarea > workarea
 chmod +x workarea
 set updatedfiles = ($updatedfiles workarea)

@@ -727,6 +727,8 @@
     workarea,
     s/Mf-base, bytevector.ss, cpnanopass.ss, date.ss,
     5_6.ms, examples.ms
+- updated newrelease to handle mats/Mf-*nt
+    newrelease mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt
 - fixed gather-filedata's sort of profile entries.  for any two
   entries x and y in the list produced by the sort call, if x's
   bfp = y's bfp, x should come before y if x's efp < y's efp.
