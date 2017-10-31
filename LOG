@@ -727,3 +727,18 @@
     workarea,
     s/Mf-base, bytevector.ss, cpnanopass.ss, date.ss,
     5_6.ms, examples.ms
+- fixed gather-filedata's sort of profile entries.  for any two
+  entries x and y in the list produced by the sort call, if x's
+  bfp = y's bfp, x should come before y if x's efp < y's efp.
+  The idea is that enclosing entries should always come later
+  in the list.  this affects only languages where two expressions
+  can start at the same character position.
+    pdhtml.ss
+- expanded capability of ez-grammar with support for simpl
+  parsing of binary operators w/precedence and associativity
+  and automatically generated markdown grammar descriptions.
+  ez-grammar-test.ss now also doubles as a test of pdhtml for
+  algebraic languages.
+    mats/examples.ms,
+    examples/ez-grammar.ss, examples/ez-grammar-test.ss,
+    examples/Makefile

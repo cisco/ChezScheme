@@ -204,7 +204,7 @@
             (let ([entry* (sort (lambda (x y)
                                   (or (> (entrydata-bfp x) (entrydata-bfp y))
                                       (and (= (entrydata-bfp x) (entrydata-bfp y))
-                                           (> (entrydata-efp x) (entrydata-efp y)))))
+                                           (< (entrydata-efp x) (entrydata-efp y)))))
                                 (filedata-entry* fdata))])
               #;(assert (not (null? entry*)))
               (let loop ([entry (car entry*)] [entry* (cdr entry*)] [new-entry* '()])
