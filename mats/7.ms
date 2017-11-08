@@ -834,6 +834,47 @@
   (begin
     (rm-rf "testdir")
     #t)
+  ; make sure maybe-compile-file handles incomplete fasl files
+  (begin
+    (mkfile "testfile-mc-2a.ss"
+      '(library (testfile-mc-2a)
+         (export q)
+         (import (chezscheme))
+         (define f
+           (lambda ()
+             (printf "running f\n")
+             "x"))
+         (define-syntax q
+           (begin
+             (printf "expanding testfile-mc-2a\n")
+             (lambda (x)
+               (printf "expanding q\n")
+               #'(f))))))
+    (mkfile "testfile-mc-2.ss"
+      '(import (chezscheme) (testfile-mc-2a))
+      '(define-syntax qq
+         (begin
+           (printf "expanding testfile-mc-2\n")
+           (lambda (x)
+             (printf "expanding qq\n")
+             #'q)))
+      '(printf "qq => ~a\n" qq))
+    (delete-file "testfile-mc-2a.so")
+    (delete-file "testfile-mc-2.so")
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f]) (maybe-compile-program x))) 'mc-2))
+    #t)
+  (begin
+    (let ([p (open-file-input/output-port "testfile-mc-2a.so" (file-options no-create no-fail no-truncate))])
+      (set-port-length! p 73)
+      (close-port p))
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
+    #t)
+  (begin
+    (let ([p (open-file-input/output-port "testfile-mc-2.so" (file-options no-create no-fail no-truncate))])
+      (set-port-length! p 87)
+      (close-port p))
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
+    #t)
  )
 
 (mat make-boot-file
