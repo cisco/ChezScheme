@@ -744,3 +744,11 @@
     mats/examples.ms,
     examples/ez-grammar.ss, examples/ez-grammar-test.ss,
     examples/Makefile
+- maybe-compile-{file,program,library} and automatic import
+  compilation now treat a malformed object file as if it were
+  not present and needs to be regenerated.  A malformed object
+  file (particularly a truncated one) might occur if the compiling
+  processes is killed or aborts before it has a chance to delete
+  a partial object file.
+    syntax.ss,
+    7.ms
