@@ -1760,6 +1760,16 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Improved compile times (9.5.1)}
+
+Compile times are now lower, sometimes by an order of magnitude or
+more, for procedures with thousands of parameters, local variables,
+and compiler-introduced temporaries.
+For such procedures, the register/frame allocator proactively spills
+variables with large live ranges, cutting down on the size and cost
+of building the conflict graph used to represent pairs of variables
+that are live at the same time and therefore cannot share a location.
+
 \subsection{Improved oblist management (9.3.3)}
 
 As a result of improvements in the handing of the oblist (symbol table),
