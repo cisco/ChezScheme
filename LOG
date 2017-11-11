@@ -971,3 +971,9 @@
   bootstrap failures after small changes like the recent change to
   procedure names, so we don't have to rebuild the boot files as often.
     Mf-base
+- added box-cas! and vector-cas!
+    prims.ss, cpnanopass.ss, np-languages.ss,
+    cmacros.ss, library.ss, primdata.ss
+    x86_64.ss x86.ss, ppc32.ss, arm32.ss,
+    5_6.ms, 5_8.ms, root-experr*,
+    objects.stex, release_notes.stex

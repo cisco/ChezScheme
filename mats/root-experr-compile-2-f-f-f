@@ -3954,6 +3954,15 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is not a mutable vector".
 5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-set!: #vfx(1 2 3) is not a mutable fxvector".
 5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-fill!: #vfx(1 2 3) is not a mutable fxvector".
+5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1)".
+5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1 1)".
+5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1 1 2)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1 is not a mutable vector".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a mutable vector".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1267650600228229401496703205376 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: -1 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 5 is not a valid index for #(4 5 3)".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: a is not a string".
 5_7.mo:Expected error in mat gensym: "gensym: #(a b c) is not a string".
@@ -3976,6 +3985,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_7.mo:Expected error in mat putprop-getprop: "getprop: 3 is not a symbol".
 5_7.mo:Expected error in mat putprop-getprop: "putprop: "hi" is not a symbol".
 5_7.mo:Expected error in mat putprop-getprop: "property-list: (a b c) is not a symbol".
+5_8.mo:Expected error in mat box-cas!: "incorrect argument count in call (box-cas! bx1)".
+5_8.mo:Expected error in mat box-cas!: "incorrect argument count in call (box-cas! bx1 1)".
+5_8.mo:Expected error in mat box-cas!: "box-cas!: 1 is not a mutable box".
+5_8.mo:Expected error in mat box-cas!: "box-cas!: #&1 is not a mutable box".
 6.mo:Expected error in mat port-operations: "open-input-file: failed for nonexistent file: no such file or directory".
 6.mo:Expected error in mat port-operations: "open-input-file: failed for nonexistent file: no such file or directory".
 6.mo:Expected error in mat port-operations: "open-output-file: failed for /nonexistent/directory/nonexistent/file: no such file or directory".
