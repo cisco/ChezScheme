@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+<% Copyright 2005-2017 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -653,6 +653,29 @@ See also the description of fixnum-only vectors (fxvectors) below.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{vector-cas!}{\categoryprocedure}{(vector-cas! \var{vector} \var{n} \var{old-obj} \var{new-obj})}
+\returns \scheme{#t} if \var{vector} is changed, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\var{vector} must be mutable.
+\scheme{vector-cas!} atomically changes the \var{n}th element of \var{vector} to \var{new-obj}
+if the replaced \var{n}th element is \scheme{eq?} to \var{old-obj}.
+If the \var{n}th element of \var{vector} that would be replaced
+is not \scheme{eq?} to \var{old-obj}, then
+\var{vector} is unchanged.
+
+\schemedisplay
+(define v (vector 'old0 'old1 'old2))
+(vector-cas! v 1 'old1 'new1) ;=> #t
+(vector-ref v 1) ;=> 'new1
+(vector-cas! v 2 'old1 'new2) ;=> #f
+(vector-ref v 2) ;=> 'old2
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{mutable-vector?}{\categoryprocedure}{(mutable-vector? \var{obj})}
 \returns \scheme{#t} if \var{obj} is a mutable vector, \scheme{#f} otherwise
 \formdef{immutable-vector?}{\categoryprocedure}{(immutable-vector? \var{obj})}
@@ -1258,6 +1281,28 @@ Any attempt to modify an immutable box causes an exception to be raised.
   (let ([b (box 3)])
     (incr! b)
     (unbox b))) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box-cas!}{\categoryprocedure}{(box-cas! \var{box} \var{old-obj} \var{new-obj})}
+\returns \scheme{#t} if \var{box} is changed, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\var{box} must be mutable.
+\scheme{box-cas!} atomically changes the content of \var{box} to \var{new-obj}
+if the replaced content is \scheme{eq?} to \var{old-obj}.
+If the content of \var{box} that would be replaced is not \scheme{eq?} to \var{old-obj}, then
+\var{box} is unchanged.
+
+\schemedisplay
+(define b (box 'old))
+(box-cas! b 'old 'new) ;=> #t
+(unbox b) ;=> 'new
+(box-cas! b 'other 'wrong) ;=> #f
+(unbox b) ;=> 'new
 \endschemedisplay
 
 %----------------------------------------------------------------------------

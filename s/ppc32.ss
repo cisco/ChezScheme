@@ -762,7 +762,15 @@
            (let ([u (make-tmp 'u)])
              (seq
                `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-               `(asm ,null-info ,(asm-lock+/- op) ,base ,index ,u)))))]))
+               `(asm ,null-info ,(asm-lock+/- op) ,base ,index ,u)))))])
+    (define-instruction effect (cas)
+      [(op (x ur) (y ur) (w shifted-integer16 integer16) (old ur) (new ur))
+       (lea->reg x y w
+         (lambda (base index)
+	   (let ([u (make-tmp 'u)])
+             (seq
+               `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+	       `(asm ,info ,asm-cas ,base ,index ,old ,new ,u)))))]))
 
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-isync)])
@@ -807,7 +815,7 @@
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label asm-rp-header
                      asm-indirect-call asm-condition-code
                      asm-trunc asm-flt
-                     asm-lock asm-lock+/-
+                     asm-lock asm-lock+/- asm-cas
                      asm-fl-load/store
                      asm-flop-2 asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-size
@@ -1752,6 +1760,21 @@
                   ;; jumping back to the lwarx
                   (emit bne -3 
                     (emit cmpi tmp `(imm 0) code*))))))))))
+
+  (define-who asm-cas
+    ;   tmp = lwarx [base,index] 
+    ;   cmp tmp, old
+    ;   bc (ne) L 2
+    ;   stwcx. new [base,index] -- also sets condition code
+    ; L:
+    (lambda (code* base index old new tmp)
+      (assert (not (eq? tmp %real-zero)))
+      (Trivit (base index old new tmp)
+        (emit lwarx tmp base index
+          (emit cmpl tmp old
+            (emit bne 2
+              (emit stwcx. new base index
+                code*)))))))
 
   (define asm-fl-relop
     (lambda (info)

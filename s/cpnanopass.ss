@@ -2964,11 +2964,14 @@
         (define build-dirty-store
           (case-lambda
             [(base offset e) (build-dirty-store base %zero offset e)]
-            [(base index offset e)
+            [(base index offset e) (build-dirty-store base index offset e
+                                     (lambda (base index offset e) `(set! ,(%mref ,base ,index ,offset) ,e))
+                                     (lambda (s r) `(seq ,s ,r)))]
+            [(base index offset e build-assign build-seq)
              (if (nanopass-case (L7 Expr) e
                    [(quote ,d) (ptr->imm d)]
                    [else #f])
-                 `(set! ,(%mref ,base ,index ,offset) ,e)
+                 (build-assign base index offset e)
                  (let ([a (if (eq? index %zero)
                               (%lea ,base offset)
                               (%lea ,base ,index offset))])
@@ -2980,17 +2983,28 @@
                        (bind #f ([e e])
                          ; eval a second so the address is not live across any calls
                          (bind #t ([a a])
-                           `(seq
-                              (set! ,(%mref ,a 0) ,e)
-                              ,(%inline remember ,a))))
+                           (build-seq
+                             (build-assign a %zero 0 e)
+                             (%inline remember ,a))))
                        (bind #t ([e e])
                          ; eval a second so the address is not live across any calls
                          (bind #t ([a a])
-                           `(seq
-                              (set! ,(%mref ,a 0) ,e)
-                              (if ,(%type-check mask-fixnum type-fixnum ,e)
+                           (build-seq
+                             (build-assign a %zero 0 e)
+                             `(if ,(%type-check mask-fixnum type-fixnum ,e)
                                   ,(%constant svoid)
                                   ,(%inline remember ,a))))))))]))
+        (define make-build-cas
+          (lambda (old-v)
+            (lambda (base index offset v)
+              `(seq
+                ,(%inline cas ,base ,index (immediate ,offset) ,old-v ,v)
+                (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)))))
+        (define build-cas-seq
+          (lambda (cas remember)
+            `(if ,cas
+                 (seq ,remember ,(%constant strue))
+                 ,(%constant sfalse))))
         (define build-$record
           (lambda (tag args)
             (bind #f (tag)
@@ -5053,6 +5067,10 @@
           [(e1 e2) (build-dirty-store e1 (constant pair-cdr-disp) e2)])
         (define-inline 3 set-box!
           [(e1 e2) (build-dirty-store e1 (constant box-ref-disp) e2)])
+        (define-inline 3 box-cas!
+          [(e1 e2 e3)
+           (bind #t (e2)
+             (build-dirty-store e1 %zero (constant box-ref-disp) e3 (make-build-cas e2) build-cas-seq))])
         (define-inline 3 $set-symbol-name!
           [(e1 e2) (build-dirty-store e1 (constant symbol-name-disp) e2)])
         (define-inline 3 $set-symbol-property-list!
@@ -5069,6 +5087,12 @@
              `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
                   ,(build-dirty-store e-box (constant box-ref-disp) e-new)
                   ,(build-libcall #t src sexpr set-box! e-box e-new)))])
+        (define-inline 2 box-cas!
+          [(e-box e-old e-new)
+           (bind #t (e-box e-old e-new)
+             `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
+                  ,(build-dirty-store e-box %zero (constant box-ref-disp) e-new (make-build-cas e-old) build-cas-seq)
+                  ,(build-libcall #t src sexpr box-cas! e-box e-old e-new)))])
         (define-inline 2 set-car!
           [(e-pair e-new)
            (bind #t (e-pair e-new)
@@ -7872,6 +7896,21 @@
                       ,(build-libcall #t src sexpr vector-set! e-v e-i e-new)))])
             (define-inline 3 $vector-set-immutable!
               [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)]))
+          (let ()
+            (define (go e-v e-i e-old e-new)
+              (nanopass-case (L7 Expr) e-i
+                [(quote ,d)
+                 (guard (target-fixnum? d))
+                 (build-dirty-store e-v %zero (+ (fix d) (constant vector-data-disp)) e-new (make-build-cas e-old) build-cas-seq)]
+                [else (build-dirty-store e-v e-i (constant vector-data-disp) e-new (make-build-cas e-old) build-cas-seq)]))
+            (define-inline 3 vector-cas!
+              [(e-v e-i e-old e-new) (go e-v e-i e-old e-new)])
+            (define-inline 2 vector-cas!
+              [(e-v e-i e-old e-new)
+               (bind #t (e-v e-i e-old e-new)
+                 `(if ,(build-vector-set!-check e-v e-i #f)
+                      ,(go e-v e-i e-old e-new)
+                      ,(build-libcall #t src sexpr vector-cas! e-v e-i e-old e-new)))]))
           (let ()
             (define (go e-v e-i e-new)
               `(set!

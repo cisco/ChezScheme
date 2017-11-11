@@ -58,6 +58,14 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Atomic compare-and-set (9.5.1)}
+
+The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
+atomically update a box or vector with a given new value when the
+current content is \scheme{eq?} to a given old value. Atomicity is
+guaranteed even if multiple threads attempt to update the same box or
+vector.
+
 \subsection{Record equality and hashing (9.5)}
 
 The new procedures \scheme{record-type-equal-procedure} and

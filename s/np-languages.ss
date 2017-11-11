@@ -519,6 +519,7 @@
   (declare-primitive store-single->double effect #f)
   (declare-primitive store-with-update effect #f) ; ppc
   (declare-primitive vpush-multiple effect #f) ; arm
+  (declare-primitive cas effect #f)
 
   (declare-primitive < pred #t)
   (declare-primitive <= pred #t)
