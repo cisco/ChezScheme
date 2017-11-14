@@ -115,7 +115,8 @@
                [(fp-fixnum) 'fixnum]
                [(fp-double-float) 'double-float]
                [(fp-single-float) 'single-float]
-               [(fp-ftd ,ftd) 'ftype])))
+               [(fp-ftd ,ftd) 'ftype]
+               [(fp-ftd& ,ftd) 'ftype])))
          (define uncprep
            (lambda (x)
              (define keyword?
