@@ -304,6 +304,11 @@
   (define-library-entry (vector-length v)
     (vector-oops 'vector-length v))
 
+  (define-library-entry (vector-cas! v i old-x new-x)
+    (if (mutable-vector? v)
+        (index-oops 'vector-cas! v i)
+        (mutable-vector-oops 'vector-cas! v)))
+
   (define-library-entry (fxvector-ref v i)
     (if (fxvector? v)
         (index-oops 'fxvector-ref v i)
@@ -415,6 +420,9 @@
 
 (define-library-entry (set-box! b v)
   ($oops 'set-box! "~s is not a mutable box" b))
+
+(define-library-entry (box-cas! b old-v new-v)
+  ($oops 'box-cas! "~s is not a mutable box" b))
 
 (let ()
 (define (fxnonfixnum1 who x)

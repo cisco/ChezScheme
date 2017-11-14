@@ -1070,6 +1070,10 @@
    (lambda (v i x)
       (#2%vector-set! v i x)))
 
+(define vector-cas!
+   (lambda (v i old-x new-x)
+      (#2%vector-cas! v i old-x new-x)))
+
 (define vector-set-fixnum!
   (lambda (v i x)
     (#2%vector-set-fixnum! v i x)))
@@ -1147,6 +1151,12 @@
       (if (mutable-box? b)
           (set-box! b v)
           ($oops 'set-box! "~s is not a mutable box" b))))
+
+(define-who box-cas!
+   (lambda (b old-v new-v)
+      (if (mutable-box? b)
+          (box-cas! b old-v new-v)
+          ($oops who "~s is not a mutable box" b))))
 
 (define mutable-box?
   (lambda (b)

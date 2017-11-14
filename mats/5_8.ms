@@ -30,3 +30,37 @@
         (set-box! x 4)
         (and (equal? x '#&4) (equal? (unbox x) 4)))
  )
+
+(mat box-cas!
+  (begin
+    (define bx1 (box 1))
+    (define bx2 (box 'apple))
+    (eq? 1 (unbox bx1)))
+  (not (box-cas! bx1 0 1))
+  (eq? 1 (unbox bx1))
+  (box-cas! bx1 1 2)
+  (eq? 2 (unbox bx1))
+
+  (not (box-cas! bx2 #f 'banana))
+  (box-cas! bx2 'apple 'banana)
+  (not (box-cas! bx2 'apple 'banana))
+  (eq? 'banana (unbox bx2))
+
+  (not (box-cas! (box (bitwise-arithmetic-shift-left 1 40))
+                 (bitwise-arithmetic-shift-left 2 40)
+                 'wrong))
+
+  (error? (box-cas! bx1)) ; arity
+  (error? (box-cas! bx1 1)) ; arity
+  (error? (box-cas! 1 bx1 2)) ; not a box
+  (error? (box-cas! (box-immutable 1) 1 2)) ; not a mutable box
+
+  ;; make sure `box-cas!` works with GC generations:
+  (begin
+    (collect 0)
+    (let ([g1 (gensym)])
+      (and (box-cas! bx2 'banana g1)
+           (begin
+             (collect 0)
+             (eq? g1 (unbox bx2))))))
+  )

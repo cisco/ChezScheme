@@ -845,7 +845,16 @@
              (seq
                `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-               `(asm ,null-info ,(asm-lock+/- op) ,r ,u1 ,u2)))))]))
+               `(asm ,null-info ,(asm-lock+/- op) ,r ,u1 ,u2)))))])
+    (define-instruction effect (cas)
+      [(op (x ur) (y ur) (w funky12) (old ur) (new ur))
+       (lea->reg x y w
+         (lambda (r)
+	   (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
+             (seq
+               `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+               `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+	       `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
 
   (define-instruction effect (pause)
     ; NB: user sqrt or something like that?
@@ -888,7 +897,7 @@
                      asm-indirect-call asm-condition-code
                      asm-fl-load/store 
                      asm-fl-load/cvt asm-fl-store/cvt asm-flt asm-trunc 
-                     asm-lock asm-lock+/-
+                     asm-lock asm-lock+/- asm-cas
                      asm-flop-2 asm-flsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1955,6 +1964,22 @@
                 [(locked-incr!) (emit addi #f tmp1 tmp1 1 code*)]
                 [(locked-decr!) (emit subi #f tmp1 tmp1 1 code*)]
                 [else (sorry! who "unexpected op ~s" op)])))))))
+
+  (define-who asm-cas
+    ;   tmp = ldrex src
+    ;   cmp tmp, old
+    ;   bne L (+2)
+    ;   tmp2 = strex new, src
+    ;   cmp tmp2, 0
+    ; L:
+    (lambda (code* src old new tmp1 tmp2)
+      (Trivit (src old new tmp1 tmp2)
+        (emit ldrex tmp1 src
+          (emit cmp tmp1 old
+            (emit bnei 1
+              (emit strex tmp2 new src
+                (emit cmpi tmp2 0
+                   code*))))))))
 
   (define asm-fl-relop
     (lambda (info)

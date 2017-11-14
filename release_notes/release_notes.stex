@@ -58,6 +58,15 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+
+\subsection{Atomic compare-and-set (9.5.1)}
+
+The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
+atomically update a box or vector with a given new value when the
+current content is \scheme{eq?} to a given old value. Atomicity is
+guaranteed even if multiple threads attempt to update the same box or
+vector.
+
 \subsection{Foreign-procedure struct arguments and results (9.5.1)}
 
 A new \scheme{(& \var{ftype})} form allows a struct or union to be
@@ -69,6 +78,14 @@ worlds, \scheme{(& \var{ftype})} passes a copy of the data at the
 address. When \scheme{(& \var{ftype})} is used as a result type,
 an extra \scheme{(* \var{ftype})} argument must be provided to receive
 the copied result, and the directly returned result is unspecified.
+
+\subsection{Ordered guardians (9.5.1)}
+
+The \scheme{make-guardian} function now accepts an optional argument to
+indicate whether the guardian is ordered or unordered. A guardian is
+unordered by default. An ordered guardian's objects are classified as
+inaccessible only when they are not reachable from the represetative
+of any inaccessible object in any other guardian.
 
 \subsection{Record equality and hashing (9.5)}
 
@@ -89,14 +106,6 @@ and immutable fxvectors, bytevectors, and strings are created by similarly named
 procedures.
 Immutable boxes are created via \scheme{box-immutable}.
 Any attempt to modify an immutable object causes an exception to be raised.
-
-\subsection{Ordered guardians (9.5.1)}
-
-The \scheme{make-guardian} function now accepts an optional argument to
-indicate whether the guardian is ordered or unordered. A guardian is
-unordered by default. An ordered guardian's objects are classified as
-inaccessible only when they are not reachable from the represetative
-of any inaccessible object in any other guardian.
 
 \subsection{Ephemeron pairs and hashtables (9.5)}
 
