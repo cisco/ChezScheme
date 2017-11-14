@@ -752,3 +752,10 @@
   a partial object file.
     syntax.ss,
     7.ms
+- add (& ftype) argument/result for foreign-procedure, which supports
+  struct arguments and results for foreign calls
+    syntax.ss, ftype.ss, cpnanopass.ss, x86.ss, x86_64.ss,
+    base-lang.ss, np-languages.ss, cprep.ss, primdata.ss,
+    schlib.c, prim.c, externs.h
+    mats/foreign4.c, mats/foreign.ms mats/Mf-*
+    foreign.stex, release_notes.stex

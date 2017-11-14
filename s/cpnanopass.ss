@@ -972,9 +972,19 @@
       (fields type reversed? invertible?))
 
     (define-record-type info-c-simple-call (nongenerative)
+      (parent info-kill*-live*)
+      (sealed #t)
+      (fields save-ra? entry)
+      (protocol
+       (lambda (new)
+         (case-lambda
+          [(save-ra? entry) ((new '() '()) save-ra? entry)]
+          [(live* save-ra? entry) ((new '() live*) save-ra? entry)]))))
+
+    (define-record-type info-c-return (nongenerative)
       (parent info)
       (sealed #t)
-      (fields save-ra? entry))
+      (fields offset))
 
     (module ()
       (record-writer (record-type-descriptor info-load)
@@ -10470,7 +10480,23 @@
                         (set! ,x ,t)
                         ,(toC (in-context Rhs
                                 (%mref ,x ,(constant record-data-disp))))))]
+                  [(fp-ftd& ,ftd)
+                   (let ([x (make-tmp 't)])
+                     (%seq
+                      (set! ,x ,t)
+                      (set! ,x ,(%mref ,x ,(constant record-data-disp)))
+                      ,(toC x)))]
                   [else ($oops who "invalid parameter type specifier ~s" type)])))
+            (define Scheme->C-for-result
+              (lambda (type toC t)
+                (nanopass-case (Ltype Type) type
+                  [(fp-void) (toC)]
+                  [(fp-ftd& ,ftd)
+                   ;; pointer isn't received as a result, but instead passed
+                   ;; to the function as its first argument (or simulated as such)
+                   (toC)]
+                  [else
+                   (Scheme->C type toC t)])))
             (define C->Scheme
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
               (lambda (type fromC lvalue)
@@ -10538,6 +10564,15 @@
                                          ,(e1 `(goto ,Lbig))
                                          (seq (label ,Lbig) ,e2)))))
                               (e1 e2))))))
+                (define (alloc-fptr ftd)
+                  (%seq
+                   (set! ,%xp
+                         ,(%constant-alloc type-typed-object (fx* (constant ptr-bytes) 2) #f))
+                   (set!
+                    ,(%mref ,%xp ,(constant record-type-disp))
+                    (literal ,(make-info-literal #f 'object ftd 0)))
+                   (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
+                   (set! ,lvalue ,%xp)))
                 (nanopass-case (Ltype Type) type
                   [(fp-void) `(set! ,lvalue ,(%constant svoid))]
                   [(fp-scheme-object) (fromC lvalue)]
@@ -10585,15 +10620,17 @@
                      (set! ,lvalue ,%xp))]
                   [(fp-ftd ,ftd)
                    (%seq
-                     ,(fromC %ac0) ; C integer return might be wiped out by alloc
-                     (set! ,%xp
-                       ,(%constant-alloc type-typed-object (fx* (constant ptr-bytes) 2) #f))
-                     (set!
-                       ,(%mref ,%xp ,(constant record-type-disp))
-                       (literal ,(make-info-literal #f 'object ftd 0)))
-                     (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
-                     (set! ,lvalue ,%xp))]
+                    ,(fromC %ac0) ; C integer return might be wiped out by alloc
+                    ,(alloc-fptr ftd))]
+                  [(fp-ftd& ,ftd)
+                   (%seq
+                    ,(fromC %ac0)
+                    ,(alloc-fptr ftd))]
                   [else ($oops who "invalid result type specifier ~s" type)]))))
+          (define (pick-Scall result-type)
+            (nanopass-case (Ltype Type) result-type
+              [(fp-void) (lookup-c-entry Scall-any-results)]
+              [else (lookup-c-entry Scall-one-result)]))
           (define build-foreign-call
             (with-output-language (L13 Effect)
               (lambda (info t0 t1* maybe-lvalue new-frame?)
@@ -10613,7 +10650,13 @@
                                     (ccall t0) t1* arg-type* c-args))
                                ,(let ([e (deallocate)])
                                   (if maybe-lvalue
-                                      `(seq ,(C->Scheme result-type c-res maybe-lvalue) ,e)
+                                      (nanopass-case (Ltype Type) result-type
+                                        [(fp-ftd& ,ftd)
+                                         ;; Don't actually return a value, because the result
+                                         ;; was instead installed in the first argument.
+                                         `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]
+                                        [else
+                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue) ,e)])
                                       e))))])
                     (if new-frame?
                         (sorry! who "can't handle nontail foreign calls")
@@ -10638,7 +10681,7 @@
                                          (cons (get-fv i) (f (cdr frame-x*) i)))))])
                         ; add 2 for the old RA and cchain
                         (set! max-fv (fx+ max-fv 2))
-                        (let-values ([(c-init c-args c-scall) (asm-foreign-callable info)])
+                        (let-values ([(c-init c-args c-result c-return) (asm-foreign-callable info)])
                           ; c-init save C callee-save registers and restores tc
                           ; each of c-args sets a variable to one of the C arguments
                           ; c-scall restores callee-save registers and tail-calls C
@@ -10667,28 +10710,12 @@
                             ,(save-scheme-state
                                (in %ac0 %ac1)
                                (out %cp %xp %yp %ts %td scheme-args extra-regs))
-                            ,(c-scall fv*
-                               (nanopass-case (Ltype Type) result-type
-                                 [(fp-scheme-object) (lookup-c-entry Scall->ptr)]
-                                 [(fp-void) (lookup-c-entry Scall->void)]
-                                 [(fp-fixnum) (lookup-c-entry Scall->fixnum)]
-                                 [(fp-integer ,bits)
-                                  (case bits
-                                    [(8 16 32) (lookup-c-entry Scall->int32)]
-                                    [(64) (lookup-c-entry Scall->int64)]
-                                    [else ($oops 'foreign-callable "unsupported result type specifier integer-~s" bits)])]
-                                 [(fp-unsigned ,bits)
-                                  (case bits
-                                    [(8 16 32) (lookup-c-entry Scall->uns32)]
-                                    [(64) (lookup-c-entry Scall->uns64)]
-                                    [else ($oops 'foreign-callable "unsupported result type specifier unsigned-~s" bits)])]
-                                 [(fp-double-float) (lookup-c-entry Scall->double)]
-                                 [(fp-single-float) (lookup-c-entry Scall->single)]
-                                 [(fp-u8*) (lookup-c-entry Scall->bytevector)]
-                                 [(fp-u16*) (lookup-c-entry Scall->bytevector)]
-                                 [(fp-u32*) (lookup-c-entry Scall->bytevector)]
-                                 [(fp-ftd ,ftd) (lookup-c-entry Scall->fptr)]
-                                 [else ($oops 'compiler-internal "invalid result type specifier ~s" result-type)]))))))))))))
+                            (inline ,(make-info-c-simple-call fv* #f (pick-Scall result-type)) ,%c-simple-call)
+                            ,(restore-scheme-state
+                               (in %ac0)
+                               (out %ac1 %cp %xp %yp %ts %td scheme-args extra-regs))
+                            ,(Scheme->C-for-result result-type c-result %ac0)
+                            ,(c-return)))))))))))
         (define handle-do-rest
           (lambda (fixed-args offset save-asm-ra?)
             (with-output-language (L13 Effect)
@@ -12495,6 +12522,10 @@
              (let ([block (make-tail-block)])
                (tail-block-tail-set! block (with-output-language (L15a Tail) `(asm-return ,reg* ...)))
                (values block (cons block block*)))]
+            [(asm-c-return ,info ,reg* ...)
+             (let ([block (make-tail-block)])
+               (tail-block-tail-set! block (with-output-language (L15a Tail) `(asm-c-return ,info ,reg* ...)))
+               (values block (cons block block*)))]
             [else ($oops who "unexpected Tail ~s" ir)])
           (Effect : Effect (ir target block*) -> * (target block*)
             [(nop) (values target block*)]
@@ -13808,6 +13839,7 @@
                 [else (sorry! who "unrecognized block ~s" block)]))))
         (Tail : Tail (ir chunk* offset) -> * (code* chunk* offset)
           [(asm-return) (values (asm-return) chunk* offset)]
+          [(asm-c-return ,info) (values (asm-c-return info) chunk* offset)]
           [(jump (label-ref ,l ,offset0))
            (values (asm-direct-jump l offset0) chunk* offset)]
           [(jump (literal ,info))
@@ -14091,6 +14123,9 @@
                      (safe-assert (libspec-label? l))
                      (fold-left add-var no-live* (libspec-label-live-reg* l))]
                     [(asm-return ,reg* ...)
+                     (safe-assert (eq? out no-live*))
+                     (fold-left add-var no-live* reg*)]
+                    [(asm-c-return ,info ,reg* ...)
                      (safe-assert (eq? out no-live*))
                      (fold-left add-var no-live* reg*)]
                     [(jump ,live-info ,t (,var* ...))
@@ -14663,7 +14698,8 @@
           (Pred : Pred (ir) -> Pred ())
           (Tail : Tail (ir) -> Tail ()
             [(jump ,live-info ,[t] (,var* ...)) `(jump ,live-info ,t)]
-            [(asm-return ,reg* ...) `(asm-return)])
+            [(asm-return ,reg* ...) `(asm-return)]
+            [(asm-c-return ,info ,reg* ...) `(asm-c-return ,info)])
           (Effect : Effect (ir) -> Effect ())
           (foldable-Effect : Effect (ir new-effect*) -> * (new-effect*)
             [(return-point ,info ,rpl ,mrvl (,cnfv* ...))
@@ -15062,7 +15098,8 @@
           (Tail : Tail (ir) -> Tail ()
             [(jump ,live-info ,t) (handle-jump t (live-info-live live-info))]
             [(goto ,l) (values '() `(goto ,l))]
-            [(asm-return) (values '() `(asm-return))])
+            [(asm-return) (values '() `(asm-return))]
+            [(asm-c-return ,info) (values '() `(asm-c-return ,info))])
           (Effect : Effect (ir new-effect*) -> * (new-effect*)
             [(set! ,live-info ,lvalue ,rhs) (Rhs rhs lvalue new-effect* (live-info-live live-info))]
             [(inline ,live-info ,info ,effect-prim ,t* ...)

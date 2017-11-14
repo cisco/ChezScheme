@@ -15,7 +15,7 @@
 
 m = i3nt
 
-fsrc = foreign1.c foreign2.c foreign3.c
+fsrc = foreign1.c foreign2.c foreign3.c foreign4.c
 fobj = foreign1.so
 mdclean = cat_flush.exe cat_flush.obj foreign1.exp foreign1.lib foreign1.obj foreign2.obj foreign3.obj
 

@@ -679,7 +679,11 @@
               [(integer-40 integer-48 integer-56 integer-64) `(fp-integer 64)]
               [(unsigned-40 unsigned-48 unsigned-56 unsigned-64) `(fp-unsigned 64)]
               [(void) (and void-okay? `(fp-void))]
-              [else (and ($ftd? x) `(fp-ftd ,x))])
+              [else
+               (cond
+                [($ftd? x) `(fp-ftd ,x)]
+                [($ftd-as-box? x) `(fp-ftd& ,(unbox x))]
+                [else #f])])
             ($oops #f "invalid ~a ~a specifier ~s" who what x)))))
 
   (define build-foreign-procedure
@@ -8508,7 +8512,9 @@
           (constant-case native-endianness
             [(little) 'utf-32le]
             [(big) 'utf-32be])])]
-      [else (and ($ftd? type) type)])))
+      [else
+       (and (or ($ftd? type) ($ftd-as-box? type))
+            type)])))
 
 (define $fp-type->pred
   (lambda (type)
@@ -8649,10 +8655,11 @@
                                                         (err ($moi) x)))))
                                        (u32*))]
                                    [else #f])
-                                 (if ($ftd? type)
-                                     #`(#,(if unsafe? #'() #`((unless (record? x '#,type) (err ($moi) x))))
-                                        (x)
-                                        (#,type))
+                                 (if (or ($ftd? type) ($ftd-as-box? type))
+                                     (let ([ftd (if ($ftd? type) type (unbox type))])
+                                       #`(#,(if unsafe? #'() #`((unless (record? x '#,ftd) (err ($moi) x))))
+                                          (x)
+                                          (#,type)))
                                      (with-syntax ([pred (datum->syntax #'foreign-procedure ($fp-type->pred type))]
                                                    [type (datum->syntax #'foreign-procedure type)])
                                        #`(#,(if unsafe? #'() #'((unless (pred x) (err ($moi) x))))
@@ -8684,15 +8691,36 @@
                          [(unsigned-48) #`((lambda (x) (mod x #x1000000000000)) unsigned-64)]
                          [(integer-56) #`((lambda (x) (mod0 x #x100000000000000)) integer-64)]
                          [(unsigned-56) #`((lambda (x) (mod x #x100000000000000)) unsigned-64)]
-                         [else #`(values #,(datum->syntax #'foreign-procedure result-type))])])
-          #`(let ([p ($foreign-procedure conv foreign-name ?foreign-addr (arg ... ...) result)]
+                         [else
+                          (cond
+                            [($ftd-as-box? result-type)
+                             ;; Return void, since an extra first argument receives the result,
+                             ;; but tell `$foreign-procedure` that the result is actually an & form
+                             #`((lambda (r) (void)) #,(datum->syntax #'foreign-procedure result-type))]
+                            [else
+                             #`(values #,(datum->syntax #'foreign-procedure result-type))])])]
+                      [([extra ...] [extra-arg ...] [extra-check ...])
+                       ;; When the result type is `(& <ftype>)`, the `$foreign-procedure` result
+                       ;; expects an extra argument as a `(* <ftype>)` that it uses to store the
+                       ;; foreign-procedure result, and it returns void. The extra argument is made
+                       ;; explicit for `$foreign-procedure`, and the return type is preserved as-is
+                       ;; to let `$foreign-procedure` know that it needs to fill the first argument.
+                       (cond
+                         [($ftd-as-box? result-type)
+                          #`([&-result]
+                             [#,(unbox result-type)]
+                             #,(if unsafe?
+                                   #`[]
+                                   #`[(unless (record? &-result '#,(unbox result-type)) (err ($moi) &-result))]))]
+                         [else #'([] [] [])])])
+          #`(let ([p ($foreign-procedure conv foreign-name ?foreign-addr (extra-arg ... arg ... ...) result)]
                   #,@(if unsafe?
                          #'()
                          #'([err (lambda (who x)
                                    ($oops (or who foreign-name)
                                      "invalid foreign-procedure argument ~s"
                                      x))])))
-              (lambda (t ...) check ... ... (result-filter (p actual ... ...)))))))))
+              (lambda (extra ... t ...) extra-check ... check ... ... (result-filter (p extra ... actual ... ...)))))))))
 
 (define-syntax foreign-procedure
   (lambda (x)
@@ -8810,12 +8838,13 @@
                                (with-syntax ([(x) (generate-temporaries #'(*))])
                                  #`(x (x) (#,(datum->syntax #'foreign-callable type))))))
                          type*)]
-                      [(result-filter result)
+                      [(result-filter result [extra-arg ...] [extra ...])
                        (case result-type
                          [(boolean) #`((lambda (x) (if x 1 0))
                                        #,(constant-case int-bits
                                            [(32) #'integer-32]
-                                           [(64) #'integer-64]))]
+                                           [(64) #'integer-64])
+                                       [] [])]
                          [(char)
                           #`((lambda (x)
                                #,(if unsafe?
@@ -8824,7 +8853,8 @@
                                                 (let ([x (char->integer x)])
                                                   (and (fx<= x #xff) x)))
                                            (err x))))
-                             unsigned-8)]
+                             unsigned-8
+                             [] [])]
                          [(wchar)
                           (constant-case wchar-bits
                             [(16) #`((lambda (x)
@@ -8834,14 +8864,16 @@
                                                         (let ([x (char->integer x)])
                                                           (and (fx<= x #xffff) x)))
                                                    (err x))))
-                                     unsigned-16)]
+                                     unsigned-16
+                                     [] [])]
                             [(32) #`((lambda (x)
                                        #,(if unsafe?
                                              #'(char->integer x)
                                              #'(if (char? x)
                                                    (char->integer x)
                                                    (err x))))
-                                     unsigned-16)])]
+                                     unsigned-16
+                                     [] [])])]
                          [(utf-8)
                           #`((lambda (x)
                                (if (eq? x #f)
@@ -8851,7 +8883,8 @@
                                          #'(if (string? x)
                                                ($fp-string->utf8 x)
                                                (err x)))))
-                             u8*)]
+                             u8*
+                             [] [])]
                          [(utf-16le)
                           #`((lambda (x)
                                (if (eq? x #f)
@@ -8861,7 +8894,8 @@
                                          #'(if (string? x)
                                                ($fp-string->utf16 x 'little)
                                                (err x)))))
-                             u16*)]
+                             u16*
+                             [] [])]
                          [(utf-16be)
                           #`((lambda (x)
                                (if (eq? x #f)
@@ -8871,7 +8905,8 @@
                                          #'(if (string? x)
                                                ($fp-string->utf16 x 'big)
                                                (err x)))))
-                             u16*)]
+                             u16*
+                             [] [])]
                          [(utf-32le)
                           #`((lambda (x)
                                (if (eq? x #f)
@@ -8881,7 +8916,8 @@
                                          #'(if (string? x)
                                                ($fp-string->utf32 x 'little)
                                                (err x)))))
-                             u32*)]
+                             u32*
+                             [] [])]
                          [(utf-32be)
                           #`((lambda (x)
                                (if (eq? x #f)
@@ -8891,21 +8927,37 @@
                                          #'(if (string? x)
                                                ($fp-string->utf32 x 'big)
                                                (err x)))))
-                             u32*)]
+                             u32*
+                             [] [])]
                          [else
-                           (if ($ftd? result-type)
-                               (with-syntax ([type (datum->syntax #'foreign-callable result-type)])
-                                 #`((lambda (x)
-                                      #,@(if unsafe? #'() #'((unless (record? x 'type) (err x))))
-                                      x)
-                                    type))
-                               (with-syntax ([pred (datum->syntax #'foreign-callable ($fp-type->pred result-type))]
-                                             [type (datum->syntax #'foreign-callable result-type)])
-                                 #`((lambda (x)
-                                      #,@(if unsafe? #'() #'((unless (pred x) (err x))))
-                                      x)
-                                    type)))])])
-          ; use a gensym to avoid giving the procedure a confusing namej
+                          (cond
+                            [($ftd? result-type)
+                             (with-syntax ([type (datum->syntax #'foreign-callable result-type)])
+                               #`((lambda (x)
+                                    #,@(if unsafe? #'() #'((unless (record? x 'type) (err x))))
+                                    x)
+                                  type
+                                  [] []))]
+                            [($ftd-as-box? result-type)
+                             ;; callable receives an extra pointer argument to fill with the result;
+                             ;; we add this type to `$foreign-callable` as an initial address argument,
+                             ;; which may be actually provided by the caller or synthesized by the
+                             ;; back end, depending on the type and architecture
+                             (with-syntax ([type (datum->syntax #'foreign-callable result-type)]
+                                           [ftd (datum->syntax #'foreign-callable (unbox result-type))])
+                               #`((lambda (x) (void)) ; callable result is ignored
+                                  type
+                                  [ftd]
+                                  [&-result]))]
+                            [else
+                             (with-syntax ([pred (datum->syntax #'foreign-callable ($fp-type->pred result-type))]
+                                           [type (datum->syntax #'foreign-callable result-type)])
+                               #`((lambda (x)
+                                    #,@(if unsafe? #'() #'((unless (pred x) (err x))))
+                                    x)
+                                  type
+                                  [] []))])])])
+          ; use a gensym to avoid giving the procedure a confusing name
           (with-syntax ([p (datum->syntax #'foreign-callable (gensym))])
             #`($foreign-callable conv
                 (let ([p ?proc])
@@ -8914,8 +8966,8 @@
                       "invalid return value ~s from ~s"
                       x p))
                   #,@(if unsafe? #'() #'((unless (procedure? p) ($oops 'foreign-callable "~s is not a procedure" p))))
-                  (lambda (t ... ...) (result-filter (p actual ...))))
-                (arg ... ...)
+                  (lambda (extra ... t ... ...) (result-filter (p extra ... actual ...))))
+                (extra-arg ... arg ... ...)
                 result)))))))
 
 (define-syntax foreign-callable

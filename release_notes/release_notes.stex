@@ -58,6 +58,18 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Foreign-procedure struct arguments and results (9.5.1)}
+
+A new \scheme{(& \var{ftype})} form allows a struct or union to be
+passed between Scheme and a foreign procedure. The Scheme-side
+representation of a \scheme{(& \var{ftype})} argument is the
+same as a \scheme{(* \var{ftype})} argument, but where
+\scheme{(& \var{ftype})} passes an address between the Scheme and C
+worlds, \scheme{(& \var{ftype})} passes a copy of the data at the
+address. When \scheme{(& \var{ftype})} is used as a result type,
+an extra \scheme{(* \var{ftype})} argument must be provided to receive
+the copied result, and the directly returned result is unspecified.
+
 \subsection{Record equality and hashing (9.5)}
 
 The new procedures \scheme{record-type-equal-procedure} and
