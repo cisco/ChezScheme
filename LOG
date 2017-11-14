@@ -756,3 +756,10 @@
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
     4.ms, smgmt.stex, release_notes.stex
+- add (& ftype) argument/result for foreign-procedure, which supports
+  struct arguments and results for foreign calls
+    syntax.ss, ftype.ss, cpnanopass.ss, x86.ss, x86_64.ss,
+    base-lang.ss, np-languages.ss, cprep.ss, primdata.ss,
+    schlib.c, prim.c, externs.h
+    mats/foreign4.c, mats/foreign.ms mats/Mf-*
+    foreign.stex, release_notes.stex

@@ -339,17 +339,8 @@ extern void S_initframe PROTO((ptr tc, iptr n));
 extern void S_put_arg PROTO((ptr tc, iptr i, ptr x));
 extern void S_return PROTO((void));
 extern void S_call_help PROTO((ptr tc, IBOOL singlep));
-extern void S_call_void PROTO((void));
-extern ptr S_call_ptr PROTO((void));
-extern iptr S_call_fixnum PROTO((void));
-extern I32 S_call_int32 PROTO((void));
-extern U32 S_call_uns32 PROTO((void));
-extern double S_call_double PROTO((void));
-extern float S_call_single PROTO((void));
-extern U8 *S_call_bytevector PROTO((void));
-extern I64 S_call_int64 PROTO((void));
-extern U64 S_call_uns64 PROTO((void));
-extern uptr S_call_fptr PROTO((void));
+extern void S_call_one_result PROTO((void));
+extern void S_call_any_results PROTO((void));
 
 #ifdef WIN32
 /* windows.c */

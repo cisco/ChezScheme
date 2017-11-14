@@ -488,10 +488,13 @@
   (declare-primitive asmlibcall! effect #f)
   (declare-primitive c-call effect #f)
   (declare-primitive c-simple-call effect #f)
+  (declare-primitive c-simple-return effect #f)
   (declare-primitive fl* effect #f)
   (declare-primitive fl+ effect #f)
   (declare-primitive fl- effect #f)
   (declare-primitive fl/ effect #f)
+  (declare-primitive fldl effect #f) ; x86
+  (declare-primitive flds effect #f) ; x86
   (declare-primitive flsqrt effect #f) ; not implemented for some ppc32 (so we don't use it)
   (declare-primitive flt effect #f)
   (declare-primitive inc-cc-counter effect #f)
@@ -544,6 +547,7 @@
   (declare-primitive -/eq value #f)
   (declare-primitive asmlibcall value #f)
   (declare-primitive fstpl value #f) ; x86 only
+  (declare-primitive fstps value #f) ; x86 only
   (declare-primitive get-double value #t) ; x86_64
   (declare-primitive get-tc value #f) ; threaded version only
   (declare-primitive lea1 value #t)
@@ -849,6 +853,7 @@
       (jump t (var* ...))
       (joto l (nfv* ...))
       (asm-return reg* ...)
+      (asm-c-return info reg* ...)
       (if p0 tl1 tl2)
       (seq e0 tl1)
       (goto l)))
@@ -961,7 +966,8 @@
     (Tail (tl)
       (goto l)
       (jump live-info t (var* ...))
-      (asm-return reg* ...)))
+      (asm-return reg* ...)
+      (asm-c-return info reg* ...)))
 
   (define-language L15b (extends L15a)
     (terminals
@@ -979,9 +985,11 @@
       (+ (fp-offset live-info imm)))
     (Tail (tl)
       (- (jump live-info t (var* ...))
-         (asm-return reg* ...))
+         (asm-return reg* ...)
+         (asm-c-return info reg* ...))
       (+ (jump live-info t)
-         (asm-return))))
+         (asm-return)
+         (asm-c-return info))))
 
   (define ur?
     (lambda (x)

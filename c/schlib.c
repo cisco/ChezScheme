@@ -252,69 +252,14 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
     CP(tc) = code;
 }
 
-void S_call_void() {
+void S_call_one_result() {
+    ptr tc = get_thread_context();
+    S_call_help(tc, 1);
+}
+
+void S_call_any_results() {
     ptr tc = get_thread_context();
     S_call_help(tc, 0);
-}
-
-ptr S_call_ptr() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return AC0(tc);
-}
-
-iptr S_call_fixnum() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return Sfixnum_value(AC0(tc));
-}
-
-I32 S_call_int32() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (I32)Sinteger_value(AC0(tc));
-}
-
-U32 S_call_uns32() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (U32)Sinteger_value(AC0(tc));
-}
-
-I64 S_call_int64() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return S_int64_value("foreign-callable", AC0(tc));
-}
-
-U64 S_call_uns64() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return S_int64_value("foreign-callable", AC0(tc));
-}
-
-double S_call_double() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return Sflonum_value(AC0(tc));
-}
-
-float S_call_single() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (float)Sflonum_value(AC0(tc));
-}
-
-U8 *S_call_bytevector() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (U8 *)&BVIT(AC0(tc),0);
-}
-
-uptr S_call_fptr() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (uptr)RECORDINSTIT(AC0(tc),0);
 }
 
 /* cchain = ((jb . co) ...) */
