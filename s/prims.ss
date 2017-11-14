@@ -1398,11 +1398,13 @@
   (foreign-procedure "(cs)locked_objectp" (scheme-object) boolean))
 
 (define-who $install-guardian
-  (lambda (obj rep tconc)
+  (lambda (obj rep tconc ordered?)
     (unless (and (pair? tconc) (pair? (car tconc)) (pair? (cdr tconc))) ($oops who "~s is not a tconc" tconc))
-    (#3%$install-guardian obj rep tconc)))
+    (#3%$install-guardian obj rep tconc ordered?)))
 
-(define make-guardian (lambda () (#2%make-guardian)))
+(define make-guardian (case-lambda
+                       [() (#2%make-guardian)]
+                       [(ordered?) (#2%make-guardian ordered?)]))
 
 (define $address-in-heap?
   (foreign-procedure "(cs)s_addr_in_heap" (uptr) boolean))

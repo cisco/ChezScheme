@@ -78,6 +78,14 @@ procedures.
 Immutable boxes are created via \scheme{box-immutable}.
 Any attempt to modify an immutable object causes an exception to be raised.
 
+\subsection{Ordered guardians (9.5.1)}
+
+The \scheme{make-guardian} function now accepts an optional argument to
+indicate whether the guardian is ordered or unordered. A guardian is
+unordered by default. An ordered guardian's objects are classified as
+inaccessible only when they are not reachable from the represetative
+of any inaccessible object in any other guardian.
+
 \subsection{Ephemeron pairs and hashtables (9.5)}
 
 Support for ephemeron pairs has been added, along with eq and eqv

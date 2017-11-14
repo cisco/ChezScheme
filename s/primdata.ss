@@ -1422,7 +1422,7 @@
   (make-engine [sig [(procedure) -> (engine)]] [flags pure alloc])
   (make-format-condition [sig [() -> (condition)]] [flags pure unrestricted mifoldable discard])
   (make-fxvector [sig [(length) (length fixnum) -> (fxvector)]] [flags alloc])
-  (make-guardian [sig [() -> (procedure)]] [flags alloc cp02])
+  (make-guardian [sig [() (ptr) -> (procedure)]] [flags alloc cp02])
   (make-hash-table [sig [() (ptr) -> (old-hash-table)]] [flags unrestricted alloc])
   (make-input-port [sig [(procedure string) -> (textual-input-port)]] [flags alloc])
   (make-input/output-port [sig [(procedure string string) -> (textual-input/output-port)]] [flags alloc])

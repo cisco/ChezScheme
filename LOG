@@ -752,3 +752,7 @@
   a partial object file.
     syntax.ss,
     7.ms
+- add ordered guardians through a new optional argument to make-guardian
+    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
+    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
+    4.ms, smgmt.stex, release_notes.stex
