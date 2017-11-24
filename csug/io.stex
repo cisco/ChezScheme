@@ -3661,8 +3661,8 @@ the last dot (period) in the last component of a path name.
 The path root component is the portion of \var{path} that does not
 include the extension, if any, or the dot that precedes it.
 
-If the first component names a root directory (including drivers
-and shared under Windows) or home directory,
+If the first component names a root directory (including drives
+and shares under Windows) or home directory,
 \scheme{path-absolute?} returns \scheme{#t}.
 Otherwise, \scheme{path-absolute?} returns \scheme{#f}. 
 

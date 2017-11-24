@@ -4787,7 +4787,14 @@
                                            found-uid)]
                                         [else ($oops #f "re~:[loading~;compiling~] ~a did not define library ~s" compile-file? src-path path)])])
                              (parameterize ([source-directories (cons (path-parent src-path) (source-directories))])
-                               ($load-library obj-path (if ct? 'load 'revisit)))
+                               (guard (c [(and (irritants-condition? c) (member obj-path (condition-irritants c)))
+                                          (with-message (with-output-to-string
+                                                          (lambda ()
+                                                            (display-string "failed to load object file: ")
+                                                            (display-condition c)))
+                                            ($oops/c #f ($make-recompile-condition path)
+                                              "problem loading object file ~a ~s" obj-path c))])
+                                 ($load-library obj-path (if ct? 'load 'revisit))))
                              (cond
                                [(search-loaded-libraries path) =>
                                 (lambda (found-uid)
@@ -5193,16 +5200,22 @@
             (let ([ofn-mod-time (file-modification-time ofn)])
               (if (time>=? ofn-mod-time (with-new-who who (lambda () (file-modification-time ifn))))
                   (with-message "object file is not older"
-                    (let ([rcinfo* (load-recompile-info who ofn)])
-                      (if (andmap
-                            (lambda (rcinfo)
-                              (andmap
-                                (lambda (x)
-                                  (with-source-path who x
-                                    (lambda (x)
-                                      (time<=? (with-new-who who (lambda () (file-modification-time x))) ofn-mod-time))))
-                                (recompile-info-include-req* rcinfo)))
-                            rcinfo*)
+                    (let ([rcinfo* (guard (c [else (with-message (with-output-to-string
+                                                                   (lambda ()
+                                                                     (display-string "failed to process object file: ")
+                                                                     (display-condition c)))
+                                                     #f)])
+                                     (load-recompile-info who ofn))])
+                      (if (and rcinfo*
+                               (andmap
+                                 (lambda (rcinfo)
+                                   (andmap
+                                     (lambda (x)
+                                       (with-source-path who x
+                                         (lambda (x)
+                                           (time<=? (with-new-who who (lambda () (file-modification-time x))) ofn-mod-time))))
+                                     (recompile-info-include-req* rcinfo)))
+                                 rcinfo*))
                           (if (compile-imported-libraries)
                               (guard (c [(and ($recompile-condition? c) (eq? ($recompile-importer-path c) #f))
                                          (with-message (format "recompiling ~s because a dependency has changed" ifn)

@@ -1,4 +1,3 @@
-;; examples .ms
 ;;; examples.ms
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -21,7 +20,7 @@
      (begin
        (mat name
          (begin
-           (parameterize ((current-directory *examples-directory*))
+           (parameterize ((source-directories (cons *examples-directory* (source-directories))))
              (load (format "~a/~a.ss" *examples-directory* file))
              ...)
            #t)
@@ -589,5 +588,5 @@ edit>
 (examples-mat ez-grammar-test ("ez-grammar-test")
   (equal?
     (with-output-to-string ez-grammar-test)
-    "end of tests\n")
+    "8 tests ran\n")
 )

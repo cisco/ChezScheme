@@ -645,6 +645,112 @@
     makefiles/Makefile-release_notes.in
       (renamed from release_notes/Makefile),
     makefiles/Makefile
+- added pass-time tracking for pre-cpnanopass passes to compile.
+    compile.ss
+- added inline handler for fxdiv-and-mod
+    cp0.ss, primdata.ss
+- changed order in which return-point operations are done (adjust
+  sfp first, then store return values, then restore local saves) to
+  avoid storing return values to homes beyond the end of the stack
+  in cases where adjusting sfp might result in a call to dooverflood.
+    cpnanopass.ss, np-languages.ss
+- removed unused {make-,}asm-return-registers bindings
+    cpnanopass.ss
+- corrected the max-fv value field of the lambda produced by the
+  hand-coded bytevector=? handler.
+    cpnanopass.ss
+- reduced live-pointer and inspector free-variable mask computation
+  overhead
+    cpnanopass.ss
+- moved regvec cset copies to driver so they aren't copied each
+  time a uvar is assigned to a register.  removed checks for
+  missing register csets, since registers always have csets.
+    cpnanopass.ss
+- added closure-rep else clause in record-inspector-information!.
+    cpnanopass.ss
+- augmented tree representation with a constant representation
+  for full trees to reduce the overhead of manipulating trees or
+  subtress with all bits set.
+    cpnanopass.ss
+- tree-for-each now takes start and end offsets; this cuts the
+  cost of traversing and applying the action when the range of
+  applicable offsets is other than 0..tree-size.
+    cpnanopass.ss
+- introduced the notion of poison variables to reduce the cost of
+  register/frame allocation for procedures with large sets of local
+  variables.  When the number of local variables exceeds a given
+  limit (currently hardwired to 1000), each variable with a large
+  live range is considered poison.  A reasonable set of variables
+  with large live ranges (the set of poison variables) is computed
+  by successive approximation to avoid excessive overhead.  Poison
+  variables directly conflict with all spillables, and all non-poison
+  spillables indirectly conflict with all poison spillables through
+  a shared poison-cset.  Thus poison variables cannot live in the
+  same location as any other variable, i.e., they poison the location.
+  Conflicts between frame locations and poison variables are handled
+  normally, which allows poison variables to be assigned to
+  move-related frame homes.  Poison variables are spilled prior to
+  register allocation, so conflicts between registers and poison
+  variables are not represented.  move relations between poison
+  variables and frame variables are recorded as usual, but other
+  move relations involving poison variables are not recorded.
+    cpnanopass.ss, np-languages.ss
+- changed the way a uvar's degree is decremented by remove-victim!.
+  instead of checking for a conflict between each pair of victim
+  and keeper and decrementing when the conflict is found, remove-victim!
+  now decrements the degree of each var in each victim's conflict
+  set.  while this might decrement other victims' degrees unnecessarily,
+  it can be much less expensive when large numbers of variables are
+  involved, since the number of conflicts between two non-poison
+  variables should be small due to the selection process for
+  (non-)poison variables and the fact that the unspillables introduced
+  by instruction selection should also have few conflicts.  That
+  is, it reduces the worst-case complexity of decrementing degrees
+  from O(n^2) to O(n).
+    cpnanopass.ss
+- took advice in compute-degree! comment to increment the uvars in
+  each registers csets rather than looping over the registers for
+  each uvar asking whether the register conflicts with the uvar.
+    cpnanopass.ss
+- assign-new-frame! now zeros out save-weight for local saves, since
+  once they are explicitly saved and restored, they are no longer
+  call-live and thus have no save cost.
+    cpnanopass.ss
+- desensitized the let-values source-caching timing test slightly
+    8.ms
+- updated allx, bullyx patches
+    patch*
+- attempt to stabilize timing tests let-values source-caching
+  test and ephemeron gc test while resensitizing the former
+    8.ms, 4.ms
+- various formatting and comment corrections
+    workarea,
+    s/Mf-base, bytevector.ss, cpnanopass.ss, date.ss,
+    5_6.ms, examples.ms
+- updated newrelease to handle mats/Mf-*nt
+    newrelease mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt
+- fixed gather-filedata's sort of profile entries.  for any two
+  entries x and y in the list produced by the sort call, if x's
+  bfp = y's bfp, x should come before y if x's efp < y's efp.
+  The idea is that enclosing entries should always come later
+  in the list.  this affects only languages where two expressions
+  can start at the same character position.
+    pdhtml.ss
+- expanded capability of ez-grammar with support for simpl
+  parsing of binary operators w/precedence and associativity
+  and automatically generated markdown grammar descriptions.
+  ez-grammar-test.ss now also doubles as a test of pdhtml for
+  algebraic languages.
+    mats/examples.ms,
+    examples/ez-grammar.ss, examples/ez-grammar-test.ss,
+    examples/Makefile
+- maybe-compile-{file,program,library} and automatic import
+  compilation now treat a malformed object file as if it were
+  not present and needs to be regenerated.  A malformed object
+  file (particularly a truncated one) might occur if the compiling
+  processes is killed or aborts before it has a chance to delete
+  a partial object file.
+    syntax.ss,
+    7.ms
 - fix enumerate signature 
     primdata.ss
-
