@@ -2594,6 +2594,20 @@
         (define-inline-carry-op fx-/carry -)
         (define-inline-carry-op fx*/carry (lambda (x y z) (+ (* x y) z))))
 
+      (define-inline 3 fxdiv-and-mod
+        [(x y)
+         (and likely-to-be-compiled?
+              (cp0-constant? (result-exp (value-visit-operand! y)))
+              (cp0
+                (let ([tx (cp0-make-temp #t)] [ty (cp0-make-temp #t)])
+                  (let ([refx (build-ref tx)] [refy (build-ref ty)])
+                    (build-lambda (list tx ty)
+                      (build-primcall 3 'values
+                        (list
+                          (build-primcall 3 'fxdiv (list refx refy))
+                          (build-primcall 3 'fxmod (list refx refy)))))))
+                ctxt empty-env sc wd name moi))])
+
       (define-inline 2 $top-level-value
         [(x)
          (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! x))

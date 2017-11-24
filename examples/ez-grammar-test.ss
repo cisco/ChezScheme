@@ -162,7 +162,7 @@
         (unread-char c ip))
       (define ($ws!) (set! $prev-pos $pos))
       (define ($make-token type value)
-        (let ([tok (make-token type value $prev-pos (- $pos 1))])
+        (let ([tok (make-token type value $prev-pos $pos)])
           (set! $prev-pos $pos)
           tok))
       (define ($lex-error c)
@@ -198,7 +198,7 @@
           [eof stream-nil]
           [char-whitespace? ($ws!) (lex)]
           [char-numeric? (lex-number c)]
-          [#\/ (seen-/)]
+          [#\/ (seen-slash)]
           [identifier-initial? (put-char sp c) (lex-identifier)]
           [#\( (return-token 'lparen #\()]
           [#\) (return-token 'rparen #\))] 
@@ -206,6 +206,9 @@
           [#\+ (seen-plus)] 
           [#\- (seen-minus)] 
           [#\= (seen-equals)] 
+          [#\* (return-token 'binop '*)]
+          [#\, (return-token 'sep #\,)]
+          [#\; (return-token 'sep #\;)]
           [else (lex-error c)])
         (module (lex-identifier)
           (define (id) (return-token 'id (string->symbol (get-buf))))
@@ -215,22 +218,22 @@
             [else ($unread-char c) (id)])
           (define (lex-identifier) (next)))
         (define-state-case seen-plus c
-          [eof (lex-error c)]
+          [eof (return-token 'binop '+)]
           [char-numeric? (lex-signed-number #\+ c)]
-          [else (lex-error c)])
+          [else (return-token 'binop '+)])
         (define-state-case seen-minus c
-          [eof (lex-error c)]
+          [eof (return-token 'binop '-)]
           [char-numeric? (lex-signed-number #\- c)]
-          [else (lex-error c)])
+          [else (return-token 'binop '-)])
         (define-state-case seen-equals c
-          [eof (lex-error c)]
+          [eof (return-token 'binop '=)]
           [#\> (return-token 'big-arrow #f)]
-          [else (lex-error c)])
+          [else (return-token 'binop '=)])
         (module (lex-number lex-signed-number)
           (define (finish-number)
             (let ([str (get-buf)])
               (let ([n (string->number str 10)])
-                (unless n (errorf 'parse-ftc "unexpected number literal ~a" str))
+                (unless n (errorf 'lexer "unexpected number literal ~a" str))
                 (return-token 'integer n))))
           (define (num)
             (let ([c ($get-char)])
@@ -246,11 +249,11 @@
               [eof (assert #f)]
               [char-numeric? (put-char sp c) (num)]
               [else (assert #f)])))
-        (define-state-case seen-/ c
-          [eof (lex-error c)]
+        (define-state-case seen-slash c
+          [eof (return-token 'binop '/)]
           [#\* (lex-block-comment)]
           [#\/ (lex-comment)]
-          [else (lex-error c)])
+          [else (return-token 'binop '/)])
         (define-state-case lex-comment c
           [eof (lex)]
           [#\newline ($ws!) (lex)]
@@ -281,34 +284,53 @@
       (wr (token-efp x) p)))
 )
 
-(library (parser)
-  (export parse)
+(module parser ()
+  (export parse *sfd*)
   (import (chezscheme) (streams) (lexer))
+  (define *sfd*)
   (module (define-grammar is sat parse-consumed-all? parse-result-value grammar-trace make-src)
     (define (sep->parser sep)
       (cond
-        [(char? sep) (sat (lambda (x) (eq? (token-value x) sep)))]
+        [(char? sep) (sat (lambda (x) (and (eq? (token-type x) 'sep) (eq? (token-value x) sep))))]
         [(symbol? sep) (sat (lambda (x) (eq? (token-type x) sep)))]
         [else (errorf "don't know how to parse separator: ~s" sep)]))
     (meta define (constant? x) (let ([x (syntax->datum x)]) (or (string? x) (char? x))))
     (define constant->parser
-      (let ()
+      (lambda (const)
         (define (token-sat type val)
           (sat (lambda (x)
                  (let ([ans (and (token? x) (eqv? (token-type x) type) (eqv? (token-value x) val))])
                    (when (grammar-trace) (printf "    ~s is [~s, ~a]? => ~s~%" x type val ans))
                    ans))))
-        (lambda (const)
-          (if (string? const)
-              (case const
-                ["=>" (token-sat 'big-arrow #f)]
-                [else (token-sat 'id (string->symbol const))])
-              (case const
-                [#\( (token-sat 'lparen const)]
-                [#\) (token-sat 'rparen const)]
-                [#\! (token-sat 'bang const)]
-                [else (errorf 'constant->parser "don't know how to construct a parser for ~a" const)])))))
-    (define make-src (lambda (bfp efp) (and (<= bfp efp) (cons bfp efp))))
+        (if (string? const)
+            (case const
+              [else (token-sat 'id (string->symbol const))])
+            (case const
+              [#\( (token-sat 'lparen const)]
+              [#\) (token-sat 'rparen const)]
+              [#\! (token-sat 'bang const)]
+              [else (errorf 'constant->parser "don't know how to construct a parser for ~a" const)]))))
+    (meta define (constant->markdown k)
+      (format "~a" k))
+    (define binop->parser
+      (lambda (binop)
+        (define (binop-sat type val)
+          (is val
+            (where [x <- item] (and (token? x) (eq? (token-type x) type) (eq? (token-value x) val)))))
+        (define (unexpected) (errorf 'binop->parser "don't know how to construct a parser for ~a" binop))
+        (if (string? binop)
+            (binop-sat 'binop
+              (case binop
+                ["=" '=]
+                ["+" '+]
+                ["-" '-]
+                ["*" '*]
+                ["/" '/]
+                [else (unexpected)]))
+            (unexpected))))
+    (define make-src
+      (lambda (bfp efp)
+        (make-source-object *sfd* bfp efp)))
     (include "ez-grammar.ss"))
 
   (define token
@@ -330,102 +352,219 @@
                           (when (grammar-trace) (printf "    ~s is [~s, ~s]? => ~s~%" x type val ans))
                           ans)))]))]))
 
-  (define-grammar expr
-    (expr
-      [integer :: src (token 'integer) =>
+  (define identifier (token 'id))
+
+  (define integer (token 'integer))
+
+  (define-grammar expr (markdown-directory ".")
+    (TERMINALS
+      (identifier (x y) (DESCRIPTION ("An identifier is ...")))
+      (integer (i) (DESCRIPTION ("An integer literal is ..."))))
+    (expr (e)
+      (BINOP src ((RIGHT "=") (LEFT "+" "-") (LEFT "*" "/")) t) =>
+        (lambda (src op x y)
+          (make-annotation `(,op ,x ,y) src `(,op ,(annotation-stripped x) ,(annotation-stripped y)))))
+    (term (t)
+      [test-SEP+ :: src "sepplus" #\( (SEP+ e #\;) #\) =>
+        (lambda (src e+)
+          (make-annotation `(SEP+ ,@e+) src `(SEP+ ,@(map annotation-stripped e+))))]
+      [test-SEP* :: src "sepstar" #\( (SEP* e #\,) #\) =>
+        (lambda (src e*)
+          (make-annotation `(SEP* ,@e*) src `(SEP* ,@(map annotation-stripped e*))))]
+      [test-OPT :: src "opt" #\( (OPT e #f) #\) =>
+        (lambda (src maybe-e)
+          (if maybe-e
+              (make-annotation `(OPT ,maybe-e) src `(OPT ,(annotation-stripped maybe-e)))
+              (make-annotation `(OPT) src `(OPT))))]
+      [test-K+ :: src "kplus" #\( (K+ e) #\) =>
+        (lambda (src e+)
+          (make-annotation `(K+ ,@e+) src `(K+ ,@(map annotation-stripped e+))))]
+      [test-K* :: src "kstar" #\( (K* e) #\) =>
+        (lambda (src e*)
+          (make-annotation `(K* ,@e*) src `(K* ,@(map annotation-stripped e*))))]
+      [varref :: src x =>
+        (lambda (src id)
+          (make-annotation `(id ,id) src `(id ,id)))]
+      [intref :: src i =>
         (lambda (src n)
-          `(int ,src ,n))]
-      [becomes :: src "=>" expr =>
-        (lambda (src e)
-          `(=> ,src ,e))]
-      [becomes! :: src "=>" #\! expr =>
-        (lambda (src e)
-          `(=>! ,src ,e))]
-      [group :: src #\( expr #\) =>
+          (make-annotation `(int ,n) src `(int ,n)))]
+      [group :: src #\( e #\) =>
         (lambda (src e)
           `(group ,src ,e))]))
 
   (define parse
-    (lambda (fn)
-      (let ([ip (open-input-file fn)])
-        (dynamic-wind
-          void
-          (lambda ()
-            (let ([token-stream (lexer fn ip)])
-              (define (oops)
-                (let ([last-token (stream-last-forced token-stream)])
-                  (if last-token
-                      (errorf 'parse "parse error at or before character ~s of ~a" (token-bfp last-token) fn)
-                      (errorf 'parse "no expressions found in ~a" fn))))
-;;; return the first result, if any, for which the input stream was entirely consumed.
-              (let loop ([res* (expr token-stream)])
-                (if (null? res*)
-                    (oops)
-                    (let ([res (car res*)])
-                      (if (parse-consumed-all? res)
-                          (parse-result-value res)
-                          (loop (cdr res*))))))))
-          (lambda () (close-input-port ip))))))
-  )
+    (lambda (fn ip)
+      (let ([token-stream (lexer fn ip)])
+        (define (oops)
+          (let ([last-token (stream-last-forced token-stream)])
+            (if last-token
+                (errorf 'parse "parse error at or before character ~s of ~a" (token-bfp last-token) fn)
+                (errorf 'parse "no expressions found in ~a" fn))))
+        ;;; return the first result, if any, for which the input stream was entirely consumed.
+        (let loop ([res* (expr token-stream)])
+          (if (null? res*)
+              (oops)
+              (let ([res (car res*)])
+                (if (parse-consumed-all? res)
+                    (parse-result-value res)
+                    (loop (cdr res*))))))))))
+
+(define run
+  (lambda (fn)
+    (import parser)
+    (let* ([ip (open-file-input-port fn)]
+           [sfd (make-source-file-descriptor fn ip #t)]
+           [ip (transcoded-port ip (native-transcoder))])
+      (fluid-let ([*sfd* sfd])
+        (eval
+          `(let ()
+             (define-syntax define-ops
+               (lambda (x)
+                 (syntax-case x ()
+                   [(_ op ...)
+                    #`(begin
+                        (define-syntax op
+                          (lambda (x)
+                            (let ([src (annotation-source (syntax->annotation x))])
+                              (with-syntax ([bfp (source-object-bfp src)] [efp (source-object-efp src)])
+                                (syntax-case x ()
+                                  [(_ e (... ...)) #'`(op (bfp . efp) ,e (... ...))])))))
+                        ...)])))
+             (define-ops SEP+ SEP* OPT K+ K* id int group)
+             (define-ops = + - * /)
+             (define x 'x)
+             (define y 'y)
+             (define z 'z)
+             ,(dynamic-wind
+                void
+                (lambda () (parse fn ip))
+                (lambda () (close-input-port ip)))))))))
 
 (define (ez-grammar-test)
-  (import (parser))
-  (with-output-to-file "ez-grammar-test1"
-    (lambda ()
-      (for-each display
-        '(
-           "1347\n"
-           )))
-    'replace)
+  (define n 0)
+  (define test
+    (lambda (line* okay?)
+      (set! n (+ n 1))
+      (let ([fn (format "testfile~s" n)])
+        (with-output-to-file fn
+          (lambda () (for-each (lambda (line) (printf "~a\n" line)) line*))
+          'replace)
+        (let ([result (parameterize ([compile-profile #t] [compile-interpret-simple #f])
+                        (guard (c [else c]) (run fn)))])
+          (guard (c [else #f]) (profile-dump-html))
+          (delete-file fn)
+          (delete-file "profile.html")
+          (delete-file (format "~a.html" fn))
+          (unless (okay? result)
+            (printf "test ~s failed\n" n)
+            (printf "  test code:")
+            (for-each (lambda (line) (printf "    ~a\n" line)) line*)
+            (printf "  result:\n    ")
+            (if (condition? result)
+                (begin (display-condition result) (newline))
+                (parameterize ([pretty-initial-indent 4])
+                  (pretty-print result)))
+            (newline))))))
 
-  (with-output-to-file "ez-grammar-test2"
-    (lambda ()
-      (for-each display
-        '(
-           "\n"
-           "/* hello */ => ( => 1253) /* goodbye\n"
-           "         111111111122222222223333333333\n"
-           "123456789012345678901234567890123456789\n"
-           "*/\n"
-           )))
-    'replace)
+  (define-syntax returns
+    (syntax-rules ()
+      [(_ k) (lambda (x) (equal? x 'k))]))
 
-  (with-output-to-file "ez-grammar-test3err"
-    (lambda ()
-      (for-each display
-        '(
-           "\n"
-           "/* hello */ => (=> 1253 =>) /* goodbye\n"
-           "         111111111122222222223333333333\n"
-           "123456789012345678901234567890123456789\n"
-           "*/\n"
-           )))
-    'replace)
+  (define-syntax oops
+    (syntax-rules ()
+      [(_ (c) e1 e2 ...)
+       (lambda (c) (and (condition? c) e1 e2 ...))]))
 
-  (with-output-to-file "ez-grammar-test4err"
-    (lambda ()
-      (for-each display
-        '(
-           "3 /*\n"
-           )))
-    'replace)
+  (test
+    '(
+       "1347"
+       )
+    (returns
+      (int (0 . 4) 1347)))
 
-  (unless (guard (c [else #f]) (equal? (parse "ez-grammar-test1") (quote (int (0 . 3) 1347))))
-    (printf "test 1 failed\n"))
-  (delete-file "ez-grammar-test1")
-  (unless (guard (c [else #f]) (equal? (parse "ez-grammar-test2") (quote (=> (13 . 25) (group (16 . 25) (=> (18 . 24) (int (21 . 24) 1253)))))))
-    (printf "test 2 failed\n"))
-  (delete-file "ez-grammar-test2")
-  (unless (guard (c [else (and (equal? (condition-message c) "parse error at or before character ~s of ~a") (equal? (condition-irritants c) (quote (25 "ez-grammar-test3err"))))]) (parse "ez-grammar-test3err") #f)
-    (printf "test 3 failed\n"))
-  (delete-file "ez-grammar-test3err")
-  (unless (guard (c [else (and (equal? (condition-message c) "unexpected ~a at character ~s of ~a") (equal? (condition-irritants c) (quote ("eof" 6 "ez-grammar-test4err"))))]) (parse "ez-grammar-test4err") #f)
-    (printf "test 4 failed\n"))
-  (delete-file "ez-grammar-test4err")
-  (printf "end of tests\n"))
+  (test
+    '(
+       "3 /*"
+       )
+    (oops (c)
+      (equal? (condition-message c) "unexpected ~a at character ~s of ~a")
+      (equal? (condition-irritants c) '("eof" 6 "testfile2"))))
+
+  (test
+    '(
+       "3 / 4 + 5 opt(6)"
+       )
+    (oops (c)
+      (equal? (condition-message c) "parse error at or before character ~s of ~a")
+      (equal? (condition-irritants c) '(10 "testfile3"))))
+
+  (test
+    '(
+       "x = y = 5"
+       )
+    (returns
+      (=
+       (0 . 9)
+       (id (0 . 1) x)
+       (= (4 . 9) (id (4 . 5) y) (int (8 . 9) 5)))))
+
+  (test
+    '(
+       "x = y = x + 5 - z * 7 + 8 / z"
+       )
+    (returns
+      (=
+       (0 . 29)
+       (id (0 . 1) x)
+       (=
+        (4 . 29)
+        (id (4 . 5) y)
+        (+
+         (8 . 29)
+         (-
+          (8 . 21)
+          (+ (8 . 13) (id (8 . 9) x) (int (12 . 13) 5))
+          (* (16 . 21) (id (16 . 17) z) (int (20 . 21) 7)))
+         (/ (24 . 29) (int (24 . 25) 8) (id (28 . 29) z)))))))
+
+  (test
+    '(
+       "opt(opt(opt()))"
+       )
+    (returns
+      (OPT (0 . 15) (OPT (4 . 14) (OPT (8 . 13))))))
+
+  (test
+    '(
+       "kstar(3 4 kplus(1 2 3 kstar()))"
+       )
+    (returns
+      (K* (0 . 31)
+        (int (6 . 7) 3)
+        (int (8 . 9) 4)
+        (K+ (10 . 30)
+          (int (16 . 17) 1)
+          (int (18 . 19) 2)
+          (int (20 . 21) 3)
+          (K* (22 . 29))))))
+
+  (test
+    '(
+       "sepplus( opt() ; opt(5) ; sepstar(17, 34) ; sepstar())"
+       )
+    (returns
+      (SEP+ (0 . 54)
+        (OPT (9 . 14))
+        (OPT (17 . 23) (int (21 . 22) 5))
+        (SEP* (26 . 41) (int (34 . 36) 17) (int (38 . 40) 34))
+        (SEP* (44 . 53)))))
+
+  (delete-file "expr.md")
+  (printf "~s tests ran\n" n)
+  )
 
 #!eof
 
-The following should print only "end of tests".
+The following should print only "<n> tests ran".
 
-echo '(ez-grammar-test)' | scheme -q ez-grammar-test.ss
+echo '(ez-grammar-test)' | ../bin/scheme -q ez-grammar-test.ss

@@ -48,7 +48,7 @@ The R6RS core of the Chez Scheme language is described in
 which also includes an introduction to Scheme and a set of example programs.
 Chez Scheme's additional language, run-time system, and
 programming environment features are described in the
-[Chez Scheme User's Guide](http://cisco.github.io/ChezScheme/csug9.4/csug.html).
+[Chez Scheme User's Guide](http://cisco.github.io/ChezScheme/csug9.5/csug.html).
 The latter includes a shared index and a shared summary of forms,
 with links where appropriate to the former, so it is often the best
 starting point.
