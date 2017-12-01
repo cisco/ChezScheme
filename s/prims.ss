@@ -210,12 +210,19 @@
   (lambda (x)
     (unless (procedure? x)
       ($oops '$procedure-name "~s is not a procedure" x))
-    ($code-name ($closure-code x))))
+    (let name ([x x])
+      (let ([code ($closure-code x)])
+        (if ($code-arity-in-closure? code)
+            (name ($closure-ref x 0))
+            ($code-name code))))))
 
 (define-who procedure-arity-mask
   (lambda (x)
     (unless (procedure? x) ($oops who "~s is not a procedure" x))
-    ($code-arity-mask ($closure-code x))))
+    (let ([c ($closure-code x)])
+      (if ($code-arity-in-closure? c)
+          ($closure-ref x 1)
+          ($code-arity-mask c)))))
 
 (let ()
   (define-syntax frob-proc
@@ -404,6 +411,16 @@
     (unless ($code? x) ($oops who "~s is not code" x))
     ($code-pinfo* x)))
 
+(define-who $code-mutable-closure?
+  (lambda (x)
+    (unless ($code? x) ($oops who "~s is not code" x))
+    ($code-mutable-closure? x)))
+
+(define-who $code-arity-in-closure?
+  (lambda (x)
+    (unless ($code? x) ($oops who "~s is not code" x))
+    ($code-arity-in-closure? x)))
+
 (define $object-address ; not safe and can't be
   (lambda (x offset)
     ($object-address x offset)))
@@ -444,6 +461,15 @@
       (unless (and (fixnum? i) (fx< -1 i ($closure-length x)))
          ($oops '$closure-ref "invalid index ~s" i))
       ($closure-ref x i)))
+
+(define $closure-set!
+   (lambda (x i new)
+     (unless (and (procedure? x)
+                  ($code-mutable-closure? ($closure-code x)))
+         ($oops '$closure-ref "~s is not a mutable closure" x))
+      (unless (and (fixnum? i) (fx< -1 i ($closure-length x)))
+         ($oops '$closure-ref "invalid index ~s" i))
+      ($closure-set! x i new)))
 
 (define $continuation? (lambda (x) ($continuation? x)))
 
@@ -2249,3 +2275,45 @@
         (unless (string? str) ($oops who "~s is not a string" str))
         (wctmb cp (string->utf16 str 'little))))))
 )
+
+(define-who $make-wrapper-procedure
+  (lambda (proc arity-mask)
+    (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+    (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
+    (#3%$make-wrapper-procedure proc arity-mask)))
+
+(define-who make-wrapper-procedure
+  (lambda (proc arity-mask data)
+    (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+    (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
+    (#3%make-wrapper-procedure proc arity-mask data)))
+
+(define-who make-arity-wrapper-procedure
+  (lambda (proc arity-mask data)
+    (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+    (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
+    (#3%make-arity-wrapper-procedure proc arity-mask data)))
+
+(define-who wrapper-procedure?
+  (lambda (x)
+    (and (procedure? x)
+         (let ([c ($closure-code x)])
+           (and ($code-arity-in-closure? c)
+                ;; Indirect way of distinguishing from `$make-wrapper-procedure` result:
+                ($code-mutable-closure? c))))))
+
+(define-who set-wrapper-procedure!
+  (lambda (x proc)
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
+    (unless (procedure? proc)  ($oops who "~s is not a procedure" proc))
+    ($closure-set! x 0 proc)))
+
+(define-who wrapper-procedure-data
+  (lambda (x)
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
+    ($closure-ref x 2)))
+
+(define-who set-wrapper-procedure-data!
+  (lambda (x v)
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
+    ($closure-set! x 2 v)))

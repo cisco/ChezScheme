@@ -1027,3 +1027,7 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- add make-wrapper-procedure, make-arity-wrapper-procedure, etc.
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss, primdata.ss,
+    prims.ss, print.ss, gc.c, number.c, prim.c, externs.h,
+    objects.stex, release_notes.stex, misc.ms, mats/patch*, mats/root*
