@@ -3821,6 +3821,26 @@ misc.mo:Expected error in mat virtual-registers: "set-virtual-register!: invalid
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah)".
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah . 17)".
 misc.mo:Expected error in mat procedure-arity-mask: "procedure-arity-mask: 17 is not a procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure)".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args))".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args) 1)".
+misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1 is not a procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-a-procedure is not a procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-an-exact-integer is not an arity mask".
+misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1.0 is not an arity mask".
+misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: 1 is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure> is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure!)".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: 1 is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure> is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data!)".
+misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: 1 is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: #<procedure> is not an arity wrapper procedure".
+misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
 cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (cont0 (quote x))".

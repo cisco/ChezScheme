@@ -971,3 +971,7 @@
   bootstrap failures after small changes like the recent change to
   procedure names, so we don't have to rebuild the boot files as often.
     Mf-base
+- add make-arity-wrapper
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
+    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
+    misc.ms, mats/patch*, mats/root*

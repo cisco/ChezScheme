@@ -1,5 +1,5 @@
-*** errors-compile-0-f-t-f	2018-05-21 15:45:38.426922815 -0400
---- errors-interpret-0-f-t-f	2018-05-21 16:11:21.764903593 -0400
+*** errors-compile-0-f-t-f	2018-07-15 21:23:08.670931178 -0600
+--- errors-interpret-0-f-t-f	2018-07-15 21:58:19.008974933 -0600
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -169,7 +169,44 @@
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
-*** 4056,4071 ****
+*** 3829,3845 ****
+  misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-an-exact-integer is not an arity mask".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1.0 is not an arity mask".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure!)".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data!)".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: #<procedure> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
+  cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
+--- 3835,3851 ----
+  misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-an-exact-integer is not an arity mask".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1.0 is not an arity mask".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure!)".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data!)".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: 1 is not an arity wrapper procedure".
+! misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
+  cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
+  cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
+***************
+*** 4076,4091 ****
   6.mo:Expected error in mat pretty-print: "incorrect argument count in call (pretty-format (quote foo) (quote x) (quote x))".
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
@@ -186,9 +223,9 @@
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
---- 4062,4071 ----
+--- 4082,4091 ----
 ***************
-*** 7011,7017 ****
+*** 7031,7037 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
@@ -196,7 +233,7 @@
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7011,7017 ----
+--- 7031,7037 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
@@ -205,7 +242,7 @@
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
-*** 7148,7155 ****
+*** 7168,7175 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -214,7 +251,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 7148,7155 ----
+--- 7168,7175 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -224,7 +261,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 7157,7171 ****
+*** 7177,7191 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -240,7 +277,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 7157,7171 ----
+--- 7177,7191 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -257,7 +294,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 7178,7203 ****
+*** 7198,7223 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -284,7 +321,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 7178,7203 ----
+--- 7198,7223 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -312,7 +349,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7328,7366 ****
+*** 7348,7386 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -352,7 +389,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7328,7366 ----
+--- 7348,7386 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -393,14 +430,14 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7375,7431 ****
+*** 7395,7451 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure pcons>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure pcons>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1 2 3)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (n (+ z 7) w "what?")".
@@ -451,7 +488,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7375,7431 ----
+--- 7395,7451 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -459,8 +496,8 @@
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
@@ -510,7 +547,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
 ***************
-*** 8556,8568 ****
+*** 8576,8588 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -524,7 +561,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8556,8568 ----
+--- 8576,8588 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -539,7 +576,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 10052,10061 ****
+*** 10072,10081 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -550,7 +587,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 10052,10061 ----
+--- 10072,10081 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
