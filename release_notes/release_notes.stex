@@ -58,7 +58,6 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-
 \subsection{Atomic compare-and-set (9.5.1)}
 
 The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
@@ -86,6 +85,19 @@ indicate whether the guardian is ordered or unordered. A guardian is
 unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
+
+\subsection{Procedure arity-mask adjustment and redirection (9.5.1)}
+
+The new procedure \scheme{make-arity-wrapper-procedure} creates a
+procedure that behaves like a given one, but with a different
+result for \scheme{procedure-arity-mask}. The new mask is intended to be a
+subset of the original procedure's arity mask, and the original procedure
+is intended to report its own error for argument counts that do not fit the
+specified mask, but neither behavior is checked.
+The wrapped procedure can be replaced imperatively, which is useful
+for triggering just-in-time conversions of a procedure's
+implementation while imposing a minimal overhead on calls to the
+procedure before or after conversion.
 
 \subsection{Record equality and hashing (9.5)}
 

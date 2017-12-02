@@ -332,7 +332,17 @@
                                (min (if (fx< interface 0)
                                         (fx- -1 interface)
                                         interface)
-                                 m))])))))
+                                    m))]))))
+                 (arity-mask (let mask ((cl* cl*) (arity-mask 0))
+                               (if (null? cl*)
+                                   arity-mask
+                                   (nanopass-case (Linterp CaseLambdaClause) (car cl*)
+                                     [(clause (,x* ...) ,interface ,body)
+                                      (mask (cdr cl*)
+                                            (logor arity-mask
+                                                   (if (< interface 0)
+                                                       (- (ash 1 (- -1 interface)))
+                                                       (ash 1 interface))))])))))
              (define adjust-interface
                (lambda (x)
                  (if (fx< x 0)
@@ -355,18 +365,24 @@
                  [(0)
                   (ip2-closure free
                     ($rt lambda ()
-                      (lambda args
-                        ($rt body ([a0 0] [a1 0] [fp 0]) args (length args)))))]
+                      ($make-arity-wrapper-procedure
+                       (lambda args
+                         ($rt body ([a0 0] [a1 0] [fp 0]) args (length args)))
+                       arity-mask)))]
                  [(1)
                   (ip2-closure free
                     ($rt lambda ()
-                      (lambda (a0 . args)
-                        ($rt body ([a1 0] [fp 0]) args (length args)))))]
+                      ($make-arity-wrapper-procedure
+                       (lambda (a0 . args)
+                         ($rt body ([a1 0] [fp 0]) args (length args)))
+                       arity-mask)))]
                  [(2)
                   (ip2-closure free
                     ($rt lambda ()
-                      (lambda (a0 a1 . args)
-                        ($rt body ([fp 0]) args (length args)))))]))))]
+                      ($make-arity-wrapper-procedure
+                       (lambda (a0 a1 . args)
+                         ($rt body ([fp 0]) args (length args)))
+                       arity-mask)))]))))]
       [(set! ,x ,e)
        (let ((e (ip2 e)))
          (let ((loc (c-var-loc x)) (i (c-var-index x)))

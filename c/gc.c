@@ -536,7 +536,11 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             S_G.countof[tg][countof_closure] += 1;
             S_G.bytesof[tg][countof_closure] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-            find_room(space_pure, tg, type_closure, n, p);
+            if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+              find_room(space_impure, tg, type_closure, n, p);
+            } else {
+              find_room(space_pure, tg, type_closure, n, p);
+            }
             copy_ptrs(type_closure, p, pp, n);
             SETCLOSCODE(p,code);
          /* pad if necessary */
