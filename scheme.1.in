@@ -14,7 +14,7 @@
 \fB{InstallPetiteName}\fP [ \fIoptions\fP ] \fIfile\fP ...
 .SH DESCRIPTION
 \*s is a programming language, based on R6RS Scheme, and a
-high-performance implementation of that langauge.
+high-performance implementation of that language.
 \*s compiles source expressions \fIincrementally\fP to machine code,
 providing the speed of compiled code in an interactive system.
 .LP
