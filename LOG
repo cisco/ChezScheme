@@ -752,3 +752,5 @@
   a partial object file.
     syntax.ss,
     7.ms
+- fix signature of bytevector-[u/s]16-native-set!
+    primdata.ss
