@@ -754,3 +754,5 @@
     7.ms
 - fix signature of bytevector-[u/s]16-native-set!
     primdata.ss
+- fix enumerate signature 
+    primdata.ss
