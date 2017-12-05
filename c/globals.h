@@ -15,7 +15,7 @@
  */
 
 /* globals that do NOT need to be preserved in a saved heap.
- * they must be initalized each time the system is brought up. */
+ * they must be initialized each time the system is brought up. */
 
 /* gc.c */
 EXTERN IBOOL S_checkheap;
