@@ -58,6 +58,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Procedure source location without inspector information (9.5.1)}
+
+When \scheme{generate-inspector-information} is set to \scheme{#f} and
+\scheme{generate-procedure-source-information} is set to \scheme{#t},
+source location information is preserved for a procedure, even though
+other inspector information is not preserved.
+
 \subsection{Record equality and hashing (9.5)}
 
 The new procedures \scheme{record-type-equal-procedure} and

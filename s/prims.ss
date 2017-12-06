@@ -1672,6 +1672,7 @@
                  [(x) (name (and x #t))]))
              (name init))])))
   (define-boolean-tc-parameter generate-inspector-information #t)
+  (define-boolean-tc-parameter generate-procedure-source-information #f)
   (define-boolean-tc-parameter generate-profile-forms #t)
   (define-boolean-tc-parameter $suppress-primitive-inlining #f)
 )

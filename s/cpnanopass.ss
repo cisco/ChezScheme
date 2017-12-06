@@ -5324,6 +5324,7 @@
           (define-tc-parameter current-output-port current-output)
           (define-tc-parameter current-error-port current-error)
           (define-tc-parameter generate-inspector-information generate-inspector-information)
+          (define-tc-parameter generate-procedure-source-information generate-procedure-source-information)
           (define-tc-parameter generate-profile-forms generate-profile-forms)
           (define-tc-parameter $compile-profile compile-profile)
           (define-tc-parameter optimize-level optimize-level)
@@ -13878,6 +13879,11 @@
                                  (list->vector (ctci-rpi* ctci)))])
                         (vector-sort! (lambda (x y) (fx< (rp-info-offset x) (rp-info-offset y))) v)
                         v)))]
+                 [(and (generate-procedure-source-information)
+                       (info-lambda-src info)) =>
+                  (lambda (src)
+                    (include "types.ss")
+                    (make-code-info src #f #f #f #f))]
                  [else #f])
                (info-lambda-pinfo* info))
              (lambda (p) (c-trace (info-lambda-name info) code-size trace* p)))])
