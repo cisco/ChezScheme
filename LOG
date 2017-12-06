@@ -773,3 +773,11 @@
     cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
     primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
     misc.ms, mats/patch*, mats/root*
+- fix signature of bytevector-[u/s]16-native-set!
+    primdata.ss
+- fix enumerate signature 
+    primdata.ss
+- add generate-procedure-source-information
+    cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
+    primdata.ss, prims.ss, misc.ms,
+    system.stex, release_notes.tex

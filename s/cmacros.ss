@@ -1378,6 +1378,7 @@
    [ptr meta-level]
    [ptr compile-profile]
    [ptr generate-inspector-information]
+   [ptr generate-procedure-source-information]
    [ptr generate-profile-forms]
    [ptr optimize-level]
    [ptr subset-mode]

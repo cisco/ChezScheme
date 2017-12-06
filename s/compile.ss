@@ -559,6 +559,7 @@
                    [cp0-score-limit (cp0-score-limit)]
                    [cp0-outer-unroll-limit (cp0-outer-unroll-limit)]
                    [generate-inspector-information (generate-inspector-information)]
+                   [generate-procedure-source-information (generate-procedure-source-information)]
                    [$compile-profile ($compile-profile)]
                    [generate-interrupt-trap (generate-interrupt-trap)]
                    [$optimize-closures ($optimize-closures)]

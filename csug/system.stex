@@ -1108,6 +1108,7 @@ cp0-effort-limit
 cp0-score-limit
 cp0-outer-unroll-limit
 generate-inspector-information
+generate-procedure-source-information
 compile-profile
 generate-interrupt-trap
 enable-cross-library-optimization
@@ -2392,6 +2393,21 @@ For example, if:
 \noindent
 is included in a file, generation of inspector information will be
 disabled only for the remainder of that particular file.
+
+%----------------------------------------------------------------------------
+\entryheader\label{desc:generate-procedure-source-information}
+\formdef{generate-procedure-source-information}{\categorythreadparameter}{generate-procedure-source-information}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{generate-inspector-information} is set to \scheme{#f} and
+this parameter is set to \scheme{#t}, then a source location is preserved
+for a procedure, even though other inspector information is not preserved.
+Source information provides a small amount of debugging support at a
+much lower cost in memory and object-file size than full inspector information.
+If this parameter is changed during the compilation of a file, the
+original value will be restored.
 
 %----------------------------------------------------------------------------
 \entryheader
