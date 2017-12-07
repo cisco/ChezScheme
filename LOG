@@ -756,3 +756,5 @@
     primdata.ss
 - fix enumerate signature 
     primdata.ss
+- added support for Visual Studio 2017.15.5
+    wininstall/locate-vcredist.bat
