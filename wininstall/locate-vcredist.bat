@@ -17,6 +17,11 @@
     @SET "Path32=%VCINSTALLDIR%Redist\MSVC\14.11.25325\MergeModules\Microsoft_VC141_CRT_x86.msm"
     @SET "Path64=%VCINSTALLDIR%Redist\MSVC\14.11.25325\MergeModules\Microsoft_VC141_CRT_x64.msm"
   )
+
+  @IF EXIST "%VCINSTALLDIR%Redist\MSVC\14.12.25810" (
+    @SET "Path32=%VCINSTALLDIR%Redist\MSVC\14.12.25810\MergeModules\Microsoft_VC141_CRT_x86.msm"
+    @SET "Path64=%VCINSTALLDIR%Redist\MSVC\14.12.25810\MergeModules\Microsoft_VC141_CRT_x64.msm"
+  )
 )
 
 @DEL vcredist.wxs >nul 2>&1
