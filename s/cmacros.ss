@@ -645,11 +645,13 @@
       (continuation "cont" #\k 7)        ;
       (code "code" #\c 8)                ;
       (pure-typed-object "p-tobj" #\r 9) ;
-      (impure-record "ip-rec" #\s 10))   ;
+      (impure-record "ip-rec" #\s 10)    ;
+      (impure-typed-object "ip-tobj" #\t 11) ; as needed (instead of impure) for backtraces
+      (closure "closure" #\l 12))        ; as needed (instead of pure/impure) for backtraces
     (unswept
-      (data "data" #\d 11)))             ; unswept objects allocated here
+      (data "data" #\d 13)))             ; unswept objects allocated here
   (unreal
-    (empty "empty" #\e 12)))             ; available segments
+    (empty "empty" #\e 14)))             ; available segments
 
 ;;; enumeration of types for which gc tracks object counts
 ;;; also update gc.c

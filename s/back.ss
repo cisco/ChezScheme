@@ -73,6 +73,13 @@
       [() ($get-enable-object-counts)]
       [(b) ($set-enable-object-counts b)])))
 
+(define-who enable-object-backreferences
+  (let ([$get-enable-object-backreferences (foreign-procedure "(cs)enable_object_backreferences" () boolean)]
+        [$set-enable-object-backreferences (foreign-procedure "(cs)set_enable_object_backreferences" (boolean) void)])
+    (case-lambda
+      [() ($get-enable-object-backreferences)]
+      [(b) ($set-enable-object-backreferences b)])))
+
 (define-who collect-trip-bytes
    (make-parameter
       (constant default-collect-trip-bytes)

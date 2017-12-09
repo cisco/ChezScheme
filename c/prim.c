@@ -177,6 +177,9 @@ void S_prim_init() {
     Sforeign_symbol("(cs)enable_object_counts", (void *)S_enable_object_counts);
     Sforeign_symbol("(cs)set_enable_object_counts", (void *)S_set_enable_object_counts);
     Sforeign_symbol("(cs)object_counts", (void *)S_object_counts);
+    Sforeign_symbol("(cs)enable_object_backreferences", (void *)S_enable_object_backreferences);
+    Sforeign_symbol("(cs)set_enable_object_backreferences", (void *)S_set_enable_object_backreferences);
+    Sforeign_symbol("(cs)object_backreferences", (void *)S_object_backreferences);
 }
 
 static void s_instantiate_code_object() {

@@ -349,6 +349,27 @@ ptr S_object_counts(void) {
   return outer_alist;
 }
 
+IBOOL S_enable_object_backreferences(void) {
+  return S_G.enable_object_backreferences;
+}
+
+void S_set_enable_object_backreferences(IBOOL eoc) {
+  S_G.enable_object_backreferences = eoc;
+}
+
+ptr S_object_backreferences(void) {
+  IGEN g; ptr ls = Snil;
+
+  tc_mutex_acquire()
+
+  for (g = S_G.max_nonstatic_generation+1; g--; )
+    ls = Scons(S_G.gcbackreference[g], ls);
+
+  tc_mutex_release()
+
+  return ls;
+}
+
 /* Scompact_heap().  Compact into as few O/S chunks as possible and
  * move objects into static generation
  */
@@ -819,7 +840,7 @@ void S_do_gc(IGEN mcg, IGEN tg) {
 
 
 void S_gc(ptr tc, IGEN mcg, IGEN tg) {
-  if (tg == static_generation || S_G.enable_object_counts)
+  if (tg == static_generation || S_G.enable_object_counts || S_G.enable_object_backreferences)
     S_gc_oce(tc, mcg, tg);
   else
     S_gc_ocd(tc, mcg, tg);
