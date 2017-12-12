@@ -85,7 +85,7 @@
     (unless (mutable-vector? v) ($oops who "~s is not a mutable vector" v))
     (let ([n (vector-length v)])
       (do ([i 0 (fx+ i 1)])
-          ((fx= i n) v)
+          ((fx= i n))
         (vector-set! v i obj)))))
 
 (set! fxvector->list

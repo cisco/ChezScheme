@@ -758,3 +758,9 @@
     primdata.ss
 - added support for Visual Studio 2017.15.5
     wininstall/locate-vcredist.bat
+- fixed substring-fill! and vector-fill! to return void, reflecting the
+  documented return value of unspecified value.  Also changes substring-fill!
+  to use define-who instead of repeating 'substring-fill! in all the error
+  messages.
+    5_4.ss, 5_6.ss
+
