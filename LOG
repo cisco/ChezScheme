@@ -766,3 +766,5 @@
 - fix mat of substring-fill!
   after the recent change, the result of substring-fill! is void
     5_5.ms
+- fix a few signatures
+    primdata.ss
