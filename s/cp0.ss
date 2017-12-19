@@ -3588,6 +3588,9 @@
           (lambda (?p ?ls ?ls* lvl map? ctxt sc wd name moi)
             ; (map/for-each proc (list a11 a12 ... a1m) (list a21 a22 ... a2m) ... (list an1 an2 ... anm)) =>
             ;   (let ([p proc])
+            ;     (if (procedure? p)
+            ;         (void)
+            ;         ($oops 'map/for-each "~s is not a procedure" p))
             ;     (let ([t11 a11] ... [t1m a1m])
             ;       ...
             ;         (let ([tn1 an1] ... [tnm anm])
@@ -3605,22 +3608,32 @@
                                        e**)])
                          (residualize-seq (list* ?p ?ls ?ls*) '() ctxt)
                          (build-let (list p) (list (value-visit-operand! ?p))
-                           (let f ([t** temp**] [e** (reverse e**)] [ls* (cons ?ls ?ls*)])
-                             (if (null? t**)
-                                 (let ([results 
-                                        (let ([preinfo (app-preinfo ctxt)])
-                                          (let g ([t** temp**])
-                                            (if (null? (car t**))
-                                                '()
-                                                (cons `(call ,preinfo (ref #f ,p)
-                                                         ,(map (lambda (t*) (build-ref (car t*))) t**) ...)
-                                                  (g (map cdr t**))))))])
-                                   (if map?
-                                       (build-primcall lvl 'list results)
-                                       (make-seq* ctxt results)))
-                                 (non-result-exp (value-visit-operand! (car ls*))
-                                   (build-let (car t**) (car e**)
-                                     (f (cdr t**) (cdr e**) (cdr ls*)))))))))
+                           (let ([main
+                                  (let f ([t** temp**] [e** (reverse e**)] [ls* (cons ?ls ?ls*)])
+                                    (if (null? t**)
+                                        (let ([results 
+                                               (let ([preinfo (app-preinfo ctxt)])
+                                                 (let g ([t** temp**])
+                                                   (if (null? (car t**))
+                                                       '()
+                                                       (cons `(call ,preinfo (ref #f ,p)
+                                                                ,(map (lambda (t*) (build-ref (car t*))) t**) ...)
+                                                             (g (map cdr t**))))))])
+                                          (if map?
+                                              (build-primcall lvl 'list results)
+                                              (make-seq* ctxt results)))
+                                        (non-result-exp (value-visit-operand! (car ls*))
+                                          (build-let (car t**) (car e**)
+                                            (f (cdr t**) (cdr e**) (cdr ls*))))))]) 
+                             (if (fx= lvl 2)
+                               (make-seq ctxt
+                                 `(if ,(build-primcall 2 'procedure? (list `(ref #f ,p)))
+                                      ,void-rec
+                                      ,(build-primcall 3 '$oops (list `(quote ,(if map? 'map 'for-each))
+                                                                      `(quote  "~s is not a procedure")
+                                                                      `(ref #f ,p))))
+                                 main)
+                               main)))))
                   (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! (car ls*)))
                     [(quote ,d)
                      (and (list? d) (loop (cdr ls*) (cons (map (lambda (x) `(quote ,x)) d) e**) all-quoted?))]
