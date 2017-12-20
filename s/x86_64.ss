@@ -2377,7 +2377,7 @@
             (if (target-fixnum? lpm)
                 `(,size . ,(fix lpm))
                 `(abs 0 (object ,lpm)))
-            (aop-cons* `(asm livemask: ,(format "~b" lpm))
+            (aop-cons* `(asm livemask: ,(if (number? lpm) (format "~b" lpm) (format "~s" lpm)))
               '(code-top-link)
               (aop-cons* `(asm code-top-link)
                 `(,size . ,fs)

@@ -59,7 +59,11 @@
   (sealed #t))
 
 (define-record-type rp-info
-  (fields (immutable offset) (immutable src) (immutable sexpr) (immutable mask))
+  (fields
+    (immutable offset)
+    (immutable src)
+    (immutable sexpr)
+    (immutable mask)) ; an integer or (cons size tree)
   (nongenerative #{rp-info gr886ae7iuw4wt9ft4vxym-1})
   (sealed #t))
 

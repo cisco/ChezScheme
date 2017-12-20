@@ -763,4 +763,8 @@
   to use define-who instead of repeating 'substring-fill! in all the error
   messages.
     5_4.ss, 5_6.ss
-
+- keep call-live in tree form, which allows more efficient computation
+  of live-pointer masks when many live variables span many calls
+    cpnanopass.ss, inspect.ss, np-languages.ss, primdata.ss,
+     tree.ss (added), types.ss,
+    x86_64.ss, cmacros.ss, gc.c, s/Mf-base
