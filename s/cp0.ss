@@ -3619,7 +3619,7 @@
                                                        (cons `(call ,preinfo (ref #f ,p)
                                                                 ,(map (lambda (t*) (build-ref (car t*))) t**) ...)
                                                              (g (map cdr t**))))))])
-                                          (if map?
+                                          (if (and map? (not (eq? ctxt 'effect)))
                                               (build-primcall lvl 'list results)
                                               (make-seq* ctxt results)))
                                         (non-result-exp (value-visit-operand! (car ls*))
@@ -3696,15 +3696,18 @@
                       (build-lambda (cons p ls*)
                         (let f ([n n] [ls* ls*] [ropnd* '()])
                           (if (fx= n 1)
-                              (build-primcall 3 'list
-                                (reverse
-                                  (cons
-                                    `(call ,(app-preinfo ctxt) (ref #f ,p)
-                                       ,(map (lambda (x)
-                                               (build-primcall 3 'car
-                                                 (list (build-ref x))))
-                                          ls*) ...)
-                                    ropnd*)))
+                              (let ([opnd*
+                                     (reverse
+                                       (cons
+                                         `(call ,(app-preinfo ctxt) (ref #f ,p)
+                                            ,(map (lambda (x)
+                                                    (build-primcall 3 'car
+                                                      (list (build-ref x))))
+                                               ls*) ...)
+                                         ropnd*))])
+                                (if (eq? ctxt 'effect)
+                                    (make-seq* ctxt opnd*)
+                                    (build-primcall 3 'list opnd*)))
                               (let ([tls* (map (lambda (x) (cp0-make-temp #t)) ls*)])
                                 (build-let tls*
                                   (map (lambda (x)
