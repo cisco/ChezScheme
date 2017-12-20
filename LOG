@@ -766,4 +766,6 @@
 - Check that first argument of map is a procedure in cp02 expansion
   to raise the same error that the non expanded version
     cp0.ss
+- avoid building the result list in a map that is called for effect
+    cp0.ss
 
