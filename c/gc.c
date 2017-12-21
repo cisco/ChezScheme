@@ -45,6 +45,7 @@ static void sweep_port PROTO((ptr p));
 static void sweep_thread PROTO((ptr p));
 static void sweep_continuation PROTO((ptr p));
 static void sweep_stack PROTO((uptr base, uptr size, uptr ret));
+static void sweep_live_tree PROTO((uptr range, ptr tree, ptr *pp));
 static void sweep_record PROTO((ptr x));
 static int scan_record_for_self PROTO((ptr x));
 static IGEN sweep_dirty_record PROTO((ptr x));
@@ -1831,7 +1832,7 @@ static void sweep_continuation(p) ptr p; {
 /* assumes stack has already been copied to newspace */
 static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
   ptr *pp; iptr oldret;
-  ptr num;
+  ptr livemask;
 
   while (fp != base) {
     if (fp < base)
@@ -1843,31 +1844,72 @@ static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
     ret = (iptr)(*pp);
     relocate_return_addr(pp)
 
-    num = ENTRYLIVEMASK(oldret);
-    if (Sfixnump(num)) {
-      uptr mask = UNFIX(num);
+    livemask = ENTRYLIVEMASK(oldret);
+    if (Sfixnump(livemask)) {
+      uptr mask = UNFIX(livemask);
       while (mask != 0) {
         pp += 1;
         if (mask & 0x0001) relocate(pp)
         mask >>= 1;
       }
-    } else {
+    } else if (Spairp(livemask)) {
+      /* A tree: (range . tree). The tree must be shallow enough that
+         recursion in `sweep_tree_live` is ok. */
+      relocate(&ENTRYLIVEMASK(oldret))
+      livemask = ENTRYLIVEMASK(oldret);
+
+      relocate(&INITCDR(livemask))
+
+      sweep_live_tree(UNFIX(Scar(livemask)), Scdr(livemask), pp);
+    } else if (Sbignump(livemask)) {
+      /* As of the addition of the above tree form, we
+         don't expect bignums to be used as a mask anymore,
+         but allow them for now. */
       iptr index;
 
       relocate(&ENTRYLIVEMASK(oldret))
-      num = ENTRYLIVEMASK(oldret);
-      index = BIGLEN(num);
+      livemask = ENTRYLIVEMASK(oldret);
+
+      index = BIGLEN(livemask);
       while (index-- != 0) {
         INT bits = bigit_bits;
-        bigit mask = BIGIT(num,index);
+        bigit mask = BIGIT(livemask,index);
         while (bits-- > 0) {
           pp += 1;
           if (mask & 1) relocate(pp)
           mask >>= 1;
         }
       }
+    } else {
+      S_error_abort("sweep_stack(gc): unreocgnized mask format");
     }
   }
+}
+
+static void sweep_live_tree(range, tree, pp) uptr range; ptr tree, *pp; {
+  /* A tree is either a fixnum or a pair of two trees, with
+     half of the range on the left and the rest on the right */
+    if (Sfixnump(tree)) {
+      uptr mask = UNFIX(tree);
+      while (mask != 0) {
+        pp += 1;
+        if (mask & 0x0001) relocate(pp)
+        mask >>= 1;
+      }
+    } else if (tree == Strue) {
+      while (range-- > 0) {
+        pp += 1;
+        relocate(pp)
+      }
+    } else {
+      uptr split = range >> 1;
+      
+      relocate(&INITCAR(tree))
+      relocate(&INITCDR(tree))
+
+      sweep_live_tree(split, Scar(tree), pp);
+      sweep_live_tree(range - split, Scdr(tree), pp + split);
+    }
 }
 
 #define sweep_or_check_record(x, sweep_or_check)                 \

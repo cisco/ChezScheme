@@ -1469,7 +1469,7 @@
    [ptr link]))
 
 (define-primitive-structure-disps rp-header typemod
-  ([ptr livemask]
+  ([ptr livemask] ; a fixnum or (cons size tree)
    [uptr toplink]
    [iptr frame-size]
    [uptr mv-return-address]))

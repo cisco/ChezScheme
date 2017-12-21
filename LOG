@@ -781,3 +781,15 @@
     cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
     primdata.ss, prims.ss, misc.ms,
     system.stex, release_notes.tex
+- added support for Visual Studio 2017.15.5
+    wininstall/locate-vcredist.bat
+- fixed substring-fill! and vector-fill! to return void, reflecting the
+  documented return value of unspecified value.  Also changes substring-fill!
+  to use define-who instead of repeating 'substring-fill! in all the error
+  messages.
+    5_4.ss, 5_6.ss
+- keep call-live in tree form, which allows more efficient computation
+  of live-pointer masks when many live variables span many calls
+    cpnanopass.ss, inspect.ss, np-languages.ss, primdata.ss,
+     tree.ss (added), types.ss,
+    x86_64.ss, cmacros.ss, gc.c, s/Mf-base

@@ -120,19 +120,19 @@
          ($string-set-immutable! v2)
          v2)])))
 
-(define substring-fill!
+(define-who substring-fill!
    (lambda (s m n c)
       (unless (mutable-string? s)
-         ($oops 'substring-fill! "~s is not a mutable string" s))
+         ($oops who "~s is not a mutable string" s))
       (unless (char? c)
-         ($oops 'substring-fill! "~s is not a character" c))
+         ($oops who "~s is not a character" c))
       (let ([k (string-length s)])
          (unless (and (fixnum? m) (fixnum? n) (fx<= 0 m n k))
-            ($oops 'substring-fill!
+            ($oops who
                    "~s and ~s are not valid start/end indices for ~s"
                    m n s))
          (do ([i m (fx+ i 1)])
-             ((fx= i n) s)
+             ((fx= i n))
              (string-set! s i c)))))
 
 (set! string-for-each
