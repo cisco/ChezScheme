@@ -276,19 +276,20 @@
                [(eq? st full-tree)
                 ;; Memoizing at full subtrees uses offset and size
                 ;; (combined into one number) to identity the subtree.
-                (let ([key (+ offset (* total-size size))])
+                (let ([key (and (fx> size (fixnum-width))
+                                (+ offset (* total-size size)))])
                   (cond
-                   [(hashtable-ref full-cache key #f)
+                   [(and key (hashtable-ref full-cache key #f))
                     => (lambda (v) v)]
                    [else
                     (let ([v (do ([size size (fx- size 1)]
                                   [offset offset (fx+ offset 1)]
                                   [init init (apply-leaf-proc init offset extra-leaf-args)])
                                  ((fx= size 0) init))])
-                      (hashtable-set! full-cache key v)
+                      (when key (hashtable-set! full-cache key v))
                       v)]))]
                [else
-                ;; We're relying on a fresh `cons`es to repersent different parts
+                ;; We're relying on a fresh `cons`es to represent different parts
                 ;; of a tree, even if the parts have the same local content. So,
                 ;; `eq?` identifies a subtree.
                 (let ([cell (eq-hashtable-cell cache st #f)]
