@@ -763,4 +763,8 @@
   to use define-who instead of repeating 'substring-fill! in all the error
   messages.
     5_4.ss, 5_6.ss
-
+- fix mat of substring-fill!
+  after the recent change, the result of substring-fill! is void
+    5_5.ms
+- fix a few signatures
+    primdata.ss
