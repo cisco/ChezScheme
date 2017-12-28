@@ -1876,6 +1876,8 @@
     (error? (even? 3.2))
     (error? (even? 3.0+1.0i))
     (error? (even? 1+1i))
+    (error? (even? +inf.0))
+    (error? (even? +nan.0))
  )
 
 (mat odd?
@@ -1891,6 +1893,8 @@
     (error? (odd? 3.2))
     (error? (odd? 3.0+1.0i))
     (error? (odd? 3+1i))
+    (error? (odd? +inf.0))
+    (error? (odd? +nan.0))
  )
 
 (mat 1+

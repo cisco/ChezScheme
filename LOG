@@ -793,3 +793,10 @@
     cpnanopass.ss, inspect.ss, np-languages.ss, primdata.ss,
      tree.ss (added), types.ss,
     x86_64.ss, cmacros.ss, gc.c, s/Mf-base
+- fix mat of substring-fill!
+  after the recent change, the result of substring-fill! is void
+    5_5.ms
+- fix a few signatures
+    primdata.ss
+- fix even? and odd? to error on exceptional flonums
+    5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*

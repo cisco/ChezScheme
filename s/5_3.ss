@@ -1896,6 +1896,7 @@
          [(fixnum?) (fxeven? x)]
          [(bignum?) (not (bigodd? x))]
          [(flonum?)
+          (when (exceptional-flonum? x) (noninteger-error 'even? x))
           (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
              (cond
                 [(fl= x y) #t]
@@ -1911,6 +1912,7 @@
          [(fixnum?) (fxodd? x)]
          [(bignum?) (bigodd? x)]
          [(flonum?)
+          (when (exceptional-flonum? x) (noninteger-error 'odd? x))
           (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
              (cond
                 [(fl= x y) #f]
@@ -2655,6 +2657,7 @@
 (set-who! fleven?
   (lambda (x)
     (unless (flonum? x) ($oops who "~s is not a flonum" x))
+    (when (exceptional-flonum? x) (noninteger-error 'fleven? x))
     (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
       (cond
         [(fl= x y) #t]
@@ -2664,6 +2667,7 @@
 (set-who! flodd?
   (lambda (x)
     (unless (flonum? x) ($oops who "~s is not a flonum" x))
+    (when (exceptional-flonum? x) (noninteger-error 'flodd? x))
     (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
       (cond
         [(fl= x y) #f]
