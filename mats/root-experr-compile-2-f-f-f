@@ -1055,12 +1055,16 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat even?: "even?: 3.2 is not an integer".
 5_3.mo:Expected error in mat even?: "even?: 3.0+1.0i is not an integer".
 5_3.mo:Expected error in mat even?: "even?: 1+1i is not an integer".
+5_3.mo:Expected error in mat even?: "even?: +inf.0 is not an integer".
+5_3.mo:Expected error in mat even?: "even?: +nan.0 is not an integer".
 5_3.mo:Expected error in mat odd?: "incorrect argument count in call (odd?)".
 5_3.mo:Expected error in mat odd?: "incorrect argument count in call (odd? 0 1)".
 5_3.mo:Expected error in mat odd?: "odd?: a is not an integer".
 5_3.mo:Expected error in mat odd?: "odd?: 3.2 is not an integer".
 5_3.mo:Expected error in mat odd?: "odd?: 3.0+1.0i is not an integer".
 5_3.mo:Expected error in mat odd?: "odd?: 3+1i is not an integer".
+5_3.mo:Expected error in mat odd?: "odd?: +inf.0 is not an integer".
+5_3.mo:Expected error in mat odd?: "odd?: +nan.0 is not an integer".
 5_3.mo:Expected error in mat \x31;+: "incorrect argument count in call (\x31;+)".
 5_3.mo:Expected error in mat \x31;+: "incorrect argument count in call (\x31;+ 0 1)".
 5_3.mo:Expected error in mat \x31;+: "1+: a is not a number".
@@ -9185,6 +9189,8 @@ fl.mo:Expected error in mat fleven?: "fleven?: 3 is not a flonum".
 fl.mo:Expected error in mat fleven?: "fleven?: 3.2 is not an integer".
 fl.mo:Expected error in mat fleven?: "fleven?: 3.0+1.0i is not a flonum".
 fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
+fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
+fl.mo:Expected error in mat fleven?: "fleven?: +nan.0 is not an integer".
 fl.mo:Expected error in mat flodd?: "incorrect argument count in call (flodd?)".
 fl.mo:Expected error in mat flodd?: "incorrect argument count in call (flodd? 0.0 1.0)".
 fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
@@ -9192,6 +9198,8 @@ fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
 fl.mo:Expected error in mat flodd?: "odd?: 3.2 is not an integer".
 fl.mo:Expected error in mat flodd?: "flodd?: 3.0+1.0i is not a flonum".
 fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
+fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".
+fl.mo:Expected error in mat flodd?: "flodd?: +nan.0 is not an integer".
 fl.mo:Expected error in mat flmin: "incorrect argument count in call (flmin)".
 fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
 fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
