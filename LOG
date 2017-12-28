@@ -768,3 +768,5 @@
     5_5.ms
 - fix a few signatures
     primdata.ss
+- fix even? and odd? to error on exceptional flonums
+    5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
