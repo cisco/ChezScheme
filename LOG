@@ -770,3 +770,5 @@
     primdata.ss
 - fix comment about Sscheme_program
     main.c
+- fix even? and odd? to error on exceptional flonums
+    5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
