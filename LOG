@@ -772,3 +772,5 @@
     main.c
 - fix even? and odd? to error on exceptional flonums
     5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
+- fix bug in date->time-utc caused by incorrect use of difftime in Windows
+    stats.c, date.ms, release_notes.stex

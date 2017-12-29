@@ -622,9 +622,11 @@
     (sleep (make-time 'time-duration 0 1))
     (time<? t (date->time-utc (current-date))))
   (let ([t (current-time)])
-    (time=?
-      (date->time-utc (time-utc->date t -14400))
-      (date->time-utc (time-utc->date t 0))))
+    (and
+     (time=? (date->time-utc (time-utc->date t)) t)
+     (time=? (date->time-utc (time-utc->date t -86400)) t)
+     (time=? (date->time-utc (time-utc->date t 0)) t)
+     (time=? (date->time-utc (time-utc->date t 86400)) t)))
 )
 
 (mat time&date-printing
