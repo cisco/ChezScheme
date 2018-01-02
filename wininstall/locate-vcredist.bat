@@ -8,20 +8,18 @@
 )
 
 @IF "%VisualStudioVersion%"=="15.0" (
-  @IF EXIST "%VCINSTALLDIR%Redist\MSVC\14.10.25008" (
-    @SET "Path32=%VCINSTALLDIR%Redist\MSVC\14.10.25008\MergeModules\Microsoft_VC150_CRT_x86.msm"
-    @SET "Path64=%VCINSTALLDIR%Redist\MSVC\14.10.25008\MergeModules\Microsoft_VC150_CRT_x64.msm"
+  @PUSHD "%VCINSTALLDIR%Redist\MSVC"
+  @FOR /D %%D IN (*) DO (
+    @PUSHD %%D
+    @FOR %%F IN (MergeModules\Microsoft_VC*_CRT_x86.msm) DO (
+      SET "Path32=%VCINSTALLDIR%Redist\MSVC\%%D\%%F"
+    )
+    @FOR %%F IN (MergeModules\Microsoft_VC*_CRT_x64.msm) DO (
+      SET "Path64=%VCINSTALLDIR%Redist\MSVC\%%D\%%F"
+    )
+    @POPD
   )
-
-  @IF EXIST "%VCINSTALLDIR%Redist\MSVC\14.11.25325" (
-    @SET "Path32=%VCINSTALLDIR%Redist\MSVC\14.11.25325\MergeModules\Microsoft_VC141_CRT_x86.msm"
-    @SET "Path64=%VCINSTALLDIR%Redist\MSVC\14.11.25325\MergeModules\Microsoft_VC141_CRT_x64.msm"
-  )
-
-  @IF EXIST "%VCINSTALLDIR%Redist\MSVC\14.12.25810" (
-    @SET "Path32=%VCINSTALLDIR%Redist\MSVC\14.12.25810\MergeModules\Microsoft_VC141_CRT_x86.msm"
-    @SET "Path64=%VCINSTALLDIR%Redist\MSVC\14.12.25810\MergeModules\Microsoft_VC141_CRT_x64.msm"
-  )
+  @POPD
 )
 
 @DEL vcredist.wxs >nul 2>&1
