@@ -947,6 +947,7 @@
   (enable-cross-library-optimization [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
+  (expand-omit-library-invocations [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
   (expand/optimize-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
   (exit-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])

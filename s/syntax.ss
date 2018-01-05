@@ -3420,7 +3420,12 @@
 
 (define residualize-invoke-requirements
   (case-lambda
-    [(code) (residualize-invoke-requirements '() (require-visit) (require-invoke) code)]
+    [(code) (residualize-invoke-requirements '()
+                                             (require-visit)
+                                             (if (expand-omit-library-invocations)
+                                                 '()
+                                                 (require-invoke))
+                                             code)]
     [(import* visit* invoke* code)
      (build-sequence no-source
        `(,@(map (build-requirement '$import-library) import*)
@@ -4960,6 +4965,10 @@
   (set! library-list
     (lambda ()
       (list-loaded-libraries)))
+
+  (set! expand-omit-library-invocations
+    ($make-thread-parameter #f
+      (lambda (v) (and v #t))))
 
   (let ()
     (define maybe-get-lib

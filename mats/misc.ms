@@ -5041,3 +5041,24 @@
                (def))))
     (equal? 3 (return-x)))
 )
+
+(mat expand-omit-library-invocations
+  (not (expand-omit-library-invocations))
+  (begin
+    (library (define-m-as-one) (export m) (import (chezscheme)) (define m 1))
+    (define (find-define-m-as-one s)
+      (or (eq? s 'define-m-as-one)
+          (and (pair? s)
+                (or (find-define-m-as-one (car s))
+                        (find-define-m-as-one (cdr s))))))
+    #t)
+  (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m)))
+  (begin
+    (expand-omit-library-invocations 'yes)
+    (eq? #t (expand-omit-library-invocations)))
+  (not (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m))))
+  (begin
+    (expand-omit-library-invocations #f)
+    (not (expand-omit-library-invocations)))
+  (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m)))
+  )

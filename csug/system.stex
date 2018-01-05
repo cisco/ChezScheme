@@ -2228,6 +2228,27 @@ Configure \scheme{make-x-generator} this way only in situations where
 the potential for unspecified failure is more tolerable than
 recompilation.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{expand-omit-library-invocations}{\categorythreadparameter}{expand-omit-library-invocations}
+\listlibraries
+\endentryheader
+
+\noindent
+This boolean-valued parameter determines whether library uses are
+recorded in macro expansion. Normally, when an expression expands to a
+reference to a library-defined identifier, the expansion is prefixed
+with a check to ensure that the exporting library is defined and
+invoked. If \scheme{expand-omit-library-invocations} is set to true,
+the prefix is omitted.
+
+Setting \scheme{expand-omit-library-invocations} to true makes sense
+only when evaluating many small expressions in a context where all
+referenced libraries are known to be present and already invoked, and
+only when it's worth saving the small overhead of representing and
+running the check.
+
+
 \section{Source Directories and Files\label{SECTSYSTEMSOURCE}}
 
 %----------------------------------------------------------------------------
