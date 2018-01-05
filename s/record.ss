@@ -408,7 +408,7 @@
       (when (and parent (record-type-sealed? parent))
         ($oops who "cannot extend sealed record type ~s" parent))
       (let ([parent-fields (if (not parent) '() (csv7:record-type-field-decls parent))]
-            [uid (or uid (gensym (symbol->string name)))])
+            [uid (or uid ((current-generate-id) name))])
        ; start base offset at rtd field
        ; synchronize with syntax.ss and front.ss
         (let-values ([(pm mpm flds size)

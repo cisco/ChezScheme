@@ -971,3 +971,6 @@
   bootstrap failures after small changes like the recent change to
   procedure names, so we don't have to rebuild the boot files as often.
     Mf-base
+- add current-generate-id and expand-omit-library-invocations, which can be
+  useful for avoiding library recompilation and redundant invocation checks
+    syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex
