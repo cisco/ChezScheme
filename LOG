@@ -774,3 +774,6 @@
     5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
 - fix bug in date->time-utc caused by incorrect use of difftime in Windows
     stats.c, date.ms, release_notes.stex
+- add current-generate-id, which can be useful for avoiding library
+  recompilation
+    syntax.ss, record.ss, primdata.ss, misc.ms, system.stex

@@ -469,7 +469,7 @@
 
 (define generate-id
   (lambda (sym)
-    (gensym (symbol->string sym))))
+    ((current-generate-id) sym)))
 
 (define make-token:sym
   (lambda (token sym)

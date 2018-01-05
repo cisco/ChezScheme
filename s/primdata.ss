@@ -935,6 +935,7 @@
   (current-eval [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-exception-state [sig [() -> (exception-state)] [(exception-state) -> (void)]] [flags])
   (current-expand [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (current-generate-id [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-input-port [sig [() -> (textual-input-port)] [(textual-input-port) -> (void)]] [flags])   ; not restricted to 1 argument
   (current-locate-source-object-source [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-make-source-object [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])

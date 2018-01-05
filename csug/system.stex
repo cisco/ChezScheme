@@ -2119,6 +2119,115 @@ loaded from source, when it is compiled via \scheme{compile-file},
 and when a compiled version of the file is loaded via \scheme{load}
 or \scheme{visit}.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-generate-id}{\categorythreadparameter}{current-generate-id}
+\listlibraries
+\endentryheader
+
+\noindent
+This parameter determines a procedure that is called by the macro
+expander. The procedure receives a symbol and returns a fresh symbol
+that the expander uses for a top-level binding, as a record uid,
+or to identify a library compilation. The default procedure converts the
+symbol to a string and passes it to \scheme{gensym}.
+
+For example, while expanding the following \scheme{library}, the
+\scheme{current-generate-id} procedure is called on the symbols
+\scheme{a-lib}, \scheme{a-var}, and \scheme{a-var} again.
+
+\schemedisplay
+(library (a-lib)
+  (export a-var)
+  (import (chezscheme))
+  (define a-var 3)
+  (define-syntax def
+    (syntax-rules ()
+      [(_) (define a-var 'other)]))
+  (def))
+\endschemedisplay
+
+The \scheme{current-generate-id} procedure is called on \scheme{a-lib}
+to generate a symbol that identifies this particular library
+compilation, as opposed to the compilation of a different library
+named \scheme{(a-lib)}. It is called on \scheme{a-var} the first time
+to select a distinct symbol to hold the value of the \scheme{a-var}
+defininion, since \scheme{a-var} itself should not be defined directly
+at the top level. Finally, the \scheme{current-generate-id} procedure
+is called on \scheme{a-var} to select a name for the macro-introduced
+definiton of \scheme{a-var} in the expansion of \scheme{(def)}---which
+turns out to be completely inaccessible since no reference is
+introduced by the same expansion step.
+
+Setting the parameter to a particular, deterministic generator can
+cause symbols in the expansion of the library to be always the
+same. That determinism can be helpful if the expansion semantically
+matches an earlier expansion, so that uses of an earlier compilation
+remain compatible with the new one. Of course, reusing a symbol runs
+the risk of creating collisions that the macro and library system
+normally prevents via distinct symbols, and compiler optimizations may
+rely on the expectation of distinct symbols for distinct compilations.
+Configure \scheme{current-generate-id} at your own risk.
+
+As a further example, suppose that the following two forms are
+compiled separately:
+
+\schemedisplay
+;; Compile this x.ss to x.so
+(library (x)
+  (export x)
+  (import (chezscheme))
+  (define x '(x)))
+
+;; Compile this y.ss to y.so
+(top-level-program
+ (import (chezscheme)
+         (y))
+ (printf "~s\n" x))
+\endschemedisplay
+
+If \scheme{x.ss} is modified and recompiled, loading the new
+\scheme{x.so} and the old \scheme{y.so} will correctly report an error
+that the compiled \scheme{y.so} requires a different compilation
+instance that the one already loaded.
+
+Suppose, however, that you're willing to live dangerously to avoid
+recompiling \scheme{y.ss} by generating the same symbols for every
+compilation of \scheme{x.ss}. While compiling \scheme{x.ss}, you could
+set \scheme{current-generate-id} to the result of
+\scheme{make-x-generator}:
+
+\schemedisplay
+(define (make-x-generator)
+  (let ([x-uid "gf91a5b83ujz3mogjdaij7-x"]
+        [counter-ht (make-eq-hashtable)])
+    (lambda (sym)
+      (let* ([n (eq-hashtable-ref counter-ht sym 0)]
+             [s ((if (gensym? sym) gensym->unique-string symbol->string) sym)]
+             [g (gensym (symbol->string sym) (format "~a-~a-~a" x-uid s n))])
+        (eq-hashtable-set! counter-ht sym (+ n 1))
+        g))))
+\endschemedisplay
+
+As long as the first and second compilations of \scheme{x.ss} use the
+result of \scheme{make-x-generator}, the first compilation of
+\scheme{y.ss} might work with the second compilation of \scheme{x.ss},
+even if the change adds, removes, or reorders definitions of variables
+other than \scheme{x}.
+
+Beware that if the variable \scheme{x} is originally defined as
+\scheme{(define x 1)}, then the compilation of \scheme{y.ss} likely
+inlines the value \scheme{1} in place of its reference to the variable
+\scheme{x}, so changing \scheme{x.ss} will have no effect without
+recompiling \scheme{y.ss}. Similarly, if the change to \scheme{x.ss}
+deletes the definition of \scheme{x} or introduces a macro-generated
+definition of \scheme{x} before the direct definition, then the
+previously compiled \scheme{y.ss} is unlikely to refer to the correct
+definition of \scheme{x} in the new compilation of \scheme{x.ss}.
+Configure \scheme{make-x-generator} this way only in situations where
+the potential for unspecified failure is more tolerable than
+recompilation.
+
 \section{Source Directories and Files\label{SECTSYSTEMSOURCE}}
 
 %----------------------------------------------------------------------------
