@@ -935,6 +935,7 @@
   (current-eval [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-exception-state [sig [() -> (exception-state)] [(exception-state) -> (void)]] [flags])
   (current-expand [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (current-generate-id [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-input-port [sig [() -> (textual-input-port)] [(textual-input-port) -> (void)]] [flags])   ; not restricted to 1 argument
   (current-locate-source-object-source [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-make-source-object [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
@@ -947,6 +948,7 @@
   (enable-object-backreferences [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
+  (expand-omit-library-invocations [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
   (expand/optimize-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
   (exit-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])

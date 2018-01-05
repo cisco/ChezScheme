@@ -1583,6 +1583,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Incorrect handling of offset in
+\protect\scheme{date->time-utc} on Windows (9.5)}
+
+A bug when \scheme{date->time-utc} is called on Windows with a
+date-zone-offset smaller than the system's time-zone offset has been
+fixed.
+[This bug dated back to Version 9.5.]
+
 \subsection{Compiler mishandling of fx /carry operations (9.5)}
 
 A bug in the source optimizer that caused an internal compiler error when

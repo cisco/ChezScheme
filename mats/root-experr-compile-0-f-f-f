@@ -9228,7 +9228,7 @@ fl.mo:Expected error in mat flodd?: "incorrect argument count in call (flodd?)".
 fl.mo:Expected error in mat flodd?: "incorrect argument count in call (flodd? 0.0 1.0)".
 fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
 fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
-fl.mo:Expected error in mat flodd?: "odd?: 3.2 is not an integer".
+fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
 fl.mo:Expected error in mat flodd?: "flodd?: 3.0+1.0i is not a flonum".
 fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
 fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".

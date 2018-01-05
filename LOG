@@ -798,5 +798,12 @@
     5_5.ms
 - fix a few signatures
     primdata.ss
+- fix comment about Sscheme_program
+    main.c
 - fix even? and odd? to error on exceptional flonums
     5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
+- fix bug in date->time-utc caused by incorrect use of difftime in Windows
+    stats.c, date.ms, release_notes.stex
+- add current-generate-id and expand-omit-library-invocations, which can be
+  useful for avoiding library recompilation and redundant invocation checks
+    syntax.ss, record.ss, primdata.ss, misc.ms, system.stex

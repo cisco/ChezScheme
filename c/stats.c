@@ -409,7 +409,7 @@ ptr S_mktime(ptr dtvec) {
 
   tzoff = adjust_time_zone(dtvec, &tmx, given_tzoff);
 
-  if (tzoff != orig_tzoff) tx = (time_t) difftime(tx, (time_t)(orig_tzoff - tzoff));
+  if (tzoff != orig_tzoff) tx = tx - orig_tzoff + tzoff;
 
   return Scons(S_integer_time_t(tx), Svector_ref(dtvec, dtvec_nsec));
 }

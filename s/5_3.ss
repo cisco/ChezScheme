@@ -1890,36 +1890,36 @@
              (when (= y 0) (domain-error 'remainder y))
              (f x y)]))))
 
-(set! even?
+(set-who! even?
    (lambda (x)
       (type-case x
          [(fixnum?) (fxeven? x)]
          [(bignum?) (not (bigodd? x))]
          [(flonum?)
-          (when (exceptional-flonum? x) (noninteger-error 'even? x))
+          (when (exceptional-flonum? x) (noninteger-error who x))
           (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
              (cond
                 [(fl= x y) #t]
                 [(fl= (fl+ y 1.0) x) #f]
-                [else (noninteger-error 'even? x)]))]
+                [else (noninteger-error who x)]))]
          [else
-          (unless (integer? x) (noninteger-error 'even? x))
+          (unless (integer? x) (noninteger-error who x))
           (even? (real-part x))])))
 
-(set! odd?
+(set-who! odd?
    (lambda (x)
       (type-case x
          [(fixnum?) (fxodd? x)]
          [(bignum?) (bigodd? x)]
          [(flonum?)
-          (when (exceptional-flonum? x) (noninteger-error 'odd? x))
+          (when (exceptional-flonum? x) (noninteger-error who x))
           (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
              (cond
                 [(fl= x y) #f]
                 [(fl= (fl+ y 1.0) x) #t]
-                [else (noninteger-error 'odd? x)]))]
+                [else (noninteger-error who x)]))]
          [else
-          (unless (integer? x) (noninteger-error 'odd? x))
+          (unless (integer? x) (noninteger-error who x))
           (odd? (real-part x))])))
 
 (set-who! round
@@ -2657,22 +2657,22 @@
 (set-who! fleven?
   (lambda (x)
     (unless (flonum? x) ($oops who "~s is not a flonum" x))
-    (when (exceptional-flonum? x) (noninteger-error 'fleven? x))
+    (when (exceptional-flonum? x) (noninteger-error who x))
     (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
       (cond
         [(fl= x y) #t]
         [(fl= (fl+ y 1.0) x) #f]
-        [else (noninteger-error 'fleven? x)]))))
+        [else (noninteger-error who x)]))))
 
 (set-who! flodd?
   (lambda (x)
     (unless (flonum? x) ($oops who "~s is not a flonum" x))
-    (when (exceptional-flonum? x) (noninteger-error 'flodd? x))
+    (when (exceptional-flonum? x) (noninteger-error who x))
     (let ([y (fl* ($flfloor (fl/ x 2.0)) 2.0)])
       (cond
         [(fl= x y) #f]
         [(fl= (fl+ y 1.0) x) #t]
-        [else (noninteger-error 'odd? x)]))))
+        [else (noninteger-error who x)]))))
 
 (set-who! flmin
   (let ([$flmin (lambda (x y) (if (or (fl< x y) ($nan? x)) x y))])

@@ -5072,3 +5072,71 @@
   (mutable-bytevector? '#vu8())
   
  )
+
+(mat current-generate-id
+  (begin
+    (define (make-x-generator)
+      (let ([x-uid "gf91a5b83ujz3mogjdaij7-x"]
+            [counter-ht (make-eq-hashtable)])
+        (lambda (sym)
+          (let* ([n (eq-hashtable-ref counter-ht sym 0)]
+                 [str (if (gensym? sym) (gensym->unique-string sym) (symbol->string sym))]
+                 [g (gensym (symbol->string sym) (format "~a-~a-~a" x-uid str n))])
+            (eq-hashtable-set! counter-ht sym (+ n 1))
+            g))))
+    (and (parameterize ([current-generate-id (make-x-generator)])
+           (eval `(module consistent-x (x make-pt pt-r)
+                    ;; Note: `module` doesn't currently enable `x` to be inlined
+                    (define x 1)
+                    (define-record-type pt (fields r i)))))
+         #t))
+  (begin
+    (define return-x (let ()
+                       (import consistent-x)
+                       (lambda () x)))
+    (define a-pt (let ()
+                   (import consistent-x)
+                   (make-pt -1 -2)))
+    (define get-r (let ()
+                    (import consistent-x)
+                    (lambda (p) (pt-r p))))
+    (equal? 1 (return-x)))
+  (equal? -1 (get-r a-pt))
+  (begin
+    (parameterize ([current-generate-id (make-x-generator)])
+      (eval `(module consistent-x (x make-pt pt-x)
+               (define x 2)
+               (define-record-type pt (fields x y)))))
+    (equal? 2 (return-x)))
+  (equal? -1 (get-r a-pt))
+  (begin
+    (parameterize ([current-generate-id (make-x-generator)])
+      (eval `(module consistent-x (x)
+               (define x 3)
+               (define-syntax def (syntax-rules () [(_) (define x 'other)]))
+               ;; `(def)` after above definition => expect that
+               ;; its `x` is generated second
+               (def))))
+    (equal? 3 (return-x)))
+)
+
+(mat expand-omit-library-invocations
+  (not (expand-omit-library-invocations))
+  (begin
+    (library (define-m-as-one) (export m) (import (chezscheme)) (define m 1))
+    (define (find-define-m-as-one s)
+      (or (eq? s 'define-m-as-one)
+          (and (pair? s)
+                (or (find-define-m-as-one (car s))
+                        (find-define-m-as-one (cdr s))))))
+    #t)
+  (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m)))
+  (begin
+    (expand-omit-library-invocations 'yes)
+    (eq? #t (expand-omit-library-invocations)))
+  (not (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m))))
+  (begin
+    (expand-omit-library-invocations #f)
+    (not (expand-omit-library-invocations)))
+  (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m)))
+  )

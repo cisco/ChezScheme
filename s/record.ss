@@ -395,6 +395,15 @@
           (rec predicate (lambda (x) ($sealed-record? x rtd)))
           (rec predicate (lambda (x) (record? x rtd))))))
 
+  (set-who! current-generate-id
+    ($make-thread-parameter
+     (lambda (sym)
+       (unless (symbol? sym) ($oops 'default-generate-id "~s is not a symbol" sym))
+       (gensym (symbol->string sym)))
+     (lambda (p)
+       (unless (procedure? p) ($oops who "~s is not a procedure" p))
+       p)))
+
   (let ((base-rtd #!base-rtd))
     (define (make-flags uid sealed? opaque? parent)
       (fxlogor
@@ -408,7 +417,7 @@
       (when (and parent (record-type-sealed? parent))
         ($oops who "cannot extend sealed record type ~s" parent))
       (let ([parent-fields (if (not parent) '() (csv7:record-type-field-decls parent))]
-            [uid (or uid (gensym (symbol->string name)))])
+            [uid (or uid ((current-generate-id) name))])
        ; start base offset at rtd field
        ; synchronize with syntax.ss and front.ss
         (let-values ([(pm mpm flds size)

@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2017-12-28 06:34:44.000000000 -0600
---- errors-compile-0-t-f-f	2017-12-28 06:06:29.000000000 -0600
+*** errors-compile-0-f-f-f	2017-12-28 15:38:17.000000000 -0600
+--- errors-compile-0-t-f-f	2017-12-28 15:10:14.000000000 -0600
 ***************
 *** 93,99 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
@@ -5659,7 +5659,7 @@
 ! fl.mo:Expected error in mat flodd?: "incorrect argument count in call (flodd? 0.0 1.0)".
   fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
-  fl.mo:Expected error in mat flodd?: "odd?: 3.2 is not an integer".
+  fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
 --- 9191,9198 ----
   fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
@@ -5668,7 +5668,7 @@
 ! fl.mo:Expected error in mat flodd?: "incorrect number of arguments to #<procedure flodd?>".
   fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
-  fl.mo:Expected error in mat flodd?: "odd?: 3.2 is not an integer".
+  fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
 ***************
 *** 9200,9206 ****
   fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
