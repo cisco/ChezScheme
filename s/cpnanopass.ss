@@ -3410,7 +3410,7 @@
                   (%inline logor ,e (immediate ,type))))))
         (define-syntax build-ref-check
           (syntax-rules ()
-            [(_ type-disp maximum-length length-offset type mask)
+            [(_ type-disp maximum-length length-offset type mask immutable-flag)
              (lambda (e-v e-i maybe-e-new)
                ; NB: caller must bind e-v, e-i, and maybe-e-new
                (safe-assert (no-need-to-bind? #t e-v))
@@ -3423,7 +3423,7 @@
                      [(expr->index e-i 1 (constant maximum-length)) =>
                       (lambda (index)
                         (let ([e (%inline u<
-                                   (immediate ,(logor (ash index (constant length-offset)) (constant type)))
+                                   (immediate ,(logor (ash index (constant length-offset)) (constant type) (constant immutable-flag)))
                                    ,t)])
                           (if (and (eqv? (constant type) (constant type-fixnum))
                                    (eqv? (constant mask) (constant mask-fixnum)))
@@ -7573,8 +7573,8 @@
                 [(e-name e-handler e-ib e-ob) (go e-name e-handler e-ib e-ob `(quote #f))]
                 [(e-name e-handler e-ib e-ob e-info) (go e-name e-handler e-ib e-ob e-info)]))))
         (let ()
-          (define build-fxvector-ref-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-fxvector mask-fxvector))
-          (define build-fxvector-set!-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-mutable-fxvector mask-mutable-fxvector))
+          (define build-fxvector-ref-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-fxvector mask-fxvector fxvector-immutable-flag))
+          (define build-fxvector-set!-check (build-ref-check fxvector-type-disp maximum-fxvector-length fxvector-length-offset type-mutable-fxvector mask-mutable-fxvector fxvector-immutable-flag))
           (define-inline 2 $fxvector-ref-check?
             [(e-fv e-i) (bind #t (e-fv e-i) (build-fxvector-ref-check e-fv e-i #f))])
           (define-inline 2 $fxvector-set!-check?
@@ -7619,10 +7619,10 @@
         (let ()
           (define build-string-ref-check
             (lambda (e-s e-i)
-              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-string mask-string) e-s e-i #f)))
+              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-string mask-string string-immutable-flag) e-s e-i #f)))
           (define build-string-set!-check
             (lambda (e-s e-i)
-              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-mutable-string mask-mutable-string) e-s e-i #f)))
+              ((build-ref-check string-type-disp maximum-string-length string-length-offset type-mutable-string mask-mutable-string string-immutable-flag) e-s e-i #f)))
           (define-inline 2 $string-ref-check?
             [(e-s e-i) (bind #t (e-s e-i) (build-string-ref-check e-s e-i))])
           (define-inline 2 $string-set!-check?
@@ -7677,8 +7677,8 @@
             (define-inline 3 $string-set-immutable!
               [(e-s) ((build-set-immutable! string-type-disp string-immutable-flag) e-s)])))
         (let ()
-          (define build-vector-ref-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-vector mask-vector))
-          (define build-vector-set!-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-mutable-vector mask-mutable-vector))
+          (define build-vector-ref-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-vector mask-vector vector-immutable-flag))
+          (define build-vector-set!-check (build-ref-check vector-type-disp maximum-vector-length vector-length-offset type-mutable-vector mask-mutable-vector vector-immutable-flag))
           (define-inline 2 $vector-ref-check?
             [(e-v e-i) (bind #t (e-v e-i) (build-vector-ref-check e-v e-i #f))])
           (define-inline 2 $vector-set!-check?
@@ -7767,7 +7767,7 @@
                                 (lambda (index)
                                   (%inline u<
                                     (immediate ,(logor (ash (+ index (fx- bytes 1)) (constant bytevector-length-offset))
-                                                  (constant type-bytevector)))
+                                                  (constant type-bytevector) (constant bytevector-immutable-flag)))
                                     ,t))]
                                [else
                                  (build-and

@@ -807,3 +807,6 @@
 - add current-generate-id and expand-omit-library-invocations, which can be
   useful for avoiding library recompilation and redundant invocation checks
     syntax.ss, record.ss, primdata.ss, misc.ms, system.stex
+- fix bounds checking with an immediate index on immutable vectors,
+  fxvectors, strings, and bytevectors
+    cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
