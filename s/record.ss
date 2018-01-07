@@ -395,15 +395,6 @@
           (rec predicate (lambda (x) ($sealed-record? x rtd)))
           (rec predicate (lambda (x) (record? x rtd))))))
 
-  (set-who! current-generate-id
-    ($make-thread-parameter
-     (lambda (sym)
-       (unless (symbol? sym) ($oops 'default-generate-id "~s is not a symbol" sym))
-       (gensym (symbol->string sym)))
-     (lambda (p)
-       (unless (procedure? p) ($oops who "~s is not a procedure" p))
-       p)))
-
   (let ((base-rtd #!base-rtd))
     (define (make-flags uid sealed? opaque? parent)
       (fxlogor
