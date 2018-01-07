@@ -428,17 +428,31 @@
  )
 
 (mat $string-ref-check?
-  (let ([s (make-string 3)] [not-s (make-vector 3)])
+  (let ([s (make-string 3)] [imm-s (string->immutable-string (make-string 3))] [not-s (make-vector 3)])
     (let ([i-1 -1] [i0 0] [i1 1] [i2 2] [i3 3] [ifalse #f] [ibig (+ (most-positive-fixnum) 1)])
       (and
         (not (#%$string-ref-check? not-s i0))
         (not (#%$string-ref-check? s ifalse))
         (not (#%$string-ref-check? s i-1))
+        (not (#%$string-ref-check? imm-s i-1))
+        (#%$string-ref-check? s 0)
+        (#%$string-ref-check? s 1)
+        (#%$string-ref-check? s 2)
+        (#%$string-ref-check? imm-s 0)
+        (#%$string-ref-check? imm-s 1)
+        (#%$string-ref-check? imm-s 2)
         (#%$string-ref-check? s i0)
         (#%$string-ref-check? s i1)
         (#%$string-ref-check? s i2)
+        (#%$string-ref-check? imm-s i0)
+        (#%$string-ref-check? imm-s i1)
+        (#%$string-ref-check? imm-s i2)
+        (not (#%$string-ref-check? s 3))
         (not (#%$string-ref-check? s i3))
-        (not (#%$string-ref-check? s ibig)))))
+        (not (#%$string-ref-check? s ibig))
+        (not (#%$string-ref-check? imm-s 3))
+        (not (#%$string-ref-check? imm-s i3))
+        (not (#%$string-ref-check? imm-s ibig)))))
  )
 
 (mat string-ref
