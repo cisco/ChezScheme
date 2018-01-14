@@ -9391,7 +9391,7 @@
                    (begin
                      (when (any-set? keys-seen (clause-key nongenerative))
                        (syntax-error src "record definition has multiple nongenerative clauses"))
-                     (Mclause parse-clauses ([%uid (datum->syntax #'* (gensym (symbol->string (syntax->datum name))))])
+                     (Mclause parse-clauses ([%uid (datum->syntax #'* ((current-generate-id) (syntax->datum name)))])
                        (set-flags keys-seen (clause-key nongenerative))
                        (cdr clause*)))]
                   [(nongenerative id)
