@@ -785,3 +785,6 @@
     4.ms, root-experr-compile-0-f-f-f, patch-compile-0-t-f-f,
     patch-compile-0-f-t-f, patch-interpret-0-f-t-f, patch-interpret-0-f-f-f,
     patch-interpret-3-f-t-f, patch-interpret-3-f-f-f
+- fix bounds checking with an immediate index on immutable vectors,
+  fxvectors, strings, and bytevectors
+    cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
