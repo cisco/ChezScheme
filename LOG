@@ -779,3 +779,9 @@
     cp0.ss
 - avoid building the result list in a map that is called for effect
     cp0.ss
+- added tests to ensure the optimize-level version 2 of map and for-each raise
+  a non-procedure exception when the first argument is not a procedure, even
+  when the rest of the program is compiled at optimize level 3.
+    4.ms, root-experr-compile-0-f-f-f, patch-compile-0-t-f-f,
+    patch-compile-0-f-t-f, patch-interpret-0-f-t-f, patch-interpret-0-f-f-f,
+    patch-interpret-3-f-t-f, patch-interpret-3-f-f-f
