@@ -597,6 +597,9 @@ Notes:
                             signatures)])
              (fold-left (if extend? pred-union pred-intersect) (car vals) (cdr vals))))))
 
+  (define (primref->unsafe-primref pr)
+    (lookup-primref 3 (primref-name pr)))
+
   [define-pass cptypes/raw : Lsrc (ir ctxt types) -> Lsrc (ret types t-types f-types)
     [Expr : Expr (ir ctxt types) -> Expr (ret types t-types f-types)
       [(quote ,d)
@@ -803,6 +806,18 @@ Notes:
                         (predicate-implies? var pred))
                    (values (make-seq ctxt (make-seq 'effect (car e*) (cadr e*)) true-rec)
                            true-rec t #f #f)]
+                  [(and (not (all-set? (prim-mask unsafe) (primref-flags pr)))
+                        (nanopass-case (Lsrc Expr) (cadr e*) ; check that it is a rtd
+                          [(quote ,d)
+                           (record-type-descriptor? d)]
+                          [(record-type ,rtd ,e) #t]
+                          [else #f]))
+                   (let ([pr (primref->unsafe-primref pr)])
+                     (values `(call ,preinfo ,pr ,e* ...)
+                             ret types
+                             (and (eq? ctxt 'test)
+                                  (pred-env-add/ref types (car e*) pred))
+                             #f))]
                   [else
                    (values ir ret types
                            (and (eq? ctxt 'test)
@@ -818,6 +833,11 @@ Notes:
                 [(predicate-implies? (car r*) 'flonum)
                  (values (make-seq ctxt (car e*) false-rec)
                          false-rec t #f #f)]
+                [(and (not (all-set? (prim-mask unsafe) (primref-flags pr)))
+                      (predicate-implies? (car r*) 'number))
+                 (let ([pr (primref->unsafe-primref pr)])
+                   (values `(call ,preinfo ,pr ,e* ...)
+                           ret t #f #f))]
                 [else
                  (values ir ret t #f #f)])]
              [(and (fx= (length e*) 1)
@@ -829,8 +849,22 @@ Notes:
                 [(predicate-implies? (car r*) 'flonum)
                  (values (make-seq ctxt (car e*) true-rec)
                          true-rec t #f #f)]
+                [(and (not (all-set? (prim-mask unsafe) (primref-flags pr)))
+                      (predicate-implies? (car r*) 'number))
+                 (let ([pr (primref->unsafe-primref pr)])
+                   (values `(call ,preinfo ,pr ,e* ...)
+                           ret t #f #f))]
                 [else
                  (values ir ret t #f #f)])]
+             [(and (not (all-set? (prim-mask unsafe) (primref-flags pr)))
+                   (all-set? (prim-mask safeongoodargs) (primref-flags pr))
+                   (andmap (lambda (r n)
+                             (predicate-implies? r
+                                                 (primref->argument-predicate pr n #f)))
+                           r* (enumerate r*)))
+               (let ([pr (primref->unsafe-primref pr)])
+                 (values `(call ,preinfo ,pr ,e* ...)
+                         ret types #f #f))]
              [else
               (values ir ret t #f #f)])))]
       [(case-lambda ,preinfo ,cl* ...)

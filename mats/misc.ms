@@ -4876,7 +4876,7 @@
         '(if (#3%zero? (#3%random 1000))
              (begin (pariah (void)) (#3%display 0))
              (#3%display 1))
-        '(if (#2%zero? (#2%random 1000))
+        '(if (#3%zero? (#2%random 1000))
              (begin (pariah (void)) (#2%display 0))
              (#2%display 1))))
 )
