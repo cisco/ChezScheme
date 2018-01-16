@@ -371,6 +371,7 @@
         (export "void" "Sset_verbose" "(int)")
         (export "void" "Sscheme_init" "(void (*)(void))")
         (export "void" "Sregister_boot_file" "(const char *)")
+        (export "void" "Sregister_boot_file_fd" "(const char *, int fd)")
         (export "void" "Sregister_heap_file" "(const char *)")
         (export "void" "Scompact_heap" "(void)")
         (export "void" "Ssave_heap" "(const char *, int)")

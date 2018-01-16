@@ -184,7 +184,7 @@
 
 (let ()
   (define do-load-binary
-    (lambda (who fn ip situation for-import?)
+    (lambda (who fn ip situation for-import? results?)
       (module (Lexpand? visit-stuff? visit-stuff-inner revisit-stuff? revisit-stuff-inner
                recompile-info? library/ct-info? library/rt-info? program-info?)
         (import (nanopass))
@@ -193,8 +193,9 @@
       (define unexpected-value!
         (lambda (x)
           ($oops who "unexpected value ~s read from ~a" x fn)))
-      (let loop ()
-        (let ([x (fasl-read ip)])
+      (let loop ([lookahead-x #f])
+        (let* ([x (or lookahead-x (fasl-read ip))]
+               [next-x (and results? (not (eof-object? x)) (fasl-read ip))])
           (define run-inner
             (lambda (x)
               (cond
@@ -210,11 +211,23 @@
                 [(revisit-stuff? x) (when (memq situation '(load revisit)) (run-inner (revisit-stuff-inner x)))]
                 [(visit-stuff? x) (when (memq situation '(load visit)) (run-inner (visit-stuff-inner x)))]
                 [else (run-inner x)])))
+          (define run-vector
+            (lambda (x i)
+              (cond
+               [(fx= (fx+ i 1) (vector-length x))
+                (run-outer (vector-ref x i))]
+               [else
+                (run-outer (vector-ref x i))
+                (run-vector x (fx+ i 1))])))
           (cond
             [(eof-object? x) (close-port ip)]
-            [(vector? x) (vector-for-each run-outer x) (loop)]
-            [(Lexpand? x) ($interpret-backend x situation for-import? fn) (loop)]
-            [else (run-outer x) (loop)])))))
+            [(vector? x)
+             (cond
+              [(and results? (eof-object? next-x) (fx> (vector-length x) 0)) (run-vector x 0)]
+              [else (vector-for-each run-outer x) (loop next-x)])]
+            [(Lexpand? x) ($interpret-backend x situation for-import? fn) (loop next-x)]
+            [(and results? (eof-object? next-x)) (run-outer x)]
+            [else (run-outer x) (loop next-x)])))))
 
   (define (do-load who fn situation for-import? ksrc)
     (let ([ip ($open-file-input-port who fn)])
@@ -234,7 +247,7 @@
                         (begin (set-port-position! ip start-pos) 0)))])
           (port-file-compressed! ip)
           (if ($compiled-file-header? ip)
-              (do-load-binary who fn ip situation for-import?)
+              (do-load-binary who fn ip situation for-import? #f)
               (begin
                 (when ($port-flags-set? ip (constant port-flag-compressed))
                   ($oops who "missing header for compiled file ~s" fn))
@@ -245,6 +258,12 @@
                   ; whack ip so on-reset close-port call above closes the text port
                   (set! ip (transcoded-port ip (current-transcoder)))
                   (ksrc ip sfd ($make-read ip sfd fp)))))))))
+
+  (set-who! load-compiled-from-port
+    (lambda (ip)
+      (unless (and (input-port? ip) (binary-port? ip))
+        ($oops who "~s is not a binary input port" ip))
+      (do-load-binary who (port-name ip) ip 'load #f #t)))
 
   (set-who! load-program
     (rec load-program

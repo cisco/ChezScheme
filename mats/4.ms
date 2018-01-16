@@ -1081,6 +1081,18 @@
   (procedure? (lambda (x) (map x)))
   (error? ; nonprocedure
     (map 3 '(a b c)))
+  (error? ; nonprocedure
+    (parameterize ([optimize-level 3])
+      (eval '(#2%map 3 '(a b c)))))
+  (error? ; nonprocedure
+    (parameterize ([optimize-level 3])
+      (eval
+        '(let ()
+           (define (f p b)
+             (unbox b)
+             (#2%map p (if (box? b) '() '(1 2 3)))
+             (list p (procedure? p)))
+           (f 7 (box 0))))))
   (error? ; improper list
     (map pretty-print 'a))
   (error? ; improper list
@@ -1712,6 +1724,9 @@
   (procedure? (lambda (x) (for-each x)))
   (error? ; nonprocedure
     (for-each 3 '(a b c)))
+  (error? ; nonprocedure
+    (parameterize ([optimize-level 3])
+      (eval '(#2%for-each 3 '(a b c)))))
   (error? ; improper list
     (for-each pretty-print 'a))
   (error? ; improper list

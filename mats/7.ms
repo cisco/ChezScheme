@@ -112,6 +112,14 @@
     "6\n")
  )
 
+(mat load-compiled-from-port
+  (begin
+   (define-values (o get) (open-bytevector-output-port))
+   (compile-to-port '((define lcfp1 'worked) 'loaded) o)
+   (equal? 'loaded (load-compiled-from-port (open-bytevector-input-port (get)))))
+  (equal? 'worked lcfp1)
+)
+
 (mat compile-to-file
   (begin
     (delete-file (format "testfile.~s" (machine-type)))

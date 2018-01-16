@@ -268,6 +268,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat r6rs:case: "invalid syntax (case)".
 4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
 4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 7 is not a procedure".
 4.mo:Expected error in mat map: "map: a is not a proper list".
 4.mo:Expected error in mat map: "map: (a . b) is not a proper list".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
@@ -337,6 +339,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
 4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
 4.mo:Expected error in mat for-each: "for-each: a is not a proper list".
 4.mo:Expected error in mat for-each: "for-each: (a . b) is not a proper list".

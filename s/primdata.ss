@@ -1399,6 +1399,7 @@
   (list-head [sig [(sub-ptr sub-index) -> (ptr)]] [flags alloc])
   (literal-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
   (load [sig [(pathname) (pathname procedure) -> (void)]] [flags true ieee r5rs])
+  (load-compiled-from-port [sig [(ptr) -> (ptr ...)]] [flags])
   (load-library [sig [(pathname) (pathname procedure) -> (void)]] [flags true])
   (profile-load-data [sig [(pathname) -> (void)]] [flags true])
   (load-program [sig [(pathname) (pathname procedure) -> (void)]] [flags true])

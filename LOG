@@ -807,6 +807,21 @@
 - add current-generate-id and expand-omit-library-invocations, which can be
   useful for avoiding library recompilation and redundant invocation checks
     syntax.ss, record.ss, primdata.ss, misc.ms, system.stex
+- Check that first argument of map is a procedure in cp02 expansion
+  to raise the same error that the non expanded version
+    cp0.ss
+- avoid building the result list in a map that is called for effect
+    cp0.ss
+- added tests to ensure the optimize-level version 2 of map and for-each raise
+  a non-procedure exception when the first argument is not a procedure, even
+  when the rest of the program is compiled at optimize level 3.
+    4.ms, root-experr-compile-0-f-f-f, patch-compile-0-t-f-f,
+    patch-compile-0-f-t-f, patch-interpret-0-f-t-f, patch-interpret-0-f-f-f,
+    patch-interpret-3-f-t-f, patch-interpret-3-f-f-f
 - fix bounds checking with an immediate index on immutable vectors,
   fxvectors, strings, and bytevectors
     cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
+- add load-compiled-from-port and Sregister_boot_file_fd for loading modes
+  based on open files instead of paths
+    7.ss, primdata.ss, mkheader.ss, scheme.c
+    7.ms, foreign.stex, system.stex
