@@ -184,13 +184,15 @@
 
 (let ()
   (define do-load-binary
-    (lambda (who fn ip situation for-import?)
+    (lambda (who fn ip situation for-import? results?)
       (let ([load-binary (make-load-binary who fn situation for-import?)])
-        (let loop ()
-          (let ([x (fasl-read ip)])
+        (let loop ([lookahead-x #f])
+          (let* ([x (or lookahead-x (fasl-read ip))]
+                 [next-x (and results? (not (eof-object? x)) (fasl-read ip))])
             (cond
              [(eof-object? x) (close-port ip)]
-             [else (load-binary x) (loop)]))))))
+             [(and results? (eof-object? next-x)) (load-binary x)]
+             [else (load-binary x) (loop next-x)]))))))
 
   (define (make-load-binary who fn situation for-import?)
     (module (Lexpand? visit-stuff? visit-stuff-inner revisit-stuff? revisit-stuff-inner
@@ -216,9 +218,17 @@
          [(revisit-stuff? x) (when (memq situation '(load revisit)) (run-inner (revisit-stuff-inner x)))]
          [(visit-stuff? x) (when (memq situation '(load visit)) (run-inner (visit-stuff-inner x)))]
          [else (run-inner x)])))
+    (define run-vector
+      (lambda (x i)
+        (cond
+         [(fx= (fx+ i 1) (vector-length x))
+          (run-outer (vector-ref x i))]
+         [else
+          (run-outer (vector-ref x i))
+          (run-vector x (fx+ i 1))])))
     (lambda (x)
       (cond
-       [(vector? x) (vector-for-each run-outer x)]
+       [(vector? x) (run-vector x 0)]
        [(Lexpand? x) ($interpret-backend x situation for-import? fn)]
        [else (run-outer x)])))
 
@@ -240,7 +250,7 @@
                         (begin (set-port-position! ip start-pos) 0)))])
           (port-file-compressed! ip)
           (if ($compiled-file-header? ip)
-              (do-load-binary who fn ip situation for-import?)
+              (do-load-binary who fn ip situation for-import? #f)
               (begin
                 (when ($port-flags-set? ip (constant port-flag-compressed))
                   ($oops who "missing header for compiled file ~s" fn))
@@ -255,6 +265,12 @@
   (set! $make-load-binary
     (lambda (fn situation for-import?)
       (make-load-binary '$make-load-binary fn situation for-import?)))
+
+  (set-who! load-compiled-from-port
+    (lambda (ip)
+      (unless (and (input-port? ip) (binary-port? ip))
+        ($oops who "~s is not a binary input port" ip))
+      (do-load-binary who (port-name ip) ip 'load #f #t)))
 
   (set-who! load-program
     (rec load-program
