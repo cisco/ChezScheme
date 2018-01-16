@@ -2720,6 +2720,7 @@ program.
 \cfunction{void}{Sscheme_init}{void (*\var{abnormal}_\var{exit})(void)}
 \cfunction{void}{Sset_verbose}{int \var{v}}
 \cfunction{void}{Sregister_boot_file}{const char *\var{name}}
+\cfunction{void}{Sregister_boot_file_fd}{const char *\var{name}, int \var{fd}}
 \cfunction{void}{Sbuild_heap}{const char *\var{exec}, void (*\var{custom}_\var{init})(void)}
 \cfunction{void}{Senable_expeditor}{const char *\var{history}_\var{file}}
 \cfunction{void}{Sretain_static_relocation}{void}
@@ -2752,9 +2753,11 @@ for subsequently registered boot files.
 
 \scheme{Sregister_boot_file} searches for
 the named boot file and
-register it for loading.
-The file is opened but not loaded until the heap is built via
-\scheme{Sbuild_heap}.
+register it for loading, while \scheme{Sregister_boot_file_fd}
+provides a specific boot file as a file descriptor.
+When only a boot file name is provided, the is opened but not loaded until the heap is built via
+\scheme{Sbuild_heap}. When a file descriptor is provided, the given file name
+is used only for error reporting.
 For the first boot file registered only, the system also
 searches for the boot files upon which the named file
 depends, either directly or indirectly.

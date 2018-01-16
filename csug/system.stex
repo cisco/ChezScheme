@@ -982,6 +982,24 @@ by absolute path names.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{load-compiled-from-port}{\categoryprocedure}{(load-compiled-from-port \var{input-port})}
+\returns result of the last compiled expression
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{load-compiled-from-port} reads and evaluates the object-code contents
+of \var{input-port} as previously created by functions like \scheme{compile-file},
+\scheme{compile-script}, \scheme{compile-library}, and
+\scheme{compile-to-port}.
+
+The return value is the value of the last expression whose compiled
+form is in \var{input-port}. If \var{input-port} is empty, then the
+result value is unspecified.
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{visit}{\categoryprocedure}{(visit \var{path})}
 \returns unspecified
 \listlibraries

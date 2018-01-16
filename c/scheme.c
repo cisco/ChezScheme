@@ -545,17 +545,18 @@ static boot_desc bd[MAX_BOOT_FILES];
 /* locally defined functions */
 static uptr zget_uptr PROTO((gzFile file, uptr *pn));
 static INT zgetstr PROTO((gzFile file, char *s, iptr max));
-static IBOOL find_boot PROTO((const char *name, const char *ext, IBOOL errorp));
+static IBOOL find_boot PROTO((const char *name, const char *ext, int fd, IBOOL errorp));
 static void load PROTO((ptr tc, iptr n, IBOOL base));
+static void check_boot_file_state PROTO((const char *who));
 
-static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; {
+static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IBOOL errorp; {
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n; INT c;
   const char *path;
   char *expandedpath;
   gzFile file;
 
-  if (S_fixedpathp(name)) {
+  if ((fd != -1) || S_fixedpathp(name)) {
     if (strlen(name) >= PATH_MAX) {
       fprintf(stderr, "boot-file path is too long %s\n", name);
       S_abnormal_exit();
@@ -563,11 +564,16 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
 
     path = name;
 
-    expandedpath = S_malloc_pathname(path);
-    file = gzopen(expandedpath, "rb");
-    /* assumption (seemingly true based on a glance at the source code):
-       gzopen doesn't squirrel away a pointer to expandedpath. */
-    free(expandedpath);
+    if (fd != -1) {
+      file = gzdopen(fd, "rb");
+    } else {
+      expandedpath = S_malloc_pathname(path);
+      file = gzopen(expandedpath, "rb");
+      /* assumption (seemingly true based on a glance at the source code):
+         gzopen doesn't squirrel away a pointer to expandedpath. */
+      free(expandedpath);
+    }
+
     if (!file) {
       if (errorp) {
         fprintf(stderr, "cannot open boot file %s\n", path);
@@ -725,7 +731,7 @@ static IBOOL find_boot(name, ext, errorp) const char *name, *ext; IBOOL errorp; 
           gzclose(file);
           S_abnormal_exit();
         }
-        if (find_boot(buf, ".boot", 0)) break;
+        if (find_boot(buf, ".boot", -1, 0)) break;
         if ((c = gzgetc(file)) == ')') {
           char *sep; char *wastebuf[8];
           fprintf(stderr, "cannot find subordinate boot file ");
@@ -979,20 +985,28 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
 #endif
 }
 
-extern void Sregister_boot_file(name) const char *name; {
+static void check_boot_file_state(const char *who) {
   switch (current_state) {
     case UNINITIALIZED:
     case DEINITIALIZED:
-      fprintf(stderr, "error (Sregister_boot_file): uninitialized; call Sscheme_init first\n");
+      fprintf(stderr, "error (%s): uninitialized; call Sscheme_init first\n", who);
       if (current_state == UNINITIALIZED) exit(1); else S_abnormal_exit();
     case RUNNING:
-      fprintf(stderr, "error (Sregister_boot_file): already running\n");
+      fprintf(stderr, "error (%s): already running\n", who);
       S_abnormal_exit();
     case BOOTING:
       break;
   }
+}
 
-  find_boot(name, "", 1);
+extern void Sregister_boot_file(name) const char *name; {
+  check_boot_file_state("Sregister_boot_file");
+  find_boot(name, "", -1, 1);
+}
+
+extern void Sregister_boot_file_fd(name, fd) const char *name; int fd; {
+  check_boot_file_state("Sregister_boot_file_fd");
+  find_boot(name, "", fd, 1);
 }
 
 extern void Sregister_heap_file(UNUSED const char *path) {
@@ -1047,7 +1061,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     }
 #endif
 
-    if (!find_boot(name, ".boot", 0)) {
+    if (!find_boot(name, ".boot", -1, 0)) {
       fprintf(stderr, "cannot find compatible %s.boot in search path\n  \"%s%s\"\n",
               name,
               Sschemeheapdirs, Sdefaultheapdirs);
