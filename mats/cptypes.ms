@@ -516,3 +516,33 @@
                               (define-record-type ,(gensym "other-rec") (fields a)))
                             '(my-rec? other-rec?))
 )
+
+(mat cptypes-unsafe
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (pair? x) (car x)))
+    '(lambda (x) (when (pair? x) (#3%car x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (pair? x) (cdr x)))
+    '(lambda (x) (when (pair? x) (#3%cdr x))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (pair? x) (#2%cadr x)))
+         '(lambda (x) (when (pair? x) (#3%cadr x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (fxmax x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (#3%fxmax x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (eq? y 5)) (fxmax x y)))
+    '(lambda (x y) (when (and (fixnum? x) (eq? y 5)) (#3%fxmax x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (fxmax x 5)))
+    '(lambda (x) (when (fixnum? x) (#3%fxmax x 5))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y z) (when (and (fixnum? x) (fixnum? y) (fixnum? z)) (fxmax x y z)))
+    '(lambda (x y z) (when (and (fixnum? x) (fixnum? y) (fixnum? z)) (#3%fxmax x y z))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (fxzero? x)))
+    '(lambda (x) (when (fixnum? x) (#3%fxzero? x))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (number? x) (#2%odd? x)))
+         '(lambda (x) (when (number? x) (#3%odd? x)))))
+)

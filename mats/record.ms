@@ -8785,7 +8785,7 @@
                     [r (inc r)]
                     [r (inc r)])
                r)))))
-    `(lambda (x) (#3%$record ',record-type-descriptor? 37 (#2%+ 1 (#2%+ 1 x)))))
+    `(lambda (x) (#3%$record ',record-type-descriptor? 37 (#3%+ 1 (#2%+ 1 x)))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -8812,7 +8812,7 @@
                     [r (inc r)])
                r)))))
     '(let ([rtd (#2%$make-record-type-descriptor #!base-rtd 'foo #f #f #f #f '#((immutable a) (immutable b)) 'define-record-type)])
-       (lambda (x) (#3%$record rtd 37 (#2%+ 1 (#2%+ 1 x))))))
+       (lambda (x) (#3%$record rtd 37 (#3%+ 1 (#2%+ 1 x))))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
