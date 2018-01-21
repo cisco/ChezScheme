@@ -759,3 +759,9 @@
     schlib.c, prim.c, externs.h
     mats/foreign4.c, mats/foreign.ms mats/Mf-*
     foreign.stex, release_notes.stex
+- add a __thread convention for foreign procedures and callables
+  to automate thread [de]activation
+    syntax.ss, ftype.ss, x86.ss, x86_64.ss, ppc32.ss,
+    cmacros.ss, base-lang.ss, np-languages.ss, cprep.ss
+    thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
+    mats/Mf-t*, foreign.ms, foreign4.c

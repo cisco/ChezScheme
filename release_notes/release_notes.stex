@@ -70,6 +70,17 @@ address. When \scheme{(& \var{ftype})} is used as a result type,
 an extra \scheme{(* \var{ftype})} argument must be provided to receive
 the copied result, and the directly returned result is unspecified.
 
+\subsection{Foreign-procedure thread activation (9.5.1)}
+
+A new \scheme{__thread} foreign-procedure convention, which can be
+combined with other conventions, causes a foreign-procedure call
+to deactive the current thread during the call. Similarly, the
+\scheme{__thread} convention modifier for callables causes the
+current thread to be activated on entry to the callable, and the
+activation state is reverted on exit from the callable; this
+activation makes callables work from threads that are otherwise
+unknown to the Scheme system.
+
 \subsection{Record equality and hashing (9.5)}
 
 The new procedures \scheme{record-type-equal-procedure} and

@@ -28,7 +28,7 @@
       [%xp  %r12           #t 12]
       [%ts  %rax %Cretval  #f  0]
       [%td  %rbx           #t  3]
-      [%ac1 %r10           #f 10]
+      [%ac1 %r10 %deact    #f 10]
       [%yp  %r11           #f 11]
       [%cp  %r15           #t 15]
       [#;%ret %rsi           #t  6]
@@ -57,7 +57,7 @@
       [%xp  %r12           #t 12]
       [%ts  %rax %Cretval  #f  0]
       [%td  %rbx           #t  3]
-      [%ac1 %r10           #f 10]
+      [%ac1 %r10 %deact    #f 10]
       [%yp  %r11           #f 11]
       [%cp  %r15           #t 15]
       [#;%ret %r8  %Carg5    #f  8]
@@ -824,6 +824,20 @@
      (safe-assert (eq? z %rax))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-get-tc))])
 
+  (define-instruction value activate-thread
+    [(op (z ur))
+     (safe-assert (eq? z %rax)) ; see get-tc
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-activate-thread))])
+
+  (define-instruction effect deactivate-thread
+    [(op)
+     `(asm ,info ,asm-deactivate-thread)])
+
+  (define-instruction effect unactivate-thread
+    [(op (x ur))
+     (safe-assert (eq? x %Carg1))
+     `(asm ,info ,asm-unactivate-thread ,x)])
+
   ; TODO: risc architectures will have to take info-asmlib-save-ra? into account
   (define-instruction value asmlibcall
     [(op (z ur))
@@ -982,7 +996,7 @@
                      asm-inc-profile-counter
                      asm-inc-cc-counter asm-read-time-stamp-counter asm-read-performance-monitoring-counter
                      ; threaded version specific
-                     asm-get-tc
+                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
                      ; machine dependent exports
                      asm-sext-rax->rdx asm-store-single->double asm-kill asm-get-double)
 
@@ -2219,6 +2233,21 @@
       (lambda (code* jmp-reg) ; dest is ignored, since it is always the first C argument (rax in this case)
         (asm-helper-call code* target jmp-reg))))
 
+  (define asm-activate-thread
+    (let ([target `(x86_64-call 0 (entry ,(lookup-c-entry activate-thread)))])
+      (lambda (code* jmp-reg)
+        (asm-helper-call code* target jmp-reg))))
+
+  (define asm-deactivate-thread
+    (let ([target `(x86_64-call 0 (entry ,(lookup-c-entry deactivate-thread)))])
+      (lambda (code*)
+        (asm-helper-call code* target %rax))))
+
+  (define asm-unactivate-thread
+    (let ([target `(x86_64-call 0 (entry ,(lookup-c-entry unactivate-thread)))])
+      (lambda (code* arg-reg)
+        (asm-helper-call code* target %rax))))
+
   (define asm-indirect-call
     (lambda (code* t . ignore)
       ; NB: c-call is already required to be a register or memory operand, so
@@ -2494,6 +2523,47 @@
           (fx> (fx+ iint ints) 6)
           (fx> (fx+ ifp fps) 8)))
 
+    (module (push-registers pop-registers push-registers-size)
+      (define (move-registers regs load?)
+        (define vfp (make-vfp))
+        (define (fp-reg? reg)
+          (let loop ([i (fx- (vector-length vfp) 1)])
+            (or (eq? reg (vector-ref vfp i))
+                (and (fx> i 0) (loop (fx- i 1))))))
+        (with-output-language (L13 Effect)
+          (let loop ([regs regs] [offset 0])
+            (let* ([reg (car regs)]
+                   [e (cond
+                       [(fp-reg? reg)
+                        `(inline ,(make-info-loadfl reg) ,(if load? %load-double %store-double) ,%sp ,%zero (immediate ,offset))]
+                       [load? `(set! ,reg ,(%mref ,%sp ,offset))]
+                       [else `(set! ,(%mref ,%sp ,offset) ,reg)])]
+                   [regs (cdr regs)])
+              (if (null? regs)
+                  e
+                  `(seq ,e ,(loop regs (fx+ offset 8))))))))
+      (define (push-registers-size regs)
+        (align (fx* 8 (length regs)) 16))
+      (define (push-registers regs)
+        (with-output-language (L13 Effect)
+          (%seq
+            (set! ,%sp ,(%inline - ,%sp (immediate ,(push-registers-size regs))))
+            ,(move-registers regs #f))))
+      (define (pop-registers regs)
+        (with-output-language (L13 Effect)
+          (%seq
+            ,(move-registers regs #t)
+            (set! ,%sp ,(%inline + ,%sp (immediate ,(push-registers-size regs))))))))
+
+    (define (as-c-call e)
+      (if-feature windows
+        (with-output-language (L13 Effect)
+          (%seq
+           (set! ,%sp ,(%inline - ,%sp (immediate 32)))
+           ,e
+           (set! ,%sp ,(%inline + ,%sp (immediate 32)))))
+        e))
+
     (define asm-foreign-call
       (with-output-language (L13 Effect)
         (letrec ([load-double-stack
@@ -2737,6 +2807,20 @@
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
                                      regs iint ifp (fx+ isp 8)))])))))])
+          (define (add-deactivate adjust-active? t0 live* result-live* e)
+            (cond
+             [adjust-active?
+              (let ([save-and-restore
+                     (lambda (regs e)
+                       (cond
+                        [(null? regs) e]
+                        [else (%seq ,(push-registers regs) ,e ,(pop-registers regs))]))])
+                (%seq
+                 (set! ,%deact ,t0)
+                 ,(save-and-restore (cons %deact live*) (as-c-call (%inline deactivate-thread)))
+                 ,e
+                 ,(save-and-restore result-live* (as-c-call `(set! ,%rax ,(%inline activate-thread))))))]
+             [else e]))
           (define (add-save-fill-target fill-result-here? frame-size locs)
             (cond
              [fill-result-here?
@@ -2766,6 +2850,20 @@
                 `(seq
                   ,(loop (cdr classes) (fx+ offset 8) (cdr iregs) fpregs)
                   (set! ,(%mref ,%rcx ,offset) ,(car iregs)))])))
+          (define (get-result-regs fill-result-here? result-type result-classes)
+            (if fill-result-here?
+                (let loop ([classes result-classes] [iregs (reg-list %rax %rdx)] [fpregs (reg-list %Cfparg1 %Cfparg2)])
+                  (cond
+                   [(null? classes) '()]
+                   [(eq? 'sse (car classes))
+                    (cons (car fpregs) (loop (cdr classes) iregs (cdr fpregs)))]
+                   [else
+                    (cons (car iregs) (loop (cdr classes) (cdr iregs) fpregs))]))
+                (nanopass-case (Ltype Type) result-type
+                  [(fp-double-float) (list %Cfpretval)]
+                  [(fp-single-float) (list %Cfpretval)]
+                  [(fp-void) '()]
+                  [else (list %rax)])))
           (define returnem
             (lambda (frame-size locs ccall r-loc)
              ; need to maintain 16-byte alignment, ignoring the return address
@@ -2789,24 +2887,28 @@
                    [arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [result-classes (classify-type result-type)]
-                   [fill-result-here? (result-fits-in-registers? result-classes)])
+                   [fill-result-here? (result-fits-in-registers? result-classes)]
+                   [adjust-active? (memq 'adjust-active conv)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*) (make-vint) (make-vfp))
                 (lambda (frame-size nfp locs live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
                       (returnem frame-size locs
                         (lambda (t0)
-                          (let ([c-call
-                                 (if-feature windows
-                                   (%seq
-                                     (set! ,%sp ,(%inline - ,%sp (immediate 32)))
-                                     (inline ,(make-info-kill*-live* (reg-list %rax) live*) ,%c-call ,t0)
-                                     (set! ,%sp ,(%inline + ,%sp (immediate 32))))
-                                   (%seq
-                                     ;; System V ABI varargs functions require count of fp regs used in %al register.
-                                     ;; since we don't know if the callee is a varargs function, we always set it.
-                                     (set! ,%rax (immediate ,nfp))
-                                     (inline ,(make-info-kill*-live* (reg-list %rax) (cons %rax live*)) ,%c-call ,t0)))])
+                          (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
+                                 [c-call
+                                  (add-deactivate adjust-active? t0 live*
+                                   (get-result-regs fill-result-here? result-type result-classes)
+                                   (if-feature windows
+                                     (%seq
+                                       (set! ,%sp ,(%inline - ,%sp (immediate 32)))
+                                       (inline ,(make-info-kill*-live* (reg-list %rax %rdx) live*) ,%c-call ,t)
+                                       (set! ,%sp ,(%inline + ,%sp (immediate 32))))
+                                     (%seq
+                                       ;; System V ABI varargs functions require count of fp regs used in %al register.
+                                       ;; since we don't know if the callee is a varargs function, we always set it.
+                                       (set! ,%rax (immediate ,nfp))
+                                       (inline ,(make-info-kill*-live* (reg-list %rax %rdx) (cons %rax live*)) ,%c-call ,t))))])
                             (cond
                              [fill-result-here?
                               (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes)]
@@ -2851,10 +2953,12 @@
                    +---------------------------+ <- 16-byte boundary
                    |                           | 
                    |  space for register args  | four quads
-            sp+80: |                           | 
+         sp+80/96: |                           | 
                    +---------------------------+ <- 16-byte boundary
                    |   incoming return address | one quad
       incoming sp: +---------------------------+
+            sp+72: |        active state       | zero or two quads
+                   +---------------------------+
                    |                           |
                    |   callee-save registers   | RBX, RBP, RDI, RSI, R12, R13, R14, R15 (8 quads)
                    |                           | 
@@ -2872,10 +2976,10 @@
                    +---------------------------+ <- 16-byte boundary
                    |   incoming return address | one quad
                    +---------------------------+
-                   |         pad word          | one quad
+           sp+176: |  pad word / active state  | one quad
                    +---------------------------+
                    |   indirect result space   | two quads
-            sp+160 |  (for & results via regs) |
+           sp+160: |  (for & results via regs) |
                    +---------------------------+<- 16-byte boundary
                    |                           | 
                    |    saved register args    | space for Carg*, Cfparg* (14 quads)
@@ -3038,11 +3142,11 @@
                                ,(f (cdr types) (fx+ iint 1) ifp (fx+ isp 8)))
                              (f (cdr types) iint ifp isp))]))))))
           (define do-stack
-            (lambda (types)
+            (lambda (types adjust-active?)
              ; risp is where incoming register args are stored
              ; sisp is where incoming stack args are stored
               (if-feature windows
-                (let f ([types types] [locs '()] [isp 80])
+                (let f ([types types] [locs '()] [isp (if adjust-active? 96 80)])
                   (if (null? types)
                       locs
                       (f (cdr types)
@@ -3111,7 +3215,7 @@
                              (f (cdr types)
                                (cons (load-int-stack (car types) risp) locs)
                                (fx+ iint 1) ifp (fx+ risp 8) sisp))]))))))
-          (define (do-result result-type result-classes)
+          (define (do-result result-type result-classes adjust-active?)
             (nanopass-case (Ltype Type) result-type
               [(fp-ftd& ,ftd)
                (cond
@@ -3148,7 +3252,7 @@
                 [else
                  (values (lambda ()
                            ;; Return pointer that was filled; destination was the first argument
-                           `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows 80 48))))
+                           `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows (if adjust-active? 96 80) 48))))
                          (list %Cretval))])]
               [(fp-double-float)
                (values
@@ -3167,21 +3271,37 @@
                (values(lambda (x)
                         `(set! ,%Cretval ,x))
                       (list %Cretval))]))
+          (define (unactivate result-regs)
+            (let ([e `(seq
+                       (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) (if-feature windows 72 176))))
+                       ,(as-c-call (%inline unactivate-thread ,%Carg1)))])
+              (if (null? result-regs)
+                  e
+                  (%seq
+                   ,(push-registers result-regs)
+                   ,e
+                   ,(pop-registers result-regs)))))
           (lambda (info)
             (let ([conv (info-foreign-conv info)]
                   [arg-type* (info-foreign-arg-type* info)]
                   [result-type (info-foreign-result-type info)])
               (let* ([result-classes (classify-type result-type)]
+                     [adjust-active? (memq 'adjust-active conv)]
                      [synthesize-first? (and result-classes
                                              (result-fits-in-registers? result-classes))]
-                     [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*))])
-                (let-values ([(get-result result-regs) (do-result result-type result-classes)])
+                     [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*) adjust-active?)])
+                (let-values ([(get-result result-regs) (do-result result-type result-classes adjust-active?)])
                   (values
                    (lambda ()
                      (%seq
                       ,(if-feature windows
                          (%seq
-                           ,(save-arg-regs arg-type*)
+                           ,(let ([e (save-arg-regs arg-type*)])
+                              (if adjust-active?
+                                  (%seq
+                                    ,e
+                                    (set! ,%sp ,(%inline - ,%sp (immediate 16))))
+                                  e))
                            ,(%inline push ,%rbx)
                            ,(%inline push ,%rbp)
                            ,(%inline push ,%rdi)
@@ -3201,9 +3321,16 @@
                            ,(%inline push ,%r15)
                            ,(save-arg-regs arg-type*)))
                       ,(if-feature pthreads
-                         (%seq 
+                         ((lambda (e)
+                            (if adjust-active?
+                                (%seq
+                                 ,(as-c-call `(set! ,%rax ,(%inline activate-thread)))
+                                 (set! ,(%mref ,%sp ,(if-feature windows 72 176)) ,%rax)
+                                 ,e)
+                                e))
+                          (%seq 
                            (set! ,%rax ,(%inline get-tc))
-                           (set! ,%tc ,%rax))
+                           (set! ,%tc ,%rax)))
                          `(set! ,%tc (literal ,(make-info-literal #f 'entry (lookup-c-entry thread-context) 0))))))
                    (let ([locs (reverse locs)])
                      (if synthesize-first?
@@ -3213,9 +3340,19 @@
                    get-result
                    (lambda ()
                      (in-context Tail
-                      (%seq
+                      ((lambda (e)
+                         (if adjust-active?
+                             (%seq
+                              ,(unactivate result-regs)
+                              ,e)
+                             e))
+                       (%seq
                         ,(if-feature windows
-                           (%seq
+                           ((lambda (e)
+                              (if adjust-active?
+                                  (%seq ,e (set! ,%sp ,(%inline + ,%sp (immediate 16))))
+                                  e))
+                            (%seq
                              (set! ,%sp ,(%inline + ,%sp (immediate 8)))
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))
@@ -3224,7 +3361,7 @@
                              (set! ,%rsi ,(%inline pop))
                              (set! ,%rdi ,(%inline pop))
                              (set! ,%rbp ,(%inline pop))
-                             (set! ,%rbx ,(%inline pop)))
+                             (set! ,%rbx ,(%inline pop))))
                            (%seq
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))
@@ -3233,5 +3370,5 @@
                              (set! ,%rbp ,(%inline pop))
                              (set! ,%rbx ,(%inline pop))
                              (set! ,%sp ,(%inline + ,%sp (immediate 136)))))
-                        (asm-c-return ,null-info ,result-regs ...)))))))))))))
+                        (asm-c-return ,null-info ,result-regs ...))))))))))))))
   )

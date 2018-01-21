@@ -78,9 +78,9 @@
   (import (nanopass))
   (include "base-lang.ss")
 
- ; convention is a symbol or #f (we're assuming the front end already verified
- ; the convention is a valid one for this machine-type
-  (define convention? (lambda (x) (or (symbol? x) (eq? #f x))))
+ ; convention is a list of symbols (we're assuming the front end already verified
+ ; the convention is a valid one for this machine-type)
+  (define convention? (lambda (x) (and (list? x) (andmap symbol? x))))
 
  ; r6rs says a quote subform should be a datum, not must be a datum
  ; chez scheme allows a quote subform to be any value
@@ -489,6 +489,7 @@
   (declare-primitive c-call effect #f)
   (declare-primitive c-simple-call effect #f)
   (declare-primitive c-simple-return effect #f)
+  (declare-primitive deactivate-thread effect #f) ; threaded version only
   (declare-primitive fl* effect #f)
   (declare-primitive fl+ effect #f)
   (declare-primitive fl- effect #f)
@@ -521,6 +522,7 @@
   (declare-primitive store-single effect #f)
   (declare-primitive store-single->double effect #f)
   (declare-primitive store-with-update effect #f) ; ppc
+  (declare-primitive unactivate-thread effect #f) ; threaded version only
   (declare-primitive vpush-multiple effect #f) ; arm
 
   (declare-primitive < pred #t)
@@ -550,6 +552,7 @@
   (declare-primitive fstps value #f) ; x86 only
   (declare-primitive get-double value #t) ; x86_64
   (declare-primitive get-tc value #f) ; threaded version only
+  (declare-primitive activate-thread value #f) ; threaded version only
   (declare-primitive lea1 value #t)
   (declare-primitive lea2 value #t)
   (declare-primitive load value #t)

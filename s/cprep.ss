@@ -85,11 +85,14 @@
                   (uncprep-sequence e2 ls))]
                [else (cons (uncprep x) ls)])))
          (define uncprep-fp-conv
-           (lambda (x)
-             (case x
-               [(i3nt-stdcall) '__stdcall]
-               [(i3nt-com) '__com]
-               [else #f])))
+           (lambda (x*)
+             (map (lambda (x)
+                    (case x
+                      [(i3nt-stdcall) '__stdcall]
+                      [(i3nt-com) '__com]
+                      [(adjust-active) '__thread]
+                      [else #f]))
+                  x*)))
          (define-who uncprep-fp-specifier
            (lambda (x)
              (nanopass-case (Ltype Type) x
