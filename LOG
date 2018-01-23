@@ -899,3 +899,5 @@
     Mf-install.in
 - standalone export form now handles (import import-spec ...)
     8.ms, syntax.ss, release_notes.stex
+- add collect-rendezvous
+    prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex, release_notes.stex

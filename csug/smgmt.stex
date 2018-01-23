@@ -155,6 +155,25 @@ The system determines which generations to collect, based on \var{g} and
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{collect-rendezvous}{\categoryprocedure}{(collect-rendezvous)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+Requests a garbage collection in the same way as when the system
+determines that a collection should occur. All running threads are
+coordinated so that one of them calls the collect-request handler, while
+the other threads pause until the handler returns.
+
+Note that if the collect-request handler (see
+\scheme{collect-request-handler}) does not call \scheme{collect}, then
+\scheme{collect-rendezvous} does not actualy perform a garbage
+collection.
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{collect-notify}{\categoryglobalparameter}{collect-notify}
 \listlibraries
 \endentryheader
