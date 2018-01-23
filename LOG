@@ -827,3 +827,9 @@
     7.ms, foreign.stex, system.stex
 - add collect-rendezvous
     prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex
+- add a __thread convention for foreign procedures and callables
+  to automate thread [de]activation
+    syntax.ss, ftype.ss, x86.ss, x86_64.ss, ppc32.ss,
+    cmacros.ss, base-lang.ss, np-languages.ss, cprep.ss
+    thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
+    mats/Mf-t*, foreign.ms, foreign4.c

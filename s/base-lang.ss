@@ -155,7 +155,7 @@
 
   (define convention?
     (lambda (x)
-      (or (eq? x #f) (symbol? x))))
+      (and (list? x) (andmap symbol? x))))
 
   (define-record-type preinfo
     (nongenerative #{preinfo e23pkvo5btgapnzomqgegm-2})
