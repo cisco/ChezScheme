@@ -1523,9 +1523,6 @@
     (test-cp0-expansion cfl~= '(+ +2.2i -3.7+5.3i) -3.7+7.5i)
  )
 
-(mat intentional-fail
-     (eqv? (+ 1 1) 3))
-
 (mat -
     (error? (-))
     (error? (- 'a))
