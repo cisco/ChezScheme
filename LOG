@@ -825,3 +825,5 @@
   based on open files instead of paths
     7.ss, primdata.ss, mkheader.ss, scheme.c
     7.ms, foreign.stex, system.stex
+- add collect-rendezvous
+    prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex

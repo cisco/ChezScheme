@@ -769,6 +769,12 @@
          ($oops who "invalid target generation ~s for generation ~s" gtarget g))
        (collect2 g (if (eq? gtarget 'static) (constant static-generation) gtarget))])))
 
+(set! collect-rendezvous
+  (let ([fire-collector (foreign-procedure "(cs)fire_collector" () void)])
+    (lambda ()
+      (fire-collector)
+      ($collect-rendezvous))))
+
 (set! keyboard-interrupt-handler
    ($make-thread-parameter
       (lambda ()

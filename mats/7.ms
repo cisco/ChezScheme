@@ -3597,6 +3597,41 @@ evaluating module init
     (or (not a) (not (assq 'static (cdr a)))))
 )
 
+(mat collect-rendezvous
+  (begin
+    (define (check-working-gc collect)
+      (with-interrupts-disabled
+       (let ([p (weak-cons (gensym) #f)])
+         (collect)
+         (eq? (car p) #!bwp))))
+    (and (check-working-gc collect)
+         (check-working-gc collect-rendezvous)))
+      
+  (or (not (threaded?))
+      (let ([m (make-mutex)]
+            [c (make-condition)]
+            [done? #f])
+        (fork-thread
+         (lambda ()
+           (let loop ()
+             (mutex-acquire m)
+             (cond
+              [done?
+               (condition-signal c)
+               (mutex-release m)]
+              [else
+               (mutex-release m)
+               (loop)]))))
+        (and (check-working-gc collect-rendezvous)
+             ;; End thread:
+             (begin
+               (mutex-acquire m)
+               (set! done? #t)
+               (condition-wait c m)
+               (mutex-release m)
+               ;; Plain `collect` should work again:
+               (check-working-gc collect)))))
+  )
 
 ;;; section 7.6:
 
