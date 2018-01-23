@@ -788,3 +788,5 @@
 - fix bounds checking with an immediate index on immutable vectors,
   fxvectors, strings, and bytevectors
     cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
+- add collect-rendezvous
+    prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex

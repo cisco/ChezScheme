@@ -186,6 +186,7 @@ void S_prim_init() {
     Sforeign_symbol("(cs)enable_object_counts", (void *)S_enable_object_counts);
     Sforeign_symbol("(cs)set_enable_object_counts", (void *)S_set_enable_object_counts);
     Sforeign_symbol("(cs)object_counts", (void *)S_object_counts);
+    Sforeign_symbol("(cs)fire_collector", (void *)S_fire_collector);
 }
 
 static void s_instantiate_code_object() {
