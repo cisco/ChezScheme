@@ -215,14 +215,15 @@
       (lambda (who cte? x env)
         (define (go x)
           ($uncprep
-            ($cpcheck
-              (let ([cpletrec-ran? #f])
-                (let ([x ((run-cp0)
-                          (lambda (x)
-                            (set! cpletrec-ran? #t)
-                            ($cpletrec ($cp0 x $compiler-is-loaded?)))
-                          ($cpvalid x))])
-                  (if cpletrec-ran? x ($cpletrec x)))))))
+            ($cpcommonize
+              ($cpcheck
+                (let ([cpletrec-ran? #f])
+                  (let ([x ((run-cp0)
+                            (lambda (x)
+                              (set! cpletrec-ran? #t)
+                              ($cpletrec ($cp0 x $compiler-is-loaded?)))
+                            ($cpvalid x))])
+                    (if cpletrec-ran? x ($cpletrec x))))))))
         (unless (environment? env)
           ($oops who "~s is not an environment" env))
         ; claim compiling-a-file to get cte as well as run-time code
@@ -243,4 +244,48 @@
            (unless (environment? env)
              ($oops who "~s is not an environment" env))
            ; claim compiling-a-file to get cte as well as run-time code
-           ($uncprep (expand x env #t #t))])))))
+           ($uncprep (expand x env #t #t))]))))
+
+  (set-who! $cpcheck-prelex-flags
+    (lambda (x after-pass)
+      (import (nanopass))
+      (include "base-lang.ss")
+
+      (define-pass cpcheck-prelex-flags : Lsrc (ir) -> Lsrc ()
+        (definitions
+          (define sorry!
+            (lambda (who str . arg*)
+              (apply fprintf (console-output-port) str arg*)
+              (newline (console-output-port))))
+          (define initialize-id!
+            (lambda (id)
+              (prelex-flags-set! id
+                (let ([flags (prelex-flags id)])
+                  (fxlogor
+                    (fxlogand flags (constant prelex-sticky-mask))
+                    (fxsll (fxlogand flags (constant prelex-is-mask))
+                      (constant prelex-was-flags-offset))))))))
+        (Expr : Expr (ir) -> Expr ()
+          [(ref ,maybe-src ,x)
+           (when (prelex-operand x) (sorry! who "~s has an operand after ~s (src ~s)" x after-pass maybe-src))
+           (unless (prelex-was-referenced x) (sorry! who "~s referenced but not so marked after ~s (src ~s)" x after-pass maybe-src))
+           (when (prelex-referenced x)
+             (unless (prelex-was-multiply-referenced x) (sorry! who "~s multiply referenced but not so marked after ~s (src ~s)" x after-pass maybe-src))
+             (set-prelex-multiply-referenced! x #t))
+           (set-prelex-referenced! x #t)
+           `(ref ,maybe-src ,x)]
+          [(set! ,maybe-src ,x ,[e])
+           (unless (prelex-was-assigned x) (sorry! who "~s assigned but not so marked after ~s (src ~s)" x after-pass maybe-src))
+           (set-prelex-assigned! x #t)
+           `(set! ,maybe-src ,x ,e)]
+          [(letrec ([,x* ,e*] ...) ,body)
+           (for-each initialize-id! x*)
+           `(letrec ([,x* ,(map Expr e*)] ...) ,(Expr body))]
+          [(letrec* ([,x* ,e*] ...) ,body)
+           (for-each initialize-id! x*)
+           `(letrec* ([,x* ,(map Expr e*)] ...) ,(Expr body))])
+        (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
+          [(clause (,x* ...) ,interface ,body)
+           (for-each initialize-id! x*)
+           `(clause (,x* ...) ,interface ,(Expr body))]))
+      (Lexpand-to-go x cpcheck-prelex-flags))))

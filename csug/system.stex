@@ -2633,6 +2633,34 @@ reach this decision if the effort and outer unroll limits are large.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{commonization-level}{\categorythreadparameter}{commonization-level}
+\listlibraries
+\endentryheader
+
+After running the main source optimization pass (cp0) for the last time, the
+compiler optionally runs a \emph{commonization} pass.
+The pass commonizes the code for lambda expressions that have
+identical structure by abstracting differences at certain leaves
+of the program, namely constants, references to unassigned variables,
+and references to primitives.
+The parameter \scheme{commonization-level} controls whether commonization
+is run and, if so, how aggressive it is.
+Its value must be a nonnegative exact integer ranging from 0 through 9.
+When the parameter is set to 0, the default, commonization is not run.
+Otherwise, higher values result in more commonization.
+
+Commonization can undo some of the effects of cp0's inlining, can
+add run-time overhead, and can complicate debugging, particularly
+at higher commonization levels, which is why it is disabled by
+default.
+On the other hand, for macros or other meta programs that can
+generate large, mostly similar lambda expressions, enabling
+commonization can result in significant savings in object-code size
+and even reduce run-time overhead by making more efficient use of
+instruction caches.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{undefined-variable-warnings}{\categorythreadparameter}{undefined-variable-warnings}
 \listlibraries
 \endentryheader

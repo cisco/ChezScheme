@@ -115,6 +115,14 @@ ehc = $(defaultehc)
 defaulteoc = t
 eoc = $(defaulteoc)
 
+# cl determines the commonization level
+defaultcl = (commonization-level)
+cl = $(defaultcl)
+
+# ecpf determines whether the compiler checks prelex flags
+defaultecpf = t
+ecpf = $(defaultecpf)
+
 # set of mats to run
 mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread\
  misc cp0 5_6 5_7 5_8 6 io format 7 record hash enum 8 fx fl cfl foreign\
@@ -141,11 +149,13 @@ $(objdir)/%.mo : %.ms mat.so
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
              '(#%$$enable-check-heap #${ehc})'\
+             '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
              '(enable-object-counts #${eoc})'\
+             '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\
              '(set! *examples-directory* "${Examples}")'\
              '(enable-cp0 #${cp0})'\
@@ -162,11 +172,13 @@ $(objdir)/%.mo : %.ms mat.so
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
              '(#%$$enable-check-heap #${ehc})'\
+             '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
              '(enable-object-counts #${eoc})'\
+             '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\
              '(set! *examples-directory* "${Examples}")'\
              '(enable-cp0 #${cp0})'\
@@ -222,15 +234,15 @@ partialx:
 allx: prettyclean
 	$(MAKE) allxhelp o=0
 	$(MAKE) allxhelp o=3
-	$(MAKE) allxhelp o=0 cp0=t
-	$(MAKE) allxhelp o=3 cp0=t
+	$(MAKE) allxhelp o=0 cp0=t cl=3
+	$(MAKE) allxhelp o=3 cp0=t cl=3
 	$(MAKE) allxhelp o=0 spi=t rmg=2 p=t
 	$(MAKE) allxhelp o=3 spi=t rmg=2 p=t
-	$(MAKE) allxhelp o=0 eval=interpret
-	$(MAKE) allxhelp o=3 eval=interpret
+	$(MAKE) allxhelp o=0 eval=interpret cl=6
+	$(MAKE) allxhelp o=3 eval=interpret cl=6
 	$(MAKE) allxhelp o=0 eval=interpret cp0=t rmg=2
 	$(MAKE) allxhelp o=3 eval=interpret cp0=t rmg=2
-	$(MAKE) allxhelp o=0 eoc=f ehc=t
+	$(MAKE) allxhelp o=0 eoc=f ehc=t cl=9
 	$(MAKE) allxhelp o=3 eval=interpret ehc=t rmg=2
 
 just-reports:
@@ -252,12 +264,12 @@ bullyx:
 
 bully:
 	-$(MAKE) allxhelpnotall spi=t cp0=f
-	-$(MAKE) allxhelp spi=f cp0=f ctb='(/ (collect-trip-bytes) 64)' ehc=t
+	-$(MAKE) allxhelp spi=f cp0=f cl=9 ctb='(/ (collect-trip-bytes) 64)' ehc=t
 	-$(MAKE) allxhelp spi=t cp0=f cis=t cmg=1
 	-$(MAKE) allxhelp spi=f cp0=f cis=t cmg=6 ehc=t
 	-$(MAKE) allxhelp spi=t cp0=t ctb='(/ (collect-trip-bytes) 64)' cgr=6
 	-$(MAKE) allxhelp spi=t cp0=f p=t eoc=f ehc=t
-	-$(MAKE) allxhelp spi=f cp0=t p=t ehc=t
+	-$(MAKE) allxhelp spi=f cp0=t cl=9 p=t ehc=t
 	-$(MAKE) allxhelp eval=interpret spi=f cp0=f
 	-$(MAKE) allxhelp eval=interpret spi=f cp0=t
 	-$(MAKE) allxhelp eval=interpret spi=t cp0=f ctb='(/ (collect-trip-bytes) 64)' ehc=t
@@ -272,6 +284,7 @@ doheader:
 	printf "%s" "-------- o=$o" >> summary
 	if [ "$(spi)" != "$(defaultspi)" ] ; then printf " spi=$(spi)" >> summary ; fi
 	if [ "$(ehc)" != "$(defaultehc)" ] ; then printf " ehc=$(ehc)" >> summary ; fi
+	if [ "$(ecpf)" != "$(defaultecpf)" ] ; then printf " ecpf(ecpf)" >> summary ; fi
 	if [ "$(cp0)" != "$(defaultcp0)" ] ; then printf " cp0=$(cp0)" >> summary ; fi
 	if [ "$(cis)" != "$(defaultcis)" ] ; then printf " cis=$(cis)" >> summary ; fi
 	if [ "$p" != "$(defaultp)" ] ; then printf " p=$p" >> summary ; fi
@@ -280,6 +293,7 @@ doheader:
 	if [ "$(cgr)" != "$(defaultcgr)" ] ; then printf " cgr=$(cgr)" >> summary ; fi
 	if [ "$(cmg)" != "$(defaultcmg)" ] ; then printf " cmg=$(cmg)" >> summary ; fi
 	if [ "$(eoc)" != "$(defaulteoc)" ] ; then printf " eoc=$(eoc)" >> summary ; fi
+	if [ "$(cl)" != "$(defaultcl)" ] ; then printf " cl=$(cl)" >> summary ; fi
 	if [ "$(hdrmsg)" != "" ] ; then printf " $(hdrmsg)" >> summary ; fi
 
 dosummary:
@@ -312,11 +326,13 @@ script.all$o makescript$o:
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
              '(#%$$enable-check-heap #${ehc})'\
+             '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
              '(enable-object-counts #${eoc})'\
+             '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\
              '(set! *examples-directory* "${Examples}")'\
              '(enable-cp0 #${cp0})'\

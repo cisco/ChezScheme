@@ -657,7 +657,8 @@
                                        ($cpletrec ($cp0 x #f)))
                                      x2)])
                              (if cpletrec-ran? x ($cpletrec x))))]
-                    [x2b ($cpcheck x2a)])
+                    [x2b ($cpcheck x2a)]
+                    [x2b ($cpcommonize x2b)])
                (when eoo (pretty-print ($uncprep x2b) eoo))
                (ip2 (ip1 x2b))))
         ([a0 0] [a1 0] [fp 0] [cp 0]))))

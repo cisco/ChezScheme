@@ -1366,6 +1366,8 @@
    [ptr optimize-level]
    [ptr subset-mode]
    [ptr suppress-primitive-inlining]
+   [ptr default-record-equal-procedure]
+   [ptr default-record-hash-procedure]
    [U64 instr-counter]
    [U64 alloc-counter]
    [ptr parameters]))
