@@ -790,3 +790,92 @@
     cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
 - fix a few signatures
     primdata.ss
+- more staid and consistent Mf-cross main target
+    Mf-cross
+- cpletrec now replaces the incoming prelexes with new ones so
+  that it doesn't have to alter the flags on the incoming ones, since
+  the same expander output is passed through the compiler twice while
+  compiling a file with macro definitions or libraries.  we were
+  getting away without this just by luck.
+    cpletrec.ss
+- pure? and ivory? now return #t for a primref only if the prim is
+  declared to be a proc, since some non-proc prims are mutable, e.g.,
+  $active-threads and $collect-request-pending.
+    cp0.ss
+- $error-handling-mode? and $eol-style? are now properly declared to
+  be procs rather than system state variables.
+    primdata.ss
+- the new pass $check-prelex-flags verifies that prelex referenced,
+  multiply-referenced, and assigned flags are set when they
+  should be.  (it doesn't, however, complain if a flag is set
+  when it need not be.)  when the new system parameter
+  $enable-check-prelex-flags is set, $check-prelex-flags is
+  called after each major pass that produces Lsrc forms to verify
+  that the flags are set correctly in the output of the pass.
+  this parameter is unset by default but set when running the
+  mats.
+    cprep.ss, back.ss, compile.ss, primdata.ss,
+    mats/Mf-base
+- removed the unnecessary set of prelex referenced flag from the
+  build-ref routines when we've just established that it is set.
+    syntax.ss, compile.ss
+- equivalent-expansion? now prints differences to the current output
+  port to aid in debugging.
+    mat.ss
+- the nanopass that patches calls to library globals into calls to
+  their local counterparts during whole-program optimization now
+  creates new prelexes and sets the prelex referenced, multiply
+  referenced, and assigned flags on the new prelexes rather than
+  destructively setting flags on the incoming prelexes.  The
+  only known problems this fixes are (1) the multiply referenced
+  flag was not previously being set for cross-library calls when
+  it should have been, resulting in overly aggressive inlining
+  of library exports during whole-program optimization, and (2)
+  the referenced flag could sometimes be set for library exports
+  that aren't actually used in the final program, which could
+  prevent some unreachable code from being eliminated.
+    compile.ss
+- added support for specifying default record-equal and
+  record-hash procedures.
+    primdata.ss, cmacros.ss, cpnanopass.ss, prims.ss, newhash.ss,
+    gc.c,
+    record.ms
+- added missing call to relocate for subset-mode tc field, which
+  wasn't burning us because the only valid non-false value, the
+  symbol system, is in the static generation after the initial heap
+  compaction.
+    gc.c
+- added a lambda-commonization pass that runs after the other
+  source optimizations, particularly inlining, and a new parameter
+  that controls how hard it works.  the value of commonization-level
+  ranges from 0 through 9, with 0 disabling commonization and 9
+  maximizing it.  The default value is 0 (disabled).  At present,
+  for non-zero level n, the commonizer attempts to commonize
+  lambda expressions consisting of 2^(10-n) or more nodes.
+  commonization of one or more lambda expressions requires that
+  they have identical structure down to the leaf nodes for quote
+  expressions, references to unassigned variables, and primitives.
+  So that various downstream optimizations aren't disabled, there
+  are some additional restrictions, the most important of which
+  being that call-position expressions must be identical.  The
+  commonizer works by abstracting the code into a helper that
+  takes the values of the differing leaf nodes as arguments.
+  the name of the helper is formed by concatenating the names of
+  the original procedures, separated by '&', and this is the name
+  that will show up in a stack trace.  The source location will
+  be that of one of the original procedures.  Profiling inhibits
+  commonization, because commonization requires profile source
+  locations to be identical.
+    cpcommonize.ss (new), compile.ss, interpret.ss, cprep.ss,
+    primdata.ss, s/Mf-base,
+    mats/Mf-base
+- cpletrec now always produces a letrec rather than a let for
+  single immutable lambda bindings, even when not recursive, for
+  consistent expand/optimize output whether the commonizer is
+  run or not.
+    cpletrec.ss,
+    record.ms
+- trans-make-ftype-pointer no longer generates a call to
+  $verify-ftype-address if the address expression is a call to
+  ftype-pointer-address.
+    ftype.ss

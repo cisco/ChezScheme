@@ -545,6 +545,11 @@
       (lambda (x)
         (set-box! (cdr x) (symbol-hashtable-ref ht (car x) '()))))))
 
+(define check-prelex-flags
+  (lambda (x after)
+    (when ($enable-check-prelex-flags)
+      ($pass-time 'cpcheck-prelex-flags (lambda () (do-trace $cpcheck-prelex-flags x 'uncprep))))))
+
 (define compile-file-help
   (lambda (op hostop wpoop machine sfd do-read outfn)
     (include "types.ss")
@@ -592,7 +597,9 @@
               (let ([x1 ($pass-time 'expand
                           (lambda ()
                             (expand x0 (if (eq? (subset-mode) 'system) ($system-environment) (interaction-environment)) #t #t outfn)))])
+                (check-prelex-flags x1 'expand)
                 ($uncprep x1 #t) ; populate preinfo sexpr fields
+                (check-prelex-flags x1 'uncprep)
                 (when wpoop
                   ; cross-library optimization locs might be set by cp0 during the expander's compile-time
                   ; evaluation of library forms.  since we have no need for the optimization information in
@@ -631,16 +638,28 @@
     (let loop ([chunk* (expand-Lexpand x1)] [rx2b* '()] [rfinal* '()])
       (define finish-compile
         (lambda (x1 f)
-          (let* ([x2 ($pass-time 'cpvalid (lambda () (do-trace $cpvalid x1)))]
+          (let* ([waste (check-prelex-flags x1 'before-cpvalid)]
+                 [x2 ($pass-time 'cpvalid (lambda () (do-trace $cpvalid x1)))]
+                 [waste (check-prelex-flags x2 'cpvalid)]
                  [x2a (let ([cpletrec-ran? #f])
                         (let ([x ((run-cp0)
                                   (lambda (x)
                                     (set! cpletrec-ran? #t)
-                                    (let ([x ($pass-time 'cp0 (lambda () (do-trace $cp0 x)))])
-                                      ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))))
+                                    (let* ([x ($pass-time 'cp0 (lambda () (do-trace $cp0 x)))]
+                                           [waste (check-prelex-flags x 'cp0)]
+                                           [x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))]
+                                           [waste (check-prelex-flags x 'cpletrec)])
+                                      x))
                                   x2)])
-                          (if cpletrec-ran? x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x))))))]
+                          (if cpletrec-ran?
+                              x
+                              (let ([x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))])
+                                (check-prelex-flags x 'cpletrec)
+                                x))))]
                  [x2b ($pass-time 'cpcheck (lambda () (do-trace $cpcheck x2a)))]
+                 [waste (check-prelex-flags x2b 'cpcheck)]
+                 [x2b ($pass-time 'cpcommonize (lambda () (do-trace $cpcommonize x2b)))]
+                 [waste (check-prelex-flags x2b 'cpcommonize)]
                  [x7 (do-trace $np-compile x2b #t)]
                  [x8 ($c-make-closure x7)])
             (loop (cdr chunk*) (cons (f x2b) rx2b*) (cons (f x8) rfinal*)))))
@@ -1030,24 +1049,6 @@
 
     (define build-void (let ([void-rec `(quote ,(void))]) (lambda () void-rec)))
 
-    (define build-cluster*
-      (lambda (node*)
-        (define (s-entry/binary node* rcluster*)
-          (if (null? node*)
-              (reverse rcluster*)
-              (let ([node (car node*)])
-                (if (library-node-binary? node)
-                    (s-entry/binary (cdr node*) rcluster*)
-                    (s-source (cdr node*) (list node) rcluster*)))))
-        (define (s-source node* rnode* rcluster*)
-          (if (null? node*)
-              (reverse (cons (reverse rnode*) rcluster*))
-              (let ([node (car node*)])
-                (if (library-node-binary? node)
-                    (s-entry/binary (cdr node*) (cons (reverse rnode*) rcluster*))
-                    (s-source (cdr node*) (cons node rnode*) rcluster*)))))
-        (s-entry/binary node* '())))
-
     (define build-lambda
       (lambda (ids body)
         `(case-lambda ,(make-preinfo-lambda)
@@ -1067,12 +1068,60 @@
         (build-primcall '$install-library/rt-code `(quote ,(library-node-uid node)) thunk)))
 
     (define-pass patch : Lsrc (ir env) -> Lsrc ()
+      (definitions
+        (define with-initialized-ids
+          (lambda (old-id* proc)
+            (let ([new-id* (map (lambda (old-id)
+                                  (let ([new-id (make-prelex
+                                                  (prelex-name old-id)
+                                                  (let ([flags (prelex-flags old-id)])
+                                                    (fxlogor
+                                                      (fxlogand flags (constant prelex-sticky-mask))
+                                                      (fxsll (fxlogand flags (constant prelex-is-mask))
+                                                        (constant prelex-was-flags-offset))))
+                                                  (prelex-source old-id)
+                                                  #f)])
+                                    (prelex-operand-set! old-id new-id)
+                                    new-id))
+                             old-id*)])
+              (let-values ([v* (proc new-id*)])
+                (for-each (lambda (old-id) (prelex-operand-set! old-id #f)) old-id*)
+                (apply values v*)))))
+        (define build-ref
+          (case-lambda
+            [(x) (build-ref #f x)]
+            [(src x)
+             (let ([x (prelex-operand x)])
+               (safe-assert (prelex? x))
+               (if (prelex-referenced x)
+                   (set-prelex-multiply-referenced! x #t)
+                   (set-prelex-referenced! x #t))
+               `(ref ,src ,x))])))
       (Expr : Expr (ir) -> Expr ()
+        [(ref ,maybe-src ,x) (build-ref maybe-src x)]
         [(call ,preinfo ,pr (quote ,d))
          (guard (eq? (primref-name pr) '$top-level-value) (symbol? d))
          (cond
-           [(symbol-hashtable-ref env d #f) => (lambda (x) `(ref ,(preinfo-src preinfo) ,x))]
-           [else ir])]))
+           [(symbol-hashtable-ref env d #f) => (lambda (x) (build-ref (preinfo-src preinfo) x))]
+           [else ir])]
+        [(set! ,maybe-src ,x ,[e])
+         (let ([x (prelex-operand x)])
+           (safe-assert (prelex? x))
+           (set-prelex-assigned! x #t)
+           `(set! ,maybe-src ,x ,e))]
+        [(letrec ([,x* ,e*] ...) ,body)
+         (with-initialized-ids x*
+           (lambda (x*)
+             `(letrec ([,x* ,(map Expr e*)] ...) ,(Expr body))))]
+        [(letrec* ([,x* ,e*] ...) ,body)
+         (with-initialized-ids x*
+           (lambda (x*)
+             `(letrec* ([,x* ,(map Expr e*)] ...) ,(Expr body))))])
+      (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
+        [(clause (,x* ...) ,interface ,body)
+         (with-initialized-ids x*
+           (lambda (x*)
+             `(clause (,x* ...) ,interface ,(Expr body))))]))
 
     (define build-top-level-set!*
       (lambda (node)
@@ -1082,7 +1131,6 @@
              (lambda (dl db dv body)
                (if dl
                    `(seq ,(build-primcall '$set-top-level-value! `(quote ,dl)
-                            ;; not using build-ref here because we don't want to change the ref/multiply refed flags
                             `(cte-optimization-loc ,db (ref #f ,dv)))
                       ,body)
                    body))
@@ -1105,7 +1153,7 @@
 
     (define build-combined-program-ir
       (lambda (program node*)
-        (let ([patch-env (make-patch-env node*)])
+        (patch
           (fold-right
             (lambda (node combined-body)
               (if (library-node-binary? node)
@@ -1117,8 +1165,8 @@
                      ,combined-body)
                   (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
                     [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
-                     `(letrec* ([,dv* ,(map (lambda (de) (patch de patch-env)) de*)] ...)
-                        (seq ,(patch body patch-env)
+                     `(letrec* ([,dv* ,de*] ...)
+                        (seq ,body
                           (seq
                             ,(build-install-library/rt-code node
                                (if (library-node-visible? node)
@@ -1126,8 +1174,9 @@
                                    void-pr))
                             ,combined-body)))])))
             (nanopass-case (Lexpand Program) (program-node-ir program)
-              [(program ,uid ,body) (patch body patch-env)])
-            node*))))
+              [(program ,uid ,body) body])
+            node*)
+          (make-patch-env node*))))
 
     (define build-combined-library-ir
       (lambda (node*)
@@ -1135,34 +1184,41 @@
         (define build-let
           (lambda (ids exprs body)
             `(call ,(make-preinfo) ,(build-lambda ids body) ,exprs ...)))
-        (define build-ref
-          (lambda (x)
-            (when (prelex-referenced x)
-              (set-prelex-multiply-referenced! x #t))
-            (set-prelex-referenced! x #t)
-            `(ref #f ,x)))
-        (define build-set!
-          (lambda (x e)
-            (set-prelex-assigned! x #t)
-            `(set! #f ,x ,e)))
         (define build-mark-invoked!
           (lambda (node)
             (build-primcall '$mark-invoked! `(quote ,(library-node-uid node)))))
-        (let ([patch-env (make-patch-env node*)])
-          (define build-cluster
-            (lambda (node* cluster-body)
-              (fold-right
-                (lambda (node cluster-body)
-                  (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
-                    [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
-                     `(letrec* ([,dv* ,(map (lambda (de) (patch de patch-env)) de*)] ...)
-                        (seq ,(patch body patch-env)
-                          (seq
-                            ,(if (library-node-visible? node)
-                                 `(seq ,(build-top-level-set!* node) ,(build-mark-invoked! node))
-                                 (build-mark-invoked! node))
-                            ,cluster-body)))]))
-                cluster-body node*)))
+        (define build-cluster*
+          (lambda (node*)
+            (define (s-entry/binary node* rcluster*)
+              (if (null? node*)
+                  (reverse rcluster*)
+                  (let ([node (car node*)])
+                    (if (library-node-binary? node)
+                        (s-entry/binary (cdr node*) rcluster*)
+                        (s-source (cdr node*) (list node) rcluster*)))))
+            (define (s-source node* rnode* rcluster*)
+              (if (null? node*)
+                  (reverse (cons (reverse rnode*) rcluster*))
+                  (let ([node (car node*)])
+                    (if (library-node-binary? node)
+                        (s-entry/binary (cdr node*) (cons (reverse rnode*) rcluster*))
+                        (s-source (cdr node*) (cons node rnode*) rcluster*)))))
+            (s-entry/binary node* '())))
+        (define build-cluster
+          (lambda (node* cluster-body)
+            (fold-right
+              (lambda (node cluster-body)
+                (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
+                  [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
+                   `(letrec* ([,dv* ,de*] ...)
+                      (seq ,body
+                        (seq
+                          ,(if (library-node-visible? node)
+                               `(seq ,(build-top-level-set!* node) ,(build-mark-invoked! node))
+                               (build-mark-invoked! node))
+                          ,cluster-body)))]))
+              cluster-body node*)))
+        (patch
           ; example: D imports C; C imports A, B; B imports A; A imports nothing
           ;          have wpos for D, A, B; obj for C
           ; (let ([lib-f (void)])
@@ -1190,31 +1246,32 @@
             (let ([cluster-idx* (enumerate cluster*)])
               (build-let (list lib-f) (list (build-void))
                 `(seq 
-                   ,(build-set! lib-f
-                      (let f ([cluster* cluster*] [cluster-idx* cluster-idx*])
+                   (set! #f ,lib-f
+                     ,(let f ([cluster* cluster*] [cluster-idx* cluster-idx*])
                         (let ([idx (gen-var 'idx)])
                           (build-lambda (list idx)
                             (build-cluster (car cluster*)
                               (let ([cluster* (cdr cluster*)])
                                 (if (null? cluster*)
                                     (let ([idx (gen-var 'idx)])
-                                      (build-set! lib-f (build-lambda (list idx) (build-void))))
+                                      `(set! #f ,lib-f ,(build-lambda (list idx) (build-void))))
                                     (let ([t (gen-var 't)])
                                       (build-let (list t) (list (f cluster* (cdr cluster-idx*)))
-                                        `(if ,(build-primcall 'eqv? (build-ref idx) `(quote ,(car cluster-idx*)))
-                                             ,(build-set! lib-f (build-ref t))
-                                             ,(build-call (build-ref t) (build-ref idx))))))))))))
+                                        `(if ,(build-primcall 'eqv? `(ref #f ,idx) `(quote ,(car cluster-idx*)))
+                                             (set! #f ,lib-f (ref #f ,t))
+                                             ,(build-call `(ref #f ,t) `(ref #f ,idx))))))))))))
                    ,(fold-right (lambda (cluster cluster-idx body)
                                   (fold-right (lambda (node body)
                                                 `(seq
                                                    ,(build-install-library/rt-code node
                                                       (if (library-node-visible? node)
                                                           (build-lambda '()
-                                                            (build-call (build-ref lib-f) `(quote ,cluster-idx)))
+                                                            (build-call `(ref #f ,lib-f) `(quote ,cluster-idx)))
                                                           void-pr))
                                                    ,body))
                                     body cluster))
-                      (build-void) cluster* cluster-idx*)))))))))
+                      (build-void) cluster* cluster-idx*)))))
+        (make-patch-env node*)))))
 
   (with-output-language (Lexpand Outer)
     (define add-library-records
@@ -1416,7 +1473,8 @@
                                       ($pass-time 'cpletrec (lambda () ($cpletrec x)))))
                                   x2)])
                           (if cpletrec-ran? x ($pass-time 'cpletrec (lambda () ($cpletrec x))))))]
-                 [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))])
+                 [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))]
+                 [x2b ($pass-time 'cpcommonize (lambda () ($cpcommonize x2b)))])
             (when (and (expand/optimize-output) (not ($noexpand? x0)))
               (pretty-print ($uncprep x2b) (expand/optimize-output)))
             (if (and (compile-interpret-simple)

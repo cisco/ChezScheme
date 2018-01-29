@@ -582,9 +582,9 @@
 
 (define build-lexical-reference
   (lambda (ae prelex)
-    (when (prelex-referenced prelex)
-      (set-prelex-multiply-referenced! prelex #t))
-    (set-prelex-referenced! prelex #t)
+    (if (prelex-referenced prelex)
+        (set-prelex-multiply-referenced! prelex #t)
+        (set-prelex-referenced! prelex #t))
     (build-profile ae `(ref ,(ae->src ae) ,prelex))))
 
 (define build-lexical-assignment

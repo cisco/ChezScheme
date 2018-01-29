@@ -5335,6 +5335,8 @@
           (define-tc-parameter $target-machine target-machine)
           (define-tc-parameter $current-stack-link stack-link)
           (define-tc-parameter $current-winders winders)
+          (define-tc-parameter default-record-equal-procedure default-record-equal-procedure)
+          (define-tc-parameter default-record-hash-procedure default-record-hash-procedure)
           )
 
         (define-inline 3 $install-guardian

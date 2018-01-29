@@ -728,7 +728,10 @@ ftype operators:
                                       [else x]))
                                 #'?addr)])
                #`($make-fptr '#,ftd
-                   #,(if (fx= (optimize-level) 3)
+                   #,(if (or (fx= (optimize-level) 3)
+                             (syntax-case #'addr-expr (ftype-pointer-address)
+                               [(ftype-pointer-address x) #t]
+                               [else #f]))
                          #'addr-expr
                          #'(let ([addr addr-expr])
                              ($verify-ftype-address 'make-ftype addr)
