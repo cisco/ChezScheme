@@ -2564,21 +2564,36 @@ When comparing two non-eq? instances that do not share an equality
 procedure, <tt>equal?</tt> returns <tt>#f</tt>.
 
 <p>
-<a name="./objects:s142"></a><a name="./objects:s143"></a>Similarly, when the <a name="./objects:s144"></a><tt>equal-hash</tt>
+A default equality procedure to be used for all record types (including
+opaque types) can be specified via the parameter
+<a name="./objects:s142"></a><tt>default-record-equal-procedure</tt>.
+The default equality procedure is used only if neither instance's type has or inherits
+a type-specific record equality procedure.
+
+<p>
+<a name="./objects:s143"></a><a name="./objects:s144"></a>Similarly, when the <a name="./objects:s145"></a><tt>equal-hash</tt>
 primitive hashes a record instance, it defaults to a value that is
 independent of the record type and contents of the instance.
 A program can override this behavior for instances of a
-record type by using <a name="./objects:s145"></a><tt>record-type-hash-procedure</tt>
+record type by using <a name="./objects:s146"></a><tt>record-type-hash-procedure</tt>
 to associate a hash procedure with the record-type descriptor (<tt><i>rtd</i></tt>)
 that describes the record type.
-The procedure <a name="./objects:s146"></a><tt>record-hash-procedure</tt> can be used to find
+The procedure <a name="./objects:s147"></a><tt>record-hash-procedure</tt> can be used to find
 the hash procedure for a given record instance, following the inheritance
 chain.
-<tt><i>equal-hash</i></tt> passes <tt><i>hash-proc</i></tt> two arguments: the
+<tt><i>equal-hash</i></tt> passes the hash procedure two arguments: the
 instance plus a <tt><i>hash</i></tt> procedure that should be used for
 recursive hashing of values within the instance.
 Use of <tt><i>hash</i></tt> for recursive hashing is necessary to allow
-hashing of potentially cyclic structure.
+hashing of potentially cyclic structure and to make the hashing
+of shared structure more efficient.
+
+<p>
+A default hash procedure to be used for all record types (including
+opaque types) can be specified via the parameter
+<a name="./objects:s148"></a><tt>default-record-hash-procedure</tt>.
+The default hash procedure is used only if an instance's type does not have or inherit
+a type-specific hash procedure.
 
 <p>
 The following example illustrates the setting of equality and hash
@@ -2711,7 +2726,7 @@ to cyclic record structures.
 (hashtable-ref&nbsp;h&nbsp;graph2&nbsp;#f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (hashtable-ref&nbsp;h&nbsp;graph3&nbsp;#f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s147"></a><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>&nbsp;<i>equal-proc</i>)</tt></span>
+<p><a name="./objects:s149"></a><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>&nbsp;<i>equal-proc</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>)</tt></span>
@@ -2738,7 +2753,7 @@ the property that it produces the same hash value for any two
 instances the equality procedure considers equal.
 
 <p>
-<a name="./objects:s148"></a><span class=formdef><b>procedure</b>: <tt>(record-equal-procedure&nbsp;<i>record<sub>1</sub></i>&nbsp;<i>record<sub>2</sub></i>)</tt></span>
+<a name="./objects:s150"></a><span class=formdef><b>procedure</b>: <tt>(record-equal-procedure&nbsp;<i>record<sub>1</sub></i>&nbsp;<i>record<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>the shared equality procedure for <tt><i>record<sub>1</sub></i></tt> and <tt><i>record<sub>2</sub></i></tt>, if there is one, otherwise <tt>#f</tt>
 <br>
@@ -2752,7 +2767,7 @@ equality procedure associated with the type is returned.
 Otherwise, <tt>#f</tt> is returned.
 
 <p>
-<a name="./objects:s149"></a><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>&nbsp;<i>hash-proc</i>)</tt></span>
+<a name="./objects:s151"></a><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>&nbsp;<i>hash-proc</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>)</tt></span>
@@ -2773,12 +2788,16 @@ In the second form, <tt>record-type-hash-procedure</tt> returns
 the hash procedure associated with <tt><i>rtd</i></tt>, if any, otherwise <tt>#f</tt>.
 
 <p>
+The procedure <tt><i>hash-proc</i></tt> should accept two arguments, the
+instance for which it should compute a hash value and a hash procedure
+to use to compute hash values for arbitrary fields of the instance,
+and it return a nonnegative exact integer.
 A record type's hash procedure should produce the same hash value
 for any two instances the record type's equality procedure considers
 equal.
 
 <p>
-<a name="./objects:s150"></a><span class=formdef><b>procedure</b>: <tt>(record-hash-procedure&nbsp;<i>record</i>)</tt></span>
+<a name="./objects:s152"></a><span class=formdef><b>procedure</b>: <tt>(record-hash-procedure&nbsp;<i>record</i>)</tt></span>
 <br>
 <b>returns: </b>the hash procedure for <tt><i>record</i></tt>, if there is one, otherwise <tt>#f</tt>
 <br>
@@ -2792,13 +2811,47 @@ is returned.
 Otherwise, <tt>#f</tt> is returned.
 
 <p>
+<a name="./objects:s153"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-equal-procedure</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>This parameter determines how two record instances are compared by
+<tt>equal?</tt> if neither has a type-specific equality procedure.
+When the parameter has the value <tt>#f</tt> (the default), <tt>equal?</tt>
+compares the instances with <tt>eq?</tt>, i.e., there is no attempt at
+determining structural equivalence.
+Otherwise, the parameter's value must be a procedure, and <tt>equal?</tt>
+invokes that procedure to compare the instances, passing it three arguments:
+the two instances and a procedure that should be used to recursively
+compare arbitrary values within the instances.
+
+<p>
+<a name="./objects:s154"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-hash-procedure</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>This parameter determines the hash procedure used when <tt>equal-hash</tt>
+is called on a record instance and the instance does not have a type-specific
+hash procedure.
+When the parameter has the value <tt>#f</tt> (the default), <tt>equal-hash</tt>
+returns a value that is independent of the record type and contents
+of the instance.
+Otherwise, the parameter's value must be a procedure, and <tt>equal-hash</tt>
+invokes the procedure to compute the instance's hash value, passing it
+the record instance and a procedure to invoke to recursively compute
+hash values for arbitrary values contained within the record.
+The procedure should return a nonnegative exact integer, and the
+return value should be the same for any two instances the default
+equal procedure considers equivalent.
+
+<p>
 
 <h3><a name="g62"></a><a name="./objects:h15"></a>Section 7.15. Legacy Record Types<a name="SECTCSV7RECORDS"></a></h3>
 
 
 
 <p>
-<a name="./objects:s151"></a><a name="./objects:s152"></a><a name="./objects:s153"></a>In addition to the Revised<sup>6</sup> Report record-type creation and definition
+<a name="./objects:s155"></a><a name="./objects:s156"></a><a name="./objects:s157"></a>In addition to the Revised<sup>6</sup> Report record-type creation and definition
 mechanisms, which are described in Chapter&nbsp;<a href="http://scheme.com/tspl4/./records.html#g138">9</a> of <i>The Scheme Programming Language, 4th Edition</i>,
 <i>Chez&nbsp;Scheme</i> continues to support pre-R6RS mechanisms for creating new
 data types, or <i>record types</i>, with fixed sets of named fields.
@@ -2900,7 +2953,7 @@ printer, and the inspector uses it to allow inspection and mutation of
 system- and user-defined records during debugging.
 
 <p>
-<a name="./objects:s154"></a><a name="./objects:s155"></a>A parent record
+<a name="./objects:s158"></a><a name="./objects:s159"></a>A parent record
 may be specified in the <tt>define-record</tt> syntax or as an optional
 argument to <tt>make-record-type</tt>.
 A new record inherits the parent record's fields, and each instance
@@ -2909,7 +2962,7 @@ type as well, so that accessors and mutators for the parent type may
 be used on instances of the new type.
 
 <p>
-<a name="./objects:s156"></a><a name="./objects:s157"></a>Record
+<a name="./objects:s160"></a><a name="./objects:s161"></a>Record
 type definitions may be classified as either generative or nongenerative.
 A new type results for each <i>generative</i> record definition,
 while only one type results for all occurrences of a given
@@ -2919,7 +2972,7 @@ and setters are applicable only to objects with the same type.
 
 <p>
 Syntactic (<tt>define-record</tt>) record definitions are
-<a name="./objects:s158"></a><i>expand-time generative</i> by default, which means that a new
+<a name="./objects:s162"></a><i>expand-time generative</i> by default, which means that a new
 record is created when the code is expanded.
 Expansion happens once for each form prior to compilation or
 interpretation, as when it is entered interactively, loaded from source,
@@ -2929,7 +2982,7 @@ form, e.g., in the body of a procedure called multiple times, always
 produce the same record type.
 
 <p>
-<a name="./objects:s159"></a>Separate <tt>define-record</tt> forms
+<a name="./objects:s163"></a>Separate <tt>define-record</tt> forms
 usually produce different types, even if the forms are textually
 identical.
 The only exception occurs when the name of a record is specified as
@@ -2945,7 +2998,7 @@ Scheme process.
 
 <p>
 Procedural (<tt>make-record-type</tt>) record definitions are
-<a name="./objects:s160"></a><i>run-time generative</i> by default.
+<a name="./objects:s164"></a><i>run-time generative</i> by default.
 That is, each call to <tt>make-record-type</tt> usually produces a new
 record type.
 As with the syntactic interface,
@@ -3010,7 +3063,7 @@ type.
 
 
 <p>
-<a name="./objects:s161"></a><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
+<a name="./objects:s165"></a><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;<i>parent</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3093,7 +3146,7 @@ Each of these field names is bound to the value of the corresponding field
 during initialization.
 
 <p>
-<a name="./objects:s162"></a><a name="./objects:s163"></a>If
+<a name="./objects:s166"></a><a name="./objects:s167"></a>If
 <tt><i>parent</i></tt> is present, the record type named by <tt><i>parent</i></tt>
 is the parent of the record.
 The new record type inherits each of the parent record's fields,
@@ -3333,7 +3386,7 @@ immutable fields are involved.
 <p>
 
 <p><tt>'#1=#[triple&nbsp;#1#&nbsp;(3&nbsp;4)&nbsp;#1#]&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception</i></tt>
-<p><a name="./objects:s164"></a>The following example demonstrates
+<p><a name="./objects:s168"></a>The following example demonstrates
 the use of nongenerative record definitions.
 
 <p>
@@ -3378,13 +3431,13 @@ different source files or are compiled separately and loaded from
 different object files.
 
 <p>
-<a name="./objects:s165"></a><span class=formdef><b>syntax</b>: <tt>predicate</tt></span>
+<a name="./objects:s169"></a><span class=formdef><b>syntax</b>: <tt>predicate</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>prefix</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>constructor</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./objects:s166"></a><a name="./objects:s167"></a>These identifiers are auxiliary keywords for <tt>define-record</tt>.
+<p><a name="./objects:s170"></a><a name="./objects:s171"></a>These identifiers are auxiliary keywords for <tt>define-record</tt>.
 It is a syntax violation to reference these identifiers except in
 contexts where they are recognized as auxiliary keywords.
 <tt>mutable</tt> and <tt>immutable</tt> are also auxiliary keywords for
@@ -3393,7 +3446,7 @@ contexts where they are recognized as auxiliary keywords.
 
 
 <p>
-<a name="./objects:s168"></a><span class=formdef><b>syntax</b>: <tt>(type-descriptor&nbsp;<i>name</i>)</tt></span>
+<a name="./objects:s172"></a><span class=formdef><b>syntax</b>: <tt>(type-descriptor&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor associated with <tt><i>name</i></tt>
 <br>
@@ -3417,7 +3470,7 @@ interface routines described later in this section.
 <p><tt>(define-record&nbsp;frob&nbsp;())<br>
 
 (type-descriptor&nbsp;frob)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;record&nbsp;type&nbsp;frob&gt;</tt>
-<p><a name="./objects:s169"></a><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>name</i>)</tt></span>
+<p><a name="./objects:s173"></a><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor associated with <tt><i>name</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>rtd</i>)</tt></span>
@@ -3505,7 +3558,7 @@ continuation of the example above demonstrates.
 <p><tt>(record-reader&nbsp;'marble&nbsp;(type-descriptor&nbsp;marble))<br>
 
 (make-marble&nbsp;'pink&nbsp;'splendid)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#[marble&nbsp;pink&nbsp;splendid]</tt>
-<p><a name="./objects:s170"></a><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s174"></a><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the record writer associated with <tt><i>rtd</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>&nbsp;<i>procedure</i>)</tt></span>
@@ -3576,7 +3629,7 @@ of record.
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;m))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#&lt;record&nbsp;of&nbsp;type&nbsp;marble&gt;"</tt>
 <p>A print method may be called more than once during the printing of a
 single record to support cycle detection and graph printing
-(see <a name="./objects:s171"></a><tt>print-graph</tt>),
+(see <a name="./objects:s175"></a><tt>print-graph</tt>),
 so print
 methods that perform side effects other than printing to the given
 port are discouraged.
@@ -3615,12 +3668,12 @@ or numbers, may be printed by direct calls to <tt>display</tt> or
 &nbsp;&nbsp;&nbsp;&nbsp;ref-lexive))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#0=&lt;#0#&gt;</tt>
 <p>Print methods need not be concerned with handling nonfalse values of
 the parameters
-<a name="./objects:s172"></a><tt>print-level</tt>.
+<a name="./objects:s176"></a><tt>print-level</tt>.
 The printer handles <tt>print-level</tt> automatically even when
 user-defined print procedures are used.
 Since records typically contain a small, fixed number of fields, it
 is usually possible to ignore nonfalse values of
-<a name="./objects:s173"></a><tt>print-length</tt> as well.
+<a name="./objects:s177"></a><tt>print-length</tt> as well.
 
 <p>
 
@@ -3645,7 +3698,7 @@ is usually possible to ignore nonfalse values of
 &nbsp;&nbsp;&nbsp;&nbsp;(set-ref-contents!&nbsp;ref-lexive&nbsp;ref-lexive)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;ref-lexive))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;&lt;&lt;&lt;&lt;#[...]&gt;&gt;&gt;&gt;</tt>
-<p><a name="./objects:s174"></a><span class=formdef><b>thread parameter</b>: <tt>print-record</tt></span>
+<p><a name="./objects:s178"></a><span class=formdef><b>thread parameter</b>: <tt>print-record</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3658,7 +3711,7 @@ name of the record type as returned by <tt>record-type-name</tt>.
 
 
 <p>
-<a name="./objects:s175"></a><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
+<a name="./objects:s179"></a><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>parent-rtd</i>&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
 <br>
 <b>returns: </b>a record-type descriptor for a new record type
@@ -3699,7 +3752,7 @@ If the <tt>immutable</tt> class-specifier is present, the field is
 immutable; otherwise, the field is mutable.
 <tt><i>type</i></tt>, if present, specifies how the field is represented.
 The types are the same as those given in the description
-of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">170</a>.
+of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">171</a>.
 
 <p>
 If a type is specified, the field can contain objects only of the
@@ -3794,7 +3847,7 @@ x&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;low&nbsp;quality&nb
 While field names are generally distinct, it is permissible for one field
 name to be the same as another in the list of fields or the same as
 an inherited name.
-In this case, <a name="./objects:s176"></a><a name="./objects:s177"></a>field ordinals
+In this case, <a name="./objects:s180"></a><a name="./objects:s181"></a>field ordinals
 must be used to select fields in calls to <tt>record-field-accessor</tt>
 and <tt>record-field-mutator</tt>.
 Ordinals range from zero through one less than the number of fields.
@@ -3819,7 +3872,7 @@ Parent fields come first, if any, followed by the fields in
 ((record-field-accessor&nbsp;r3&nbsp;4)&nbsp;x)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;e<br>
 
 ((record-field-accessor&nbsp;r3&nbsp;'t)&nbsp;x)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>unspecified</i></tt>
-<p><a name="./objects:s178"></a><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rcd</i>)</tt></span>
+<p><a name="./objects:s182"></a><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rcd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a constructor for records of the type represented by <tt><i>rtd</i></tt>
@@ -3836,7 +3889,7 @@ order given when the record-type descriptor was created.
 
 
 <p>
-<a name="./objects:s179"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessor&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s183"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessor&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b>an accessor for the identified field
 <br>
@@ -3854,7 +3907,7 @@ It returns the contents of the specified field of the record.
 
 
 <p>
-<a name="./objects:s180"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessible?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s184"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessible?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the specified field is accessible, otherwise <tt>#f</tt>
 <br>
@@ -3874,7 +3927,7 @@ instance of the record type.
 
 
 <p>
-<a name="./objects:s181"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutator&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s185"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutator&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b>a mutator for the identified field
 <br>
@@ -3894,7 +3947,7 @@ the specified field when the record-type descriptor was created.
 
 
 <p>
-<a name="./objects:s182"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutable?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s186"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutable?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the specified field is mutable, otherwise <tt>#f</tt>
 <br>
@@ -3916,7 +3969,7 @@ instance of the record type.
 
 
 <p>
-<a name="./objects:s183"></a><span class=formdef><b>procedure</b>: <tt>(record-type-name&nbsp;<i>rtd</i>)</tt></span>
+<a name="./objects:s187"></a><span class=formdef><b>procedure</b>: <tt>(record-type-name&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the name of the record-type represented by <tt><i>rtd</i></tt>
 <br>
@@ -3940,7 +3993,7 @@ is the "pretty" name of the gensym (see&nbsp;<a href="./objects.html#g56">7.9</a
 (define&nbsp;p&nbsp;(type-descriptor&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;))<br>
 
 (record-type-name&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"point"</tt>
-<p><a name="./objects:s184"></a><span class=formdef><b>procedure</b>: <tt>(record-type-symbol&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s188"></a><span class=formdef><b>procedure</b>: <tt>(record-type-symbol&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the generated symbol associated with <tt><i>rtd</i></tt>
 <br>
@@ -3960,7 +4013,7 @@ is the "pretty" name of the gensym (see&nbsp;<a href="./objects.html#g56">7.9</a
 (define&nbsp;p&nbsp;(type-descriptor&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;))<br>
 
 (record-type-symbol&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;</tt>
-<p><a name="./objects:s185"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-names&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s189"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-names&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a list of field names of the type represented by <tt><i>rtd</i></tt>
 <br>
@@ -3974,7 +4027,7 @@ The field names are symbols.
 <p><tt>(define-record&nbsp;triple&nbsp;((immutable&nbsp;x1)&nbsp;(mutable&nbsp;x2)&nbsp;(immutable&nbsp;x3)))<br>
 
 (record-type-field-names&nbsp;(type-descriptor&nbsp;triple))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(x1&nbsp;x2&nbsp;x3)</tt>
-<p><a name="./objects:s186"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-decls&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s190"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-decls&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a list of field declarations of the type represented by <tt><i>rtd</i></tt>
 <br>
@@ -4003,7 +4056,7 @@ under <tt>make-record-type</tt>.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;&nbsp;(mutable&nbsp;ptr&nbsp;y)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;&nbsp;(mutable&nbsp;ptr&nbsp;radius))</tt>
-<p><a name="./objects:s187"></a><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s191"></a><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a record, otherwise <tt>#f</tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>&nbsp;<i>rtd</i>)</tt></span>
@@ -4023,7 +4076,7 @@ record-type descriptor <tt><i>rtd</i></tt> is equivalent to the following.
 <p>
 
 <p><tt>(lambda&nbsp;(x)&nbsp;(record?&nbsp;x&nbsp;<i>rtd</i>))</tt>
-<p><a name="./objects:s188"></a><span class=formdef><b>procedure</b>: <tt>(record-type-descriptor&nbsp;<i>rec</i>)</tt></span>
+<p><a name="./objects:s192"></a><span class=formdef><b>procedure</b>: <tt>(record-type-descriptor&nbsp;<i>rec</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor of <tt><i>rec</i></tt>
 <br>
@@ -4060,7 +4113,7 @@ rtd&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;record&nbsp;type&
 
 
 <p>
-<a name="./objects:s189"></a><span class=formdef><b>procedure</b>: <tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></span>
+<a name="./objects:s193"></a><span class=formdef><b>procedure</b>: <tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></span>
 <br>
 <b>returns: </b>an exact integer bitmask identifying the accepted argument counts of <tt><i>proc</i></tt>
 <br>
@@ -4106,7 +4159,7 @@ encoding of all bits set is <tt>-1</tt>.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised October 2017 for Chez Scheme Version 9.5<br>
+Revised January 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

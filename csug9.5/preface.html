@@ -17,35 +17,26 @@
 
 
 <p>
-<i>Chez&nbsp;Scheme</i> Version&nbsp;9 is a complete implementation of the language of
-the Revised<sup>6</sup> Report on Scheme (R6RS), with numerous extensions.
-The implementation is extensively tested and actively maintained and supported.
-It includes a fast compiler that generates efficient native code for each
-processor upon which it runs along with a run-time system that provides
-automatic storage management, foreign language interfaces, and an
+<i>Chez&nbsp;Scheme</i> is both a general-purpose programming language and
+an implementation of that language, with supporting tools and
+documentation.
+As a superset of the language described in the Revised<sup>6</sup> Report
+on Scheme (R6RS), <i>Chez&nbsp;Scheme</i> supports all standard features of
+Scheme, including first-class procedures, proper treatment of tail
+calls, continuations, user-defined records, libraries, exceptions,
+and hygienic macro expansion.
+<i>Chez&nbsp;Scheme</i> supports numerous non-R6RS features.
+A few of these are local and top-level modules,
+local import, foreign datatypes and procedures, nonblocking I/O,
+an interactive top-level, compile-time values and properties,
+pretty-printing, and formatted output.
+
+<p>
+The implementation includes a compiler that generates native code
+for each processor upon which it runs along with a run-time system
+that provides automatic storage management, foreign-language
+interfaces, source-level debugging, profiling support, and an
 extensive run-time library.
-
-<p>
-The compiler has been rewritten for Version&nbsp;9 and generates
-substantially faster code than the earlier compiler at the cost of
-additional compile time.
-This is the primary difference between Versions&nbsp;8 and&nbsp;9.
-
-<p>
-This book is a companion to <i>The Scheme Programming Language, 4th
-Edition</i> (TSPL4).
-While TSPL4 describes only standard R6RS features, this book describes
-<i>Chez&nbsp;Scheme</i> extensions.
-For the reader's convenience, the summary of forms and index at the back
-of this book contain entries from both books, with each entry from TSPL4
-marked with a "t" in front of its page number.
-In the online version, the page numbers given in the summary of forms and
-index double as direct links into one of the documents or the other.
-
-<p>
-Additional documentation for <i>Chez&nbsp;Scheme</i> includes release notes, a
-manual page, and a number of published papers and articles that describe
-various aspects of the system's design and implementation.
 
 <p>
 The threaded versions of <i>Chez&nbsp;Scheme</i> support native threads, allowing
@@ -65,6 +56,45 @@ Unlike most shells that support command-line editing, the expression
 editor properly supports multiline expressions.
 
 <p>
+<i>Chez&nbsp;Scheme</i> is intended to be as reliable and efficient as possible,
+with reliability taking precedence over efficiency if necessary.
+Reliability means behaving as designed and documented.
+While a <i>Chez&nbsp;Scheme</i> program can always fail to work properly
+because of a bug in the program, it should never fail because of a
+bug in the <i>Chez&nbsp;Scheme</i> implementation.
+Efficiency means performing at a high level, consuming minimal CPU
+time and memory.
+Performance should be balanced across features, across run time and
+compile time, and across programs and data of different sizes.
+These principles guide <i>Chez&nbsp;Scheme</i> language and tool design as
+well as choice of implementation technique; for example, a language
+feature or debugging hook might not exist in <i>Chez&nbsp;Scheme</i> because
+its presence would reduce reliability, efficiency, or both.
+
+<p>
+The compiler has been rewritten for Version&nbsp;9 and generates
+substantially faster code than the earlier compiler at the cost of
+greater compile time.
+This is the primary difference between Versions&nbsp;8 and&nbsp;9.
+
+<p>
+This book (CSUG) is a companion to <i>The Scheme Programming
+Language, 4th Edition</i> (TSPL4).
+TSPL4 serves as an introduction to and reference for R6RS, while
+CSUG describes <i>Chez&nbsp;Scheme</i> features and tools that are not part
+of R6RS.
+For the reader's convenience, the summary of forms and index at the back
+of this book contain entries from both books, with each entry from TSPL4
+marked with a "t" in front of its page number.
+In the online version, the page numbers given in the summary of forms and
+index double as direct links into one of the documents or the other.
+
+<p>
+Additional documentation for <i>Chez&nbsp;Scheme</i> includes release notes, a
+manual page, and a number of published papers and articles that describe
+various aspects of the system's design and implementation.
+
+<p>
 Thank you for using <i>Chez&nbsp;Scheme</i>.
 
 
@@ -75,7 +105,7 @@ Thank you for using <i>Chez&nbsp;Scheme</i>.
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised October 2017 for Chez Scheme Version 9.5<br>
+Revised January 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
