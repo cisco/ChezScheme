@@ -3619,14 +3619,18 @@
                                                        (cons `(call ,preinfo (ref #f ,p)
                                                                 ,(map (lambda (t*) (build-ref (car t*))) t**) ...)
                                                              (g (map cdr t**))))))])
-                                          (if (and map? (not (eq? ctxt 'effect)))
-                                              (build-primcall lvl 'list results)
-                                              (make-seq* ctxt results)))
+                                          (if (and map? (not (eq? (app-ctxt ctxt) 'effect)))
+                                              (if (null? results)
+                                                  null-rec
+                                                  (build-primcall lvl 'list results))
+                                              (if (null? results)
+                                                  void-rec
+                                                  (make-seq* (app-ctxt ctxt) results))))
                                         (non-result-exp (value-visit-operand! (car ls*))
                                           (build-let (car t**) (car e**)
                                             (f (cdr t**) (cdr e**) (cdr ls*))))))]) 
                              (if (fx= lvl 2)
-                               (make-seq ctxt
+                               (make-seq (app-ctxt ctxt)
                                  `(if ,(build-primcall 2 'procedure? (list `(ref #f ,p)))
                                       ,void-rec
                                       ,(build-primcall 3 '$oops (list `(quote ,(if map? 'map 'for-each))
@@ -3642,11 +3646,7 @@
                     [else #f])))))
         (define-inline 2 map
           [(?p ?ls . ?ls*)
-            (if (andmap null-rec? (cons ?ls ?ls*))
-                (begin
-                  (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
-                  null-rec)
-                (inline-lists ?p ?ls ?ls* 2 #t ctxt sc wd name moi))])
+           (inline-lists ?p ?ls ?ls* 2 #t ctxt sc wd name moi)])
         (define-inline 3 map
           [(?p ?ls . ?ls*)
             (cond
@@ -3725,12 +3725,7 @@
 
         (define-inline 2 for-each
           [(?p ?ls . ?ls*)
-           (cond
-             [(andmap null-rec? (cons ?ls ?ls*))
-              (residualize-seq '() (list* ?p ?ls ?ls*) ctxt)
-              void-rec]
-             [else
-             (inline-lists ?p ?ls ?ls* 2 #f ctxt sc wd name moi)])])
+           (inline-lists ?p ?ls ?ls* 2 #f ctxt sc wd name moi)])
         (define-inline 3 for-each
           [(?p ?ls . ?ls*)
            (cond
