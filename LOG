@@ -879,3 +879,7 @@
   $verify-ftype-address if the address expression is a call to
   ftype-pointer-address.
     ftype.ss
+- Remove special case for (#2%map p '()) in cp0
+  so the reduced version checks that p is a procedure.
+  Also make the same change for #2%for-each.
+    cp0.ss, 4.ms
