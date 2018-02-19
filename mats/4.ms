@@ -1425,9 +1425,9 @@
   (procedure? (lambda (x) (fold-left x)))
   (procedure? (lambda (x) (fold-left x y)))
   (error? ; nonprocedure
-    (for-left 3 0 '()))
+    (fold-left 3 0 '()))
   (error? ; nonprocedure
-    (for-left 3 0 '() '()))
+    (fold-left 3 0 '() '()))
   (error? ; nonprocedure
     (fold-left 3 0 '(a b c)))
   (error? ; improper list
@@ -1553,9 +1553,9 @@
   (procedure? (lambda (x) (fold-right x)))
   (procedure? (lambda (x) (fold-right x y)))
   (error? ; nonprocedure
-    (for-right 3 0 '()))
+    (fold-right 3 0 '()))
   (error? ; nonprocedure
-    (for-right 3 0 '() '()))
+    (fold-right 3 0 '() '()))
   (error? ; nonprocedure
     (fold-right 3 0 '(a b c)))
   (error? ; improper list
