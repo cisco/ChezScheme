@@ -268,6 +268,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat r6rs:case: "invalid syntax (case)".
 4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
 4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 7 is not a procedure".
 4.mo:Expected error in mat map: "map: a is not a proper list".
 4.mo:Expected error in mat map: "map: (a . b) is not a proper list".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
@@ -288,6 +292,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
+4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
+4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
 4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
 4.mo:Expected error in mat fold-left: "fold-left: a is not a proper list".
 4.mo:Expected error in mat fold-left: "fold-left: (a . b) is not a proper list".
@@ -317,6 +323,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-left: "fold-left: input list was altered during operation".
 4.mo:Expected error in mat fold-left: "fold-left: input list was altered during operation".
 4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
+4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
+4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
 4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: (a . b) is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
@@ -338,6 +346,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 7 is not a procedure".
 4.mo:Expected error in mat for-each: "for-each: a is not a proper list".
 4.mo:Expected error in mat for-each: "for-each: (a . b) is not a proper list".
 4.mo:Expected error in mat for-each: "for-each: (a a a a a a ...) is circular".
@@ -370,6 +382,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
+4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
+4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
 4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
 4.mo:Expected error in mat ormap: "ormap: a is not a proper list".
 4.mo:Expected error in mat ormap: "ormap: (a . b) is not a proper list".
@@ -404,6 +418,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat ormap: "ormap: input list was altered during operation".
 4.mo:Expected error in mat ormap: "ormap: input list was altered during operation".
 4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
+4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
+4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
 4.mo:Expected error in mat andmap: "andmap: a is not a proper list".
 4.mo:Expected error in mat andmap: "andmap: (a . b) is not a proper list".
 4.mo:Expected error in mat andmap: "andmap: (a a a a a a ...) is circular".
@@ -437,6 +453,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat andmap: "andmap: input list was altered during operation".
 4.mo:Expected error in mat andmap: "andmap: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
+4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
+4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
 4.mo:Expected error in mat exists: "exists: a is not a proper list".
 4.mo:Expected error in mat exists: "exists: (a . b) is not a proper list".
 4.mo:Expected error in mat exists: "exists: (a a a a a a ...) is circular".
@@ -469,6 +487,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
+4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
+4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
 4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
 4.mo:Expected error in mat for-all: "for-all: a is not a proper list".
 4.mo:Expected error in mat for-all: "for-all: (a . b) is not a proper list".
