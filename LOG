@@ -883,3 +883,5 @@
   so the reduced version checks that p is a procedure.
   Also make the same change for #2%for-each.
     cp0.ss, 4.ms
+- Mitigate a race condition in Windows when deleting files and directories.
+    windows.c

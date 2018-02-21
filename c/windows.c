@@ -408,10 +408,14 @@ int S_windows_rename(const char *oldpathname, const char *newpathname) {
 
 int S_windows_rmdir(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
+  int rc;
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
-    return _rmdir(pathname);
+    rc =_rmdir(pathname);
   else
-    return _wrmdir(wpathname);
+    rc = _wrmdir(wpathname);
+  if (0 == rc)
+    Sleep(0); // Give Windows time to delete the directory.
+  return rc;
 }
 
 int S_windows_stat64(const char *pathname, struct STATBUF *buffer) {
@@ -432,10 +436,14 @@ int S_windows_system(const char *command) {
 
 int S_windows_unlink(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
+  int rc;
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
-    return _unlink(pathname);
+    rc = _unlink(pathname);
   else
-    return _wunlink(wpathname);
+    rc = _wunlink(wpathname);
+  if (0 == rc)
+    Sleep(0); // Give Windows time to delete the file.
+  return rc;
 }
 
 char *S_windows_getcwd(char *buffer, int maxlen) {

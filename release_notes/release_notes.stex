@@ -1542,6 +1542,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Permission denied after deleting files or directories in Windows}
+
+In Windows, deleting a file or directory briefly leaves the file or
+directory in a state where a subsequent create operation fails with
+permission denied. This race condition is now mitigated by a call to
+Sleep.
+[This bug applies to all versions up to 9.5 on Windows 7 and later.]
+
 \subsection{Incorrect handling of offset in
 \protect\scheme{date->time-utc} on Windows (9.5)}
 
