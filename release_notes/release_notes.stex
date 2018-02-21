@@ -1546,8 +1546,7 @@ in fasl files does not generally make sense.
 
 In Windows, deleting a file or directory briefly leaves the file or
 directory in a state where a subsequent create operation fails with
-permission denied. This race condition is now mitigated by a call to
-Sleep.
+permission denied. This race condition is now mitigated.
 [This bug applies to all versions up to 9.5 on Windows 7 and later.]
 
 \subsection{Incorrect handling of offset in

@@ -408,14 +408,20 @@ int S_windows_rename(const char *oldpathname, const char *newpathname) {
 
 int S_windows_rmdir(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
-  int rc;
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
-    rc =_rmdir(pathname);
-  else
-    rc = _wrmdir(wpathname);
-  if (0 == rc)
-    Sleep(0); // Give Windows time to delete the directory.
-  return rc;
+    return _rmdir(pathname);
+  else {
+    int rc;
+    if (!(rc = _wrmdir(wpathname))) {
+      // Spin loop until Windows deletes the directory.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wrmdir(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 int S_windows_stat64(const char *pathname, struct STATBUF *buffer) {
@@ -436,14 +442,20 @@ int S_windows_system(const char *command) {
 
 int S_windows_unlink(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
-  int rc;
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
-    rc = _unlink(pathname);
-  else
-    rc = _wunlink(wpathname);
-  if (0 == rc)
-    Sleep(0); // Give Windows time to delete the file.
-  return rc;
+    return _unlink(pathname);
+  else {
+    int rc;
+    if (!(rc = _wunlink(wpathname))) {
+      // Spin loop until Windows deletes the file.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wunlink(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 char *S_windows_getcwd(char *buffer, int maxlen) {
