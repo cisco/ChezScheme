@@ -199,14 +199,14 @@ ptr Scall(cp, argcnt) ptr cp; iptr argcnt; {
 static ptr S_call(tc, cp, argcnt) ptr tc; ptr cp; iptr argcnt; {
     AC0(tc) = (ptr)argcnt;
     AC1(tc) = cp;
-    S_call_help(tc, 1);
+    S_call_help(tc, 1, 0);
     return AC0(tc);
 }
 
 /* args are set up, argcnt in ac0, closure in ac1 */
-void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
+void S_call_help(tc, singlep, lock_ts) ptr tc; IBOOL singlep; IBOOL lock_ts; {
   /* declaring code volatile should be unnecessary, but it quiets gcc */
-    void *jb; volatile ptr code;
+  void *jb; volatile ptr code;
 
   /* lock caller's code object, since his return address is sitting in
      the C stack and we may end up in a garbage collection */
@@ -220,6 +220,12 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
     if (jb == NULL)
       S_error_abort("unable to allocate memory for jump buffer");
     FRAME(tc, -1) = CCHAIN(tc) = Scons(Scons(jb, code), CCHAIN(tc));
+    if (lock_ts) {
+      /* Lock a code object passed in TS, which is a more immediate
+         caller whose return address is on the C stack */
+      Slock_object(TS(tc));
+      CCHAIN(tc) = Scons(Scons(NULL, TS(tc)), CCHAIN(tc));
+    }
 
     switch (SETJMP(jb)) {
         case 0: /* first time */
@@ -252,75 +258,21 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
     CP(tc) = code;
 }
 
-void S_call_void() {
+void S_call_one_result() {
     ptr tc = get_thread_context();
-    S_call_help(tc, 0);
+    S_call_help(tc, 1, 1);
 }
 
-ptr S_call_ptr() {
+void S_call_any_results() {
     ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return AC0(tc);
-}
-
-iptr S_call_fixnum() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return Sfixnum_value(AC0(tc));
-}
-
-I32 S_call_int32() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (I32)Sinteger_value(AC0(tc));
-}
-
-U32 S_call_uns32() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (U32)Sinteger_value(AC0(tc));
-}
-
-I64 S_call_int64() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return S_int64_value("foreign-callable", AC0(tc));
-}
-
-U64 S_call_uns64() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return S_int64_value("foreign-callable", AC0(tc));
-}
-
-double S_call_double() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return Sflonum_value(AC0(tc));
-}
-
-float S_call_single() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (float)Sflonum_value(AC0(tc));
-}
-
-U8 *S_call_bytevector() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (U8 *)&BVIT(AC0(tc),0);
-}
-
-uptr S_call_fptr() {
-    ptr tc = get_thread_context();
-    S_call_help(tc, 1);
-    return (uptr)RECORDINSTIT(AC0(tc),0);
+    S_call_help(tc, 0, 1);
 }
 
 /* cchain = ((jb . co) ...) */
 void S_return() {
     ptr tc = get_thread_context();
     ptr xp, yp;
+    void *jb;
 
     SFP(tc) = (ptr)((ptr *)SFP(tc) - 2);
 
@@ -336,7 +288,9 @@ void S_return() {
     for (xp = CCHAIN(tc); ; xp = Scdr(xp)) {
         Sunlock_object(CDAR(xp));
         if (xp == yp) break;
-        FREEJMPBUF(CAAR(xp));
+        jb = CAAR(xp);
+        if (jb != NULL)
+          FREEJMPBUF(jb);
     }
 
   /* reset cchain and return via longjmp */
