@@ -550,11 +550,23 @@ under Windows running on Intel hardware.
 \foreigntype{\scheme{(* \var{ftype})}}
 \index{ftype}This type allows a pointer to a foreign
 type (ftype) to be passed.
-The argument must be an ftype pointer of with type \var{ftype},
+The argument must be an ftype pointer of type \var{ftype},
 and the actual argument is the address encapsulated in the
 ftype pointer.
 See Section~\ref{SECTFOREIGNDATA} for a description of
 foreign types.
+
+\foreigntype{\scheme{(& \var{ftype})}}
+\index{ftype}This type allows a foreign
+type (ftype) to be passed as a value, but represented
+on the Scheme side as a pointer to the foreign-type data.
+That is, a \scheme{(& \var{ftype})} argument is represented on
+the Scheme side the same as a \scheme{(* \var{ftype})} argument,
+but a \scheme{(& \var{ftype})} argument is passed to the foreign procedure as the
+content at the foreign pointer's address instead of as the
+address. For example, if \var{ftype} is a \scheme{struct} type,
+then \scheme{(& \var{ftype})} passes a struct argument instead of
+a struct-pointer argument. The \var{ftype} cannot refer to an array type.
 
 \medskip\noindent
 The result types are similar to the parameter types with the addition of a
@@ -814,6 +826,16 @@ ftype pointer encapsulating the address is returned.
 See Section~\ref{SECTFOREIGNDATA} for a description of
 foreign types.
 
+\foreigntype{\scheme{(& \var{ftype})}}
+\index{ftype}The result is interpreted as a foreign object
+whose structure is described by \var{ftype}, where the foreign
+procedure returns a \var{ftype} result, but the caller
+must provide an extra \scheme{(* \var{ftype})} argument before
+all other arguments to receive the result. An unspecified Scheme object
+is returned when the foreign procedure is called, since the result
+is instead written into storage referenced by the extra argument.
+ The \var{ftype} cannot refer to an array type.
+
 \medskip\noindent
 Consider a C identity procedure:
 \schemedisplay
@@ -969,6 +991,12 @@ except that the requirements and conversions are effectively reversed,
 e.g., the conversions described for \scheme{foreign-procedure}
 arguments are performed for \scheme{foreign-callable} return
 values.
+A \scheme{(& \var{ftype})} argument to the callable refers to an address
+that is valid only during the dynamic extent of the callback invocation.
+A \scheme{(& \var{ftype})} result type for a callable causes the Scheme
+procedure to receive an extra \scheme{(& \var{ftype})} argument before
+all others; the Scheme procedure should write a result into the extra
+argument, and the direct result of the Scheme procedure is ignored.
 Type checking is performed for result values but not argument values,
 since the parameter
 values are provided by the foreign code and must be assumed to be

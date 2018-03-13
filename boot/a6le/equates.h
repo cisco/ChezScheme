@@ -87,8 +87,8 @@ typedef unsigned long U64;
 #define bytevector_length_factor 0x8
 #define bytevector_length_offset 0x3
 #define bytevector_type_disp 0x1
-#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall->ptr Scall->fptr Scall->bytevector Scall->fixnum Scall->int32 Scall->uns32 Scall->double Scall->single Scall->int64 Scall->uns64 Scall->void)
-#define c_entry_vector_size 0x1F
+#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall-one-result Scall-any-results)
+#define c_entry_vector_size 0x16
 #define cached_stack_link_disp 0x8
 #define cached_stack_size_disp 0x0
 #define card_offset_bits 0x9
@@ -695,17 +695,8 @@ typedef unsigned long U64;
 #define wchar_bits 0x20
 
 /* constants from declare-c-entries */
-#define CENTRY_Scall_bytevector 22
-#define CENTRY_Scall_double 26
-#define CENTRY_Scall_fixnum 23
-#define CENTRY_Scall_fptr 21
-#define CENTRY_Scall_int32 24
-#define CENTRY_Scall_int64 28
-#define CENTRY_Scall_ptr 20
-#define CENTRY_Scall_single 27
-#define CENTRY_Scall_uns32 25
-#define CENTRY_Scall_uns64 29
-#define CENTRY_Scall_void 30
+#define CENTRY_Scall_any_results 21
+#define CENTRY_Scall_one_result 20
 #define CENTRY_Sreturn 19
 #define CENTRY_foreign_entry 14
 #define CENTRY_get_more_room 16
