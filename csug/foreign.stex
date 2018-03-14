@@ -192,8 +192,7 @@ Scheme-callable wrappers for foreign procedures can also be created via
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{conv} \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{conv} \dots \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
 \returns a procedure
 \listlibraries
 \endentryheader
@@ -213,13 +212,14 @@ by the \var{res-type}.
 Multiple procedures may be created for the same \index{foreign entry}foreign entry.
 
 \label{page:conv-description}%
-If \var{conv} is present, it specifies the calling convention to be used.
-The default is \scheme{#f}, which specifies the default calling convention
-on the target machine.
-Three other conventions are currently supported, all only under
-Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com}.
+Each \var{conv} adjusts specifies the calling convention to be used.
+A \scheme{#f} is allowed as \var{conv} to inicated the default calling convention
+on the target machine (so the \scheme{#f} has no effect).
+Three other conventions are currently supported under
+Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com} (32-bit only).
 Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
+Finally, \var{conv} can be \scheme{__thread} to control thread deactivation.
 
 Use \scheme{__stdcall} to access most Windows API procedures.
 Use \scheme{__cdecl} for Windows API varargs procedures,
@@ -249,6 +249,31 @@ creates an interface to a COM method at offset 12 in the vtable
 encapsulated within the COM instance passed as the first argument,
 with the second argument being a double float and the return
 value being an integer.
+
+Use \scheme{__thread} to make the current thread deactivated (see
+\scheme{fork-thread}) while a foreign procedure is called. The
+thread is activated again when the foreign procedure returns. Deactivation
+of the thread allows garbage collection to proceed in other threads,
+so do not pass collectable memory to the foreign procedure, or use
+\scheme{lock-object} to lock the memory in place; see also
+\scheme{Sdeactivate_thread}. The \scheme{__thread}
+declaration has no effect on a non-threaded version of the system.
+
+For example, calling the C \scheme{sleep} function with the default
+convention will block other Scheme threads from performing a garbage
+collection, but adding the \scheme{__thread} declaration avoids that
+problem:
+
+\schemedisplay
+(define c-sleep (foreign-procedure __thread "sleep" (unsigned) unsigned))
+(c-sleep 10) \var{; sleeps for 10 seconds without blocking other threads}
+\endschemedisplay
+
+\noindent
+If a foreign procedure that is called with \scheme{__thread} can
+invoke callables, then each callable should also be declared with
+\scheme{__thread} so that the callable reactivates the thread.
+
 
 Complete type checking and conversion is performed on the parameters.
 The types
@@ -976,8 +1001,7 @@ function ftype (Section~\ref{SECTFOREIGNDATA}).
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{foreign-callable}{\categorysyntax}{(foreign-callable \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-callable \var{conv} \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-callable}{\categorysyntax}{(foreign-callable \var{conv} \dots \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
 \returns a code object
 \listlibraries
 \endentryheader
@@ -1002,9 +1026,16 @@ since the parameter
 values are provided by the foreign code and must be assumed to be
 correct.
 
-If \var{conv} is present, it specifies the calling convention to be used.
+Each \var{conv} adjusts the calling convention to be used.
 \scheme{foreign-callable} supports the same conventions as
 \scheme{foreign-procedure} with the exception of \scheme{__com}.
+The \scheme{__thread} convention for a callable activates a
+calling thread if the thread is not already activated, and
+the thread's activation state is reverted when the callable
+returns. If a calling thread is not currently registered with
+the Scheme system, then reverting the thread's activation state implies
+destroying the thread's registration (see \scheme{Sdestroy_thread}).
+
 
 The value produced by \scheme{foreign-callable} is a Scheme code object,
 which contains some header information as well as code that performs
@@ -1067,8 +1098,8 @@ void cb_init(void) {
        callbacks[i] = (CB)0;
 }
 
-void register_callback(char c, int cb) {
-    callbacks[c] = (CB)cb;
+void register_callback(char c, CB cb) {
+    callbacks[c] = cb;
 }
 
 void event_loop(void) {
@@ -1090,9 +1121,9 @@ Interfaces to these functions may be defined in Scheme as follows.
 (define cb-init
   (foreign-procedure "cb_init" () void))
 (define register-callback
-  (foreign-procedure "register_callback" (char int) void))
+  (foreign-procedure "register_callback" (char void*) void))
 (define event-loop
-  (foreign-procedure "event_loop" () void))
+  (foreign-procedure __thread "event_loop" () void))
 \endschemedisplay
 
 \noindent
@@ -1101,7 +1132,7 @@ A callback for selected characters can then be defined.
 \schemedisplay
 (define callback
   (lambda (p)
-    (let ([code (foreign-callable p (char) void)])
+    (let ([code (foreign-callable __thread p (char) void)])
       (lock-object code)
       (foreign-callable-entry-point code))))
 (define ouch
@@ -1135,7 +1166,10 @@ Ouch! Hit by 'e'
 \endschemedisplay
 
 \noindent
-A more well-behaved version of this example would save each code object
+The \scheme{__thread} declarations in this example ensure that
+other threads can continue working while \scheme{event-loop}
+blocks waiting for input.
+A more well-behaved version of the example would save each code object
 returned by \scheme{foreign-callable} and unlock it when it is no longer
 registered as a callback.
 
@@ -1440,8 +1474,7 @@ An \var{ftype} must take one of the following forms:
 (array \var{length} \var{ftype})
 (* \var{ftype})
 (bits (\var{field-name} \var{signedness} \var{bits}) \dots)
-(function (\var{ftype} \dots) \var{ftype})
-(function \var{conv} (\var{ftype} \dots) \var{ftype})
+(function \var{conv} \dots (\var{ftype} \dots) \var{ftype})
 (packed \var{ftype})
 (unpacked \var{ftype})
 (endian \var{endianness} \var{ftype})
@@ -3431,15 +3464,17 @@ in the active state and need not be activated.
 Any thread that has been deactivated, and any
 thread created by some mechanism other than \scheme{fork-thread} must,
 however, be activated before before it can access Scheme data or execute
-Scheme code.
-\scheme{Sactivate_thread} is used for this purpose.
+Scheme code. A foreign callable that is declared with \scheme{__thread}
+can activate a calling thread.
+Otherwise, \scheme{Sactivate_thread} must be used to activate a thread.
 It returns 1 the first time the thread is activated and 0 on each
-subsequent call.
+subsequent call until the activation is destroyed with \scheme{Sdestroy_thread}.
 
 Since active threads operating in C code prevent the storage management
 system from garbage collecting,
-a thread should be deactivated via \scheme{Sdeactivate_thread} whenever
-it may spend a significant amount of time in C code.
+a thread should be deactivated via \scheme{Sdeactivate_thread} or
+through a \scheme{foreign-procedure} \scheme{__thread} declaration whenever
+the thread may spend a significant amount of time in C code.
 This is especially important whenever the thread calls a C library
 function, like \scheme{read}, that may block indefinitely.
 Once deactivated, the thread must not touch any Scheme data or

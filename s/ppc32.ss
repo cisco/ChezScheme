@@ -57,7 +57,7 @@
     [%xp    %r20                  #t 20]
     [%ts    %r14                  #t 14]
     [%td    %r15                  #t 15]
-    [%ac1   %r12                  #f 12]
+    [%ac1   %r12 %deact           #f 12]
     [%ret   %r17                  #t 17]
     [%cp    %r24                  #t 24]
     [%yp    %r27                  #t 27]
@@ -668,6 +668,30 @@
          `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
          `(set! ,(make-live-info) ,z (asm ,info ,asm-get-tc ,u))))])
 
+  ;; like get-tc
+  (define-instruction value (activate-thread)
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-activate-thread ,u))))])
+
+  (define-instruction effect (deactivate-thread)
+    [(op)
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(asm ,info ,asm-deactivate-thread ,u)))])
+
+  (define-instruction effect (unactivate-thread)
+    [(op (z ur))
+     (safe-assert (eq? z %Carg1))
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(asm ,info ,asm-unactivate-thread ,u)))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur)) 
      (let ([u (make-tmp 'u)])
@@ -823,7 +847,7 @@
                      shift-count?
                      asm-isync
                      ; threaded version specific
-                     asm-get-tc
+                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
                      ; machine dependent exports
                      asm-kill)
 
@@ -1906,6 +1930,21 @@
       (lambda (code* dest tmp . ignore) ; dest is ignored, since it is always Cretval
         (asm-helper-call code* target #f tmp))))
 
+  (define asm-activate-thread
+    (let ([target `(ppc32-call 0 (entry ,(lookup-c-entry activate-thread)))])
+      (lambda (code* dest tmp . ignore) ; dest is ignored, since it is always Cretval
+        (asm-helper-call code* target #f tmp))))
+
+  (define asm-deactivate-thread
+    (let ([target `(ppc32-call 0 (entry ,(lookup-c-entry deactivate-thread)))])
+      (lambda (code* tmp . ignore)
+        (asm-helper-call code* target #f tmp))))
+
+  (define asm-unactivate-thread
+    (let ([target `(ppc32-call 0 (entry ,(lookup-c-entry unactivate-thread)))])
+      (lambda (code* tmp . ignore)
+        (asm-helper-call code* target #f tmp))))
+
   (define-who asm-return-address
     (lambda (dest l incr-offset next-addr)
       (make-rachunk dest l incr-offset next-addr
@@ -2133,6 +2172,7 @@
     (define align (lambda (b x) (let ([k (- b 1)]) (fxlogand (fx+ x k) (fxlognot k)))))
     (define gp-parameter-regs (lambda () (list %Carg1 %Carg2 %Carg3 %Carg4 %Carg5 %Carg6 %Carg7 %Carg8)))
     (define fp-parameter-regs (lambda () (list %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4 %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8)))
+    (define fp-result-regs (lambda () (list %Cfpretval)))
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
         [(fp-ftd& ,ftd) (not ($ftd-compound? ftd))]
@@ -2141,6 +2181,32 @@
       (nanopass-case (Ltype Type) result-type
         [(fp-ftd& ,ftd) ($ftd-compound? ftd)]
 	[else #f]))
+
+    (module (push-registers pop-registers)
+      ;; stack offset must be 8-byte aligned if fp-reg-count is non-zero
+      (define (move-registers regs fp-reg-count fp-regs load? offset e)
+	(with-output-language (L13 Effect)
+          (cond
+	   [(fx> fp-reg-count 0)
+	    ;; Push floating-point first to get correct alignment
+	    (let ([offset (align 8 offset)])
+	      (move-registers regs (fx- fp-reg-count 1) (cdr fp-regs) load? (fx+ offset 8)
+			      (cond
+			       [load? `(seq ,e (inline ,(make-info-loadfl (car fp-regs)) ,%load-double ,%sp ,%zero (immediate ,offset)))]
+			       [else  `(seq (inline ,(make-info-loadfl (car fp-regs)) ,%store-double ,%sp ,%zero (immediate ,offset)) ,e)])))]
+	   [(pair? regs)
+	    (move-registers (cdr regs) 0 '() load? (fx+ offset 4)
+			    (cond
+			     [load? `(seq ,e (set! ,(car regs) ,(%mref ,%sp ,offset)))]
+			     [else  `(seq (set! ,(%mref ,%sp ,offset) ,(car regs)) ,e)]))]
+	   [else e])))
+      ;; Add "pushes" before e
+      (define (push-registers regs fp-reg-count fp-regs offset e)
+	(move-registers regs fp-reg-count fp-regs #f offset e))
+      ;; Add "pops" after e
+      (define (pop-registers regs fp-reg-count fp-regs offset e)
+        (move-registers regs fp-reg-count fp-regs #t offset e)))
+
     (define-who asm-foreign-call
       (with-output-language (L13 Effect)
         (define load-double-stack
@@ -2233,10 +2299,12 @@
           (lambda (types)
             ;; NB: start stack pointer at 8 to put arguments above the linkage area
             (let loop ([types types] [locs '()] [live* '()] [int* (gp-parameter-regs)] [flt* (fp-parameter-regs)] [isp 8]
+		       ;; needed when adjusting active:
+		       [fp-live-count 0]
 		       ;; configured for `ftd-fp&` unpacking of floats:
 		       [fp-disp (constant flonum-data-disp)] [single? #f])
               (if (null? types)
-                  (values isp locs live*)
+                  (values isp locs live* fp-live-count)
                   (nanopass-case (Ltype Type) (car types)
                     [(fp-double-float)
                      (if (constant software-floating-point)
@@ -2245,21 +2313,21 @@
                                (let ([isp (align 8 isp)])
                                  (loop (cdr types)
                                    (cons (load-double-stack isp fp-disp) locs)
-                                   live* '() flt* (fx+ isp 8)
+                                   live* '() flt* (fx+ isp 8) fp-live-count
 				   (constant flonum-data-disp) #f))
                                (loop (cdr types)
                                  (cons (load-soft-double-reg (cadr int*) (car int*) fp-disp) locs)
-                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp
+                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp fp-live-count
 				 (constant flonum-data-disp) #f)))
                          (if (null? flt*)
                              (let ([isp (align 8 isp)])
                                (loop (cdr types)
                                  (cons (load-double-stack isp fp-disp) locs)
-                                 live* int* '() (fx+ isp 8)
+                                 live* int* '() (fx+ isp 8) fp-live-count
 				 (constant flonum-data-disp) #f))
                              (loop (cdr types)
                                (cons (load-double-reg (car flt*) fp-disp) locs)
-                               live* int* (cdr flt*) isp
+                               live* int* (cdr flt*) isp (fx+ fp-live-count 1)
 			       (constant flonum-data-disp) #f)))]
                     [(fp-single-float)
                      (if (constant software-floating-point)
@@ -2267,29 +2335,29 @@
                              ; NB: ABI says singles are passed as doubles on the stack, but gcc/linux doesn't
                              (loop (cdr types)
                                (cons (load-single-stack isp fp-disp single?) locs)
-                               live* '() flt* (fx+ isp 4)
+                               live* '() flt* (fx+ isp 4) fp-live-count
 			       (constant flonum-data-disp) #f)
                              (loop (cdr types)
                                (cons (load-soft-single-reg (car int*) fp-disp single?) locs)
-                               (cons (car int*) live*) (cdr int*) flt* isp
+                               (cons (car int*) live*) (cdr int*) flt* isp fp-live-count
 			       (constant flonum-data-disp) #f))
                          (if (null? flt*)
                              ; NB: ABI says singles are passed as doubles on the stack, but gcc/linux doesn't
                              (let ([isp (align 4 isp)])
                                (loop (cdr types)
                                  (cons (load-single-stack isp fp-disp single?) locs)
-                                 live* int* '() (fx+ isp 4)
+                                 live* int* '() (fx+ isp 4) fp-live-count
 				 (constant flonum-data-disp) #f))
                              (loop (cdr types)
                                (cons (load-single-reg (car flt*) fp-disp single?) locs)
-                               live* int* (cdr flt*) isp
+                               live* int* (cdr flt*) isp (fx+ fp-live-count 1)
 			       (constant flonum-data-disp) #f)))]
                     [(fp-ftd& ,ftd)
                      (cond
                       [($ftd-compound? ftd)
                        ;; pass as pointer
 		       (let ([pointer-type (with-output-language (Ltype Type) `(fp-integer 32))])
-			 (loop (cons pointer-type (cdr types)) locs live* int* flt* isp
+			 (loop (cons pointer-type (cdr types)) locs live* int* flt* isp fp-live-count
 			       (constant flonum-data-disp) #f))]
                       [else
                        ;; extract content and pass that content
@@ -2301,7 +2369,7 @@
 						  (case ($ftd-size ftd)
 						    [(4) `(fp-single-float)]
 						    [else `(fp-double-float)]))])
-			     (loop (cons unpacked-type (cdr types)) locs live* int* flt* isp
+			     (loop (cons unpacked-type (cdr types)) locs live* int* flt* isp fp-live-count
 				   ;; no floating displacement within pointer:
 				   0
 				   ;; in case of float, load as single-float:
@@ -2313,21 +2381,21 @@
                                (let ([isp (align 8 isp)])
                                  (loop (cdr types)
                                    (cons (load-indirect-int64-stack isp) locs)
-                                   live* '() flt* (fx+ isp 8)
+                                   live* '() flt* (fx+ isp 8) fp-live-count
 				   (constant flonum-data-disp) #f))
                                (loop (cdr types)
                                  (cons (load-indirect-int64-reg (cadr int*) (car int*)) locs)
-                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp
+                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp fp-live-count
 				 (constant flonum-data-disp) #f)))]
 			  [else
 			   (if (null? int*)
 			       (loop (cdr types)
                                  (cons (load-indirect-int-stack isp ($ftd-size ftd)) locs)
-                                 live* '() flt* (fx+ isp 4)
+                                 live* '() flt* (fx+ isp 4) fp-live-count
   			         (constant flonum-data-disp) #f)
 			       (loop (cdr types)
                                  (cons (load-indirect-int-reg (car int*) ($ftd-size ftd) category) locs)
-                                 (cons (car int*) live*) (cdr int*) flt* isp
+                                 (cons (car int*) live*) (cdr int*) flt* isp fp-live-count
 				 (constant flonum-data-disp) #f))]))])]
                     [else
                      (if (nanopass-case (Ltype Type) (car types)
@@ -2339,20 +2407,20 @@
                                (let ([isp (align 8 isp)])
                                  (loop (cdr types)
                                    (cons (load-int64-stack isp) locs)
-                                   live* '() flt* (fx+ isp 8)
+                                   live* '() flt* (fx+ isp 8) fp-live-count
 				   (constant flonum-data-disp) #f))
                                (loop (cdr types)
                                  (cons (load-int64-reg (cadr int*) (car int*)) locs)
-                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp
+                                 (cons* (car int*) (cadr int*) live*) (cddr int*) flt* isp fp-live-count
 				 (constant flonum-data-disp) #f)))
                          (if (null? int*)
                              (loop (cdr types)
                                (cons (load-int-stack isp) locs)
-                               live* '() flt* (fx+ isp 4)
+                               live* '() flt* (fx+ isp 4) fp-live-count
 			       (constant flonum-data-disp) #f)
                              (loop (cdr types)
                                (cons (load-int-reg (car int*)) locs)
-                               (cons (car int*) live*) (cdr int*) flt* isp
+                               (cons (car int*) live*) (cdr int*) flt* isp fp-live-count
 			       (constant flonum-data-disp) #f)))])))))
 	(define do-indirect-result-from-registers
 	  (lambda (ftd offset)
@@ -2374,16 +2442,40 @@
 		      (inline ,(make-info-load 'integer-32 #f) ,%store ,tmp ,%zero (immediate 0) ,%Cretval-high)
 		      (inline ,(make-info-load 'integer-32 #f) ,%store ,tmp ,%zero (immediate 4) ,%Cretval-low))]
 		    [else (sorry! who "unexpected result size")])])))))
+	(define (add-deactivate t0 offset live* fp-live-count result-live* result-fp-live-count e)
+	  (let ([save-and-restore
+		 (lambda (regs fp-count fp-regs e)
+		   (cond
+		    [(and (null? regs) (fx= 0 fp-count)) e]
+		    [else
+		     (pop-registers regs fp-count fp-regs offset
+				    (push-registers regs fp-count fp-regs offset
+						    e))]))])
+	    (%seq
+	     (set! ,%deact ,t0)
+	     ,(save-and-restore (cons %deact live*) fp-live-count (fp-parameter-regs) (%inline deactivate-thread))
+	     ,e
+	     ,(save-and-restore result-live* result-fp-live-count (fp-result-regs) `(set! ,%Cretval ,(%inline activate-thread))))))
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
           (let* ([arg-type* (info-foreign-arg-type* info)]
 		 [result-type (info-foreign-result-type info)]
-		 [fill-result-here? (indirect-result-that-fits-in-registers? result-type)])
+		 [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
+		 [adjust-active? (memq 'adjust-active (info-foreign-conv info))])
             (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*))
-              (lambda (orig-frame-size locs live*)
+              (lambda (orig-frame-size locs live* fp-live-count)
                 ;; NB: add 4 to frame size for CR save word
-                (let ([fill-stash-offset orig-frame-size]
-                      [frame-size (align 16 (fx+ orig-frame-size 4 (if fill-result-here? 4 0)))])
+                (let* ([fill-stash-offset orig-frame-size]
+		       [base-frame-size (fx+ orig-frame-size (if fill-result-here? 4 0))]
+		       [deactivate-save-offset (if (and adjust-active? (fx> fp-live-count 0))
+						   (align 8 base-frame-size) ; for `double` save
+						   base-frame-size)]
+		       [frame-size (align 16 (fx+ 4 ; for CR save
+						  (if adjust-active?
+						      (fx+ deactivate-save-offset
+							   (fx* fp-live-count 8)
+							   (fx* (length live*) 4))
+						      deactivate-save-offset)))])
                   (values
                     (lambda () (%inline store-with-update ,%Csp ,%Csp (immediate ,(fx- frame-size))))
                     (let ([locs (reverse locs)])
@@ -2393,20 +2485,26 @@
 			(cons (load-int-stack fill-stash-offset) locs)]
 		       [else locs]))
                     (lambda (t0)
-                      (if (constant software-floating-point)
+		      (define (make-call result-live* result-fp-live-count)
+			(cond
+			 [adjust-active?
+			  (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
+					  `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,%deact))]
+			 [else `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,t0)]))
+		      (if (constant software-floating-point)
                           (let ()
                             (define handle-64-bit
                               (lambda ()
-                                `(inline ,(make-info-kill*-live* (reg-list %Cretval-high %Cretval-low) live*) ,%c-call ,t0)))
+				(make-call (reg-list %Cretval-high %Cretval-low) 0)))
                             (define handle-32-bit
                               (lambda ()
-                                `(inline ,(make-info-kill*-live* (reg-list %Cretval) live*) ,%c-call ,t0)))
+                                (make-call (reg-list %Cretval) 0)))
                             (define handle-integer-cases
                               (lambda (bits)
                                 (case bits
                                   [(8 16 32) (handle-32-bit)]
                                   [(64) (handle-64-bit)]
-                                  [else (sorry! who "unexpected asm-foriegn-procedures fp-integer size ~s" bits)])))
+                                  [else (sorry! who "unexpected asm-foreign-procedures fp-integer size ~s" bits)])))
 			    (define (handle-ftd&-case ftd)
 			      (cond
 			       [fill-result-here?
@@ -2415,20 +2513,20 @@
 				      (handle-64-bit)
 				      (handle-32-bit))
 				 ,(do-indirect-result-from-registers ftd fill-stash-offset))]
-			       [else `(inline ,(make-info-kill*-live* (reg-list) live*) ,%c-call ,t0)]))
+			       [else (make-call (reg-list) 0)]))
                             (nanopass-case (Ltype Type) result-type
                               [(fp-double-float) (handle-64-bit)]
                               [(fp-single-float) (handle-32-bit)]
                               [(fp-integer ,bits) (handle-integer-cases bits)]
                               [(fp-integer ,bits) (handle-integer-cases bits)]
 			      [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
-                              [else `(inline ,(make-info-kill*-live* (reg-list %Cretval) live*) ,%c-call ,t0)]))
+                              [else (make-call (reg-list %Cretval) 0)]))
                           (let ()
                             (define handle-integer-cases
                               (lambda (bits)
                                 (case bits
-                                  [(8 16 32) `(inline ,(make-info-kill*-live* (reg-list %Cretval) live*) ,%c-call ,t0)]
-                                  [(64) `(inline ,(make-info-kill*-live* (reg-list %Cretval-high %Cretval-low) live*) ,%c-call ,t0)]
+                                  [(8 16 32) (make-call (reg-list %Cretval) 0)]
+                                  [(64) (make-call (reg-list %Cretval-high %Cretval-low) 0)]
                                   [else (sorry! who "unexpected asm-foreign-procedures fp-integer size ~s" bits)])))
 			    (define (handle-ftd&-case ftd)
 			      (cond
@@ -2436,16 +2534,16 @@
 				(%seq
 				 ,(if (not (eq? 'float ($ftd-atomic-category ftd)))
 				      (handle-integer-cases (* 8 ($ftd-size ftd)))
-				      `(inline ,(make-info-kill*-live* (reg-list) live*) ,%c-call ,t0))
+				      (make-call (reg-list) 1))
 				 ,(do-indirect-result-from-registers ftd fill-stash-offset))]
 			       [else `(inline ,(make-info-kill*-live* (reg-list) live*) ,%c-call ,t0)]))
                             (nanopass-case (Ltype Type) result-type
-                              [(fp-double-float) `(inline ,(make-info-kill*-live* (reg-list) live*) ,%c-call ,t0)]
-                              [(fp-single-float) `(inline ,(make-info-kill*-live* (reg-list) live*) ,%c-call ,t0)]
+                              [(fp-double-float) (make-call (reg-list) 1)]
+                              [(fp-single-float) (make-call (reg-list) 1)]
                               [(fp-integer ,bits) (handle-integer-cases bits)]
                               [(fp-unsigned ,bits) (handle-integer-cases bits)]
 			      [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
-                              [else `(inline ,(make-info-kill*-live* (reg-list %Cretval) live*) ,%c-call ,t0)]))))
+                              [else (make-call (reg-list %Cretval) 0)]))))
                     (nanopass-case (Ltype Type) result-type
                       [(fp-double-float)
                        (lambda (lvalue)
@@ -2552,12 +2650,15 @@
                    |                           |
                    |        back chain         | 1 word
              sp+X: |                           |
+                   +---------------------------+ <- 16-byte aligned
                    +---------------------------+
                    +---------------------------+ <- 16-byte aligned
                    |                           |
                    |       &-return space      | 2 words, if needed
                    |                           |
                    +---------------------------+ <- 8-byte aligned
+                   |      unactivate mode      | 1 word, if needed
+                   +---------------------------+
                    |                           |
                    |      callee-save regs     |
                    |                           |
@@ -2567,9 +2668,9 @@
                    |                           |
                    +---------------------------+ <- 8-byte aligned
                    |                           |
-                   |   integer argument regs   |
+                   |   integer argument regs   |   Also used to stash results during unactivate
                    |                           |
-             sp+8: +---------------------------+  <-- 8-byte aligned
+             sp+8: +---------------------------+ <- 8-byte aligned
                    |                           |
                    |            lr             | 1 word (place for get-thread-context to store lr)
                    |                           |
@@ -2837,20 +2938,23 @@
 		       (case ($ftd-size ftd)
 			 [(4) `(inline ,(make-info-loadfl %Cfpretval) ,%load-single ,%sp ,%zero (immediate ,return-space-offset))]
 			 [else `(inline ,(make-info-loadfl %Cfpretval) ,%load-double ,%sp ,%zero (immediate ,return-space-offset))]))
-		     '())]
+		     '()
+		     1)]
 		   [else
 		    (cond
 		     [($ftd-compound? ftd)
 		      ;; return pointer
 		      (values
 		       (lambda () `(set! ,%Cretval ,(%mref ,%sp ,int-reg-offset)))
-		       (list %Cretval))]
+		       (list %Cretval)
+		       0)]
 		     [(fx= 8 ($ftd-size ftd))
 		      (values (lambda ()
 				(%seq
 				 (set! ,%Cretval-high ,(%mref ,%sp ,return-space-offset))
 				 (set! ,%Cretval-low ,(%mref ,%sp ,(fx+ return-space-offset 4)))))
-			      (list %Cretval-high %Cretval-low))]
+			      (list %Cretval-high %Cretval-low)
+			      0)]
 		     [else
 		      (values
 		       (lambda ()
@@ -2858,18 +2962,22 @@
 			   [(1) `(set! ,%Cretval (inline ,(make-info-load 'integer-8 #f) ,%load ,%sp ,%zero (immediate ,return-space-offset)))]
 			   [(2) `(set! ,%Cretval (inline ,(make-info-load 'integer-16 #f) ,%load ,%sp ,%zero (immediate ,return-space-offset)))]
 			   [else `(set! ,%Cretval ,(%mref ,%sp ,return-space-offset))]))
-		       (list %Cretval))])])]
+		       (list %Cretval)
+		       0)])])]
                 [(fp-double-float)
                  (values (lambda (x)
 			   `(inline ,(make-info-loadfl %Cfpretval) ,%load-double ,x ,%zero ,(%constant flonum-data-disp)))
-			 '())]
+			 '()
+			 1)]
                 [(fp-single-float)
                  (values (lambda (x)
 			   `(inline ,(make-info-loadfl %Cfpretval) ,%load-double->single ,x ,%zero ,(%constant flonum-data-disp)))
-			 '())]
+			 '()
+			 1)]
                 [(fp-void)
                  (values (lambda () `(nop))
-                         '())]
+                         '()
+			 0)]
 		[else
 		 (cond
 		  [(nanopass-case (Ltype Type) result-type
@@ -2880,11 +2988,20 @@
 			     (%seq
 			      (set! ,%Cretval-low ,lo-rhs)
 			      (set! ,%Cretval-high ,hi-rhs)))
-			   (list %Cretval-high %Cretval-low))]
+			   (list %Cretval-high %Cretval-low)
+			   0)]
 		  [else
 		   (values (lambda (rhs)
 			     `(set! ,%Cretval ,rhs))
-			   (list %Cretval))])])))
+			   (list %Cretval)
+			   0)])])))
+          (define (unactivate unactivate-mode-offset result-regs result-num-fp-regs stash-offset)
+            (let ([e (%seq
+                       (set! ,%Carg1 ,(%mref ,%sp ,unactivate-mode-offset))
+                       ,(%inline unactivate-thread ,%Carg1))])
+	      (pop-registers result-regs result-num-fp-regs (fp-result-regs) stash-offset
+			     (push-registers result-regs result-num-fp-regs (fp-result-regs) stash-offset
+					     e))))
           (lambda (info)
             (define callee-save-regs (list %r14 %r15 %r16 %r17 %r18 %r19 %r20 %r21 %r22 %r23 %r24 %r25 %r26 %r27 %r28 %r29 %r30 %r31))
             (define isaved (length callee-save-regs))
@@ -2899,12 +3016,12 @@
                                                float-reg-offset
                                                (fx+ (fx* fp-reg-count 8) float-reg-offset))]
 		       [synthesize-first-argument? (indirect-result-that-fits-in-registers? result-type)]
-                       [return-space-offset (align 8 (fx+ (fx* isaved 4) callee-save-offset))]
-                       [stack-size (align 16 (if synthesize-first-argument?
-						 (fx+ return-space-offset 8)
-						 return-space-offset))]
+		       [adjust-active? (memq 'adjust-active (info-foreign-conv info))]
+                       [unactivate-mode-offset (fx+ (fx* isaved 4) callee-save-offset)]
+                       [return-space-offset (align 8 (fx+ unactivate-mode-offset (if adjust-active? 4 0)))]
+                       [stack-size (align 16 (fx+ return-space-offset (if synthesize-first-argument? 8 0)))]
                        [stack-arg-offset (fx+ stack-size 8)])
-		  (let-values ([(get-result result-regs) (do-result result-type return-space-offset int-reg-offset)])
+		  (let-values ([(get-result result-regs result-num-fp-regs) (do-result result-type return-space-offset int-reg-offset)])
 		    (values
 		     (lambda ()
 		       (%seq
@@ -2916,9 +3033,16 @@
                          ; not bothering with cr, because we don't update nonvolatile fields
 			 ,(save-regs callee-save-regs callee-save-offset)
 			 ,(if-feature pthreads
-                            (%seq 
-                              (set! ,%Cretval ,(%inline get-tc))
-                              (set! ,%tc ,%Cretval))
+			    ((lambda (e)
+                               (if adjust-active?
+                                   (%seq
+                                     (set! ,%Cretval ,(%inline activate-thread))
+                                     (set! ,(%mref ,%sp ,unactivate-mode-offset) ,%Cretval)
+                                     ,e)
+                                   e))
+			     (%seq 
+                               (set! ,%Cretval ,(%inline get-tc))
+                               (set! ,%tc ,%Cretval)))
                             `(set! ,%tc (literal ,(make-info-literal #f 'entry (lookup-c-entry thread-context) 0))))))
 		     ; list of procedures that marshal arguments from their C stack locations
                      ; to the Scheme argument locations
@@ -2927,6 +3051,12 @@
 		     get-result
 		     (lambda ()
 		       (in-context Tail
+                        ((lambda (e)
+                           (if adjust-active?
+                               (%seq
+                                ,(unactivate unactivate-mode-offset result-regs result-num-fp-regs int-reg-offset)
+                                ,e)
+                               e))
                          (%seq
                            ; restore the lr
                            (inline ,null-info ,%restore-lr (immediate ,(fx+ stack-size 4)))
@@ -2935,5 +3065,5 @@
                            ; deallocate space for pad & arg reg values
                            (set! ,%Csp ,(%inline + ,%Csp (immediate ,stack-size)))
                            ; done
-                           (asm-c-return ,null-info ,callee-save-regs ... ,result-regs ...))))))))))))))
+                           (asm-c-return ,null-info ,callee-save-regs ... ,result-regs ...)))))))))))))))
 )
