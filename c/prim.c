@@ -124,6 +124,9 @@ static void create_c_entry_vector() {
 #ifdef PTHREADS
     install_c_entry(CENTRY_raw_collect_cond, (ptr)&S_collect_cond);
     install_c_entry(CENTRY_raw_tc_mutex, (ptr)&S_tc_mutex);
+    install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
+    install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
+    install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));
 #endif /* PTHREADS */
     install_c_entry(CENTRY_handle_values_error, proc2ptr(S_handle_values_error));
     install_c_entry(CENTRY_handle_mvlet_error, proc2ptr(S_handle_mvlet_error));
@@ -139,7 +142,10 @@ static void create_c_entry_vector() {
 
     for (i = 0; i < c_entry_vector_size; i++) {
 #ifndef PTHREADS
-      if (i == CENTRY_raw_collect_cond || i == CENTRY_raw_tc_mutex) continue;
+      if (i == CENTRY_raw_collect_cond || i == CENTRY_raw_tc_mutex
+          || i == CENTRY_activate_thread || i == CENTRY_deactivate_thread
+          || i == CENTRY_unactivate_thread)
+        continue;
 #endif /* NOT PTHREADS */
       if (Svector_ref(S_G.c_entry_vector, i) == Sfalse) {
         fprintf(stderr, "c_entry_vector entry %d is uninitialized\n", i);

@@ -216,6 +216,8 @@ extern void S_mutex_release PROTO((scheme_mutex_t *m));
 extern s_thread_cond_t *S_make_condition PROTO((void));
 extern void S_condition_free PROTO((s_thread_cond_t *c));
 extern IBOOL S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m, ptr t));
+extern INT S_activate_thread PROTO((void));
+extern void S_unactivate_thread PROTO((int mode));
 #endif
 
 /* scheme.c */
