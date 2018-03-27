@@ -895,3 +895,5 @@
 - reworked the S_call_help/S_return CCHAIN handling to fix a bug in which
   the signal handler could trip over the NULL jumpbuf in a CCHAIN record.  
     schlib.c
+- install equates.h, kernel.o, and main.o on unix-like systems
+    Mf-install.in

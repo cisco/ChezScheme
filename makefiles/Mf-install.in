@@ -123,6 +123,9 @@ libbininstall: ${LibBin}
           ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallSchemeName}.boot;\
         fi
 	ln -sf ${LibBin}/scheme.boot ${LibBin}/${InstallScriptName}.boot;
+	$I -m 444 ${Include}/equates.h ${LibBin}
+	$I -m 444 ${Include}/kernel.o ${LibBin}
+	$I -m 444 ${Include}/main.o ${LibBin}
 	$I -m 444 ${Include}/scheme.h ${LibBin}
 
 maninstall: scheme.1 petite.1 ${Man}
