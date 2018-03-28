@@ -1067,8 +1067,8 @@ void cb_init(void) {
        callbacks[i] = (CB)0;
 }
 
-void register_callback(char c, int cb) {
-    callbacks[c] = (CB)cb;
+void register_callback(char c, CB cb) {
+    callbacks[c] = cb;
 }
 
 void event_loop(void) {
@@ -1090,7 +1090,7 @@ Interfaces to these functions may be defined in Scheme as follows.
 (define cb-init
   (foreign-procedure "cb_init" () void))
 (define register-callback
-  (foreign-procedure "register_callback" (char int) void))
+  (foreign-procedure "register_callback" (char void*) void))
 (define event-loop
   (foreign-procedure "event_loop" () void))
 \endschemedisplay
