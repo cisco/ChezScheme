@@ -1554,6 +1554,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Incomplete handling of import specs within standalone export forms}
+
+A bug that limited the \scheme{(import \var{import-spec} \dots)} form within a
+standalone \scheme{export} form to \scheme{(import \var{import-spec})} has been
+fixed.
+
 \subsection{Permission denied after deleting files or directories in Windows}
 
 In Windows, deleting a file or directory briefly leaves the file or
