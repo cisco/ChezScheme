@@ -8552,7 +8552,7 @@
                 [c (syntax->datum orig-c)]
                 [c (cond
                      [(not c) #f]
-                     [(eq? c '__thread) 'adjust-active]
+                     [(eq? c '__collect_safe) 'adjust-active]
                      [else
                       (case ($target-machine)
                         [(i3nt ti3nt)
@@ -8579,8 +8579,11 @@
                      keep-accum)))]))))
 
 (define $make-foreign-procedure
-  (lambda (conv foreign-name ?foreign-addr type* result-type)
+  (lambda (who conv foreign-name ?foreign-addr type* result-type)
     (let ([unsafe? (= (optimize-level) 3)])
+      (define (check-strings-allowed type)
+        (when (memq 'adjust-active (syntax->datum conv))
+          ($oops who "~s argument not allowed with __collect_safe procedure" type)))
       (with-syntax ([conv conv]
                     [foreign-name foreign-name]
                     [?foreign-addr ?foreign-addr]
@@ -8623,6 +8626,7 @@
                                                             (err ($moi) x))))
                                                (unsigned-32))])]
                                    [(utf-8)
+                                    (check-strings-allowed type)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8633,6 +8637,7 @@
                                                         (err ($moi) x)))))
                                        (u8*))]
                                    [(utf-16le)
+                                    (check-strings-allowed type)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8643,6 +8648,7 @@
                                                         (err ($moi) x)))))
                                        (u16*))]
                                    [(utf-16be)
+                                    (check-strings-allowed type)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8653,6 +8659,7 @@
                                                         (err ($moi) x)))))
                                        (u16*))]
                                    [(utf-32le)
+                                    (check-strings-allowed type)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8663,6 +8670,7 @@
                                                         (err ($moi) x)))))
                                        (u32*))]
                                    [(utf-32be)
+                                    (check-strings-allowed type)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8750,7 +8758,7 @@
     (syntax-case x ()
       [(_ c ... ?name (arg ...) result)
        (lambda (r)
-         ($make-foreign-procedure
+         ($make-foreign-procedure 'foreign-procedure
            ($filter-conv 'foreign-procedure #'(c ...))
            (let ([x (datum ?name)]) (and (string? x) x))
            #'($foreign-entry ?name)
@@ -8764,10 +8772,13 @@
                   ($oops who "unsupported convention ~s" c)))
               (syntax->list conv))
     (let ([unsafe? (= (optimize-level) 3)])
+      (define (check-strings-allowed result-type)
+        (when (memq 'adjust-active (syntax->datum conv))
+          ($oops who "~s result not allowed with __collect_safe callable" result-type)))
       (with-syntax ([conv conv] [?proc ?proc])
         (with-syntax ([((actual (t ...) (arg ...)) ...)
                        (map
-                         (lambda (type)
+                        (lambda (type)
                            (or (case type
                                  [(boolean)
                                   (with-syntax ([(x) (generate-temporaries #'(*))])
@@ -8894,6 +8905,7 @@
                                      unsigned-16
                                      [] [])])]
                          [(utf-8)
+                          (check-strings-allowed result-type)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8905,6 +8917,7 @@
                              u8*
                              [] [])]
                          [(utf-16le)
+                          (check-strings-allowed result-type)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8916,6 +8929,7 @@
                              u16*
                              [] [])]
                          [(utf-16be)
+                          (check-strings-allowed result-type)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8927,6 +8941,7 @@
                              u16*
                              [] [])]
                          [(utf-32le)
+                          (check-strings-allowed result-type)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8938,6 +8953,7 @@
                              u32*
                              [] [])]
                          [(utf-32be)
+                          (check-strings-allowed result-type)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
