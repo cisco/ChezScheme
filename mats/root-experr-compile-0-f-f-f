@@ -9484,6 +9484,18 @@ foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name 
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-8 argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-16be argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-16le argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-32be argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-32le argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: utf-8 argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-8 result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-16le result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-16be result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-32le result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-32be result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: utf-8 result not allowed with __collect_safe callable".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".

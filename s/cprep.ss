@@ -90,7 +90,7 @@
                     (case x
                       [(i3nt-stdcall) '__stdcall]
                       [(i3nt-com) '__com]
-                      [(adjust-active) '__thread]
+                      [(adjust-active) '__collect_safe]
                       [else #f]))
                   x*)))
          (define-who uncprep-fp-specifier

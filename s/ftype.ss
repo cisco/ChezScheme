@@ -1197,7 +1197,7 @@ ftype operators:
                                       [(ftd-base? ftd) (do-base (filter-foreign-type (ftd-base-type ftd)) (ftd-base-swap? ftd) offset)]
                                       [(ftd-pointer? ftd) #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-ftd ftd))]
                                       [(ftd-function? ftd) 
-                                       ($make-foreign-procedure
+                                       ($make-foreign-procedure 'make-ftype-pointer
                                          (ftd-function-conv ftd)
                                          #f
                                          #`($fptr-offset-addr #,fptr-expr offset)
