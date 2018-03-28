@@ -897,3 +897,5 @@
     schlib.c
 - install equates.h, kernel.o, and main.o on unix-like systems
     Mf-install.in
+- standalone export form now handles (import import-spec ...)
+    8.ms, syntax.ss, release_notes.stex

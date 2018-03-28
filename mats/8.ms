@@ -7976,6 +7976,19 @@
   (equal?
     (let () (import ($l3)) (f (f 3)))
     3)
+  (begin
+    ;; (export import-spec ...) empty case
+    (library ($empty) (export) (import (chezscheme)) (export (import)))
+    #t)
+  (begin
+    (library ($l4-A) (export a) (import (chezscheme)) (define a 1))
+    (library ($l4-B) (export b) (import (chezscheme)) (define b 2))
+    #t)
+  (equal? '(1 2) (let () (import ($l4-A) ($l4-B)) (list a b)))
+  (begin
+    ;; (export import-spec ...) multiple imports case
+    (library ($l4-C) (export) (import (chezscheme)) (export (import ($l4-A) ($l4-B))))
+    (equal? '(1 2) (let () (import ($l4-C)) (list a b))))
  )
 
 (mat library2
