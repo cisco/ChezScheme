@@ -4280,14 +4280,18 @@
                                          (append #'(old-id ...) exports)
                                          (append #'(old-id ...) exports-to-check)
                                          (fold-right resolve&add-id new-exports #'(old-id ...) #'(new-id ...)))]
-                                      [(?import impspec)
+                                      [(?import impspec ...)
                                        (sym-kwd? ?import import)
-                                       (let-values ([(mid tid imps) (help-determine-imports #'impspec r #f)])
-                                         (let ([imps (if (import-interface? imps) (module-exports imps) imps)])
-                                           (values
-                                             (append (map car imps) exports)
-                                             exports-to-check
-                                             (fold-right add-id new-exports (map cdr imps)))))]
+                                       (let process-impspecs ([impspec* #'(impspec ...)])
+                                         (if (null? impspec*)
+                                             (values exports exports-to-check new-exports)
+                                             (let-values ([(_mid _tid imps) (help-determine-imports (car impspec*) r #f)]
+                                                          [(exports exports-to-check new-exports) (process-impspecs (cdr impspec*))])
+                                               (let ([imps (if (import-interface? imps) (module-exports imps) imps)])
+                                                 (values
+                                                  (append (map car imps) exports)
+                                                  exports-to-check
+                                                  (fold-right add-id new-exports (map cdr imps)))))))]
                                       [_ (syntax-error x "invalid export spec")])))))])
               (g (cdr expspec**) exports exports-to-check new-exports))))))
 )
