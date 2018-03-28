@@ -313,7 +313,7 @@ as long as the lock is allocated in memory shared by the processes.
 A lock is simply a word-sized integer, i.e., an <tt>iptr</tt> or
 <tt>uptr</tt> foreign type (Section&nbsp;<a href="./foreign.html#g31">4.5</a>) with the native
 endiannes of the target machine, possibly part of a larger structure
-defined using <tt>define-ftype</tt> (page&nbsp;<a href="./foreign.html#defn:define-ftype">75</a>).
+defined using <tt>define-ftype</tt> (page&nbsp;<a href="./foreign.html#defn:define-ftype">76</a>).
 It must be explicitly allocated in memory that resides outside the Scheme
 heap and, when appropriate, explicitly deallocated.
 When just threads are involved (i.e., when multiple processes are not 
@@ -380,7 +380,7 @@ disciplined manner.
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>Each of these has a syntax like and behaves similarly to
-<tt>ftype-set!</tt> (page&nbsp;<a href="./foreign.html#defn:ftype-set!">84</a>), though with an implicit
+<tt>ftype-set!</tt> (page&nbsp;<a href="./foreign.html#defn:ftype-set!">85</a>), though with an implicit
 <tt><i>val-expr</i></tt>.
 In particular, the restrictions on and handling of <tt><i>fptr-expr</i></tt>
 and the accessors <tt><i>a</i>&nbsp;...</tt> is similar, with one important
@@ -440,7 +440,7 @@ increment or decrement is required.
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>Each of these has a syntax like and behaves similarly to
-<tt>ftype-set!</tt> (page&nbsp;<a href="./foreign.html#defn:ftype-set!">84</a>), though with an implicit
+<tt>ftype-set!</tt> (page&nbsp;<a href="./foreign.html#defn:ftype-set!">85</a>), though with an implicit
 <tt><i>val-expr</i></tt>.
 In particular, the restrictions on and handling of <tt><i>fptr-expr</i></tt>
 and the accessors <tt><i>a</i>&nbsp;...</tt> is similar, with one important
@@ -818,7 +818,7 @@ given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliograp
 Copyright &copy; 2017 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2018 for Chez Scheme Version 9.5.1<br>
+Revised March 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
