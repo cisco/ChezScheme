@@ -18,7 +18,7 @@
          sorry! make-preinfo preinfo? preinfo-lambda? preinfo-sexpr preinfo-sexpr-set! preinfo-src
          make-preinfo-lambda preinfo-lambda-name preinfo-lambda-name-set! preinfo-lambda-flags preinfo-lambda-libspec
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
-         prelex-source prelex-operand prelex-operand-set! prelex-uname prelex-counter make-prelex*
+         prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
          target-fixnum? target-bignum?)
 
   (module (lookup-primref primref? primref-name primref-flags primref-arity primref-signatures primref-level)
@@ -78,16 +78,15 @@
            prelex-flags prelex-flags-set!
            prelex-source
            prelex-operand prelex-operand-set!
-           prelex-uname
-           prelex-counter)
+           prelex-uname)
     (define-record-type prelex
-      (nongenerative #{prelex grpmhtzqa9bflxfggfu6pp-1})
+      (nongenerative #{prelex grpmhtzqa9bflxfggfu6pp-2})
       (sealed #t)
-      (fields (mutable name) (mutable flags) source (mutable operand) (mutable $uname) (mutable $counter))
+      (fields (mutable name) (mutable flags) source (mutable operand) (mutable $uname))
       (protocol
         (lambda (new)
           (lambda (name flags source operand)
-            (new name flags source operand #f #f)))))
+            (new name flags source operand #f)))))
     (define prelex-uname
       (lambda (id)
         (or (prelex-$uname id)
@@ -95,16 +94,6 @@
               (with-tc-mutex
                 (or (prelex-$uname id)
                     (begin (prelex-$uname-set! id uname) uname)))))))
-    (define counter 0)
-    (define prelex-counter
-      (lambda (id)
-        (or (prelex-$counter id)
-            (with-tc-mutex
-             (or (prelex-$counter id)
-                 (let ([c counter])
-                   (set! counter (fx1+ counter))
-                   (prelex-$counter-set! id c)
-                   c))))))
     (record-writer (record-type-descriptor prelex)
       (lambda (x p wr)
         (fprintf p "~s" (prelex-name x)))))

@@ -871,9 +871,9 @@
   (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]
                   [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]]
              [flags alloc])
-  (make-time [sig [(sub-symbol sub-ufixnum sub-fixnum) -> (time)]] [flags alloc])
+  (make-time [sig [(sub-symbol sub-ufixnum exact-integer) -> (time)]] [flags alloc])
   (set-time-nanosecond! [sig [(time sub-uint) -> (void)]] [flags true])
-  (set-time-second! [sig [(time sub-fixnum) -> (void)]] [flags true])
+  (set-time-second! [sig [(time exact-integer) -> (void)]] [flags true])
   (set-time-type! [sig [(time sub-symbol) -> (void)]] [flags true])
   (subtract-duration (sig [(time time) -> (time)]) [flags alloc])
   (subtract-duration! (sig [(time time) -> (time)]) [flags alloc])
@@ -886,7 +886,7 @@
   (time-difference (sig [(time time) -> (time)]) [flags alloc])
   (time-difference! (sig [(time time) -> (time)]) [flags alloc])
   (time-nanosecond [sig [(time) -> (uint)]] [flags mifoldable discard true])
-  (time-second [sig [(time) -> (fixnum)]] [flags mifoldable discard true])
+  (time-second [sig [(time) -> (exact-integer)]] [flags mifoldable discard true])
   (time-type [sig [(time) -> (symbol)]] [flags mifoldable discard true])
   (time-utc->date [sig [(time) (time sub-fixnum) -> (date)]] [flags alloc])
 )
@@ -948,6 +948,7 @@
   (default-record-hash-procedure [sig [() -> (maybe-procedure)] [(maybe-procedure) -> (void)]] [flags])
   (enable-cross-library-optimization [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
+  (enable-type-recovery [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
   (expand/optimize-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
