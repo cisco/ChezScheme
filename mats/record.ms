@@ -8607,6 +8607,24 @@
        (if b
            (#3%$object-ref 'scheme-object 'x ,fixnum?)
            72)))
+  ; ensure we're checking to make sure field names, accessors, and
+  ; mutators are identifiers
+  (error? ; invalid field spec
+    (define-record-type foo (fields 876)))
+  (error? ; invalid field spec
+    (define-record-type foo (fields (mutable (x)))))
+  (error? ; invalid field spec
+    (define-record-type foo (fields (immutable "spam"))))
+  (error? ; invalid field spec
+    (define-record-type foo (fields (immutable (x) foo-x))))
+  (error? ; invalid accessor name
+    (define-record-type foo (fields (immutable x (foo-x)))))
+  (error? ; invalid field spec
+    (define-record-type foo (fields (mutable (x) foo-x foo-x!))))
+  (error? ; invalid accessor name
+    (define-record-type foo (fields (mutable x (foo-x) foo-x!))))
+  (error? ; invalid accessor name
+    (define-record-type foo (fields (mutable x foo-x (foo-x!)))))
 )
 
 (mat define-record-type-extensions
