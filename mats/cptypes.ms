@@ -314,6 +314,89 @@
               (if (if y #f z) (f t 1) (f t 2))))))
 )
 
+(mat cptype-directly-applied-case-lambda
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval
+        '(let ([t ((lambda (x y) (cons y x)) 'a 'b)])
+           (list t t))))
+    '((b . a) (b . a)))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval
+        '(let ([t ((lambda (x . y) (cons y x)) 'a 'b 'c 'd)])
+           (list t t))))
+    '(((b c d) . a) ((b c d) . a)))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval
+        '(let ([t ((case-lambda
+                     [(x) (cons 'first x)]
+                     [(x y) (cons* 'second y x)]
+                     [(x . y) (cons* 'third y x)]) 'a 'b)])
+           (list t t))))
+    '((second b . a) (second b . a)))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval
+        '(let ([t ((case-lambda
+                     [(x) (cons 'first x)]
+                     [(x y) (cons* 'second y x)]
+                     [(x . y) (cons* 'third y x)]) 'a 'b 'c)])
+           (list t t))))
+    '((third (b c) . a) (third (b c) . a)))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval 
+        '(let ([t 'z])
+           ((lambda args (set! t (cons args t))) 'a 'b 'c)
+           t)))
+    '((a b c) . z))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval 
+        '(let ([t 'z])
+           ((lambda args (set! t (cons args t))) 'a 'b 'c)
+           t)))
+    '((a b c) . z))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval 
+        '(let ([t 'z])
+           ((lambda (x . y) (set! t (cons* y x t))) 'a 'b 'c)
+           t)))
+    '((b c) a . z))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval 
+        '(let ([t 'z])
+           ((case-lambda 
+              [(x) (set! t (cons* 'first x t))]
+              [(x y) (set! t (cons* 'second y x t))]
+              [(x . y) (set! t (cons* 'third y x t))]) 'a 'b)
+           t)))
+    '(second b a . z))
+  (equal?
+    (parameterize ([enable-type-recovery #t]
+                   [run-cp0 (lambda (cp0 x) x)])
+      (eval 
+        '(let ([t 'z])
+           ((case-lambda 
+              [(x) (set! t (cons* 'first x t))]
+              [(x y) (set! t (cons* 'second y x t))]
+              [(x . y) (set! t (cons* 'third y x t))]) 'a 'b 'c 'd)
+           t)))
+    '(third (b c d) a . z))
+)
+
 (define (test-chain/preamble/self preamble check-self? l)
   (let loop ([l l])
     (if (null? l)

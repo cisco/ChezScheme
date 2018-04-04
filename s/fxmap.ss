@@ -39,18 +39,18 @@
  ;; record types
 
  (define-record-type $branch
-   [fields prefix mask left right count changes]
-   [nongenerative #{$branch pfv8jpsat5jrk6vq7vclc3ntg-1}]
-   [sealed #t])
+   (fields prefix mask left right count changes)
+   (nongenerative #{$branch pfv8jpsat5jrk6vq7vclc3ntg-1})
+   (sealed #t))
 
  (define-record-type $leaf
-   [fields key val changes]
-   [nongenerative #{$leaf pfv8jq2dzw50ox4f6vqm1ff5v-1}]
-   [sealed #t])
+   (fields key val changes)
+   (nongenerative #{$leaf pfv8jq2dzw50ox4f6vqm1ff5v-1})
+   (sealed #t))
 
  (define-record-type $empty
-   [nongenerative #{$empty pfwk1nal7cs5dornqtzvda91m-0}]
-   [sealed #t])
+   (nongenerative #{$empty pfwk1nal7cs5dornqtzvda91m-0})
+   (sealed #t))
 
  ;; constants
 
@@ -272,9 +272,9 @@
 
  (define (join* p1 d1 p2 d2)
    (cond
-    [($empty? d1) d2]
-    [($empty? d2) d1]
-    [else (join p1 d1 p2 d2)]))
+     [($empty? d1) d2]
+     [($empty? d2) d1]
+     [else (join p1 d1 p2 d2)]))
 
  (define (branching-bit p m)
    (highest-set-bit (fxxor p m)))
@@ -282,14 +282,24 @@
  (define-syntax-rule (mask h m)
    (fxand (fxior h (fx1- m)) (fxnot m)))
 
- (define (highest-set-bit x1)
-   (let* ([x2 (fxior x1 (fxsrl x1 1))]
-          [x3 (fxior x2 (fxsrl x2 2))]
-          [x4 (fxior x3 (fxsrl x3 4))]
-          [x5 (fxior x4 (fxsrl x4 8))]
-          [x6 (fxior x5 (fxsrl x5 16))]
-          [x7 (fxior x6 (fxsrl x6 32))])
-     (fxxor x7 (fxsrl x7 1))))
+ (define highest-set-bit
+   (if (fx= (fixnum-width) 61)
+       (lambda (x1)
+         (let* ([x2 (fxior x1 (fxsrl x1 1))]
+                [x3 (fxior x2 (fxsrl x2 2))]
+                [x4 (fxior x3 (fxsrl x3 4))]
+                [x5 (fxior x4 (fxsrl x4 8))]
+                [x6 (fxior x5 (fxsrl x5 16))]
+                [x7 (fxior x6 (fxsrl x6 32))])
+           (fxxor x7 (fxsrl x7 1))))
+       (lambda (x1)
+         (let* ([x2 (fxior x1 (fxsrl x1 1))]
+                [x3 (fxior x2 (fxsrl x2 2))]
+                [x4 (fxior x3 (fxsrl x3 4))]
+                [x5 (fxior x4 (fxsrl x4 8))]
+                [x6 (fxior x5 (fxsrl x5 16))])
+           (fxxor x6 (fxsrl x6 1))))))
+
 
  (define-syntax-rule (nomatch? h p m)
    (not (fx= (mask h m) p)))
