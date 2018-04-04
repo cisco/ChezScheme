@@ -901,3 +901,7 @@
     8.ms, syntax.ss, release_notes.stex
 - add collect-rendezvous
     prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex, release_notes.stex
+- added identifier? checks to detect attempts to use non-identifier
+  field names in define-record-type field specs.
+    syntax.ss,
+    record.ms, root-experr*

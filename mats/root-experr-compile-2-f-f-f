@@ -7453,6 +7453,14 @@ record.mo:Expected error in mat r6rs-records-syntactic: "invalid define-record-t
 record.mo:Expected error in mat r6rs-records-syntactic: "no constructor descriptor for define-record record type frob".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: invalid protocol oops".
 record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed prnt".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier 876".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable (x))".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable "spam")".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable (x) foo-x)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable x (foo-x))".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable (x) foo-x foo-x!)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable x (foo-x) foo-x!)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable x foo-x (foo-x!))".
 record.mo:Expected error in mat define-record-type-extensions: "missing nongenerative clause and require-nongenerative-clause is #t (define-record-type foo)".
 record.mo:Expected error in mat cp0-record-ref-optimizations: "make-record-type-descriptor: invalid uid 5".
 hash.mo:Expected error in mat old-hash-table: "get-hash-table: ((a . b)) is not an eq hashtable".
