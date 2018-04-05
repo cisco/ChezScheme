@@ -819,7 +819,7 @@
                (begin
                  (when (and src-path (time<? (file-modification-time lib-path) (file-modification-time src-path)))
                    (warningf who "~a file ~a is older than source file ~a" what lib-path src-path))
-                 (when (import-notify) (fprintf (console-output-port) "reading ~a" lib-path))
+                 (when (import-notify) (fprintf (console-output-port) "reading ~a\n" lib-path))
                  lib-path))))))
 
   (define build-graph
