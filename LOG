@@ -921,3 +921,6 @@
     c/Mf-a6osx, c/Mf-i3osx, c/Mf-ta6osx, c/Mf-ti3osx
 - handle compiled library code in boot files once base boot is loaded
     globals.h, scheme.c, 7.ss, 7.ms, primdata.ss
+- add newline to (import-notify) message in compile-whole-library and
+  compile-whole-program
+    compile.ss
