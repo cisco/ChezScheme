@@ -26,8 +26,8 @@
         (Inner : Inner (ir) -> * (val)
           [,lsrc (go lsrc)]
           [(program ,uid ,body) (go ($build-invoke-program uid body))]
-          [(library/ct ,uid ,import-code ,visit-code)
-           (go ($build-install-library/ct-code uid import-code visit-code))]
+          [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+           (go ($build-install-library/ct-code uid export-id* import-code visit-code))]
           [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
            (go ($build-install-library/rt-code uid dl* db* dv* de* body))]
           [,linfo/ct `(library/ct-info ,(library-info-uid linfo/ct) ,(library/ct-info-import-req* linfo/ct)

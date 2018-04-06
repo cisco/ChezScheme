@@ -905,3 +905,15 @@
   field names in define-record-type field specs.
     syntax.ss,
     record.ms, root-experr*
+- fixed an issue with the library system where an exception that occurs
+  during visit or revisit left the library in an inconsistent state that
+  caused it to appear that it was still in the process of running.  This
+  manifested in it raising a cyclic dependency exception, even though
+  there really is not a cyclic dependency.  The various library
+  management functions involved will now reset the part of the library
+  when an exception occurs.  This also means that if the library visit
+  or revisit failed for a transient reason (such as a missing or
+  incorrect library version that can be fixed by updating the
+  library-directories) it is now possible to recover from these errors.
+    expand-lang.ss, syntax.ss, interpret.ss, compile.ss, cprep.ss,
+    8.ms

@@ -461,8 +461,8 @@
       (Inner : Inner (ir) -> Inner ()
         [,lsrc lsrc] ; NB: workaround for nanopass tag snafu
         [(program ,uid ,body) ($build-invoke-program uid body)]
-        [(library/ct ,uid  ,import-code ,visit-code)
-         ($build-install-library/ct-code uid import-code visit-code)]
+        [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+         ($build-install-library/ct-code uid export-id* import-code visit-code)]
         [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
          ($build-install-library/rt-code uid dl* db* dv* de* body)]
         [else ir]))
@@ -916,7 +916,7 @@
                    (program-node-ir-set! maybe-program ir)
                    (values)])
                 (ctLibrary : ctLibrary (ir situation) -> * ()
-                  [(library/ct ,uid ,import-code ,visit-code)
+                  [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
                    (when (eq? situation 'revisit) ($oops who "encountered revisit-only compile-time library ~s while processing wpo file ~s" (lookup-path uid) ifn))
                    (record-ct-lib-ir! uid ir)
                    (values)])
@@ -1042,8 +1042,8 @@
     (define build-install-library/ct-code
       (lambda (node)
         (nanopass-case (Lexpand ctLibrary) (library-node-ctir node)
-          [(library/ct ,uid ,import-code ,visit-code)
-           ($build-install-library/ct-code uid
+          [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+           ($build-install-library/ct-code uid export-id*
              (if (library-node-visible? node) import-code void-pr)
              (if (library-node-visible? node) visit-code void-pr))])))
 
@@ -1449,8 +1449,8 @@
          (Inner : Inner (ir) -> Expr ()
            [,lsrc lsrc]
            [(program ,uid ,body) ($build-invoke-program uid body)]
-           [(library/ct ,uid ,import-code ,visit-code)
-            ($build-install-library/ct-code uid import-code visit-code)]
+           [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+            ($build-install-library/ct-code uid export-id* import-code visit-code)]
            [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
             ($build-install-library/rt-code uid dl* db* dv* de* body)]
            [else (sorry! who "unexpected Lexpand record ~s" ir)])
