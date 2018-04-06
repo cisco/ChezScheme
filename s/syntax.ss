@@ -828,9 +828,10 @@
          ,(build-sequence no-source init*)))))
 
 (define build-top-library/ct
-  (lambda (uid import-code* visit-code*)
+  (lambda (uid export-id* import-code* visit-code*)
     (with-output-language (Lexpand ctLibrary)
       `(library/ct ,uid
+         (,export-id* ...)
          ,(build-lambda no-source '()
             (build-sequence no-source import-code*))
          ,(if (null? visit-code*)
@@ -2357,9 +2358,10 @@
     (mutable clo*)                ; cross-library optimization information
     (mutable loaded-import-reqs)
     (mutable loaded-visit-reqs)
+    (mutable export-id*)          ; ids that need to be reset when visit-code raises an exception
     (mutable import-code)
     (mutable visit-code))
-  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-1})
+  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-2})
   (sealed #t))
 
 (define-record-type rtdesc
@@ -2375,6 +2377,7 @@
          libdesc-loaded-visit-reqs libdesc-loaded-visit-reqs-set!
          libdesc-import-code libdesc-import-code-set!
          libdesc-visit-code libdesc-visit-code-set!
+         libdesc-visit-id* libdesc-visit-id*-set!
          libdesc-clo* libdesc-clo*-set!)
   (define get-ctdesc
     (lambda (desc)
@@ -2416,6 +2419,12 @@
   (define libdesc-visit-code-set!
     (lambda (desc x)
       (ctdesc-visit-code-set! (get-ctdesc desc) x)))
+  (define libdesc-visit-id*
+    (lambda (desc)
+      (ctdesc-export-id* (get-ctdesc desc))))
+  (define libdesc-visit-id*-set!
+    (lambda (desc x)
+      (ctdesc-export-id*-set! (get-ctdesc desc) x)))
   (define libdesc-clo*
     (lambda (desc)
       (ctdesc-clo* (get-ctdesc desc))))
@@ -2460,10 +2469,15 @@
               (when (eq? p 'pending)
                 ($oops #f "cyclic dependency involving visit of library ~s" (libdesc-path desc)))
               (libdesc-visit-code-set! desc 'pending)
-              (for-each (lambda (req) (visit-library (libreq-uid req))) (libdesc-visit-visit-req* desc))
-              (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-visit-req* desc))
-              (p)
-              (libdesc-visit-code-set! desc #f))]))]
+              (on-reset
+                (begin
+                  (for-each (lambda (id) ($sc-put-cte id (make-binding 'visit uid) #f)) (libdesc-visit-id* desc))
+                  (libdesc-visit-code-set! desc p))
+                (for-each (lambda (req) (visit-library (libreq-uid req))) (libdesc-visit-visit-req* desc))
+                (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-visit-req* desc))
+                (p))
+              (libdesc-visit-code-set! desc #f)
+              (libdesc-visit-id*-set! desc '()))]))]
       [else ($oops #f "library ~:s is not defined" uid)])))
 
 (define invoke-library
@@ -2480,8 +2494,9 @@
               (when (eq? p 'pending)
                 ($oops #f "cyclic dependency involving invocation of library ~s" (libdesc-path desc)))
               (libdesc-invoke-code-set! desc 'pending)
-              (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
-              (p)
+              (on-reset (libdesc-invoke-code-set! desc p)
+                (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
+                (p))
               (libdesc-invoke-code-set! desc #f))]))]
       [else ($oops #f "library ~:s is not defined" uid)])))
 
@@ -2525,8 +2540,9 @@
                      (when (eq? p 'pending)
                        ($oops #f "cyclic dependency involving invocation of library ~s" (libdesc-path desc)))
                      (libdesc-invoke-code-set! desc 'pending)
-                     (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
-                     (p)
+                     (on-reset (libdesc-invoke-code-set! desc p)
+                       (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
+                       (p))
                      (libdesc-invoke-code-set! desc #f))]))
               (unless (memp (lambda (x) (eq? (libreq-uid x) uid)) req*)
                 (set! req* (cons (make-libreq (libdesc-path desc) (libdesc-version desc) uid) req*))))]
@@ -2626,7 +2642,7 @@
                         (install-library library-path library-uid
                          ; import-code & visit-code is #f because vthunk invocation has already set up compile-time environment
                           (make-libdesc library-path library-version outfn #f
-                            (make-ctdesc include-req* import-req* visit-visit-req* visit-req* '() #t #t #f #f)
+                            (make-ctdesc include-req* import-req* visit-visit-req* visit-req* '() #t #t '() #f #f)
                             (make-rtdesc invoke-req* #t
                               (top-level-eval-hook
                                 (build-lambda no-source '()
@@ -2666,6 +2682,13 @@
                                build-void
                                (lambda ()
                                  (build-top-library/ct library-uid
+                                   ; visit-time exports (making them available for reset on visit-code failure)
+                                   (fold-left (lambda (ls x)
+                                                (let ([label (car x)] [exp (cdr x)])
+                                                  (if (and (pair? exp) (eq? (car exp) 'visit))
+                                                      (cons label ls)
+                                                      ls)))
+                                     '() env*)
                                    ; setup code
                                    `(,(build-cte-install bound-id (build-data no-source interface-binding) '*system*)
                                       ,@(if (null? env*)
@@ -4632,11 +4655,12 @@
         (when desc (put-library-descriptor uid desc)))))
 
   (define-who install-library/ct-code
-    (lambda (uid import-code visit-code)
+    (lambda (uid export-id* import-code visit-code)
       (let ([desc (get-library-descriptor uid)])
         (unless desc (sorry! who "unable to install visit code for non-existent library ~s" uid))
         (let ([ctdesc (libdesc-ctdesc desc)])
           (unless ctdesc (sorry! who "unable to install visit code for revisit-only library ~s" uid))
+          (ctdesc-export-id*-set! ctdesc export-id*)
           (ctdesc-import-code-set! ctdesc import-code)
           (ctdesc-visit-code-set! ctdesc visit-code)))))
 
@@ -5077,7 +5101,8 @@
                 [(#t) (void)]
                 [(#f)
                  (libdesc-loaded-invoke-reqs-set! desc 'pending)
-                 (for-each (make-load-req load-invoke-library path) (libdesc-invoke-req* desc))
+                 (on-reset (libdesc-loaded-invoke-reqs-set! desc #f)
+                   (for-each (make-load-req load-invoke-library path) (libdesc-invoke-req* desc)))
                  (libdesc-loaded-invoke-reqs-set! desc #t)]
                 [(pending) ($oops #f "cyclic dependency involving invocation of library ~s" (libdesc-path desc))]))))))
     (define load-visit-library
@@ -5091,8 +5116,9 @@
                 [(#t) (void)]
                 [(#f)
                  (libdesc-loaded-visit-reqs-set! desc 'pending)
-                 (for-each (make-load-req load-visit-library path) (libdesc-visit-visit-req* desc))
-                 (for-each (make-load-req load-invoke-library path) (libdesc-visit-req* desc))
+                 (on-reset (libdesc-loaded-visit-reqs-set! desc #f)
+                   (for-each (make-load-req load-visit-library path) (libdesc-visit-visit-req* desc))
+                   (for-each (make-load-req load-invoke-library path) (libdesc-visit-req* desc)))
                  (libdesc-loaded-visit-reqs-set! desc #t)]
                 [(pending) ($oops #f "cyclic dependency involving visit of library ~s" (libdesc-path desc))]))))))
     (define load-import-library
@@ -5106,7 +5132,8 @@
                 [(#t) (void)]
                 [(#f)
                  (libdesc-loaded-import-reqs-set! desc 'pending)
-                 (for-each (make-load-req load-import-library path) (libdesc-import-req* desc))
+                 (on-reset (libdesc-loaded-import-reqs-set! desc #f)
+                   (for-each (make-load-req load-import-library path) (libdesc-import-req* desc)))
                  (libdesc-loaded-import-reqs-set! desc #t)]
                 [(pending) ($oops #f "cyclic dependency involving import of library ~s" (libdesc-path desc))]))))))
     (define import-library
@@ -5261,9 +5288,10 @@
       (build-lambda no-source '() body))))
 
 (set-who! $build-install-library/ct-code
-  (lambda (uid import-code visit-code)
+  (lambda (uid export-id* import-code visit-code)
     (build-primcall no-source 3 '$install-library/ct-code
       (build-data no-source uid)
+      (build-data no-source export-id*)
       import-code
       visit-code)))
 
@@ -5393,7 +5421,7 @@
           (library/ct-info-visit-visit-req* linfo/ct)
           (library/ct-info-visit-req* linfo/ct)
           (library/ct-info-clo* linfo/ct)
-          #f #f 'loading 'loading)))))
+          #f #f '() 'loading 'loading)))))
 
 (set! $install-library/rt-desc
   (lambda (linfo/rt for-import? ofn)
@@ -5405,8 +5433,8 @@
         uid ofn (make-rtdesc (library/rt-info-invoke-req* linfo/rt) #f 'loading)))))
 
 (set! $install-library/ct-code
-  (lambda (uid import-code visit-code)
-    (install-library/ct-code uid import-code visit-code)))
+  (lambda (uid export-id* import-code visit-code)
+    (install-library/ct-code uid export-id* import-code visit-code)))
 
 (set! $install-library/rt-code
   (lambda (uid invoke-code)
@@ -5482,7 +5510,7 @@
     (lambda (path uid)
       (install-library path uid
         (make-libdesc path (if (eq? (car path) 'rnrs) '(6) '()) #f #t
-          (make-ctdesc '() '() '() '() '() #t #t #f #f)
+          (make-ctdesc '() '() '() '() '() #t #t '() #f #f)
           (make-rtdesc '() #t #f)))))
   (set! $make-base-modules
     (lambda ()

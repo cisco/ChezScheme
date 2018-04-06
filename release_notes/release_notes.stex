@@ -1566,13 +1566,24 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Incomplete handling of import specs within standalone export forms}
+\subsection{Misleading cyclic dependency error (9.5)}
+
+The library system no longer reports a cyclic dependency error
+during the second and subsequent attempts to visit or invoke a
+library after the first attempt fails for some reason other than
+an actual cyclic dependency.
+The fix also allows a library to be visited or invoked successfully
+on the second or subsequent attempt if the visit or invoke failed
+for a transient reason, such as a missing or incorrect version in
+an imported library.
+
+\subsection{Incomplete handling of import specs within standalone export forms (9.5)}
 
 A bug that limited the \scheme{(import \var{import-spec} \dots)} form within a
 standalone \scheme{export} form to \scheme{(import \var{import-spec})} has been
 fixed.
 
-\subsection{Permission denied after deleting files or directories in Windows}
+\subsection{Permission denied after deleting files or directories in Windows (9.5)}
 
 In Windows, deleting a file or directory briefly leaves the file or
 directory in a state where a subsequent create operation fails with

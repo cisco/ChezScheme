@@ -666,8 +666,8 @@
     [,lsrc (ibeval lsrc)]
     [(program ,uid ,body)
      (ibeval ($build-invoke-program uid body))]
-    [(library/ct ,uid ,import-code ,visit-code)
-     (ibeval ($build-install-library/ct-code uid import-code visit-code))]
+    [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+     (ibeval ($build-install-library/ct-code uid export-id* import-code visit-code))]
     [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
      (ibeval ($build-install-library/rt-code uid dl* db* dv* de* body))]
     [,linfo/rt ($install-library/rt-desc linfo/rt for-import? ofn)]
