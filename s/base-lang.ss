@@ -155,7 +155,7 @@
 
   (define convention?
     (lambda (x)
-      (and (list? x) (andmap symbol? x))))
+      (symbol? x)))
 
   (define-record-type preinfo
     (nongenerative #{preinfo e23pkvo5btgapnzomqgegm-2})
@@ -211,7 +211,7 @@
 
   ; source language used by the passes leading up to the compiler or interpreter
   (define-language Lsrc
-    (nongenerative-id #{Lsrc czsa1fcfzdeh493n-2})
+    (nongenerative-id #{Lsrc czsa1fcfzdeh493n-3})
     (terminals
       (preinfo (preinfo))
       ($prelex (x))
@@ -248,8 +248,8 @@
       (record-ref rtd type index e)
       (record-set! rtd type index e1 e2)
       (cte-optimization-loc box e)
-      (foreign conv name e (arg-type* ...) result-type)
-      (fcallable conv e (arg-type* ...) result-type)
+      (foreign (conv ...) name e (arg-type* ...) result-type)
+      (fcallable (conv ...) e (arg-type* ...) result-type)
       (profile src)                                         => (profile)
       ; used only in cpvalid
       (cpvalid-defer e))

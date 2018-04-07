@@ -73,10 +73,10 @@
          (values `(seq ,e1 ,e2) (fx+ size1 size2))]
         [(if ,[e1 size1] ,[e2 size2] ,[e3 size3])
          (values `(if ,e1 ,e2 ,e3) (fx+ size1 size2 size3))]
-        [(foreign ,conv ,name ,[e size] (,arg-type* ...) ,result-type)
-         (values `(foreign ,conv ,name ,e (,arg-type* ...) ,result-type) (fx+ 1 size))]
-        [(fcallable ,conv ,[e size] (,arg-type* ...) ,result-type)
-         (values `(fcallable ,conv ,e (,arg-type* ...) ,result-type) (fx+ 1 size))]
+        [(foreign (,conv ...) ,name ,[e size] (,arg-type* ...) ,result-type)
+         (values `(foreign (,conv ...) ,name ,e (,arg-type* ...) ,result-type) (fx+ 1 size))]
+        [(fcallable (,conv ...) ,[e size] (,arg-type* ...) ,result-type)
+         (values `(fcallable (,conv ...) ,e (,arg-type* ...) ,result-type) (fx+ 1 size))]
         ; ($top-level-value 'x) adds just 1 to the size
         [(call ,preinfo ,pr (quote ,d))
          (guard (eq? (primref-name pr) '$top-level-value))
@@ -379,24 +379,24 @@
                                                        (with-env x1* x2*
                                                          `(letrec ([,x1* ,(map f e1* e2*) ,size1*] ...) ,(f body1 body2))))]
                                                  [else #f])]
-                                              [(foreign ,conv1 ,name1 ,e1 (,arg-type1* ...) ,result-type1)
+                                              [(foreign (,conv1 ...) ,name1 ,e1 (,arg-type1* ...) ,result-type1)
                                                (nanopass-case (Lcommonize1 Expr) e2
-                                                 [(foreign ,conv2 ,name2 ,e2 (,arg-type2* ...) ,result-type2)
-                                                  (and (eq? conv1 conv2)
+                                                 [(foreign (,conv2 ...) ,name2 ,e2 (,arg-type2* ...) ,result-type2)
+                                                  (and (equal? conv1 conv2)
                                                        (equal? name1 name2)
                                                        (fx= (length arg-type1*) (length arg-type2*))
                                                        (andmap same-type? arg-type1* arg-type2*)
                                                        (same-type? result-type1 result-type2)
-                                                       `(foreign ,conv1 ,name1 ,(f e1 e2) (,arg-type1* ...) ,result-type1))]
+                                                       `(foreign (,conv1 ...) ,name1 ,(f e1 e2) (,arg-type1* ...) ,result-type1))]
                                                  [else #f])]
-                                              [(fcallable ,conv1 ,e1 (,arg-type1* ...) ,result-type1)
+                                              [(fcallable (,conv1 ...) ,e1 (,arg-type1* ...) ,result-type1)
                                                (nanopass-case (Lcommonize1 Expr) e2
-                                                 [(fcallable ,conv2 ,e2 (,arg-type2* ...) ,result-type2)
-                                                  (and (eq? conv1 conv2)
+                                                 [(fcallable (,conv2 ...) ,e2 (,arg-type2* ...) ,result-type2)
+                                                  (and (equal? conv1 conv2)
                                                        (fx= (length arg-type1*) (length arg-type2*))
                                                        (andmap same-type? arg-type1* arg-type2*)
                                                        (same-type? result-type1 result-type2)
-                                                       `(fcallable ,conv1 ,(f e1 e2) (,arg-type1* ...) ,result-type1))]
+                                                       `(fcallable (,conv1 ...) ,(f e1 e2) (,arg-type1* ...) ,result-type1))]
                                                  [else #f])]
                                               [(cte-optimization-loc ,box1 ,e1)
                                                (nanopass-case (Lcommonize1 Expr) e2

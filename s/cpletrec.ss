@@ -348,11 +348,11 @@ Handling letrec and letrec*
        (with-initialized-ids x*
          (lambda (x*)
            (cpletrec-letrec #t x* e* body)))]
-      [(foreign ,conv ,name ,[e pure?] (,arg-type* ...) ,result-type)
-       (values `(foreign ,conv ,name ,e (,arg-type* ...) ,result-type)
+      [(foreign (,conv ...) ,name ,[e pure?] (,arg-type* ...) ,result-type)
+       (values `(foreign (,conv ...) ,name ,e (,arg-type* ...) ,result-type)
          (and (fx= (optimize-level) 3) pure?))]
-      [(fcallable ,conv ,[e pure?] (,arg-type* ...) ,result-type)
-       (values `(fcallable ,conv ,e (,arg-type* ...) ,result-type)
+      [(fcallable (,conv ...) ,[e pure?] (,arg-type* ...) ,result-type)
+       (values `(fcallable (,conv ...) ,e (,arg-type* ...) ,result-type)
          (and (fx= (optimize-level) 3) pure?))]
       [(record-ref ,rtd ,type ,index ,[e pure?])
        (values `(record-ref ,rtd ,type ,index ,e) #f)]
