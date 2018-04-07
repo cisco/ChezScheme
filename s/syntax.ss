@@ -689,14 +689,14 @@
   (define build-foreign-procedure
     (lambda (ae conv foreign-name foreign-addr params result)
       (build-profile ae
-        `(foreign ,conv ,foreign-name ,foreign-addr
+        `(foreign (,conv ...) ,foreign-name ,foreign-addr
            (,(map (lambda (x) (build-fp-specifier 'foreign-procedure 'parameter x #f)) params) ...)
            ,(build-fp-specifier 'foreign-procedure "result" result #t)))))
 
   (define build-foreign-callable
     (lambda (ae conv proc params result)
       (build-profile ae
-        `(fcallable ,conv ,proc
+        `(fcallable (,conv ...) ,proc
            (,(map (lambda (x) (build-fp-specifier 'foreign-callable 'parameter x #f)) params) ...)
            ,(build-fp-specifier 'foreign-callable "result" result #t))))))
 

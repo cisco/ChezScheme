@@ -78,10 +78,6 @@
   (import (nanopass))
   (include "base-lang.ss")
 
- ; convention is a list of symbols (we're assuming the front end already verified
- ; the convention is a valid one for this machine-type)
-  (define convention? (lambda (x) (and (list? x) (andmap symbol? x))))
-
  ; r6rs says a quote subform should be a datum, not must be a datum
  ; chez scheme allows a quote subform to be any value
   (define datum? (lambda (x) #t))

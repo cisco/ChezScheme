@@ -328,10 +328,10 @@
        (let-values ([(e* vals-dl?) (undefer* e* proxy dl?)])
          (defer-or-not (or body-dl? vals-dl?)
            `(letrec* ([,x* ,e*] ...) ,body)))]
-      [(foreign ,conv ,name ,[undefer : e dl?] (,arg-type* ...) ,result-type)
-       (defer-or-not dl? `(foreign ,conv ,name ,e (,arg-type* ...) ,result-type))]
-      [(fcallable ,conv ,[undefer : e dl?] (,arg-type* ...) ,result-type)
-       (defer-or-not dl? `(fcallable ,conv ,e (,arg-type* ...) ,result-type))]
+      [(foreign (,conv ...) ,name ,[undefer : e dl?] (,arg-type* ...) ,result-type)
+       (defer-or-not dl? `(foreign (,conv ...) ,name ,e (,arg-type* ...) ,result-type))]
+      [(fcallable (,conv ...) ,[undefer : e dl?] (,arg-type* ...) ,result-type)
+       (defer-or-not dl? `(fcallable (,conv ...) ,e (,arg-type* ...) ,result-type))]
       [(cte-optimization-loc ,box ,[undefer : e dl?])
        (defer-or-not dl? `(cte-optimization-loc ,box ,e))]
       [(pariah) (values x #f)]
@@ -547,10 +547,10 @@
        (defer-or-not (or dl0? dl1? dl2?) `(if ,e0 ,e1 ,e2))]
       [(seq ,[cpvalid : e1 dl1?] ,[cpvalid : e2 dl2?])
        (defer-or-not (or dl1? dl2?) `(seq ,e1 ,e2))]
-      [(foreign ,conv ,name ,[cpvalid : e dl?] (,arg-type* ...) ,result-type)
-       (defer-or-not dl? `(foreign ,conv ,name ,e (,arg-type* ...) ,result-type))]
-      [(fcallable ,conv ,[cpvalid : e dl?] (,arg-type* ...) ,result-type)
-       (defer-or-not dl? `(fcallable ,conv ,e (,arg-type* ...) ,result-type))]
+      [(foreign (,conv ...) ,name ,[cpvalid : e dl?] (,arg-type* ...) ,result-type)
+       (defer-or-not dl? `(foreign (,conv ...) ,name ,e (,arg-type* ...) ,result-type))]
+      [(fcallable (,conv ...) ,[cpvalid : e dl?] (,arg-type* ...) ,result-type)
+       (defer-or-not dl? `(fcallable (,conv ...) ,e (,arg-type* ...) ,result-type))]
       [(cte-optimization-loc ,box ,[cpvalid : e dl?])
        (defer-or-not dl? `(cte-optimization-loc ,box ,e))]
       [(pariah) (values x #f)]
