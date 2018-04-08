@@ -917,3 +917,5 @@
   library-directories) it is now possible to recover from these errors.
     expand-lang.ss, syntax.ss, interpret.ss, compile.ss, cprep.ss,
     8.ms
+- Added -Wno-implicit-fallthrough flag to macOS C makefiles.
+    c/Mf-a6osx, c/Mf-i3osx, c/Mf-ta6osx, c/Mf-ti3osx
