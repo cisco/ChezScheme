@@ -185,36 +185,42 @@
 (let ()
   (define do-load-binary
     (lambda (who fn ip situation for-import?)
-      (module (Lexpand? visit-stuff? visit-stuff-inner revisit-stuff? revisit-stuff-inner
-               recompile-info? library/ct-info? library/rt-info? program-info?)
-        (import (nanopass))
-        (include "base-lang.ss")
-        (include "expand-lang.ss"))
-      (define unexpected-value!
-        (lambda (x)
-          ($oops who "unexpected value ~s read from ~a" x fn)))
-      (let loop ()
-        (let ([x (fasl-read ip)])
-          (define run-inner
-            (lambda (x)
-              (cond
-                [(procedure? x) (x)]
-                [(library/rt-info? x) ($install-library/rt-desc x for-import? fn)]
-                [(library/ct-info? x) ($install-library/ct-desc x for-import? fn)]
-                [(program-info? x) ($install-program-desc x)]
-                [else (unexpected-value! x)])))
-          (define run-outer
-            (lambda (x)
-              (cond
-                [(recompile-info? x) (void)]
-                [(revisit-stuff? x) (when (memq situation '(load revisit)) (run-inner (revisit-stuff-inner x)))]
-                [(visit-stuff? x) (when (memq situation '(load visit)) (run-inner (visit-stuff-inner x)))]
-                [else (run-inner x)])))
-          (cond
-            [(eof-object? x) (close-port ip)]
-            [(vector? x) (vector-for-each run-outer x) (loop)]
-            [(Lexpand? x) ($interpret-backend x situation for-import? fn) (loop)]
-            [else (run-outer x) (loop)])))))
+      (let ([load-binary (make-load-binary who fn situation for-import?)])
+        (let loop ()
+          (let ([x (fasl-read ip)])
+            (cond
+             [(eof-object? x) (close-port ip)]
+             [else (load-binary x) (loop)]))))))
+
+  (define (make-load-binary who fn situation for-import?)
+    (module (Lexpand? visit-stuff? visit-stuff-inner revisit-stuff? revisit-stuff-inner
+              recompile-info? library/ct-info? library/rt-info? program-info?)
+      (import (nanopass))
+      (include "base-lang.ss")
+      (include "expand-lang.ss"))
+    (define unexpected-value!
+      (lambda (x)
+        ($oops who "unexpected value ~s read from ~a" x fn)))
+    (define run-inner
+      (lambda (x)
+        (cond
+         [(procedure? x) (x)]
+         [(library/rt-info? x) ($install-library/rt-desc x for-import? fn)]
+         [(library/ct-info? x) ($install-library/ct-desc x for-import? fn)]
+         [(program-info? x) ($install-program-desc x)]
+         [else (unexpected-value! x)])))
+    (define run-outer
+      (lambda (x)
+        (cond
+         [(recompile-info? x) (void)]
+         [(revisit-stuff? x) (when (memq situation '(load revisit)) (run-inner (revisit-stuff-inner x)))]
+         [(visit-stuff? x) (when (memq situation '(load visit)) (run-inner (visit-stuff-inner x)))]
+         [else (run-inner x)])))
+    (lambda (x)
+      (cond
+       [(vector? x) (vector-for-each run-outer x)]
+       [(Lexpand? x) ($interpret-backend x situation for-import? fn)]
+       [else (run-outer x)])))
 
   (define (do-load who fn situation for-import? ksrc)
     (let ([ip ($open-file-input-port who fn)])
@@ -245,6 +251,10 @@
                   ; whack ip so on-reset close-port call above closes the text port
                   (set! ip (transcoded-port ip (current-transcoder)))
                   (ksrc ip sfd ($make-read ip sfd fp)))))))))
+
+  (set! $make-load-binary
+    (lambda (fn situation for-import?)
+      (make-load-binary '$make-load-binary fn situation for-import?)))
 
   (set-who! load-program
     (rec load-program

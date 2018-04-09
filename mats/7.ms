@@ -933,6 +933,31 @@
     "hello 1\nhello 2\nhello 3\nhello 4\nhello 5\n")
   (equal?
     (begin
+      (parameterize ([optimize-level 2])
+        (compile-to-file
+         '((library (A) (export a) (import (scheme)) (define a 'aye))
+           (library (B) (export b) (import (A) (scheme)) (define b (list a 'captain))))
+         "testfile-libs.so")
+        (make-boot-file "testfile.boot" '("petite") "testfile-libs.so"))
+      (let-values ([(to-stdin from-stdout from-stderr pid)
+                    (open-process-ports
+                      (format "~a -b testfile.boot -q"
+                        (if (windows?)
+                            (list->string (subst #\\ #\/ (string->list *scheme*)))
+                            *scheme*))
+                      (buffer-mode block)
+                      (native-transcoder))])
+        (pretty-print '(let () (import (B)) (printf "~s\n" b)) to-stdin)
+        (close-output-port to-stdin)
+        (let ([out (get-string-all from-stdout)]
+              [err (get-string-all from-stderr)])
+          (close-input-port from-stdout)
+          (close-input-port from-stderr)
+          (unless (eof-object? err) (error 'bootfile-test1 err))
+          out)))
+    "(aye captain)\n")
+  (equal?
+    (begin
       (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
           (machine-type) (machine-type) (if (windows?) ".exe" "")))
