@@ -1566,6 +1566,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Boot files containing compiled library code fail to load}
+
+Compiled library code may now appear within fasl objects loaded during
+the boot process, provided that they are appended to the end of the base boot
+file or appear within a later boot file.
+
 \subsection{Misleading cyclic dependency error (9.5)}
 
 The library system no longer reports a cyclic dependency error

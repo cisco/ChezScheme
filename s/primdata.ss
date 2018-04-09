@@ -2072,6 +2072,7 @@
   ($make-fptr [flags pure mifoldable discard true])
   ($make-graph-env [flags])
   ($make-library-requirements-options [flags pure discard true])
+  ($make-load-binary [flags])
   ($make-object-finder [flags])
   ($make-promise [flags alloc])
   ($make-read [flags])
