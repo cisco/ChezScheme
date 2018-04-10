@@ -184,7 +184,7 @@
 
   ; language of foreign types
   (define-language Ltype 
-    (nongenerative-id #{Ltype czp82kxwe75y4e18-0})
+    (nongenerative-id #{Ltype czp82kxwe75y4e18-1})
     (terminals
       (exact-integer (bits))
       ($ftd (ftd)))
@@ -199,7 +199,8 @@
       (fp-fixnum)
       (fp-double-float)
       (fp-single-float)
-      (fp-ftd ftd)))
+      (fp-ftd ftd)
+      (fp-ftd& ftd)))
 
   (define arity?
     (lambda (x)

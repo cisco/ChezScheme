@@ -1366,6 +1366,8 @@
    [ptr optimize-level]
    [ptr subset-mode]
    [ptr suppress-primitive-inlining]
+   [ptr default-record-equal-procedure]
+   [ptr default-record-hash-procedure]
    [U64 instr-counter]
    [U64 alloc-counter]
    [ptr parameters]))
@@ -2631,16 +2633,7 @@
      scan-remembered-set
      instantiate-code-object
      Sreturn
-     Scall->ptr
-     Scall->fptr
-     Scall->bytevector
-     Scall->fixnum
-     Scall->int32
-     Scall->uns32
-     Scall->double
-     Scall->single
-     Scall->int64
-     Scall->uns64
-     Scall->void
+     Scall-one-result
+     Scall-any-results
   ))
 )

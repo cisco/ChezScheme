@@ -1500,9 +1500,13 @@ static void sweep_thread(p) ptr p; {
     /* immediate GENERATEINSPECTORINFORMATION */
     /* immediate GENERATEPROFILEFORMS */
     /* immediate OPTIMIZELEVEL */
-    relocate(&PARAMETERS(tc))
+    relocate(&SUBSETMODE(tc))
+    /* immediate SUPPRESSPRIMITIVEINLINING */
+    relocate(&DEFAULTRECORDEQUALPROCEDURE(tc))
+    relocate(&DEFAULTRECORDHASHPROCEDURE(tc))
     /* U64 INSTRCOUNTER(tc) */
     /* U64 ALLOCCOUNTER(tc) */
+    relocate(&PARAMETERS(tc))
     for (i = 0 ; i < virtual_register_count ; i += 1) {
       relocate(&VIRTREG(tc, i));
     }
@@ -2126,7 +2130,7 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
         youngest = tg;
       } else {
         /* Not reached, so far; add to pending list */
-	add_ephemeron_to_pending(pe);
+        add_ephemeron_to_pending(pe);
         /* Make the consistent (but pessimistic w.r.t. to wrong-way
            pointers) assumption that the key will stay live and move
            to the target generation. That assumption covers the value

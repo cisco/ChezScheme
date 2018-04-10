@@ -410,8 +410,18 @@ int S_windows_rmdir(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
     return _rmdir(pathname);
-  else
-    return _wrmdir(wpathname);
+  else {
+    int rc;
+    if (!(rc = _wrmdir(wpathname))) {
+      // Spin loop until Windows deletes the directory.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wrmdir(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 int S_windows_stat64(const char *pathname, struct STATBUF *buffer) {
@@ -434,8 +444,18 @@ int S_windows_unlink(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
     return _unlink(pathname);
-  else
-    return _wunlink(wpathname);
+  else {
+    int rc;
+    if (!(rc = _wunlink(wpathname))) {
+      // Spin loop until Windows deletes the file.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wunlink(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 char *S_windows_getcwd(char *buffer, int maxlen) {
