@@ -35,6 +35,9 @@ if ({(echo -n "$1" | grep '^[0-9]\.[0-9]$' >& /dev/null)}) then
 
   # set ZR to release number w/o "."
   set ZR = $MR$mR
+
+  # set underscoreR to release number w/ "_" in place of "."
+  set underscoreR = $MR"_"$mR
 else if ({(echo -n "$1" | grep '^[0-9]\.[0-9]\.[0-9]$' >& /dev/null)}) then
   # set MR to major release number
   set tmp = $R:r
@@ -48,6 +51,9 @@ else if ({(echo -n "$1" | grep '^[0-9]\.[0-9]\.[0-9]$' >& /dev/null)}) then
 
   # set ZR to release number w/o "."
   set ZR = $MR$mR$bR
+
+  # set underscoreR to release number w/ "_" in place of "."
+  set underscoreR = $MR"_"$mR"_"$bR
 else
   echo "invalid release number $R"
   exit 1
@@ -87,6 +93,7 @@ set updatedfiles = ($updatedfiles NOTICE)
 
 mkdir makefiles
 sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
+sed -e "s/csug[0-9]\.[0-9]\(\.[0-9]\)*/csug$R/" -e "s/csug[0-9]_[0-9]\(_[0-9]\)*/csug$underscoreR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
 set updatedfiles = ($updatedfiles makefiles/Mf-install.in)
 
 /bin/rm scheme.1.in

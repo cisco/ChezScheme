@@ -1,7 +1,7 @@
 m = $(m)
 Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
 STEXLIB=../stex
-installdir=/tmp/csug9
+installdir=/tmp/csug9.5
 INSTALL=../$m/installsh
 
 x = csug
@@ -16,7 +16,8 @@ target: logcheck1 logcheck2 checklibs $(x).html $(x).pdf
 
 install: target
 	$(INSTALL) -m 2755 -d $(installdir)
-	$(INSTALL) -m 0644 --ifdiff *.html *.pdf *.css $(installdir)
+	$(INSTALL) -m 0644 --ifdiff *.html *.css $(installdir)
+	$(INSTALL) -m 0644 --ifdiff csug.pdf $(installdir)/csug9_5.pdf
 	$(INSTALL) -m 2755 -d $(installdir)/canned
 	$(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned
 	$(INSTALL) -m 2755 -d $(installdir)/gifs

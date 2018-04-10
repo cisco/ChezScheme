@@ -1647,6 +1647,8 @@
   (define-tc-parameter optimize-level (lambda (x) (and (fixnum? x) (fx<= 0 x 3))) "valid optimize level" 0)
   (define-tc-parameter $compile-profile (lambda (x) (memq x '(#f source block))) "valid compile-profile flag" #f)
   (define-tc-parameter subset-mode (lambda (mode) (memq mode '(#f system))) "valid subset mode" #f)
+  (define-tc-parameter default-record-equal-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
+  (define-tc-parameter default-record-hash-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
 )
 
 (define-who compile-profile

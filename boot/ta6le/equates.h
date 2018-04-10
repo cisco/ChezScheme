@@ -87,8 +87,8 @@ typedef unsigned long U64;
 #define bytevector_length_factor 0x8
 #define bytevector_length_offset 0x3
 #define bytevector_type_disp 0x1
-#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall->ptr Scall->fptr Scall->bytevector Scall->fixnum Scall->int32 Scall->uns32 Scall->double Scall->single Scall->int64 Scall->uns64 Scall->void)
-#define c_entry_vector_size 0x1F
+#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall-one-result Scall-any-results)
+#define c_entry_vector_size 0x16
 #define cached_stack_link_disp 0x8
 #define cached_stack_size_disp 0x0
 #define card_offset_bits 0x9
@@ -498,7 +498,7 @@ typedef unsigned long U64;
 #define size_rp_header 0x20
 #define size_rtd_counts 0x810
 #define size_symbol 0x30
-#define size_tc 0x270
+#define size_tc 0x280
 #define size_thread 0x10
 #define size_tlc 0x20
 #define size_typed_object 0x10
@@ -549,7 +549,7 @@ typedef unsigned long U64;
 #define tc_ac0_disp 0x28
 #define tc_ac1_disp 0x30
 #define tc_active_disp 0x134
-#define tc_alloc_counter_disp 0x260
+#define tc_alloc_counter_disp 0x270
 #define tc_ap_disp 0x50
 #define tc_arg_regs_disp 0x0
 #define tc_block_counter_disp 0x1D0
@@ -561,6 +561,8 @@ typedef unsigned long U64;
 #define tc_current_input_disp 0x1B8
 #define tc_current_mso_disp 0x1E0
 #define tc_current_output_disp 0x1C0
+#define tc_default_record_equal_procedure_disp 0x258
+#define tc_default_record_hash_procedure_disp 0x260
 #define tc_disable_count_disp 0x198
 #define tc_eap_disp 0x58
 #define tc_esp_disp 0x48
@@ -569,7 +571,7 @@ typedef unsigned long U64;
 #define tc_generate_inspector_information_disp 0x230
 #define tc_generate_profile_forms_disp 0x238
 #define tc_guardian_entries_disp 0x118
-#define tc_instr_counter_disp 0x258
+#define tc_instr_counter_disp 0x268
 #define tc_keyboard_interrupt_pending_disp 0x1A8
 #define tc_meta_level_disp 0x220
 #define tc_null_immutable_bytevector_disp 0x210
@@ -577,7 +579,7 @@ typedef unsigned long U64;
 #define tc_null_immutable_string_disp 0x218
 #define tc_null_immutable_vector_disp 0x200
 #define tc_optimize_level_disp 0x240
-#define tc_parameters_disp 0x268
+#define tc_parameters_disp 0x278
 #define tc_random_seed_disp 0x130
 #define tc_real_eap_disp 0x90
 #define tc_ret_disp 0x60
@@ -693,17 +695,8 @@ typedef unsigned long U64;
 #define wchar_bits 0x20
 
 /* constants from declare-c-entries */
-#define CENTRY_Scall_bytevector 22
-#define CENTRY_Scall_double 26
-#define CENTRY_Scall_fixnum 23
-#define CENTRY_Scall_fptr 21
-#define CENTRY_Scall_int32 24
-#define CENTRY_Scall_int64 28
-#define CENTRY_Scall_ptr 20
-#define CENTRY_Scall_single 27
-#define CENTRY_Scall_uns32 25
-#define CENTRY_Scall_uns64 29
-#define CENTRY_Scall_void 30
+#define CENTRY_Scall_any_results 21
+#define CENTRY_Scall_one_result 20
 #define CENTRY_Sreturn 19
 #define CENTRY_foreign_entry 14
 #define CENTRY_get_more_room 16
@@ -904,7 +897,7 @@ typedef unsigned long U64;
 #define AC0(x) (*((void* *)((uptr)(x)+40)))
 #define AC1(x) (*((void* *)((uptr)(x)+48)))
 #define ACTIVE(x) (*((I32 *)((uptr)(x)+308)))
-#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+608)))
+#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+624)))
 #define AP(x) (*((void* *)((uptr)(x)+80)))
 #define ARGREGS(x,i) (((void* *)((uptr)(x)+0))[i])
 #define BLOCKCOUNTER(x) (*((ptr *)((uptr)(x)+464)))
@@ -916,6 +909,8 @@ typedef unsigned long U64;
 #define CURRENTINPUT(x) (*((ptr *)((uptr)(x)+440)))
 #define CURRENTMSO(x) (*((ptr *)((uptr)(x)+480)))
 #define CURRENTOUTPUT(x) (*((ptr *)((uptr)(x)+448)))
+#define DEFAULTRECORDEQUALPROCEDURE(x) (*((ptr *)((uptr)(x)+600)))
+#define DEFAULTRECORDHASHPROCEDURE(x) (*((ptr *)((uptr)(x)+608)))
 #define DISABLECOUNT(x) (*((ptr *)((uptr)(x)+408)))
 #define EAP(x) (*((void* *)((uptr)(x)+88)))
 #define ESP(x) (*((void* *)((uptr)(x)+72)))
@@ -924,7 +919,7 @@ typedef unsigned long U64;
 #define GENERATEINSPECTORINFORMATION(x) (*((ptr *)((uptr)(x)+560)))
 #define GENERATEPROFILEFORMS(x) (*((ptr *)((uptr)(x)+568)))
 #define GUARDIANENTRIES(x) (*((ptr *)((uptr)(x)+280)))
-#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+600)))
+#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+616)))
 #define KEYBOARDINTERRUPTPENDING(x) (*((ptr *)((uptr)(x)+424)))
 #define METALEVEL(x) (*((ptr *)((uptr)(x)+544)))
 #define NULLIMMUTABLEBYTEVECTOR(x) (*((ptr *)((uptr)(x)+528)))
@@ -932,7 +927,7 @@ typedef unsigned long U64;
 #define NULLIMMUTABLESTRING(x) (*((ptr *)((uptr)(x)+536)))
 #define NULLIMMUTABLEVECTOR(x) (*((ptr *)((uptr)(x)+512)))
 #define OPTIMIZELEVEL(x) (*((ptr *)((uptr)(x)+576)))
-#define PARAMETERS(x) (*((ptr *)((uptr)(x)+616)))
+#define PARAMETERS(x) (*((ptr *)((uptr)(x)+632)))
 #define RANDOMSEED(x) (*((U32 *)((uptr)(x)+304)))
 #define REAL_EAP(x) (*((void* *)((uptr)(x)+144)))
 #define RET(x) (*((void* *)((uptr)(x)+96)))
