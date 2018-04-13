@@ -917,10 +917,7 @@
           "testfile-5.ss"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q"
-                        (if (windows?)
-                            (list->string (subst #\\ #\/ (string->list *scheme*)))
-                            *scheme*))
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)
@@ -941,10 +938,7 @@
         (make-boot-file "testfile.boot" '("petite") "testfile-libs.so"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q"
-                        (if (windows?)
-                            (list->string (subst #\\ #\/ (string->list *scheme*)))
-                            *scheme*))
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (pretty-print '(let () (import (B)) (printf "~s\n" b)) to-stdin)
@@ -971,10 +965,7 @@
           "testfile-5.so"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q"
-                        (if (windows?)
-                            (list->string (subst #\\ #\/ (string->list *scheme*)))
-                            *scheme*))
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)
@@ -3328,9 +3319,7 @@ evaluating module init
         'replace)
      ; compile in a separate Scheme process
       (if (windows?)
-          (system (format "echo (compile-file \"testfile\") | ~a"
-                    (list->string
-                      (subst #\\ #\/ (string->list *scheme*)))))
+          (system (format "echo (compile-file \"testfile\") | ~a" (patch-exec-path *scheme*)))
           (system (format "echo '(compile-file \"testfile\")' | ~a" *scheme*)))
       (load "testfile.so")
       (list (top-level-bound? '$notfribblefratz) (top-level-value '$notfribblefratz)))
