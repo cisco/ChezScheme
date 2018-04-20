@@ -931,3 +931,8 @@
     cp0.ss, cpcheck.ss, cpvalid.ss, interpret.ss, cpletrec.ss,
     thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
     mats/Mf-t*, foreign.ms, foreign4.c
+- Use system flag of primitives to avoid check in primvars.ms
+  With this flag the primitive is not tested in primvars.ms but other
+  parts of the compiler can use the signature/flags.
+  Also, add a signature to every system boolean primitive.
+    primvars.ms, primdata.ss
