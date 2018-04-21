@@ -2932,14 +2932,14 @@
   (error? (foreign-procedure __collect_safe "unknown" (utf-32be) void))
   (error? (foreign-procedure __collect_safe "unknown" (utf-32le) void))
   (error? (foreign-procedure __collect_safe "unknown" (string) void))
-  ;; (error? (foreign-procedure __collect_safe "unknown" (wstring) void)) <- error message varies by platform
+  (error? (foreign-procedure __collect_safe "unknown" (wstring) void))
   (error? (foreign-callable __collect_safe (lambda () #f) () utf-8))
   (error? (foreign-callable __collect_safe (lambda () #f) () utf-16le))
   (error? (foreign-callable __collect_safe (lambda () #f) () utf-16be))
   (error? (foreign-callable __collect_safe (lambda () #f) () utf-32le))
   (error? (foreign-callable __collect_safe (lambda () #f) () utf-32be))
   (error? (foreign-callable __collect_safe (lambda () #f) () string))
-  ;; (error? (foreign-callable __collect_safe (lambda () #f) () wstring)) <- error message varies by platform
+  (error? (foreign-callable __collect_safe (lambda () #f) () wstring))
   (begin
     (define-ftype thread-callback-T (function __collect_safe (double) double))
     (define (call-with-thread-callback cb-proc proc)
