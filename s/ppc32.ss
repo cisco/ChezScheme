@@ -2461,7 +2461,7 @@
           (let* ([arg-type* (info-foreign-arg-type* info)]
 		 [result-type (info-foreign-result-type info)]
 		 [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
-		 [adjust-active? (memq 'adjust-active (info-foreign-conv info))])
+		 [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)])
             (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*))
               (lambda (orig-frame-size locs live* fp-live-count)
                 ;; NB: add 4 to frame size for CR save word
@@ -3016,7 +3016,7 @@
                                                float-reg-offset
                                                (fx+ (fx* fp-reg-count 8) float-reg-offset))]
 		       [synthesize-first-argument? (indirect-result-that-fits-in-registers? result-type)]
-		       [adjust-active? (memq 'adjust-active (info-foreign-conv info))]
+		       [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)]
                        [unactivate-mode-offset (fx+ (fx* isaved 4) callee-save-offset)]
                        [return-space-offset (align 8 (fx+ unactivate-mode-offset (if adjust-active? 4 0)))]
                        [stack-size (align 16 (fx+ return-space-offset (if synthesize-first-argument? 8 0)))]

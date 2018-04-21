@@ -248,8 +248,8 @@
       (record-ref rtd type index e)
       (record-set! rtd type index e1 e2)
       (cte-optimization-loc box e)
-      (foreign (conv ...) name e (arg-type* ...) result-type)
-      (fcallable (conv ...) e (arg-type* ...) result-type)
+      (foreign (conv* ...) name e (arg-type* ...) result-type)
+      (fcallable (conv* ...) e (arg-type* ...) result-type)
       (profile src)                                         => (profile)
       ; used only in cpvalid
       (cpvalid-defer e))

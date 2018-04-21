@@ -256,7 +256,9 @@ allowed concurrent to the foreign procedure. The
 \scheme{__collect_safe} declaration allows concurrent collection by
 deactivating the current thread (see \scheme{fork-thread}) when the
 foreign procedure is called, and the thread is activated again when
-the foreign procedure returns. Refrain from passing collectable memory to a
+the foreign procedure returns. The \scheme{__collect_safe} declaration
+is useful, for example, when calling a blocking I/O call to allow
+other Scheme threads to run normally. Refrain from passing collectable memory to a
 \scheme{__collect_safe} foreign procedure, or use \scheme{lock-object}
 to lock the memory in place; see also \scheme{Sdeactivate_thread}. The
 \scheme{__collect_safe} declaration has no effect on a non-threaded
@@ -278,7 +280,8 @@ invoke callables, then each callable should also be declared with
 \scheme{__collect_safe} so that the callable reactivates the thread.
 
 
-Complete type checking and conversion is performed on the parameters.
+Complete type checking and conversion is performed on the parameters
+to a foreign procedure.
 The types
 \index{\scheme{scheme-object}}\scheme{scheme-object},
 \index{\scheme{string}}\scheme{string},
@@ -295,17 +298,28 @@ and
 must be used with caution, however, since they allow allocated
 Scheme objects to be used in places the Scheme memory management system
 cannot control. No problems will arise as long as such objects are not
-retained in
-foreign variables or data structures while Scheme code is running,
-since garbage collection can occur only while Scheme code is running.
-The types \scheme{string}, \scheme{wstring}, and \scheme{utf-8} through \scheme{utf-32be}
-are disallowed as argument types for a \scheme{__collect_safe} foreign procedure, since the object
-passed to the foreign procedure is not accessible for locking
-before concurrent garbage collection is enabled.
-Parameter types other than \scheme{scheme-object} through \scheme{utf-32be}
-are converted to equivalent foreign
+retained in foreign variables or data structures while Scheme code is running,
+and as long as they are not passed as arguments to a \scheme{__collect_safe} procedure,
+since garbage collection can occur only while Scheme code is running
+or when concurrent garbage collection is enabled.
+Other parameter types are converted to equivalent foreign
 representations and consequently they can be retained indefinitely in
 foreign variables and data structures.
+
+For argument types \scheme{string}, \scheme{wstring},
+\index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16le}}\scheme{utf-16le},
+\index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32le}}\scheme{utf-32le}, and
+\index{\scheme{utf-32be}}\scheme{utf-32be}, an argument is converted
+to a fresh object that is passed to the foreign procedure. Since the
+fresh object is not accessible for locking before the call, it can
+never be treated correctly for a \scheme{__collect_safe} foreign
+procedure, so those types are disallowed as argument types for
+a \scheme{__collect_safe} foreign procedure. For analogous reasons,
+those types are disallowed as the result of a \scheme{__collect_safe}
+foreign callable.
+
 Following are the valid parameter types:
 
 \foreigntype{\scheme{integer-8}}

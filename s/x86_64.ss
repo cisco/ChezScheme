@@ -2883,12 +2883,12 @@
                         `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size)))))))))
           (lambda (info)
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
-            (let* ([conv (info-foreign-conv info)]
+            (let* ([conv* (info-foreign-conv* info)]
                    [arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [result-classes (classify-type result-type)]
                    [fill-result-here? (result-fits-in-registers? result-classes)]
-                   [adjust-active? (memq 'adjust-active conv)])
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*) (make-vint) (make-vfp))
                 (lambda (frame-size nfp locs live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
@@ -3282,11 +3282,11 @@
                    ,e
                    ,(pop-registers result-regs)))))
           (lambda (info)
-            (let ([conv (info-foreign-conv info)]
+            (let ([conv* (info-foreign-conv* info)]
                   [arg-type* (info-foreign-arg-type* info)]
                   [result-type (info-foreign-result-type info)])
               (let* ([result-classes (classify-type result-type)]
-                     [adjust-active? (memq 'adjust-active conv)]
+                     [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
                      [synthesize-first? (and result-classes
                                              (result-fits-in-registers? result-classes))]
                      [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*) adjust-active?)])

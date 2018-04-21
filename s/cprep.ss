@@ -187,12 +187,12 @@
                [(letrec* ([,x* ,[e*]] ...) ,body)
                 `(letrec* ,(map (lambda (x e) `(,(get-name x) ,e)) x* e*)
                    ,@(uncprep-sequence body '()))]
-               [(foreign (,conv ...) ,name ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-procedure ,(uncprep-fp-conv conv) ,name ,e
+               [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-procedure ,(uncprep-fp-conv conv*) ,name ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
-               [(fcallable (,conv ...) ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-callable ,(uncprep-fp-conv conv) ,e
+               [(fcallable (,conv* ...) ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-callable ,(uncprep-fp-conv conv*) ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
                [(record-ref ,rtd ,type ,index ,[e]) `(record-ref ,rtd ',type ,e ,index)]
