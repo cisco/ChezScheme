@@ -56,7 +56,7 @@ ftype ->
   (array length ftype)
   (bits (field-name signedness bits) ...)
   (function (arg-type ...) result-type)
-  (function conv (arg-type ...) result-type)
+  (function conv ... (arg-type ...) result-type)
   (packed ftype)
   (unpacked ftype)
   (endian endianness ftype)
@@ -322,7 +322,7 @@ ftype operators:
   (define-ftd-record-type array #{rtd/ftd-array a9pth58056u34h517jsrqv-5} length ftd)
   (define-ftd-record-type pointer #{rtd/ftd-pointer a9pth58056u34h517jsrqv-6} (mutable ftd))
   (define-ftd-record-type bits #{rtd/ftd-ibits a9pth58056u34h517jsrqv-9} swap? field*)
-  (define-ftd-record-type function #{rtd/ftd-function a9pth58056u34h517jsrqv-10} conv arg-type* result-type)
+  (define-ftd-record-type function #{rtd/ftd-function a9pth58056u34h517jsrqv-11} conv* arg-type* result-type)
   (module (pointer-size alignment pointer-alignment native-base-ftds swap-base-ftds)
     (define alignment
       (lambda (max-alignment size)
@@ -527,7 +527,7 @@ ftype operators:
                    [(function-kwd (arg-type ...) result-type)
                     (eq? (datum function-kwd) 'function)
                     (f #'(function-kwd #f (arg-type ...) result-type) #f stype funok?)]
-                   [(function-kwd conv (arg-type ...) result-type)
+                   [(function-kwd conv ... (arg-type ...) result-type)
                     (eq? (datum function-kwd) 'function)
                     (let ()
                       (define filter-type
@@ -539,7 +539,7 @@ ftype operators:
                       (make-ftd-function rtd/fptr
                         (and defid (symbol->string (syntax->datum defid)))
                         stype #f #f
-                        ($filter-conv 'function-ftype #'conv)
+                        ($filter-conv 'function-ftype #'(conv ...))
                         (map (lambda (x) (filter-type r x #f)) #'(arg-type ...))
                         (filter-type r #'result-type #t)))]
                    [(packed-kwd ftype)
@@ -729,7 +729,7 @@ ftype operators:
                                       ;; (foreign-callable-entry-point code-object)
                                       [(procedure? x)
                                        (let ([co #,($make-foreign-callable 'make-ftype-pointer
-                                                     (ftd-function-conv ftd)
+                                                     (ftd-function-conv* ftd)
                                                      #'x
                                                      (map indirect-ftd-pointer (ftd-function-arg-type* ftd))
                                                      (indirect-ftd-pointer (ftd-function-result-type ftd)))])
@@ -1197,8 +1197,8 @@ ftype operators:
                                       [(ftd-base? ftd) (do-base (filter-foreign-type (ftd-base-type ftd)) (ftd-base-swap? ftd) offset)]
                                       [(ftd-pointer? ftd) #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-ftd ftd))]
                                       [(ftd-function? ftd) 
-                                       ($make-foreign-procedure
-                                         (ftd-function-conv ftd)
+                                       ($make-foreign-procedure 'make-ftype-pointer
+                                         (ftd-function-conv* ftd)
                                          #f
                                          #`($fptr-offset-addr #,fptr-expr offset)
                                          (map indirect-ftd-pointer (ftd-function-arg-type* ftd))

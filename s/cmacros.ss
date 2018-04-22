@@ -1387,6 +1387,10 @@
                  (cons (string->symbol (substring str 3 (- n 5))) params)
                  params))))))
 
+(define-constant unactivate-mode-noop       0)
+(define-constant unactivate-mode-deactivate 1)
+(define-constant unactivate-mode-destroy    2)
+
 (define-primitive-structure-disps rtd-counts type-typed-object
   ([iptr type]
    [U64 timestamp]
@@ -2624,6 +2628,9 @@
      split-and-resize
      raw-collect-cond
      raw-tc-mutex
+     activate-thread
+     deactivate-thread
+     unactivate-thread
      handle-values-error
      handle-mvlet-error
      handle-arg-error

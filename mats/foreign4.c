@@ -17,6 +17,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(_REENTRANT) || defined(_WIN32)
+# ifdef _WIN32
+#  include <Windows.h>
+#  define SCHEME_IMPORT
+#  include "scheme.h"
+# else
+#  include <pthread.h>
+#  include "scheme.h"
+# endif
+# undef EXPORT
+#endif
+
 typedef signed char i8;
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -62,6 +74,78 @@ EXPORT void free_at_boundary(void *p)
   free(p);
 }
 #endif
+
+#if defined(_REENTRANT) || defined(_WIN32)
+
+typedef struct in_thread_args_t {
+  double (*proc)(double arg);
+  double arg;
+  int n_times;
+} in_thread_args_t;
+
+void *in_thread(void *_proc_and_arg)
+{
+  in_thread_args_t *proc_and_arg = _proc_and_arg;
+  int i;
+
+  for (i = 0; i < proc_and_arg->n_times; i++) {
+    proc_and_arg->arg = proc_and_arg->proc(proc_and_arg->arg);
+  }
+
+  return NULL;
+}
+
+#if defined(_WIN32)
+# define os_thread_t unsigned
+# define os_thread_create(addr, proc, arg) (((*(addr)) = _beginthread(proc, 0, arg)) == -1)
+# define os_thread_join(t) WaitForSingleObject((HANDLE)(intptr_t)(t), INFINITE)
+#else
+# define os_thread_t pthread_t
+# define os_thread_create(addr, proc, arg) pthread_create(addr, NULL, in_thread, proc_and_arg)
+# define os_thread_join(t) pthread_join(t, NULL)
+#endif
+
+EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int n_times,
+                                     int do_fork, int do_deactivate) {
+  os_thread_t t;
+  in_thread_args_t *proc_and_arg = malloc(sizeof(in_thread_args_t));
+
+  proc_and_arg->proc = proc;
+  proc_and_arg->arg = arg;
+  proc_and_arg->n_times = n_times;
+
+  if (do_fork) {
+    if (!os_thread_create(&t, in_thread, proc_and_arg)) {
+      if (do_deactivate)
+        Sdeactivate_thread();
+      os_thread_join(t);
+      if (do_deactivate)
+        Sactivate_thread();
+    }
+  } else {
+    in_thread(proc_and_arg);
+  }
+
+  arg = proc_and_arg->arg;
+  free(proc_and_arg);
+
+  return arg;
+}
+
+#endif
+
+EXPORT unsigned spin_a_while(int amt, unsigned a, unsigned b)
+{
+  int i;
+
+  /* A loop that the compiler is unlikely to optimize away */
+  for (i = 0; i < amt; i++) {
+    a = a + 1;
+    b = b + a;
+  }
+
+  return a;
+}
 
 #define GEN(ts, init, sum)                                              \
   EXPORT ts f4_get_ ## ts () {                                          \

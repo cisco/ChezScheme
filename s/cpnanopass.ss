@@ -940,11 +940,11 @@
     (define-record-type info-foreign (nongenerative)
       (parent info)
       (sealed #t)
-      (fields conv arg-type* result-type (mutable name))
+      (fields conv* arg-type* result-type (mutable name))
       (protocol
         (lambda (pargs->new)
-          (lambda (conv arg-type* result-type)
-            ((pargs->new) conv arg-type* result-type #f)))))
+          (lambda (conv* arg-type* result-type)
+            ((pargs->new) conv* arg-type* result-type #f)))))
 
     (define-record-type info-literal (nongenerative)
       (parent info)
@@ -1045,12 +1045,12 @@
         [(call ,preinfo ,e ,[e*] ...)
          `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (fx< (optimize-level) 3) #f #f)
             ,(Expr e) ,e* ...)]
-        [(foreign ,conv ,name ,[e] (,arg-type* ...) ,result-type)
-         (let ([info (make-info-foreign conv arg-type* result-type)])
+        [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
+         (let ([info (make-info-foreign conv* arg-type* result-type)])
            (info-foreign-name-set! info name)
            `(foreign ,info ,e))]
-        [(fcallable ,conv ,[e] (,arg-type* ...) ,result-type)
-         `(fcallable ,(make-info-foreign conv arg-type* result-type) ,e)])
+        [(fcallable (,conv* ...) ,[e] (,arg-type* ...) ,result-type)
+         `(fcallable ,(make-info-foreign conv* arg-type* result-type) ,e)])
       (CaseLambdaExpr ir #f))
 
     (define find-matching-clause
