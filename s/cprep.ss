@@ -85,11 +85,14 @@
                   (uncprep-sequence e2 ls))]
                [else (cons (uncprep x) ls)])))
          (define uncprep-fp-conv
-           (lambda (x)
-             (case x
-               [(i3nt-stdcall) '__stdcall]
-               [(i3nt-com) '__com]
-               [else #f])))
+           (lambda (x*)
+             (map (lambda (x)
+                    (case x
+                      [(i3nt-stdcall) '__stdcall]
+                      [(i3nt-com) '__com]
+                      [(adjust-active) '__collect_safe]
+                      [else #f]))
+                  x*)))
          (define-who uncprep-fp-specifier
            (lambda (x)
              (nanopass-case (Ltype Type) x
@@ -184,12 +187,12 @@
                [(letrec* ([,x* ,[e*]] ...) ,body)
                 `(letrec* ,(map (lambda (x e) `(,(get-name x) ,e)) x* e*)
                    ,@(uncprep-sequence body '()))]
-               [(foreign ,conv ,name ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-procedure ,(uncprep-fp-conv conv) ,name ,e
+               [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-procedure ,(uncprep-fp-conv conv*) ,name ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
-               [(fcallable ,conv ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-callable ,(uncprep-fp-conv conv) ,e
+               [(fcallable (,conv* ...) ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-callable ,(uncprep-fp-conv conv*) ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
                [(record-ref ,rtd ,type ,index ,[e]) `(record-ref ,rtd ',type ,e ,index)]

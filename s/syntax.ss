@@ -687,16 +687,16 @@
             ($oops #f "invalid ~a ~a specifier ~s" who what x)))))
 
   (define build-foreign-procedure
-    (lambda (ae conv foreign-name foreign-addr params result)
+    (lambda (ae conv* foreign-name foreign-addr params result)
       (build-profile ae
-        `(foreign ,conv ,foreign-name ,foreign-addr
+        `(foreign (,conv* ...) ,foreign-name ,foreign-addr
            (,(map (lambda (x) (build-fp-specifier 'foreign-procedure 'parameter x #f)) params) ...)
            ,(build-fp-specifier 'foreign-procedure "result" result #t)))))
 
   (define build-foreign-callable
-    (lambda (ae conv proc params result)
+    (lambda (ae conv* proc params result)
       (build-profile ae
-        `(fcallable ,conv ,proc
+        `(fcallable (,conv* ...) ,proc
            (,(map (lambda (x) (build-fp-specifier 'foreign-callable 'parameter x #f)) params) ...)
            ,(build-fp-specifier 'foreign-callable "result" result #t))))))
 
@@ -6023,9 +6023,9 @@
 (global-extend 'core '$foreign-procedure
   (lambda (e r w ae)
     (syntax-case e ()
-      ((_ conv foreign-name foreign-addr (arg ...) result)
+      ((_ conv* foreign-name foreign-addr (arg ...) result)
        (build-foreign-procedure ae
-         (strip (syntax conv) w)
+         (strip (syntax conv*) w)
          (strip (syntax foreign-name) w)
          (chi (syntax foreign-addr) r w)
          (map (lambda (x) (strip x w)) (syntax (arg ...)))
@@ -6034,9 +6034,9 @@
 (global-extend 'core '$foreign-callable
   (lambda (e r w ae)
     (syntax-case e ()
-      ((_ conv proc (arg ...) result)
+      ((_ conv* proc (arg ...) result)
        (build-foreign-callable ae
-         (strip (syntax conv) w)
+         (strip (syntax conv*) w)
          (chi (syntax proc) r w)
          (map (lambda (x) (strip x w)) (syntax (arg ...)))
          (strip (syntax result) w))))))
@@ -8572,30 +8572,51 @@
          [else ($oops '$fp-type->pred "unrecognized type ~s" type)])])))
 
 (define $filter-conv
-  (lambda (who conv)
+  (lambda (who conv*)
     (define squawk
       (lambda (x)
         (syntax-error x (format "invalid ~s convention" who))))
-    (let ([c (syntax->datum conv)])
-      (if (not c)
-          #f
-          (case ($target-machine)
-            [(i3nt ti3nt)
-             (case c
-               [(__stdcall) #'i3nt-stdcall]
-               [(__cdecl) #f]
-               [(__com) #'i3nt-com]
-               [else (squawk conv)])]
-            [(ppcnt)
-             (case c
-               [(__stdcall __cdecl) #f]
-               [else (squawk conv)])]
-            [else (squawk conv)])))))
+    (let loop ([conv* conv*] [accum '()] [keep-accum '()])
+      (cond
+        [(null? conv*) (datum->syntax #'filter-conv keep-accum)]
+        [else
+         (let* ([orig-c (car conv*)]
+                [c (syntax->datum orig-c)]
+                [c (cond
+                     [(not c) #f]
+                     [(eq? c '__collect_safe) 'adjust-active]
+                     [else
+                      (case ($target-machine)
+                        [(i3nt ti3nt)
+                         (case c
+                           [(__stdcall) 'i3nt-stdcall]
+                           [(__cdecl) #f]
+                           [(__com) 'i3nt-com]
+                           [else (squawk orig-c)])]
+                        [(ppcnt)
+                         (case c
+                           [(__stdcall __cdecl) #f]
+                           [else (squawk orig-c)])]
+                        [else (squawk orig-c)])])])
+           (when (member c accum)
+             (syntax-error orig-c (format "redundant ~s convention" who)))
+           (unless (or (null? accum)
+                       (eq? c 'adjust-active)
+                       (and (eq? 'adjust-active (car accum))
+                            (null? (cdr accum))))
+             (syntax-error orig-c (format "conflicting ~s convention" who)))
+           (loop (cdr conv*) (cons c accum)
+                 (if c
+                     (cons c keep-accum)
+                     keep-accum)))]))))
 
 (define $make-foreign-procedure
-  (lambda (conv foreign-name ?foreign-addr type* result-type)
+  (lambda (who conv* foreign-name ?foreign-addr type* result-type)
     (let ([unsafe? (= (optimize-level) 3)])
-      (with-syntax ([conv conv]
+      (define (check-strings-allowed)
+        (when (memq 'adjust-active (syntax->datum conv*))
+          ($oops who "string argument not allowed with __collect_safe procedure")))
+      (with-syntax ([conv* conv*]
                     [foreign-name foreign-name]
                     [?foreign-addr ?foreign-addr]
                     [(t ...) (generate-temporaries type*)])
@@ -8637,6 +8658,7 @@
                                                             (err ($moi) x))))
                                                (unsigned-32))])]
                                    [(utf-8)
+                                    (check-strings-allowed)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8647,6 +8669,7 @@
                                                         (err ($moi) x)))))
                                        (u8*))]
                                    [(utf-16le)
+                                    (check-strings-allowed)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8657,6 +8680,7 @@
                                                         (err ($moi) x)))))
                                        (u16*))]
                                    [(utf-16be)
+                                    (check-strings-allowed)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8667,6 +8691,7 @@
                                                         (err ($moi) x)))))
                                        (u16*))]
                                    [(utf-32le)
+                                    (check-strings-allowed)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8677,6 +8702,7 @@
                                                         (err ($moi) x)))))
                                        (u32*))]
                                    [(utf-32be)
+                                    (check-strings-allowed)
                                     #`(()
                                        ((if (eq? x #f)
                                             x
@@ -8745,7 +8771,7 @@
                                    #`[]
                                    #`[(unless (record? &-result '#,(unbox result-type)) (err ($moi) &-result))]))]
                          [else #'([] [] [])])])
-          #`(let ([p ($foreign-procedure conv foreign-name ?foreign-addr (extra-arg ... arg ... ...) result)]
+          #`(let ([p ($foreign-procedure conv* foreign-name ?foreign-addr (extra-arg ... arg ... ...) result)]
                   #,@(if unsafe?
                          #'()
                          #'([err (lambda (who x)
@@ -8762,25 +8788,29 @@
           (or ($fp-filter-type ($expand-fp-ftype 'foreign-procedure what r x) result?)
               (syntax-error x (format "invalid foreign-procedure ~s type specifier" what))))))
     (syntax-case x ()
-      [(_ ?name (arg ...) result)
-       #'(foreign-procedure #f ?name (arg ...) result)]
-      [(_ conv ?name (arg ...) result)
+      [(_ c ... ?name (arg ...) result)
        (lambda (r)
-         ($make-foreign-procedure
-           ($filter-conv 'foreign-procedure #'conv)
+         ($make-foreign-procedure 'foreign-procedure
+           ($filter-conv 'foreign-procedure #'(c ...))
            (let ([x (datum ?name)]) (and (string? x) x))
            #'($foreign-entry ?name)
            (map (lambda (x) (filter-type r x #f)) #'(arg ...))
            (filter-type r #'result #t)))])))
 
 (define $make-foreign-callable
-  (lambda (who conv ?proc type* result-type)
-    (when (eq? conv 'i3nt-com) ($oops who "unsupported convention ~s" conv))
+  (lambda (who conv* ?proc type* result-type)
+    (for-each (lambda (c)
+                (when (eq? (syntax->datum c) 'i3nt-com)
+                  ($oops who "unsupported convention ~s" c)))
+              (syntax->list conv*))
     (let ([unsafe? (= (optimize-level) 3)])
-      (with-syntax ([conv conv] [?proc ?proc])
+      (define (check-strings-allowed)
+        (when (memq 'adjust-active (syntax->datum conv*))
+          ($oops who "string result not allowed with __collect_safe callable")))
+      (with-syntax ([conv* conv*] [?proc ?proc])
         (with-syntax ([((actual (t ...) (arg ...)) ...)
                        (map
-                         (lambda (type)
+                        (lambda (type)
                            (or (case type
                                  [(boolean)
                                   (with-syntax ([(x) (generate-temporaries #'(*))])
@@ -8907,6 +8937,7 @@
                                      unsigned-16
                                      [] [])])]
                          [(utf-8)
+                          (check-strings-allowed)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8918,6 +8949,7 @@
                              u8*
                              [] [])]
                          [(utf-16le)
+                          (check-strings-allowed)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8929,6 +8961,7 @@
                              u16*
                              [] [])]
                          [(utf-16be)
+                          (check-strings-allowed)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8940,6 +8973,7 @@
                              u16*
                              [] [])]
                          [(utf-32le)
+                          (check-strings-allowed)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8951,6 +8985,7 @@
                              u32*
                              [] [])]
                          [(utf-32be)
+                          (check-strings-allowed)
                           #`((lambda (x)
                                (if (eq? x #f)
                                    x
@@ -8991,7 +9026,7 @@
                                   [] []))])])])
           ; use a gensym to avoid giving the procedure a confusing name
           (with-syntax ([p (datum->syntax #'foreign-callable (gensym))])
-            #`($foreign-callable conv
+            #`($foreign-callable conv*
                 (let ([p ?proc])
                   (define (err x)
                     ($oops 'foreign-callable
@@ -9010,12 +9045,10 @@
           (or ($fp-filter-type ($expand-fp-ftype 'foreign-callable what r x) result?)
               (syntax-error x (format "invalid foreign-callable ~s type specifier" what))))))
     (syntax-case x ()
-      [(_ proc (arg ...) result)
-       #'(foreign-callable #f proc (arg ...) result)]
-      [(_ conv ?proc (arg ...) result)
+      [(_ c ... ?proc (arg ...) result)
        (lambda (r)
          ($make-foreign-callable 'foreign-callable
-           ($filter-conv 'foreign-callable #'conv)
+           ($filter-conv 'foreign-callable #'(c ...))
            #'?proc
            (map (lambda (x) (filter-type r x #f)) #'(arg ...))
            (filter-type r #'result #t)))])))

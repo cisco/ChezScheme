@@ -88,8 +88,8 @@ typedef unsigned long long U64;
 #define bytevector_length_offset 0x3
 #define bytevector_pad_disp 0x5
 #define bytevector_type_disp 0x1
-#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall-one-result Scall-any-results)
-#define c_entry_vector_size 0x16
+#define c_entry_name_vector #(thread-context get-thread-context handle-apply-overflood handle-docall-error handle-overflow handle-overflood handle-nonprocedure-symbol thread-list split-and-resize raw-collect-cond raw-tc-mutex activate-thread deactivate-thread unactivate-thread handle-values-error handle-mvlet-error handle-arg-error foreign-entry install-library-entry get-more-room scan-remembered-set instantiate-code-object Sreturn Scall-one-result Scall-any-results)
+#define c_entry_vector_size 0x19
 #define cached_stack_link_disp 0x4
 #define cached_stack_size_disp 0x0
 #define card_offset_bits 0x8
@@ -679,6 +679,9 @@ typedef unsigned long long U64;
 #define typedef_u8 "unsigned char"
 #define typedef_uptr "unsigned int"
 #define typemod 0x8
+#define unactivate_mode_deactivate 0x1
+#define unactivate_mode_destroy 0x2
+#define unactivate_mode_noop 0x0
 #define unaligned_floats 1
 #define unaligned_integers 1
 #define underflow_limit 0x40
@@ -693,28 +696,31 @@ typedef unsigned long long U64;
 #define wchar_bits 0x20
 
 /* constants from declare-c-entries */
-#define CENTRY_Scall_any_results 21
-#define CENTRY_Scall_one_result 20
-#define CENTRY_Sreturn 19
-#define CENTRY_foreign_entry 14
-#define CENTRY_get_more_room 16
+#define CENTRY_Scall_any_results 24
+#define CENTRY_Scall_one_result 23
+#define CENTRY_Sreturn 22
+#define CENTRY_activate_thread 11
+#define CENTRY_deactivate_thread 12
+#define CENTRY_foreign_entry 17
+#define CENTRY_get_more_room 19
 #define CENTRY_get_thread_context 1
 #define CENTRY_handle_apply_overflood 2
-#define CENTRY_handle_arg_error 13
+#define CENTRY_handle_arg_error 16
 #define CENTRY_handle_docall_error 3
-#define CENTRY_handle_mvlet_error 12
+#define CENTRY_handle_mvlet_error 15
 #define CENTRY_handle_nonprocedure_symbol 6
 #define CENTRY_handle_overflood 5
 #define CENTRY_handle_overflow 4
-#define CENTRY_handle_values_error 11
-#define CENTRY_install_library_entry 15
-#define CENTRY_instantiate_code_object 18
+#define CENTRY_handle_values_error 14
+#define CENTRY_install_library_entry 18
+#define CENTRY_instantiate_code_object 21
 #define CENTRY_raw_collect_cond 9
 #define CENTRY_raw_tc_mutex 10
-#define CENTRY_scan_remembered_set 17
+#define CENTRY_scan_remembered_set 20
 #define CENTRY_split_and_resize 8
 #define CENTRY_thread_context 0
 #define CENTRY_thread_list 7
+#define CENTRY_unactivate_thread 13
 
 /* displacements for records */
 #define eq_hashtable_rtd_disp 1

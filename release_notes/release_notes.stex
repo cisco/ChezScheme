@@ -58,6 +58,17 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Foreign-procedure thread activation (9.5.1)}
+
+A new \scheme{__collect_safe} foreign-procedure convention, which can
+be combined with other conventions, causes a foreign-procedure call to
+deactive the current thread during the call so that other threads can
+perform a garbage collection. Similarly, the \scheme{__collect_safe}
+convention modifier for callables causes the current thread to be
+activated on entry to the callable, and the activation state is
+reverted on exit from the callable; this activation makes callables
+work from threads that are otherwise unknown to the Scheme system.
+
 \subsection{Garbage collection and threads (9.5.1)}
 
 A new \scheme{collect-rendezvous} function performs a garbage

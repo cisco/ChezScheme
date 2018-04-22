@@ -192,8 +192,7 @@ Scheme-callable wrappers for foreign procedures can also be created via
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{conv} \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-procedure}{\categorysyntax}{(foreign-procedure \var{conv} \dots \var{entry-exp} (\var{param-type} \dots) \var{res-type})}
 \returns a procedure
 \listlibraries
 \endentryheader
@@ -213,13 +212,15 @@ by the \var{res-type}.
 Multiple procedures may be created for the same \index{foreign entry}foreign entry.
 
 \label{page:conv-description}%
-If \var{conv} is present, it specifies the calling convention to be used.
-The default is \scheme{#f}, which specifies the default calling convention
-on the target machine.
-Three other conventions are currently supported, all only under
-Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com}.
+Each \var{conv} adjusts specifies the calling convention to be used.
+A \scheme{#f} is allowed as \var{conv} to indicate the default calling convention
+on the target machine (so the \scheme{#f} has no effect).
+Three other conventions are currently supported under
+Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com} (32-bit only).
 Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
+Finally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
+collection is allowed concurrent to a call of the foreign procedure.
 
 Use \scheme{__stdcall} to access most Windows API procedures.
 Use \scheme{__cdecl} for Windows API varargs procedures,
@@ -250,7 +251,37 @@ encapsulated within the COM instance passed as the first argument,
 with the second argument being a double float and the return
 value being an integer.
 
-Complete type checking and conversion is performed on the parameters.
+Use \scheme{__collect_safe} to declare that garbage collection is
+allowed concurrent to the foreign procedure. The
+\scheme{__collect_safe} declaration allows concurrent collection by
+deactivating the current thread (see \scheme{fork-thread}) when the
+foreign procedure is called, and the thread is activated again when
+the foreign procedure returns. The \scheme{__collect_safe} declaration
+is useful, for example, when calling a blocking I/O call to allow
+other Scheme threads to run normally. Refrain from passing collectable memory to a
+\scheme{__collect_safe} foreign procedure, or use \scheme{lock-object}
+to lock the memory in place; see also \scheme{Sdeactivate_thread}. The
+\scheme{__collect_safe} declaration has no effect on a non-threaded
+version of the system.
+
+For example, calling the C \scheme{sleep} function with the default
+convention will block other Scheme threads from performing a garbage
+collection, but adding the \scheme{__collect_safe} declaration avoids that
+problem:
+
+\schemedisplay
+(define c-sleep (foreign-procedure __collect_safe "sleep" (unsigned) unsigned))
+(c-sleep 10) \var{; sleeps for 10 seconds without blocking other threads}
+\endschemedisplay
+
+\noindent
+If a foreign procedure that is called with \scheme{__collect_safe} can
+invoke callables, then each callable should also be declared with
+\scheme{__collect_safe} so that the callable reactivates the thread.
+
+
+Complete type checking and conversion is performed on the parameters
+to a foreign procedure.
 The types
 \index{\scheme{scheme-object}}\scheme{scheme-object},
 \index{\scheme{string}}\scheme{string},
@@ -266,14 +297,29 @@ and
 \index{\scheme{utf-32be}}\scheme{utf-32be},
 must be used with caution, however, since they allow allocated
 Scheme objects to be used in places the Scheme memory management system
-cannot control.  
-No problems will arise as long as such objects are not
-retained in
-foreign variables or data structures while Scheme code is running,
-since garbage collection can occur only while Scheme code is running.
-All other parameter types are converted to equivalent foreign
-representations and consequently can be retained indefinitely in
+cannot control. No problems will arise as long as such objects are not
+retained in foreign variables or data structures while Scheme code is running,
+and as long as they are not passed as arguments to a \scheme{__collect_safe} procedure,
+since garbage collection can occur only while Scheme code is running
+or when concurrent garbage collection is enabled.
+Other parameter types are converted to equivalent foreign
+representations and consequently they can be retained indefinitely in
 foreign variables and data structures.
+
+For argument types \scheme{string}, \scheme{wstring},
+\index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16le}}\scheme{utf-16le},
+\index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32le}}\scheme{utf-32le}, and
+\index{\scheme{utf-32be}}\scheme{utf-32be}, an argument is converted
+to a fresh object that is passed to the foreign procedure. Since the
+fresh object is not accessible for locking before the call, it can
+never be treated correctly for a \scheme{__collect_safe} foreign
+procedure, so those types are disallowed as argument types for
+a \scheme{__collect_safe} foreign procedure. For analogous reasons,
+those types are disallowed as the result of a \scheme{__collect_safe}
+foreign callable.
+
 Following are the valid parameter types:
 
 \foreigntype{\scheme{integer-8}}
@@ -509,8 +555,9 @@ with an added null byte, and the address of the first byte of the
 bytevector is passed to C.
 The bytevector should not be retained in foreign variables or data
 structures, since the memory management system may relocate or discard
-them between foreign procedure calls, and use their storage for some
-other purpose.
+them between foreign procedure calls and use their storage for some
+other purpose. The \scheme{utf-8} argument type is not allowed for a
+\scheme{__collect_safe} foreign procedure.
 
 \foreigntype{\scheme{utf-16le}}
 \index{\scheme{utf-16le}}Arguments of this type are treated like arguments
@@ -976,8 +1023,7 @@ function ftype (Section~\ref{SECTFOREIGNDATA}).
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{foreign-callable}{\categorysyntax}{(foreign-callable \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
-\formdef{foreign-procedure}{\categorysyntax}{(foreign-callable \var{conv} \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
+\formdef{foreign-callable}{\categorysyntax}{(foreign-callable \var{conv} \dots \var{proc-exp} (\var{param-type} \dots) \var{res-type})}
 \returns a code object
 \listlibraries
 \endentryheader
@@ -1002,9 +1048,16 @@ since the parameter
 values are provided by the foreign code and must be assumed to be
 correct.
 
-If \var{conv} is present, it specifies the calling convention to be used.
+Each \var{conv} adjusts the calling convention to be used.
 \scheme{foreign-callable} supports the same conventions as
 \scheme{foreign-procedure} with the exception of \scheme{__com}.
+The \scheme{__collect_safe} convention for a callable activates a
+calling thread if the thread is not already activated, and
+the thread's activation state is reverted when the callable
+returns. If a calling thread is not currently registered with
+the Scheme system, then reverting the thread's activation state implies
+destroying the thread's registration (see \scheme{Sdestroy_thread}).
+
 
 The value produced by \scheme{foreign-callable} is a Scheme code object,
 which contains some header information as well as code that performs
@@ -1092,7 +1145,7 @@ Interfaces to these functions may be defined in Scheme as follows.
 (define register-callback
   (foreign-procedure "register_callback" (char void*) void))
 (define event-loop
-  (foreign-procedure "event_loop" () void))
+  (foreign-procedure __collect_safe "event_loop" () void))
 \endschemedisplay
 
 \noindent
@@ -1101,7 +1154,7 @@ A callback for selected characters can then be defined.
 \schemedisplay
 (define callback
   (lambda (p)
-    (let ([code (foreign-callable p (char) void)])
+    (let ([code (foreign-callable __collect_safe p (char) void)])
       (lock-object code)
       (foreign-callable-entry-point code))))
 (define ouch
@@ -1135,7 +1188,10 @@ Ouch! Hit by 'e'
 \endschemedisplay
 
 \noindent
-A more well-behaved version of this example would save each code object
+The \scheme{__collect_safe} declarations in this example ensure that
+other threads can continue working while \scheme{event-loop}
+blocks waiting for input.
+A more well-behaved version of the example would save each code object
 returned by \scheme{foreign-callable} and unlock it when it is no longer
 registered as a callback.
 
@@ -1440,8 +1496,7 @@ An \var{ftype} must take one of the following forms:
 (array \var{length} \var{ftype})
 (* \var{ftype})
 (bits (\var{field-name} \var{signedness} \var{bits}) \dots)
-(function (\var{ftype} \dots) \var{ftype})
-(function \var{conv} (\var{ftype} \dots) \var{ftype})
+(function \var{conv} \dots (\var{ftype} \dots) \var{ftype})
 (packed \var{ftype})
 (unpacked \var{ftype})
 (endian \var{endianness} \var{ftype})
@@ -3431,15 +3486,17 @@ in the active state and need not be activated.
 Any thread that has been deactivated, and any
 thread created by some mechanism other than \scheme{fork-thread} must,
 however, be activated before before it can access Scheme data or execute
-Scheme code.
-\scheme{Sactivate_thread} is used for this purpose.
+Scheme code. A foreign callable that is declared with \scheme{__collect_safe}
+can activate a calling thread.
+Otherwise, \scheme{Sactivate_thread} must be used to activate a thread.
 It returns 1 the first time the thread is activated and 0 on each
-subsequent call.
+subsequent call until the activation is destroyed with \scheme{Sdestroy_thread}.
 
 Since active threads operating in C code prevent the storage management
 system from garbage collecting,
-a thread should be deactivated via \scheme{Sdeactivate_thread} whenever
-it may spend a significant amount of time in C code.
+a thread should be deactivated via \scheme{Sdeactivate_thread} or
+through a \scheme{foreign-procedure} \scheme{__collect_safe} declaration whenever
+the thread may spend a significant amount of time in C code.
 This is especially important whenever the thread calls a C library
 function, like \scheme{read}, that may block indefinitely.
 Once deactivated, the thread must not touch any Scheme data or

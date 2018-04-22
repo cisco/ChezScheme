@@ -9492,6 +9492,20 @@ foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name 
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".

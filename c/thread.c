@@ -143,6 +143,33 @@ IBOOL Sactivate_thread() { /* create or reactivate current thread */
   }
 }
 
+int S_activate_thread() { /* Like Sactivate_thread(), but returns a mode to revert the effect */
+  ptr tc = get_thread_context();
+
+  if (tc == (ptr)0) {
+    Sactivate_thread();
+    return unactivate_mode_destroy;
+  } else if (!ACTIVE(tc)) {
+    reactivate_thread(tc);
+    return unactivate_mode_deactivate;
+  } else
+    return unactivate_mode_noop;
+}
+
+void S_unactivate_thread(int mode) { /* Reverts a previous S_activate_thread() effect */
+  switch (mode) {
+  case unactivate_mode_deactivate:
+    Sdeactivate_thread();
+    break;
+  case unactivate_mode_destroy:
+    Sdestroy_thread();
+    break;
+  case unactivate_mode_noop:
+  default:
+    break;
+  }
+}
+
 void Sdeactivate_thread() { /* deactivate current thread */
   ptr tc = get_thread_context();
   if (tc != (ptr)0) deactivate_thread(tc)
