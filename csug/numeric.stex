@@ -180,9 +180,9 @@ cases, code that does not perform these checks.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{most-positive-fixnum}{\categoryprocedure}{(most-positive-fixnum)}
-\returns the most negative fixnum supported by the system
-\formdef{most-negative-fixnum}{\categoryprocedure}{(most-negative-fixnum)}
 \returns the most positive fixnum supported by the system
+\formdef{most-negative-fixnum}{\categoryprocedure}{(most-negative-fixnum)}
+\returns the most negative fixnum supported by the system
 \listlibraries
 \endentryheader
 
