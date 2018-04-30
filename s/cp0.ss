@@ -879,7 +879,7 @@
             ((ids->do-clause '()) clause)
             #t))))
 
-    (module (pure? ivory? simple? simple/profile? boolean-valued?)
+    (module (pure? ivory? simple? simple/profile? boolean-valued? single-valued?)
       (define-syntax make-$memoize
         (syntax-rules ()
           [(_ flag-known flag)
@@ -1107,18 +1107,45 @@
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (simple/profile? e))]
               [else ($oops who "unrecognized record ~s" e)]))))
 
+      (define (extract-called-procedure pr e*)
+        (case (primref-name pr)
+          [(call-with-values)
+           (and (fx= (length e*) 2)
+                (cadr e*))]
+          [(r6rs:dynamic-wind)
+           (and (fx= (length e*) 3)
+                (cadr e*))]
+          [(dynamic-wind)
+           (cond
+            [(fx= (length e*) 3) (cadr e*)]
+            [(fx= (length e*) 4) (caddr e*)]
+            [else #f])]
+          [(apply $apply)
+           (and (fx>= (length e*) 1)
+                (car e*))]
+          [else #f]))
+
       (define-who boolean-valued?
         (lambda (e)
           (with-memoize (boolean-valued-known boolean-valued) e
             ; 2015/02/11 sorted by frequency
             (nanopass-case (Lsrc Expr) e
               [(call ,preinfo ,e ,e* ...)
-               (nanopass-case (Lsrc Expr) (result-exp e)
-                 [,pr (all-set? (prim-mask boolean-valued) (primref-flags pr))]
-                 [(case-lambda ,preinfo1 (clause (,x* ...) ,interface ,body))
-                  (guard (fx= interface (length e*)))
-                  (memoize (boolean-valued? body))]
-                 [else #f])]
+               (let procedure-boolean-valued? ([e e] [e* e*])
+                 (nanopass-case (Lsrc Expr) (result-exp e)
+                   [,pr
+                    (or (all-set? (prim-mask boolean-valued) (primref-flags pr))
+                        (and e*
+                             (let ([proc-e (extract-called-procedure pr e*)])
+                               (and proc-e
+                                    (memoize (procedure-boolean-valued? proc-e #f))))))]
+                   [(case-lambda ,preinfo ,cl* ...)
+                    (memoize (andmap (lambda (cl)
+                                       (nanopass-case (Lsrc CaseLambdaClause) cl
+                                         [(clause (,x* ...) ,interface ,body)
+                                          (boolean-valued? body)]))
+                                     cl*))]
+                   [else #f]))]
               [(if ,e0 ,e1 ,e2) (memoize (and (boolean-valued? e1) (boolean-valued? e2)))]
               [(record-ref ,rtd ,type ,index ,e) (eq? type 'boolean)]
               [(ref ,maybe-src ,x) #f]
@@ -1140,6 +1167,50 @@
               [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #f]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #f]
               [(pariah) #f]
+              [else ($oops who "unrecognized record ~s" e)]))))
+
+      (define-who single-valued?
+        (lambda (e)
+          (with-memoize (single-valued-known single-valued) e
+            ; 2015/02/11 sorted by frequency
+            (nanopass-case (Lsrc Expr) e
+              [(call ,preinfo ,e ,e* ...)
+               (let procedure-single-valued? ([e e] [e* e*])
+                 (nanopass-case (Lsrc Expr) (result-exp e)
+                   [,pr
+                    (or (all-set? (prim-mask single-valued) (primref-flags pr))
+                        (and e*
+                             (let ([proc-e (extract-called-procedure pr e*)])
+                               (and proc-e
+                                    (memoize (procedure-single-valued? proc-e #f))))))]
+                   [(case-lambda ,preinfo ,cl* ...)
+                    (memoize (andmap (lambda (cl)
+                                       (nanopass-case (Lsrc CaseLambdaClause) cl
+                                         [(clause (,x* ...) ,interface ,body)
+                                          (single-valued? body)]))
+                                     cl*))]
+                   [else #f]))]
+              [(if ,e0 ,e1 ,e2) (memoize (and (single-valued? e1) (single-valued? e2)))]
+              [(record-ref ,rtd ,type ,index ,e) #t]
+              [(ref ,maybe-src ,x) #t]
+              [(quote ,d) #t]
+              [(seq ,e1 ,e2) (memoize (single-valued? e2))]
+              [(case-lambda ,preinfo ,cl* ...) #t]
+              [(letrec* ([,x* ,e*] ...) ,body) (memoize (single-valued? body))]
+              [(letrec ([,x* ,e*] ...) ,body) (memoize (single-valued? body))]
+              [,pr #t]
+              [(record-type ,rtd ,e) #t]
+              [(record-cd ,rcd ,rtd-expr ,e) #t]
+              [(record-set! ,rtd ,type ,index ,e1 ,e2) #t]
+              [(record ,rtd ,rtd-expr ,e* ...) #t]
+              [(immutable-list (,e* ...) ,e) #t]
+              [(cte-optimization-loc ,box ,e) (memoize (single-valued? e))]
+              [(profile ,src) #t]
+              [(set! ,maybe-src ,x ,e) #t]
+              [(moi) #t]
+              [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #t]
+              [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
+              [(pariah) #t]
               [else ($oops who "unrecognized record ~s" e)])))))
 
     (define find-call-lambda-clause
@@ -2051,25 +2122,13 @@
                  (cond
                    [(and (app-used ctxt1)
                          (let ([e (result-exp *p-val)])
-                           (nanopass-case (Lsrc Expr) e
-                             ; in dire need of matching more than one pattern
-                             [(quote ,d) (list e)]
-                             [(ref ,maybe-src ,x) (list e)]
-                             [(set! ,maybe-src ,x0 ,e0) (list e)]
-                             [(case-lambda ,preinfo ,cl* ...) (list e)]
-                             [,pr (list e)]
-                             [(foreign (,conv* ...) ,name ,e0 (,arg-type* ...) ,result-type) (list e)]
-                             [(fcallable (,conv* ...) ,e0 (,arg-type* ...) ,result-type) (list e)]
-                             [(record-type ,rtd0 ,e0) (list e)]
-                             [(record-cd ,rcd0 ,rtd-expr0 ,e0) (list e)]
-                             [(immutable-list (,e0* ...) ,e0) (list e)]
-                             [(record-ref ,rtd ,type ,index ,e0) (list e)]
-                             [(record-set! ,rtd ,type ,index ,e1 ,e2) (list e)]
-                             [(record ,rtd ,rtd-expr ,e* ...) (list e)]
-                             [(call ,preinfo ,pr ,e* ...)
-                              (guard (eq? (primref-name pr) 'values))
-                              e*]
-                             [else #f]))) =>
+                           (if (single-valued? e)
+                               (list e)
+                               (nanopass-case (Lsrc Expr) e
+                                 [(call ,preinfo ,pr ,e* ...)
+                                  (guard (eq? (primref-name pr) 'values))
+                                  e*]
+                                 [else #f])))) =>
                     (lambda (args)
                       ; (with-values (values arg ...) c-temp) => (c-temp arg ...)
                       (letify (make-preinfo-lambda) ids ctxt
