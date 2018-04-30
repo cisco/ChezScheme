@@ -18,10 +18,11 @@
   (include "primref.ss")
 
   (define record-prim!
-    (lambda (prim unprefixed flags arity boolean-valued?)
+    (lambda (prim unprefixed flags arity boolean-valued? single-valued?)
       (unless (eq? unprefixed prim) ($sputprop prim '*unprefixed* unprefixed))
-      (let ([flags (if boolean-valued? (fxlogor flags (prim-mask boolean-valued)) flags)]
-            [arity (and (not (null? arity)) arity)])
+      (let* ([flags (if boolean-valued? (fxlogor flags (prim-mask boolean-valued)) flags)]
+             [flags (if single-valued? (fxlogor flags (prim-mask single-valued)) flags)]
+             [arity (and (not (null? arity)) arity)])
         ($sputprop prim '*flags* flags)
         (when (any-set? (prim-mask (or primitive system)) flags)
           ($sputprop prim '*prim2* (make-primref prim flags arity))
@@ -38,7 +39,8 @@
               '#,(datum->syntax #'* (vector-map priminfo-unprefixed v-info))
               '#,(datum->syntax #'* (vector-map priminfo-mask v-info))
               '#,(datum->syntax #'* (vector-map priminfo-arity v-info))
-              '#,(datum->syntax #'* (vector-map priminfo-boolean? v-info)))))))
+              '#,(datum->syntax #'* (vector-map priminfo-boolean? v-info))
+              '#,(datum->syntax #'* (vector-map priminfo-single-valued? v-info)))))))
 
   (for-each (lambda (x) (for-each (lambda (key) ($sremprop x key)) '(*prim2* *prim3* *flags* *unprefixed*))) (oblist))
   setup)

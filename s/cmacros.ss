@@ -1574,6 +1574,7 @@
   (boolean-valued           #b00000010000000000000000)
   (abort-op                 #b00000100000000000000000)
   (unsafe                   #b00001000000000000000000)
+  (single-valued            #b00100000000000000000000)
   (arith-op                 (or proc pure true))
   (alloc                    (or proc discard true))
   ; would be nice to check that these and only these actually have cp0 partial folders
@@ -1589,6 +1590,8 @@
   (simple                        #b0000100000)
   (boolean-valued-known          #b0001000000)
   (boolean-valued                #b0010000000)
+  (single-valued-known           #b0100000000)
+  (single-valued                 #b1000000000)
 )
 
 (define-syntax define-flag-field

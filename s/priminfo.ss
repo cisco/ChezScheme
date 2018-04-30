@@ -13,7 +13,8 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(module priminfo (priminfo-unprefixed priminfo-libraries priminfo-mask priminfo-signatures priminfo-arity primvec get-priminfo priminfo-boolean?)
+(module priminfo (priminfo-unprefixed priminfo-libraries priminfo-mask priminfo-signatures priminfo-arity primvec
+                  get-priminfo priminfo-boolean? priminfo-single-valued?)
   (define-record-type priminfo
     (nongenerative)
     (sealed #t)
@@ -37,6 +38,15 @@
              (andmap (lambda (sig)
                        (let ([out (cdr sig)])
                          (and (pair? out) (eq? (car out) 'boolean) (null? (cdr out)))))
+               signature*)))))
+
+  (define priminfo-single-valued?
+    (lambda (info)
+      (let ([signature* (priminfo-signatures info)])
+        (and (not (null? signature*))
+             (andmap (lambda (sig)
+                       (let ([out (cdr sig)])
+                         (and (pair? out) (null? (cdr out)))))
                signature*)))))
 
   (define signature->interface
