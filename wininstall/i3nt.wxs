@@ -36,9 +36,6 @@
         <Component Id="cmp97E86E3E78EC5C1E35333413F9D239A9" Guid="*">
           <File Id="filC2A38DD4D83F793279D6D10E8D553145" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv951mt.lib" />
         </Component>
-        <Component Id="cmpA984DD6C19B2AF6FB1CF1EB8B82265F7" Guid="*">
-          <File Id="fil01A92E9B0A1BED208B24F65BE7808680" KeyPath="yes" Source="..\i3nt\boot\i3nt\equates.h" />
-        </Component>
         <Component Id="cmp4EC08D9AF0D6DADE3077A7EB099476B4" Guid="*">
           <File Id="fil47E4EBA05B181E80FAF43A5B84DCC1D6" KeyPath="yes" Source="..\i3nt\boot\i3nt\mainmd.obj" />
         </Component>
@@ -67,7 +64,6 @@
       <ComponentRef Id="cmpE28E1FD7F26C181DE59FFBF90644FC76" />
       <ComponentRef Id="cmp47E339F22F1D268C3D889C89DC04B1EC" />
       <ComponentRef Id="cmp97E86E3E78EC5C1E35333413F9D239A9" />
-      <ComponentRef Id="cmpA984DD6C19B2AF6FB1CF1EB8B82265F7" />
       <ComponentRef Id="cmp4EC08D9AF0D6DADE3077A7EB099476B4" />
       <ComponentRef Id="cmp919AB6246AC9B090D079FECBCF9B3758" />
       <ComponentRef Id="cmpAA816697285A56C59BE524C8F381935D" />
