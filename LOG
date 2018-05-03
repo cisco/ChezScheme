@@ -931,3 +931,5 @@
     cp0.ss, cpcheck.ss, cpvalid.ss, interpret.ss, cpletrec.ss,
     thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
     mats/Mf-t*, foreign.ms, foreign4.c
+- Don't install equates.h
+    Mf-install.in, wininstall/*nt.wxs

@@ -36,9 +36,6 @@
         <Component Id="cmpD7880184C113065E511275EFD531D589" Guid="*">
           <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv951mt.lib" />
         </Component>
-        <Component Id="cmp19832A9F8ABA24EE5E11B447538AC375" Guid="*">
-          <File Id="fil7626314F25A516DCC7C61AC8BA501397" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\equates.h" />
-        </Component>
         <Component Id="cmp5211817ED85951CDAF2FD5E2419BD211" Guid="*">
           <File Id="fil21839A8D4062A72DEAB3156D77EEE82A" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\mainmd.obj" />
         </Component>
@@ -67,7 +64,6 @@
       <ComponentRef Id="cmpDEB15B7CB19176296C92E8032592FDB4" />
       <ComponentRef Id="cmpCBDB945622604667783C3C57A0427DF5" />
       <ComponentRef Id="cmpD7880184C113065E511275EFD531D589" />
-      <ComponentRef Id="cmp19832A9F8ABA24EE5E11B447538AC375" />
       <ComponentRef Id="cmp5211817ED85951CDAF2FD5E2419BD211" />
       <ComponentRef Id="cmpD21D824506A948F172A50CECA2B6D0AC" />
       <ComponentRef Id="cmpB650D26FBD85BF1F56C4AA76A9CFBD7E" />
