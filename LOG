@@ -933,3 +933,5 @@
     mats/Mf-t*, foreign.ms, foreign4.c
 - Don't install equates.h
     Mf-install.in, wininstall/*nt.wxs
+- Double FMTBUFSIZE to fix compilation with gcc-8
+    c/prim5.c

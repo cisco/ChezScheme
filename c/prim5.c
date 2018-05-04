@@ -219,7 +219,7 @@ static ptr s_decode_float(x) ptr x; {
     return S_decode_float(FLODAT(x));
 }
 
-#define FMTBUFSIZE 60
+#define FMTBUFSIZE 120
 #define CHUNKADDRLT(x, y) (((chunkinfo *)(Scar(x)))->addr < ((chunkinfo *)(Scar(y)))->addr)
 mkmergesort(sort_chunks, merge_chunks, ptr, Snil, CHUNKADDRLT, INITCDR)
 
