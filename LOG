@@ -937,3 +937,5 @@
     wininstall/product.wxs
 - Use Windows path separator character when finding boot files on Windows.
     scheme.c
+- Propagate enable-check-prelex-flags to separate-eval sub-process in tests.
+    mats.ss

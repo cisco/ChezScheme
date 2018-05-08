@@ -380,6 +380,7 @@
                   (open-process-ports (format "~a -q" (patch-exec-path *scheme*))
                     (buffer-mode block)
                     (native-transcoder))])
+      (pretty-print `(#%$enable-check-prelex-flags ,(#%$enable-check-prelex-flags)) to-stdin)
       (for-each (lambda (expr) (pretty-print expr to-stdin)) expr*)
       (close-port to-stdin)
       (let* ([stdout-stuff (slurp from-stdout)]
