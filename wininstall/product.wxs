@@ -76,6 +76,14 @@
       <FeatureRef Id="VCRedist64"/>
     <?endif?>
 
+    <Feature Id="Registry" Level="1" Title="Chez Scheme Registry Entries">
+      <Component Id="cmpRegistry" Directory="APPLICATIONFOLDER" Guid="*">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Chez Scheme\csv$(var.Version)">
+          <RegistryValue Name="HeapSearchPath" Value="[D_boot]%m" Type="string" />
+        </RegistryKey>
+      </Component>
+    </Feature>
+
     <Icon Id="cs.ico" SourceFile="../c/cs.ico"/>
     <Property Id="ARPPRODUCTICON" Value="cs.ico"/>
 
