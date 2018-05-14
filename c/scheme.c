@@ -429,6 +429,7 @@ static const char *path_last(p) const char *p; {
 #define DEFAULT_HEAP_PATH "%x;%x\\..\\..\\boot\\%m"
 #endif
 #define SEARCHPATHSEP ';'
+#define PATHSEP '\\'
 
 static char *get_defaultheapdirs() {
   char *result;
@@ -441,6 +442,7 @@ static char *get_defaultheapdirs() {
 }
 #else /* not WIN32: */
 #define SEARCHPATHSEP ':'
+#define PATHSEP '/'
 #ifndef DEFAULT_HEAP_PATH
 #define DEFAULT_HEAP_PATH "/usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m"
 #endif
@@ -516,7 +518,7 @@ static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *
   /* unless entry was null, append name and ext onto path and return true with
    * updated path, sp, and possibly dsp */
     if (s != *sp) {
-      if (!DIRMARKERP(*(p - 1))) { setp('/'); }
+      if (!DIRMARKERP(*(p - 1))) { setp(PATHSEP); }
       t = name;
       while (*t != 0) setp(*t++);
       t = ext;

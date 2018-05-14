@@ -935,3 +935,5 @@
     Mf-install.in, wininstall/*nt.wxs
 - Windows install now sets HeapSearchPath in the registry
     wininstall/product.wxs
+- Use Windows path separator character when finding boot files on Windows.
+    scheme.c
