@@ -933,3 +933,5 @@
     mats/Mf-t*, foreign.ms, foreign4.c
 - Don't install equates.h
     Mf-install.in, wininstall/*nt.wxs
+- Windows install now sets HeapSearchPath in the registry
+    wininstall/product.wxs
