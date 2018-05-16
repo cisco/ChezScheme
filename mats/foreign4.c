@@ -40,7 +40,7 @@ typedef long long i64;
 # define EXPORT
 #endif
 
-/* To help make sure that argument and result handling doens't
+/* To help make sure that argument and result handling doesn't
    read or write too far, try to provide functions that allocate
    a structure at the end of a memory page (where the next page is
    likely to be unmapped) */
