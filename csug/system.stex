@@ -1835,7 +1835,7 @@ If instead this file were compiled, using \scheme{compile-file}, the
 compiler would arrange to define \scheme{mvlet} before continuing
 with the expansion and evaluation of the \scheme{mvlet} expression,
 but it would not arrange to define \scheme{nodups?}.
-Thus the expansion of the \scheme{mvlet} expression would fails.
+Thus the expansion of the \scheme{mvlet} expression would fail.
 
 In this case it does not help to evaluate the syntactic extension alone.
 A solution in this case would be to move the definition of
