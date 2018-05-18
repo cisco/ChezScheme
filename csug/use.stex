@@ -1757,7 +1757,7 @@ parameter (Section~\ref{SECTUSEINTERACTION}).
 
 Most of the options are described elsewhere in this chapter, and a few
 are self-explanatory.
-The remainder pertain the loading of boot files at system start-up
+The remainder pertain to the loading of boot files at system start-up
 time and are described below.
 
 \index{boot files}%
