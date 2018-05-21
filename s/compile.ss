@@ -1018,7 +1018,8 @@
             (unless (program-node-ir maybe-program) ($oops who "loading ~a did not define expected program pieces" ifn))
             (chase-program-dependencies! maybe-program))
           (for-each chase-library-dependencies! node*)
-          (values maybe-program (filter library-node-visible? (vector->list (hashtable-values libs))) wpo*)))))
+          (let-values ([(visible* invisible*) (partition library-node-visible? (vector->list (hashtable-values libs)))])
+            (values maybe-program visible* invisible* wpo*))))))
 
   (define topological-sort
     (lambda (program-entry library-entry*)
@@ -1043,11 +1044,26 @@
       (lambda (node)
         (nanopass-case (Lexpand ctLibrary) (library-node-ctir node)
           [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
-           ($build-install-library/ct-code uid export-id*
-             (if (library-node-visible? node) import-code void-pr)
-             (if (library-node-visible? node) visit-code void-pr))])))
+           (if (library-node-visible? node)
+               ($build-install-library/ct-code uid export-id* import-code visit-code)
+               (let ([fail (gen-var 'fail)])
+                 (set-prelex-referenced! fail #t)
+                 (set-prelex-multiply-referenced! fail #t)
+                 (build-let
+                  (list fail)
+                  (list (build-lambda '()
+                          (build-primcall '$oops `(quote ,'visit)
+                            `(quote ,"library ~s is not visible")
+                            `(quote ,(library-node-path node)))))
+                  ($build-install-library/ct-code uid export-id* `(ref #f ,fail) `(ref #f ,fail)))))])))
+
 
     (define build-void (let ([void-rec `(quote ,(void))]) (lambda () void-rec)))
+
+    (define gen-var (lambda (sym) (make-prelex sym 0 #f #f)))
+    (define build-let
+      (lambda (ids exprs body)
+        `(call ,(make-preinfo) ,(build-lambda ids body) ,exprs ...)))
 
     (define build-lambda
       (lambda (ids body)
@@ -1180,10 +1196,6 @@
 
     (define build-combined-library-ir
       (lambda (node*)
-        (define gen-var (lambda (sym) (make-prelex sym 0 #f #f)))
-        (define build-let
-          (lambda (ids exprs body)
-            `(call ,(make-preinfo) ,(build-lambda ids body) ,exprs ...)))
         (define build-mark-invoked!
           (lambda (node)
             (build-primcall '$mark-invoked! `(quote ,(library-node-uid node)))))
@@ -1318,10 +1330,12 @@
             body visit-lib*)))
 
     (define build-program-body
-      (lambda (program-entry node* visit-lib*)
+      (lambda (program-entry node* visit-lib* invisible*)
         (add-library-records node* visit-lib*
-          (add-visit-lib-install* visit-lib*
-            `(revisit-only ,(build-combined-program-ir program-entry node*))))))
+          (add-library-records node* invisible*
+            (add-visit-lib-install* visit-lib*
+              (add-visit-lib-install* invisible*
+                `(revisit-only ,(build-combined-program-ir program-entry node*))))))))
 
     (define build-library-body
       (lambda (node* visit-lib*)
@@ -1390,12 +1404,12 @@
          (unless (string? ifn) ($oops who "~s is not a string" ifn))
          (unless (string? ofn) ($oops who "~s is not a string" ofn))
          (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
-                       [(program-entry lib* no-wpo*) (build-graph who ir* ifn #t #f libs-visible?)])
+                       [(program-entry lib* invisible* no-wpo*) (build-graph who ir* ifn #t #f libs-visible?)])
            (safe-assert program-entry)
            (safe-assert (null? no-wpo*))
            (let ([node* (topological-sort program-entry lib*)])
              (finish-compile who "whole program" ifn ofn hash-bang-line
-               (build-program-body program-entry node* lib*))
+               (build-program-body program-entry node* lib* invisible*))
              (build-required-library-list node* lib*)))])))
 
   (set-who! compile-whole-library
@@ -1403,8 +1417,9 @@
       (unless (string? ifn) ($oops who "~s is not a string" ifn))
       (unless (string? ofn) ($oops who "~s is not a string" ofn))
       (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
-                    [(no-program lib* wpo*) (build-graph who ir* ifn #f (generate-wpo-files) #t)])
+                    [(no-program lib* invisible* wpo*) (build-graph who ir* ifn #f (generate-wpo-files) #t)])
         (safe-assert (not no-program))
+        (safe-assert (null? invisible*))
         (safe-assert (or (not (generate-wpo-files)) (not (null? wpo*))))
         (when (null? lib*) ($oops "did not find libraries in input file ~s" ifn))
         (let ([node* (topological-sort #f lib*)])

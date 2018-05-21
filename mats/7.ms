@@ -1614,6 +1614,13 @@ evaluating module init
       "testfile-wpo-prog")
     "()\n")
 
+  (equal?
+    (separate-compile
+      '(lambda (x)
+         (compile-whole-program (format "~a.wpo" x) (format "~a-none.so" x) #f))
+      "testfile-wpo-prog")
+    "()\n")
+
   (delete-file "testfile-wpo-lib.ss")
   (delete-file "testfile-wpo-lib.so")
   (delete-file "testfile-wpo-lib.wpo")
@@ -1621,6 +1628,9 @@ evaluating module init
   (equal?
     (separate-eval '(load-program "testfile-wpo-prog-all.so"))
     "3628800\n3628800\n")
+
+  (error?
+    (separate-eval '(load-program "testfile-wpo-prog-none.so")))
 
   (begin
     (with-output-to-file "testfile-wpo-a3.ss"
