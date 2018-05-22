@@ -1655,7 +1655,7 @@ The application installation script should install {\PetiteChezScheme}
 if not already installed on the target system.
 It should install the application boot file in the same directory as
 the {\PetiteChezScheme} boot file petite.boot is installed,
-and it should should install the application shared libraries, if any,
+and it should install the application shared libraries, if any,
 either in the same location or in a standard location for shared libraries
 on the target system.
 It should also create a link to or copy of the {\PetiteChezScheme}
