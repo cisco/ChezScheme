@@ -1614,6 +1614,13 @@ evaluating module init
       "testfile-wpo-prog")
     "()\n")
 
+  (equal?
+    (separate-compile
+      '(lambda (x)
+         (compile-whole-program (format "~a.wpo" x) (format "~a-none.so" x) #f))
+      "testfile-wpo-prog")
+    "()\n")
+
   (delete-file "testfile-wpo-lib.ss")
   (delete-file "testfile-wpo-lib.so")
   (delete-file "testfile-wpo-lib.wpo")
@@ -1621,6 +1628,9 @@ evaluating module init
   (equal?
     (separate-eval '(load-program "testfile-wpo-prog-all.so"))
     "3628800\n3628800\n")
+
+  (error?
+    (separate-eval '(load-program "testfile-wpo-prog-none.so")))
 
   (begin
     (with-output-to-file "testfile-wpo-a3.ss"
@@ -3180,6 +3190,197 @@ evaluating module init
     "(9 . 5)\n")
 )
 
+(mat library-manager
+  (begin
+    (with-output-to-file "testfile-lm-a.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-a)
+            (export ct-a rt-a)
+            (import (scheme))
+            (meta define ct-a (begin (display "ct-a rhs\n") 123))
+            (define rt-a (begin (display "rt-a rhs\n") 456)))))
+      'replace)
+    (with-output-to-file "testfile-lm-b.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-b)
+            (export b)
+            (import (scheme) (testfile-lm-a))
+            (define-syntax (use-ct-val x) (if (odd? ct-a) #'"odd" #'"even"))
+            (define b use-ct-val))))
+      'replace)
+    (with-output-to-file "testfile-lm-c.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-c)
+            (export c)
+            (import (scheme) (testfile-lm-a))
+            (define use-rt-val rt-a)
+            (define c use-rt-val))))
+      'replace)
+    (with-output-to-file "testfile-lm-combined.ss"
+      (lambda ()
+        (pretty-print
+         '(begin
+            (include "testfile-lm-a.ss")
+            (include "testfile-lm-b.ss")
+            (include "testfile-lm-c.ss"))))
+      'replace)
+    (with-output-to-file "testfile-lm-use-b.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-use-b)
+            (export x)
+            (import (scheme) (testfile-lm-b))
+            (meta define x b))))
+      'replace)
+    (with-output-to-file "testfile-lm-use-c.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-use-c)
+            (export x)
+            (import (scheme) (testfile-lm-c))
+            (define-syntax (x x) c))))
+      'replace)
+    #t)
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(compile-library "testfile-lm-a"))
+   (string-append
+    "compiling testfile-lm-a.ss with output to testfile-lm-a.so\n"
+    "ct-a rhs\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-library "testfile-lm-b")
+    '(printf "b = ~s\n" (let () (import (testfile-lm-b)) b)))
+   (string-append
+    "compiling testfile-lm-b.ss with output to testfile-lm-b.so\n"
+    "import: found source file \"testfile-lm-a.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-a.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-a.so\"\n"
+    "ct-a rhs\n"
+    "b = \"odd\"\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-library "testfile-lm-c")
+    '(printf "c = ~s\n" (let () (import (testfile-lm-c)) c)))
+   (string-append
+    "compiling testfile-lm-c.ss with output to testfile-lm-c.so\n"
+    "import: found source file \"testfile-lm-a.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-a.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-a.so\"\n"
+    "rt-a rhs\n"
+    "c = 456\n"))
+  (equal?
+   ;; library manager revisits object file containing a single library
+   ;; to resolve dependencies after earlier visit
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(visit "testfile-lm-a.so")
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "import: found source file \"testfile-lm-c.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-c.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-c.so\"\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-a.so\" for library (testfile-lm-a) run-time info\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager visits object file containing a single library
+   ;; to resolve dependencies after earlier revisit
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(revisit "testfile-lm-a.so")
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "import: found source file \"testfile-lm-b.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-b.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-b.so\"\n"
+    "import: attempting to 'visit' previously 'revisited' \"testfile-lm-a.so\" for library (testfile-lm-a) compile-time info\n"
+    "\"odd\"\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-file "testfile-lm-combined"))
+   (string-append
+    "compiling testfile-lm-combined.ss with output to testfile-lm-combined.so\n"
+    "ct-a rhs\n"))
+  (equal?
+   ;; library manager revisits object file containing related libraries
+   ;; to resolve dependencies after earlier visit
+   (separate-eval
+    '(import-notify #t)
+    '(visit "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define-syntax (foo x) ct-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "ct-a rhs\n"
+    "foo = 123\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-combined.so\" for library (testfile-lm-c) run-time info\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager visits object file containing related libraries
+   ;; to resolve dependencies after earlier revisit
+   (separate-eval
+    '(import-notify #t)
+    '(revisit "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define foo rt-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "import: attempting to 'visit' previously 'revisited' \"testfile-lm-combined.so\" for library (testfile-lm-a) compile-time info\n"
+    "rt-a rhs\n"
+    "foo = 456\n"
+    "\"odd\"\n"))
+  (equal?
+   ;; library manager does not revisit due to earlier load
+   (separate-eval
+    '(import-notify #t)
+    '(load "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define-syntax (foo x) ct-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "ct-a rhs\n"
+    "foo = 123\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager does not revisit due to earlier load
+   (separate-eval
+    '(import-notify #t)
+    '(load "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define foo rt-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "rt-a rhs\n"
+    "foo = 456\n"
+    "\"odd\"\n"))
+  )
 
 
 ;;; section 7.2:
