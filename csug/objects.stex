@@ -1317,7 +1317,7 @@ be parsed as a number.
 
 \item
 A symbol whose name contains arbitrary characters may be written by
-escaping them them with \scheme{\} or with \scheme{|}.
+escaping them with \scheme{\} or with \scheme{|}.
 \scheme{\} is used to escape a single character (except 'x', since
 \scheme{\x} marks the start of a hex scalar value),
 whereas \scheme{|} is used

@@ -23,7 +23,7 @@ Section~\ref{SECTCOMPATEXTENDSYNTAX}
 describes \scheme{extend-syntax} macros.
 These features are supported directly by current versions of {\ChezScheme},
 but support may be dropped in future versions.
-New programs should use the standard mechanisms described in
+New programs should use the standard mechanisms described
 in \emph{The Scheme Programming Language, 4th Edition}~\cite{Dybvig:tspl4}
 instead.
 
