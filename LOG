@@ -999,3 +999,5 @@
     misc.ms
 - flush expand-output and expand/optimize-output ports
     compile.ss
+- clarify "unknown module" error message in determine-module-imports
+    syntax.ss
