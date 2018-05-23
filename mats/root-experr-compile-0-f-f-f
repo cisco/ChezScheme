@@ -7032,6 +7032,7 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
 7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
 7.mo:Expected error in mat compile-whole-program: "incorrect argument count in call (compile-whole-program "testfile-wpo-ab.wpo")".
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in visit: library (testfile-wpo-lib) is not visible
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded

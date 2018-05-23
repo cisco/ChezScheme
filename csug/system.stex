@@ -1835,7 +1835,7 @@ If instead this file were compiled, using \scheme{compile-file}, the
 compiler would arrange to define \scheme{mvlet} before continuing
 with the expansion and evaluation of the \scheme{mvlet} expression,
 but it would not arrange to define \scheme{nodups?}.
-Thus the expansion of the \scheme{mvlet} expression would fails.
+Thus the expansion of the \scheme{mvlet} expression would fail.
 
 In this case it does not help to evaluate the syntactic extension alone.
 A solution in this case would be to move the definition of
@@ -2795,7 +2795,7 @@ or to the boolean value \scheme{#t}.
 The profile information can be dumped via:
 
 \begin{description}
-\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump=html}}
+\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump-html}}
 in HTML format to allow the programmer to visualize how
 often each expression is executed using a color-coding system that
 makes it easy to spot ``hot spots,''
@@ -4362,7 +4362,7 @@ in bytes, including not only the bytes occupied for Scheme objects
 but also various forms of overhead, including fragmentation and
 reserved but not currently occupied memory, and is thus an accurate
 measure of the amount of heap memory currently reserved from the
-the operating system for the current process.
+operating system for the current process.
 
 %----------------------------------------------------------------------------
 \entryheader
