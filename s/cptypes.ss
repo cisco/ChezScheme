@@ -62,12 +62,14 @@ Notes:
 |#
 
 
-(define $cptypes
+(define $cptypes)
 (let ()
   (import (nanopass))
   (include "base-lang.ss")
   (include "fxmap.ss")
 
+  (define-pass cptypes : Lsrc (ir) -> Lsrc ()
+    (definitions
   (define prelex-counter
     (let ()
       (define count 0)
@@ -621,8 +623,7 @@ Notes:
 
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
-
-  (define-pass cptypes : Lsrc (ir ctxt types) -> Lsrc (ret types t-types f-types)
+)
     (Expr : Expr (ir ctxt types) -> Expr (ret types t-types f-types)
       [(quote ,d)
        (values ir (datum->predicate d ir) types #f #f)]
@@ -657,7 +658,7 @@ Notes:
           (values e1 ret1 types #f #f)]
          [else
           (let-values ([(e2 ret types t-types f-types)
-                        (cptypes e2 ctxt types)])
+                        (Expr e2 ctxt types)])
             (values (make-seq ctxt e1 e2) ret types t-types f-types))])]
       [(if ,[e1 'test types -> e1 ret1 types1 t-types1 f-types1] ,e2 ,e3)
        (cond
@@ -665,21 +666,21 @@ Notes:
           (values e1 ret1 types #f #f)]
          [(predicate-implies-not? ret1 false-rec)
           (let-values ([(e2 ret types t-types f-types)
-                        (cptypes e2 ctxt types1)])
+                        (Expr e2 ctxt types1)])
             (values (make-seq ctxt e1 e2) ret types t-types f-types))]
          [(predicate-implies? ret1 false-rec)
           (let-values ([(e3 ret types t-types f-types)
-                        (cptypes e3 ctxt types1)])
+                        (Expr e3 ctxt types1)])
             (values (make-seq ctxt e1 e3) ret types t-types f-types))]
          [else
           (let*-values ([(t-types1) (or t-types1 types1)]
                         [(f-types1) (or f-types1 types1)]
                         [(e2 ret2 types2 t-types2 f-types2)
-                         (cptypes e2 ctxt t-types1)]
+                         (Expr e2 ctxt t-types1)]
                         [(t-types2) (or t-types2 types2)]
                         [(f-types2) (or f-types2 types2)]
                         [(e3 ret3 types3 t-types3 f-types3)
-                         (cptypes e3 ctxt f-types1)]
+                         (Expr e3 ctxt f-types1)]
                         [(t-types3) (or t-types3 types3)]
                         [(f-types3) (or f-types3 types3)])
             (let ([ir `(if ,e1 ,e2 ,e3)])
@@ -890,7 +891,7 @@ Notes:
                         (nanopass-case (Lsrc CaseLambdaClause) cl
                           [(clause (,x* ...) ,interface ,body)
                            (let-values ([(body ret types t-types f-types)
-                                         (cptypes body 'value types)])
+                                         (Expr body 'value types)])
                              (for-each (lambda (x) (prelex-operand-set! x #f)) x*)
                              (with-output-language (Lsrc CaseLambdaClause)
                                `(clause (,x* ...) ,interface ,body)))]))
@@ -916,7 +917,7 @@ Notes:
        (define finish
          (lambda (x* interface body t)
            (let-values ([(body ret n-types t-types f-types)
-                         (cptypes body ctxt t)])
+                         (Expr body ctxt t)])
              (let* ([new-types (fold-left (lambda (f x) (pred-env-remove/base f x types)) n-types x*)]
                     [t-types (and (eq? ctxt 'test)
                                   t-types
@@ -956,7 +957,7 @@ Notes:
        (let* ([t (fold-left (lambda (f x) (pred-env-intersect/base f x types)) types t*)]
               [t (fold-left pred-env-add t x* r*)])
         (let-values ([(body ret n-types t-types f-types)
-                      (cptypes body ctxt t)])
+                      (Expr body ctxt t)])
           (let* ([new-types (fold-left (lambda (f x) (pred-env-remove/base f x types)) n-types x*)]
                  [t-types (and (eq? ctxt 'test)
                                t-types
@@ -975,11 +976,11 @@ Notes:
                         (if (null? x*)
                           (values (reverse rev-e*) types)
                           (let-values ([(e ret types t-types f-types)
-                                        (cptypes (car e*) 'value types)])
+                                        (Expr (car e*) 'value types)])
                             (let ([types (pred-env-add types (car x*) ret)])
                               (loop (cdr x*) (cdr e*) types (cons e rev-e*))))))])
         (let-values ([(body ret n-types t-types f-types)
-                      (cptypes body ctxt types)])
+                      (Expr body ctxt types)])
           (let* ([new-types (fold-left (lambda (f x) (pred-env-remove/base f x types)) n-types x*)]
                  [t-types (and (eq? ctxt 'test)
                                t-types
@@ -1038,10 +1039,10 @@ Notes:
       [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) (values ir #f types #f #f)]
       [else ($oops who "unrecognized record ~s" ir)])
-    (Expr ir ctxt types))
-
-  (lambda (ir)
     (let-values ([(ir ret types t-types f-types)
-                  (cptypes ir 'value pred-env-empty)])
+                  (Expr ir 'value pred-env-empty)])
       ir))
-))
+
+  (set! $cptypes cptypes)
+
+)
