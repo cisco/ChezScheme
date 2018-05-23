@@ -270,7 +270,8 @@ collection, but adding the \scheme{__collect_safe} declaration avoids that
 problem:
 
 \schemedisplay
-(define c-sleep (foreign-procedure __collect_safe "sleep" (unsigned) unsigned))
+(define c-sleep
+  (foreign-procedure __collect_safe "sleep" (unsigned) unsigned))
 (c-sleep 10) \var{; sleeps for 10 seconds without blocking other threads}
 \endschemedisplay
 
