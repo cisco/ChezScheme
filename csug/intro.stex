@@ -131,7 +131,7 @@ valid identifiers in {\ChezScheme}.
 Second, the single-character sequences \scheme{\schlbrace} and
 \scheme{\schrbrace} are identifiers.
 Third, identifiers containing arbitrary characters may be printed by
-escaping them them with \scheme{\} or with \scheme{|}.
+escaping them with \scheme{\} or with \scheme{|}.
 \scheme{\} is used to escape a single character (except 'x', since
 \scheme{\x} marks the start of a hex scalar value),
 whereas \scheme{|} is used
@@ -139,7 +139,7 @@ to escape the group of characters that follow it up through the
 matching \scheme{|}.
 For example, \scheme{\||\|} is an identifier with a two-character
 name consisting of the character \scheme{|} followed by the
-the character \scheme{\}, and \scheme{|hit me!|} is an identifier whose name
+character \scheme{\}, and \scheme{|hit me!|} is an identifier whose name
 contains a space.
 
 In addition, gensyms (page~\ref{desc:gensym}) are printed with

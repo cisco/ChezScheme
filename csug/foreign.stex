@@ -3485,7 +3485,7 @@ A thread created via the Scheme procedure \scheme{fork-thread} starts
 in the active state and need not be activated.
 Any thread that has been deactivated, and any
 thread created by some mechanism other than \scheme{fork-thread} must,
-however, be activated before before it can access Scheme data or execute
+however, be activated before it can access Scheme data or execute
 Scheme code. A foreign callable that is declared with \scheme{__collect_safe}
 can activate a calling thread.
 Otherwise, \scheme{Sactivate_thread} must be used to activate a thread.
