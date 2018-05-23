@@ -933,5 +933,16 @@
     mats/Mf-t*, foreign.ms, foreign4.c
 - Don't install equates.h
     Mf-install.in, wininstall/*nt.wxs
+- Windows install now sets HeapSearchPath in the registry
+    wininstall/product.wxs
+- Use Windows path separator character when finding boot files on Windows.
+    scheme.c
+- Propagate enable-check-prelex-flags to separate-eval sub-process in tests.
+    mats.ss
+- Reject attempts to visit libraries that compile-whole-program has rendered
+  invisible due to libs-visible? flag.
+    compile.ss, 7.ms, root-experr-compile-0-f-f-f, root-experr-compile-2-f-f-f,
+    patch-compile-0-f-t-f, patch-compile-0-t-f-f, patch-interpret-0-f-f-f,
+    patch-interpret-0-f-t-f, patch-interpret-3-f-f-f, patch-interpret-3-f-t-f
 - Double FMTBUFSIZE to fix compilation with gcc-8
     c/prim5.c
