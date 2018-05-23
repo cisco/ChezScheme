@@ -2795,7 +2795,7 @@ or to the boolean value \scheme{#t}.
 The profile information can be dumped via:
 
 \begin{description}
-\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump=html}}
+\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump-html}}
 in HTML format to allow the programmer to visualize how
 often each expression is executed using a color-coding system that
 makes it easy to spot ``hot spots,''
