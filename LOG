@@ -997,3 +997,5 @@
   whose base and/or index is a local save.
     cpnanopass.ss,
     misc.ms
+- flush expand-output and expand/optimize-output ports
+    compile.ss

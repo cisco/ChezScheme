@@ -635,7 +635,8 @@
     (when (expand-output)
       (when source-info-string
         (fprintf (expand-output) "~%;; expand output for ~a\n" source-info-string))
-      (pretty-print ($uncprep x1) (expand-output)))
+      (pretty-print ($uncprep x1) (expand-output))
+      (flush-output-port (expand-output)))
     (let loop ([chunk* (expand-Lexpand x1)] [rx2b* '()] [rfinal* '()])
       (define finish-compile
         (lambda (x1 f)
@@ -683,7 +684,8 @@
                                      [else (sorry! who "unrecognized stuff ~s" x2b)])
                                    (finish x2b)))
                           rx2b*)])
-                (pretty-print (if (fx= (length e*) 1) (car e*) `(begin ,@(reverse e*))) (expand/optimize-output))))
+                (pretty-print (if (fx= (length e*) 1) (car e*) `(begin ,@(reverse e*))) (expand/optimize-output))
+                (flush-output-port (expand/optimize-output))))
             ($pass-time 'pfasl (lambda () (c-print-fasl `(group ,@(reverse rfinal*)) op))))
           (let ([x1 (car chunk*)])
             (cond
@@ -1479,7 +1481,8 @@
           (let* ([x1 (expand-Lexpand ($pass-time 'expand (lambda () (expand x0 env-spec #t))))]
                  [waste ($uncprep x1 #t)] ; populate preinfo sexpr fields
                  [waste (when (and (expand-output) (not ($noexpand? x0)))
-                          (pretty-print ($uncprep x1) (expand-output)))]
+                          (pretty-print ($uncprep x1) (expand-output))
+                          (flush-output-port (expand-output)))]
                  [x2 ($pass-time 'cpvalid (lambda () ($cpvalid x1)))]
                  [x2a (let ([cpletrec-ran? #f])
                         (let ([x ((run-cp0)
@@ -1492,7 +1495,8 @@
                  [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))]
                  [x2b ($pass-time 'cpcommonize (lambda () ($cpcommonize x2b)))])
             (when (and (expand/optimize-output) (not ($noexpand? x0)))
-              (pretty-print ($uncprep x2b) (expand/optimize-output)))
+              (pretty-print ($uncprep x2b) (expand/optimize-output))
+              (flush-output-port (expand/optimize-output)))
             (if (and (compile-interpret-simple)
                      (not ($assembly-output))
                      (cheat? x2b))
