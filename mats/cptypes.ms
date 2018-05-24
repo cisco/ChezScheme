@@ -26,6 +26,36 @@
                      #;[optimize-level (max (optimize-level) 2)])
         (expand/optimize y)))]))
 
+(define-syntax cptypes/nocp0-equivalent-expansion?
+  (syntax-rules ()
+    [(_ x y)
+     (equivalent-expansion?
+      (parameterize ([enable-cp0 #f]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize x))
+      (parameterize ([enable-cp0 #f]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize y)))]))
+
+(define-syntax cptypes/nocp0/alternative-equivalent-expansion?
+  (syntax-rules ()
+    [(_ x y)
+     (equivalent-expansion?
+      (parameterize ([enable-cp0 #f]
+                     [enable-type-recovery #f]
+                     [run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize x))
+      (parameterize ([enable-cp0 #f]
+                     [enable-type-recovery #f]
+                     [run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize y)))]))
+
 (mat cptypes-handcoded
   (cptypes-equivalent-expansion?
     '(vector? (vector))  ;actually reduced by folding, not cptypes 
@@ -45,6 +75,12 @@
   (cptypes-equivalent-expansion?
     '(pair? (cons 1 2)) 
     #t)
+  (cptypes-equivalent-expansion?
+    '(pair? (list 1 2)) 
+    #t)
+  (cptypes-equivalent-expansion?
+    '(pair? (list)) 
+    #f)
   (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! x 0 0) (vector? x))
     '(lambda (x) (vector-set! x 0 0) #t))
@@ -628,4 +664,34 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (number? x) (#2%odd? x)))
          '(lambda (x) (when (number? x) (#3%odd? x)))))
+)
+
+(mat cptypes-rest-argument
+  (cptypes/nocp0-equivalent-expansion?
+    '((lambda (x . r) (pair? r)) 1)
+    '((lambda (x . r) #f) 1))
+  (cptypes/nocp0-equivalent-expansion?
+    '((lambda (x . r) (null? r)) 1)
+    '((lambda (x . r) #t) 1))
+  (cptypes/nocp0-equivalent-expansion?
+    '((lambda (x . r) (pair? r)) 1 2)
+    '((lambda (x . r) #t) 1 2))
+  (cptypes/nocp0-equivalent-expansion?
+    '((lambda (x . r) (null? r)) 1 2)
+    '((lambda (x . r) #f) 1 2))
+)
+
+(mat cptypes-rest-argument/alternative
+  (cptypes/nocp0/alternative-equivalent-expansion?
+    '((lambda (x . r) (pair? r)) 1)
+    '((lambda (x . r) #f) 1))
+  (cptypes/nocp0/alternative-equivalent-expansion?
+    '((lambda (x . r) (null? r)) 1)
+    '((lambda (x . r) #t) 1))
+  (cptypes/nocp0/alternative-equivalent-expansion?
+    '((lambda (x . r) (pair? r)) 1 2)
+    '((lambda (x . r) #t) 1 2))
+  (cptypes/nocp0/alternative-equivalent-expansion?
+    '((lambda (x . r) (null? r)) 1 2)
+    '((lambda (x . r) #f) 1 2))
 )

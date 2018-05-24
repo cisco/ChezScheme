@@ -195,7 +195,8 @@ Notes:
                                    (set! ret (pred-env-add/key ret key (pred-intersect x z)))))
                                (lambda (key x)
                                  (set! ret (pred-env-add/key ret key x)))
-                               (lambda (key x) (error 'pred-env-intersect/base "") (void))
+                               (lambda (key x)
+                                 ($impoops 'pred-env-intersect/base "unexpected value ~s in base environment ~s" x base))
                                from
                                base)
            ret)]))
@@ -233,7 +234,8 @@ Notes:
                                  ;x-> from
                                  ;z-> types
                                  (set! ret (pred-env-add/key ret key (pred-union x z)))))
-                             (lambda (key x) (error 'pred-env-union/base "") (void))
+                             (lambda (key x)
+                               ($impoops 'pred-env-union/from "unexpected value ~s in base environment ~s" x base))
                              from
                              base)
           ret))
@@ -288,7 +290,8 @@ Notes:
                                  (if (eq? x z)
                                      (set! ret (fxmap-reset/base ret key new-base))
                                      (set! ret (fxmap-advance/base ret key new-base)))))
-                             (lambda (key x) (error 'pred-env-rebase "") (void))
+                             (lambda (key x)
+                               ($impoops 'pred-env-rebase "unexpected value ~s in base environment ~s" x base))
                              new-base
                              base)
         ret))
@@ -843,6 +846,13 @@ Notes:
                                 (pred-env-add/ref types (car e*) pred))
                            #f)]))]
              ; TODO: special case for call-with-values.
+             [(eq? (primref-name pr) 'list)
+              (cond 
+                [(null? e*)
+                 ;should have be reduced by cp0
+                 (values null-rec null-rec t #f #f)]
+                [else
+                 (values `(call ,preinfo ,pr ,e* ...) 'pair t #f #f)])]
              [(and (fx= (length e*) 1)
                    (eq? (primref-name pr) 'exact?))
               (cond
@@ -940,7 +950,7 @@ Notes:
                (fold-left pred-env-add t x*
                  (let f ([i nfixed] [r* r*])
                    (if (fx= i 0)
-                       (list (if (null? r*) 'null 'pair))
+                       (list (if (null? r*) null-rec 'pair))
                        (cons (car r*) (f (fx- i 1) (cdr r*))))))))
            (lambda () (values ir 'bottom types #f #f))))]
       [(call ,preinfo ,[e0 'value types -> e0 ret0 types0 t-types0 f-types0]
