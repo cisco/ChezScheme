@@ -1001,3 +1001,5 @@
     compile.ss
 - clarify "unknown module" error message in determine-module-imports
     syntax.ss
+- restore the import code on reset to provide consistent error message
+    syntax.ss, 8.ms
