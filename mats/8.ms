@@ -8977,7 +8977,47 @@
                        (eval '(lookup f g) (environment '(testfile-lr-l3) '(lookup))))])
            (eval '(lookup f g) (environment '(testfile-lr-l3) '(lookup))))))
     "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
-)
+
+  ;; re-arm import code if it complains about a library that is not visible
+  (begin
+    (with-output-to-file "testfile-lr-l4.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lr-l4)
+            (export x)
+            (import (chezscheme))
+            (define x 123))))
+      'replace)
+    (with-output-to-file "testfile-lr-p4.ss"
+      (lambda ()
+        (for-each pretty-print
+         '((import (testfile-lr-l4) (scheme))
+           (define (run args)
+             (guard (c [#t (display-condition c) (newline)])
+               (pretty-print (top-level-value (car args) (environment (cdr args))))))
+           (when (> x 0) ;; reference export
+             (let ([args (map string->symbol (command-line-arguments))])
+               (if (= (length args) 2)
+                   (begin
+                     (run args)
+                     (run args))
+                   (error #f "expected 2 args")))))))
+      'replace)
+    (separate-eval
+     '(parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+        (compile-program "testfile-lr-p4.ss")
+        (compile-whole-program "testfile-lr-p4.wpo" "testfile-lr-p4-visible" #t)
+        (compile-whole-program "testfile-lr-p4.wpo" "testfile-lr-p4-not-visible" #f)))
+    (equal?
+     (separate-eval
+      '(parameterize ([command-line-arguments '("x" "testfile-lr-l4")])
+         (load-program "testfile-lr-p4-visible")
+         (load-program "testfile-lr-p4-not-visible")))
+     (string-append
+      "123\n"
+      "123\n"
+      "Exception in visit: library (testfile-lr-l4) is not visible\n"
+      "Exception in visit: library (testfile-lr-l4) is not visible\n"))))
 
 (mat cross-library-optimization
   (begin

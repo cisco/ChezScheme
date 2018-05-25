@@ -5147,10 +5147,11 @@
                    (when (eq? p 'loading)
                      ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
                   (libdesc-import-code-set! desc #f)
-                  (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
-                  ($install-library-clo-info (libdesc-clo* desc))
-                  (libdesc-clo*-set! desc '())
-                  (p))]))]
+                  (on-reset (libdesc-import-code-set! desc p)
+                    (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
+                    ($install-library-clo-info (libdesc-clo* desc))
+                    (libdesc-clo*-set! desc '())
+                    (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
   
     ; invoking or visiting a possibly unloaded library occurs in two separate steps:
