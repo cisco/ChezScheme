@@ -1091,7 +1091,7 @@ written using string-output ports to produce string output.
 a new string output port during the
 application of \var{thunk}.
 If \var{thunk} returns, the string associated with the new string output
-port is returned, as with \scheme{get-output-from-string}.
+port is returned, as with \scheme{get-output-string}.
 
 \schemedisplay
 (with-output-to-string

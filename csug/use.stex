@@ -687,7 +687,7 @@ been defined,
 (define yin (lambda () (- (yang) 1)))
 \endschemedisplay
 
-defines \scheme{yin} at top level as a variable to a procedure that calls
+defines \scheme{yin} at top level as a variable bound to a procedure that calls
 the value of the top-level variable \scheme{yang}, even though \scheme{yang}
 has not yet been defined.
 If this is followed by
