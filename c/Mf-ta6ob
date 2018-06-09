@@ -35,7 +35,7 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+	$C -rdynamic -Wl,--export-dynamic -Wl,-z,wxneeded -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS=-m64 ./configure --64)
