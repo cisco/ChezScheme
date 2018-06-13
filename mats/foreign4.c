@@ -105,6 +105,7 @@ void *in_thread(void *_proc_and_arg)
 # define os_thread_join(t) pthread_join(t, NULL)
 #endif
 
+#ifdef FEATURE_PTHREADS
 EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int n_times,
                                      int do_fork, int do_deactivate) {
   os_thread_t t;
@@ -131,7 +132,7 @@ EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int
 
   return arg;
 }
-
+#endif /* FEATURE_PTHREADS */
 #endif
 
 EXPORT unsigned spin_a_while(int amt, unsigned a, unsigned b)
