@@ -756,6 +756,125 @@ ptr S_string(s, n) const char *s; iptr n; {
     return p;
 }
 
+ptr Sstring_utf8(s, n) const char *s; iptr n; {
+  const char* u8;
+  iptr cc, d, i, n8;
+  ptr p, tc;
+
+  if (n < 0) n = strlen(s);
+
+  if (n == 0) return S_G.null_string;
+
+  /* determine code point count cc */
+  u8 = s;
+  n8 = n;
+  cc = 0;
+  while (n8 > 0) {
+    unsigned char b1 = *(const unsigned char*)u8++;
+    n8--;
+    cc++;
+    if ((b1 & 0x80) == 0)
+      ;
+    else if ((b1 & 0x40) == 0)
+      ;
+    else if ((b1 & 0x20) == 0) {
+      if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+        u8++;
+        n8--;
+      }
+    } else if ((b1 & 0x10) == 0) {
+      if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+        u8++;
+        n8--;
+        if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+          u8++;
+          n8--;
+        }
+      }
+    } else if ((b1 & 0x08) == 0) {
+      if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+        u8++;
+        n8--;
+        if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+          u8++;
+          n8--;
+          if ((n8 >= 1) && ((*u8 & 0xc0) == 0x80)) {
+            u8++;
+            n8--;
+          }
+        }
+      }
+    }
+  }
+
+  if ((uptr)cc > (uptr)maximum_string_length)
+    S_error("", "invalid string size request");
+
+  tc = get_thread_context();
+  d = size_string(cc);
+  thread_find_room(tc, type_typed_object, d, p);
+  STRTYPE(p) = (cc << string_length_offset) | type_string;
+
+  /* fill the string */
+  u8 = s;
+  n8 = n;
+  i = 0;
+  while (n8 > 0) {
+    unsigned char b1 = *u8++;
+    int c = 0xfffd;
+    n8--;
+    if ((b1 & 0x80) == 0)
+      c = b1;
+    else if ((b1 & 0x40) == 0)
+      ;
+    else if ((b1 & 0x20) == 0) {
+      unsigned char b2;
+      if ((n8 >= 1) && (((b2 = *u8) & 0xc0) == 0x80)) {
+        int x = ((b1 & 0x1f) << 6) | (b2 & 0x3f);
+        u8++;
+        n8--;
+        if (x >= 0x80)
+          c = x;
+      }
+    } else if ((b1 & 0x10) == 0) {
+      unsigned char b2;
+      if ((n8 >= 1) && (((b2 = *u8) & 0xc0) == 0x80)) {
+        unsigned char b3;
+        u8++;
+        n8--;
+        if ((n8 >= 1) && (((b3 = *u8) & 0xc0) == 0x80)) {
+          int x = ((b1 & 0x0f) << 12) | ((b2 & 0x3f) << 6) | (b3 & 0x3f);
+          u8++;
+          n8--;
+          if ((x >= 0x800) && ((x < 0xd800) || (x > 0xdfff)))
+            c = x;
+        }
+      }
+    } else if ((b1 & 0x08) == 0) {
+      unsigned char b2;
+      if ((n8 >= 1) && (((b2 = *u8) & 0xc0) == 0x80)) {
+        unsigned char b3;
+        u8++;
+        n8--;
+        if ((n8 >= 1) && (((b3 = *u8) & 0xc0) == 0x80)) {
+          unsigned char b4;
+          u8++;
+          n8--;
+          if ((n8 >= 1) && (((b4 = *u8) & 0xc0) == 0x80)) {
+            int x = ((b1 & 0x07) << 18) | ((b2 & 0x3f) << 12) | ((b3 & 0x3f) << 6) | (b4 & 0x3f);
+            u8++;
+            n8--;
+            if ((x >= 0x10000) && (x <= 0x10ffff))
+              c = x;
+          }
+        }
+      }
+    }
+    Sstring_set(p, i++, c);
+  }
+  return p;
+}
+
 ptr S_bignum(n, sign) iptr n; IBOOL sign; {
     ptr tc = get_thread_context();
     ptr p; iptr d;

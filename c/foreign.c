@@ -171,7 +171,7 @@ void Sforeign_symbol(s, v) const char *s; void *v; {
         SETVECTIT(S_G.foreign_static, b, Scons(Scons(bvstring(s), addr_to_ptr(v)),
                                           Svector_ref(S_G.foreign_static, b)));
     } else if (ptr_to_addr(x) != v)
-        S_error1("Sforeign_symbol", "duplicate symbol entry for ~s", S_string(s, -1));
+        S_error1("Sforeign_symbol", "duplicate symbol entry for ~s", Sstring_utf8(s, -1));
 
     tc_mutex_release()
 }
@@ -229,8 +229,8 @@ static void load_shared_object(path) const char *path; {
 
     handle = dlopen(path, RTLD_NOW);
     if (handle == (void *)NULL)
-        S_error2("", "(while loading ~a) ~a", S_string(path, -1),
-                    S_string(dlerror(), -1));
+        S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1),
+                    Sstring_utf8(dlerror(), -1));
     S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
 
     tc_mutex_release()
@@ -281,7 +281,7 @@ static ptr foreign_entries() {
 
     for (b = 0; b < buckets; b++)
         for (p = Svector_ref(S_G.foreign_static, b); p != Snil; p = Scdr(p))
-            entries = Scons(S_string((char *)&BVIT(Scar(Scar(p)), 0), -1), entries);
+            entries = Scons(Sstring_utf8((char *)&BVIT(Scar(Scar(p)), 0), -1), entries);
 
     return entries;
 }

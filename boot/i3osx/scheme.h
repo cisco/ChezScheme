@@ -147,6 +147,7 @@ EXPORT ptr Smake_string PROTO((iptr, int));
 EXPORT ptr Smake_uninitialized_string PROTO((iptr));
 EXPORT ptr Sstring PROTO((const char *));
 EXPORT ptr Sstring_of_length PROTO((const char *, iptr));
+EXPORT ptr Sstring_utf8 PROTO((const char*, iptr));
 EXPORT ptr Sbox PROTO((ptr));
 EXPORT ptr Sinteger PROTO((iptr));
 EXPORT ptr Sunsigned PROTO((uptr));

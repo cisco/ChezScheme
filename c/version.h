@@ -211,7 +211,6 @@ typedef char *memcpy_t;
 #define LSTAT S_windows_stat64
 #define OFF_T __int64
 #define OPEN S_windows_open
-#define PUTENV _putenv
 #define READ _read
 #define RENAME S_windows_rename
 #define RMDIR S_windows_rmdir
@@ -395,9 +394,6 @@ typedef char tputsputcchar;
 #endif
 #ifndef OPEN
 # define OPEN open
-#endif
-#ifndef PUTENV
-# define PUTENV putenv
 #endif
 #ifndef READ
 # define READ read

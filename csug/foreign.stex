@@ -3091,6 +3091,7 @@ their C equivalents.
 \cfunction{ptr}{Sflonum}{double x}
 \cfunction{ptr}{Sstring}{const char *\var{s}}
 \cfunction{ptr}{Sstring_of_length}{const char *\var{s}, iptr \var{n}}
+\cfunction{ptr}{Sstring_utf8}{const char *\var{s}, iptr \var{n}};
 \end{flushleft}
 
 \noindent
@@ -3098,6 +3099,10 @@ their C equivalents.
 \scheme{Sstring_of_length} creates a Scheme string of length \var{n}
 and copies the first \var{n} bytes from \var{s}
 into the new Scheme string.
+
+If the C string is encoded in UTF-8, use \scheme{Sstring_utf8}
+instead. Specify the number of bytes to convert as \var{n} or use $-1$
+to convert until the null terminator.
 
 It is possible to determine whether a C integer is within fixnum range
 by comparing the fixnum value of a fixnum created from a C integer with
@@ -3202,6 +3207,27 @@ and \scheme{Smake_fxvector} are similar to their Scheme counterparts.
 \cfunction{ptr}{Smake_uninitialized_string}{iptr \var{n}}
 \end{flushleft}
 
+\parheader{Windows-specific helper functions}
+The following helper functions are provided on Windows only.
+
+\begin{flushleft}
+\cfunction{char *}{Sgetenv}{const char *\var{name}}
+\end{flushleft}
+
+\noindent
+\scheme{Sgetenv} returns the UTF-8-encoded value of UTF-8-encoded
+environment variable \var{name} if found and NULL otherwise. Call
+\scheme{free} on the returned value when it is no longer needed.
+
+\begin{flushleft}
+\cfunction{wchar_t *}{Sutf8_to_wide}{const char *\s}
+\cfunction{char *}{Swide_to_utf8}{const wchar_t *\s}
+\end{flushleft}
+
+\noindent
+\scheme{Sutf8_to_wide} and \scheme{Swide_to_utf8} convert between
+UTF-8-encoded and UTF-16LE-encoded null-terminated strings. Call
+\scheme{free} on the returned value when it is no longer needed.
 
 \parheader{Accessing top-level values}
 Top-level variable bindings may be accessed or assigned via

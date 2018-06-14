@@ -421,8 +421,7 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
 #ifdef WIN32
   {
     TIME_ZONE_INFORMATION tz;
-    WCHAR *w_tzname;
-    int len;
+    wchar_t *w_tzname;
 
     /* The ...ForYear() function is available on Windows Vista and later: */
     GetTimeZoneInformationForYear(tmxp->tm_year, NULL, &tz);
@@ -436,10 +435,9 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
     }
 
     if (given_tzoff == Sfalse) {
-      len = (int)wcslen(w_tzname);
-      tz_name = S_string(NULL, len);
-      while (len--)
-        Sstring_set(tz_name, len, w_tzname[len]);
+      char *name = Swide_to_utf8(w_tzname);
+      tz_name = Sstring_utf8(name, -1);
+      free(name);
     }
   }
 #else
@@ -447,10 +445,10 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
   if (given_tzoff == Sfalse) {
 # if defined(__linux__) || defined(SOLARIS)
     /* Linux and Solaris set `tzname`: */
-    tz_name = S_string(tzname[tmxp->tm_isdst], -1);
+    tz_name = Sstring_utf8(tzname[tmxp->tm_isdst], -1);
 # else
     /* BSD variants add `tm_zone` in `struct tm`: */
-    tz_name = S_string(tmxp->tm_zone, -1);
+    tz_name = Sstring_utf8(tmxp->tm_zone, -1);
 # endif
   }
 #endif
@@ -498,7 +496,7 @@ ptr S_realtime(void) {
 void S_stats_init() {
 #ifdef WIN32
   /* Use GetSystemTimePreciseAsFileTime when available (Windows 8 and later). */
-  HMODULE h = LoadLibrary("kernel32.dll");
+  HMODULE h = LoadLibraryW(L"kernel32.dll");
   if (h != NULL) {
     GetSystemTimeAsFileTime_t proc = (GetSystemTimeAsFileTime_t)GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
     if (proc != NULL)

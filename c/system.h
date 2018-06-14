@@ -17,6 +17,8 @@
 #include "scheme.h"
 #include "equates.h"
 #ifdef FEATURE_WINDOWS
+#define WINVER 0x0601 // Windows 7
+#define _WIN32_WINNT WINVER
 #include <windows.h>
 #endif
 

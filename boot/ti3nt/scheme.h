@@ -147,6 +147,7 @@ EXPORT ptr Smake_string PROTO((iptr, int));
 EXPORT ptr Smake_uninitialized_string PROTO((iptr));
 EXPORT ptr Sstring PROTO((const char *));
 EXPORT ptr Sstring_of_length PROTO((const char *, iptr));
+EXPORT ptr Sstring_utf8 PROTO((const char*, iptr));
 EXPORT ptr Sbox PROTO((ptr));
 EXPORT ptr Sinteger PROTO((iptr));
 EXPORT ptr Sunsigned PROTO((uptr));
@@ -196,6 +197,12 @@ EXPORT void Sscheme_deinit PROTO((void));
 EXPORT int Sactivate_thread PROTO((void));
 EXPORT void Sdeactivate_thread PROTO((void));
 EXPORT int Sdestroy_thread PROTO((void));
+
+/* Windows support. */
+#include <wchar.h>
+EXPORT char * Sgetenv PROTO((const char *));
+EXPORT wchar_t * Sutf8_to_wide PROTO((const char *));
+EXPORT char * Swide_to_utf8 PROTO((const wchar_t *));
 
 /* Features. */
 #define FEATURE_ICONV
