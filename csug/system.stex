@@ -5036,7 +5036,7 @@ environment of the process,
 where it is available to the current process (e.g., via \var{getenv})
 and any spawned processes.
 The key and value are copied into storage allocated outside of
-the Scheme heap; this space is never reclaimed.
+the Scheme heap; this space is never reclaimed on non-Windows systems.
 
 \schemedisplay
 (putenv "SCHEME" "rocks!")

@@ -321,7 +321,7 @@ ptr S_boot_read(gzFile file, const char *path) {
   ptr tc = get_thread_context();
   struct unbufFaslFileObj uffo;
 
-  uffo.path = S_string(path, -1);
+  uffo.path = Sstring_utf8(path, -1);
   uffo.type = UFFO_TYPE_GZ;
   uffo.file = file;
   return fasl_entry(tc, &uffo);

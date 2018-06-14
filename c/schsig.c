@@ -384,8 +384,8 @@ static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr arg
     }
 
     args = Scons(FIX(type),
-                 Scons((strlen(who) == 0 ? Sfalse : S_string(who,-1)),
-                       Scons(S_string(s, -1), args)));
+                 Scons((strlen(who) == 0 ? Sfalse : Sstring_utf8(who,-1)),
+                       Scons(Sstring_utf8(s, -1), args)));
 
 #ifdef PTHREADS
     while (S_tc_mutex_depth > 0) {

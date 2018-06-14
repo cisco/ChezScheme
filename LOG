@@ -946,3 +946,10 @@
     patch-interpret-0-f-t-f, patch-interpret-3-f-f-f, patch-interpret-3-f-t-f
 - Double FMTBUFSIZE to fix compilation with gcc-8
     c/prim5.c
+- Improved Unicode support for command-line arguments, environment
+  variables, the C interface and error messages, and the Windows
+  registry, DLL loading, and process creation
+    scheme.h, alloc.c, externs.h, fasl.c, foreign.c, io.c, main.c,
+    prim5.c, scheme.c, schlib.c, schsig.c, stats.c, system.h,
+    version.h, windows.c, foreign.stex, system.stex, mkheader.ss,
+    prims.ss
