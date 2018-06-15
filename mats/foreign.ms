@@ -2736,12 +2736,12 @@
                      (foreign-callable-code-object
                       (ftype-pointer-address id)))
                     v))]))
-           (and (let ([v (make-ftype-pointer T (foreign-alloc (ftype-sizeof T)))])
+           (and (let ([v (make-ftype-pointer T (malloc_at_boundary (ftype-sizeof T)))])
                   (get v)
                   (and (= (T-ref v) vi)
                        ...
                        (begin
-                         (foreign-free (ftype-pointer-address v))
+                         (free_at_boundary (ftype-pointer-address v))
                          #t)))
                 (let ([a (make-ftype-pointer T (malloc_at_boundary (ftype-sizeof T)))])
                   (T-set! a) ...
