@@ -44,7 +44,9 @@ typedef long long i64;
    read or write too far, try to provide functions that allocate
    a structure at the end of a memory page (where the next page is
    likely to be unmapped) */
+
 #if defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+
 # include <stdlib.h>
 # include <sys/mman.h>
 # include <unistd.h>
@@ -54,16 +56,39 @@ EXPORT void *malloc_at_boundary(int sz)
 {
   intptr_t alloc_size = getpagesize();
   char *p;
-  p = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+  p = mmap(NULL, 2 * alloc_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+  mprotect(p + alloc_size, alloc_size, PROT_NONE);
   return p + alloc_size - sz;
 }
 
 EXPORT void free_at_boundary(void *p)
 {
   intptr_t alloc_size = getpagesize();
-  munmap((void *)(((intptr_t)p) & ~(alloc_size-1)), alloc_size);
+  munmap((void *)(((intptr_t)p) & ~(alloc_size-1)), 2 * alloc_size);
 }
+
+#elif defined(_WIN32)
+
+EXPORT void *malloc_at_boundary(int sz)
+{
+  SYSTEM_INFO si;
+  char *p;
+  DWORD dummy;
+  GetSystemInfo(&si);
+  p = VirtualAlloc(NULL, 2 * si.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+  VirtualProtect(p + si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &dummy);
+  return p + si.dwPageSize - sz;
+}
+
+EXPORT void free_at_boundary(void *p)
+{
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  VirtualFree((void *)(((intptr_t)p) & ~(si.dwPageSize-1)), 0, MEM_RELEASE);
+}
+
 #else
+
 EXPORT void *malloc_at_boundary(int sz)
 {
   return malloc(sz);
@@ -73,6 +98,7 @@ EXPORT void free_at_boundary(void *p)
 {
   free(p);
 }
+
 #endif
 
 #if defined(_REENTRANT) || defined(_WIN32)
