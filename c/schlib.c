@@ -206,9 +206,11 @@ static ptr S_call(tc, cp, argcnt) ptr tc; ptr cp; iptr argcnt; {
 }
 
 /* args are set up, argcnt in ac0, closure in ac1 */
-void S_call_help(tc, singlep, lock_ts) ptr tc; IBOOL singlep; IBOOL lock_ts; {
-  /* declaring code volatile should be unnecessary, but it quiets gcc */
+void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_ts; {
+  /* declaring code and tc volatile should be unnecessary, but it quiets gcc
+     and avoids occasional invalid memory violations on Windows */
   void *jb; volatile ptr code;
+  volatile ptr tc = tc_in;
 
   /* lock caller's code object, since his return address is sitting in
      the C stack and we may end up in a garbage collection */
