@@ -956,3 +956,5 @@
 - Repair x86_64 `&` foreign-procedure result type handling for types of a
   small size that is not a multiple of the word size
     x86_64.ss, foreign.ms, foreign4.c
+- Avoid an occasional invalid memory violation on Windows in S_call_help
+    schlib.c
