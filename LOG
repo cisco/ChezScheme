@@ -958,3 +958,5 @@
     x86_64.ss, foreign.ms, foreign4.c
 - Avoid an occasional invalid memory violation on Windows in S_call_help
     schlib.c
+- Updated csug socket code to match that in examples folder
+    csug/foreign.stex, examples/socket.ss
