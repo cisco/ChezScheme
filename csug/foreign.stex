@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2018 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -3682,9 +3682,6 @@ char* get_error(void) {
 ;;; socket.ss
 
 ;;; Requires csocket.so, built from csocket.c.
-;;; Example compilation command line from macOS:
-;;;  cc -c csocket.c -o csocket.o
-;;;  cc csocket.o -dynamic -dynamiclib -current_version 1.0 -compatibility_version 1.0 -o csocket.so
 (load-shared-object "./csocket.so")
 
 ;;; Requires from C library:
