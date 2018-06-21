@@ -3040,7 +3040,7 @@ A \scheme{profile} form has the effect of accounting to the source
 position identified by \var{source-object} the number of times the
 \scheme{profile} form is executed.
 Profile forms are generated implicitly by the expander for source
-expressions in annorated input, e.g., input read by the compiler or
+expressions in annotated input, e.g., input read by the compiler or
 interpreter from a Scheme source file, so this form is typically
 useful only when unannotated source code is produced by the front
 end for some language that targets Scheme.
@@ -3177,7 +3177,7 @@ frequently executed code.
 This value of this parameter must be a string or \scheme{#f}.
 If it is a string, the string should contain an HTML cascading style sheet (CSS)
 color specifier.
-If the parameter is set to string, \scheme{profile-dump-html} includes line numbers
+If the parameter is set to a string, \scheme{profile-dump-html} includes line numbers
 in its html rendering of each source file, using the specified color.
 If the parameter is set to \scheme{#f}, no line numbers are included.
 
@@ -3194,7 +3194,7 @@ This procedure produces a dump of all
 profile information present in \var{dump}, which defaults to
 the value returned by \scheme{profile-dump}.
 It returns a list of entries, each of which is itself a list containing the
-following elements identify one block of code and how many times it
+following elements identifying one block of code and how many times it
 has been executed.
 
 \begin{itemize}
