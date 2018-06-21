@@ -1400,7 +1400,7 @@ be parsed as a number.
 
 <p>
 <li>A symbol whose name contains arbitrary characters may be written by
-escaping them them with <tt>\</tt> or with <tt>|</tt>.
+escaping them with <tt>\</tt> or with <tt>|</tt>.
 <tt>\</tt> is used to escape a single character (except 'x', since
 <tt>\x</tt> marks the start of a hex scalar value),
 whereas <tt>|</tt> is used
@@ -1518,7 +1518,7 @@ lazily, i.e., not until first requested, either by the printer, fasl
 writer, or explicitly by one of the procedures <tt>symbol-&gt;string</tt>
 or <tt>gensym-&gt;unique-string</tt>.
 In addition, a gensym is not placed into the system's internal symbol
-table (the oblist; see page&nbsp;<a href="./objects.html#desc:oblist">153</a>) until the unique name
+table (the oblist; see page&nbsp;<a href="./objects.html#desc:oblist">155</a>) until the unique name
 is requested.
 This allows a gensym to be reclaimed by the storage manager
 if no references to the gensym exist and no unique name exists by which to
@@ -1734,7 +1734,7 @@ this symbol table.
 <p>
 The list of interned symbols grows when a new symbol
 is introduced into the system or when the unique name of a
-gensym (see page&nbsp;<a href="./objects.html#desc:gensym">150</a>) is requested.
+gensym (see page&nbsp;<a href="./objects.html#desc:gensym">152</a>) is requested.
 It shrinks when the garbage collector determines that it is
 safe to discard a symbol.
 It is safe to discard a symbol only if the symbol is not accessible except
@@ -2986,7 +2986,7 @@ produce the same record type.
 usually produce different types, even if the forms are textually
 identical.
 The only exception occurs when the name of a record is specified as
-a generated symbol, or <i>gensym</i> (page&nbsp;<a href="./objects.html#desc:gensym">150</a>).
+a generated symbol, or <i>gensym</i> (page&nbsp;<a href="./objects.html#desc:gensym">152</a>).
 Multiple copies of a record definition whose name is given by a gensym
 always produce the same record type; i.e., such definitions are
 nongenerative.
@@ -3015,11 +3015,11 @@ By default, a record is printed with the syntax
 <p>where <tt><i>field</i>&nbsp;...</tt> are the printed representations of
 the contents of the fields of the record, and
 <tt><i>type-name</i></tt> is a generated symbol, or <i>gensym</i>
-(page&nbsp;<a href="./objects.html#desc:gensym">150</a>), that uniquely identifies the record type.
+(page&nbsp;<a href="./objects.html#desc:gensym">152</a>), that uniquely identifies the record type.
 For nongenerative records, <tt><i>type-name</i></tt> is the gensym
 provided by the program.
 Otherwise, it is a gensym whose "pretty" name
-(page&nbsp;<a href="./objects.html#desc:gensym">150</a>) is the name given to the record by
+(page&nbsp;<a href="./objects.html#desc:gensym">152</a>) is the name given to the record by
 <tt>define-record</tt> or <tt>make-record-type</tt>.
 
 <p>
@@ -3752,7 +3752,7 @@ If the <tt>immutable</tt> class-specifier is present, the field is
 immutable; otherwise, the field is mutable.
 <tt><i>type</i></tt>, if present, specifies how the field is represented.
 The types are the same as those given in the description
-of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">171</a>.
+of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">173</a>.
 
 <p>
 If a type is specified, the field can contain objects only of the
@@ -4156,10 +4156,10 @@ encoding of all bits set is <tt>-1</tt>.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

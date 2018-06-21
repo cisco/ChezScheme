@@ -336,7 +336,7 @@ between one-shot and normal continuations.
 When the optional <tt><i>critical?</i></tt> argument is present and non-false,
 the <tt><i>in</i></tt> thunk is invoked in a critical section along with the code
 that records that the body has been entered, and the <tt><i>out</i></tt> thunk is
-invoked in a critical section section along with the code that records
+invoked in a critical section along with the code that records
 that the body has been exited.
 Extreme caution must be taken with this form of <tt>dynamic-wind</tt>,
 since an error or long-running computation can leave interrupts
@@ -395,7 +395,7 @@ from the point of interruption.
 <p>
 When an engine is applied to its arguments, it sets up a timer
 to fire in <tt><i>ticks</i></tt> time units.
-(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">320</a>.)
+(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">322</a>.)
 If the engine computation completes before the timer expires, the
 system invokes <tt><i>complete</i></tt>, passing 
 it the number of <tt><i>ticks</i></tt> left over and
@@ -822,10 +822,10 @@ passed to <tt>engine-return</tt>.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

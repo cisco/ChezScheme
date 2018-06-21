@@ -173,7 +173,26 @@ The system determines which generations to collect, based on <tt><i>g</i></tt> a
 
 
 <p>
-<a name="./smgmt:s10"></a><span class=formdef><b>global parameter</b>: <tt>collect-notify</tt></span>
+<a name="./smgmt:s10"></a><span class=formdef><b>procedure</b>: <tt>(collect-rendezvous)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>Requests a garbage collection in the same way as when the system
+determines that a collection should occur. All running threads are
+coordinated so that one of them calls the collect-request handler, while
+the other threads pause until the handler returns.
+
+<p>
+Note that if the collect-request handler (see
+<tt>collect-request-handler</tt>) does not call <tt>collect</tt>, then
+<tt>collect-rendezvous</tt> does not actualy perform a garbage
+collection.
+
+
+<p>
+<a name="./smgmt:s11"></a><span class=formdef><b>global parameter</b>: <tt>collect-notify</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -183,7 +202,7 @@ a message whenever a collection is run.
 
 
 <p>
-<a name="./smgmt:s11"></a><span class=formdef><b>global parameter</b>: <tt>collect-trip-bytes</tt></span>
+<a name="./smgmt:s12"></a><span class=formdef><b>global parameter</b>: <tt>collect-trip-bytes</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -199,13 +218,13 @@ once per large chunk allocated.
 Furthermore, some time may elapse between when a collection is
 requested by the storage manager and when the collect request is
 honored, especially if interrupts are temporarily disabled via
-<a name="./smgmt:s12"></a><tt>with-interrupts-disabled</tt>
-or <a name="./smgmt:s13"></a><tt>disable-interrupts</tt>.
+<a name="./smgmt:s13"></a><tt>with-interrupts-disabled</tt>
+or <a name="./smgmt:s14"></a><tt>disable-interrupts</tt>.
 Thus, <tt>collect-trip-bytes</tt> is an approximate measure only.
 
 
 <p>
-<a name="./smgmt:s14"></a><span class=formdef><b>global parameter</b>: <tt>collect-generation-radix</tt></span>
+<a name="./smgmt:s15"></a><span class=formdef><b>global parameter</b>: <tt>collect-generation-radix</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -226,7 +245,7 @@ effectively delays collection of older generations indefinitely.
 
 
 <p>
-<a name="./smgmt:s15"></a><span class=formdef><b>global parameter</b>: <tt>collect-maximum-generation</tt></span>
+<a name="./smgmt:s16"></a><span class=formdef><b>global parameter</b>: <tt>collect-maximum-generation</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -244,7 +263,7 @@ system and thus the total amount of memory required.
 
 
 <p>
-<a name="./smgmt:s16"></a><span class=formdef><b>global parameter</b>: <tt>collect-request-handler</tt></span>
+<a name="./smgmt:s17"></a><span class=formdef><b>global parameter</b>: <tt>collect-request-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -272,7 +291,7 @@ e.g.:
 occurring.
 
 <p>
-<a name="./smgmt:s17"></a><span class=formdef><b>global parameter</b>: <tt>release-minimum-generation</tt></span>
+<a name="./smgmt:s18"></a><span class=formdef><b>global parameter</b>: <tt>release-minimum-generation</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -305,7 +324,7 @@ if (a) the two parameters have the same value before the change, or (b)
 <tt>release-minimum-generation</tt> has a value greater than <tt><i>g</i></tt>.
 
 <p>
-<a name="./smgmt:s18"></a><span class=formdef><b>global parameter</b>: <tt>heap-reserve-ratio</tt></span>
+<a name="./smgmt:s19"></a><span class=formdef><b>global parameter</b>: <tt>heap-reserve-ratio</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -329,19 +348,19 @@ calls into the operating system to request and free memory space.
 
 
 <p>
-<a name="./smgmt:s19"></a><a name="./smgmt:s20"></a><i>Weak pairs</i> allow programs
+<a name="./smgmt:s20"></a><a name="./smgmt:s21"></a><i>Weak pairs</i> allow programs
 to maintain <i>weak pointers</i> to objects.
 A weak pointer to an object does not prevent the object from being
 reclaimed by the storage management system, but it does remain valid as
 long as the object is otherwise accessible in the system.
 
 <p>
-<a name="./smgmt:s21"></a><i>Ephemeron pairs</i> are like weak pairs, but
+<a name="./smgmt:s22"></a><i>Ephemeron pairs</i> are like weak pairs, but
 ephemeron pairs combine two pointers where the second is retained only
 as long as the first is retained.
 
 <p>
-<a name="./smgmt:s22"></a><i>Guardians</i>
+<a name="./smgmt:s23"></a><i>Guardians</i>
 allow programs to protect objects from deallocation
 by the garbage collector and to determine when the objects would
 otherwise have been deallocated.
@@ -365,7 +384,7 @@ in&nbsp;[<a class=citation href="./bibliography.html#g171">23</a>], but the impl
 avoids quadratic-time worst-case behavior.
 
 <p>
-<a name="./smgmt:s23"></a><a name="desc:weak-cons"></a>
+<a name="./smgmt:s24"></a><a name="desc:weak-cons"></a>
 <span class=formdef><b>procedure</b>: <tt>(weak-cons&nbsp;<i>obj<sub>1</sub></i>&nbsp;<i>obj<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>a new weak pair
@@ -445,7 +464,7 @@ dropped, but makes no guarantees about when this will occur.
 
 
 <p>
-<a name="./smgmt:s24"></a><span class=formdef><b>procedure</b>: <tt>(weak-pair?&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s25"></a><span class=formdef><b>procedure</b>: <tt>(weak-pair?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if obj is a weak pair, <tt>#f</tt> otherwise
 <br>
@@ -457,7 +476,7 @@ dropped, but makes no guarantees about when this will occur.
 (weak-pair?&nbsp;(cons&nbsp;'a&nbsp;'b))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (weak-pair?&nbsp;"oops")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./smgmt:s25"></a><a name="desc:ephemeron-cons"></a>
+<p><a name="./smgmt:s26"></a><a name="desc:ephemeron-cons"></a>
 <span class=formdef><b>procedure</b>: <tt>(ephemeron-cons&nbsp;<i>obj<sub>1</sub></i>&nbsp;<i>obj<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>a new ephemeron pair
@@ -541,7 +560,7 @@ reference, and that non-weak reference prevents the car field from becoming
 <tt>#!bwp</tt>.
 
 <p>
-<a name="./smgmt:s26"></a><span class=formdef><b>procedure</b>: <tt>(ephemeron-pair?&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s27"></a><span class=formdef><b>procedure</b>: <tt>(ephemeron-pair?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if obj is a ephemeron pair, <tt>#f</tt> otherwise
 <br>
@@ -555,7 +574,7 @@ reference, and that non-weak reference prevents the car field from becoming
 (ephemeron-pair?&nbsp;(weak-cons&nbsp;'a&nbsp;'b))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (ephemeron-pair?&nbsp;"oops")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./smgmt:s27"></a><span class=formdef><b>procedure</b>: <tt>(bwp-object?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./smgmt:s28"></a><span class=formdef><b>procedure</b>: <tt>(bwp-object?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if obj is the broken weak-pair object, <tt>#f</tt> otherwise
 <br>
@@ -578,7 +597,7 @@ reference, and that non-weak reference prevents the car field from becoming
 (car&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#!bwp<br>
 
 (bwp-object?&nbsp;(car&nbsp;p))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./smgmt:s28"></a><span class=formdef><b>procedure</b>: <tt>(make-guardian)</tt></span>
+<p><a name="./smgmt:s29"></a><span class=formdef><b>procedure</b>: <tt>(make-guardian)</tt></span>
 <br>
 <b>returns: </b>a new guardian
 <br>
@@ -891,11 +910,11 @@ All pointers from C variables or data structures to Scheme objects
 should generally be discarded before entry (or reentry) into Scheme.
 When this guideline cannot be followed, the object may be
 <i>locked</i> via <tt>lock-object</tt> or via the equivalent
-C library procedure <a name="./smgmt:s29"></a><tt>Slock_object</tt>
+C library procedure <a name="./smgmt:s30"></a><tt>Slock_object</tt>
 (Section&nbsp;<a href="./foreign.html#g34">4.8</a>).
 
 <p>
-<a name="./smgmt:s30"></a><span class=formdef><b>procedure</b>: <tt>(lock-object&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s31"></a><span class=formdef><b>procedure</b>: <tt>(lock-object&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -911,7 +930,7 @@ Locking can also lead to accidental retention of storage if objects
 are not unlocked.
 Objects may be unlocked via <tt>unlock-object</tt> or the equivalent
 C library procedure
-<a name="./smgmt:s31"></a><tt>Sunlock_object</tt>.
+<a name="./smgmt:s32"></a><tt>Sunlock_object</tt>.
 
 <p>
 Locking immediate values, such as fixnums, booleans, and characters,
@@ -919,7 +938,7 @@ or objects that have been made static is unnecessary but harmless.
 
 
 <p>
-<a name="./smgmt:s32"></a><span class=formdef><b>procedure</b>: <tt>(unlock-object&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s33"></a><span class=formdef><b>procedure</b>: <tt>(unlock-object&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -945,7 +964,7 @@ or objects that have been made static is unnecessary and ineffective but harmles
 
 
 <p>
-<a name="./smgmt:s33"></a><span class=formdef><b>procedure</b>: <tt>(locked-object?&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s34"></a><span class=formdef><b>procedure</b>: <tt>(locked-object?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is locked, immediate, or static
 <br>
@@ -961,10 +980,10 @@ booleans, and characters, and objects that have been made static.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

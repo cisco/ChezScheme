@@ -1734,7 +1734,7 @@ information in error messages.
 (see <tt>current-expand</tt>), initially <tt>sc-expand</tt>.
 
 <p>
-<a name="./system:s82"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">351</a>)
+<a name="./system:s82"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">353</a>)
 which can be used to request that the compiler or interpreter show
 expander output.
 
@@ -1873,7 +1873,7 @@ optimizations performed.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;odd?)])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(h&nbsp;n)))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1025</tt>
-<p><a name="./system:s88"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">351</a>)
+<p><a name="./system:s88"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">353</a>)
 which can be used to request that the compiler or interpreter show
 source-optimizer output.
 
@@ -1997,7 +1997,7 @@ If instead this file were compiled, using <tt>compile-file</tt>, the
 compiler would arrange to define <tt>mvlet</tt> before continuing
 with the expansion and evaluation of the <tt>mvlet</tt> expression,
 but it would not arrange to define <tt>nodups?</tt>.
-Thus the expansion of the <tt>mvlet</tt> expression would fails.
+Thus the expansion of the <tt>mvlet</tt> expression would fail.
 
 <p>
 In this case it does not help to evaluate the syntactic extension alone.
@@ -2464,7 +2464,7 @@ This option is particularly useful for running RNRS top-level programs
 at optimize-level&nbsp;3 via the
 <a name="./system:s99"></a><tt>--program</tt> command-line option,
 since <tt>eval-when</tt> is ineffective for RNRS top-level programs as described
-on page&nbsp;<a href="./system.html#eval-when-tlp">343</a>.
+on page&nbsp;<a href="./system.html#eval-when-tlp">345</a>.
 
 
 <p>
@@ -2919,8 +2919,8 @@ Similarly, when <tt>expand/optimize-output</tt> is set to a textual
 output port, the output of the source optimizer is printed.
 
 <p>
-<a name="./system:s116"></a><a name="./system:s117"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">337</a>) and
-<tt>expand-optimize</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize">338</a>), which
+<a name="./system:s116"></a><a name="./system:s117"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">339</a>) and
+<tt>expand-optimize</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize">340</a>), which
 can be used to run the expander or the expander and source optimizer
 directly on an individual form.
 
@@ -4718,7 +4718,7 @@ in bytes, including not only the bytes occupied for Scheme objects
 but also various forms of overhead, including fragmentation and
 reserved but not currently occupied memory, and is thus an accurate
 measure of the amount of heap memory currently reserved from the
-the operating system for the current process.
+operating system for the current process.
 
 <p>
 <a name="./system:s203"></a><span class=formdef><b>procedure</b>: <tt>(maximum-memory-bytes)</tt></span>
@@ -5230,7 +5230,7 @@ values.
 
 (test)&nbsp;&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1</tt>
 <p>The definition of <tt>parameterize</tt> is similar to the definition of
-<tt>fluid-let</tt> (page&nbsp;<a href="./binding.html#defn:fluid-let">115</a>):
+<tt>fluid-let</tt> (page&nbsp;<a href="./binding.html#defn:fluid-let">117</a>):
 
 <p>
 
@@ -5459,7 +5459,7 @@ environment of the process,
 where it is available to the current process (e.g., via <tt><i>getenv</i></tt>)
 and any spawned processes.
 The key and value are copied into storage allocated outside of
-the Scheme heap; this space is never reclaimed.
+the Scheme heap; this space is never reclaimed on non-Windows systems.
 
 <p>
 
@@ -5536,10 +5536,10 @@ It is typically used only for system debugging.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

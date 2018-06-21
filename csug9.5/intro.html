@@ -145,7 +145,7 @@ valid identifiers in <i>Chez&nbsp;Scheme</i>.
 Second, the single-character sequences <tt>&#123;</tt> and
 <tt>&#125;</tt> are identifiers.
 Third, identifiers containing arbitrary characters may be printed by
-escaping them them with <tt>\</tt> or with <tt>|</tt>.
+escaping them with <tt>\</tt> or with <tt>|</tt>.
 <tt>\</tt> is used to escape a single character (except 'x', since
 <tt>\x</tt> marks the start of a hex scalar value),
 whereas <tt>|</tt> is used
@@ -153,7 +153,7 @@ to escape the group of characters that follow it up through the
 matching <tt>|</tt>.
 For example, <tt>\||\|</tt> is an identifier with a two-character
 name consisting of the character <tt>|</tt> followed by the
-the character <tt>\</tt>, and <tt>|hit&nbsp;me!|</tt> is an identifier whose name
+character <tt>\</tt>, and <tt>|hit&nbsp;me!|</tt> is an identifier whose name
 contains a space.
 
 <p>
@@ -246,7 +246,7 @@ contain the same list, and <tt>#0=(a&nbsp;.&nbsp;#0#)</tt> is a cyclic
 list, i.e., its cdr is itself.
 
 <p>
-A <tt>$primitive</tt> form (see page&nbsp;<a href="./system.html#desc:hash-primitive">346</a>) may
+A <tt>$primitive</tt> form (see page&nbsp;<a href="./system.html#desc:hash-primitive">348</a>) may
 be abbreviated in the same manner as a <tt>quote</tt> form, using the 
 <a name="./intro:s27"></a><tt>#%</tt> prefix.
 For example,
@@ -263,7 +263,7 @@ Inserting <tt>#!eof</tt> into the middle of a file can thus be handy
 when tracking down a load-time error.
 
 <p>
-Broken pointers in weak pairs (see page&nbsp;<a href="./smgmt.html#desc:weak-cons">393</a>) are
+Broken pointers in weak pairs (see page&nbsp;<a href="./smgmt.html#desc:weak-cons">395</a>) are
 represented by the <i>broken weak pointer</i> object, which is
 printed <tt>#!bwp</tt>.
 
@@ -479,10 +479,10 @@ available at the url
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

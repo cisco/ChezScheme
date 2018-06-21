@@ -745,12 +745,12 @@ message.
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>When When <tt><i>obj</i></tt> is <tt>#f</tt>, the port's beginning-of-line (BOL)
+<p>When <tt><i>obj</i></tt> is <tt>#f</tt>, the port's beginning-of-line (BOL)
 flag is cleared; otherwise, the port's BOL flag is set.
 
 <p>
 The BOL flag is consulted by <tt>fresh-line</tt>
-(page&nbsp;<a href="./io.html#desc:fresh-line">238</a>) to determine if it needs to emit a
+(page&nbsp;<a href="./io.html#desc:fresh-line">240</a>) to determine if it needs to emit a
 newline.
 This flag is maintained automatically for file output ports, string output
 ports, and transcript ports.
@@ -1179,7 +1179,7 @@ written using string-output ports to produce string output.
 a new string output port during the
 application of <tt><i>thunk</i></tt>.
 If <tt><i>thunk</i></tt> returns, the string associated with the new string output
-port is returned, as with <tt>get-output-from-string</tt>.
+port is returned, as with <tt>get-output-string</tt>.
 
 <p>
 
@@ -2295,7 +2295,7 @@ character to <tt><i>textual-output-port</i></tt>, unless it can determine that t
 is already positioned at the start of a line.
 It does this by flushing the port and consulting the
 "beginning-of-line" (BOL) flag associated with the port.
-(See page&nbsp;<a href="./io.html#desc:set-port-bol">218</a>.)
+(See page&nbsp;<a href="./io.html#desc:set-port-bol">220</a>.)
 
 
 <p>
@@ -2749,7 +2749,7 @@ objects <tt><i>obj</i>&nbsp;...</tt>.
 Characters are copied from <tt><i>format-string</i></tt> to the output string from
 left to right, until <tt><i>format-string</i></tt> is exhausted.
 The format string may contain one or more <tt><i>format directives</i></tt>, which are
-multi-character sequences prefixed by a a tilde (&nbsp;<tt>~</tt>&nbsp;).
+multi-character sequences prefixed by a tilde (&nbsp;<tt>~</tt>&nbsp;).
 Each directive is replaced by some other text, often involving one or more
 of the <tt><i>obj</i>&nbsp;...</tt> arguments, as determined by the semantics
 of the directive.
@@ -4789,10 +4789,10 @@ subprocess is terminated.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2017 Cisco Systems, Inc.<br>
+Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2018 for Chez Scheme Version 9.5.1<br>
+Revised June 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
