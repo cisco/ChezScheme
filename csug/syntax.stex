@@ -1887,7 +1887,7 @@ the annotation is returned.
 \endentryheader
 
 \var{sfd} must be a source-file descriptor.
-\var{bfd} must be an exact nonnegative integer and should be the
+\var{bfp} must be an exact nonnegative integer and should be the
 character position of the next character to be read from
 \var{textual-input-port}.
 
