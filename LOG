@@ -960,3 +960,5 @@
     schlib.c
 - Updated csug socket code to match that in examples folder
     csug/foreign.stex, examples/socket.ss
+- Adjust cp0 to not replace a procedure name from a let wrapper
+    cp0.ss, misc.ms
