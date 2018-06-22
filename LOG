@@ -833,3 +833,5 @@
     cmacros.ss, base-lang.ss, np-languages.ss, cprep.ss
     thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
     mats/Mf-t*, foreign.ms, foreign4.c
+- Adjust cp0 to not replace a procedure name from a let wrapper
+    cp0.ss, misc.ms

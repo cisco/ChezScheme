@@ -5026,6 +5026,23 @@
             'other-data))
   )
 
+(mat procedure-name
+  (begin
+    (define (procedure-name f)
+      (((inspect/object f) 'code) 'name))
+    (define should-be-named-f (let ([f (lambda (x) x)]) f))
+    (define should-be-named-g (letrec ([g (lambda (x) x)]) g))
+    (define should-be-named-h (let ([f (let ([h (lambda (x) x)]) h)]) f))
+    (define should-be-named-i (letrec ([f (let ([i (lambda (x) x)]) i)]) f))
+    (define should-be-named-j (let ([f (letrec ([j (lambda (x) x)]) j)]) f))
+    #t)
+  (equal? (procedure-name procedure-name) "procedure-name")
+  (equal? (procedure-name should-be-named-f) "f")
+  (equal? (procedure-name should-be-named-g) "g")
+  (equal? (procedure-name should-be-named-h) "h")
+  (equal? (procedure-name should-be-named-i) "i")
+  (equal? (procedure-name should-be-named-j) "j"))
+
 (mat fasl-immutable
   (begin
     (define immutable-objs (list (vector->immutable-vector '#(1 2 3))

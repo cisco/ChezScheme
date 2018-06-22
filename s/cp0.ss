@@ -4555,7 +4555,9 @@
          (let-values ([(e args) (lift-let e e*)])
            (cp0-call preinfo e (build-operands args env wd moi) ctxt env sc wd name moi)))]
       [(case-lambda ,preinfo ,cl* ...)
-       (when (symbol? name)
+       (when (and (symbol? name)
+                  ;; Avoid replacing a name from an optimized-away `let` pattern:
+                  (not (preinfo-lambda-name preinfo)))
          (preinfo-lambda-name-set! preinfo
            (let ([x ($symbol-name name)])
              (if (pair? x) (cdr x) x))))
