@@ -1,11 +1,11 @@
 ;;; Copyright 2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,7 +168,7 @@
       (define ($lex-error c)
         (errorf #f "unexpected ~a at character ~s of ~a"
           (if (eof-object? c)
-              "eof" 
+              "eof"
               (format "character '~c'" c))
           $pos fn))
       (define-syntax lex-error
@@ -186,7 +186,7 @@
               (char-alphabetic? c)))
           (define identifier-subsequent?
             (lambda (c)
-              (or (char-alphabetic? c) 
+              (or (char-alphabetic? c)
                   (char-numeric? c)))))
         (define-syntax define-state-case
           (syntax-rules ()
@@ -201,11 +201,11 @@
           [#\/ (seen-slash)]
           [identifier-initial? (put-char sp c) (lex-identifier)]
           [#\( (return-token 'lparen #\()]
-          [#\) (return-token 'rparen #\))] 
-          [#\! (return-token 'bang #\!)] 
-          [#\+ (seen-plus)] 
-          [#\- (seen-minus)] 
-          [#\= (seen-equals)] 
+          [#\) (return-token 'rparen #\))]
+          [#\! (return-token 'bang #\!)]
+          [#\+ (seen-plus)]
+          [#\- (seen-minus)]
+          [#\= (seen-equals)]
           [#\* (return-token 'binop '*)]
           [#\, (return-token 'sep #\,)]
           [#\; (return-token 'sep #\;)]
