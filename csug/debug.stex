@@ -1,11 +1,11 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
-% 
+% Copyright 2005-2018 Cisco Systems, Inc.
+%
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
-% 
+%
 % http://www.apache.org/licenses/LICENSE-2.0
-% 
+%
 % Unless required by applicable law or agreed to in writing, software
 % distributed under the License is distributed on an "AS IS" BASIS,
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -434,7 +434,7 @@ In the former case, \var{expr} must evaluate to a procedure.
 \schemedisplay
 > (let ()
     (trace-define plus
-      (lambda (x y) 
+      (lambda (x y)
         (+ x y)))
     (list (plus 3 4) (+ 5 6)))
 |(plus 3 4)
@@ -522,7 +522,7 @@ failed assertion.
 
 A variant of the interactive debugger, the break handler, is entered as
 the result of a keyboard interrupt handled by the default
-keyboard-interrupt handler or an explicit call to the procedure 
+keyboard-interrupt handler or an explicit call to the procedure
 \scheme{break} handled by the default break handler.
 Again, the command ``?'' lists the command options.
 These include commands to:
@@ -769,7 +769,7 @@ identified by relative path names.
 For absolute pathnames starting with a \scheme{/} (or \scheme{\} or a
 directory specifier under Windows), the inspector tries the absolute
 pathname first, then looks for the last (filename) component of the path in
-the list of source directories. 
+the list of source directories.
 For pathnames starting with \scheme{./} (or \scheme{.\} under Windows)
 or \scheme{../} (or \scheme{..\} under Windows), the inspector looks in
 \scheme{"."} or \scheme{".."} first, as appropriate, then for the entire
@@ -778,7 +778,7 @@ pathname in the source directories, then for the last (filename)
 component in the source directories.
 For other (relative) pathnames, the inspector looks for the entire
 relative pathname in the list of source directories, then the last
-(filename) component in the list of source directories. 
+(filename) component in the list of source directories.
 
 If a file by the same name as but different contents from the original
 source file is found during this process, it will be skipped over.
@@ -900,7 +900,7 @@ scalar values are not in the ASCII range.
 of the symbol.
 
 \Icmd{\scheme{ref} or \scheme{r} \var{n}} moves to the \var{nth} field of the symbol.
-Field 0 is the top-level value of the symbol, field 1 
+Field 0 is the top-level value of the symbol, field 1
 is the symbol's name, and field 2 is its property list.
 \var{n} defaults to 0.
 

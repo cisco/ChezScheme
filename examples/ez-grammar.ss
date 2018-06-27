@@ -1,18 +1,18 @@
 ;;; Copyright 2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-;;; See http://www.cs.nott.ac.uk/~pszgmh/monparsing.pdf for origins of 
+;;; See http://www.cs.nott.ac.uk/~pszgmh/monparsing.pdf for origins of
 ;;; some of the monadic combinators.
 
 ;;; Authors: Jon Rossie, Kent Dybvig
@@ -350,16 +350,16 @@
             (equal? (syntax->datum x) (syntax->datum y))))
         (define (elt-equal? x y)
           (cond
-            [(sep-elt? x) 
+            [(sep-elt? x)
              (and (sep-elt? y)
                   (eq? (sep-elt-+? x) (sep-elt-+? y))
                   (elt-equal? (sep-elt-elt x) (sep-elt-elt y))
                   (syntax-equal? (sep-elt-sep x) (sep-elt-sep y)))]
-            [(opt-elt? x) 
+            [(opt-elt? x)
              (and (opt-elt? y)
                   (elt-equal? (opt-elt-elt x) (opt-elt-elt y))
                   (syntax-equal? (opt-elt-default x) (opt-elt-default y)))]
-            [(kleene-elt? x) 
+            [(kleene-elt? x)
              (and (kleene-elt? y)
                   (eq? (kleene-elt-+? x) (kleene-elt-+? y))
                   (elt-equal? (kleene-elt-elt x) (kleene-elt-elt y)))]
@@ -447,7 +447,7 @@
               ""
               (apply string-append
                 (cons (car ls)
-                  (map (lambda (s) (format "~a~a" sep s)) (cdr ls)))))) 
+                  (map (lambda (s) (format "~a~a" sep s)) (cdr ls))))))
         (define (render-paragraph hard-leading-newline?)
           (lambda (paragraph)
             (define (md-text s)
