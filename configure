@@ -260,18 +260,6 @@ if [ "$installman" = "" ] ; then
   installman=$installprefix/$installmansuffix
 fi
 
-if [ "$withoutx" = "yes" ]; then
-  if [ ! -f c/expeditor.c.ori ]; then
-    mv c/expeditor.c c/expeditor.c.ori    
-  fi
-  sed -e '/#ifdef LIBX11/i\
-    #undef LIBX11' c/expeditor.c.ori > c/expeditor.c
-else
-  if [ -f c/expeditor.c.ori ]; then
-    mv c/expeditor.c.ori c/expeditor.c       
-  fi
-fi
-
 if [ "$help" = "yes" ]; then
   echo "Purpose:"
   echo "  $0 determines the machine type and constructs a custom Makefile"
@@ -384,6 +372,10 @@ cat > $w/c/config.h << END
 #define DEFAULT_HEAP_PATH "$installlib/csv%v/%m"
 #endif
 END
+
+if [ "$withoutx" = "yes" ]; then
+  echo '#define _WITHOUT_X_' >> $w/c/config.h
+fi
 
 cat > $w/c/Mf-config << END
 CC=$CC
