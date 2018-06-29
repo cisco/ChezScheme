@@ -15,6 +15,7 @@
  */
 
 #include "system.h"
+#include "config.h"
 
 #ifdef FEATURE_EXPEDITOR
 
@@ -882,6 +883,10 @@ static void s_ee_carriage_return(void) {
 static void s_ee_line_feed(void) {
   putchar(0x0a);
 }
+
+#ifdef _WITHOUT_X_
+#undef LIBX11
+#endif
 
 #ifdef LIBX11
 #include <dlfcn.h>
