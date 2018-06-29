@@ -34,7 +34,9 @@ typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
 #define FLUSHCACHE
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define LSEEK lseek64
 #define OFF_T off64_t
 #define _LARGEFILE64_SOURCE
@@ -67,7 +69,9 @@ typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
 #define FLUSHCACHE
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define LSEEK lseek64
 #define OFF_T off64_t
 #define _LARGEFILE64_SOURCE
@@ -100,7 +104,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define LSEEK lseek64
 #define OFF_T off64_t
 #define _LARGEFILE64_SOURCE
@@ -133,7 +139,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define SECATIME(sb) (sb).st_atimespec.tv_sec
 #define SECCTIME(sb) (sb).st_ctimespec.tv_sec
 #define SECMTIME(sb) (sb).st_mtimespec.tv_sec
@@ -164,7 +172,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define SECATIME(sb) (sb).st_atimespec.tv_sec
 #define SECCTIME(sb) (sb).st_ctimespec.tv_sec
 #define SECMTIME(sb) (sb).st_mtimespec.tv_sec
@@ -248,7 +258,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define SECATIME(sb) (sb).st_atimespec.tv_sec
 #define SECCTIME(sb) (sb).st_ctimespec.tv_sec
 #define SECMTIME(sb) (sb).st_mtimespec.tv_sec
@@ -279,7 +291,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "/usr/X11R6/lib/libX11.dylib"
+#endif
 #define _DARWIN_USE_64_BIT_INODE
 #define SECATIME(sb) (sb).st_atimespec.tv_sec
 #define SECCTIME(sb) (sb).st_ctimespec.tv_sec
@@ -346,7 +360,9 @@ typedef char *memcpy_t;
 typedef char tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#ifdef _X11_XLIB_H_
 #define LIBX11 "libX11.so"
+#endif
 #define SECATIME(sb) (sb).st_atim.tv_sec
 #define SECCTIME(sb) (sb).st_ctim.tv_sec
 #define SECMTIME(sb) (sb).st_mtim.tv_sec
