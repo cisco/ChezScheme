@@ -960,3 +960,5 @@
     schlib.c
 - Updated csug socket code to match that in examples folder
     csug/foreign.stex, examples/socket.ss
+- Add an option --without-x to configure, which allows you to build ChezScheme without X11
+    c/expeditor.c, configure
