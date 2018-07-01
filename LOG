@@ -960,3 +960,5 @@
     schlib.c
 - Updated csug socket code to match that in examples folder
     csug/foreign.stex, examples/socket.ss
+- add an option --disable-x11
+    c/version.h, configure
