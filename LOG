@@ -962,3 +962,6 @@
     csug/foreign.stex, examples/socket.ss
 - add an option --disable-x11
     c/version.h, configure
+- allow s_ee_get_clipboard to use the pastebuffer on macOS even when X11 is not
+  available.
+    expeditor.c
