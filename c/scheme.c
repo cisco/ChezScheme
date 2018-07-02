@@ -320,7 +320,7 @@ static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
     CP(tc) = Svoid; /* don't have calling code object */
 
     AC0(tc) = (ptr)(uptr)n;
-    S_call_help(tc, 0);
+    S_call_help(tc, 0, 0);
     check_ap(tc);
 
     CP(tc) = Svoid; /* leave clean so direct Scall won't choke */

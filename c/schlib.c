@@ -199,14 +199,16 @@ ptr Scall(cp, argcnt) ptr cp; iptr argcnt; {
 static ptr S_call(tc, cp, argcnt) ptr tc; ptr cp; iptr argcnt; {
     AC0(tc) = (ptr)argcnt;
     AC1(tc) = cp;
-    S_call_help(tc, 1);
+    S_call_help(tc, 1, 0);
     return AC0(tc);
 }
 
 /* args are set up, argcnt in ac0, closure in ac1 */
-void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
-  /* declaring code volatile should be unnecessary, but it quiets gcc */
-    void *jb; volatile ptr code;
+void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_ts; {
+  /* declaring code and tc volatile should be unnecessary, but it quiets gcc
+     and avoids occasional invalid memory violations on Windows */
+  void *jb; volatile ptr code;
+  volatile ptr tc = tc_in;
 
   /* lock caller's code object, since his return address is sitting in
      the C stack and we may end up in a garbage collection */
@@ -219,7 +221,16 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
     jb = CREATEJMPBUF();
     if (jb == NULL)
       S_error_abort("unable to allocate memory for jump buffer");
-    FRAME(tc, -1) = CCHAIN(tc) = Scons(Scons(jb, code), CCHAIN(tc));
+    if (lock_ts) {
+      /* Lock a code object passed in TS, which is a more immediate
+         caller whose return address is on the C stack */
+      Slock_object(TS(tc));
+      CCHAIN(tc) = Scons(Scons(jb, Scons(code,TS(tc))), CCHAIN(tc));
+    } else {
+      CCHAIN(tc) = Scons(Scons(jb, Scons(code,Sfalse)), CCHAIN(tc));
+    }
+
+    FRAME(tc, -1) = CCHAIN(tc);
 
     switch (SETJMP(jb)) {
         case 0: /* first time */
@@ -254,15 +265,15 @@ void S_call_help(tc, singlep) ptr tc; IBOOL singlep; {
 
 void S_call_one_result() {
     ptr tc = get_thread_context();
-    S_call_help(tc, 1);
+    S_call_help(tc, 1, 1);
 }
 
 void S_call_any_results() {
     ptr tc = get_thread_context();
-    S_call_help(tc, 0);
+    S_call_help(tc, 0, 1);
 }
 
-/* cchain = ((jb . co) ...) */
+/* cchain = ((jb . (co . maybe-co)) ...) */
 void S_return() {
     ptr tc = get_thread_context();
     ptr xp, yp;
@@ -279,7 +290,9 @@ void S_return() {
 
   /* error checks are done; now unlock affected code objects */
     for (xp = CCHAIN(tc); ; xp = Scdr(xp)) {
-        Sunlock_object(CDAR(xp));
+        ptr p = CDAR(xp);
+        Sunlock_object(Scar(p));
+        if (Scdr(p) != Sfalse) Sunlock_object(Scdr(p));
         if (xp == yp) break;
         FREEJMPBUF(CAAR(xp));
     }

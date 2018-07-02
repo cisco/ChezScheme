@@ -763,6 +763,9 @@
     schlib.c, prim.c, externs.h
     mats/foreign4.c, mats/foreign.ms mats/Mf-*
     foreign.stex, release_notes.stex
+- reworked the S_call_help/S_return CCHAIN handling to fix a bug in which
+  the signal handler could trip over the NULL jumpbuf in a CCHAIN record.  
+    schlib.c
 - added box-cas! and vector-cas!
     prims.ss, cpnanopass.ss, np-languages.ss,
     cmacros.ss, library.ss, primdata.ss

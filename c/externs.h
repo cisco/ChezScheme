@@ -343,7 +343,7 @@ extern void S_machine_init PROTO((void));
 extern void S_initframe PROTO((ptr tc, iptr n));
 extern void S_put_arg PROTO((ptr tc, iptr i, ptr x));
 extern void S_return PROTO((void));
-extern void S_call_help PROTO((ptr tc, IBOOL singlep));
+extern void S_call_help PROTO((ptr tc, IBOOL singlep, IBOOL lock_ts));
 extern void S_call_one_result PROTO((void));
 extern void S_call_any_results PROTO((void));
 
