@@ -37,6 +37,7 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+disablex11=no
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
@@ -200,6 +201,9 @@ while [ $# != 0 ] ; do
     --help)
       help=yes
       ;;
+    --disable-x11)
+      disablex11=yes
+      ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
       ;;
@@ -266,6 +270,7 @@ if [ "$help" = "yes" ]; then
   echo "  -m=<machine type>                 same as --machine <machine type> ($m)"
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
+  echo "  --disable-x11                     disabling x11"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
@@ -367,6 +372,10 @@ cat > $w/c/config.h << END
 #define DEFAULT_HEAP_PATH "$installlib/csv%v/%m"
 #endif
 END
+
+if [ "$disablex11" = "yes" ]; then
+  echo '#define DISABLE_X11' >> $w/c/config.h
+fi
 
 cat > $w/c/Mf-config << END
 CC=$CC

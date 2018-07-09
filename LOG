@@ -960,5 +960,10 @@
     schlib.c
 - Updated csug socket code to match that in examples folder
     csug/foreign.stex, examples/socket.ss
+- add an option --disable-x11
+    c/version.h, configure
+- allow s_ee_get_clipboard to use the pastebuffer on macOS even when X11 is not
+  available.
+    expeditor.c
 - Adjust cp0 to not replace a procedure name from a let wrapper
     cp0.ss, misc.ms
