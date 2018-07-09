@@ -158,15 +158,19 @@ doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates}
 # faster when most of the targets need to be recompiled.
 all: bootall ${Cheader} ${Cequates}
 
-# allx runs all up to two times and checks to see if the new boot file is the
+# allx runs all up to three times and checks to see if the new boot file is the
 # same as the last, i.e., the system is properly bootstrapped.
 allx: prettyclean saveboot
 	$(MAKE) all
 	if $(MAKE) checkboot; then echo fine ; else\
-	  $(MAKE) prettyclean saveboot &&\
-	  $(MAKE) all &&\
-	  $(MAKE) checkboot ;\
-	fi
+          $(MAKE) prettyclean saveboot &&\
+          $(MAKE) all &&\
+          if $(MAKE) checkboot; then echo fine ; else\
+            $(MAKE) prettyclean saveboot &&\
+            $(MAKE) all &&\
+            $(MAKE) checkboot ;\
+          fi\
+        fi
 	$(MAKE) restoreboot
 ifneq ($(OS),Windows_NT)
 	$(MAKE) resetbootlinks

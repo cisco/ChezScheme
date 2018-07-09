@@ -967,3 +967,7 @@
     expeditor.c
 - Adjust cp0 to not replace a procedure name from a let wrapper
     cp0.ss, misc.ms
+- allx now runs all up to three (rather than two) times to eliminate
+  bootstrap failures after small changes like the recent change to
+  procedure names, so we don't have to rebuild the boot files as often.
+    Mf-base
