@@ -965,3 +965,5 @@
 - allow s_ee_get_clipboard to use the pastebuffer on macOS even when X11 is not
   available.
     expeditor.c
+- Adjust cp0 to not replace a procedure name from a let wrapper
+    cp0.ss, misc.ms
