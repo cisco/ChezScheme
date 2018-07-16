@@ -207,7 +207,7 @@
     c/Mf-*, c/Makefile.*nt
 - removed unnecessary datestamp.c target
     c/Mf.*nt
-- fixed unnessesary blocking in expeditor on Windows. 
+- fixed unnecessary blocking in expeditor on Windows.
     c/expeditor.c
 - eliminated a couple of thread-safety issues and limitations on the
   sizes of pathnames produced by expansion of tilde (home-directory)
@@ -260,7 +260,7 @@
   (and palette) and update CSUG to match. update the CSUG screenshots
   to reflect the refined look.
     s/pdhtml.ss
-    csug/system.stex 
+    csug/system.stex
     csug/canned/profilehtml-orig.png
     csug/canned/profilehtml.png
     csug/canned/fatfibhtml-orig.png
@@ -481,7 +481,7 @@
     primdata.ss
 - more optimizations for map and for-each with explicit list
   extend the reductions for map and for-each when the arguments are
-  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
+  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...).
     cp0.ss,
     4.ms
 - reverted to the preceding version of cp0 due to failure to preserve
@@ -639,7 +639,7 @@
 - Updated CSUG to replace \INSERTREVISIONMONTHSPACEYEAR with the current
   month and year at the time of generation.
     csug.stex, copyright.stex
-- Updated configuration to set machine types in the CSUG and release notes 
+- Updated configuration to set machine types in the CSUG and release notes
   make files, and updated distclean target to remove these files.
     configure, makefiles/Makefile-csug.in (renamed from csug/Makefile),
     makefiles/Makefile-release_notes.in
@@ -754,7 +754,7 @@
     7.ms
 - fix signature of bytevector-[u/s]16-native-set!
     primdata.ss
-- fix enumerate signature 
+- fix enumerate signature
     primdata.ss
 - added support for Visual Studio 2017.15.5
     wininstall/locate-vcredist.bat
@@ -893,7 +893,7 @@
     mats/foreign4.c, mats/foreign.ms mats/Mf-*
     foreign.stex, release_notes.stex
 - reworked the S_call_help/S_return CCHAIN handling to fix a bug in which
-  the signal handler could trip over the NULL jumpbuf in a CCHAIN record.  
+  the signal handler could trip over the NULL jumpbuf in a CCHAIN record.
     schlib.c
 - install equates.h, kernel.o, and main.o on unix-like systems
     Mf-install.in
