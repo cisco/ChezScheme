@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2018-05-21 16:24:51.416317188 -0400
---- errors-compile-0-f-t-f	2018-05-21 15:45:38.426922815 -0400
+*** errors-compile-0-f-f-f	2018-07-16 14:43:05.195920036 -0400
+--- errors-compile-0-f-t-f	2018-07-16 14:11:48.751983271 -0400
 ***************
 *** 125,131 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
@@ -271,8 +271,8 @@
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
