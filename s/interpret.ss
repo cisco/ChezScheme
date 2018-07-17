@@ -654,7 +654,7 @@
                            (let ([x ((run-cp0)
                                      (lambda (x)
                                        (set! cpletrec-ran? #t)
-                                       ($cpletrec ($cp0 x #f)))
+                                       ($cpletrec ($cptypes ($cp0 x #f))))
                                      x2)])
                              (if cpletrec-ran? x ($cpletrec x))))]
                     [x2b ($cpcheck x2a)]

@@ -104,6 +104,8 @@
 
 (define enable-cross-library-optimization ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+(define enable-type-recovery ($make-thread-parameter #t (lambda (x) (and x #t))))
+
 (define machine-type
   (lambda ()
     (constant machine-type-name)))
@@ -214,6 +216,7 @@
 (package-stubs compiler-support
   $cp0
   $cpvalid
+  $cptypes
   $cpletrec
   $cpcheck)
 (package-stubs syntax-support

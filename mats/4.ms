@@ -1304,9 +1304,9 @@
               (list 'b 'u 'y)
               (list 'c 'v 'z))))
     '(#2%list
-       (#2%string->symbol (#2%string-append "a" "b" "c"))
-       (#2%string->symbol (#2%string-append "t" "u" "v"))
-       (#2%string->symbol (#2%string-append "x" "y" "z"))))
+       (#3%string->symbol (#3%string-append "a" "b" "c"))
+       (#3%string->symbol (#3%string-append "t" "u" "v"))
+       (#3%string->symbol (#3%string-append "x" "y" "z"))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize

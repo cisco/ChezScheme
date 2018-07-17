@@ -815,13 +815,13 @@
            (lambda (r)
              (emit-word! 2953052161)
              (emit-word! 3766812992)
-             (emit-word! (#2%+ 3766747136 (#2%ash r 0))))))
+             (emit-word! (#3%+ 3766747136 (#2%ash r 0))))))
       (syntax-case x ($primitive)
         [(set! test
            (lambda (r1)
              (ew1! 2953052161)
              (ew2! 3766812992)
-             (ew3! (#2%+ 3766747136 (#2%ash r2 0)))))
+             (ew3! (#3%+ 3766747136 (#2%ash r2 0)))))
          (eq? #'r1 #'r2)])))
  ; verify optimization of (if e s s) => (begin e s)
   (equivalent-expansion?
@@ -859,14 +859,14 @@
       (expand/optimize
         '(lambda (x y) (if (not (or (fx< x y) (fx> y x))) x y))))
     '(lambda (x.0 y.1)
-       (if (if (#2%fx< x.0 y.1) #t (#2%fx> y.1 x.0))
+       (if (if (#2%fx< x.0 y.1) #t (#3%fx> y.1 x.0))
            y.1
            x.0)))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
       (expand/optimize
         '(lambda (x y) (if (or (fx< x y) (fx> y x)) x y))))
-    '(lambda (x y) (if (if (#2%fx< x y) #t (#2%fx> y x)) x y)))
+    '(lambda (x y) (if (if (#2%fx< x y) #t (#3%fx> y x)) x y)))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
       (expand/optimize
