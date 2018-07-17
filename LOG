@@ -983,3 +983,9 @@
     x86_64.ss x86.ss, ppc32.ss, arm32.ss,
     5_6.ms, 5_8.ms, root-experr*,
     objects.stex, release_notes.stex
+- add object-backreferences and enable-object-backreferences as an aid
+  to debugging memory leaks
+     back.ss, cmacros.ss, inspect.ss, primdata.ss,
+     gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
+     globals.h, externs.h,
+     system.stex, 7.ms
