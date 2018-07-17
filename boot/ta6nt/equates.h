@@ -262,7 +262,7 @@ typedef unsigned long long U64;
 #define int_bits 0x20
 #define integer_divide_instruction 1
 #define keyboard_interrupt_index 0x3
-#define library_entry_vector_size 0x20C
+#define library_entry_vector_size 0x210
 #define libspec_closure_index 0xD
 #define libspec_does_not_expect_headroom_index 0x0
 #define libspec_error_index 0xE
@@ -961,5 +961,5 @@ typedef unsigned long long U64;
 #define VIRTREG(x,i) (((ptr *)((uptr)(x)+152))[i])
 
 /* library entries we access from C code */
-#define library_nonprocedure_code 150
-#define library_dounderflow 152
+#define library_nonprocedure_code 152
+#define library_dounderflow 154

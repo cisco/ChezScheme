@@ -183,6 +183,7 @@ EXPORT void Sretain_static_relocation PROTO((void));
 EXPORT void Sset_verbose PROTO((int));
 EXPORT void Sscheme_init PROTO((void (*)(void)));
 EXPORT void Sregister_boot_file PROTO((const char *));
+EXPORT void Sregister_boot_file_fd PROTO((const char *, int fd));
 EXPORT void Sregister_heap_file PROTO((const char *));
 EXPORT void Scompact_heap PROTO((void));
 EXPORT void Ssave_heap PROTO((const char *, int));
