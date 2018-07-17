@@ -2880,3 +2880,5 @@
       [(x g) ($compute-composition x (filter-generation who g))])))
 
 (define object-counts (foreign-procedure "(cs)object_counts" () ptr))
+
+(define object-backreferences (foreign-procedure "(cs)object_backreferences" () ptr))
