@@ -972,4 +972,8 @@
   procedure names, so we don't have to rebuild the boot files as often.
     Mf-base
 - Fix tests for cp0 procedure-name change
-    misc.ms, patch-compile-0-f-t-f
+    misc.ms, patch-compile-0-f-t-f, patch-interpret-0-f-t-f
+- add load-compiled-from-port and Sregister_boot_file_fd for loading modes
+  based on open files instead of paths
+    7.ss, primdata.ss, mkheader.ss, scheme.c
+    7.ms, foreign.stex, system.stex
