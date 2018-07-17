@@ -1000,3 +1000,7 @@
 - add current-generate-id and expand-omit-library-invocations, which can be
   useful for avoiding library recompilation and redundant invocation checks
     syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex
+- add load-compiled-from-port and Sregister_boot_file_fd for loading modes
+  based on open files instead of paths
+    7.ss, primdata.ss, mkheader.ss, scheme.c
+    7.ms, foreign.stex, system.stex
