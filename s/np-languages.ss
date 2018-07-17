@@ -78,10 +78,6 @@
   (import (nanopass))
   (include "base-lang.ss")
 
- ; convention is a list of symbols (we're assuming the front end already verified
- ; the convention is a valid one for this machine-type)
-  (define convention? (lambda (x) (and (list? x) (andmap symbol? x))))
-
  ; r6rs says a quote subform should be a datum, not must be a datum
  ; chez scheme allows a quote subform to be any value
   (define datum? (lambda (x) #t))
@@ -416,7 +412,7 @@
     (Program (prog)
       (+ (labels ([l* le*] ...) l)                     => (labels ([l* le*] ...) (l))))
     (CaseLambdaExpr (le)
-      (+ (fcallable info)                              => (fcallable info)))
+      (+ (fcallable info l)                            => (fcallable info l)))
     (Lvalue (lvalue)
       (+ x
          (mref e1 e2 imm)))
@@ -786,8 +782,6 @@
     (lambda (x)
       (and (integer? x) (exact? x))))
 
-  (define livemask? $livemask?)
-
  ; calling conventions are imposed; clauses no longer have formals (they are
  ; now locals set by arguments from argument registers and frame); calls no
  ; longer have arguments; case-lambda is resposible for dispatching to correct
@@ -803,7 +797,7 @@
       (pred-primitive (pred-prim))
       (value-primitive (value-prim))
       (immediate (imm fs))
-      (livemask (lpm))
+      (exact-integer (lpm))
       (info (info))
       (maybe-label (mrvl))
       (label (l rpl))
@@ -932,7 +926,7 @@
       (pred-primitive (pred-prim))
       (value-primitive (value-prim))
       (immediate (imm fs))
-      (livemask (lpm))
+      (exact-integer (lpm))
       (live-info (live-info))
       (info (info))
       (label (l rpl))

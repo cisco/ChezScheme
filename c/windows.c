@@ -23,9 +23,9 @@
 
 static ptr s_ErrorString(DWORD dwMessageId);
 static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid);
-static ptr s_GetRegistry(char *s);
-static void s_PutRegistry(char *s, char *val);
-static void s_RemoveRegistry(char *s);
+static ptr s_GetRegistry(wchar_t *s);
+static void s_PutRegistry(wchar_t *s, wchar_t *val);
+static void s_RemoveRegistry(wchar_t *s);
 
 void S_machine_init() {
     Sregister_symbol("(com)CreateInstance", (void *)s_CreateInstance);
@@ -42,7 +42,10 @@ INT S_getpagesize() {
 }
 
 void *S_ntdlopen(const char *path) {
-    return (void *)LoadLibrary(path);
+  wchar_t *pathw = Sutf8_to_wide(path);
+  void *r = (void *)LoadLibraryW(pathw);
+  free(pathw);
+  return r;
 }
 
 void *S_ntdlsym(void *h, const char *s) {
@@ -66,85 +69,42 @@ char *S_ntdlerror(void) {
 oops, no S_flushcache_max_gap or S_doflush
 #endif /* FLUSHCACHE */
 
-static int strncasecmp(const char *s1, const char *s2, int n) {
-  while (n > 0) {
-    char c1 = *s1; char c2 = *s2;
-
-    if (c1 == 0) return c2 == 0 ? 0 : -1;
-    if (c2 == 0) return 1;
-
-    c1 = tolower(c1);
-    c2 = tolower(c2);
-
-    if (c1 != c2) return c1 < c2 ? -1 : 1;
-    n -= 1; s1 += 1; s2 += 1;
-  }
-  return 0;
-}
-
-static void SplitRegistryKey(char *who, char *wholekey, HKEY *key, char **subkey, char **last) {
-  char c, *s;
+static void SplitRegistryKey(char *who, wchar_t *wholekey, HKEY *key, wchar_t **subkey, wchar_t **last) {
+  wchar_t c, *s;
 
  /* Determine the base key */
-  if (strncasecmp(wholekey, "HKEY_CLASSES_ROOT\\", 18) == 0) {
+  if (_wcsnicmp(wholekey, L"HKEY_CLASSES_ROOT\\", 18) == 0) {
     *key = HKEY_CLASSES_ROOT;
     *subkey = wholekey+18;
-  } else if (strncasecmp(wholekey, "HKEY_CURRENT_USER\\", 18) == 0) {
+  } else if (_wcsnicmp(wholekey, L"HKEY_CURRENT_USER\\", 18) == 0) {
     *key = HKEY_CURRENT_USER;
     *subkey = wholekey+18;
-  } else if (strncasecmp(wholekey, "HKEY_LOCAL_MACHINE\\", 19) == 0) {
+  } else if (_wcsnicmp(wholekey, L"HKEY_LOCAL_MACHINE\\", 19) == 0) {
     *key = HKEY_LOCAL_MACHINE;
     *subkey = wholekey+19;
-  } else if (strncasecmp(wholekey, "HKEY_USERS\\", 11) == 0) {
+  } else if (_wcsnicmp(wholekey, L"HKEY_USERS\\", 11) == 0) {
     *key = HKEY_USERS;
     *subkey = wholekey+11;
-  } else if (strncasecmp(wholekey, "HKEY_CURRENT_CONFIG\\", 20) == 0) {
+  } else if (_wcsnicmp(wholekey, L"HKEY_CURRENT_CONFIG\\", 20) == 0) {
     *key = HKEY_CURRENT_CONFIG;
     *subkey = wholekey+20;
-  } else if (strncasecmp(wholekey, "HKEY_DYN_DATA\\", 14) == 0) {
+  } else if (_wcsnicmp(wholekey, L"HKEY_DYN_DATA\\", 14) == 0) {
     *key = HKEY_DYN_DATA;
     *subkey = wholekey+14;
-  } else
-    S_error1(who, "invalid registry key ~s", Sstring(wholekey));
+  } else {
+    char *wholekey_utf8 = Swide_to_utf8(wholekey);
+    ptr wholekey_scheme = Sstring_utf8(wholekey_utf8, -1);
+    free(wholekey_utf8);
+    S_error1(who, "invalid registry key ~s", wholekey_scheme);
+  }
 
   for (*last = s = *subkey, c = *s; c != '\0'; c = *++s)
     if (c == '\\') *last = s;
 }
 
-/* could commonize portions of next two routines, but they're short.
- * the first version takes a char * and returns the result in a buffer
- * of fixed size.  the second takes a char * and returns the result
- * in a scheme string of the necessary size.  the first returns
- * (char *)0 on failure; the second returns Sfalse. */
-extern char *S_GetRegistry(char *buf, int bufsize, char *s) {
+static ptr s_GetRegistry(wchar_t *s) {
   HKEY key, result;
-  char *subkey, *last;
-  DWORD rc, type, size;
-
-  SplitRegistryKey("get-registry", s, &key, &subkey, &last);
-
- /* open the key */
-  if (last == subkey) {
-    rc = RegOpenKeyEx(key, "", 0, KEY_QUERY_VALUE, &result);
-  } else {
-    *last = '\0'; /* Truncate subkey at backslash */
-    rc = RegOpenKeyEx(key, subkey, 0, KEY_QUERY_VALUE, &result);
-    *last++ = '\\'; /* Restore backslash */
-  }
-  if (rc != ERROR_SUCCESS) return (char *)0;
-
- /* grab the data */
-  size = bufsize - 1;  /* leave room for trailing nul */
-  rc = RegQueryValueEx(result, last, NULL, &type, buf, &size);
-  RegCloseKey(result);
-  buf[bufsize-1] = 0;  /* nul may be missing if buffer just large enough */
-
-  return rc != ERROR_SUCCESS ? (char *)0 : buf;
-}
-
-static ptr s_GetRegistry(char *s) {
-  HKEY key, result;
-  char *subkey, *last;
+  wchar_t *subkey, *last;
   DWORD rc, type, size;
   ptr ans;
 
@@ -152,16 +112,16 @@ static ptr s_GetRegistry(char *s) {
 
  /* open the key */
   if (last == subkey) {
-    rc = RegOpenKeyEx(key, "", 0, KEY_QUERY_VALUE, &result);
+    rc = RegOpenKeyExW(key, L"", 0, KEY_QUERY_VALUE, &result);
   } else {
     *last = '\0'; /* Truncate subkey at backslash */
-    rc = RegOpenKeyEx(key, subkey, 0, KEY_QUERY_VALUE, &result);
+    rc = RegOpenKeyExW(key, subkey, 0, KEY_QUERY_VALUE, &result);
     *last++ = '\\'; /* Restore backslash */
   }
   if (rc != ERROR_SUCCESS) return Sfalse;
 
  /* Get the size of the value */
-  rc = RegQueryValueEx(result, last, NULL, &type, NULL, &size);
+  rc = RegQueryValueExW(result, last, NULL, &type, NULL, &size);
   if (rc != ERROR_SUCCESS) {
     RegCloseKey(result);
     return Sfalse;
@@ -171,86 +131,97 @@ static ptr s_GetRegistry(char *s) {
   ans = S_bytevector(size);
 
  /* Load up the bytevector */
-  rc = RegQueryValueEx(result, last, NULL, &type, &BVIT(ans,0), &size);
+  rc = RegQueryValueExW(result, last, NULL, &type, &BVIT(ans,0), &size);
   RegCloseKey(result);
   if (rc != ERROR_SUCCESS) return Sfalse;
 
- /* discard unwanted terminating null byte, if present */
-  if ((type == REG_SZ) || (type == REG_EXPAND_SZ))
-    BYTEVECTOR_TYPE(ans) = ((size-1) << bytevector_length_offset) | type_bytevector;
+ /* discard unwanted terminating null character, if present */
+  if (((type == REG_SZ) || (type == REG_EXPAND_SZ)) &&
+      (size >= 2) &&
+      (*(wchar_t*)(&BVIT(ans, size-2)) == 0))
+    BYTEVECTOR_TYPE(ans) = ((size-2) << bytevector_length_offset) | type_bytevector;
 
   return ans;
 }
 
-static void s_PutRegistry(char *s, char *val) {
+static void s_PutRegistry(wchar_t *s, wchar_t *val) {
   HKEY key, result;
-  char *subkey, *last;
-  DWORD rc, qrc, type, size;
+  wchar_t *subkey, *last;
+  DWORD rc, type;
+  size_t n = (wcslen(val) + 1) * sizeof(wchar_t);
+#if (size_t_bits > 32)
+  if ((DWORD)n != n)  { 
+    char *s_utf8 = Swide_to_utf8(s);
+    ptr s_scheme = Sstring_utf8(s_utf8, -1);
+    free(s_utf8);
+    S_error2("put-registry!", "cannot set ~a (~a)", s_scheme, Sstring("too long"));
+  }
+#endif
 
   SplitRegistryKey("put-registry!", s, &key, &subkey, &last);
 
  /* create/open the key */
   if (last == subkey) {
-    rc = RegCreateKey(key, "", &result);
+    rc = RegCreateKeyExW(key, L"", 0, NULL, 0, KEY_SET_VALUE, NULL, &result, NULL);
   } else {
     *last = '\0'; /* Truncate subkey at backslash */
-    rc = RegCreateKey(key, subkey, &result);
+    rc = RegCreateKeyExW(key, subkey, 0, NULL, 0, KEY_SET_VALUE, NULL, &result, NULL);
     *last++ = '\\'; /* Restore backslash */
   }
 
- /* lookup type for key (if it exists), if not assume REG_SZ */
   if (rc == ERROR_SUCCESS) {
-    qrc = RegQueryValueEx(result, last, NULL, &type, NULL, &size);
-    if (qrc != ERROR_SUCCESS) type = REG_SZ;
-  }
+   /* lookup type for key (if it exists), if not assume REG_SZ */
+    if (ERROR_SUCCESS != RegQueryValueExW(result, last, NULL, &type, NULL, NULL))
+      type = REG_SZ;
 
-  if (rc == ERROR_SUCCESS) {
-    size_t n = strlen(val)+1;
-#if (size_t_bits > 32)
-    if ((DWORD)n != n)  {
-      RegCloseKey(result);
-      S_error2("put-registry!", "cannot set ~a (~a)", Sstring(s), Sstring("too long"));
-    }
-#endif
    /* set the value */
-    rc = RegSetValueEx(result, last, 0, type, val, (DWORD)n);
+    rc = RegSetValueExW(result, last, 0, type, (const BYTE*)val, (DWORD)n);
     RegCloseKey(result);
   }
 
-  if (rc != ERROR_SUCCESS)
-    S_error2("put-registry!", "cannot set ~a (~a)", Sstring(s),
+  if (rc != ERROR_SUCCESS) {
+    char *s_utf8 = Swide_to_utf8(s);
+    ptr s_scheme = Sstring_utf8(s_utf8, -1);
+    free(s_utf8);
+    S_error2("put-registry!", "cannot set ~a (~a)", s_scheme,
       rc == ERROR_FILE_NOT_FOUND ? Sstring("not found") : s_ErrorString(rc));
+  }
 }
 
-static void s_RemoveRegistry(char *s) {
+
+static void s_RemoveRegistry(wchar_t *s) {
   HKEY key, result;
-  char *subkey, *last;
+  wchar_t *subkey, *last;
   DWORD rc;
 
   SplitRegistryKey("remove-registry!", s, &key, &subkey, &last);
 
  /* open the key */
   if (last == subkey) {
-    rc = RegOpenKeyEx(key, "", 0, KEY_ALL_ACCESS, &result);
+    rc = RegOpenKeyExW(key, L"", 0, KEY_ALL_ACCESS, &result);
   } else {
     *last = '\0'; /* Truncate subkey at backslash */
-    rc = RegOpenKeyEx(key, subkey, 0, KEY_ALL_ACCESS, &result);
+    rc = RegOpenKeyExW(key, subkey, 0, KEY_ALL_ACCESS, &result);
     *last++ = '\\'; /* Restore backslash */
   }
   if (rc == ERROR_SUCCESS) {
    /* delete the value */
-    rc = RegDeleteValue(result, last);
+    rc = RegDeleteValueW(result, last);
     if (rc == ERROR_FILE_NOT_FOUND)
      /* value by given name not found; try deleting as key */
-      rc = RegDeleteKey(result, last);
+      rc = RegDeleteKeyW(result, last);
     RegCloseKey(result);
   }
 
-  if (rc != ERROR_SUCCESS)
-    S_error2("remove-registry!", "cannot remove ~a (~a)", Sstring(s),
+  if (rc != ERROR_SUCCESS) {
+    char *s_utf8 = Swide_to_utf8(s);
+    ptr s_scheme = Sstring_utf8(s_utf8, -1);
+    free(s_utf8);
+    S_error2("remove-registry!", "cannot remove ~a (~a)", s_scheme,
       rc == ERROR_FILE_NOT_FOUND ? Sstring("not found") :
       rc == ERROR_ACCESS_DENIED ? Sstring("insufficient permission or subkeys exist") :
       s_ErrorString(rc));
+  }
 }
 
 static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid) {
@@ -410,8 +381,18 @@ int S_windows_rmdir(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
     return _rmdir(pathname);
-  else
-    return _wrmdir(wpathname);
+  else {
+    int rc;
+    if (!(rc = _wrmdir(wpathname))) {
+      // Spin loop until Windows deletes the directory.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wrmdir(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 int S_windows_stat64(const char *pathname, struct STATBUF *buffer) {
@@ -434,8 +415,18 @@ int S_windows_unlink(const char *pathname) {
   wchar_t wpathname[PATH_MAX];
   if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
     return _unlink(pathname);
-  else
-    return _wunlink(wpathname);
+  else {
+    int rc;
+    if (!(rc = _wunlink(wpathname))) {
+      // Spin loop until Windows deletes the file.
+      int n;
+      for (n = 100; n > 0; n--) {
+        if (_wunlink(wpathname) && (errno == ENOENT)) break;
+      }
+      return 0;
+    }
+    return rc;
+  }
 }
 
 char *S_windows_getcwd(char *buffer, int maxlen) {
@@ -453,4 +444,54 @@ char *S_windows_getcwd(char *buffer, int maxlen) {
     return NULL;
   } else
     return buffer;
+}
+
+char *Swide_to_utf8(const wchar_t *arg) {
+  int len = WideCharToMultiByte(CP_UTF8, 0, arg, -1, NULL, 0, NULL, NULL);
+  if (0 == len) return NULL;
+  char* arg8 = (char*)malloc(len * sizeof(char));
+  if (0 == WideCharToMultiByte(CP_UTF8, 0, arg, -1, arg8, len, NULL, NULL)) {
+    free(arg8);
+    return NULL;
+  }
+  return arg8;
+}
+
+wchar_t *Sutf8_to_wide(const char *arg) {
+  int len = MultiByteToWideChar(CP_UTF8, 0, arg, -1, NULL, 0);
+  if (0 == len) return NULL;
+  wchar_t* argw = (wchar_t*)malloc(len * sizeof(wchar_t));
+  if (0 == MultiByteToWideChar(CP_UTF8, 0, arg, -1, argw, len)) {
+    free(argw);
+    return NULL;
+  }
+  return argw;
+}
+
+char *Sgetenv(const char *name) {
+  wchar_t* wname;
+  DWORD n;
+  wchar_t buffer[256];
+  wname = Sutf8_to_wide(name);
+  if (NULL == wname) return NULL;
+  n = GetEnvironmentVariableW(wname, buffer, 256);
+  if (n == 0) {
+    free(wname);
+    return NULL;
+  } else if (n <= 256) {
+    free(wname);
+    return Swide_to_utf8(buffer);
+  } else {
+    wchar_t* value = (wchar_t*)malloc(n * sizeof(wchar_t));
+    if (0 == GetEnvironmentVariableW(wname, value, n)) {
+      free(wname);
+      free(value);
+      return NULL;
+    } else {
+      char* result = Swide_to_utf8(value);
+      free(wname);
+      free(value);
+      return result;
+    }
+  }
 }

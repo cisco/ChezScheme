@@ -20,7 +20,7 @@
 what = all examples
 base = ../..
 
-doitformebaby:	xboot
+xdoit:	xboot
 
 include Mf-${xm}
 

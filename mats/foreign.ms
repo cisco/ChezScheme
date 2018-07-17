@@ -2018,7 +2018,7 @@
         (foreign-callable
           (lambda (x y)
             (collect)
-            (let ([ls (make-list 20000 #\z)])
+            (let ([ls (map (lambda (x) (make-vector 200 x)) (make-list 100))])
               (collect)
               (collect)
               (collect)
@@ -2028,8 +2028,13 @@
           (scheme-object iptr)
           scheme-object))
       (define (go) (Sinvoke2 Fcons 4 5))
-      (go))
-    '(20000 4 . 5))
+      (define initial-result (go))
+      (let loop ([i 100])
+        (if (zero? i)
+            initial-result
+            (and (equal? initial-result (go))
+                 (loop (sub1 i))))))
+    '(100 4 . 5))
   (eqv?
     (let ()
       (define Sinvoke2
@@ -2486,6 +2491,31 @@
               (ftype-pointer-address fptr)))
           *m*)
         (+ $stack-depth $base-value)))
+  ;; Make sure that a callable is suitably locked, and that it's
+  ;; unlocked when the C stack is popped by an escape
+  (equal?
+    (let ()
+      (define Sinvoke2
+        (foreign-procedure "Sinvoke2"
+          (scheme-object scheme-object iptr)
+          scheme-object))
+      (define Fcons
+        (foreign-callable
+          (lambda (k y)
+            ;; Escape with locked, which should be #t
+            ;; because a callable is locked while it's
+            ;; called:
+            (k (locked-object? Fcons)))
+          (scheme-object iptr)
+          scheme-object))
+      (list
+       ;; Call and normal callable return:
+       (let ([v (Sinvoke2 Fcons (lambda (x) x) 5)])
+         (list v (locked-object? Fcons)))
+       ;; Escape from callable:
+       (let ([v ($with-exit-proc (lambda (k) (Sinvoke2 Fcons k 5)))])
+         (list v (locked-object? Fcons)))))
+    '((#t #f) (#t #f)))
 )
 
 (machine-case
@@ -2706,12 +2736,12 @@
                      (foreign-callable-code-object
                       (ftype-pointer-address id)))
                     v))]))
-           (and (let ([v (make-ftype-pointer T (foreign-alloc (ftype-sizeof T)))])
+           (and (let ([v (make-ftype-pointer T (malloc_at_boundary (ftype-sizeof T)))])
                   (get v)
                   (and (= (T-ref v) vi)
                        ...
                        (begin
-                         (foreign-free (ftype-pointer-address v))
+                         (free_at_boundary (ftype-pointer-address v))
                          #t)))
                 (let ([a (make-ftype-pointer T (malloc_at_boundary (ftype-sizeof T)))])
                   (T-set! a) ...
@@ -2762,7 +2792,7 @@
       (syntax-rules ()
         [(_ arg ...)
          (and (check* () arg ...)
-              (check* (__thread) arg ...))]))
+              (check* (__collect_safe) arg ...))]))
     (define-syntax check-n
       (syntax-rules ()
         [(_ [ni ti vi] ...)
@@ -2895,9 +2925,23 @@
   (check-union [x double 68.0] [y int 0])
   )
 
-(mat thread
+(mat collect-safe
+  (error? (foreign-procedure __collect_safe "unknown" (utf-8) void))
+  (error? (foreign-procedure __collect_safe "unknown" (utf-16be) void))
+  (error? (foreign-procedure __collect_safe "unknown" (utf-16le) void))
+  (error? (foreign-procedure __collect_safe "unknown" (utf-32be) void))
+  (error? (foreign-procedure __collect_safe "unknown" (utf-32le) void))
+  (error? (foreign-procedure __collect_safe "unknown" (string) void))
+  (error? (foreign-procedure __collect_safe "unknown" (wstring) void))
+  (error? (foreign-callable __collect_safe (lambda () #f) () utf-8))
+  (error? (foreign-callable __collect_safe (lambda () #f) () utf-16le))
+  (error? (foreign-callable __collect_safe (lambda () #f) () utf-16be))
+  (error? (foreign-callable __collect_safe (lambda () #f) () utf-32le))
+  (error? (foreign-callable __collect_safe (lambda () #f) () utf-32be))
+  (error? (foreign-callable __collect_safe (lambda () #f) () string))
+  (error? (foreign-callable __collect_safe (lambda () #f) () wstring))
   (begin
-    (define-ftype thread-callback-T (function __thread (double) double))
+    (define-ftype thread-callback-T (function __collect_safe (double) double))
     (define (call-with-thread-callback cb-proc proc)
       (let ([callback (make-ftype-pointer thread-callback-T cb-proc)])
         (let ([r (proc callback)])
@@ -2936,12 +2980,12 @@
                (lambda (callback) (call callback arg n-times #t #t)))))
           call-in-unknown-thread-1))
     (define call-in-unknown-thread-4
-      ;; In an truly unknown thread, but also using `__thread` to
+      ;; In an truly unknown thread, but also using `__collect_safe` to
       ;; deactivate the current thread instead of using `Sdeactivate_thread`
       ;; within the foreign function:
       (if (and (threaded?)
                (foreign-entry? "call_in_unknown_thread"))
-          (let ([call (foreign-procedure __thread "call_in_unknown_thread"
+          (let ([call (foreign-procedure __collect_safe "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
             (lambda (proc arg n-times)
@@ -2969,7 +3013,7 @@
              n
              1))
           10.5)
-  ;; Try to crash a `__thread` foreign-procedure call by moving the
+  ;; Try to crash a `__collect_safe` foreign-procedure call by moving the
   ;; return address out from under the foreign procedure. This attempt
   ;; should fail, because deactivating a thread first locks the
   ;; current code object.
@@ -2984,7 +3028,7 @@
         (fork-thread (lambda ()
                        (let loop ([i 10])
                          (unless (zero? i)
-                           (let ([spin (eval '(foreign-procedure __thread "spin_a_while" (int unsigned unsigned) unsigned))])
+                           (let ([spin (eval '(foreign-procedure __collect_safe "spin_a_while" (int unsigned unsigned) unsigned))])
                              (spin 1000000 0 1))
                            (loop (sub1 i))))
                        (mutex-acquire m)
@@ -3001,4 +3045,33 @@
                   (loop (sub1 i))))
               (loop))))
         ok?))
-  )
+)
+
+(machine-case
+  [(i3nt ti3nt)
+   (mat i3nt-stdcall-collect-safe
+     (equal?
+       (let ()
+         (define sum (foreign-procedure __collect_safe __stdcall "_sum_stdcall@8" (int int) int))
+	 (sum 3 7))
+        10)
+     (equal?
+      (let ()
+        (define Sinvoke2
+          (foreign-procedure __collect_safe "Sinvoke2_stdcall"
+            (scheme-object scheme-object iptr)
+            scheme-object))
+        (define Fcons
+          (foreign-callable __collect_safe __stdcall
+            (lambda (x y) (cons x y))
+            (scheme-object iptr)
+            scheme-object))
+        (Sinvoke2 Fcons 41 51))
+      '(41 . 51)))
+    (mat i3nt-com-thread
+     (eqv?
+       (let ()
+         (define com-instance ((foreign-procedure "get_com_instance" () iptr)))
+         ((foreign-procedure __collect_safe __com 0 (iptr int) int) com-instance 3)
+         ((foreign-procedure __collect_safe __com 4 (iptr int) int) com-instance 17))
+       37))])

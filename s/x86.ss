@@ -2295,7 +2295,7 @@
           (if (target-fixnum? lpm)
               `(long . ,(fix lpm))
               `(abs 0 (object ,lpm)))
-          (aop-cons* `(asm livemask: ,(if (number? lpm) (format "~b" lpm) (format "~s" lpm)))
+          (aop-cons* `(asm livemask: ,(format "~b" lpm))
             '(code-top-link)
             (aop-cons* `(asm code-top-link)
               `(long . ,fs)
@@ -2528,13 +2528,13 @@
                                ,e
                                ,(pop-registers regs fp-count 0))]))])
                 (%seq
-                 (set! ,%eax ,t0)
-                 ,(save-and-restore (list %eax) 0 (%inline deactivate-thread))
+                 (set! ,%edx ,t0)
+                 ,(save-and-restore (list %edx) 0 (%inline deactivate-thread))
                  ,e
                  ,(save-and-restore result-regs result-fp-count `(set! ,%eax ,(%inline activate-thread))))))]
            [else e]))
         (define returnem
-          (lambda (conv orig-frame-size locs result-type ccall r-loc)
+          (lambda (conv* orig-frame-size locs result-type ccall r-loc)
             (let ([frame-size (constant-case machine-type-name
                                 ; maintain 16-byte alignment not including the return address pushed
                                 ; by the call instruction, which counts as part of callee's frame
@@ -2549,7 +2549,7 @@
                 r-loc
                 ; Windows __stdcall convention requires callee to clean up
                 (lambda ()
-                  (if (or (fx= frame-size 0) (memq 'i3nt-stdcall conv) (memq 'i3nt-com conv))
+                  (if (or (fx= frame-size 0) (memq 'i3nt-stdcall conv*) (memq 'i3nt-com conv*))
                       `(nop)
                       (let ([frame-size (if (callee-pops-result-pointer? result-type)
                                             (fx- frame-size (constant ptr-bytes))
@@ -2557,20 +2557,20 @@
                         `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size))))))))))
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
-          (let ([conv (info-foreign-conv info)]
+          (let ([conv* (info-foreign-conv* info)]
                 [arg-type* (info-foreign-arg-type* info)]
                 [result-type (info-foreign-result-type info)])
             (with-values (do-stack arg-type* '() 0 result-type)
               (lambda (frame-size locs)
-                (returnem conv frame-size locs result-type
+                (returnem conv* frame-size locs result-type
                   (lambda (t0)
                     (let* ([fill-result-here? (fill-result-pointer-from-registers? result-type)]
-                           [adjust-active? (memq 'adjust-active conv)]
-                           [t (if adjust-active? %eax t0)] ; need a register if `adjust-active?`
+                           [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                           [t (if adjust-active? %edx t0)] ; need a register if `adjust-active?`
                            [call
                             (add-deactivate adjust-active? fill-result-here? t0 result-type
                               (cond
-                                [(memq 'i3nt-com conv)
+                                [(memq 'i3nt-com conv*)
                                  (when (null? arg-type*)
                                    ($oops 'foreign-procedure
                                           "__com convention requires instance argument"))
@@ -2833,8 +2833,8 @@
                    ,e
                    ,(pop-registers result-regs result-num-fp-regs 1)))))
         (lambda (info)
-          (let* ([conv (info-foreign-conv info)]
-                 [adjust-active? (memq 'adjust-active conv)]
+          (let* ([conv* (info-foreign-conv* info)]
+                 [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
                  [arg-type* (info-foreign-arg-type* info)]
                  [result-type (info-foreign-result-type info)]
                  [indirect-result-space (constant-case machine-type-name
@@ -2897,7 +2897,7 @@
                            (set! ,%ebp ,(%inline pop))
                            ; Windows __stdcall convention requires callee to clean up
                            ,((lambda (e)
-                               (if (or (memq 'i3nt-stdcall conv) (memq 'i3nt-com conv))
+                               (if (or (memq 'i3nt-stdcall conv*) (memq 'i3nt-com conv*))
                                  (let ([arg-size (fx- frame-size init-stack-offset)])
                                    (if (fx> arg-size 0)
                                        (%seq

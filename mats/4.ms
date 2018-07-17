@@ -1080,6 +1080,10 @@
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (map x)))
   (error? ; nonprocedure
+    (map 3 '()))
+  (error? ; nonprocedure
+    (map 3 '() '()))
+  (error? ; nonprocedure
     (map 3 '(a b c)))
   (error? ; nonprocedure
     (parameterize ([optimize-level 3])
@@ -1421,6 +1425,10 @@
   (procedure? (lambda (x) (fold-left x)))
   (procedure? (lambda (x) (fold-left x y)))
   (error? ; nonprocedure
+    (fold-left 3 0 '()))
+  (error? ; nonprocedure
+    (fold-left 3 0 '() '()))
+  (error? ; nonprocedure
     (fold-left 3 0 '(a b c)))
   (error? ; improper list
     (fold-left cons 0 'a))
@@ -1544,6 +1552,10 @@
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (fold-right x)))
   (procedure? (lambda (x) (fold-right x y)))
+  (error? ; nonprocedure
+    (fold-right 3 0 '()))
+  (error? ; nonprocedure
+    (fold-right 3 0 '() '()))
   (error? ; nonprocedure
     (fold-right 3 0 '(a b c)))
   (error? ; improper list
@@ -1723,10 +1735,23 @@
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (for-each x)))
   (error? ; nonprocedure
+    (for-each 3 '()))
+  (error? ; nonprocedure
+    (for-each 3 '() '()))
+  (error? ; nonprocedure
     (for-each 3 '(a b c)))
   (error? ; nonprocedure
     (parameterize ([optimize-level 3])
       (eval '(#2%for-each 3 '(a b c)))))
+  (error? ; nonprocedure
+    (parameterize ([optimize-level 3])
+      (eval
+        '(let ()
+           (define (f p b)
+             (unbox b)
+             (#2%for-each p (if (box? b) '() '(1 2 3)))
+             (list p (procedure? p)))
+           (f 7 (box 0))))))
   (error? ; improper list
     (for-each pretty-print 'a))
   (error? ; improper list
@@ -2233,6 +2258,10 @@
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (ormap x)))
   (error? ; nonprocedure
+    (ormap 3 '()))
+  (error? ; nonprocedure
+    (ormap 3 '() '()))
+  (error? ; nonprocedure
     (ormap 3 '(a b c)))
   (error? ; improper list
     (ormap not 'a))
@@ -2333,6 +2362,10 @@
    (eq? (andmap (lambda (x y z) #t) '() '() '()) #t)
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (andmap x)))
+  (error? ; nonprocedure
+    (andmap 3 '()))
+  (error? ; nonprocedure
+    (andmap 3 '() '()))
   (error? ; nonprocedure
     (andmap 3 '(a b c)))
   (error? ; improper list
@@ -2435,6 +2468,10 @@
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (exists x)))
   (error? ; nonprocedure
+    (exists 3 '()))
+  (error? ; nonprocedure
+    (exists 3 '() '()))
+  (error? ; nonprocedure
     (exists 3 '(a b c)))
   (error? ; improper list
     (exists not 'a))
@@ -2535,6 +2572,10 @@
    (eq? (for-all (lambda (x y z) #t) '() '() '()) #t)
  ; make sure compiler doesn't bomb w/two few args
   (procedure? (lambda (x) (for-all x)))
+  (error? ; nonprocedure
+    (for-all 3 '()))
+  (error? ; nonprocedure
+    (for-all 3 '() '()))
   (error? ; nonprocedure
     (for-all 3 '(a b c)))
   (error? ; improper list

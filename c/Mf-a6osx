@@ -17,7 +17,7 @@ m = a6osx
 Cpu = X86_64
 
 mdclib = -liconv -lm -lncurses
-C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wall -Wextra -Werror -O2 -I/opt/X11/include/ ${CFLAGS}
+C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough -Werror -O2 -I/opt/X11/include/ ${CFLAGS}
 o = o
 mdsrc = i3le.c
 mdobj = i3le.o

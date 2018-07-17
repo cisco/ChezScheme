@@ -117,7 +117,7 @@ Section~\ref{SECTNUMERICMISC}.
 The Revised$^6$ Report distinguishes two types of special numeric objects:
 fixnums and flonums.
 {\ChezScheme} additionally distinguishes \emph{bignums} (exact integers outside
-of the bignum range) and \emph{ratnums} (ratios of exact integers).
+of the fixnum range) and \emph{ratnums} (ratios of exact integers).
 It also provides a predicate for recognizing \emph{cflonums}, which are
 flonums or inexact complex numbers.
 
@@ -180,9 +180,9 @@ cases, code that does not perform these checks.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{most-positive-fixnum}{\categoryprocedure}{(most-positive-fixnum)}
-\returns the most negative fixnum supported by the system
-\formdef{most-negative-fixnum}{\categoryprocedure}{(most-negative-fixnum)}
 \returns the most positive fixnum supported by the system
+\formdef{most-negative-fixnum}{\categoryprocedure}{(most-negative-fixnum)}
+\returns the most negative fixnum supported by the system
 \listlibraries
 \endentryheader
 

@@ -1145,14 +1145,15 @@ Documentation notes:
       (let ()
         (define (lookup-equal-procedure record1 record2)
           (let ([e/h (lookup-equal/hash record1 'equal-proc)])
-            (and e/h
-                 (let ([proc (equal/hash-maybe-proc e/h)])
-                   (and proc
-                        (let ([rtd (equal/hash-rtd e/h)])
-                          (let ([e/h (lookup-equal/hash record2 'equal-proc)])
-                            (and e/h
-                                 (eq? (equal/hash-rtd e/h) rtd)
-                                 proc))))))))
+            (let ([proc (equal/hash-maybe-proc e/h)])
+              (if proc
+                  (and
+                    (eq? (equal/hash-rtd (lookup-equal/hash record2 'equal-proc)) (equal/hash-rtd e/h))
+                    proc)
+                  (let ([default-proc (default-record-equal-procedure)])
+                    (and default-proc
+                         (not (equal/hash-maybe-proc (lookup-equal/hash record2 'equal-proc)))
+                         default-proc))))))
         (set-who! $record-equal-procedure
           (lambda (record1 record2)
             (lookup-equal-procedure record1 record2)))
@@ -1163,8 +1164,8 @@ Documentation notes:
             (lookup-equal-procedure record1 record2))))
       (let ()
         (define (lookup-hash-procedure record)
-          (let ([e/h (lookup-equal/hash record 'hash-proc)])
-            (and e/h (equal/hash-maybe-proc e/h))))
+          (or (equal/hash-maybe-proc (lookup-equal/hash record 'hash-proc))
+              (default-record-hash-procedure)))
         (set-who! $record-hash-procedure
           (lambda (record)
             (lookup-hash-procedure record)))

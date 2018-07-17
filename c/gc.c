@@ -45,7 +45,6 @@ static void sweep_port PROTO((ptr p));
 static void sweep_thread PROTO((ptr p));
 static void sweep_continuation PROTO((ptr p));
 static void sweep_stack PROTO((uptr base, uptr size, uptr ret));
-static void sweep_live_tree PROTO((uptr range, ptr tree, ptr *pp));
 static void sweep_record PROTO((ptr x));
 static int scan_record_for_self PROTO((ptr x));
 static IGEN sweep_dirty_record PROTO((ptr x));
@@ -390,7 +389,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           if (next != Sfalse && SPACE(keyval) & space_old)
             tlcs_to_rehash = S_cons_in(space_new, 0, p, tlcs_to_rehash);
       } else if (TYPEP(tf, mask_box, type_box)) {
-        ISPC s;
+          ISPC s;
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_box] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
@@ -564,11 +563,16 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             S_G.countof[tg][countof_closure] += 1;
             S_G.bytesof[tg][countof_closure] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-            s = (BACKREFERENCES_ENABLED
-                 ? space_closure
-                 : ((CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset))
-                    ? space_impure
-                    : space_pure));
+            if (BACKREFERENCES_ENABLED)
+              s = space_closure;
+            else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+              /* Using `space_impure` is ok because the code slot of a mutable
+                 closure is never mutated, so the code is never newer than the
+                 closure. If it were, then because the code pointer looks like
+                 a fixnum, an old-generation sweep wouldn't update it properly. */
+              s = space_impure;
+            } else
+              s = space_pure;
             find_room(s, tg, type_closure, n, p);
             copy_ptrs(type_closure, p, pp, n);
             SETCLOSCODE(p,code);
@@ -1146,11 +1150,11 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     maybe_final_ordered_ls = ls;
                   }
                 } else {
-                  WITH_TOP_BACKREFERENCE(ls, relocate(&rep));
-
                 /* if tconc was old it's been forwarded */
                   tconc = GUARDIANTCONC(ls);
                   
+                  WITH_TOP_BACKREFERENCE(tconc, relocate(&rep));
+
                   old_end = Scdr(tconc);
                 /* allocating pair in tg means it will be swept, which is wasted effort, but should cause no harm */
                   new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
@@ -1182,7 +1186,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     }
 
                     rep = GUARDIANREP(ls);
-                    WITH_TOP_BACKREFERENCE(ls, relocate(&rep));
+                    WITH_TOP_BACKREFERENCE(tconc, relocate(&rep));
                     relocate_rep = 1;
 
 #ifdef ENABLE_OBJECT_COUNTS
@@ -1799,9 +1803,13 @@ static void sweep_thread(p) ptr p; {
     /* immediate GENERATEINSPECTORINFORMATION */
     /* immediate GENERATEPROFILEFORMS */
     /* immediate OPTIMIZELEVEL */
-    relocate(&PARAMETERS(tc))
+    relocate(&SUBSETMODE(tc))
+    /* immediate SUPPRESSPRIMITIVEINLINING */
+    relocate(&DEFAULTRECORDEQUALPROCEDURE(tc))
+    relocate(&DEFAULTRECORDHASHPROCEDURE(tc))
     /* U64 INSTRCOUNTER(tc) */
     /* U64 ALLOCCOUNTER(tc) */
+    relocate(&PARAMETERS(tc))
     for (i = 0 ; i < virtual_register_count ; i += 1) {
       relocate(&VIRTREG(tc, i));
     }
@@ -1832,7 +1840,7 @@ static void sweep_continuation(p) ptr p; {
 /* assumes stack has already been copied to newspace */
 static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
   ptr *pp; iptr oldret;
-  ptr livemask;
+  ptr num;
 
   while (fp != base) {
     if (fp < base)
@@ -1844,72 +1852,31 @@ static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
     ret = (iptr)(*pp);
     relocate_return_addr(pp)
 
-    livemask = ENTRYLIVEMASK(oldret);
-    if (Sfixnump(livemask)) {
-      uptr mask = UNFIX(livemask);
+    num = ENTRYLIVEMASK(oldret);
+    if (Sfixnump(num)) {
+      uptr mask = UNFIX(num);
       while (mask != 0) {
         pp += 1;
         if (mask & 0x0001) relocate(pp)
         mask >>= 1;
       }
-    } else if (Spairp(livemask)) {
-      /* A tree: (range . tree). The tree must be shallow enough that
-         recursion in `sweep_tree_live` is ok. */
-      relocate(&ENTRYLIVEMASK(oldret))
-      livemask = ENTRYLIVEMASK(oldret);
-
-      relocate(&INITCDR(livemask))
-
-      sweep_live_tree(UNFIX(Scar(livemask)), Scdr(livemask), pp);
-    } else if (Sbignump(livemask)) {
-      /* As of the addition of the above tree form, we
-         don't expect bignums to be used as a mask anymore,
-         but allow them for now. */
+    } else {
       iptr index;
 
       relocate(&ENTRYLIVEMASK(oldret))
-      livemask = ENTRYLIVEMASK(oldret);
-
-      index = BIGLEN(livemask);
+      num = ENTRYLIVEMASK(oldret);
+      index = BIGLEN(num);
       while (index-- != 0) {
         INT bits = bigit_bits;
-        bigit mask = BIGIT(livemask,index);
+        bigit mask = BIGIT(num,index);
         while (bits-- > 0) {
           pp += 1;
           if (mask & 1) relocate(pp)
           mask >>= 1;
         }
       }
-    } else {
-      S_error_abort("sweep_stack(gc): unreocgnized mask format");
     }
   }
-}
-
-static void sweep_live_tree(range, tree, pp) uptr range; ptr tree, *pp; {
-  /* A tree is either a fixnum or a pair of two trees, with
-     half of the range on the left and the rest on the right */
-    if (Sfixnump(tree)) {
-      uptr mask = UNFIX(tree);
-      while (mask != 0) {
-        pp += 1;
-        if (mask & 0x0001) relocate(pp)
-        mask >>= 1;
-      }
-    } else if (tree == Strue) {
-      while (range-- > 0) {
-        pp += 1;
-        relocate(pp)
-      }
-    } else {
-      uptr split = range >> 1;
-      
-      relocate(&INITCAR(tree))
-      relocate(&INITCDR(tree))
-
-      sweep_live_tree(split, Scar(tree), pp);
-      sweep_live_tree(range - split, Scdr(tree), pp + split);
-    }
 }
 
 #define sweep_or_check_record(x, sweep_or_check)                 \
@@ -2522,7 +2489,7 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
         youngest = tg;
       } else {
         /* Not reached, so far; add to pending list */
-	add_ephemeron_to_pending(pe);
+        add_ephemeron_to_pending(pe);
         /* Make the consistent (but pessimistic w.r.t. to wrong-way
            pointers) assumption that the key will stay live and move
            to the target generation. That assumption covers the value

@@ -207,7 +207,7 @@
     c/Mf-*, c/Makefile.*nt
 - removed unnecessary datestamp.c target
     c/Mf.*nt
-- fixed unnessesary blocking in expeditor on Windows. 
+- fixed unnecessary blocking in expeditor on Windows.
     c/expeditor.c
 - eliminated a couple of thread-safety issues and limitations on the
   sizes of pathnames produced by expansion of tilde (home-directory)
@@ -260,7 +260,7 @@
   (and palette) and update CSUG to match. update the CSUG screenshots
   to reflect the refined look.
     s/pdhtml.ss
-    csug/system.stex 
+    csug/system.stex
     csug/canned/profilehtml-orig.png
     csug/canned/profilehtml.png
     csug/canned/fatfibhtml-orig.png
@@ -481,7 +481,7 @@
     primdata.ss
 - more optimizations for map and for-each with explicit list
   extend the reductions for map and for-each when the arguments are
-  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...). 
+  explicit lists like (list 1 2 3 ...) or '(1 2 3 ...).
     cp0.ss,
     4.ms
 - reverted to the preceding version of cp0 due to failure to preserve
@@ -639,7 +639,7 @@
 - Updated CSUG to replace \INSERTREVISIONMONTHSPACEYEAR with the current
   month and year at the time of generation.
     csug.stex, copyright.stex
-- Updated configuration to set machine types in the CSUG and release notes 
+- Updated configuration to set machine types in the CSUG and release notes
   make files, and updated distclean target to remove these files.
     configure, makefiles/Makefile-csug.in (renamed from csug/Makefile),
     makefiles/Makefile-release_notes.in
@@ -752,38 +752,10 @@
   a partial object file.
     syntax.ss,
     7.ms
-- add ordered guardians through a new optional argument to make-guardian
-    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
-    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
-    4.ms, smgmt.stex, release_notes.stex
-- add (& ftype) argument/result for foreign-procedure, which supports
-  struct arguments and results for foreign calls
-    syntax.ss, ftype.ss, cpnanopass.ss, x86.ss, x86_64.ss,
-    base-lang.ss, np-languages.ss, cprep.ss, primdata.ss,
-    schlib.c, prim.c, externs.h
-    mats/foreign4.c, mats/foreign.ms mats/Mf-*
-    foreign.stex, release_notes.stex
-- reworked the S_call_help/S_return CCHAIN handling to fix a bug in which
-  the signal handler could trip over the NULL jumpbuf in a CCHAIN record.  
-    schlib.c
-- added box-cas! and vector-cas!
-    prims.ss, cpnanopass.ss, np-languages.ss,
-    cmacros.ss, library.ss, primdata.ss
-    x86_64.ss x86.ss, ppc32.ss, arm32.ss,
-    5_6.ms, 5_8.ms, root-experr*,
-    objects.stex, release_notes.stex
-- add make-arity-wrapper
-    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
-    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
-    misc.ms, mats/patch*, mats/root*
 - fix signature of bytevector-[u/s]16-native-set!
     primdata.ss
-- fix enumerate signature 
+- fix enumerate signature
     primdata.ss
-- add generate-procedure-source-information
-    cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
-    primdata.ss, prims.ss, misc.ms,
-    system.stex, release_notes.tex
 - added support for Visual Studio 2017.15.5
     wininstall/locate-vcredist.bat
 - fixed substring-fill! and vector-fill! to return void, reflecting the
@@ -791,11 +763,6 @@
   to use define-who instead of repeating 'substring-fill! in all the error
   messages.
     5_4.ss, 5_6.ss
-- keep call-live in tree form, which allows more efficient computation
-  of live-pointer masks when many live variables span many calls
-    cpnanopass.ss, inspect.ss, np-languages.ss, primdata.ss,
-     tree.ss (added), types.ss,
-    x86_64.ss, cmacros.ss, gc.c, s/Mf-base
 - fix mat of substring-fill!
   after the recent change, the result of substring-fill! is void
     5_5.ms
@@ -807,9 +774,6 @@
     5_3.ss, 5_3.ms, fl.ms, root-experr*, patch*
 - fix bug in date->time-utc caused by incorrect use of difftime in Windows
     stats.c, date.ms, release_notes.stex
-- add current-generate-id and expand-omit-library-invocations, which can be
-  useful for avoiding library recompilation and redundant invocation checks
-    syntax.ss, record.ss, primdata.ss, misc.ms, system.stex
 - Check that first argument of map is a procedure in cp02 expansion
   to raise the same error that the non expanded version
     cp0.ss
@@ -824,17 +788,219 @@
 - fix bounds checking with an immediate index on immutable vectors,
   fxvectors, strings, and bytevectors
     cpnanopass.ss, 5_5.ms, 5_6.ms, bytevector.ms
+- fix a few signatures
+    primdata.ss
+- more staid and consistent Mf-cross main target
+    Mf-cross
+- cpletrec now replaces the incoming prelexes with new ones so
+  that it doesn't have to alter the flags on the incoming ones, since
+  the same expander output is passed through the compiler twice while
+  compiling a file with macro definitions or libraries.  we were
+  getting away without this just by luck.
+    cpletrec.ss
+- pure? and ivory? now return #t for a primref only if the prim is
+  declared to be a proc, since some non-proc prims are mutable, e.g.,
+  $active-threads and $collect-request-pending.
+    cp0.ss
+- $error-handling-mode? and $eol-style? are now properly declared to
+  be procs rather than system state variables.
+    primdata.ss
+- the new pass $check-prelex-flags verifies that prelex referenced,
+  multiply-referenced, and assigned flags are set when they
+  should be.  (it doesn't, however, complain if a flag is set
+  when it need not be.)  when the new system parameter
+  $enable-check-prelex-flags is set, $check-prelex-flags is
+  called after each major pass that produces Lsrc forms to verify
+  that the flags are set correctly in the output of the pass.
+  this parameter is unset by default but set when running the
+  mats.
+    cprep.ss, back.ss, compile.ss, primdata.ss,
+    mats/Mf-base
+- removed the unnecessary set of prelex referenced flag from the
+  build-ref routines when we've just established that it is set.
+    syntax.ss, compile.ss
+- equivalent-expansion? now prints differences to the current output
+  port to aid in debugging.
+    mat.ss
+- the nanopass that patches calls to library globals into calls to
+  their local counterparts during whole-program optimization now
+  creates new prelexes and sets the prelex referenced, multiply
+  referenced, and assigned flags on the new prelexes rather than
+  destructively setting flags on the incoming prelexes.  The
+  only known problems this fixes are (1) the multiply referenced
+  flag was not previously being set for cross-library calls when
+  it should have been, resulting in overly aggressive inlining
+  of library exports during whole-program optimization, and (2)
+  the referenced flag could sometimes be set for library exports
+  that aren't actually used in the final program, which could
+  prevent some unreachable code from being eliminated.
+    compile.ss
+- added support for specifying default record-equal and
+  record-hash procedures.
+    primdata.ss, cmacros.ss, cpnanopass.ss, prims.ss, newhash.ss,
+    gc.c,
+    record.ms
+- added missing call to relocate for subset-mode tc field, which
+  wasn't burning us because the only valid non-false value, the
+  symbol system, is in the static generation after the initial heap
+  compaction.
+    gc.c
+- added a lambda-commonization pass that runs after the other
+  source optimizations, particularly inlining, and a new parameter
+  that controls how hard it works.  the value of commonization-level
+  ranges from 0 through 9, with 0 disabling commonization and 9
+  maximizing it.  The default value is 0 (disabled).  At present,
+  for non-zero level n, the commonizer attempts to commonize
+  lambda expressions consisting of 2^(10-n) or more nodes.
+  commonization of one or more lambda expressions requires that
+  they have identical structure down to the leaf nodes for quote
+  expressions, references to unassigned variables, and primitives.
+  So that various downstream optimizations aren't disabled, there
+  are some additional restrictions, the most important of which
+  being that call-position expressions must be identical.  The
+  commonizer works by abstracting the code into a helper that
+  takes the values of the differing leaf nodes as arguments.
+  the name of the helper is formed by concatenating the names of
+  the original procedures, separated by '&', and this is the name
+  that will show up in a stack trace.  The source location will
+  be that of one of the original procedures.  Profiling inhibits
+  commonization, because commonization requires profile source
+  locations to be identical.
+    cpcommonize.ss (new), compile.ss, interpret.ss, cprep.ss,
+    primdata.ss, s/Mf-base,
+    mats/Mf-base
+- cpletrec now always produces a letrec rather than a let for
+  single immutable lambda bindings, even when not recursive, for
+  consistent expand/optimize output whether the commonizer is
+  run or not.
+    cpletrec.ss,
+    record.ms
+- trans-make-ftype-pointer no longer generates a call to
+  $verify-ftype-address if the address expression is a call to
+  ftype-pointer-address.
+    ftype.ss
+- Remove special case for (#2%map p '()) in cp0
+  so the reduced version checks that p is a procedure.
+  Also make the same change for #2%for-each.
+    cp0.ss, 4.ms
+- Mitigate a race condition in Windows when deleting files and directories.
+    windows.c
+- add (& ftype) argument/result for foreign-procedure, which supports
+  struct arguments and results for foreign calls
+    syntax.ss, ftype.ss, cpnanopass.ss, x86.ss, x86_64.ss,
+    base-lang.ss, np-languages.ss, cprep.ss, primdata.ss,
+    schlib.c, prim.c, externs.h
+    mats/foreign4.c, mats/foreign.ms mats/Mf-*
+    foreign.stex, release_notes.stex
+- reworked the S_call_help/S_return CCHAIN handling to fix a bug in which
+  the signal handler could trip over the NULL jumpbuf in a CCHAIN record.
+    schlib.c
+- install equates.h, kernel.o, and main.o on unix-like systems
+    Mf-install.in
+- standalone export form now handles (import import-spec ...)
+    8.ms, syntax.ss, release_notes.stex
+- add collect-rendezvous
+    prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex, release_notes.stex
+- added identifier? checks to detect attempts to use non-identifier
+  field names in define-record-type field specs.
+    syntax.ss,
+    record.ms, root-experr*
+- fixed an issue with the library system where an exception that occurs
+  during visit or revisit left the library in an inconsistent state that
+  caused it to appear that it was still in the process of running.  This
+  manifested in it raising a cyclic dependency exception, even though
+  there really is not a cyclic dependency.  The various library
+  management functions involved will now reset the part of the library
+  when an exception occurs.  This also means that if the library visit
+  or revisit failed for a transient reason (such as a missing or
+  incorrect library version that can be fixed by updating the
+  library-directories) it is now possible to recover from these errors.
+    expand-lang.ss, syntax.ss, interpret.ss, compile.ss, cprep.ss,
+    8.ms
+- Added -Wno-implicit-fallthrough flag to macOS C makefiles.
+    c/Mf-a6osx, c/Mf-i3osx, c/Mf-ta6osx, c/Mf-ti3osx
+- handle compiled library code in boot files once base boot is loaded
+    globals.h, scheme.c, 7.ss, 7.ms, primdata.ss
+- add newline to (import-notify) message in compile-whole-library and
+  compile-whole-program
+    compile.ss
+- add a __collect_safe convention for foreign procedures and callables
+  to automate thread [de]activation
+    syntax.ss, ftype.ss, x86.ss, x86_64.ss, ppc32.ss,
+    cmacros.ss, base-lang.ss, np-languages.ss, cprep.ss, cpcommonize.ss,
+    cp0.ss, cpcheck.ss, cpvalid.ss, interpret.ss, cpletrec.ss,
+    thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
+    mats/Mf-t*, foreign.ms, foreign4.c
+- Don't install equates.h
+    Mf-install.in, wininstall/*nt.wxs
+- Windows install now sets HeapSearchPath in the registry
+    wininstall/product.wxs
+- Use Windows path separator character when finding boot files on Windows.
+    scheme.c
+- Propagate enable-check-prelex-flags to separate-eval sub-process in tests.
+    mats.ss
+- Reject attempts to visit libraries that compile-whole-program has rendered
+  invisible due to libs-visible? flag.
+    compile.ss, 7.ms, root-experr-compile-0-f-f-f, root-experr-compile-2-f-f-f,
+    patch-compile-0-f-t-f, patch-compile-0-t-f-f, patch-interpret-0-f-f-f,
+    patch-interpret-0-f-t-f, patch-interpret-3-f-f-f, patch-interpret-3-f-t-f
+- Double FMTBUFSIZE to fix compilation with gcc-8
+    c/prim5.c
+- Improved Unicode support for command-line arguments, environment
+  variables, the C interface and error messages, and the Windows
+  registry, DLL loading, and process creation
+    scheme.h, alloc.c, externs.h, fasl.c, foreign.c, io.c, main.c,
+    prim5.c, scheme.c, schlib.c, schsig.c, stats.c, system.h,
+    version.h, windows.c, foreign.stex, system.stex, mkheader.ss,
+    prims.ss
+- Repair x86_64 `&` foreign-procedure result type handling for types of a
+  small size that is not a multiple of the word size
+    x86_64.ss, foreign.ms, foreign4.c
+- Avoid an occasional invalid memory violation on Windows in S_call_help
+    schlib.c
+- Updated csug socket code to match that in examples folder
+    csug/foreign.stex, examples/socket.ss
+- add an option --disable-x11
+    c/version.h, configure
+- allow s_ee_get_clipboard to use the pastebuffer on macOS even when X11 is not
+  available.
+    expeditor.c
+- Adjust cp0 to not replace a procedure name from a let wrapper
+    cp0.ss, misc.ms
+- allx now runs all up to three (rather than two) times to eliminate
+  bootstrap failures after small changes like the recent change to
+  procedure names, so we don't have to rebuild the boot files as often.
+    Mf-base
+- Fix tests for cp0 procedure-name change
+    misc.ms, patch-compile-0-f-t-f
+- add ordered guardians through a new optional argument to make-guardian
+    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
+    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
+    4.ms, smgmt.stex, release_notes.stex
+- added box-cas! and vector-cas!
+    prims.ss, cpnanopass.ss, np-languages.ss,
+    cmacros.ss, library.ss, primdata.ss
+    x86_64.ss x86.ss, ppc32.ss, arm32.ss,
+    5_6.ms, 5_8.ms, root-experr*,
+    objects.stex, release_notes.stex
+- add object-backreferences and enable-object-backreferences as an aid
+  to debugging memory leaks
+     back.ss, cmacros.ss, inspect.ss, primdata.ss,
+     gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
+     globals.h, externs.h,
+     system.stex, 7.ms
+- add make-arity-wrapper
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
+    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
+    misc.ms, mats/patch*, mats/root*
+- add generate-procedure-source-information
+    cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
+    primdata.ss, prims.ss, misc.ms,
+    system.stex, release_notes.tex
+- add current-generate-id and expand-omit-library-invocations, which can be
+  useful for avoiding library recompilation and redundant invocation checks
+    syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex
 - add load-compiled-from-port and Sregister_boot_file_fd for loading modes
   based on open files instead of paths
     7.ss, primdata.ss, mkheader.ss, scheme.c
     7.ms, foreign.stex, system.stex
-- add collect-rendezvous
-    prim.c, 7.ss, primdata.ss, 7.ms, smgmt.stex
-- add a __thread convention for foreign procedures and callables
-  to automate thread [de]activation
-    syntax.ss, ftype.ss, x86.ss, x86_64.ss, ppc32.ss,
-    cmacros.ss, base-lang.ss, np-languages.ss, cprep.ss
-    thread.c, prim.c, externs.h, foreign.stex, release_notes.stex,
-    mats/Mf-t*, foreign.ms, foreign4.c
-- Adjust cp0 to not replace a procedure name from a let wrapper
-    cp0.ss, misc.ms

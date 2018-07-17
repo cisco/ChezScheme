@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2018 Cisco Systems, Inc.
 %
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -1854,7 +1854,7 @@ If instead this file were compiled, using \scheme{compile-file}, the
 compiler would arrange to define \scheme{mvlet} before continuing
 with the expansion and evaluation of the \scheme{mvlet} expression,
 but it would not arrange to define \scheme{nodups?}.
-Thus the expansion of the \scheme{mvlet} expression would fails.
+Thus the expansion of the \scheme{mvlet} expression would fail.
 
 In this case it does not help to evaluate the syntactic extension alone.
 A solution in this case would be to move the definition of
@@ -2797,6 +2797,34 @@ reach this decision if the effort and outer unroll limits are large.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{commonization-level}{\categorythreadparameter}{commonization-level}
+\listlibraries
+\endentryheader
+
+After running the main source optimization pass (cp0) for the last time, the
+compiler optionally runs a \emph{commonization} pass.
+The pass commonizes the code for lambda expressions that have
+identical structure by abstracting differences at certain leaves
+of the program, namely constants, references to unassigned variables,
+and references to primitives.
+The parameter \scheme{commonization-level} controls whether commonization
+is run and, if so, how aggressive it is.
+Its value must be a nonnegative exact integer ranging from 0 through 9.
+When the parameter is set to 0, the default, commonization is not run.
+Otherwise, higher values result in more commonization.
+
+Commonization can undo some of the effects of cp0's inlining, can
+add run-time overhead, and can complicate debugging, particularly
+at higher commonization levels, which is why it is disabled by
+default.
+On the other hand, for macros or other meta programs that can
+generate large, mostly similar lambda expressions, enabling
+commonization can result in significant savings in object-code size
+and even reduce run-time overhead by making more efficient use of
+instruction caches.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{undefined-variable-warnings}{\categorythreadparameter}{undefined-variable-warnings}
 \listlibraries
 \endentryheader
@@ -2931,7 +2959,7 @@ or to the boolean value \scheme{#t}.
 The profile information can be dumped via:
 
 \begin{description}
-\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump=html}}
+\item[\scheme{profile-dump-html}]\index{\scheme{profile-dump-html}}
 in HTML format to allow the programmer to visualize how
 often each expression is executed using a color-coding system that
 makes it easy to spot ``hot spots,''
@@ -4498,7 +4526,7 @@ in bytes, including not only the bytes occupied for Scheme objects
 but also various forms of overhead, including fragmentation and
 reserved but not currently occupied memory, and is thus an accurate
 measure of the amount of heap memory currently reserved from the
-the operating system for the current process.
+operating system for the current process.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -4722,6 +4750,81 @@ of \scheme{(collect-maximum-generation)}, inclusive, or the symbol
 (cdr (assoc 3
        (cdr (assoc (record-type-descriptor frob)
               (object-counts)))))                ;=> (2 . 16)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+
+\entryheader
+\formdef{enable-object-backreferences}{\categoryglobalparameter}{enable-object-backreferences}
+\listlibraries
+\endentryheader
+
+The value of \scheme{enable-object-backreferences} is a boolean value that
+determines whether the collector records information about which other object
+caused an object to be retained and
+hence whether the backreferences reported by the procedure
+\scheme{object-backreferences} are accurate.
+The parameter is set to \scheme{#f} by default, since backreference recording
+adds overhead to collection.
+
+Beware that backreference recording can have small performance affects
+even after it is disabled---at least until the next collection over
+the same generations---since backreference records constrain the way
+that the collector stores some objects.
+
+\entryheader
+\formdef{object-backreferences}{\categoryprocedure}{(object-backreferences)}
+\returns a list of list of pairs
+\listlibraries
+\endentryheader
+
+The procedure \scheme{object-backreferences} returns a list of
+backreference lists. Each backreference list is a list of pairs, where
+the \scheme{car} of the pair is a referenced object, and the
+\scheme{cdr} of the pair is either \scheme{#f} or a value that caused
+the \scheme{car}'s value or be retained during collection. The
+\scheme{cdr} of a backreference pair is \scheme{#f} if the object in
+the \scheme{car} is retained by a root reference within the system's
+implementation or static generation. By locating the \scheme{cdr} of
+one pair as the \scheme{car} of another, chains of objects as
+discovered by the collector can be traced back to roots.
+
+The list returned by \scheme{object-backreferences} contains one
+backreference list for each nonstatic generation (in order, starting
+with generation \scheme{0}). An object is recorded in a backreference
+list for the destination generation to which it is moved by
+collection. The collector records backreference information only when
+\scheme{enable-object-backreferences} is set to a true value, and only
+for objects that start in generations that are collected.
+
+For example, assuming that backreferences have not been previously
+enabled, the result of
+%
+\schemedisplay
+(collect-request-handler void)
+(enable-object-backreferences #t)
+(collect 0)
+(enable-object-backreferences #f)
+(object-backreferences)
+\endschemedisplay
+%
+will have a non-empty backreference list only for the second
+list in the result (i.e., the list for generation \scheme{1}).
+
+Although \scheme{object-backreferences} reports generation-specific
+information to reflect its cooperation with generational collection,
+backreference information is most useful after a collection of all
+generations up to the maximum nonstatic generation. In that case,
+backreference information can be used to discover why a particular
+value or kind of value remains allocated or remains in a weak pair
+after garbage collection.
+
+\schemedisplay
+(collect-request-handler void)
+(enable-object-backreferences #t)
+(define b (box "hello"))
+(collect 0)
+(assq (unbox b) (cadr (object-backreferences))) ;=> ("hello" . #&"hello")
 \endschemedisplay
 
 \section{Cost Centers\label{SECTMISCCOSTCENTERS}}
@@ -5172,7 +5275,7 @@ environment of the process,
 where it is available to the current process (e.g., via \var{getenv})
 and any spawned processes.
 The key and value are copied into storage allocated outside of
-the Scheme heap; this space is never reclaimed.
+the Scheme heap; this space is never reclaimed on non-Windows systems.
 
 \schemedisplay
 (putenv "SCHEME" "rocks!")

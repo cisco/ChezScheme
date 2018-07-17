@@ -260,38 +260,52 @@
  ; same modulo renaming of gensyms
  ; procedure in either input is used as predicate for other
   (lambda (x y)
-    (let ([alist '()])
-      (let e? ([x x] [y y])
-        (cond
-          [(procedure? x) (x y)]
-          [(procedure? y) (y x)]
-          [(eqv? x y) #t]
-          [(pair? x)
-           (and (pair? y) (e? (car x) (car y)) (e? (cdr x) (cdr y)))]
-          [(or (and (gensym? x) (symbol? y))
-               (and (gensym? y) (symbol? x)))
-           (cond
-             [(assq x alist) => (lambda (a) (eq? y (cdr a)))]
-             [else (set! alist (cons `(,x . ,y) alist)) #t])]
-          [(string? x) (and (string? y) (string=? x y))]
-          [(bytevector? x) (and (bytevector? y) (bytevector=? x y))]
-          [(vector? x)
-           (and (vector? y)
-                (fx= (vector-length x) (vector-length y))
-                (let f ([i (fx- (vector-length x) 1)])
-                  (or (fx< i 0)
-                      (and (e? (vector-ref x i) (vector-ref y i))
-                           (f (fx1- i))))))]
-          [(fxvector? x)
-           (and (fxvector? y)
-                (fx= (fxvector-length x) (fxvector-length y))
-                (let f ([i (fx- (fxvector-length x) 1)])
-                  (if (fx< i 0)
-                      k
-                      (and (fx= (fxvector-ref x i) (fxvector-ref y i))
-                           (f (fx1- i))))))]
-          [(box? x) (and (box? y) (e? (unbox x) (unbox y)))]
-          [else #f])))))
+    (let ([alist '()] [oops? #f])
+      (or (let e? ([x x] [y y])
+            (or (cond
+                  [(procedure? x) (x y)]
+                  [(procedure? y) (y x)]
+                  [(eqv? x y) #t]
+                  [(pair? x)
+                   (and (pair? y) (e? (car x) (car y)) (e? (cdr x) (cdr y)))]
+                  [(or (and (gensym? x) (symbol? y))
+                       (and (gensym? y) (symbol? x)))
+                   (cond
+                     [(assq x alist) => (lambda (a) (eq? y (cdr a)))]
+                     [else (set! alist (cons `(,x . ,y) alist)) #t])]
+                  [(string? x) (and (string? y) (string=? x y))]
+                  [(bytevector? x) (and (bytevector? y) (bytevector=? x y))]
+                  [(vector? x)
+                   (and (vector? y)
+                        (fx= (vector-length x) (vector-length y))
+                        (let f ([i (fx- (vector-length x) 1)])
+                          (or (fx< i 0)
+                              (and (e? (vector-ref x i) (vector-ref y i))
+                                   (f (fx1- i))))))]
+                  [(fxvector? x)
+                   (and (fxvector? y)
+                        (fx= (fxvector-length x) (fxvector-length y))
+                        (let f ([i (fx- (fxvector-length x) 1)])
+                          (if (fx< i 0)
+                              k
+                              (and (fx= (fxvector-ref x i) (fxvector-ref y i))
+                                   (f (fx1- i))))))]
+                  [(box? x) (and (box? y) (e? (unbox x) (unbox y)))]
+                  [else #f])
+                (begin
+                  (unless oops?
+                    (set! oops? #t)
+                    (printf "failure in equivalent-expansion?:\n")
+                    (pretty-print x)
+                    (printf "is not equivalent to\n")
+                    (pretty-print y))
+                  #f)))
+          (begin
+            (printf "original expressions:\n")
+            (pretty-print x)
+            (printf "is not equivalent to\n")
+            (pretty-print y)
+            #f)))))
 
 (define *fuzz* 1e-14)
 
@@ -366,6 +380,7 @@
                   (open-process-ports (format "~a -q" (patch-exec-path *scheme*))
                     (buffer-mode block)
                     (native-transcoder))])
+      (pretty-print `(#%$enable-check-prelex-flags ,(#%$enable-check-prelex-flags)) to-stdin)
       (for-each (lambda (expr) (pretty-print expr to-stdin)) expr*)
       (close-port to-stdin)
       (let* ([stdout-stuff (slurp from-stdout)]

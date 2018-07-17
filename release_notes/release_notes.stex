@@ -2,8 +2,8 @@
 
 \thisversion{Version 9.5.1}
 \thatversion{Version 8.4}
-\pubmonth{October}
-\pubyear{2017}
+\pubmonth{January}
+\pubyear{2018}
 
 \begin{document}
 
@@ -58,44 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Atomic compare-and-set (9.5.1)}
+\subsection{Procedure source location without inspector information (9.5.1)}
 
-The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
-atomically update a box or vector with a given new value when the
-current content is \scheme{eq?} to a given old value. Atomicity is
-guaranteed even if multiple threads attempt to update the same box or
-vector.
-
-\subsection{Foreign-procedure struct arguments and results (9.5.1)}
-
-A new \scheme{(& \var{ftype})} form allows a struct or union to be
-passed between Scheme and a foreign procedure. The Scheme-side
-representation of a \scheme{(& \var{ftype})} argument is the
-same as a \scheme{(* \var{ftype})} argument, but where
-\scheme{(& \var{ftype})} passes an address between the Scheme and C
-worlds, \scheme{(& \var{ftype})} passes a copy of the data at the
-address. When \scheme{(& \var{ftype})} is used as a result type,
-an extra \scheme{(* \var{ftype})} argument must be provided to receive
-the copied result, and the directly returned result is unspecified.
-
-\subsection{Foreign-procedure thread activation (9.5.1)}
-
-A new \scheme{__thread} foreign-procedure convention, which can be
-combined with other conventions, causes a foreign-procedure call
-to deactive the current thread during the call. Similarly, the
-\scheme{__thread} convention modifier for callables causes the
-current thread to be activated on entry to the callable, and the
-activation state is reverted on exit from the callable; this
-activation makes callables work from threads that are otherwise
-unknown to the Scheme system.
-
-\subsection{Ordered guardians (9.5.1)}
-
-The \scheme{make-guardian} function now accepts an optional argument to
-indicate whether the guardian is ordered or unordered. A guardian is
-unordered by default. An ordered guardian's objects are classified as
-inaccessible only when they are not reachable from the represetative
-of any inaccessible object in any other guardian.
+When \scheme{generate-inspector-information} is set to \scheme{#f} and
+\scheme{generate-procedure-source-information} is set to \scheme{#t},
+source location information is preserved for a procedure, even though
+other inspector information is not preserved.
 
 \subsection{Procedure arity-mask adjustment and redirection (9.5.1)}
 
@@ -110,22 +78,73 @@ for triggering just-in-time conversions of a procedure's
 implementation while imposing a minimal overhead on calls to the
 procedure before or after conversion.
 
-\subsection{Procedure source location without inspector information (9.5.1)}
+\subsection{Atomic compare-and-set (9.5.1)}
 
-When \scheme{generate-inspector-information} is set to \scheme{#f} and
-\scheme{generate-procedure-source-information} is set to \scheme{#t},
-source location information is preserved for a procedure, even though
-other inspector information is not preserved.
+The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
+atomically update a box or vector with a given new value when the
+current content is \scheme{eq?} to a given old value. Atomicity is
+guaranteed even if multiple threads attempt to update the same box or
+vector.
 
-\subsection{Record equality and hashing (9.5)}
+\subsection{Ordered guardians (9.5.1)}
 
-The new procedures \scheme{record-type-equal-procedure} and
+The \scheme{make-guardian} function now accepts an optional argument to
+indicate whether the guardian is ordered or unordered. A guardian is
+unordered by default. An ordered guardian's objects are classified as
+inaccessible only when they are not reachable from the represetative
+of any inaccessible object in any other guardian.
+
+\subsection{Foreign-procedure thread activation (9.5.1)}
+
+A new \scheme{__collect_safe} foreign-procedure convention, which can
+be combined with other conventions, causes a foreign-procedure call to
+deactive the current thread during the call so that other threads can
+perform a garbage collection. Similarly, the \scheme{__collect_safe}
+convention modifier for callables causes the current thread to be
+activated on entry to the callable, and the activation state is
+reverted on exit from the callable; this activation makes callables
+work from threads that are otherwise unknown to the Scheme system.
+
+\subsection{Garbage collection and threads (9.5.1)}
+
+A new \scheme{collect-rendezvous} function performs a garbage
+collection in the same way as when the system determines that a
+collection should occur. For many purposes,
+\scheme{collect-rendezvous} is a variant of \scheme{collect} that
+works when multiple threads are active. More precisely, the
+\scheme{collect-rendezvous} function invokes the collect-request
+handler (in an unspecified thread) after synchronizing all active
+threads and temporarily deactivating all but the one used to call the
+collect-request handler.
+
+\subsection{Foreign-procedure struct arguments and results (9.5.1)}
+
+A new \scheme{(& \var{ftype})} form allows a struct or union to be
+passed between Scheme and a foreign procedure. The Scheme-side
+representation of a \scheme{(& \var{ftype})} argument is the
+same as a \scheme{(* \var{ftype})} argument, but where
+\scheme{(& \var{ftype})} passes an address between the Scheme and C
+worlds, \scheme{(& \var{ftype})} passes a copy of the data at the
+address. When \scheme{(& \var{ftype})} is used as a result type,
+an extra \scheme{(* \var{ftype})} argument must be provided to receive
+the copied result, and the directly returned result is unspecified.
+
+\subsection{Record equality and hashing (9.5, 9.5.1)}
+
+Several new procedures and parameters allow a program to control what
+\scheme{equal?} and \scheme{equal-hash} do when applied
+to structures containing record instances.
+The procedures \scheme{record-type-equal-procedure} and
 \scheme{record-type-hash-procedure} can be used to customize the
-handling of records by \scheme{equal?} and \scheme{hash}, and
-the new procedures \scheme{record-equal-procedure} and
+handling of records of specific types by \scheme{equal?} and \scheme{hash}, and
+the procedures \scheme{record-equal-procedure} and
 \scheme{record-hash-procedure} can be used to look up the
 applicable (possibly inherited) equality and hashing procedures
 for specific record instances.
+The parameters \scheme{default-record-equal-procedure} and
+\scheme{default-record-hash-procedure} can be used to control
+the default behavior when comparing or hashing records without
+type-specific equality and hashing procedures.
 
 \subsection{Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.5)}
 
@@ -1594,6 +1613,36 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Boot files containing compiled library code fail to load}
+
+Compiled library code may now appear within fasl objects loaded during
+the boot process, provided that they are appended to the end of the base boot
+file or appear within a later boot file.
+
+\subsection{Misleading cyclic dependency error (9.5)}
+
+The library system no longer reports a cyclic dependency error
+during the second and subsequent attempts to visit or invoke a
+library after the first attempt fails for some reason other than
+an actual cyclic dependency.
+The fix also allows a library to be visited or invoked successfully
+on the second or subsequent attempt if the visit or invoke failed
+for a transient reason, such as a missing or incorrect version in
+an imported library.
+
+\subsection{Incomplete handling of import specs within standalone export forms (9.5)}
+
+A bug that limited the \scheme{(import \var{import-spec} \dots)} form within a
+standalone \scheme{export} form to \scheme{(import \var{import-spec})} has been
+fixed.
+
+\subsection{Permission denied after deleting files or directories in Windows (9.5)}
+
+In Windows, deleting a file or directory briefly leaves the file or
+directory in a state where a subsequent create operation fails with
+permission denied. This race condition is now mitigated.
+[This bug applies to all versions up to 9.5 on Windows 7 and later.]
+
 \subsection{Incorrect handling of offset in
 \protect\scheme{date->time-utc} on Windows (9.5)}
 
@@ -1826,6 +1875,18 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Lambda commonization (9.5.1)}
+
+After running the main source optimization pass (cp0), the
+compiler optionally runs a \emph{commonization} pass, which
+commonizes code for similar lambda expressions.
+The parameter \scheme{commonization-level} controls whether the
+commonization pass is run and, if so, how aggressive it is.
+The parameter's value must be a nonnegative exact integer ranging
+from 0 through 9.  When the parameter is set to 0, the default,
+commonization is not run.  Otherwise, higher values result in more
+commonization.
 
 \subsection{Improved compile times (9.5.1)}
 

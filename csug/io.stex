@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2018 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -670,7 +670,7 @@ message.
 \endentryheader
 
 \noindent
-When When \var{obj} is \scheme{#f}, the port's beginning-of-line (BOL)
+When \var{obj} is \scheme{#f}, the port's beginning-of-line (BOL)
 flag is cleared; otherwise, the port's BOL flag is set.
 
 The BOL flag is consulted by \scheme{fresh-line}
@@ -1091,7 +1091,7 @@ written using string-output ports to produce string output.
 a new string output port during the
 application of \var{thunk}.
 If \var{thunk} returns, the string associated with the new string output
-port is returned, as with \scheme{get-output-from-string}.
+port is returned, as with \scheme{get-output-string}.
 
 \schemedisplay
 (with-output-to-string
@@ -2555,7 +2555,7 @@ objects \scheme{\var{obj} \dots}.
 Characters are copied from \var{format-string} to the output string from
 left to right, until \var{format-string} is exhausted.
 The format string may contain one or more \var{format directives}, which are
-multi-character sequences prefixed by a a tilde (~\scheme{~}~).
+multi-character sequences prefixed by a tilde (~\scheme{~}~).
 Each directive is replaced by some other text, often involving one or more
 of the \scheme{\var{obj} \dots} arguments, as determined by the semantics
 of the directive.

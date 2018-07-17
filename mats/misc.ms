@@ -4975,6 +4975,28 @@
     (procedure-arity-mask 17))
   )
 
+
+(mat procedure-name
+  (begin
+    (define (procedure-name f)
+      (((inspect/object f) 'code) 'name))
+    (define (ok-name? name expect)
+      (or (equal? name expect)
+          ;; interpreter currently doesn't keep names
+          (eq? (current-eval) interpret)))
+    (define should-be-named-f (let ([f (lambda (x) x)]) f))
+    (define should-be-named-g (letrec ([g (lambda (x) x)]) g))
+    (define should-be-named-h (let ([f (let ([h (lambda (x) x)]) h)]) f))
+    (define should-be-named-i (letrec ([f (let ([i (lambda (x) x)]) i)]) f))
+    (define should-be-named-j (let ([f (letrec ([j (lambda (x) x)]) j)]) f))
+    #t)
+  (ok-name? (procedure-name procedure-name) "procedure-name")
+  (ok-name? (procedure-name should-be-named-f) "f")
+  (ok-name? (procedure-name should-be-named-g) "g")
+  (ok-name? (procedure-name should-be-named-h) "h")
+  (ok-name? (procedure-name should-be-named-i) "i")
+  (ok-name? (procedure-name should-be-named-j) "j"))
+
 (mat arity-wrapper-procedure
   (error? (make-arity-wrapper-procedure))
   (error? (make-arity-wrapper-procedure (lambda args args)))
@@ -5024,24 +5046,18 @@
     (set-arity-wrapper-procedure-data! p 'other-data)
     (equal? (arity-wrapper-procedure-data p)
             'other-data))
-  )
 
-(mat procedure-name
-  (begin
-    (define (procedure-name f)
-      (((inspect/object f) 'code) 'name))
-    (define should-be-named-f (let ([f (lambda (x) x)]) f))
-    (define should-be-named-g (letrec ([g (lambda (x) x)]) g))
-    (define should-be-named-h (let ([f (let ([h (lambda (x) x)]) h)]) f))
-    (define should-be-named-i (letrec ([f (let ([i (lambda (x) x)]) i)]) f))
-    (define should-be-named-j (let ([f (letrec ([j (lambda (x) x)]) j)]) f))
-    #t)
-  (equal? (procedure-name procedure-name) "procedure-name")
-  (equal? (procedure-name should-be-named-f) "f")
-  (equal? (procedure-name should-be-named-g) "g")
-  (equal? (procedure-name should-be-named-h) "h")
-  (equal? (procedure-name should-be-named-i) "i")
-  (equal? (procedure-name should-be-named-j) "j"))
+  (let ([a (make-arity-wrapper-procedure (lambda args args) 8 #f)])
+    (lock-object a)
+    (collect)
+    (let ([g (gensym)])
+      (set-arity-wrapper-procedure-data! a g)
+      (collect)
+      (and
+       (equal? (arity-wrapper-procedure-data a) g)
+       (begin (unlock-object a) #t))))
+
+  )
 
 (mat fasl-immutable
   (begin

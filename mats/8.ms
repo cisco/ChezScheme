@@ -7976,6 +7976,19 @@
   (equal?
     (let () (import ($l3)) (f (f 3)))
     3)
+  (begin
+    ;; (export import-spec ...) empty case
+    (library ($empty) (export) (import (chezscheme)) (export (import)))
+    #t)
+  (begin
+    (library ($l4-A) (export a) (import (chezscheme)) (define a 1))
+    (library ($l4-B) (export b) (import (chezscheme)) (define b 2))
+    #t)
+  (equal? '(1 2) (let () (import ($l4-A) ($l4-B)) (list a b)))
+  (begin
+    ;; (export import-spec ...) multiple imports case
+    (library ($l4-C) (export) (import (chezscheme)) (export (import ($l4-A) ($l4-B))))
+    (equal? '(1 2) (let () (import ($l4-C)) (list a b))))
  )
 
 (mat library2
@@ -8715,6 +8728,255 @@
   (equal?
     (separate-eval '(revisit "testfile-l6-prog1.so"))
     "revisiting testfile-l6-prog1\n#((10 . 12))\n")
+)
+
+(mat library-regression
+  ; test that failing invoke code does not result in cyclic dependency problem on re-run
+  (equal?
+    (separate-eval
+      '(begin
+         (library (invoke-fail)
+           (export x)
+           (import (chezscheme))
+           (define x #f)
+           (error #f "failed to load library (invoke-fail)"))
+         (guard (e [else
+                     (guard (e2 [else 
+                                  (display-condition e) (newline)
+                                  (display-condition e2) (newline)])
+                       (eval 'x (environment '(chezscheme) '(invoke-fail))))])
+           (eval 'x (environment '(chezscheme) '(invoke-fail))))))
+    "Exception: failed to load library (invoke-fail)\nException: failed to load library (invoke-fail)\n")
+
+  ; test that true cyclic dependency will always report the same thing
+  (equal?
+    (separate-eval
+      '(begin
+         (library (invoke-cyclic)
+           (export x y)
+           (import (chezscheme))
+           (define x #f)
+           (define y (eval '(if x 5 10) (environment '(chezscheme) '(invoke-cyclic)))))
+         (guard (e [else
+                     (guard (e2 [else 
+                                  (display-condition e) (newline)
+                                  (display-condition e2) (newline)])
+                       (eval 'x (environment '(chezscheme) '(invoke-cyclic))))])
+           (eval 'x  (environment '(chezscheme) '(invoke-cyclic))))))
+    "Exception: cyclic dependency involving invocation of library (invoke-cyclic)\nException: cyclic dependency involving invocation of library (invoke-cyclic)\n")
+
+  (begin
+    ; library to help make it easier to cause a failure in the visit-code that
+    ; does not lead to failure during compilation of the file.
+    (with-output-to-file "testfile-lr-l1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-lr-l1)
+             (export make-it-fail)
+             (import (chezscheme))
+             (define make-it-fail (make-parameter #f (lambda (x) (and x #t)))))))
+      'replace)
+    ; simple test to define one macro and potentially to raise an error when
+    ; defining the second one.
+    (with-output-to-file "testfile-lr-l2.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-lr-l2)
+             (export M1 M2)
+             (import (chezscheme) (testfile-lr-l1))
+             (define-syntax M1
+               (identifier-syntax #f))
+
+             (define-syntax M2
+               (if (make-it-fail)
+                   (error 'M2 "user requested failure with (make-it-fail) parameter")
+                   (lambda (x)
+                     (syntax-case x ()
+                       [(_ expr) #'expr])))))))
+      'replace)
+    ; more complete test that attempts to create the various types of things
+    ; that can be defined in visit code so that we can verify things are being
+    ; properly reset.
+    (with-output-to-file "testfile-lr-l3.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-lr-l3)
+             (export a b c d e f g h)
+             (import (chezscheme) (testfile-lr-l1))
+
+             (module a (x) (define x 5))
+             (alias b cons)
+             (define-syntax c (make-compile-time-value 5))
+             (define d 5)
+             (meta define e 5)
+             (define-syntax f (identifier-syntax #f))
+             (define $g (make-parameter #f))
+             (define-syntax g
+               (make-variable-transformer
+                 (lambda (x)
+                   (syntax-case x ()
+                     [(set! _ v) #'($g v)]
+                     [_ #'($g)]
+                     [(_ e* ...) #'(($g) e* ...)]))))
+             (define-property f g 10)
+             (define-syntax h
+               (if (make-it-fail)
+                   (error 'h "user requested failure with (make-it-fail) parameter")
+                   (lambda (x)
+                     (syntax-case x ()
+                       [(_ expr) #'expr])))))))
+      'replace)
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t])
+           (for-each compile-library x)))
+      '(list "testfile-lr-l1" "testfile-lr-l2" "testfile-lr-l3"))
+    #t)
+
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l2) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval 'M1 (environment '(testfile-lr-l2))))])
+           (eval 'M1 (environment '(testfile-lr-l2))))))
+    "Exception in M2: user requested failure with (make-it-fail) parameter\nException in M2: user requested failure with (make-it-fail) parameter\n")
+
+  ; module is defined as part of import code, run time bindings are setup as part of invoke code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (import a)
+         x))
+    "5\n")
+
+  ; alias is part of module binding ribcage, set up by import code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (b 'a 'b)))
+    "(a . b)\n")
+
+  ; compile-time-value is set in visit code, should show same error each time it is referenced
+  (equal?
+    (separate-eval
+      '(begin
+         (library (lookup)
+           (export lookup)
+           (import (chezscheme))
+           (define-syntax lookup
+             (lambda (x)
+               (syntax-case x ()
+                 [(_ id) (lambda (rho) #`'#,(rho #'id))]
+                 [(_ id key) (lambda (rho) #`'#,(rho #'id #'key))]))))
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval '(lookup c) (environment '(testfile-lr-l3) '(lookup))))])
+           (eval '(lookup c) (environment '(testfile-lr-l3) '(lookup))))))
+    "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
+
+  ; defines are set up as part of invoke code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         d))
+    "5\n")
+
+  ; meta defines are set up as part of visit code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval '(let ()
+                                (define-syntax get-e
+                                  (lambda (x)
+                                    (syntax-case x ()
+                                      [(_) #`'#,e])))
+                                (get-e))
+                         (environment '(chezscheme) '(testfile-lr-l3))))])
+           (eval '(let ()
+                    (define-syntax get-e
+                      (lambda (x)
+                        (syntax-case x ()
+                          [(_) #`'#,e])))
+                    (get-e))
+             (environment '(chezscheme) '(testfile-lr-l3))))))
+    "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
+
+  ; macros are set up as part of visit code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval 'f (environment '(testfile-lr-l3))))])
+           (eval 'f (environment '(testfile-lr-l3))))))
+    "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
+
+  ; variable transformer macros are set up as part of visit code
+  (equal?
+    (separate-eval
+      '(begin
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval 'g (environment '(testfile-lr-l3))))])
+           (eval 'g (environment '(testfile-lr-l3))))))
+    "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
+
+  ; properties are setup as part of visit code.
+  (equal?
+    (separate-eval
+      '(begin
+         (library (lookup)
+           (export lookup)
+           (import (chezscheme))
+           (define-syntax lookup
+             (lambda (x)
+               (syntax-case x ()
+                 [(_ id) (lambda (rho) #`'#,(rho #'id))]
+                 [(_ id key) (lambda (rho) #`'#,(rho #'id #'key))]))))
+         (import (testfile-lr-l3) (testfile-lr-l1))
+         (make-it-fail #t)
+         (guard (e [else
+                     (guard (e2
+                              [else
+                                (display-condition e) (newline)
+                                (display-condition e2) (newline)])
+                       (eval '(lookup f g) (environment '(testfile-lr-l3) '(lookup))))])
+           (eval '(lookup f g) (environment '(testfile-lr-l3) '(lookup))))))
+    "Exception in h: user requested failure with (make-it-fail) parameter\nException in h: user requested failure with (make-it-fail) parameter\n")
 )
 
 (mat cross-library-optimization

@@ -925,10 +925,7 @@
           "testfile-5.ss"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q"
-                        (if (windows?)
-                            (list->string (subst #\\ #\/ (string->list *scheme*)))
-                            *scheme*))
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)
@@ -939,6 +936,28 @@
           (unless (eof-object? err) (error 'bootfile-test1 err))
           out)))
     "hello 1\nhello 2\nhello 3\nhello 4\nhello 5\n")
+  (equal?
+    (begin
+      (parameterize ([optimize-level 2])
+        (compile-to-file
+         '((library (A) (export a) (import (scheme)) (define a 'aye))
+           (library (B) (export b) (import (A) (scheme)) (define b (list a 'captain))))
+         "testfile-libs.so")
+        (make-boot-file "testfile.boot" '("petite") "testfile-libs.so"))
+      (let-values ([(to-stdin from-stdout from-stderr pid)
+                    (open-process-ports
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
+                      (buffer-mode block)
+                      (native-transcoder))])
+        (pretty-print '(let () (import (B)) (printf "~s\n" b)) to-stdin)
+        (close-output-port to-stdin)
+        (let ([out (get-string-all from-stdout)]
+              [err (get-string-all from-stderr)])
+          (close-input-port from-stdout)
+          (close-input-port from-stderr)
+          (unless (eof-object? err) (error 'bootfile-test1 err))
+          out)))
+    "(aye captain)\n")
   (equal?
     (begin
       (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
@@ -954,10 +973,7 @@
           "testfile-5.so"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q"
-                        (if (windows?)
-                            (list->string (subst #\\ #\/ (string->list *scheme*)))
-                            *scheme*))
+                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)
@@ -1606,6 +1622,13 @@ evaluating module init
       "testfile-wpo-prog")
     "()\n")
 
+  (equal?
+    (separate-compile
+      '(lambda (x)
+         (compile-whole-program (format "~a.wpo" x) (format "~a-none.so" x) #f))
+      "testfile-wpo-prog")
+    "()\n")
+
   (delete-file "testfile-wpo-lib.ss")
   (delete-file "testfile-wpo-lib.so")
   (delete-file "testfile-wpo-lib.wpo")
@@ -1613,6 +1636,9 @@ evaluating module init
   (equal?
     (separate-eval '(load-program "testfile-wpo-prog-all.so"))
     "3628800\n3628800\n")
+
+  (error?
+    (separate-eval '(load-program "testfile-wpo-prog-none.so")))
 
   (begin
     (with-output-to-file "testfile-wpo-a3.ss"
@@ -3172,6 +3198,197 @@ evaluating module init
     "(9 . 5)\n")
 )
 
+(mat library-manager
+  (begin
+    (with-output-to-file "testfile-lm-a.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-a)
+            (export ct-a rt-a)
+            (import (scheme))
+            (meta define ct-a (begin (display "ct-a rhs\n") 123))
+            (define rt-a (begin (display "rt-a rhs\n") 456)))))
+      'replace)
+    (with-output-to-file "testfile-lm-b.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-b)
+            (export b)
+            (import (scheme) (testfile-lm-a))
+            (define-syntax (use-ct-val x) (if (odd? ct-a) #'"odd" #'"even"))
+            (define b use-ct-val))))
+      'replace)
+    (with-output-to-file "testfile-lm-c.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-c)
+            (export c)
+            (import (scheme) (testfile-lm-a))
+            (define use-rt-val rt-a)
+            (define c use-rt-val))))
+      'replace)
+    (with-output-to-file "testfile-lm-combined.ss"
+      (lambda ()
+        (pretty-print
+         '(begin
+            (include "testfile-lm-a.ss")
+            (include "testfile-lm-b.ss")
+            (include "testfile-lm-c.ss"))))
+      'replace)
+    (with-output-to-file "testfile-lm-use-b.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-use-b)
+            (export x)
+            (import (scheme) (testfile-lm-b))
+            (meta define x b))))
+      'replace)
+    (with-output-to-file "testfile-lm-use-c.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-lm-use-c)
+            (export x)
+            (import (scheme) (testfile-lm-c))
+            (define-syntax (x x) c))))
+      'replace)
+    #t)
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(compile-library "testfile-lm-a"))
+   (string-append
+    "compiling testfile-lm-a.ss with output to testfile-lm-a.so\n"
+    "ct-a rhs\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-library "testfile-lm-b")
+    '(printf "b = ~s\n" (let () (import (testfile-lm-b)) b)))
+   (string-append
+    "compiling testfile-lm-b.ss with output to testfile-lm-b.so\n"
+    "import: found source file \"testfile-lm-a.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-a.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-a.so\"\n"
+    "ct-a rhs\n"
+    "b = \"odd\"\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-library "testfile-lm-c")
+    '(printf "c = ~s\n" (let () (import (testfile-lm-c)) c)))
+   (string-append
+    "compiling testfile-lm-c.ss with output to testfile-lm-c.so\n"
+    "import: found source file \"testfile-lm-a.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-a.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-a.so\"\n"
+    "rt-a rhs\n"
+    "c = 456\n"))
+  (equal?
+   ;; library manager revisits object file containing a single library
+   ;; to resolve dependencies after earlier visit
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(visit "testfile-lm-a.so")
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "import: found source file \"testfile-lm-c.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-c.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-c.so\"\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-a.so\" for library (testfile-lm-a) run-time info\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager visits object file containing a single library
+   ;; to resolve dependencies after earlier revisit
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(revisit "testfile-lm-a.so")
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "import: found source file \"testfile-lm-b.ss\"\n"
+    "import: found corresponding object file \"testfile-lm-b.so\"\n"
+    "import: object file is not older\n"
+    "import: loading object file \"testfile-lm-b.so\"\n"
+    "import: attempting to 'visit' previously 'revisited' \"testfile-lm-a.so\" for library (testfile-lm-a) compile-time info\n"
+    "\"odd\"\n"))
+  (equal?
+   (separate-eval
+    '(import-notify #t)
+    '(library-extensions '((".ss" . ".so")))
+    '(compile-file "testfile-lm-combined"))
+   (string-append
+    "compiling testfile-lm-combined.ss with output to testfile-lm-combined.so\n"
+    "ct-a rhs\n"))
+  (equal?
+   ;; library manager revisits object file containing related libraries
+   ;; to resolve dependencies after earlier visit
+   (separate-eval
+    '(import-notify #t)
+    '(visit "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define-syntax (foo x) ct-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "ct-a rhs\n"
+    "foo = 123\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-combined.so\" for library (testfile-lm-c) run-time info\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager visits object file containing related libraries
+   ;; to resolve dependencies after earlier revisit
+   (separate-eval
+    '(import-notify #t)
+    '(revisit "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define foo rt-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "import: attempting to 'visit' previously 'revisited' \"testfile-lm-combined.so\" for library (testfile-lm-a) compile-time info\n"
+    "rt-a rhs\n"
+    "foo = 456\n"
+    "\"odd\"\n"))
+  (equal?
+   ;; library manager does not revisit due to earlier load
+   (separate-eval
+    '(import-notify #t)
+    '(load "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define-syntax (foo x) ct-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-c)) c))
+   (string-append
+    "ct-a rhs\n"
+    "foo = 123\n"
+    "rt-a rhs\n"
+    "456\n"))
+  (equal?
+   ;; library manager does not revisit due to earlier load
+   (separate-eval
+    '(import-notify #t)
+    '(load "testfile-lm-combined.so")
+    '(let ()
+       (import (testfile-lm-a))
+       (define foo rt-a)
+       (printf "foo = ~s\n" foo))
+    '(let () (import (testfile-lm-b)) b))
+   (string-append
+    "rt-a rhs\n"
+    "foo = 456\n"
+    "\"odd\"\n"))
+  )
 
 
 ;;; section 7.2:
@@ -3311,9 +3528,7 @@ evaluating module init
         'replace)
      ; compile in a separate Scheme process
       (if (windows?)
-          (system (format "echo (compile-file \"testfile\") | ~a"
-                    (list->string
-                      (subst #\\ #\/ (string->list *scheme*)))))
+          (system (format "echo (compile-file \"testfile\") | ~a" (patch-exec-path *scheme*)))
           (system (format "echo '(compile-file \"testfile\")' | ~a" *scheme*)))
       (load "testfile.so")
       (list (top-level-bound? '$notfribblefratz) (top-level-value '$notfribblefratz)))
@@ -3597,6 +3812,90 @@ evaluating module init
     (or (not a) (not (assq 'static (cdr a)))))
 )
 
+(mat object-references
+  (begin
+    (define variable-whose-value-is-a-gensym (gensym))
+    (define guardian-to-hold-gensyms (make-guardian))
+    ;; works on tree-shaped objects, except that
+    ;; weak/ephemeron pairs can create DAGs; if a weak pair has
+    ;; a non-#!bwp in the `car`, it must be referenced
+    ;; by a box or by `guardian-to-hold-gensyms`
+    (define (check-references obj)
+      (let ([backrefs (make-eq-hashtable)]
+            [old-collect (collect-request-handler)])
+        (enable-object-backreferences #t)
+        (collect-request-handler void)
+        (collect (collect-maximum-generation))
+        (for-each (lambda (brs)
+                    (for-each (lambda (br)
+                                (hashtable-set! backrefs (car br) (cdr br)))
+                              brs))
+                  (object-backreferences))
+        (enable-object-backreferences #f)
+        (collect-request-handler old-collect)
+        (and
+         ;; Check the given object
+         (let loop ([obj obj] [parent #f])
+           (and (or (not parent)
+                    (null? obj)
+                    (boolean? obj)
+                    (eq? parent (hashtable-ref backrefs obj #f)))
+                (cond
+                 [(pair? obj)
+                  (and (cond
+                        [(weak-pair? obj)
+                         (let ([a (car obj)])
+                           (or (eq? a #!bwp)
+                               (let ([p (hashtable-ref backrefs a #f)])
+                                 (or (box? p)
+                                     ;; retained by `guardian-to-hold-gensyms`
+                                     ;; means retains by it's tconc
+                                     (and (pair? p)
+                                          (eq? guardian-to-hold-gensyms
+                                               (hashtable-ref backrefs p #f)))))))]
+                        [(ephemeron-pair? obj) #t]
+                        [else
+                         (loop (car obj) obj)])
+                       (loop (cdr obj) obj))]
+                 [(vector? obj)
+                  (let vloop ([i 0])
+                    (or (= i (vector-length obj))
+                        (and (loop (vector-ref obj i) obj)
+                             (vloop (add1 i)))))]
+                 [(box? obj)
+                  (loop (unbox obj) obj)]
+                 [(procedure? obj)
+                  (let ([insp (inspect/object obj)])
+                    (let ploop ([i 0])
+                      (or (= i (insp 'length))
+                          (and (loop (((insp 'ref i) 'ref) 'value) obj)
+                               (ploop (add1 i))))))]
+                 [else #t])))
+         ;; Check a symbol binding
+         (let ([var (hashtable-ref backrefs variable-whose-value-is-a-gensym #f)])
+           (and (eq? 'symbol ((inspect/object var) 'type))
+                (equal? "variable-whose-value-is-a-gensym"
+                        (((inspect/object var) 'name) 'value)))))))
+    #t)
+  (check-references (list (gensym)
+                          (vector (gensym) (box (cons (gensym) (gensym))) (gensym))
+                          (let ([v (gensym)])
+                            (lambda ()
+                              v))
+                          ;; make sure `weak-cons` doesn't retain
+                          (weak-cons (gensym) #f)
+                          (let ([v (gensym)])
+                            ;; weak pair won't count as retaining reference
+                            (weak-cons v
+                                       ;; containing box will count
+                                       (box v)))
+                          (let ([v (gensym)])
+                            (guardian-to-hold-gensyms v)
+                            (weak-cons v #f))
+                          (let ([v (gensym)])
+                            (list v (ephemeron-cons v (gensym))))))
+)
+
 (mat collect-rendezvous
   (begin
     (define (check-working-gc collect)
@@ -3629,6 +3928,10 @@ evaluating module init
                (set! done? #t)
                (condition-wait c m)
                (mutex-release m)
+               ;; Make sure the thread is really done
+               (let loop ()
+                 (unless (= 1 (#%$top-level-value '$active-threads))
+                   (loop)))
                ;; Plain `collect` should work again:
                (check-working-gc collect)))))
   )

@@ -1,4 +1,4 @@
-<% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2017 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -1362,7 +1362,7 @@ be parsed as a number.
 
 \item
 A symbol whose name contains arbitrary characters may be written by
-escaping them them with \scheme{\} or with \scheme{|}.
+escaping them with \scheme{\} or with \scheme{|}.
 \scheme{\} is used to escape a single character (except 'x', since
 \scheme{\x} marks the start of a hex scalar value),
 whereas \scheme{|} is used
@@ -2425,6 +2425,12 @@ comparison of potentially cyclic structure.
 When comparing two non-eq? instances that do not share an equality
 procedure, \scheme{equal?} returns \scheme{#f}.
 
+A default equality procedure to be used for all record types (including
+opaque types) can be specified via the parameter
+\index{\scheme{default-record-equal-procedure}}\scheme{default-record-equal-procedure}.
+The default equality procedure is used only if neither instance's type has or inherits
+a type-specific record equality procedure.
+
 \index{record hashing}\index{\scheme{equal-hash} on records}%
 Similarly, when the \index{\scheme{equal-hash}}\scheme{equal-hash}
 primitive hashes a record instance, it defaults to a value that is
@@ -2436,11 +2442,18 @@ that describes the record type.
 The procedure \index{\scheme{record-hash-procedure}}\scheme{record-hash-procedure} can be used to find
 the hash procedure for a given record instance, following the inheritance
 chain.
-\var{equal-hash} passes \var{hash-proc} two arguments: the
+\var{equal-hash} passes the hash procedure two arguments: the
 instance plus a \var{hash} procedure that should be used for
 recursive hashing of values within the instance.
 Use of \var{hash} for recursive hashing is necessary to allow
-hashing of potentially cyclic structure.
+hashing of potentially cyclic structure and to make the hashing
+of shared structure more efficient.
+
+A default hash procedure to be used for all record types (including
+opaque types) can be specified via the parameter
+\index{\scheme{default-record-hash-procedure}}\scheme{default-record-hash-procedure}.
+The default hash procedure is used only if an instance's type does not have or inherit
+a type-specific hash procedure.
 
 The following example illustrates the setting of equality and hash
 procedures.
@@ -2577,6 +2590,10 @@ If \var{hash-proc} is \scheme{#f}, any existing association between
 In the second form, \scheme{record-type-hash-procedure} returns
 the hash procedure associated with \var{rtd}, if any, otherwise \scheme{#f}.
 
+The procedure \var{hash-proc} should accept two arguments, the
+instance for which it should compute a hash value and a hash procedure
+to use to compute hash values for arbitrary fields of the instance,
+and it return a nonnegative exact integer.
 A record type's hash procedure should produce the same hash value
 for any two instances the record type's equality procedure considers
 equal.
@@ -2594,6 +2611,42 @@ type that is associated with a hash procedure, if any.
 If such type is found, the hash procedure associated with the type
 is returned.
 Otherwise, \scheme{#f} is returned.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{default-record-equal-procedure}{\categorythreadparameter}{default-record-equal-procedure}
+\listlibraries
+\endentryheader
+
+This parameter determines how two record instances are compared by
+\scheme{equal?} if neither has a type-specific equality procedure.
+When the parameter has the value \scheme{#f} (the default), \scheme{equal?}
+compares the instances with \scheme{eq?}, i.e., there is no attempt at
+determining structural equivalence.
+Otherwise, the parameter's value must be a procedure, and \scheme{equal?}
+invokes that procedure to compare the instances, passing it three arguments:
+the two instances and a procedure that should be used to recursively
+compare arbitrary values within the instances.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{default-record-hash-procedure}{\categorythreadparameter}{default-record-hash-procedure}
+\listlibraries
+\endentryheader
+
+This parameter determines the hash procedure used when \scheme{equal-hash}
+is called on a record instance and the instance does not have a type-specific
+hash procedure.
+When the parameter has the value \scheme{#f} (the default), \scheme{equal-hash}
+returns a value that is independent of the record type and contents
+of the instance.
+Otherwise, the parameter's value must be a procedure, and \scheme{equal-hash}
+invokes the procedure to compute the instance's hash value, passing it
+the record instance and a procedure to invoke to recursively compute
+hash values for arbitrary values contained within the record.
+The procedure should return a nonnegative exact integer, and the
+return value should be the same for any two instances the default
+equal procedure considers equivalent.
 
 \section{Legacy Record Types\label{SECTCSV7RECORDS}}
 

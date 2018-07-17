@@ -109,14 +109,24 @@ Handling letrec and letrec*
 
   (define-pass cpletrec : Lsrc (ir) -> Lsrc ()
     (definitions
-      (define initialize-id!
-        (lambda (id)
-          (prelex-flags-set! id
-            (let ([flags (prelex-flags id)])
-              (fxlogor
-                (fxlogand flags (constant prelex-sticky-mask))
-                (fxsll (fxlogand flags (constant prelex-is-mask))
-                  (constant prelex-was-flags-offset)))))))
+      (define with-initialized-ids
+        (lambda (old-id* proc)
+          (let ([new-id* (map (lambda (old-id)
+                                (let ([new-id (make-prelex
+                                                (prelex-name old-id)
+                                                (let ([flags (prelex-flags old-id)])
+                                                  (fxlogor
+                                                    (fxlogand flags (constant prelex-sticky-mask))
+                                                    (fxsll (fxlogand flags (constant prelex-is-mask))
+                                                      (constant prelex-was-flags-offset))))
+                                                (prelex-source old-id)
+                                                #f)])
+                                  (prelex-operand-set! old-id new-id)
+                                  new-id))
+                           old-id*)])
+            (let-values ([v* (proc new-id*)])
+              (for-each (lambda (old-id) (prelex-operand-set! old-id #f)) old-id*)
+              (apply values v*)))))
       (define (Expr* e*)
         (if (null? e*)
             (values '() #t)
@@ -243,9 +253,7 @@ Handling letrec and letrec*
                   (cond
                     [(and (not (prelex-referenced/assigned lhs)) (binding-pure? b)) body]
                     [(and (not (prelex-assigned lhs)) (lambda? rhs))
-                     (if (binding-recursive? b)
-                         (build-letrec (list lhs) (list rhs) body)
-                         (build-let (make-preinfo) (make-preinfo-lambda) (list lhs) (list rhs) body))]
+                     (build-letrec (list lhs) (list rhs) body)]
                     [(not (memq b (node-link* b)))
                      (build-let (make-preinfo) (make-preinfo-lambda) (list lhs) (list rhs) body)]
                     [else (grisly-letrec '() b* body)]))
@@ -272,32 +280,34 @@ Handling letrec and letrec*
                   (and body-pure? (andmap binding-pure? b*)))))))))
     (Expr : Expr (ir) -> Expr (#t)
       [(ref ,maybe-src ,x)
-       (safe-assert (not (prelex-operand x)))
-       (safe-assert (prelex-was-referenced x))
-       (when (prelex-referenced x)
-         (safe-assert (prelex-was-multiply-referenced x))
-         (set-prelex-multiply-referenced! x #t))
-       (set-prelex-seen/referenced! x #t)
-       (values ir (not (prelex-was-assigned x)))]
+       (let ([x (prelex-operand x)])
+         (safe-assert (prelex? x))
+         (safe-assert (prelex-was-referenced x))
+         (when (prelex-referenced x)
+           (safe-assert (prelex-was-multiply-referenced x))
+           (set-prelex-multiply-referenced! x #t))
+         (set-prelex-seen/referenced! x #t)
+         (values `(ref ,maybe-src ,x) (not (prelex-was-assigned x))))]
       [(quote ,d) (values ir #t)]
       [(call ,preinfo0 (case-lambda ,preinfo1 (clause (,x* ...) ,interface ,body)) ,e* ...)
        (guard (fx= (length e*) interface))
-       (for-each initialize-id! x*)
-       (let-values ([(body body-pure?) (Expr body)])
-         (let-values ([(pre* lhs* rhs* pure?)
-                       (let f ([x* x*] [e* e*])
-                         (if (null? x*)
-                             (values '() '() '() #t)
-                             (let ([x (car x*)])
-                               (let-values ([(e e-pure?) (Expr (car e*))]
-                                             [(pre* lhs* rhs* pure?) (f (cdr x*) (cdr e*))])
-                                 (if (prelex-referenced/assigned x)
-                                     (values pre* (cons x lhs*) (cons e rhs*) (and e-pure? pure?))
-                                     (values (if e-pure? pre* (cons e pre*))
-                                       lhs* rhs* (and e-pure? pure?)))))))])
-           (values
-             (build-seq pre* (build-let preinfo0 preinfo1 lhs* rhs* body))
-             (and body-pure? pure?))))]
+       (with-initialized-ids x*
+         (lambda (x*)
+           (let-values ([(body body-pure?) (Expr body)])
+             (let-values ([(pre* lhs* rhs* pure?)
+                           (let f ([x* x*] [e* e*])
+                             (if (null? x*)
+                                 (values '() '() '() #t)
+                                 (let ([x (car x*)])
+                                   (let-values ([(e e-pure?) (Expr (car e*))]
+                                                [(pre* lhs* rhs* pure?) (f (cdr x*) (cdr e*))])
+                                     (if (prelex-referenced/assigned x)
+                                         (values pre* (cons x lhs*) (cons e rhs*) (and e-pure? pure?))
+                                         (values (if e-pure? pre* (cons e pre*))
+                                           lhs* rhs* (and e-pure? pure?)))))))])
+               (values
+                 (build-seq pre* (build-let preinfo0 preinfo1 lhs* rhs* body))
+                 (and body-pure? pure?))))))]
       [(call ,preinfo ,pr ,e* ...)
        (let ()
          (define (arity-okay? arity n)
@@ -321,24 +331,28 @@ Handling letrec and letrec*
       [(seq ,[e1 e1-pure?] ,[e2 e2-pure?])
        (values `(seq ,e1 ,e2) (and e1-pure? e2-pure?))]
       [(set! ,maybe-src ,x ,[e pure?])
-       (safe-assert (prelex-was-assigned x))
-       ; NB: cpletrec-letrec assumes assignments to unreferenced ids are dropped
-       (if (prelex-was-referenced x)
-           (begin
-             (set-prelex-seen/assigned! x #t)
-             (values `(set! ,maybe-src ,x ,e) #f))
-           (if pure? (values `(quote ,(void)) #t) (values `(seq ,e (quote ,(void))) #f)))]
+       (let ([x (prelex-operand x)])
+         (safe-assert (prelex? x))
+         (safe-assert (prelex-was-assigned x))
+         ; NB: cpletrec-letrec assumes assignments to unreferenced ids are dropped
+         (if (prelex-was-referenced x)
+             (begin
+               (set-prelex-seen/assigned! x #t)
+               (values `(set! ,maybe-src ,x ,e) #f))
+             (if pure? (values `(quote ,(void)) #t) (values `(seq ,e (quote ,(void))) #f))))]
       [(letrec ([,x* ,e*] ...) ,body)
-       (for-each initialize-id! x*)
-       (cpletrec-letrec #f x* e* body)]
+       (with-initialized-ids x*
+         (lambda (x*)
+           (cpletrec-letrec #f x* e* body)))]
       [(letrec* ([,x* ,e*] ...) ,body)
-       (for-each initialize-id! x*)
-       (cpletrec-letrec #t x* e* body)]
-      [(foreign ,conv ,name ,[e pure?] (,arg-type* ...) ,result-type)
-       (values `(foreign ,conv ,name ,e (,arg-type* ...) ,result-type)
+       (with-initialized-ids x*
+         (lambda (x*)
+           (cpletrec-letrec #t x* e* body)))]
+      [(foreign (,conv* ...) ,name ,[e pure?] (,arg-type* ...) ,result-type)
+       (values `(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type)
          (and (fx= (optimize-level) 3) pure?))]
-      [(fcallable ,conv ,[e pure?] (,arg-type* ...) ,result-type)
-       (values `(fcallable ,conv ,e (,arg-type* ...) ,result-type)
+      [(fcallable (,conv* ...) ,[e pure?] (,arg-type* ...) ,result-type)
+       (values `(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type)
          (and (fx= (optimize-level) 3) pure?))]
       [(record-ref ,rtd ,type ,index ,[e pure?])
        (values `(record-ref ,rtd ,type ,index ,e) #f)]
@@ -367,9 +381,10 @@ Handling letrec and letrec*
       [else (sorry! who "unhandled record ~s" ir)])
     (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
       [(clause (,x* ...) ,interface ,body)
-       (for-each initialize-id! x*)
-       (let-values ([(body pure?) (Expr body)])
-         `(clause (,x* ...) ,interface ,body))])
+       (with-initialized-ids x*
+         (lambda (x*)
+           (let-values ([(body pure?) (Expr body)])
+             `(clause (,x* ...) ,interface ,body))))])
     (let-values ([(ir pure?) (Expr ir)]) ir))
 
 (lambda (x)

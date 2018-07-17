@@ -268,6 +268,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat r6rs:case: "invalid syntax (case)".
 4.mo:Expected error in mat named-let: "incorrect argument count in call ((letrec ((...)) x) 3 4)".
 4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 3 is not a procedure".
+4.mo:Expected error in mat map: "map: 7 is not a procedure".
 4.mo:Expected error in mat map: "map: a is not a proper list".
 4.mo:Expected error in mat map: "map: (a . b) is not a proper list".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
@@ -288,6 +292,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
 4.mo:Expected error in mat map: "map: (a a a a a a ...) is circular".
+4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
+4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
 4.mo:Expected error in mat fold-left: "fold-left: 3 is not a procedure".
 4.mo:Expected error in mat fold-left: "fold-left: a is not a proper list".
 4.mo:Expected error in mat fold-left: "fold-left: (a . b) is not a proper list".
@@ -317,6 +323,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-left: "fold-left: input list was altered during operation".
 4.mo:Expected error in mat fold-left: "fold-left: input list was altered during operation".
 4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
+4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
+4.mo:Expected error in mat fold-right: "fold-right: 3 is not a procedure".
 4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: (a . b) is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
@@ -338,6 +346,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 3 is not a procedure".
+4.mo:Expected error in mat for-each: "for-each: 7 is not a procedure".
 4.mo:Expected error in mat for-each: "for-each: a is not a proper list".
 4.mo:Expected error in mat for-each: "for-each: (a . b) is not a proper list".
 4.mo:Expected error in mat for-each: "for-each: (a a a a a a ...) is circular".
@@ -370,6 +382,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
 4.mo:Expected error in mat for-each: "for-each: input list was altered during operation".
+4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
+4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
 4.mo:Expected error in mat ormap: "ormap: 3 is not a procedure".
 4.mo:Expected error in mat ormap: "ormap: a is not a proper list".
 4.mo:Expected error in mat ormap: "ormap: (a . b) is not a proper list".
@@ -404,6 +418,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat ormap: "ormap: input list was altered during operation".
 4.mo:Expected error in mat ormap: "ormap: input list was altered during operation".
 4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
+4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
+4.mo:Expected error in mat andmap: "andmap: 3 is not a procedure".
 4.mo:Expected error in mat andmap: "andmap: a is not a proper list".
 4.mo:Expected error in mat andmap: "andmap: (a . b) is not a proper list".
 4.mo:Expected error in mat andmap: "andmap: (a a a a a a ...) is circular".
@@ -437,6 +453,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat andmap: "andmap: input list was altered during operation".
 4.mo:Expected error in mat andmap: "andmap: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
+4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
+4.mo:Expected error in mat exists: "exists: 3 is not a procedure".
 4.mo:Expected error in mat exists: "exists: a is not a proper list".
 4.mo:Expected error in mat exists: "exists: (a . b) is not a proper list".
 4.mo:Expected error in mat exists: "exists: (a a a a a a ...) is circular".
@@ -469,6 +487,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
 4.mo:Expected error in mat exists: "exists: input list was altered during operation".
+4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
+4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
 4.mo:Expected error in mat for-all: "for-all: 3 is not a procedure".
 4.mo:Expected error in mat for-all: "for-all: a is not a proper list".
 4.mo:Expected error in mat for-all: "for-all: (a . b) is not a proper list".
@@ -7045,6 +7065,7 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
 7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
 7.mo:Expected error in mat compile-whole-program: "incorrect argument count in call (compile-whole-program "testfile-wpo-ab.wpo")".
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in visit: library (testfile-wpo-lib) is not visible
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
@@ -7466,6 +7487,14 @@ record.mo:Expected error in mat r6rs-records-syntactic: "invalid define-record-t
 record.mo:Expected error in mat r6rs-records-syntactic: "no constructor descriptor for define-record record type frob".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: invalid protocol oops".
 record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed prnt".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier 876".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable (x))".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable "spam")".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable (x) foo-x)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (immutable x (foo-x))".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable (x) foo-x foo-x!)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable x (foo-x) foo-x!)".
+record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable x foo-x (foo-x!))".
 record.mo:Expected error in mat define-record-type-extensions: "missing nongenerative clause and require-nongenerative-clause is #t (define-record-type foo)".
 record.mo:Expected error in mat cp0-record-ref-optimizations: "make-record-type-descriptor: invalid uid 5".
 hash.mo:Expected error in mat old-hash-table: "get-hash-table: ((a . b)) is not an eq hashtable".
@@ -9497,6 +9526,20 @@ foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name 
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".

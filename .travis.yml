@@ -25,4 +25,4 @@ addons:
       - lib32ncurses5-dev
       - libx32ncurses5-dev
 script:
-  - ./configure -m=$TARGET_MACHINE && make && ( cd ${TARGET_MACHINE}/mats && make partialx 2>&1 ) | tee Make.out | grep '^matting '
+  - .travis/dobuild.sh

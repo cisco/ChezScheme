@@ -2441,7 +2441,7 @@
             (if (target-fixnum? lpm)
                 `(,size . ,(fix lpm))
                 `(abs 0 (object ,lpm)))
-            (aop-cons* `(asm livemask: ,(if (number? lpm) (format "~b" lpm) (format "~s" lpm)))
+            (aop-cons* `(asm livemask: ,(format "~b" lpm))
               '(code-top-link)
               (aop-cons* `(asm code-top-link)
                 `(,size . ,fs)
@@ -2478,6 +2478,11 @@
     (define (classify-type type)
       (nanopass-case (Ltype Type) type
         [(fp-ftd& ,ftd) (classify-eightbytes ftd)]
+        [else #f]))
+
+    (define (classified-size type)
+      (nanopass-case (Ltype Type) type
+        [(fp-ftd& ,ftd) ($ftd-size ftd)]
         [else #f]))
 
     ;; classify-eightbytes: returns '(memory) or a nonemtpy list of 'integer/'sse
@@ -2866,8 +2871,8 @@
                                  `(set! ,(%mref ,%sp ,frame-size) ,x)))))]
              [else
               (values frame-size locs)]))
-          (define (add-fill-result c-call saved-offset classes)
-            (let loop ([classes classes] [offset 0] [iregs (reg-list %rax %rdx)] [fpregs (reg-list %Cfparg1 %Cfparg2)])
+          (define (add-fill-result c-call saved-offset classes size)
+            (let loop ([classes classes] [offset 0] [iregs (reg-list %rax %rdx)] [fpregs (reg-list %Cfparg1 %Cfparg2)] [size size])
               (cond
                [(null? classes)
                 `(seq
@@ -2875,12 +2880,46 @@
                   (set! ,%rcx ,(%mref ,%sp ,saved-offset)))]
                [(eq? 'sse (car classes))
                 `(seq
-                  ,(loop (cdr classes) (fx+ offset 8) iregs (cdr fpregs))
-                  (inline ,(make-info-loadfl (car fpregs)) ,%store-double ,%rcx ,%zero (immediate ,offset)))]
+                  ,(loop (cdr classes) (fx+ offset 8) iregs (cdr fpregs) (fx- size 8))
+                  ,(case size
+                     [(4) `(inline ,(make-info-loadfl (car fpregs)) ,%store-single ,%rcx ,%zero (immediate ,offset))]
+                     [else `(inline ,(make-info-loadfl (car fpregs)) ,%store-double ,%rcx ,%zero (immediate ,offset))]))]
                [else
                 `(seq
-                  ,(loop (cdr classes) (fx+ offset 8) (cdr iregs) fpregs)
-                  (set! ,(%mref ,%rcx ,offset) ,(car iregs)))])))
+                  ,(loop (cdr classes) (fx+ offset 8) (cdr iregs) fpregs (fx- size 8))
+                  ,(let ([ireg (car iregs)])
+                     (case size
+                       [(1) `(inline ,(make-info-load 'integer-8 #f) ,%store
+                                     ,%rcx ,%zero (immediate ,offset) ,ireg)]
+                       [(2) `(inline ,(make-info-load 'integer-16 #f) ,%store
+                                     ,%rcx ,%zero (immediate ,offset) ,ireg)]
+                       [(3) (%seq
+                             (inline ,(make-info-load 'integer-16 #f) ,%store
+                                     ,%rcx ,%zero (immediate ,offset) ,ireg)
+                             (set! ,ireg ,(%inline srl ,ireg (immediate 16)))
+                             (inline ,(make-info-load 'integer-8 #f) ,%store
+                                     ,%rcx ,%zero (immediate ,(fx+ 2 offset)) ,ireg))]
+                       [(4) `(inline ,(make-info-load 'integer-32 #f) ,%store
+                                     ,%rcx ,%zero (immediate ,offset) ,ireg)]
+                       [(5 6 7) (%seq
+                                 (inline ,(make-info-load 'integer-32 #f) ,%store
+                                         ,%rcx ,%zero (immediate ,offset) ,ireg)
+                                 (set! ,ireg ,(%inline srl ,ireg (immediate 32)))
+                                 ,(case size
+                                    [(5)
+                                     `(inline ,(make-info-load 'integer-8 #f) ,%store
+                                              ,%rcx ,%zero (immediate ,(fx+ 4 offset)) ,ireg)]
+                                    [(6)
+                                     `(inline ,(make-info-load 'integer-16 #f) ,%store
+                                              ,%rcx ,%zero (immediate ,(fx+ 4 offset)) ,ireg)]
+                                    [(7)
+                                     (%seq
+                                      (inline ,(make-info-load 'integer-16 #f) ,%store
+                                              ,%rcx ,%zero (immediate ,(fx+ 4 offset)) ,ireg)
+                                      (set! ,ireg ,(%inline srl ,ireg (immediate 16)))
+                                      (inline ,(make-info-load 'integer-8 #f) ,%store
+                                              ,%rcx ,%zero (immediate ,(fx+ 6 offset)) ,ireg))]))]
+                       [else `(set! ,(%mref ,%rcx ,offset) ,ireg)])))])))
           (define (get-result-regs fill-result-here? result-type result-classes)
             (if fill-result-here?
                 (let loop ([classes result-classes] [iregs (reg-list %rax %rdx)] [fpregs (reg-list %Cfparg1 %Cfparg2)])
@@ -2914,12 +2953,13 @@
                         `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size)))))))))
           (lambda (info)
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
-            (let* ([conv (info-foreign-conv info)]
+            (let* ([conv* (info-foreign-conv* info)]
                    [arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [result-classes (classify-type result-type)]
+                   [result-size (classified-size result-type)]
                    [fill-result-here? (result-fits-in-registers? result-classes)]
-                   [adjust-active? (memq 'adjust-active conv)])
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*) (make-vint) (make-vfp))
                 (lambda (frame-size nfp locs live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
@@ -2942,7 +2982,7 @@
                                        (inline ,(make-info-kill*-live* (reg-list %rax %rdx) (cons %rax live*)) ,%c-call ,t))))])
                             (cond
                              [fill-result-here?
-                              (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes)]
+                              (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes result-size)]
                              [else c-call])))
                         (nanopass-case (Ltype Type) result-type
                           [(fp-double-float)
@@ -3313,11 +3353,11 @@
                    ,e
                    ,(pop-registers result-regs)))))
           (lambda (info)
-            (let ([conv (info-foreign-conv info)]
+            (let ([conv* (info-foreign-conv* info)]
                   [arg-type* (info-foreign-arg-type* info)]
                   [result-type (info-foreign-result-type info)])
               (let* ([result-classes (classify-type result-type)]
-                     [adjust-active? (memq 'adjust-active conv)]
+                     [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
                      [synthesize-first? (and result-classes
                                              (result-fits-in-registers? result-classes))]
                      [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*) adjust-active?)])

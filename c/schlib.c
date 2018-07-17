@@ -105,6 +105,8 @@ ptr Sstring_of_length(s, n) const char *s; iptr n; {
     return S_string(s, n);
 }
 
+/* Sstring_utf8 is in alloc.c */
+
 /* Sbox is in alloc.c */
 
 /* Sinteger is in number.c */

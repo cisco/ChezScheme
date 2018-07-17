@@ -120,7 +120,7 @@ Its default value is \scheme{100}.
 \endentryheader
 
 The value of \scheme{ee-default-repeat} is a nonnegative fixnum
-value that determines the number of of times the next command is
+value that determines the number of times the next command is
 repeated after the \scheme{ee-command-repeat} editing command
 (bound to \scheme{Esc-^U} by default) is used and \emph{not}
 followed by a sequence of digits.

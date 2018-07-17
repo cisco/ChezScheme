@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cisco/ChezScheme.svg?branch=master)](https://travis-ci.org/cisco/ChezScheme)
+
 Chez Scheme is both a programming language and an implementation
 of that language, with supporting tools and documentation.
 

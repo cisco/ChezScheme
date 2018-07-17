@@ -124,7 +124,17 @@ ptr S_strerror(INT errnum) {
   ptr p; char *msg;
 
   tc_mutex_acquire()
-  p = (msg = strerror(errnum)) == NULL ? Sfalse : Sstring(msg);
+#ifdef WIN32
+  msg = Swide_to_utf8(_wcserror(errnum));
+  if (msg == NULL)
+    p = Sfalse;
+  else {
+    p = Sstring_utf8(msg, -1);
+    free(msg);
+  }
+#else
+  p = (msg = strerror(errnum)) == NULL ? Sfalse : Sstring_utf8(msg, -1);
+#endif
   tc_mutex_release()
   return p;
 }
@@ -219,7 +229,7 @@ static ptr s_decode_float(x) ptr x; {
     return S_decode_float(FLODAT(x));
 }
 
-#define FMTBUFSIZE 60
+#define FMTBUFSIZE 120
 #define CHUNKADDRLT(x, y) (((chunkinfo *)(Scar(x)))->addr < ((chunkinfo *)(Scar(y)))->addr)
 mkmergesort(sort_chunks, merge_chunks, ptr, Snil, CHUNKADDRLT, INITCDR)
 
@@ -356,15 +366,21 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
   if (outfn == NULL) {
     out = stderr;
   } else {
+#ifdef WIN32
+    wchar_t *outfnw = Sutf8_to_wide(outfn);
+    out = _wfopen(outfnw, L"w");
+    free(outfnw);
+#else
     out = fopen(outfn, "w");
+#endif
     if (out == NULL) {
       ptr msg = S_strerror(errno);
       if (msg != Sfalse) {
         tc_mutex_release()
-        S_error2("fopen", "open of ~s failed: ~a", Sstring(outfn), msg);
+        S_error2("fopen", "open of ~s failed: ~a", Sstring_utf8(outfn, -1), msg);
       } else {
         tc_mutex_release()
-        S_error1("fopen", "open of ~s failed", Sstring(outfn));
+        S_error1("fopen", "open of ~s failed", Sstring_utf8(outfn, -1));
       }
     }
   }
@@ -601,7 +617,7 @@ static ptr s_system(const char *s) {
   if (DISABLECOUNT(tc) == FIX(0)) reactivate_thread(tc);
 #endif
 
-  if (status == -1) {
+  if ((status == -1) && (errno != 0)) {
     ptr msg = S_strerror(errno);
 
     if (msg != Sfalse)
@@ -624,12 +640,12 @@ static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
     INT ifd = -1, ofd = -1, efd = -1, child = -1;
 
 #ifdef WIN32
-/* WIN32 version courtesy of Bob Burger, burgerrg@sagian.com */
     HANDLE hToRead, hToWrite, hFromRead, hFromWrite, hFromReadErr, hFromWriteErr, hProcess;
-    STARTUPINFO si = {0};
+    STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi;
     char *comspec;
     char *buffer;
+    wchar_t* bufferw;
 
     /* Create non-inheritable pipes, important to eliminate zombee children
      * when the parent sides are closed. */
@@ -640,14 +656,12 @@ static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
         CloseHandle(hToWrite);
         S_error("process", "cannot open pipes");
     }
-    if (stderrp) {
-      if (!CreatePipe(&hFromReadErr, &hFromWriteErr, NULL, 0)) {
-          CloseHandle(hToRead);
-          CloseHandle(hToWrite);
-          CloseHandle(hFromRead);
-          CloseHandle(hFromWrite);
-          S_error("process", "cannot open pipes");
-      }
+    if (stderrp && !CreatePipe(&hFromReadErr, &hFromWriteErr, NULL, 0)) {
+        CloseHandle(hToRead);
+        CloseHandle(hToWrite);
+        CloseHandle(hFromRead);
+        CloseHandle(hFromWrite);
+        S_error("process", "cannot open pipes");
     }
 
     si.cb = sizeof(STARTUPINFO);
@@ -701,13 +715,16 @@ static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
       si.hStdError = si.hStdOutput;
     }
 
-    if ((comspec = getenv("COMSPEC"))) {
-        size_t n = strlen(comspec) + strlen(s) + 5;
+    if ((comspec = Sgetenv("COMSPEC"))) {
+        size_t n = strlen(comspec) + strlen(s) + 7;
         buffer = (char *)_alloca(n);
-        snprintf(buffer, n, "%s /c %s", comspec, s);
+        snprintf(buffer, n, "\"%s\" /c %s", comspec, s);
+        free(comspec);
     } else
         buffer = s;
-    if (!CreateProcess(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+    bufferw = Sutf8_to_wide(buffer);
+    if (!CreateProcessW(NULL, bufferw, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+        free(bufferw);
         CloseHandle(si.hStdInput);
         CloseHandle(hToWrite);
         CloseHandle(hFromRead);
@@ -718,6 +735,7 @@ static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
         }
         S_error("process", "cannot spawn subprocess");
     }
+    free(bufferw);
     CloseHandle(si.hStdInput);
     CloseHandle(si.hStdOutput);
     if (stderrp) {
@@ -1331,46 +1349,40 @@ static ptr s_getenv PROTO((char *name));
 
 static ptr s_getenv(name) char *name; {
 #ifdef WIN32
-#define GETENVBUFSIZ 100
-  char buf[GETENVBUFSIZ];
-  size_t n;
-
-  n = GetEnvironmentVariable(name, buf, GETENVBUFSIZ);
-  if (n > GETENVBUFSIZ) {
-    ptr bv = S_bytevector(n);
-    n = GetEnvironmentVariable(name, &BVIT(bv,0), (DWORD)n);
-    if (n != 0) return S_string(&BVIT(bv,0), n);
-  } else if (n > 0) {
-    return S_string(buf, n);
-  }
-
-  if (getenv_s(&n, buf, GETENVBUFSIZ, name) == 0) {
-    if (n != 0) return S_string(buf, n-1);
-  } else {
-    ptr bv = S_bytevector(n);
-    if (getenv_s(&n, &BVIT(bv,0), n, name) == 0)
-      if (n != 0) return S_string(&BVIT(bv,0), n-1);
-  }
-
-  return Sfalse;
+  char *s = Sgetenv(name);
 #else /* WIN32 */
   char *s = getenv(name);
-  return s == (char *)0 ? Sfalse : S_string(s, -1);
 #endif /* WIN32 */
+  if (s == (char *)0)
+    return Sfalse;
+  else {
+    ptr r = Sstring_utf8(s, -1);
+#ifdef WIN32
+    free(s);
+#endif
+    return r;
+  }
 }
 
 static void s_putenv PROTO((char *name, char *value));
 static void s_putenv(name, value) char *name, *value; {
-  iptr n; char *s;
 #ifdef WIN32
-  if (SetEnvironmentVariable(name, value) == 0) {
+  wchar_t* namew;
+  wchar_t* valuew;
+  BOOL rc;
+  namew = Sutf8_to_wide(name);
+  valuew = Sutf8_to_wide(value);
+  rc = SetEnvironmentVariableW(namew, valuew);
+  free(namew);
+  free(valuew);
+  if (rc == 0)
     S_error1("putenv", "environment extension failed: ~a", S_LastErrorString());
-  }
-#endif /* WIN32 */
+#else /* WIN32 */
+  iptr n; char *s;
   n = strlen(name) + strlen(value) + 2;
   if ((s = malloc(n)) == (char *)NULL
        || snprintf(s, n, "%s=%s", name, value) < 0
-       || PUTENV(s) != 0) {
+       || putenv(s) != 0) {
     ptr msg = S_strerror(errno);
 
     if (msg != Sfalse)
@@ -1378,6 +1390,7 @@ static void s_putenv(name, value) char *name, *value; {
     else
       S_error("putenv", "environment extension failed");
   }
+#endif /* WIN32 */
 }
 
 #ifdef PTHREADS
@@ -1904,48 +1917,49 @@ static iconv_close_ft iconv_close_f = (iconv_close_ft)0;
 #define ICONV_CLOSE iconv_close
 #endif
 
+#ifdef WIN32
+static ptr s_iconv_trouble(HMODULE h, const char *what) {
+  wchar_t dllw[PATH_MAX];
+  char *dll;
+  size_t n;
+  char *msg;
+  ptr r;
+  if (0 != GetModuleFileNameW(h, dllw, PATH_MAX))
+    dll = Swide_to_utf8(dllw);
+  else
+    dll = NULL;
+  FreeLibrary(h);
+  n = strlen(what) + strlen(dll) + 17;
+  msg = (char *)malloc(n);
+  sprintf_s(msg, n, "cannot find %s in %s", what, dll);
+  free(dll);
+  r = Sstring_utf8(msg, -1);
+  free(msg);
+  return r;
+}
+#endif /* WIN32 */
+
 static ptr s_iconv_open(const char *tocode, const char *fromcode) {
   iconv_t cd;
 #ifdef WIN32
   static int iconv_is_loaded = 0;
   if (!iconv_is_loaded) {
-    HMODULE h = LoadLibrary("iconv.dll");
-    if (h == NULL) h = LoadLibrary("libiconv.dll");
-    if (h == NULL) h = LoadLibrary("libiconv-2.dll");
-    if (h == NULL) h = LoadLibrary(".\\iconv.dll");
-    if (h == NULL) h = LoadLibrary(".\\libiconv.dll");
-    if (h == NULL) h = LoadLibrary(".\\libiconv-2.dll");
+    HMODULE h = LoadLibraryW(L"iconv.dll");
+    if (h == NULL) h = LoadLibraryW(L"libiconv.dll");
+    if (h == NULL) h = LoadLibraryW(L"libiconv-2.dll");
+    if (h == NULL) h = LoadLibraryW(L".\\iconv.dll");
+    if (h == NULL) h = LoadLibraryW(L".\\libiconv.dll");
+    if (h == NULL) h = LoadLibraryW(L".\\libiconv-2.dll");
     if (h == NULL) return Sstring("cannot load iconv.dll, libiconv.dll, or libiconv-2.dll");
     if ((iconv_open_f = (iconv_open_ft)GetProcAddress(h, "iconv_open")) == NULL &&
-        (iconv_open_f = (iconv_open_ft)GetProcAddress(h, "libiconv_open")) == NULL) {
-      const char prefix[] = "cannot find iconv_open or libiconv_open in ";
-      char msg[sizeof(prefix) - 1 + PATH_MAX];
-      strncpy(msg, prefix, sizeof(prefix));
-      strcpy(msg + sizeof(prefix) - 1, "iconv dll");
-      GetModuleFileName(h, msg + sizeof(prefix) - 1, PATH_MAX);
-      FreeLibrary(h);
-      return Sstring(msg);
-    }
+        (iconv_open_f = (iconv_open_ft)GetProcAddress(h, "libiconv_open")) == NULL)
+      return s_iconv_trouble(h, "iconv_open or libiconv_open");
     if ((iconv_f = (iconv_ft)GetProcAddress(h, "iconv")) == NULL &&
-        (iconv_f = (iconv_ft)GetProcAddress(h, "libiconv")) == NULL) {
-      const char prefix[] = "cannot find iconv or libiconv in ";
-      char msg[sizeof(prefix) - 1 + PATH_MAX];
-      strncpy(msg, prefix, sizeof(prefix));
-      strcpy(msg + sizeof(prefix) - 1, "iconv dll");
-      GetModuleFileName(h, msg + sizeof(prefix) - 1, PATH_MAX);
-      FreeLibrary(h);
-      return Sstring(msg);
-    }
+        (iconv_f = (iconv_ft)GetProcAddress(h, "libiconv")) == NULL)
+      return s_iconv_trouble(h, "iconv or libiconv");
     if ((iconv_close_f = (iconv_close_ft)GetProcAddress(h, "iconv_close")) == NULL &&
-        (iconv_close_f = (iconv_close_ft)GetProcAddress(h, "libiconv_close")) == NULL) {
-      const char prefix[] = "cannot find iconv_close or libiconv_close in ";
-      char msg[sizeof(prefix) - 1 + PATH_MAX];
-      strncpy(msg, prefix, sizeof(prefix));
-      strcpy(msg + sizeof(prefix) - 1, "iconv dll");
-      GetModuleFileName(h, msg + sizeof(prefix) - 1, PATH_MAX);
-      FreeLibrary(h);
-      return Sstring(msg);
-    }
+        (iconv_close_f = (iconv_close_ft)GetProcAddress(h, "libiconv_close")) == NULL)
+      return s_iconv_trouble(h, "iconv_close or libiconv_close");
     iconv_is_loaded = 1;
   }
 #endif /* WIN32 */

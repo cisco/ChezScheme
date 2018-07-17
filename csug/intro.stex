@@ -13,15 +13,12 @@
 % limitations under the License.
 \chapter{Introduction}
 
-{\ChezScheme} is an implementation of the Revised$^6$ Report on
-Scheme~\cite{r6rs} (R6RS) with numerous language and programming environment
-extensions.
-
-This book describes these extensions in detail.
+This book describes {\ChezScheme} extensions to the Revised$^6$
+Report on Scheme~\cite{r6rs} (R6RS).
 It contains as well a concise summary of standard and {\ChezScheme} forms 
 and procedures, which gives the syntax of each form and the number and
 types of arguments accepted by each procedure.
-Details on standard Scheme features can be found in
+Details on standard R6RS features can be found in
 \index{The Scheme Programming Language, 4th Edition@\emph{The Scheme Programming Language, 4th Edition}}\hyperlink{http://www.scheme.com/tspl4/}{\emph{The
 Scheme Programming Language, 4th Edition}} (TSPL4)~\cite{Dybvig:tspl4} or
 the Revised$^6$ Report on Scheme.
@@ -96,7 +93,7 @@ Online versions and errata for this book and for TSPL4 can be found at
 \bigskip\noindent
 \emph{Acknowledgments:}
 Michael Adams, Mike Ashley, Carl Bruggeman, Bob Burger, Sam
-Daniel, George Davidson, Aziz Ghuloum, Bob Hieb, Andy Keep, and Oscar Waddell have
+Daniel, George Davidson, Matthew Flatt, Aziz Ghuloum, Bob Hieb, Andy Keep, and Oscar Waddell have
 contributed substantially to the development of {\ChezScheme}.
 {\ChezScheme}'s expression editor is based on a command-line editor for
 Scheme developed from 1989 through 1994 by C.~David Boyer.
@@ -134,7 +131,7 @@ valid identifiers in {\ChezScheme}.
 Second, the single-character sequences \scheme{\schlbrace} and
 \scheme{\schrbrace} are identifiers.
 Third, identifiers containing arbitrary characters may be printed by
-escaping them them with \scheme{\} or with \scheme{|}.
+escaping them with \scheme{\} or with \scheme{|}.
 \scheme{\} is used to escape a single character (except 'x', since
 \scheme{\x} marks the start of a hex scalar value),
 whereas \scheme{|} is used
@@ -142,7 +139,7 @@ to escape the group of characters that follow it up through the
 matching \scheme{|}.
 For example, \scheme{\||\|} is an identifier with a two-character
 name consisting of the character \scheme{|} followed by the
-the character \scheme{\}, and \scheme{|hit me!|} is an identifier whose name
+character \scheme{\}, and \scheme{|hit me!|} is an identifier whose name
 contains a space.
 
 In addition, gensyms (page~\ref{desc:gensym}) are printed with

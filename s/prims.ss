@@ -1681,6 +1681,8 @@
   (define-tc-parameter optimize-level (lambda (x) (and (fixnum? x) (fx<= 0 x 3))) "valid optimize level" 0)
   (define-tc-parameter $compile-profile (lambda (x) (memq x '(#f source block))) "valid compile-profile flag" #f)
   (define-tc-parameter subset-mode (lambda (mode) (memq mode '(#f system))) "valid subset mode" #f)
+  (define-tc-parameter default-record-equal-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
+  (define-tc-parameter default-record-hash-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
 )
 
 (define-who compile-profile
@@ -1788,16 +1790,16 @@
 (when-feature windows
 (define get-registry
   (let ([fp (foreign-procedure "(windows)GetRegistry"
-              (string)
+              (wstring)
               scheme-object)])
     (lambda (s)
       (unless (string? s) ($oops 'get-registry "~s is not a string" s))
       (let ([x (fp s)])
-        (and x (utf8->string x))))))
+        (and x (utf16->string x (constant native-endianness)))))))
 
 (define put-registry!
   (let ([fp (foreign-procedure "(windows)PutRegistry"
-              (string string)
+              (wstring wstring)
               void)])
     (lambda (s1 s2)
       (unless (string? s1) ($oops 'put-registry! "~s is not a string" s1))
@@ -1806,7 +1808,7 @@
 
 (define remove-registry!
   (let ([fp (foreign-procedure "(windows)RemoveRegistry"
-              (string)
+              (wstring)
               void)])
     (lambda (s)
       (unless (string? s) ($oops 'remove-registry! "~s is not a string" s))
@@ -1870,14 +1872,14 @@
                       [(fx<= b1 #x7f) ; one-byte encoding
                        (string-set! s j (integer->char b1))
                        (loop (fx+ i 1) (fx+ j 1))]
-                      [(fx<= #xc2 b1 #xdf) ; two-byte encoding
+                      [(fx<= #xc0 b1 #xdf) ; two-byte encoding
                        (if (fx< i (fx- n 1)) ; have at least two bytes?
                            (let ([b2 (bytevector-u8-ref bv (fx+ i 1))])
                              (if (fx= (fxsrl b2 6) #b10) ; second byte a continuation byte?
                                  (begin
                                    (string-set! s j
                                      (let ([x (fxlogor (fxsll (fxlogand b1 #b11111) 6) (fxlogand b2 #b111111))])
-                                       (if (fx<= x #x7f) #\x8ffd (integer->char x))))
+                                       (if (fx<= x #x7f) #\xfffd (integer->char x))))
                                    (loop (fx+ i 2) (fx+ j 1)))
                                 ; second byte is not a continuation byte
                                  (begin

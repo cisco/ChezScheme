@@ -20,6 +20,8 @@
 #include <limits.h>
 #ifdef WIN32
 #include <io.h>
+#include <shlobj.h>
+#pragma comment(lib, "shell32.lib")
 #else /* WIN32 */
 #include <sys/file.h>
 #include <dirent.h>
@@ -41,17 +43,23 @@ char *S_malloc_pathname(const char *inpath) {
 
 #ifdef WIN32
   if (*inpath == '~' && (*(ip = inpath + 1) == 0 || DIRMARKERP(*ip))) {
-    const char *homedrive, *homepath; size_t n1, n2, n3;
-
-    if ((homedrive = getenv("HOMEDRIVE")) != NULL && (homepath = getenv("HOMEPATH")) != NULL) {
-      n1 = strlen(homedrive);
-      n2 = strlen(homepath);
-      n3 = strlen(ip) + 1;
-      if ((outpath = malloc(n1 + n2 + n3)) == NULL) S_error("expand_pathname", "malloc failed");
-      memcpy(outpath, homedrive, n1);
-      memcpy(outpath + n1, homepath, n2);
-      memcpy(outpath + n1 + n2, ip, n3);
-      return outpath;
+    wchar_t* homew;
+    if (SUCCEEDED(SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, &homew))) {
+      char *home = Swide_to_utf8(homew);
+      CoTaskMemFree(homew);
+      if (NULL != home) {
+        size_t n1, n2;
+        n1 = strlen(home);
+        n2 = strlen(ip) + 1;
+        if ((outpath = malloc(n1 + n2)) == NULL) {
+          free(home);
+          S_error("expand_pathname", "malloc failed");
+        }
+        memcpy(outpath, home, n1);
+        memcpy(outpath + n1, ip, n2);
+        free(home);
+        return outpath;
+      }
     }
   }
 #else /* WIN32 */
@@ -91,25 +99,9 @@ char *S_malloc_pathname(const char *inpath) {
 }
 
 #ifdef WIN32
-/* raises an exception if insufficient space cannot be malloc'd.
-   returns NULL if utf-8 path cannot be converted to wchars.
-   otherwise returns a freshly allocated, wide-character version
-   of inpath with ~ (home directory) prefix expanded, if possible */
 wchar_t *S_malloc_wide_pathname(const char *inpath) {
-  size_t n; char *path; wchar_t *wpath;
-
-  path = S_malloc_pathname(inpath);
-  n = strlen(path) + 1;
-  /* counting on utf-8 representation having at least as many chars as wchar representation */
-  if ((wpath = (wchar_t *)malloc(n * sizeof(wchar_t))) == NULL) {
-    free(path);
-    S_error("expand_pathname", "malloc failed");
-  }
-  if (MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, (int)n) == 0) {
-    free(path);
-    free(wpath);
-    return NULL;
-  }
+  char *path = S_malloc_pathname(inpath);
+  wchar_t *wpath = Sutf8_to_wide(path);
   free(path);
   return wpath;
 }

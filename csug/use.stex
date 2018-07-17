@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2018 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -687,7 +687,7 @@ been defined,
 (define yin (lambda () (- (yang) 1)))
 \endschemedisplay
 
-defines \scheme{yin} at top level as a variable to a procedure that calls
+defines \scheme{yin} at top level as a variable bound to a procedure that calls
 the value of the top-level variable \scheme{yang}, even though \scheme{yang}
 has not yet been defined.
 If this is followed by
@@ -1655,7 +1655,7 @@ The application installation script should install {\PetiteChezScheme}
 if not already installed on the target system.
 It should install the application boot file in the same directory as
 the {\PetiteChezScheme} boot file petite.boot is installed,
-and it should should install the application shared libraries, if any,
+and it should install the application shared libraries, if any,
 either in the same location or in a standard location for shared libraries
 on the target system.
 It should also create a link to or copy of the {\PetiteChezScheme}
@@ -1757,7 +1757,7 @@ parameter (Section~\ref{SECTUSEINTERACTION}).
 
 Most of the options are described elsewhere in this chapter, and a few
 are self-explanatory.
-The remainder pertain the loading of boot files at system start-up
+The remainder pertain to the loading of boot files at system start-up
 time and are described below.
 
 \index{boot files}%

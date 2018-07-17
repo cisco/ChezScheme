@@ -1,4 +1,4 @@
-% Copyright 2005-2017 Cisco Systems, Inc.
+% Copyright 2005-2018 Cisco Systems, Inc.
 % 
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -213,13 +213,14 @@ Multiple procedures may be created for the same \index{foreign entry}foreign ent
 
 \label{page:conv-description}%
 Each \var{conv} adjusts specifies the calling convention to be used.
-A \scheme{#f} is allowed as \var{conv} to inicated the default calling convention
+A \scheme{#f} is allowed as \var{conv} to indicate the default calling convention
 on the target machine (so the \scheme{#f} has no effect).
 Three other conventions are currently supported under
 Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com} (32-bit only).
 Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
-Finally, \var{conv} can be \scheme{__thread} to control thread deactivation.
+Finally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
+collection is allowed concurrent to a call of the foreign procedure.
 
 Use \scheme{__stdcall} to access most Windows API procedures.
 Use \scheme{__cdecl} for Windows API varargs procedures,
@@ -250,32 +251,38 @@ encapsulated within the COM instance passed as the first argument,
 with the second argument being a double float and the return
 value being an integer.
 
-Use \scheme{__thread} to make the current thread deactivated (see
-\scheme{fork-thread}) while a foreign procedure is called. The
-thread is activated again when the foreign procedure returns. Deactivation
-of the thread allows garbage collection to proceed in other threads,
-so do not pass collectable memory to the foreign procedure, or use
-\scheme{lock-object} to lock the memory in place; see also
-\scheme{Sdeactivate_thread}. The \scheme{__thread}
-declaration has no effect on a non-threaded version of the system.
+Use \scheme{__collect_safe} to declare that garbage collection is
+allowed concurrent to the foreign procedure. The
+\scheme{__collect_safe} declaration allows concurrent collection by
+deactivating the current thread (see \scheme{fork-thread}) when the
+foreign procedure is called, and the thread is activated again when
+the foreign procedure returns. The \scheme{__collect_safe} declaration
+is useful, for example, when calling a blocking I/O call to allow
+other Scheme threads to run normally. Refrain from passing collectable memory to a
+\scheme{__collect_safe} foreign procedure, or use \scheme{lock-object}
+to lock the memory in place; see also \scheme{Sdeactivate_thread}. The
+\scheme{__collect_safe} declaration has no effect on a non-threaded
+version of the system.
 
 For example, calling the C \scheme{sleep} function with the default
 convention will block other Scheme threads from performing a garbage
-collection, but adding the \scheme{__thread} declaration avoids that
+collection, but adding the \scheme{__collect_safe} declaration avoids that
 problem:
 
 \schemedisplay
-(define c-sleep (foreign-procedure __thread "sleep" (unsigned) unsigned))
+(define c-sleep
+  (foreign-procedure __collect_safe "sleep" (unsigned) unsigned))
 (c-sleep 10) \var{; sleeps for 10 seconds without blocking other threads}
 \endschemedisplay
 
 \noindent
-If a foreign procedure that is called with \scheme{__thread} can
+If a foreign procedure that is called with \scheme{__collect_safe} can
 invoke callables, then each callable should also be declared with
-\scheme{__thread} so that the callable reactivates the thread.
+\scheme{__collect_safe} so that the callable reactivates the thread.
 
 
-Complete type checking and conversion is performed on the parameters.
+Complete type checking and conversion is performed on the parameters
+to a foreign procedure.
 The types
 \index{\scheme{scheme-object}}\scheme{scheme-object},
 \index{\scheme{string}}\scheme{string},
@@ -291,14 +298,29 @@ and
 \index{\scheme{utf-32be}}\scheme{utf-32be},
 must be used with caution, however, since they allow allocated
 Scheme objects to be used in places the Scheme memory management system
-cannot control.  
-No problems will arise as long as such objects are not
-retained in
-foreign variables or data structures while Scheme code is running,
-since garbage collection can occur only while Scheme code is running.
-All other parameter types are converted to equivalent foreign
-representations and consequently can be retained indefinitely in
+cannot control. No problems will arise as long as such objects are not
+retained in foreign variables or data structures while Scheme code is running,
+and as long as they are not passed as arguments to a \scheme{__collect_safe} procedure,
+since garbage collection can occur only while Scheme code is running
+or when concurrent garbage collection is enabled.
+Other parameter types are converted to equivalent foreign
+representations and consequently they can be retained indefinitely in
 foreign variables and data structures.
+
+For argument types \scheme{string}, \scheme{wstring},
+\index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16le}}\scheme{utf-16le},
+\index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32le}}\scheme{utf-32le}, and
+\index{\scheme{utf-32be}}\scheme{utf-32be}, an argument is converted
+to a fresh object that is passed to the foreign procedure. Since the
+fresh object is not accessible for locking before the call, it can
+never be treated correctly for a \scheme{__collect_safe} foreign
+procedure, so those types are disallowed as argument types for
+a \scheme{__collect_safe} foreign procedure. For analogous reasons,
+those types are disallowed as the result of a \scheme{__collect_safe}
+foreign callable.
+
 Following are the valid parameter types:
 
 \foreigntype{\scheme{integer-8}}
@@ -534,8 +556,9 @@ with an added null byte, and the address of the first byte of the
 bytevector is passed to C.
 The bytevector should not be retained in foreign variables or data
 structures, since the memory management system may relocate or discard
-them between foreign procedure calls, and use their storage for some
-other purpose.
+them between foreign procedure calls and use their storage for some
+other purpose. The \scheme{utf-8} argument type is not allowed for a
+\scheme{__collect_safe} foreign procedure.
 
 \foreigntype{\scheme{utf-16le}}
 \index{\scheme{utf-16le}}Arguments of this type are treated like arguments
@@ -1029,7 +1052,7 @@ correct.
 Each \var{conv} adjusts the calling convention to be used.
 \scheme{foreign-callable} supports the same conventions as
 \scheme{foreign-procedure} with the exception of \scheme{__com}.
-The \scheme{__thread} convention for a callable activates a
+The \scheme{__collect_safe} convention for a callable activates a
 calling thread if the thread is not already activated, and
 the thread's activation state is reverted when the callable
 returns. If a calling thread is not currently registered with
@@ -1123,7 +1146,7 @@ Interfaces to these functions may be defined in Scheme as follows.
 (define register-callback
   (foreign-procedure "register_callback" (char void*) void))
 (define event-loop
-  (foreign-procedure __thread "event_loop" () void))
+  (foreign-procedure __collect_safe "event_loop" () void))
 \endschemedisplay
 
 \noindent
@@ -1132,7 +1155,7 @@ A callback for selected characters can then be defined.
 \schemedisplay
 (define callback
   (lambda (p)
-    (let ([code (foreign-callable __thread p (char) void)])
+    (let ([code (foreign-callable __collect_safe p (char) void)])
       (lock-object code)
       (foreign-callable-entry-point code))))
 (define ouch
@@ -1166,7 +1189,7 @@ Ouch! Hit by 'e'
 \endschemedisplay
 
 \noindent
-The \scheme{__thread} declarations in this example ensure that
+The \scheme{__collect_safe} declarations in this example ensure that
 other threads can continue working while \scheme{event-loop}
 blocks waiting for input.
 A more well-behaved version of the example would save each code object
@@ -2816,7 +2839,7 @@ for subsequently registered boot files.
 the named boot file and
 register it for loading, while \scheme{Sregister_boot_file_fd}
 provides a specific boot file as a file descriptor.
-When only a boot file name is provided, the is opened but not loaded until the heap is built via
+When only a boot file name is provided, the file is opened but not loaded until the heap is built via
 \scheme{Sbuild_heap}. When a file descriptor is provided, the given file name
 is used only for error reporting.
 For the first boot file registered only, the system also
@@ -3071,6 +3094,7 @@ their C equivalents.
 \cfunction{ptr}{Sflonum}{double x}
 \cfunction{ptr}{Sstring}{const char *\var{s}}
 \cfunction{ptr}{Sstring_of_length}{const char *\var{s}, iptr \var{n}}
+\cfunction{ptr}{Sstring_utf8}{const char *\var{s}, iptr \var{n}};
 \end{flushleft}
 
 \noindent
@@ -3078,6 +3102,10 @@ their C equivalents.
 \scheme{Sstring_of_length} creates a Scheme string of length \var{n}
 and copies the first \var{n} bytes from \var{s}
 into the new Scheme string.
+
+If the C string is encoded in UTF-8, use \scheme{Sstring_utf8}
+instead. Specify the number of bytes to convert as \var{n} or use $-1$
+to convert until the null terminator.
 
 It is possible to determine whether a C integer is within fixnum range
 by comparing the fixnum value of a fixnum created from a C integer with
@@ -3182,6 +3210,27 @@ and \scheme{Smake_fxvector} are similar to their Scheme counterparts.
 \cfunction{ptr}{Smake_uninitialized_string}{iptr \var{n}}
 \end{flushleft}
 
+\parheader{Windows-specific helper functions}
+The following helper functions are provided on Windows only.
+
+\begin{flushleft}
+\cfunction{char *}{Sgetenv}{const char *\var{name}}
+\end{flushleft}
+
+\noindent
+\scheme{Sgetenv} returns the UTF-8-encoded value of UTF-8-encoded
+environment variable \var{name} if found and NULL otherwise. Call
+\scheme{free} on the returned value when it is no longer needed.
+
+\begin{flushleft}
+\cfunction{wchar_t *}{Sutf8_to_wide}{const char *\s}
+\cfunction{char *}{Swide_to_utf8}{const wchar_t *\s}
+\end{flushleft}
+
+\noindent
+\scheme{Sutf8_to_wide} and \scheme{Swide_to_utf8} convert between
+UTF-8-encoded and UTF-16LE-encoded null-terminated strings. Call
+\scheme{free} on the returned value when it is no longer needed.
 
 \parheader{Accessing top-level values}
 Top-level variable bindings may be accessed or assigned via
@@ -3466,8 +3515,8 @@ A thread created via the Scheme procedure \scheme{fork-thread} starts
 in the active state and need not be activated.
 Any thread that has been deactivated, and any
 thread created by some mechanism other than \scheme{fork-thread} must,
-however, be activated before before it can access Scheme data or execute
-Scheme code. A foreign callable that is declared with \scheme{__thread}
+however, be activated before it can access Scheme data or execute
+Scheme code. A foreign callable that is declared with \scheme{__collect_safe}
 can activate a calling thread.
 Otherwise, \scheme{Sactivate_thread} must be used to activate a thread.
 It returns 1 the first time the thread is activated and 0 on each
@@ -3476,7 +3525,7 @@ subsequent call until the activation is destroyed with \scheme{Sdestroy_thread}.
 Since active threads operating in C code prevent the storage management
 system from garbage collecting,
 a thread should be deactivated via \scheme{Sdeactivate_thread} or
-through a \scheme{foreign-procedure} \scheme{__thread} declaration whenever
+through a \scheme{foreign-procedure} \scheme{__collect_safe} declaration whenever
 the thread may spend a significant amount of time in C code.
 This is especially important whenever the thread calls a C library
 function, like \scheme{read}, that may block indefinitely.
@@ -3539,12 +3588,14 @@ transparent input from and output to a subprocess via a Scheme port.
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /* c_write attempts to write the entire buffer, pushing through
    interrupts, socket delays, and partial-buffer writes */
-int c_write(int fd, char *buf, unsigned n) {
-    unsigned i, m;
+int c_write(int fd, char *buf, ssize_t start, ssize_t n) {
+    ssize_t i, m;
 
+    buf += start;
     m = n;
     while (m > 0) {
         if ((i = write(fd, buf, m)) < 0) {
@@ -3559,9 +3610,10 @@ int c_write(int fd, char *buf, unsigned n) {
 }
 
 /* c_read pushes through interrupts and socket delays */
-int c_read(int fd, char *buf, unsigned n) {
+int c_read(int fd, char *buf, size_t start, size_t n) {
     int i;
 
+    buf += start;
     for (;;) {
         i = read(fd, buf, n);
         if (i >= 0) return i;
@@ -3595,17 +3647,17 @@ int do_bind(int s, char *name) {
     (void) strcpy(sun.sun_path, name);
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return bind(s, &sun, length);
+    return bind(s, (struct sockaddr*)(&sun), length);
 }
 
 /* do_accept accepts a connection on socket s */
 int do_accept(int s) {
     struct sockaddr_un sun;
-    int length;
+    socklen_t length;
 
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return accept(s, &sun, &length);
+    return accept(s, (struct sockaddr*)(&sun), &length);
 }
 
 /* do_connect initiates a socket connection */
@@ -3617,7 +3669,7 @@ int do_connect(int s, char *name) {
     (void) strcpy(sun.sun_path, name);
     length = sizeof(sun.sun_family) + sizeof(sun.sun_path);
 
-    return connect(s, &sun, length);
+    return connect(s, (struct sockaddr*)(&sun), length);
 }
 
 /* get_error returns the operating system's error status */
@@ -3633,86 +3685,86 @@ char* get_error(void) {
 ;;; socket.ss
 
 ;;; Requires csocket.so, built from csocket.c.
-(case (machine-type)
-  [(i3le ti3le) (load-shared-object "libc.so.6")]
-  [(i3osx ti3osx) (load-shared-object "libc.dylib")]
-  [else (load-shared-object "libc.so")])
+(load-shared-object "./csocket.so")
 
 ;;; Requires from C library:
 ;;;   close, dup, execl, fork, kill, listen, tmpnam, unlink
-(load-shared-object "libc.so")
+(case (machine-type)
+  [(i3le ti3le a6le ta6le) (load-shared-object "libc.so.6")]
+  [(i3osx ti3osx a6osx ta6osx) (load-shared-object "libc.dylib")]
+  [else (load-shared-object "libc.so")])
 
 ;;; basic C-library stuff
 
 (define close
-  (foreign-procedure "close" (integer-32)
-    integer-32))
+  (foreign-procedure "close" (int)
+    int))
 
 (define dup
-  (foreign-procedure "dup" (integer-32)
-    integer-32))
+  (foreign-procedure "dup" (int)
+    int))
 
 (define execl4
-  (let ([execl-help
+  (let ((execl-help
          (foreign-procedure "execl"
-           (string string string string integer-32)
-           integer-32)])
+           (string string string string void*)
+           int)))
     (lambda (s1 s2 s3 s4)
       (execl-help s1 s2 s3 s4 0))))
 
 (define fork
   (foreign-procedure "fork" ()
-    integer-32))
+    int))
 
 (define kill
-  (foreign-procedure "kill" (integer-32 integer-32)
-    integer-32))
+  (foreign-procedure "kill" (int int)
+    int))
 
 (define listen
-  (foreign-procedure "listen" (integer-32 integer-32)
-    integer-32))
+  (foreign-procedure "listen" (int int)
+    int))
 
 (define tmpnam
-  (foreign-procedure "tmpnam" (integer-32)
+  (foreign-procedure "tmpnam" (void*)
     string))
 
 (define unlink
   (foreign-procedure "unlink" (string)
-    integer-32))
+    int))
 
 ;;; routines defined in csocket.c
 
 (define accept
-  (foreign-procedure "do_accept" (integer-32)
-    integer-32))
+  (foreign-procedure "do_accept" (int)
+    int))
 
 (define bytes-ready?
-  (foreign-procedure "bytes_ready" (integer-32)
+  (foreign-procedure "bytes_ready" (int)
     boolean))
 
 (define bind
-  (foreign-procedure "do_bind" (integer-32 string)
-    integer-32))
+  (foreign-procedure "do_bind" (int string)
+    int))
 
 (define c-error
   (foreign-procedure "get_error" ()
     string))
 
 (define c-read
-  (foreign-procedure "c_read" (integer-32 string integer-32)
-    integer-32))
+  (foreign-procedure "c_read" (int u8* size_t size_t)
+    ssize_t))
 
 (define c-write
-  (foreign-procedure "c_write" (integer-32 string integer-32)
-    integer-32))
+  (foreign-procedure "c_write" (int u8* size_t ssize_t)
+    ssize_t))
 
 (define connect
-  (foreign-procedure "do_connect" (integer-32 string)
-    integer-32))
+  (foreign-procedure "do_connect" (int string)
+    int))
 
 (define socket
   (foreign-procedure "do_socket" ()
-    integer-32))
+    int))
 
 ;;; higher-level routines
 
@@ -3722,7 +3774,7 @@ char* get_error(void) {
   (lambda (old new)
     (check 'close (close old))
     (unless (= (dup new) old)
-      (errorf 'dodup
+      (error 'dodup
         "couldn't set up child process io for fd ~s" old))))
 
 (define dofork
@@ -3733,7 +3785,7 @@ char* get_error(void) {
       (cond
         [(= pid 0) (child)]
         [(> pid 0) (parent pid)]
-        [else (errorf 'fork (c-error))]))))
+        [else (error 'fork (c-error))]))))
 
 (define setup-server-socket
  ; create a socket, bind it to name, and listen for connections
@@ -3757,11 +3809,11 @@ char* get_error(void) {
     (check 'accept (accept sock))))
 
 (define check
- ; raise an exception if status x is negative, using c-error to
+ ; signal an error if status x is negative, using c-error to
  ; obtain the operating-system's error message
   (lambda (who x)
     (if (< x 0)
-        (errorf who (c-error))
+        (error who (c-error))
         x)))
 
 (define terminate-process

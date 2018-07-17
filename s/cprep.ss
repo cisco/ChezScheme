@@ -26,8 +26,8 @@
         (Inner : Inner (ir) -> * (val)
           [,lsrc (go lsrc)]
           [(program ,uid ,body) (go ($build-invoke-program uid body))]
-          [(library/ct ,uid ,import-code ,visit-code)
-           (go ($build-install-library/ct-code uid import-code visit-code))]
+          [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
+           (go ($build-install-library/ct-code uid export-id* import-code visit-code))]
           [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
            (go ($build-install-library/rt-code uid dl* db* dv* de* body))]
           [,linfo/ct `(library/ct-info ,(library-info-uid linfo/ct) ,(library/ct-info-import-req* linfo/ct)
@@ -90,7 +90,7 @@
                     (case x
                       [(i3nt-stdcall) '__stdcall]
                       [(i3nt-com) '__com]
-                      [(adjust-active) '__thread]
+                      [(adjust-active) '__collect_safe]
                       [else #f]))
                   x*)))
          (define-who uncprep-fp-specifier
@@ -187,12 +187,12 @@
                [(letrec* ([,x* ,[e*]] ...) ,body)
                 `(letrec* ,(map (lambda (x e) `(,(get-name x) ,e)) x* e*)
                    ,@(uncprep-sequence body '()))]
-               [(foreign ,conv ,name ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-procedure ,(uncprep-fp-conv conv) ,name ,e
+               [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-procedure ,(uncprep-fp-conv conv*) ,name ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
-               [(fcallable ,conv ,[e] (,arg-type* ...) ,result-type)
-                `($foreign-callable ,(uncprep-fp-conv conv) ,e
+               [(fcallable (,conv* ...) ,[e] (,arg-type* ...) ,result-type)
+                `($foreign-callable ,(uncprep-fp-conv conv*) ,e
                    ,(map uncprep-fp-specifier arg-type*)
                    ,(uncprep-fp-specifier result-type))]
                [(record-ref ,rtd ,type ,index ,[e]) `(record-ref ,rtd ',type ,e ,index)]
@@ -219,14 +219,15 @@
       (lambda (who cte? x env)
         (define (go x)
           ($uncprep
-            ($cpcheck
-              (let ([cpletrec-ran? #f])
-                (let ([x ((run-cp0)
-                          (lambda (x)
-                            (set! cpletrec-ran? #t)
-                            ($cpletrec ($cp0 x $compiler-is-loaded?)))
-                          ($cpvalid x))])
-                  (if cpletrec-ran? x ($cpletrec x)))))))
+            ($cpcommonize
+              ($cpcheck
+                (let ([cpletrec-ran? #f])
+                  (let ([x ((run-cp0)
+                            (lambda (x)
+                              (set! cpletrec-ran? #t)
+                              ($cpletrec ($cp0 x $compiler-is-loaded?)))
+                            ($cpvalid x))])
+                    (if cpletrec-ran? x ($cpletrec x))))))))
         (unless (environment? env)
           ($oops who "~s is not an environment" env))
         ; claim compiling-a-file to get cte as well as run-time code
@@ -247,4 +248,48 @@
            (unless (environment? env)
              ($oops who "~s is not an environment" env))
            ; claim compiling-a-file to get cte as well as run-time code
-           ($uncprep (expand x env #t #t))])))))
+           ($uncprep (expand x env #t #t))]))))
+
+  (set-who! $cpcheck-prelex-flags
+    (lambda (x after-pass)
+      (import (nanopass))
+      (include "base-lang.ss")
+
+      (define-pass cpcheck-prelex-flags : Lsrc (ir) -> Lsrc ()
+        (definitions
+          (define sorry!
+            (lambda (who str . arg*)
+              (apply fprintf (console-output-port) str arg*)
+              (newline (console-output-port))))
+          (define initialize-id!
+            (lambda (id)
+              (prelex-flags-set! id
+                (let ([flags (prelex-flags id)])
+                  (fxlogor
+                    (fxlogand flags (constant prelex-sticky-mask))
+                    (fxsll (fxlogand flags (constant prelex-is-mask))
+                      (constant prelex-was-flags-offset))))))))
+        (Expr : Expr (ir) -> Expr ()
+          [(ref ,maybe-src ,x)
+           (when (prelex-operand x) (sorry! who "~s has an operand after ~s (src ~s)" x after-pass maybe-src))
+           (unless (prelex-was-referenced x) (sorry! who "~s referenced but not so marked after ~s (src ~s)" x after-pass maybe-src))
+           (when (prelex-referenced x)
+             (unless (prelex-was-multiply-referenced x) (sorry! who "~s multiply referenced but not so marked after ~s (src ~s)" x after-pass maybe-src))
+             (set-prelex-multiply-referenced! x #t))
+           (set-prelex-referenced! x #t)
+           `(ref ,maybe-src ,x)]
+          [(set! ,maybe-src ,x ,[e])
+           (unless (prelex-was-assigned x) (sorry! who "~s assigned but not so marked after ~s (src ~s)" x after-pass maybe-src))
+           (set-prelex-assigned! x #t)
+           `(set! ,maybe-src ,x ,e)]
+          [(letrec ([,x* ,e*] ...) ,body)
+           (for-each initialize-id! x*)
+           `(letrec ([,x* ,(map Expr e*)] ...) ,(Expr body))]
+          [(letrec* ([,x* ,e*] ...) ,body)
+           (for-each initialize-id! x*)
+           `(letrec* ([,x* ,(map Expr e*)] ...) ,(Expr body))])
+        (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
+          [(clause (,x* ...) ,interface ,body)
+           (for-each initialize-id! x*)
+           `(clause (,x* ...) ,interface ,(Expr body))]))
+      (Lexpand-to-go x cpcheck-prelex-flags))))

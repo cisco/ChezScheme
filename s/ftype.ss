@@ -56,7 +56,7 @@ ftype ->
   (array length ftype)
   (bits (field-name signedness bits) ...)
   (function (arg-type ...) result-type)
-  (function conv (arg-type ...) result-type)
+  (function conv ... (arg-type ...) result-type)
   (packed ftype)
   (unpacked ftype)
   (endian endianness ftype)
@@ -322,7 +322,7 @@ ftype operators:
   (define-ftd-record-type array #{rtd/ftd-array a9pth58056u34h517jsrqv-5} length ftd)
   (define-ftd-record-type pointer #{rtd/ftd-pointer a9pth58056u34h517jsrqv-6} (mutable ftd))
   (define-ftd-record-type bits #{rtd/ftd-ibits a9pth58056u34h517jsrqv-9} swap? field*)
-  (define-ftd-record-type function #{rtd/ftd-function a9pth58056u34h517jsrqv-10} conv arg-type* result-type)
+  (define-ftd-record-type function #{rtd/ftd-function a9pth58056u34h517jsrqv-11} conv* arg-type* result-type)
   (module (pointer-size alignment pointer-alignment native-base-ftds swap-base-ftds)
     (define alignment
       (lambda (max-alignment size)
@@ -729,7 +729,7 @@ ftype operators:
                                       ;; (foreign-callable-entry-point code-object)
                                       [(procedure? x)
                                        (let ([co #,($make-foreign-callable 'make-ftype-pointer
-                                                     (ftd-function-conv ftd)
+                                                     (ftd-function-conv* ftd)
                                                      #'x
                                                      (map indirect-ftd-pointer (ftd-function-arg-type* ftd))
                                                      (indirect-ftd-pointer (ftd-function-result-type ftd)))])
@@ -742,7 +742,10 @@ ftype operators:
                                       [else x]))
                                 #'?addr)])
                #`($make-fptr '#,ftd
-                   #,(if (fx= (optimize-level) 3)
+                   #,(if (or (fx= (optimize-level) 3)
+                             (syntax-case #'addr-expr (ftype-pointer-address)
+                               [(ftype-pointer-address x) #t]
+                               [else #f]))
                          #'addr-expr
                          #'(let ([addr addr-expr])
                              ($verify-ftype-address 'make-ftype addr)
@@ -1194,8 +1197,8 @@ ftype operators:
                                       [(ftd-base? ftd) (do-base (filter-foreign-type (ftd-base-type ftd)) (ftd-base-swap? ftd) offset)]
                                       [(ftd-pointer? ftd) #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-ftd ftd))]
                                       [(ftd-function? ftd) 
-                                       ($make-foreign-procedure
-                                         (ftd-function-conv ftd)
+                                       ($make-foreign-procedure 'make-ftype-pointer
+                                         (ftd-function-conv* ftd)
                                          #f
                                          #`($fptr-offset-addr #,fptr-expr offset)
                                          (map indirect-ftd-pointer (ftd-function-arg-type* ftd))

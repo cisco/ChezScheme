@@ -126,6 +126,13 @@ static void main_init() {
     S_protect(&S_G.heap_reserve_ratio_id);
     S_G.heap_reserve_ratio_id = S_intern((const unsigned char *)"$heap-reserve-ratio");
     SETSYMVAL(S_G.heap_reserve_ratio_id, Sflonum(default_heap_reserve_ratio));
+
+    S_protect(&S_G.scheme_version_id);
+    S_G.scheme_version_id = S_intern((const unsigned char *)"$scheme-version");
+    S_protect(&S_G.make_load_binary_id);
+    S_G.make_load_binary_id = S_intern((const unsigned char *)"$make-load-binary");
+    S_protect(&S_G.load_binary);
+    S_G.load_binary = Sfalse;
 }
 
 static ptr fixtest = FIX(-1);
@@ -415,25 +422,28 @@ static const char *path_last(p) const char *p; {
   return p;
 }
 
-#define SEARCHPATHMAXSIZE 8192
 #ifdef WIN32
 #ifndef DEFAULT_HEAP_PATH
 /* by default, look in executable directory or in parallel boot directory */
 #define DEFAULT_HEAP_PATH "%x;%x\\..\\..\\boot\\%m"
 #endif
 #define SEARCHPATHSEP ';'
+#define PATHSEP '\\'
 
 static char *get_defaultheapdirs() {
   char *result;
-  static char defaultheapdirs[SEARCHPATHMAXSIZE];
-  char key[PATH_MAX];
-  snprintf(key, PATH_MAX, "HKEY_LOCAL_MACHINE\\Software\\Chez Scheme\\csv%s\\HeapSearchPath", VERSION);
-  result = S_GetRegistry(defaultheapdirs, SEARCHPATHMAXSIZE, key);
-  if (result == NULL) result = DEFAULT_HEAP_PATH;
-  return result;
+  wchar_t buf[PATH_MAX];
+  DWORD len = sizeof(buf);
+  if (ERROR_SUCCESS != RegGetValueW(HKEY_LOCAL_MACHINE, L"Software\\Chez Scheme\\csv" VERSION, L"HeapSearchPath", RRF_RT_REG_SZ, NULL, buf, &len))
+    return DEFAULT_HEAP_PATH;
+  else if ((result = Swide_to_utf8(buf)))
+    return result;
+  else
+    return DEFAULT_HEAP_PATH;
 }
 #else /* not WIN32: */
 #define SEARCHPATHSEP ':'
+#define PATHSEP '/'
 #ifndef DEFAULT_HEAP_PATH
 #define DEFAULT_HEAP_PATH "/usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m"
 #endif
@@ -466,17 +476,20 @@ static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *
           switch (*s) {
 #ifdef WIN32
             case 'x': {
-              char exepath[PATH_MAX]; DWORD n;
+              wchar_t exepath[PATH_MAX]; DWORD n;
               s += 1;
-              n = GetModuleFileName(NULL,exepath,PATH_MAX);
+              n = GetModuleFileNameW(NULL, exepath, PATH_MAX);
               if (n == 0 || (n == PATH_MAX && GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
                 fprintf(stderr, "warning: executable path is too long; ignoring %%x\n");
               } else {
+                char *tstart;
                 const char *tend;
-                t = exepath;
+                tstart = Swide_to_utf8(exepath);
+                t = tstart;
                 tend = path_last(t);
                 if (tend != t) tend -= 1; /* back up to directory separator */
                 while (t != tend) setp(*t++);
+                free(tstart);
               }
               break;
             }
@@ -509,7 +522,7 @@ static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *
   /* unless entry was null, append name and ext onto path and return true with
    * updated path, sp, and possibly dsp */
     if (s != *sp) {
-      if (!DIRMARKERP(*(p - 1))) { setp('/'); }
+      if (!DIRMARKERP(*(p - 1))) { setp(PATHSEP); }
       t = name;
       while (*t != 0) setp(*t++);
       t = ext;
@@ -553,7 +566,11 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n; INT c;
   const char *path;
+#ifdef WIN32
+  wchar_t *expandedpath;
+#else
   char *expandedpath;
+#endif
   gzFile file;
 
   if ((fd != -1) || S_fixedpathp(name)) {
@@ -567,8 +584,13 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
     if (fd != -1) {
       file = gzdopen(fd, "rb");
     } else {
+#ifdef WIN32
+      expandedpath = S_malloc_wide_pathname(path);
+      file = gzopen_w(expandedpath, "rb");
+#else
       expandedpath = S_malloc_pathname(path);
       file = gzopen(expandedpath, "rb");
+#endif
       /* assumption (seemingly true based on a glance at the source code):
          gzopen doesn't squirrel away a pointer to expandedpath. */
       free(expandedpath);
@@ -644,8 +666,13 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
         }
       }
 
+#ifdef WIN32
+      expandedpath = S_malloc_wide_pathname(path);
+      file = gzopen_w(expandedpath, "rb");
+#else
       expandedpath = S_malloc_pathname(path);
       file = gzopen(expandedpath, "rb");
+#endif
       /* assumption (seemingly true based on a glance at the source code):
          gzopen doesn't squirrel away a pointer to expandedpath. */
       free(expandedpath);
@@ -823,6 +850,16 @@ static void handle_visit_revisit(tc, p) ptr tc; ptr p; {
   }
 }
 
+static int set_load_binary(iptr n) {
+  if (SYMVAL(S_G.scheme_version_id) == sunbound) return 0; // set by back.ss
+  ptr make_load_binary = SYMVAL(S_G.make_load_binary_id);
+  if (Sprocedurep(make_load_binary)) {
+    S_G.load_binary = Scall3(make_load_binary, Sstring_utf8(bd[n].path, -1), Sstring_to_symbol("load"), Sfalse);
+    return 1;
+  }
+  return 0;
+}
+
 static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   ptr x; iptr i;
 
@@ -855,6 +892,10 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
     if (Sprocedurep(x)) {
       S_initframe(tc, 0);
       x = boot_call(tc, x, 0);
+    } else if (Sprocedurep(S_G.load_binary) || set_load_binary(n)) {
+      S_initframe(tc, 1);
+      S_put_arg(tc, 1, x);
+      x = boot_call(tc, S_G.load_binary, 1);
     } else if (Svectorp(x)) {
       iptr j, n;
       n = Svector_length(x);
@@ -878,6 +919,7 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
     i += 1;
   }
 
+  S_G.load_binary = Sfalse;
   gzclose(bd[n].file);
 }
 
@@ -958,7 +1000,11 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
 
   boot_count = 0;
 
+#ifdef WIN32
+  Sschemeheapdirs = Sgetenv("SCHEMEHEAPDIRS");
+#else
   Sschemeheapdirs = getenv("SCHEMEHEAPDIRS");
+#endif
   if (Sschemeheapdirs == (char *)0) {
     Sschemeheapdirs = "";
     if ((Sdefaultheapdirs = get_defaultheapdirs()) == (char *)0) Sdefaultheapdirs = "";
@@ -1116,7 +1162,7 @@ extern void Senable_expeditor(history_file) const char *history_file; {
   Scall1(S_symbol_value(Sstring_to_symbol("$enable-expeditor")), Strue);
   if (history_file != (const char *)0)
     Scall1(S_symbol_value(Sstring_to_symbol("$expeditor-history-file")),
-           Sstring(history_file));
+           Sstring_utf8(history_file, -1));
 }
 
 extern INT Sscheme_start(argc, argv) INT argc; const char *argv[]; {
@@ -1137,7 +1183,7 @@ extern INT Sscheme_start(argc, argv) INT argc; const char *argv[]; {
 
   arglist = Snil;
   for (i = argc - 1; i > 0; i -= 1)
-    arglist = Scons(Sstring(argv[i]), arglist);
+    arglist = Scons(Sstring_utf8(argv[i], -1), arglist);
 
   p = S_symbol_value(S_intern((const unsigned char *)"$scheme"));
   if (!Sprocedurep(p)) {
@@ -1171,7 +1217,7 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
 
   arglist = Snil;
   for (i = argc - 1; i > 0; i -= 1)
-    arglist = Scons(Sstring(argv[i]), arglist);
+    arglist = Scons(Sstring_utf8(argv[i], -1), arglist);
 
   p = S_symbol_value(S_intern((const unsigned char *)"$script"));
   if (!Sprocedurep(p)) {
@@ -1181,7 +1227,7 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
 
   S_initframe(tc, 3);
   S_put_arg(tc, 1, Sboolean(programp));
-  S_put_arg(tc, 2, Sstring(scriptfile));
+  S_put_arg(tc, 2, Sstring_utf8(scriptfile, -1));
   S_put_arg(tc, 3, arglist);
   p = boot_call(tc, p, 3);
 

@@ -1385,6 +1385,8 @@
    [ptr optimize-level]
    [ptr subset-mode]
    [ptr suppress-primitive-inlining]
+   [ptr default-record-equal-procedure]
+   [ptr default-record-hash-procedure]
    [U64 instr-counter]
    [U64 alloc-counter]
    [ptr parameters]))
@@ -1473,7 +1475,7 @@
    [ptr link]))
 
 (define-primitive-structure-disps rp-header typemod
-  ([ptr livemask] ; a fixnum or (cons size tree)
+  ([ptr livemask]
    [uptr toplink]
    [iptr frame-size]
    [uptr mv-return-address]))

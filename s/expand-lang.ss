@@ -80,10 +80,10 @@
   (define maybe-label? (lambda (x) (or (not x) (gensym? x))))
 
   (define-language Lexpand
-    (nongenerative-id #{Lexpand fgy7v2wrvj0so4ro8kvhqo-1})
+    (nongenerative-id #{Lexpand fgy7v2wrvj0so4ro8kvhqo-2})
     (terminals
       (maybe-label (dl))
-      (gensym (uid))
+      (gensym (uid export-id))
       (library-path (path))
       (library-version (version))
       (maybe-optimization-loc (db))
@@ -110,7 +110,7 @@
       prog
       lsrc)
     (ctLibrary (ctlib)
-      (library/ct uid import-code visit-code))
+      (library/ct uid (export-id* ...) import-code visit-code))
     (rtLibrary (rtlib)
       (library/rt uid
         (dl* ...)
