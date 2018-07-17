@@ -1220,3 +1220,49 @@
     (error? (fxvector-set! immutable-123-fxvector 0 1))
     (error? (fxvector-fill! immutable-123-fxvector 0))
 )
+
+(mat vector-cas!
+  (begin
+    (define vec1 (vector 1 2 3))
+    (define vec2 (vector 'apple 'banana 'coconut))
+    (eq? 1 (vector-ref vec1 0)))
+  (not (vector-cas! vec1 0 0 1))
+  (eq? 1 (vector-ref vec1 0))
+  (vector-cas! vec1 0 1 4)
+  (eq? 4 (vector-ref vec1 0))
+  (not (vector-cas! vec1 0 1 5))
+
+  (not (vector-cas! vec1 1 0 1))
+  (eq? 2 (vector-ref vec1 1))
+  (vector-cas! vec1 1 2 5)
+  (eq? 5 (vector-ref vec1 1))
+
+  (not (vector-cas! vec2 0 'banana 'donut))
+  (vector-cas! vec2 0 'apple 'donut)
+  (not (vector-cas! vec2 0 'apple 'eclair))
+  (eq? 'donut (vector-ref vec2 0))
+
+  (not (vector-cas! vec2 1 'apple 'fig))
+  (vector-cas! vec2 1 'banana 'fig)
+  (not (vector-cas! vec2 1 'banana 'grape))
+  (eq? 'fig (vector-ref vec2 1))
+
+  (error? (vector-cas! vec1)) ; arity
+  (error? (vector-cas! vec1 1)) ; arity
+  (error? (vector-cas! vec1 1 2)) ; arity
+  (error? (vector-cas! 1 vec1 2 3)) ; not a vector
+  (error? (vector-cas! (vector->immutable-vector vec1) 1 2 3)) ; not a mutable vector
+  (error? (vector-cas! vec1 vec1 2 3)) ; not a fixnum
+  (error? (vector-cas! vec1 (expt 2 100) 2 3)) ; not a fixnum
+  (error? (vector-cas! vec1 -1 2 3)) ; out of range
+  (error? (vector-cas! vec1 5 2 3)) ; out of range
+
+  ;; make sure `vector-cas!` works with GC generations:
+  (begin
+    (collect 0)
+    (let ([g1 (gensym)])
+      (and (vector-cas! vec2 2 'coconut g1)
+           (begin
+             (collect 0)
+             (eq? g1 (vector-ref vec2 2))))))
+)
