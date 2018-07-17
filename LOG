@@ -977,3 +977,5 @@
   based on open files instead of paths
     7.ss, primdata.ss, mkheader.ss, scheme.c
     7.ms, foreign.stex, system.stex
+- auto-config improvement, detect if X11 exist on Mac OS X
+    configure
