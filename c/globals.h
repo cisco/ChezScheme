@@ -73,6 +73,7 @@ EXTERN struct {
     ptr heap_reserve_ratio_id;
     IBOOL retain_static_relocation;
     IBOOL enable_object_counts;
+    IBOOL enable_object_backreferences;
     ptr scheme_version_id;
     ptr make_load_binary_id;
     ptr load_binary;
@@ -126,6 +127,7 @@ EXTERN struct {
     uptr countof_size[countof_types];
     ptr static_id;
     ptr countof_names;
+    ptr gcbackreference[static_generation+1];
 
   /* intern.c */
     iptr *oblist_length_pointer;
