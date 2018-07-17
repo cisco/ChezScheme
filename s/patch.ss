@@ -18,6 +18,7 @@
   (case-lambda
    [() #f]
    [(v) (void)]))
+(define current-generate-id (make-parameter (lambda (s) (gensym (symbol->string s)))))
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
