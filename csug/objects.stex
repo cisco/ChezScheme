@@ -3792,3 +3792,104 @@ encoding of all bits set is \scheme{-1}.
 (logbit? 2 (procedure-arity-mask pair?)) ;=> #f
 (logbit? 2 (procedure-arity-mask cons)) ;=> #t
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-arity-wrapper-procedure}{\categoryprocedure}{(make-arity-wrapper-procedure \var{proc} \var{arity-mask} \var{data})}
+\returns a procedure that behaves like \var{proc}, but with the given \var{arity-mask}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{proc} must be a procedure, and \var{arity-mask} must be an exact
+integer representing an arity mask in the sense of \scheme{procedure-arity-mask}.
+
+The resulting procedure behaves the same as \var{proc}, except that
+\scheme{procedure-arity-mask} on the result procedure returns
+\var{arity-mask}. Although \var{arity-mask} determines the value
+reported by \scheme{procedure-arity-mask}, when the result procedure
+is called, its arguments are passed on to \var{proc} without checking
+whether the count is consistent with \var{arity-mask}.
+
+The \var{data} argument can be any value, and it can be retrived from
+the result procedure with \scheme{arity-wrapper-procedure-data}.
+
+\schemedisplay
+(define vector3 (make-arity-wrapper-procedure vector 8 #f))
+(procedure-arity-mask vector) ; => -1
+(procedure-arity-mask vector3) ; => 8
+(vector3 1 2 3) ;=> #(1 2 3)
+(vector3 1 2) ;=> #(1 2)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{arity-wrapper-procedure?}{\categoryprocedure}{(arity-wrapper-procedure? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an arity wrapper procedure, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(arity-wrapper-procedure? vector) ; => #f
+(define vector3 (make-arity-wrapper-procedure vector 8 #f))
+(arity-wrapper-procedure? vector3) ; => #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{arity-wrapper-procedure-data}{\categoryprocedure}{(arity-wrapper-procedure-data \var{aw-proc})}
+\returns the data store with the arity wrapper procedure \var{proc}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{aw-proc} must be an arity wrapper procedure produced by
+\scheme{make-arity-wrapper-procedure}.
+
+
+\schemedisplay
+(define vector3 (make-arity-wrapper-procedure vector 8 'my-data))
+(arity-wrapper-procedure-data vector3) ; => 'my-data
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-arity-wrapper-procedure-data!}{\categoryprocedure}{(set-arity-wrapper-procedure-data! \var{aw-proc} \var{data})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{aw-proc} must be an arity wrapper procedure produced by
+\scheme{make-arity-wrapper-procedure}.
+
+Changes the data stored in \var{aw-proc} to \var{data}.
+
+\schemedisplay
+(define vector3 (make-arity-wrapper-procedure vector 8 'my-data))
+(arity-wrapper-procedure-data vector3) ; => 'my-data
+(set-arity-wrapper-procedure-data! vector3 'my-new-data)
+(arity-wrapper-procedure-data vector3) ; => 'my-new-data
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-arity-wrapper-procedure!}{\categoryprocedure}{(set-arity-wrapper-procedure-data! \var{aw-proc} \var{proc})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{aw-proc} must be an arity wrapper procedure produced by
+\scheme{make-arity-wrapper-procedure}, and \var{proc} must be a procedure.
+
+Changes \var{aw-proc} so that it behaves the same as \var{proc}, except that
+the result of \scheme{(procedure-arity-mask \var{aw-proc})} is unchanged.
+
+\schemedisplay
+(define vector3 (make-arity-wrapper-procedure vector 8 'my-data))
+(vector3 1 2 3) ; => #(1 2 3)
+(set-arity-wrapper-procedure! vector3 list)
+(vector3 1 2 3) ; => (1 2 3)
+\endschemedisplay

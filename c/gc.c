@@ -563,7 +563,16 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             S_G.countof[tg][countof_closure] += 1;
             S_G.bytesof[tg][countof_closure] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-            s = (BACKREFERENCES_ENABLED ? space_closure : space_pure);
+            if (BACKREFERENCES_ENABLED)
+              s = space_closure;
+            else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+              /* Using `space_impure` is ok because the code slot of a mutable
+                 closure is never mutated, so the code is never newer than the
+                 closure. If it were, then because the code pointer looks like
+                 a fixnum, an old-generation sweep wouldn't update it properly. */
+              s = space_impure;
+            } else
+              s = space_pure;
             find_room(s, tg, type_closure, n, p);
             copy_ptrs(type_closure, p, pp, n);
             SETCLOSCODE(p,code);
@@ -630,7 +639,7 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
     ptr code;
 
     code = CLOSCODE(p);
-    if (sweep_pure) {
+    if (sweep_pure || (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset))) {
       relocate(&code)
       SETCLOSCODE(p,code);
       if (CODETYPE(code) & (code_flag_continuation << code_flags_offset))

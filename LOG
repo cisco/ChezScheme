@@ -989,3 +989,7 @@
      gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
      globals.h, externs.h,
      system.stex, 7.ms
+- add make-arity-wrapper
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
+    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
+    misc.ms, mats/patch*, mats/root*

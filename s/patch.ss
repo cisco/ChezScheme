@@ -13,6 +13,8 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(define ($make-arity-wrapper-procedure proc mask) proc)
+
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
 ; (current-expand (lambda args (apply sc-expand args)))
