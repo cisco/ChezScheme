@@ -13,13 +13,6 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(define ($make-arity-wrapper-procedure proc mask) proc)
-(define generate-procedure-source-information
-  (case-lambda
-   [() #f]
-   [(v) (void)]))
-(define current-generate-id (make-parameter (lambda (s) (gensym (symbol->string s)))))
-
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
 ; (current-expand (lambda args (apply sc-expand args)))
