@@ -1140,6 +1140,7 @@
   (block-write [sig [(textual-output-port string) (textual-output-port string length) -> (void)]] [flags true])
   (box [sig [(ptr) -> (box)]] [flags unrestricted alloc])
   (box? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
+  (box-cas! [sig [(box ptr ptr) -> (boolean)]] [flags])
   (box-immutable [sig [(ptr) -> (box)]] [flags unrestricted alloc])
   (break [sig [(ptr ...) -> (ptr ...)]] [flags])
   (bwp-object? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
@@ -1686,6 +1687,7 @@
   (utf-16-codec [sig [() -> (codec)] [(sub-symbol) -> (codec)]] [flags pure true]) ; has optional eness argument
   (utf-16le-codec [sig [() -> (codec)]] [flags pure unrestricted true])
   (utf-16be-codec [sig [() -> (codec)]] [flags pure unrestricted true])
+  (vector-cas! [sig [(vector sub-index ptr ptr) -> (boolean)]] [flags])
   (vector-copy [sig [(vector) -> (vector)]] [flags alloc])
   (vector->immutable-vector [sig [(vector) -> (vector)]] [flags alloc])
   (vector-set-fixnum! [sig [(vector sub-index fixnum) -> (void)]] [flags true])
