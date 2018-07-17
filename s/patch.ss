@@ -14,6 +14,10 @@
 ;;; limitations under the License.
 
 (define ($make-arity-wrapper-procedure proc mask) proc)
+(define generate-procedure-source-information
+  (case-lambda
+   [() #f]
+   [(v) (void)]))
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 

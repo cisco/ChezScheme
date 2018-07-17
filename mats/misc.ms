@@ -2015,6 +2015,30 @@
   (eqv? (profile-clear) (void))
 )
 
+(mat generate-procedure-source-information
+  (begin
+    (define the-source
+      (let ([sfd (make-source-file-descriptor "the-source.ss" (open-bytevector-input-port '#vu8()))])
+        (make-source-object sfd 10 20)))
+    (define (make-proc full-inspect?)
+      (parameterize ([generate-inspector-information full-inspect?]
+                     [generate-procedure-source-information #t])
+        (let ([e '(lambda (x) x)])
+          (compile (make-annotation e the-source e)))))
+    (define proc-i (make-proc #t))
+    (define proc-n (make-proc #f))
+    (and (procedure? proc-i)
+         (procedure? proc-n)))
+  (equal? (((inspect/object proc-i) 'code) 'source-object)
+          the-source)
+  (equal? (((inspect/object proc-n) 'code) 'source-object)
+          the-source)
+  (equal? ((((inspect/object proc-i) 'code) 'source) 'value)
+          '(lambda (x) x))
+  (equal? (((inspect/object proc-n) 'code) 'source)
+          #f)
+)
+
 (mat strip-fasl-file
   (error?
     (fasl-strip-options ratfink profile-source))

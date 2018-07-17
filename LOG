@@ -993,3 +993,7 @@
     cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
     primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
     misc.ms, mats/patch*, mats/root*
+- add generate-procedure-source-information
+    cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
+    primdata.ss, prims.ss, misc.ms,
+    system.stex, release_notes.tex
