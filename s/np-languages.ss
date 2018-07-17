@@ -520,6 +520,7 @@
   (declare-primitive store-with-update effect #f) ; ppc
   (declare-primitive unactivate-thread effect #f) ; threaded version only
   (declare-primitive vpush-multiple effect #f) ; arm
+  (declare-primitive cas effect #f)
 
   (declare-primitive < pred #t)
   (declare-primitive <= pred #t)

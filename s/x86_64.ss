@@ -939,6 +939,15 @@
     [(op (x ur) (y ur) (w imm32))
      `(asm ,info ,asm-locked-decr ,x ,y ,w)])
 
+  (define-instruction effect (cas)
+    [(op (x ur) (y ur) (w imm32) (old ur) (new ur))
+     (let ([urax (make-precolored-unspillable 'urax %rax)])
+       (with-output-language (L15d Effect)
+         (seq
+           `(set! ,(make-live-info) ,urax ,old)
+           ;; NB: may modify %rax:
+           `(asm ,info ,asm-locked-cmpxchg ,x ,y ,w ,urax ,new))))])
+
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-pause)])
 
@@ -989,7 +998,7 @@
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label asm-rp-header
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-fl-store asm-fl-load asm-flt asm-trunc asm-div
-                     asm-exchange asm-pause asm-locked-incr asm-locked-decr
+                     asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-flop-2 asm-flsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1126,6 +1135,8 @@
 
   (define-op locked-dec (#;b *) locked-unary-op #b1111111 #b001)
   (define-op locked-inc (#;b *) locked-unary-op #b1111111 #b000)
+
+  (define-op locked-cmpxchg (*) locked-cmpxchg-op)
 
   ; also do inc-reg dec-reg
 
@@ -1269,6 +1280,21 @@
         (ax-ea-modrm-ttt dest-ea ttt-code)
         (ax-ea-sib dest-ea)
         (ax-ea-addr-disp dest-ea))))
+
+  (define locked-cmpxchg-op
+    (lambda (op size dest-ea new-reg code*)
+      (begin
+        (emit-code (op dest-ea new-reg code*)
+          (build byte #xf0) ; lock prefix
+          (ax-ea-rex (if (eq? size 'quad) 1 0) dest-ea new-reg size)
+          (build byte #x0f)
+          (build byte
+            (byte-fields
+              [1 #b1011000]
+              [0 (ax-size-code size)]))
+          (ax-ea-modrm-reg dest-ea new-reg)
+          (ax-ea-sib dest-ea)
+          (ax-ea-addr-disp dest-ea)))))
 
   (define pushi-op
     (lambda (op imm-ea code*)
@@ -2018,6 +2044,11 @@
     (lambda (code* base index offset)
       (let ([dest (build-mem-opnd base index offset)])
         (emit locked-dec dest code*))))
+
+  (define asm-locked-cmpxchg
+    (lambda (code* base index offset old-v new-v)
+      (let ([dest (build-mem-opnd base index offset)])
+        (emit locked-cmpxchg dest (cons 'reg new-v) code*))))
 
   (define asm-pause
     (lambda (code*)

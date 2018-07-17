@@ -1486,4 +1486,40 @@
                       (equal? (condition-irritants c) (list 'a)))])
         (p 'a)))
  )
+
+(mat cas
+ (begin
+   (define (check container container-ref container-cas!)
+     (let ([N 1000]
+           [M 4]
+           [done 0]
+           [m (make-mutex)]
+           [c (make-condition)])
+       (define (bump)
+         (let loop ([i 0])
+           (unless (= i N)
+             (let ([v (container-ref container)])
+               (if (container-cas! container v (add1 v))
+                   (loop (add1 i))
+                   (loop i)))))
+         (mutex-acquire m)
+         (set! done (add1 done))
+         (condition-signal c)
+         (mutex-release m))
+       (let loop ([j 0])
+         (when (< j M)
+           (fork-thread bump)
+           (loop (add1 j))))
+       (mutex-acquire m)
+       (let loop ()
+         (cond
+          [(= done M)
+           (mutex-release m)]
+          [else
+           (condition-wait c m)
+           (loop)]))
+       (= (container-ref container) (* M N))))
+   (check (box 0) unbox box-cas!))
+ (check (vector 1 0 2) (lambda (v) (vector-ref v 1)) (lambda (v o n) (vector-cas! v 1 o n))))
+
 )
