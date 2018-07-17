@@ -1,5 +1,5 @@
-*** errors-compile-0-f-t-f	2018-05-21 15:45:38.426922815 -0400
---- errors-interpret-0-f-t-f	2018-05-21 16:11:21.764903593 -0400
+*** errors-compile-0-f-t-f	2018-07-16 14:11:48.751983271 -0400
+--- errors-interpret-0-f-t-f	2018-07-16 14:33:23.391939643 -0400
 ***************
 *** 1,7 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -399,8 +399,8 @@
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure n>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure pcons>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure pcons>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1 2 3)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (n (+ z 7) w "what?")".
@@ -459,8 +459,8 @@
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".

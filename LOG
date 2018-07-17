@@ -207,7 +207,7 @@
     c/Mf-*, c/Makefile.*nt
 - removed unnecessary datestamp.c target
     c/Mf.*nt
-- fixed unnessesary blocking in expeditor on Windows.
+- fixed unnecessary blocking in expeditor on Windows.
     c/expeditor.c
 - eliminated a couple of thread-safety issues and limitations on the
   sizes of pathnames produced by expansion of tilde (home-directory)
@@ -971,5 +971,7 @@
   bootstrap failures after small changes like the recent change to
   procedure names, so we don't have to rebuild the boot files as often.
     Mf-base
+- Fix tests for cp0 procedure-name change
+    misc.ms, patch-compile-0-f-t-f
 - auto-config improvement, detect if X11 exist on Mac OS X
     configure
