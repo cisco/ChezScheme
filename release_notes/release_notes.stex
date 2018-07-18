@@ -1592,6 +1592,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Incorrect return code when \protect\scheme{exit} is called with multiple arguments}
+
+A bug in the implementation of the default exit handler with multiple
+values has been fixed.
+
 \subsection{Boot files containing compiled library code fail to load}
 
 Compiled library code may now appear within fasl objects loaded during
