@@ -2187,7 +2187,7 @@
               [len ($continuation-stack-length x)]
               [lpm ($continuation-return-livemask x)])
           (cond
-            [(and (code-info? info) (find-rpi offset (code-info-rpis info))) =>
+            [(and (code-info? info) (code-info-rpis info) (find-rpi offset (code-info-rpis info))) =>
              (lambda (rpi)
                (let ([cookie '(chocolate . chip)])
                  (let ([vals (make-vector len cookie)] [vars (make-vector len '())] [live (code-info-live info)])
