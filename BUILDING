@@ -97,6 +97,17 @@ The make file supports several targets:
   fails.  This should not fail unless the distributed boot files are
   out of sync with the sources.
 
+  When you make a modification to the system that causes the C side to
+  get out of sync with the Scheme side so that the build fails, try
+  the following from $W if you have a recent version of Chez Scheme
+  installed in your path:
+
+    make -C s clean all patchfile=patch Scheme=scheme SCHEMEHEAPDIRS={see below}
+    make build
+
+  Set SCHEMEHEAPDIRS to /usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m on
+  Unix-like systems and to %x/../../boot/%m on Windows systems.
+
   To run Chez Scheme without installing, you need to tell the executable
   where to find the boot files.  This can be done via command-line
   arguments, e.g.:
@@ -157,7 +168,7 @@ The make file supports several targets:
   can take 5 minutes or more.
 
   'make bootfiles' builds boot files for each machine type for which
-  a subdirectory exists in the top-level boot directory.  to build
+  a subdirectory exists in the top-level boot directory.  To build
   for a supported machine type that isn't built by default, simply
   add the appropriate subdirectory, i.e., 'mkdir boot/$M', where M
   is the machine type, before running 'make bootfiles'.  You can
