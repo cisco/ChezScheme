@@ -340,8 +340,8 @@ static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
             p = Svoid;
             break;
         default:
-            p = S_get_scheme_arg(tc, 0);
-            break;
+            fprintf(stderr, "received %d values in boot_call\n", (int)(iptr)AC1(tc));
+            S_abnormal_exit();
     }
     return p;
 }
