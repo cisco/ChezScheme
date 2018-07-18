@@ -12269,13 +12269,16 @@
                     (label ,Lret)
                     (rp-header ,Lmvreturn ,(* 2 (constant ptr-bytes)) 1) ; cchain is live at sfp[ptr-bytes]
                     (set! ,(ref-reg %ac1) (immediate 1)) ; single-value as expected
-                    (label ,Lexit)
                     ,(save-scheme-state
                        (in %ac0 %ac1)
                        (out %cp %xp %yp %ts %td scheme-args extra-regs))
+                    (label ,Lexit)
                     (inline ,(make-info-c-simple-call #f (lookup-c-entry Sreturn)) ,%c-simple-call)
                     (label ,Lmvreturn)
                     (set! ,(ref-reg %ac1) ,%ac0)
+                    ,(save-scheme-state
+                       (in %ac0 %ac1 scheme-args)
+                       (out %cp %xp %yp %ts %td extra-regs))
                     (goto ,Lexit))))]
            [else ($oops who "unrecognized hand-coded name ~s" sym)])]))
 

@@ -340,7 +340,7 @@ static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
             p = Svoid;
             break;
         default:
-            p = S_get_scheme_arg(tc, 0);
+            p = S_get_scheme_arg(tc, 1);
             break;
     }
     return p;

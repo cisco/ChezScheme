@@ -988,4 +988,6 @@
 - add generate-procedure-source-information
     cmacros.ss, compile.ss, cpnanopass.ss, inspect.ss,
     primdata.ss, prims.ss, misc.ms,
-    system.stex, release_notes.tex
+    system.stex, release_notes.stex
+- fix boot_call and the invoke code object to handle multiple values
+    scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
