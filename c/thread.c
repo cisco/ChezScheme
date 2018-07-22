@@ -80,6 +80,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   CCHAIN(tc) = Snil;
 
   WINDERS(tc) = Snil;
+  ATTACHMENTS(tc) = Snil;
   STACKLINK(tc) = SYMVAL(S_G.null_continuation_id);
   STACKCACHE(tc) = Snil;
 

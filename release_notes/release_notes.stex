@@ -58,6 +58,15 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Continuation attachments (9.5.1)}
+
+The new \scheme{call-setting-continuation-attachment},
+\scheme{call-with-current-continuation-attachment}, and
+\scheme{current-continuation-attachments} procedure support
+efficiently recording and querying information on a continuation, but
+without unnecessarily extending continuation---that is, without
+interfering with tail-call behavior.
+
 \subsection{Procedure source location without inspector information (9.5.1)}
 
 When \scheme{generate-inspector-information} is set to \scheme{#f} and
