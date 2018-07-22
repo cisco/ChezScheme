@@ -991,3 +991,8 @@
     system.stex, release_notes.stex
 - fix boot_call and the invoke code object to handle multiple values
     scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
+- add support for continuation attachments
+    cpnanopass.ss, np-languages.ss, 4.ss, prims.ss, inspect.ss,
+    cmacro.ss, primdata.ss, library.ss types.ss, mkheader.ss,
+    alloc.c, gc.c, schsig.c, thread.c, externs.h,
+    4.ms, control.stex

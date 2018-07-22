@@ -111,6 +111,7 @@
 ;;; dounderflow & nuate must come before callcc
 (define-hand-coded-library-entry dounderflow)
 (define-hand-coded-library-entry nuate)
+(define-hand-coded-library-entry reify-cc)
 (define-hand-coded-library-entry callcc)
 (define-hand-coded-library-entry call1cc)
 (define-hand-coded-library-entry dofargint32)
@@ -124,6 +125,7 @@
 (define-hand-coded-library-entry dofretu32*)
 (define-hand-coded-library-entry domvleterr)
 (define-hand-coded-library-entry values-error)
+(define-hand-coded-library-entry $shift-attachment)
 (define-hand-coded-library-entry bytevector=?)
 
 (define $instantiate-code-object ($hand-coded '$instantiate-code-object))

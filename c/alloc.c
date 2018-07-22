@@ -599,9 +599,9 @@ ptr S_closure(cod, n) ptr cod; iptr n; {
 }
 
 /* S_mkcontinuation is always called with mutex */
-ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders)
+ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders, attachments)
         ISPC s; IGEN g; ptr nuate; ptr stack; iptr length; iptr clength; ptr link;
-        ptr ret; ptr winders; {
+        ptr ret; ptr winders; ptr attachments; {
     ptr p;
 
     find_room(s, g, type_closure, size_continuation, p);
@@ -612,6 +612,7 @@ ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders)
     CONTLINK(p) = link;
     CONTRET(p) = ret;
     CONTWINDERS(p) = winders;
+    CONTATTACHMENTS(p) = attachments;
     return p;
 }
 

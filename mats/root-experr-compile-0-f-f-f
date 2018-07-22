@@ -527,6 +527,25 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat call/1cc: "attempt to invoke shot one-shot continuation".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (current-continuation-attachments (quote ()))".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any))".
+4.mo:Expected error in mat continuation-attachments: "call-setting-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any) void (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments to #<procedure>".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none))".
+4.mo:Expected error in mat continuation-attachments: "call-with-current-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments to #<procedure void>".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments)".
+4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: 10 is not a continuation".
+4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: #<procedure> is not a continuation".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments (call/cc (lambda (...) x)) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat $primitive: "fx+: a is not a fixnum".
 4.mo:Expected error in mat $primitive: "invalid primitive name fubar".
 4.mo:Expected error in mat $primitive: "incorrect argument count in call (car (quote a) (quote b))".
