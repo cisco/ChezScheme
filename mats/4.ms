@@ -3367,10 +3367,29 @@
               (begin (x (cons 'a 'b)) (not (x)))
               (begin (collect) (equal? (x) '(a . b)))
               (not (x)))))
+   ;; same for ordered:
+   (with-interrupts-disabled
+      (let ([x (make-guardian #t)])
+         (and (not (x))
+              (begin (x (cons 'a 'b)) (not (x)))
+              (begin (collect) (equal? (x) '(a . b)))
+              (not (x)))))
    (with-interrupts-disabled
       (let ([x1 (make-guardian)])
          ; counting on a little compiler cleanliness here...
          (let ([x2 (make-guardian)])
+            (x1 x2)
+            (x2 x2))
+         (collect)
+         (let ([x2 (x1)])
+            (and (equal? (x2) x2)
+                 (not (x1))
+                 (not (x2))))))
+   ;; same for ordered:
+   (with-interrupts-disabled
+      (let ([x1 (make-guardian #t)])
+         ; counting on a little compiler cleanliness here...
+         (let ([x2 (make-guardian #t)])
             (x1 x2)
             (x2 x2))
          (collect)
@@ -3392,8 +3411,30 @@
                [(g) => (lambda (x) (f (- n 1)))]
                [else (collect) (f n)])))
          #t)))
+   ;; same for ordered:
+   (parameterize ([collect-trip-bytes (expt 2 24)])
+     (let ([k 1000000])
+       (let ([g (make-guardian #t)])
+         (let f ([n k])
+           (unless (= n 0)
+             (g (cons 3 4))
+             (let f () (cond [(g) => (lambda (x) (g x) (f))]))
+             (f (- n 1))))
+         (let f ([n k])
+           (unless (= n 0)
+             (cond
+               [(g) => (lambda (x) (f (- n 1)))]
+               [else (collect) (f n)])))
+         #t)))
    (with-interrupts-disabled
       (let ([x (make-guardian)])
+         (and (not (x))
+              (begin (x (cons 'a 'b) 'calvin) (not (x)))
+              (begin (collect) (equal? (x) 'calvin))
+              (not (x)))))
+   ;; same for ordered:
+   (with-interrupts-disabled
+      (let ([x (make-guardian #t)])
          (and (not (x))
               (begin (x (cons 'a 'b) 'calvin) (not (x)))
               (begin (collect) (equal? (x) 'calvin))
@@ -3404,8 +3445,22 @@
               (begin (x (cons 'a 'b) (cons 'calvin 'hobbes)) (not (x)))
               (begin (collect) (equal? (x) '(calvin . hobbes)))
               (not (x)))))
+   ;; same for ordered:
+   (with-interrupts-disabled
+      (let ([x (make-guardian #t)])
+         (and (not (x))
+              (begin (x (cons 'a 'b) (cons 'calvin 'hobbes)) (not (x)))
+              (begin (collect) (equal? (x) '(calvin . hobbes)))
+              (not (x)))))
    (with-interrupts-disabled
       (let ([x (make-guardian)])
+         (and (not (x))
+              (begin (x (cons 'a 'b) 17) (not (x)))
+              (begin (collect) (equal? (x) '17))
+              (not (x)))))
+   ;; same for ordered:
+   (with-interrupts-disabled
+      (let ([x (make-guardian #t)])
          (and (not (x))
               (begin (x (cons 'a 'b) 17) (not (x)))
               (begin (collect) (equal? (x) '17))
@@ -3421,9 +3476,29 @@
              (collect 0 0)
              (list ((g1)) p)))))
      '((c d) (b)))
+   ;; same for ordered:
+   (equal?
+     (with-interrupts-disabled
+       (let ([g1 (make-guardian #t)] [g2 (make-guardian #t)])
+         (let ([p (list 'a 'b)])
+           (g1 p g2)
+           (g2 (list 'c 'd))
+           (collect 0 0)
+           (let ([p (cdr p)])
+             (collect 0 0)
+             (list ((g1)) p)))))
+     '((c d) (b)))
 
    (eq? (with-interrupts-disabled
           (let* ([g (make-guardian)] [x (list 'a 'b)])
+            (g x)
+            (collect 0 0)
+            (#%$keep-live x)
+            (g)))
+        #f)
+   ;; same for ordered:
+   (eq? (with-interrupts-disabled
+          (let* ([g (make-guardian #t)] [x (list 'a 'b)])
             (g x)
             (collect 0 0)
             (#%$keep-live x)
@@ -3468,7 +3543,186 @@
        (error #f "no static-generation fraz in object-counts list"))
      (pretty-print (cons g x)) ; keep 'em live
      #t)
- )
+
+   (begin
+     (define (measure-guardian-chain-time n get-key ordered?)
+       ;; Create a chain of guardians `n` long and
+       ;; report how long a collection takes averaged
+       ;; over `iters` tries
+       (define iters 10)
+       (let loop ([g #f] [accum 0] [j iters])
+         (if (zero? j)
+             (if (zero? accum)
+                 g
+                 (/ accum iters))
+             (let ([g (let loop ([i n])
+                        (let ([g (make-guardian ordered?)])
+                          (if (zero? i)
+                              g
+                              (let ([next-g (loop (sub1 i))])
+                                (g (get-key next-g) next-g)
+                                g))))])
+               (let ([start (current-time)])
+                 (collect (collect-maximum-generation))
+                 (let ([delta (time-difference (current-time) start)])
+                   (loop g
+                         (+ accum
+                            (* (time-second delta) 1e9)
+                            (time-nanosecond delta))
+                         (sub1 j))))))))
+
+     ;; Make sure guardian chains imply GC times that
+     ;; look linear, as opposed to quadratic
+     (define (ok-relative-guardian-chain-time? get-key ordered?)
+       (let loop ([tries 3])
+         (or (< (/ (measure-guardian-chain-time 10000 get-key ordered?)
+                   (measure-guardian-chain-time 1000 get-key ordered?))
+                20)
+             (and (positive? tries)
+                  (loop (sub1 tries))))))
+
+     (and (ok-relative-guardian-chain-time? values #f)
+          (ok-relative-guardian-chain-time? values #t)
+          (let ([obj (gensym)])
+            (and
+             (ok-relative-guardian-chain-time? (lambda (x) obj) #f)
+             (ok-relative-guardian-chain-time? (lambda (x) obj) #t)))))
+
+   ;; Ordered finalization as different from unordred:
+   (with-interrupts-disabled
+    (let ([g1 (make-guardian #t)]
+          [g2 (make-guardian #t)]
+          [s (gensym)])
+      (g1 s)
+      (g2 (list s)) ; delays readying `s` in `g1`
+      (set! s #f)
+      (collect 0 0)
+      (and (list? (g2))
+           (not (g1))
+           (begin
+             (collect 0 0)
+             (and (symbol? (g1))
+                  (not (g2)))))))
+   ;; Unordered is different:
+   (with-interrupts-disabled
+    (let ([g1 (make-guardian #f)]
+          [g2 (make-guardian #f)]
+          [s (gensym)])
+      (g1 s)
+      (g2 (list s)) ; no delay
+      (set! s #f)
+      (collect 0 0)
+      (and (list? (g2))
+           (symbol? (g1))
+           (begin
+             (collect 0 0)
+             (and (not (g1))
+                  (not (g2)))))))
+
+   ;; cycle ok with unordered
+   (let ([g (make-guardian)])
+     (let ([s (gensym)])
+       (g s (list s)))
+     (collect)
+     (list? (g)))
+   ;; cycle not ok with ordered
+   (let ([g (make-guardian #t)])
+     (let ([s (gensym)])
+       (g s (list s)))
+     (collect)
+     (not (g)))
+   ;; self representative doesn't count as cycle
+   (let ([g (make-guardian #t)])
+     (let ([s (gensym)])
+       (g s  s))
+     (collect)
+     (symbol? (g)))
+   ;; try a longer cycle:
+   (let ([g (make-guardian #t)])
+     (let ([hd (cons 0 '())])
+       (set-cdr! hd
+                 (let loop ([i 100])
+                   (if (zero? i)
+                       hd
+                       (let ([p (cons i (loop (sub1 i)))])
+                         (g p)
+                         p)))))
+     (collect)
+     (not (g)))
+
+   ;; same object, ordered and unordered => ordered first
+   (with-interrupts-disabled
+    (let ([g1 (make-guardian)]
+          [g2 (make-guardian #t)])
+      (let ([s (gensym)])
+        (g1 s)
+        (g2 s))
+      (collect 0 0)
+      (collect 0 0)
+      (and (not (g2))
+           (symbol? (g1))
+           (not (g2))
+           (begin
+             (collect 0 0)
+             (and (symbol? (g2))
+                  (not (g1))
+                  (not (g2)))))))
+
+   ;; same object, both ordered => available from both
+   (with-interrupts-disabled
+    (let ([g1 (make-guardian #t)]
+          [g2 (make-guardian #t)])
+      (let ([s (gensym)])
+        (g1 s)
+        (g2 s))
+      (collect 0 0)
+      (and (symbol? (g2))
+           (symbol? (g1))
+           (not (g1))
+           (not (g2))
+           (begin
+             (collect 0 0)
+             (and (not (g1))
+                  (not (g2)))))))
+
+   ;; check ordered finalization on objects that immediately
+   ;; refer to themselves, which can create trouble for a naive
+   ;; approach to determining accessibility
+   (begin
+     (define (check-self-referencing p extract)
+       (with-interrupts-disabled
+        (let ([g (make-guardian #t)])
+          (g p)
+          (let ([wb (weak-cons p #f)])
+            (set! p #f)
+            (collect 0 0)
+            (let ([p (car wb)])
+              (and (not (g))
+                   (eq? p (extract p))))))))
+     (let ([p (cons #f #f)])
+       (set-car! p p)
+       (check-self-referencing p car)))
+   (let ([p (cons #f #f)])
+     (set-cdr! p p)
+     (check-self-referencing p cdr))
+   (let ([p (cons #f #f)])
+     (set-car! p p)
+     (set-cdr! p p)
+     (check-self-referencing p (lambda (p)
+                                 (and (eq? (car p) (cdr p))
+                                      (car p)))))
+   (let ([b (box #f)])
+     (set-box! b b)
+     (check-self-referencing b unbox))
+   (let ([f (letrec ([f (lambda () f)]) f)])
+     (check-self-referencing f (lambda (f) (f))))
+   (let ()
+     (define-record-type self (fields (mutable v)))
+     (let ([v (make-self #f)])
+       (self-v-set! v v)
+       (check-self-referencing v self-v)))
+  )
+
 
 (mat weak-cons
    (procedure? weak-cons)

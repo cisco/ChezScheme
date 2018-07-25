@@ -991,3 +991,7 @@
     system.stex, release_notes.stex
 - fix boot_call and the invoke code object to handle multiple values
     scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
+- add ordered guardians through a new optional argument to make-guardian
+    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
+    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
+    4.ms, smgmt.stex, release_notes.stex
