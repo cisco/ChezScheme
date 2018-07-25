@@ -1008,3 +1008,8 @@
 - add current-generate-id and expand-omit-library-invocations, which can be
   useful for avoiding library recompilation and redundant invocation checks
     syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex
+- add support for continuation attachments
+    cpnanopass.ss, np-languages.ss, 4.ss, prims.ss, inspect.ss,
+    cmacro.ss, primdata.ss, library.ss types.ss, mkheader.ss,
+    alloc.c, gc.c, schsig.c, thread.c, externs.h,
+    4.ms, control.stex

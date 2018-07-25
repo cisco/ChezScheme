@@ -369,6 +369,24 @@
       ($oops who "~s is not a procedure" p))
     (#3%call/cc p)))
 
+(define-who call-setting-continuation-attachment
+  (lambda (v p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-setting-continuation-attachment v (lambda () (p)))))
+
+(define-who call-with-current-continuation-attachment
+  (lambda (default-val p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-with-current-continuation-attachment default-val (lambda (x) (p x)))))
+
+(define $make-shift-attachment
+  (lambda (proc)
+    (if (procedure? proc)
+        (#3%$make-shift-attachment proc)
+        ($oops #f "attempt to apply non-procedure ~s" proc))))
+
 (define $code? (lambda (x) ($code? x)))
 
 (define $system-code? (lambda (x) ($system-code? x)))
@@ -500,6 +518,12 @@
       (unless ($continuation? x)
          ($oops '$continuation-winders "~s is not a continuation" x))
       ($continuation-winders x)))
+
+(define $continuation-attachments
+   (lambda (x)
+      (unless ($continuation? x)
+         ($oops '$continuation-attachments "~s is not a continuation" x))
+      ($continuation-attachments x)))
 
 (define $continuation-return-code
    (lambda (x)
@@ -1414,13 +1438,23 @@
        ($oops '$current-stack-link "invalid argument ~s" k))
      ($current-stack-link k)]))
 
-(define $current-winders
+(define-who $current-winders
+  (let ()
+    (include "types.ss")
+    (case-lambda
+      [() ($current-winders)]
+      [(w)
+       (unless (and (list? w) (andmap winder? w))
+         ($oops who "malformed winders ~s" w))
+       ($current-winders w)])))
+
+(define $current-attachments
   (case-lambda
-    [() ($current-winders)]
+    [() ($current-attachments)]
     [(w)
-     (unless (and (list? w) (andmap (lambda (x) (winder? x)) w))
-       ($oops '$current-winders "malformed winders ~s" w))
-     ($current-winders w)]))
+     (unless (list? w)
+       ($oops '$current-attachments "malformed attachments ~s" w))
+     ($current-attachments w)]))
 
 (define lock-object
   (foreign-procedure "(cs)lock_object" (scheme-object) void))

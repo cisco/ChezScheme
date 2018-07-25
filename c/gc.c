@@ -549,6 +549,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             CONTLENGTH(p) = CONTLENGTH(pp);
             CONTCLENGTH(p) = CONTCLENGTH(pp);
             CONTWINDERS(p) = CONTWINDERS(pp);
+            CONTATTACHMENTS(p) = CONTATTACHMENTS(pp);
             if (CONTLENGTH(p) != scaled_shot_1_shot_flag) {
                 CONTLINK(p) = CONTLINK(pp);
                 CONTRET(p) = CONTRET(pp);
@@ -1772,6 +1773,7 @@ static void sweep_thread(p) ptr p; {
     relocate(&STACKLINK(tc))
     /* iptr SCHEMESTACKSIZE */
     relocate(&WINDERS(tc))
+    relocate(&ATTACHMENTS(tc))
     relocate_return_addr(&FRAME(tc,0))
     sweep_stack((uptr)SCHEMESTACK(tc), (uptr)SFP(tc), (uptr)FRAME(tc,0));
     relocate(&U(tc))
@@ -1821,6 +1823,7 @@ static void sweep_thread(p) ptr p; {
 static void sweep_continuation(p) ptr p; {
   PUSH_BACKREFERENCE(p)
   relocate(&CONTWINDERS(p))
+  relocate(&CONTATTACHMENTS(p))
 
  /* bug out for shot 1-shot continuations */
   if (CONTLENGTH(p) == scaled_shot_1_shot_flag) return;
