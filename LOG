@@ -1005,3 +1005,6 @@
     cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
     primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
     misc.ms, mats/patch*, mats/root*
+- add current-generate-id and expand-omit-library-invocations, which can be
+  useful for avoiding library recompilation and redundant invocation checks
+    syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex

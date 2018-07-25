@@ -104,6 +104,15 @@
 
 (define enable-cross-library-optimization ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+(define-who current-generate-id
+  ($make-thread-parameter
+   (lambda (sym)
+     (unless (symbol? sym) ($oops 'default-generate-id "~s is not a symbol" sym))
+     (gensym (symbol->string sym)))
+   (lambda (p)
+     (unless (procedure? p) ($oops who "~s is not a procedure" p))
+     p)))
+
 (define machine-type
   (lambda ()
     (constant machine-type-name)))
