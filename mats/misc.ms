@@ -4938,8 +4938,11 @@
   (equal? (procedure-arity-mask (lambda () #f)) 1)
   (equal? (procedure-arity-mask (lambda (x) x)) 2)
   (equal? (procedure-arity-mask (lambda (x y z w) x)) 16)
+  (equal? (procedure-arity-mask (interpret '(lambda (x y z w) x))) 16)
   (or (eq? (current-eval) interpret)
       (equal? (procedure-arity-mask (lambda (x y z w a b c d e f g h i j) x)) (ash 1 14)))
+  (or (eq? (current-eval) interpret)
+      (equal? (procedure-arity-mask (interpret '(lambda (x y z w a b c d e f g h i j) x))) (ash 1 14)))
   (or (eq? (current-eval) interpret)
       (and
         (equal? (procedure-arity-mask (case-lambda)) 0)
@@ -4972,6 +4975,7 @@
     (procedure-arity-mask 17))
   )
 
+
 (mat procedure-name
   (begin
     (define (procedure-name f)
@@ -4992,6 +4996,68 @@
   (ok-name? (procedure-name should-be-named-h) "h")
   (ok-name? (procedure-name should-be-named-i) "i")
   (ok-name? (procedure-name should-be-named-j) "j"))
+
+(mat arity-wrapper-procedure
+  (error? (make-arity-wrapper-procedure))
+  (error? (make-arity-wrapper-procedure (lambda args args)))
+  (error? (make-arity-wrapper-procedure (lambda args args) 1))
+  (error? (make-arity-wrapper-procedure 1 1 #f))
+  (error? (make-arity-wrapper-procedure 'not-a-procedure 1 #f))
+  (error? (make-arity-wrapper-procedure (lambda args args) 'not-an-exact-integer #f))
+  (error? (make-arity-wrapper-procedure (lambda args args) 1.0 #f))
+
+  (equal? ((make-arity-wrapper-procedure (lambda args args) 8 #f) 1 2 3)
+          '(1 2 3))
+  (equal? ((make-arity-wrapper-procedure (lambda args args) 1 #f) 1 2 3) ; arity not checked!
+          '(1 2 3))
+
+  (equal? (procedure-arity-mask (make-arity-wrapper-procedure (lambda args args) 1 #f))
+          1)
+  (equal? (procedure-arity-mask (make-arity-wrapper-procedure (lambda args args) -12345 #f))
+          -12345)
+
+  (not (arity-wrapper-procedure? 10))
+  (not (arity-wrapper-procedure? (lambda args args)))
+  (not (arity-wrapper-procedure? (interpret '(lambda args args))))
+  (arity-wrapper-procedure? (make-arity-wrapper-procedure (lambda args args) 1 #f))
+
+  (error? (arity-wrapper-procedure-data 1))
+  (error? (arity-wrapper-procedure-data (lambda args args)))
+  (error? (arity-wrapper-procedure-data (interpret '(lambda args args))))
+  (equal? (arity-wrapper-procedure-data (make-arity-wrapper-procedure (lambda args args) 1 'data))
+          'data)
+
+  (error? (set-arity-wrapper-procedure!))
+  (error? (set-arity-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f)))
+  (error? (set-arity-wrapper-procedure! 1 void))
+  (error? (set-arity-wrapper-procedure! (lambda args args) void))
+  (error? (set-arity-wrapper-procedure! (interpret '(lambda args args)) void))
+  (let ([p (make-arity-wrapper-procedure (lambda args args) 8 #f)])
+    (set-arity-wrapper-procedure! p vector)
+    (equal? (p 1 2 3)
+            '#(1 2 3)))
+
+  (error? (set-arity-wrapper-procedure-data!))
+  (error? (set-arity-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f)))
+  (error? (set-arity-wrapper-procedure-data! 1 #t))
+  (error? (set-arity-wrapper-procedure-data! (lambda args args) #t))
+  (error? (set-arity-wrapper-procedure! (interpret '(lambda args args)) #t))
+  (let ([p (make-arity-wrapper-procedure (lambda args args) 8 'data)])
+    (set-arity-wrapper-procedure-data! p 'other-data)
+    (equal? (arity-wrapper-procedure-data p)
+            'other-data))
+
+  (let ([a (make-arity-wrapper-procedure (lambda args args) 8 #f)])
+    (lock-object a)
+    (collect)
+    (let ([g (gensym)])
+      (set-arity-wrapper-procedure-data! a g)
+      (collect)
+      (and
+       (equal? (arity-wrapper-procedure-data a) g)
+       (begin (unlock-object a) #t))))
+
+  )
 
 (mat fasl-immutable
   (begin
