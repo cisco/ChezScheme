@@ -996,6 +996,7 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
 
   S_G.retain_static_relocation = 0;
   S_G.enable_object_counts = 0;
+  S_G.enable_object_backreferences = 0;
 
   boot_count = 0;
 

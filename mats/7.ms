@@ -3841,6 +3841,90 @@ evaluating module init
     (or (not a) (not (assq 'static (cdr a)))))
 )
 
+(mat object-references
+  (begin
+    (define variable-whose-value-is-a-gensym (gensym))
+    (define guardian-to-hold-gensyms (make-guardian))
+    ;; works on tree-shaped objects, except that
+    ;; weak/ephemeron pairs can create DAGs; if a weak pair has
+    ;; a non-#!bwp in the `car`, it must be referenced
+    ;; by a box or by `guardian-to-hold-gensyms`
+    (define (check-references obj)
+      (let ([backrefs (make-eq-hashtable)]
+            [old-collect (collect-request-handler)])
+        (enable-object-backreferences #t)
+        (collect-request-handler void)
+        (collect (collect-maximum-generation))
+        (for-each (lambda (brs)
+                    (for-each (lambda (br)
+                                (hashtable-set! backrefs (car br) (cdr br)))
+                              brs))
+                  (object-backreferences))
+        (enable-object-backreferences #f)
+        (collect-request-handler old-collect)
+        (and
+         ;; Check the given object
+         (let loop ([obj obj] [parent #f])
+           (and (or (not parent)
+                    (null? obj)
+                    (boolean? obj)
+                    (eq? parent (hashtable-ref backrefs obj #f)))
+                (cond
+                 [(pair? obj)
+                  (and (cond
+                        [(weak-pair? obj)
+                         (let ([a (car obj)])
+                           (or (eq? a #!bwp)
+                               (let ([p (hashtable-ref backrefs a #f)])
+                                 (or (box? p)
+                                     ;; retained by `guardian-to-hold-gensyms`
+                                     ;; means retains by it's tconc
+                                     (and (pair? p)
+                                          (eq? guardian-to-hold-gensyms
+                                               (hashtable-ref backrefs p #f)))))))]
+                        [(ephemeron-pair? obj) #t]
+                        [else
+                         (loop (car obj) obj)])
+                       (loop (cdr obj) obj))]
+                 [(vector? obj)
+                  (let vloop ([i 0])
+                    (or (= i (vector-length obj))
+                        (and (loop (vector-ref obj i) obj)
+                             (vloop (add1 i)))))]
+                 [(box? obj)
+                  (loop (unbox obj) obj)]
+                 [(procedure? obj)
+                  (let ([insp (inspect/object obj)])
+                    (let ploop ([i 0])
+                      (or (= i (insp 'length))
+                          (and (loop (((insp 'ref i) 'ref) 'value) obj)
+                               (ploop (add1 i))))))]
+                 [else #t])))
+         ;; Check a symbol binding
+         (let ([var (hashtable-ref backrefs variable-whose-value-is-a-gensym #f)])
+           (and (eq? 'symbol ((inspect/object var) 'type))
+                (equal? "variable-whose-value-is-a-gensym"
+                        (((inspect/object var) 'name) 'value)))))))
+    #t)
+  (check-references (list (gensym)
+                          (vector (gensym) (box (cons (gensym) (gensym))) (gensym))
+                          (let ([v (gensym)])
+                            (lambda ()
+                              v))
+                          ;; make sure `weak-cons` doesn't retain
+                          (weak-cons (gensym) #f)
+                          (let ([v (gensym)])
+                            ;; weak pair won't count as retaining reference
+                            (weak-cons v
+                                       ;; containing box will count
+                                       (box v)))
+                          (let ([v (gensym)])
+                            (guardian-to-hold-gensyms v)
+                            (weak-cons v #f))
+                          (let ([v (gensym)])
+                            (list v (ephemeron-cons v (gensym))))))
+)
+
 (mat collect-rendezvous
   (begin
     (define (check-working-gc collect)

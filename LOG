@@ -995,3 +995,9 @@
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
     4.ms, smgmt.stex, release_notes.stex
+- add object-backreferences and enable-object-backreferences as an aid
+  to debugging memory leaks
+     back.ss, cmacros.ss, inspect.ss, primdata.ss,
+     gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
+     globals.h, externs.h,
+     system.stex, 7.ms
