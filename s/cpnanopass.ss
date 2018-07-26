@@ -793,11 +793,14 @@
     (define-record-type info-call (nongenerative)
       (parent info)
       (sealed #t)
-      (fields src sexpr (mutable check?) pariah? error?)
+      (fields src sexpr (mutable check?) pariah? error? shift-attachment?)
       (protocol
         (lambda (pargs->new)
-          (lambda (src sexpr check? pariah? error?)
-            ((pargs->new) src sexpr check? pariah? error?)))))
+          (case-lambda
+           [(src sexpr check? pariah? error? shift-attachment?)
+            ((pargs->new) src sexpr check? pariah? error? shift-attachment?)]
+           [(src sexpr check? pariah? error?)
+            ((pargs->new) src sexpr check? pariah? error? #f)]))))
 
     (define-record-type info-newframe (nongenerative)
       (parent info)
@@ -844,7 +847,7 @@
             [(kill* libspec save-ra?)
              ((new kill*) libspec save-ra?)]))))
 
-    (module (intrinsic-info-asmlib intrinsic-return-live* intrinsic-entry-live* dorest-intrinsics)
+    (module (intrinsic-info-asmlib intrinsic-return-live* intrinsic-entry-live* intrinsic-modify-reg* dorest-intrinsics)
       ; standing on our heads here to avoid referencing registers at
       ; load time...would be cleaner if registers were immutable,
       ; i.e., mutable fields (direct and inherited from var) were kept
@@ -872,6 +875,10 @@
               (intrinsic-return-live* intrinsic)
               ((intrinsic-get-rv* intrinsic)))
             ((intrinsic-get-live* intrinsic)))))
+      (define intrinsic-modify-reg*
+        (lambda (intrinsic)
+          (append ((intrinsic-get-rv* intrinsic))
+                  ((intrinsic-get-kill* intrinsic)))))
       (define-syntax declare-intrinsic
         (syntax-rules (unquote)
           [(_ name entry-name (kill ...) (live ...) (rv ...))
@@ -903,7 +910,7 @@
       (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp) (%ac0) (%xp))
       (declare-intrinsic get-room get-room () (%xp) (%xp))
       (declare-intrinsic scan-remembered-set scan-remembered-set () () ())
-      (declare-intrinsic reify-cc reify-cc (%xp %ac0 %ts) () ())
+      (declare-intrinsic reify-cc reify-cc (%xp %ac0 %ts) () (%td))
       (declare-intrinsic dooverflow dooverflow () () ())
       (declare-intrinsic dooverflood dooverflood () (%xp) ())
       ; a dorest routine takes all of the register and frame arguments from the rest
@@ -1564,16 +1571,21 @@
           (lambda (mode)
             (case mode
               [(non-tail pop) 'pop]
-              [(tail tail/reified) 'tail/reified]))))
+              [(tail tail/reified) 'tail/reified])))
+        (define info-call->shifting-info-call
+          (lambda (info)
+            (make-info-call (info-call-src info) (info-call-sexpr info)
+                            (info-call-check? info) (info-call-pariah? info) (info-call-error? info)
+                            #t))))
       (CaseLambdaClause : CaseLambdaClause (cl) -> CaseLambdaClause ()
-        [(clause (,x* ...) ,interface ,[Expr : body 'tail '() -> body])
+        [(clause (,x* ...) ,interface ,[Expr : body 'tail -> body])
          `(clause (,x* ...) ,interface ,body)])
-      (Expr : Expr (ir [mode 'non-tail] [loop-x* '()]) -> Expr ()
+      (Expr : Expr (ir [mode 'non-tail]) -> Expr ()
         [,x (return mode x)]
-        [(letrec ([,x* ,[le* 'non-tail '() -> le*]] ...) ,[body])
+        [(letrec ([,x* ,[le* 'non-tail -> le*]] ...) ,[body])
          `(letrec ([,x* ,le*] ...) ,body)]
-        [(call ,info ,mdcl ,pr ,[e1 'non-tail '() -> e1]
-               (case-lambda ,info2 (clause () ,interface ,[body (->in-wca mode) '() -> body])))
+        [(call ,info ,mdcl ,pr ,[e1 'non-tail -> e1]
+               (case-lambda ,info2 (clause () ,interface ,[body (->in-wca mode) -> body])))
          (guard (and (eq? (primref-name pr) 'call-setting-continuation-attachment)
                      (= interface 0)))
          (case mode
@@ -1586,7 +1598,7 @@
            [(non-tail)
             ;; Push attachment; `body` has been adjusted to pop
             `(seq (attachment-set push ,e1) ,body)])]
-        [(call ,info ,mdcl ,pr ,[e1 'non-tail '() -> e1]
+        [(call ,info ,mdcl ,pr ,[e1 'non-tail -> e1]
                (case-lambda ,info2 (clause (,x) ,interface ,[body])))
          (guard (and (eq? (primref-name pr) 'call-with-current-continuation-attachment)
                      (= interface 1)))
@@ -1600,58 +1612,32 @@
            [else
             ;; Check dynamically for attachment
             `(let ([,x (attachment-get ,e1)]) ,body)])]
-        [(call ,info ,mdcl ,x ,[e* 'non-tail '() -> e*] ...)
-         (guard (memq x loop-x*))
-         ;; No convert for a loop call, even if mode is 'pop
-         `(call ,info ,mdcl ,x ,e* ...)]
-        [(call ,info ,mdcl ,[e 'non-tail '() -> e] ,[e* 'non-tail '() -> e*] ...)
-         (let ([new-e (case mode
-                        [(pop)
-                         (let ([level (if (info-call-check? info) 2 3)]
-                               [p-info (make-info-call #f #f #f #f #f)])
-                           `(call ,p-info #f ,(lookup-primref level '$make-shift-attachment) ,e))]
-                        [else e])])
-           `(call ,info ,(and (eq? new-e e) mdcl) ,new-e ,e* ...))]
-        [(foreign-call ,info ,[e 'non-tail '() -> e] ,[e* 'non-tail '() -> e*] ...)
+        [(call ,info ,mdcl ,[e 'non-tail -> e] ,[e* 'non-tail -> e*] ...)
+         (let ([info (case mode
+                       [(pop) (info-call->shifting-info-call info)]
+                       [else info])])
+           `(call ,info ,mdcl ,e ,e* ...))]
+        [(foreign-call ,info ,[e 'non-tail -> e] ,[e* 'non-tail -> e*] ...)
          (return mode `(foreign-call ,info ,e ,e* ...))]
         [(fcallable ,info) (return mode `(fcallable ,info))]
         [(label ,l ,[body]) `(label ,l ,body)]
-        [(mvlet ,[e 'non-tail '() -> e] ((,x** ...) ,interface* ,body*) ...)
-         (let ([body* (map (lambda (body interface)
-                             (case (and (fx< interface 0)
-                                        mode)
-                               [(pop)
-                                ;; If `body` is a direct call, then we need to change
-                                ;; to an `apply`, since the last argument is turned
-                                ;; into a list already. It would have been better to
-                                ;; avoid the direct-call setup in the first place.
-                                (nanopass-case (L4.875 Expr) body
-                                  [(call ,info ,mdcl ,e ,e* ...)
-                                   (guard mdcl)
-                                   (%primcall info #f apply
-                                              ,(%primcall #f #f $make-shift-attachment ,e)
-                                              ,e* ...)]
-                                  [else
-                                   (Expr body 'pop loop-x*)])]
-                               [else
-                                (Expr body mode loop-x*)]))
-                           body* interface*)])
-           `(mvlet ,e ((,x** ...) ,interface* ,body*) ...))]
-        [(mvcall ,info ,[e1 'non-tail '() -> e1] ,[e2 'non-tail '() -> e2])
-         (let ([e2 (case mode
-                     [(pop) (%primcall #f #f $make-shift-attachment ,e2)]
-                     [else e2])])
+        [(mvlet ,[e 'non-tail -> e] ((,x** ...) ,interface* ,[body*]) ...)
+         `(mvlet ,e ((,x** ...) ,interface* ,body*) ...)]
+        [(mvcall ,info ,[e1 'non-tail -> e1] ,[e2 'non-tail -> e2])
+         (let ([info (case mode
+                       [(pop) (info-call->shifting-info-call info)]
+                       [else info])])
            `(mvcall ,info ,e1 ,e2))]
-        [(let ([,x* ,[e* 'non-tail '() -> e*]] ...) ,[body])
+        [(let ([,x* ,[e* 'non-tail -> e*]] ...) ,[body])
          `(let ([,x* ,e*] ...) ,body)]
         [(case-lambda ,info ,[cl] ...) (return mode `(case-lambda ,info ,cl ...))]
         [(quote ,d) (return mode `(quote ,d))]
-        [(if ,[e0 'non-tail '() -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
-        [(seq ,[e0 'non-tail '() -> e0] ,[e1]) `(seq ,e0 ,e1)]
+        [(if ,[e0 'non-tail -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
+        [(seq ,[e0 'non-tail -> e0] ,[e1]) `(seq ,e0 ,e1)]
         [(profile ,src) `(profile ,src)]
         [(pariah) `(pariah)]
         [,pr (return mode pr)]
-        [(loop ,x (,x* ...) ,[body mode (cons x loop-x*) -> body])
+        [(loop ,x (,x* ...) ,[body])
          `(loop ,x (,x* ...) ,body)]
         [else ($oops who "unexpected Expr ~s" ir)]))
 
@@ -2826,12 +2812,29 @@
                   `(call ,info ,mdcl (call ,info2 ,mdcl2 ,(Symref (primref-name pr0)) ,(Symref (primref-name pr))) ,e* ...)))])]
           [(call ,info ,mdcl ,pr ,e* ...)
            (cond
-             [(handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*) => Expr]
+             [(and
+               (or (not (info-call-shift-attachment? info))
+                   ;; FIXME: need a less fragile way to avoid multiple results
+                   ;; Exclude inlined primitives that return more than one value:
+                   (not (memq (primref-name pr) '(values call/cc call-with-current-continuation call/1cc))))
+               (handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*))
+              => (lambda (e)
+                   (let ([e (Expr e)])
+                     (cond
+                       [(info-call-shift-attachment? info)
+                        (let ([t (make-tmp 't)])
+                          `(let ([,t ,e])
+                             (seq
+                              (attachment-set pop)
+                              ,t)))]
+                       [else e])))]
              [else
               (let ([e* (map Expr e*)])
                 ; NB: expand calls through symbol top-level values similarly
                 (let ([info (if (any-set? (prim-mask abort-op) (primref-flags pr))
-                                (make-info-call (info-call-src info) (info-call-sexpr info) (info-call-check? info) #t #t)
+                                (make-info-call (info-call-src info) (info-call-sexpr info)
+                                                (info-call-check? info) #t #t
+                                                (info-call-shift-attachment? info))
                                 info)])
                   `(call ,info ,mdcl ,(Symref (primref-name pr)) ,e* ...)))])]))
       (define-who unhandled-arity
@@ -9831,13 +9834,16 @@
             (let ([x (make-tmp x)])
               (set! local* (cons x local*))
               x)))
+        (define make-info-call-like
+          (lambda (info)
+            (make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f (info-call-shift-attachment? info))))
         (define Mvcall
           (lambda (info e consumer k)
             (with-output-language (L10.5 Expr)
               (nanopass-case (L10.5 Expr) e
-                [,t (k `(mvcall ,(make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f) #f ,consumer ,t ()))]
+                [,t (k `(mvcall ,(make-info-call-like info) #f ,consumer ,t ()))]
                 [(values ,info2 ,t* ...)
-                 (k `(mvcall ,(make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f) #f ,consumer ,t* ... ()))]
+                 (k `(mvcall ,(make-info-call-like info) #f ,consumer ,t* ... ()))]
                 [(mvcall ,info ,mdcl ,t0 ,t1* ... (,t* ...))
                  (k `(mvcall ,info ,mdcl ,t0 ,t1* ... (,t* ... ,consumer)))]
                 [(if ,e0 ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
@@ -9853,9 +9859,9 @@
                  (let ([tmp (make-tmp 't)])
                    `(seq
                       (set! ,tmp ,rhs)
-                      (mvcall ,(make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f) #f ,consumer ,tmp ())))]
+                      (mvcall ,(make-info-call-like info) #f ,consumer ,tmp ())))]
                 [else ; set! & mvset
-                 `(seq ,e ,(k `(mvcall ,(make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f) #f ,consumer ,(%constant svoid) ())))])))))
+                 `(seq ,e ,(k `(mvcall ,(make-info-call-like info) #f ,consumer ,(%constant svoid) ())))])))))
       (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
         [(clause (,x* ...) (,local0* ...) ,mcp ,interface ,body)
          (fluid-let ([local* local0*])
@@ -9864,7 +9870,8 @@
              `(clause (,x* ...) (,local* ...) ,mcp ,interface
                 ,body)))])
       (Rhs : Rhs (ir) -> Rhs ()
-        [(call ,info ,mdcl ,[t0?] ,[t1*] ...) `(mvcall ,info ,mdcl ,t0? ,t1* ... ())])
+        [(call ,info ,mdcl ,[t0?] ,[t1*] ...)
+         `(mvcall ,info ,mdcl ,t0? ,t1* ... ())])
       (Expr : Expr (ir) -> Expr ()
         [(mvcall ,info ,[e] ,[t]) (Mvcall info e t values)]
         [(set! ,[lvalue] (mvcall ,info ,[e] ,[t]))
@@ -10306,12 +10313,43 @@
                      (and (libspec? x)
                           (eqv? (info-literal-offset info) 0)
                           x)))))
+          (define add-reify-cc-save
+            (lambda (live-reg* e)
+              ;; Save and restore any live registers that may be used by the `reify-cc` instrinsic.
+              ;; Since we can't use temporaries at this point --- %sfp is already moved --- manually
+              ;; allocate a few registers (that may not be real registers) and hope that we
+              ;; have enough.
+              (let* ([reify-cc-modify-reg* (intrinsic-modify-reg* reify-cc)]
+                     [tmp-reg* (reg-list %ac1 %yp)]
+                     [save-reg* (fold-left (lambda (reg* r)
+                                             (cond
+                                               [(memq r reg*) reg*]
+                                               [(memq r reify-cc-modify-reg*) (cons r reg*)]
+                                               [(memq r tmp-reg*)
+                                                ($oops who "reify-cc-save live register conflicts ~s" reg*)]
+                                               [else reg*]))
+                                           '() live-reg*)])
+                (safe-assert (andmap (lambda (tmp-reg) (not (memq tmp-reg reify-cc-modify-reg*))) tmp-reg*))
+                (with-output-language (L13 Effect)
+                  (let loop ([save-reg* save-reg*] [i 0])
+                    (cond
+                      [(null? save-reg*) e]
+                      [else
+                       (%seq
+                        ,(case i
+                           [(0) `(set! ,(ref-reg %ac1) ,(car save-reg*))]
+                           [(1) `(set! ,(ref-reg %yp) ,(car save-reg*))]
+                           [else ($oops who "reify-cc-save too many live reigsters ~s" save-reg*)])
+                        ,(loop (cdr save-reg*) (fx+ i 1))
+                        ,(case i
+                           [(0) `(set! ,(car save-reg*) ,(ref-reg %ac1))]
+                           [(1) `(set! ,(car save-reg*) ,(ref-reg %yp))]))]))))))
           (define build-call
             (with-output-language (L13 Tail)
               (case-lambda
                 [(t rpl reg* fv* maybe-info mdcl)
-                 (build-call t #f rpl reg* fv* maybe-info mdcl #f)]
-                [(t cploc rpl reg* fv* maybe-info mdcl consumer?)
+                 (build-call t #f rpl reg* fv* maybe-info mdcl #f (and maybe-info (info-call-shift-attachment? maybe-info)))]
+                [(t cploc rpl reg* fv* maybe-info mdcl consumer? shift-attachment?)
                  (let ()
                    (define set-return-address
                      (lambda (tl)
@@ -10327,13 +10365,29 @@
                              [live-fv* (meta-cond
                                          [(real-register? '%ret) fv*]
                                          [else (cons (get-fv 0) fv*)])])
-                         (if consumer?
-                             `(jump ,t (,%ac0 ,live-reg* ... ,live-fv* ...))
-                             (if argcnt?
-                                 `(seq
+                         ((lambda (e)
+                            (cond
+                              [shift-attachment?
+                               `(seq
+                                 ,(add-reify-cc-save
+                                   (cons (and consumer? %ac0)
+                                         (nanopass-case (L13 Triv) t
+                                           [,x (cons x live-reg*)]
+                                           [(mref ,x1 ,x2 ,imm) (cons x1 (cons x2 live-reg*))]
+                                           [else live-reg*]))
+                                   (%seq
+                                    (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+                                    (set! ,%ts ,(%mref ,%td ,(constant continuation-attachments-disp)))
+                                    (set! ,(%mref ,%td ,(constant continuation-attachments-disp)) ,(%mref ,%ts ,(constant pair-cdr-disp)))))
+                                 ,e)]
+                              [else e]))
+                          (if consumer?
+                              `(jump ,t (,%ac0 ,live-reg* ... ,live-fv* ...))
+                              (if argcnt?
+                                  `(seq
                                     (set! ,%ac0 (immediate ,(fx+ (length reg*) (length fv*))))
                                     (jump ,t (,%ac0 ,live-reg* ... ,live-fv* ...)))
-                                 `(jump ,t (,live-reg* ... ,live-fv* ...)))))))
+                                  `(jump ,t (,live-reg* ... ,live-fv* ...))))))))
                    (define direct-call
                      (lambda ()
                        (if rpl
@@ -10364,7 +10418,8 @@
                        (if mdcl
                            (set-cp ,(ref-reg %cp) ,(or cploc (Triv t))
                              ,(set-return-address
-                                (if (memq mdcl dcl*)
+                                (if (and (memq mdcl dcl*)
+                                         (not shift-attachment?))
                                     (direct-call)
                                     (finish-call #f ; don't set the argcount, since it doesn't need to be checked
                                        #t (in-context Triv `(label-ref ,mdcl 0))))))
@@ -10387,7 +10442,8 @@
                                              (%mref ,%xp ,(constant closure-code-disp))))))))]))))
                    (if (not t)
                        (set-return-address
-                         (if (memq mdcl dcl*)
+                        (if (and (memq mdcl dcl*)
+                                 (not shift-attachment?))
                              (direct-call)
                              (finish-call #f #f (in-context Triv `(label-ref ,mdcl 0)))))
                        (nanopass-case (L12 Triv) t
@@ -10422,13 +10478,13 @@
                             [else (normal-call)])]
                          [else (normal-call)])))])))
           (define build-consumer-call
-            (lambda (tc cnfv rpl)
+            (lambda (tc cnfv rpl shift-attachment?)
               ; haven't a clue which argument registers are live, so list 'em all.
               ; also haven't a clue which frame variables are live.  really need a
               ; way to list all of them as well, but we count on there being enough
               ; other registers (e.g., ac0, xp) to get us from the producer return
               ; point to the consumer jump point.
-              (build-call tc cnfv rpl arg-registers '() #f #f #t)))
+              (build-call tc cnfv rpl arg-registers '() #f #f #t shift-attachment?)))
           (define prepare-for-consumer-call
             (lambda (mrvl)
               (with-output-language (L13 Effect)
@@ -10488,12 +10544,12 @@
                                                 ,(let ([tc (car tc*)] [tc* (cdr tc*)] [rpl* (cdr rpl*)] [cnfv (car cnfv*)] [cnfv* (cdr cnfv*)])
                                                    (if (null? tc*)
                                                        (build-return-point rpl mrvl cnfv*
-                                                         (build-consumer-call tc cnfv rpl))
+                                                         (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info)))
                                                        (let ([this-mrvl (make-local-label 'mrvl)])
                                                          `(seq
                                                             ,(let ([rpl (car rpl*)])
                                                                (build-return-point rpl this-mrvl cnfv*
-                                                                 (build-consumer-call tc cnfv rpl)))
+                                                                 (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info))))
                                                             ,(f tc* cnfv* rpl* this-mrvl)))))))))))
                                ,(build-postlude newframe-info))))))))))))
           ; NB: combine
@@ -10541,12 +10597,12 @@
                                                 ,(let ([tc (car tc*)] [tc* (cdr tc*)] [rpl* (cdr rpl*)] [cnfv (car cnfv*)] [cnfv* (cdr cnfv*)])
                                                    (if (null? (cdr tc*))
                                                        (build-return-point rpl mrvl cnfv*
-                                                         (build-consumer-call tc cnfv rpl))
+                                                         (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info)))
                                                        (let ([this-mrvl (make-local-label 'mrvl)])
                                                          `(seq
                                                             ,(let ([rpl (car rpl*)])
                                                                (build-return-point rpl this-mrvl cnfv*
-                                                                 (build-consumer-call tc cnfv rpl)))
+                                                                 (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info))))
                                                             ,(f tc* cnfv* rpl* this-mrvl)))))))))))
                                ,(build-postlude newframe-info (car (last-pair cnfv*))))))))))))))
           (module (build-tail-call build-mv-return)
@@ -10602,7 +10658,7 @@
                                      (restore-local-saves ,newframe-info)
                                      (set! ,(ref-reg %cp) ,cnfv)
                                      ,(build-shift-args newframe-info))))
-                              ,(build-consumer-call tc (in-context Triv (ref-reg %cp)) #f))
+                              ,(build-consumer-call tc (in-context Triv (ref-reg %cp)) #f #f))
                             (let ([tc* (list-head tc* (fx- (length tc*) 1))])
                               `(seq
                                  ,(build-nontail-call info mdcl t0 t1* tc* '() mrvl #t
@@ -10611,7 +10667,7 @@
                                         (remove-frame ,newframe-info)
                                         (restore-local-saves ,newframe-info)
                                         ,(build-shift-args newframe-info))))
-                                 ,(build-consumer-call tc #f #f))))))))
+                                 ,(build-consumer-call tc #f #f #f))))))))
               (define build-mv-return
                 (lambda (t*)
                   (let-values ([(reg* reg-t* frame-t*) (get-arg-regs t*)])
