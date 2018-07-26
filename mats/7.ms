@@ -114,10 +114,10 @@
 
 (mat load-compiled-from-port
   (begin
-   (define-values (o get) (open-bytevector-output-port))
-   (compile-to-port '((define lcfp1 'worked) 'loaded) o)
-   (equal? 'loaded (load-compiled-from-port (open-bytevector-input-port (get)))))
-  (equal? 'worked lcfp1)
+    (define-values (o get) (open-bytevector-output-port))
+    (compile-to-port '((define lcfp1 'worked) 'loaded) o)
+    (eq? 'loaded (load-compiled-from-port (open-bytevector-input-port (get)))))
+  (eq? 'worked lcfp1)
 )
 
 (mat compile-to-file
@@ -3619,6 +3619,35 @@ evaluating module init
   (error? ; unexpected return from handler
     (parameterize ([exit-handler values])
       (exit 5)))
+  (begin
+    (define (exit-code expr)
+      (if (windows?)
+          (system (format "echo ~s | ~a -q" expr (patch-exec-path *scheme*)))
+          (system (format "echo '~s' | ~a -q" expr *scheme*))))
+    #t)
+  (eqv? (exit-code '(exit)) 0)
+  (eqv? (exit-code '(exit 15)) 15)
+  (eqv? (exit-code '(exit 0)) 0)
+  (eqv? (exit-code '(exit 24 7)) 24)
+  (eqv? (exit-code '(exit 0 1 2)) 0)
+  (eqv? (exit-code '(exit 3.14)) 1)
+  (eqv? (exit-code '(exit 9.8 3.14)) 1)
+  (begin
+    (with-output-to-file "testfile-exit.ss"
+      (lambda ()
+        (for-each pretty-print
+          '((import (scheme))
+            (apply exit (map string->number (command-line-arguments))))))
+      'replace)
+    #t)
+  (eqv? (system (format "~a --script testfile-exit.ss" (patch-exec-path *scheme*))) 0)
+  (eqv? (system (format "~a --script testfile-exit.ss 5" (patch-exec-path *scheme*))) 5)
+  (eqv? (system (format "~a --script testfile-exit.ss 0 1 2" (patch-exec-path *scheme*))) 0)
+  (eqv? (system (format "~a --script testfile-exit.ss 3 4 5" (patch-exec-path *scheme*))) 3)
+  (eqv? (system (format "~a --program testfile-exit.ss" (patch-exec-path *scheme*))) 0)
+  (eqv? (system (format "~a --program testfile-exit.ss 2" (patch-exec-path *scheme*))) 2)
+  (eqv? (system (format "~a --program testfile-exit.ss 0 1 2" (patch-exec-path *scheme*))) 0)
+  (eqv? (system (format "~a --program testfile-exit.ss 6 7 8" (patch-exec-path *scheme*))) 6)
  )
 
 (mat abort

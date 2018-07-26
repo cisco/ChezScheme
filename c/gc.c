@@ -549,6 +549,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             CONTLENGTH(p) = CONTLENGTH(pp);
             CONTCLENGTH(p) = CONTCLENGTH(pp);
             CONTWINDERS(p) = CONTWINDERS(pp);
+            CONTATTACHMENTS(p) = CONTATTACHMENTS(pp);
             if (CONTLENGTH(p) != scaled_shot_1_shot_flag) {
                 CONTLINK(p) = CONTLINK(pp);
                 CONTRET(p) = CONTRET(pp);
@@ -556,24 +557,23 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             }
         } else {
             iptr len, n;
-            ISPC s;
             len = CLOSLEN(pp);
             n = size_closure(len);
 #ifdef ENABLE_OBJECT_COUNTS
             S_G.countof[tg][countof_closure] += 1;
             S_G.bytesof[tg][countof_closure] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-            if (BACKREFERENCES_ENABLED)
-              s = space_closure;
-            else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+            if (BACKREFERENCES_ENABLED) {
+              find_room(space_closure, tg, type_closure, n, p);
+            } else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
               /* Using `space_impure` is ok because the code slot of a mutable
                  closure is never mutated, so the code is never newer than the
                  closure. If it were, then because the code pointer looks like
                  a fixnum, an old-generation sweep wouldn't update it properly. */
-              s = space_impure;
-            } else
-              s = space_pure;
-            find_room(s, tg, type_closure, n, p);
+              find_room(space_impure, tg, type_closure, n, p);
+            } else {
+              find_room(space_pure, tg, type_closure, n, p);
+            }
             copy_ptrs(type_closure, p, pp, n);
             SETCLOSCODE(p,code);
          /* pad if necessary */
@@ -1772,6 +1772,7 @@ static void sweep_thread(p) ptr p; {
     relocate(&STACKLINK(tc))
     /* iptr SCHEMESTACKSIZE */
     relocate(&WINDERS(tc))
+    relocate(&ATTACHMENTS(tc))
     relocate_return_addr(&FRAME(tc,0))
     sweep_stack((uptr)SCHEMESTACK(tc), (uptr)SFP(tc), (uptr)FRAME(tc,0));
     relocate(&U(tc))
@@ -1821,6 +1822,7 @@ static void sweep_thread(p) ptr p; {
 static void sweep_continuation(p) ptr p; {
   PUSH_BACKREFERENCE(p)
   relocate(&CONTWINDERS(p))
+  relocate(&CONTATTACHMENTS(p))
 
  /* bug out for shot 1-shot continuations */
   if (CONTLENGTH(p) == scaled_shot_1_shot_flag) return;

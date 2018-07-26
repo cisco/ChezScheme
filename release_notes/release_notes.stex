@@ -58,13 +58,6 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Procedure source location without inspector information (9.5.1)}
-
-When \scheme{generate-inspector-information} is set to \scheme{#f} and
-\scheme{generate-procedure-source-information} is set to \scheme{#t},
-source location information is preserved for a procedure, even though
-other inspector information is not preserved.
-
 \subsection{Procedure arity-mask adjustment and redirection (9.5.1)}
 
 The new procedure \scheme{make-arity-wrapper-procedure} creates a
@@ -78,14 +71,6 @@ for triggering just-in-time conversions of a procedure's
 implementation while imposing a minimal overhead on calls to the
 procedure before or after conversion.
 
-\subsection{Atomic compare-and-set (9.5.1)}
-
-The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
-atomically update a box or vector with a given new value when the
-current content is \scheme{eq?} to a given old value. Atomicity is
-guaranteed even if multiple threads attempt to update the same box or
-vector.
-
 \subsection{Ordered guardians (9.5.1)}
 
 The \scheme{make-guardian} function now accepts an optional argument to
@@ -93,6 +78,21 @@ indicate whether the guardian is ordered or unordered. A guardian is
 unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
+
+\subsection{Procedure source location without inspector information (9.5.1)}
+
+When \scheme{generate-inspector-information} is set to \scheme{#f} and
+\scheme{generate-procedure-source-information} is set to \scheme{#t},
+source location information is preserved for a procedure, even though
+other inspector information is not preserved.
+
+\subsection{Atomic compare-and-set (9.5.1)}
+
+The new procedures \scheme{box-cas!} and \scheme{vector-cas!}
+atomically update a box or vector with a given new value when the
+current content is \scheme{eq?} to a given old value. Atomicity is
+guaranteed even if multiple threads attempt to update the same box or
+vector.
 
 \subsection{Foreign-procedure thread activation (9.5.1)}
 
@@ -1612,6 +1612,11 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Incorrect return code when \protect\scheme{exit} is called with multiple arguments}
+
+A bug in the implementation of the default exit handler with multiple
+values has been fixed.
 
 \subsection{Boot files containing compiled library code fail to load}
 

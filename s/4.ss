@@ -281,13 +281,16 @@
                  (map car more)))))]))
 )
 
+
 (let ()
-  (define disable/enable (make-winder #f disable-interrupts enable-interrupts))
+  (include "types.ss")
+  
+  (define disable/enable (make-winder disable-interrupts enable-interrupts '()))
 
   (define (dwind in body out)
     (let ((old-winders ($current-winders)))
       (in)
-      ($current-winders (cons (make-winder #f in out) old-winders))
+      ($current-winders (cons (make-winder in out ($current-attachments)) old-winders))
       (call-with-values
         body
         (case-lambda
@@ -306,7 +309,7 @@
       (disable-interrupts)
       ($current-winders d/e+old-winders)
       (in)
-      ($current-winders (cons (make-winder #t in out) old-winders))
+      ($current-winders (cons (make-critical-winder in out ($current-attachments)) old-winders))
       (enable-interrupts)
       (call-with-values
         body
@@ -361,33 +364,46 @@
         (let f ((old old))
           (unless (eq? old tail)
             (let ([w (car old)] [old (cdr old)])
-              (if (winder-critical? w)
+              (if (critical-winder? w)
                   (begin
                     (disable-interrupts)
                     ($current-winders (cons disable/enable old))
+                    ($current-attachments (winder-attachments w))
                     ((winder-out w))
                     ($current-winders old)
                     (enable-interrupts))
                   (begin
                     ($current-winders old)
+                    ($current-attachments (winder-attachments w))
                     ((winder-out w))))
               (f old))))
         (let f ([new new])
           (unless (eq? new tail)
             (let ([w (car new)])
               (f (cdr new))
-              (if (winder-critical? w)
+              (if (critical-winder? w)
                   (begin
                     (disable-interrupts)
                     ($current-winders (cons disable/enable (cdr new)))
+                    ($current-attachments (winder-attachments w))
                     ((winder-in w))
                     ($current-winders new)
                     (enable-interrupts))
                   (begin
+                    ($current-attachments (winder-attachments w))
                     ((winder-in w))
                     ($current-winders new)))))))))
-)
+  )
 
+(define current-continuation-attachments
+  (lambda ()
+    ($current-attachments)))
+
+(define-who continuation-next-attachments
+  (lambda (c)
+    (unless ($continuation? c)
+      ($oops who "~s is not a continuation" c))
+    ($continuation-attachments c)))
 
 ;;; make-promise and force
 

@@ -903,6 +903,7 @@
       (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp) (%ac0) (%xp))
       (declare-intrinsic get-room get-room () (%xp) (%xp))
       (declare-intrinsic scan-remembered-set scan-remembered-set () () ())
+      (declare-intrinsic reify-cc reify-cc (%xp %ac0 %ts) () ())
       (declare-intrinsic dooverflow dooverflow () () ())
       (declare-intrinsic dooverflood dooverflood () (%xp) ())
       ; a dorest routine takes all of the register and frame arguments from the rest
@@ -1549,7 +1550,112 @@
         [,pr pr]
         [else ($oops who "unexpected Expr ~s" ir)]))
 
-    (define-pass np-name-anonymous-lambda : L4.875 (ir) -> L5 ()
+    (define-pass np-recognize-attachment : L4.875 (ir) -> L4.9375 ()
+      (definitions
+        (define return
+          (lambda (mode x)
+            (case mode
+              [(pop) (with-output-language (L4.9375 Expr)
+                       `(seq
+                          (attachment-set pop)
+                          ,x))]
+              [else x])))
+        (define ->in-wca
+          (lambda (mode)
+            (case mode
+              [(non-tail pop) 'pop]
+              [(tail tail/reified) 'tail/reified]))))
+      (CaseLambdaClause : CaseLambdaClause (cl) -> CaseLambdaClause ()
+        [(clause (,x* ...) ,interface ,[Expr : body 'tail '() -> body])
+         `(clause (,x* ...) ,interface ,body)])
+      (Expr : Expr (ir [mode 'non-tail] [loop-x* '()]) -> Expr ()
+        [,x (return mode x)]
+        [(letrec ([,x* ,[le* 'non-tail '() -> le*]] ...) ,[body])
+         `(letrec ([,x* ,le*] ...) ,body)]
+        [(call ,info ,mdcl ,pr ,[e1 'non-tail '() -> e1]
+               (case-lambda ,info2 (clause () ,interface ,[body (->in-wca mode) '() -> body])))
+         (guard (and (eq? (primref-name pr) 'call-setting-continuation-attachment)
+                     (= interface 0)))
+         (case mode
+           [(pop tail/reified)
+            ;; Definitely an attachment in place
+            `(seq (attachment-set set ,e1) ,body)]
+           [(tail)
+            ;; Check dynamically for reified continuation and attachment
+            `(seq (attachment-set reify-and-set ,e1) ,body)]
+           [(non-tail)
+            ;; Push attachment; `body` has been adjusted to pop
+            `(seq (attachment-set push ,e1) ,body)])]
+        [(call ,info ,mdcl ,pr ,[e1 'non-tail '() -> e1]
+               (case-lambda ,info2 (clause (,x) ,interface ,[body])))
+         (guard (and (eq? (primref-name pr) 'call-with-current-continuation-attachment)
+                     (= interface 1)))
+         (case mode
+           [(non-tail)
+            ;; No surrounding `with-continuation-attachment`
+            `(let ([,x ,e1]) ,body)]
+           [(pop tail/reified)
+            ;; Defintely an attachment in place
+            `(seq ,e1 (let ([,x (attachment-get)]) ,body))]
+           [else
+            ;; Check dynamically for attachment
+            `(let ([,x (attachment-get ,e1)]) ,body)])]
+        [(call ,info ,mdcl ,x ,[e* 'non-tail '() -> e*] ...)
+         (guard (memq x loop-x*))
+         ;; No convert for a loop call, even if mode is 'pop
+         `(call ,info ,mdcl ,x ,e* ...)]
+        [(call ,info ,mdcl ,[e 'non-tail '() -> e] ,[e* 'non-tail '() -> e*] ...)
+         (let ([new-e (case mode
+                        [(pop)
+                         (let ([level (if (info-call-check? info) 2 3)]
+                               [p-info (make-info-call #f #f #f #f #f)])
+                           `(call ,p-info #f ,(lookup-primref level '$make-shift-attachment) ,e))]
+                        [else e])])
+           `(call ,info ,(and (eq? new-e e) mdcl) ,new-e ,e* ...))]
+        [(foreign-call ,info ,[e 'non-tail '() -> e] ,[e* 'non-tail '() -> e*] ...)
+         (return mode `(foreign-call ,info ,e ,e* ...))]
+        [(fcallable ,info) (return mode `(fcallable ,info))]
+        [(label ,l ,[body]) `(label ,l ,body)]
+        [(mvlet ,[e 'non-tail '() -> e] ((,x** ...) ,interface* ,body*) ...)
+         (let ([body* (map (lambda (body interface)
+                             (case (and (fx< interface 0)
+                                        mode)
+                               [(pop)
+                                ;; If `body` is a direct call, then we need to change
+                                ;; to an `apply`, since the last argument is turned
+                                ;; into a list already. It would have been better to
+                                ;; avoid the direct-call setup in the first place.
+                                (nanopass-case (L4.875 Expr) body
+                                  [(call ,info ,mdcl ,e ,e* ...)
+                                   (guard mdcl)
+                                   (%primcall info #f apply
+                                              ,(%primcall #f #f $make-shift-attachment ,e)
+                                              ,e* ...)]
+                                  [else
+                                   (Expr body 'pop loop-x*)])]
+                               [else
+                                (Expr body mode loop-x*)]))
+                           body* interface*)])
+           `(mvlet ,e ((,x** ...) ,interface* ,body*) ...))]
+        [(mvcall ,info ,[e1 'non-tail '() -> e1] ,[e2 'non-tail '() -> e2])
+         (let ([e2 (case mode
+                     [(pop) (%primcall #f #f $make-shift-attachment ,e2)]
+                     [else e2])])
+           `(mvcall ,info ,e1 ,e2))]
+        [(let ([,x* ,[e* 'non-tail '() -> e*]] ...) ,[body])
+         `(let ([,x* ,e*] ...) ,body)]
+        [(case-lambda ,info ,[cl] ...) (return mode `(case-lambda ,info ,cl ...))]
+        [(quote ,d) (return mode `(quote ,d))]
+        [(if ,[e0 'non-tail '() -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
+        [(seq ,[e0 'non-tail '() -> e0] ,[e1]) `(seq ,e0 ,e1)]
+        [(profile ,src) `(profile ,src)]
+        [(pariah) `(pariah)]
+        [,pr (return mode pr)]
+        [(loop ,x (,x* ...) ,[body mode (cons x loop-x*) -> body])
+         `(loop ,x (,x* ...) ,body)]
+        [else ($oops who "unexpected Expr ~s" ir)]))
+
+    (define-pass np-name-anonymous-lambda : L4.9375 (ir) -> L5 ()
       (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ())
       (Expr : Expr (ir) -> Expr ()
         [(case-lambda ,info ,[cl] ...)
@@ -1559,7 +1665,7 @@
            (uvar-info-lambda-set! anon info)
            `(letrec ([,anon (case-lambda ,info ,cl ...)])
               ,anon))])
-      (nanopass-case (L4.875 CaseLambdaExpr) ir
+      (nanopass-case (L4.9375 CaseLambdaExpr) ir
         [(case-lambda ,info ,[CaseLambdaClause : cl] ...) `(case-lambda ,info ,cl ...)]))
 
     (define-pass np-convert-closures : L5 (x) -> L6 ()
@@ -2692,6 +2798,32 @@
              ,[e*] ...)
            (guard (and (eq? (primref-name pr) '$top-level-value) (symbol? d)))
            `(call ,info0 ,mdcl0 ,(Symref d) ,e* ...)]
+          [(call ,info0 ,mdcl0
+             (call ,info1 ,mdcl1 ,pr
+               (call ,info2 ,mdcl2 ,pr2 (quote ,d)))
+             ,[e*] ...)
+           (guard (and (eq? (primref-name pr) '$make-shift-attachment)
+                       (eq? (primref-name pr2) '$top-level-value) (symbol? d)))
+           `(call ,info0 ,mdcl0 (call ,info1 ,mdcl1 ,(Symref (primref-name pr)) ,(Symref d)) ,e* ...)]
+          [(call ,info ,mdcl (call ,info2 ,mdcl2 ,pr0 ,pr) ,e* ...)
+           (guard (eq? (primref-name pr0) '$make-shift-attachment)
+                  ;; FIXME: need a less fragile way to avoid multiple results
+                  ;; Exclude inlined primitives that return more than one value:
+                  (not (memq (primref-name pr) '(values call/cc call-with-current-continuation call/1cc))))
+           (cond
+            [(handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*)
+             => (lambda (e)
+                  (let ([t (make-tmp 't)])
+                    `(let ([,t ,(Expr e)])
+                       (seq
+                        (attachment-set pop)
+                        ,t))))]
+            [else
+             (let ([e* (map Expr e*)])
+                (let ([info (if (any-set? (prim-mask abort-op) (primref-flags pr))
+                                (make-info-call (info-call-src info) (info-call-sexpr info) (info-call-check? info) #t #t)
+                                info)])
+                  `(call ,info ,mdcl (call ,info2 ,mdcl2 ,(Symref (primref-name pr0)) ,(Symref (primref-name pr))) ,e* ...)))])]
           [(call ,info ,mdcl ,pr ,e* ...)
            (cond
              [(handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*) => Expr]
@@ -5022,6 +5154,7 @@
           (inline-accessor $code-pinfo* code-pinfo*-disp)
           (inline-accessor $continuation-link continuation-link-disp)
           (inline-accessor $continuation-winders continuation-winders-disp)
+          (inline-accessor $continuation-attachments continuation-attachments-disp)
           (inline-accessor csv7:record-type-descriptor record-type-disp)
           (inline-accessor $record-type-descriptor record-type-disp)
           (inline-accessor record-rtd record-type-disp)
@@ -5293,7 +5426,8 @@
           (define hand-coded-closure?
             (lambda (name)
               (not (memq name '(nuate nonprocedure-code error-invoke invoke
-                                      arity-wrapper-apply $arity-wrapper-apply)))))
+                                      arity-wrapper-apply $arity-wrapper-apply
+                                      $shift-attachment)))))
           (define-inline 2 $hand-coded
             [(name)
              (nanopass-case (L7 Expr) name
@@ -5382,6 +5516,7 @@
           (define-tc-parameter $target-machine target-machine)
           (define-tc-parameter $current-stack-link stack-link)
           (define-tc-parameter $current-winders winders)
+          (define-tc-parameter $current-attachments attachments)
           (define-tc-parameter default-record-equal-procedure default-record-equal-procedure)
           (define-tc-parameter default-record-hash-procedure default-record-hash-procedure)
           )
@@ -5407,6 +5542,18 @@
             [(e-proc e-arity-mask)
              (bind #f (e-proc e-arity-mask)
                (make-wrapper-closure-alloc e-proc e-arity-mask #f 3 (lookup-libspec $arity-wrapper-apply)))]))
+
+        (define-inline 3 $make-shift-attachment
+          [(e-proc)
+           (bind #f (e-proc)
+             (bind #t ([c (%constant-alloc type-closure (fx* 3 (constant ptr-bytes)))])
+               (%seq
+                 (set! ,(%mref ,c ,(constant closure-code-disp))
+                       (literal ,(make-info-literal #f 'library
+                                      (lookup-libspec $shift-attachment)
+                                      (constant code-data-disp))))
+                 (set! ,(%mref ,c ,(constant closure-data-disp)) ,e-proc)
+                 ,c)))])
 
         (define-inline 3 $install-guardian
           [(e-obj e-rep e-tconc ordered?)
@@ -9591,6 +9738,14 @@
          (if e0?
              (Triv* (cons e0? e1*) (lambda (t*) (k `(call ,info ,mdcl ,(car t*) ,(cdr t*) ...))))
              (Triv* e1* (lambda (t*) (k `(call ,info ,mdcl #f ,t* ...)))))]
+        [(attachment-get ,e* ...)
+         (Triv* e*
+           (lambda (t*)
+             (k `(attachment-get ,t* ...))))]
+        [(attachment-set ,aop ,e* ...)
+         (Triv* e*
+           (lambda (t*)
+             (k `(attachment-set ,aop ,t* ...))))]
         [(foreign-call ,info ,e0 ,e1* ...)
          (Triv* (cons e0 e1*)
            (lambda (t*)
@@ -9934,6 +10089,8 @@
         [(set! ,[lvalue] (mvcall ,info ,mdcl ,[t0?] ,[t1] ... (,[t*] ...)))
          (guard (info-call-error? info) (fx< (debug-level) 2))
          `(tail (mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...)))]
+        [(set! ,[lvalue] (attachment-get ,[t*] ...))
+         `(set! ,lvalue (attachment-get ,t* ...))]
         [(label ,l ,[ebody]) `(seq (label ,l) ,ebody)]
         [(trap-check ,ioc ,[ebody]) `(seq (trap-check ,ioc) ,ebody)]
         [(overflow-check ,[ebody]) `(seq (overflow-check) ,ebody)]
@@ -9951,7 +10108,8 @@
                      (%seq ,e (goto ,join)
                        ,(f `(seq (label ,(car l*)) ,(car e*)) (cdr l*) (cdr e*)))))
               (label ,join)))]
-        [(values ,info ,t* ...) `(nop)])
+        [(values ,info ,t* ...) `(nop)]
+        [(attachment-get ,t* ...) `(nop)])
       (Tail : Expr (ir) -> Tail ()
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
@@ -10977,6 +11135,11 @@
                              ; (new) stack base in sfp, clength in ac1, old frame base in yp
                              ; set up return address and stack link
                              (set! ,(%tc-ref stack-link) ,(%mref ,xp/cp ,(constant continuation-link-disp)))
+                             ; potentially pop an attachment
+                             (set! ,%ts ,(%mref ,xp/cp ,(constant continuation-attachments-disp)))
+                             (if ,(%inline eq? ,(%constant sfalse) ,%ts)
+                                 (nop)
+                                 (set! ,(%tc-ref attachments) ,%ts))
                              ; set %td to end of the destination area / base of stack values dest
                              (set! ,%td ,(%inline + ,%td ,%sfp))
                              ; don't shift if no stack values
@@ -11094,7 +11257,52 @@
                                              (set! ,%xp ,(%mref ,xp/cp ,(constant continuation-return-address-disp)))
                                              (set! ,fv0 ,%xp)
                                              (jump ,(%mref ,%xp ,(constant return-address-mv-return-address-disp))
-                                               (,%ac0 ,arg-registers ... ,fv0))))]))))))))))))
+                                               (,%ac0 ,arg-registers ... ,fv0))))])))))))))))
+        (define reify-cc-help
+          (lambda (finish)
+            (with-output-language (L13 Tail)
+              (let ([Ltop (make-local-label 'Ltop)])
+                (%seq
+                  (set! ,%td ,(%tc-ref stack-link))
+                  (set! ,%xp ,%td)
+                  (label ,Ltop)
+                  (set! ,%ac0 ,(%mref ,%xp ,(constant continuation-stack-clength-disp)))
+                  (if ,(%inline eq?
+                          ,(%mref ,%xp ,(constant continuation-stack-length-disp))
+                          ,%ac0)
+                       ,(%seq
+                          (set! ,%ac0
+                            (literal ,(make-info-literal #f 'library-code
+                                        (lookup-libspec dounderflow)
+                                        (fx+ (constant code-data-disp) (constant size-rp-header)))))
+                          (if (if ,(%inline eq?
+                                        ,(%mref ,%td ,(constant continuation-attachments-disp))
+                                        ,(%constant sfalse))
+                                   (false)
+                                   ,(%inline eq? ,%ref-ret ,%ac0))
+                              ,(finish %td)
+                              ,(%seq
+                                 (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
+                                 (set! ,(%mref ,%xp ,(constant continuation-code-disp))
+                                   (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
+                                 (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
+                                 (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
+                                 (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
+                                 (set! ,%ref-ret ,%ac0)
+                                 (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
+                                 (set! ,(%tc-ref stack-link) ,%xp)
+                                 (set! ,%ac0 ,(%tc-ref scheme-stack))
+                                 (set! ,(%tc-ref scheme-stack) ,%sfp)
+                                 (set! ,(%mref ,%xp ,(constant continuation-stack-disp)) ,%ac0)
+                                 (set! ,%ac0 ,(%inline - ,%sfp ,%ac0))
+                                 (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
+                                 (set! ,(%mref ,%xp ,(constant continuation-stack-clength-disp)) ,%ac0)
+                                 (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,%ac0))
+                                 ,(finish %xp))))
+                       ,(%seq
+                          (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
+                          (set! ,%xp ,(%mref ,%xp ,(constant continuation-link-disp)))
+                          (goto ,Ltop)))))))))
       (Program : Program (ir) -> Program ()
         [(labels ([,l* ,le*] ...) ,l)
          `(labels ([,l* ,(map CaseLambdaExpr le* l*)] ...) ,l)])
@@ -11120,55 +11328,41 @@
            [(dorest3) (make-do-rest 3 frame-args-offset)]
            [(dorest4) (make-do-rest 4 frame-args-offset)]
            [(dorest5) (make-do-rest 5 frame-args-offset)]
+           [(reify-cc)
+            (let ([other-reg* (fold-left (lambda (live* kill) (remq kill live*))
+                                         (vector->list regvec)
+                                         ;; Registers used by `reify-cc-help` output,
+                                         ;; plus `%ts` so that we have one to allocate
+                                         (reg-list %xp %td %ac0 %ts))])
+              `(lambda ,(make-named-info-lambda "reify-cc" '(0)) 0 ()
+                ,(asm-enter
+                   (%seq
+                     (check-live ,other-reg* ...)
+                     ,(reify-cc-help
+                       (lambda (reg)
+                         (if (eq? reg %td)
+                             `(asm-return ,%td ,other-reg* ...)
+                             `(seq
+                                (set! ,%td ,reg)
+                                (asm-return ,%td ,other-reg* ...)))))))))]
            [(callcc)
-            (let ([Ltop (make-local-label 'Ltop)])
-              `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
-                 ,(%seq
-                    (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
-                    (set! ,%td ,(%tc-ref stack-link))
-                    (set! ,%xp ,%td)
-                    (label ,Ltop)
-                    (set! ,%ac0 ,(%mref ,%xp ,(constant continuation-stack-clength-disp)))
-                    (if ,(%inline eq?
-                           ,(%mref ,%xp ,(constant continuation-stack-length-disp))
-                           ,%ac0)
-                        ,(%seq
-                           (set! ,%ac0
-                             (literal ,(make-info-literal #f 'library-code
-                                         (lookup-libspec dounderflow)
-                                         (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                           (if (if ,(%inline eq? ,%ref-ret ,%ac0)
-                                   ,(%inline eq?
-                                      ,(%mref ,%td ,(constant continuation-winders-disp))
-                                      ,(%tc-ref winders))
-                                   (false))
-                               ,(%seq
-                                  (set! ,(make-arg-opnd 1) ,%td)
-                                  ,(do-call 1))
-                               ,(%seq
-                                  (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
-                                  ; TODO: remove next line once get-room preserves %td
-                                  (set! ,%td ,(%tc-ref stack-link))
-                                  (set! ,(%mref ,%xp ,(constant continuation-code-disp))
-                                    (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
-                                  (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
-                                  (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
-                                  (set! ,%ref-ret ,%ac0)
-                                  (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
-                                  (set! ,(%tc-ref stack-link) ,%xp)
-                                  (set! ,%ac0 ,(%tc-ref scheme-stack))
-                                  (set! ,(%tc-ref scheme-stack) ,%sfp)
-                                  (set! ,(%mref ,%xp ,(constant continuation-stack-disp)) ,%ac0)
-                                  (set! ,%ac0 ,(%inline - ,%sfp ,%ac0))
-                                  (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
-                                  (set! ,(%mref ,%xp ,(constant continuation-stack-clength-disp)) ,%ac0)
-                                  (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,%ac0))
-                                  (set! ,(make-arg-opnd 1) ,%xp)
-                                  ,(do-call 1))))
-                        ,(%seq
-                           (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
-                           (set! ,%xp ,(%mref ,%xp ,(constant continuation-link-disp)))
-                           (goto ,Ltop))))))]
+            ;; Could be implemented using the `reify-cc` intrinsic, as follows,
+            ;; but, we inline `reify-cc` to save a few instructions
+            #;
+            `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
+               ,(%seq
+                  (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+                  (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
+                  (set! ,(make-arg-opnd 1) ,%td)
+                  ,(do-call 1)))
+            `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
+               ,(%seq
+                  (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
+                  ,(reify-cc-help
+                    (lambda (reg)
+                      (%seq
+                        (set! ,(make-arg-opnd 1) ,reg)
+                        ,(do-call 1))))))]
            [(call1cc)
             `(lambda ,(make-named-info-lambda 'call1cc '(1)) 0 ()
                ,(%seq
@@ -11178,11 +11372,11 @@
                     (literal ,(make-info-literal #f 'library-code
                                    (lookup-libspec dounderflow)
                                    (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                  (if (if ,(%inline eq? ,%ref-ret ,%ac0)
-                          ,(%inline eq?
-                             ,(%mref ,%td ,(constant continuation-winders-disp))
-                             ,(%tc-ref winders))
-                          (false))
+                  (if (if ,(%inline eq?
+                               ,(%mref ,%td ,(constant continuation-attachments-disp))
+                               ,(%constant sfalse))
+                           (false)
+                           ,(%inline eq? ,%ref-ret ,%ac0))
                       ,(%seq
                          (set! ,(make-arg-opnd 1) ,%td)
                          ,(do-call 1))
@@ -11193,8 +11387,8 @@
                          (set! ,(%mref ,%xp ,(constant continuation-code-disp))
                            (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
                          (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
-                         (set! ,(%mref ,%xp ,(constant continuation-winders-disp))
-                           ,(%tc-ref winders))
+                         (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
+                         (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
                          ,(meta-cond
                             [(real-register? '%ret) `(set! ,%ret ,%ac0)]
                             [else `(nop)])
@@ -11309,7 +11503,9 @@
         [(mref ,x1 ,x2 ,imm) (%mref ,(Ref x1) ,(Ref x2) ,imm)])
       (Rhs : Rhs (ir) -> Rhs ()
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
-         ($oops who "Effect is responsible for handling mvcalls")])
+         ($oops who "Effect is responsible for handling mvcalls")]
+        [(attachment-get ,t* ...)
+         ($oops who "Effect is responsible for handling attachment-gets")])
       (Effect : Effect (ir) -> Effect ()
         [(do-rest ,fixed-args)
          (if (fx<= fixed-args dorest-intrinsic-max)
@@ -11353,7 +11549,64 @@
         [(foreign-call ,info ,[t0] ,[t1*] ...)
          (build-foreign-call info t0 t1* #f #t)]
         [(set! ,[lvalue] (foreign-call ,info ,[t0] ,[t1*] ...))
-         (build-foreign-call info t0 t1* lvalue #t)])
+         (build-foreign-call info t0 t1* lvalue #t)]
+        [(set! ,[lvalue] (attachment-get))
+         ;; No default expression => an attachment is certainly available
+         (let ([ats (make-tmp 'ats)])
+           (%seq
+            (set! ,ats ,(%tc-ref attachments))
+            (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))]
+        [(set! ,[lvalue] (attachment-get ,[t]))
+         ;; Default expression => need to check for reified continuation
+         ;; and attachment beyond it. For now, we always reify the continuation
+         ;; to simplify the check
+         (let ([ats (make-tmp 'ats)])
+           (%seq
+             (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+             (set! ,ats ,(%tc-ref attachments))
+             (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
+                 (set! ,lvalue ,t)
+                 (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp))))))]
+        [(attachment-set ,aop)
+         (case aop
+           [(pop)
+            (let ([ats (make-tmp 'ats)])
+              (%seq
+                (set! ,ats ,(%tc-ref attachments))
+                (set! ,(%tc-ref attachments) ,(%mref ,ats ,(constant pair-cdr-disp)))))]
+           [else
+            ($oops who "unexpected attachment-set mode ~s" aop)])]
+        [(attachment-set ,aop ,[t])
+         (let ([ats (make-tmp 'ats)])
+           (define (make-push)
+             (let ([p (make-tmp 'pr)])
+               ;; Generate
+               ;;  ($current-attachments (cons t ($current-attachments)))
+               (%seq
+                (set! ,p ,(%constant-alloc type-pair (constant size-pair)))
+                (set! ,(%mref ,p ,(constant pair-car-disp)) ,t)
+                (set! ,(%mref ,p ,(constant pair-cdr-disp)) ,ats)
+                (set! ,(%tc-ref attachments) ,p))))
+           (case aop
+             [(push)
+              (%seq
+               (set! ,ats ,(%tc-ref attachments))
+               ,(make-push))]
+             [(set)
+              (%seq
+               (set! ,ats ,(%tc-ref attachments))
+               (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp)))
+               ,(make-push))]
+             [(reify-and-set)
+              (%seq
+               (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+               (set! ,ats ,(%tc-ref attachments))
+               (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
+                   (nop)
+                   (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
+               ,(make-push))]
+             [else
+              ($oops who "unexpected attachment-set mode ~s" aop)]))])
       (Tail : Tail  (ir) -> Tail  ()
         [(entry-point (,x* ...) ,dcl ,mcp ,tlbody)
          (unless (andmap (lambda (x) (eq? (uvar-type x) 'ptr)) x*)
@@ -12231,6 +12484,32 @@
                        (set! ,(ref-reg %cp) ,%td)
                        (jump ,(%mref ,%td ,(constant closure-code-disp))
                              (,%ac0 ,(reg-cons* %ret arg-registers) ...)))]))))]
+           [($shift-attachment)
+            ;; Reify the continuation, but dropping the first `attachments` element,
+            ;; which must be present, so that the attachment will be popped
+            ;; on return from the continuation
+            (let ([info (make-info "$shift-attachment" '())])
+              (info-lambda-fv*-set! info '(proc))
+              `(lambda ,info 0 ()
+                ,(%seq
+                  (set! ,(ref-reg %ac1) ,%ac0) ; save argument count
+                  (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+                  (set! ,%ts ,(%mref ,%td ,(constant continuation-attachments-disp)))
+                  (set! ,(%mref ,%td ,(constant continuation-attachments-disp)) ,(%mref ,%ts ,(constant pair-cdr-disp)))
+                  (set! ,%ac0 ,(ref-reg %ac1)) ; restore argument count
+                  ,(meta-cond
+                    [(real-register? '%cp)
+                     (%seq
+                       (set! ,%cp ,(%mref ,%cp ,(constant closure-data-disp)))
+                       (jump ,(%mref ,%cp ,(constant closure-code-disp))
+                             (,%ac0 ,%cp ,(reg-cons* %ret arg-registers) ...)))]
+                    [else
+                     (%seq
+                       (set! ,%td ,(ref-reg %cp))
+                       (set! ,%td ,(%mref ,%td ,(constant closure-data-disp)))
+                       (set! ,(ref-reg %cp) ,%td)
+                       (jump ,(%mref ,%td ,(constant closure-code-disp))
+                             (,%ac0 ,(reg-cons* %ret arg-registers) ...)))]))))]
            [(bytevector=?)
             (let ([bv1 (make-tmp 'bv1)] [bv2 (make-tmp 'bv2)] [idx (make-tmp 'idx)] [len2 (make-tmp 'len2)])
               (define (argcnt->max-fv n) (max (- n (length arg-registers)) 0))
@@ -12329,13 +12608,16 @@
                     (label ,Lret)
                     (rp-header ,Lmvreturn ,(* 2 (constant ptr-bytes)) 1) ; cchain is live at sfp[ptr-bytes]
                     (set! ,(ref-reg %ac1) (immediate 1)) ; single-value as expected
-                    (label ,Lexit)
                     ,(save-scheme-state
                        (in %ac0 %ac1)
                        (out %cp %xp %yp %ts %td scheme-args extra-regs))
+                    (label ,Lexit)
                     (inline ,(make-info-c-simple-call #f (lookup-c-entry Sreturn)) ,%c-simple-call)
                     (label ,Lmvreturn)
                     (set! ,(ref-reg %ac1) ,%ac0)
+                    ,(save-scheme-state
+                       (in %ac0 %ac1 scheme-args)
+                       (out %cp %xp %yp %ts %td extra-regs))
                     (goto ,Lexit))))]
            [else ($oops who "unrecognized hand-coded name ~s" sym)])]))
 
@@ -16008,6 +16290,7 @@
               (pass np-recognize-mrvs unparse-L4.5)
               (pass np-expand-foreign unparse-L4.75)
               (pass np-recognize-loops unparse-L4.875)
+              (pass np-recognize-attachment unparse-L4.9375)
               (pass np-name-anonymous-lambda unparse-L5)
               (pass np-convert-closures unparse-L6)
               (pass np-optimize-direct-call unparse-L6)

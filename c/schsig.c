@@ -65,7 +65,8 @@ static void split(k, s) ptr k; ptr *s; {
                                  m, m,
                                  CONTLINK(k),
                                  *s,
-                                 Snil);
+                                 Snil,
+                                 Sfalse);
     CONTLENGTH(k) = CONTCLENGTH(k) = n;
     CONTSTACK(k) = (ptr)s;
     *s = (ptr)DOUNDERFLOW;
@@ -279,7 +280,8 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
                                         split_stack_clength,
                                         STACKLINK(tc),
                                         *split_point,
-                                        Snil);
+                                        Snil,
+                                        Sfalse);
             tc_mutex_release()
 
           /* overwrite old return address with dounderflow */
@@ -686,7 +688,8 @@ void S_schsig_init() {
                            scaled_shot_1_shot_flag, scaled_shot_1_shot_flag,
                            FIX(0),
                            FIX(0),
-                           Snil));
+                           Snil,
+                           Sfalse));
 
         S_protect(&S_G.error_id);
         S_G.error_id = S_intern((const unsigned char *)"$c-error");

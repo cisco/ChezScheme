@@ -208,6 +208,18 @@ One-shot continuations are continuations that may be invoked at most
 once, whether explicitly or implicitly.
 They are obtained with \scheme{call/1cc}.
 
+Continuation \textit{attachment}s support efficient annotation and
+inspection of continuations. Each continution has either one immediate
+attachment or none, and an immediate attachment is added or replaced
+using \scheme{call-setting-continuation-attachment}. The
+\scheme{call-with-current-continuation-attachment} function retrieves
+the current continuation's attachment, if any. Although each
+continuation has a single immediate attachment, a continuation may
+extend another continuation that has its own separate attachment, and
+the \scheme{current-continuation-attachments} function returns a list
+of attachments for the current continuation and all continuations that
+it extends.
+
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{call/1cc}{\categoryprocedure}{(call/1cc \var{procedure})}
@@ -292,6 +304,132 @@ that the body has been exited.
 Extreme caution must be taken with this form of \scheme{dynamic-wind},
 since an error or long-running computation can leave interrupts
 and automatic garbage collection disabled.
+
+%----------------------------------------------------------------------------
+\entryheader\label{call-setting-continuation-attachment}\label{call-with-current-continuation-attachment}
+\formdef{call-setting-continuation-attachment}{\categoryprocedure}{(call-setting-continuation-attachment \var{val} \var{procedure})}
+\formdef{call-with-current-continuation-attachment}{\categoryprocedure}{(call-with-current-continuation-attachment \var{default-val} \var{procedure})}
+\returns the values returned by \var{procedure}
+\listlibraries
+\endentryheader
+
+\noindent \scheme{call-setting-continuation-attachment} calls
+\var{procedure} with no arguments while setting the attachment of the
+current continuation to \var{val}. The continuation of the call to
+\var{procedure} is the same as the continuation of the call to
+\scheme{call-setting-continuation-attachment} (i.e., it is still the
+current continuation). If the current continuation already has an
+attachment, it is replaced by \var{val}.
+
+\scheme{call-with-current-continuation-attachment} calls
+\var{procedure} with one argument: the current continuation's
+attachment, if any, or the value of \var{default-val} if the current
+continuation has no attachment. The continuation of the call to
+\var{procedure} is the same as the continuation of the call to
+\scheme{call-with-current-continuation-attachment} (i.e., it is still
+the current continuation).
+
+\schemedisplay
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+  (call-with-current-continuation-attachment
+   'nothing
+   (lambda (a) a)))) ; => milk
+
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+  (list
+   (call-with-current-continuation-attachment
+    'nothing
+    (lambda (a) a))))) ; => (nothing)
+
+(list
+ (call-setting-continuation-attachment
+  'milk
+  (lambda ()
+   (call-with-current-continuation-attachment
+    'nothing
+    (lambda (a) a))))) ; => (milk)
+
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+  (call-setting-continuation-attachment
+   'water
+   (lambda ()
+     (call-with-current-continuation-attachment
+       'nothing
+       (lambda (a) a)))))) ; => water
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{current-continuation-attachments}
+\formdef{current-continuation-attachments}{\categoryprocedure}{(current-continuation-attachments)}
+\returns a list
+\listlibraries
+\endentryheader
+
+\noindent \scheme{current-continuation-attachments} returns a list of
+attachments starting with the current continuation's attachment, if
+any, followed by the attachment of continuation that is extended by
+the current continuation, and so on. If a continuation has no
+attachment, then no corresponding element is included in the result
+list.
+
+\schemedisplay
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+  (current-continuation-attachments))) ; => (milk)
+
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+   (vector
+    (call-setting-continuation-attachment
+     'cookies
+     (lambda ()
+       (current-continuation-attachments)))))) ; => #((cookies milk))
+
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+   (call-setting-continuation-attachment
+    'water
+    (lambda ()
+      (current-continuation-attachments))))) ; => (water)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader\label{continuation-next-attachments}
+\formdef{continuation-next-attachments}{\categoryprocedure}{(continuation-next-attachments \var{continuation})}
+\returns a list
+\listlibraries
+\endentryheader
+
+\noindent \scheme{continuation-next-attachments} takes a continuation
+and returns the list of attachments that
+\scheme{current-continuation-attachments} would return if it were
+called as the next step of \var{continuation}. Note that the result
+list will not include any attachment on the immediate continuation
+that is captured by \var{continuation}---only the attachments of continuations
+that are extended by \var{continuation}.
+
+\schemedisplay
+(define about-to-snack
+  (call/cc
+   (lambda (esc)
+    (call-setting-continuation-attachment
+     'milk
+     (lambda ()
+       (snack (call-setting-continuation-attachment
+               'cookies
+               (lambda () (call/cc esc)))))))))
+
+(continuation-next-attachments about-to-snack) ; => (milk)
+\endschemedisplay
 
 \section{Engines\label{SECTENGINES}}
 

@@ -260,6 +260,14 @@ if [ "$installman" = "" ] ; then
   installman=$installprefix/$installmansuffix
 fi
 
+if [ "$disablex11" = "no" ] ; then
+  if [ $m = a6osx ] || [ $m = ta6osx ] ; then
+    if [ ! -d /opt/X11/include/ ] ; then
+      disablex11=yes
+    fi
+  fi
+fi
+
 if [ "$help" = "yes" ]; then
   echo "Purpose:"
   echo "  $0 determines the machine type and constructs a custom Makefile"

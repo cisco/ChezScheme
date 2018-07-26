@@ -885,12 +885,14 @@
         (defref RELOCCODE reloc-table code)
         (defref RELOCIT reloc-table data)
 
+        (defref CONTCODE continuation code)
         (defref CONTSTACK continuation stack)
         (defref CONTLENGTH continuation stack-length)
         (defref CONTCLENGTH continuation stack-clength)
         (defref CONTLINK continuation link)
         (defref CONTRET continuation return-address)
         (defref CONTWINDERS continuation winders)
+        (defref CONTATTACHMENTS continuation attachments)
 
         (defref RTDCOUNTSTYPE rtd-counts type)
         (defref RTDCOUNTSTIMESTAMP rtd-counts timestamp)

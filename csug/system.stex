@@ -3671,8 +3671,8 @@ If the current caf\'e is the original caf\'e, or if \scheme{exit}
 is called from a script, \scheme{exit} exits from Scheme.
 In this case, the exit code for the Scheme process is 0 if
 no arguments were supplied or if the first argument is void,
-the value of the first argument
-if it is a 32-bit exact integer, and -1 otherwise.
+the value of the first argument cast to a C int if
+it is an exact integer of the host machine's bit width, and 1 otherwise.
 
 %----------------------------------------------------------------------------
 \entryheader
