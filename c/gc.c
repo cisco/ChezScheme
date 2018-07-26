@@ -557,7 +557,6 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             }
         } else {
             iptr len, n;
-            ISPC s;
             len = CLOSLEN(pp);
             n = size_closure(len);
 #ifdef ENABLE_OBJECT_COUNTS
