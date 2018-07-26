@@ -378,12 +378,6 @@
       ($oops who "~s is not a procedure" p))
     (#3%call-with-current-continuation-attachment default-val (lambda (x) (p x)))))
 
-(define $make-shift-attachment
-  (lambda (proc)
-    (if (procedure? proc)
-        (#3%$make-shift-attachment proc)
-        ($oops #f "attempt to apply non-procedure ~s" proc))))
-
 (define $code? (lambda (x) ($code? x)))
 
 (define $system-code? (lambda (x) ($system-code? x)))

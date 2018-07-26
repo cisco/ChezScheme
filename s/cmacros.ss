@@ -2586,7 +2586,6 @@
      (nuate #f 0 #f #t)
      (virtual-register #f 1 #t #t)
      (set-virtual-register! #f 1 #t #t)
-     ($shift-attachment #f 0 #f #f)
   ))
 
 (let ()

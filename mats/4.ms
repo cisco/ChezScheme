@@ -3283,6 +3283,11 @@
    (define (returns-not-a-procedure) 'also-something-else)
    (define (return-three-values) (values 1 2 3))
    (define (return-the-same-value v) v)
+   (define (check-attachments-start v r)
+     (let ([ats (current-continuation-attachments)])
+       (and (pair? ats)
+            (equal? (car ats) v)
+            r)))
     #t)
   (equal? 'yep (call-with-yep get-or-nope))
   (equal? 'yeah (call-with-yep (lambda () (call-with-yeah get-or-nope))))
@@ -3425,6 +3430,31 @@
               'ok
               (lambda ()
                 (call-with-values (lambda () (return-one)) act-like-list))))))
+  (equal? '(ok)
+          (call-with-yep ; just to ensure the argument `lambda` isn't inlined
+           (lambda ()
+             (call-setting-continuation-attachment
+              'ok
+              (lambda ()
+                ;; Should be detected as a loop form
+                (let loop ([i 1000])
+                  (if (fx= i 0)
+                      (current-continuation-attachments)
+                      (loop (sub1 i)))))))))
+  (equal? 'ok
+          (call-setting-continuation-attachment
+           -1
+           (lambda ()
+             (let loop ([i 0])
+               (cond
+                [(= i 1000) 'ok]
+                [else (check-attachments-start
+                       (sub1 i)
+                       (call-setting-continuation-attachment
+                        i
+                        (lambda ()
+                          ;; Not detected as a loop, but as a direct call
+                          (loop (add1 i)))))])))))
  )
  
 ;;; section 4-7:

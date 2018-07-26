@@ -2092,7 +2092,6 @@
   ($make-record-type #;[sig [(rtd maybe-rtd sub-ptr sub-list ptr ptr ptr ...) -> (rtd)]] [flags pure alloc cp02])
   ($make-relocation-table! [flags])
   ($make-rnrs-libraries [flags])
-  ($make-shift-attachment [flags])
   ($make-source-oops [flags])
   ($make-src-condition [flags])
   ($make-textual-input/output-port #;[sig [(string port-handler string string) (string port-handler string string ptr) -> (textual-input/output-port)]] [flags alloc])

@@ -125,7 +125,6 @@
 (define-hand-coded-library-entry dofretu32*)
 (define-hand-coded-library-entry domvleterr)
 (define-hand-coded-library-entry values-error)
-(define-hand-coded-library-entry $shift-attachment)
 (define-hand-coded-library-entry bytevector=?)
 
 (define $instantiate-code-object ($hand-coded '$instantiate-code-object))
