@@ -11614,15 +11614,24 @@
             (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))]
         [(set! ,[lvalue] (attachment-get ,[t]))
          ;; Default expression => need to check for reified continuation
-         ;; and attachment beyond it. For now, we always reify the continuation
-         ;; to simplify the check
-         (let ([ats (make-tmp 'ats)])
+         ;; and attachment beyond it
+         (let ([uf (make-tmp 'uf)]
+               [sl (make-tmp 'sl)]
+               [ats (make-tmp 'ats)])
            (%seq
-             (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
-             (set! ,ats ,(%tc-ref attachments))
-             (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
-                 (set! ,lvalue ,t)
-                 (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp))))))]
+            (set! ,uf (literal ,(make-info-literal #f 'library-code
+                                      (lookup-libspec dounderflow)
+                                      (fx+ (constant code-data-disp) (constant size-rp-header)))))
+            (if ,(%inline eq? ,%ref-ret ,uf)
+                ;; Reified, so maybe an attachment
+                ,(%seq
+                  (set! ,sl ,(%tc-ref stack-link))
+                  (set! ,ats ,(%tc-ref attachments))
+                  (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,ats)
+                      (set! ,lvalue ,t)
+                      (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))
+                ;; Not reified, so no attachment
+                (set! ,lvalue ,t))))]
         [(attachment-set ,aop)
          (case aop
            [(pop)
