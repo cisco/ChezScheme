@@ -11627,7 +11627,9 @@
                 ,(%seq
                   (set! ,sl ,(%tc-ref stack-link))
                   (set! ,ats ,(%tc-ref attachments))
-                  (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,ats)
+                  (if (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,ats)
+                          (true)
+                          ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,(%constant sfalse)))
                       (set! ,lvalue ,t)
                       (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))
                 ;; Not reified, so no attachment
