@@ -1373,6 +1373,7 @@
   (hash-table-for-each [sig [(old-hash-table procedure) -> (void)]] [flags])
   (hash-table-map [sig [(old-hash-table procedure) -> (list)]] [flags true])
   (hashtable-cell [sig [(old-hash-table ptr ptr) -> ((ptr . ptr))]] [flags true])
+  (hashtable-cells [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
   (hashtable-values [sig [(hashtable) -> (vector)]] [flags alloc])
   (hashtable-weak? [sig [(hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (iconv-codec [feature iconv] [sig [(sub-string) -> (codec)]] [flags pure true])
@@ -1784,6 +1785,7 @@
   ($dynamic-closure-counts [flags alloc])  ; added for closure instrumentation
   ($enum-set-members [flags])
   ($eol-style? [flags])
+  ($eq-hashtable-cells [flags discard])
   ($eq-hashtable-clear! [flags true])
   ($eq-hashtable-copy [flags true discard])
   ($eq-hashtable-entries [flags discard])

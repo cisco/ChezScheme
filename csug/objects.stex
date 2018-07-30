@@ -1862,7 +1862,7 @@ The values may appear in any order in the returned vector.
 (hashtable-set! ht p1 "one")
 (hashtable-set! ht p2 "two")
 (hashtable-set! ht 'q "two")
-(hashtable-values ht) ;=> #("one" "two" "two")
+(hashtable-values ht) ;=> #("one" "two" "two") \var{or any permutation}
 \endschemedisplay
 
 This procedure is equivalent to:
@@ -1875,6 +1875,33 @@ This procedure is equivalent to:
 
 but more efficient since the separate vector of keys need
 not be created.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable})}
+\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable} \var{size})}
+\returns a vector of up to \var{size} elements containing the cells of \var{hashtable}
+\listlibraries
+\endentryheader
+
+\noindent
+Each element of the result vector is the value of one of the cells in \var{hashtable}.
+The cells may appear in any order in the returned vector.
+If \var{size} is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than \var{size} cells.
+If \var{size} is not specified, then the result vector has \scheme{(hashtable-size \var{hashtable})} elements.
+Different calls to \scheme{hashtable-cells}
+with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
+may return different subsets of \var{hashtable}'s cells.
+
+\schemedisplay
+(define ht (make-eqv-hashtable))
+(hashtable-set! ht 1 'one)
+(hashtable-set! ht 2 'two)
+(hashtable-cells ht) ;=> #((1 . one) (2 . two)) \var{or} #((2 . two) (1 . one))
+(hashtable-cells ht 1) ;=> #((1 . one)) \var{or} #((2 . two))
+(hashtable-cells ht 0) ;=> #()
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader

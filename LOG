@@ -991,3 +991,7 @@
     system.stex, release_notes.stex
 - fix boot_call and the invoke code object to handle multiple values
     scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
+- add hashtable-cells
+    newhash.ss, primdata.ss,
+    hash.ms, root-experr*,
+    objects.stex, release_notes.stex
