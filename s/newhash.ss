@@ -50,6 +50,7 @@ Documentation notes:
 (define hashtable-clear!)                ; hashtable [k], k >= 0
 (define hashtable-keys)                  ; hashtable
 (define hashtable-entries)               ; hashtable
+(define hashtable-cells)                 ; hashtable
 (define hashtable-equivalence-function)  ; hashtable
 (define hashtable-hash-function)         ; hashtable
 (define hashtable-mutable?)              ; hashtable
@@ -91,6 +92,7 @@ Documentation notes:
 (define $eq-hashtable-keys)              ; eq-hashtable
 (define $eq-hashtable-values)            ; eq-hashtable
 (define $eq-hashtable-entries)           ; eq-hashtable
+(define $eq-hashtable-cells)             ; eq-hashtable
 (define $eq-hashtable-copy)              ; eq-hashtable [mutableflag]
 (define $eq-hashtable-clear!)            ; eq-hashtable [fxminlen]
 
@@ -304,6 +306,22 @@ Documentation notes:
                       (g (cdr b) (fx+ ikey 1))))))))
         (values keys vals))))
 
+  (define $ht-hashtable-cells
+    (lambda (h max-sz)
+      (let ([sz (fxmin max-sz (ht-size h))])
+        (let ([cells (make-vector sz)]
+              [vec (ht-vec h)])
+          (let ([n (vector-length vec)])
+            (let f ([i 0] [icell 0])
+              (unless (or (fx= i n) (fx= icell sz))
+                (let g ([b (vector-ref vec i)] [icell icell])
+                  (if (or (null? b) (fx=? icell sz))
+                      (f (fx+ i 1) icell)
+                      (let ([a (car b)])
+                        (vector-set! cells icell a)
+                        (g (cdr b) (fx+ icell 1))))))))
+          cells))))
+
   (define eqv-generic?
     (lambda (x)
       ; all numbers except fixnums must go through generic hashtable
@@ -351,7 +369,7 @@ Documentation notes:
         ($eq-hashtable-copy (eqv-ht-eqht h) mutable?)
         ($gen-hashtable-copy (eqv-ht-genht h) mutable?))))
 
-  (module ($eqv-hashtable-keys $eqv-hashtable-values $eqv-hashtable-entries)
+  (module ($eqv-hashtable-keys $eqv-hashtable-values $eqv-hashtable-entries $eqv-hashtable-cells)
     (define vector-append
       (lambda (v1 v2)
         (let ([n1 (vector-length v1)] [n2 (vector-length v2)])
@@ -383,7 +401,12 @@ Documentation notes:
                      [(keys2 vals2) ($ht-hashtable-entries (eqv-ht-genht h))])
           (values
             (vector-append keys1 keys2)
-            (vector-append vals1 vals2))))))
+            (vector-append vals1 vals2)))))
+    (define $eqv-hashtable-cells
+      (lambda (h max-sz)
+        (let* ([cells1 ($eq-hashtable-cells (eqv-ht-eqht h) max-sz)]
+               [cells2 ($ht-hashtable-cells (eqv-ht-genht h) (fx- max-sz (vector-length cells1)))])
+          (vector-append cells1 cells2)))))
 
   (define number-hash
     (lambda (z)
@@ -775,10 +798,10 @@ Documentation notes:
               ($ht-hashtable-clear! (eqv-ht-genht h) minlen)]
              [else ($ht-hashtable-clear! h minlen)]))])))
 
-  (set! hashtable-keys
+  (set-who! hashtable-keys
     (lambda (h)
       (unless (xht? h)
-        ($oops 'hashtable-keys "~s is not a hashtable" h))
+        ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
         [(eq) ($eq-hashtable-keys h)]
         [(eqv) ($eqv-hashtable-keys h)]
@@ -792,14 +815,28 @@ Documentation notes:
         [(eqv) ($eqv-hashtable-values h)]
         [else ($ht-hashtable-values h)])))
 
-  (set! hashtable-entries
+  (set-who! hashtable-entries
     (lambda (h)
       (unless (xht? h)
-        ($oops 'hashtable-entries "~s is not a hashtable" h))
+        ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
         [(eq) ($eq-hashtable-entries h)]
         [(eqv) ($eqv-hashtable-entries h)]
         [else ($ht-hashtable-entries h)])))
+
+  (set-who! hashtable-cells
+    (case-lambda
+     [(h max-sz)
+      (unless (xht? h)
+        ($oops who "~s is not a hashtable" h))
+      (unless (and (integer? max-sz) (exact? max-sz) (not (negative? max-sz)))
+        ($oops who "~s is not a valid length" max-sz))
+      (let ([max-sz (if (fixnum? max-sz) max-sz (hashtable-size h))])
+        (case (xht-type h)
+          [(eq) ($eq-hashtable-cells h max-sz)]
+          [(eqv) ($eqv-hashtable-cells h max-sz)]
+          [else ($ht-hashtable-cells h max-sz)]))]
+     [(h) (hashtable-cells h (hashtable-size h))]))
 
   (set! hashtable-size
     (lambda (h)
@@ -1027,6 +1064,20 @@ Documentation notes:
                       (let ([keyval ($tlc-keyval b)])
                         (vector-set! keys j (car keyval))
                         (vector-set! vals j (cdr keyval))
+                        (inner ($tlc-next b) (fx+ j 1)))))))))))
+
+  (set! $eq-hashtable-cells
+    (lambda (h max-sz)
+      (let ([vec (ht-vec h)] [size (fxmin max-sz (ht-size h))])
+        (let ([n (vector-length vec)] [cells (make-vector size)])
+          (let outer ([i 0] [j 0])
+            (if (or (fx= i n) (fx= j size))
+                cells
+                (let inner ([b (vector-ref vec i)] [j j])
+                  (if (or (fixnum? b) (fx= j size))
+                      (outer (fx+ i 1) j)
+                      (let ([keyval ($tlc-keyval b)])
+                        (vector-set! cells j keyval)
                         (inner ($tlc-next b) (fx+ j 1)))))))))))
 
   (set! $eq-hashtable-copy

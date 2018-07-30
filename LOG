@@ -1013,3 +1013,7 @@
     cmacro.ss, primdata.ss, library.ss types.ss, mkheader.ss,
     alloc.c, gc.c, schsig.c, thread.c, externs.h,
     4.ms, control.stex, release_notes.stex
+- add hashtable-cells
+    newhash.ss, primdata.ss,
+    hash.ms, root-experr*,
+    objects.stex, release_notes.stex

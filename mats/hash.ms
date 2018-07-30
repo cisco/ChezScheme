@@ -504,6 +504,17 @@
     (hashtable-entries $ht 72))
   (error? ; not a hashtable
     (hashtable-entries '(hash . table)))
+ ; hashtable-cells
+  (error? ; wrong argument count
+    (hashtable-cells))
+  (error? ; wrong argument count
+    (hashtable-cells $ht 72 43))
+  (error? ; not a hashtable
+    (hashtable-cells '(hash . table)))
+  (error? ; bad size
+    (hashtable-cells $ht -79))
+  (error? ; bad size
+    (hashtable-cells $ht 'not-an-unsigned-integer))
  ; hashtable-hash-function
   (error? ; wrong argument count
     (hashtable-hash-function))
@@ -919,6 +930,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h 'a 'aval) (void))
   (equal?
     (list
@@ -944,6 +958,12 @@
   (same-elements? (hashtable-keys h) '#(a b c))
   (same-elements? (hashtable-values h) '#(bval cval aval))
   (equal-entries? (hashtable-entries h) '#(b c a) '#(bval cval aval))
+  (same-elements? (hashtable-cells h) '#((b . bval) (c . cval) (a . aval)))
+  (same-elements? (hashtable-cells h (expt 2 100)) '#((b . bval) (c . cval) (a . aval)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells '#((b . bval) (c . cval)))
+        (same-elements? cells '#((b . bval) (a . aval)))
+        (same-elements? cells '#((c . cval) (a . aval)))))
   #;(same-elements? (list->vector (hashtable-map h cons)) '#((a . aval) (b . bval) (c . cval)))
   #;(same-elements?
     (let ([v (make-vector 3)] [i 0])
@@ -1063,6 +1083,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h ka 'aval) (void))
   (equal?
     (list
@@ -1088,6 +1111,13 @@
   (same-elements? (hashtable-keys h) '#((a) (b) (c)))
   (same-elements? (hashtable-values h) '#(bval cval aval))
   (equal-entries? (hashtable-entries h) '#((a) (b) (c)) '#(aval bval cval))
+  (same-elements? (hashtable-cells h) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (same-elements? (hashtable-cells h (expt 2 100)) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells (vector (cons ka 'aval) (cons kb 'bval)))
+        (same-elements? cells (vector (cons ka 'aval) (cons kc 'cval)))
+        (same-elements? cells (vector (cons kb 'bval) (cons kc 'cval)))))
+  (andmap weak-pair? (vector->list (hashtable-cells h)))
   #;(same-elements? (list->vector (hashtable-map h cons)) '#(((a) . aval) ((b) . bval) ((c) . cval)))
   #;(same-elements?
     (let ([v (make-vector 3)] [i 0])
@@ -1165,6 +1195,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   #;(eqv? (hashtable-map h (lambda args (error #f "oops"))) '())
   #;(eqv? (hashtable-for-each h (lambda args (error #f "oops"))) (void))
   #;(eqv? (hashtable-for-each-cell h (lambda args (error #f "oops"))) (void))
@@ -1299,6 +1332,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h ka ka) (void))
   (equal?
     (list
@@ -1324,6 +1360,13 @@
   (same-elements? (hashtable-keys h) '#((a) (b) (c)))
   (same-elements? (hashtable-values h) '#((a) (b) (c)))
   (equal-entries? (hashtable-entries h) '#((a) (b) (c)) '#((a) (c) (b)))
+  (same-elements? (hashtable-cells h) (vector (cons ka ka) (cons kb kc) (cons kc kb)))
+  (same-elements? (hashtable-cells h (expt 2 100)) (vector (cons ka ka) (cons kb kc) (cons kc kb)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells (vector (cons ka ka) (cons kb kc)))
+        (same-elements? cells (vector (cons ka ka) (cons kc kb)))
+        (same-elements? cells (vector (cons kb kc) (cons kc kb)))))
+  (andmap ephemeron-pair? (vector->list (hashtable-cells h)))
   #;(same-elements? (list->vector (hashtable-map h cons)) '#(((a) . a) ((b) . c) ((c) . b)))
   #;(same-elements?
     (let ([v (make-vector 3)] [i 0])
@@ -1630,6 +1673,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (eq-hashtable-set! h 'a 'aval) (void))
   (equal?
     (list
@@ -1655,6 +1701,12 @@
   (same-elements? (hashtable-keys h) '#(a b c))
   (same-elements? (hashtable-values h) '#(bval cval aval))
   (equal-entries? (hashtable-entries h) '#(b c a) '#(bval cval aval))
+  (same-elements? (hashtable-cells h) '#((a . aval) (b . bval) (c . cval)))
+  (same-elements? (hashtable-cells h (expt 2 100)) '#((a . aval) (b . bval) (c . cval)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells '#((a . aval) (b . bval)))
+        (same-elements? cells '#((a . aval) (c . cval)))
+        (same-elements? cells '#((b . bval) (c . cval)))))
   (equal? (eq-hashtable-ref h 'a 1) 'aval)
   (equal? (eq-hashtable-ref h 'b #f) 'bval)
   (equal? (eq-hashtable-ref h 'c 'nope) 'cval)
@@ -1774,6 +1826,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (eq-hashtable-set! h ka 'aval) (void))
   (equal?
     (list
@@ -1799,6 +1854,13 @@
   (same-elements? (hashtable-keys h) '#((a) (b) (c)))
   (same-elements? (hashtable-values h) '#(aval bval cval))
   (equal-entries? (hashtable-entries h) '#((a) (b) (c)) '#(aval bval cval))
+  (same-elements? (hashtable-cells h) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (same-elements? (hashtable-cells h (expt 2 100)) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells (vector (cons ka 'aval) (cons kb 'bval)))
+        (same-elements? cells (vector (cons ka 'aval) (cons kc 'cval)))
+        (same-elements? cells (vector (cons kb 'bval) (cons kc 'cval)))))
+  (andmap weak-pair? (vector->list (hashtable-cells h)))
   (equal? (eq-hashtable-ref h ka 1) 'aval)
   (equal? (eq-hashtable-ref h kb #f) 'bval)
   (equal? (eq-hashtable-ref h kc 'nope) 'cval)
@@ -1964,6 +2026,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (eq-hashtable-set! h ka 'aval) (void))
   (equal?
     (list
@@ -1989,6 +2054,13 @@
   (same-elements? (hashtable-keys h) '#((a) (b) (c)))
   (same-elements? (hashtable-values h) '#(aval bval cval))
   (equal-entries? (hashtable-entries h) '#((a) (b) (c)) '#(aval bval cval))
+  (same-elements? (hashtable-cells h) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (same-elements? (hashtable-cells h (expt 2 100)) (vector (cons ka 'aval) (cons kb 'bval) (cons kc 'cval)))
+  (let ([cells (hashtable-cells h 2)])
+    (or (same-elements? cells (vector (cons ka 'aval) (cons kb 'bval)))
+        (same-elements? cells (vector (cons ka 'aval) (cons kc 'cval)))
+        (same-elements? cells (vector (cons kb 'bval) (cons kc 'cval)))))
+  (andmap ephemeron-pair? (vector->list (hashtable-cells h)))
   (equal? (eq-hashtable-ref h ka 1) 'aval)
   (equal? (eq-hashtable-ref h kb #f) 'bval)
   (equal? (eq-hashtable-ref h kc 'nope) 'cval)
@@ -2308,6 +2380,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h 'a 'aval) (void))
   (equal?
     (list
@@ -2451,6 +2526,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h ka 'aval) (void))
   (equal?
     (list
@@ -2703,6 +2781,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h ka 'aval) (void))
   (equal?
     (list
@@ -3222,6 +3303,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (hashtable-set! h 'a 'aval) (void))
   (equal?
     (list
@@ -3357,6 +3441,9 @@
   (same-elements? (hashtable-keys h) '#())
   (same-elements? (hashtable-values h) '#())
   (equal-entries? (hashtable-entries h) '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
   (eqv? (symbol-hashtable-set! h 'a 'aval) (void))
   (equal?
     (list
@@ -3541,6 +3628,7 @@
   (same-elements? (hashtable-keys $ght) $ght-keys1)
   (same-elements? (hashtable-values $ght) $ght-vals1)
   (equal-entries? (hashtable-entries $ght) $ght-keys1 $ght-vals1)
+  (same-elements? (hashtable-cells $ght) (vector-map cons $ght-keys1 $ght-vals1))
   (begin
     (define $ght-keys2 '#((a . b) (1 . 2) 3/4 3.4 3.5 1e23 #e1e50 1+1i 3+3.2i -15 #e1e-50 #1=(a . #1#) (#2=(#2# b c))))
     (define $ght-vals2 '#(a b c d e f g h i j k l m))

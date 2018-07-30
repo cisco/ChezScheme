@@ -58,6 +58,14 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Extracting a subset of hashtable cells (9.5.1)}
+
+The new \scheme{hashtable-cells} function is similar to
+\scheme{hashtable-entries}, but it returns a vector of cells instead
+of two vectors. An optional argument limits the size of the result vector,
+which enables a traversal of $N$ entries in $O(N)$ time when a hash table
+has more than $O(N)$ entries.
+
 \subsection{Procedure arity-mask adjustment and redirection (9.5.1)}
 
 The new procedure \scheme{make-arity-wrapper-procedure} creates a
