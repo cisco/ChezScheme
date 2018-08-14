@@ -28,6 +28,39 @@ later in this file):
 ./configure
 sudo make install
 
+for chinese:
+
+  As we all know, china has the great firlwall. Executing the `./configure` will be hard to succeed.
+  The reason is that ChezScheme depend on three packages (on github),
+
+  * https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz
+
+  * https://github.com/madler/zlib/archive/v1.2.11.tar.gz
+
+  * https://github.com/dybvig/stex/archive/v1.2.1.tar.gz   
+
+  This is the link to the three packages,
+  first, download their,
+  and then mv to the ChezScheme directoy,
+  finally execute `./configure`
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+|for chinese:众所周知，中国有the great firewall，如果你没有翻墙的话，那么在执行 `./configure` 的时候基本不会成功                                        |
+|原因是编译chezscheme需要依赖下载三个github上三个发布的安装包。                                                                                      |
+|                                                                                                                                            |
+|* https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz                                                                 |
+|                                                                                                                                            |
+|* https://github.com/madler/zlib/archive/v1.2.11.tar.gz                                                                                     |
+|                                                                                                                                            |
+|* https://github.com/dybvig/stex/archive/v1.2.1.tar.gz                                                                                      |
+|                                                                                                                                            |
+|这是三个安装包的链接，请用浏览器打开，然后下载下来放到chez scheme的文件夹中，然后再执行 `./configure` 。                                                 |
+|                                                                                                                                            |
+|see more:                                                                                                                                   |
+|  https://github.com/ltoddy/ltoddy.github.io/wiki/%E5%85%B3%E4%BA%8EChez-Scheme%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85%E9%97%AE%E9%A2%98       |
+|                                                                                                                                            |
+----------------------------------------------------------------------------------------------------------------------------------------------
+
 This should not take more than a minute or so, after which the commands
 'scheme' and 'petite' can be used to run Chez Scheme and Petite Chez
 Scheme, while 'man scheme' and 'man petite' can be used to view the

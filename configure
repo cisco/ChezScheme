@@ -328,17 +328,31 @@ if [ -d '.git' ] && command -v git >/dev/null 2>&1 ; then
 else
   if [ ! -f 'nanopass/nanopass.ss' ] ; then
     rmdir nanopass > /dev/null 2>&1
-    (curl  -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -zxf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
+    if [ ! -f 'nanopass-framework-scheme-1.9.tar.gz' ]; then
+      (curl  -L -o nanopass-framework-scheme-1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz &&
+      tar -zxf nanopass-framework-scheme-1.9.tar.gz &&
+      mv nanopass-framework-scheme-1.9 nanopass &&
+      rm nanopass-framework-scheme-1.9.tar.gz) || exit 1
+    fi
   fi
 
   if [ ! -f 'zlib/configure' ] ; then
     rmdir zlib > /dev/null 2>&1
-    (curl -L -o v1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz && tar -xzf v1.2.11.tar.gz && mv zlib-1.2.11 zlib && rm v1.2.11.tar.gz) || exit 1
+    if [ ! -f 'zlib-1.2.11.tar.gz' ]; then
+      (curl -L -o zlib-1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz &&
+      tar -xzf zlib-1.2.11.tar.gz &&
+      mv zlib-1.2.11 zlib && rm zlib-1.2.11.tar.gz) || exit 1 
+    fi
   fi
 
   if [ ! -f 'stex/Mf-stex' ] ; then
     rmdir stex > /dev/null 2>&1
-    (curl -L -o v1.2.1.tar.gz https://github.com/dybvig/stex/archive/v1.2.1.tar.gz && tar -zxf v1.2.1.tar.gz && mv stex-1.2.1 stex && rm v1.2.1.tar.gz) || exit 1
+    if [ ! -f 'stex-1.2.1.tar.gz' ]; then
+      (curl -L -o stex-1.2.1.tar.gz https://github.com/dybvig/stex/archive/v1.2.1.tar.gz &&
+      tar -zxf stex-1.2.1.tar.gz &&
+      mv stex-1.2.1 stex &&
+      rm stex-1.2.1.tar.gz) || exit 1
+    fi
   fi
 fi
 

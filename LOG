@@ -991,3 +991,5 @@
     system.stex, release_notes.stex
 - fix boot_call and the invoke code object to handle multiple values
     scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
+- change the way the dependency package
+    configure, BUILDING
