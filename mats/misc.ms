@@ -272,6 +272,18 @@
        (case-lambda
          [() (q 0)]
          [(x) (q)])))
+   ; regression tests for non-tail-call mref lvalue destination
+   (begin
+     (define (c1-f a)
+       (let ([x (fxvector 0)])
+         (lambda (v) (fxvector-set! x 0 (modulo v a)) x)))
+     #t)
+   (equal? ((c1-f 7) 10) #vfx(3))
+   (begin
+     (define (c1-id x) x)
+     (define (c1-g x) (vector-set-fixnum! x 0 (c1-id 17)))
+     #t)
+   (equal? (let ([v (vector 3)]) (c1-g v) v) '#(17))
 )
 
 (mat compiler2 ; random tests
