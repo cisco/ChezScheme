@@ -991,6 +991,12 @@
     system.stex, release_notes.stex
 - fix boot_call and the invoke code object to handle multiple values
     scheme.c, cpnanopass.ss, 7.ms, release_notes.stex, system.stex
+- the compiler now uses a temporary variable to hold the return
+  value of a nested call across the restore-local-saves form to
+  properly handle the case where the destination lvalue is an mref
+  whose base and/or index is a local save.
+    cpnanopass.ss,
+    misc.ms
 - add ordered guardians through a new optional argument to make-guardian
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,

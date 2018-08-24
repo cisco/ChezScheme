@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.1}
 \thatversion{Version 8.4}
-\pubmonth{January}
+\pubmonth{August}
 \pubyear{2018}
 
 \begin{document}
@@ -1621,12 +1621,21 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Incorrect return code when \protect\scheme{exit} is called with multiple arguments}
+\subsection{Invalid memory reference from \protect\scheme{fxvector} calls (9.5)}
+
+A compiler bug that could result in an invalid memory reference or
+some other unpleasant behavior for calls to \scheme{fxvector} in
+which the nested subexpression to compute the new value to be stored
+is nontrivial has been fixed.
+This bug could also affect calls to \scheme{vector-set-fixnum!} and possibly
+other primitive operations.
+
+\subsection{Incorrect return code when \protect\scheme{exit} is called with multiple arguments (9.5)}
 
 A bug in the implementation of the default exit handler with multiple
 values has been fixed.
 
-\subsection{Boot files containing compiled library code fail to load}
+\subsection{Boot files containing compiled library code fail to load (9.5)}
 
 Compiled library code may now appear within fasl objects loaded during
 the boot process, provided that they are appended to the end of the base boot

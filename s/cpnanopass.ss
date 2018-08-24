@@ -11601,7 +11601,12 @@
         [(set! ,[lvalue] (mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...)))
          (build-nontail-call info mdcl t0? t1* t* '() #f #f
            (lambda (newframe-info)
-             (%seq (remove-frame ,newframe-info) (set! ,lvalue ,%ac0) (restore-local-saves ,newframe-info))))]
+             (let ([retval (make-tmp 'retval)])
+               (%seq
+                 (remove-frame ,newframe-info)
+                 (set! ,retval ,%ac0)
+                 (restore-local-saves ,newframe-info)
+                 (set! ,lvalue ,retval)))))]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
          (build-foreign-call info t0 t1* #f #t)]
         [(set! ,[lvalue] (foreign-call ,info ,[t0] ,[t1*] ...))
