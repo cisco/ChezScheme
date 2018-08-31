@@ -21,6 +21,9 @@ build:
 install:
 	(cd $(workarea) && $(MAKE) install)
 
+uninstall:
+	(cd $(workarea) && $(MAKE) uninstall)
+
 test:
 	(cd $(workarea) && $(MAKE) test PREFIX=$(workarea)/)
 
