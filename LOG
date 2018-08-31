@@ -1003,3 +1003,5 @@
     syntax.ss
 - restore the import code on reset to provide consistent error message
     syntax.ss, 8.ms
+- add uninstall target
+    Makefile.in, Makefile-workarea.in, Mf-install.in
