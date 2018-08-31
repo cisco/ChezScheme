@@ -195,9 +195,11 @@ env OS=Windows_NT make
 
 Prerequisites:
 
-* Cygwin or Bash/WSL with bash, grep, make, sed, etc.
+* Cygwin or Bash/WSL with bash, git, grep, make, sed, etc.
 * Microsoft Visual Studio 2017 or 2015
 * WiX Toolset (for making an install)
+
+Be sure that git config core.autocrlf is set to false.
 
 To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
 set PATH:
