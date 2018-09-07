@@ -1005,3 +1005,5 @@
     syntax.ss, 8.ms
 - add uninstall target
     Makefile.in, Makefile-workarea.in, Mf-install.in
+- add PDB files for Windows
+    c/*nt, wininstall/*nt.wxs

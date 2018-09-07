@@ -12,8 +12,14 @@
         <Component Id="cmp372F759C97C3C69E4C336B81D807E4F5" Guid="*">
           <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.lib" />
         </Component>
+        <Component Id="cmp009F56824D2716FAAC978FE17A4D947D" Guid="*">
+          <File Id="filDD0E7D06D27FC4C00388CB48E4B2818C" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.pdb" />
+        </Component>
         <Component Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" Guid="*">
           <File Id="fil8A260A0B8935F8F9011AA2EDB9147BDE" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\petite.exe" />
+        </Component>
+        <Component Id="cmp06CB93AA8B342FF0F33E91AAD7442833" Guid="*">
+          <File Id="fil28785B1496AE7F6C41D003949FC2B161" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\petite.pdb" />
         </Component>
         <Component Id="cmpDEB15B7CB19176296C92E8032592FDB4" Guid="*">
           <File Id="fil25DA5700F745B21085322BA7CBBEFEB7" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\scheme.exe">
@@ -25,6 +31,9 @@
                       Icon="cs.ico"
                       WorkingDirectory="APPLICATIONFOLDER"/>
           </File>
+        </Component>
+        <Component Id="cmp11A1080D3E8EBF95EED2BE17CA4E3140" Guid="*">
+          <File Id="filB463198F2BD7379A7E3A758313DBEF30" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\scheme.pdb" />
         </Component>
       </Directory>
     </DirectoryRef>
@@ -60,8 +69,11 @@
       <ComponentRef Id="cmpA67EF6318D00B4209BFCD0BFDCDF781C" />
       <ComponentRef Id="cmpF41FF9DE554F79FB6FBD85E5B80A5221" />
       <ComponentRef Id="cmp372F759C97C3C69E4C336B81D807E4F5" />
+      <ComponentRef Id="cmp009F56824D2716FAAC978FE17A4D947D" />
       <ComponentRef Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" />
+      <ComponentRef Id="cmp06CB93AA8B342FF0F33E91AAD7442833" />
       <ComponentRef Id="cmpDEB15B7CB19176296C92E8032592FDB4" />
+      <ComponentRef Id="cmp11A1080D3E8EBF95EED2BE17CA4E3140" />
       <ComponentRef Id="cmpCBDB945622604667783C3C57A0427DF5" />
       <ComponentRef Id="cmpD7880184C113065E511275EFD531D589" />
       <ComponentRef Id="cmp5211817ED85951CDAF2FD5E2419BD211" />
