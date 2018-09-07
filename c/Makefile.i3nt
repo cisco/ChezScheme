@@ -28,16 +28,17 @@ MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /fp:precise /Ox /W3 /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /fp:precise /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
-DLLLDFLAGS=/machine:ix86 /release /nologo
+DLLLDFLAGS=/debug:full /machine:ix86 /nologo
 # see note in Makefile.a6nt regarding stack size.  we use 8MB here to be consistent.
-EXELDFLAGS=/machine:ix86 /incremental:no /release /nologo /STACK:0x800000
+EXELDFLAGS=/debug:full /machine:ix86 /incremental:no /nologo /STACK:0x800000
 
 # use following flags for debugging
-# CFLAGS=/nologo /Od /W3 /MDd /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DI386 /DNO_UNISTD_H
-# LDFLAGS=/machine:ix86 /incremental:no /release /nologo /debug
+# CFLAGS=/nologo /fp:precise /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# MDCFLAGS=$(CFLAGS) /MDd
+# MTCFLAGS=$(CFLAGS) /MTd
 
 SystemLib=rpcrt4.lib ole32.lib advapi32.lib User32.lib
 MDZlibLib=..\zlib\zlib.lib
