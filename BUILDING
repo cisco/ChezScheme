@@ -193,9 +193,10 @@ WINDOWS
 
 Building Chez Scheme under 64-bit Windows with Cygwin or Bash/WSL
 follows the instructions above, except that 'make install' and 'make
-uninstall' are not supported, and the 'OS' environment variable must
-be set to 'Windows_NT' on Bash/WSL (to indicate a build for Windows,
-as opposed to a build for Linux on Windows):
+uninstall' are not supported. On Bash/WSL, the build directory must be
+in a location with a Windows path such as /mnt/c, and the 'OS'
+environment variable must be set to 'Windows_NT' to indicate a build
+for Windows, as opposed to a build for Linux on Windows:
 
 env OS=Windows_NT ./configure
 env OS=Windows_NT make
