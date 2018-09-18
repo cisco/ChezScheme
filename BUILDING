@@ -42,6 +42,7 @@ Prerequisites:
 * gcc
 * Header files and libraries for ncurses
 * Header files and libraries for X windows
+* Header files and libraries for uuid
 
 Uninstalling on Unix-like systems is as simple as running:
 

@@ -53,57 +53,33 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff);
 #include <rpc.h>
 
 ptr S_unique_id() {
-    union {UUID uuid; INT foo[4];} u;
-    u.foo[0] = 0;
-    u.foo[1] = 0;
-    u.foo[2] = 0;
-    u.foo[3] = 0;
-
-    UuidCreate(&u.uuid);
-    return S_add(S_ash(Sunsigned(u.foo[0]), Sinteger(8*3*sizeof(INT))),
-            S_add(S_ash(Sunsigned(u.foo[1]), Sinteger(8*2*sizeof(INT))),
-             S_add(S_ash(Sunsigned(u.foo[2]), Sinteger(8*sizeof(INT))),
-              Sunsigned(u.foo[3]))));
+  union {UUID uuid; U32 foo[4];} u;
+  u.foo[0] = 0;
+  u.foo[1] = 0;
+  u.foo[2] = 0;
+  u.foo[3] = 0;
+  UuidCreate(&u.uuid);
+  return S_add(S_ash(Sunsigned32(u.foo[0]), Sinteger(8*3*sizeof(U32))),
+           S_add(S_ash(Sunsigned32(u.foo[1]), Sinteger(8*2*sizeof(U32))),
+             S_add(S_ash(Sunsigned32(u.foo[2]), Sinteger(8*sizeof(U32))),
+              Sunsigned32(u.foo[3]))));
 }
 
 #else /* WIN32 */
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
-static INT gethostip(void) {
-    char hostname[MAXHOSTNAMELEN+1];
-    struct hostent *h;
-    char **p;
-    struct in_addr in;
-
-    if (gethostname(hostname, MAXHOSTNAMELEN)) return 0;
-    if ((h = gethostbyname(hostname)) == NULL) return 0;
-    p = h->h_addr_list;
-    if (*p == NULL) return 0;
-
-    memcpy(&in.s_addr, *p, sizeof (in.s_addr));
-    return in.s_addr;
-}
+#include <uuid/uuid.h>
 
 ptr S_unique_id() {
-    struct timeval tp;
-    time_t sec;
-    pid_t pid;
-    INT ip;
-
-    (void) gettimeofday(&tp,NULL);
-
-    pid = getpid();
-    ip = gethostip();
-    sec = tp.tv_sec;
-
-    return S_add(S_ash(Sunsigned(pid), Sinteger(8*(sizeof(sec)+sizeof(ip)))),
-              S_add(S_ash(Sunsigned(ip), Sinteger(8*(sizeof(sec)))),
-                    Sunsigned(sec)));
+  union {uuid_t uuid; U32 foo[4];} u;
+  u.foo[0] = 0;
+  u.foo[1] = 0;
+  u.foo[2] = 0;
+  u.foo[3] = 0;
+  uuid_generate(u.uuid);
+  return S_add(S_ash(Sunsigned32(u.foo[0]), Sinteger(8*3*sizeof(U32))),
+           S_add(S_ash(Sunsigned32(u.foo[1]), Sinteger(8*2*sizeof(U32))),
+             S_add(S_ash(Sunsigned32(u.foo[2]), Sinteger(8*sizeof(U32))),
+              Sunsigned32(u.foo[3]))));
 }
 
 #endif /* WIN32 */

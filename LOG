@@ -1007,3 +1007,5 @@
     Makefile.in, Makefile-workarea.in, Mf-install.in
 - add PDB files for Windows
     c/*nt, wininstall/*nt.wxs
+- use uuid_generate on unix-like systems for S_unique_id
+    BUILDING, c/Mf-*le, stats.c, objects.stex, release_notes.stex
