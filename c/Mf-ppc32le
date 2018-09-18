@@ -16,7 +16,7 @@
 m = ppc32le
 Cpu = PPC32
 
-mdclib = -lm -ldl -lncurses -lrt
+mdclib = -lm -ldl -lncurses -lrt -luuid
 C = ${CC} ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 ${CFLAGS}
 o = o
 mdsrc = ppc32.c

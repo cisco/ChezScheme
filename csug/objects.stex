@@ -1418,10 +1418,8 @@ The pretty name of a gensym is returned by the procedure
 
 In both the first and second forms, the unique name is an
 automatically generated globally unique name.
-Globally unique names are constructed (lazily---see below)
-from some combination of a unique machine identifier (such as the
-network address), the current process identifier (PID), and the
-time at which the Scheme session began, along with an internal
+Globally unique names are constructed (lazily---see below) from the
+combination of a universally unique identifier and an internal
 counter.
 In the third form of gensym, the unique name of the new gensym is
 \var{unique-name}, which must be a string.

@@ -11,8 +11,10 @@ matrix:
       env: TARGET_MACHINE=ta6osx
     - os: linux
       env: TARGET_MACHINE=i3le
+      sudo: required
     - os: linux
       env: TARGET_MACHINE=ti3le
+      sudo: required
     - os: linux
       env: TARGET_MACHINE=a6le
     - os: linux
