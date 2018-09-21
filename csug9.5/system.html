@@ -1066,7 +1066,25 @@ by absolute path names.
 
 
 <p>
-<a name="./system:s50"></a><span class=formdef><b>procedure</b>: <tt>(visit&nbsp;<i>path</i>)</tt></span>
+<a name="./system:s50"></a><span class=formdef><b>procedure</b>: <tt>(load-compiled-from-port&nbsp;<i>input-port</i>)</tt></span>
+<br>
+<b>returns: </b>result of the last compiled expression
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>load-compiled-from-port</tt> reads and evaluates the object-code contents
+of <tt><i>input-port</i></tt> as previously created by functions like <tt>compile-file</tt>,
+<tt>compile-script</tt>, <tt>compile-library</tt>, and
+<tt>compile-to-port</tt>.
+
+<p>
+The return value is the value of the last expression whose compiled
+form is in <tt><i>input-port</i></tt>. If <tt><i>input-port</i></tt> is empty, then the
+result value is unspecified.
+
+
+<p>
+<a name="./system:s51"></a><span class=formdef><b>procedure</b>: <tt>(visit&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1102,12 +1120,12 @@ on bindings defined in another without actually loading and evaluating
 the code in the supporting file.
 
 <p>
-<a name="./system:s51"></a>The parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
+<a name="./system:s52"></a>The parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
 determines the set of directories searched for source files not identified
 by absolute path names.
 
 <p>
-<a name="./system:s52"></a><span class=formdef><b>procedure</b>: <tt>(revisit&nbsp;<i>path</i>)</tt></span>
+<a name="./system:s53"></a><span class=formdef><b>procedure</b>: <tt>(revisit&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1138,12 +1156,12 @@ top-level bindings at run-time, since these procedures use compile-time
 information to resolve top-level bindings.
 
 <p>
-<a name="./system:s53"></a>The parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
+<a name="./system:s54"></a>The parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
 determines the set of directories searched for source files not identified
 by absolute path names.
 
 <p>
-<a name="./system:s54"></a><span class=formdef><b>procedure</b>: <tt>(compile-file&nbsp;<i>input-filename</i>)</tt></span>
+<a name="./system:s55"></a><span class=formdef><b>procedure</b>: <tt>(compile-file&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-file&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1157,11 +1175,11 @@ if this is not the case, <tt>compile-file</tt> raises an exception
 with condition type <tt>&amp;syntax</tt>.
 
 <p>
-The normal evaluation process proceeds in two steps: <a name="./system:s55"></a>compilation and
+The normal evaluation process proceeds in two steps: <a name="./system:s56"></a>compilation and
 execution.
 <tt>compile-file</tt> performs the compilation process for an entire source
 file, producing an object file.
-When the object file is subsequently loaded (see <a name="./system:s56"></a><tt>load</tt>), the
+When the object file is subsequently loaded (see <a name="./system:s57"></a><tt>load</tt>), the
 compilation process is not necessary, and the file typically loads
 several times faster.
 
@@ -1205,6 +1223,8 @@ cp0-outer-unroll-limit<br>
 
 generate-inspector-information<br>
 
+generate-procedure-source-information<br>
+
 compile-profile<br>
 
 generate-interrupt-trap<br>
@@ -1223,7 +1243,7 @@ For example, if
 to 3 just while the remainder of file is compiled.
 
 <p>
-<a name="./system:s57"></a><span class=formdef><b>procedure</b>: <tt>(compile-script&nbsp;<i>input-filename</i>)</tt></span>
+<a name="./system:s58"></a><span class=formdef><b>procedure</b>: <tt>(compile-script&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-script&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1238,7 +1258,7 @@ that it copies the leading <tt>#!</tt> line from the
 source-file script into the object file.
 When the <tt>#!</tt> line is present it is uncompressed in the output
 file even when the parameter
-<a name="./system:s58"></a><tt>compile-compressed</tt> is
+<a name="./system:s59"></a><tt>compile-compressed</tt> is
 set to <tt>#t</tt>, causing the remainder of the file to be compressed.
 This allows it to be interpreted properly by the operating system.
 
@@ -1246,11 +1266,11 @@ This allows it to be interpreted properly by the operating system.
 <tt>compile-script</tt> permits compiled script files to be created from
 source script to reduce script load time.
 As with source-code scripts, compiled scripts may be run with the
-<a name="./system:s59"></a><tt>--script</tt>
+<a name="./system:s60"></a><tt>--script</tt>
 command-line option.
 
 <p>
-<a name="./system:s60"></a><span class=formdef><b>procedure</b>: <tt>(compile-library&nbsp;<i>input-filename</i>)</tt></span>
+<a name="./system:s61"></a><span class=formdef><b>procedure</b>: <tt>(compile-library&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-library&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1267,7 +1287,7 @@ This effectively disables any non-R6RS lexical
 syntax except where subsequently overridden by <tt>#!chezscheme</tt>.
 
 <p>
-<a name="./system:s61"></a><span class=formdef><b>procedure</b>: <tt>(compile-program&nbsp;<i>input-filename</i>)</tt></span>
+<a name="./system:s62"></a><span class=formdef><b>procedure</b>: <tt>(compile-program&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-program&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br>
 <b>returns: </b>a list of libraries invoked by the program
@@ -1306,11 +1326,11 @@ directly imported by the program.
 <p>
 As with source-code top-level programs, compiled top-level programs may be
 run with the
-<a name="./system:s62"></a><tt>--program</tt>
+<a name="./system:s63"></a><tt>--program</tt>
 command-line option.
 
 <p>
-<a name="./system:s63"></a><span class=formdef><b>procedure</b>: <tt>(maybe-compile-file&nbsp;<i>input-filename</i>)</tt></span>
+<a name="./system:s64"></a><span class=formdef><b>procedure</b>: <tt>(maybe-compile-file&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(maybe-compile-file&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(maybe-compile-library&nbsp;<i>input-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(maybe-compile-library&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
@@ -1342,7 +1362,7 @@ When <tt><i>output-filename</i></tt> is not specified, the input and output
 filenames are determined in the same manner as for <tt>compile-file</tt>.
 
 <p>
-<a name="./system:s64"></a><span class=formdef><b>thread parameter</b>: <tt>compile-library-handler</tt></span>
+<a name="./system:s65"></a><span class=formdef><b>thread parameter</b>: <tt>compile-library-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1352,7 +1372,7 @@ The procedure should typically invoke <tt>compile-library</tt> and
 pass it the two arguments, but it can also use one of the other
 file or port compilation procedures.
 For example, it might read the source file using its own parser and
-use <a name="./system:s65"></a><tt>compile-to-file</tt> to finish
+use <a name="./system:s66"></a><tt>compile-to-file</tt> to finish
 the compilation process.
 The procedure can perform other actions as well, such as parameterizing
 compilation parameters, establishing guards, or gathering statistics.
@@ -1368,7 +1388,7 @@ imported library when <tt>compile-imported-libraries</tt> is <tt>#t</tt>
 and the expander determines the object file is out-of-date.
 
 <p>
-<a name="./system:s66"></a><span class=formdef><b>thread parameter</b>: <tt>compile-program-handler</tt></span>
+<a name="./system:s67"></a><span class=formdef><b>thread parameter</b>: <tt>compile-program-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1378,7 +1398,7 @@ The procedure should typically invoke <tt>compile-program</tt> and
 pass it the two arguments, but it can also use one of the other
 file or port compilation procedures.
 For example, it might read the source file using its own parser and
-use <a name="./system:s67"></a><tt>compile-to-file</tt> to finish
+use <a name="./system:s68"></a><tt>compile-to-file</tt> to finish
 the compilation process.
 The procedure can perform other actions as well, such as parameterizing
 compilation parameters, establishing guards, or gathering statistics.
@@ -1392,7 +1412,7 @@ The value of this parameter is called by <tt>maybe-compile-program</tt>
 when the object file is out-of-date.
 
 <p>
-<a name="./system:s68"></a><span class=formdef><b>procedure</b>: <tt>(compile-whole-program&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
+<a name="./system:s69"></a><span class=formdef><b>procedure</b>: <tt>(compile-whole-program&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-whole-program&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>&nbsp;<i>libs-visible?</i>)</tt></span>
 <br>
 <b>returns: </b>a list of libraries left to be loaded at run time
@@ -1440,7 +1460,7 @@ that are not incorporated into the output, though this optimization
 is limited in nature.
 
 <p>
-<a name="./system:s69"></a>The procedures <tt>compile-file</tt>, <tt>compile-program</tt>, <tt>compile-library</tt>,
+<a name="./system:s70"></a>The procedures <tt>compile-file</tt>, <tt>compile-program</tt>, <tt>compile-library</tt>,
 <tt>compile-script</tt>, and <tt>compile-whole-library</tt> produce wpo files as well as ordinary
 object files when the <tt>generate-wpo-files</tt> parameter is set
 to <tt>#t</tt> (the default is <tt>#f</tt>).
@@ -1448,7 +1468,7 @@ to <tt>#t</tt> (the default is <tt>#f</tt>).
 an optional wpo port.
 
 <p>
-<a name="./system:s70"></a><span class=formdef><b>procedure</b>: <tt>(compile-whole-library&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
+<a name="./system:s71"></a><span class=formdef><b>procedure</b>: <tt>(compile-whole-library&nbsp;<i>input-filename</i>&nbsp;<i>output-filename</i>)</tt></span>
 <br>
 <b>returns: </b>a list of libraries left to be loaded at run time
 <br>
@@ -1461,7 +1481,7 @@ produced (when <tt>generate-wpo-files</tt> is <tt>#t</tt>) as well
 as an object file for the resulting combination of libraries.
 
 <p>
-<a name="./system:s71"></a><span class=formdef><b>procedure</b>: <tt>(compile-port&nbsp;<i>input-port</i>&nbsp;<i>output-port</i>)</tt></span>
+<a name="./system:s72"></a><span class=formdef><b>procedure</b>: <tt>(compile-port&nbsp;<i>input-port</i>&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-port&nbsp;<i>input-port</i>&nbsp;<i>output-port</i>&nbsp;<i>sfd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-port&nbsp;<i>input-port</i>&nbsp;<i>output-port</i>&nbsp;<i>sfd</i>&nbsp;<i>wpo-port</i>)</tt></span>
 <br>
@@ -1493,7 +1513,7 @@ to do compression, e.g., if it was opened with the <tt>compressed</tt>
 file option.
 
 <p>
-<a name="./system:s72"></a><span class=formdef><b>procedure</b>: <tt>(compile-to-port&nbsp;<i>obj-list</i>&nbsp;<i>output-port</i>)</tt></span>
+<a name="./system:s73"></a><span class=formdef><b>procedure</b>: <tt>(compile-to-port&nbsp;<i>obj-list</i>&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-to-port&nbsp;<i>obj-list</i>&nbsp;<i>output-port</i>&nbsp;<i>sfd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-to-port&nbsp;<i>obj-list</i>&nbsp;<i>output-port</i>&nbsp;<i>sfd</i>&nbsp;<i>wpo-port</i>)</tt></span>
 <br>
@@ -1537,7 +1557,7 @@ program requires at run time, as with <tt>compile-program</tt>.
 Otherwise, the return value is unspecified.
 
 <p>
-<a name="./system:s73"></a><span class=formdef><b>procedure</b>: <tt>(compile-to-file&nbsp;<i>obj-list</i>&nbsp;<i>output-file</i>)</tt></span>
+<a name="./system:s74"></a><span class=formdef><b>procedure</b>: <tt>(compile-to-file&nbsp;<i>obj-list</i>&nbsp;<i>output-file</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(compile-to-file&nbsp;<i>obj-list</i>&nbsp;<i>output-file</i>&nbsp;<i>sfd</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -1567,7 +1587,7 @@ program requires at run time, as with <tt>compile-program</tt>.
 Otherwise, the return value is unspecified.
 
 <p>
-<a name="./system:s74"></a><span class=formdef><b>procedure</b>: <tt>(make-boot-file&nbsp;<i>output-filename</i>&nbsp;<i>base-boot-list</i>&nbsp;<i>input-filename</i>&nbsp;...)</tt></span>
+<a name="./system:s75"></a><span class=formdef><b>procedure</b>: <tt>(make-boot-file&nbsp;<i>output-filename</i>&nbsp;<i>base-boot-list</i>&nbsp;<i>input-filename</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1591,7 +1611,7 @@ input file should be a base boot file, i.e., petite.boot or some boot file
 derived from petite.boot.
 
 <p>
-<a name="./system:s75"></a><a name="./system:s76"></a>Boot files are loaded explicitly via the <tt>--boot</tt> or <tt>-b</tt>
+<a name="./system:s76"></a><a name="./system:s77"></a>Boot files are loaded explicitly via the <tt>--boot</tt> or <tt>-b</tt>
 command-line options or implicitly based on the name of the executable
 (Section&nbsp;<a href="./use.html#g14">2.9</a>).
 
@@ -1600,7 +1620,7 @@ See Section&nbsp;<a href="./use.html#g13">2.8</a> for more information on boot f
 and the use of <tt>make-boot-file</tt>.
 
 <p>
-<a name="./system:s77"></a><span class=formdef><b>procedure</b>: <tt>(make-boot-header&nbsp;<i>output-filename</i>&nbsp;<i>base-boot<sub>1</sub></i>&nbsp;<i>base-boot<sub>2</sub></i>...)</tt></span>
+<a name="./system:s78"></a><span class=formdef><b>procedure</b>: <tt>(make-boot-header&nbsp;<i>output-filename</i>&nbsp;<i>base-boot<sub>1</sub></i>&nbsp;<i>base-boot<sub>2</sub></i>...)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1618,7 +1638,7 @@ The call
 <p>
 
 <p><tt>(make-boot-file&nbsp;<i>output-filename</i>&nbsp;'(<i>base-boot<sub>1</sub></i>&nbsp;<i>base-boot<sub>2</sub></i>&nbsp;...))</tt>
-<p><a name="./system:s78"></a><span class=formdef><b>procedure</b>: <tt>(strip-fasl-file&nbsp;<i>input-path</i>&nbsp;<i>output-path</i>&nbsp;<i>options</i>)</tt></span>
+<p><a name="./system:s79"></a><span class=formdef><b>procedure</b>: <tt>(strip-fasl-file&nbsp;<i>input-path</i>&nbsp;<i>output-path</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1654,7 +1674,7 @@ If <tt><i>options</i></tt> is empty, the output file is effectively equivalent
 to the input file, though it will not necessarily be identical.
 
 <p>
-<a name="./system:s79"></a><span class=formdef><b>syntax</b>: <tt>(fasl-strip-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
+<a name="./system:s80"></a><span class=formdef><b>syntax</b>: <tt>(fasl-strip-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>a fasl-strip-options enumeration set
 <br>
@@ -1698,7 +1718,7 @@ as part of a binary-only package.
 
 
 <p>
-<a name="./system:s80"></a><span class=formdef><b>procedure</b>: <tt>(machine-type)</tt></span>
+<a name="./system:s81"></a><span class=formdef><b>procedure</b>: <tt>(machine-type)</tt></span>
 <br>
 <b>returns: </b>the current machine type
 <br>
@@ -1709,7 +1729,7 @@ for a list of supported machine types.
 
 
 <p>
-<a name="./system:s81"></a><a name="desc:expand"></a>
+<a name="./system:s82"></a><a name="desc:expand"></a>
 <span class=formdef><b>procedure</b>: <tt>(expand&nbsp;<i>obj</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(expand&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></span>
 <br>
@@ -1734,21 +1754,21 @@ information in error messages.
 (see <tt>current-expand</tt>), initially <tt>sc-expand</tt>.
 
 <p>
-<a name="./system:s82"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">353</a>)
+<a name="./system:s83"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">354</a>)
 which can be used to request that the compiler or interpreter show
 expander output.
 
 <p>
-<a name="./system:s83"></a><span class=formdef><b>thread parameter</b>: <tt>current-expand</tt></span>
+<a name="./system:s84"></a><span class=formdef><b>thread parameter</b>: <tt>current-expand</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p><tt>current-expand</tt> determines the expansion procedure used by
 the compiler, interpreter, and direct calls to
-<a name="./system:s84"></a><tt>expand</tt>
+<a name="./system:s85"></a><tt>expand</tt>
 to expand syntactic extensions.
 <tt>current-expand</tt> is initially bound to the value of
-<a name="./system:s85"></a><tt>sc-expand</tt>.
+<a name="./system:s86"></a><tt>sc-expand</tt>.
 
 <p>
 It may be set another procedure, but since the format of
@@ -1768,7 +1788,7 @@ by the compiler, interpreter, and <tt>expand</tt>; their number
 and roles are unspecified.
 
 <p>
-<a name="./system:s86"></a><span class=formdef><b>procedure</b>: <tt>(sc-expand&nbsp;<i>obj</i>)</tt></span>
+<a name="./system:s87"></a><span class=formdef><b>procedure</b>: <tt>(sc-expand&nbsp;<i>obj</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(sc-expand&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></span>
 <br>
 <b>returns: </b>the expanded form of <tt><i>obj</i></tt>
@@ -1788,7 +1808,7 @@ If not provided, <tt><i>env</i></tt> defaults to the environment returned by
 <tt>interaction-environment</tt>.
 
 <p>
-<a name="./system:s87"></a><a name="desc:expand/optimize"></a>
+<a name="./system:s88"></a><a name="desc:expand/optimize"></a>
 <span class=formdef><b>procedure</b>: <tt>(expand/optimize&nbsp;<i>obj</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(expand/optimize&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></span>
 <br>
@@ -1873,12 +1893,12 @@ optimizations performed.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;odd?)])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(h&nbsp;n)))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1025</tt>
-<p><a name="./system:s88"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">353</a>)
+<p><a name="./system:s89"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">354</a>)
 which can be used to request that the compiler or interpreter show
 source-optimizer output.
 
 <p>
-<a name="./system:s89"></a><span class=formdef><b>syntax</b>: <tt>(eval-when&nbsp;<i>situations</i>&nbsp;<i>form<sub>1</sub></i>&nbsp;<i>form<sub>2</sub></i>&nbsp;...)</tt></span>
+<a name="./system:s90"></a><span class=formdef><b>syntax</b>: <tt>(eval-when&nbsp;<i>situations</i>&nbsp;<i>form<sub>1</sub></i>&nbsp;<i>form<sub>2</sub></i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -1940,7 +1960,7 @@ This solves most, but not all, problems of this nature, since most are
 related to the use of <tt>define-syntax</tt> and modules.
 Some problems are not so straightforwardly handled, however.
 For example, assume that the file contains the following definitions
-for <a name="./system:s90"></a><tt>nodups?</tt> and <a name="./system:s91"></a><tt>mvlet</tt>.
+for <a name="./system:s91"></a><tt>nodups?</tt> and <a name="./system:s92"></a><tt>mvlet</tt>.
 
 <p>
 
@@ -2289,7 +2309,7 @@ the <tt>eval</tt> situation is not present; otherwise, they are treated as
 if the <tt>eval-when</tt> wrapper were absent.
 
 <p>
-<a name="./system:s92"></a><span class=formdef><b>thread parameter</b>: <tt>eval-syntax-expanders-when</tt></span>
+<a name="./system:s93"></a><span class=formdef><b>thread parameter</b>: <tt>eval-syntax-expanders-when</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2313,7 +2333,7 @@ or <tt>visit</tt>.
 
 
 <p>
-<a name="./system:s93"></a><span class=formdef><b>global parameter</b>: <tt>source-directories</tt></span>
+<a name="./system:s94"></a><span class=formdef><b>global parameter</b>: <tt>source-directories</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2339,7 +2359,7 @@ list when it compiles (when <tt>compile-imported-libraries</tt> is true) or load
 only if the library is not already defined.
 
 <p>
-<a name="./system:s94"></a><span class=formdef><b>procedure</b>: <tt>(with-source-path&nbsp;<i>who</i>&nbsp;<i>name</i>&nbsp;<i>procedure</i>)</tt></span>
+<a name="./system:s95"></a><span class=formdef><b>procedure</b>: <tt>(with-source-path&nbsp;<i>who</i>&nbsp;<i>name</i>&nbsp;<i>procedure</i>)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2408,7 +2428,7 @@ directory.
 
 
 <p>
-<a name="./system:s95"></a><span class=formdef><b>thread parameter</b>: <tt>optimize-level</tt></span>
+<a name="./system:s96"></a><span class=formdef><b>thread parameter</b>: <tt>optimize-level</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2440,7 +2460,7 @@ levels if desired.
 
 <p>
 One way to use optimize levels is on a per-file
-basis, using <a name="./system:s96"></a><tt>eval-when</tt> to force the use of a particular
+basis, using <a name="./system:s97"></a><tt>eval-when</tt> to force the use of a particular
 optimize level at compile time.
 For example, placing:
 
@@ -2449,7 +2469,7 @@ For example, placing:
 <p><tt>(eval-when&nbsp;(compile)&nbsp;(optimize-level&nbsp;3))</tt>
 <p>at the front of a file will cause all of the forms in the file to be
 compiled at optimize level 3 when the file is compiled (using
-<a name="./system:s97"></a><tt>compile-file</tt>) but does not affect the optimize level used
+<a name="./system:s98"></a><tt>compile-file</tt>) but does not affect the optimize level used
 when the file is loaded from source.
 Since <tt>compile-file</tt> parameterizes <tt>optimize-level</tt> (see <tt>parameterize</tt>),
 the above
@@ -2458,17 +2478,17 @@ system in which the <tt>compile-file</tt> is performed.
 
 <p>
 The optimize level can also be set via the
-<a name="./system:s98"></a><tt>--optimize-level</tt>
+<a name="./system:s99"></a><tt>--optimize-level</tt>
 command-line option (Section&nbsp;<a href="./use.html#g14">2.9</a>).
 This option is particularly useful for running RNRS top-level programs
 at optimize-level&nbsp;3 via the
-<a name="./system:s99"></a><tt>--program</tt> command-line option,
+<a name="./system:s100"></a><tt>--program</tt> command-line option,
 since <tt>eval-when</tt> is ineffective for RNRS top-level programs as described
 on page&nbsp;<a href="./system.html#eval-when-tlp">345</a>.
 
 
 <p>
-<a name="./system:s100"></a><a name="desc:hash-primitive"></a>
+<a name="./system:s101"></a><a name="desc:hash-primitive"></a>
 <span class=formdef><b>syntax</b>: <tt>($primitive&nbsp;<i>variable</i>)</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>#%<i>variable</i></tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>($primitive&nbsp;2&nbsp;<i>variable</i>)</tt></span>
@@ -2514,7 +2534,7 @@ otherwise, it is treated as an optimize-level 2 application.
 (let&nbsp;([car&nbsp;cdr])&nbsp;(#%car&nbsp;'(a&nbsp;b&nbsp;c)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;a<br>
 
 (begin&nbsp;(set!&nbsp;car&nbsp;cdr)&nbsp;(#%car&nbsp;'(a&nbsp;b&nbsp;c)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;a</tt>
-<p><a name="./system:s101"></a><span class=formdef><b>thread parameter</b>: <tt>debug-level</tt></span>
+<p><a name="./system:s102"></a><span class=formdef><b>thread parameter</b>: <tt>debug-level</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2529,7 +2549,7 @@ if it were in tail position (thus causing the caller's frame not
 to appear in a stack backtrace); this occurs at debug levels below&nbsp;2.
 
 <p>
-<a name="./system:s102"></a><span class=formdef><b>thread parameter</b>: <tt>generate-interrupt-trap</tt></span>
+<a name="./system:s103"></a><span class=formdef><b>thread parameter</b>: <tt>generate-interrupt-trap</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2554,13 +2574,13 @@ that make no other calls.
 
 
 <p>
-<a name="./system:s103"></a><span class=formdef><b>thread parameter</b>: <tt>compile-interpret-simple</tt></span>
+<a name="./system:s104"></a><span class=formdef><b>thread parameter</b>: <tt>compile-interpret-simple</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>At all optimize levels, when the value of
 <tt>compile-interpret-simple</tt> is set to a true value (the default),
-<a name="./system:s104"></a><tt>compile</tt> interprets simple
+<a name="./system:s105"></a><tt>compile</tt> interprets simple
 expressions.
 A simple expression is one that creates no procedures.
 This can save a significant amount of time over the course of many
@@ -2570,7 +2590,7 @@ When set to false, <tt>compile</tt> compiles all expressions.
 
 
 <p>
-<a name="./system:s105"></a><a name="desc:generate-inspector-information"></a>
+<a name="./system:s106"></a><a name="desc:generate-inspector-information"></a>
 <span class=formdef><b>thread parameter</b>: <tt>generate-inspector-information</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -2596,7 +2616,21 @@ For example, if:
 disabled only for the remainder of that particular file.
 
 <p>
-<a name="./system:s106"></a><span class=formdef><b>thread parameter</b>: <tt>enable-cross-library-optimization</tt></span>
+<a name="./system:s107"></a><a name="desc:generate-procedure-source-information"></a>
+<span class=formdef><b>thread parameter</b>: <tt>generate-procedure-source-information</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>When <tt>generate-inspector-information</tt> is set to <tt>#f</tt> and
+this parameter is set to <tt>#t</tt>, then a source location is preserved
+for a procedure, even though other inspector information is not preserved.
+Source information provides a small amount of debugging support at a
+much lower cost in memory and object-file size than full inspector information.
+If this parameter is changed during the compilation of a file, the
+original value will be restored.
+
+<p>
+<a name="./system:s108"></a><span class=formdef><b>thread parameter</b>: <tt>enable-cross-library-optimization</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2611,11 +2645,11 @@ of the resulting object files and the exposure of near-source
 information via the object file.
 
 <p>
-<a name="./system:s107"></a><span class=formdef><b>thread parameter</b>: <tt>generate-wpo-files</tt></span>
+<a name="./system:s109"></a><span class=formdef><b>thread parameter</b>: <tt>generate-wpo-files</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s108"></a>When this parameter is set to <tt>#t</tt> (the default is <tt>#f</tt>),
+<p><a name="./system:s110"></a>When this parameter is set to <tt>#t</tt> (the default is <tt>#f</tt>),
 <tt>compile-file</tt>, <tt>compile-library</tt>, <tt>compile-program</tt>,
 and <tt>compile-script</tt> produce whole-program optimization (wpo)
 files for use by <tt>compile-whole-program</tt>.
@@ -2625,7 +2659,7 @@ with <tt>.wpo</tt>, or adding the extension <tt>.wpo</tt> if the
 object filename has no extension or has the extension <tt>.wpo</tt>.
 
 <p>
-<a name="./system:s109"></a><span class=formdef><b>thread parameter</b>: <tt>compile-compressed</tt></span>
+<a name="./system:s111"></a><span class=formdef><b>thread parameter</b>: <tt>compile-compressed</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2637,7 +2671,7 @@ the object files they create.
 
 
 <p>
-<a name="./system:s110"></a><span class=formdef><b>thread parameter</b>: <tt>compile-file-message</tt></span>
+<a name="./system:s112"></a><span class=formdef><b>thread parameter</b>: <tt>compile-file-message</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2651,7 +2685,7 @@ the object files they create.
 <p>When the parameter is set to <tt>#f</tt>, the message is not printed.
 
 <p>
-<a name="./system:s111"></a><a name="desc:run-cp0"></a>
+<a name="./system:s113"></a><a name="desc:run-cp0"></a>
 <span class=formdef><b>thread parameter</b>: <tt>run-cp0</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>cp0-effort-limit</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>cp0-score-limit</tt></span>
@@ -2712,7 +2746,7 @@ out to be a constant.
 
 <p>
 It is possible to see what <tt>cp0</tt> does with an expression
-via the procedure <a name="./system:s112"></a><tt>expand/optimize</tt>,
+via the procedure <a name="./system:s114"></a><tt>expand/optimize</tt>,
 which expands its argument and passes the result through <tt>cp0</tt>, as
 illustrated by the following transcript.
 
@@ -2846,7 +2880,7 @@ For example,
 reach this decision if the effort and outer unroll limits are large.
 
 <p>
-<a name="./system:s113"></a><span class=formdef><b>thread parameter</b>: <tt>commonization-level</tt></span>
+<a name="./system:s115"></a><span class=formdef><b>thread parameter</b>: <tt>commonization-level</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2874,7 +2908,7 @@ and even reduce run-time overhead by making more efficient use of
 instruction caches.
 
 <p>
-<a name="./system:s114"></a><span class=formdef><b>thread parameter</b>: <tt>undefined-variable-warnings</tt></span>
+<a name="./system:s116"></a><span class=formdef><b>thread parameter</b>: <tt>undefined-variable-warnings</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2897,7 +2931,7 @@ Enabling undefined-variable warnings can facilitate this process.
 The checks are also visible in the output of <tt>expand/optimize</tt>.
 
 <p>
-<a name="./system:s115"></a><a name="desc:expand-output"></a><a name="desc:expand/optimize-output"></a>
+<a name="./system:s117"></a><a name="desc:expand-output"></a><a name="desc:expand/optimize-output"></a>
 <span class=formdef><b>thread parameter</b>: <tt>expand-output</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>expand/optimize-output</tt></span>
 <br>
@@ -2919,13 +2953,13 @@ Similarly, when <tt>expand/optimize-output</tt> is set to a textual
 output port, the output of the source optimizer is printed.
 
 <p>
-<a name="./system:s116"></a><a name="./system:s117"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">339</a>) and
+<a name="./system:s118"></a><a name="./system:s119"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">339</a>) and
 <tt>expand-optimize</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize">340</a>), which
 can be used to run the expander or the expander and source optimizer
 directly on an individual form.
 
 <p>
-<a name="./system:s118"></a><span class=formdef><b>syntax</b>: <tt>(pariah&nbsp;<i>expr<sub>1</sub></i>&nbsp;<i>expr<sub>2</sub></i>&nbsp;...)</tt></span>
+<a name="./system:s120"></a><span class=formdef><b>syntax</b>: <tt>(pariah&nbsp;<i>expr<sub>1</sub></i>&nbsp;<i>expr<sub>2</sub></i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>the values of the last subexpression
 <br>
@@ -2949,7 +2983,7 @@ others.
 
 
 <p>
-<a name="./system:s119"></a><a name="./system:s120"></a><a name="./system:s121"></a>ChezScheme supports two forms of profiling: source profiling and
+<a name="./system:s121"></a><a name="./system:s122"></a><a name="./system:s123"></a>ChezScheme supports two forms of profiling: source profiling and
 block profiling.
 With source profiling enabled, the compiler instruments the code
 it produces to count the number of times each source-code expression
@@ -3015,23 +3049,23 @@ Source profiling involves at least the following steps:
 <p>
 
 <p>
-<a name="./system:s122"></a>Source profiling is enabled by setting the parameter
+<a name="./system:s124"></a>Source profiling is enabled by setting the parameter
 <tt>compile-profile</tt> to the symbol <tt>source</tt>
 or to the boolean value <tt>#t</tt>.
 The profile information can be dumped via:
 
 <p>
 <dl compact>
-<dt><tt>profile-dump-html</tt><dd><a name="./system:s123"></a>
+<dt><tt>profile-dump-html</tt><dd><a name="./system:s125"></a>
 in HTML format to allow the programmer to visualize how
 often each expression is executed using a color-coding system that
 makes it easy to spot "hot spots,"
-<dt><tt>profile-dump-list</tt><dd><a name="./system:s124"></a>
+<dt><tt>profile-dump-list</tt><dd><a name="./system:s126"></a>
 in a form suitable for user-defined post-processing,
-<dt><tt>profile-dump</tt><dd><a name="./system:s125"></a>
+<dt><tt>profile-dump</tt><dd><a name="./system:s127"></a>
 in a form suitable for off-line processing by one of the methods
 above or by some custom means, or
-<dt><tt>profile-dump-data</tt><dd><a name="./system:s126"></a>
+<dt><tt>profile-dump-data</tt><dd><a name="./system:s128"></a>
 in a form suitable for loading into the compiler's database.
 </dl>
 
@@ -3049,7 +3083,7 @@ database, and
 <p>
 
 <p>
-<a name="./system:s127"></a>Profile information dumped by <tt>profile-dump-data</tt> is loaded
+<a name="./system:s129"></a>Profile information dumped by <tt>profile-dump-data</tt> is loaded
 into the compiler's profile database via <tt>profile-load-data</tt>.
 Profiling information is <i>not</i> available to the compiler unless
 it is explicitly dumped via <tt>profile-dump-data</tt> and loaded
@@ -3070,7 +3104,7 @@ the steps are similar:
 <p>
 
 <p>
-<a name="./system:s128"></a><a name="./system:s129"></a>Block profiling is enabled by setting the parameter
+<a name="./system:s130"></a><a name="./system:s131"></a>Block profiling is enabled by setting the parameter
 <tt>compile-profile</tt> to the symbol <tt>block</tt>
 or to the boolean value <tt>#t</tt>.
 The profile information must be dumped via <tt>profile-dump-data</tt>
@@ -3214,7 +3248,7 @@ generate a list of profile entries, which may then be analyzed manually
 or via a custom profile-viewing application.
 
 <p>
-<a name="./system:s130"></a><span class=formdef><b>thread parameter</b>: <tt>compile-profile</tt></span>
+<a name="./system:s132"></a><span class=formdef><b>thread parameter</b>: <tt>compile-profile</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3238,7 +3272,7 @@ larger and less efficient, so this parameter should be set only
 when profile information is needed.
 
 <p>
-<a name="./system:s131"></a><span class=formdef><b>syntax</b>: <tt>(profile&nbsp;<i>source-object</i>)</tt></span>
+<a name="./system:s133"></a><span class=formdef><b>syntax</b>: <tt>(profile&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3248,13 +3282,13 @@ when profile information is needed.
 position identified by <tt><i>source-object</i></tt> the number of times the
 <tt>profile</tt> form is executed.
 Profile forms are generated implicitly by the expander for source
-expressions in annorated input, e.g., input read by the compiler or
+expressions in annotated input, e.g., input read by the compiler or
 interpreter from a Scheme source file, so this form is typically
 useful only when unannotated source code is produced by the front
 end for some language that targets Scheme.
 
 <p>
-<a name="./system:s132"></a><span class=formdef><b>thread parameter</b>: <tt>(generate-profile-forms)</tt></span>
+<a name="./system:s134"></a><span class=formdef><b>thread parameter</b>: <tt>(generate-profile-forms)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3268,7 +3302,7 @@ generation of <tt>profile</tt> forms, typically when explicit
 that should be profiled.
 
 <p>
-<a name="./system:s133"></a><span class=formdef><b>procedure</b>: <tt>(profile-clear)</tt></span>
+<a name="./system:s135"></a><span class=formdef><b>procedure</b>: <tt>(profile-clear)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3278,7 +3312,7 @@ that should be profiled.
 the counts associated with each section of code are set to zero.
 
 <p>
-<a name="./system:s134"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump)</tt></span>
+<a name="./system:s136"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump)</tt></span>
 <br>
 <b>returns: </b>a list of pairs of source-object and count
 <br>
@@ -3308,7 +3342,7 @@ It might be used, for example, to dump profile information to a
 fasl file on one machine for subsequent processing on another.
 
 <p>
-<a name="./system:s135"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-html)</tt></span>
+<a name="./system:s137"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-html)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(profile-dump-html&nbsp;<i>prefix</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(profile-dump-html&nbsp;<i>prefix</i>&nbsp;<i>dump</i>)</tt></span>
 <br>
@@ -3329,7 +3363,7 @@ The raw profile information is obtained from <tt><i>dump</i></tt>, which
 defaults to the value returned by <tt>profile-dump</tt>.
 
 <p>
-<a name="./system:s136"></a><span class=formdef><b>thread parameter</b>: <tt>(profile-palette)</tt></span>
+<a name="./system:s138"></a><span class=formdef><b>thread parameter</b>: <tt>(profile-palette)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3395,19 +3429,19 @@ frequently executed code.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("#FF7F00"&nbsp;.&nbsp;"black")&nbsp;&nbsp;&nbsp;&nbsp;;&nbsp;orange<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("#FF0000"&nbsp;.&nbsp;"black")))&nbsp;&nbsp;;&nbsp;red</tt>
-<p><a name="./system:s137"></a><span class=formdef><b>thread parameter</b>: <tt>(profile-line-number-color)</tt></span>
+<p><a name="./system:s139"></a><span class=formdef><b>thread parameter</b>: <tt>(profile-line-number-color)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>This value of this parameter must be a string or <tt>#f</tt>.
 If it is a string, the string should contain an HTML cascading style sheet (CSS)
 color specifier.
-If the parameter is set to string, <tt>profile-dump-html</tt> includes line numbers
+If the parameter is set to a string, <tt>profile-dump-html</tt> includes line numbers
 in its html rendering of each source file, using the specified color.
 If the parameter is set to <tt>#f</tt>, no line numbers are included.
 
 <p>
-<a name="./system:s138"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-list)</tt></span>
+<a name="./system:s140"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-list)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(profile-dump-list&nbsp;<i>warn?</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(profile-dump-list&nbsp;<i>warn?</i>&nbsp;<i>dump</i>)</tt></span>
 <br>
@@ -3419,7 +3453,7 @@ If the parameter is set to <tt>#f</tt>, no line numbers are included.
 profile information present in <tt><i>dump</i></tt>, which defaults to
 the value returned by <tt>profile-dump</tt>.
 It returns a list of entries, each of which is itself a list containing the
-following elements identify one block of code and how many times it
+following elements identifying one block of code and how many times it
 has been executed.
 
 <p>
@@ -3472,7 +3506,7 @@ position for each source point and, if successful, aggregates
 multiple counts for the source point into a single entry.
 
 <p>
-<a name="./system:s139"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-data&nbsp;<i>path</i>)</tt></span>
+<a name="./system:s141"></a><span class=formdef><b>procedure</b>: <tt>(profile-dump-data&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(profile-dump-data&nbsp;<i>path</i>&nbsp;<i>dump</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3488,7 +3522,7 @@ to the file named by <tt><i>path</i></tt>, replacing the file if it already exis
 <tt><i>dump</i></tt> defaults to the value returned by <tt>profile-dump</tt>.
 
 <p>
-<a name="./system:s140"></a><span class=formdef><b>procedure</b>: <tt>(profile-load-data&nbsp;<i>path</i>&nbsp;...)</tt></span>
+<a name="./system:s142"></a><span class=formdef><b>procedure</b>: <tt>(profile-load-data&nbsp;<i>path</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3513,7 +3547,7 @@ When more than one file is loaded, either by one or multiple calls
 to <tt>profile-load-data</tt>, the weights are averaged.
 
 <p>
-<a name="./system:s141"></a><span class=formdef><b>procedure</b>: <tt>(profile-query-weight&nbsp;<i>obj</i>)</tt></span>
+<a name="./system:s143"></a><span class=formdef><b>procedure</b>: <tt>(profile-query-weight&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt><i>obj</i></tt>'s profile weight, or <tt>#f</tt> if <tt><i>obj</i></tt> is not in the database
 <br>
@@ -3546,7 +3580,7 @@ more frequently are tested before those whose keys matched less
 frequently.
 
 <p>
-<a name="./system:s142"></a><span class=formdef><b>procedure</b>: <tt>(profile-clear-database)</tt></span>
+<a name="./system:s144"></a><span class=formdef><b>procedure</b>: <tt>(profile-clear-database)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3564,14 +3598,14 @@ those counts.
 
 
 <p>
-<a name="./system:s143"></a><span class=formdef><b>procedure</b>: <tt>(new-cafe)</tt></span>
+<a name="./system:s145"></a><span class=formdef><b>procedure</b>: <tt>(new-cafe)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(new-cafe&nbsp;<i>eval-proc</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s144"></a><a name="./system:s145"></a><i>Chez&nbsp;Scheme</i> interacts with the user
+<p><a name="./system:s146"></a><a name="./system:s147"></a><i>Chez&nbsp;Scheme</i> interacts with the user
 through a <i>waiter</i>, or read-eval-print loop (REPL).
 The waiter operates within a context called a <i>caf&eacute;</i>.
 When the system starts up, the user is placed in a caf&eacute; and
@@ -3595,7 +3629,7 @@ Otherwise, the value of the parameter <tt>current-eval</tt> is used.
 <tt><i>eval-proc</i></tt> must accept one argument, the expression to evaluate.
 
 <p>
-Interesting values for <tt><i>eval-proc</i></tt> include <a name="./system:s146"></a><tt>expand</tt>,
+Interesting values for <tt><i>eval-proc</i></tt> include <a name="./system:s148"></a><tt>expand</tt>,
 which causes the macro expanded value of each expression entered to
 be printed and <tt>(lambda&nbsp;(x)&nbsp;x)</tt>, which simply causes each expression
 entered to be printed.
@@ -3631,16 +3665,16 @@ testing of a program on a series of input values.
 6</tt>
 <p>The default waiter reader (see <tt>waiter-prompt-and-read</tt>) displays
 the current waiter prompt (see <tt>waiter-prompt-string</tt>)
-to the current value of <a name="./system:s147"></a><tt>console-output-port</tt> and
+to the current value of <a name="./system:s149"></a><tt>console-output-port</tt> and
 reads
-from the current value of <a name="./system:s148"></a><tt>console-input-port</tt>.
+from the current value of <a name="./system:s150"></a><tt>console-input-port</tt>.
 The default waiter printer (see <tt>waiter-write</tt>) sends output
-to the current value of <a name="./system:s149"></a><tt>console-output-port</tt>.
+to the current value of <a name="./system:s151"></a><tt>console-output-port</tt>.
 These parameters, along with <tt>current-eval</tt>,
 can be modified to change the behavior of the waiter.
 
 <p>
-<a name="./system:s150"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-prompt-string</tt></span>
+<a name="./system:s152"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-prompt-string</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3667,7 +3701,7 @@ are marked by repeating the prompt string once for each nesting level.
 %%&nbsp;(waiter-prompt-string)<br>
 
 "%"</tt>
-<p><a name="./system:s151"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-prompt-and-read</tt></span>
+<p><a name="./system:s153"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-prompt-and-read</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3680,7 +3714,7 @@ It should return an expression to be evaluated by the current
 evaluator (see <tt>new-cafe</tt> and <tt>current-eval</tt>).
 
 <p>
-<a name="./system:s152"></a><span class=formdef><b>procedure</b>: <tt>(default-prompt-and-read&nbsp;<i>level</i>)</tt></span>
+<a name="./system:s154"></a><span class=formdef><b>procedure</b>: <tt>(default-prompt-and-read&nbsp;<i>level</i>)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3731,7 +3765,7 @@ It might be defined as follows.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(flush-output-port&nbsp;(console-output-port)))<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x))))</tt>
-<p><a name="./system:s153"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-write</tt></span>
+<p><a name="./system:s155"></a><span class=formdef><b>thread parameter</b>: <tt>waiter-write</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3752,7 +3786,7 @@ The following example installs a procedure equivalent to the default
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pretty-print&nbsp;x&nbsp;(console-output-port)))<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(flush-output-port&nbsp;(console-output-port))))</tt>
-<p><a name="./system:s154"></a><span class=formdef><b>procedure</b>: <tt>(reset)</tt></span>
+<p><a name="./system:s156"></a><span class=formdef><b>procedure</b>: <tt>(reset)</tt></span>
 <br>
 <b>returns: </b>does not return
 <br>
@@ -3763,7 +3797,7 @@ without arguments.
 
 
 <p>
-<a name="./system:s155"></a><span class=formdef><b>thread parameter</b>: <tt>reset-handler</tt></span>
+<a name="./system:s157"></a><span class=formdef><b>thread parameter</b>: <tt>reset-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3774,7 +3808,7 @@ The default reset handler resets to the current caf&eacute;.
 
 
 <p>
-<a name="./system:s156"></a><span class=formdef><b>procedure</b>: <tt>(exit&nbsp;<i>obj</i>&nbsp;...)</tt></span>
+<a name="./system:s158"></a><span class=formdef><b>procedure</b>: <tt>(exit&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>does not return
 <br>
@@ -3785,7 +3819,7 @@ The default reset handler resets to the current caf&eacute;.
 
 
 <p>
-<a name="./system:s157"></a><span class=formdef><b>thread parameter</b>: <tt>exit-handler</tt></span>
+<a name="./system:s159"></a><span class=formdef><b>thread parameter</b>: <tt>exit-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3801,11 +3835,11 @@ If the current caf&eacute; is the original caf&eacute;, or if <tt>exit</tt>
 is called from a script, <tt>exit</tt> exits from Scheme.
 In this case, the exit code for the Scheme process is 0 if
 no arguments were supplied or if the first argument is void,
-the value of the first argument
-if it is a 32-bit exact integer, and -1 otherwise.
+the value of the first argument cast to a C int if
+it is an exact integer of the host machine's bit width, and 1 otherwise.
 
 <p>
-<a name="./system:s158"></a><span class=formdef><b>procedure</b>: <tt>(abort)</tt></span>
+<a name="./system:s160"></a><span class=formdef><b>procedure</b>: <tt>(abort)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(abort&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>does not return
@@ -3817,7 +3851,7 @@ passing along its argument, if any.
 
 
 <p>
-<a name="./system:s159"></a><span class=formdef><b>thread parameter</b>: <tt>abort-handler</tt></span>
+<a name="./system:s161"></a><span class=formdef><b>thread parameter</b>: <tt>abort-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3833,7 +3867,7 @@ a 32-bit exact integer, and -1 otherwise.
 
 
 <p>
-<a name="./system:s160"></a><span class=formdef><b>global parameter</b>: <tt>scheme-start</tt></span>
+<a name="./system:s162"></a><span class=formdef><b>global parameter</b>: <tt>scheme-start</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3860,11 +3894,11 @@ To have any effect, this parameter must be set within a boot file.
 (See Chapter&nbsp;<a href="./use.html#g5">2</a>.)
 
 <p>
-<a name="./system:s161"></a><span class=formdef><b>global parameter</b>: <tt>scheme-script</tt></span>
+<a name="./system:s163"></a><span class=formdef><b>global parameter</b>: <tt>scheme-script</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s162"></a><a name="./system:s163"></a><a name="./system:s164"></a>The value of <tt>scheme-script</tt> is a procedure that determines the
+<p><a name="./system:s164"></a><a name="./system:s165"></a><a name="./system:s166"></a>The value of <tt>scheme-script</tt> is a procedure that determines the
 system's action upon start-up,
 when the <tt>--script</tt> option is used.
 The procedure receives one or more arguments.
@@ -3895,11 +3929,11 @@ To have any effect, this parameter must be set within a boot file.
 
 
 <p>
-<a name="./system:s165"></a><span class=formdef><b>global parameter</b>: <tt>scheme-program</tt></span>
+<a name="./system:s167"></a><span class=formdef><b>global parameter</b>: <tt>scheme-program</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s166"></a><a name="./system:s167"></a><a name="./system:s168"></a>The value of <tt>scheme-program</tt> is a procedure that determines the
+<p><a name="./system:s168"></a><a name="./system:s169"></a><a name="./system:s170"></a>The value of <tt>scheme-program</tt> is a procedure that determines the
 system's action upon start-up
 when the <tt>--program</tt> (RNRS top-level program) option is used.
 The procedure receives one or more arguments.
@@ -3930,28 +3964,28 @@ To have any effect, this parameter must be set within a boot file.
 
 
 <p>
-<a name="./system:s169"></a><span class=formdef><b>global parameter</b>: <tt>command-line</tt></span>
+<a name="./system:s171"></a><span class=formdef><b>global parameter</b>: <tt>command-line</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s170"></a>This parameter is set by the default values of <tt>scheme-script</tt>
+<p><a name="./system:s172"></a>This parameter is set by the default values of <tt>scheme-script</tt>
 and <tt>scheme-program</tt>
 to a list representing the command line, with the script name followed
 by the command-line arguments, when the <tt>--script</tt> or
 <tt>--program</tt> option is used on system startup.
 
 <p>
-<a name="./system:s171"></a><span class=formdef><b>global parameter</b>: <tt>command-line-arguments</tt></span>
+<a name="./system:s173"></a><span class=formdef><b>global parameter</b>: <tt>command-line-arguments</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s172"></a>This parameter is set by the default values of <tt>scheme-script</tt>
+<p><a name="./system:s174"></a>This parameter is set by the default values of <tt>scheme-script</tt>
 and <tt>scheme-program</tt>
 to a list of the command-line arguments when the <tt>--script</tt>
 or <tt>--program</tt> option is used on system startup.
 
 <p>
-<a name="./system:s173"></a><span class=formdef><b>global parameter</b>: <tt>suppress-greeting</tt></span>
+<a name="./system:s175"></a><span class=formdef><b>global parameter</b>: <tt>suppress-greeting</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3972,13 +4006,13 @@ To have any effect, this parameter must be set within a boot file.
 
 
 <p>
-A <a name="./system:s174"></a>transcript file is a record of an interactive session.
+A <a name="./system:s176"></a>transcript file is a record of an interactive session.
 It is also useful as a "quick-and-dirty" alternative to opening an
 output file and using explicit output operations.
 
 
 <p>
-<a name="./system:s175"></a><a name="desc:transcript-on"></a>
+<a name="./system:s177"></a><a name="desc:transcript-on"></a>
 <span class=formdef><b>procedure</b>: <tt>(transcript-on&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3996,7 +4030,7 @@ file cannot be opened for output.
 
 
 <p>
-<a name="./system:s176"></a><span class=formdef><b>procedure</b>: <tt>(transcript-off)</tt></span>
+<a name="./system:s178"></a><span class=formdef><b>procedure</b>: <tt>(transcript-off)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -4006,7 +4040,7 @@ file cannot be opened for output.
 
 
 <p>
-<a name="./system:s177"></a><span class=formdef><b>procedure</b>: <tt>(transcript-cafe&nbsp;<i>path</i>)</tt></span>
+<a name="./system:s179"></a><span class=formdef><b>procedure</b>: <tt>(transcript-cafe&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -4120,7 +4154,7 @@ The offset for Eastern Daylight Time (EDT) is -14400.
 UTC is represented by offset zero.
 
 <p>
-<a name="./system:s178"></a><span class=formdef><b>procedure</b>: <tt>(current-time)</tt></span>
+<a name="./system:s180"></a><span class=formdef><b>procedure</b>: <tt>(current-time)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(current-time&nbsp;<i>time-type</i>)</tt></span>
 <br>
 <b>returns: </b>a time object representing the current time
@@ -4135,7 +4169,7 @@ and defaults to <tt>time-utc</tt>.
 <p><tt>(current-time)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;time-utc&nbsp;1198815722.473668000&gt;<br>
 
 (current-time&nbsp;'time-process)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;time-process&nbsp;0.120534264&gt;</tt>
-<p><a name="./system:s179"></a><span class=formdef><b>procedure</b>: <tt>(make-time&nbsp;<i>type</i>&nbsp;<i>nsec</i>&nbsp;<i>sec</i>)</tt></span>
+<p><a name="./system:s181"></a><span class=formdef><b>procedure</b>: <tt>(make-time&nbsp;<i>type</i>&nbsp;<i>nsec</i>&nbsp;<i>sec</i>)</tt></span>
 <br>
 <b>returns: </b>a time object
 <br>
@@ -4153,7 +4187,7 @@ integer less than 10<sup>9</sup>.
 (make-time&nbsp;'time-duration&nbsp;10&nbsp;5)<br>
 
 (make-time&nbsp;'time-duration&nbsp;10&nbsp;-5)</tt>
-<p><a name="./system:s180"></a><span class=formdef><b>procedure</b>: <tt>(time?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./system:s182"></a><span class=formdef><b>procedure</b>: <tt>(time?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a time object, <tt>#f</tt> otherwise
 <br>
@@ -4166,7 +4200,7 @@ integer less than 10<sup>9</sup>.
 (time?&nbsp;(make-time&nbsp;'time-utc&nbsp;0&nbsp;0))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (time?&nbsp;"1400&nbsp;hours")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./system:s181"></a><span class=formdef><b>procedure</b>: <tt>(time-type&nbsp;<i>time</i>)</tt></span>
+<p><a name="./system:s183"></a><span class=formdef><b>procedure</b>: <tt>(time-type&nbsp;<i>time</i>)</tt></span>
 <br>
 <b>returns: </b>the time type of <tt><i>time</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(time-nanosecond&nbsp;<i>time</i>)</tt></span>
@@ -4195,7 +4229,7 @@ integer less than 10<sup>9</sup>.
 (time-second&nbsp;(make-time&nbsp;'time-duration&nbsp;10&nbsp;-5))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;-5<br>
 
 (time-nanosecond&nbsp;(make-time&nbsp;'time-duration&nbsp;10&nbsp;-5))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;10</tt>
-<p><a name="./system:s182"></a><span class=formdef><b>procedure</b>: <tt>(set-time-type!&nbsp;<i>time</i>&nbsp;<i>type</i>)</tt></span>
+<p><a name="./system:s184"></a><span class=formdef><b>procedure</b>: <tt>(set-time-type!&nbsp;<i>time</i>&nbsp;<i>type</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(set-time-nanosecond!&nbsp;<i>time</i>&nbsp;<i>nsec</i>)</tt></span>
@@ -4222,7 +4256,7 @@ In particular, no conversion of values is performed when the type of a time
 object is changed.
 
 <p>
-<a name="./system:s183"></a><span class=formdef><b>procedure</b>: <tt>(time=?&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
+<a name="./system:s185"></a><span class=formdef><b>procedure</b>: <tt>(time=?&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(time&lt;?&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(time&lt;=?&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(time&gt;=?&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
@@ -4250,7 +4284,7 @@ the same type.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(loop))<br>
 
 &nbsp;&nbsp;(time&gt;?&nbsp;(current-time)&nbsp;t))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./system:s184"></a><span class=formdef><b>procedure</b>: <tt>(copy-time&nbsp;<i>time</i>)</tt></span>
+<p><a name="./system:s186"></a><span class=formdef><b>procedure</b>: <tt>(copy-time&nbsp;<i>time</i>)</tt></span>
 <br>
 <b>returns: </b>a copy of <tt><i>time</i></tt>
 <br>
@@ -4266,7 +4300,7 @@ the same type.
 (eqv?&nbsp;(time-second&nbsp;t2)&nbsp;(time-second&nbsp;t1))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (eqv?&nbsp;(time-nanosecond&nbsp;t2)&nbsp;(time-nanosecond&nbsp;t1))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./system:s185"></a><span class=formdef><b>procedure</b>: <tt>(time-difference&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
+<p><a name="./system:s187"></a><span class=formdef><b>procedure</b>: <tt>(time-difference&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>the result of subtracting <tt><i>time<sub>2</sub></i></tt> from <tt><i>time<sub>1</sub></i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(time-difference!&nbsp;<i>time<sub>1</sub></i>&nbsp;<i>time<sub>2</sub></i>)</tt></span>
@@ -4321,7 +4355,7 @@ new time object.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(time=?&nbsp;(add-duration&nbsp;t1&nbsp;t3)&nbsp;t2)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(time=?&nbsp;(subtract-duration&nbsp;t2&nbsp;t3)&nbsp;t1))))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./system:s186"></a><span class=formdef><b>procedure</b>: <tt>(current-date)</tt></span>
+<p><a name="./system:s188"></a><span class=formdef><b>procedure</b>: <tt>(current-date)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(current-date&nbsp;<i>offset</i>)</tt></span>
 <br>
 <b>returns: </b>a date object representing the current date
@@ -4354,7 +4388,7 @@ The following examples assume the local time zone is EST.
 (date-zone-name&nbsp;(current-date))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"EST"&nbsp;<i>or&nbsp;other&nbsp;system-provided&nbsp;string</i><br>
 
 (date-zone-name&nbsp;(current-date&nbsp;0))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./system:s187"></a><span class=formdef><b>procedure</b>: <tt>(make-date&nbsp;<i>nsec</i>&nbsp;<i>sec</i>&nbsp;<i>min</i>&nbsp;<i>hour</i>&nbsp;<i>day</i>&nbsp;<i>mon</i>&nbsp;<i>year</i>)</tt></span>
+<p><a name="./system:s189"></a><span class=formdef><b>procedure</b>: <tt>(make-date&nbsp;<i>nsec</i>&nbsp;<i>sec</i>&nbsp;<i>min</i>&nbsp;<i>hour</i>&nbsp;<i>day</i>&nbsp;<i>mon</i>&nbsp;<i>year</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-date&nbsp;<i>nsec</i>&nbsp;<i>sec</i>&nbsp;<i>min</i>&nbsp;<i>hour</i>&nbsp;<i>day</i>&nbsp;<i>mon</i>&nbsp;<i>year</i>&nbsp;<i>offset</i>)</tt></span>
 <br>
 <b>returns: </b>a date object
@@ -4395,7 +4429,7 @@ object produce <tt>#f</tt>.
 (date-zone-name&nbsp;(make-date&nbsp;0&nbsp;30&nbsp;7&nbsp;9&nbsp;23&nbsp;9&nbsp;2007&nbsp;-14400))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (string?&nbsp;(date-zone-name&nbsp;(make-date&nbsp;0&nbsp;30&nbsp;7&nbsp;9&nbsp;23&nbsp;9&nbsp;2007)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./system:s188"></a><span class=formdef><b>procedure</b>: <tt>(date?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./system:s190"></a><span class=formdef><b>procedure</b>: <tt>(date?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a date object, <tt>#f</tt> otherwise
 <br>
@@ -4408,7 +4442,7 @@ object produce <tt>#f</tt>.
 (date?&nbsp;(make-date&nbsp;0&nbsp;30&nbsp;7&nbsp;9&nbsp;23&nbsp;9&nbsp;2007&nbsp;-14400))<br>
 
 (date?&nbsp;"Sun&nbsp;Sep&nbsp;23&nbsp;09:07:30&nbsp;2007")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./system:s189"></a><span class=formdef><b>procedure</b>: <tt>(date-nanosecond&nbsp;<i>date</i>)</tt></span>
+<p><a name="./system:s191"></a><span class=formdef><b>procedure</b>: <tt>(date-nanosecond&nbsp;<i>date</i>)</tt></span>
 <br>
 <b>returns: </b>the nanosecond of <tt><i>date</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(date-second&nbsp;<i>date</i>)</tt></span>
@@ -4456,7 +4490,7 @@ object produce <tt>#f</tt>.
 (date-year&nbsp;d)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;2007<br>
 
 (date-zone-offset&nbsp;d)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;-14400</tt>
-<p><a name="./system:s190"></a><span class=formdef><b>procedure</b>: <tt>(date-week-day&nbsp;<i>date</i>)</tt></span>
+<p><a name="./system:s192"></a><span class=formdef><b>procedure</b>: <tt>(date-week-day&nbsp;<i>date</i>)</tt></span>
 <br>
 <b>returns: </b>the week-day of <tt><i>date</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(date-year-day&nbsp;<i>date</i>)</tt></span>
@@ -4491,7 +4525,7 @@ d2&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp
 (date-week-day&nbsp;d2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;0<br>
 
 (date-year-day&nbsp;d2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;265</tt>
-<p><a name="./system:s191"></a><span class=formdef><b>procedure</b>: <tt>(date-dst?&nbsp;<i>date</i>)</tt></span>
+<p><a name="./system:s193"></a><span class=formdef><b>procedure</b>: <tt>(date-dst?&nbsp;<i>date</i>)</tt></span>
 <br>
 <b>returns: </b>whether <tt><i>date</i></tt> is in Daylight Saving Time
 <br><span class=formdef><b>procedure</b>: <tt>(date-zone-name&nbsp;<i>date</i>)</tt></span>
@@ -4520,7 +4554,7 @@ In particular, the format of the zone name is platform-specific.
 (date-dst?&nbsp;d)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (date-zone-name&nbsp;d)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"EDT"&nbsp;<i>or&nbsp;some&nbsp;system-provided&nbsp;string</i></tt>
-<p><a name="./system:s192"></a><span class=formdef><b>procedure</b>: <tt>(time-utc-&gt;date&nbsp;<i>time</i>)</tt></span>
+<p><a name="./system:s194"></a><span class=formdef><b>procedure</b>: <tt>(time-utc-&gt;date&nbsp;<i>time</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(time-utc-&gt;date&nbsp;<i>time</i>&nbsp;<i>offset</i>)</tt></span>
 <br>
 <b>returns: </b>a date object corresponding to <tt><i>time</i></tt>
@@ -4561,7 +4595,7 @@ object produce <tt>#f</tt>.
 (time-utc-&gt;date&nbsp;t)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp;Sep&nbsp;23&nbsp;09:07:30&nbsp;2007&gt;<br>
 
 (time-utc-&gt;date&nbsp;t&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;date&nbsp;Sun&nbsp;Sep&nbsp;23&nbsp;13:07:30&nbsp;2007&gt;</tt>
-<p><a name="./system:s193"></a><span class=formdef><b>procedure</b>: <tt>(date-and-time)</tt></span>
+<p><a name="./system:s195"></a><span class=formdef><b>procedure</b>: <tt>(date-and-time)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(date-and-time&nbsp;<i>date</i>)</tt></span>
 <br>
 <b>returns: </b>a string giving the current date and time
@@ -4578,7 +4612,7 @@ always has length 24.
 (define&nbsp;d&nbsp;(make-date&nbsp;0&nbsp;0&nbsp;0&nbsp;0&nbsp;1&nbsp;1&nbsp;2007&nbsp;0))<br>
 
 (date-and-time&nbsp;d)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"Mon&nbsp;Jan&nbsp;01&nbsp;00:00:00&nbsp;2007"</tt>
-<p><a name="./system:s194"></a><span class=formdef><b>procedure</b>: <tt>(sleep&nbsp;<i>time</i>)</tt></span>
+<p><a name="./system:s196"></a><span class=formdef><b>procedure</b>: <tt>(sleep&nbsp;<i>time</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -4605,7 +4639,7 @@ Section&nbsp;<a href="./system.html#g119">12.10</a> may also be used to
 time computations.
 
 <p>
-<a name="./system:s195"></a><span class=formdef><b>syntax</b>: <tt>(time&nbsp;<i>expr</i>)</tt></span>
+<a name="./system:s197"></a><span class=formdef><b>syntax</b>: <tt>(time&nbsp;<i>expr</i>)</tt></span>
 <br>
 <b>returns: </b>the values of <tt><i>expr</i></tt>
 <br>
@@ -4629,7 +4663,7 @@ associated with evaluating <tt><i>expr</i></tt>.
 &nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;ms&nbsp;elapsed&nbsp;real&nbsp;time,&nbsp;including&nbsp;1&nbsp;ms&nbsp;collecting<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;160&nbsp;bytes&nbsp;allocated,&nbsp;including&nbsp;8184&nbsp;bytes&nbsp;reclaimed</tt>
-<p><a name="./system:s196"></a><span class=formdef><b>procedure</b>: <tt>(display-statistics)</tt></span>
+<p><a name="./system:s198"></a><span class=formdef><b>procedure</b>: <tt>(display-statistics)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(display-statistics&nbsp;<i>textual-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -4642,7 +4676,7 @@ If <tt><i>textual-output-port</i></tt> is not supplied, it defaults to the curre
 
 
 <p>
-<a name="./system:s197"></a><span class=formdef><b>procedure</b>: <tt>(cpu-time)</tt></span>
+<a name="./system:s199"></a><span class=formdef><b>procedure</b>: <tt>(cpu-time)</tt></span>
 <br>
 <b>returns: </b>the amount of cpu time consumed since system start-up
 <br>
@@ -4658,7 +4692,7 @@ See also <tt>current-time</tt>, which returns more precise information.
 
 
 <p>
-<a name="./system:s198"></a><span class=formdef><b>procedure</b>: <tt>(real-time)</tt></span>
+<a name="./system:s200"></a><span class=formdef><b>procedure</b>: <tt>(real-time)</tt></span>
 <br>
 <b>returns: </b>the amount of real time that has elapsed since system start-up
 <br>
@@ -4671,7 +4705,7 @@ See also <tt>current-time</tt>, which returns more precise information.
 
 
 <p>
-<a name="./system:s199"></a><span class=formdef><b>procedure</b>: <tt>(bytes-allocated)</tt></span>
+<a name="./system:s201"></a><span class=formdef><b>procedure</b>: <tt>(bytes-allocated)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(bytes-allocated&nbsp;<i>g</i>)</tt></span>
 <br>
 <b>returns: </b>the number of bytes currently allocated
@@ -4689,13 +4723,13 @@ number of bytes allocated in all generations.
 
 
 <p>
-<a name="./system:s200"></a><span class=formdef><b>procedure</b>: <tt>(initial-bytes-allocated)</tt></span>
+<a name="./system:s202"></a><span class=formdef><b>procedure</b>: <tt>(initial-bytes-allocated)</tt></span>
 <br>
 <b>returns: </b>the total number of bytes allocated after loading boot files
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s201"></a><span class=formdef><b>procedure</b>: <tt>(bytes-deallocated)</tt></span>
+<p><a name="./system:s203"></a><span class=formdef><b>procedure</b>: <tt>(bytes-deallocated)</tt></span>
 <br>
 <b>returns: </b>the total number of bytes deallocated by the garbage collector
 <br>
@@ -4707,7 +4741,7 @@ still in use or not, can be obtained by summing
 and possibly subtracting <tt>(initial-bytes-allocated)</tt>.
 
 <p>
-<a name="./system:s202"></a><span class=formdef><b>procedure</b>: <tt>(current-memory-bytes)</tt></span>
+<a name="./system:s204"></a><span class=formdef><b>procedure</b>: <tt>(current-memory-bytes)</tt></span>
 <br>
 <b>returns: </b>the total number of bytes currently allocated, including overhead
 <br>
@@ -4721,7 +4755,7 @@ measure of the amount of heap memory currently reserved from the
 operating system for the current process.
 
 <p>
-<a name="./system:s203"></a><span class=formdef><b>procedure</b>: <tt>(maximum-memory-bytes)</tt></span>
+<a name="./system:s205"></a><span class=formdef><b>procedure</b>: <tt>(maximum-memory-bytes)</tt></span>
 <br>
 <b>returns: </b>the maximum number of bytes ever allocated, including overhead
 <br>
@@ -4734,7 +4768,7 @@ returned or could have returned, since the last call to
 call, since the process started.
 
 <p>
-<a name="./system:s204"></a><span class=formdef><b>procedure</b>: <tt>(reset-maximum-memory-bytes!)</tt></span>
+<a name="./system:s206"></a><span class=formdef><b>procedure</b>: <tt>(reset-maximum-memory-bytes!)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -4744,13 +4778,13 @@ call, since the process started.
 of the heap to the current size of the heap.
 
 <p>
-<a name="./system:s205"></a><span class=formdef><b>procedure</b>: <tt>(collections)</tt></span>
+<a name="./system:s207"></a><span class=formdef><b>procedure</b>: <tt>(collections)</tt></span>
 <br>
 <b>returns: </b>the number garbage collections so far
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s206"></a><span class=formdef><b>procedure</b>: <tt>(statistics)</tt></span>
+<p><a name="./system:s208"></a><span class=formdef><b>procedure</b>: <tt>(statistics)</tt></span>
 <br>
 <b>returns: </b>a sstats record containing current statistics
 <br>
@@ -4802,7 +4836,7 @@ and the bytes and count values are exact integers.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(current-time&nbsp;'time-collector-real)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bytes-deallocated))))</tt>
-<p><a name="./system:s207"></a><span class=formdef><b>procedure</b>: <tt>(make-sstats&nbsp;<i>cpu</i>&nbsp;<i>real</i>&nbsp;<i>bytes</i>&nbsp;<i>gc-count</i>&nbsp;<i>gc-cpu</i>&nbsp;<i>gc-real</i>&nbsp;<i>gc-bytes</i>)</tt></span>
+<p><a name="./system:s209"></a><span class=formdef><b>procedure</b>: <tt>(make-sstats&nbsp;<i>cpu</i>&nbsp;<i>real</i>&nbsp;<i>bytes</i>&nbsp;<i>gc-count</i>&nbsp;<i>gc-cpu</i>&nbsp;<i>gc-real</i>&nbsp;<i>gc-bytes</i>)</tt></span>
 <br>
 <b>returns: </b>a sstats record
 <br>
@@ -4813,13 +4847,13 @@ The other arguments must be exact integers.
 
 
 <p>
-<a name="./system:s208"></a><span class=formdef><b>procedure</b>: <tt>(sstats?&nbsp;<i>obj</i>)</tt></span>
+<a name="./system:s210"></a><span class=formdef><b>procedure</b>: <tt>(sstats?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a sstats record, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s209"></a><span class=formdef><b>procedure</b>: <tt>(sstats-cpu&nbsp;<i>s</i>)</tt></span>
+<p><a name="./system:s211"></a><span class=formdef><b>procedure</b>: <tt>(sstats-cpu&nbsp;<i>s</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(sstats-real&nbsp;<i>s</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(sstats-bytes&nbsp;<i>s</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(sstats-gc-count&nbsp;<i>s</i>)</tt></span>
@@ -4834,7 +4868,7 @@ The other arguments must be exact integers.
 <p><tt><i>s</i></tt> must be a sstats record.
 
 <p>
-<a name="./system:s210"></a><span class=formdef><b>procedure</b>: <tt>(set-sstats-cpu!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
+<a name="./system:s212"></a><span class=formdef><b>procedure</b>: <tt>(set-sstats-cpu!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-sstats-real!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-sstats-bytes!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-sstats-gc-count!&nbsp;<i>s</i>&nbsp;<i>new-value</i>)</tt></span>
@@ -4855,7 +4889,7 @@ Each procedure sets the value of the corresponding field of <tt><i>s</i></tt> to
 
 
 <p>
-<a name="./system:s211"></a><span class=formdef><b>procedure</b>: <tt>(sstats-difference&nbsp;<i>s<sub>1</sub></i>&nbsp;<i>s<sub>2</sub></i>)</tt></span>
+<a name="./system:s213"></a><span class=formdef><b>procedure</b>: <tt>(sstats-difference&nbsp;<i>s<sub>1</sub></i>&nbsp;<i>s<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>a sstats record representing the difference between <tt><i>s<sub>1</sub></i></tt> and <tt><i>s<sub>2</sub></i></tt>
 <br>
@@ -4867,7 +4901,7 @@ corresponding field of <tt><i>s<sub>1</sub></i></tt> to produce the resulting <t
 record.
 
 <p>
-<a name="./system:s212"></a><span class=formdef><b>procedure</b>: <tt>(sstats-print&nbsp;<i>s</i>)</tt></span>
+<a name="./system:s214"></a><span class=formdef><b>procedure</b>: <tt>(sstats-print&nbsp;<i>s</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(sstats-print&nbsp;<i>s</i>&nbsp;<i>textual-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -4881,7 +4915,7 @@ to <tt>display-statistics</tt> and <tt>time</tt>.
 
 
 <p>
-<a name="./system:s213"></a><span class=formdef><b>global parameter</b>: <tt>enable-object-counts</tt></span>
+<a name="./system:s215"></a><span class=formdef><b>global parameter</b>: <tt>enable-object-counts</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -4906,7 +4940,7 @@ generation and to obtain the object counts immediately after that
 collection.
 
 <p>
-<a name="./system:s214"></a><span class=formdef><b>procedure</b>: <tt>(object-counts)</tt></span>
+<a name="./system:s216"></a><span class=formdef><b>procedure</b>: <tt>(object-counts)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -4983,7 +5017,7 @@ simultaneously in multiple threads, and exited or reentered one or more
 times via continuation invocation.
 
 <p>
-<a name="./system:s215"></a><span class=formdef><b>thread parameter</b>: <tt>generate-allocation-counts</tt></span>
+<a name="./system:s217"></a><span class=formdef><b>thread parameter</b>: <tt>generate-allocation-counts</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -4993,7 +5027,7 @@ allocation that occurs.
 This parameter is initially false.
 
 <p>
-<a name="./system:s216"></a><span class=formdef><b>thread parameter</b>: <tt>generate-instruction-counts</tt></span>
+<a name="./system:s218"></a><span class=formdef><b>thread parameter</b>: <tt>generate-instruction-counts</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -5003,7 +5037,7 @@ number of instructions executed by that block.
 This parameter is initially false.
 
 <p>
-<a name="./system:s217"></a><span class=formdef><b>procedure</b>: <tt>(make-cost-center)</tt></span>
+<a name="./system:s219"></a><span class=formdef><b>procedure</b>: <tt>(make-cost-center)</tt></span>
 <br>
 <b>returns: </b>a new cost center
 <br>
@@ -5012,13 +5046,13 @@ This parameter is initially false.
 <p>The recorded costs of the new cost center are initialized to zero.
 
 <p>
-<a name="./system:s218"></a><span class=formdef><b>procedure</b>: <tt>(cost-center?&nbsp;<i>obj</i>)</tt></span>
+<a name="./system:s220"></a><span class=formdef><b>procedure</b>: <tt>(cost-center?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a cost center, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s219"></a><span class=formdef><b>procedure</b>: <tt>(with-cost-center&nbsp;<i>cost-center</i>&nbsp;<i>thunk</i>)</tt></span>
+<p><a name="./system:s221"></a><span class=formdef><b>procedure</b>: <tt>(with-cost-center&nbsp;<i>cost-center</i>&nbsp;<i>thunk</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(with-cost-center&nbsp;<i>timed?</i>&nbsp;<i>cost-center</i>&nbsp;<i>thunk</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -5042,19 +5076,19 @@ includes cpu time spent in instrumented, uninstrumented, and non-Scheme
 code.
 
 <p>
-<a name="./system:s220"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-instruction-count&nbsp;<i>cost-center</i>)</tt></span>
+<a name="./system:s222"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-instruction-count&nbsp;<i>cost-center</i>)</tt></span>
 <br>
 <b>returns: </b>the number of instructions tracked by <tt><i>cost-center</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s221"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-allocation-count&nbsp;<i>cost-center</i>)</tt></span>
+<p><a name="./system:s223"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-allocation-count&nbsp;<i>cost-center</i>)</tt></span>
 <br>
 <b>returns: </b>the number of allocated bytes tracked by <tt><i>cost-center</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s222"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-time&nbsp;<i>cost-center</i>)</tt></span>
+<p><a name="./system:s224"></a><span class=formdef><b>procedure</b>: <tt>(cost-center-time&nbsp;<i>cost-center</i>)</tt></span>
 <br>
 <b>returns: </b>the cpu time tracked by <tt><i>cost-center</i></tt>
 <br>
@@ -5063,7 +5097,7 @@ code.
 <p>The cpu time is returned as a time object with time-type <tt>time-duration</tt>.
 
 <p>
-<a name="./system:s223"></a><span class=formdef><b>procedure</b>: <tt>(reset-cost-center!&nbsp;<i>cost-center</i>)</tt></span>
+<a name="./system:s225"></a><span class=formdef><b>procedure</b>: <tt>(reset-cost-center!&nbsp;<i>cost-center</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -5089,7 +5123,7 @@ the parameter may be defined directly with <tt>case-lambda</tt>.
 
 
 <p>
-<a name="./system:s224"></a><span class=formdef><b>procedure</b>: <tt>(make-parameter&nbsp;<i>object</i>)</tt></span>
+<a name="./system:s226"></a><span class=formdef><b>procedure</b>: <tt>(make-parameter&nbsp;<i>object</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-parameter&nbsp;<i>object</i>&nbsp;<i>procedure</i>)</tt></span>
 <br>
 <b>returns: </b>a parameter (procedure)
@@ -5140,7 +5174,7 @@ follows:
 
 (format&nbsp;"~s"&nbsp;'(1&nbsp;2&nbsp;3&nbsp;4&nbsp;5&nbsp;6))&nbsp;&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"(1&nbsp;2&nbsp;3&nbsp;4&nbsp;5&nbsp;6)"</tt>
 <p>The definition of <tt>make-parameter</tt> is straightforward using
-<a name="./system:s225"></a><tt>case-lambda</tt>:
+<a name="./system:s227"></a><tt>case-lambda</tt>:
 
 <p>
 
@@ -5169,7 +5203,7 @@ parameters.
 
 
 <p>
-<a name="./system:s226"></a><span class=formdef><b>syntax</b>: <tt>(parameterize&nbsp;((<i>param</i>&nbsp;<i>expr</i>)&nbsp;...)&nbsp;<i>body<sub>1</sub></i>&nbsp;<i>body<sub>2</sub></i>&nbsp;...)</tt></span>
+<a name="./system:s228"></a><span class=formdef><b>syntax</b>: <tt>(parameterize&nbsp;((<i>param</i>&nbsp;<i>expr</i>)&nbsp;...)&nbsp;<i>body<sub>1</sub></i>&nbsp;<i>body<sub>2</sub></i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>the values of the body <tt><i>body<sub>1</sub></i>&nbsp;<i>body<sub>2</sub></i>&nbsp;...</tt>
 <br>
@@ -5317,7 +5351,7 @@ the registers.
 
 
 <p>
-<a name="./system:s227"></a><span class=formdef><b>procedure</b>: <tt>(virtual-register-count)</tt></span>
+<a name="./system:s229"></a><span class=formdef><b>procedure</b>: <tt>(virtual-register-count)</tt></span>
 <br>
 <b>returns: </b>the number of virtual registers
 <br>
@@ -5328,7 +5362,7 @@ It cannot be changed except by recompiling <i>Chez&nbsp;Scheme</i> from
 source.
 
 <p>
-<a name="./system:s228"></a><span class=formdef><b>procedure</b>: <tt>(set-virtual-register!&nbsp;<i>k</i>&nbsp;<i>x</i>)</tt></span>
+<a name="./system:s230"></a><span class=formdef><b>procedure</b>: <tt>(set-virtual-register!&nbsp;<i>k</i>&nbsp;<i>x</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -5339,7 +5373,7 @@ source.
 <tt>(virtual-register-count)</tt>.
 
 <p>
-<a name="./system:s229"></a><span class=formdef><b>procedure</b>: <tt>(virtual-register&nbsp;<i>k</i>)</tt></span>
+<a name="./system:s231"></a><span class=formdef><b>procedure</b>: <tt>(virtual-register&nbsp;<i>k</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -5357,7 +5391,7 @@ threaded versions of the system).
 
 
 <p>
-<a name="./system:s230"></a><span class=formdef><b>procedure</b>: <tt>(scheme-version)</tt></span>
+<a name="./system:s232"></a><span class=formdef><b>procedure</b>: <tt>(scheme-version)</tt></span>
 <br>
 <b>returns: </b>a version string
 <br>
@@ -5376,7 +5410,7 @@ threaded versions of the system).
 <p>for <i>Petite&nbsp;Chez&nbsp;Scheme</i>.
 
 <p>
-<a name="./system:s231"></a><span class=formdef><b>procedure</b>: <tt>(scheme-version-number)</tt></span>
+<a name="./system:s233"></a><span class=formdef><b>procedure</b>: <tt>(scheme-version-number)</tt></span>
 <br>
 <b>returns: </b>three values: the major, minor, and sub-minor version numbers
 <br>
@@ -5394,7 +5428,7 @@ In <i>Chez&nbsp;Scheme</i> Version 7.9.4:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;9<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;4</tt>
-<p><a name="./system:s232"></a><span class=formdef><b>procedure</b>: <tt>(petite?)</tt></span>
+<p><a name="./system:s234"></a><span class=formdef><b>procedure</b>: <tt>(petite?)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if called in <i>Petite&nbsp;Chez&nbsp;Scheme</i>, <tt>#f</tt> otherwise
 <br>
@@ -5406,13 +5440,13 @@ a way to determine if the compiler is available.
 
 
 <p>
-<a name="./system:s233"></a><span class=formdef><b>procedure</b>: <tt>(threaded?)</tt></span>
+<a name="./system:s235"></a><span class=formdef><b>procedure</b>: <tt>(threaded?)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if called in a threaded version of the system, <tt>#f</tt> otherwise
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s234"></a><span class=formdef><b>procedure</b>: <tt>(interactive?)</tt></span>
+<p><a name="./system:s236"></a><span class=formdef><b>procedure</b>: <tt>(interactive?)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if system is run interactively, <tt>#f</tt> otherwise
 <br>
@@ -5425,13 +5459,13 @@ Otherwise, it returns <tt>#f</tt>.
 
 
 <p>
-<a name="./system:s235"></a><span class=formdef><b>procedure</b>: <tt>(get-process-id)</tt></span>
+<a name="./system:s237"></a><span class=formdef><b>procedure</b>: <tt>(get-process-id)</tt></span>
 <br>
 <b>returns: </b>the operating system process id if the current process
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./system:s236"></a><span class=formdef><b>procedure</b>: <tt>(getenv&nbsp;<i>key</i>)</tt></span>
+<p><a name="./system:s238"></a><span class=formdef><b>procedure</b>: <tt>(getenv&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b>environment value of <tt><i>key</i></tt> or <tt>#f</tt>
 <br>
@@ -5445,7 +5479,7 @@ is associated with <tt><i>key</i></tt>.
 <p>
 
 <p><tt>(getenv&nbsp;"HOME")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"/u/freddy"</tt>
-<p><a name="./system:s237"></a><span class=formdef><b>procedure</b>: <tt>(putenv&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
+<p><a name="./system:s239"></a><span class=formdef><b>procedure</b>: <tt>(putenv&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -5466,7 +5500,7 @@ the Scheme heap; this space is never reclaimed on non-Windows systems.
 <p><tt>(putenv&nbsp;"SCHEME"&nbsp;"rocks!")<br>
 
 (getenv&nbsp;"SCHEME")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"rocks!"</tt>
-<p><a name="./system:s238"></a><span class=formdef><b>procedure</b>: <tt>(get-registry&nbsp;<i>key</i>)</tt></span>
+<p><a name="./system:s240"></a><span class=formdef><b>procedure</b>: <tt>(get-registry&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b>registry value of <tt><i>key</i></tt> or <tt>#f</tt>
 <br><span class=formdef><b>procedure</b>: <tt>(put-registry!&nbsp;<i>key</i>&nbsp;<i>val</i>)</tt></span>
@@ -5519,7 +5553,7 @@ These routines are defined for Windows only.
 
 
 <p>
-<a name="./system:s239"></a><span class=formdef><b>thread parameter</b>: <tt>subset-mode</tt></span>
+<a name="./system:s241"></a><span class=formdef><b>thread parameter</b>: <tt>subset-mode</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -5539,7 +5573,7 @@ It is typically used only for system debugging.
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised June 2018 for Chez Scheme Version 9.5.1<br>
+Revised September 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

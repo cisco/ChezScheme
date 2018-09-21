@@ -3117,21 +3117,23 @@ program.
 
 <a name="./foreign:s172"></a>[func] <tt>void</tt> <tt>Sregister_boot_file</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>)</tt><br>
 
-<a name="./foreign:s173"></a>[func] <tt>void</tt> <tt>Sbuild_heap</tt><tt>(const&nbsp;char&nbsp;*<i>exec</i>,&nbsp;void&nbsp;(*<i>custom</i>_<i>init</i>)(void))</tt><br>
+<a name="./foreign:s173"></a>[func] <tt>void</tt> <tt>Sregister_boot_file_fd</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>,&nbsp;int&nbsp;<i>fd</i>)</tt><br>
 
-<a name="./foreign:s174"></a>[func] <tt>void</tt> <tt>Senable_expeditor</tt><tt>(const&nbsp;char&nbsp;*<i>history</i>_<i>file</i>)</tt><br>
+<a name="./foreign:s174"></a>[func] <tt>void</tt> <tt>Sbuild_heap</tt><tt>(const&nbsp;char&nbsp;*<i>exec</i>,&nbsp;void&nbsp;(*<i>custom</i>_<i>init</i>)(void))</tt><br>
 
-<a name="./foreign:s175"></a>[func] <tt>void</tt> <tt>Sretain_static_relocation</tt><tt>(void)</tt><br>
+<a name="./foreign:s175"></a>[func] <tt>void</tt> <tt>Senable_expeditor</tt><tt>(const&nbsp;char&nbsp;*<i>history</i>_<i>file</i>)</tt><br>
 
-<a name="./foreign:s176"></a>[func] <tt>int</tt> <tt>Sscheme_start</tt><tt>(int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
+<a name="./foreign:s176"></a>[func] <tt>void</tt> <tt>Sretain_static_relocation</tt><tt>(void)</tt><br>
 
-<a name="./foreign:s177"></a>[func] <tt>int</tt> <tt>Sscheme_script</tt><tt>(char&nbsp;*<i>scriptfile</i>,&nbsp;int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
+<a name="./foreign:s177"></a>[func] <tt>int</tt> <tt>Sscheme_start</tt><tt>(int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
 
-<a name="./foreign:s178"></a>[func] <tt>int</tt> <tt>Sscheme_program</tt><tt>(char&nbsp;*<i>programfile</i>,&nbsp;int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
+<a name="./foreign:s178"></a>[func] <tt>int</tt> <tt>Sscheme_script</tt><tt>(char&nbsp;*<i>scriptfile</i>,&nbsp;int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
 
-<a name="./foreign:s179"></a>[func] <tt>void</tt> <tt>Scompact_heap</tt><tt>(void)</tt><br>
+<a name="./foreign:s179"></a>[func] <tt>int</tt> <tt>Sscheme_program</tt><tt>(char&nbsp;*<i>programfile</i>,&nbsp;int&nbsp;<i>argc</i>,&nbsp;char&nbsp;*<i>argv</i>[])</tt><br>
 
-<a name="./foreign:s180"></a>[func] <tt>void</tt> <tt>Sscheme_deinit</tt><tt>(void)</tt><br>
+<a name="./foreign:s180"></a>[func] <tt>void</tt> <tt>Scompact_heap</tt><tt>(void)</tt><br>
+
+<a name="./foreign:s181"></a>[func] <tt>void</tt> <tt>Sscheme_deinit</tt><tt>(void)</tt><br>
 
 
 <p>
@@ -3161,9 +3163,11 @@ for subsequently registered boot files.
 <p>
 <tt>Sregister_boot_file</tt> searches for
 the named boot file and
-register it for loading.
-The file is opened but not loaded until the heap is built via
-<tt>Sbuild_heap</tt>.
+register it for loading, while <tt>Sregister_boot_file_fd</tt>
+provides a specific boot file as a file descriptor.
+When only a boot file name is provided, the file is opened but not loaded until the heap is built via
+<tt>Sbuild_heap</tt>. When a file descriptor is provided, the given file name
+is used only for error reporting.
 For the first boot file registered only, the system also
 searches for the boot files upon which the named file
 depends, either directly or indirectly.
@@ -3245,49 +3249,49 @@ Each predicate accepts a single Scheme object and returns a boolean
 
 <p>
 
-<a name="./foreign:s181"></a>[macro] <tt>int</tt> <tt>Sfixnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s182"></a>[macro] <tt>int</tt> <tt>Sfixnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s182"></a>[macro] <tt>int</tt> <tt>Scharp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s183"></a>[macro] <tt>int</tt> <tt>Scharp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s183"></a>[macro] <tt>int</tt> <tt>Snullp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s184"></a>[macro] <tt>int</tt> <tt>Snullp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s184"></a>[macro] <tt>int</tt> <tt>Seof_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s185"></a>[macro] <tt>int</tt> <tt>Seof_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s185"></a>[macro] <tt>int</tt> <tt>Sbwp_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s186"></a>[macro] <tt>int</tt> <tt>Sbwp_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s186"></a>[macro] <tt>int</tt> <tt>Sbooleanp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s187"></a>[macro] <tt>int</tt> <tt>Sbooleanp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s187"></a>[macro] <tt>int</tt> <tt>Spairp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s188"></a>[macro] <tt>int</tt> <tt>Spairp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s188"></a>[macro] <tt>int</tt> <tt>Ssymbolp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s189"></a>[macro] <tt>int</tt> <tt>Ssymbolp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s189"></a>[macro] <tt>int</tt> <tt>Sprocedurep</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s190"></a>[macro] <tt>int</tt> <tt>Sprocedurep</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s190"></a>[macro] <tt>int</tt> <tt>Sflonump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s191"></a>[macro] <tt>int</tt> <tt>Sflonump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s191"></a>[macro] <tt>int</tt> <tt>Svectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s192"></a>[macro] <tt>int</tt> <tt>Svectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s192"></a>[macro] <tt>int</tt> <tt>Sbytevectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s193"></a>[macro] <tt>int</tt> <tt>Sbytevectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s193"></a>[macro] <tt>int</tt> <tt>Sfxvectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s194"></a>[macro] <tt>int</tt> <tt>Sfxvectorp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s194"></a>[macro] <tt>int</tt> <tt>Sstringp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s195"></a>[macro] <tt>int</tt> <tt>Sstringp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s195"></a>[macro] <tt>int</tt> <tt>Sbignump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s196"></a>[macro] <tt>int</tt> <tt>Sbignump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s196"></a>[macro] <tt>int</tt> <tt>Sboxp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s197"></a>[macro] <tt>int</tt> <tt>Sboxp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s197"></a>[macro] <tt>int</tt> <tt>Sinexactnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s198"></a>[macro] <tt>int</tt> <tt>Sinexactnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s198"></a>[macro] <tt>int</tt> <tt>Sexactnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s199"></a>[macro] <tt>int</tt> <tt>Sexactnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s199"></a>[macro] <tt>int</tt> <tt>Sratnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s200"></a>[macro] <tt>int</tt> <tt>Sratnump</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s200"></a>[macro] <tt>int</tt> <tt>Sinputportp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s201"></a>[macro] <tt>int</tt> <tt>Sinputportp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s201"></a>[macro] <tt>int</tt> <tt>Soutputportp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s202"></a>[macro] <tt>int</tt> <tt>Soutputportp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s202"></a>[macro] <tt>int</tt> <tt>Srecordp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s203"></a>[macro] <tt>int</tt> <tt>Srecordp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3300,13 +3304,13 @@ Scheme value.
 
 <p>
 
-<a name="./foreign:s203"></a>[macro] <tt>iptr</tt> <tt>Sfixnum_value</tt><tt>(ptr&nbsp;<i>fixnum</i>)</tt><br>
+<a name="./foreign:s204"></a>[macro] <tt>iptr</tt> <tt>Sfixnum_value</tt><tt>(ptr&nbsp;<i>fixnum</i>)</tt><br>
 
-<a name="./foreign:s204"></a>[macro] <tt>uptr</tt> <tt>Schar_value</tt><tt>(ptr&nbsp;<i>character</i>)</tt><br>
+<a name="./foreign:s205"></a>[macro] <tt>uptr</tt> <tt>Schar_value</tt><tt>(ptr&nbsp;<i>character</i>)</tt><br>
 
-<a name="./foreign:s205"></a>[macro] <tt>int</tt> <tt>Sboolean_value</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s206"></a>[macro] <tt>int</tt> <tt>Sboolean_value</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s206"></a>[macro] <tt>double</tt> <tt>Sflonum_value</tt><tt>(ptr&nbsp;<i>flonum</i>)</tt><br>
+<a name="./foreign:s207"></a>[macro] <tt>double</tt> <tt>Sflonum_value</tt><tt>(ptr&nbsp;<i>flonum</i>)</tt><br>
 
 
 
@@ -3321,9 +3325,9 @@ interpretations of negative and large unsigned values.
 
 <p>
 
-<a name="./foreign:s207"></a>[func] <tt>iptr</tt> <tt>Sinteger_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s208"></a>[func] <tt>iptr</tt> <tt>Sinteger_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
-<a name="./foreign:s208"></a>[macro] <tt>uptr</tt> <tt>Sunsigned_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s209"></a>[macro] <tt>uptr</tt> <tt>Sunsigned_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
 
 
@@ -3336,13 +3340,13 @@ type for the machine type.
 
 <p>
 
-<a name="./foreign:s209"></a>[func] <tt>&lt;32-bit&nbsp;int&nbsp;type&gt;</tt> <tt>Sinteger32_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s210"></a>[func] <tt>&lt;32-bit&nbsp;int&nbsp;type&gt;</tt> <tt>Sinteger32_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
-<a name="./foreign:s210"></a>[macro] <tt>&lt;32-bit&nbsp;unsigned&nbsp;type&gt;</tt> <tt>Sunsigned32_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s211"></a>[macro] <tt>&lt;32-bit&nbsp;unsigned&nbsp;type&gt;</tt> <tt>Sunsigned32_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
-<a name="./foreign:s211"></a>[func] <tt>&lt;64-bit&nbsp;int&nbsp;type&gt;</tt> <tt>Sinteger64_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s212"></a>[func] <tt>&lt;64-bit&nbsp;int&nbsp;type&gt;</tt> <tt>Sinteger64_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
-<a name="./foreign:s212"></a>[macro] <tt>&lt;64-bit&nbsp;unsigned&nbsp;type&gt;</tt> <tt>Sunsigned64_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
+<a name="./foreign:s213"></a>[macro] <tt>&lt;64-bit&nbsp;unsigned&nbsp;type&gt;</tt> <tt>Sunsigned64_value</tt><tt>(ptr&nbsp;<i>integer</i>)</tt><br>
 
 
 
@@ -3353,13 +3357,13 @@ Scheme counterparts.
 
 <p>
 
-<a name="./foreign:s213"></a>[macro] <tt>ptr</tt> <tt>Scar</tt><tt>(ptr&nbsp;<i>pair</i>)</tt><br>
+<a name="./foreign:s214"></a>[macro] <tt>ptr</tt> <tt>Scar</tt><tt>(ptr&nbsp;<i>pair</i>)</tt><br>
 
-<a name="./foreign:s214"></a>[macro] <tt>ptr</tt> <tt>Scdr</tt><tt>(ptr&nbsp;<i>pair</i>)</tt><br>
+<a name="./foreign:s215"></a>[macro] <tt>ptr</tt> <tt>Scdr</tt><tt>(ptr&nbsp;<i>pair</i>)</tt><br>
 
-<a name="./foreign:s215"></a>[macro] <tt>ptr</tt> <tt>Ssymbol_to_string</tt><tt>(ptr&nbsp;<i>sym</i>)</tt><br>
+<a name="./foreign:s216"></a>[macro] <tt>ptr</tt> <tt>Ssymbol_to_string</tt><tt>(ptr&nbsp;<i>sym</i>)</tt><br>
 
-<a name="./foreign:s216"></a>[macro] <tt>ptr</tt> <tt>Sunbox</tt><tt>(ptr&nbsp;<i>box</i>)</tt><br>
+<a name="./foreign:s217"></a>[macro] <tt>ptr</tt> <tt>Sunbox</tt><tt>(ptr&nbsp;<i>box</i>)</tt><br>
 
 
 
@@ -3371,13 +3375,13 @@ Scheme counterparts.
 
 <p>
 
-<a name="./foreign:s217"></a>[macro] <tt>iptr</tt> <tt>Sstring_length</tt><tt>(ptr&nbsp;<i>str</i>)</tt><br>
+<a name="./foreign:s218"></a>[macro] <tt>iptr</tt> <tt>Sstring_length</tt><tt>(ptr&nbsp;<i>str</i>)</tt><br>
 
-<a name="./foreign:s218"></a>[macro] <tt>iptr</tt> <tt>Svector_length</tt><tt>(ptr&nbsp;<i>vec</i>)</tt><br>
+<a name="./foreign:s219"></a>[macro] <tt>iptr</tt> <tt>Svector_length</tt><tt>(ptr&nbsp;<i>vec</i>)</tt><br>
 
-<a name="./foreign:s219"></a>[macro] <tt>iptr</tt> <tt>Sbytevector_length</tt><tt>(ptr&nbsp;<i>bytevec</i>)</tt><br>
+<a name="./foreign:s220"></a>[macro] <tt>iptr</tt> <tt>Sbytevector_length</tt><tt>(ptr&nbsp;<i>bytevec</i>)</tt><br>
 
-<a name="./foreign:s220"></a>[macro] <tt>iptr</tt> <tt>Sfxvector_length</tt><tt>(ptr&nbsp;<i>fxvec</i>)</tt><br>
+<a name="./foreign:s221"></a>[macro] <tt>iptr</tt> <tt>Sfxvector_length</tt><tt>(ptr&nbsp;<i>fxvec</i>)</tt><br>
 
 
 
@@ -3391,13 +3395,13 @@ octet (unsigned char).
 
 <p>
 
-<a name="./foreign:s221"></a>[macro] <tt>char</tt> <tt>Sstring_ref</tt><tt>(ptr&nbsp;<i>str</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
+<a name="./foreign:s222"></a>[macro] <tt>char</tt> <tt>Sstring_ref</tt><tt>(ptr&nbsp;<i>str</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
 
-<a name="./foreign:s222"></a>[macro] <tt>ptr</tt> <tt>Svector_ref</tt><tt>(ptr&nbsp;<i>vec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
+<a name="./foreign:s223"></a>[macro] <tt>ptr</tt> <tt>Svector_ref</tt><tt>(ptr&nbsp;<i>vec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
 
-<a name="./foreign:s223"></a>[macro] <tt>octet</tt> <tt>Sbytevector_u8_ref</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
+<a name="./foreign:s224"></a>[macro] <tt>octet</tt> <tt>Sbytevector_u8_ref</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
 
-<a name="./foreign:s224"></a>[macro] <tt>ptr</tt> <tt>Sfxvector_ref</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
+<a name="./foreign:s225"></a>[macro] <tt>ptr</tt> <tt>Sfxvector_ref</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>)</tt><br>
 
 
 
@@ -3415,7 +3419,7 @@ the pointer points and may copy other data over the object.
 
 <p>
 
-<a name="./foreign:s225"></a>[macro] <tt>octet&nbsp;*</tt> <tt>Sbytevector_data</tt><tt>(ptr&nbsp;<i>bytevec</i>)</tt><br>
+<a name="./foreign:s226"></a>[macro] <tt>octet&nbsp;*</tt> <tt>Sbytevector_data</tt><tt>(ptr&nbsp;<i>bytevec</i>)</tt><br>
 
 
 
@@ -3428,19 +3432,19 @@ where necessary.
 
 <p>
 
-<a name="./foreign:s226"></a>[func] <tt>void</tt> <tt>Sset_box</tt><tt>(ptr&nbsp;<i>box</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s227"></a>[func] <tt>void</tt> <tt>Sset_box</tt><tt>(ptr&nbsp;<i>box</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s227"></a>[func] <tt>void</tt> <tt>Sset_car</tt><tt>(ptr&nbsp;<i>pair</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s228"></a>[func] <tt>void</tt> <tt>Sset_car</tt><tt>(ptr&nbsp;<i>pair</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s228"></a>[func] <tt>void</tt> <tt>Sset_cdr</tt><tt>(ptr&nbsp;<i>pair</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s229"></a>[func] <tt>void</tt> <tt>Sset_cdr</tt><tt>(ptr&nbsp;<i>pair</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s229"></a>[macro] <tt>void</tt> <tt>Sstring_set</tt><tt>(ptr&nbsp;<i>str</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;char&nbsp;<i>c</i>)</tt><br>
+<a name="./foreign:s230"></a>[macro] <tt>void</tt> <tt>Sstring_set</tt><tt>(ptr&nbsp;<i>str</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;char&nbsp;<i>c</i>)</tt><br>
 
-<a name="./foreign:s230"></a>[func] <tt>void</tt> <tt>Svector_set</tt><tt>(ptr&nbsp;<i>vec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s231"></a>[func] <tt>void</tt> <tt>Svector_set</tt><tt>(ptr&nbsp;<i>vec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s231"></a>[macro] <tt>void</tt> <tt>Sbytevector_u8_set</tt><tt>(ptr&nbsp;<i>bytevec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;octet&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s232"></a>[macro] <tt>void</tt> <tt>Sbytevector_u8_set</tt><tt>(ptr&nbsp;<i>bytevec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;octet&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s232"></a>[macro] <tt>void</tt> <tt>Sfxvector_set</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>fixnum</i>)</tt><br>
+<a name="./foreign:s233"></a>[macro] <tt>void</tt> <tt>Sfxvector_set</tt><tt>(ptr&nbsp;<i>fxvec</i>,&nbsp;iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>fixnum</i>)</tt><br>
 
 
 
@@ -3467,17 +3471,17 @@ the eof object (<tt>#!eof</tt>), and the void object.
 
 <p>
 
-<a name="./foreign:s233"></a>[macro] <tt>ptr</tt> <tt>Snil</tt><br>
+<a name="./foreign:s234"></a>[macro] <tt>ptr</tt> <tt>Snil</tt><br>
 
-<a name="./foreign:s234"></a>[macro] <tt>ptr</tt> <tt>Strue</tt><br>
+<a name="./foreign:s235"></a>[macro] <tt>ptr</tt> <tt>Strue</tt><br>
 
-<a name="./foreign:s235"></a>[macro] <tt>ptr</tt> <tt>Sfalse</tt><br>
+<a name="./foreign:s236"></a>[macro] <tt>ptr</tt> <tt>Sfalse</tt><br>
 
-<a name="./foreign:s236"></a>[macro] <tt>ptr</tt> <tt>Sbwp_object</tt><br>
+<a name="./foreign:s237"></a>[macro] <tt>ptr</tt> <tt>Sbwp_object</tt><br>
 
-<a name="./foreign:s237"></a>[macro] <tt>ptr</tt> <tt>Seof_object</tt><br>
+<a name="./foreign:s238"></a>[macro] <tt>ptr</tt> <tt>Seof_object</tt><br>
 
-<a name="./foreign:s238"></a>[macro] <tt>ptr</tt> <tt>Svoid</tt><br>
+<a name="./foreign:s239"></a>[macro] <tt>ptr</tt> <tt>Svoid</tt><br>
 
 
 
@@ -3487,19 +3491,19 @@ their C equivalents.
 
 <p>
 
-<a name="./foreign:s239"></a>[macro] <tt>ptr</tt> <tt>Sfixnum</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s240"></a>[macro] <tt>ptr</tt> <tt>Sfixnum</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s240"></a>[macro] <tt>ptr</tt> <tt>Schar</tt><tt>(char&nbsp;<i>c</i>)</tt><br>
+<a name="./foreign:s241"></a>[macro] <tt>ptr</tt> <tt>Schar</tt><tt>(char&nbsp;<i>c</i>)</tt><br>
 
-<a name="./foreign:s241"></a>[macro] <tt>ptr</tt> <tt>Sboolean</tt><tt>(int&nbsp;<i>b</i>)</tt><br>
+<a name="./foreign:s242"></a>[macro] <tt>ptr</tt> <tt>Sboolean</tt><tt>(int&nbsp;<i>b</i>)</tt><br>
 
-<a name="./foreign:s242"></a>[func] <tt>ptr</tt> <tt>Sflonum</tt><tt>(double&nbsp;x)</tt><br>
+<a name="./foreign:s243"></a>[func] <tt>ptr</tt> <tt>Sflonum</tt><tt>(double&nbsp;x)</tt><br>
 
-<a name="./foreign:s243"></a>[func] <tt>ptr</tt> <tt>Sstring</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>)</tt><br>
+<a name="./foreign:s244"></a>[func] <tt>ptr</tt> <tt>Sstring</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>)</tt><br>
 
-<a name="./foreign:s244"></a>[func] <tt>ptr</tt> <tt>Sstring_of_length</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s245"></a>[func] <tt>ptr</tt> <tt>Sstring_of_length</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s245"></a>[func] <tt>ptr</tt> <tt>Sstring_utf8</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s246"></a>[func] <tt>ptr</tt> <tt>Sstring_utf8</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
 ;
 
 
@@ -3527,9 +3531,9 @@ integers whether they are in fixnum range or not.
 
 <p>
 
-<a name="./foreign:s246"></a>[func] <tt>ptr</tt> <tt>Sinteger</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s247"></a>[func] <tt>ptr</tt> <tt>Sinteger</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s247"></a>[func] <tt>ptr</tt> <tt>Sunsigned</tt><tt>(uptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s248"></a>[func] <tt>ptr</tt> <tt>Sunsigned</tt><tt>(uptr&nbsp;<i>n</i>)</tt><br>
 
 
 
@@ -3580,13 +3584,13 @@ restrict their arguments to the 32- or 64-bit range.
 
 <p>
 
-<a name="./foreign:s248"></a>[func] <tt>ptr</tt> <tt>Sinteger32</tt><tt>(&lt;32-bit&nbsp;int&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s249"></a>[func] <tt>ptr</tt> <tt>Sinteger32</tt><tt>(&lt;32-bit&nbsp;int&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s249"></a>[func] <tt>ptr</tt> <tt>Sunsigned32</tt><tt>(&lt;32-bit&nbsp;unsigned&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s250"></a>[func] <tt>ptr</tt> <tt>Sunsigned32</tt><tt>(&lt;32-bit&nbsp;unsigned&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s250"></a>[func] <tt>ptr</tt> <tt>Sinteger64</tt><tt>(&lt;64-bit&nbsp;int&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s251"></a>[func] <tt>ptr</tt> <tt>Sinteger64</tt><tt>(&lt;64-bit&nbsp;int&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s251"></a>[func] <tt>ptr</tt> <tt>Sunsigned64</tt><tt>(&lt;64-bit&nbsp;unsigned&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s252"></a>[func] <tt>ptr</tt> <tt>Sunsigned64</tt><tt>(&lt;64-bit&nbsp;unsigned&nbsp;type&gt;&nbsp;<i>n</i>)</tt><br>
 
 
 
@@ -3596,9 +3600,9 @@ counterparts.
 
 <p>
 
-<a name="./foreign:s252"></a>[func] <tt>ptr</tt> <tt>Scons</tt><tt>(ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>)</tt><br>
+<a name="./foreign:s253"></a>[func] <tt>ptr</tt> <tt>Scons</tt><tt>(ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>)</tt><br>
 
-<a name="./foreign:s253"></a>[func] <tt>ptr</tt> <tt>Sbox</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s254"></a>[func] <tt>ptr</tt> <tt>Sbox</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3609,7 +3613,7 @@ that it takes a C string (character pointer) as input.
 
 <p>
 
-<a name="./foreign:s254"></a>[func] <tt>ptr</tt> <tt>Sstring_to_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>)</tt><br>
+<a name="./foreign:s255"></a>[func] <tt>ptr</tt> <tt>Sstring_to_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>s</i>)</tt><br>
 
 
 
@@ -3619,13 +3623,13 @@ and <tt>Smake_fxvector</tt> are similar to their Scheme counterparts.
 
 <p>
 
-<a name="./foreign:s255"></a>[func] <tt>ptr</tt> <tt>Smake_string</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;int&nbsp;<i>c</i>)</tt><br>
+<a name="./foreign:s256"></a>[func] <tt>ptr</tt> <tt>Smake_string</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;int&nbsp;<i>c</i>)</tt><br>
 
-<a name="./foreign:s256"></a>[func] <tt>ptr</tt> <tt>Smake_vector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s257"></a>[func] <tt>ptr</tt> <tt>Smake_vector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s257"></a>[func] <tt>ptr</tt> <tt>Smake_bytevector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;int&nbsp;<i>fill</i>)</tt><br>
+<a name="./foreign:s258"></a>[func] <tt>ptr</tt> <tt>Smake_bytevector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;int&nbsp;<i>fill</i>)</tt><br>
 
-<a name="./foreign:s258"></a>[func] <tt>ptr</tt> <tt>Smake_fxvector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;ptr&nbsp;<i>fixnum</i>)</tt><br>
+<a name="./foreign:s259"></a>[func] <tt>ptr</tt> <tt>Smake_fxvector</tt><tt>(iptr&nbsp;<i>n</i>,&nbsp;ptr&nbsp;<i>fixnum</i>)</tt><br>
 
 
 
@@ -3635,7 +3639,7 @@ and <tt>Smake_fxvector</tt> are similar to their Scheme counterparts.
 
 <p>
 
-<a name="./foreign:s259"></a>[func] <tt>ptr</tt> <tt>Smake_uninitialized_string</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s260"></a>[func] <tt>ptr</tt> <tt>Smake_uninitialized_string</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
 
 
 
@@ -3644,7 +3648,7 @@ and <tt>Smake_fxvector</tt> are similar to their Scheme counterparts.
 
 <p>
 
-<a name="./foreign:s260"></a>[func] <tt>char&nbsp;*</tt> <tt>Sgetenv</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>)</tt><br>
+<a name="./foreign:s261"></a>[func] <tt>char&nbsp;*</tt> <tt>Sgetenv</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>)</tt><br>
 
 
 
@@ -3655,9 +3659,9 @@ environment variable <tt><i>name</i></tt> if found and NULL otherwise. Call
 
 <p>
 
-<a name="./foreign:s261"></a>[func] <tt>wchar_t&nbsp;*</tt> <tt>Sutf8_to_wide</tt><tt>(const&nbsp;char&nbsp;*\s)</tt><br>
+<a name="./foreign:s262"></a>[func] <tt>wchar_t&nbsp;*</tt> <tt>Sutf8_to_wide</tt><tt>(const&nbsp;char&nbsp;*\s)</tt><br>
 
-<a name="./foreign:s262"></a>[func] <tt>char&nbsp;*</tt> <tt>Swide_to_utf8</tt><tt>(const&nbsp;wchar_t&nbsp;*\s)</tt><br>
+<a name="./foreign:s263"></a>[func] <tt>char&nbsp;*</tt> <tt>Swide_to_utf8</tt><tt>(const&nbsp;wchar_t&nbsp;*\s)</tt><br>
 
 
 
@@ -3672,9 +3676,9 @@ UTF-8-encoded and UTF-16LE-encoded null-terminated strings. Call
 
 <p>
 
-<a name="./foreign:s263"></a>[func] <tt>ptr</tt> <tt>Stop_level_value</tt><tt>(ptr&nbsp;<i>sym</i>)</tt><br>
+<a name="./foreign:s264"></a>[func] <tt>ptr</tt> <tt>Stop_level_value</tt><tt>(ptr&nbsp;<i>sym</i>)</tt><br>
 
-<a name="./foreign:s264"></a>[func] <tt>void</tt> <tt>Sset_top_level_value</tt><tt>(ptr&nbsp;<i>sym</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s265"></a>[func] <tt>void</tt> <tt>Sset_top_level_value</tt><tt>(ptr&nbsp;<i>sym</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3719,11 +3723,11 @@ Scheme object is essential to the design of the C portions of the
 program.
 In these cases, the object may be <i>locked</i> via the library routine
 <tt>Slock_object</tt> (or from Scheme, the equivalent procedure
-<a name="./foreign:s265"></a><tt>lock-object</tt>).
+<a name="./foreign:s266"></a><tt>lock-object</tt>).
 
 <p>
 
-<a name="./foreign:s266"></a>[func] <tt>void</tt> <tt>Slock_object</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s267"></a>[func] <tt>void</tt> <tt>Slock_object</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3735,16 +3739,16 @@ and increases storage management overhead.
 Locking can also lead to accidental retention of storage if objects
 are not unlocked.
 Locking objects that have been made static via heap compaction
-(see <a name="./foreign:s267"></a><tt>Scompact_heap</tt> above)
+(see <a name="./foreign:s268"></a><tt>Scompact_heap</tt> above)
 is unnecessary but harmless.
 
 <p>
 Objects may be unlocked via <tt>Sunlock_object</tt>
-(<a name="./foreign:s268"></a><tt>unlock-object</tt>).
+(<a name="./foreign:s269"></a><tt>unlock-object</tt>).
 
 <p>
 
-<a name="./foreign:s269"></a>[func] <tt>void</tt> <tt>Sunlock_object</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s270"></a>[func] <tt>void</tt> <tt>Sunlock_object</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3761,7 +3765,7 @@ if an object is locked.
 
 <p>
 
-<a name="./foreign:s270"></a>[func] <tt>int</tt> <tt>Sunlocked_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s271"></a>[func] <tt>int</tt> <tt>Sunlocked_objectp</tt><tt>(ptr&nbsp;<i>obj</i>)</tt><br>
 
 
 
@@ -3786,9 +3790,9 @@ to the object exists.
 
 <p>
 
-<a name="./foreign:s271"></a>[func] <tt>void</tt> <tt>Sforeign_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>,&nbsp;void&nbsp;*<i>addr</i>)</tt><br>
+<a name="./foreign:s272"></a>[func] <tt>void</tt> <tt>Sforeign_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>,&nbsp;void&nbsp;*<i>addr</i>)</tt><br>
 
-<a name="./foreign:s272"></a>[func] <tt>void</tt> <tt>Sregister_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>,&nbsp;void&nbsp;*<i>addr</i>)</tt><br>
+<a name="./foreign:s273"></a>[func] <tt>void</tt> <tt>Sregister_symbol</tt><tt>(const&nbsp;char&nbsp;*<i>name</i>,&nbsp;void&nbsp;*<i>addr</i>)</tt><br>
 
 
 
@@ -3817,7 +3821,7 @@ operation as its Scheme counterpart, i.e., the Scheme procedure
 
 <p>
 
-<a name="./foreign:s273"></a>[func] <tt>(void&nbsp;(*)&nbsp;(void))</tt> <tt>Sforeign_callable_entry_point</tt><tt>(ptr&nbsp;<i>code</i>)</tt><br>
+<a name="./foreign:s274"></a>[func] <tt>(void&nbsp;(*)&nbsp;(void))</tt> <tt>Sforeign_callable_entry_point</tt><tt>(ptr&nbsp;<i>code</i>)</tt><br>
 
 
 
@@ -3832,7 +3836,7 @@ The inverse translation can be made via <tt>Sforeign_callable_code_object</tt>.
 
 <p>
 
-<a name="./foreign:s274"></a>[func] <tt>ptr</tt> <tt>Sforeign_callable_code_object</tt><tt>((void&nbsp;(*addr)(void)))</tt><br>
+<a name="./foreign:s275"></a>[func] <tt>ptr</tt> <tt>Sforeign_callable_code_object</tt><tt>((void&nbsp;(*addr)(void)))</tt><br>
 
 
 
@@ -3844,13 +3848,13 @@ Calling a Scheme procedure that expects a small number of arguments
 
 <p>
 
-<a name="./foreign:s275"></a>[func] <tt>ptr</tt> <tt>Scall0</tt><tt>(ptr&nbsp;<i>procedure</i>)</tt><br>
+<a name="./foreign:s276"></a>[func] <tt>ptr</tt> <tt>Scall0</tt><tt>(ptr&nbsp;<i>procedure</i>)</tt><br>
 
-<a name="./foreign:s276"></a>[func] <tt>ptr</tt> <tt>Scall1</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>)</tt><br>
+<a name="./foreign:s277"></a>[func] <tt>ptr</tt> <tt>Scall1</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>)</tt><br>
 
-<a name="./foreign:s277"></a>[func] <tt>ptr</tt> <tt>Scall2</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>)</tt><br>
+<a name="./foreign:s278"></a>[func] <tt>ptr</tt> <tt>Scall2</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>)</tt><br>
 
-<a name="./foreign:s278"></a>[func] <tt>ptr</tt> <tt>Scall3</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>3</sub></i>)</tt><br>
+<a name="./foreign:s279"></a>[func] <tt>ptr</tt> <tt>Scall3</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;ptr&nbsp;<i>obj<sub>1</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>2</sub></i>,&nbsp;ptr&nbsp;<i>obj<sub>3</sub></i>)</tt><br>
 
 
 
@@ -3880,11 +3884,11 @@ for longer argument lists.
 
 <p>
 
-<a name="./foreign:s279"></a>[func] <tt>void</tt> <tt>Sinitframe</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s280"></a>[func] <tt>void</tt> <tt>Sinitframe</tt><tt>(iptr&nbsp;<i>n</i>)</tt><br>
 
-<a name="./foreign:s280"></a>[func] <tt>void</tt> <tt>Sput_arg</tt><tt>(iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
+<a name="./foreign:s281"></a>[func] <tt>void</tt> <tt>Sput_arg</tt><tt>(iptr&nbsp;<i>i</i>,&nbsp;ptr&nbsp;<i>obj</i>)</tt><br>
 
-<a name="./foreign:s281"></a>[func] <tt>ptr</tt> <tt>Scall</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
+<a name="./foreign:s282"></a>[func] <tt>ptr</tt> <tt>Scall</tt><tt>(ptr&nbsp;<i>procedure</i>,&nbsp;iptr&nbsp;<i>n</i>)</tt><br>
 
 
 
@@ -4017,11 +4021,11 @@ allow C code to notify Scheme when a thread should be activated,
 deactivated, or destroyed.
 
 <p>
-<a name="./foreign:s282"></a>[func] <tt>int</tt> <tt>Sactivate_thread</tt><tt>(void)</tt><br>
+<a name="./foreign:s283"></a>[func] <tt>int</tt> <tt>Sactivate_thread</tt><tt>(void)</tt><br>
 
-<a name="./foreign:s283"></a>[func] <tt>void</tt> <tt>Sdeactivate_thread</tt><tt>(void)</tt><br>
+<a name="./foreign:s284"></a>[func] <tt>void</tt> <tt>Sdeactivate_thread</tt><tt>(void)</tt><br>
 
-<a name="./foreign:s284"></a>[func] <tt>int</tt> <tt>Sdestroy_thread</tt><tt>(void)</tt><br>
+<a name="./foreign:s285"></a>[func] <tt>int</tt> <tt>Sdestroy_thread</tt><tt>(void)</tt><br>
 
 
 <p>
@@ -4063,15 +4067,15 @@ ftype lock operations (sections &nbsp;<a href="./threads.html#g139">15.4</a> and
 <a href="./threads.html#g140">15.5</a>).
 
 <p>
-<a name="./foreign:s285"></a>[macro] <tt>void</tt> <tt>INITLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
+<a name="./foreign:s286"></a>[macro] <tt>void</tt> <tt>INITLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
 
-<a name="./foreign:s286"></a>[macro] <tt>void</tt> <tt>SPINLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
+<a name="./foreign:s287"></a>[macro] <tt>void</tt> <tt>SPINLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
 
-<a name="./foreign:s287"></a>[macro] <tt>void</tt> <tt>UNLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
+<a name="./foreign:s288"></a>[macro] <tt>void</tt> <tt>UNLOCK</tt><tt>(void&nbsp;*<i>addr</i>)</tt><br>
 
-<a name="./foreign:s288"></a>[macro] <tt>void</tt> <tt>LOCKED_INCR</tt><tt>(void&nbsp;*<i>addr</i>,&nbsp;int&nbsp;*<i>ret</i>)</tt><br>
+<a name="./foreign:s289"></a>[macro] <tt>void</tt> <tt>LOCKED_INCR</tt><tt>(void&nbsp;*<i>addr</i>,&nbsp;int&nbsp;*<i>ret</i>)</tt><br>
 
-<a name="./foreign:s289"></a>[macro] <tt>void</tt> <tt>LOCKED_DECR</tt><tt>(void&nbsp;*<i>addr</i>,&nbsp;int&nbsp;*<i>ret</i>)</tt><br>
+<a name="./foreign:s290"></a>[macro] <tt>void</tt> <tt>LOCKED_DECR</tt><tt>(void&nbsp;*<i>addr</i>,&nbsp;int&nbsp;*<i>ret</i>)</tt><br>
 
 
 <p>
@@ -4086,7 +4090,7 @@ Otherwise they set <tt><i>ret</i></tt> to 0.
 
 
 <p>
-<a name="./foreign:s290"></a>This section presents a simple socket interface that
+<a name="./foreign:s291"></a>This section presents a simple socket interface that
 employs a combination of Scheme and C code.
 The C code defines a set of convenient low-level operating-system
 interfaces that can be used in the higher-level Scheme code to open,
@@ -4626,7 +4630,7 @@ server:<br>
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised June 2018 for Chez Scheme Version 9.5.1<br>
+Revised September 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
