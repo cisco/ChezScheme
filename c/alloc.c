@@ -150,14 +150,6 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   return Sunsigned(n);
 }
 
-ptr S_thread_get_more_room(t, n) iptr t; iptr n; {
-   ptr x;
-   tc_mutex_acquire()
-   find_room(space_new, 0, t, n, x);
-   tc_mutex_release()
-   return x;
-}
-
 static void maybe_fire_collector() {
   ISPC s;
   uptr bytes, fudge;
@@ -369,24 +361,29 @@ void S_scan_remembered_set() {
 
 void S_get_more_room() {
   ptr tc = get_thread_context();
-  ptr xp; uptr ap, eap, real_eap, type, size;
-
-  tc_mutex_acquire()
-
-  ap = (uptr)AP(tc);
-  eap = (uptr)EAP(tc);
-  real_eap = (uptr)REAL_EAP(tc);
+  ptr xp; uptr ap, type, size;
 
   xp = XP(tc);
   if ((type = TYPEBITS(xp)) == 0) type = typemod;
-  size = ap - (iptr)UNTYPE(xp,type);
-  ap -= size;
+  ap = (uptr)UNTYPE(xp, type);
+  size = (uptr)((iptr)AP(tc) - (iptr)ap);
+
+  XP(tc) = S_get_more_room_help(tc, ap, type, size);
+}
+
+ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
+  ptr x; uptr eap, real_eap;
+
+  eap = (uptr)EAP(tc);
+  real_eap = (uptr)REAL_EAP(tc);
+
+  tc_mutex_acquire()
 
   S_scan_dirty((ptr **)eap, (ptr **)real_eap);
   eap = real_eap;
 
   if (eap - ap >= size) {
-    XP(tc) = TYPE(ap, type);
+    x = TYPE(ap, type);
     ap += size;
     if (eap - ap > alloc_waste_maximum) {
       AP(tc) = (ptr)ap;
@@ -398,20 +395,22 @@ void S_get_more_room() {
   } else if (eap - ap > alloc_waste_maximum) {
     AP(tc) = (ptr)ap;
     EAP(tc) = (ptr)eap;
-    find_room(space_new, 0, type, size, XP(tc));
+    find_room(space_new, 0, type, size, x);
   } else {
     S_G.bytes_of_space[space_new][0] -= eap - ap;
     S_reset_allocation_pointer(tc);
     ap = (uptr)AP(tc);
     if (size + alloc_waste_maximum <= (uptr)EAP(tc) - ap) {
-      XP(tc) = TYPE(ap, type);
+      x = TYPE(ap, type);
       AP(tc) = (ptr)(ap + size);
     } else {
-      find_room(space_new, 0, type, size, XP(tc));
+      find_room(space_new, 0, type, size, x);
     }
   }
 
   tc_mutex_release()
+
+  return x;
 }
 
 /* S_cons_in is always called with mutex */
