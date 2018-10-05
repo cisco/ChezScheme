@@ -59,6 +59,7 @@ extern void S_dirty_set PROTO((ptr *loc, ptr x));
 extern void S_scan_dirty PROTO((ptr **p, ptr **endp));
 extern void S_scan_remembered_set PROTO((void));
 extern void S_get_more_room PROTO((void));
+extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
 extern ptr S_cons_in PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
 extern ptr S_symbol PROTO((ptr name));
 extern ptr S_rational PROTO((ptr n, ptr d));
@@ -88,7 +89,6 @@ extern ptr S_string PROTO((const char *s, iptr n));
 extern ptr S_bignum PROTO((iptr n, IBOOL sign));
 extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
 extern ptr S_relocation_table PROTO((iptr n));
-extern ptr S_thread_get_more_room PROTO((iptr t, iptr n));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
