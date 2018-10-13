@@ -793,14 +793,14 @@
     (define-record-type info-call (nongenerative)
       (parent info)
       (sealed #t)
-      (fields src sexpr (mutable check?) pariah? error? shift-attachment?)
+      (fields src sexpr (mutable check?) pariah? error? shift-attachment? shift-consumer-attachment?*)
       (protocol
         (lambda (pargs->new)
           (case-lambda
-           [(src sexpr check? pariah? error? shift-attachment?)
-            ((pargs->new) src sexpr check? pariah? error? shift-attachment?)]
+           [(src sexpr check? pariah? error? shift-attachment? shift-consumer-attachment?*)
+            ((pargs->new) src sexpr check? pariah? error? shift-attachment? shift-consumer-attachment?*)]
            [(src sexpr check? pariah? error?)
-            ((pargs->new) src sexpr check? pariah? error? #f)]))))
+            ((pargs->new) src sexpr check? pariah? error? #f '())]))))
 
     (define-record-type info-newframe (nongenerative)
       (parent info)
@@ -1576,7 +1576,12 @@
           (lambda (info)
             (make-info-call (info-call-src info) (info-call-sexpr info)
                             (info-call-check? info) (info-call-pariah? info) (info-call-error? info)
-                            #t))))
+                            #t '())))
+        (define info-call->consumer-shifting-info-call
+          (lambda (info shift?)
+            (make-info-call (info-call-src info) (info-call-sexpr info)
+                            (info-call-check? info) (info-call-pariah? info) (info-call-error? info)
+                            #f (list shift?)))))
       (CaseLambdaClause : CaseLambdaClause (cl) -> CaseLambdaClause ()
         [(clause (,x* ...) ,interface ,[Expr : body 'tail -> body])
          `(clause (,x* ...) ,interface ,body)])
@@ -1625,8 +1630,8 @@
          `(mvlet ,e ((,x** ...) ,interface* ,body*) ...)]
         [(mvcall ,info ,[e1 'non-tail -> e1] ,[e2 'non-tail -> e2])
          (let ([info (case mode
-                       [(pop) (info-call->shifting-info-call info)]
-                       [else info])])
+                       [(pop) (info-call->consumer-shifting-info-call info #t)]
+                       [else (info-call->consumer-shifting-info-call info #f)])])
            `(mvcall ,info ,e1 ,e2))]
         [(let ([,x* ,[e* 'non-tail -> e*]] ...) ,[body])
          `(let ([,x* ,e*] ...) ,body)]
@@ -2834,7 +2839,8 @@
                 (let ([info (if (any-set? (prim-mask abort-op) (primref-flags pr))
                                 (make-info-call (info-call-src info) (info-call-sexpr info)
                                                 (info-call-check? info) #t #t
-                                                (info-call-shift-attachment? info))
+                                                (info-call-shift-attachment? info)
+                                                (info-call-shift-consumer-attachment?* info))
                                 info)])
                   `(call ,info ,mdcl ,(Symref (primref-name pr)) ,e* ...)))])]))
       (define-who unhandled-arity
@@ -9835,33 +9841,42 @@
               (set! local* (cons x local*))
               x)))
         (define make-info-call-like
-          (lambda (info)
-            (make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f (info-call-shift-attachment? info))))
+          (lambda (info shift-consumer-attachment?*)
+            (make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f
+                            (info-call-shift-attachment? info)
+                            shift-consumer-attachment?*)))
         (define Mvcall
           (lambda (info e consumer k)
-            (with-output-language (L10.5 Expr)
-              (nanopass-case (L10.5 Expr) e
-                [,t (k `(mvcall ,(make-info-call-like info) #f ,consumer ,t ()))]
-                [(values ,info2 ,t* ...)
-                 (k `(mvcall ,(make-info-call-like info) #f ,consumer ,t* ... ()))]
-                [(mvcall ,info ,mdcl ,t0 ,t1* ... (,t* ...))
-                 (k `(mvcall ,info ,mdcl ,t0 ,t1* ... (,t* ... ,consumer)))]
-                [(if ,e0 ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
-                [(seq ,e0 ,[e1]) `(seq ,e0 ,e1)]
-                [(mlabel ,[e] (,l* ,[e*]) ...) `(mlabel ,e (,l* ,e*) ...)]
-                [(label ,l ,[body]) `(label ,l ,body)]
-                [(trap-check ,ioc ,[body]) `(trap-check ,ioc ,body)]
-                [(overflow-check ,[body]) `(overflow-check ,body)]
-                [(pariah) `(pariah)]
-                [(profile ,src) `(profile ,src)]
-                [(goto ,l) `(goto ,l)]
-                [,rhs ; alloc, inline, foreign-call
-                 (let ([tmp (make-tmp 't)])
-                   `(seq
-                      (set! ,tmp ,rhs)
-                      (mvcall ,(make-info-call-like info) #f ,consumer ,tmp ())))]
-                [else ; set! & mvset
-                 `(seq ,e ,(k `(mvcall ,(make-info-call-like info) #f ,consumer ,(%constant svoid) ())))])))))
+            (let ([info (make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f
+                                        ;; consumer moves into call position:
+                                        (car (info-call-shift-consumer-attachment?* info))
+                                        '())])
+              (with-output-language (L10.5 Expr)
+                (nanopass-case (L10.5 Expr) e
+                  [,t (k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,t ()))]
+                  [(values ,info2 ,t* ...)
+                   (k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,t* ... ()))]
+                  [(mvcall ,info2 ,mdcl ,t0 ,t1* ... (,t* ...))
+                   (let ([info (make-info-call-like info2
+                                                    (append (info-call-shift-consumer-attachment?* info2)
+                                                            (list (info-call-shift-attachment? info))))])
+                     (k `(mvcall ,info ,mdcl ,t0 ,t1* ... (,t* ... ,consumer))))]
+                  [(if ,e0 ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
+                  [(seq ,e0 ,[e1]) `(seq ,e0 ,e1)]
+                  [(mlabel ,[e] (,l* ,[e*]) ...) `(mlabel ,e (,l* ,e*) ...)]
+                  [(label ,l ,[body]) `(label ,l ,body)]
+                  [(trap-check ,ioc ,[body]) `(trap-check ,ioc ,body)]
+                  [(overflow-check ,[body]) `(overflow-check ,body)]
+                  [(pariah) `(pariah)]
+                  [(profile ,src) `(profile ,src)]
+                  [(goto ,l) `(goto ,l)]
+                  [,rhs ; alloc, inline, foreign-call
+                   (let ([tmp (make-tmp 't)])
+                     `(seq
+                        (set! ,tmp ,rhs)
+                        (mvcall ,(make-info-call-like info '()) #f ,consumer ,tmp ())))]
+                  [else ; set! & mvset
+                   `(seq ,e ,(k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,(%constant svoid) ())))]))))))
       (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
         [(clause (,x* ...) (,local0* ...) ,mcp ,interface ,body)
          (fluid-let ([local* local0*])
@@ -10538,19 +10553,21 @@
                                           ,(let ([rpl (car rpl*)])
                                              (build-return-point rpl this-mrvl cnfv*
                                                (build-call t0 rpl reg* nfv* info mdcl)))
-                                          ,(let f ([tc* tc*] [cnfv* cnfv*] [rpl* rpl*] [this-mrvl this-mrvl])
+                                          ,(let f ([tc* tc*] [cnfv* cnfv*] [rpl* rpl*] [this-mrvl this-mrvl]
+                                                   [shift?* (info-call-shift-consumer-attachment?* info)])
                                              `(seq
                                                 ,(prepare-for-consumer-call this-mrvl)
-                                                ,(let ([tc (car tc*)] [tc* (cdr tc*)] [rpl* (cdr rpl*)] [cnfv (car cnfv*)] [cnfv* (cdr cnfv*)])
+                                                ,(let ([tc (car tc*)] [tc* (cdr tc*)] [rpl* (cdr rpl*)] [cnfv (car cnfv*)] [cnfv* (cdr cnfv*)]
+                                                       [shift? (car shift?*)] [shift?* (cdr shift?*)])
                                                    (if (null? tc*)
                                                        (build-return-point rpl mrvl cnfv*
-                                                         (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info)))
+                                                         (build-consumer-call tc cnfv rpl shift?))
                                                        (let ([this-mrvl (make-local-label 'mrvl)])
                                                          `(seq
                                                             ,(let ([rpl (car rpl*)])
                                                                (build-return-point rpl this-mrvl cnfv*
-                                                                 (build-consumer-call tc cnfv rpl (info-call-shift-attachment? info))))
-                                                            ,(f tc* cnfv* rpl* this-mrvl)))))))))))
+                                                                 (build-consumer-call tc cnfv rpl shift?)))
+                                                            ,(f tc* cnfv* rpl* this-mrvl shift?*)))))))))))
                                ,(build-postlude newframe-info))))))))))))
           ; NB: combine
           (define build-nontail-call-for-tail-call-with-consumers
