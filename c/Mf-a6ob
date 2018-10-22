@@ -17,7 +17,7 @@ m = a6ob
 Cpu = X86_64
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
-mdclib = -L/usr/local/lib -liconv -lm -lncurses
+mdclib = -L/usr/local/lib -liconv -lm $(LIBNCURSES)
 C = ${CC} ${CPPFLAGS} -Wpointer-arith -Werror -O ${CFLAGS}
 o = o
 mdsrc = i3le.c

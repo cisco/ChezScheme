@@ -527,7 +527,9 @@ static void s_ee_write_char(wchar_t c) {
 }
 
 #else /* WIN32 */
-#ifdef SOLARIS
+#ifdef DISABLE_CURSES
+#include "nocurses.h"
+#elif defined(SOLARIS)
 #define NCURSES_CONST
 #define CHTYPE int
 #include </usr/include/curses.h>

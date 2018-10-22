@@ -38,6 +38,7 @@ installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
 disablex11=no
+disablecurses=no
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
@@ -203,6 +204,9 @@ while [ $# != 0 ] ; do
       ;;
     --disable-x11)
       disablex11=yes
+      ;;
+    --disable-curses)
+      disablecurses=yes
       ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
@@ -385,9 +389,20 @@ if [ "$disablex11" = "yes" ]; then
   echo '#define DISABLE_X11' >> $w/c/config.h
 fi
 
+LIBCURSES=-lcurses
+LIBNCURSES=-lncurses
+
+if [ "$disablecurses" = "yes" ]; then
+  echo '#define DISABLE_CURSES' >> $w/c/config.h
+  LIBCURSES=
+  LIBNCURSES=
+fi
+
 cat > $w/c/Mf-config << END
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
 LDFLAGS=$LDFLAGS
+LIBCURSES=$LIBCURSES
+LIBNCURSES=$LIBNCURSES
 END

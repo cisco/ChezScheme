@@ -16,7 +16,7 @@
 m = i3qnx
 Cpu = I386
 
-mdclib = -lm /usr/local/lib/libiconv.so -lsocket -lncurses
+mdclib = -lm /usr/local/lib/libiconv.so -lsocket $(LIBNCURSES)
 C = qcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -N2048K ${CFLAGS}
 o = o
 mdsrc = i3le.c

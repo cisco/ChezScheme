@@ -16,7 +16,7 @@
 m = ti3s2
 Cpu = I386
 
-mdclib = -lnsl -ldl -lm -lpthread -lcurses -lrt
+mdclib = -lnsl -ldl -lm -lpthread $(LIBCURSES) -lrt
 C = ${CC} ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -D_REENTRANT ${CFLAGS}
 o = o
 mdsrc = i3le.c

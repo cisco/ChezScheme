@@ -16,7 +16,7 @@
 m = a6s2
 Cpu = X86_64
 
-mdclib = -lnsl -ldl -lm -lcurses -lrt
+mdclib = -lnsl -ldl -lm $(LIBCURSES) -lrt
 C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wextra -Werror -O ${CFLAGS}
 o = o
 mdsrc = i3le.c

@@ -28,7 +28,7 @@ kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-
 
 kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
 
-kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h itest.c 
+kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h itest.c nocurses.h
 
 mainsrc=main.c
 
@@ -51,7 +51,7 @@ endif
 
 scheme.o: itest.c
 scheme.o main.o: config.h
-${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h
+${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h nocurses.h
 ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
 ${kernelobj}: ../zlib/zconf.h ../zlib/zlib.h

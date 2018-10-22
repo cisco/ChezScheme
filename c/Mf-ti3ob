@@ -17,7 +17,7 @@ m = ti3ob
 Cpu = I386
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
-mdclib = -L/usr/local/lib -liconv -lm -lncurses -lpthread
+mdclib = -L/usr/local/lib -liconv -lm $(LIBNCURSES) -lpthread
 C = ${CC} ${CPPFLAGS} -Wpointer-arith -Werror -O2 -D_REENTRANT -pthread ${CFLAGS}
 o = o
 mdsrc = i3le.c
