@@ -3687,9 +3687,9 @@ are involved.
 
 \begin{tabular}{llllllll}
 path               & abs         & first              & rest               & parent             & last               & root               & ext       \\
-\scheme{c:}        & \scheme{#t} & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_} \\
+\scheme{c:}        & \scheme{#f} & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_} \\
 \scheme{c:/}       & \scheme{#t} & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_} \\
-\scheme{c:a/b}     & \scheme{#t} & \scheme{c:}        & \scheme{a/b}       & \scheme{c:a}       & \scheme{b}         & \scheme{c:a/b}     & \scheme{_} \\
+\scheme{c:a/b}     & \scheme{#f} & \scheme{c:}        & \scheme{a/b}       & \scheme{c:a}       & \scheme{b}         & \scheme{c:a/b}     & \scheme{_} \\
 \scheme{//s/a/b.c} & \scheme{#t} & \scheme{//s}       & \scheme{a/b.c}     & \scheme{//s/a}     & \scheme{b.c}       & \scheme{//s/a/b}   & \scheme{c} \\
 \scheme{//s.com}   & \scheme{#t} & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_} \\
 \end{tabular}
