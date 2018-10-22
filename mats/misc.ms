@@ -3483,8 +3483,8 @@
 )
 
 (mat sci-bug
-  (equal? (expt 10.0 (- 21)) 1e-21)
-  (equal? (flexpt 10.0 (- 21.0)) 1e-21)
+  (fl~= (expt 10.0 (- 21)) 1e-21)
+  (fl~= (flexpt 10.0 (- 21.0)) 1e-21)
 )
 
 (mat apropos

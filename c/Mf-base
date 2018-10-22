@@ -18,9 +18,19 @@ include Mf-config
 Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot
-Kernel=../boot/$m/kernel.$o
 Main=../boot/$m/main.$o
 Scheme=../bin/$m/scheme
+
+# One of these sets is referenced in Mf-config to select between
+# linking with kernel.o or libkernel.a
+
+KernelO=../boot/$m/kernel.$o
+KernelOLinkDeps=
+KernelOLinkLibs=
+
+KernelLib=../boot/$m/libkernel.a
+KernelLibLinkDeps=${zlibDep} ${LZ4Dep}
+KernelLibLinkLibs=${zlibLib} ${LZ4Lib}
 
 kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-oce.c\
  number.c schsig.c io.c new-io.c print.c fasl.c stats.c foreign.c prim.c prim5.c flushcache.c\
@@ -28,7 +38,7 @@ kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-
 
 kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
 
-kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h compress-io.h itest.c 
+kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h compress-io.h itest.c nocurses.h
 
 mainsrc=main.c
 
@@ -51,7 +61,7 @@ endif
 
 scheme.o: itest.c
 scheme.o main.o: config.h
-${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h compress-io.h
+${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h compress-io.h nocurses.h
 ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
 ${kernelobj}: ${zlibHeaderDep} ${LZ4HeaderDep}

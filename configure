@@ -38,10 +38,20 @@ installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
 disablex11=no
+disablecurses=no
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
+: ${LD:="ld"}
 : ${LDFLAGS:=""}
+: ${AR:="ar"}
+: ${ARFLAGS:="rc"}
+: ${RANLIB:="ranlib"}
+: ${WINDRES:="windres"}
+: ${AR:="ar"}
+: ${ARFLAGS:="ruv"}
+: ${RANLIB:="ranlib"}
+: ${WINDRES:="windres"}
 zlibInc=-I../zlib
 LZ4Inc=-I../lz4/lib
 zlibDep=../zlib/libz.a
@@ -50,6 +60,10 @@ zlibLib=../zlib/libz.a
 LZ4Lib=../lz4/lib/liblz4.a
 zlibHeaderDep="../zlib/zconf.h ../zlib/zlib.h"
 LZ4HeaderDep="../lz4/lib/lz4.h ../lz4/lib/lz4frame.h"
+Kernel=KernelO
+installkerneltarget=installkernelobj
+installzlibtarget=
+installlz4target=
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -194,6 +208,14 @@ while [ $# != 0 ] ; do
     --installscriptname=*)
       installscriptname=`echo $1 | sed -e 's/^--installscriptname=//'`
       ;;
+    --toolprefix=*)
+      toolprefix=`echo $1 | sed -e 's/^--toolprefix=//'`
+      CC="${toolprefix}${CC}"
+      LD="${toolprefix}${LD}"
+      AR="${toolprefix}${AR}"
+      RANLIB="${toolprefix}${RANLIB}"
+      WINDRES="${toolprefix}${WINDRES}"
+      ;;
     --gzip-man-pages)
       gzipmanpages=yes
       ;;
@@ -212,6 +234,19 @@ while [ $# != 0 ] ; do
     --disable-x11)
       disablex11=yes
       ;;
+    --disable-curses)
+      disablecurses=yes
+      ;;
+    --libkernel)
+      Kernel=KernelLib
+      installkerneltarget=installkernellib
+      if [ "$zlibInc" != "" ]; then
+          installzlibtarget=installzlib
+      fi
+      if [ "$LZ4Inc" != "" ]; then
+          installlz4target=installlz4
+      fi
+      ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
       ;;
@@ -221,20 +256,37 @@ while [ $# != 0 ] ; do
     CFLAGS=*)
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       ;;
+    LD=*)
+      LD=`echo $1 | sed -e 's/^LD=//'`
+      ;;
     LDFLAGS=*)
       LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
+      ;;
+    AR=*)
+      AR=`echo $1 | sed -e 's/^AR=//'`
+      ;;
+    ARFLAGS=*)
+      ARFLAGS=`echo $1 | sed -e 's/^ARFLAGS=//'`
+      ;;
+    RANLIB=*)
+      RANLIB=`echo $1 | sed -e 's/^RANLIB=//'`
+      ;;
+    WINDRES=*)
+      WINDRES=`echo $1 | sed -e 's/^WINDRES=//'`
       ;;
     ZLIB=*)
       zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
       zlibInc=
       zlibDep=
       zlibHeaderDep=
+      installzlibtarget=
       ;;
     LZ4=*)
       LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
       LZ4Inc=
       LZ4Dep=
       LZ4HeaderDep=
+      installlz4target=
       ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
@@ -298,7 +350,9 @@ if [ "$help" = "yes" ]; then
   echo "  -m=<machine type>                 same as --machine <machine type> ($m)"
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
-  echo "  --disable-x11                     disabling x11"
+  echo "  --disable-x11                     disable X11 support"
+  echo "  --disable-curses                  disable [n]curses support"
+  echo "  --libkernel                       build libkernel.a instead of kernel.o"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
@@ -309,13 +363,20 @@ if [ "$help" = "yes" ]; then
   echo "  --installschemename=<schemename>  install with group ($installschemename)"
   echo "  --installpetitename=<petitename>  install with group ($installpetitename)"
   echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
+  echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
+  echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   additional C preprocessor flags ($CPPFLAGS)"
   echo "  CFLAGS=<C compiler flags>         additional C compiler flags ($CFLAGS)"
+  echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags ($LDFLAGS)"
-  echo "  ZLIB=<lib>                        link to static <lib> instead of own zlib"
-  echo "  LZ4=<lib>                         link to static <lib> instead of own LZ4"
+  echo "  AR=<archiver>                     archiver"
+  echo "  ARFLAGS=<archiver flgs>           archiver flags"
+  echo "  RANLIB=<archive indexer>          archive indexer"
+  echo "  WINDRES=<resource compiler>       resource compiler"
+  echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
+  echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -402,6 +463,9 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallSchemeName=.*$;InstallSchemeName=$installschemename;"\
     -e "s;^InstallPetiteName=.*$;InstallPetiteName=$installpetitename;"\
     -e "s;^InstallScriptName=.*$;InstallScriptName=$installscriptname;"\
+    -e "s;^InstallKernelTarget=.*$;InstallKernelTarget=$installkerneltarget;"\
+    -e "s;^InstallZlibTarget=.*$;InstallZlibTarget=$installzlibtarget;"\
+    -e "s;^InstallLZ4Target=.*$;InstallLZ4Target=$installlz4target;"\
     makefiles/Mf-install.in > $w/Mf-install
 
 cat > $w/c/config.h << END
@@ -415,11 +479,27 @@ if [ "$disablex11" = "yes" ]; then
   echo '#define DISABLE_X11' >> $w/c/config.h
 fi
 
+cursesLib=-lcurses
+ncursesLib=-lncurses
+
+if [ "$disablecurses" = "yes" ]; then
+  echo '#define DISABLE_CURSES' >> $w/c/config.h
+  cursesLib=
+  ncursesLib=
+fi
+
 cat > $w/c/Mf-config << END
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
+LD=$LD
 LDFLAGS=$LDFLAGS
+AR=$AR
+ARFLAGS=$ARFLAGS
+RANLIB=$RANLIB
+WINDRES=$WINDRES
+cursesLib=$cursesLib
+ncursesLib=$ncursesLib
 zlibInc=$zlibInc
 LZ4Inc=$LZ4Inc
 zlibDep=$zlibDep
@@ -428,4 +508,7 @@ zlibLib=$zlibLib
 LZ4Lib=$LZ4Lib
 zlibHeaderDep=$zlibHeaderDep
 LZ4HeaderDep=$LZ4HeaderDep
+Kernel=\${${Kernel}}
+KernelLinkDeps=\${${Kernel}LinkDeps}
+KernelLinkLibs=\${${Kernel}LinkLibs}
 END

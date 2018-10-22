@@ -16,7 +16,7 @@
 m = arm32le
 Cpu = ARMV6
 
-mdclib = -lm -ldl -lncurses -lrt -luuid
+mdclib = -lm -ldl ${ncursesLib} -lrt -luuid
 C = ${CC} ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 ${CFLAGS}
 o = o
 mdsrc = arm32le.c
@@ -30,11 +30,14 @@ mdobj = arm32le.o
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	ld -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
-${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; ./configure)

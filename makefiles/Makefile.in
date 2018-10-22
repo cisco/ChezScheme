@@ -18,6 +18,9 @@ MAKEFLAGS += --no-print-directory
 build:
 	(cd $(workarea) && $(MAKE) build)
 
+run:
+	env SCHEMEHEAPDIRS=$(workarea)/boot/$(m) $(workarea)/bin/$(m)/scheme
+
 install:
 	(cd $(workarea) && $(MAKE) install)
 
@@ -29,6 +32,16 @@ test:
 
 bootfiles:
 	(cd $(workarea) && $(MAKE) bootfiles)
+
+# Supply XM=<machine> to build boot files for <machine>
+boot: build
+	mkdir -p boot/$(XM)
+	(cd $(workarea) && $(MAKE) -f Mf-boot $(XM).boot)
+
+# Supply ORIG=<dir> to build using existing at <dir>
+from-orig:
+	(cd $(m)/s && $(MAKE) -f Mf-cross m=$(m) xm=$(m) base=$(ORIG)/$(m))
+	$(MAKE) build
 
 docs: build
 	(cd csug && $(MAKE) m=$(m))
