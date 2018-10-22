@@ -21,10 +21,11 @@ o = obj
 mdobj=windows.$o
 mdsrc=windows.c Makefile.$m cs.ico scheme.rc make.bat
 mdclean=vs.bat make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
+cross=f
 
 include Mf-base
 
-${Scheme}: make.bat
+${Scheme}${cross:f=}: make.bat
 	cmd.exe /c make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
 	cp ../bin/$m/scheme.pdb ../bin/$m/petite.pdb
@@ -34,3 +35,28 @@ make.bat: vs.bat
 	echo 'set MAKEFLAGS=' >> $@
 	echo 'vs.bat amd64 && nmake /f Makefile.$m /nologo %*' >> $@
 	chmod +x $@
+
+# -------------------------------------------------------
+# For cross-compilation, triggered by setting cross=t o=o
+
+C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
+
+${Scheme}${cross:t=}: ${Main} ${Kernel} ${KernelLinkDeps}
+	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
+
+.c.$o:
+	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
+
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
+
+../zlib/configure.log:
+	echo "all:" >> ../zlib/Makefile
+	echo '\t$$(MAKE) -f win32/Makefile.gcc CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" RC="$(WINDRES)"' >> ../zlib/Makefile
+	touch ../zlib/configure.log
+
+../lz4/lib/liblz4.a: ${LZ4Sources}
+	(cd ../lz4/lib; CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" ${MAKE} liblz4.a)
