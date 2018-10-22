@@ -16,3 +16,8 @@
 
 #define EXTERN
 #include "system.h"
+
+/* The C linker may require a reference to a function to pull in all
+   the common declarations. */
+#include "externs.h"
+void scheme_statics() { }

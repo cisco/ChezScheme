@@ -15,8 +15,10 @@
  */
 
 #ifdef WIN32
-#undef FORCEINLINE
-#define FORCEINLINE static __forceinline
+# ifndef __MINGW32__
+#  undef FORCEINLINE
+#  define FORCEINLINE static __forceinline
+# endif
 #else
 #define FORCEINLINE static inline
 #endif
