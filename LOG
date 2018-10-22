@@ -1016,3 +1016,8 @@
   in threaded builds) when a lot of small objects are allocated by
   C code with no intervening Scheme-side allocation or dirty writes.
     alloc.c, types.h, externs.h
+- made Windows filename handling in directory-list, file-access-time,
+  file-change-time, file-directory?, file-exists?, file-modification-time,
+  get-mode, and path-absolute more consistent with
+  https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
+    6.ss, 6.ms, io.stex, release_notes.stex
