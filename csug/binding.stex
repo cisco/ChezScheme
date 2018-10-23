@@ -49,7 +49,7 @@ albeit scoped where the bindings of the \scheme{let-syntax} or
 in a library or RNRS top-level program unless the
 \scheme{scheme} library is included in the library or
 top-level programs imports.
-These forms are described in Chatper~\ref{CHPTSYNTAX}.
+These forms are described in Chapter~\ref{CHPTSYNTAX}.
 
 In Revised$^6$ Report Scheme, definitions can appear at the front of
 a \scheme{lambda} or similar body (e.g., a \scheme{let} or \scheme{letrec}
@@ -66,8 +66,8 @@ procedure.
 The macro expander uses the same two-pass algorithm for expanding
 top-level \scheme{begin} expressions as it uses for a \scheme{lambda},
 \scheme{library}, or top-level program body.
-(This algorithm is described in Section~\ref{SECTSYNTAXDEFINITIONS} of {\TSPLFOUR}.)
-As a result,
+(This algorithm is described in Section~\ref{TSPL:SECTSYNTAXDEFINITIONS} of 
+{\TSPLFOUR}.) As a result,
 
 \schemedisplay
 (begin
@@ -85,7 +85,7 @@ and
 
 both result in the giving \scheme{x} the value 3,
 even though an unbound variable reference to \scheme{a} would result if
-the two forms within the latter \scheme{begin} expression where run
+the two forms within the latter \scheme{begin} expression were run
 independently at top level.
 
 Similarly, the \scheme{begin} form produced by a use of
@@ -136,7 +136,7 @@ for internal variable definitions, for backward compatibility.
 
 %----------------------------------------------------------------------------
 \noskipentryheader
-\formdef{define-values}{\categorysyntax}{(define-values formals \var{expr})}
+\formdef{define-values}{\categorysyntax}{(define-values \var{formals} \var{expr})}
 \listlibraries
 \endnoskipentryheader
 
