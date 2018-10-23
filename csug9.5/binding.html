@@ -60,7 +60,7 @@ albeit scoped where the bindings of the <tt>let-syntax</tt> or
 in a library or RNRS top-level program unless the
 <tt>scheme</tt> library is included in the library or
 top-level programs imports.
-These forms are described in Chatper&nbsp;<a href="./syntax.html#g97">11</a>.
+These forms are described in Chapter&nbsp;<a href="./syntax.html#g97">11</a>.
 
 <p>
 In Revised<sup>6</sup> Report Scheme, definitions can appear at the front of
@@ -79,8 +79,8 @@ procedure.
 The macro expander uses the same two-pass algorithm for expanding
 top-level <tt>begin</tt> expressions as it uses for a <tt>lambda</tt>,
 <tt>library</tt>, or top-level program body.
-(This algorithm is described in Section&nbsp;<a href="./syntax.html#g98">11.1</a> of <i>The Scheme Programming Language, 4th Edition</i>.)
-As a result,
+(This algorithm is described in Section&nbsp;<a href="http://scheme.com/tspl4/./syntax.html#g134">8.1</a> of 
+<i>The Scheme Programming Language, 4th Edition</i>.) As a result,
 
 <p>
 
@@ -100,7 +100,7 @@ As a result,
 &nbsp;&nbsp;(define-syntax&nbsp;a&nbsp;(identifier-syntax&nbsp;3)))</tt>
 <p>both result in the giving <tt>x</tt> the value 3,
 even though an unbound variable reference to <tt>a</tt> would result if
-the two forms within the latter <tt>begin</tt> expression where run
+the two forms within the latter <tt>begin</tt> expression were run
 independently at top level.
 
 <p>
@@ -162,7 +162,7 @@ for internal variable definitions, for backward compatibility.
 
 
 <p>
-<a name="./binding:s16"></a><span class=formdef><b>syntax</b>: <tt>(define-values&nbsp;formals&nbsp;<i>expr</i>)</tt></span>
+<a name="./binding:s16"></a><span class=formdef><b>syntax</b>: <tt>(define-values&nbsp;<i>formals</i>&nbsp;<i>expr</i>)</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -707,7 +707,7 @@ than <tt>top-level-bound?</tt>, which returns true only for bound variables.
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised September 2018 for Chez Scheme Version 9.5.1<br>
+Revised October 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -370,8 +370,8 @@ predicate <tt>transcoder?</tt>, which should be standard but is not.
 <tt>little</tt>.
 
 <p>
-The codec returned by <tt>utf-16-codec</tt> can be used to create
-process data written UFT-16 format.
+The codec returned by <tt>utf-16-codec</tt> can be used to create and
+process data written UTF-16 format.
 When called without the <tt><i>endianness</i></tt> argument or with <tt><i>endianness</i></tt>
 <tt>big</tt>, <tt>utf-16-codec</tt> returns a codec for standard UTF-16
 data, i.e., one that defaults to big-endian format if no byte-order mark
@@ -1450,11 +1450,7 @@ The file descriptor is closed when the port is closed.
 transcoder, and this procedure returns a textual input port
 whose transcoder is <tt><i>?transcoder</i></tt>.
 Otherwise, this procedure returns a binary input port.
-The buffer mode <tt><i>b-mode</i></tt> defaults to <tt>block</tt>, which differs from
-<tt>block</tt> in <i>Chez&nbsp;Scheme</i> only for textual output ports.
-See the lead-in to Section&nbsp;<a href="http://scheme.com/tspl4/./io.html#g123">7.2</a> of <i>The Scheme Programming Language, 4th Edition</i>
-for a description of the constraints on and effects of the other
-arguments.
+The buffer mode <tt><i>b-mode</i></tt> defaults to <tt>block</tt>.
 
 <p>
 The Revised<sup>6</sup> Report version of this procedure does not accept the
@@ -2136,9 +2132,6 @@ whose transcoder is <tt><i>?transcoder</i></tt>.
 Otherwise, this procedure returns a binary output port.
 The buffer mode <tt><i>b-mode</i></tt> defaults to <tt>line</tt>, which differs from
 <tt>block</tt> in <i>Chez&nbsp;Scheme</i> only for textual output ports.
-See the lead-in to Section&nbsp;<a href="http://scheme.com/tspl4/./io.html#g123">7.2</a> of <i>The Scheme Programming Language, 4th Edition</i>
-for a description of the constraints on and effects of the other
-arguments.
 
 <p>
 The Revised<sup>6</sup> Report version of this procedure does not accept the
@@ -3935,9 +3928,9 @@ are involved.
 <p>
 <TABLE><TR><TD nowrap align="left">
 path               </TD><TD nowrap align="left"> abs         </TD><TD nowrap align="left"> first              </TD><TD nowrap align="left"> rest               </TD><TD nowrap align="left"> parent             </TD><TD nowrap align="left"> last               </TD><TD nowrap align="left"> root               </TD><TD nowrap align="left"> ext       </TD></TR><TR><TD nowrap align="left">
-<tt>c:</tt>        </TD><TD nowrap align="left"> <tt>#t</tt> </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
+<tt>c:</tt>        </TD><TD nowrap align="left"> <tt>#f</tt> </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
 <tt>c:/</tt>       </TD><TD nowrap align="left"> <tt>#t</tt> </TD><TD nowrap align="left"> <tt>c:/</tt>       </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:/</tt>       </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>c:/</tt>       </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
-<tt>c:a/b</tt>     </TD><TD nowrap align="left"> <tt>#t</tt> </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>a/b</tt>       </TD><TD nowrap align="left"> <tt>c:a</tt>       </TD><TD nowrap align="left"> <tt>b</tt>         </TD><TD nowrap align="left"> <tt>c:a/b</tt>     </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
+<tt>c:a/b</tt>     </TD><TD nowrap align="left"> <tt>#f</tt> </TD><TD nowrap align="left"> <tt>c:</tt>        </TD><TD nowrap align="left"> <tt>a/b</tt>       </TD><TD nowrap align="left"> <tt>c:a</tt>       </TD><TD nowrap align="left"> <tt>b</tt>         </TD><TD nowrap align="left"> <tt>c:a/b</tt>     </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
 <tt>//s/a/b.c</tt> </TD><TD nowrap align="left"> <tt>#t</tt> </TD><TD nowrap align="left"> <tt>//s</tt>       </TD><TD nowrap align="left"> <tt>a/b.c</tt>     </TD><TD nowrap align="left"> <tt>//s/a</tt>     </TD><TD nowrap align="left"> <tt>b.c</tt>       </TD><TD nowrap align="left"> <tt>//s/a/b</tt>   </TD><TD nowrap align="left"> <tt>c</tt> </TD></TR><TR><TD nowrap align="left">
 <tt>//s.com</tt>   </TD><TD nowrap align="left"> <tt>#t</tt> </TD><TD nowrap align="left"> <tt>//s.com</tt>   </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>//s.com</tt>   </TD><TD nowrap align="left"> <tt>_</tt>         </TD><TD nowrap align="left"> <tt>//s.com</tt>   </TD><TD nowrap align="left"> <tt>_</tt> </TD></TR><TR><TD nowrap align="left">
 </TD></TR></TABLE>
@@ -4792,7 +4785,7 @@ subprocess is terminated.
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised September 2018 for Chez Scheme Version 9.5.1<br>
+Revised October 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

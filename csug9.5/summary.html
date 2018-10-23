@@ -531,7 +531,7 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(define-top-level-syntax&nbsp;<i>symbol</i>&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></td><td>procedure</td><td align=right><a href="./binding.html#./binding:s32">119</a></td></tr>
  <tr><td nowrap><tt>(define-top-level-value&nbsp;<i>symbol</i>&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./binding.html#./binding:s24">117</a></td></tr>
  <tr><td nowrap><tt>(define-top-level-value&nbsp;<i>symbol</i>&nbsp;<i>obj</i>&nbsp;<i>env</i>)</tt></td><td>procedure</td><td align=right><a href="./binding.html#./binding:s24">117</a></td></tr>
- <tr><td nowrap><tt>(define-values&nbsp;formals&nbsp;<i>expr</i>)</tt></td><td>syntax</td><td align=right><a href="./binding.html#./binding:s16">114</a></td></tr>
+ <tr><td nowrap><tt>(define-values&nbsp;<i>formals</i>&nbsp;<i>expr</i>)</tt></td><td>syntax</td><td align=right><a href="./binding.html#./binding:s16">114</a></td></tr>
  <tr><td nowrap><tt>(delay&nbsp;<i>expr</i>)</tt></td><td>syntax</td><td align=right><a href="http://scheme.com/tspl4/./control.html#./control:s65">t128</a></td></tr>
  <tr><td nowrap><tt>(delete-directory&nbsp;<i>path</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s136">259</a></td></tr>
  <tr><td nowrap><tt>(delete-directory&nbsp;<i>path</i>&nbsp;<i>error?</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s136">259</a></td></tr>
@@ -549,8 +549,8 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(display-condition&nbsp;<i>obj</i>&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s7">319</a></td></tr>
  <tr><td nowrap><tt>(display-statistics)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s198">378</a></td></tr>
  <tr><td nowrap><tt>(display-statistics&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s198">378</a></td></tr>
- <tr><td nowrap><tt>(display-string&nbsp;<i>string</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s77">240</a></td></tr>
- <tr><td nowrap><tt>(display-string&nbsp;<i>string</i>&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s77">240</a></td></tr>
+ <tr><td nowrap><tt>(display-string&nbsp;<i>string</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s77">239</a></td></tr>
+ <tr><td nowrap><tt>(display-string&nbsp;<i>string</i>&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s77">239</a></td></tr>
  <tr><td nowrap><tt>(div&nbsp;<i>x<sub>1</sub></i>&nbsp;<i>x<sub>2</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s99">t175</a></td></tr>
  <tr><td nowrap><tt>(div-and-mod&nbsp;<i>x<sub>1</sub></i>&nbsp;<i>x<sub>2</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s99">t175</a></td></tr>
  <tr><td nowrap><tt>(div0&nbsp;<i>x<sub>1</sub></i>&nbsp;<i>x<sub>2</sub></i>)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./objects.html#./objects:s100">t176</a></td></tr>
@@ -1585,9 +1585,9 @@ in the electronic versions of these books.
  <tr><td nowrap><tt>(sstats-print&nbsp;<i>s</i>&nbsp;<i>textual-output-port</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s214">381</a></td></tr>
  <tr><td nowrap><tt>(sstats-real&nbsp;<i>s</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s211">380</a></td></tr>
  <tr><td nowrap><tt>(sstats?&nbsp;<i>obj</i>)</tt></td><td>procedure</td><td align=right><a href="./system.html#./system:s210">380</a></td></tr>
- <tr><td nowrap><tt>(standard-error-port)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">239</a></td></tr>
- <tr><td nowrap><tt>(standard-error-port&nbsp;<i>b-mode</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">239</a></td></tr>
- <tr><td nowrap><tt>(standard-error-port&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">239</a></td></tr>
+ <tr><td nowrap><tt>(standard-error-port)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">238</a></td></tr>
+ <tr><td nowrap><tt>(standard-error-port&nbsp;<i>b-mode</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">238</a></td></tr>
+ <tr><td nowrap><tt>(standard-error-port&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s74">238</a></td></tr>
  <tr><td nowrap><tt>(standard-error-port)</tt></td><td>procedure</td><td align=right><a href="http://scheme.com/tspl4/./io.html#./io:s33">t264</a></td></tr>
  <tr><td nowrap><tt>(standard-input-port)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s55">229</a></td></tr>
  <tr><td nowrap><tt>(standard-input-port&nbsp;<i>b-mode</i>)</tt></td><td>procedure</td><td align=right><a href="./io.html#./io:s55">229</a></td></tr>
@@ -1852,7 +1852,7 @@ in the electronic versions of these books.
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised September 2018 for Chez Scheme Version 9.5.1<br>
+Revised October 2018 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
