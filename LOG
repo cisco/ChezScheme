@@ -1146,3 +1146,9 @@
 - commented out local definition of sorry! so that problems detected
   by $cpcheck-prelex-flags actually result in a raised exception.
     cprep.ss
+- exposed the default-library-search-handler and a library-search-handler
+  parameter to permit more control over the search for libraries during
+  import, compile-whole-library, and compile-whole-program
+    syntax.ss, primdata.ss,
+    8.ms,
+    libraries.stex
