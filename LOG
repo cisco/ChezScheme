@@ -1021,3 +1021,7 @@
   get-mode, and path-absolute more consistent with
   https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
     6.ss, 6.ms, io.stex, release_notes.stex
+- fix handling of calling code's address for locking around a callable,
+  where the cp register copy in the thread context could be changed
+  in the callable prep before S_call_help gets it
+    cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms

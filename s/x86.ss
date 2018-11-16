@@ -2882,6 +2882,7 @@
                            locs))
                      get-result
                      (lambda ()
+                       (define callee-save-regs (list %ebx %edi %esi %ebp))
                        (in-context Tail
                         ((lambda (e)
                            (if adjust-active?
@@ -2913,5 +2914,6 @@
                                                  ;; after popping the return address
                                                  (make-info-c-return 4)
                                                  null-info)
+                                            ,callee-save-regs ...
                                             ,result-regs ...)))))))))))))))
   )
