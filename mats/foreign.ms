@@ -2516,6 +2516,29 @@
        (let ([v ($with-exit-proc (lambda (k) (Sinvoke2 Fcons k 5)))])
          (list v (locked-object? Fcons)))))
     '((#t #f) (#t #f)))
+
+  ;; Make sure the code pointer for a call into a
+  ;; foreign procedure is correctly saved for locking
+  ;; when entering a callback as a callable:
+  (equal?
+   (let ()
+     (define v 0)
+     (define call_many_times (foreign-procedure "call_many_times" (void*) void))
+     (define work
+       (lambda (n)
+         ;; This loop needs to be non-allocating, but
+         ;; causes varying numbers of ticks
+         ;; to be used up.
+         (let loop ([n (bitwise-and n #xFFFF)])
+           (unless (zero? n)
+             (set! v (add1 v))
+             (loop (bitwise-arithmetic-shift-right n 1))))))
+     (define handler (foreign-callable work (long) void))
+     (lock-object handler)
+     (call_many_times (foreign-callable-entry-point handler))
+     v)
+   14995143)
+
 )
 
 (machine-case
@@ -3021,10 +3044,6 @@
       (let ([m (make-mutex)]
             [done? #f]
             [ok? #t])
-        (define object->addr
-          (foreign-procedure "(cs)fxmul"
-                             (scheme-object uptr)
-                             uptr))
         (fork-thread (lambda ()
                        (let loop ([i 10])
                          (unless (zero? i)
