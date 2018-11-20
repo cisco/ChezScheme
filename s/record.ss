@@ -826,10 +826,12 @@
                     [(5) (nlambda 5)]
                     [(6) (nlambda 6)]
                     [else (rec constructor
-                            (lambda xr
-                              (unless (fx= (length xr) nflds)
-                                ($oops #f "incorrect number of arguments to ~s" constructor))
-                              (apply $record rtd xr)))]))
+                            ($make-arity-wrapper-procedure
+                             (lambda xr
+                               (unless (fx= (length xr) nflds)
+                                 ($oops #f "incorrect number of arguments to ~s" constructor))
+                               (apply $record rtd xr))
+                             (ash 1 nflds)))]))
                 (let* ([args (make-record-call-args flds (rtd-size rtd)
                                (map (lambda (x) 0) flds))]
                        [nargs (length args)]
@@ -923,12 +925,14 @@
                                   [else #f])]
                            [else #f])])
                      (rec constructor
-                       (lambda xr
-                         (unless (fx= (length xr) nflds)
-                           ($oops #f "incorrect number of arguments to ~s" constructor))
-                         (let ([x (apply $record rtd args)])
-                           (for-each (lambda (setter v) (setter x v)) setters xr)
-                           x)))))))))
+                       ($make-arity-wrapper-procedure
+                        (lambda xr
+                          (unless (fx= (length xr) nflds)
+                            ($oops #f "incorrect number of arguments to ~s" constructor))
+                          (let ([x (apply $record rtd args)])
+                            (for-each (lambda (setter v) (setter x v)) setters xr)
+                            x))
+                        (ash 1 nflds)))))))))
 
       (define ($rcd->record-constructor rcd)
         (let ([rtd (rcd-rtd rcd)] [protocol (rcd-protocol rcd)])
