@@ -228,7 +228,9 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
 
   si->space = s;
   si->generation = g;
+  si->sorted = 0;
   si->min_dirty_byte = 0xff;
+  si->trigger_ephemerons = NULL;
   for (d = 0; d < cards_per_segment; d += sizeof(ptr)) {
     iptr *dp = (iptr *)(si->dirty_bytes + d);
     /* fill sizeof(iptr) bytes at a time with 0xff */
@@ -261,7 +263,6 @@ iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
 
         chunk->nused_segs += 1;
         initialize_seginfo(si, s, g);
-        si->sorted = 0;
         si->next = S_G.occupied_segments[s][g];
         S_G.occupied_segments[s][g] = si;
         S_G.number_of_empty_segments -= 1;
@@ -300,7 +301,6 @@ iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
                 S_G.occupied_segments[s][g] = si;
                 for (j = n, nextsi = si; j > 0; j -= 1, nextsi = nextsi->next) {
                   initialize_seginfo(nextsi, s, g);
-                  nextsi->sorted = 0;
                 }
                 S_G.number_of_empty_segments -= n;
                 return si->number;
