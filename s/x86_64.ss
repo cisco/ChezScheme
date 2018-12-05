@@ -3410,6 +3410,10 @@
                          locs))
                    get-result
                    (lambda ()
+                     (define callee-save-regs
+                       (if-feature windows
+                         (list %rbx %rbp %rdi %rsi %r12 %r13 %r14 %r15)
+                         (list %rbx %rbp %r12 %r13 %r14 %r15)))
                      (in-context Tail
                       ((lambda (e)
                          (if adjust-active?
@@ -3441,5 +3445,5 @@
                              (set! ,%rbp ,(%inline pop))
                              (set! ,%rbx ,(%inline pop))
                              (set! ,%sp ,(%inline + ,%sp (immediate 136)))))
-                        (asm-c-return ,null-info ,result-regs ...))))))))))))))
+                        (asm-c-return ,null-info ,callee-save-regs ... ,result-regs ...))))))))))))))
   )

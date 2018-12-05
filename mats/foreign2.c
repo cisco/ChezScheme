@@ -424,3 +424,22 @@ EXPORT i64 ifoo64a(i64 a, i64 b, i64 c, i64 d, i64 e, i64 f, i64 g) {
 EXPORT i64 ifoo64b(i32 x, i64 a, i64 b, i64 c, i64 d, i64 e, i64 f, i64 g) {
   return (i64)x + (a - b) + (c - d) + (e - f) + g;
 }
+
+EXPORT void call_many_times(void (*f)(iptr))
+{
+  int x;
+  iptr a = 1, b = 3, c = 5, d = 7;
+  iptr e = 1, g = 3, h = 5, i = 7;
+  iptr j = 1, k = 3, l = 5, m = 7;
+  iptr big = (((iptr)1) << ((8 * sizeof(iptr)) - 2));
+
+  /* The intent of the loop is to convince the C compiler to store
+     something in the same register used for CP (so, compile with
+     optimization). */
+  for (x = 0; x < 1000000; x++) {
+    f(big|(a+e+j));
+    a = b; b = c; c = d; d = e;
+    e = g; g = h; h = i; i = j;
+    j = k+2; k = l+2; l = m+2; m = m+2;
+  }
+}
