@@ -10730,9 +10730,12 @@
                           ; c-return restores callee-save registers and returns to C
                           (%seq
                             ,(c-init)
+                            ; although we don't actually need %cp in a register, we need
+                            ; to make sure that `(%tc-ref cp)` doesn't change before S_call_help
+                            ; is called, and claiming that %cp is live is the easiest way
                             ,(restore-scheme-state
-                               (in) ; save just the required registers, e.g., %sfp
-                               (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs))
+                               (in %cp)
+                               (out %ac0 %ac1 %xp %yp %ts %td scheme-args extra-regs))
                             ; need overflow check since we're effectively retroactively turning
                             ; what was a foreign call into a Scheme non-tail call
                             (fcallable-overflow-check)
@@ -10748,8 +10751,8 @@
                             (set! ,(ref-reg %ac1) (literal ,(make-info-literal #f 'object 0 0)))
                             (set! ,(ref-reg %ts) (label-ref ,self-label 0)) ; for locking
                             ,(save-scheme-state
-                               (in %ac0 %ac1 %ts)
-                               (out %cp %xp %yp %td scheme-args extra-regs))
+                               (in %ac0 %ac1 %ts %cp)
+                               (out %xp %yp %td scheme-args extra-regs))
                             ; Scall-{any,one}-results calls the Scheme implementation of the
                             ; callable, locking this callable wrapper (as communicated in %ts)
                             ; until just before returning
@@ -10757,6 +10760,7 @@
                             ,(restore-scheme-state
                                (in %ac0)
                                (out %ac1 %cp %xp %yp %ts %td scheme-args extra-regs))
+                            ; assuming no use of %cp from here on that could get saved into `(%tc-ref cp)`:
                             ,(Scheme->C-for-result result-type c-result %ac0)
                             ,(c-return)))))))))))
         (define handle-do-rest
