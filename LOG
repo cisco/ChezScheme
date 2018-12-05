@@ -1025,3 +1025,5 @@
   where the cp register copy in the thread context could be changed
   in the callable prep before S_call_help gets it
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
+- added initialization of seginfo sorted and trigger_ephemerons fields.
+    segment.c
