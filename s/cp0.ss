@@ -3307,14 +3307,18 @@
 
       (define-inline 2 record-type-descriptor?
         [(?x)
-         (cond
-           [(nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?x))
-              [(record-type ,rtd ,e) #t]
-              [(quote ,d) (record-type-descriptor? d)]
-              [else #f])
-            (residualize-seq '() (list ?x) ctxt)
-            true-rec]
-           [else #f])])
+         (let ([?x-val (value-visit-operand! ?x)])
+           (cond
+             [(nanopass-case (Lsrc Expr) (result-exp ?x-val)
+                [(record-type ,rtd ,e) #t]
+                [(quote ,d) (record-type-descriptor? d)]
+                [else #f])
+              (residualize-seq '() (list ?x) ctxt)
+              true-rec]
+             [else
+              (residualize-seq (list ?x) '() ctxt)
+              (build-primcall (app-preinfo ctxt) 3 'record?
+                              (list ?x-val `(quote ,#!base-rtd)))]))])
 
       (define-inline 2 record-constructor-descriptor?
         [(?x)
