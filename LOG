@@ -1031,3 +1031,7 @@
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
     4.ms, smgmt.stex, release_notes.stex
+- add make-arity-wrapper
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
+    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
+    misc.ms, mats/patch*, mats/root*
