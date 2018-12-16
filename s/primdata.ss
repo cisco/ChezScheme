@@ -947,6 +947,7 @@
   (default-record-equal-procedure [sig [() -> (maybe-procedure)] [(maybe-procedure) -> (void)]] [flags])
   (default-record-hash-procedure [sig [() -> (maybe-procedure)] [(maybe-procedure) -> (void)]] [flags])
   (enable-cross-library-optimization [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
+  (enable-object-backreferences [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
@@ -1470,6 +1471,7 @@
   (nonnegative? [sig [(real) -> (boolean)]] [flags pure mifoldable discard])
   (nonpositive? [sig [(real) -> (boolean)]] [flags pure mifoldable discard])
   (number->string [sig [(number) (number sub-ufixnum) (number sub-ufixnum sub-ufixnum) -> (string)]] [flags alloc])  ; radix not restricted to 2, 4, 8, 16
+  (object-backreferences [sig [() -> (ptr)]] [flags alloc])
   (object-counts [sig [() -> (ptr)]] [flags alloc])
   (oblist [sig [() -> (list)]] [flags alloc])
   (open-fd-input-port [sig [(sub-ufixnum) (sub-ufixnum sub-symbol) (sub-ufixnum sub-symbol maybe-transcoder) -> (input-port)]] [flags true])

@@ -4622,6 +4622,81 @@ of \scheme{(collect-maximum-generation)}, inclusive, or the symbol
               (object-counts)))))                ;=> (2 . 16)
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+
+\entryheader
+\formdef{enable-object-backreferences}{\categoryglobalparameter}{enable-object-backreferences}
+\listlibraries
+\endentryheader
+
+The value of \scheme{enable-object-backreferences} is a boolean value that
+determines whether the collector records information about which other object
+caused an object to be retained and
+hence whether the backreferences reported by the procedure
+\scheme{object-backreferences} are accurate.
+The parameter is set to \scheme{#f} by default, since backreference recording
+adds overhead to collection.
+
+Beware that backreference recording can have small performance affects
+even after it is disabled---at least until the next collection over
+the same generations---since backreference records constrain the way
+that the collector stores some objects.
+
+\entryheader
+\formdef{object-backreferences}{\categoryprocedure}{(object-backreferences)}
+\returns a list of list of pairs
+\listlibraries
+\endentryheader
+
+The procedure \scheme{object-backreferences} returns a list of
+backreference lists. Each backreference list is a list of pairs, where
+the \scheme{car} of the pair is a referenced object, and the
+\scheme{cdr} of the pair is either \scheme{#f} or a value that caused
+the \scheme{car}'s value or be retained during collection. The
+\scheme{cdr} of a backreference pair is \scheme{#f} if the object in
+the \scheme{car} is retained by a root reference within the system's
+implementation or static generation. By locating the \scheme{cdr} of
+one pair as the \scheme{car} of another, chains of objects as
+discovered by the collector can be traced back to roots.
+
+The list returned by \scheme{object-backreferences} contains one
+backreference list for each nonstatic generation (in order, starting
+with generation \scheme{0}). An object is recorded in a backreference
+list for the destination generation to which it is moved by
+collection. The collector records backreference information only when
+\scheme{enable-object-backreferences} is set to a true value, and only
+for objects that start in generations that are collected.
+
+For example, assuming that backreferences have not been previously
+enabled, the result of
+%
+\schemedisplay
+(collect-request-handler void)
+(enable-object-backreferences #t)
+(collect 0)
+(enable-object-backreferences #f)
+(object-backreferences)
+\endschemedisplay
+%
+will have a non-empty backreference list only for the second
+list in the result (i.e., the list for generation \scheme{1}).
+
+Although \scheme{object-backreferences} reports generation-specific
+information to reflect its cooperation with generational collection,
+backreference information is most useful after a collection of all
+generations up to the maximum nonstatic generation. In that case,
+backreference information can be used to discover why a particular
+value or kind of value remains allocated or remains in a weak pair
+after garbage collection.
+
+\schemedisplay
+(collect-request-handler void)
+(enable-object-backreferences #t)
+(define b (box "hello"))
+(collect 0)
+(assq (unbox b) (cadr (object-backreferences))) ;=> ("hello" . #&"hello")
+\endschemedisplay
+
 \section{Cost Centers\label{SECTMISCCOSTCENTERS}}
 
 Cost centers are used to track the bytes allocated, instructions executed,

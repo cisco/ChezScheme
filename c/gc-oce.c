@@ -16,4 +16,5 @@
 
 #define GCENTRY S_gc_oce
 #define ENABLE_OBJECT_COUNTS
+#define ENABLE_BACKREFERENCE
 #include "gc.c"

@@ -39,7 +39,7 @@ static void resweep_weak_pairs PROTO((IGEN g));
 static void forward_or_bwp PROTO((ptr *pp, ptr p));
 static void sweep_generation PROTO((ptr tc, IGEN g));
 static iptr size_object PROTO((ptr p));
-static iptr sweep_typed_object PROTO((ptr p));
+static iptr sweep_typed_object PROTO((ptr tc, ptr p));
 static void sweep_symbol PROTO((ptr p));
 static void sweep_port PROTO((ptr p));
 static void sweep_thread PROTO((ptr p));
@@ -78,6 +78,31 @@ static ptr orig_next_loc[max_real_space+1];
 static ptr sorted_locked_objects;
 static ptr tlcs_to_rehash;
 static ptr recheck_guardians_ls;
+
+#ifdef ENABLE_BACKREFERENCE
+static ptr sweep_from;
+# define BACKREFERENCES_ENABLED S_G.enable_object_backreferences
+# define SET_SWEEP_FROM(p) if (S_G.enable_object_backreferences) sweep_from = p
+# define WITH_TOP_BACKREFERENCE(v, e) SET_SWEEP_FROM(v); e; SET_SWEEP_FROM(Sfalse)
+# define SET_BACKREFERENCE(p) sweep_from = p;
+# define PUSH_BACKREFERENCE(p) ptr old_sweep_from = sweep_from; SET_SWEEP_FROM(p);
+# define POP_BACKREFERENCE() SET_SWEEP_FROM(old_sweep_from);
+# define ADD_BACKREFERENCE_FROM(p, from_p)             \
+  { IGEN tg = target_generation; \
+    if ((S_G.enable_object_backreferences) && (target_generation < static_generation)) \
+      S_G.gcbackreference[tg] = S_cons_in(space_impure, tg, \
+                                          S_cons_in(space_impure, tg, p, from_p), \
+                                          S_G.gcbackreference[tg]); }
+# define ADD_BACKREFERENCE(p) ADD_BACKREFERENCE_FROM(p, sweep_from)
+#else
+# define BACKREFERENCES_ENABLED 0
+# define WITH_TOP_BACKREFERENCE(v, e) e
+# define SET_BACKREFERENCE(p)
+# define PUSH_BACKREFERENCE(p)
+# define POP_BACKREFERENCE()
+# define ADD_BACKREFERENCE(p)
+# define ADD_BACKREFERENCE_FROM(p, from_p)
+#endif
 
 /* Values for a guardian entry's `pending` field when it's added to a
    seginfo's pending list: */
@@ -280,7 +305,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
            carefully we may reduce fragmentation and sweeping cost */
           s = RECORDDESCPM(rtd) == FIX(1) && RECORDDESCMPM(rtd) == FIX(0) ?
                   space_data :
-                  RECORDDESCPM(rtd) == FIX(-1) ?
+                  ((RECORDDESCPM(rtd) == FIX(-1)) && !BACKREFERENCES_ENABLED) ?
                       RECORDDESCMPM(rtd) == FIX(0) ?
                           space_pure :
                           space_impure :
@@ -302,6 +327,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           }
       } else if (TYPEP(tf, mask_vector, type_vector)) {
           iptr len, n;
+          ISPC s;
           len = Svector_length(pp);
           n = size_vector(len);
 #ifdef ENABLE_OBJECT_COUNTS
@@ -309,11 +335,10 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           S_G.bytesof[tg][countof_vector] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
         /* assumes vector lengths look like fixnums; if not, vectors will need their own space */
-          if ((uptr)tf & vector_immutable_flag) {
-            find_room(space_pure, tg, type_typed_object, n, p);
-          } else {
-            find_room(space_impure, tg, type_typed_object, n, p);
-          }
+          s = (((uptr)tf & vector_immutable_flag)
+               ? (BACKREFERENCES_ENABLED ? space_pure_typed_object : space_pure)
+               : (BACKREFERENCES_ENABLED ? space_impure_typed_object : space_impure));
+          find_room(s, tg, type_typed_object, n, p);
           copy_ptrs(type_typed_object, p, pp, n);
         /* pad if necessary */
           if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
@@ -350,7 +375,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_tlc] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
-          find_room(space_impure, tg, type_typed_object, size_tlc, p);
+          find_room((BACKREFERENCES_ENABLED ? space_impure_typed_object : space_impure), tg, type_typed_object, size_tlc, p);
           TLCTYPE(p) = type_tlc;
           INITTLCKEYVAL(p) = keyval = TLCKEYVAL(pp);
           INITTLCHT(p) = TLCHT(pp);
@@ -364,14 +389,14 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           if (next != Sfalse && SPACE(keyval) & space_old)
             tlcs_to_rehash = S_cons_in(space_new, 0, p, tlcs_to_rehash);
       } else if (TYPEP(tf, mask_box, type_box)) {
+          ISPC s;
 #ifdef ENABLE_OBJECT_COUNTS
           S_G.countof[tg][countof_box] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
-          if ((uptr)tf == type_immutable_box) {
-            find_room(space_pure, tg, type_typed_object, size_box, p);
-          } else {
-            find_room(space_impure, tg, type_typed_object, size_box, p);
-          }
+          s = (((uptr)tf == type_immutable_box)
+               ? (BACKREFERENCES_ENABLED ? space_pure_typed_object : space_pure)
+               : (BACKREFERENCES_ENABLED ? space_impure_typed_object : space_impure));
+          find_room(s, tg, type_typed_object, size_box, p);
           BOXTYPE(p) = (iptr)tf;
           INITBOXREF(p) = Sunbox(pp);
       } else if ((iptr)tf == type_ratnum) {
@@ -489,6 +514,7 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           INITCDR(q) = Scdr(qq);
           FWDMARKER(qq) = forward_marker;
           FWDADDRESS(qq) = q;
+          ADD_BACKREFERENCE_FROM(q, p)
         } else {
           if (si->space == (space_weakpair | space_old)) {
 #ifdef ENABLE_OBJECT_COUNTS
@@ -536,7 +562,9 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             S_G.countof[tg][countof_closure] += 1;
             S_G.bytesof[tg][countof_closure] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
-            if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+            if (BACKREFERENCES_ENABLED) {
+              find_room(space_closure, tg, type_closure, n, p);
+            } else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
               /* Using `space_impure` is ok because the code slot of a mutable
                  closure is never mutated, so the code is never newer than the
                  closure. If it were, then because the code pointer looks like
@@ -577,6 +605,8 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
     FWDMARKER(pp) = forward_marker;
     FWDADDRESS(pp) = p;
 
+    ADD_BACKREFERENCE(p)
+
     return p;
 }
 
@@ -591,6 +621,8 @@ static void sweep_ptrs(pp, n) ptr *pp; iptr n; {
 
 static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   ptr tf; ITYPE t;
+
+  PUSH_BACKREFERENCE(p)
 
   if ((t = TYPEBITS(p)) == type_pair) {
     ISPC s = SPACE(p) & ~(space_locked | space_old);
@@ -635,6 +667,10 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
       relocate(&RATNUM(p))
       relocate(&RATDEN(p))
     }
+  } else if ((iptr)tf == type_tlc) {
+    relocate(&INITTLCKEYVAL(p));
+    relocate(&INITTLCHT(p));
+    relocate(&INITTLCNEXT(p));
   } else if ((iptr)tf == type_exactnum) {
     if (sweep_pure) {
       relocate(&EXACTNUM_REAL_PART(p))
@@ -657,6 +693,8 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
   } else {
     S_error_abort("sweep(gc): illegal type");
   }
+
+  POP_BACKREFERENCE()
 }
 
 /* sweep_in_old() is like sweep(), but the goal is to sweep the
@@ -909,6 +947,13 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
    }
 #endif /* ENABLE_OBJECT_COUNTS */
 
+   /* Clear any backreference lists for copied generations */
+   for (g = 0; g <= mcg; g += 1) {
+      S_G.gcbackreference[g] = Snil;
+   }
+
+   SET_BACKREFERENCE(Sfalse) /* #f => root or locked */
+
     /* pre-collection handling of locked objects. */
 
     /* create a single sorted_locked_object vector for all copied generations
@@ -966,7 +1011,10 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
       v = sorted_locked_objects;
       i = Svector_length(v);
       x = *(vp = &INITVECTIT(v, 0));
-      do sweep(tc, x, 1); while (--i != 0 && (x = *++vp) != MAXPTR);
+      do {
+        sweep(tc, x, 1);
+        ADD_BACKREFERENCE(x)
+      } while (--i != 0 && (x = *++vp) != MAXPTR);
     }
   /* sweep non-oldspace threads, since any thread may have an active stack */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
@@ -1092,17 +1140,20 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     pend_hold_ls = ls;
                   } else {
                     seginfo *si;
-                    if (!IMMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && (si->space & space_old) && !locked(rep))
+                    if (!IMMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && (si->space & space_old) && !locked(rep)) {
+                      PUSH_BACKREFERENCE(rep)
                       sweep_in_old(tc, rep);
+                      POP_BACKREFERENCE()
+                    }
                     INITGUARDIANNEXT(ls) = maybe_final_ordered_ls;
                     maybe_final_ordered_ls = ls;
                   }
                 } else {
-                  relocate(&rep);
-
                 /* if tconc was old it's been forwarded */
                   tconc = GUARDIANTCONC(ls);
                   
+                  WITH_TOP_BACKREFERENCE(tconc, relocate(&rep));
+
                   old_end = Scdr(tconc);
                 /* allocating pair in tg means it will be swept, which is wasted effort, but should cause no harm */
                   new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
@@ -1134,12 +1185,15 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                     }
 
                     rep = GUARDIANREP(ls);
-                    relocate(&rep);
+                    WITH_TOP_BACKREFERENCE(tconc, relocate(&rep));
                     relocate_rep = 1;
 
 #ifdef ENABLE_OBJECT_COUNTS
                     S_G.countof[tg][countof_guardian] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
+                    /* In backreference mode, we rely on sweep of the guardian
+                       entry not registering any backreferences. Otherwise,
+                       bogus pair pointers would get created. */
                     find_room(space_pure, tg, typemod, size_guardian_entry, p);
                     INITGUARDIANOBJ(p) = GUARDIANOBJ(ls);
                     INITGUARDIANREP(p) = rep;
@@ -1492,15 +1546,17 @@ static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
 
 static void sweep_generation(tc, g) ptr tc; IGEN g; {
   ptr *slp, *nlp; ptr *pp, p, *nl;
-
+  
   do {
     change = 0;
     sweep_space(space_impure, {
+        SET_BACKREFERENCE(TYPE((ptr)pp, type_pair)) /* only pairs put here in backreference mode */
         relocate_help(pp, p)
         p = *(pp += 1);
         relocate_help(pp, p)
         pp += 1;
     })
+    SET_BACKREFERENCE(Sfalse)
 
     sweep_space(space_symbol, {
         p = TYPE((ptr)pp, type_symbol);
@@ -1515,10 +1571,12 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
     })
 
     sweep_space(space_weakpair, {
+        SET_BACKREFERENCE(TYPE((ptr)pp, type_pair))
         p = *(pp += 1);
         relocate_help(pp, p)
         pp += 1;
     })
+    SET_BACKREFERENCE(Sfalse)
 
     sweep_space(space_ephemeron, {
         p = TYPE((ptr)pp, type_pair);
@@ -1527,11 +1585,13 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
     })
       
     sweep_space(space_pure, {
+        SET_BACKREFERENCE(TYPE((ptr)pp, type_pair)) /* only pairs put here in backreference mode */
         relocate_help(pp, p)
         p = *(pp += 1);
         relocate_help(pp, p)
         pp += 1;
     })
+    SET_BACKREFERENCE(Sfalse)
 
     sweep_space(space_continuation, {
         p = TYPE((ptr)pp, type_closure);
@@ -1541,7 +1601,7 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
 
     sweep_space(space_pure_typed_object, {
         p = TYPE((ptr)pp, type_typed_object);
-        pp = (ptr *)((uptr)pp + sweep_typed_object(p));
+        pp = (ptr *)((uptr)pp + sweep_typed_object(tc, p));
     })
 
     sweep_space(space_code, {
@@ -1555,6 +1615,19 @@ static void sweep_generation(tc, g) ptr tc; IGEN g; {
         sweep_record(p);
         pp = (ptr *)((iptr)pp +
                size_record_inst(UNFIX(RECORDDESCSIZE(RECORDINSTTYPE(p)))));
+    })
+
+    /* space used only as needed for backreferences: */
+    sweep_space(space_impure_typed_object, {
+        p = TYPE((ptr)pp, type_typed_object);
+        pp = (ptr *)((uptr)pp + sweep_typed_object(tc, p));
+    })
+
+    /* space used only as needed for backreferences: */
+    sweep_space(space_closure, {
+        p = TYPE((ptr)pp, type_closure);
+        sweep(tc, p, 1);
+        pp = (ptr *)((uptr)pp + size_object(p));
     })
 
     /* Waiting until sweeping doesn't trigger a change reduces the
@@ -1598,6 +1671,8 @@ static iptr size_object(p) ptr p; {
         return size_fxvector(Sfxvector_length(p));
     } else if (TYPEP(tf, mask_box, type_box)) {
         return size_box;
+    } else if ((iptr)tf == type_tlc) {
+        return size_tlc;
     } else if ((iptr)tf == type_ratnum) {
         return size_ratnum;
     } else if ((iptr)tf == type_exactnum) {
@@ -1620,7 +1695,7 @@ static iptr size_object(p) ptr p; {
     }
 }
 
-static iptr sweep_typed_object(p) ptr p; {
+static iptr sweep_typed_object(tc, p) ptr tc; ptr p; {
   ptr tf = TYPEFIELD(p);
 
   if (TYPEP(tf, mask_record, type_record)) {
@@ -1630,13 +1705,16 @@ static iptr sweep_typed_object(p) ptr p; {
     sweep_thread(p);
     return size_thread;
   } else {
-      S_error_abort("sweep_typed_object(gc): unexpected type");
-      return 0 /* not reached */;
+    /* We get here only if backreference mode pushed othertyped objects into
+       a typed space */
+    sweep(tc, p, 1);
+    return size_object(p);
   }
 }
 
 static void sweep_symbol(p) ptr p; {
   ptr val, code;
+  PUSH_BACKREFERENCE(p)
 
   val = SYMVAL(p);
   relocate(&val);
@@ -1648,9 +1726,12 @@ static void sweep_symbol(p) ptr p; {
   relocate(&INITSYMSPLIST(p))
   relocate(&INITSYMNAME(p))
   relocate(&INITSYMHASH(p))
+
+  POP_BACKREFERENCE()
 }
 
 static void sweep_port(p) ptr p; {
+  PUSH_BACKREFERENCE(p)
   relocate(&PORTHANDLER(p))
   relocate(&PORTINFO(p))
   relocate(&PORTNAME(p))
@@ -1666,11 +1747,13 @@ static void sweep_port(p) ptr p; {
     relocate(&PORTIBUF(p))
     PORTILAST(p) = (ptr)((iptr)PORTIBUF(p) + n);
   }
+  POP_BACKREFERENCE()
 }
 
 static void sweep_thread(p) ptr p; {
   ptr tc = (ptr)THREADTC(p);
   INT i;
+  PUSH_BACKREFERENCE(p)
 
   if (tc != (ptr)0) {
     ptr old_stack = SCHEMESTACK(tc);
@@ -1730,9 +1813,12 @@ static void sweep_thread(p) ptr p; {
       relocate(&VIRTREG(tc, i));
     }
   }
+
+  POP_BACKREFERENCE()
 }
 
 static void sweep_continuation(p) ptr p; {
+  PUSH_BACKREFERENCE(p)
   relocate(&CONTWINDERS(p))
 
  /* bug out for shot 1-shot continuations */
@@ -1746,6 +1832,8 @@ static void sweep_continuation(p) ptr p; {
 
  /* use CLENGTH to avoid sweeping unoccupied portion of one-shots */
   sweep_stack((uptr)CONTSTACK(p), (uptr)CONTSTACK(p) + CONTCLENGTH(p), (uptr)CONTRET(p));
+
+  POP_BACKREFERENCE()
 }
 
 /* assumes stack has already been copied to newspace */
@@ -1838,7 +1926,9 @@ static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
     }                                                                   \
 
 static void sweep_record(x) ptr x; {
+  PUSH_BACKREFERENCE(x)
   sweep_or_check_record(x, relocate)
+  POP_BACKREFERENCE()
 }
 
 #define check_self(pp) if (*(pp) == x) return 1;
@@ -1850,6 +1940,7 @@ static int scan_record_for_self(x) ptr x; {
 
 static IGEN sweep_dirty_record(x) ptr x; {
     ptr *pp; ptr num; ptr rtd; IGEN tg, youngest;
+    PUSH_BACKREFERENCE(x)
 
     tg = target_generation;
     youngest = 0xff;
@@ -1890,12 +1981,16 @@ static IGEN sweep_dirty_record(x) ptr x; {
         }
     }
 
+    POP_BACKREFERENCE()
+
     return youngest;
 }
 
 static void sweep_code_object(tc, co) ptr tc, co; {
     ptr t, oldco; iptr a, m, n;
 
+    PUSH_BACKREFERENCE(co)
+        
 #ifdef DEBUG
     if ((CODETYPE(co) & mask_code) != type_code) {
       (void)printf("unexpected type %x sweeping code object %p\n", CODETYPE(co), co);
@@ -1950,6 +2045,8 @@ static void sweep_code_object(tc, co) ptr tc, co; {
     }
 
     S_record_code_mod(tc, (uptr)&CODEIT(co,0), (uptr)CODELEN(co));
+
+    POP_BACKREFERENCE()
 }
 
 typedef struct _weakseginfo {
@@ -1982,6 +2079,8 @@ static void sweep_dirty(void) {
   ISPC s;
   IGEN from_g, to_g;
   seginfo *dirty_si, *nextsi;
+
+  PUSH_BACKREFERENCE(Snil) /* '() => from unspecified old object */
 
   tg = target_generation;
   mcg = max_copied_generation;
@@ -2040,7 +2139,7 @@ static void sweep_dirty(void) {
                 /* assume we won't find any wrong-way pointers */
                 youngest = 0xff;
 
-                if (s == space_impure) {
+                if ((s == space_impure) || (s == space_impure_typed_object) || (s == space_closure)) {
                   while (pp < ppend && *pp != forward_marker) {
                     /* handle two pointers at a time */
                     relocate_dirty(pp,tg,youngest)
@@ -2060,9 +2159,8 @@ static void sweep_dirty(void) {
                     (size_symbol / sizeof(ptr));
 
                   while (pp < ppend && *pp != forward_marker) { /* might overshoot card by part of a symbol.  no harm. */
-                    ptr p, val, code;
-
-                    p = TYPE((ptr)pp, type_symbol);
+                    ptr val, code, p = TYPE((ptr)pp, type_symbol);
+                    PUSH_BACKREFERENCE(p)
 
                     val = SYMVAL(p);
                     relocate_dirty(&val,tg,youngest)
@@ -2076,6 +2174,8 @@ static void sweep_dirty(void) {
                     relocate_dirty(&INITSYMHASH(p),tg,youngest)
 
                     pp += size_symbol / sizeof(ptr);
+
+                    POP_BACKREFERENCE()
                   }
                 } else if (s == space_port) {
                   /* old ports cannot overlap segment boundaries
@@ -2090,6 +2190,7 @@ static void sweep_dirty(void) {
 
                   while (pp < ppend && *pp != forward_marker) { /* might overshoot card by part of a port.  no harm. */
                     ptr p = TYPE((ptr)pp, type_typed_object);
+                    PUSH_BACKREFERENCE(p)
 
                     relocate_dirty(&PORTHANDLER(p),tg,youngest)
                     relocate_dirty(&PORTINFO(p),tg,youngest)
@@ -2108,6 +2209,8 @@ static void sweep_dirty(void) {
                     }
 
                     pp += size_port / sizeof(ptr);
+
+                    POP_BACKREFERENCE()
                   }
                 } else if (s == space_impure_record) { /* abandon hope all ye who enter here */
                   uptr j; ptr p, pnext; seginfo *si;
@@ -2192,6 +2295,8 @@ static void sweep_dirty(void) {
       }
     }
   }
+
+  POP_BACKREFERENCE()
 }
 
 static void resweep_dirty_weak_pairs() {
@@ -2319,6 +2424,7 @@ static void add_trigger_ephemerons_to_repending(ptr pe) {
 static void check_ephemeron(ptr pe, int add_to_trigger) {
   ptr p;
   seginfo *si;
+  PUSH_BACKREFERENCE(pe);
 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
@@ -2340,6 +2446,8 @@ static void check_ephemeron(ptr pe, int add_to_trigger) {
   } else {
     relocate(&INITCDR(pe))
   }
+
+  POP_BACKREFERENCE();
 }
 
 static void check_pending_ephemerons() {
@@ -2369,7 +2477,8 @@ static void check_pending_ephemerons() {
 static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
   ptr p;
   seginfo *si;
-
+  PUSH_BACKREFERENCE(pe);
+ 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
     if (si->space & space_old && !locked(p)) {
@@ -2398,6 +2507,8 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
        `youngest`: */
     relocate_dirty(&INITCDR(pe), tg, youngest)
   }
+
+  POP_BACKREFERENCE()
 
   return youngest;
 }
