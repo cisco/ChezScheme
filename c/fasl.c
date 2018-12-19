@@ -211,7 +211,7 @@ static INT uf_read PROTO((unbufFaslFile uf, octet *s, iptr n));
 static octet uf_bytein PROTO((unbufFaslFile uf));
 static uptr uf_uptrin PROTO((unbufFaslFile uf));
 static ptr fasl_entry PROTO((ptr tc, unbufFaslFile uf));
-static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, unbufFaslFile uf));
+static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, IFASLCODE ty, unbufFaslFile uf));
 static void fillFaslFile PROTO((faslFile f));
 static void bytesin PROTO((octet *s, iptr n, faslFile f));
 static void toolarge PROTO((ptr path));
@@ -304,7 +304,7 @@ ptr S_fasl_read(ptr file, IBOOL gzflag, ptr path) {
   return x;
 }
 
-ptr S_bv_fasl_read(ptr bv, ptr path) {
+ptr S_bv_fasl_read(ptr bv, int ty, ptr path) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
@@ -312,7 +312,7 @@ ptr S_bv_fasl_read(ptr bv, ptr path) {
   tc_mutex_acquire()
   uffo.path = path;
   uffo.type = UFFO_TYPE_BV;
-  x = bv_fasl_entry(tc, bv, &uffo);
+  x = bv_fasl_entry(tc, bv, ty, &uffo);
   tc_mutex_release()
   return x;
 }
@@ -372,6 +372,11 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
     }
   }
   return 0;
+}
+
+int S_fasl_stream_read(void *stream, octet *dest, iptr n)
+{
+  return uf_read((unbufFaslFile)stream, dest, n);
 }
 
 static octet uf_bytein(unbufFaslFile uf) {
@@ -451,31 +456,47 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
     ty = uf_bytein(uf);
   }
 
-  if (ty != fasl_type_fasl_size)
+  if ((ty != fasl_type_fasl_size)
+      && (ty != fasl_type_vfasl_size))
     S_error1("", "malformed fasl-object header found in ~a", uf->path);
 
   ffo.size = uf_uptrin(uf);
 
-  ffo.buf = buf;
-  ffo.next = ffo.end = ffo.buf;
-  ffo.uf = uf;
-
-  faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  if (ty == fasl_type_vfasl_size) {
+    if (S_vfasl_boot_mode == -1) {
+      ptr pre = S_cputime();
+      Scompact_heap();
+      S_vfasl_boot_mode = 1;
+      printf("pre compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
+    }
+    x = S_vfasl((ptr)0, uf, ffo.size);
+  } else {
+    ffo.buf = buf;
+    ffo.next = ffo.end = ffo.buf;
+    ffo.uf = uf;
+    
+    faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  }
 
   S_flush_instruction_cache(tc);
   return x;
 }
 
-static ptr bv_fasl_entry(ptr tc, ptr bv, unbufFaslFile uf) {
+static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, unbufFaslFile uf) {
   ptr x; ptr strbuf = S_G.null_string;
   struct faslFileObj ffo;
 
   ffo.size = Sbytevector_length(bv);
-  ffo.next = ffo.buf = &BVIT(bv, 0);
-  ffo.end = &BVIT(bv, ffo.size);
-  ffo.uf = uf;
 
-  faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  if (ty == fasl_type_vfasl_size) {
+    x = S_vfasl(bv, (ptr)0, ffo.size);
+  } else {
+    ffo.next = ffo.buf = &BVIT(bv, 0);
+    ffo.end = &BVIT(bv, ffo.size);
+    ffo.uf = uf;
+    
+    faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  }
 
   S_flush_instruction_cache(tc);
   return x;
@@ -694,27 +715,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = rtd;
             return;
         } case fasl_type_rtd: {
-            ptr rtd, rtd_uid, plist, ls;
-
             fasl_record(tc, x, t, pstrbuf, f);
-            rtd = *x;
-            rtd_uid = RECORDDESCUID(rtd);
-
-           /* see if uid's property list already registers an rtd */
-            plist = SYMSPLIST(rtd_uid);
-            for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
-              if (Scar(ls) == S_G.rtd_key) {
-                ptr old_rtd = Scar(Scdr(ls));
-               /* if so, check new rtd against old rtd and return old rtd */
-                if (!rtd_equiv(rtd, old_rtd))
-                  S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(rtd), f->uf->path);
-                *x = old_rtd;
-                return;
-              }
+            if (S_fasl_intern_rtd(x) < 0) {
+              S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(*x), f->uf->path);
             }
-
-           /* if not, register it */
-            SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
             return;
         }
         case fasl_type_record: {
@@ -1106,6 +1110,33 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
   }
 }
 
+/* Result: 0 => interned; 1 => replaced; -1 => inconsistent */
+int S_fasl_intern_rtd(ptr *x)
+{
+  ptr rtd, rtd_uid, plist, ls;
+
+  rtd = *x;
+  rtd_uid = RECORDDESCUID(rtd);
+
+  /* see if uid's property list already registers an rtd */
+  plist = SYMSPLIST(rtd_uid);
+  for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
+    if (Scar(ls) == S_G.rtd_key) {
+      ptr old_rtd = Scar(Scdr(ls));
+      /* if so, check new rtd against old rtd and return old rtd */
+      if (!rtd_equiv(rtd, old_rtd))
+        return -1;
+      else
+        *x = old_rtd;
+      return 1;
+    }
+  }
+  
+  /* if not, register it */
+  SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
+  return 0;
+}
+
 /* limited version for checking rtd fields */
 static IBOOL equalp(x, y) ptr x, y; {
   if (x == y) return 1;
@@ -1121,7 +1152,10 @@ static IBOOL equalp(x, y) ptr x, y; {
 }
 
 static IBOOL rtd_equiv(x, y) ptr x, y; {
-  return RECORDINSTTYPE(x) == RECORDINSTTYPE(y) &&
+  return ((RECORDINSTTYPE(x) == RECORDINSTTYPE(y))
+          /* recognize `base-rtd` shape: */
+          || ((RECORDINSTTYPE(x) == x)
+              && (RECORDINSTTYPE(y) == y))) &&
          RECORDDESCPARENT(x) == RECORDDESCPARENT(y) &&
          equalp(RECORDDESCPM(x), RECORDDESCPM(y)) &&
          equalp(RECORDDESCMPM(x), RECORDDESCMPM(y)) &&

@@ -884,7 +884,11 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   i = 0;
   while (i++ < LOADSKIP && S_boot_read(bd[n].file, bd[n].path) != Seof_object);
 
+  ptr pre = S_cputime();
+  uptr reading = 0;
+
   while ((x = S_boot_read(bd[n].file, bd[n].path)) != Seof_object) {
+    reading += UNFIX(S_cputime()) - UNFIX(pre);
     if (loadecho) {
       printf("%ld: ", (long)i);
       fflush(stdout);
@@ -917,7 +921,10 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
       fflush(stdout);
     }
     i += 1;
+    pre = S_cputime();
   }
+
+  printf("load %ld\n", reading);
 
   S_G.load_binary = Sfalse;
   gzclose(bd[n].file);
@@ -1116,6 +1123,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     }
   }
 
+  S_vfasl_boot_mode = -1; /* to static generation after compacting initial */
+
   if (boot_count != 0) {
     INT i = 0;
 
@@ -1142,7 +1151,13 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     while (i < boot_count) load(tc, i++, 0);
   }
 
+  S_vfasl_boot_mode = 0;
+
+  ptr pre = S_cputime();
+
   if (boot_count != 0) Scompact_heap();
+
+  printf("compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
 
  /* complete the initialization on the Scheme side */
   p = S_symbol_value(S_intern((const unsigned char *)"$scheme-init"));

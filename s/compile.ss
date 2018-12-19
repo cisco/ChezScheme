@@ -22,6 +22,7 @@
 (define $c-make-code)
 (define make-boot-header)
 (define make-boot-file)
+(define vfasl-convert-file)
 
 (let ()
 (import (nanopass))
@@ -440,10 +441,32 @@
       [else (c-assembler-output-error x)])))
 
 (define (c-print-fasl x p)
-  (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
-     (c-build-fasl x t a?)
-     ($fasl-start p t
-       (lambda (p) (c-faslobj x t p a?)))))
+  (cond
+   [(generate-vfasl) (c-print-vfasl x p)]
+   [else
+    (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
+       (c-build-fasl x t a?)
+       ($fasl-start p t
+         (lambda (p) (c-faslobj x t p a?))))]))
+
+(define (c-vfaslobj x)
+  (let f ([x x])
+    (record-case x
+      [(group) elt*
+       (apply vector (map c-vfaslobj elt*))]
+      [(visit-stuff) elt
+       (cons (constant visit-tag) (c-vfaslobj elt))]
+      [(revisit-stuff) elt
+       (cons (constant revisit-tag) (c-vfaslobj elt))]
+      [else (c-mkcode x)])))
+
+(define c-print-vfasl
+  (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)])
+    (lambda (x p)
+      (let ([bv (->vfasl (c-vfaslobj x))])
+        (put-u8 p (constant fasl-type-vfasl-size))
+        (put-uptr p (bytevector-length bv))
+        (put-bytevector p bv)))))
 
 (define-record-type visit-chunk
   (nongenerative)
@@ -1588,7 +1611,46 @@
   (set-who! $make-boot-header
     ; create boot loader (invoke) for entry into Scheme from C
     (lambda (out machine . bootfiles)
-      (do-make-boot-header who out machine bootfiles))))
+      (do-make-boot-header who out machine bootfiles)))
+  
+  (set-who! vfasl-convert-file
+    (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)]
+          [vfasl-can-combine? (foreign-procedure "(cs)vfasl_can_combinep" (scheme-object) boolean)])
+      (lambda (in-file out-file bootfile*)
+        (let ([op ($open-file-output-port who out-file
+                    (if (compile-compressed)
+                        (file-options replace compressed)
+                        (file-options replace)))])
+          (on-reset (delete-file out-file #f)
+            (on-reset (close-port op)
+              (when bootfile*
+                (emit-boot-header op (constant machine-type) bootfile*))
+              (let ([ip ($open-file-input-port who in-file (file-options compressed))])
+                (on-reset (close-port ip)
+                  (let* ([write-out (lambda (x)
+                                      (emit-header op (constant machine-type))
+                                      (let ([bv (->vfasl x)])
+                                        (put-u8 op (constant fasl-type-vfasl-size))
+                                        (put-uptr op (bytevector-length bv))
+                                        (put-bytevector op bv)))]
+                         [write-out-accum (lambda (accum)
+                                            (unless (null? accum)
+                                              (write-out (list->vector (reverse accum)))))])
+                    (let loop ([accum '()])
+                      (let ([x (fasl-read ip)])
+                        (cond
+                         [(eof-object? x)
+                          (write-out-accum accum)]
+                         [(not (vfasl-can-combine? x))
+                          (write-out-accum accum)
+                          (write-out x)
+                          (loop '())]
+                         [(vector? x)
+                          (loop (append (reverse (vector->list x)) accum))]
+                         [else
+                          (loop (cons x accum))]))))
+                  (close-port ip)))
+              (close-port op))))))))
 
 (set-who! compile-port
   (rec compile-port

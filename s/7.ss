@@ -121,7 +121,7 @@
 (set! fasl-read
   (let ()
     (define $fasl-read (foreign-procedure "(cs)fasl_read" (ptr boolean ptr) ptr))
-    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr ptr) ptr))
+    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])
         (let f ([k k] [n (fxsrl k 1)])
@@ -168,8 +168,9 @@
                 [(eqv? ty (constant fasl-type-header))
                  (check-header p)
                  (fasl-entry)]
-                [(eqv? ty (constant fasl-type-fasl-size))
-                 ($bv-fasl-read (get-bytevector-n p (get-uptr p)) (port-name p))]
+                [(or (eqv? ty (constant fasl-type-fasl-size))
+                     (eqv? ty (constant fasl-type-vfasl-size)))
+                 ($bv-fasl-read (get-bytevector-n p (get-uptr p)) ty (port-name p))]
                 [else (malformed p)])))))))
 
 (define ($compiled-file-header? ip)
