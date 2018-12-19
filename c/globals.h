@@ -151,4 +151,9 @@ EXTERN struct {
     ptr eqvp;
     ptr equalp;
     ptr symboleqp;
+
+  /* vfasl.c */
+   struct vfasl_hash_table *c_entries;
+   struct vfasl_hash_table *library_entries;
+   struct vfasl_hash_table *library_entry_codes;
 } S_G;

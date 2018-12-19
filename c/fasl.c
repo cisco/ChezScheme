@@ -237,7 +237,7 @@ static void ppc32_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr ppc32_get_jump PROTO((void *address));
 #endif /* PPC32 */
 #ifdef X86_64
-static void x86_64_set_jump PROTO((void *address, uptr item, IBOOL callp));
+static void x86_64_set_jump PROTO((void *address, uptr item, IBOOL callp, IBOOL force_abs));
 static uptr x86_64_get_jump PROTO((void *address));
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -374,6 +374,11 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
   return 0;
 }
 
+int S_fasl_stream_read(void *stream, octet *dest, iptr n)
+{
+  return uf_read((unbufFaslFile)stream, dest, n);
+}
+
 static octet uf_bytein(unbufFaslFile uf) {
   octet buf[1];
   if (uf_read(uf, buf, 1) < 0)
@@ -451,16 +456,21 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
     ty = uf_bytein(uf);
   }
 
-  if (ty != fasl_type_fasl_size)
+  if ((ty != fasl_type_fasl_size)
+      && (ty != fasl_type_vfasl_size))
     S_error1("", "malformed fasl-object header found in ~a", uf->path);
 
   ffo.size = uf_uptrin(uf);
 
-  ffo.buf = buf;
-  ffo.next = ffo.end = ffo.buf;
-  ffo.uf = uf;
-
-  faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  if (ty == fasl_type_vfasl_size) {
+    x = S_vfasl((ptr)0, uf, ffo.size);
+  } else {
+    ffo.buf = buf;
+    ffo.next = ffo.end = ffo.buf;
+    ffo.uf = uf;
+    
+    faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+  }
 
   S_flush_instruction_cache(tc);
   return x;
@@ -694,27 +704,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = rtd;
             return;
         } case fasl_type_rtd: {
-            ptr rtd, rtd_uid, plist, ls;
-
             fasl_record(tc, x, t, pstrbuf, f);
-            rtd = *x;
-            rtd_uid = RECORDDESCUID(rtd);
-
-           /* see if uid's property list already registers an rtd */
-            plist = SYMSPLIST(rtd_uid);
-            for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
-              if (Scar(ls) == S_G.rtd_key) {
-                ptr old_rtd = Scar(Scdr(ls));
-               /* if so, check new rtd against old rtd and return old rtd */
-                if (!rtd_equiv(rtd, old_rtd))
-                  S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(rtd), f->uf->path);
-                *x = old_rtd;
-                return;
-              }
+            if (S_fasl_intern_rtd(x) < 0) {
+              S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(*x), f->uf->path);
             }
-
-           /* if not, register it */
-            SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
             return;
         }
         case fasl_type_record: {
@@ -1106,6 +1099,33 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
   }
 }
 
+/* Result: 0 => interned; 1 => replaced; -1 => inconsistent */
+int S_fasl_intern_rtd(ptr *x)
+{
+  ptr rtd, rtd_uid, plist, ls;
+
+  rtd = *x;
+  rtd_uid = RECORDDESCUID(rtd);
+
+  /* see if uid's property list already registers an rtd */
+  plist = SYMSPLIST(rtd_uid);
+  for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
+    if (Scar(ls) == S_G.rtd_key) {
+      ptr old_rtd = Scar(Scdr(ls));
+      /* if so, check new rtd against old rtd and return old rtd */
+      if (!rtd_equiv(rtd, old_rtd))
+        return -1;
+      else
+        *x = old_rtd;
+      return 1;
+    }
+  }
+  
+  /* if not, register it */
+  SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
+  return 0;
+}
+
 /* limited version for checking rtd fields */
 static IBOOL equalp(x, y) ptr x, y; {
   if (x == y) return 1;
@@ -1121,7 +1141,10 @@ static IBOOL equalp(x, y) ptr x, y; {
 }
 
 static IBOOL rtd_equiv(x, y) ptr x, y; {
-  return RECORDINSTTYPE(x) == RECORDINSTTYPE(y) &&
+  return ((RECORDINSTTYPE(x) == RECORDINSTTYPE(y))
+          /* recognize `base-rtd` shape: */
+          || ((RECORDINSTTYPE(x) == x)
+              && (RECORDINSTTYPE(y) == y))) &&
          RECORDDESCPARENT(x) == RECORDDESCPARENT(y) &&
          equalp(RECORDDESCPM(x), RECORDDESCPM(y)) &&
          equalp(RECORDDESCMPM(x), RECORDDESCMPM(y)) &&
@@ -1164,7 +1187,7 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 
     address = (void *)((uptr)p + n);
     item = (uptr)x + o;
-    switch (typ) {
+    switch (typ & ~reloc_force_abs) {
         case reloc_abs:
             *(uptr *)address = item;
             break;
@@ -1198,10 +1221,10 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 #endif /* I386 */
 #ifdef X86_64
         case reloc_x86_64_jump:
-            x86_64_set_jump(address, item, 0);
+            x86_64_set_jump(address, item, 0, typ & reloc_force_abs);
             break;
         case reloc_x86_64_call:
-            x86_64_set_jump(address, item, 1);
+            x86_64_set_jump(address, item, 1, typ & reloc_force_abs);
             break;
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -1241,7 +1264,7 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
     void *address; uptr item;
 
     address = (void *)((uptr)p + n);
-    switch (typ) {
+    switch (typ & ~reloc_force_abs) {
         case reloc_abs:
             item = *(uptr *)address;
             break;
@@ -1419,9 +1442,9 @@ static uptr ppc32_get_jump(void *address) {
 #endif /* PPC32 */
 
 #ifdef X86_64
-static void x86_64_set_jump(void *address, uptr item, IBOOL callp) {
+static void x86_64_set_jump(void *address, uptr item, IBOOL callp, IBOOL force_abs) {
   I64 disp = (I64)item - ((I64)address + 5); /* 5 = size of call instruction */
-  if ((I32)disp == disp) {
+  if ((I32)disp == disp && !force_abs) {
     *(octet *)address = callp ? 0xE8 : 0xE9;  /* call or jmp disp32 opcode */
     *(I32 *)((uptr)address + 1) = (I32)disp;
     *((octet *)address + 5) = 0x90; /* nop */

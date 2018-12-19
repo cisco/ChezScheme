@@ -101,6 +101,13 @@ char *S_lookup_machine_type PROTO((uptr n));
 extern void S_set_code_obj PROTO((char *who, IFASLCODE typ, ptr p, iptr n,
              ptr x, iptr o));
 extern ptr S_get_code_obj PROTO((IFASLCODE typ, ptr p, iptr n, iptr o));
+extern int S_fasl_stream_read PROTO((void *stream, octet *dest, iptr n));
+extern int S_fasl_intern_rtd(ptr *x);
+
+/* vfasl.c */
+extern ptr S_to_vfasl PROTO((ptr v));
+extern ptr S_vfasl PROTO((ptr bv, void *stream, iptr len));
+extern ptr S_vfasl_to PROTO((ptr v));
 
 /* flushcache.c */
 extern void S_record_code_mod PROTO((ptr tc, uptr addr, uptr bytes));
@@ -152,6 +159,7 @@ extern void S_resize_oblist PROTO((void));
 extern ptr S_intern PROTO((const unsigned char *s));
 extern ptr S_intern_sc PROTO((const string_char *s, iptr n, ptr name_str));
 extern ptr S_intern3 PROTO((const string_char *pname, iptr plen, const string_char *uname, iptr ulen, ptr pname_str, ptr uame_str));
+extern ptr S_intern4 PROTO((ptr sym));
 extern void S_intern_gensym PROTO((ptr g));
 extern void S_retrofit_nonprocedure_code PROTO((void));
 
