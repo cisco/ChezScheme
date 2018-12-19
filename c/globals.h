@@ -26,6 +26,7 @@ EXTERN ptr S_child_processes[static_generation+1];
 
 /* scheme.c */
 EXTERN IBOOL S_boot_time;
+EXTERN int S_vfasl_boot_mode;
 EXTERN IBOOL S_errors_to_console;
 EXTERN ptr S_threads;
 EXTERN uptr S_nthreads;
@@ -103,6 +104,10 @@ EXTERN struct {
     ptr null_vector;
     ptr null_fxvector;
     ptr null_bytevector;
+    ptr null_immutable_string;
+    ptr null_immutable_vector;
+    ptr null_immutable_fxvector;
+    ptr null_immutable_bytevector;
     seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];
 
   /* schsig.c */
@@ -149,4 +154,9 @@ EXTERN struct {
     ptr eqvp;
     ptr equalp;
     ptr symboleqp;
+
+  /* vfasl.c */
+   struct vfasl_hash_table *c_entries;
+   struct vfasl_hash_table *library_entries;
+   struct vfasl_hash_table *library_entry_codes;
 } S_G;

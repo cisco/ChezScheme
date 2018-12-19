@@ -433,7 +433,7 @@
 (define-constant fasl-type-graph-ref 18)
 (define-constant fasl-type-gensym 19)
 (define-constant fasl-type-exactnum 20)
-; 21
+(define-constant fasl-type-vfasl-size 21)
 (define-constant fasl-type-fasl-size 22)
 (define-constant fasl-type-record 23)
 (define-constant fasl-type-rtd 24)

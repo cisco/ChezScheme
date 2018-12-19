@@ -60,6 +60,22 @@ void S_alloc_init() {
         S_protect(&S_G.null_string);
         find_room(space_new, 0, type_typed_object, size_string(0), S_G.null_string);
         STRTYPE(S_G.null_string) = (0 << string_length_offset) | type_string;
+
+        S_protect(&S_G.null_immutable_vector);
+        find_room(space_new, 0, type_typed_object, size_vector(0), S_G.null_immutable_vector);
+        VECTTYPE(S_G.null_immutable_vector) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
+
+        S_protect(&S_G.null_immutable_fxvector);
+        find_room(space_new, 0, type_typed_object, size_fxvector(0), S_G.null_immutable_fxvector);
+        FXVECTOR_TYPE(S_G.null_immutable_fxvector) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
+
+        S_protect(&S_G.null_immutable_bytevector);
+        find_room(space_new, 0, type_typed_object, size_bytevector(0), S_G.null_immutable_bytevector);
+        BYTEVECTOR_TYPE(S_G.null_immutable_bytevector) = (0 << bytevector_length_offset) | type_bytevector | bytevector_immutable_flag;
+
+        S_protect(&S_G.null_immutable_string);
+        find_room(space_new, 0, type_typed_object, size_string(0), S_G.null_immutable_string);
+        STRTYPE(S_G.null_immutable_string) = (0 << string_length_offset) | type_string | string_immutable_flag;
     }
 }
 

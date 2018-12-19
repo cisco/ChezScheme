@@ -361,7 +361,7 @@ void S_intern_gensym(sym) ptr sym; {
                tc_mutex_release()
                S_error1("intern-gensym", "unique name ~s already interned", uname_str);
             }
-            if (Sstring_ref(str, i) != uname[i]) break;
+            if (STRIT(str, i) != uname[i]) break;
           }
        }
     }
@@ -372,6 +372,40 @@ void S_intern_gensym(sym) ptr sym; {
   oblist_insert(sym, idx, GENERATION(sym));
 
   tc_mutex_release()
+}
+
+/* must hold mutex */
+ptr S_intern4(sym) ptr sym; {
+  ptr name = SYMNAME(sym);
+  ptr uname_str = (Sstringp(name) ? name : Scar(name));
+  const string_char *uname = &STRIT(uname_str, 0);
+  iptr ulen = Sstring_length(uname_str);
+  iptr hc = UNFIX(SYMHASH(sym));
+  iptr idx = hc % S_G.oblist_length;
+  bucket *b;
+
+  b = S_G.oblist[idx];
+  while (b != NULL) {
+    ptr x = b->sym;
+    ptr x_name = SYMNAME(x);
+    if (Sstringp(name) == Sstringp(x_name)) {
+      ptr str = (Sstringp(x_name) ? x_name : Scar(x_name));
+      if (Sstring_length(str) == ulen) {
+        iptr i;
+        for (i = 0; ; i += 1) {
+          if (i == ulen) {
+            return x;
+          }
+          if (STRIT(str, i) != uname[i]) break;
+        }
+      }
+    }
+    b = b->next;
+  }
+
+  oblist_insert(sym, idx, GENERATION(sym));
+
+  return sym;
 }
 
 /* retrofit existing symbols once nonprocedure_code is available */

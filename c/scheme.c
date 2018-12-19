@@ -90,10 +90,10 @@ static void main_init() {
                  i & 0x10 ? 4 : i & 0x20 ? 5 : i & 0x40 ? 6 : i & 0x80 ? 7 : 0);
     }
 
-    NULLIMMUTABLEVECTOR(tc) = S_null_immutable_vector();
-    NULLIMMUTABLEFXVECTOR(tc) = S_null_immutable_fxvector();
-    NULLIMMUTABLEBYTEVECTOR(tc) = S_null_immutable_bytevector();
-    NULLIMMUTABLESTRING(tc) = S_null_immutable_string();
+    NULLIMMUTABLEVECTOR(tc) = S_G.null_immutable_vector;
+    NULLIMMUTABLEFXVECTOR(tc) = S_G.null_immutable_fxvector;
+    NULLIMMUTABLEBYTEVECTOR(tc) = S_G.null_immutable_bytevector;
+    NULLIMMUTABLESTRING(tc) = S_G.null_immutable_string;
 
     PARAMETERS(tc) = S_G.null_vector;
     for (i = 0 ; i < virtual_register_count ; i += 1) {
@@ -1115,6 +1115,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     }
   }
 
+  S_vfasl_boot_mode = -1; /* to static generation after compacting initial */
+
   if (boot_count != 0) {
     INT i = 0;
 
@@ -1140,6 +1142,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
 
     while (i < boot_count) load(tc, i++, 0);
   }
+
+  S_vfasl_boot_mode = 0;
 
   if (boot_count != 0) Scompact_heap();
 

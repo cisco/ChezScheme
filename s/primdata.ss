@@ -1275,6 +1275,7 @@
   (fasl-file [sig [(pathname pathname) -> (void)]] [flags true])
   (fasl-read [sig [(binary-input-port) -> (ptr)]] [flags true])
   (fasl-write [sig [(sub-ptr binary-output-port) -> (void)]] [flags true])
+  (vfasl-convert-file [sig [(ptr ptr ptr) -> (void)]] [flags])
   (file-access-time [sig [(pathname) (pathname ptr) -> (time)]] [flags discard])
   (file-change-time [sig [(pathname) (pathname ptr) -> (time)]] [flags discard])
   (file-directory? [sig [(pathname) (pathname ptr) -> (boolean)]] [flags discard])

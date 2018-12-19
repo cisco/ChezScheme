@@ -1027,3 +1027,7 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- add vfasl format for faster loading
+     compile.ss, back.ss, library.ss, primdata.ss, cmacros.ss,
+     vfasl.c, fasl.c, alloc.c, scheme.c, intern.c, globals.h, externs.h,
+     Mf-base, misc.ms, system.stex, release_notes.stex

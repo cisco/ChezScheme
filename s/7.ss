@@ -121,7 +121,7 @@
 (set! fasl-read
   (let ()
     (define $fasl-read (foreign-procedure "(cs)fasl_read" (ptr boolean ptr) ptr))
-    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr ptr) ptr))
+    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int uptr uptr ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])
         (let f ([k k] [n (fxsrl k 1)])
@@ -168,8 +168,26 @@
                 [(eqv? ty (constant fasl-type-header))
                  (check-header p)
                  (fasl-entry)]
-                [(eqv? ty (constant fasl-type-fasl-size))
-                 ($bv-fasl-read (get-bytevector-n p (get-uptr p)) (port-name p))]
+                [(or (eqv? ty (constant fasl-type-fasl-size))
+                     (eqv? ty (constant fasl-type-vfasl-size)))
+                 (let ([len (get-uptr p)]
+                       [name (port-name p)])
+                   ;; fasl-read directly from the port buffer if it has `len`
+                   ;; bytes ready, which works for a bytevector port; disable
+                   ;; interrupt to make sure the bytes stay available (and
+                   ;; `$bv-fasl-read` takes tc-mutex, anyway)
+                   ((with-interrupts-disabled
+                     (let ([idx (binary-port-input-index p)])
+                       (cond
+                        [(<= len (fx- (binary-port-input-size p) idx))
+                         (let ([result ($bv-fasl-read (binary-port-input-buffer p) ty
+                                                      idx len name)])
+                           (set-binary-port-input-index! p (+ idx len))
+                           (lambda () result))]
+                        [else
+                         ;; Call `get-bytevector-n`, etc. with interrupts reenabled
+                         (lambda ()
+                           ($bv-fasl-read (get-bytevector-n p len) ty 0 len name))])))))]
                 [else (malformed p)])))))))
 
 (define ($compiled-file-header? ip)
