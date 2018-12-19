@@ -433,7 +433,7 @@
 (define-constant fasl-type-graph-ref 18)
 (define-constant fasl-type-gensym 19)
 (define-constant fasl-type-exactnum 20)
-; 21
+(define-constant fasl-type-vfasl-size 21)
 (define-constant fasl-type-fasl-size 22)
 (define-constant fasl-type-record 23)
 (define-constant fasl-type-rtd 24)
@@ -497,6 +497,8 @@
   (x86_64 reloc-x86_64-call reloc-x86_64-jump)
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump))
+
+(define-constant reloc-force-abs #x100) ; flag to add to other `reloc-` constants
 
 (constant-case ptr-bits
   [(64)
