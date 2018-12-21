@@ -16,6 +16,43 @@
 
 #include "system.h"
 
+/*
+
+   vfasl ("very fast load") format, where "data" corresponds to an
+   image to load into memory, "table" is metadata to relocate that
+   data, and the fixed-size header determines the overall size. The
+   data can be loaded directly to the static generation on boot, since
+   it's organized into pieces that should reside in a particular
+   space.
+
+        [vfasl_header]
+     _
+    /   [symbol] ...         -> space_symbol
+   /    [rtd] ...            -> space_pure
+d |     [closure] ...        -> space_pure
+a |     [impure] ...         -> space_impure
+t |     [pure_typed] ...     -> space_pure_typed
+a |     [impure_record] ...  -> space_impure_record
+  |     [code] ...           -> space_code
+   \    [data] ...           -> space_data
+    \_  [reloc] ...          -> (not kept for direct-to-static)
+     _
+t   /   [symbol reference offset] ...
+a  /    [rtd reference offset] ...
+b |     [singleton reference offset] ...
+l  \    
+e   \_  [bitmap of pointers to relocate]
+
+        
+   The bitmap at the end has one bit for each pointer-sized word in
+   the data, but it's shorter than the "data" size (divided by the
+   pointer size then divided by 8 bits per byte) because the trailing
+   zeros for data are omitted. The bitmap doesn't include some fixups
+   that are handled more directly, such as for code and its
+   relocations.
+
+*/
+
 typedef uptr vfoff;
 
 typedef struct vfasl_header {
@@ -29,37 +66,59 @@ typedef struct vfasl_header {
   vfoff rtd_offset;
 # define rtd_end_offset     closure_offset
   vfoff closure_offset;
-# define closure_end_offset code_offset
+# define closure_end_offset impure_offset
+  vfoff impure_offset;
+# define impure_end_offset  pure_typed_offset
+  vfoff pure_typed_offset;
+# define pure_typed_object_end_offset     impure_record_offset
+  vfoff impure_record_offset;
+# define impure_record_end_offset  code_offset
   vfoff code_offset;
-# define code_end_offset    other_offset
-  vfoff other_offset;
+# define code_end_offset    data_offset
+  vfoff data_offset;
+# define data_end_offset    reloc_offset
+  vfoff reloc_offset;
+# define reloc_end_offset   data_size
 
   vfoff symref_count;
   vfoff rtdref_count;
   vfoff singletonref_count;
 } vfasl_header;
 
-/* vfasl format, where the fixed-size header determines the rest of the
-   size:
+enum {
+  /* The order of these spaces needs to match vfasl_header: */
+  vspace_symbol,
+  vspace_rtd,
+  vspace_closure,
+  vspace_impure,
+  vspace_pure_typed,
+  vspace_impure_record,
+  /* rest rest are at then end to make the pointer bitmap
+     end with zeros (that can be dropped): */
+  vspace_code,
+  vspace_data,
+  vspace_reloc, /* can be dropped after direct to static generation */
+  vspaces_count
+};
 
-        [vfasl_header]
-     _
-d   /   [symbol] ...
-a  /    [rtd] ...
-t |     [closure] ...
-a  \    [code] ...
-    \_  [other] ...
+/* Needs to match order above: */
+static ISPC vspace_spaces[] = {
+  space_symbol,
+  space_pure, /* rtd */
+  space_pure, /* closure */
+  space_impure,
+  space_pure_typed_object,
+  space_impure_record,
+  space_code,
+  space_data,
+  space_data /* reloc --- but not really, since relocs are never in static */
+};
 
-t   /   [vfoff: symbol reference offset] ...
-a  /    [vfoff: rtd reference offset] ...
-b |     [vfoff: singleton reference offset] ...
-l  \    
-e   \_  [bitmap of pointer offsets]
-        
-*/
+/************************************************************/
+/* Encode-time data structures                              */
 
-/* Many chunks per vspace on first pass, one per vspace on second
-   pass: */
+/* During encoding, we use many chunks per vspace on first pass, one
+   per vspace on second pass: */
 typedef struct vfasl_chunk {
   ptr bytes;
   uptr length;
@@ -72,20 +131,6 @@ typedef struct vfasl_chunk {
 struct vfasl_count_and_chunk {
   uptr total_bytes;
   vfasl_chunk *first;
-};
-
-enum {
-  /* The order of these spaces needs to match vfasl_header: */
-  vspace_symbol,
-  vspace_rtd,
-  vspace_closure,
-  vspace_code,
-  /* The rest of the spaces are "other" */
-  vspace_array,
-  vspace_typed,
-  vspace_reloc,
-  vspace_data, /* at end, so pointer bitmap ends with zeros */
-  vspaces_count
 };
 
 typedef struct vfasl_info {
@@ -128,7 +173,8 @@ static uptr sweep_code_object(vfasl_info *vfi, ptr co);
 static uptr sweep_record(vfasl_info *vfi, ptr co);
 static uptr sweep(vfasl_info *vfi, ptr p);
 
-static void relink_code(ptr co, ptr sym_base, ptr dest_base);
+static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets, IBOOL to_static);
+static ptr find_pointer_from_offset(uptr p_off, ptr *vspaces, uptr *vspace_offsets);
 
 static void vfasl_relocate(vfasl_info *vfi, ptr *ppp);
 static ptr vfasl_relocate_help(vfasl_info *vfi, ptr pp);
@@ -155,16 +201,21 @@ static void sort_offsets(vfoff *p, vfoff len);
 
 #define vfasl_fail(vfi, what) S_error("vfasl", "cannot encode " what)
 
-#define print_stats(args) /* printf args */
+/************************************************************/
+/* Loading                                                  */
 
 ptr S_vfasl(ptr bv, void *stream, iptr input_len)
 {
   ptr tc = get_thread_context();
   vfasl_header header;
+  ptr vspaces[vspaces_count];
+  uptr vspace_offsets[vspaces_count+1], vspace_deltas[vspaces_count];
   ptr data, table;
   vfoff *symrefs, *rtdrefs, *singletonrefs;
   octet *bm, *bm_end;
   iptr used_len;
+  int s;
+  IBOOL to_static = 0;
   
   used_len = sizeof(header);
   if (used_len > input_len)
@@ -181,19 +232,63 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
   if (used_len > input_len)
     S_error("fasl-read", "input length mismatch");
 
+  vspace_offsets[vspace_symbol] = 0;
+  vspace_offsets[vspace_rtd] = header.rtd_offset;
+  vspace_offsets[vspace_closure] = header.closure_offset;
+  vspace_offsets[vspace_impure] = header.impure_offset;
+  vspace_offsets[vspace_pure_typed] = header.pure_typed_offset;
+  vspace_offsets[vspace_impure_record] = header.impure_record_offset;
+  vspace_offsets[vspace_code] = header.code_offset;
+  vspace_offsets[vspace_data] = header.data_offset;
+  vspace_offsets[vspace_reloc] = header.reloc_offset;
+  vspace_offsets[vspaces_count] = header.data_size;
+
   if (bv) {
     ptr base_addr = &BVIT(bv, sizeof(vfasl_header));
     thread_find_room(tc, typemod, header.data_size, data);
     memcpy(data, base_addr, header.data_size);
     table = ptr_add(base_addr, header.data_size);
   } else {
-    thread_find_room(tc, typemod, header.data_size, data);
-    if (S_fasl_stream_read(stream, data, header.data_size) < 0)
-      S_error("fasl-read", "input truncated");
+    if (S_vfasl_boot_mode > 0) {
+      for (s = 0; s < vspaces_count; s++) {
+        uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
+        if (sz > 0) {
+          if (s == vspace_reloc) {
+            thread_find_room(tc, typemod, sz, vspaces[s]);
+          } else {
+            find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s]);
+          }
+          if (S_fasl_stream_read(stream, vspaces[s], sz) < 0)
+            S_error("fasl-read", "input truncated");
+        } else
+          vspaces[s] = (ptr)0;
+      }
+      for (s = vspaces_count - 1; s--; ) {
+        if (!vspaces[s])
+          vspaces[s] = vspaces[s+1];
+      }
+      data = (ptr)0; /* => initialize below */
+      to_static = 1;
+    } else {
+      thread_find_room(tc, typemod, header.data_size, data);
+      if (S_fasl_stream_read(stream, data, header.data_size) < 0)
+        S_error("fasl-read", "input truncated");
+    }
 
     thread_find_room(tc, typemod, ptr_align(header.table_size), table);
     if (S_fasl_stream_read(stream, table, header.table_size) < 0)
       S_error("fasl-read", "input truncated");
+  }
+
+  if (data) {
+    for (s = 0; s < vspaces_count; s++) {
+      vspaces[s] = ptr_add(data, vspace_offsets[s]);
+      vspace_deltas[s] = (uptr)data;
+    }
+  } else {
+    data = vspaces[0];
+    for (s = 0; s < vspaces_count; s++)
+      vspace_deltas[s] = (uptr)ptr_subtract(vspaces[s], vspace_offsets[s]);
   }
 
   symrefs = table;
@@ -216,21 +311,50 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
            header.rtd_end_offset - header.rtd_offset,
            header.closure_end_offset - header.closure_offset,
            header.code_end_offset - header.code_offset,
-           header.data_size - header.other_offset,
+           ((header.code_offset - header.closure_end_offset)
+            + (header.data_size - header.code_end_offset)),
            header.table_size,
            header.symref_count * sizeof(vfoff),
            header.rtdref_count * sizeof(vfoff),
            header.singletonref_count * sizeof(vfoff));
 
-  /* Fix up pointers. The content `data` initially has all pointers
-     relative to the start of the data, so add the `data` address
-     to all pointers. */
+  /* We have to convert an offset relative to the start of data in the
+     vfasl format to an offset relative to an individual space, at
+     least for target generations other than 0. Rely on the fact that
+     the spaces and the references are both sorted. */
+#define SPACE_OFFSET_DECLS                      \
+  int s2 = 0;                                   \
+  uptr offset2 = vspace_offsets[s2];            \
+  uptr next_offset2 = vspace_offsets[s2+1]
+#define INC_SPACE_OFFSET(off)                   \
+  do {                                          \
+    while ((off) >= next_offset2) {             \
+      s2++;                                     \
+      offset2 = next_offset2;                   \
+      next_offset2 = vspace_offsets[s2+1];      \
+    }                                           \
+  } while (0)
+#define SPACE_PTR(off) ptr_add(vspaces[s2], (off) - offset2)
+  
+  /* Fix up pointers. The initial content has all pointers relative to
+     the start of the data. If the data were all still contiguous,
+     we'd add the `data` address to all pointers. Since the spaces may
+     be disconnected, though, add `vspace_deltas[s]` for the right
+     `s`. */
   {
-    ptr *p = data;
+    SPACE_OFFSET_DECLS;
+    uptr p_off = 0;
     while (bm != bm_end) {
-      octet m;
-      m = *bm;
-#     define MAYBE_FIXUP(i) if (m & (1 << i)) ((uptr *)p)[i] += (uptr)data
+      octet m = *bm;
+#     define MAYBE_FIXUP(i)                                             \
+      if (m & (1 << i)) {                                               \
+        ptr *p3;                                                        \
+        INC_SPACE_OFFSET(p_off);                                        \
+        p3 = SPACE_PTR(p_off);                                          \
+        *p3 = find_pointer_from_offset((uptr)*p3, vspaces, vspace_offsets); \
+      }                                                                 \
+      p_off += sizeof(uptr);
+
       MAYBE_FIXUP(0);
       MAYBE_FIXUP(1);
       MAYBE_FIXUP(2);
@@ -239,8 +363,8 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
       MAYBE_FIXUP(5);
       MAYBE_FIXUP(6);
       MAYBE_FIXUP(7);
+
 #     undef MAYBE_FIXUP
-      p += byte_bits;
       bm++;
     }
   }
@@ -249,18 +373,22 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
      This needs to be before interning symbols, in case ""
      is a symbol name. */
   {
+    SPACE_OFFSET_DECLS;
     vfoff i;
     for (i = 0; i < header.singletonref_count; i++) {
+      uptr r_off;
       ptr *ref;
-      ref = ptr_add(data, singletonrefs[i]);
+      r_off = singletonrefs[i];
+      INC_SPACE_OFFSET(r_off);
+      ref = SPACE_PTR(r_off);
       *ref = lookup_singleton(UNFIX(*ref));
     }
   }
 
   /* Intern symbols */
   {
-    ptr sym = TYPE(data, type_symbol);
-    ptr end_syms = TYPE(ptr_add(data, header.sym_end_offset), type_symbol);
+    ptr sym = TYPE(vspaces[vspace_symbol], type_symbol);
+    ptr end_syms = TYPE(ptr_add(vspaces[vspace_symbol], header.sym_end_offset), type_symbol);
 
     if (sym != end_syms) {
       tc_mutex_acquire()
@@ -286,12 +414,15 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
 
   /* Replace symbol references with interned references */
   {
-    ptr syms = data;
+    SPACE_OFFSET_DECLS;
+    ptr syms = vspaces[vspace_symbol];
     vfoff i;
     for (i = 0; i < header.symref_count; i++) {
-      uptr sym_pos;
+      uptr p2_off, sym_pos;
       ptr p2, sym, val;
-      p2 = ptr_add(data, symrefs[i]);
+      p2_off = symrefs[i];
+      INC_SPACE_OFFSET(p2_off);
+      p2 = SPACE_PTR(p2_off);
       sym_pos = UNFIX(*(ptr **)p2);
       sym = TYPE(ptr_add(syms, sym_pos * size_symbol), type_symbol);
       if ((val = SYMVAL(sym)) != sunbound)
@@ -302,9 +433,10 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
   
   /* Intern rtds */
   if (header.rtd_offset < header.rtd_end_offset) {
-    ptr rtd = TYPE(ptr_add(data, header.rtd_offset), type_typed_object);
-    ptr rtd_end = TYPE(ptr_add(data, header.rtd_end_offset), type_typed_object);
-
+    ptr rtd = TYPE(ptr_add(vspaces[vspace_rtd], header.rtd_offset - vspace_offsets[vspace_rtd]),
+                   type_typed_object);
+    ptr rtd_end = ptr_add(rtd, header.rtd_end_offset - header.rtd_offset);
+    
     /* first one corresponds to base_rtd */
     RECORDINSTTYPE(rtd) = S_G.base_rtd;
     RECORDDESCUID(rtd) = S_G.base_rtd;
@@ -318,7 +450,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
 
       RECORDINSTTYPE(rtd) = S_G.base_rtd;
 
-      /* fixup type and parent before continuing, relying on parents being earlier in `rtd`s */
+      /* fixup parent before continuing, relying on parents being earlier in `rtd`s */
       parent_rtd = RECORDDESCPARENT(rtd);
       if (parent_rtd != Sfalse) {
         ptr parent_uid = RECORDDESCUID(parent_rtd);
@@ -340,10 +472,14 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
   
   /* Replace rtd references to interned references */
   {
+    SPACE_OFFSET_DECLS;
     vfoff i;
     for (i = 0; i < header.rtdref_count; i++) {
+      uptr r_off;
       ptr *ref, rtd, uid;
-      ref = ptr_add(data, rtdrefs[i]);
+      r_off = rtdrefs[i];
+      INC_SPACE_OFFSET(r_off);
+      ref = SPACE_PTR(r_off);
       rtd = *ref;
       uid = RECORDDESCUID(rtd);
       if (!Ssymbolp(uid)) {
@@ -355,12 +491,14 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
 
   /* Fix code pointers on closures */
   {
-    ptr cl = TYPE(ptr_add(data, header.closure_offset), type_closure);
-    ptr end_closures = TYPE(ptr_add(data, header.closure_end_offset), type_closure);
+    ptr cl = TYPE(ptr_add(vspaces[vspace_closure], header.closure_offset - vspace_offsets[vspace_closure]),
+                  type_closure);
+    ptr end_closures = ptr_add(cl, header.closure_end_offset - header.closure_offset);
+    uptr code_delta = vspace_deltas[vspace_code];
 
     while (cl != end_closures) {
       ptr code = CLOSCODE(cl);
-      code = ptr_add(code, (uptr)data);
+      code = ptr_add(code, code_delta);
       SETCLOSCODE(cl,code);
       cl = ptr_add(cl, size_closure(CLOSLEN(cl)));
     }
@@ -368,11 +506,11 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
 
   /* Fix code via relocations */
   {    
-    ptr sym_base = data;
-    ptr code = TYPE(ptr_add(data, header.code_offset), type_typed_object);
-    ptr code_end = TYPE(ptr_add(data, header.code_end_offset), type_typed_object);
+    ptr sym_base = vspaces[vspace_symbol];
+    ptr code = TYPE(vspaces[vspace_code], type_typed_object);
+    ptr code_end = ptr_add(code, header.code_end_offset - header.code_offset);
     while (code != code_end) {
-      relink_code(code, sym_base, data);
+      relink_code(code, sym_base, vspaces, vspace_offsets, to_static);
       code = ptr_add(code, size_code(CODELEN(code)));
     }
   }
@@ -382,7 +520,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
   {
     ptr v;
     ITYPE t;
-    v = ptr_add(data, header.result_offset);
+    v = find_pointer_from_offset(header.result_offset, vspaces, vspace_offsets);
     if (((t = TYPEBITS(v)) == type_typed_object)
         && TYPEP(TYPEFIELD(v), mask_box, type_box))
       v = Sunbox(v);
@@ -395,6 +533,9 @@ ptr S_vfasl_to(ptr bv)
 {
   return S_vfasl(bv, (ptr)0, Sbytevector_length(bv));
 }
+
+/************************************************************/
+/* Saving                                                   */
 
 static void vfasl_init(vfasl_info *vfi) {
   int s;
@@ -495,8 +636,12 @@ ptr S_to_vfasl(ptr v)
 
   header.rtd_offset = vfi->spaces[vspace_symbol].total_bytes;
   header.closure_offset = header.rtd_offset + vfi->spaces[vspace_rtd].total_bytes;
-  header.code_offset = header.closure_offset + vfi->spaces[vspace_closure].total_bytes;
-  header.other_offset = header.code_offset + vfi->spaces[vspace_code].total_bytes;
+  header.impure_offset = header.closure_offset + vfi->spaces[vspace_closure].total_bytes;
+  header.pure_typed_offset = header.impure_offset + vfi->spaces[vspace_impure].total_bytes;
+  header.impure_record_offset = header.pure_typed_offset + vfi->spaces[vspace_pure_typed].total_bytes;
+  header.code_offset = header.impure_record_offset + vfi->spaces[vspace_impure_record].total_bytes;
+  header.data_offset = header.code_offset + vfi->spaces[vspace_code].total_bytes;
+  header.reloc_offset = header.data_offset + vfi->spaces[vspace_data].total_bytes;
 
   header.symref_count = vfi->symref_count;
   header.rtdref_count = vfi->rtdref_count;
@@ -518,7 +663,7 @@ ptr S_to_vfasl(ptr v)
 
   vfi->base_addr = p;
 
-  /* Set pointers to vspaces based on sizes frm first pass */
+  /* Set pointers to vspaces based on sizes from first pass */
   for (s = 0; s < vspaces_count; s++) {
     vfasl_chunk *c;
 
@@ -600,7 +745,7 @@ ptr S_to_vfasl(ptr v)
   sort_offsets(vfi->symrefs, vfi->symref_count);
   sort_offsets(vfi->rtdrefs, vfi->rtdref_count);
   sort_offsets(vfi->singletonrefs, vfi->singletonref_count);
-
+  
   for (s = 0; s < vspaces_count; s++) {
     free(vfi->spaces[s].first->bytes = (ptr)0);
   }
@@ -645,7 +790,8 @@ IBOOL S_vfasl_can_combinep(ptr v)
   return !installs;
 }
 
-/*************************************************************/
+/************************************************************/
+/* Traversals for saving                                    */
 
 static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
   seginfo *si;
@@ -678,7 +824,7 @@ static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
             pp = ptr_add(pp, sweep(vfi, TYPE((ptr)pp, type_closure)));
           }
           break;
-        case vspace_array:
+        case vspace_impure:
           while (pp < pp_end) {
             vfasl_relocate(vfi, pp);
             pp = ptr_add(pp, sizeof(ptr));
@@ -686,7 +832,8 @@ static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
           break;
         case vspace_rtd:
         case vspace_code:
-        case vspace_typed:
+        case vspace_pure_typed:
+        case vspace_impure_record:
           while (pp < pp_end) {
             pp = ptr_add(pp, sweep(vfi, TYPE((ptr)pp, type_typed_object)));
           }
@@ -809,8 +956,14 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
             }
 
             s = vspace_rtd;
-          } else
-            s = vspace_typed;
+          } else {
+            /* See gc.c for original rationale but the fine-grained
+               choices only matter when loading into the static
+               generation, so we make */
+            s = (RECORDDESCMPM(rtd) == FIX(0)
+                 ? vspace_pure_typed
+                 : vspace_impure_record);
+          }
 
           n = size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
 
@@ -823,8 +976,10 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
           iptr len, n;
           len = Svector_length(pp);
           n = size_vector(len);
-          FIND_ROOM(vfi, vspace_typed, type_typed_object, n, p);
+          FIND_ROOM(vfi, vspace_impure, type_typed_object, n, p);
           copy_ptrs(type_typed_object, p, pp, n);
+          /* pad if necessary */
+          if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
       } else if (TYPEP(tf, mask_string, type_string)) {
           iptr n;
           n = size_string(Sstring_length(pp));
@@ -844,19 +999,27 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
           vfasl_fail(vfi, "tlc");
           return (ptr)0;
       } else if (TYPEP(tf, mask_box, type_box)) {
-          FIND_ROOM(vfi, vspace_typed, type_typed_object, size_box, p);
+          FIND_ROOM(vfi, vspace_impure, type_typed_object, size_box, p);
           BOXTYPE(p) = (iptr)tf;
           INITBOXREF(p) = Sunbox(pp);
       } else if ((iptr)tf == type_ratnum) {
-          FIND_ROOM(vfi, vspace_typed, type_typed_object, size_ratnum, p);
+        /* note: vspace_impure is suboptimal for loading into static
+           generation, but these will be rare in boot code */
+          FIND_ROOM(vfi, vspace_impure, type_typed_object, size_ratnum, p);
           RATTYPE(p) = type_ratnum;
           RATNUM(p) = RATNUM(pp);
           RATDEN(p) = RATDEN(pp);
+          /* pad */
+          ((void **)UNTYPE(p, type_typed_object))[3] = (ptr)0;
       } else if ((iptr)tf == type_exactnum) {
-          FIND_ROOM(vfi, vspace_typed, type_typed_object, size_exactnum, p);
+        /* note: vspace_impure is suboptimal for loading into static
+           generation, but these will be rare in boot code */
+          FIND_ROOM(vfi, vspace_impure, type_typed_object, size_exactnum, p);
           EXACTNUM_TYPE(p) = type_exactnum;
           EXACTNUM_REAL_PART(p) = EXACTNUM_REAL_PART(pp);
           EXACTNUM_IMAG_PART(p) = EXACTNUM_IMAG_PART(pp);
+          /* pad */
+          ((void **)UNTYPE(p, type_typed_object))[3] = (ptr)0;
       } else if ((iptr)tf == type_inexactnum) {
           FIND_ROOM(vfi, vspace_data, type_typed_object, size_inexactnum, p);
           INEXACTNUM_TYPE(p) = type_inexactnum;
@@ -895,7 +1058,7 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
         vfasl_fail(vfi, "weakpair");
         return (ptr)0;
       } else {
-        FIND_ROOM(vfi, vspace_array, type_pair, size_pair, p);
+        FIND_ROOM(vfi, vspace_impure, type_pair, size_pair, p);
       }
       INITCAR(p) = Scar(pp);
       INITCDR(p) = Scdr(pp);
@@ -1108,6 +1271,10 @@ static uptr sweep_record(vfasl_info *vfi, ptr x)
     return size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
 }
 
+
+/*************************************************************/
+/* Code and relocation handling for save and load            */
+
 #define VFASL_RELOC_TAG_BITS         3
 
 #define VFASL_RELOC_C_ENTRY_TAG            1
@@ -1184,19 +1351,25 @@ static uptr sweep_code_object(vfasl_info *vfi, ptr co) {
         S_set_code_obj("vfasl", RELOC_TYPE(entry) | reloc_force_abs, co, a, obj, item_off);
     }
 
-    RELOCCODE(t) = co;
-    CODERELOC(co) = t;
-
-    vfasl_register_pointer(vfi, &RELOCCODE(t));
-    vfasl_register_pointer(vfi, &CODERELOC(co));
+    RELOCCODE(t) = (ptr)ptr_diff(co, vfi->base_addr);
+    CODERELOC(co) = (ptr)ptr_diff(t, vfi->base_addr);
+    /* no vfasl_register_pointer, since relink_code can handle it */
 
     return size_code(CODELEN(co));
 }
 
-static void relink_code(ptr co, ptr sym_base, ptr dest_base) {
+static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets, IBOOL to_static) {
     ptr t; iptr a, m, n;
 
     t = CODERELOC(co);
+    t = ptr_add(vspaces[vspace_reloc], (uptr)t - vspace_offsets[vspace_reloc]);
+
+    if (to_static)
+      CODERELOC(co) = (ptr)0;
+    else {
+      CODERELOC(co) = t;
+      RELOCCODE(t) = co;
+    }
 
     m = RELOCSIZE(t);
     a = 0;
@@ -1241,7 +1414,8 @@ static void relink_code(ptr co, ptr sym_base, ptr dest_base) {
           }
         } else {
           uptr offset = (uptr)obj;
-          obj = ptr_add(dest_base, offset);
+
+          obj = find_pointer_from_offset(offset, vspaces, vspace_offsets);
           if ((TYPEBITS(obj) == type_typed_object)
               && (TYPEFIELD(obj) == S_G.base_rtd)) {
             /* Similar to symbols: potentially replace with interned */
@@ -1255,6 +1429,18 @@ static void relink_code(ptr co, ptr sym_base, ptr dest_base) {
 
         S_set_code_obj("vfasl", RELOC_TYPE(entry), co, a, obj, item_off);
     }
+}
+
+static ptr find_pointer_from_offset(uptr p_off, ptr *vspaces, uptr *vspace_offsets)
+{
+  int s = 0;
+  ITYPE t = TYPEBITS(p_off);
+
+  p_off = (uptr)UNTYPE(p_off, t);
+  while (p_off >= vspace_offsets[s+1])
+    s++;
+
+  return TYPE(ptr_add(vspaces[s], p_off - vspace_offsets[s]), t);
 }
 
 /*************************************************************/

@@ -924,7 +924,7 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
     pre = S_cputime();
   }
 
-  printf("done %ld\n", reading);
+  printf("load %ld\n", reading);
 
   S_G.load_binary = Sfalse;
   gzclose(bd[n].file);
@@ -1123,6 +1123,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     }
   }
 
+  S_vfasl_boot_mode = -1; /* to static generation after compacting initial */
+
   if (boot_count != 0) {
     INT i = 0;
 
@@ -1148,6 +1150,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
 
     while (i < boot_count) load(tc, i++, 0);
   }
+
+  S_vfasl_boot_mode = 0;
 
   ptr pre = S_cputime();
 

@@ -463,6 +463,12 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
   ffo.size = uf_uptrin(uf);
 
   if (ty == fasl_type_vfasl_size) {
+    if (S_vfasl_boot_mode == -1) {
+      ptr pre = S_cputime();
+      Scompact_heap();
+      S_vfasl_boot_mode = 1;
+      printf("pre compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
+    }
     x = S_vfasl((ptr)0, uf, ffo.size);
   } else {
     ffo.buf = buf;
