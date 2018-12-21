@@ -237,7 +237,7 @@ static void ppc32_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr ppc32_get_jump PROTO((void *address));
 #endif /* PPC32 */
 #ifdef X86_64
-static void x86_64_set_jump PROTO((void *address, uptr item, IBOOL callp, IBOOL force_abs));
+static void x86_64_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr x86_64_get_jump PROTO((void *address));
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -463,6 +463,12 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
   ffo.size = uf_uptrin(uf);
 
   if (ty == fasl_type_vfasl_size) {
+    if (S_vfasl_boot_mode == -1) {
+      ptr pre = S_cputime();
+      Scompact_heap();
+      S_vfasl_boot_mode = 1;
+      printf("pre compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
+    }
     x = S_vfasl((ptr)0, uf, ffo.size);
   } else {
     ffo.buf = buf;
@@ -1192,7 +1198,7 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 
     address = (void *)((uptr)p + n);
     item = (uptr)x + o;
-    switch (typ & ~reloc_force_abs) {
+    switch (typ) {
         case reloc_abs:
             *(uptr *)address = item;
             break;
@@ -1226,10 +1232,10 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 #endif /* I386 */
 #ifdef X86_64
         case reloc_x86_64_jump:
-            x86_64_set_jump(address, item, 0, typ & reloc_force_abs);
+            x86_64_set_jump(address, item, 0);
             break;
         case reloc_x86_64_call:
-            x86_64_set_jump(address, item, 1, typ & reloc_force_abs);
+            x86_64_set_jump(address, item, 1);
             break;
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -1269,7 +1275,7 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
     void *address; uptr item;
 
     address = (void *)((uptr)p + n);
-    switch (typ & ~reloc_force_abs) {
+    switch (typ) {
         case reloc_abs:
             item = *(uptr *)address;
             break;
@@ -1447,9 +1453,9 @@ static uptr ppc32_get_jump(void *address) {
 #endif /* PPC32 */
 
 #ifdef X86_64
-static void x86_64_set_jump(void *address, uptr item, IBOOL callp, IBOOL force_abs) {
+static void x86_64_set_jump(void *address, uptr item, IBOOL callp) {
   I64 disp = (I64)item - ((I64)address + 5); /* 5 = size of call instruction */
-  if ((I32)disp == disp && !force_abs) {
+  if ((I32)disp == disp) {
     *(octet *)address = callp ? 0xE8 : 0xE9;  /* call or jmp disp32 opcode */
     *(I32 *)((uptr)address + 1) = (I32)disp;
     *((octet *)address + 5) = 0x90; /* nop */

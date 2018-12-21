@@ -1548,6 +1548,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)bv_fasl_read", (void *)S_bv_fasl_read);
     Sforeign_symbol("(cs)to_vfasl", (void *)S_to_vfasl);
     Sforeign_symbol("(cs)vfasl_to", (void *)S_vfasl_to);
+    Sforeign_symbol("(cs)vfasl_can_combinep", (void *)S_vfasl_can_combinep);
     Sforeign_symbol("(cs)s_decode_float", (void *)s_decode_float);
 
     Sforeign_symbol("(cs)new_open_input_fd", (void *)S_new_open_input_fd);

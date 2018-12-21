@@ -1614,7 +1614,8 @@
       (do-make-boot-header who out machine bootfiles)))
   
   (set-who! vfasl-convert-file
-    (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)])
+    (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)]
+          [vfasl-can-combine? (foreign-procedure "(cs)vfasl_can_combinep" (scheme-object) boolean)])
       (lambda (in-file out-file bootfile*)
         (let ([op ($open-file-output-port who out-file
                     (if (compile-compressed)
@@ -1626,15 +1627,28 @@
                 (emit-boot-header op (constant machine-type) bootfile*))
               (let ([ip ($open-file-input-port who in-file (file-options compressed))])
                 (on-reset (close-port ip)
-                  (let loop ()
-                    (let ([x (fasl-read ip)])
-                      (unless (eof-object? x)
-                        (emit-header op (constant machine-type))
-                        (let ([bv (->vfasl x)])
-                          (put-u8 op (constant fasl-type-vfasl-size))
-                          (put-uptr op (bytevector-length bv))
-                          (put-bytevector op bv))
-                        (loop))))
+                  (let* ([write-out (lambda (x)
+                                      (emit-header op (constant machine-type))
+                                      (let ([bv (->vfasl x)])
+                                        (put-u8 op (constant fasl-type-vfasl-size))
+                                        (put-uptr op (bytevector-length bv))
+                                        (put-bytevector op bv)))]
+                         [write-out-accum (lambda (accum)
+                                            (unless (null? accum)
+                                              (write-out (list->vector (reverse accum)))))])
+                    (let loop ([accum '()])
+                      (let ([x (fasl-read ip)])
+                        (cond
+                         [(eof-object? x)
+                          (write-out-accum accum)]
+                         [(not (vfasl-can-combine? x))
+                          (write-out-accum accum)
+                          (write-out x)
+                          (loop '())]
+                         [(vector? x)
+                          (loop (append (reverse (vector->list x)) accum))]
+                         [else
+                          (loop (cons x accum))]))))
                   (close-port ip)))
               (close-port op))))))))
 

@@ -26,6 +26,7 @@ EXTERN ptr S_child_processes[static_generation+1];
 
 /* scheme.c */
 EXTERN IBOOL S_boot_time;
+EXTERN int S_vfasl_boot_mode;
 EXTERN IBOOL S_errors_to_console;
 EXTERN ptr S_threads;
 EXTERN uptr S_nthreads;

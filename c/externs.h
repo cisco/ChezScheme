@@ -109,6 +109,7 @@ extern int S_fasl_intern_rtd(ptr *x);
 extern ptr S_to_vfasl PROTO((ptr v));
 extern ptr S_vfasl PROTO((ptr bv, void *stream, iptr len));
 extern ptr S_vfasl_to PROTO((ptr v));
+extern IBOOL S_vfasl_can_combinep(ptr v);
 
 /* flushcache.c */
 extern void S_record_code_mod PROTO((ptr tc, uptr addr, uptr bytes));
