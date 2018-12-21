@@ -455,9 +455,9 @@
       [(group) elt*
        (apply vector (map c-vfaslobj elt*))]
       [(visit-stuff) elt
-       (cons (constant visit-tag) (c-vfaslobj x))]
+       (cons (constant visit-tag) (c-vfaslobj elt))]
       [(revisit-stuff) elt
-       (cons (constant revisit-tag) (c-vfaslobj x))]
+       (cons (constant revisit-tag) (c-vfaslobj elt))]
       [else (c-mkcode x)])))
 
 (define c-print-vfasl

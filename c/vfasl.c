@@ -242,6 +242,18 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
     }
   }
 
+  /* Replace references to singletons like "" and #vu8().
+     This needs to be before interning symbols, in case ""
+     is a symbol name. */
+  {
+    vfoff i;
+    for (i = 0; i < header.singletonref_count; i++) {
+      ptr *ref;
+      ref = ptr_add(data, singletonrefs[i]);
+      *ref = lookup_singleton(UNFIX(*ref));
+    }
+  }
+
   /* Intern symbols */
   {
     ptr sym = TYPE(data, type_symbol);
@@ -335,16 +347,6 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
         /* uid is replacement interned rtd */
         *ref = uid;
       }
-    }
-  }
-
-  /* Replace references to singletons like "" and #vu8() */
-  {
-    vfoff i;
-    for (i = 0; i < header.singletonref_count; i++) {
-      ptr *ref;
-      ref = ptr_add(data, singletonrefs[i]);
-      *ref = lookup_singleton(UNFIX(*ref));
     }
   }
 
@@ -1248,6 +1250,14 @@ static int detect_singleton(ptr p) {
     return 3;
   else if (p == S_G.null_bytevector)
     return 4;
+  else if (p == S_G.eqp)
+    return 5;
+  else if (p == S_G.eqvp)
+    return 6;
+  else if (p == S_G.equalp)
+    return 7;
+  else if (p == S_G.symboleqp)
+    return 8;
   else
     return 0;
 }
@@ -1262,11 +1272,19 @@ static ptr lookup_singleton(int which) {
     return S_G.null_fxvector;
   case 4:
     return S_G.null_bytevector;
+  case 5:
+    return S_G.eqp;
+  case 6:
+    return S_G.eqvp;
+  case 7:
+    return S_G.equalp;
+  case 8:
+    return S_G.symboleqp;
   default:
     S_error("vfasl", "bad singleton index");
     return (ptr)0;
   }
-}
+}  
   
 /*************************************************************/
 
