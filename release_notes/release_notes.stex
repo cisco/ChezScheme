@@ -1621,6 +1621,26 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Disk-relative filenames in Windows (9.5.1)}
+
+In Windows, filenames that start with a disk designator but no
+directory separator are now treated as relative paths. For example,
+\scheme{(path-absolute? "C:")} now returns \scheme{#f}, and
+\scheme{(directory-list "C:")} now lists the files in the current
+directory on disk C instead of the files in the root directory of disk
+C.
+
+In addition, \scheme{file-access-time}, \scheme{file-change-time},
+\scheme{file-directory?}, \scheme{file-exists?},
+\scheme{file-modification-time}, and \scheme{get-mode} no longer
+remove trailing directory separators on Windows.
+
+\subsection{Globally unique names on non-Windows systems no longer contain the IP address (9.5.1)}
+
+The globally unique names of gensyms no longer contain the IP address
+on non-Windows systems. Windows systems already used a universally
+unique identifier.
+
 \subsection{Invalid memory reference from \protect\scheme{fxvector} calls (9.5)}
 
 A compiler bug that could result in an invalid memory reference or

@@ -27,6 +27,7 @@ include Mf-base
 ${Scheme}: make.bat
 	cmd.exe /c make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
+	cp ../bin/$m/scheme.pdb ../bin/$m/petite.pdb
 
 make.bat: vs.bat
 	echo '@echo off' > $@

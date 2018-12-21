@@ -4076,7 +4076,7 @@
      ;     (and <sub-version ref>*)
      ;     (or <sub-version ref>*)
      ;     (not <sub-version ref>)
-      (define (determine-module-imports what mid tid)
+      (define (determine-module-imports what who mid tid)
         (let ([binding (lookup (id->label mid empty-wrap) r)])
           (case (binding-type binding)
             [($module)
@@ -4092,7 +4092,7 @@
                (values mid tid
                  (make-import-interface x
                    (diff-marks (id-marks tid) (interface-marks (get-indirect-interface x))))))]
-            [else (syntax-error mid "unknown module")])))
+            [else (syntax-error who (format "unknown ~a" what))])))
       (define (impset x)
         (syntax-case x ()
           [(?only *x id ...)
@@ -4227,13 +4227,13 @@
                              [else (f (cdr imps) o.n* (cons a new-imps))]))))))))]
           [mid
            (and (not std?) (id? #'mid))
-           (determine-module-imports "module" #'mid #'mid)]
+           (determine-module-imports "module" #'mid #'mid #'mid)]
           [(?library-reference lr)
            (sym-kwd? ?library-reference library-reference)
            (let-values ([(mid tid) (lookup-library #'lr)])
-             (determine-module-imports "library" mid tid))]
+             (determine-module-imports "library" #'lr mid tid))]
           [lr (let-values ([(mid tid) (lookup-library #'lr)])
-                (determine-module-imports "library" mid tid))]))
+                (determine-module-imports "library" #'lr mid tid))]))
       (syntax-case impspec (for)
         [(?for *x level ...)
          (sym-kwd? ?for for)
@@ -5156,10 +5156,11 @@
                    (when (eq? p 'loading)
                      ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
                   (libdesc-import-code-set! desc #f)
-                  (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
-                  ($install-library-clo-info (libdesc-clo* desc))
-                  (libdesc-clo*-set! desc '())
-                  (p))]))]
+                  (on-reset (libdesc-import-code-set! desc p)
+                    (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
+                    ($install-library-clo-info (libdesc-clo* desc))
+                    (libdesc-clo*-set! desc '())
+                    (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
   
     ; invoking or visiting a possibly unloaded library occurs in two separate steps:

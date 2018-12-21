@@ -42,6 +42,11 @@ Prerequisites:
 * gcc
 * Header files and libraries for ncurses
 * Header files and libraries for X windows
+* Header files and libraries for uuid
+
+Uninstalling on Unix-like systems is as simple as running:
+
+sudo make uninstall
 
 BUILDING VERSION 9.5 AND EARLIER
 
@@ -129,8 +134,11 @@ The make file supports several targets:
   is overridden via an argument to ./configure, $W is the same as $M.)
 
 'sudo make install'
-  runs the build plus installs the resulting executable, boot files,
+  runs the build plus installs the resulting executables, boot files,
   example files, and manual pages.
+
+'sudo make uninstall'
+  uninstalls the executables, boot files, example files, and manual pages.
 
 'make test'
   runs the build plus runs a set of test programs in various different
@@ -185,19 +193,22 @@ The make file supports several targets:
 WINDOWS
 
 Building Chez Scheme under 64-bit Windows with Cygwin or Bash/WSL
-follows the instructions above, except that 'make install' is not
-supported, and the 'OS' environment variable must be set to
-'Windows_NT' on Bash/WSL (to indicate a build for Windows, as opposed
-to a build for Linux on Windows):
+follows the instructions above, except that 'make install' and 'make
+uninstall' are not supported. On Bash/WSL, the build directory must be
+in a location with a Windows path such as /mnt/c, and the 'OS'
+environment variable must be set to 'Windows_NT' to indicate a build
+for Windows, as opposed to a build for Linux on Windows:
 
 env OS=Windows_NT ./configure
 env OS=Windows_NT make
 
 Prerequisites:
 
-* Cygwin or Bash/WSL with bash, grep, make, sed, etc.
+* Cygwin or Bash/WSL with bash, git, grep, make, sed, etc.
 * Microsoft Visual Studio 2017 or 2015
 * WiX Toolset (for making an install)
+
+Be sure that git config core.autocrlf is set to false.
 
 To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
 set PATH:
@@ -221,7 +232,7 @@ make
 
 This will create workareas and compile binaries for the a6nt, i3nt,
 ta6nt, and ti3nt configurations and then include them in a single
-Windows installer package Chez Scheme.msi. The package also includes
+Windows installer package Chez Scheme.exe. The package also includes
 example files and the redistributable Microsoft Visual C++ run-time
 libraries.
 

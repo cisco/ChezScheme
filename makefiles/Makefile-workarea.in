@@ -23,6 +23,9 @@ build:
 install: build
 	$(MAKE) -f Mf-install
 
+uninstall:
+	$(MAKE) -f Mf-install uninstall
+
 test: build
 	(cd mats ; $(MAKE) allx)
 	@echo "test run complete.  check $(PREFIX)mats/summary for errors."

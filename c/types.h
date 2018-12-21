@@ -96,7 +96,7 @@ typedef int IFASLCODE;      /* fasl type codes */
   ptr _tc = tc;\
   uptr _ap = (uptr)AP(_tc);\
   if ((uptr)n > ((uptr)EAP(_tc) - _ap)) {\
-    (x) = S_thread_get_more_room(t, n);\
+    (x) = S_get_more_room_help(_tc, _ap, t, n);\
   } else {\
     (x) = TYPE(_ap,t);\
     AP(_tc) = (ptr)(_ap + n);\

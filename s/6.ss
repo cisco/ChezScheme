@@ -128,15 +128,7 @@
          (let ([x (fp path follow?)])
            (if (fixnum? x)
                x
-               (if-feature windows
-                 (let ([y (let ([n (string-length path)])
-                            (and (fx> n 0)
-                              (fp (if (directory-separator? (string-ref path (fx- n 1)))
-                                      (substring path 0 (fx- n 1))
-                                      (string-append path "\\"))
-                                  follow?)))])
-                   (if (fixnum? y) y (err x)))
-                 (err x))))]))))
+               (err x)))]))))
 
 (let ()
   (define file-x-time
@@ -155,18 +147,7 @@
           (let ([x (path-fp file follow?)])
             (if (pair? x)
                 (make-time 'time-utc (cdr x) (car x))
-                (if-feature windows
-                  (let ([y (let ([n (string-length file)])
-                             (and (fx> n 0)
-                               (path-fp
-                                 (if (directory-separator? (string-ref file (fx- n 1)))
-                                     (substring file 0 (fx- n 1))
-                                     (string-append file "\\"))
-                                 follow?)))])
-                    (if (pair? y)
-                        (make-time 'time-utc (cdr y) (car y))
-                        (path-err file x)))
-                  (path-err file x))))
+                (path-err file x)))
           (let ([x (fd-fp (port-file-descriptor file))])
             (cond
               [(pair? x) (make-time 'time-utc (cdr x) (car x))]
@@ -208,9 +189,9 @@
                                        (and (not (char=? (string-ref path i) #\*))
                                             (nostars? (fx+ i 1))))))
                       ($oops who "invalid directory name ~s" path))
-                    (wl (if (directory-separator? (string-ref path (fx- n 1)))
-                            (format "~a*" path)
-                            (format "~a\\*" path))))))
+                    (wl (if (memv (string-ref path (fx- n 1)) '(#\\ #\/ #\:))
+                            (string-append path "*")
+                            (string-append path "\\*"))))))
               (foreign-procedure "(cs)directory_list" (string) scheme-object))])
     (lambda (path)
       (unless (string? path) ($oops who "~s is not a string" path))
@@ -237,15 +218,7 @@
         [(path) (file-exists? path #t)]
         [(path follow?)
          (unless (string? path) ($oops who "~s is not a string" path))
-         (if-feature windows
-           (or (fp path follow?)
-               (let ([n (string-length path)])
-                 (and (fx> n 0)
-                      (fp (if (directory-separator? (string-ref path (fx- n 1)))
-                              (substring path 0 (fx- n 1))
-                              (string-append path "\\"))
-                          follow?))))
-           (fp path follow?))]))))
+         (fp path follow?)]))))
 
 (define-who #(r6rs: file-exists?)
   (lambda (path)
@@ -267,15 +240,7 @@
         [(path) (file-directory? path #t)]
         [(path follow?)
          (unless (string? path) ($oops who "~s is not a string" path))
-         (if-feature windows
-           (or (fp path follow?)
-               (let ([n (string-length path)])
-                 (and (fx> n 0)
-                      (fp (if (directory-separator? (string-ref path (fx- n 1)))
-                              (substring path 0 (fx- n 1))
-                              (string-append path "\\"))
-                          follow?))))
-           (fp path follow?))]))))
+         (fp path follow?)]))))
 
 (define-who file-symbolic-link?
   (let ([fp (foreign-procedure "(cs)file_symbolic_linkp" (string) boolean)])
@@ -376,7 +341,7 @@
               (char=? (string-ref s 1) #\:)
               (let ([c (string-ref s 0)])
                 (or (char<=? #\a c #\z) (char<=? #\A c #\Z))))
-         (if (and (>= n 3) (directory-separator? (string-ref s 2))) 3 2)]
+         (if (and (fx>= n 3) (directory-separator? (string-ref s 2))) 3 2)]
         [(and windows?
               (fx>= n 4)
               (char=? (string-ref s 0) #\\)
@@ -388,7 +353,7 @@
                  (char=? (string-ref s 5) #\:)
                  (let ([c (string-ref s 4)])
                    (or (char<=? #\a c #\z) (char<=? #\A c #\Z))))
-            (if (and (>= n 7) (char=? (string-ref s 6) #\\)) 7 6)]
+            (if (and (fx>= n 7) (char=? (string-ref s 6) #\\)) 7 6)]
            [(and windows?
                  (fx>= n 8)
                  (char-ci=? (string-ref s 4) #\U)
@@ -427,22 +392,16 @@
 
   (set-who! path-absolute?
     (lambda (s)
-      (define directory-separator? (directory-separator-predicate s))
       (unless (string? s) ($oops who "~s is not a string" s))
       (let ([n (string-length s)])
         (or (and (fx>= n 1) (directory-separator? (string-ref s 0)))
             (and (fx>= n 1) (char=? (string-ref s 0) #\~))
             (and windows?
-                 (fx>= n 2)
+                 (fx>= n 3)
                  (char=? (string-ref s 1) #\:)
                  (let ([c (string-ref s 0)])
-                   (or (char<=? #\a c #\z) (char<=? #\A c #\Z))))
-            (and windows?
-                 (fx>= n 4)
-                 (char=? (string-ref s 0) #\\)
-                 (char=? (string-ref s 1) #\\)
-                 (char=? (string-ref s 2) #\?)
-                 (char=? (string-ref s 3) #\\))))))
+                   (or (char<=? #\a c #\z) (char<=? #\A c #\Z)))
+                 (directory-separator? (string-ref s 2)))))))
 
   (set-who! path-extension
     (lambda (s)

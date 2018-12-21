@@ -22,6 +22,7 @@
 (define $c-make-code)
 (define make-boot-header)
 (define make-boot-file)
+(define vfasl-convert-file)
 
 (let ()
 (import (nanopass))
@@ -440,10 +441,32 @@
       [else (c-assembler-output-error x)])))
 
 (define (c-print-fasl x p)
-  (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
-     (c-build-fasl x t a?)
-     ($fasl-start p t
-       (lambda (p) (c-faslobj x t p a?)))))
+  (cond
+   [(generate-vfasl) (c-print-vfasl x p)]
+   [else
+    (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
+       (c-build-fasl x t a?)
+       ($fasl-start p t
+         (lambda (p) (c-faslobj x t p a?))))]))
+
+(define (c-vfaslobj x)
+  (let f ([x x])
+    (record-case x
+      [(group) elt*
+       (apply vector (map c-vfaslobj elt*))]
+      [(visit-stuff) elt
+       (cons (constant visit-tag) (c-vfaslobj x))]
+      [(revisit-stuff) elt
+       (cons (constant revisit-tag) (c-vfaslobj x))]
+      [else (c-mkcode x)])))
+
+(define c-print-vfasl
+  (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)])
+    (lambda (x p)
+      (let ([bv (->vfasl (c-vfaslobj x))])
+        (put-u8 p (constant fasl-type-vfasl-size))
+        (put-uptr p (bytevector-length bv))
+        (put-bytevector p bv)))))
 
 (define-record-type visit-chunk
   (nongenerative)
@@ -635,7 +658,8 @@
     (when (expand-output)
       (when source-info-string
         (fprintf (expand-output) "~%;; expand output for ~a\n" source-info-string))
-      (pretty-print ($uncprep x1) (expand-output)))
+      (pretty-print ($uncprep x1) (expand-output))
+      (flush-output-port (expand-output)))
     (let loop ([chunk* (expand-Lexpand x1)] [rx2b* '()] [rfinal* '()])
       (define finish-compile
         (lambda (x1 f)
@@ -683,7 +707,8 @@
                                      [else (sorry! who "unrecognized stuff ~s" x2b)])
                                    (finish x2b)))
                           rx2b*)])
-                (pretty-print (if (fx= (length e*) 1) (car e*) `(begin ,@(reverse e*))) (expand/optimize-output))))
+                (pretty-print (if (fx= (length e*) 1) (car e*) `(begin ,@(reverse e*))) (expand/optimize-output))
+                (flush-output-port (expand/optimize-output))))
             ($pass-time 'pfasl (lambda () (c-print-fasl `(group ,@(reverse rfinal*)) op))))
           (let ([x1 (car chunk*)])
             (cond
@@ -1479,7 +1504,8 @@
           (let* ([x1 (expand-Lexpand ($pass-time 'expand (lambda () (expand x0 env-spec #t))))]
                  [waste ($uncprep x1 #t)] ; populate preinfo sexpr fields
                  [waste (when (and (expand-output) (not ($noexpand? x0)))
-                          (pretty-print ($uncprep x1) (expand-output)))]
+                          (pretty-print ($uncprep x1) (expand-output))
+                          (flush-output-port (expand-output)))]
                  [x2 ($pass-time 'cpvalid (lambda () ($cpvalid x1)))]
                  [x2a (let ([cpletrec-ran? #f])
                         (let ([x ((run-cp0)
@@ -1492,7 +1518,8 @@
                  [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))]
                  [x2b ($pass-time 'cpcommonize (lambda () ($cpcommonize x2b)))])
             (when (and (expand/optimize-output) (not ($noexpand? x0)))
-              (pretty-print ($uncprep x2b) (expand/optimize-output)))
+              (pretty-print ($uncprep x2b) (expand/optimize-output))
+              (flush-output-port (expand/optimize-output)))
             (if (and (compile-interpret-simple)
                      (not ($assembly-output))
                      (cheat? x2b))
@@ -1584,7 +1611,32 @@
   (set-who! $make-boot-header
     ; create boot loader (invoke) for entry into Scheme from C
     (lambda (out machine . bootfiles)
-      (do-make-boot-header who out machine bootfiles))))
+      (do-make-boot-header who out machine bootfiles)))
+  
+  (set-who! vfasl-convert-file
+    (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)])
+      (lambda (in-file out-file bootfile*)
+        (let ([op ($open-file-output-port who out-file
+                    (if (compile-compressed)
+                        (file-options replace compressed)
+                        (file-options replace)))])
+          (on-reset (delete-file out-file #f)
+            (on-reset (close-port op)
+              (when bootfile*
+                (emit-boot-header op (constant machine-type) bootfile*))
+              (let ([ip ($open-file-input-port who in-file (file-options compressed))])
+                (on-reset (close-port ip)
+                  (let loop ()
+                    (let ([x (fasl-read ip)])
+                      (unless (eof-object? x)
+                        (emit-header op (constant machine-type))
+                        (let ([bv (->vfasl x)])
+                          (put-u8 op (constant fasl-type-vfasl-size))
+                          (put-uptr op (bytevector-length bv))
+                          (put-bytevector op bv))
+                        (loop))))
+                  (close-port ip)))
+              (close-port op))))))))
 
 (set-who! compile-port
   (rec compile-port

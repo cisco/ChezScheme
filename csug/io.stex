@@ -309,8 +309,8 @@ predicate \scheme{transcoder?}, which should be standard but is not.
 \var{endianness} must be the symbol \scheme{big} or the symbol
 \scheme{little}.
 
-The codec returned by \scheme{utf-16-codec} can be used to create
-process data written UFT-16 format.
+The codec returned by \scheme{utf-16-codec} can be used to create and
+process data written UTF-16 format.
 When called without the \var{endianness} argument or with \var{endianness}
 \scheme{big}, \scheme{utf-16-codec} returns a codec for standard UTF-16
 data, i.e., one that defaults to big-endian format if no byte-order mark
@@ -1359,11 +1359,7 @@ If \var{?transcoder} is present and not \scheme{#f}, it must be a
 transcoder, and this procedure returns a textual input port
 whose transcoder is \var{?transcoder}.
 Otherwise, this procedure returns a binary input port.
-The buffer mode \var{b-mode} defaults to \scheme{block}, which differs from
-\scheme{block} in {\ChezScheme} only for textual output ports.
-See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
-for a description of the constraints on and effects of the other
-arguments.
+The buffer mode \var{b-mode} defaults to \scheme{block}.
 
 The Revised$^6$ Report version of this procedure does not accept the
 optional \var{b-mode} and \var{?transcoder} arguments, which limits
@@ -1985,9 +1981,6 @@ whose transcoder is \var{?transcoder}.
 Otherwise, this procedure returns a binary output port.
 The buffer mode \var{b-mode} defaults to \scheme{line}, which differs from
 \scheme{block} in {\ChezScheme} only for textual output ports.
-See the lead-in to Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}
-for a description of the constraints on and effects of the other
-arguments.
 
 The Revised$^6$ Report version of this procedure does not accept the
 optional \var{b-mode} and \var{?transcoder} arguments, which limits
@@ -3687,9 +3680,9 @@ are involved.
 
 \begin{tabular}{llllllll}
 path               & abs         & first              & rest               & parent             & last               & root               & ext       \\
-\scheme{c:}        & \scheme{#t} & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_} \\
+\scheme{c:}        & \scheme{#f} & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_}         & \scheme{c:}        & \scheme{_} \\
 \scheme{c:/}       & \scheme{#t} & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_}         & \scheme{c:/}       & \scheme{_} \\
-\scheme{c:a/b}     & \scheme{#t} & \scheme{c:}        & \scheme{a/b}       & \scheme{c:a}       & \scheme{b}         & \scheme{c:a/b}     & \scheme{_} \\
+\scheme{c:a/b}     & \scheme{#f} & \scheme{c:}        & \scheme{a/b}       & \scheme{c:a}       & \scheme{b}         & \scheme{c:a/b}     & \scheme{_} \\
 \scheme{//s/a/b.c} & \scheme{#t} & \scheme{//s}       & \scheme{a/b.c}     & \scheme{//s/a}     & \scheme{b.c}       & \scheme{//s/a/b}   & \scheme{c} \\
 \scheme{//s.com}   & \scheme{#t} & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_}         & \scheme{//s.com}   & \scheme{_} \\
 \end{tabular}

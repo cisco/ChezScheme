@@ -997,33 +997,47 @@
   whose base and/or index is a local save.
     cpnanopass.ss,
     misc.ms
+- flush expand-output and expand/optimize-output ports
+    compile.ss
+- clarify "unknown module" error message in determine-module-imports
+    syntax.ss
+- restore the import code on reset to provide consistent error message
+    syntax.ss, 8.ms
+- add uninstall target
+    Makefile.in, Makefile-workarea.in, Mf-install.in
+- add PDB files for Windows
+    c/*nt, wininstall/*nt.wxs
+- use uuid_generate on unix-like systems for S_unique_id
+    BUILDING, c/Mf-*le, stats.c, objects.stex, release_notes.stex
+- when thread_get_room exhausts the local allocation area, it now
+  goes through a common path with S_get_more_room to allocate a new
+  local allocation area when appropriate.  this can greatly reduce
+  the use of global allocation (and the number of tc mutex acquires
+  in threaded builds) when a lot of small objects are allocated by
+  C code with no intervening Scheme-side allocation or dirty writes.
+    alloc.c, types.h, externs.h
+- made Windows filename handling in directory-list, file-access-time,
+  file-change-time, file-directory?, file-exists?, file-modification-time,
+  get-mode, and path-absolute more consistent with
+  https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
+    6.ss, 6.ms, io.stex, release_notes.stex
+- fix handling of calling code's address for locking around a callable,
+  where the cp register copy in the thread context could be changed
+  in the callable prep before S_call_help gets it
+    cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
+- added initialization of seginfo sorted and trigger_ephemerons fields.
+    segment.c
 - add ordered guardians through a new optional argument to make-guardian
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
     4.ms, smgmt.stex, release_notes.stex
+- add make-arity-wrapper
+    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
+    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
+    misc.ms, mats/patch*, mats/root*
 - add object-backreferences and enable-object-backreferences as an aid
   to debugging memory leaks
      back.ss, cmacros.ss, inspect.ss, primdata.ss,
      gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
      globals.h, externs.h,
      system.stex, 7.ms
-- add make-arity-wrapper
-    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
-    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
-    misc.ms, mats/patch*, mats/root*
-- add current-generate-id and expand-omit-library-invocations, which can be
-  useful for avoiding library recompilation and redundant invocation checks
-    syntax.ss, record.ss, primdata.ss, front.ss, misc.ms, system.stex
-- add support for continuation attachments
-    cpnanopass.ss, np-languages.ss, 4.ss, prims.ss, inspect.ss,
-    cmacro.ss, primdata.ss, library.ss types.ss, mkheader.ss,
-    alloc.c, gc.c, schsig.c, thread.c, externs.h,
-    4.ms, control.stex, release_notes.stex
-- add hashtable-cells
-    newhash.ss, primdata.ss,
-    hash.ms, root-experr*,
-    objects.stex, release_notes.stex
-- fix handling of calling code's address for locking around a callable,
-  where the cp register copy in the thread context could be changed
-  in the callable prep before S_call_help gets it
-    cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms

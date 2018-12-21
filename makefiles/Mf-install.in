@@ -79,17 +79,12 @@ SchemeScriptPath=${Bin}/${InstallScriptName}
 install: bininstall libbininstall maninstall liblibinstall
 
 uninstall:
-	@echo To uninstall all machine types:
-	@echo rm -rf ${Lib}
-	@echo rm -f ${PetitePath}
-	@echo rm -f ${SchemePath}
-	@echo rm -f ${Man}/${InstallPetiteName}.1'{,.gz}'
-	@echo rm -f ${Man}/${InstallSchemeName}.1'{,.gz}'
-	@echo ""
-	@echo To uninstall just machine-type $m
-	@echo rm -rf ${Lib}/$m
-	@echo rm -f ${PetitePath}
-	@echo rm -f ${SchemePath}
+	rm -rf ${Lib}
+	rm -f ${PetitePath}
+	rm -f ${SchemePath}
+	rm -f ${SchemeScriptPath}
+	rm -f ${Man}/${InstallPetiteName}.1{,.gz}
+	rm -f ${Man}/${InstallSchemeName}.1{,.gz}
 
 scheme.1 petite.1: scheme.1.in
 	sed -e "s;{InstallBin};${InstallBin};g" \

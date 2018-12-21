@@ -1,5 +1,8 @@
 #!/bin/bash
-
+case $TARGET_MACHINE in
+  *i3le) sudo apt-get -yq --no-install-suggests --no-install-recommends install uuid-dev:i386 ;;
+  *)
+esac
 ./configure -m=$TARGET_MACHINE
 exitcode=$?
 if [ $exitcode -ne 0 ] ; then
