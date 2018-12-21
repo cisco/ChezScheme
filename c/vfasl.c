@@ -75,7 +75,7 @@ struct vfasl_count_and_chunk {
 };
 
 enum {
-  /* The order of these spaces matters: */
+  /* The order of these spaces needs to match vfasl_header: */
   vspace_symbol,
   vspace_rtd,
   vspace_closure,
@@ -109,6 +109,8 @@ typedef struct vfasl_info {
   octet *ptr_bitmap;
 
   struct vfasl_hash_table *graph;
+
+  IBOOL installs_library_entry; /* to determine whether vfasls can be combined */
 } vfasl_info;
 
 #define ptr_add(p, n) ((ptr)((uptr)(p) + (n)))
@@ -138,6 +140,7 @@ static void vfasl_register_forward(vfasl_info *vfi, ptr pp, ptr p);
 static ptr vfasl_lookup_forward(vfasl_info *vfi, ptr p);
 
 static void fasl_init_entry_tables();
+static void vfasl_check_install_library_entry(vfasl_info *vfi, ptr name);
 
 static int detect_singleton(ptr p);
 static ptr lookup_singleton(int which);
@@ -364,8 +367,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr input_len)
   }
 
   /* Fix code via relocations */
-  {
-    
+  {    
     ptr sym_base = data;
     ptr code = TYPE(ptr_add(data, header.code_offset), type_typed_object);
     ptr code_end = TYPE(ptr_add(data, header.code_end_offset), type_typed_object);
@@ -394,6 +396,50 @@ ptr S_vfasl_to(ptr bv)
   return S_vfasl(bv, (ptr)0, Sbytevector_length(bv));
 }
 
+static void vfasl_init(vfasl_info *vfi) {
+  int s;
+  
+  vfi->base_addr = (ptr)0;
+  vfi->sym_count = 0;
+  vfi->symref_count = 0;
+  vfi->symrefs = (ptr)0;
+  vfi->base_rtd = S_G.base_rtd;
+  vfi->rtdref_count = 0;
+  vfi->rtdrefs = (ptr)0;
+  vfi->singletonref_count = 0;
+  vfi->singletonrefs = (ptr)0;
+  vfi->graph = make_vfasl_hash_table();
+  vfi->ptr_bitmap = (ptr)0;
+  vfi->installs_library_entry = 0;
+
+  for (s = 0; s < vspaces_count; s++) {
+    vfasl_chunk *c;
+
+    c = malloc(sizeof(vfasl_chunk));
+    c->bytes = (ptr)0;
+    c->length = 0;
+    c->used = 0;
+    c->swept = 0;
+    c->next = (ptr)0;
+
+    vfi->spaces[s].first = c;
+    vfi->spaces[s].total_bytes = 0;
+  }
+}
+
+static void vfasl_free_chunks(vfasl_info *vfi) {
+  int s;
+  for (s = 0; s < vspaces_count; s++) {
+    vfasl_chunk *c, *next;
+    for (c = vfi->spaces[s].first; c; c = next) {
+      next = c->next;
+      if (c->bytes)
+        free(c->bytes);
+      free(c);
+    }
+  }
+}
+
 ptr S_to_vfasl(ptr v)
 {
   vfasl_info *vfi;
@@ -420,44 +466,13 @@ ptr S_to_vfasl(ptr v)
 
   vfi = malloc(sizeof(vfasl_info));
 
-  vfi->base_addr = (ptr)0;
-  vfi->sym_count = 0;
-  vfi->symref_count = 0;
-  vfi->symrefs = (ptr)0;
-  vfi->base_rtd = S_G.base_rtd;
-  vfi->rtdref_count = 0;
-  vfi->rtdrefs = (ptr)0;
-  vfi->singletonref_count = 0;
-  vfi->singletonrefs = (ptr)0;
-  vfi->graph = make_vfasl_hash_table();
-  vfi->ptr_bitmap = (ptr)0;
+  vfasl_init(vfi);
 
   /* First pass: determine sizes */
 
-  for (s = 0; s < vspaces_count; s++) {
-    vfasl_chunk *c;
-
-    c = malloc(sizeof(vfasl_chunk));
-    c->bytes = (ptr)0;
-    c->length = 0;
-    c->used = 0;
-    c->swept = 0;
-    c->next = (ptr)0;
-
-    vfi->spaces[s].first = c;
-    vfi->spaces[s].total_bytes = 0;
-  }
-
   (void)vfasl_copy_all(vfi, v);
 
-  for (s = 0; s < vspaces_count; s++) {
-    vfasl_chunk *c, *next;
-    for (c = vfi->spaces[s].first; c; c = next) {
-      next = c->next;
-      free(c->bytes);
-      free(c);
-    }
-  }
+  vfasl_free_chunks(vfi);
 
   free_vfasl_hash_table(vfi->graph);
 
@@ -587,8 +602,9 @@ ptr S_to_vfasl(ptr v)
   sort_offsets(vfi->singletonrefs, vfi->singletonref_count);
 
   for (s = 0; s < vspaces_count; s++) {
-    free(vfi->spaces[s].first);
+    free(vfi->spaces[s].first->bytes = (ptr)0);
   }
+  vfasl_free_chunks(vfi);
 
   free_vfasl_hash_table(vfi->graph);
 
@@ -596,6 +612,40 @@ ptr S_to_vfasl(ptr v)
 
   return bv;
 }
+
+/* If compiled code uses `$install-library-entry`, then it can't be
+   combined into a single vfasled object, because the installation
+   needs to be evaluated for laster vfasls. Recognize a non-combinable
+   value as anything that references the C entry or even mentions the
+   symbol `$install-library-entry` (as defined in "library.ss"). If
+   non-boot code mentions the symbol `$install-library-entry`, it just
+   isn't as optimal.
+
+   This is an expensive test, since we perform half of a vfasl
+   encoding to look for `$install-library-entry`. */
+IBOOL S_vfasl_can_combinep(ptr v)
+{
+  IBOOL installs;
+  vfasl_info *vfi;
+
+  fasl_init_entry_tables();
+
+  /* Run a "first pass" */
+  
+  vfi = malloc(sizeof(vfasl_info));
+  vfasl_init(vfi);
+  (void)vfasl_copy_all(vfi, v);
+  vfasl_free_chunks(vfi);
+  free_vfasl_hash_table(vfi->graph);
+
+  installs = vfi->installs_library_entry;
+    
+  free(vfi);
+
+  return !installs;
+}
+
+/*************************************************************/
 
 static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
   seginfo *si;
@@ -825,17 +875,8 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
           n = size_code(CODELEN(pp));
           FIND_ROOM(vfi, vspace_code, type_typed_object, n, p);
           copy_ptrs(type_typed_object, p, pp, n);
-          if (CODERELOC(pp) == (ptr)0) {
-            /* We only get here if we're vfasling code that belongs in
-               the static generation. */
-            ptr l; iptr ln;
-            ln = size_reloc_table(0);
-            FIND_ROOM(vfi, vspace_reloc, typemod, ln, l);
-            RELOCSIZE(l) = 0;
-            RELOCCODE(l) = p;
-            CODERELOC(p) = l;
-            vfasl_register_pointer(vfi, &CODERELOC(p));
-          }
+          if (CODERELOC(pp) == (ptr)0)
+            vfasl_fail(vfi, "code without relocation");
       } else if ((iptr)tf == type_rtd_counts) {
         /* prune counts, since GC will recreate as needed */
           return Sfalse;
@@ -864,6 +905,9 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
         if (CODETYPE(code) & (code_flag_continuation << code_flags_offset)) {
           vfasl_fail(vfi, "continuation");
           return (ptr)0;
+        } else if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+          vfasl_fail(vfi, "mutable closure");
+          return (ptr)0;
         } else {
             iptr len, n;
             len = CLOSLEN(pp);
@@ -880,6 +924,8 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
         INITSYMSPLIST(p) = Snil;
         INITSYMNAME(p) = SYMNAME(pp);
         INITSYMHASH(p) = SYMHASH(pp);
+        if (Sstringp(SYMNAME(pp)))
+          vfasl_check_install_library_entry(vfi, SYMNAME(pp));
     } else if (t == type_flonum) {
         FIND_ROOM(vfi, vspace_data, type_flonum, size_flonum, p);
         FLODAT(p) = FLODAT(pp);
@@ -1116,6 +1162,8 @@ static uptr sweep_code_object(vfasl_info *vfi, ptr co) {
         if ((which_singleton = detect_singleton(obj))) {
           obj = FIX(VFASL_RELOC_SINGLETON(which_singleton));
         } else if ((pos = vfasl_hash_table_ref(S_G.c_entries, obj))) {
+          if ((uptr)pos == CENTRY_install_library_entry)
+            vfi->installs_library_entry = 1;
           obj = FIX(VFASL_RELOC_C_ENTRY(pos));
         } else if ((pos = vfasl_hash_table_ref(S_G.library_entries, obj))) {
           obj = FIX(VFASL_RELOC_LIBRARY_ENTRY(pos));
@@ -1237,6 +1285,20 @@ static void fasl_init_entry_tables()
   }
 
   tc_mutex_release()
+}
+
+static void vfasl_check_install_library_entry(vfasl_info *vfi, ptr name)
+{
+  const char *ile = "$install-library-entry";
+  iptr len = Sstring_length(name), i;
+
+  for (i = 0; i < len; i++) {
+    if (Sstring_ref(name, i) != (unsigned)ile[i])
+      return;
+  }
+
+  if (!ile[i])
+    vfi->installs_library_entry = 1;
 }
 
 /*************************************************************/

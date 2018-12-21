@@ -74,6 +74,7 @@
     ($hand-coded 'nonprocedure-code)))
 
 (define $foreign-entry ($hand-coded '$foreign-entry-procedure))
+;; The name `$install-library-entry` is special to `vfasl-can-combine?`
 (define $install-library-entry
   ($hand-coded '$install-library-entry-procedure))
 
