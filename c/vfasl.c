@@ -176,10 +176,12 @@ static int detect_singleton(ptr p);
 static ptr lookup_singleton(int which);
 
 typedef struct vfasl_hash_table vfasl_hash_table;
-static vfasl_hash_table *make_vfasl_hash_table();
-static void free_vfasl_hash_table(vfasl_hash_table *ht);
+static vfasl_hash_table *make_vfasl_hash_table(IBOOL permanent);
 static void vfasl_hash_table_set(vfasl_hash_table *ht, ptr key, ptr value);
 static ptr vfasl_hash_table_ref(vfasl_hash_table *ht, ptr key);
+
+static ptr vfasl_malloc(uptr sz);
+static ptr vfasl_calloc(uptr sz, uptr n);
 
 static void sort_offsets(vfoff *p, vfoff len);
 
@@ -526,14 +528,14 @@ static void vfasl_init(vfasl_info *vfi) {
   vfi->rtdrefs = (ptr)0;
   vfi->singletonref_count = 0;
   vfi->singletonrefs = (ptr)0;
-  vfi->graph = make_vfasl_hash_table();
+  vfi->graph = make_vfasl_hash_table(0);
   vfi->ptr_bitmap = (ptr)0;
   vfi->installs_library_entry = 0;
 
   for (s = 0; s < vspaces_count; s++) {
     vfasl_chunk *c;
 
-    c = malloc(sizeof(vfasl_chunk));
+    c = vfasl_malloc(sizeof(vfasl_chunk));
     c->bytes = (ptr)0;
     c->length = 0;
     c->used = 0;
@@ -542,19 +544,6 @@ static void vfasl_init(vfasl_info *vfi) {
 
     vfi->spaces[s].first = c;
     vfi->spaces[s].total_bytes = 0;
-  }
-}
-
-static void vfasl_free_chunks(vfasl_info *vfi) {
-  int s;
-  for (s = 0; s < vspaces_count; s++) {
-    vfasl_chunk *c, *next;
-    for (c = vfi->spaces[s].first; c; c = next) {
-      next = c->next;
-      if (c->bytes)
-        free(c->bytes);
-      free(c);
-    }
   }
 }
 
@@ -582,17 +571,13 @@ ptr S_to_vfasl(ptr v)
     v = Sbox(v);
   }
 
-  vfi = malloc(sizeof(vfasl_info));
+  vfi = vfasl_malloc(sizeof(vfasl_info));
 
   vfasl_init(vfi);
 
   /* First pass: determine sizes */
 
   (void)vfasl_copy_all(vfi, v);
-
-  vfasl_free_chunks(vfi);
-
-  free_vfasl_hash_table(vfi->graph);
 
   /* Setup for second pass: allocate to contiguous bytes */
 
@@ -636,7 +621,7 @@ ptr S_to_vfasl(ptr v)
   for (s = 0; s < vspaces_count; s++) {
     vfasl_chunk *c;
 
-    c = malloc(sizeof(vfasl_chunk));
+    c = vfasl_malloc(sizeof(vfasl_chunk));
     c->bytes = p;
     c->length = vfi->spaces[s].total_bytes;
     c->used = 0;
@@ -663,7 +648,7 @@ ptr S_to_vfasl(ptr v)
   vfi->rtdref_count = 0;
   vfi->singletonref_count = 0;
 
-  vfi->graph = make_vfasl_hash_table();
+  vfi->graph = make_vfasl_hash_table(0);
 
   vfi->ptr_bitmap = p;
 
@@ -715,15 +700,6 @@ ptr S_to_vfasl(ptr v)
   sort_offsets(vfi->rtdrefs, vfi->rtdref_count);
   sort_offsets(vfi->singletonrefs, vfi->singletonref_count);
   
-  for (s = 0; s < vspaces_count; s++) {
-    free(vfi->spaces[s].first->bytes = (ptr)0);
-  }
-  vfasl_free_chunks(vfi);
-
-  free_vfasl_hash_table(vfi->graph);
-
-  free(vfi);
-
   return bv;
 }
 
@@ -746,15 +722,11 @@ IBOOL S_vfasl_can_combinep(ptr v)
 
   /* Run a "first pass" */
   
-  vfi = malloc(sizeof(vfasl_info));
+  vfi = vfasl_malloc(sizeof(vfasl_info));
   vfasl_init(vfi);
   (void)vfasl_copy_all(vfi, v);
-  vfasl_free_chunks(vfi);
-  free_vfasl_hash_table(vfi->graph);
 
   installs = vfi->installs_library_entry;
-    
-  free(vfi);
 
   return !installs;
 }
@@ -879,8 +851,8 @@ static ptr vfasl_find_room(vfasl_info *vfi, int s, ITYPE t, iptr n) {
     if (newlen < 4096)
       newlen = 4096;
 
-    c = malloc(sizeof(vfasl_chunk));
-    c->bytes = malloc(newlen);
+    c = vfasl_malloc(sizeof(vfasl_chunk));
+    c->bytes = vfasl_malloc(newlen);
     c->length = newlen;
     c->used = 0;
     c->swept = 0;
@@ -1421,9 +1393,9 @@ static void fasl_init_entry_tables()
   if (!S_G.c_entries) {
     iptr i;
     
-    S_G.c_entries = make_vfasl_hash_table();
-    S_G.library_entries = make_vfasl_hash_table();
-    S_G.library_entry_codes = make_vfasl_hash_table();
+    S_G.c_entries = make_vfasl_hash_table(1);
+    S_G.library_entries = make_vfasl_hash_table(1);
+    S_G.library_entry_codes = make_vfasl_hash_table(1);
 
     for (i = Svector_length(S_G.c_entry_vector); i--; ) {
       ptr entry = Svector_ref(S_G.c_entry_vector, i);
@@ -1510,6 +1482,7 @@ typedef struct hash_entry {
 } hash_entry;
 
 struct vfasl_hash_table {
+  IBOOL permanent;
   uptr count;
   uptr size;
   hash_entry *entries;
@@ -1518,21 +1491,23 @@ struct vfasl_hash_table {
 #define HASH_CODE(p) ((uptr)(p) >> log2_ptr_bytes)
 #define HASH_CODE2(p) (((uptr)(p) >> (log2_ptr_bytes + log2_ptr_bytes)) | 1)
 
-static vfasl_hash_table *make_vfasl_hash_table() {
+static vfasl_hash_table *make_vfasl_hash_table(IBOOL permanent) {
   vfasl_hash_table *ht;
 
-  ht = malloc(sizeof(vfasl_hash_table));
-  
+  if (permanent)
+    ht = malloc(sizeof(vfasl_hash_table));
+  else
+    ht = vfasl_malloc(sizeof(vfasl_hash_table));
+
+  ht->permanent = permanent;
   ht->count = 0;
   ht->size = 16;
-  ht->entries = calloc(sizeof(hash_entry), ht->size);
+  if (permanent)
+    ht->entries = calloc(sizeof(hash_entry), ht->size);
+  else
+    ht->entries = vfasl_calloc(sizeof(hash_entry), ht->size);
 
   return ht;
-}
-
-static void free_vfasl_hash_table(vfasl_hash_table *ht) {
-  free(ht->entries);
-  free(ht);
 }
 
 static void vfasl_hash_table_set(vfasl_hash_table *ht, ptr key, ptr value) {
@@ -1547,14 +1522,19 @@ static void vfasl_hash_table_set(vfasl_hash_table *ht, ptr key, ptr value) {
     
     ht->count = 0;
     ht->size *= 2;
-    ht->entries = calloc(sizeof(hash_entry), ht->size);
+    if (ht->permanent)
+      ht->entries = calloc(sizeof(hash_entry), ht->size);
+    else
+      ht->entries = vfasl_calloc(sizeof(hash_entry), ht->size);
     
     for (i = 0; i < size; i++) {
       if (old_entries[i].key)
         vfasl_hash_table_set(ht, old_entries[i].key, old_entries[i].value);
     }
+
+    if (ht->permanent)
+      free(old_entries);
     
-    free(old_entries);
     size = ht->size;
   }
 
@@ -1583,6 +1563,24 @@ static ptr vfasl_hash_table_ref(vfasl_hash_table *ht, ptr key) {
 
   return ht->entries[hc].value;
 }
+
+/*************************************************************/
+
+static ptr vfasl_malloc(uptr sz) {
+  ptr tc = get_thread_context();
+  ptr p;
+  thread_find_room(tc, typemod, ptr_align(sz), p);
+  return p;
+}
+
+static ptr vfasl_calloc(uptr sz, uptr n) {
+  ptr p;
+  sz *= n;
+  p = vfasl_malloc(sz);
+  memset(p, 0, sz);
+  return p;
+}
+
 
 /*************************************************************/
 
