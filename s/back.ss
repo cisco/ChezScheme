@@ -126,7 +126,7 @@
     (lambda (x)
       (and x #t))))
 
-(define generate-vfasl
+(define compile-vfasl
   ($make-thread-parameter #f
     (lambda (x)
       (and x #t))))

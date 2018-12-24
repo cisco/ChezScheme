@@ -442,7 +442,7 @@
 
 (define (c-print-fasl x p)
   (cond
-   [(generate-vfasl) (c-print-vfasl x p)]
+   [(compile-vfasl) (c-print-vfasl x p)]
    [else
     (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
        (c-build-fasl x t a?)
