@@ -211,7 +211,7 @@ static INT uf_read PROTO((unbufFaslFile uf, octet *s, iptr n));
 static octet uf_bytein PROTO((unbufFaslFile uf));
 static uptr uf_uptrin PROTO((unbufFaslFile uf));
 static ptr fasl_entry PROTO((ptr tc, unbufFaslFile uf));
-static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, IFASLCODE ty, unbufFaslFile uf));
+static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, IFASLCODE ty, uptr offset, uptr len, unbufFaslFile uf));
 static void fillFaslFile PROTO((faslFile f));
 static void bytesin PROTO((octet *s, iptr n, faslFile f));
 static void toolarge PROTO((ptr path));
@@ -304,7 +304,7 @@ ptr S_fasl_read(ptr file, IBOOL gzflag, ptr path) {
   return x;
 }
 
-ptr S_bv_fasl_read(ptr bv, int ty, ptr path) {
+ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
@@ -312,7 +312,7 @@ ptr S_bv_fasl_read(ptr bv, int ty, ptr path) {
   tc_mutex_acquire()
   uffo.path = path;
   uffo.type = UFFO_TYPE_BV;
-  x = bv_fasl_entry(tc, bv, ty, &uffo);
+  x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo);
   tc_mutex_release()
   return x;
 }
@@ -464,12 +464,10 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
 
   if (ty == fasl_type_vfasl_size) {
     if (S_vfasl_boot_mode == -1) {
-      ptr pre = S_cputime();
-      Scompact_heap();
       S_vfasl_boot_mode = 1;
-      printf("pre compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
+      Scompact_heap();
     }
-    x = S_vfasl((ptr)0, uf, ffo.size);
+    x = S_vfasl((ptr)0, uf, 0, ffo.size);
   } else {
     ffo.buf = buf;
     ffo.next = ffo.end = ffo.buf;
@@ -482,17 +480,16 @@ static ptr fasl_entry(ptr tc, unbufFaslFile uf) {
   return x;
 }
 
-static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, unbufFaslFile uf) {
+static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFaslFile uf) {
   ptr x; ptr strbuf = S_G.null_string;
   struct faslFileObj ffo;
 
-  ffo.size = Sbytevector_length(bv);
-
   if (ty == fasl_type_vfasl_size) {
-    x = S_vfasl(bv, (ptr)0, ffo.size);
+    x = S_vfasl(bv, (ptr)0, offset, len);
   } else {
-    ffo.next = ffo.buf = &BVIT(bv, 0);
-    ffo.end = &BVIT(bv, ffo.size);
+    ffo.size = len;
+    ffo.next = ffo.buf = &BVIT(bv, offset);
+    ffo.end = &BVIT(bv, offset + len);
     ffo.uf = uf;
     
     faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);

@@ -94,7 +94,7 @@ extern ptr S_relocation_table PROTO((iptr n));
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
 ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, ptr path));
-ptr S_bv_fasl_read PROTO((ptr bv, int ty, ptr path));
+ptr S_bv_fasl_read PROTO((ptr bv, int ty, uptr offset, uptr len, ptr path));
 /* S_boot_read's f argument is really gzFile, but zlib.h is not included everywhere */
 ptr S_boot_read PROTO((gzFile file, const char *path));
 char *S_format_scheme_version PROTO((uptr n));
@@ -107,7 +107,7 @@ extern int S_fasl_intern_rtd(ptr *x);
 
 /* vfasl.c */
 extern ptr S_to_vfasl PROTO((ptr v));
-extern ptr S_vfasl PROTO((ptr bv, void *stream, iptr len));
+extern ptr S_vfasl PROTO((ptr bv, void *stream, iptr offset, iptr len));
 extern ptr S_vfasl_to PROTO((ptr v));
 extern IBOOL S_vfasl_can_combinep(ptr v);
 

@@ -14,7 +14,7 @@
 ;;; limitations under the License.
 
 ;;; regression and other tests that don't fit somewhere more logical
-
+  
 (define-syntax biglet
   (lambda (x)
     (syntax-case x ()
@@ -2281,6 +2281,50 @@
   (not (#%$fasl-file-equal? "testfile-fatfib1.so" "testfile-fatfib3.so"))
   (error? (#%$fasl-file-equal? "testfile-fatfib1.so" "testfile-fatfib3.so" #t))
 )
+
+(mat vfasl
+  (begin
+    (define-record-type vfasl-demo
+      (fields x y)
+      (nongenerative #{vfasl-demo pfwhk286n2j894o33awcq9er4-0}))
+    (define vfasl-content (list 1 1/2 3.0 4+5i 6.0+7.0i
+                                "apple" 'banana
+                                (make-vfasl-demo 10 "11")
+                                (vector 1 'two "three")
+                                (box 88)
+                                "" '#() '#vu8() (make-fxvector 0)
+                                (string->immutable-string "") (vector->immutable-vector '#())
+                                (bytevector->immutable-bytevector '#vu8())
+                                (fxvector->immutable-fxvector (make-fxvector 0))))
+    (define (same-vfasl-content? v)
+      (andmap (lambda (a b)
+                (or (eqv? a b)
+                    (and (or (and (string? a)
+                                  (positive? (string-length a)))
+                             (and (vector? a)
+                                  (positive? (vector-length a)))
+                             (box? a))
+                         (equal? a b))
+                    (and (vfasl-demo? a)
+                         (vfasl-demo? b)
+                         (equal? (vfasl-demo-x a)
+                                 (vfasl-demo-x b))
+                         (equal? (vfasl-demo-y a)
+                                 (vfasl-demo-y b)))
+                    (printf "~s ~s\n" a b)))
+              vfasl-content
+              v))
+    (compile-to-file (list `(define (vfasled) ',vfasl-content)
+                           `(define (get-vfasled) vfasled)
+                           `(define (call-vfasled) (vfasled)))
+                     "testfile-fasl.so")
+    (vfasl-convert-file "testfile-fasl.so" "testfile-vfasl.so" #f)
+    (load "testfile-vfasl.so")
+    #t)
+  
+  (same-vfasl-content? (vfasled))
+  (eq? vfasled (get-vfasled))
+  (eq? (vfasled) (call-vfasled)))
 
 (mat cost-center
   (error? ; wrong number of arguments

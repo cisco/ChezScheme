@@ -1603,6 +1603,19 @@ as part of a binary-only package.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{vfasl-convert-file}{\categoryprocedure}{(vfasl-convert-file \var{input-path} \var{output-path} \var{base-boots})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+Converts a compiled file to one that may load more quickly, especially
+in the case of a boot file. The converted file is a boot file if
+\var{base-boots} is a list of strings, otherwise \var{base-boots} must
+be \scheme{#f} to create a non-boot file.
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{machine-type}{\categoryprocedure}{(machine-type)}
 \returns the current machine type
 \listlibraries

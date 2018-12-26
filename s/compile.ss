@@ -441,32 +441,10 @@
       [else (c-assembler-output-error x)])))
 
 (define (c-print-fasl x p)
-  (cond
-   [(compile-vfasl) (c-print-vfasl x p)]
-   [else
-    (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
-       (c-build-fasl x t a?)
-       ($fasl-start p t
-         (lambda (p) (c-faslobj x t p a?))))]))
-
-(define (c-vfaslobj x)
-  (let f ([x x])
-    (record-case x
-      [(group) elt*
-       (apply vector (map c-vfaslobj elt*))]
-      [(visit-stuff) elt
-       (cons (constant visit-tag) (c-vfaslobj elt))]
-      [(revisit-stuff) elt
-       (cons (constant revisit-tag) (c-vfaslobj elt))]
-      [else (c-mkcode x)])))
-
-(define c-print-vfasl
-  (let ([->vfasl (foreign-procedure "(cs)to_vfasl" (scheme-object) scheme-object)])
-    (lambda (x p)
-      (let ([bv (->vfasl (c-vfaslobj x))])
-        (put-u8 p (constant fasl-type-vfasl-size))
-        (put-uptr p (bytevector-length bv))
-        (put-bytevector p bv)))))
+  (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
+     (c-build-fasl x t a?)
+     ($fasl-start p t
+       (lambda (p) (c-faslobj x t p a?)))))
 
 (define-record-type visit-chunk
   (nongenerative)

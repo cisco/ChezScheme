@@ -58,6 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Faster loading format (9.5.1)}
+
+The new procedure \scheme{vfasl-convert-file} converts a file to a
+format that can be loaded more quickly, especially for an uncompressed
+boot file.
+
 \subsection{Extracting a subset of hashtable cells (9.5.1)}
 
 The new \scheme{hashtable-cells} function is similar to

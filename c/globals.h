@@ -105,6 +105,10 @@ EXTERN struct {
     ptr null_vector;
     ptr null_fxvector;
     ptr null_bytevector;
+    ptr null_immutable_string;
+    ptr null_immutable_vector;
+    ptr null_immutable_fxvector;
+    ptr null_immutable_bytevector;
     seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];
 
   /* schsig.c */

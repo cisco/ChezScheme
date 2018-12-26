@@ -498,8 +498,6 @@
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump))
 
-(define-constant reloc-force-abs #x100) ; flag to add to other `reloc-` constants
-
 (constant-case ptr-bits
   [(64)
    (define-constant reloc-extended-format #x1)

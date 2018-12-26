@@ -425,7 +425,6 @@ void S_retrofit_nonprocedure_code() {
 
   npc = S_G.nonprocedure_code;
 
-  /* FIXME */
   /* assuming this happens early, before collector has been called, so need look only for generation 0 symbols */
   for (bl = S_G.buckets_of_generation[0]; bl != NULL; bl = bl->cdr) {
     sym = bl->car->sym;

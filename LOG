@@ -1041,3 +1041,7 @@
      gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
      globals.h, externs.h,
      system.stex, 7.ms
+- add vfasl format for faster loading
+     compile.ss, back.ss, library.ss, primdata.ss, cmacros.ss,
+     vfasl.c, fasl.c, alloc.c, scheme.c, intern.c, globals.h, externs.h,
+     Mf-base, misc.ms, system.stex, release_notes.stex

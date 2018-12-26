@@ -94,10 +94,10 @@ static void main_init() {
                  i & 0x10 ? 4 : i & 0x20 ? 5 : i & 0x40 ? 6 : i & 0x80 ? 7 : 0);
     }
 
-    NULLIMMUTABLEVECTOR(tc) = S_null_immutable_vector();
-    NULLIMMUTABLEFXVECTOR(tc) = S_null_immutable_fxvector();
-    NULLIMMUTABLEBYTEVECTOR(tc) = S_null_immutable_bytevector();
-    NULLIMMUTABLESTRING(tc) = S_null_immutable_string();
+    NULLIMMUTABLEVECTOR(tc) = S_G.null_immutable_vector;
+    NULLIMMUTABLEFXVECTOR(tc) = S_G.null_immutable_fxvector;
+    NULLIMMUTABLEBYTEVECTOR(tc) = S_G.null_immutable_bytevector;
+    NULLIMMUTABLESTRING(tc) = S_G.null_immutable_string;
 
     PARAMETERS(tc) = S_G.null_vector;
     for (i = 0 ; i < virtual_register_count ; i += 1) {
@@ -888,11 +888,7 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   i = 0;
   while (i++ < LOADSKIP && S_boot_read(bd[n].file, bd[n].path) != Seof_object);
 
-  ptr pre = S_cputime();
-  uptr reading = 0;
-
   while ((x = S_boot_read(bd[n].file, bd[n].path)) != Seof_object) {
-    reading += UNFIX(S_cputime()) - UNFIX(pre);
     if (loadecho) {
       printf("%ld: ", (long)i);
       fflush(stdout);
@@ -925,10 +921,7 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
       fflush(stdout);
     }
     i += 1;
-    pre = S_cputime();
   }
-
-  printf("load %ld\n", reading);
 
   S_G.load_binary = Sfalse;
   gzclose(bd[n].file);
@@ -1157,13 +1150,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
 
   S_vfasl_boot_mode = 0;
 
-  printf("vfasl %ld %ld / %ld\n", vfasl_load_time, vfasl_fix_time, vfasl_relocs);
-
-  ptr pre = S_cputime();
-
   if (boot_count != 0) Scompact_heap();
-
-  printf("compact %ld\n", UNFIX(S_cputime()) - UNFIX(pre));
 
  /* complete the initialization on the Scheme side */
   p = S_symbol_value(S_intern((const unsigned char *)"$scheme-init"));

@@ -126,11 +126,6 @@
     (lambda (x)
       (and x #t))))
 
-(define compile-vfasl
-  ($make-thread-parameter #f
-    (lambda (x)
-      (and x #t))))
-
 (define $enable-check-prelex-flags
   ($make-thread-parameter #f
     (lambda (x)
