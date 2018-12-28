@@ -230,48 +230,48 @@
 
 (define c-build-fasl
   (lambda (x t a?)
-    (let build ([x x])
+    (let build ([x x] [d 0])
       (record-case x
-         [(object) (x) ($fasl-enter x t a?)]
+         [(object) (x) ($fasl-enter x t a? d)]
          [(closure) func
-          ($fasl-bld-graph x t a?
-            (lambda (x t a?)
-              (build ($c-func-code-record func))))]
+          ($fasl-bld-graph x t a? d #f
+            (lambda (x t a? d)
+              (build ($c-func-code-record func) d)))]
          [(code) stuff
-          ($fasl-bld-graph x t a?
-            (lambda (x t a?)
+          ($fasl-bld-graph x t a? d #f
+            (lambda (x t a? d)
               (record-case x
                 [(code) (func subtype free name arity-mask size code-list info pinfo*)
-                 ($fasl-enter name t a?)
-                 ($fasl-enter arity-mask t a?)
-                 ($fasl-enter info t a?)
-                 ($fasl-enter pinfo* t a?)
+                 ($fasl-enter name t a? d)
+                 ($fasl-enter arity-mask t a? d)
+                 ($fasl-enter info t a? d)
+                 ($fasl-enter pinfo* t a? d)
                  (for-each
                    (lambda (x)
                      (record-case x
-                       [(abs) (n x) (build x)]
+                       [(abs) (n x) (build x d)]
                        [else
                         (constant-case architecture
                           [(x86)
                            (record-case x
-                             [(rel) (n x) (build x)]
+                             [(rel) (n x) (build x d)]
                              [else (void)])]
                           [(x86_64)
                            (record-case x
-                             [(x86_64-jump x86_64-call) (n x) (build x)]
+                             [(x86_64-jump x86_64-call) (n x) (build x d)]
                              [else (void)])]
                           [(arm32)
                            (record-case x
-                             [(arm32-abs arm32-call arm32-jump) (n x) (build x)]
+                             [(arm32-abs arm32-call arm32-jump) (n x) (build x d)]
                              [else (void)])]
                           [(ppc32)
                            (record-case x
-                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x)]
+                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x d)]
                              [else (void)])])]))
                    code-list)])))]
-         [(group) elt* (for-each build elt*)]
-         [(revisit-stuff) elt (build elt)]
-         [(visit-stuff) elt (build elt)]))))
+         [(group) elt* (for-each (lambda (elt) (build elt d)) elt*)]
+         [(revisit-stuff) elt (build elt d)]
+         [(visit-stuff) elt (build elt d)]))))
 
 (include "fasl-helpers.ss")
 
@@ -443,8 +443,8 @@
 (define (c-print-fasl x p)
   (let ([t ($fasl-table)] [a? (or (generate-inspector-information) (eq? ($compile-profile) 'source))])
      (c-build-fasl x t a?)
-     ($fasl-start p t
-       (lambda (p) (c-faslobj x t p a?)))))
+     ($fasl-start x p t
+       (lambda (x p) (c-faslobj x t p a?)))))
 
 (define-record-type visit-chunk
   (nongenerative)
@@ -612,8 +612,8 @@
                         (lambda ()
                           (parameterize ([$target-machine (machine-type)])
                             (let ([t ($fasl-table)])
-                              ($fasl-enter x1 t #t)
-                              ($fasl-start wpoop t (lambda (p) ($fasl-out x1 p t #t))))))))))
+                              ($fasl-enter x1 t #t 0)
+                              ($fasl-start x1 wpoop t (lambda (x p) ($fasl-out x p t #t))))))))))
                 (compile-file-help1 x1 op source-info-string)
                 (when hostop
                   ; the host library file contains expander output possibly augmented with
@@ -623,8 +623,8 @@
                     (lambda ()
                       (parameterize ([$target-machine (machine-type)])
                         (let ([t ($fasl-table)])
-                          ($fasl-enter x1 t #t)
-                          ($fasl-start hostop t (lambda (p) ($fasl-out x1 p t #t)))))))))
+                          ($fasl-enter x1 t #t 0)
+                          ($fasl-start x1 hostop t (lambda (x p) ($fasl-out x p t #t)))))))))
               (cfh0 (+ n 1)))))))))
 
 (define library/program-info?
@@ -1379,8 +1379,8 @@
                     (let ([t ($fasl-table)])
                       (let ([x (fold-left (lambda (outer ir) (with-output-language (Lexpand Outer) `(group ,outer ,ir)))
                                  (car ir*) (cdr ir*))])
-                        ($fasl-enter x t #t)
-                        ($fasl-start wpoop t (lambda (p) ($fasl-out x p t #t)))))))))
+                        ($fasl-enter x t #t 0)
+                        ($fasl-start x wpoop t (lambda (x p) ($fasl-out x p t #t)))))))))
             (close-port wpoop))))))
 
   (define build-required-library-list

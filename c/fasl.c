@@ -962,6 +962,13 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             faslin(tc, &INITCDR(p), t, pstrbuf, f);
             return;
         }
+        case fasl_type_begin: {
+            uptr n = uptrin(f) - 1; ptr v;
+            while (n--)
+              faslin(tc, &v, t, pstrbuf, f);
+            faslin(tc, x, t, pstrbuf, f);
+            return;
+        }
         default:
             S_error2("", "invalid object type ~d in fasl file ~a", FIX(ty), f->uf->path);
     }

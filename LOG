@@ -1045,3 +1045,5 @@
      compile.ss, back.ss, library.ss, primdata.ss, cmacros.ss,
      vfasl.c, fasl.c, alloc.c, scheme.c, intern.c, globals.h, externs.h,
      Mf-base, misc.ms, system.stex, release_notes.stex
+- avoid fasl overflow of C stack
+    fasl.ss, compile.ss, cmacros.ss, fasl.c, 6.ms
