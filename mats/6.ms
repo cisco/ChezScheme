@@ -970,6 +970,46 @@
     '(#t #f #t #t #f #t))
 )
 
+(mat fasl-depth
+  (begin
+    (define fasl-deep-N 100000)
+    (define (check v)
+      (let-values ([(o get) (open-bytevector-output-port)])
+        (fasl-write v o)
+        (equal? v (fasl-read (open-bytevector-input-port (get))))))
+    (define (check-mk mk)
+      (check (let loop ([n fasl-deep-N])
+               (if (zero? n)
+                   'done
+                   (mk (loop (sub1 n)))))))
+    (define-record-type other
+      (fields val))
+    (record-type-equal-procedure (record-type-descriptor other)
+                                 (lambda (a b eql?)
+                                   (eql? (other-val a) (other-val b))))
+    #t)
+
+  (check-mk vector)
+  (check-mk box)
+  (check-mk list)
+  (check-mk (lambda (v) (cons 'x v)))
+  (check-mk make-other)
+
+  ;; Generate a chain of code records:
+  (let-values ([(o get) (open-bytevector-output-port)])
+    (compile-to-port
+     (list
+      `(lambda ()
+         ,(let loop ([n fasl-deep-N])
+            (if (zero? n)
+                ''end
+                `(if (stop?)
+                     'stop
+                     ,(loop (sub1 n)))))))
+     o)
+    (fasl-read (open-bytevector-input-port (get)))
+    #t))
+
 (mat clear-output-port ; test interactively
    (procedure? clear-output-port)
  )

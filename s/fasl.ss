@@ -53,47 +53,47 @@
 (include "fasl-helpers.ss")
 
 (define bld-pair
-   (lambda (x t a?)
-      (bld (car x) t a?)
-      (bld (cdr x) t a?)))
+   (lambda (x t a? d)
+      (bld (car x) t a? d)
+      (bld (cdr x) t a? d)))
 
 (define bld-vector
-   (lambda (x t a?)
+   (lambda (x t a? d)
       (let ([len (vector-length x)])
          (let bldvec ([i 0])
             (unless (fx= i len)
-               (bld (vector-ref x i) t a?)
+               (bld (vector-ref x i) t a? d)
                (bldvec (fx+ i 1)))))))
 
 (define bld-record
-  (lambda (x t a?)
+  (lambda (x t a? d)
     (unless (eq? x #!base-rtd)
-      (really-bld-record x t a?))))
+      (really-bld-record x t a? d))))
 
 (define really-bld-record
-  (lambda (x t a?)
+  (lambda (x t a? d)
     (let ([rtd ($record-type-descriptor x)])
-      (bld rtd t a?)
+      (bld rtd t a? d)
       (do ([flds (rtd-flds rtd) (cdr flds)] [i 0 (+ i 1)])
         ((null? flds))
         (when (memq (fld-type (car flds)) '(scheme-object ptr))
-          (bld ((csv7:record-field-accessor rtd i) x) t a?))))))
+          (bld ((csv7:record-field-accessor rtd i) x) t a? d))))))
 
 (define bld-ht
-  (lambda (x t a?)
+  (lambda (x t a? d)
     (let-values ([(keyvec valvec) (hashtable-entries x)])
       (vector-for-each
         (lambda (key val)
-          (bld key t a?)
-          (bld val t a?))
+          (bld key t a? d)
+          (bld val t a? d))
         keyvec valvec))))
 
 (define bld-box
-   (lambda (x t a?)
-      (bld (unbox x) t a?)))
+   (lambda (x t a? d)
+      (bld (unbox x) t a? d)))
 
 (define bld-simple
-   (lambda (x t a?)
+   (lambda (x t a? d)
       (void)))
 
 (module (bld-graph dump-graph reset-dump-graph)
@@ -129,7 +129,7 @@
             (printf "~10s ~10s ~s\n" entry dup (car cat)))
           vcat ventry vdup))))
   (define bld-graph
-    (lambda (x t a? handler)
+    (lambda (x t a? d inner? handler)
       (let ([a (eq-hashtable-cell (table-hash t) x 'first)])
         (let ([p (cdr a)])
           (cond
@@ -138,8 +138,16 @@
                  (when (fx= (modulo n 10000) 0)
                    (printf "entries = ~s, ba = ~s, count = ~s\n" n (bytes-allocated) (table-count t))))
              (record! ventry x)
-             (set-cdr! a #f)
-             (handler x t a?)]
+             (cond
+              [(fx>= d 500)
+               ;; Limit depth of recursion by lifting to a `fasl-begin` graph:
+               (let ([n (table-count t)])
+                 (set-cdr! a (cons n (if inner? 'inner-begin 'begin)))
+                 (table-count-set! t (fx+ n 1)))
+               (handler x t a? 0)]
+              [else
+               (set-cdr! a #f)
+               (handler x t a? (fx+ d 1))])]
             [(not p)
              (record! vdup x)
              (let ([n (table-count t)])
@@ -148,20 +156,20 @@
   (reset-dump-graph))
 
 (define bld
-   (lambda (x t a?)
+   (lambda (x t a? d)
       (cond
-        [(pair? x) (bld-graph x t a? bld-pair)]
-        [(vector? x) (bld-graph x t a? bld-vector)]
-        [(or (symbol? x) (string? x)) (bld-graph x t a? bld-simple)]
+        [(pair? x) (bld-graph x t a? d #t bld-pair)]
+        [(vector? x) (bld-graph x t a? d #t bld-vector)]
+        [(or (symbol? x) (string? x)) (bld-graph x t a? d #t bld-simple)]
         [(and (annotation? x) (not a?))
-         (bld (annotation-stripped x) t a?)]
-        [(eq-hashtable? x) (bld-graph x t a? bld-ht)]
-        [(symbol-hashtable? x) (bld-graph x t a? bld-ht)]
-        [($record? x) (bld-graph x t a? bld-record)]
-        [(box? x) (bld-graph x t a? bld-box)]
+         (bld (annotation-stripped x) t a? d)]
+        [(eq-hashtable? x) (bld-graph x t a? d #t bld-ht)]
+        [(symbol-hashtable? x) (bld-graph x t a? d #t bld-ht)]
+        [($record? x) (bld-graph x t a? d #t bld-record)]
+        [(box? x) (bld-graph x t a? d #t bld-box)]
         [(or (large-integer? x) (ratnum? x) ($inexactnum? x) ($exactnum? x)
              (fxvector? x) (bytevector? x))
-         (bld-graph x t a? bld-simple)])))
+         (bld-graph x t a? d #t bld-simple)])))
 
 (module (small-integer? large-integer?)
   (define least-small-integer (- (expt 2 31)))
@@ -566,20 +574,53 @@
          [($rtd-counts? x) (wrf-immediate (constant sfalse) p)]
          [else ($oops 'fasl-write "invalid fasl object ~s" x)])))
 
-(define start
-  (lambda (p t proc)
-    (dump-graph)
-    (let-values ([(bv* size)
-                  (let-values ([(p extractor) ($open-bytevector-list-output-port)])
-                    (let ([n (table-count t)])
-                      (unless (fx= n 0)
-                        (put-u8 p (constant fasl-type-graph))
-                        (put-uptr p n)))
-                    (proc p)
-                    (extractor))])
-      (put-u8 p (constant fasl-type-fasl-size))
-      (put-uptr p size)
-      (for-each (lambda (bv) (put-bytevector p bv)) bv*))))
+(module (start)
+  (define start
+    (lambda (x p t proc)
+      (dump-graph)
+      (let-values ([(bv* size)
+                    (let-values ([(p extractor) ($open-bytevector-list-output-port)])
+                      (let ([n (table-count t)])
+                        (unless (fx= n 0)
+                          (put-u8 p (constant fasl-type-graph))
+                          (put-uptr p n)))
+                      (let ([begins (extract-begins t)])
+                        (unless (null? begins)
+                          (put-u8 p (constant fasl-type-begin))
+                          (put-uptr p (fx+ (length begins) 1))
+                          (for-each (lambda (x)
+                                      (if (eq? 'begin (cdr (eq-hashtable-ref (table-hash t) x #f)))
+                                          (proc x p)
+                                          (wrf x p t #t)))
+                                    begins)))
+                      (proc x p)
+                      (extractor))])
+        (put-u8 p (constant fasl-type-fasl-size))
+        (put-uptr p size)
+        (for-each (lambda (bv) (put-bytevector p bv)) bv*))))
+
+  (define (extract-begins t)
+    (let ([ht (table-hash t)])
+      (let-values ([(keys vals) (hashtable-entries ht)])
+        (let ([len (vector-length keys)])
+          (let loop ([i 0] [begins '()])
+            (cond
+             [(fx= i len)
+              ;; Sort so that higher graph numbers are earlier, which
+              ;; achieves the intended effect of limiting recursion.
+              (list-sort (lambda (a b)
+                           (> (car (eq-hashtable-ref ht a #f))
+                              (car (eq-hashtable-ref ht b #f))))
+                         begins)]
+             [else
+              (let ([v (vector-ref vals i)])
+                (cond
+                 [(not v) (loop (fx+ i 1) begins)]
+                 [(or (eq? 'begin (cdr v))
+                      (eq? 'inner-begin (cdr v)))
+                  (loop (fx+ i 1)
+                        (cons (vector-ref keys i) begins))]
+                 [else (loop (fx+ i 1) begins)]))])))))))
 
 (module (fasl-write fasl-file)
   ; when called from fasl-write or fasl-file, pass #t for a? to preserve annotations;
@@ -587,8 +628,8 @@
   (define fasl-one
     (lambda (x p)
       (let ([t (make-table)])
-         (bld x t #t)
-         (start p t (lambda (p) (wrf x p t #t))))))
+         (bld x t #t 0)
+         (start x p t (lambda (x p) (wrf x p t #t))))))
 
   (define-who fasl-write
     (lambda (x p)
@@ -623,8 +664,8 @@
   (lambda (x p)
     (emit-header p (constant machine-type-any))
     (let ([t (make-table)])
-      (bld-graph x t #f really-bld-record)
-      (start p t (lambda (p) (wrf-graph x p t #f really-wrf-record))))))
+      (bld-graph x t #f 0 #t really-bld-record)
+      (start x p t (lambda (x p) (wrf-graph x p t #f really-wrf-record))))))
 
 ($fasl-target (make-target bld-graph bld wrf start make-table wrf-graph fasl-base-rtd fasl-write fasl-file))
 )
@@ -635,10 +676,10 @@
       (let ([target ($fasl-target)])
         (assert target)
         target)))
-  (set! $fasl-bld-graph (lambda (x t a? handler) ((target-fasl-bld-graph (fasl-target)) x t a? handler)))
-  (set! $fasl-enter (lambda (x t a?) ((target-fasl-enter (fasl-target)) x t a?)))
+  (set! $fasl-bld-graph (lambda (x t a? d inner? handler) ((target-fasl-bld-graph (fasl-target)) x t a? d inner? handler)))
+  (set! $fasl-enter (lambda (x t a? d) ((target-fasl-enter (fasl-target)) x t a? d)))
   (set! $fasl-out (lambda (x p t a?) ((target-fasl-out (fasl-target)) x p t a?)))
-  (set! $fasl-start (lambda (p t proc) ((target-fasl-start (fasl-target)) p t proc)))
+  (set! $fasl-start (lambda (x p t proc) ((target-fasl-start (fasl-target)) x p t proc)))
   (set! $fasl-table (lambda () ((target-fasl-table (fasl-target)))))
   (set! $fasl-wrf-graph (lambda (x p t a? handler) ((target-fasl-wrf-graph (fasl-target)) x p t a? handler)))
   (set! $fasl-base-rtd (lambda (x p) ((target-fasl-base-rtd (fasl-target)) x p)))
