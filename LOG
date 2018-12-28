@@ -1027,3 +1027,5 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- avoid fasl overflow of C stack
+    fasl.ss, compile.ss, cmacros.ss, fasl.c, 6.ms
