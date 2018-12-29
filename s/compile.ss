@@ -1602,7 +1602,7 @@
           (on-reset (delete-file out-file #f)
             (on-reset (close-port op)
               (when bootfile*
-                (emit-boot-header op (constant machine-type) bootfile*))
+                (emit-boot-header op (constant machine-type-name) bootfile*))
               (let ([ip ($open-file-input-port who in-file (file-options compressed))])
                 (on-reset (close-port ip)
                   (let* ([write-out (lambda (x)

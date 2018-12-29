@@ -321,11 +321,11 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
   } while (0)
 #define SPACE_PTR(off) ptr_add(vspaces[s2], (off) - offset2)
 
-  /* Fix up pointers. The initiaal content has all pointers relative to
-     the start of the data. In not-to-static mode, we can just add the
-     `data` address to all pointers. In to-static mode, since the
-     spaces may be discontiguous, use `find_pointer_from_offset`. */
-  if (to_static) {
+  /* Fix up pointers. The initial content has all pointers relative to
+     the start of the data. Since the spaces of referenced pointers
+     may be discontiguous, use `find_pointer_from_offset` to get each
+     new pointer. */
+  {
     SPACE_OFFSET_DECLS;
     uptr p_off = 0;
     while (bm != bm_end) {
@@ -349,25 +349,6 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       MAYBE_FIXUP(7);
 
 #     undef MAYBE_FIXUP
-      bm++;
-    }
-  } else {
-    ptr *p = (ptr *)data;
-    while (bm != bm_end) {
-      octet m = *bm;
-#     define MAYBE_FIXUP(i) if (m & (1 << i)) p[i] = ptr_add(p[i], (uptr)data)
-
-      MAYBE_FIXUP(0);
-      MAYBE_FIXUP(1);
-      MAYBE_FIXUP(2);
-      MAYBE_FIXUP(3);
-      MAYBE_FIXUP(4);
-      MAYBE_FIXUP(5);
-      MAYBE_FIXUP(6);
-      MAYBE_FIXUP(7);
-
-#     undef MAYBE_FIXUP
-      p += byte_bits;
       bm++;
     }
   }
