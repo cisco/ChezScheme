@@ -222,6 +222,7 @@ typedef unsigned long long U64;
 #define fasl_type_symbol 0x2
 #define fasl_type_symbol_hashtable 0x20
 #define fasl_type_vector 0x4
+#define fasl_type_vfasl_size 0x15
 #define fasl_type_visit 0x22
 #define fasl_type_weak_pair 0x1E
 #define fixnum_bits 0x3D
