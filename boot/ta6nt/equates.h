@@ -185,6 +185,7 @@ typedef unsigned long long U64;
 #define fasl_fld_u8 0x1
 #define fasl_header #vu8(0 0 0 0 99 104 101 122)
 #define fasl_type_base_rtd 0x1A
+#define fasl_type_begin 0x29
 #define fasl_type_box 0x1
 #define fasl_type_bytevector 0x1D
 #define fasl_type_closure 0x6

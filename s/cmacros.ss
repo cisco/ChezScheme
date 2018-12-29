@@ -455,6 +455,8 @@
 (define-constant fasl-type-immutable-bytevector 39)
 (define-constant fasl-type-immutable-box 40)
 
+(define-constant fasl-type-begin 41)
+
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
 (define-constant fasl-fld-i16 2)
