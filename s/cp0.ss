@@ -755,6 +755,14 @@
            (bump sc 1)
            `(if ,e1 ,e2 ,e3)])))
 
+    (define make-nontail
+      (lambda (ctxt e)
+        (if (or (not (eq? (app-ctxt ctxt) 'tail))
+                (single-valued-nontail? e))
+            e
+            (let ([tmp (cp0-make-temp #f)])
+              (build-let (list tmp) (list e) (build-ref tmp))))))
+
     (define result-exp
       (lambda (e)
         (nanopass-case (Lsrc Expr) e
@@ -879,7 +887,7 @@
             ((ids->do-clause '()) clause)
             #t))))
 
-    (module (pure? ivory? simple? simple/profile? boolean-valued?)
+    (module (pure? ivory? simple? simple/profile? boolean-valued? single-valued-nontail?)
       (define-syntax make-$memoize
         (syntax-rules ()
           [(_ flag-known flag)
@@ -1140,6 +1148,43 @@
               [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #f]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #f]
               [(pariah) #f]
+              [else ($oops who "unrecognized record ~s" e)]))))
+
+      (define-who single-valued-nontail?
+        (lambda (e)
+          (with-memoize (single-valued-nontail-known single-valued-nontail) e
+            ; known to produce a single value, and does not observe
+            ; or affect the immediate continuation frame (so removing
+            ; (an enclosing frame would be ok)
+            (nanopass-case (Lsrc Expr) e
+              [(quote ,d) #t]
+              [(call ,preinfo ,e ,e* ...)
+               (nanopass-case (Lsrc Expr) e
+                 [,pr (all-set? (prim-mask single-valued) (primref-flags pr))]
+                 [(case-lambda ,preinfo1 (clause (,x* ...) ,interface ,body))
+                  (guard (fx= interface (length e*)))
+                  (memoize (single-valued-nontail? body))]
+                 [else #f])]
+              [(ref ,maybe-src ,x) #t]
+              [(case-lambda ,preinfo ,cl* ...) #t]
+              [(if ,e1 ,e2 ,e3) (memoize (and (single-valued-nontail? e2) (single-valued-nontail? e3)))]
+              [(seq ,e1 ,e2) (memoize (single-valued-nontail? e2))]
+              [(set! ,maybe-src ,x ,e) #t]
+              [(immutable-list (,e* ...) ,e) #t]
+              [(letrec ([,x* ,e*] ...) ,body) (memoize (single-valued-nontail? body))]
+              [(letrec* ([,x* ,e*] ...) ,body) (memoize (single-valued-nontail? body))]
+              [,pr #t]
+              [(record-cd ,rcd ,rtd-expr ,e) #t]
+              [(record-ref ,rtd ,type ,index ,e) #t]
+              [(record-set! ,rtd ,type ,index ,e1 ,e2) #t]
+              [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #t]
+              [(record-type ,rtd ,e) #t]
+              [(record ,rtd ,rtd-expr ,e* ...) #t]
+              [(pariah) #t]
+              [(profile ,src) #t]
+              [(cte-optimization-loc ,box ,e) (memoize (single-valued-nontail? e))]
+              [(moi) #t]
+              [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
               [else ($oops who "unrecognized record ~s" e)])))))
 
     (define find-call-lambda-clause
@@ -1271,7 +1316,9 @@
                    [(and (= (length id*) 1)
                          (nanopass-case (Lsrc Expr) body
                            [(ref ,maybe-src ,x) (eq? x (car id*))]
-                           [else #f]))
+                           [else #f])
+                         (or (not (eq? (app-ctxt ctxt) 'tail))
+                             (single-valued-nontail? (car rhs*))))
                     ; (let ((x e)) x) => e
                     ; x is clearly not assigned, even if flags are polluted and say it is
                     (car rhs*)]
@@ -1609,7 +1656,7 @@
                [else (residualize-ref maybe-src id sc)])]
             [,pr
               (context-case ctxt
-                [(value)
+                [(value tail)
                  (if (all-set? (prim-mask (or primitive proc)) (primref-flags pr))
                      rhs
                      (residualize-ref maybe-src id sc))]
@@ -2117,9 +2164,9 @@
         [args #f])
 
       (define-inline 2 (cons* list* values append append!)
-        [(x) (let ((xval (value-visit-operand! x)))
+        [(x) (begin
                (residualize-seq (list x) '() ctxt)
-               xval)]
+               (make-nontail ctxt (value-visit-operand! x)))]
         [args #f])
 
       (define-inline 2 vector
@@ -4173,19 +4220,19 @@
             (and (not (null? e*))
                  (begin
                    (residualize-seq '() (list ?x) ctxt)
-                   (car e*)))]
+                   (make-nontail ctxt (car e*))))]
            [(call ,preinfo ,pr ,e1 ,e2)
             (guard (eq? (primref-name pr) 'cons))
             (residualize-seq (list ?x) '() ctxt)
             (non-result-exp (operand-value ?x)
-              (make-seq (app-ctxt ctxt) e2 e1))]
+              (make-seq (app-ctxt ctxt) e2 (make-nontail ctxt e1)))]
            [(call ,preinfo ,pr ,e* ...)
             (guard (memq (primref-name pr) '(list list* cons*)) (not (null? e*)))
             (residualize-seq (list ?x) '() ctxt)
             (non-result-exp (operand-value ?x)
               (fold-right
                 (lambda (e1 e2) (make-seq (app-ctxt ctxt) e1 e2))
-                (car e*)
+                (make-nontail ctxt (car e*))
                 (cdr e*)))]
            [else #f])])
 
@@ -4203,7 +4250,7 @@
             (guard (eq? (primref-name pr) 'cons))
             (residualize-seq (list ?x) '() ctxt)
             (non-result-exp (operand-value ?x)
-              (make-seq (app-ctxt ctxt) e1 e2))]
+              (make-seq (app-ctxt ctxt) e1 (make-nontail ctxt e2)))]
            [(call ,preinfo ,pr ,e* ...)
             (guard (eq? (primref-name pr) 'list) (not (null? e*)))
             (residualize-seq (list ?x) '() ctxt)
@@ -4233,7 +4280,7 @@
                        (residualize-seq (list ?x ?i) '() ctxt)
                        (non-result-exp (operand-value ?i) ; do first ...
                          (non-result-exp (operand-value ?x) ; ... so we keep ?x related side effects together
-                           e)))))))
+                           (make-nontail ctxt e))))))))
 
         (define tryref
           (lambda (ctxt ?x ?i seqprim maybe-pred)
@@ -4545,7 +4592,7 @@
            (let ([x ($symbol-name name)])
              (if (pair? x) (cdr x) x))))
        (context-case ctxt
-         [(value)
+         [(value tail)
           (bump sc 1)
           `(case-lambda ,preinfo
              ,(let f ([cl* cl*] [mask 0])
@@ -4558,7 +4605,7 @@
                              (f (cdr cl*) new-mask)
                              (cons
                                (with-extended-env ((env x*) (env x* #f))
-                                 `(clause (,x* ...) ,interface ,(cp0 body 'value env sc wd #f name)))
+                                 `(clause (,x* ...) ,interface ,(cp0 body 'tail env sc wd #f name)))
                                (f (cdr cl*) new-mask))))])))
              ...)]
          [(effect) void-rec]
@@ -4591,11 +4638,13 @@
                                   (make-if ctxt sc e1
                                     true-rec
                                     (do-e3))]))
-                             (if (eq? (app-ctxt ctxt) 'value)
-                                 (let ([e1 (value-visit-operand! (car (app-opnds ctxt)))])
-                                   (and (boolean-valued? e1) (finish e1)))
-                                 (and (eq? (app-ctxt ctxt) 'test)
-                                      (finish (test-visit-operand! (car (app-opnds ctxt)))))))]
+                             (let ([r-ctxt (app-ctxt ctxt)])
+                               (if (or (eq? r-ctxt 'value)
+                                       (eq? r-ctxt 'tail))
+                                   (let ([e1 (visit-operand! (car (app-opnds ctxt)) r-ctxt)])
+                                     (and (boolean-valued? e1) (finish e1)))
+                                   (and (eq? (app-ctxt ctxt) 'test)
+                                        (finish (test-visit-operand! (car (app-opnds ctxt))))))))]
                           [else #f]))
                    (cp0-let preinfo ids body ctxt env sc wd name moi))]
               [() (cp0 ir 'value env sc wd name moi)]))])]
@@ -4604,7 +4653,7 @@
       [(letrec* ([,x* ,e*] ...) ,body)
        (cp0-rec-let #t x* e* body ctxt env sc wd name moi)]
       [,pr (context-case ctxt
-             [(value) (bump sc 1) pr]
+             [(value tail) (bump sc 1) pr]
              [(effect) void-rec]
              [(test)
               (if (all-set? (prim-mask proc) (primref-flags pr))
@@ -4613,16 +4662,16 @@
              [(app) (fold-primref pr ctxt sc wd name moi)])]
       [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type)
        (context-case ctxt
-         [(value app) (bump sc 1) `(foreign (,conv* ...) ,name ,(cp0 e 'value env sc wd #f moi) (,arg-type* ...) ,result-type)]
+         [(value tail app) (bump sc 1) `(foreign (,conv* ...) ,name ,(cp0 e 'value env sc wd #f moi) (,arg-type* ...) ,result-type)]
          [(effect test) (cp0 `(seq ,e ,true-rec) ctxt env sc wd #f moi)])]
       [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type)
        (context-case ctxt
-         [(value app) (bump sc 1) `(fcallable (,conv* ...) ,(cp0 e 'value env sc wd #f moi) (,arg-type* ...) ,result-type)]
+         [(value tail app) (bump sc 1) `(fcallable (,conv* ...) ,(cp0 e 'value env sc wd #f moi) (,arg-type* ...) ,result-type)]
          [(effect) (cp0 e 'effect env sc wd #f moi)]
          [(test) (make-seq ctxt (cp0 e 'effect env sc wd #f moi) true-rec)])]
       [(record ,rtd ,rtd-expr ,e* ...)
        (context-case ctxt
-         [(value app)
+         [(value tail app)
           (let ([rtd-expr (cp0 rtd-expr 'value env sc wd #f moi)]
                 [e* (map (lambda (e) (cp0 e 'value env sc wd #f moi)) e*)])
             (or (nanopass-case (Lsrc Expr) (result-exp rtd-expr)
@@ -4728,7 +4777,7 @@
        (fluid-let ([likely-to-be-compiled? ltbc?]
                    [opending-list '()]
                    [cp0-info-hashtable (make-weak-eq-hashtable)])
-         (cp0 x 'value empty-env (new-scorer) (new-watchdog) #f #f))]))))
+         (cp0 x 'tail empty-env (new-scorer) (new-watchdog) #f #f))]))))
 
 ; check to make sure all required handlers were seen, after expansion of the
 ; expression above has been completed

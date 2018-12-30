@@ -8757,7 +8757,7 @@
                              ;; but tell `$foreign-procedure` that the result is actually an & form
                              #`((lambda (r) (void)) #,(datum->syntax #'foreign-procedure result-type))]
                             [else
-                             #`(values #,(datum->syntax #'foreign-procedure result-type))])])]
+                             #`(begin #,(datum->syntax #'foreign-procedure result-type))])])]
                       [([extra ...] [extra-arg ...] [extra-check ...])
                        ;; When the result type is `(& <ftype>)`, the `$foreign-procedure` result
                        ;; expects an extra argument as a `(* <ftype>)` that it uses to store the
