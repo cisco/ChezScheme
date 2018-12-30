@@ -1977,178 +1977,182 @@
  )
 
 (mat cp0-car/cdr
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+  (begin
+    (define (expansion-matches? src expect)
+      ;; Check that expansion matches or doesn't match under various conditions.
+      ;; Expansion should not match in safe mode for expression involving the names
+      ;; `$xxx`, `$yyy`, and `$zzz`, but it should match when those are wrapped with
+      ;; `add1` (whcih makes the expression known-single-valued).
+      ;; The names `$nontail-xxx`, `$nontail-yyy`, and `$nontail-zzz` must similarly
+      ;; be wrapped to match in either safe or unsafe mode, since unsafe mode is obliged
+      ;; to preserve non-tailness.
+      ;; Other names, including `$xxx-ok`, can match without wrapping.
+      (define (contains-id? id l)
+        (or (eq? id l)
+            (and (pair? l) (or (contains-id? id (car l)) (contains-id? id (cdr l))))))
+      (define (primitive->level l)
+        (cond
+         [(pair? l)
+          (if (and (eq? (car l) '$primitive)
+                   (null? (cddr l)))
+              (cons* (car l) (if (= (optimize-level) 3) 3 2) (cdr l))
+              (cons (primitive->level (car l)) (primitive->level (cdr l))))]
+         [else l]))
+      (define (add-add1s l around-ids)
+        (cond
+         [(pair? l)
+          (if (memq (car l) around-ids)
+              `(#%add1 ,l)
+              (cons (add-add1s (car l) around-ids) (add-add1s (cdr l) around-ids)))]
+         [else l]))      
+      (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+        (let* ([nontail-ids '($nontail-xxx $nontail-yyy $nontail-zzz)]
+               [non-nontail-ids '($xxx $yyy $zzz)]
+               [all-ids (if (= (optimize-level) 3)
+                            nontail-ids
+                            (append non-nontail-ids nontail-ids))])
+          (and (if (andmap (lambda (id) (not (contains-id? id src))) all-ids)
+                   (equivalent-expansion? (expand/optimize src)
+                                          (primitive->level expect))
+                   (not (equivalent-expansion? (expand/optimize src)
+                                               (primitive->level expect))))
+               (equivalent-expansion? (expand/optimize (add-add1s src all-ids))
+                                      (primitive->level (add-add1s expect all-ids)))
+               ;; Try subsets:
+               (andmap (lambda (ids)
+                         (if (ormap (lambda (id) (and (not (member id ids)) (contains-id? id src))) all-ids)
+                             (not (equivalent-expansion? (expand/optimize (add-add1s src ids))
+                                                         (primitive->level (add-add1s expect ids))))
+                             (equivalent-expansion? (expand/optimize (add-add1s src ids))
+                                                    (primitive->level (add-add1s expect ids)))))
+                       (let loop ([ids all-ids])
+                         (if (null? ids)
+                             '()
+                             (let ([subs (loop (cdr ids))])
+                               (append (list (list (car ids)))
+                                       subs
+                                       (map (lambda (sub) (cons (car ids) sub)) subs))))))))))
+    #t)
+  (expansion-matches?
+    '(begin (#%write 'a)
            ((begin (#%write 'b) #%car)
             (begin (#%write 'c)
               ((begin (#%write 'd) #%cons)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'f) ($yyy) (#3%write 'e) ($xxx))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'f) ($yyy) (#2%write 'e) ($xxx))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+               (begin (#%write 'e) ($nontail-xxx))
+               (begin (#%write 'f) ($yyy))))))
+    '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'f) ($yyy) (#%write 'e) ($nontail-xxx)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%car)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'f) ($yyy) (#3%write 'g) ($zzz) (#3%write 'e) ($xxx))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'f) ($yyy) (#2%write 'g) ($zzz) (#2%write 'e) ($xxx))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%cons)
+                    (begin (#%write 'e) ($nontail-xxx))
+                    (begin (#%write 'f) ($yyy))))))
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'f) ($yyy) (#%write 'e) ($nontail-xxx)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%car)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
+                   ((begin (#%write 'd) #%list)
+                    (begin (#%write 'e) ($nontail-xxx))
+                    (begin (#%write 'f) ($yyy))
+                    (begin (#%write 'g) ($zzz))))))
     ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
     ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'f) ($yyy) (#3%write 'g) ($zzz) (#3%write 'e) ($xxx))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'f) ($yyy) (#2%write 'g) ($zzz) (#2%write 'e) ($xxx))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'f) ($yyy) (#%write 'g) ($zzz) (#%write 'e) ($nontail-xxx)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%car)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%cons*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'f) ($yyy) (#3%write 'g) ($zzz) (#3%write 'e) ($xxx))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'f) ($yyy) (#2%write 'g) ($zzz) (#2%write 'e) ($xxx))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%list*)
+                    (begin (#%write 'e) ($nontail-xxx))
+                    (begin (#%write 'f) ($yyy))
+                    (begin (#%write 'g) ($zzz))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'f) ($yyy) (#%write 'g) ($zzz) (#%write 'e) ($nontail-xxx)))
+  (expansion-matches?
+   '(begin (#%write 'a)
+           ((begin (#%write 'b) #%car)
+            (begin (#%write 'c)
+                   ((begin (#%write 'd) #%cons*)
+                    (begin (#%write 'e) ($nontail-xxx))
+                    (begin (#%write 'f) ($yyy))
+                    (begin (#%write 'g) ($zzz))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'f) ($yyy) (#%write 'g) ($zzz) (#%write 'e) ($nontail-xxx)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%cons)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%cons)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($nontail-yyy))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%list (begin (#3%write 'f) ($yyy)) (begin (#3%write 'g) ($zzz))))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%list (begin (#2%write 'f) ($yyy)) (begin (#2%write 'g) ($zzz))))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%list)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($yyy-ok))
+                    (begin (#%write 'g) ($zzz-ok))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%list (begin (#%write 'f) ($yyy-ok)) (begin (#%write 'g) ($zzz-ok)))))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%list* (begin (#3%write 'f) ($yyy)) (begin (#3%write 'g) ($zzz))))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%list* (begin (#2%write 'f) ($yyy)) (begin (#2%write 'g) ($zzz))))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%list*)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($yyy-ok))
+                    (begin (#%write 'g) ($zzz-ok))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%list* (begin (#%write 'f) ($yyy-ok)) (begin (#%write 'g) ($zzz-ok)))))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%cons*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))
-               (begin (#%write 'g) ($zzz))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%cons* (begin (#3%write 'f) ($yyy)) (begin (#3%write 'g) ($zzz))))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%cons* (begin (#2%write 'f) ($yyy)) (begin (#2%write 'g) ($zzz))))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%cons*)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($yyy-ok))
+                    (begin (#%write 'g) ($zzz-ok))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%cons* (begin (#%write 'f) ($yyy-ok)) (begin (#%write 'g) ($zzz-ok)))))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%list*)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($nontail-yyy))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%cons*)
-               (begin (#%write 'e) ($xxx))
-               (begin (#%write 'f) ($yyy))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%cons*)
+                    (begin (#%write 'e) ($xxx))
+                    (begin (#%write 'f) ($nontail-yyy))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%list*)
-               (begin (#%write 'e) ($xxx))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%cdr (begin (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx))))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%cdr (begin (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx))))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize
-        '(begin (#%write 'a)
+                   ((begin (#%write 'd) #%list*)
+                    (begin (#%write 'e) ($xxx-ok))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%cdr (begin (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok)))))
+  (expansion-matches?
+   '(begin (#%write 'a)
            ((begin (#%write 'b) #%cdr)
             (begin (#%write 'c)
-              ((begin (#%write 'd) #%cons*)
-               (begin (#%write 'e) ($xxx))))))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%cdr (begin (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx))))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%cdr (begin (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx))))))
+                   ((begin (#%write 'd) #%cons*)
+                    (begin (#%write 'e) ($xxx-ok))))))
+    ; other possibilities exist...
+   '(begin (#%write 'a) (#%write 'b) (#%cdr (begin (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok)))))
  )
 
 (mat cp0-seq-ref
@@ -2182,438 +2186,326 @@
       (expand/optimize
         '(string-ref (string #\1 #\2 #\3) 1)))
     #\2)
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) vector-ref)
             (begin (write 'c)
               ((begin (write 'd) vector)
                (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
+               (begin (write 'f) ($nontail-yyy))
                (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+            (begin (write 'h) 1)))
+    ; other possibilities exist ...
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'g) ($zzz) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) vector-ref)
             (begin (write 'c)
               ((begin (write 'd) vector)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 3)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 3)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%vector-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%vector-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
-               (#3%vector
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 3)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%vector-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%vector
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 3)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+               (#%write 'c)
+               (#%write 'd)
+               (#%vector
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 3))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) list-ref)
             (begin (write 'c)
               ((begin (write 'd) list)
                (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
+               (begin (write 'f) ($nontail-yyy))
                (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'g) ($zzz) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) list-ref)
             (begin (write 'c)
               ((begin (write 'd) list*)
                (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
+               (begin (write 'f) ($nontail-yyy))
                (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'g) ($zzz) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) list-ref)
             (begin (write 'c)
               ((begin (write 'd) cons*)
                (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
+               (begin (write 'f) ($nontail-yyy))
                (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) ($yyy))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx) (#%write 'g) ($zzz) (#%write 'f) ($nontail-yyy)))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) list-ref)
             (begin (write 'c)
               ((begin (write 'd) cons*)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 2)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 2)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%list-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%list-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
-               (#3%cons*
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 2)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%list-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%cons*
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 2)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+               (#%write 'c)
+               (#%write 'd)
+               (#%cons*
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 2))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
               ((begin (write 'd) string)
-               (begin (write 'e) ($xxx))
+               (begin (write 'e) ($xxx-ok))
                (begin (write 'f) #\y)
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) #\y)
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) #\y)))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) #\y)
+        '(begin
+           (#%write 'a)
+           (#%write 'b)
+           (#%string-ref
+             (begin
+               (#%write 'c)
+               (#%write 'd)
+               (#%string
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) #\y)
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
               ((begin (write 'd) string)
-               (begin (write 'e) ($xxx))
+               (begin (write 'e) ($xxx-ok))
                (begin (write 'f) 'oops)
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) 'oops)
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) 'oops)
         '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%string-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%string-ref
              (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%string
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) 'oops)
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
-        '(begin (write 'a)
+               (#%write 'c)
+               (#%write 'd)
+               (#%string
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) 'oops)
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
+        `(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
               ((begin (write 'd) string)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) (,(if (= (optimize-level) 3) '$nontail-yyy '$yyy-ok)))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) ($nontail-yyy))
         '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%string-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%string-ref
              (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%string
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+               (#%write 'c)
+               (#%write 'd)
+               (#%string
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
               ((begin (write 'd) #2%string)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%string-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%string-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
+               (#%write 'c)
+               (#%write 'd)
                (#2%string
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 1)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%string-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%string
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
               ((begin (write 'd) string)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 3)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 3)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%string-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%string-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
-               (#3%string
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 3)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%string-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%string
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 3)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+               (#%write 'c)
+               (#%write 'd)
+               (#%string
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 3))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
               ((begin (write 'd) fxvector)
-               (begin (write 'e) ($xxx))
+               (begin (write 'e) ($xxx-ok))
                (begin (write 'f) 121)
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) 121)
-        '(begin (#2%write 'a) (#2%write 'b) (#2%write 'h) (#2%write 'c) (#2%write 'd) (#2%write 'e) ($xxx) (#2%write 'g) ($zzz) (#2%write 'f) 121)))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) 121)
+        '(begin
+           (#%write 'a)
+           (#%write 'b)
+           (#%fxvector-ref
+             (begin
+               (#%write 'c)
+               (#%write 'd)
+               (#%fxvector
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) 121)
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
               ((begin (write 'd) fxvector)
-               (begin (write 'e) ($xxx))
+               (begin (write 'e) ($xxx-ok))
                (begin (write 'f) 'oops)
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) 'oops)
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) 'oops)
         '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%fxvector-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%fxvector-ref
              (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%fxvector
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) 'oops)
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
-        '(begin (write 'a)
+               (#%write 'c)
+               (#%write 'd)
+               (#%fxvector
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) 'oops)
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
+        `(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
               ((begin (write 'd) fxvector)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) (,(if (= (optimize-level) 3) '$nontail-yyy '$yyy-ok)))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
     (if (= (optimize-level) 3)
-        '(begin (#3%write 'a) (#3%write 'b) (#3%write 'h) (#3%write 'c) (#3%write 'd) (#3%write 'e) ($xxx) (#3%write 'g) ($zzz) (#3%write 'f) ($yyy))
+        '(begin (#%write 'a) (#%write 'b) (#%write 'h) (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok) (#%write 'g) ($zzz-ok) (#%write 'f) ($nontail-yyy))
         '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%fxvector-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%fxvector-ref
              (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%fxvector
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+               (#%write 'c)
+               (#%write 'd)
+               (#%fxvector
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1)))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
               ((begin (write 'd) #2%fxvector)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 1)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 1)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%fxvector-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%fxvector-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
+               (#%write 'c)
+               (#%write 'd)
                (#2%fxvector
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 1)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%fxvector-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%fxvector
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 1)))))
-  (equivalent-expansion?
-    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level (max (optimize-level) 2)])
-      (expand/optimize
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 1))))
+  (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
               ((begin (write 'd) fxvector)
-               (begin (write 'e) ($xxx))
-               (begin (write 'f) ($yyy))
-               (begin (write 'g) ($zzz))))
-            (begin (write 'h) 3)))))
-    ; other possibilities exist but are too many to list and too difficult to construct with $permutations.
-    ; if you see a problem, convert to use $check-writes (defined above)
-    (if (= (optimize-level) 3)
+               (begin (write 'e) ($xxx-ok))
+               (begin (write 'f) ($yyy-ok))
+               (begin (write 'g) ($zzz-ok))))
+            (begin (write 'h) 3)))
+    ; other possibilities exist...
         '(begin
-           (#3%write 'a)
-           (#3%write 'b)
-           (#3%fxvector-ref
+           (#%write 'a)
+           (#%write 'b)
+           (#%fxvector-ref
              (begin
-               (#3%write 'c)
-               (#3%write 'd)
-               (#3%fxvector
-                 (begin (#3%write 'e) ($xxx))
-                 (begin (#3%write 'f) ($yyy))
-                 (begin (#3%write 'g) ($zzz))))
-             (begin (#3%write 'h) 3)))
-        '(begin
-           (#2%write 'a)
-           (#2%write 'b)
-           (#2%fxvector-ref
-             (begin
-               (#2%write 'c)
-               (#2%write 'd)
-               (#2%fxvector
-                 (begin (#2%write 'e) ($xxx))
-                 (begin (#2%write 'f) ($yyy))
-                 (begin (#2%write 'g) ($zzz))))
-             (begin (#2%write 'h) 3)))))
+               (#%write 'c)
+               (#%write 'd)
+               (#%fxvector
+                 (begin (#%write 'e) ($xxx-ok))
+                 (begin (#%write 'f) ($yyy-ok))
+                 (begin (#%write 'g) ($zzz-ok))))
+             (begin (#%write 'h) 3))))
  )
 
 (mat let-pushing
@@ -2827,4 +2719,104 @@
       (expand/optimize
         `(lambda (x) (= x x))) ; x could be +nan.0
       `(lambda (x) (($primitive ,(if (fx= (optimize-level) 3) 3 2) =) x x))))
+)
+
+(mat cp0-non-tail
+  ;; Make sure that an expression that might depend on a specific
+  ;; continuation is not moved out of its continuation --- that is,
+  ;; that it's not moved from non-taul to tail position within a
+  ;; function. This constaint applies even with optimization level 3,
+  ;; since it's about the behavior of programs without errors. Also
+  ;; make sure that redudant wrappers are not left around expressions
+  ;; where the context otherwise enforces a single-valued result.
+  (begin
+    (define (simplify-only-nontail? mk)
+      (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+        (and
+         ;; Identifier is known single-valued, doesn't use continuation:
+         (equivalent-expansion?
+          (expand/optimize `(lambda (g) ,(mk `g)))
+          '(lambda (g) g))
+         ;; Call to identifier is not known single-valued, might depend
+         ;; on the continuation:
+         (not (equivalent-expansion?
+               (expand/optimize `(lambda (g) ,(mk `(g))))
+               '(lambda (g) (g))))
+         ;; Ditto, but in a nested procedure:
+         (not (equivalent-expansion?
+               (expand/optimize `(lambda () (lambda (g) ,(mk `(g)))))
+               '(lambda () (lambda (g) (g)))))
+         ;; Argument position already enforces single-valued and no
+         ;; dependency on surrounding continuation:
+         (equivalent-expansion?
+          (expand/optimize `(lambda (g) (#2%list ,(mk `(g)))))
+          '(lambda (g) (#2%list (g))))
+         (equivalent-expansion?
+          (expand/optimize `(lambda (g) (#3%list ,(mk `(g)))))
+          '(lambda (g) (#3%list (g))))
+         ;; Same for the test position of `if`:
+         (equivalent-expansion?
+          (expand/optimize `(lambda (g) (if ,(mk `(g)) 1 2)))
+          '(lambda (g) (if (g) 1 2))))))
+     #t)
+   (simplify-only-nontail? (lambda (e) `(let ([x ,e]) x)))
+   (simplify-only-nontail? (lambda (e) `(letrec ([x ,e]) x)))
+   (simplify-only-nontail? (lambda (e) `(values ,e)))
+   (simplify-only-nontail? (lambda (e) `(list* ,e)))
+   (simplify-only-nontail? (lambda (e) `(append ,e)))
+   (simplify-only-nontail? (lambda (e) `(append! ,e)))
+   (simplify-only-nontail? (lambda (e) `(car (list ,e))))
+   (simplify-only-nontail? (lambda (e) `(car (cons ,e 2))))
+   (simplify-only-nontail? (lambda (e) `(cdr (cons 2 ,e))))
+)
+
+(mat cp0-single-valued
+  ;; Make sure that lifted-out expressions retain a single-result
+  ;; check in safe mode even when the result is not used, but no
+  ;; check in unsafe mode.
+  (begin
+    (define adds-needed-$value?
+      (case-lambda
+       [(mk safe-extras)
+        (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+          (and
+           (equivalent-expansion?
+            (expand/optimize `(lambda (g) ,(mk '(g) 3)))
+            (if (= (optimize-level) 3)
+                '(lambda (g) (g) 3)
+                `(lambda (g) ,@safe-extras (#3%$value (g)) 3)))))]
+       [(mk) (adds-needed-$value? mk '())]))
+    (define posn-decl-expanded
+      '((#2%$make-record-type-descriptor
+         #!base-rtd 'posn #f #f #f #f
+         '#((immutable x) (immutable y)) 'define-record-type)))
+     #t)
+   (adds-needed-$value? (lambda (e v) `(if (let ([x ,e]) #t) ,v 'other)))
+   (adds-needed-$value? (lambda (e v) `(if (list ,e) ,v 'other)))
+   (adds-needed-$value? (lambda (e v) `(if (if ,e #t 'yes) ,v 'other)))
+   (adds-needed-$value? (lambda (e v) `(if (if ,e #f #f) 'other ,v)))
+   (adds-needed-$value? (lambda (e v) `(if (if ,e #f #t) ,v ,v)))
+   (adds-needed-$value? (lambda (e v) `(let ([unused 0]) (set! unused ,e) ,v)))
+   (adds-needed-$value? (lambda (e v) `(car (cons ,v ,e))))
+   (adds-needed-$value? (lambda (e v) `(vector-ref (vector ,v ,e) 0)))
+   (adds-needed-$value? (lambda (e v) `(begin
+                                         (define-record-type posn
+                                           (fields x y))
+                                         (make-posn -1 ,e)
+                                         ,v))
+                        posn-decl-expanded)
+   (adds-needed-$value? (lambda (e v) `(let ()
+                                         (define-record-type posn
+                                           (fields x y))
+                                         (posn-x (make-posn ,v ,e))))
+                        posn-decl-expanded)
+   (adds-needed-$value? (lambda (e v) `(let ()
+                                         (define-record-type posn
+                                           (fields x y))
+                                         (if (make-posn 0 ,e) ,v 'other)))
+                        posn-decl-expanded)
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (equivalent-expansion?
+      (expand/optimize '(let ([g1 (begin (unknown) (void))]) 10))
+      '(begin (unknown) 10)))
 )

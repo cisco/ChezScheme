@@ -135,8 +135,15 @@ Handling letrec and letrec*
               (values (cons e e*) (and e-pure? e*-pure?)))))
       (with-output-language (Lsrc Expr)
         (define build-seq 
-          (lambda (e* body)
-            (fold-right (lambda (e body) `(seq ,e ,body)) body e*)))
+          (lambda (pure? e* body)
+            ;; Unless `pure?`, wrap `$value` around forms added to a `begin`, so that
+            ;; there's a check to make sure they result is a single value. The wrapper
+            ;; can be removed by other compiler passes if the argument obviously produces
+            ;; a single value.
+            (fold-right (lambda (e body)
+                          (let ([e (if pure? e `(call ,(make-preinfo) ,(lookup-primref 3 '$value) ,e))])
+                            `(seq ,e ,body)))
+                        body e*)))
         (define build-let
           (lambda (call-preinfo lambda-preinfo lhs* rhs* body)
             (if (null? lhs*)
@@ -306,7 +313,7 @@ Handling letrec and letrec*
                                          (values (if e-pure? pre* (cons e pre*))
                                            lhs* rhs* (and e-pure? pure?)))))))])
                (values
-                 (build-seq pre* (build-let preinfo0 preinfo1 lhs* rhs* body))
+                 (build-seq pure? pre* (build-let preinfo0 preinfo1 lhs* rhs* body))
                  (and body-pure? pure?))))))]
       [(call ,preinfo ,pr ,e* ...)
        (let ()
