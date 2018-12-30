@@ -1027,3 +1027,7 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- adjust compiler, especially cp0, to avoid turning errors like `(let
+  ([x (values 1 2)]) x)` into programs that return multiple values
+    cp0.ss, cpletrec.ss, cpnanopass, prims.ss, primdata.ss, priminfo.ss,
+    primvars.ss, cmacros.ss, syntax.ss, cp0.ms, record.ms

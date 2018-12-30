@@ -13,10 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(define generate-procedure-source-information
-  (case-lambda
-   [() #f]
-   [(v) (void)]))
+(define ($value x) x)
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 

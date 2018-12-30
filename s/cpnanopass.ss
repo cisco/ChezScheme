@@ -2673,6 +2673,44 @@
             [(k ?sym)
              (with-implicit (k quasiquote)
                #'`(literal ,(make-info-literal #t 'object ?sym (constant symbol-value-disp))))])))
+      (define single-valued?
+        (case-lambda
+         [(e) (single-valued? e 5)]
+         [(e fuel)
+          (and (not (zero? fuel))
+               (nanopass-case (L7 Expr) e
+                 [,x #t]
+                 [(immediate ,imm) #t]
+                 [(literal ,info) #t]
+                 [(label-ref ,l ,offset) #t]
+                 [(mref ,e1 ,e2 ,imm) #t]
+                 [(quote ,d) #t]
+                 [,pr #t]
+                 [(call ,info ,mdcl ,pr ,e* ...)
+                  (all-set? (prim-mask single-valued) (primref-flags pr))]
+                 [(foreign-call ,info ,e, e* ...) #t]
+                 [(alloc ,info ,e) #t]
+                 [(set! ,lvalue ,e) #t]
+                 [(profile ,src) #t]
+                 [(pariah) #t]
+                 [(let ([,x* ,e*] ...) ,body)
+                  (single-valued? body (fx- fuel 1))]
+                 [(if ,e0 ,e1 ,e2)
+                  (and (single-valued? e1 (fx- fuel 1))
+                       (single-valued? e2 (fx- fuel 1)))]
+                 [(seq ,e0 ,e1)
+                  (single-valued? e1 (fx- fuel 1))]
+                 [else #f]))]))
+      (define ensure-single-valued
+        (case-lambda
+         [(e unsafe-omit?)
+          (if (or unsafe-omit?
+                  (single-valued? e))
+              e
+              (with-output-language (L7 Expr)
+                (let ([t (make-tmp 'v)])                    
+                  `(values ,(make-info-call #f #f #f #f #f) ,e))))]
+         [(e) (ensure-single-valued e (fx= (optimize-level) 3))]))
       (define-pass np-expand-primitives : L7 (ir) -> L9 ()
         (Program : Program (ir) -> Program ()
           [(labels ([,l* ,le*] ...) ,l)
@@ -3805,8 +3843,10 @@
                       [else #f]))]
               [else #f])))
         (define-inline 2 values
-          [(e) e]
+          [(e) (ensure-single-valued e)]
           [e* `(values ,(make-info-call src sexpr #f #f #f) ,e* ...)])
+        (define-inline 2 $value
+          [(e) (ensure-single-valued e #f)])
         (define-inline 2 eq?
           [(e1 e2) (%inline eq? ,e1 ,e2)])
         (define-inline 2 $keep-live
@@ -3879,7 +3919,7 @@
                        reduce-equality
                        reduce-inequality))
                  (define-inline 3 op
-                   [(e) `(seq ,e ,(%constant strue))]
+                   [(e) `(seq ,(ensure-single-valued e) ,(%constant strue))]
                    [(e1 e2) (go e1 e2)]
                    [(e1 e2 . e*) (reducer src sexpr moi e1 e2 e*)])
                  (define-inline 3 r6rs:op
@@ -3896,7 +3936,7 @@
               [(_ op inline-op base)
                (define-inline 3 op
                  [() `(immediate ,(fix base))]
-                 [(e) e]
+                 [(e) (ensure-single-valued e)]
                  [(e1 e2) (%inline inline-op ,e1 ,e2)]
                  [(e1 . e*) (reduce src sexpr moi e1 e*)])]))
           (fxlogop fxlogand logand -1)
@@ -3994,7 +4034,7 @@
                        (%inline u< ,e1 ,e2))])
         (define-inline 3 fx+
           [() `(immediate 0)]
-          [(e) e]
+          [(e) (ensure-single-valued e)]
           [(e1 e2) (%inline + ,e1 ,e2)]
           [(e1 . e*) (reduce src sexpr moi e1 e*)])
         (define-inline 3 r6rs:fx+ ; limited to two arguments
@@ -4174,7 +4214,7 @@
                               (%inline * ,e1 ,t))))])]))
             (define-inline 3 fx*
               [() `(immediate ,(fix 1))]
-              [(e) e]
+              [(e) (ensure-single-valued e)]
               [(e1 e2) (build-fx* e1 e2 #f)]
               [(e1 . e*) (reduce src sexpr moi e1 e*)])
             (define-inline 3 r6rs:fx* ; limited to two arguments
@@ -4592,7 +4632,7 @@
         ;   [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
         (define-inline 3 fxmin
-          [(e) e]
+          [(e) (ensure-single-valued e)]
           [(e1 e2) (bind #t (e1 e2)
                      `(if ,(%inline < ,e1 ,e2)
                           ,e1
@@ -4600,7 +4640,7 @@
           [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
         (define-inline 3 fxmax
-          [(e) e]
+          [(e) (ensure-single-valued e)]
           [(e1 e2) (bind #t (e1 e2)
                      `(if ,(%inline < ,e2 ,e1)
                           ,e1
@@ -4867,10 +4907,10 @@
                                      ,(%inline + ,t (immediate ,next-i)))
                                    ,(loop e2 e* next-i)))))))))))
           (define-inline 2 list*
-            [(e) e]
+            [(e) (ensure-single-valued e)]
             [(e . e*) (go e e*)])
           (define-inline 2 cons*
-            [(e) e]
+            [(e) (ensure-single-valued e)]
             [(e . e*) (go e e*)]))
         (define-inline 2 vector
           [() `(quote #())]
@@ -6524,13 +6564,13 @@
           ;; allocated across nested fl+, fl*, fl-, fl/ etc. operation
           (define-inline 3 fl+
             [() `(quote 0.0)]
-            [(e) e]
+            [(e) (ensure-single-valued e)]
             [(e1 e2) (bind #f (e1 e2) (build-flop-2 %fl+ e1 e2))]
             [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
           (define-inline 3 fl*
             [() `(quote 1.0)]
-            [(e) e]
+            [(e) (ensure-single-valued e)]
             [(e1 e2) (bind #f (e1 e2) (build-flop-2 %fl* e1 e2))]
             [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
@@ -6593,7 +6633,7 @@
 
             (define-inline 3 cfl+
               [() `(quote 0.0)]
-              [(e) e]
+              [(e) (ensure-single-valued e)]
               [(e1 e2) (build-libcall #f src sexpr cfl+ e1 e2)]
               ; TODO: add 3 argument version of cfl+ library function
               #;[(e1 e2 e3) (build-libcall #f src sexpr cfl+ e1 e2 e3)]
@@ -6601,7 +6641,7 @@
 
             (define-inline 3 cfl*
               [() `(quote 1.0)]
-              [(e) e]
+              [(e) (ensure-single-valued e)]
               [(e1 e2) (build-libcall #f src sexpr cfl* e1 e2)]
               ; TODO: add 3 argument version of cfl* library function
               #;[(e1 e2 e3) (build-libcall #f src sexpr cfl* e1 e2 e3)]
