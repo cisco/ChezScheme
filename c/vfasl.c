@@ -110,7 +110,7 @@ typedef struct vfasl_chunk {
   uptr length;
   uptr used;
   uptr swept;
-  struct vfasl_chunk *next;
+  struct vfasl_chunk *next, *prev;
 } vfasl_chunk;
 
 /* One per vspace: */
@@ -150,6 +150,15 @@ typedef struct vfasl_info {
 
 #define byte_bits      8
 #define log2_byte_bits 3
+
+#define segment_align(size) (((size)+bytes_per_segment-1) & ~(bytes_per_segment-1))
+
+static uptr symbol_pos_to_offset(uptr sym_pos) {
+  uptr syms_per_segment = bytes_per_segment / size_symbol;
+  uptr segs = sym_pos / syms_per_segment;
+  uptr syms = sym_pos - (segs * syms_per_segment);
+  return (segs * bytes_per_segment) + (syms * size_symbol);
+}
 
 static ptr vfasl_copy_all(vfasl_info *vfi, ptr v);
 
@@ -240,7 +249,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         if (sz > 0) {
           if (s == vspace_reloc) {
             thread_find_room(tc, typemod, sz, vspaces[s]);
-          } else {
+          } else { 
             find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s]);
           }
           if (S_fasl_stream_read(stream, vspaces[s], sz) < 0)
@@ -371,6 +380,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 
   /* Intern symbols */
   {
+    uptr in_seg_off = 0;
     ptr sym = TYPE(vspaces[vspace_symbol], type_symbol);
     ptr end_syms = TYPE(VSPACE_END(vspace_symbol), type_symbol);
 
@@ -379,7 +389,20 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 
       while (sym < end_syms) {
         ptr isym;
-        
+
+        /* Make sure we don't try to claim a symbol that crosses
+           a segment boundary */
+        if ((in_seg_off + size_symbol) > bytes_per_segment) {
+          if (in_seg_off == bytes_per_segment) {
+            in_seg_off = 0;
+          } else {
+            /* Back up, then round up to next segment */
+            sym = ptr_add(ptr_subtract(sym, size_symbol),
+                          (bytes_per_segment - (in_seg_off - size_symbol)));
+            in_seg_off = 0;
+          }
+        }
+
         INITSYMVAL(sym) = sunbound;
         INITSYMCODE(sym,S_G.nonprocedure_code);
 
@@ -390,6 +413,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         }
 
         sym = ptr_add(sym, size_symbol);
+        in_seg_off += size_symbol;
       }
 
       tc_mutex_release()
@@ -408,7 +432,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       INC_SPACE_OFFSET(p2_off);
       p2 = SPACE_PTR(p2_off);
       sym_pos = UNFIX(*(ptr **)p2);
-      sym = TYPE(ptr_add(syms, sym_pos * size_symbol), type_symbol);
+      sym = TYPE(ptr_add(syms, symbol_pos_to_offset(sym_pos)), type_symbol);
       if ((val = SYMVAL(sym)) != sunbound)
         sym = val;
       *(ptr **)p2 = sym;
@@ -544,6 +568,7 @@ static void vfasl_init(vfasl_info *vfi) {
     c->used = 0;
     c->swept = 0;
     c->next = (ptr)0;
+    c->prev = (ptr)0;
 
     vfi->spaces[s].first = c;
     vfi->spaces[s].total_bytes = 0;
@@ -628,6 +653,7 @@ ptr S_to_vfasl(ptr v)
     c->used = 0;
     c->swept = 0;
     c->next = (ptr)0;
+    c->prev = (ptr)0;
     vfi->spaces[s].first = c;
 
     p = ptr_add(p, vfi->spaces[s].total_bytes);
@@ -748,9 +774,18 @@ static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
     changed = 0;
     for (s = 0; s < vspaces_count; s++) {
       vfasl_chunk *c = vfi->spaces[s].first;
-      while (c && (c->swept < c->used)) {
+
+      /* consistent order of sweeping by older chunks first: */
+      if (c) {
+        while ((c->swept < c->used) && c->next)
+          c = c->next;
+        if (c->swept >= c->used)
+          c = c->prev;
+      }
+
+      while (c) {
         ptr pp, pp_end;
-        
+
         pp = ptr_add(c->bytes, c->swept);
         pp_end = ptr_add(c->bytes, c->used);
         c->swept = c->used;
@@ -788,7 +823,8 @@ static ptr vfasl_copy_all(vfasl_info *vfi, ptr v) {
           break;
         }
 
-        c = c->next;
+        if (c->swept >= c->used)
+          c = c->prev;
         changed = 1;
       }
     }
@@ -857,22 +893,71 @@ static void vfasl_relocate_parents(vfasl_info *vfi, ptr p) {
 
 static ptr vfasl_find_room(vfasl_info *vfi, int s, ITYPE t, iptr n) {
   ptr p;
+  uptr sz = vfi->spaces[s].total_bytes;
+
+  switch (s) {
+  case vspace_symbol:
+  case vspace_pure_typed:
+  case vspace_impure_record:
+    /* For these spaces, in case they will be loaded into the static
+       generation, objects must satisfy an extra constraint: an object
+       must not span segments unless it's at the start of a
+       segment. */
+    if (sz & (bytes_per_segment-1)) {
+      /* Since we're not at the start of a segment, don't let an
+         object span a segment */
+      if ((segment_align(sz) != segment_align(sz+n))
+          && ((sz+n) != segment_align(sz+n))) {
+        /* Fill in to next segment, instead. */
+        uptr delta = segment_align(sz) - sz;
+        vfasl_chunk *c, *new_c;
+
+        vfi->spaces[s].total_bytes += delta;
+
+        /* Create a new chunk so the old one tracks the current
+           swept-to-used region, and the new chunk starts a new
+           segment. If the old chunk doesn't have leftover bytes
+           (because we're in the first pass), then we'll need to
+           clean out this useless chunk below. */
+        c = vfi->spaces[s].first;
+        new_c = vfasl_malloc(sizeof(vfasl_chunk));
+        new_c->bytes = ptr_add(c->bytes, c->used + delta);
+        new_c->length = c->length - (c->used + delta);
+        new_c->used = 0;
+        new_c->swept = 0;
+
+        new_c->prev = (ptr)0;
+        new_c->next = c;        
+        c->prev = new_c;
+
+        vfi->spaces[s].first = new_c;
+      }
+    }
+    break;
+  default:
+    break;
+  }
 
   vfi->spaces[s].total_bytes += n;
-  
+
   if (vfi->spaces[s].first->used + n > vfi->spaces[s].first->length) {
-    vfasl_chunk *c;
-    iptr newlen = n * 2;
-    if (newlen < 4096)
-      newlen = 4096;
+    vfasl_chunk *c, *old_c;
+    iptr newlen = segment_align(n);
 
     c = vfasl_malloc(sizeof(vfasl_chunk));
     c->bytes = vfasl_malloc(newlen);
     c->length = newlen;
     c->used = 0;
     c->swept = 0;
-    
-    c->next = vfi->spaces[s].first;
+
+    old_c = vfi->spaces[s].first;
+    if (old_c->next && !old_c->length)
+      old_c = old_c->next; /* drop useless chunk created above */
+
+    c->prev = (ptr)0;
+    c->next = old_c;
+    old_c->prev = c;
+
     vfi->spaces[s].first = c;
   }
 
@@ -926,6 +1011,13 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
 
           if (pp == S_G.base_rtd)
             vfi->base_rtd = p;
+
+          /* pad if necessary */
+          {
+            iptr m = unaligned_size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
+            if (m != n)
+              *((ptr *)((uptr)UNTYPE(p,type_typed_object) + m)) = FIX(0);
+          }
       } else if (TYPEP(tf, mask_vector, type_vector)) {
           iptr len, n;
           len = Svector_length(pp);
@@ -1031,6 +1123,8 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
             n = size_closure(len);
             FIND_ROOM(vfi, vspace_closure, type_closure, n, p);
             copy_ptrs(type_closure, p, pp, n);
+            /* pad if necessary */
+            if ((len & 1) == 0) CLOSIT(p, len) = FIX(0);
         }
     } else if (t == type_symbol) {
         iptr pos = vfi->sym_count++;
@@ -1360,7 +1454,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
                 obj = CLOSCODE(obj);
             } else if (tag == VFASL_RELOC_SYMBOL_TAG) {
               ptr val;
-              obj = TYPE(ptr_add(sym_base, pos * size_symbol), type_symbol);
+              obj = TYPE(ptr_add(sym_base, symbol_pos_to_offset(pos)), type_symbol);
               if ((val = SYMVAL(obj)) != sunbound)
                 obj = val;
             } else {
