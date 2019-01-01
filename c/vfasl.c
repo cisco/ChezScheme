@@ -286,31 +286,32 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
   bm = ptr_add(singletonrefs, header.singletonref_count * sizeof(vfoff));
   bm_end = ptr_add(table, header.table_size);
 
-  if (0)
-    printf("\n"
-           "hdr  %ld\n"
-           "syms %ld\n"
-           "rtds %ld\n"
-           "clos %ld\n"
-           "code %ld\n"
-           "rloc %ld\n"
-           "data %ld\n"
-           "othr %ld\n"
-           "tabl %ld  symref %ld  rtdref %ld  sglref %ld\n",
-           sizeof(vfasl_header),
-           VSPACE_LENGTH(vspace_symbol),
-           VSPACE_LENGTH(vspace_rtd),
-           VSPACE_LENGTH(vspace_closure),
-           VSPACE_LENGTH(vspace_code),
-           VSPACE_LENGTH(vspace_reloc),
-           VSPACE_LENGTH(vspace_data),
-           (VSPACE_LENGTH(vspace_impure)
-            + VSPACE_LENGTH(vspace_pure_typed)
-            + VSPACE_LENGTH(vspace_impure_record)),
-           header.table_size,
-           header.symref_count * sizeof(vfoff),
-           header.rtdref_count * sizeof(vfoff),
-           header.singletonref_count * sizeof(vfoff));
+#if 0
+  printf("\n"
+         "hdr  %ld\n"
+         "syms %ld\n"
+         "rtds %ld\n"
+         "clos %ld\n"
+         "code %ld\n"
+         "rloc %ld\n"
+         "data %ld\n"
+         "othr %ld\n"
+         "tabl %ld  symref %ld  rtdref %ld  sglref %ld\n",
+         sizeof(vfasl_header),
+         VSPACE_LENGTH(vspace_symbol),
+         VSPACE_LENGTH(vspace_rtd),
+         VSPACE_LENGTH(vspace_closure),
+         VSPACE_LENGTH(vspace_code),
+         VSPACE_LENGTH(vspace_reloc),
+         VSPACE_LENGTH(vspace_data),
+         (VSPACE_LENGTH(vspace_impure)
+          + VSPACE_LENGTH(vspace_pure_typed)
+          + VSPACE_LENGTH(vspace_impure_record)),
+         header.table_size,
+         header.symref_count * sizeof(vfoff),
+         header.rtdref_count * sizeof(vfoff),
+         header.singletonref_count * sizeof(vfoff));
+#endif
 
   /* We have to convert an offset relative to the start of data in the
      vfasl format to an offset relative to an individual space, at
@@ -897,7 +898,6 @@ static ptr vfasl_find_room(vfasl_info *vfi, int s, ITYPE t, iptr n) {
 
   switch (s) {
   case vspace_symbol:
-  case vspace_pure_typed:
   case vspace_impure_record:
     /* For these spaces, in case they will be loaded into the static
        generation, objects must satisfy an extra constraint: an object
@@ -914,12 +914,16 @@ static ptr vfasl_find_room(vfasl_info *vfi, int s, ITYPE t, iptr n) {
 
         vfi->spaces[s].total_bytes += delta;
 
+        /* Mark the end of the old segment */
+        c = vfi->spaces[s].first;
+        p = ptr_add(c->bytes, c->used);
+        FWDMARKER(p) = forward_marker;
+
         /* Create a new chunk so the old one tracks the current
            swept-to-used region, and the new chunk starts a new
            segment. If the old chunk doesn't have leftover bytes
            (because we're in the first pass), then we'll need to
            clean out this useless chunk below. */
-        c = vfi->spaces[s].first;
         new_c = vfasl_malloc(sizeof(vfasl_chunk));
         new_c->bytes = ptr_add(c->bytes, c->used + delta);
         new_c->length = c->length - (c->used + delta);
