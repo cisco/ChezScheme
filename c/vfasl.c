@@ -247,10 +247,10 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       for (s = 0; s < vspaces_count; s++) {
         uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
         if (sz > 0) {
-          if (s == vspace_reloc) {
-            thread_find_room(tc, typemod, sz, vspaces[s]);
+          if ((s == vspace_reloc) && !S_G.retain_static_relocation) {
+            thread_find_room(tc, typemod, sz, vspaces[s])
           } else { 
-            find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s]);
+            find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s])
           }
           if (S_fasl_stream_read(stream, vspaces[s], sz) < 0)
             S_error("fasl-read", "input truncated");
@@ -264,12 +264,12 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       data = (ptr)0; /* => initialize below */
       to_static = 1;
     } else {
-      thread_find_room(tc, typemod, header.data_size, data);
+      thread_find_room(tc, typemod, header.data_size, data)
       if (S_fasl_stream_read(stream, data, header.data_size) < 0)
         S_error("fasl-read", "input truncated");
     }
 
-    thread_find_room(tc, typemod, ptr_align(header.table_size), table);
+    thread_find_room(tc, typemod, ptr_align(header.table_size), table)
     if (S_fasl_stream_read(stream, table, header.table_size) < 0)
       S_error("fasl-read", "input truncated");
   }
@@ -1419,7 +1419,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
     t = CODERELOC(co);
     t = ptr_add(vspaces[vspace_reloc], (uptr)t - vspace_offsets[vspace_reloc]);
 
-    if (to_static)
+    if (to_static && !S_G.retain_static_relocation)
       CODERELOC(co) = (ptr)0;
     else {
       CODERELOC(co) = t;
@@ -1667,7 +1667,7 @@ static ptr vfasl_hash_table_ref(vfasl_hash_table *ht, ptr key) {
 static ptr vfasl_malloc(uptr sz) {
   ptr tc = get_thread_context();
   ptr p;
-  thread_find_room(tc, typemod, ptr_align(sz), p);
+  thread_find_room(tc, typemod, ptr_align(sz), p)
   return p;
 }
 
