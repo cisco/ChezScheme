@@ -90,12 +90,21 @@ synchronized across processors.
 a thread object.
 
 Nothing can be done with the thread object returned by
-\scheme{fork-thread}, other than to print it.
+\scheme{fork-thread}, other than to print it or use it with inspection
+functions such as \scheme{compute-size}.
 
 Threads created by foreign code using some means other than
 \scheme{fork-thread} must call \scheme{Sactivate_thread}
 (Section~\ref{SECTFOREIGNCLIB}) before touching any Scheme data
 or calling any Scheme procedures.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-initial-thread}{\categoryprocedure}{(get-initial-thread)}
+\returns a thread object for the initial thread
+\listlibraries
+\endentryheader
+
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -116,7 +125,6 @@ The thread id is a thread number assigned by thread id, and has no
 relationship to the process id returned by
 \index{\scheme{get-process-id}}\scheme{get-process-id}, which is the same
 in all threads.
-
 
 \section{Mutexes}
 

@@ -1452,6 +1452,14 @@ of all objects in the heap is sufficient,
 \index{\scheme{object-counts}}\scheme{object-counts} is potentially much
 more efficient.
 
+The procedure \scheme{compute-size-increments} is similar to
+\scheme{compute-size} mapped over a list of elements, but it reports a
+size for each later element without including the size of objects
+reachable from ealier elements, and it treats weak and ephemeron pairs
+differently. For a large number of reachable objects,
+\scheme{compute-size-increments} uses much less memory than
+\scheme{compute-size}.
+
 These procedures treat immediate objects such as fixnums, booleans, and
 characters as zero-count, zero-byte leaves.
 
@@ -1495,6 +1503,11 @@ If \var{generation} is not supplied, it defaults to the value of
 \var{object} and anything reachable from \var{object} in any generation
 less than or equal to \var{generation}.
 Immediate values such as fixnums, booleans, and characters have zero size.
+Size computation for a thread is limited when the thread is still active,
+since its full continuation cannot be inspected in that case, but the
+full continuation is inspected if the thread is inactive (such as during
+a garbage collection rendezvous when a different thread is selected by
+the rendezvous).
 
 The following examples are valid for machines with 32-bit pointers.
 
@@ -1568,4 +1581,53 @@ The following examples are valid for machines with 32-bit pointers.
     (cons x x))
   0)                       ;=> ((pair 1 . 8)
                                 (#<record type frob> 1 . 8))
+\endschemedisplay
+
+\entryheader
+\formdef{compute-size-increments}{\categoryprocedure}{(compute-size-increments \var{list})}
+\formdef{compute-size-increments}{\categoryprocedure}{(compute-size-increments \var{list} \var{generation})}
+\returns a list as described below
+\listlibraries
+\endentryheader
+
+\var{list} must be a list, but each element can be any object.
+\var{generation} must be a fixnum between 0 and the value of
+\scheme{collect-maximum-generation}, inclusive, or the symbol
+\scheme{static}.
+If \var{generation} is not supplied, it defaults to the value of
+\scheme{collect-maximum-generation}.
+
+\scheme{compute-size-increments} is like mapping \scheme{compute-size}
+over \var{list}, except that any object reachable from an earlier
+element of \var{list} is not treated as reachable by a later element
+of \var{list}. In addition, each immediate element of \var{list} is
+not treated as reachable by earlier elements of \var{list}---although
+other values reachable from later elements of \var{list} may be
+considered reachable from earlier elements.
+
+Unlike \var{compute-size}, \scheme{compute-size-increments} does not
+consider the \scheme{car} of a weak pair reachable from the weak pair.
+It also does not consider the \scheme{car} or \scheme{cdr} of an
+ephemeron pair to be reachable from the ephemeron pair, unless the
+\scheme{car} is already determined to be reachable (perhaps from an
+earlier element of \var{list}); if the \scheme{car} of an ephemeron
+pair is discovered to be reachable later (perhaps from a later element
+of \var{list}), then the \scheme{cdr} of the ephemeron pair is
+considered to be reachable from the \scheme{car}, which has the effect
+of charging the memory of the \scheme{cdr} to the same element of
+\var{list} as the memory of the \scheme{car}.
+
+The following examples are valid for machines with 32-bit pointers.
+
+\schemedisplay
+(compute-size-increments (list 0)) ;=> (0)
+(compute-size-increments (list (cons 0 0))) ;=> (8)
+(compute-size-increments (list (cons 0 0) (cons 0 0))) ;=> (8 8)
+(compute-size-increments (let ([p (cons 0 0)])
+                           (list p p))) ;=> (8 0)
+(compute-size-increments (let ([p (cons 0 0)])
+                           (list (cons 1 p) (cons 1 p)))) ;=> (16 8)
+(compute-size-increments (let* ([p (cons 0 0)]
+                                [e (ephemeron-cons p (cons 0 0))])
+                           (list e p))) ;=> (8 16)
 \endschemedisplay
