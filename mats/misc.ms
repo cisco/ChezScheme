@@ -1049,6 +1049,108 @@
   (fixnum? (let ([k (call/1cc (lambda (k) k))]) (collect) (compute-size k)))
 )
 
+(mat compute-size-increments
+  (error? (compute-size-increments 'not-a-list))
+  (error? (compute-size-increments 0))
+  (error? (compute-size-increments (list 0) -1))
+  (error? (compute-size-increments (list 0) "static"))
+  (error? (compute-size-increments (list 0) '()))
+  (begin
+    (define pair-size (compute-size (cons 1 2)))
+    #t)
+  (equal? (list pair-size pair-size)
+          (compute-size-increments (list (cons 1 2) (cons 3 4))))
+  (equal? (list (* 3 pair-size) pair-size)
+          (let ([l (list 1 2)])
+            (compute-size-increments (list (cons 3 l) (cons 4 l)))))
+  (equal? (list pair-size)
+          (compute-size-increments (list (weak-cons (make-bytevector 100) #f))))
+  (let* ([x (make-bytevector 100)]
+         [ls (list (lambda () x) x)])
+    (equal? (compute-size-increments ls)
+            (reverse (compute-size-increments (reverse ls)))))
+  ;; Ephemeron(s) found before key:
+  (equal? (list pair-size (* 2 pair-size))
+          (compute-size-increments (let* ([p (cons 0 0)]
+                                          [e (ephemeron-cons p (cons 0 0))])
+                                     (list e p))))
+  (equal? (list pair-size (* 3 pair-size))
+          (let* ([v (cons 1 2)]
+                 [e (ephemeron-cons v (cons 3 4))])
+            (compute-size-increments (list e (cons v #f)))))
+  (equal? (list (* 4 pair-size) (* 4 pair-size))
+          (let* ([v (cons 1 2)]
+                 [e* (list (ephemeron-cons v (cons 3 4))
+                           (ephemeron-cons v (cons 5 6)))])
+            (compute-size-increments (list e* (cons v #f)))))
+  ;; Key found before ephemeron(s):
+  (equal? (list (* 2 pair-size) (* 2 pair-size))
+          (let* ([v (cons 1 2)]
+                 [e (ephemeron-cons v (cons 3 4))])
+            (compute-size-increments (list (cons v #f) e))))
+  (equal? (list (* 2 pair-size) (* 6 pair-size))
+          (let* ([v (cons 1 2)]
+                 [e* (list (ephemeron-cons v (cons 3 4))
+                           (ephemeron-cons v (cons 5 6)))])
+            (compute-size-increments (list (cons v #f) e*))))
+  ;; This call will encounter many kinds of objects, just to make
+  ;; sure it doesn't fail:
+  (list? (compute-size-increments (list (call/cc values)) 'static))
+  ;; Check that a deactivated thread's continuation can be traversed
+  ;; for `compute-size-increments`:
+  (or (not (threaded?))
+      (let* ([ready (box #f)]
+             [saved (box #f)]
+             [m (make-mutex)]
+             [N 1000000]
+             [pause-until (lambda (check)
+                            (let loop ()
+                              (unless (check)
+                                (sleep (make-time 'time-duration 10000 0))
+                                (loop))))]
+             [th (fork-thread
+                  (lambda ()
+                    (let ([bstr (make-bytevector N)])
+                      (box-cas! ready #f 'go)
+                      ;; Block so that thread becomes deactivated
+                      (mutex-acquire m)
+                      (mutex-release m)
+                      ;; bstr is retained in the thread's continuation until here
+                      (set-box! saved (bytevector-u8-ref bstr 0))
+                      (pause-until (lambda () (box-cas! ready 'finish 'done)))
+                      ;; Block so that thread becomes deactivated, again
+                      (mutex-acquire m)
+                      (mutex-release m))))])
+        (mutex-acquire m)
+        ;; Wait for thread to start
+        (pause-until (lambda () (eq? 'go (unbox ready))))
+        ;; Wait for thread to become inactive, blocked on the mutex
+        (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
+        ;; Get thread's size, which should include bstr
+        (let ([pre-sizes (compute-size-increments (list th))])
+          (mutex-release m)
+          ;; Wait for bytevector to be discarded in the thread
+          (pause-until (lambda () (unbox saved)))
+          (mutex-acquire m)
+          (set-box! ready 'finish)
+          ;; Wait for thread to become inactive again
+          (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
+          ;; Get thread's size, which should'nt include bstr
+          (let ([post-sizes (compute-size-increments (list th))])
+            (mutex-release m)
+            ;; Wait for thread to exit
+            (let ()
+              (define $threads (foreign-procedure "(cs)threads" () scheme-object))
+              (pause-until (lambda () (= 1 (length ($threads))))))
+            ;; Make sure `compute-size-increments` doesn't crash on a
+            ;; terminated thread:
+            (compute-size-increments (list th))
+            ;; Main result: detected size of `bstr` in the thread
+            ;; while it was part of the continuation
+            (and (> (car pre-sizes) N)
+                 (< (car post-sizes) N))))))
+)
+
 (mat compute-composition
   (error? (compute-composition 0 -1))
   (error? (compute-composition 0 "static"))

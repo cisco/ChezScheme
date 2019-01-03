@@ -58,6 +58,15 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Counting reachable objects from multiple sources (9.5.1)}
+
+The new procedure \scheme{compute-size-increments} is like
+\scheme{compute-size}, but it reports sizes for only newly reached
+objects for later elements of a given list. It also treats weak and
+ephemeron pairs in a way that assigns sizes to references that cause a
+weakly held value to be retained, as opposed to assigning the size to
+the pair.
+
 \subsection{Procedure source location without inspector information (9.5.1)}
 
 When \scheme{generate-inspector-information} is set to \scheme{#f} and

@@ -1750,6 +1750,50 @@
   (syntax-rules ()
     ((_ x) (let ((t x)) (and (pair? t) (symbol? (car t)))))))
 
+;;; bitset constants
+
+;; For a bitset ranging over all fixnum values, use an array of ...
+;; array of fixnums, where the lo bits of a key fixnum are used to
+;; index a bit within one bitset fixnum.
+(define-constant eq-bitset-lo-bits (fx- (integer-length (constant fixnum-bits)) 1))
+
+;; Using `$fxaddress` discards typemod bits, but we may be able to
+;; discard additional bits due to allocation alignment:
+(define-constant eq-bitset-discard-bits (fx- (log2 (constant byte-alignment))
+                                             (log2 (constant typemod))))
+
+(constant-case ptr-bits
+  [(64)
+   ;; Break fixnum into 5 levels: [l1:14] [l2:14] [l3:14] [l4:14-discard] [lo:5]
+   (define-constant eq-bitset-l1-bits 14)
+   (define-constant eq-bitset-l2-bits 14)
+   (define-constant eq-bitset-l3-bits 14)]
+  [(32)
+   ;; Break fixnum into 3 levels: [l1:13] [l4:13-discard] [lo:4]
+   (define-constant eq-bitset-l1-bits 13)
+   (define-constant eq-bitset-l2-bits 0)
+   (define-constant eq-bitset-l3-bits 0)])
+
+(define-constant eq-bitset-l4-bits (fx- (constant fixnum-bits)
+                                        (constant eq-bitset-l1-bits)
+                                        (constant eq-bitset-l2-bits)
+                                        (constant eq-bitset-l3-bits)
+                                        (constant eq-bitset-lo-bits)
+                                        (constant eq-bitset-discard-bits)))
+
+(define-constant eq-bitset-l1-shift (fx- (constant fixnum-bits) (constant eq-bitset-l1-bits)))
+(define-constant eq-bitset-l2-shift (fx- (constant fixnum-bits) (constant eq-bitset-l1-bits)
+                                         (constant eq-bitset-l2-bits)))
+(define-constant eq-bitset-l3-shift (fx- (constant fixnum-bits) (constant eq-bitset-l1-bits)
+                                         (constant eq-bitset-l2-bits) (constant eq-bitset-l3-bits)))
+(define-constant eq-bitset-l4-shift (fx+ (constant eq-bitset-lo-bits)
+                                         (constant eq-bitset-discard-bits)))
+
+(define-constant eq-bitset-l2-mask (fx- (fxsll 1 (constant eq-bitset-l2-bits)) 1))
+(define-constant eq-bitset-l3-mask (fx- (fxsll 1 (constant eq-bitset-l3-bits)) 1))
+(define-constant eq-bitset-l4-mask (fx- (fxsll 1 (constant eq-bitset-l4-bits)) 1))
+(define-constant eq-bitset-lo-mask (fx- (fxsll 1 (constant eq-bitset-lo-bits)) 1))
+
 ;;; heap/stack mangement constants
 
 (define-constant collect-interrupt-index 1)
@@ -2645,5 +2689,6 @@
      Sreturn
      Scall-one-result
      Scall-any-results
+     segment-info
   ))
 )
