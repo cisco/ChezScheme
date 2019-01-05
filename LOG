@@ -1050,3 +1050,8 @@
 - adjust cp0 to avoid turning errors like `(let ([x (values 1 2)]) x)`
   into programs that return multiple values
     cp0.ss, primdata.ss, cmacros.ss, syntax.ss, cp0.ms
+- added `compute-size-increments` and `get-initial-thread`, and
+  adjust compiler to inline `weak-pair?` and `ephemeron-pair?`
+    inspect.ss, bitset.ss, cmacros.ss, prims.ss, primdata.ss, Mf-base,
+    prim.c, types.h, misc.ms, thread.ms, debug.stex, threads.stex,
+    release_notes.stex
