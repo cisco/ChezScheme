@@ -115,6 +115,8 @@ typedef int IFASLCODE;      /* fasl type codes */
 
 #define ptr_align(size) (((size)+byte_alignment-1) & ~(byte_alignment-1))
 
+/* The inlined implementation of primitives like `weak-pair?`
+   rely on the first two fields of `seginfo`: */
 typedef struct _seginfo {
   unsigned char space;                      /* space the segment is in */
   unsigned char generation;                 /* generation the segment is in */

@@ -139,6 +139,7 @@ static void create_c_entry_vector() {
     install_c_entry(CENTRY_Sreturn, proc2ptr(S_return));
     install_c_entry(CENTRY_Scall_one_result, proc2ptr(S_call_one_result));
     install_c_entry(CENTRY_Scall_any_results, proc2ptr(S_call_any_results));
+    install_c_entry(CENTRY_segment_info, proc2ptr(S_segment_info));
 
     for (i = 0; i < c_entry_vector_size; i++) {
 #ifndef PTHREADS

@@ -89,6 +89,7 @@
          (not (thread-condition? m))
          (not (mutex? 'mutex))
          (not (thread-condition? 'condition))))
+  (thread? (get-initial-thread))
   (begin
     (define $threads (foreign-procedure "(cs)threads" () scheme-object))
     (define $fib (lambda (x) (if (< x 2) 1 (+ ($fib (- x 1)) ($fib (- x 2))))))
@@ -98,6 +99,8 @@
         (lambda () (sleep t))))
     (define $thread-check
       (lambda ()
+        (unless (memq (get-initial-thread) ($threads))
+          (errorf #f "initial thread is missing from list"))
         (let loop ([n 100] [nt (length ($threads))])
           (cond
             [(<= nt $nthreads)

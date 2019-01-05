@@ -59,9 +59,7 @@
     scheme-object))
 
 (define weak-pair?
-  (foreign-procedure "(cs)s_weak_pairp"
-    (scheme-object)
-    scheme-object))
+  (lambda (p) (weak-pair? p)))
 
 (define ephemeron-cons
   (foreign-procedure "(cs)s_ephemeron_cons"
@@ -69,9 +67,7 @@
     scheme-object))
 
 (define ephemeron-pair?
-  (foreign-procedure "(cs)s_ephemeron_pairp"
-    (scheme-object)
-    scheme-object))
+  (lambda (p) (ephemeron-pair? p)))
 
 (define $split-continuation
   (foreign-procedure "(cs)single_continuation"
@@ -1483,6 +1479,7 @@
 (define $close-resurrected-mutexes&conditions)
 (define $tc-mutex)
 (define $collect-cond)
+(define get-initial-thread)
 (let ()
 ; scheme-object's below are mutex and condition addresses, which are
 ; assumed to be at least ptr aligned and therefore look like fixnums
@@ -1499,6 +1496,7 @@
 (define cw (foreign-procedure "(cs)condition_wait" (scheme-object scheme-object scheme-object) boolean))
 (define cb (foreign-procedure "(cs)condition_broadcast" (scheme-object) void))
 (define cs (foreign-procedure "(cs)condition_signal" (scheme-object) void))
+(define ts (foreign-procedure "(cs)threads" () scheme-object))
 
 (define-record-type (condition $make-condition $condition?)
   (fields (mutable addr $condition-addr $condition-addr-set!))
@@ -1631,6 +1629,10 @@
 
 (set! $tc-mutex ($make-mutex ($raw-tc-mutex)))
 (set! $collect-cond ($make-condition ($raw-collect-cond)))
+
+(set! get-initial-thread
+  (let ([thread (car (ts))])
+    (lambda () thread)))
 ))
 
 (let ()
@@ -1720,6 +1722,19 @@
   (define-tlc-parameter $tlc-ht)
   (define-tlc-parameter $tlc-next $set-tlc-next!)
 )
+
+(define $generation
+  (lambda (x)
+    ($generation x)))
+(define $maybe-seginfo
+  (lambda (x)
+    ($maybe-seginfo x)))
+(define $seginfo-generation
+  (lambda (x)
+    ($seginfo-generation x)))
+(define $seginfo-space
+  (lambda (x)
+    ($seginfo-space x)))
 
 (define ($fxaddress x) (#3%$fxaddress x))
 
