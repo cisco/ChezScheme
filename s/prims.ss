@@ -339,6 +339,12 @@
 
 (define values ($hand-coded 'values-procedure))
 
+;; When applied, ensures the argument expression produces a single
+;; value. Unlike other primitives, an immediate application of
+;; `$value` won't be optimized away with optimization level 3 unless
+;; the argument expression definitely produces a single value.
+(define $value (lambda (x) x))
+
 (define call-with-values
   (lambda (producer consumer)
     (unless (procedure? producer)

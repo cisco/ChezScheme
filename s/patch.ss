@@ -13,7 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(define (generate-vfasl) #f)
+(define ($value x) x)
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
