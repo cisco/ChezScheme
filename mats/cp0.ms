@@ -2815,5 +2815,8 @@
                                            (fields x y))
                                          (if (make-posn 0 ,e) ,v 'other)))
                         posn-decl-expanded)
-   
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (equivalent-expansion?
+      (expand/optimize '(let ([g1 (begin (unknown) (void))]) 10))
+      '(begin (unknown) 10)))
 )

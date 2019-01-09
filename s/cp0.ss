@@ -737,7 +737,10 @@
             (cond
              [(and (eq? ctxt 'effect) (simple? e2))
               e1]
-             [(and (eq? ctxt 'ignored) (simple1? e2))
+             [(and (eq? ctxt 'ignored) (simple1? e2)
+                   ;; don't move e1 into a single-value
+                   ;; position unless that's ok
+                   (single-valued? e1))
               e1]
              [else
               (let ([e1 (nanopass-case (Lsrc Expr) e1
