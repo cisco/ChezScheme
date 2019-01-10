@@ -1473,10 +1473,12 @@
 (define fork-thread)
 (define make-mutex)
 (define mutex?)
+(define mutex-name)
 (define mutex-acquire)
 (define mutex-release)
 (define make-condition)
 (define thread-condition?)
+(define condition-name)
 (define condition-wait)
 (define condition-signal)
 (define condition-broadcast)
@@ -1501,12 +1503,14 @@
 (define cs (foreign-procedure "(cs)condition_signal" (scheme-object) void))
 
 (define-record-type (condition $make-condition $condition?)
-  (fields (mutable addr $condition-addr $condition-addr-set!))
+  (fields (mutable addr $condition-addr $condition-addr-set!)
+          (immutable name $condition-name))
   (nongenerative)
   (sealed #t))
 
 (define-record-type (mutex $make-mutex $mutex?)
-  (fields (mutable addr $mutex-addr $mutex-addr-set!))
+  (fields (mutable addr $mutex-addr $mutex-addr-set!)
+          (immutable name $mutex-name))
   (nongenerative)
   (sealed #t))
 
@@ -1529,14 +1533,27 @@
                 (void))))))))
 
 (set! make-mutex
-  (lambda ()
-    (let ([m ($make-mutex (mm))])
-      (mutex-guardian m)
-      m)))
+  (case-lambda
+    [()
+     (let ([m ($make-mutex (mm) #f)])
+       (mutex-guardian m)
+       m)]
+    [(name)
+     (unless (symbol? name)
+      ($oops 'make-condition "~s is not a symbol" name))
+     (let ([m ($make-mutex (mm) name)])
+       (mutex-guardian m)
+       m)]))
 
 (set! mutex?
   (lambda (x)
     ($mutex? x)))
+
+(set! mutex-name
+  (lambda (m)
+    (unless (mutex? m)
+      ($oops 'mutex-name "~s is not a mutex" m))
+    ($mutex-name m)))
 
 (set! mutex-acquire
   (case-lambda
@@ -1561,14 +1578,27 @@
       (mr addr))))
 
 (set! make-condition
-  (lambda ()
-    (let ([c ($make-condition (mc))])
-      (condition-guardian c)
-      c)))
+  (case-lambda
+    [()
+     (let ([c ($make-condition (mc) #f)])
+       (condition-guardian c)
+       c)]
+    [(name)
+     (unless (symbol? name)
+      ($oops 'make-condition "~s is not a symbol" name))
+     (let ([c ($make-condition (mc) name)])
+       (condition-guardian c)
+       c)]))
 
 (set! thread-condition?
   (lambda (x)
     ($condition? x)))
+
+(set! condition-name
+  (lambda (c)
+    (unless (thread-condition? c)
+      ($oops 'condition-name "~s is not a condition" c))
+    ($condition-name c)))
 
 (set! condition-wait
   (case-lambda
@@ -1629,8 +1659,8 @@
               ($condition-addr-set! c 0)))
           (f))))))
 
-(set! $tc-mutex ($make-mutex ($raw-tc-mutex)))
-(set! $collect-cond ($make-condition ($raw-collect-cond)))
+(set! $tc-mutex ($make-mutex ($raw-tc-mutex) '$tc-mutex))
+(set! $collect-cond ($make-condition ($raw-collect-cond) '$collect-cond))
 ))
 
 (let ()
