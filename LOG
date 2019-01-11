@@ -1031,3 +1031,6 @@
   ([x (values 1 2)]) x)` into programs that return multiple values
     cp0.ss, cpletrec.ss, cpnanopass, prims.ss, primdata.ss, priminfo.ss,
     primvars.ss, cmacros.ss, syntax.ss, cp0.ms, record.ms
+- use the "single-valued" flag on primitives to simplify certain
+  call-with-values patterns
+    cp0.ss, cp0.ms
