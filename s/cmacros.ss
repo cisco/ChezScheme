@@ -1614,8 +1614,8 @@
   (simple                        #b0000100000)
   (boolean-valued-known          #b0001000000)
   (boolean-valued                #b0010000000)
-  (single-valued-nontail-known   #b0100000000)
-  (single-valued-nontail         #b1000000000)
+  (single-valued-known           #b0100000000)
+  (single-valued                 #b1000000000)
 )
 
 (define-syntax define-flag-field

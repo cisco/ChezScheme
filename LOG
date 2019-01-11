@@ -1055,3 +1055,10 @@
     inspect.ss, bitset.ss, cmacros.ss, prims.ss, primdata.ss, Mf-base,
     prim.c, types.h, misc.ms, thread.ms, debug.stex, threads.stex,
     release_notes.stex
+- adjust compiler, especially cp0, to avoid turning errors like `(let
+  ([x (values 1 2)]) x)` into programs that return multiple values
+    cp0.ss, cpletrec.ss, cpnanopass, prims.ss, primdata.ss, priminfo.ss,
+    primvars.ss, cmacros.ss, syntax.ss, cp0.ms, record.ms
+- use the "single-valued" flag on primitives to simplify certain
+  call-with-values patterns
+    cp0.ss, cp0.ms
