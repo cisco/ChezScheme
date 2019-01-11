@@ -104,6 +104,7 @@
 
 (define enable-cross-library-optimization ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+
 (define-who current-generate-id
   ($make-thread-parameter
    (lambda (sym)
@@ -112,6 +113,9 @@
    (lambda (p)
      (unless (procedure? p) ($oops who "~s is not a procedure" p))
      p)))
+
+(define enable-type-recovery ($make-thread-parameter #t (lambda (x) (and x #t))))
+
 
 (define machine-type
   (lambda ()
@@ -223,6 +227,7 @@
 (package-stubs compiler-support
   $cp0
   $cpvalid
+  $cptypes
   $cpletrec
   $cpcheck)
 (package-stubs syntax-support

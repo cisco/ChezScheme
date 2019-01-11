@@ -16,23 +16,23 @@
 ;;; r6rs features
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs arithmetic bitwise)] [flags primitive proc])
-  (bitwise-not [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-and [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (bitwise-ior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (bitwise-xor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (bitwise-if [sig [(sint sint sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-bit-count [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-length [sig [(sint) -> (uint)]] [flags arith-op mifoldable discard])
-  (bitwise-first-bit-set [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-bit-set? [sig [(sint uint) -> (boolean)]] [flags pure mifoldable discard])
-  (bitwise-copy-bit [sig [(sint uint bit) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-bit-field [sig [(sint sub-uint sub-uint) -> (uint)]] [flags arith-op mifoldable discard])
-  (bitwise-copy-bit-field [sig [(sint sub-uint sub-uint sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-arithmetic-shift [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03])
-  (bitwise-arithmetic-shift-left [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03])
-  (bitwise-arithmetic-shift-right [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03])
-  (bitwise-rotate-bit-field [sig [(sint sub-uint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard])
-  (bitwise-reverse-bit-field [sig [(sint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard])
+  (bitwise-not [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-and [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (bitwise-ior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (bitwise-xor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (bitwise-if [sig [(sint sint sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-bit-count [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-length [sig [(sint) -> (uint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-first-bit-set [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-bit-set? [sig [(sint uint) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (bitwise-copy-bit [sig [(sint uint bit) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-bit-field [sig [(sint sub-uint sub-uint) -> (uint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-copy-bit-field [sig [(sint sub-uint sub-uint sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-arithmetic-shift [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
+  (bitwise-arithmetic-shift-left [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
+  (bitwise-arithmetic-shift-right [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
+  (bitwise-rotate-bit-field [sig [(sint sub-uint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (bitwise-reverse-bit-field [sig [(sint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs arithmetic fixnums)] [flags primitive proc])
@@ -40,18 +40,18 @@
   (fixnum-width [sig [() -> (fixnum)]] [flags pure unrestricted true cp02])
   (least-fixnum [sig [() -> (fixnum)]] [flags pure unrestricted true cp02])
   (greatest-fixnum [sig [() -> (fixnum)]] [flags pure unrestricted true cp02])
-  (fx<? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02])    ; restricted to 2+ arguments
-  (fx<=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02])   ; restricted to 2+ arguments
-  (fx=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02])    ; restricted to 2+ arguments
-  (fx>? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02])    ; restricted to 2+ arguments
-  (fx>=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02])   ; restricted to 2+ arguments
-  (fxzero? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxeven? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxodd? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxmax [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op cp02])
-  (fxmin [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op cp02])
+  (fx<? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
+  (fx<=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; restricted to 2+ arguments
+  (fx=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
+  (fx>? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
+  (fx>=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; restricted to 2+ arguments
+  (fxzero? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxeven? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxodd? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxmax [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxmin [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
   ((r6rs: fx*) [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 2 arguments
   ((r6rs: fx+) [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 2 arguments
   ((r6rs: fx-) [sig [(fixnum) (fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])  ; restricted to 1 or 2 arguments
@@ -61,17 +61,17 @@
   (fxdiv0-and-mod0 [sig [(fixnum fixnum) -> (fixnum fixnum)]] [flags discard])
   (fxdiv0 [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxmod0 [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fx+/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02])
-  (fx-/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02])
-  (fx*/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02])
-  (fxnot [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxand [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
-  (fxior [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
-  (fxxor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
-  (fxif [sig [(fixnum fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxbit-count [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxlength [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxfirst-bit-set [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
+  (fx+/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02 safeongoodargs])
+  (fx-/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02 safeongoodargs])
+  (fx*/carry [sig [(fixnum fixnum fixnum) -> (fixnum fixnum)]] [flags cp02 safeongoodargs])
+  (fxnot [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxand [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
+  (fxior [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
+  (fxxor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
+  (fxif [sig [(fixnum fixnum fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxbit-count [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxlength [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxfirst-bit-set [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
   (fxbit-set? [sig [(fixnum sub-ufixnum) -> (boolean)]] [flags pure cp02])
   (fxcopy-bit [sig [(fixnum sub-ufixnum bit) -> (fixnum)]] [flags arith-op cp02])
   (fxbit-field [sig [(fixnum sub-ufixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02 cp03])
@@ -90,28 +90,28 @@
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs arithmetic flonums)] [flags primitive proc])
   (flonum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (real->flonum [sig [(real) -> (flonum)]] [flags arith-op mifoldable discard])
-  (fl=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])             ; restricted to 2+ arguments
-  (fl<? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])             ; restricted to 2+ arguments
-  (fl<=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])            ; restricted to 2+ arguments
-  (fl>? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])             ; restricted to 2+ arguments
-  (fl>=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])            ; restricted to 2+ arguments
-  (flinteger? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flzero? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
+  (real->flonum [sig [(real) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fl=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])             ; restricted to 2+ arguments
+  (fl<? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])             ; restricted to 2+ arguments
+  (fl<=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])            ; restricted to 2+ arguments
+  (fl>? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])             ; restricted to 2+ arguments
+  (fl>=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])            ; restricted to 2+ arguments
+  (flinteger? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flzero? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flodd? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
   (fleven? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flfinite? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flinfinite? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flnan? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flmax [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flmin [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op mifoldable discard])
-  (fl* [sig [(flonum ...) -> (flonum)]] [flags arith-op partial-folder])
-  (fl+ [sig [(flonum ...) -> (flonum)]] [flags arith-op partial-folder])
-  (fl- [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op partial-folder])
-  (fl/ [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op partial-folder])
-  (flabs [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
+  (flfinite? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flinfinite? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flnan? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flmax [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flmin [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fl* [sig [(flonum ...) -> (flonum)]] [flags arith-op partial-folder safeongoodargs])
+  (fl+ [sig [(flonum ...) -> (flonum)]] [flags arith-op partial-folder safeongoodargs])
+  (fl- [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op partial-folder safeongoodargs])
+  (fl/ [sig [(flonum flonum ...) -> (flonum)]] [flags arith-op partial-folder safeongoodargs])
+  (flabs [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
   (fldiv-and-mod [sig [(flonum flonum) -> (flonum flonum)]] [flags discard])
   (fldiv [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
   (flmod [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
@@ -120,25 +120,25 @@
   (flmod0 [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
   (flnumerator [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
   (fldenominator [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flfloor [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flceiling [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (fltruncate [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flround [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flexp [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (fllog [sig [(flonum) (flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flsin [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flcos [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (fltan [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flasin [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flacos [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flatan [sig [(flonum) (flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flsqrt [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (flexpt [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard])
+  (flfloor [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flceiling [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fltruncate [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flround [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flexp [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fllog [sig [(flonum) (flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flsin [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flcos [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fltan [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flasin [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flacos [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flatan [sig [(flonum) (flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flsqrt [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flexpt [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
   (make-no-infinities-violation [sig [() -> (ptr)]] [flags pure unrestricted alloc])
   (no-infinities-violation? [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
   (make-no-nans-violation [sig [() -> (ptr)]] [flags pure unrestricted alloc])
   (no-nans-violation? [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
-  (fixnum->flonum [sig [(fixnum) -> (flonum)]] [flags arith-op cp02])
+  (fixnum->flonum [sig [(fixnum) -> (flonum)]] [flags arith-op cp02 safeongoodargs])
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs base) (rnrs exceptions)] [flags keyword])
@@ -192,30 +192,30 @@
   (real-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (rational-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (integer-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (exact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (inexact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard])
-  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard])
-  ((r6rs: <) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: <=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  ((r6rs: =) [sig [(number number number ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: >) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: >=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  (zero? [sig [(number) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (positive? [sig [(real) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (negative? [sig [(real) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (odd? [sig [(integer) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (even? [sig [(integer) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])
-  (finite? [sig [(real) -> (boolean)]] [flags pure mifoldable discard])
-  (infinite? [sig [(real) -> (boolean)]] [flags pure mifoldable discard])
-  (nan? [sig [(real) -> (boolean)]] [flags pure mifoldable discard])
-  (max [sig [(real real ...) -> (real)]] [flags arith-op mifoldable discard ieee r5rs])
-  (min [sig [(real real ...) -> (real)]] [flags arith-op mifoldable discard ieee r5rs])
-  (+ [sig [(number ...) -> (number)]] [flags arith-op partial-folder ieee r5rs])
-  (* [sig [(number ...) -> (number)]] [flags arith-op partial-folder ieee r5rs])
-  (- [sig [(number number ...) -> (number)]] [flags arith-op partial-folder ieee r5rs])
+  (exact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (inexact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs])
+  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard safeongoodargs])
+  ((r6rs: <) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: <=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: =) [sig [(number number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: >) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: >=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
+  (zero? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (positive? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (negative? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (odd? [sig [(integer) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (even? [sig [(integer) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (finite? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (infinite? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (nan? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (max [sig [(real real ...) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (min [sig [(real real ...) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (+ [sig [(number ...) -> (number)]] [flags arith-op partial-folder safeongoodargs ieee r5rs])
+  (* [sig [(number ...) -> (number)]] [flags arith-op partial-folder safeongoodargs ieee r5rs])
+  (- [sig [(number number ...) -> (number)]] [flags arith-op partial-folder safeongoodargs ieee r5rs])
   (/ [sig [(number number ...) -> (number)]] [flags arith-op partial-folder ieee r5rs])
-  (abs [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
+  (abs [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (div-and-mod [sig [(number number) -> (number number)]] [flags discard])
   (div [sig [(number number) -> (number)]] [flags arith-op mifoldable discard])
   (mod [sig [(number number) -> (number)]] [flags arith-op mifoldable discard])
@@ -226,11 +226,11 @@
   (lcm [sig [(number ...) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (numerator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
   (denominator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
-  (floor [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (ceiling [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (truncate [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (round [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (rationalize [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
+  (floor [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (ceiling [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (truncate [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (round [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (rationalize [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (exp [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (log [sig [(number) (number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (sin [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
@@ -242,22 +242,22 @@
   (sqrt [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (exact-integer-sqrt [sig [(integer) -> (integer integer)]] [flags discard discard]) ; could be mifoldable if multiple values were handled
   (expt [sig [(number number) -> (number)]] [flags pure discard true cp02 ieee r5rs]) ; can take too long to fold
-  (make-rectangular [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (make-polar [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (real-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (imag-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (magnitude [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (angle [sig [(number) -> (real)]] [flags arith-op mifoldable discard ieee r5rs])
+  (make-rectangular [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (make-polar [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (real-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (imag-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (magnitude [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (angle [sig [(number) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   ((r6rs: number->string) [sig [(number) (number sub-ufixnum) (number sub-ufixnum sub-ufixnum) -> (string)]] [flags alloc ieee r5rs]) ; radix restricted to 2, 4, 8, 16
   ((r6rs: string->number) [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard ieee r5rs]) ; radix restricted to 2, 4, 8, 16
   (not [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs cp02])
   (boolean? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (boolean=? [sig [(boolean boolean boolean ...) -> (boolean)]] [flags pure mifoldable discard cp03])
+  (boolean=? [sig [(boolean boolean boolean ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
   (pair? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (cons [sig [(ptr ptr) -> (#1=(ptr . ptr))]] [flags unrestricted alloc ieee r5rs])
  ; c..r non-alphabetic so marks come before references
-  (car [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
-  (cdr [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
+  (car [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 safeongoodargs ieee r5rs])
+  (cdr [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 safeongoodargs ieee r5rs])
   (caar [sig [(#2=(#1# . ptr)) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (cdar [sig [(#2#) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (cadr [sig [(#3=(ptr . #1#)) -> (ptr)]] [flags mifoldable discard ieee r5rs])
@@ -297,40 +297,40 @@
   (map [sig [(procedure list list ...) -> (list)]] [flags cp02 cp03 ieee r5rs true])
   (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp02 cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard ieee r5rs])
-  (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03])
-  (string->symbol [sig [(string) -> (symbol)]] [flags true mifoldable discard ieee r5rs])
+  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
+  (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
+  (string->symbol [sig [(string) -> (symbol)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (char? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (char->integer [sig [(char) -> (fixnum)]] [flags pure mifoldable discard true ieee r5rs])
+  (char->integer [sig [(char) -> (fixnum)]] [flags pure mifoldable discard safeongoodargs true ieee r5rs])
   (integer->char [sig [(sub-ufixnum) -> (char)]] [flags pure mifoldable discard true ieee r5rs])
-  ((r6rs: char<=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs]) ; restricted to 2+ arguments
-  ((r6rs: char<?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  ((r6rs: char=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs cp03])  ; restricted to 2+ arguments
-  ((r6rs: char>=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs]) ; restricted to 2+ arguments
-  ((r6rs: char>?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: char<=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs]) ; restricted to 2+ arguments
+  ((r6rs: char<?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: char=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs cp03])  ; restricted to 2+ arguments
+  ((r6rs: char>=?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs]) ; restricted to 2+ arguments
+  ((r6rs: char>?) [sig [(char char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
   (string? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (make-string [sig [(length) (length char) -> (string)]] [flags alloc ieee r5rs])
-  (string [sig [(char ...) -> (string)]] [flags alloc ieee r5rs cp02])
-  (string-length [sig [(string) -> (length)]] [flags pure true ieee r5rs mifoldable discard])
+  (string [sig [(char ...) -> (string)]] [flags alloc ieee r5rs cp02 safeongoodargs])
+  (string-length [sig [(string) -> (length)]] [flags pure true ieee r5rs mifoldable discard safeongoodargs])
   (string-ref [sig [(string sub-index) -> (ptr)]] [flags true ieee r5rs mifoldable discard cp02])
-  ((r6rs: string<=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  ((r6rs: string<?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
-  ((r6rs: string=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs cp03])   ; restricted to 2+ arguments
-  ((r6rs: string>=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; restricted to 2+ arguments
-  ((r6rs: string>?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: string<=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: string<?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
+  ((r6rs: string=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs cp03])   ; restricted to 2+ arguments
+  ((r6rs: string>=?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
+  ((r6rs: string>?) [sig [(string string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
   (substring [sig [(string sub-length sub-length) -> (string)]] [flags alloc ieee r5rs])
-  (string-append [sig [(string ...) -> (string)]] [flags alloc ieee r5rs])
-  (string->list [sig [(string) -> (list)]] [flags alloc ieee r5rs])
+  (string-append [sig [(string ...) -> (string)]] [flags alloc safeongoodargs ieee r5rs])
+  (string->list [sig [(string) -> (list)]] [flags alloc safeongoodargs ieee r5rs])
   (list->string [sig [(sub-list) -> (string)]] [flags alloc ieee r5rs])
   (string-for-each [sig [(procedure string string ...) -> (void)]] [flags cp03])
-  (string-copy [sig [(string) -> (string)]] [flags alloc ieee r5rs])
+  (string-copy [sig [(string) -> (string)]] [flags alloc safeongoodargs ieee r5rs])
   (vector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (make-vector [sig [(length) (length ptr) -> (vector)]] [flags alloc ieee r5rs])
   (vector [sig [(ptr ...) -> (vector)]] [flags unrestricted alloc ieee r5rs cp02])
-  (vector-length [sig [(vector) -> (length)]] [flags pure true ieee r5rs mifoldable discard])
+  (vector-length [sig [(vector) -> (length)]] [flags pure true ieee r5rs mifoldable discard safeongoodargs])
   (vector-ref [sig [(vector sub-index) -> (ptr)]] [flags ieee r5rs mifoldable discard cp02])
   (vector-set! [sig [(vector sub-index ptr) -> (void)]] [flags true ieee r5rs])
-  (vector->list [sig [(vector) -> (list)]] [flags alloc ieee r5rs])
+  (vector->list [sig [(vector) -> (list)]] [flags alloc safeongoodargs ieee r5rs])
   (list->vector [sig [(list) -> (vector)]] [flags alloc ieee r5rs])
   (vector-fill! [sig [(vector ptr) -> (void)]] [flags true ieee r5rs])
   (vector-map [sig [(procedure vector vector ...) -> (vector)]] [flags cp03])
@@ -353,16 +353,16 @@
   (native-endianness [sig [() -> (symbol)]] [flags pure unrestricted alloc cp02])
   (bytevector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (make-bytevector [sig [(length) (length u8/s8) -> (bytevector)]] [flags alloc])
-  (bytevector-length [sig [(bytevector) -> (length)]] [flags true mifoldable discard])
-  (bytevector=? [sig [(bytevector bytevector) -> (boolean)]] [flags mifoldable discard cp03])
+  (bytevector-length [sig [(bytevector) -> (length)]] [flags true mifoldable discard safeongoodargs])
+  (bytevector=? [sig [(bytevector bytevector) -> (boolean)]] [flags mifoldable discard cp03 safeongoodargs])
   (bytevector-fill! [sig [(bytevector u8/s8) -> (void)]] [flags true])
   (bytevector-copy! [sig [(bytevector sub-length bytevector sub-length sub-length) -> (void)]] [flags true])
-  (bytevector-copy [sig [(bytevector) -> (bytevector)]] [flags alloc])
+  (bytevector-copy [sig [(bytevector) -> (bytevector)]] [flags alloc safeongoodargs])
   (bytevector-u8-ref [sig [(bytevector sub-index) -> (u8)]] [flags true mifoldable discard])
   (bytevector-s8-ref [sig [(bytevector sub-index) -> (s8)]] [flags true mifoldable discard])
   (bytevector-u8-set! [sig [(bytevector sub-index u8) -> (void)]] [flags true])
   (bytevector-s8-set! [sig [(bytevector sub-index s8) -> (void)]] [flags true])
-  (bytevector->u8-list [sig [(bytevector) -> (list)]] [flags alloc])
+  (bytevector->u8-list [sig [(bytevector) -> (list)]] [flags alloc safeongoodargs])
   (u8-list->bytevector [sig [(sub-list) -> (bytevector)]] [flags alloc])
   (bytevector-uint-ref [sig [(bytevector sub-index symbol sub-length) -> (uint)]] [flags true mifoldable discard])
   (bytevector-sint-ref [sig [(bytevector sub-index symbol sub-length) -> (sint)]] [flags true mifoldable discard])
@@ -535,9 +535,9 @@
   (hashtable-hash-function [sig [(hashtable) -> (ptr)]] [flags])
   (hashtable-mutable? [sig [(hashtable) -> (boolean)]] [flags mifoldable discard])
   (equal-hash [sig [(ptr) -> (length)]] [flags unrestricted true])
-  (string-hash [sig [(string) -> (length)]] [flags true])
-  (string-ci-hash [sig [(string) -> (length)]] [flags true])
-  (symbol-hash [sig [(symbol) -> (length)]] [flags true])
+  (string-hash [sig [(string) -> (length)]] [flags true safeongoodargs])
+  (string-ci-hash [sig [(string) -> (length)]] [flags true safeongoodargs])
+  (symbol-hash [sig [(symbol) -> (length)]] [flags true safeongoodargs])
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs io ports)] [flags keyword])
@@ -729,8 +729,8 @@
 )
 
 (define-symbol-flags* ([libraries (rnrs r5rs)] [flags primitive proc])
-  (exact->inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard ieee r5rs])
+  (exact->inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (quotient [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (remainder [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (modulo [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
@@ -871,9 +871,9 @@
   (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]
                   [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]]
              [flags alloc])
-  (make-time [sig [(sub-symbol sub-ufixnum sub-fixnum) -> (time)]] [flags alloc])
+  (make-time [sig [(sub-symbol sub-ufixnum exact-integer) -> (time)]] [flags alloc])
   (set-time-nanosecond! [sig [(time sub-uint) -> (void)]] [flags true])
-  (set-time-second! [sig [(time sub-fixnum) -> (void)]] [flags true])
+  (set-time-second! [sig [(time exact-integer) -> (void)]] [flags true])
   (set-time-type! [sig [(time sub-symbol) -> (void)]] [flags true])
   (subtract-duration (sig [(time time) -> (time)]) [flags alloc])
   (subtract-duration! (sig [(time time) -> (time)]) [flags alloc])
@@ -886,7 +886,7 @@
   (time-difference (sig [(time time) -> (time)]) [flags alloc])
   (time-difference! (sig [(time time) -> (time)]) [flags alloc])
   (time-nanosecond [sig [(time) -> (uint)]] [flags mifoldable discard true])
-  (time-second [sig [(time) -> (fixnum)]] [flags mifoldable discard true])
+  (time-second [sig [(time) -> (exact-integer)]] [flags mifoldable discard true])
   (time-type [sig [(time) -> (symbol)]] [flags mifoldable discard true])
   (time-utc->date [sig [(time) (time sub-fixnum) -> (date)]] [flags alloc])
 )
@@ -951,6 +951,7 @@
   (enable-cross-library-optimization [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-object-backreferences [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
+  (enable-type-recovery [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
   (expand-omit-library-invocations [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])
@@ -1108,17 +1109,17 @@
 )
 
 (define-symbol-flags* ([libraries] [flags primitive proc])
-  (< [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard])           ; not restricted to 2+ arguments
-  (<= [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard])          ; not restricted to 2+ arguments
-  (= [sig [(number number ...) -> (boolean)]] [flags pure mifoldable discard])           ; not restricted to 2+ arguments
-  (> [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard])           ; not restricted to 2+ arguments
-  (>= [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard])          ; not restricted to 2+ arguments
-  (-1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
-  (1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
-  (1- [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
+  (< [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])           ; not restricted to 2+ arguments
+  (<= [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])          ; not restricted to 2+ arguments
+  (= [sig [(number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])           ; not restricted to 2+ arguments
+  (> [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])           ; not restricted to 2+ arguments
+  (>= [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])          ; not restricted to 2+ arguments
+  (-1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
+  (1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
+  (1- [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
   (abort [sig [() (ptr) -> (bottom)]] [flags abort-op])
   (acosh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
-  (add1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
+  (add1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
   (andmap [sig [(procedure list list ...) -> (ptr ...)]] [flags cp03])
   (annotation? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (annotation-expression [sig [(annotation) -> (ptr)]] [flags pure mifoldable discard true])
@@ -1181,27 +1182,27 @@
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument
   (call-setting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
-  (cfl* [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder])
-  (cfl+ [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder])
-  (cfl- [sig [(cflonum cflonum ...) -> (cflonum)]] [flags arith-op partial-folder])
+  (cfl* [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
+  (cfl+ [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
+  (cfl- [sig [(cflonum cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
   (cfl/ [sig [(cflonum cflonum ...) -> (cflonum)]] [flags arith-op partial-folder])
-  (cfl= [sig [(cflonum cflonum ...) -> (boolean)]] [flags pure mifoldable discard])
-  (cfl-conjugate [sig [(cflonum) -> (cflonum)]] [flags arith-op mifoldable discard])
-  (cfl-imag-part [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (cfl-magnitude-squared [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard])
-  (cfl-real-part [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard])
+  (cfl= [sig [(cflonum cflonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (cfl-conjugate [sig [(cflonum) -> (cflonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (cfl-imag-part [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (cfl-magnitude-squared [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (cfl-real-part [sig [(cflonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
   (cflonum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (char<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])     ; not restricted to 2+ arguments
-  (char<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])      ; not restricted to 2+ arguments
-  (char=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03])      ; not restricted to 2+ arguments
-  (char>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])     ; not restricted to 2+ arguments
-  (char>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])      ; not restricted to 2+ arguments
-  (char- [sig [(char char) -> (fixnum)]] [flags pure mifoldable discard true])
-  (char-ci<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
-  (char-ci<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
-  (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03])   ; not restricted to 2+ arguments
-  (char-ci>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
-  (char-ci>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
+  (char<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])     ; not restricted to 2+ arguments
+  (char<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])      ; not restricted to 2+ arguments
+  (char=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])      ; not restricted to 2+ arguments
+  (char>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])     ; not restricted to 2+ arguments
+  (char>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])      ; not restricted to 2+ arguments
+  (char- [sig [(char char) -> (fixnum)]] [flags pure mifoldable discard true safeongoodargs])
+  (char-ci<=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
+  (char-ci<? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
+  (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])   ; not restricted to 2+ arguments
+  (char-ci>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
+  (char-ci>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
   (char-name [sig [(sub-ptr) (sub-symbol maybe-char) -> (ptr)]] [flags])
   (char-ready? [sig [() (textual-input-port) -> (boolean)]] [flags ieee r5rs])
   (chmod [sig [(pathname sub-ufixnum) -> (void)]] [flags])
@@ -1299,16 +1300,16 @@
   (port-file-compressed! [sig [(port) -> (void)]] [flags])
   (file-regular? [sig [(pathname) (pathname ptr) -> (boolean)]] [flags discard])
   (file-symbolic-link? [sig [(pathname) -> (boolean)]] [flags discard])
-  (fllp [sig [(flonum) -> (ufixnum)]] [flags arith-op mifoldable discard])
-  (fl-make-rectangular [sig [(flonum flonum) -> (inexactnum)]] [flags arith-op mifoldable discard])
+  (fllp [sig [(flonum) -> (ufixnum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (fl-make-rectangular [sig [(flonum flonum) -> (inexactnum)]] [flags arith-op mifoldable discard safeongoodargs])
   (flonum->fixnum [sig [(flonum) -> (fixnum)]] [flags arith-op cp02])
-  (flnonpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (flnonnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
-  (fl= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
-  (fl< [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
-  (fl<= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
-  (fl> [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])   ; not restricted to 2+ arguments
-  (fl>= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard])  ; not restricted to 2+ arguments
+  (flnonpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flnonnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (fl= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
+  (fl< [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
+  (fl<= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
+  (fl> [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
+  (fl>= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
   (flush-output-port [sig [() (output-port) -> (void)]] [flags true])   ; not restricted to 1 argument
   (foreign-entry? [sig [(string) -> (boolean)]] [flags discard])
   (foreign-entry [sig [(string) -> (uptr)]] [flags discard true])
@@ -1336,39 +1337,39 @@
   (fx/ [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])  ; not restricted to 1 or 2 arguments
   (fx1+ [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fx1- [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fx< [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02])   ; not restricted to 2+ arguments
-  (fx<= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02])  ; not restricted to 2+ arguments
-  (fx= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02])   ; not restricted to 2+ arguments
-  (fx> [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02])   ; not restricted to 2+ arguments
-  (fx>= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02])  ; not restricted to 2+ arguments
+  (fx< [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; not restricted to 2+ arguments
+  (fx<= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])  ; not restricted to 2+ arguments
+  (fx= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; not restricted to 2+ arguments
+  (fx> [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; not restricted to 2+ arguments
+  (fx>= [sig [(fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])  ; not restricted to 2+ arguments
   (fxabs [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxlogand [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
   (fxlogbit? [sig [(ufixnum fixnum) -> (boolean)]] [flags pure cp02])
   (fxlogbit0 [sig [(sub-ufixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxlogbit1 [sig [(sub-ufixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxlogior [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
-  (fxlognot [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxlogor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
-  (fxlogtest [sig [(fixnum fixnum) -> (boolean)]] [flags pure cp02])
-  (fxlogxor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
+  (fxlogior [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
+  (fxlognot [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02 safeongoodargs])
+  (fxlogor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
+  (fxlogtest [sig [(fixnum fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxlogxor [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder safeongoodargs])
   (fxmodulo [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxnonnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
-  (fxnonpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02])
+  (fxnonnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxnonpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
   (fxquotient [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
   (fxremainder [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsll [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsra [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsrl [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
-  (fxvector [sig [(fixnum ...) -> (fxvector)]] [flags alloc cp02])
-  (fxvector->list [sig [(fxvector) -> (list)]] [flags alloc])
-  (fxvector-copy [sig [(fxvector) -> (fxvector)]] [flags alloc])
+  (fxvector [sig [(fixnum ...) -> (fxvector)]] [flags alloc cp02 safeongoodargs])
+  (fxvector->list [sig [(fxvector) -> (list)]] [flags alloc safeongoodargs])
+  (fxvector-copy [sig [(fxvector) -> (fxvector)]] [flags alloc safeongoodargs])
   (fxvector-fill! [sig [(fxvector fixnum) -> (void)]] [flags true])
-  (fxvector->immutable-fxvector [sig [(fxvector) -> (fxvector)]] [flags alloc])
-  (fxvector-length [sig [(fxvector) -> (length)]] [flags pure mifoldable discard true])
+  (fxvector->immutable-fxvector [sig [(fxvector) -> (fxvector)]] [flags alloc safeongoodargs])
+  (fxvector-length [sig [(fxvector) -> (length)]] [flags pure mifoldable discard true safeongoodargs])
   (fxvector-ref [sig [(fxvector sub-index) -> (fixnum)]] [flags mifoldable discard cp02])
   (fxvector-set! [sig [(fxvector sub-index fixnum) -> (void)]] [flags true])
   (fxvector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc])
+  (gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc safeongoodargs])
   (gensym? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (gensym->unique-string [sig [(gensym) -> (string)]] [flags true mifoldable]) ; can't discard ... if we have our hands on it, it must be in the oblist after this
   (get-bytevector-some! [sig [(binary-input-port bytevector length length) -> (ptr)]] [flags true])
@@ -1422,15 +1423,15 @@
   (lock-object [sig [(ptr) -> (void)]] [flags unrestricted true])
   (locked-object? [sig [(ptr) -> (boolean)]] [flags unrestricted discard])
   (logand [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (logbit? [sig [(uint sint) -> (boolean)]] [flags pure mifoldable discard])
+  (logbit? [sig [(uint sint) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (logbit0 [sig [(uint sint) -> (sint)]] [flags arith-op mifoldable discard])
   (logbit1 [sig [(uint sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (logior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (lognot [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard])
-  (logor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (logtest [sig [(sint sint) -> (boolean)]] [flags pure mifoldable discard])
-  (logxor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder])
-  (magnitude-squared [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
+  (logior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (lognot [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
+  (logor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (logtest [sig [(sint sint) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (logxor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (magnitude-squared [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
   (make-annotation [sig [(ptr source-object ptr) (ptr source-object ptr annotation-options) -> (annotation)]] [flags pure true mifoldable discard])
   (make-arity-wrapper-procedure [sig [(procedure sint ptr) -> (procedure)]] [flags pure true mifoldable discard])
   (make-boot-file [sig [(pathname sub-list pathname ...) -> (void)]] [flags true])
@@ -1528,7 +1529,7 @@
   (pretty-format [sig [(symbol) -> (ptr)] [(symbol sub-ptr) -> (void)]] [flags])
   (pretty-print [sig [(ptr) (ptr textual-output-port) -> (void)]] [flags true])
   (printf [sig [(string sub-ptr ...) -> (void)]] [flags true])
-  (procedure-arity-mask [sig [(procedure) -> (sint)]] [flags mifoldable discard true])
+  (procedure-arity-mask [sig [(procedure) -> (sint)]] [flags mifoldable discard safeongoodargs true])
   (process [sig [(string) -> (list)]] [flags])
   (profile-clear-database [sig [() -> (void)]] [flags true])
   (profile-clear [sig [() -> (void)]] [flags true])
@@ -1536,12 +1537,12 @@
   (profile-dump-data [sig [(pathname) (pathname sub-list) -> (void)]] [flags true])
   (profile-dump-list [sig [() (ptr) (ptr sub-list) -> (list)]] [flags discard true])
   (profile-dump-html [sig [() (pathname) (pathname sub-list) -> (void)]] [flags true])
-  (property-list [sig [(symbol) -> (list)]] [flags discard true])
+  (property-list [sig [(symbol) -> (list)]] [flags discard true safeongoodargs])
   (put-bytevector-some [sig [(binary-output-port bytevector) (binary-output-port bytevector length) (binary-output-port bytevector length length) -> (uint)]] [flags true])
   (put-hash-table! [sig [(old-hash-table ptr ptr) -> (void)]] [flags true])
   (put-registry! [feature windows] [sig [(string string) -> (void)]] [flags true])
   (put-string-some [sig [(textual-output-port string) (textual-output-port string length) (textual-output-port string length length) -> (uint)]] [flags true])
-  (putprop [sig [(symbol ptr ptr) -> (void)]] [flags true])
+  (putprop [sig [(symbol ptr ptr) -> (void)]] [flags true safeongoodargs])
   (putenv [sig [(string string) -> (void)]] [flags true])
   (profile-query-weight [sig [(ptr) -> (maybe-flonum)]] [flags unrestricted discard])
   (random [sig [(sub-number) -> (number)]] [flags alloc])
@@ -1562,7 +1563,7 @@
   (remove-hash-table! [sig [(old-hash-table ptr) -> (void)]] [flags true])
   (remove-registry! [feature windows] [sig [(string) -> (void)]] [flags true])
   (remove! [sig [(ptr list) -> (list)]] [flags true])
-  (remprop [sig [(symbol ptr) -> (void)]] [flags])
+  (remprop [sig [(symbol ptr) -> (void)]] [flags safeongoodargs])
   (remq! [sig [(ptr list) -> (list)]] [flags true])
   (remv! [sig [(ptr list) -> (list)]] [flags true])
   (rename-file [sig [(pathname ptr) -> (void)]] [flags])
@@ -1642,21 +1643,21 @@
   (statistics [sig [() -> (sstats)]] [flags unrestricted alloc])
   (string->multibyte [feature windows] [sig [(sub-uint string) -> (bytevector)]] [flags true discard])
   (string->number [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard]) ; radix not restricted to 2, 4, 8, 16
-  (string<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])        ; not restricted to 2+ arguments
-  (string<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments
-  (string=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard cp03])         ; not restricted to 2+ arguments
-  (string>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])        ; not restricted to 2+ arguments
-  (string>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments
-  (string-ci<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; not restricted to 2+ arguments
-  (string-ci<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; not restricted to 2+ arguments
-  (string-ci=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs cp03])   ; not restricted to 2+ arguments
-  (string-ci>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])  ; not restricted to 2+ arguments
-  (string-ci>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard ieee r5rs])   ; not restricted to 2+ arguments
+  (string<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])        ; not restricted to 2+ arguments
+  (string<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])         ; not restricted to 2+ arguments
+  (string=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard cp03 safeongoodargs])         ; not restricted to 2+ arguments
+  (string>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])        ; not restricted to 2+ arguments
+  (string>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])         ; not restricted to 2+ arguments
+  (string-ci<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])  ; not restricted to 2+ arguments
+  (string-ci<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; not restricted to 2+ arguments
+  (string-ci=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs cp03])   ; not restricted to 2+ arguments
+  (string-ci>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])  ; not restricted to 2+ arguments
+  (string-ci>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; not restricted to 2+ arguments
   (string-copy! [sig [(string sub-length string sub-length sub-length) -> (void)]] [flags true])
-  (string->immutable-string [sig [(string) -> (string)]] [flags alloc])
+  (string->immutable-string [sig [(string) -> (string)]] [flags alloc safeongoodargs])
   (string-truncate! [sig [(string length) -> (string)]] [flags true])
   (strip-fasl-file [sig [(pathname pathname fasl-strip-options) -> (void)]] [flags true])
-  (sub1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
+  (sub1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
   (subst [sig [(ptr ptr ptr) -> (ptr)]] [flags alloc])
   (subst! [sig [(ptr ptr ptr) -> (ptr)]] [flags])
   (substq [sig [(ptr ptr ptr) -> (ptr)]] [flags alloc])
@@ -1699,7 +1700,7 @@
   (transcript-on [sig [(pathname) -> (void)]] [flags true ieee r5rs])
   (truncate-file [sig [(output-port) (output-port sub-ptr) -> (void)]] [flags])
   (truncate-port [sig [(output-port) (output-port sub-ptr) -> (void)]] [flags])
-  (unbox [sig [(box) -> (ptr)]] [flags mifoldable discard])
+  (unbox [sig [(box) -> (ptr)]] [flags mifoldable discard safeongoodargs])
   (unget-u8 [sig [(binary-input-port ptr) -> (void)]] [flags true])
   (unget-char [sig [(textual-input-port ptr) -> (void)]] [flags true])
   (unlock-object [sig [(ptr) -> (void)]] [flags unrestricted true])
@@ -1708,8 +1709,8 @@
   (utf-16le-codec [sig [() -> (codec)]] [flags pure unrestricted true])
   (utf-16be-codec [sig [() -> (codec)]] [flags pure unrestricted true])
   (vector-cas! [sig [(vector sub-index ptr ptr) -> (boolean)]] [flags])
-  (vector-copy [sig [(vector) -> (vector)]] [flags alloc])
-  (vector->immutable-vector [sig [(vector) -> (vector)]] [flags alloc])
+  (vector-copy [sig [(vector) -> (vector)]] [flags alloc safeongoodargs])
+  (vector->immutable-vector [sig [(vector) -> (vector)]] [flags alloc safeongoodargs])
   (vector-set-fixnum! [sig [(vector sub-index fixnum) -> (void)]] [flags true])
   (virtual-register [sig [(sub-index) -> (ptr)]] [flags discard])
   (virtual-register-count [sig [() -> (length)]] [flags pure unrestricted true cp02])
@@ -1792,6 +1793,7 @@
   ($continuation-attachments [flags])
   ($cp0 [flags])
   ($cpcheck [flags])
+  ($cptypes [flags])
   ($cpcheck-prelex-flags [flags])
   ($cpcommonize [flags])
   ($cpletrec [flags])

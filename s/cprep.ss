@@ -215,6 +215,10 @@
       (if (eq? (subset-mode) 'system)
           ($system-environment)
           (interaction-environment)))
+    (define (cptypes x)
+      (if (enable-type-recovery)
+          ($cptypes x)
+          x))
     (define e/o
       (lambda (who cte? x env)
         (define (go x)
@@ -225,9 +229,9 @@
                   (let ([x ((run-cp0)
                             (lambda (x)
                               (set! cpletrec-ran? #t)
-                              ($cpletrec ($cp0 x $compiler-is-loaded?)))
+                              ($cpletrec (cptypes ($cp0 x $compiler-is-loaded?))))
                             ($cpvalid x))])
-                    (if cpletrec-ran? x ($cpletrec x))))))))
+                    (if cpletrec-ran? x ($cpletrec (cptypes x)))))))))
         (unless (environment? env)
           ($oops who "~s is not an environment" env))
         ; claim compiling-a-file to get cte as well as run-time code

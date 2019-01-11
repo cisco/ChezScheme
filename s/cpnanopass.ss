@@ -4556,6 +4556,7 @@
             [(e1 e2) (dofxlogbit1 e2 e1)])
           (define-inline 3 fxcopy-bit
             [(e1 e2 e3)
+             ;; NB: even in the case where e3 is not known to be 0 or 1, seems like we could do better here.
              (and (fixnum-constant? e3)
                   (case (constant-value e3)
                     [(0) (dofxlogbit0 e1 e2)]

@@ -551,6 +551,12 @@
     (when ($enable-check-prelex-flags)
       ($pass-time 'cpcheck-prelex-flags (lambda () (do-trace $cpcheck-prelex-flags x 'uncprep))))))
 
+(define cptypes
+  (lambda (x)
+    (if (enable-type-recovery)
+        ($pass-time 'cptypes (lambda () ($cptypes x)))
+        x)))
+
 (define compile-file-help
   (lambda (op hostop wpoop machine sfd do-read outfn)
     (include "types.ss")
@@ -569,7 +575,8 @@
                    [$compile-profile ($compile-profile)]
                    [generate-interrupt-trap (generate-interrupt-trap)]
                    [$optimize-closures ($optimize-closures)]
-                   [enable-cross-library-optimization (enable-cross-library-optimization)])
+                   [enable-cross-library-optimization (enable-cross-library-optimization)]
+                   [enable-type-recovery (enable-type-recovery)])
       (emit-header op (constant machine-type))
       (when hostop (emit-header hostop (host-machine-type)))
       (when wpoop (emit-header wpoop (host-machine-type)))
@@ -650,14 +657,18 @@
                                     (set! cpletrec-ran? #t)
                                     (let* ([x ($pass-time 'cp0 (lambda () (do-trace $cp0 x)))]
                                            [waste (check-prelex-flags x 'cp0)]
+                                           [x (cptypes x)]
+                                           [waste (check-prelex-flags x 'cptypes)]
                                            [x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))]
                                            [waste (check-prelex-flags x 'cpletrec)])
                                       x))
                                   x2)])
                           (if cpletrec-ran?
                               x
-                              (let ([x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))])
-                                (check-prelex-flags x 'cpletrec)
+                              (let* ([x (cptypes x)]
+                                     [waste (check-prelex-flags x 'cptypes)]
+                                     [x ($pass-time 'cpletrec (lambda () (do-trace $cpletrec x)))]
+                                     [waste (check-prelex-flags x 'cpletrec)])
                                 x))))]
                  [x2b ($pass-time 'cpcheck (lambda () (do-trace $cpcheck x2a)))]
                  [waste (check-prelex-flags x2b 'cpcheck)]
@@ -1489,10 +1500,13 @@
                         (let ([x ((run-cp0)
                                   (lambda (x)
                                     (set! cpletrec-ran? #t)
-                                    (let ([x ($pass-time 'cp0 (lambda () ($cp0 x)))])
+                                    (let* ([x ($pass-time 'cp0 (lambda () ($cp0 x)))]
+                                           [x (cptypes x)])
                                       ($pass-time 'cpletrec (lambda () ($cpletrec x)))))
                                   x2)])
-                          (if cpletrec-ran? x ($pass-time 'cpletrec (lambda () ($cpletrec x))))))]
+                          (if cpletrec-ran? x
+                              (let ([x (cptypes x)])
+                                ($pass-time 'cpletrec (lambda () ($cpletrec x)))))))]
                  [x2b ($pass-time 'cpcheck (lambda () ($cpcheck x2a)))]
                  [x2b ($pass-time 'cpcommonize (lambda () ($cpcommonize x2b)))])
             (when (and (expand/optimize-output) (not ($noexpand? x0)))

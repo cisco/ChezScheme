@@ -13,7 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(define ($value x) x)
+(define enable-type-recovery ($make-thread-parameter #t (lambda (x) (and x #t))))
 
 (printf "loading ~s cross compiler~%" (constant machine-type-name))
 
