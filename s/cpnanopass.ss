@@ -2882,7 +2882,21 @@
             (%inline eq? ,e1 ,e2)))
         (define build-eqv?
           (lambda (src sexpr e1 e2)
-            (build-libcall #f src sexpr eqv? e1 e2)))
+            (bind #t (e1 e2)
+              (build-simple-or
+               (build-eq? e1 e2)
+               (build-and
+                ;; checking just one argument is good enough for typical
+                ;; uses, where `eqv?` almost always receives two fixnums
+                ;; or two characters; checking both arguments appears to
+                ;; by counter-productive by introducing too many branches
+                (build-simple-or
+                 (%type-check mask-flonum type-flonum ,e1)
+                 (build-and
+                  (%type-check mask-typed-object type-typed-object ,e1)
+                  (%type-check mask-other-number type-other-number
+                    ,(%mref ,e1 ,(constant bignum-type-disp)))))
+                (build-libcall #f src sexpr eqv? e1 e2))))))
         (define make-build-eqv?
           (lambda (src sexpr)
             (lambda (e1 e2)
@@ -5698,6 +5712,7 @@
                   ($unbound-object? obj)
                   (eqv? obj '#vfx()))))
           (define eqvok-help? number?)
+          (define eqvnever-help? (lambda (obj) (not (number? obj))))
           (define e*ok?
             (lambda (e*ok-help?)
               (lambda (e)
@@ -5706,9 +5721,11 @@
                   [else #f]))))
           (define eqok? (e*ok? eqok-help?))
           (define eqvok? (e*ok? eqvok-help?))
+          (define eqvnever? (e*ok? eqvnever-help?))
           (define-inline 2 eqv?
             [(e1 e2) (or (eqvop-null-fptr e1 e2)
-                         (if (or (eqok? e1) (eqok? e2))
+                         (if (or (eqok? e1) (eqok? e2)
+                                 (eqvnever? e1) (eqvnever? e2))
                              (build-eq? e1 e2)
                              (build-eqv? src sexpr e1 e2)))])
           (let ()
