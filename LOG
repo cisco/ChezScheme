@@ -1031,10 +1031,10 @@
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
     4.ms, smgmt.stex, release_notes.stex
-- add make-arity-wrapper
-    cmacros.ss, cpnanopass.ss, interpret.ss, library.ss,
-    primdata.ss, prims.ss, gc.c, objects.stex, release_notes.stex
-    misc.ms, mats/patch*, mats/root*
+ - add make-wrapper-procedure, make-arity-wrapper-procedure, etc.
+     cmacros.ss, cpnanopass.ss, interpret.ss, library.ss, primdata.ss,
+     prims.ss, print.ss, gc.c, number.c, prim.c, externs.h,
+     objects.stex, release_notes.stex, misc.ms, mats/patch*, mats/root*
 - add object-backreferences and enable-object-backreferences as an aid
   to debugging memory leaks
      back.ss, cmacros.ss, inspect.ss, primdata.ss,

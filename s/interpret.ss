@@ -365,21 +365,21 @@
                  [(0)
                   (ip2-closure free
                     ($rt lambda ()
-                      ($make-arity-wrapper-procedure
+                      ($make-wrapper-procedure
                        (lambda args
                          ($rt body ([a0 0] [a1 0] [fp 0]) args (length args)))
                        arity-mask)))]
                  [(1)
                   (ip2-closure free
                     ($rt lambda ()
-                      ($make-arity-wrapper-procedure
+                      ($make-wrapper-procedure
                        (lambda (a0 . args)
                          ($rt body ([a1 0] [fp 0]) args (length args)))
                        arity-mask)))]
                  [(2)
                   (ip2-closure free
                     ($rt lambda ()
-                      ($make-arity-wrapper-procedure
+                      ($make-wrapper-procedure
                        (lambda (a0 a1 . args)
                          ($rt body ([fp 0]) args (length args)))
                        arity-mask)))]))))]

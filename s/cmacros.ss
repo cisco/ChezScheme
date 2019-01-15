@@ -2656,7 +2656,8 @@
      (nuate #f 0 #f #t)
      (virtual-register #f 1 #t #t)
      (set-virtual-register! #f 1 #t #t)
-     ($arity-wrapper-apply #f 0 #f #f)
+     ($wrapper-apply #f 0 #f #f)
+     (wrapper-apply #f 0 #f #f)
      (arity-wrapper-apply #f 0 #f #f)
      ($shift-attachment #f 0 #f #f)
   ))
@@ -2705,5 +2706,6 @@
      Scall-one-result
      Scall-any-results
      segment-info
-  ))
+     bignum-mask-test
+     ))
 )

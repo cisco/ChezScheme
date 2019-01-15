@@ -268,6 +268,7 @@ extern ptr S_logtest PROTO((ptr x, ptr y));
 extern ptr S_logor PROTO((ptr x, ptr y));
 extern ptr S_logxor PROTO((ptr x, ptr y));
 extern ptr S_lognot PROTO((ptr x));
+extern void S_bignum_mask_test PROTO((void));
 
 /* prim.c */
 extern ptr S_lookup_library_entry PROTO((iptr n, IBOOL errorp));

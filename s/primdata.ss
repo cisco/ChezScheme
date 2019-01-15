@@ -1129,8 +1129,6 @@
   (append! [sig [() -> (null)] [(list ... ptr) -> (ptr)]] [flags cp02])
   (apropos [sig [(sub-ptr) (sub-ptr environment) -> (void)]] [flags true])
   (apropos-list [sig [(sub-ptr) (sub-ptr environment) -> (list)]] [flags alloc])
-  (arity-wrapper-procedure? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (arity-wrapper-procedure-data [sig [(ptr) -> (ptr)]] [flags discard])
   (ash [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03])
   (assertion-violationf [sig [(who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; 2nd arg is format string
   (asinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
@@ -1462,6 +1460,7 @@
   (make-thread-parameter [feature pthreads] [sig [(ptr) (ptr procedure) -> (ptr)]] [flags true cp02 cp03])
   (make-weak-eq-hashtable [sig [() (uint) -> (eq-hashtable)]] [flags alloc])
   (make-weak-eqv-hashtable [sig [() (uint) -> (hashtable)]] [flags alloc])
+  (make-wrapper-procedure [sig [(procedure sint ptr) -> (procedure)]] [flags pure true mifoldable discard])
   (mark-port-closed! [sig [(port) -> (void)]] [flags true])
   (maximum-memory-bytes [sig [() -> (uint)]] [flags alloc])
   (maybe-compile-file [sig [(pathname) (pathname pathname) -> (void)]] [flags true])
@@ -1575,8 +1574,6 @@
   (s8-list->bytevector [sig [(sub-list) -> (bytevector)]] [flags alloc])
   (sc-expand [sig [(ptr) (ptr environment) (ptr environment ptr) (ptr environment ptr ptr) (ptr environment ptr ptr maybe-string) -> (ptr)]] [flags])
   (scheme-environment [sig [() -> (environment)]] [flags unrestricted alloc])
-  (set-arity-wrapper-procedure! [sig [(ptr procedure) -> (void)]] [flags true])
-  (set-arity-wrapper-procedure-data! [sig [(ptr ptr) -> (void)]] [flags true])
   (set-binary-port-input-buffer! [sig [(binary-input-port bytevector) -> (void)]] [flags true])
   (set-binary-port-input-index! [sig [(binary-input-port sub-index) -> (void)]] [flags true])
   (set-binary-port-input-size! [sig [(binary-input-port sub-length) -> (void)]] [flags true])
@@ -1611,6 +1608,8 @@
   (set-timer [sig [(ufixnum) -> (ufixnum)]] [flags true])
   (set-top-level-value! [sig [(symbol ptr) (symbol ptr environment) -> (void)]] [flags true])
   (set-virtual-register! [sig [(sub-index ptr) -> (void)]] [flags true])
+  (set-wrapper-procedure! [sig [(ptr procedure) -> (void)]] [flags true])
+  (set-wrapper-procedure-data! [sig [(ptr ptr) -> (void)]] [flags true])
   (sinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (sleep [sig [(time) -> (void)]] [flags true])
   (sort [sig [(procedure list) -> (list)]] [flags true])
@@ -1726,6 +1725,8 @@
   (with-output-to-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags])    ; has options argument
   (with-output-to-string [sig [(procedure) -> (string)]] [flags])
   (with-source-path [sig [(who pathname procedure) -> (ptr ...)]] [flags])
+  (wrapper-procedure? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
+  (wrapper-procedure-data [sig [(ptr) -> (ptr)]] [flags discard])
 )
 
 (define-symbol-flags* ([libraries] [flags system proc]) ; system procedures
@@ -2121,8 +2122,8 @@
   ($make-textual-input-port #;[sig [(string port-handler string) (string port-handler string ptr) -> (textual-input-port)]] [flags alloc])
   ($make-textual-output-port #;[sig [(string port-handler string) (string port-handler string ptr) -> (textual-output-port)]] [flags alloc])
   ($make-tlc [flags alloc])
-  ($make-arity-wrapper-procedure [flags])
   ($make-vtable [flags])
+  ($make-wrapper-procedure [flags])
   ($map [flags])
   ($mark-invoked! [flags])
   ($maybe-compile-file [flags])

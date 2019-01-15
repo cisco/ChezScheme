@@ -81,18 +81,21 @@ of two vectors. An optional argument limits the size of the result vector,
 which enables a traversal of $N$ entries in $O(N)$ time when a hash table
 has more than $O(N)$ entries.
 
-\subsection{Procedure arity-mask adjustment and redirection (9.5.1)}
+\subsection{Procedure redirection with arity-mask adjustment (9.5.1)}
 
-The new procedure \scheme{make-arity-wrapper-procedure} creates a
-procedure that behaves like a given one, but with a different
-result for \scheme{procedure-arity-mask}. The new mask is intended to be a
-subset of the original procedure's arity mask, and the original procedure
-is intended to report its own error for argument counts that do not fit the
-specified mask, but neither behavior is checked.
-The wrapped procedure can be replaced imperatively, which is useful
-for triggering just-in-time conversions of a procedure's
-implementation while imposing a minimal overhead on calls to the
-procedure before or after conversion.
+The new procedures \scheme{make-wrapper-procedure} and \scheme{make-arity-wrapper-procedure},
+create a procedure that behaves like a given one, but with an
+associated data value and a potentially different result for
+\scheme{procedure-arity-mask}. If different, the new mask is intended to be a
+subset of the original procedure's arity mask, although that is not checked.
+The procedure returned by \scheme{make-arity-wrapper-procedure} checks the
+argument count against the given arity mask when call, while \scheme{make-wrapper-procedure}
+expects the original procedure is intended to
+report its own error for argument counts that do not fit the specified mask. The wrapped
+procedure (or its data value) can be replaced imperatively,
+which is useful for triggering just-in-time conversions of a procedure's implementation
+while imposing a minimal overhead on calls to the procedure before or after
+conversion.
 
 \subsection{Ordered guardians (9.5.1)}
 

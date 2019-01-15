@@ -128,8 +128,9 @@
 (define-hand-coded-library-entry values-error)
 (define-hand-coded-library-entry $shift-attachment)
 (define-hand-coded-library-entry bytevector=?)
+(define-hand-coded-library-entry $wrapper-apply)
+(define-hand-coded-library-entry wrapper-apply)
 (define-hand-coded-library-entry arity-wrapper-apply)
-(define-hand-coded-library-entry $arity-wrapper-apply)
 
 (define $instantiate-code-object ($hand-coded '$instantiate-code-object))
 

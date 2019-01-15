@@ -206,7 +206,11 @@
   (lambda (x)
     (unless (procedure? x)
       ($oops '$procedure-name "~s is not a procedure" x))
-    ($code-name ($closure-code x))))
+    (let name ([x x])
+      (let ([code ($closure-code x)])
+        (if ($code-arity-in-closure? code)
+            (name ($closure-ref x 0))
+            ($code-name code))))))
 
 (define-who procedure-arity-mask
   (lambda (x)
@@ -2323,12 +2327,17 @@
         (wctmb cp (string->utf16 str 'little))))))
 )
 
-;; like `make-arity-wrapper-procedure`, but for system use and immutable
-(define-who $make-arity-wrapper-procedure
+(define-who $make-wrapper-procedure
   (lambda (proc arity-mask)
     (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
     (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
-    (#3%$make-arity-wrapper-procedure proc arity-mask)))
+    (#3%$make-wrapper-procedure proc arity-mask)))
+
+(define-who make-wrapper-procedure
+  (lambda (proc arity-mask data)
+    (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+    (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
+    (#3%make-wrapper-procedure proc arity-mask data)))
 
 (define-who make-arity-wrapper-procedure
   (lambda (proc arity-mask data)
@@ -2336,26 +2345,26 @@
     (unless (or (fixnum? arity-mask) (bignum? arity-mask)) ($oops who "~s is not an arity mask" arity-mask))
     (#3%make-arity-wrapper-procedure proc arity-mask data)))
 
-(define-who arity-wrapper-procedure?
+(define-who wrapper-procedure?
   (lambda (x)
     (and (procedure? x)
-         ;; A somewhat indirect test: mutable + arity in closure => arity wrapper
          (let ([c ($closure-code x)])
            (and ($code-arity-in-closure? c)
+                ;; Indirect way of distinguishing from `$make-wrapper-procedure` result:
                 ($code-mutable-closure? c))))))
 
-(define-who set-arity-wrapper-procedure!
+(define-who set-wrapper-procedure!
   (lambda (x proc)
-    (unless (arity-wrapper-procedure? x) ($oops who "~s is not an arity wrapper procedure" x))
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
     (unless (procedure? proc)  ($oops who "~s is not a procedure" proc))
     ($closure-set! x 0 proc)))
 
-(define-who arity-wrapper-procedure-data
+(define-who wrapper-procedure-data
   (lambda (x)
-    (unless (arity-wrapper-procedure? x) ($oops who "~s is not an arity wrapper procedure" x))
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
     ($closure-ref x 2)))
 
-(define-who set-arity-wrapper-procedure-data!
+(define-who set-wrapper-procedure-data!
   (lambda (x v)
-    (unless (arity-wrapper-procedure? x) ($oops who "~s is not an arity wrapper procedure" x))
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
     ($closure-set! x 2 v)))

@@ -1647,6 +1647,15 @@ ptr S_logbitp(k, x) ptr k, x; {
   }
 }
 
+/* %ac0 must hold a nonnegative fixnum.  %ts must hold a bignum.  Changes %ts */
+void S_bignum_mask_test(void) {
+  ptr tc = get_thread_context();
+  iptr n = (iptr)AC0(tc);
+  ptr x = TS(tc);
+
+  TS(tc) = big_logbitp(n, x, BIGLEN(x), BIGSIGN(x));
+}
+
 /* similar logic to big_logand */
 
 static ptr big_logbitp(n, x, xl, xs) ptr x; iptr n, xl; IBOOL xs; {

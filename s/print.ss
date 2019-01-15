@@ -717,9 +717,14 @@ floating point returns with (1 0 -1 ...).
 
   (define wrprocedure
     (lambda (x p)
-      (display-string "#<procedure" p)
-      (wrcodename ($closure-code x) p)
-      (write-char #\> p)))
+      (let ([code ($closure-code x)])
+        (cond
+         [($code-arity-in-closure? code) ; => wrapper procedure
+          (wrprocedure ($closure-ref x 0) p)]
+         [else
+          (display-string "#<procedure" p)
+          (wrcodename code p)
+          (write-char #\> p)]))))
 
   (define wrcode
     (lambda (x p)

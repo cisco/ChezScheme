@@ -5587,7 +5587,7 @@
           (define hand-coded-closure?
             (lambda (name)
               (not (memq name '(nuate nonprocedure-code error-invoke invoke
-                                      arity-wrapper-apply $arity-wrapper-apply
+                                      $wrapper-apply wrapper-apply arity-wrapper-apply
                                       $shift-attachment)))))
           (define-inline 2 $hand-coded
             [(name)
@@ -5683,8 +5683,8 @@
           )
 
         (let ()
-          (define (make-wrapper-closure-alloc e-proc e-arity-mask e-data size libspec)
-            (bind #t ([c (%constant-alloc type-closure (fx* size (constant ptr-bytes)))])
+          (define (make-wrapper-closure-alloc e-proc e-arity-mask e-data libspec)
+            (bind #t ([c (%constant-alloc type-closure (fx* (if e-data 4 3) (constant ptr-bytes)))])
               (%seq
                 (set! ,(%mref ,c ,(constant closure-code-disp))
                       (literal ,(make-info-literal #f 'library libspec (constant code-data-disp))))
@@ -5695,14 +5695,18 @@
                        (set! ,(%mref ,c ,(fx+ (fx* (constant ptr-bytes) 2) (constant closure-data-disp))) ,e-data)
                        ,c)
                      c))))
+          (define-inline 3 $make-wrapper-procedure
+            [(e-proc e-arity-mask)
+             (bind #f (e-proc e-arity-mask)
+               (make-wrapper-closure-alloc e-proc e-arity-mask #f (lookup-libspec $wrapper-apply)))])
+          (define-inline 3 make-wrapper-procedure
+            [(e-proc e-arity-mask e-data)
+             (bind #f (e-proc e-arity-mask e-data)
+               (make-wrapper-closure-alloc e-proc e-arity-mask e-data (lookup-libspec wrapper-apply)))])
           (define-inline 3 make-arity-wrapper-procedure
             [(e-proc e-arity-mask e-data)
              (bind #f (e-proc e-arity-mask e-data)
-               (make-wrapper-closure-alloc e-proc e-arity-mask e-data 4 (lookup-libspec arity-wrapper-apply)))])
-          (define-inline 3 $make-arity-wrapper-procedure
-            [(e-proc e-arity-mask)
-             (bind #f (e-proc e-arity-mask)
-               (make-wrapper-closure-alloc e-proc e-arity-mask #f 3 (lookup-libspec $arity-wrapper-apply)))]))
+               (make-wrapper-closure-alloc e-proc e-arity-mask e-data (lookup-libspec arity-wrapper-apply)))]))
 
         (define-inline 3 $make-shift-attachment
           [(e-proc)
@@ -12708,30 +12712,80 @@
                           (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs))))
                   (set! ,%ac0 ,(%constant svoid))
                   (jump ,%ref-ret (,%ac0))))]
-           [($arity-wrapper-apply arity-wrapper-apply)
+           [($wrapper-apply wrapper-apply arity-wrapper-apply)
             (let ([info (make-info (symbol->string sym) '())])
-              (info-lambda-fv*-set! info (if (eq? sym '$arity-wrapper-apply)
-                                             '(box arity-mask)
-                                             '(box arity-mask data)))
+              (define (add-check-arity cl-reg e)
+                (with-output-language (L13.5 Tail)
+                  (define (fail)
+                    `(goto ,(make-Ldoargerr)))
+                  (if (memq sym '(arity-wrapper-apply))
+                      (%seq
+                       (set! ,%ts ,(%mref ,cl-reg ,(fx+ (constant closure-data-disp) (constant ptr-bytes))))
+                       (if ,(%type-check mask-fixnum type-fixnum ,%ts)
+                           ;; Arity is a fixnum...
+                           (if ,(%inline u< ,%ac0 (immediate ,(constant fixnum-bits)))
+                               (seq
+                                (set! ,%ts ,(%inline sra ,%ts ,%ac0))
+                                (if ,(%inline logtest ,%ts (immediate ,(fix 1)))
+                                    ,e
+                                    ,(fail)))
+                               ;; Arg count is > fixnum width; allow if the fixnum
+                               ;; is negative
+                               (if ,(%inline u< ,%ts (immediate 0))
+                                   ,e
+                                   ,(fail)))
+                           ;; Arity is a bignum...
+                           ,(%seq
+                             ,(meta-cond
+                               [(real-register? '%cp)
+                                (save-scheme-state
+                                 (in %ac0 %cp %ts scheme-args)
+                                 (out %ac1 %xp %yp %td extra-regs))]
+                               [else
+                                (save-scheme-state
+                                 (in %ac0 %td %ts scheme-args)
+                                 (out %ac1 %xp %yp %cp extra-regs))])
+                             (inline ,(make-info-c-simple-call #f (lookup-c-entry bignum-mask-test))
+                                     ,%c-simple-call)
+                             ,(meta-cond
+                               [(real-register? '%cp)
+                                (restore-scheme-state
+                                 (in %ac0 %cp %ts scheme-args)
+                                 (out %ac1 %xp %yp %td extra-regs))]
+                               [else
+                                (restore-scheme-state
+                                 (in %ac0 %td %ts scheme-args)
+                                 (out %ac1 %xp %yp %cp extra-regs))])
+                             (if ,(%inline eq? ,%ts ,(%constant strue))
+                                 ,e
+                                 ,(fail)))))
+                      e)))
+              (info-lambda-fv*-set! info (if (memq sym '($wrapper-apply))
+                                             '(proc arity-mask)
+                                             '(proc arity-mask data)))
               (info-lambda-flags-set! info (fxior (constant code-flag-arity-in-closure)
-                                                  (if (eq? sym 'arity-wrapper-apply)
-                                                      (constant code-flag-mutable-closure)
-                                                      0)))
+                                                  (if (memq sym '($wrapper-apply))
+                                                      0
+                                                      (constant code-flag-mutable-closure))))
               `(lambda ,info 0 ()
-                ,(%seq
-                  ,(meta-cond
-                    [(real-register? '%cp)
-                     (%seq
-                       (set! ,%cp ,(%mref ,%cp ,(constant closure-data-disp)))
-                       (jump ,(%mref ,%cp ,(constant closure-code-disp))
-                             (,%ac0 ,%cp ,(reg-cons* %ret arg-registers) ...)))]
-                    [else
-                     (%seq
-                       (set! ,%td ,(ref-reg %cp))
-                       (set! ,%td ,(%mref ,%td ,(constant closure-data-disp)))
-                       (set! ,(ref-reg %cp) ,%td)
-                       (jump ,(%mref ,%td ,(constant closure-code-disp))
-                             (,%ac0 ,(reg-cons* %ret arg-registers) ...)))]))))]
+                ,(meta-cond
+                  [(real-register? '%cp)
+                   (add-check-arity
+                    %cp
+                    (%seq
+                      (set! ,%cp ,(%mref ,%cp ,(constant closure-data-disp)))
+                      (jump ,(%mref ,%cp ,(constant closure-code-disp))
+                            (,%ac0 ,%cp ,(reg-cons* %ret arg-registers) ...))))]
+                  [else
+                   (%seq
+                     (set! ,%td ,(ref-reg %cp))
+                     ,(add-check-arity
+                       %td
+                       (%seq
+                         (set! ,%td ,(%mref ,%td ,(constant closure-data-disp)))
+                         (set! ,(ref-reg %cp) ,%td)
+                         (jump ,(%mref ,%td ,(constant closure-code-disp))
+                               (,%ac0 ,(reg-cons* %ret arg-registers) ...)))))])))]
            [($shift-attachment)
             ;; Reify the continuation, but dropping the first `attachments` element,
             ;; which must be present, so that the attachment will be popped

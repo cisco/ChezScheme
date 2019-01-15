@@ -826,7 +826,7 @@
                     [(5) (nlambda 5)]
                     [(6) (nlambda 6)]
                     [else (rec constructor
-                            ($make-arity-wrapper-procedure
+                            ($make-wrapper-procedure
                              (lambda xr
                                (unless (fx= (length xr) nflds)
                                  ($oops #f "incorrect number of arguments to ~s" constructor))
@@ -925,7 +925,7 @@
                                   [else #f])]
                            [else #f])])
                      (rec constructor
-                       ($make-arity-wrapper-procedure
+                       ($make-wrapper-procedure
                         (lambda xr
                           (unless (fx= (length xr) nflds)
                             ($oops #f "incorrect number of arguments to ~s" constructor))
