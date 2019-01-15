@@ -1164,7 +1164,7 @@
       [(ERROR_CALL_NONPROCEDURE) (cnt nonprocedure arg1?)
        ($oops #f "attempt to apply non-procedure ~s" nonprocedure)]
       [(ERROR_CALL_ARGUMENT_COUNT) (cnt procedure arg1?)
-       ($oops #f "incorrect number of arguments to ~s" procedure)]
+       ($oops #f "incorrect number of arguments ~s to ~s" cnt procedure)]
       [(ERROR_RESET) (who msg . args)
        ($oops who "~?.  Some debugging context lost" msg args)]
       [(ERROR_NONCONTINUABLE_INTERRUPT) args
