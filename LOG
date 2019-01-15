@@ -1030,3 +1030,5 @@
 - redirecting output of first two checkboot runs to /dev/null so the
   ignored exception, if any, does not show up in the make output.
     s/Mf-base
+- fixed 7.ms to specify the relative path of testfile.boot
+    7.ms
