@@ -1107,42 +1107,45 @@
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (simple/profile? e))]
               [else ($oops who "unrecognized record ~s" e)]))))
 
+      (define (extract-called-procedure pr e*)
+        (case (primref-name pr)
+          [(call-with-values)
+           (and (fx= (length e*) 2)
+                (cadr e*))]
+          [(r6rs:dynamic-wind)
+           (and (fx= (length e*) 3)
+                (cadr e*))]
+          [(dynamic-wind)
+           (cond
+            [(fx= (length e*) 3) (cadr e*)]
+            [(fx= (length e*) 4) (caddr e*)]
+            [else #f])]
+          [(apply $apply)
+           (and (fx>= (length e*) 1)
+                (car e*))]
+          [else #f]))
+
       (define-who boolean-valued?
         (lambda (e)
           (with-memoize (boolean-valued-known boolean-valued) e
             ; 2015/02/11 sorted by frequency
             (nanopass-case (Lsrc Expr) e
               [(call ,preinfo ,e ,e* ...)
-               (let ()
-                 (define (boolean-valued-call? e)
-                   (nanopass-case (Lsrc Expr) (result-exp e)
-                     [,pr (all-set? (prim-mask boolean-valued) (primref-flags pr))]
-                     [(case-lambda ,preinfo ,cl* ...)
-                      (andmap (lambda (cl)
-                                (nanopass-case (Lsrc CaseLambdaClause) cl
-                                  [(clause (,x* ...) ,interface ,body)
-                                   (memoize (boolean-valued? body))]))
-                              cl*)]
-                     [else #f]))
-                 (cond
-                   [(not (primref? e))
-                    (boolean-valued-call? e)]
-                   [(and (eq? (primref-name e) 'call-with-values)
-                         (fx= (length e*) 2))
-                    (boolean-valued-call? (cadr e*))]
-                   [(and (or (eq? (primref-name e) 'dynamic-wind)
-                             (eq? (primref-name e) 'r6rs:dynamic-wind))
-                         (fx= (length e*) 3))
-                    (boolean-valued-call? (cadr e*))]
-                   [(and (eq? (primref-name e) 'dynamic-wind)
-                         (fx= (length e*) 4))
-                    (boolean-valued-call? (caddr e*))]
-                   [(and (or (eq? (primref-name e) 'apply)
-                             (eq? (primref-name e) '$apply))
-                         (fx>= (length e*) 1))
-                    (boolean-valued-call? (car e*))]
-                   [else
-                    (boolean-valued-call? e)]))]
+               (let procedure-boolean-valued? ([e e] [e* e*])
+                 (nanopass-case (Lsrc Expr) (result-exp e)
+                   [,pr
+                    (or (all-set? (prim-mask boolean-valued) (primref-flags pr))
+                        (and e*
+                             (let ([proc-e (extract-called-procedure pr e*)])
+                               (and proc-e
+                                    (memoize (procedure-boolean-valued? proc-e #f))))))]
+                   [(case-lambda ,preinfo ,cl* ...)
+                    (memoize (andmap (lambda (cl)
+                                       (nanopass-case (Lsrc CaseLambdaClause) cl
+                                         [(clause (,x* ...) ,interface ,body)
+                                          (boolean-valued? body)]))
+                                     cl*))]
+                   [else #f]))]
               [(if ,e0 ,e1 ,e2) (memoize (and (boolean-valued? e1) (boolean-valued? e2)))]
               [(record-ref ,rtd ,type ,index ,e) (eq? type 'boolean)]
               [(ref ,maybe-src ,x) #f]
@@ -1172,36 +1175,21 @@
             ; 2015/02/11 sorted by frequency
             (nanopass-case (Lsrc Expr) e
               [(call ,preinfo ,e ,e* ...)
-               (let ()
-                 (define (single-valued-call? e)
-                   (nanopass-case (Lsrc Expr) (result-exp e)
-                     [,pr (all-set? (prim-mask single-valued) (primref-flags pr))]
-                     [(case-lambda ,preinfo ,cl* ...)
-                      (andmap (lambda (cl)
-                                (nanopass-case (Lsrc CaseLambdaClause) cl
-                                  [(clause (,x* ...) ,interface ,body)
-                                   (memoize (single-valued? body))]))
-                              cl*)]
-                     [else #f]))
-                 (cond
-                   [(not (primref? e))
-                    (single-valued-call? e)]
-                   [(and (eq? (primref-name e) 'call-with-values)
-                         (fx= (length e*) 2))
-                    (single-valued-call? (cadr e*))]
-                   [(and (or (eq? (primref-name e) 'dynamic-wind)
-                             (eq? (primref-name e) 'r6rs:dynamic-wind))
-                         (fx= (length e*) 3))
-                    (single-valued-call? (cadr e*))]
-                   [(and (eq? (primref-name e) 'dynamic-wind)
-                         (fx= (length e*) 4))
-                    (single-valued-call? (caddr e*))]
-                   [(and (or (eq? (primref-name e) 'apply)
-                             (eq? (primref-name e) '$apply))
-                         (fx>= (length e*) 1))
-                    (single-valued-call? (car e*))]
-                   [else
-                    (single-valued-call? e)]))]
+               (let procedure-single-valued? ([e e] [e* e*])
+                 (nanopass-case (Lsrc Expr) (result-exp e)
+                   [,pr
+                    (or (all-set? (prim-mask single-valued) (primref-flags pr))
+                        (and e*
+                             (let ([proc-e (extract-called-procedure pr e*)])
+                               (and proc-e
+                                    (memoize (procedure-single-valued? proc-e #f))))))]
+                   [(case-lambda ,preinfo ,cl* ...)
+                    (memoize (andmap (lambda (cl)
+                                       (nanopass-case (Lsrc CaseLambdaClause) cl
+                                         [(clause (,x* ...) ,interface ,body)
+                                          (single-valued? body)]))
+                                     cl*))]
+                   [else #f]))]
               [(if ,e0 ,e1 ,e2) (memoize (and (single-valued? e1) (single-valued? e2)))]
               [(record-ref ,rtd ,type ,index ,e) #t]
               [(ref ,maybe-src ,x) #t]

@@ -14,7 +14,7 @@
 ;;; limitations under the License.
 
 (module priminfo (priminfo-unprefixed priminfo-libraries priminfo-mask priminfo-signatures priminfo-arity primvec
-                  get-priminfo priminfo-boolean? priminfo-single-valued?)
+                  get-priminfo priminfo-boolean? priminfo-result-arity)
   (define-record-type priminfo
     (nongenerative)
     (sealed #t)
@@ -38,16 +38,22 @@
              (andmap (lambda (sig)
                        (let ([out (cdr sig)])
                          (and (pair? out) (eq? (car out) 'boolean) (null? (cdr out)))))
-               signature*)))))
+                     signature*)))))
 
-  (define priminfo-single-valued?
+  (define priminfo-result-arity
     (lambda (info)
       (let ([signature* (priminfo-signatures info)])
-        (and (not (null? signature*))
-             (andmap (lambda (sig)
-                       (let ([out (cdr sig)])
-                         (and (pair? out) (null? (cdr out)))))
-               signature*)))))
+        (cond
+         [(null? signature*) 'unknown]
+         [(andmap (lambda (sig)
+                    (let ([out (cdr sig)])
+                      (and (pair? out) (null? (cdr out)))))
+                  signature*)
+          ;; Note that a `(bottom)` result is treated as single-valued,
+          ;; which is ok in the sense that the aborting operation will
+          ;; produce a single value when it (never) returns.
+          'single]
+         [else 'multiple]))))
 
   (define signature->interface
     (lambda (sig)
