@@ -32,10 +32,10 @@
       [%yp  %r11           #f 11]
       [%cp  %r15           #t 15]
       [#;%ret %rsi           #t  6]
-      [     %rcx %Carg1    #f  1]
       [     %rdx %Carg2    #f  2]
       [     %r8  %Carg3    #f  8]
-      [     %r9  %Carg4    #f  9])
+      [     %r9  %Carg4    #f  9]
+      [     %rcx %Carg1    #f  1]) ; last to avoid use as a Scheme argument
     (machine-dependent
       [%Cfparg1 %Cfpretval #f  0]
       [%Cfparg2            #f  1]
