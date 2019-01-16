@@ -185,6 +185,7 @@ an exception.
 ;     n: exact integer
 ;     m: exact or inexact integer
 ;     w: exact or inexact integer or norep
+;    wi: exact integer or norep or 'inf or 'nan
 ;     x: number, thunk, or norep
 ;     e: exact integer exponent
 ;    i?: #t if number should be made inexact
@@ -198,12 +199,14 @@ an exception.
 (define plus (lambda (x) x))
 (define minus -)
 
+(define (implied-i ex) (if (not ex) 'i ex))
+
 (define make-part
   (lambda (i? s n)
     (s (if i? (inexact n) n))))
 
 (define make-part/exponent
-  (lambda (i? s w r e)
+  (lambda (i? s wi r e)
     ; get out quick for really large/small exponents, like 1e1000000000
     ; no need for great precision here; using 2x the min/max base two
     ; exponent, which should be conservative for all bases.  1x should
@@ -217,14 +220,20 @@ an exception.
       (float-type-case
         [(ieee) -1023]))
     (cond
-      [(eq? w 'norep) 'norep]
-      [i? (s (if (eqv? w 0)
+      [(eq? wi 'norep) 'norep]
+      [(eq? wi 'inf) (if i? (s +inf.0) 'norep)]
+      [(eq? wi 'nan) (if i? +nan.0 'norep)]
+      [i? (s (if (eqv? wi 0)
                  0.0
-                 (if (<= (* min-float-exponent 2) e (* max-float-exponent 2))
-                     (inexact (* w (expt r e)))
+                 (if (<= (* min-float-exponent 2)
+                         (+ e (/ (- (integer-length (numerator wi))
+                                    (integer-length (denominator wi)))
+                                 (log r 2)))
+                         (* max-float-exponent 2))
+                     (inexact (* wi (expt r e)))
                      (if (< e 0) 0.0 +inf.0))))]
-      [(eqv? w 0) 0]
-      [else (lambda () (s (* w (expt r e))))])))
+      [(eqv? wi 0) 0]
+      [else (lambda () (s (* wi (expt r e))))])))
 
 (define (thaw x) (if (procedure? x) (x) x))
 
@@ -319,7 +328,7 @@ an exception.
 (mknum-state num2 (r ex ms s n)          ; saw digit
   (finish-number ms ex x1 (make-part (eq? ex 'i) s n))
   [(digit r) (num2 r ex ms s (+ (* n r) d))]
-  [#\/ (rat0 r ex ms s (make-part (eq? ex 'i) plus n))]
+  [#\/ (rat0 r ex ex ms s (make-part #f plus n))]
   [#\| (mwidth0 r ex ms (make-part (not (eq? ex 'e)) s n))]
   [#\. (let ([!r6rs (or !r6rs (not (fx= r 10)))]) (float1 r ex ms s n (fx+ i 1) 0))]
   [#\# (let ([!r6rs #t]) (numhash r ex ms s (* n r)))]
@@ -368,7 +377,7 @@ an exception.
 
 (mknum-state numhash (r ex ms s n)       ; saw # after integer
   (finish-number ms ex x1 (make-part (not (eq? ex 'e)) s n))
-  [#\/ (rat0 r ex ms s (make-part (not (eq? ex 'e)) plus n))]
+  [#\/ (rat0 r (implied-i ex) ex ms s (make-part #f plus n))]
   [#\. (floathash r ex ms s n (fx+ i 1) 0)]
   [#\# (numhash r ex ms s (* n r))]
   [(#\e #\s #\f #\d #\l) (exp0 r ex ms s n)]
@@ -376,24 +385,28 @@ an exception.
 
 ; can't embed sign in m since we might end up in exp0 and then on
 ; to make-part, which counts on sign being separate
-(mknum-state rat0 (r ex ms s m)          ; saw slash
+(mknum-state rat0 (r ex d-ex ms s m)          ; saw slash
   #f
-  [(digit r) (rat1 r ex ms s m d)])
+  [(digit r) (rat1 r ex d-ex ms s m d)])
 
-(define (mkrat p q) (if (eqv? q 0) 'norep (/ p q)))
+(define (mkrat i? d-i? s nan inf p q)
+  (if (eqv? q 0)
+      (if d-i? (s (/ p 0.0)) (if (eqv? p 0) nan inf))
+      (let ([r (/ p q)])
+        (s (if (or i? d-i?) (inexact r) r)))))
 
-(mknum-state rat1 (r ex ms s m n)        ; saw denominator digit
-  (finish-number ms ex x1 (mkrat m (make-part (eq? ex 'i) s n)))
-  [(digit r) (rat1 r ex ms s m (+ (* n r) d))]
+(mknum-state rat1 (r ex d-ex ms s m n)        ; saw denominator digit
+  (finish-number ms ex x1 (mkrat (eq? ex 'i) (eq? d-ex 'i) s 'norep 'norep m (make-part #f plus n)))
+  [(digit r) (rat1 r ex d-ex ms s m (+ (* n r) d))]
   [#\# (let ([!r6rs #t]) (rathash r ex ms s m (* n r)))]
-  [(#\e #\s #\f #\d #\l) (let ([!r6rs #t]) (exp0 r ex ms s (mkrat m (make-part (not (eq? ex 'e)) plus n))))]
-  [else (complex0 r ex ms (mkrat m (make-part (eq? ex 'i) s n)))])
+  [(#\e #\s #\f #\d #\l) (let ([!r6rs #t]) (exp0 r ex ms s (mkrat #f #f plus 'norep 'norep m (make-part #f plus n))))]
+  [else (complex0 r ex ms (mkrat #f (eq? d-ex 'i) s 'norep 'norep m (make-part #f plus n)))])
 
 (mknum-state rathash (r ex ms s m n)    ; saw # after denominator
-  (finish-number ms ex x1 (mkrat m (make-part (not (eq? ex 'e)) s n)))
+  (finish-number ms ex x1 (mkrat #f (not (eq? ex 'e)) s 'norep 'norep m (make-part #f plus n)))
   [#\# (rathash r ex ms s m (* n r))]
-  [(#\e #\s #\f #\d #\l) (exp0 r ex ms s (mkrat m (make-part (not (eq? ex 'e)) plus n)))]
-  [else (complex0 r ex ms (mkrat m (make-part (not (eq? ex 'e)) s n)))])
+  [(#\e #\s #\f #\d #\l) (exp0 r ex ms s (mkrat #f #f plus 'nan 'inf m (make-part #f plus n)))]
+  [else (complex0 r ex ms (mkrat #f (not (eq? ex 'e)) s 'norep 'norep m (make-part #f plus n)))])
 
 (mknum-state float0 (r ex ms s)          ; saw leading decimal point
   #f
@@ -413,21 +426,21 @@ an exception.
   [(#\e #\s #\f #\d #\l) (exp0 r ex ms s (+ m (* n (expt r (- j i)))))]
   [else (complex0 r ex ms (make-part (not (eq? ex 'e)) s (+ m (* n (expt r (- j i))))))])
 
-(mknum-state exp0 (r ex ms s w)          ; saw exponent flag
+(mknum-state exp0 (r ex ms s wi)          ; saw exponent flag
   #f
-  [(digit r) (exp2 r ex ms s w plus d)]
-  [#\+ (exp1 r ex ms s w plus)]
-  [#\- (exp1 r ex ms s w minus)])
+  [(digit r) (exp2 r ex ms s wi plus d)]
+  [#\+ (exp1 r ex ms s wi plus)]
+  [#\- (exp1 r ex ms s wi minus)])
 
-(mknum-state exp1 (r ex ms sm w s)       ; saw exponent sign
+(mknum-state exp1 (r ex ms sm wi s)       ; saw exponent sign
   #f
-  [(digit r) (exp2 r ex ms sm w s d)])
+  [(digit r) (exp2 r ex ms sm wi s d)])
 
-(mknum-state exp2 (r ex ms sm w s e)     ; saw exponent digit(s)
-  (finish-number ms ex x1 (make-part/exponent (not (eq? ex 'e)) sm w r (s e)))
-  [(digit r) (exp2 r ex ms sm w s (+ (* e r) d))]
-  [#\| (mwidth0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm w r (s e)))]
-  [else (complex0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm w r (s e)))])
+(mknum-state exp2 (r ex ms sm wi s e)     ; saw exponent digit(s)
+  (finish-number ms ex x1 (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))
+  [(digit r) (exp2 r ex ms sm wi s (+ (* e r) d))]
+  [#\| (mwidth0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))]
+  [else (complex0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))])
 
 (mknum-state mwidth0 (r ex ms x)         ; saw vertical bar
   #f
