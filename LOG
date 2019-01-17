@@ -1032,3 +1032,10 @@
     s/Mf-base
 - fixed 7.ms to specify the relative path of testfile.boot
     7.ms
+- profile counts are now maintained even for code that has been
+  reclaimed by the collector and must be released explicitly by the
+  programmer via (profile-release-counters).
+    pdhtml.ss, primdata.ss,
+    globals.h, externs.h, fasl.c, prim5.c, prim.c, alloc.c, scheme.c,
+    misc.ms,
+    release_notes.stex, system.stex
