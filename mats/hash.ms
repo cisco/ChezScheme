@@ -2425,6 +2425,11 @@
           k**))
       (call-with-values (lambda () (#%$hashtable-veclen ht)) cons))
     '(32 . 32))
+
+ (begin
+  (hashtable-set! h +nan.0 'nan)
+  #t)
+ (eq? 'nan (hashtable-ref h (abs +nan.0) #f))
 )
 
 (mat weak-eqv-hashtable

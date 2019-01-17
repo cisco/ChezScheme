@@ -5696,6 +5696,17 @@
         (define-inline 3 bytevector=?
           [(e1 e2) (build-libcall #f src sexpr bytevector=? e1 e2)])
         (let ()
+          (define eqvop-flonum
+            (lambda (e1 e2)
+              (nanopass-case (L7 Expr) e1
+                [(quote ,d) (and (flonum? d)
+                                 (bind #t (e2)
+                                   (build-and
+                                    (%type-check mask-flonum type-flonum ,e2)
+                                    (if ($nan? d)
+                                        (build-not (%inline fl= ,e2 ,e2))
+                                        (%inline fl= ,e2 ,e1)))))]
+                [else #f])))
           (define eqok-help?
             (lambda (obj)
               (or (symbol? obj)
@@ -5724,6 +5735,8 @@
           (define eqvnever? (e*ok? eqvnever-help?))
           (define-inline 2 eqv?
             [(e1 e2) (or (eqvop-null-fptr e1 e2)
+                         (eqvop-flonum e1 e2)
+                         (eqvop-flonum e2 e1)
                          (if (or (eqok? e1) (eqok? e2)
                                  (eqvnever? e1) (eqvnever? e2))
                              (build-eq? e1 e2)
@@ -6409,15 +6422,18 @@
                           ,(build-libcall #t src sexpr logtest e1 e2)))])
         (define-inline 3 $flhash
           [(e) (bind #t (e)
-                 (%inline logand
-                    ,(%inline srl
-                      ,(constant-case ptr-bits
-                         [(32) (%inline +
-                                  ,(%mref ,e ,(constant flonum-data-disp))
-                                  ,(%mref ,e ,(fx+ (constant flonum-data-disp) 4)))]
-                         [(64) (%mref ,e ,(constant flonum-data-disp))])
-                      (immediate 1))
-                    (immediate ,(- (constant fixnum-factor)))))])
+                 `(if ,(%inline fl= ,e ,e)
+                     ,(%inline logand
+                       ,(%inline srl
+                         ,(constant-case ptr-bits
+                            [(32) (%inline +
+                                     ,(%mref ,e ,(constant flonum-data-disp))
+                                     ,(%mref ,e ,(fx+ (constant flonum-data-disp) 4)))]
+                            [(64) (%mref ,e ,(constant flonum-data-disp))])
+                         (immediate 1))
+                       (immediate ,(- (constant fixnum-factor))))
+                   ;; +nan.0
+                   (immediate ,(fix #xfa1e))))])
         (let ()
           (define build-flonum-extractor
             (lambda (pos size e1)
@@ -6447,21 +6463,24 @@
 
         (define-inline 3 $fleqv?
           [(e1 e2)
-           (constant-case ptr-bits
-             [(32) (build-and
-                     (%inline eq?
-                       ,(%mref ,e1 ,(constant flonum-data-disp))
-                       ,(%mref ,e2 ,(constant flonum-data-disp)))
-                     (%inline eq?
-                       ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4))
-                       ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))]
-             [(64) (%inline eq?
-                     ,(%mref ,e1 ,(constant flonum-data-disp))
-                     ,(%mref ,e2 ,(constant flonum-data-disp)))]
-             [else ($oops 'compiler-internal
-                     "$fleqv doesn't handle ptr-bits = ~s"
-                     (constant ptr-bits))])])
-
+           (bind #t (e1 e2)
+             `(if ,(%inline fl= ,e1 ,e1) ; check e1 no +nan.0
+                  ,(constant-case ptr-bits
+                    [(32) (build-and
+                            (%inline eq?
+                             ,(%mref ,e1 ,(constant flonum-data-disp))
+                             ,(%mref ,e2 ,(constant flonum-data-disp)))
+                            (%inline eq?
+                              ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4))
+                              ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))]
+                    [(64) (%inline eq?
+                            ,(%mref ,e1 ,(constant flonum-data-disp))
+                            ,(%mref ,e2 ,(constant flonum-data-disp)))]
+                    [else ($oops 'compiler-internal
+                                 "$fleqv doesn't handle ptr-bits = ~s"
+                                 (constant ptr-bits))])
+                  ;; If e1 is +nan.0, see if e2 is +nan.0:
+                  ,(build-not (%inline fl= ,e2 ,e2))))])
 
         (let ()
           (define build-flop-1
