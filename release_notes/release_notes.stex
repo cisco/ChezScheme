@@ -58,6 +58,19 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Profile data retained for reclaimed code (9.5.1)}
+
+Profile data is now retained indefinitely even for code objects
+that have been reclaimed by the garbage collector.
+Previously, the counters holding the data were reclaimed by the
+collector along with the code objects.
+This makes profile output more complete and accurate, but it does
+represent a potential space leak in programs that create or load
+and release code dynamically.
+Such programs can avoid the potential space leak by releasing the
+counters explicitly via the new procedure
+\scheme{profile-release-counters}.
+
 \subsection{Procedure source location without inspector information (9.5.1)}
 
 When \scheme{generate-inspector-information} is set to \scheme{#f} and

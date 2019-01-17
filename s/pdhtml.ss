@@ -60,14 +60,14 @@
   (include "types.ss")
   (define op+ car)
   (define op- cdr)
-  (define find-pcode
-    (foreign-procedure "(cs)find_pcode" () scheme-object))
-  (define find-pinfo
-    (lambda (x who)
-      (cond
-        [(procedure? x) ($code-pinfo* ($closure-code x))]
-        [($code? x) ($code-pinfo* x)]
-        [else ($oops who "could not find profiling info in ~s" x)])))
+  (define get-counter-list (foreign-procedure "(cs)s_profile_counters" () ptr))
+  (define set-counter-list! (foreign-procedure "(cs)s_set_profile_counters" (ptr) void))
+  (set-who! profile-release-counters
+    (lambda ()
+      (set-counter-list!
+        (remp
+          (lambda (x) (bwp-object? (car x)))
+          (get-counter-list)))))
   (set-who! profile-clear
     (lambda ()
       (define clear-links
@@ -80,8 +80,8 @@
       (for-each
         (lambda (x)
           (for-each (lambda (node) (clear-links (rblock-op node)))
-            (find-pinfo x who)))
-        (find-pcode))))
+            (cdr x)))
+        (get-counter-list))))
   (set-who! profile-dump
     (lambda ()
       (define rblock-count
@@ -94,7 +94,7 @@
                 (- (#3%apply + (#3%map sum (op+ op)))
                    (#3%apply + (#3%map sum (op- op))))))))
       (fold-left
-        (lambda (r code)
+        (lambda (r x)
           (fold-left
             (lambda (r rblock)
               (fold-left
@@ -102,8 +102,8 @@
                   (lambda (r inst)
                     (cons (cons inst count) r)))
                 r (rblock-srecs rblock)))
-            r (find-pinfo code who)))
-        '() (find-pcode)))))
+            r (cdr x)))
+        '() (get-counter-list)))))
 
 (let ()
   (include "types.ss")
