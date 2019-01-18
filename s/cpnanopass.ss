@@ -6034,13 +6034,35 @@
             (lambda (e1 e2)
               (nanopass-case (L7 Expr) e1
                 [(quote ,d) (and (flonum? d)
-                                 (bind #t (e2)
-                                   (build-and
-                                    (%type-check mask-flonum type-flonum ,e2)
-                                    (if ($nan? d)
-                                        (build-not (%inline fl= ,e2 ,e2))
-                                        (%inline fl= ,e2 ,e1)))))]
-                [else #f])))
+                                 (build-and
+                                  (%type-check mask-flonum type-flonum ,e2)
+                                  (if ($nan? d)
+                                      ;; NaN: invert `fl=` on self
+                                      (bind #t (e2)
+                                        (build-not (%inline fl= ,e2 ,e2)))
+                                      ;; Non-NaN: compare bits
+                                      (constant-case ptr-bits
+                                        [(32)
+                                         (bind #t (e2)
+                                           (let ([d0 (if (eq? (constant-case native-endianness) (native-endianness)) 0 4)])
+                                             (let ([word1 ($object-ref 'iptr d (fx+ (constant flonum-data-disp) d0))]
+                                                   [word2 ($object-ref 'iptr d (fx+ (constant flonum-data-disp) (fx- 4 d0)))])
+                                               (build-and
+                                                (%inline eq?
+                                                         ,(%mref ,e2 ,(constant flonum-data-disp))
+                                                         (immediate ,word1))
+                                                (%inline eq?
+                                                         ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))
+                                                         (immediate ,word2))))))]
+                                        [(64)
+                                         (let ([word ($object-ref 'iptr d (constant flonum-data-disp))])
+                                           (%inline eq?
+                                                    ,(%mref ,e2 ,(constant flonum-data-disp))
+                                                    (immediate ,word)))]
+                                        [else ($oops 'compiler-internal
+                                                     "eqv doesn't handle ptr-bits = ~s"
+                                                     (constant ptr-bits))]))))]
+              [else #f])))
           (define eqok-help?
             (lambda (obj)
               (or (symbol? obj)
@@ -6798,7 +6820,7 @@
         (define-inline 3 $fleqv?
           [(e1 e2)
            (bind #t (e1 e2)
-             `(if ,(%inline fl= ,e1 ,e1) ; check e1 no +nan.0
+             `(if ,(%inline fl= ,e1 ,e1) ; check e1 not +nan.0
                   ,(constant-case ptr-bits
                     [(32) (build-and
                             (%inline eq?

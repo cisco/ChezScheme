@@ -333,19 +333,7 @@
       (and (fl~= (cfl-real-part x) (cfl-real-part y))
            (fl~= (cfl-imag-part x) (cfl-imag-part y)))))
 
-; from ieee.ms
-(define ==
-   (lambda (x y)
-      (and (inexact? x)
-           (inexact? y)
-           (if (flonum? x)
-               (and (flonum? y)
-                    (if (fl= x y)
-                        (fl= (fl/ 1.0 x) (fl/ 1.0 y))
-                        (and (not (fl= x x)) (not (fl= y y)))))
-               (and (not (flonum? y))
-                    (== (real-part x) (real-part y))
-                    (== (imag-part x) (imag-part y)))))))
+(define == eqv?)
 
 (define (nan) (/ 0.0 0.0))  ; keeps "pretty-equal?" happy
 (define pi (* (asin 1.0) 2))
