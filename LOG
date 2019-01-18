@@ -1039,3 +1039,6 @@
     globals.h, externs.h, fasl.c, prim5.c, prim.c, alloc.c, scheme.c,
     misc.ms,
     release_notes.stex, system.stex
+- clarified required use of scheme-start to start an application
+  packaged as a boot file and added a short "myecho" example.
+    use.stex

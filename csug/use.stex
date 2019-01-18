@@ -1590,8 +1590,19 @@ application's name and spare your users from supplying any command-line
 arguments or running a separate script to load the application code.
 \end{itemize}
 
-A boot file is simply an object file, possibly containing the code for
-more than one source file, prefixed by a boot header.
+\index{\scheme{scheme-start}}%
+When an application is packaged into a boot file, the source code
+that is compiled and converted into a boot file should set
+\scheme{scheme-start} to a procedure that starts the application,
+as shown in the example above.
+The application should not be started directly from the boot file,
+because boot files are loaded before final initialization of the
+Scheme system.
+The value of \scheme{scheme-start} is invoked automatically after
+final initialization.
+
+A boot file is simply an object file containing the code for
+one or more source files, prefixed by a boot header.
 The boot header identifies a base boot file upon which the application
 directly depends, or possibly two or more alternatives upon which the
 application can be run.
@@ -1630,7 +1641,7 @@ This would allow your application to run on top of the full
 {\ChezScheme} if present, otherwise {\PetiteChezScheme}.
 
 In most cases, you can construct your application
-so it does not depend upon features of {\ChezScheme} (specifically,
+so it does not depend upon features of scheme.boot (specifically,
 the compiler) by specifying only \scheme{"petite"} in the call to
 \scheme{make-boot-file}.
 If your application calls \scheme{eval}, however, and you wish to
@@ -1638,6 +1649,28 @@ allow users to be able to take
 advantage of the faster execution speed of compiled code, then specifying
 both \scheme{"scheme"} and \scheme{"petite"}
 is appropriate.
+
+Here is how we might create and run a simple ``echo'' application
+from a Linux shell:
+
+\schemedisplay
+echo '(suppress-greeting #t)' > myecho.ss
+echo '(scheme-start (lambda fns (printf "~{~a~^ ~}\n" fns)))' >> myecho.ss
+echo '(compile-file "myecho.ss") \
+      (make-boot-file "myecho.boot" (quote ("petite")) "myecho.so")' \
+     | scheme -q
+scheme -b myecho.boot hello world
+\endschemedisplay
+
+If we take the extra step of installing a copy of the {\PetiteChezScheme}
+executable as \scheme{myecho} and copying \scheme{myecho.boot} into
+the same directory as \scheme{petite.boot} (or set SCHEMEHEAPDIRS to
+include the directory containing myecho.boot), we can simply invoke
+\scheme{myecho} to run our echo application:
+
+\schemedisplay
+myecho hello world
+\endschemedisplay
 
 \parheader{Distributing the Application}
 Distributing an application involves can be as simple as creating a
