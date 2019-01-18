@@ -632,7 +632,7 @@
 (define exact-inexact/
    (lambda (x y)
       (cond
-         [(fixnum? x) (fl/ (fixnum->flonum x) y)]
+         [(fixnum? x) (if (fx= x 0) 0 (fl/ (fixnum->flonum x) y))]
          [(floatable? x) (fl/ (inexact x) y)]
          [(or (fl= y 0.0) (exceptional-flonum? y))
           (if (< x 0) (fl/ -1.0 y) (fl/ y))]
@@ -641,7 +641,7 @@
 (define inexact-exact/
    (lambda (x y)
       (cond
-         [(fixnum? y) (fl/ x (fixnum->flonum y))]
+         [(fixnum? y) (if (eq? y 0) (domain-error '/ y) (fl/ x (fixnum->flonum y)))]
          [(floatable? y) (fl/ x (inexact y))]
          [(or (fl= x 0.0) (exceptional-flonum? x)) (if (< y 0) (fl- x) x)]
          [else (inexact (/ (exact x) y))])))
@@ -1266,7 +1266,10 @@
 (set! angle
    (lambda (z)
       (type-case z
-         [(flonum?) (if (negated-flonum? z) pi 0.0)]
+         [(flonum?) (cond
+                     [($nan? z) +nan.0]
+                     [(negated-flonum? z) pi]
+                     [else 0])]
          [($inexactnum?) (cflangle z)]
          [(fixnum? bignum? ratnum?)
           (cond
@@ -1475,28 +1478,47 @@
          [(flonum?)
           (type-case x
              [(flonum?)
-              (if (and (fl< x 0.0) (not ($flinteger-or-inf? y)))
+              (if (and (fl< x 0.0) (not ($flinteger? y)))
                   (exp (* y (log x)))
                   ($flexpt x y))]
              [($inexactnum? $exactnum?) (exp (* y (log x)))]
              [(fixnum? bignum? ratnum?)
-              (if (floatable? x)
-                  (expt (inexact x) y)
-                  (exp (* y (log x))))]
+              (cond
+               [(eq? x 0)
+                (cond
+                 [(fl< y 0.0) ($impoops 'expt "undefined for values ~s and ~s" x y)]
+                 [(fl= y 0.0) 1.0]
+                 [($nan? y) +nan.0]
+                 [else 0])]
+               [(eq? x 1) 1]
+               [else
+                (if (floatable? x)
+                    (expt (inexact x) y)
+                    (exp (* y (log x))))])]
              [else (nonnumber-error 'expt x)])]
          [($inexactnum?)
-          (if (or (eq? x 0) (and (flonum? x) (= x 0.0)))
-              0.0 
-              (begin
-                (unless (number? x) (nonnumber-error 'expt x))
-                (exp (* y (log x)))))]
+          (cond
+           [(eq? x 0)
+            (let ([r ($inexactnum-real-part y)])
+              (cond
+               [(fl> r 0.0) 0]
+               [else
+                ($impoops 'expt "undefined for values ~s and ~s" x y)]))]
+           [(eq? x 1) 1]
+           [(and (flonum? x) (fl= x 0.0) (not (negated-flonum? ($inexactnum-real-part y))))
+            0.0]
+           [else
+            (unless (number? x) (nonnumber-error 'expt x))
+            (exp (* y (log x)))])]
          [(ratnum? $exactnum?)
           (unless (number? x) (nonnumber-error 'expt x))
           (cond
+             [(eqv? y 1/2) (sqrt x)]
              [(eq? x 0)
               (if (> (real-part y) 0)
                   0
                   ($impoops 'expt "undefined for values ~s and ~s" x y))]
+             [(eq? x 1) 1]
              [(floatable? y) (expt x (inexact y))]
              [else (exp (* y (log x)))])]
          [else (nonnumber-error 'expt y)])))
@@ -2215,9 +2237,11 @@
           (type-case x
              [(fixnum? bignum? ratnum? flonum?)
               ;; a / c+di => c(a/(cc+dd)) + (-d(a/cc+dd))i
-              (let ([c (real-part y)] [d (imag-part y)])
-                 (let ([t (/ x (+ (* c c) (* d d)))])
-                    (make-rectangular (* c t) (- (* d t)))))]
+              (if (eq? x 0)
+                  0
+                  (let ([c (real-part y)] [d (imag-part y)])
+                    (let ([t (/ x (+ (* c c) (* d d)))])
+                      (make-rectangular (* c t) (- (* d t))))))]
              [($exactnum? $inexactnum?)
               ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
               (let ([a (real-part x)] [b (imag-part x)]
