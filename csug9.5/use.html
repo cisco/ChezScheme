@@ -1775,8 +1775,19 @@ arguments or running a separate script to load the application code.
 <p>
 
 <p>
-A boot file is simply an object file, possibly containing the code for
-more than one source file, prefixed by a boot header.
+<a name="./use:s69"></a>When an application is packaged into a boot file, the source code
+that is compiled and converted into a boot file should set
+<tt>scheme-start</tt> to a procedure that starts the application,
+as shown in the example above.
+The application should not be started directly from the boot file,
+because boot files are loaded before final initialization of the
+Scheme system.
+The value of <tt>scheme-start</tt> is invoked automatically after
+final initialization.
+
+<p>
+A boot file is simply an object file containing the code for
+one or more source files, prefixed by a boot header.
 The boot header identifies a base boot file upon which the application
 directly depends, or possibly two or more alternatives upon which the
 application can be run.
@@ -1787,7 +1798,7 @@ The base boot file, and its base boot file, if any, are loaded
 automatically when your application boot file is loaded.
 
 <p>
-Boot files are created with <a name="./use:s69"></a><tt>make-boot-file</tt>.
+Boot files are created with <a name="./use:s70"></a><tt>make-boot-file</tt>.
 This procedure accepts two or more arguments.
 The first is a string naming the file into which the boot header and
 object code should be placed, the second is a list of strings naming base
@@ -1815,7 +1826,7 @@ This would allow your application to run on top of the full
 
 <p>
 In most cases, you can construct your application
-so it does not depend upon features of <i>Chez&nbsp;Scheme</i> (specifically,
+so it does not depend upon features of scheme.boot (specifically,
 the compiler) by specifying only <tt>"petite"</tt> in the call to
 <tt>make-boot-file</tt>.
 If your application calls <tt>eval</tt>, however, and you wish to
@@ -1825,7 +1836,32 @@ both <tt>"scheme"</tt> and <tt>"petite"</tt>
 is appropriate.
 
 <p>
-<p><b>Distributing the Application.</b>&nbsp;&nbsp;Distributing an application involves can be as simple as creating a
+Here is how we might create and run a simple "echo" application
+from a Linux shell:
+
+<p>
+
+<p><tt>echo&nbsp;'(suppress-greeting&nbsp;#t)'&nbsp;&gt;&nbsp;myecho.ss<br>
+
+echo&nbsp;'(scheme-start&nbsp;(lambda&nbsp;fns&nbsp;(printf&nbsp;"~&#123;~a~^&nbsp;~&#125;\n"&nbsp;fns)))'&nbsp;&gt;&gt;&nbsp;myecho.ss<br>
+
+echo&nbsp;'(compile-file&nbsp;"myecho.ss")&nbsp;\<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(make-boot-file&nbsp;"myecho.boot"&nbsp;(quote&nbsp;("petite"))&nbsp;"myecho.so")'&nbsp;\<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;scheme&nbsp;-q<br>
+
+scheme&nbsp;-b&nbsp;myecho.boot&nbsp;hello&nbsp;world</tt>
+<p>If we take the extra step of installing a copy of the <i>Petite&nbsp;Chez&nbsp;Scheme</i>
+executable as <tt>myecho</tt> and copying <tt>myecho.boot</tt> into
+the same directory as <tt>petite.boot</tt> (or set SCHEMEHEAPDIRS to
+include the directory containing myecho.boot), we can simply invoke
+<tt>myecho</tt> to run our echo application:
+
+<p>
+
+<p><tt>myecho&nbsp;hello&nbsp;world</tt>
+<p><p><b>Distributing the Application.</b>&nbsp;&nbsp;Distributing an application involves can be as simple as creating a
 distribution package that includes the following items:
 
 <p>
@@ -1858,7 +1894,7 @@ shortcuts to run the executable.
 
 
 <p>
-<a name="./use:s70"></a><a name="./use:s71"></a><a name="./use:s72"></a><a name="./use:s73"></a><a name="./use:s74"></a><a name="./use:s75"></a><a name="./use:s76"></a><a name="./use:s77"></a><a name="./use:s78"></a><a name="./use:s79"></a><a name="./use:s80"></a><a name="./use:s81"></a><a name="./use:s82"></a><a name="./use:s83"></a><a name="./use:s84"></a><a name="./use:s85"></a><a name="./use:s86"></a><a name="./use:s87"></a><a name="./use:s88"></a><a name="./use:s89"></a><a name="./use:s90"></a><i>Chez&nbsp;Scheme</i> recognizes the following command-line options.
+<a name="./use:s71"></a><a name="./use:s72"></a><a name="./use:s73"></a><a name="./use:s74"></a><a name="./use:s75"></a><a name="./use:s76"></a><a name="./use:s77"></a><a name="./use:s78"></a><a name="./use:s79"></a><a name="./use:s80"></a><a name="./use:s81"></a><a name="./use:s82"></a><a name="./use:s83"></a><a name="./use:s84"></a><a name="./use:s85"></a><a name="./use:s86"></a><a name="./use:s87"></a><a name="./use:s88"></a><a name="./use:s89"></a><a name="./use:s90"></a><a name="./use:s91"></a><i>Chez&nbsp;Scheme</i> recognizes the following command-line options.
 
 <p>
 <TABLE><TR><TD nowrap align="left">
@@ -1901,7 +1937,7 @@ shortcuts to run the executable.
 </TD></TR></TABLE>
 
 <p>
-<a name="./use:s91"></a><a name="./use:s92"></a><a name="./use:s93"></a><a name="./use:s94"></a><a name="./use:s95"></a><a name="./use:s96"></a>The following options are recognized but cause the system to print an
+<a name="./use:s92"></a><a name="./use:s93"></a><a name="./use:s94"></a><a name="./use:s95"></a><a name="./use:s96"></a><a name="./use:s97"></a>The following options are recognized but cause the system to print an
 error message and exit because saved heaps are no longer supported.
 
 <p>
@@ -1929,7 +1965,7 @@ The remainder pertain to the loading of boot files at system start-up
 time and are described below.
 
 <p>
-<a name="./use:s97"></a><a name="./use:s98"></a>When <i>Chez&nbsp;Scheme</i> is run, it looks for one or more boot files
+<a name="./use:s98"></a><a name="./use:s99"></a>When <i>Chez&nbsp;Scheme</i> is run, it looks for one or more boot files
 to load.
 Boot files contain the compiled Scheme code that implements most of
 the Scheme system, including the interpreter, compiler, and most
@@ -1969,7 +2005,7 @@ arguments for which search tracing is desired.
 Ordinarily, the search for
 boot files is limited to a set of
 installation directories, but this may be overridden by setting
-the environment variable <a name="./use:s99"></a><tt>SCHEMEHEAPDIRS</tt>.
+the environment variable <a name="./use:s100"></a><tt>SCHEMEHEAPDIRS</tt>.
 <tt>SCHEMEHEAPDIRS</tt> should be a colon-separated list of directories, listed in
 the order in which they should be searched.
 Within each directory, the two-character escape sequence "<tt>%v</tt>"
@@ -2013,7 +2049,7 @@ boot files.
 Copyright &copy; 2018 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised October 2018 for Chez Scheme Version 9.5.1<br>
+Revised January 2019 for Chez Scheme Version 9.5.1<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
