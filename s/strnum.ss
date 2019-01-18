@@ -391,7 +391,7 @@ an exception.
 
 (define (mkrat i? d-i? s nan inf p q)
   (if (eqv? q 0)
-      (if d-i? (s (/ p 0.0)) (if (eqv? p 0) nan inf))
+      (if d-i? (s (/ (inexact p) 0.0)) (if (eqv? p 0) nan inf))
       (let ([r (/ p q)])
         (s (if (or i? d-i?) (inexact r) r)))))
 
