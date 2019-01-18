@@ -618,13 +618,15 @@
     [(ieee)
      (define threshold+ #i#x10000000000000)
      (define threshold- #i#x-10000000000000)])
-  (if (fl>= x 0.0)
-      (if (fl< x threshold+)
-          (fl- (fl+ x threshold+) threshold+)
-          x)
-      (if (fl> x threshold-)
-          (fl- (fl+ x threshold-) threshold-)
-          x)))
+  (if (fl= x 0.0)
+      x ; don't change sign
+      (if (fl>= x 0.0)
+          (if (fl< x threshold+)
+              (fl- (fl+ x threshold+) threshold+)
+              x)
+          (if (fl> x threshold-)
+              (fl- (fl+ x threshold-) threshold-)
+              x))))
 
 ;;; The generic comparison entries assume the fixnum case is inlined.
 

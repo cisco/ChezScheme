@@ -2546,7 +2546,7 @@
                        [else #f])])
            (and xval
                 yval
-                (or (not (eq? xval 0)) (not (fixnum? yval)) (fx>= yval 0))
+                (not (and (eq? xval 0) (negative? (real-part yval))))
                 (begin
                   (residualize-seq '() (list x y) ctxt)
                   `(quote ,(expt xval yval)))))])
