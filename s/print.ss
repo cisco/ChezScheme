@@ -691,6 +691,7 @@ floating point returns with (1 0 -1 ...).
           [($tlc?) (display-string "#<tlc>" p)]
           [(thread?) (wrthread x p)]
           [($rtd-counts?) (display-string "#<rtd-counts>" p)]
+          [(phantom-bytevector?) (display-string "#<phantom-bytevector>" p)]
           [else (display-string "#<garbage>" p)])]
         [else (display-string "#<foreign>" p)])))
 

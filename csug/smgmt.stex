@@ -882,3 +882,88 @@ or objects that have been made static is unnecessary and ineffective but harmles
 This predicate returns true if \var{obj} cannot be relocated or reclaimed
 by the collector, including immediate values, such as fixnums,
 booleans, and characters, and objects that have been made static.
+
+
+\section{Phantom Bytevectors\label{SECTSMGMTPHANTOM}}
+
+\index{phamtom bytevectors}A \emph{phantom bytevector} represents
+memory that is allocated outside of the Scheme stroage management
+system. A phantom bytevector itself uses a small amount of space, but
+it contains a length that reflects external allocation. Representing
+external allocation can be useful for reflecting memory consumption
+and triggering garbage-collection heuristics based on consumption. For
+example, for a program that allocates external objects and frees
+through a guardian, representing the external object's memory use can
+trigger earlier garbage collections when the external objects are
+large. A phantom bytevector can also reflect external allocation to
+tools like \scheme{compute-size}, since the length of a phantom
+bytevector is included in the result of \scheme{compute-size} for the
+phantom bytevector.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-phantom-bytevector}{\categoryprocedure}{(make-phantom-bytevector \var{n})}
+\returns a phantom bytevector
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be an exact nonnegative integer.
+
+Creates a phantom bytevector that reflects \var{n} bytes of external
+allocation.
+
+The value \var{n} must reflect actual allocation in the sense of
+consuming a portion of the process's address space. Claiming
+significantly more bytes than are actually allocated introduces the
+possibility of overflow within the store management system's
+calculations.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{phantom-bytevector?}{\categoryprocedure}{(phantom-bytevector? \var{obj})}
+\returns \scheme{#t} if obj is a phantom bytevector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(phantom-bytevector? (make-phantom-bytevector 1024)) ;=> #t
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{phantom-bytevector-length}{\categoryprocedure}{(phantom-bytevector-length \var{pbv})}
+\returns the length of the phantom bytevector
+\listlibraries
+\endentryheader
+
+\noindent
+\var{pbv} must be a phantom bytevector.
+
+Returns the number of bytes of external allocation that \var{pbv}
+represents.
+
+\schemedisplay
+(phantom-bytevector-length (make-phantom-bytevector 1024)) ;=> 1024
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{set-phantom-bytevector-length!}{\categoryprocedure}{(set-phantom-bytevector-length! \var{pbv} \var{n})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{pbv} must be a phantom bytevector, and \var{n} must be an exact nonnegative integer.
+
+Adjusts the allocation represented by \var{pbv} to \var{n} bytes. For
+example, when an externally allocated object represented by \var{pbv}
+is deallocated, then \var{pbv}'s length should be set to \scheme{0}.
+
+\schemedisplay
+(define pbv (make-phantom-bytevector 1024))
+(phantom-bytevector-length pbv) ;=> 1024
+(set-phantom-bytevector-length! pbv 1)
+(phantom-bytevector-length pbv) ;=> 1
+\endschemedisplay

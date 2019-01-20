@@ -146,6 +146,7 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
 
   g = gmin;
   while (g <= gmax) {
+    n += S_G.phantom_sizes[g];
     for (s = smin; s <= smax; s++) {
      /* add in bytes previously recorded */
       n += S_G.bytes_of_space[s][g];
@@ -170,7 +171,7 @@ static void maybe_fire_collector() {
   ISPC s;
   uptr bytes, fudge;
 
-  bytes = 0;
+  bytes = S_G.phantom_sizes[0];
 
   for (s = 0; s <= max_real_space; s += 1) {
    /* bytes already accounted for */
@@ -927,4 +928,34 @@ ptr S_relocation_table(n) iptr n; {
     thread_find_room(tc, typemod, d, p);
     RELOCSIZE(p) = n;
     return p;
+}
+
+ptr S_phantom_bytevector(sz) uptr sz; {
+    ptr tc = get_thread_context();
+    ptr p;
+
+    thread_find_room(tc, type_typed_object, size_phantom, p);
+
+    PHANTOMTYPE(p) = type_phantom;
+    PHANTOMLEN(p) = 0;
+
+    S_phantom_bytevector_adjust(p, sz);
+
+    return p;
+}
+
+void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
+  uptr old_sz = PHANTOMLEN(ph);
+  seginfo *si;
+  IGEN g;
+
+  tc_mutex_acquire()
+
+  si = SegInfo(ptr_get_segment(ph));
+  g = si->generation;
+
+  S_G.phantom_sizes[g] += (new_sz - old_sz);
+  PHANTOMLEN(ph) = new_sz;
+
+  tc_mutex_release()
 }

@@ -1785,6 +1785,7 @@
   (define-tlc-parameter $tlc-next $set-tlc-next!)
 )
 
+
 (define $generation
   (lambda (x)
     ($generation x)))
@@ -1797,6 +1798,38 @@
 (define $seginfo-space
   (lambda (x)
     ($seginfo-space x)))
+
+(let ()
+  (define $phantom-bytevector-adjust!
+    (foreign-procedure "(cs)phantom_bytevector_adjust"
+      (scheme-object uptr)
+      void))
+  
+  (set-who! phantom-bytevector?
+    (lambda (v) (phantom-bytevector? v)))
+
+  (set-who! $make-phantom-bytevector
+    (lambda () (#3%$make-phantom-bytevector)))
+
+  (set-who! make-phantom-bytevector
+    (lambda (n)
+      (unless (and ($integer-64? n) (>= n 0))
+        ($oops who "~s is not a valid phantom bytevector length" n))
+      (let ([ph ($make-phantom-bytevector)])
+        ($phantom-bytevector-adjust! ph n)
+        ph)))
+  
+  (set-who! phantom-bytevector-length
+    (lambda (ph)
+      (unless (phantom-bytevector? ph) ($oops who "~s is not a phantom bytevector" ph))
+      (#3%phantom-bytevector-length ph)))
+  
+  (set-who! set-phantom-bytevector-length!
+    (lambda (ph n)
+      (unless (phantom-bytevector? ph) ($oops who "~s is not a phantom bytevector" ph))
+      (unless (and ($integer-64? n) (>= n 0))
+        ($oops who "~s is not a valid phantom bytevector length" n))
+      ($phantom-bytevector-adjust! ph n))))
 
 (define ($fxaddress x) (#3%$fxaddress x))
 

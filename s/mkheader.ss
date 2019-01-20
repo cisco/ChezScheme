@@ -805,6 +805,9 @@
         (definit INITTLCNEXT tlc next)
         (defset SETTLCNEXT tlc next)
 
+        (defref PHANTOMTYPE phantom type)
+        (defref PHANTOMLEN  phantom length)
+
         (defref SYMVAL symbol value)
         (defref SYMPVAL symbol pvalue)
         (defref SYMPLIST symbol plist)

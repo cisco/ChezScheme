@@ -1062,3 +1062,8 @@
 - use the "single-valued" flag on primitives to simplify certain
   call-with-values patterns
     cp0.ss, cp0.ms
+- added phantom bytevectors
+    cmacros.ss, primdata.ss, prims.ss, cpnanopass.ss, fasl.ss,
+    inspect.ss, prin.ss, mkheader.ss, misc.ms,
+    alloc.c, prim5.c, gc.c, fasl.c, externs.h,
+    smgmt.stex, system.stex, release_notes.stex

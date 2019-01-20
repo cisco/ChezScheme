@@ -456,6 +456,7 @@
 (define-constant fasl-type-immutable-box 40)
 
 (define-constant fasl-type-begin 41)
+(define-constant fasl-type-phantom 42)
 
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
@@ -749,6 +750,7 @@
 (define-constant type-thread           #b01001110)
 (define-constant type-tlc              #b01011110)
 (define-constant type-rtd-counts       #b01101110)
+(define-constant type-phantom          #b01111110)
 (define-constant type-record                #b111)
 
 (define-constant code-flag-system           #b0001)
@@ -932,6 +934,7 @@
            (fx- (fxsll 1 (constant code-flags-offset)) 1)))
 (define-constant mask-thread       (constant byte-constant-mask))
 (define-constant mask-tlc          (constant byte-constant-mask))
+(define-constant mask-phantom      (constant byte-constant-mask))
 
 (define-constant type-mutable-vector (constant type-vector))
 (define-constant type-immutable-vector
@@ -1466,6 +1469,10 @@
    [ptr next]
    [ptr ordered?]  ; boolean to indicate finalization mode
    [ptr pending])) ; for the GC's use
+
+(define-primitive-structure-disps phantom type-typed-object
+  ([iptr type]
+   [uptr length]))
 
 ;;; forwarding addresses are recorded with a single forward-marker
 ;;; bit pattern (a special Scheme object) followed by the forwarding

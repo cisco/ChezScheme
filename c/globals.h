@@ -133,6 +133,7 @@ EXTERN struct {
     ptr static_id;
     ptr countof_names;
     ptr gcbackreference[static_generation+1];
+    uptr phantom_sizes[static_generation+1];
 
   /* intern.c */
     iptr *oblist_length_pointer;
