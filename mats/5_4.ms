@@ -1162,6 +1162,10 @@
   (test (string-titlecase "r6rs") "R6rs") ; this example appears to be wrong in R6RS (Sept 2007 version)
   (test (string-titlecase "R6RS") "R6rs") ; this one, too
 
+  (test (string-titlecase "stra \xDF;e") "Stra Sse")
+  (test (string-titlecase "one \xFB00;e") "One Ffe")
+  (test (string-titlecase "one\xFB00;e") "One\xFB00;e")
+
   (test (string-downcase "A\x3A3;'x") "a\x3C3;'x") ; ' is a MidLetter
 
   (test (string-ci<? "a" "Z") #t)

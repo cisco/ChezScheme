@@ -403,9 +403,11 @@
           (define (trans s i c seen-cased? ac)
             (if seen-cased?
                 (trans1 s i ($str-downcase c) #t ac)
-                (if ($char-cased? c)
-                    (trans1 s i ($str-titlecase c) #t ac)
-                    (trans1 s i c #f ac))))
+                (let ([tc ($str-titlecase c)])
+                  (if (or ($char-cased? c)
+                          (not (eqv? c tc)))
+                      (trans1 s i tc #t ac)
+                      (trans1 s i c #f ac)))))
           ; NB: if used as a pattern for word breaking, take care not to break between CR & LF (WB3)
           ; NB: and between regional-indicators (WB13c).  also take care not to let handling of WB6 and
           ; NB: WB7 here prevent breaks in, e.g., "a." when not followed by, e.g., another letter.

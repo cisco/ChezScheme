@@ -1067,3 +1067,6 @@
     inspect.ss, prin.ss, mkheader.ss, misc.ms,
     alloc.c, prim5.c, gc.c, fasl.c, externs.h,
     smgmt.stex, system.stex, release_notes.stex
+- fix `string-titlecase` on special-casing characters like #\xDF and
+   #\xFB00
+    5_4.ss, 5_4.ms
