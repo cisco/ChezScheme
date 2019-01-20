@@ -5051,3 +5051,83 @@
   (mutable-bytevector? '#vu8())
   
  )
+
+(mat phantom-bytevector
+  (phantom-bytevector? (make-phantom-bytevector 0))
+  (not (phantom-bytevector? 10))
+  (not (phantom-bytevector? (vector 1 2 3)))
+
+  (error? (make-phantom-bytevector -1))
+  (error? (make-phantom-bytevector (expt 2 100)))
+  (error? (make-phantom-bytevector 'x))
+
+  (begin
+    (define $ph (make-phantom-bytevector 0))
+    (phantom-bytevector? $ph))
+  (eqv? 0 (phantom-bytevector-length $ph))      
+  (eqv? (void) (set-phantom-bytevector-length! $ph 1))
+  (eqv? 1 (phantom-bytevector-length $ph))
+  (eqv? (void) (set-phantom-bytevector-length! $ph 100))
+  (eqv? 100 (phantom-bytevector-length $ph))
+
+  (begin
+    (collect (collect-maximum-generation))
+    (define $pre-allocated (bytes-allocated))
+    (define $pre-memory (current-memory-bytes))
+    (set-phantom-bytevector-length! $ph $pre-allocated)
+    #t)
+
+  ;; Big change to `(bytes-allocated)`
+  (< (* 1.75 $pre-allocated)
+     (bytes-allocated)
+     (* 2.25 $pre-allocated))
+
+  ;; No big change to `(current-memory-bytes)`
+  (< (* 0.75 $pre-memory)
+     (current-memory-bytes)
+     (* 1.25 $pre-memory))
+
+  ;; Same change after GC
+  (begin
+    (collect (collect-maximum-generation))
+    (< (* 1.75 $pre-allocated)
+       (bytes-allocated)
+       (* 2.25 $pre-allocated)))
+
+  ;; fasl => another jump by `$pre-allocated` bytes
+  (begin
+    (define $ph2
+      (let-values ([(o get) (open-bytevector-output-port)])
+        (fasl-write $ph o)
+        (fasl-read (open-bytevector-input-port (get)))))
+    (phantom-bytevector? $ph2))
+
+  (< (* 2.75 $pre-allocated)
+     (bytes-allocated)
+     (* 3.25 $pre-allocated))
+
+  ;; Try GC again
+  (begin
+    (collect (collect-maximum-generation))
+    (< (* 2.75 $pre-allocated)
+       (bytes-allocated)
+       (* 3.25 $pre-allocated)))
+
+  ;; Let GC reclaim $ph2, and `(byte-allocated)` should go down
+  (begin
+    (set! $ph2 #f)
+    (collect (collect-maximum-generation))
+    (< (* 1.75 $pre-allocated)
+       (bytes-allocated)
+       (* 2.25 $pre-allocated)))
+
+  (> (compute-size $ph) (phantom-bytevector-length $ph))
+
+  ;; Change length of `$ph`, and `(byte-allocated)` should go down
+  (begin
+    (set-phantom-bytevector-length! $ph 0)
+    (< (* 0.75 $pre-allocated)
+       (bytes-allocated)
+       (* 1.25 $pre-allocated)))
+  
+  )

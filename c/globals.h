@@ -126,6 +126,7 @@ EXTERN struct {
     uptr countof_size[countof_types];
     ptr static_id;
     ptr countof_names;
+    uptr phantom_sizes[static_generation+1];
 
   /* intern.c */
     iptr *oblist_length_pointer;

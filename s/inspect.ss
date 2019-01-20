@@ -509,6 +509,7 @@
                 [(char? x) char-dispatch-table]
                 [else empty-dispatch-table]))]
          [(tlc) tlc-dispatch-table]
+         [(phantom-bytevector) phantom-dispatch-table]
          [(ftype-struct) ftype-struct-dispatch-table]
          [(ftype-union) ftype-union-dispatch-table]
          [(ftype-array) ftype-array-dispatch-table]
@@ -1723,6 +1724,15 @@
       (name-line-display ((object) 'next) "next"))]
 ))
 
+(define phantom-dispatch-table
+ (make-dispatch-table
+
+   ["content-size"
+     "show size field"
+     (() (name-line-display ((object) 'content-size) "content-size"))]
+
+))
+
 (set! inspect
   (lambda (x)
     (let ([t (set-timer 0)])
@@ -1881,6 +1891,14 @@
           (unless (and (fixnum? i) (fx< -1 i (bytevector-length x)))
             ($oops 'bytevector-object "invalid index ~s" i))
           (make-object (bytevector-u8-ref x i))]
+        [size (g) (compute-size x g)]
+        [write (p) (write x p)]
+        [print (p) (pretty-print x p)]))
+
+    (define make-phantom-object
+      (make-object-maker phantom-bytevector (x)
+        [value () x]
+        [length () (phantom-bytevector-length x)]
         [size (g) (compute-size x g)]
         [write (p) (write x p)]
         [print (p) (pretty-print x p)]))
@@ -2382,6 +2400,7 @@
           [(port? x) (make-port-object x)]
           [($unbound-object? x) (make-unbound-object x)]
           [($tlc? x) (make-tlc-object x)]
+          [(phantom-bytevector? x) (make-phantom-object x)]
           [else (make-simple-object x)])))
 
     (make-object x)))
@@ -2565,6 +2584,9 @@
                   (compute-size ($tlc-keyval x))
                   (compute-size ($tlc-next x)))]
                [($rtd-counts? x) (constant size-rtd-counts)]
+               [(phantom-bytevector? x)
+                (fx+ (constant size-tlc)
+                  (phantom-bytevector-length x))]
                [else ($oops who "missing case for ~s" x)])))
          ; ensure size-ht isn't counted in the size of any object
          (eq-hashtable-set! size-ht size-ht (cons cookie 0))
@@ -2596,7 +2618,7 @@
       (define-counters (type-names type-counts incr!)
         pair symbol vector fxvector bytevector string box flonum bignum ratnum exactnum
         inexactnum continuation stack procedure code-object reloc-table port thread tlc
-        rtd-counts)
+        rtd-counts phantom)
       (define compute-composition!
         (lambda (x)
           (unless (or ($immediate? x)
@@ -2716,6 +2738,8 @@
              (compute-composition! ($tlc-keyval x))
              (compute-composition! ($tlc-next x))]
             [($rtd-counts? x) (incr! rtd-counts (constant size-rtd-counts))]
+            [(phantom-bytevector? x) (incr! phantom (fx+ (constant size-phantom)
+                                                         (phantom-bytevector-length x)))]
             [else ($oops who "missing case for ~s" x)])))
       ; ensure hashtables aren't counted
       (eq-hashtable-set! seen-ht seen-ht #t)
@@ -2784,7 +2808,7 @@
                                        (construct-proc ($object-ref 'scheme-object x (fld-byte fld)) (f (cdr flds)))
                                        (f (cdr flds))))))))]
                       [(or (fxvector? x) (bytevector? x) (string? x) (flonum? x) (bignum? x)
-                           ($inexactnum? x) ($rtd-counts? x)) 
+                           ($inexactnum? x) ($rtd-counts? x) (phantom-bytevector? x))
                        next-proc]
                       [(box? x) (construct-proc (unbox x) next-proc)]
                       [(ratnum? x) (construct-proc ($ratio-numerator x) ($ratio-denominator x) next-proc)]

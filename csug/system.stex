@@ -4355,14 +4355,15 @@ See also \scheme{current-time}, which returns more precise information.
 \endentryheader
 
 If \var{g} is supplied, \scheme{bytes-allocated} returns the number of
-bytes currently allocated for Scheme objects in the specified generation.
+bytes currently allocated for Scheme objects in the specified generation
+plus externally allocated bytes as represented by phantom bytevectors in
+the generation.
 \var{g} must be a nonnegative exact integer no greater than the
 maximum nonstatic generation, i.e., the
 value returned by \scheme{collect-maximum-generation}, or the symbol
 \scheme{static}.
 If \var{g} is not supplied, \scheme{bytes-allocated} returns the total
 number of bytes allocated in all generations.
-
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -4396,7 +4397,9 @@ in bytes, including not only the bytes occupied for Scheme objects
 but also various forms of overhead, including fragmentation and
 reserved but not currently occupied memory, and is thus an accurate
 measure of the amount of heap memory currently reserved from the
-operating system for the current process.
+operating system for the current process. The result is only for
+Scheme's storage management, however, so it does not include sizes
+for externally allocated objects that are represented by phantom bytevectors.
 
 %----------------------------------------------------------------------------
 \entryheader

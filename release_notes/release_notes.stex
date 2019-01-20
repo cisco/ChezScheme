@@ -58,6 +58,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Phantom bytevectors (9.5.1)}
+
+Phantom bytevectors reflect externally allocated memory use in an
+object. A phamtom bytevector is recognized by \scheme{compute-size},
+and it can affect garbage-collection heuristics to trigger earlier
+finalization of the external object through a guardian.
+
 \subsection{Procedure source location without inspector information (9.5.1)}
 
 When \scheme{generate-inspector-information} is set to \scheme{#f} and

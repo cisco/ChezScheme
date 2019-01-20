@@ -89,6 +89,8 @@ extern ptr S_string PROTO((const char *s, iptr n));
 extern ptr S_bignum PROTO((iptr n, IBOOL sign));
 extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
 extern ptr S_relocation_table PROTO((iptr n));
+extern ptr S_phantom_bytevector PROTO((uptr sz));
+extern void S_phantom_bytevector_adjust PROTO((ptr ph, uptr new_sz));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));

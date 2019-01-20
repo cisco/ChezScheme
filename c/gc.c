@@ -434,6 +434,11 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
 #endif /* ENABLE_OBJECT_COUNTS */
           find_room(space_data, tg, type_typed_object, size_rtd_counts, p);
           copy_ptrs(type_typed_object, p, pp, size_rtd_counts);
+      } else if (TYPEP(tf, mask_phantom, type_phantom)) {
+          find_room(space_data, tg, type_typed_object, size_phantom, p);
+          PHANTOMTYPE(p) = PHANTOMTYPE(pp);
+          PHANTOMLEN(p) = PHANTOMLEN(pp);
+          S_G.phantom_sizes[tg] += PHANTOMLEN(p);
       } else {
           S_error_abort("copy(gc): illegal type");
           return (ptr)0 /* not reached */;
@@ -625,6 +630,8 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
     sweep_thread(p);
   } else if ((iptr)tf == type_rtd_counts) {
     /* nothing to sweep */;
+  } else if ((iptr)tf == type_phantom) {
+    /* nothing to sweep */;
   } else {
     S_error_abort("sweep(gc): illegal type");
   }
@@ -731,6 +738,11 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
             S_G.bytes_left[s][g] = 0;
             S_G.bytes_of_space[s][g] = 0;
         }
+
+  /* reset phantom size in generations to be copied */
+    for (g = 0; g <= mcg; g++) {
+      S_G.phantom_sizes[g] = 0;
+    }
 
   /* set up target generation sweep_loc and orig_next_loc pointers */
     for (s = 0; s <= max_real_space; s++)
@@ -1395,6 +1407,8 @@ static iptr size_object(p) ptr p; {
         return size_thread;
     } else if ((iptr)tf == type_rtd_counts) {
         return size_rtd_counts;
+    } else if ((iptr)tf == type_phantom) {
+        return size_phantom;
     } else {
         S_error_abort("size_object(gc): illegal type");
         return 0 /* not reached */;

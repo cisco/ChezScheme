@@ -4745,6 +4745,7 @@
           (typed-object-pred immutable-fxvector? mask-mutable-fxvector type-immutable-fxvector)
           (typed-object-pred $inexactnum? mask-inexactnum type-inexactnum)
           (typed-object-pred $rtd-counts? mask-rtd-counts type-rtd-counts)
+          (typed-object-pred phantom-bytevector? mask-phantom type-phantom)
           (typed-object-pred input-port? mask-input-port type-input-port)
           (typed-object-pred output-port? mask-output-port type-output-port)
           (typed-object-pred port? mask-port type-port)
@@ -5384,6 +5385,22 @@
                  (set! ,(%mref ,t ,(constant guardian-entry-tconc-disp)) ,e-tconc)
                  (set! ,(%mref ,t ,(constant guardian-entry-next-disp)) ,(%tc-ref guardian-entries))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
+
+        (define-inline 3 $make-phantom-bytevector
+          [()
+           (bind #f ()
+             (bind #t ([t (%constant-alloc type-typed-object (constant size-phantom))])
+                   (%seq
+                    (set! ,(%mref ,t ,(constant phantom-type-disp))
+                          ,(%constant type-phantom))
+                    (set! ,(%mref ,t ,(constant phantom-length-disp))
+                          (immediate 0))
+                    ,t)))])
+        (define-inline 3 phantom-bytevector-length
+          [(e-ph)
+           (bind #f (e-ph)
+             (unsigned->ptr (%mref ,e-ph ,(constant phantom-length-disp))
+                            (constant ptr-bits)))])
 
         (define-inline 2 virtual-register-count
           [() `(quote ,(constant virtual-register-count))])

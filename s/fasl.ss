@@ -516,6 +516,11 @@
        (put-uptr p (ash n -32))
        (put-uptr p (logand n #xFFFFFFFF)))))
 
+(define wrf-phantom
+  (lambda (x p)
+    (put-u8 p (constant fasl-type-phantom))
+    (put-uptr p (phantom-bytevector-length x))))
+
 (define wrf-graph
    (lambda (x p t a? handler)
       (let ([a (eq-hashtable-ref (table-hash t) x #f)])
@@ -564,6 +569,7 @@
          [(eq? x (void)) (wrf-immediate (constant svoid) p)]
          [(eq? x '#0=#0#) (wrf-immediate (constant black-hole) p)]
          [($rtd-counts? x) (wrf-immediate (constant sfalse) p)]
+         [(phantom-bytevector? x) (wrf-phantom x p)]
          [else ($oops 'fasl-write "invalid fasl object ~s" x)])))
 
 (define start

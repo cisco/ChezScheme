@@ -936,6 +936,9 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_library_code:
             *x = CLOSCODE(S_lookup_library_entry(uptrin(f), 1));
             return;
+        case fasl_type_phantom:
+            *x = S_phantom_bytevector(uptrin(f));
+            return;
         case fasl_type_graph:
             faslin(tc, x, S_vector(uptrin(f)), pstrbuf, f);
             return;
