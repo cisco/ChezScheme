@@ -1027,3 +1027,5 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- added enable-arithmetic-left-associative
+    cp0.ss, compile.ss, primdata.ss, front.ss, cp0.ms, system.stex

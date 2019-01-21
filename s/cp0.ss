@@ -2197,35 +2197,45 @@
                             (let ([folded (generic-op a d)])
                               (and (target-fixnum? folded) folded)))))]
                 [else #f]))))
-        (define (partial-fold-plus level orig-arg* ctxt prim op generic-op ident bottom?)
+        (define (partial-fold-plus level orig-arg* ctxt prim op generic-op ident bottom? assoc-at-level)
           (define fold? (make-fold? op generic-op))
-          (let loop ([arg* (reverse orig-arg*)] [a ident] [val* '()] [used '()] [unused '()])
+          (let loop ([arg* orig-arg*] [a ident] [val* '()] [used '()] [unused '()])
             (if (null? arg*)
-                (cond
-                  [(bottom? a)
-                   (cond
-                     [(or (fx= level 3) (null? val*))
-                      (residualize-seq '() orig-arg* ctxt)
-                      `(quote ,a)]
-                     [else
-                       (residualize-seq used unused ctxt)
-                       `(seq
-                          ,(build-primcall (app-preinfo ctxt) level prim val*)
-                          (quote ,a))])]
-                  [else
-                    (residualize-seq used unused ctxt)
-                    (cond
-                      [(null? val*) `(quote ,a)]
-                      [(eqv? a ident)
-                       (if (and (fx= level 3) (null? (cdr val*)))
-                           (car val*)
-                           (build-primcall (app-preinfo ctxt) level prim val*))]
-                      [else
-                        (build-primcall (app-preinfo ctxt) level prim (cons `(quote ,a) val*))])])
+                (let ([val* (reverse val*)])
+                  (cond
+                   [(bottom? a)
+                     (cond
+                       [(or (fx= level 3) (null? val*))
+                        (residualize-seq '() orig-arg* ctxt)
+                        `(quote ,a)]
+                       [else
+                         (residualize-seq used unused ctxt)
+                         `(seq
+                           ,(build-primcall (app-preinfo ctxt) level prim
+                                            (if (enable-arithmetic-left-associative)
+                                                ;; May need bottom to avoid overflow
+                                                (cons `(quote ,a) val*)
+                                                val*))
+                           (quote ,a))])]
+                    [else
+                      (residualize-seq used unused ctxt)
+                      (cond
+                        [(null? val*) `(quote ,a)]
+                        [(eqv? a ident)
+                         (if (and (fx= level 3) (null? (cdr val*)))
+                             (car val*)
+                             (build-primcall (app-preinfo ctxt) level prim val*))]
+                        [else
+                          (build-primcall (app-preinfo ctxt) level prim (cons `(quote ,a) val*))])]))
                 (let* ([arg (car arg*)] [val (value-visit-operand! arg)])
                   (cond
                     [(fold? val a) =>
                      (lambda (a) (loop (cdr arg*) a val* used (cons arg unused)))]
+                    [(and (enable-arithmetic-left-associative)
+                          (not (and assoc-at-level (fx>= level assoc-at-level))))
+                     ;; preserve left-associative bahvior
+                     (let ([rest-val* (reverse (map value-visit-operand! (cdr arg*)))])
+                       (loop '() a (append rest-val* (cons val val*)) (append arg* used) unused))]
                     [else (loop (cdr arg*) a (cons val val*) (cons arg used) unused)])))))
 
         (define (partial-fold-minus level arg arg* ctxt prim op generic-op ident)
@@ -2270,17 +2280,19 @@
           ; partial-fold-plus assumes arg* is nonempty
           (syntax-rules (plus minus)
             [(_ plus prim generic-op ident)
-             (partial-folder plus prim generic-op ident (lambda (x) #f))]
+             (partial-folder plus prim generic-op ident (lambda (x) #f) #f)]
             [(_ plus prim generic-op ident bottom?)
+             (partial-folder plus prim generic-op ident bottom? #f)]
+            [(_ plus prim generic-op ident bottom? assoc-at-level)
              (begin
                (define-inline 2 prim
                  ; (fl+) might should return -0.0, but we force it to return +0.0 per TSPL4
                  [() (residualize-seq '() '() ctxt) `(quote ,(if (eqv? ident -0.0) +0.0 ident))]
-                 [arg* (partial-fold-plus 2 arg* ctxt 'prim prim generic-op ident bottom?)])
+                 [arg* (partial-fold-plus 2 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level)])
                (define-inline 3 prim
                  ; (fl+) might should return -0.0, but we force it to return +0.0 per TSPL4
                  [() (residualize-seq '() '() ctxt) `(quote ,(if (eqv? ident -0.0) +0.0 ident))]
-                 [arg* (partial-fold-plus 3 arg* ctxt 'prim prim generic-op ident bottom?)]))]
+                 [arg* (partial-fold-plus 3 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level)]))]
             [(_ minus prim generic-op ident)
              (begin
                (define-inline 2 prim
@@ -2294,13 +2306,15 @@
           ; fx+ and fx* limited to exactly two args, fx- limited to one or two args
           (syntax-rules (plus minus)
             [(_ plus r6rs:prim prim generic-op ident)
-             (r6rs-fixnum-partial-folder plus r6rs:prim prim generic-op ident (lambda (x) #f))]
+             (r6rs-fixnum-partial-folder plus r6rs:prim prim generic-op ident (lambda (x) #f) #f)]
             [(_ plus r6rs:prim prim generic-op ident bottom?)
+             (r6rs-fixnum-partial-folder plus r6rs:prim prim generic-op ident bottom? #f)]
+            [(_ plus r6rs:prim prim generic-op ident bottom? assoc-at-level)
              (begin
                (define-inline 2 r6rs:prim
-                 [(arg1 arg2) (partial-fold-plus 2 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom?)])
+                 [(arg1 arg2) (partial-fold-plus 2 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level)])
                (define-inline 3 r6rs:prim
-                 [(arg1 arg2) (partial-fold-plus 3 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom?)]))]
+                 [(arg1 arg2) (partial-fold-plus 3 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level)]))]
             [(_ minus r6rs:prim prim generic-op ident)
              (begin
                (define-inline 2 r6rs:prim
@@ -2315,14 +2329,14 @@
         ; handling nans here using the support for handling exact zero in
         ; the multiply case.  maybe shouldn't bother with nans anyway.
         (partial-folder plus + + 0 generic-nan?)
-        (partial-folder plus fx+ + 0)
-        (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0)
+        (partial-folder plus fx+ + 0 (lambda (x) #f) 3)
+        (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0 (lambda (x) #f) 3)
         (partial-folder plus fl+ fl+ -0.0 fl-nan?)
         (partial-folder plus cfl+ cfl+ -0.0 cfl-nan?)
 
         (partial-folder plus * * 1 exact-zero?)   ; exact zero trumps nan
-        (partial-folder plus fx* * 1 exact-zero?)
-        (r6rs-fixnum-partial-folder plus r6rs:fx* fx* * 1 exact-zero?)
+        (partial-folder plus fx* * 1 exact-zero? 3)
+        (r6rs-fixnum-partial-folder plus r6rs:fx* fx* * 1 exact-zero? 3)
         (partial-folder plus fl* fl* 1.0 fl-nan?)
         (partial-folder plus cfl* cfl* 1.0 cfl-nan?)
 
@@ -2341,20 +2355,20 @@
         (partial-folder minus fl/ fl/ 1.0)
         (partial-folder minus cfl/ cfl/ 1.0)
 
-        (partial-folder plus logior logior 0 exact-negone?)
-        (partial-folder plus logor logor 0 exact-negone?)
-        (partial-folder plus bitwise-ior bitwise-ior 0 exact-negone?)
-        (partial-folder plus fxlogior logor 0 exact-negone?)
-        (partial-folder plus fxior logor 0 exact-negone?)
-        (partial-folder plus fxlogor logor 0 exact-negone?)
-        (partial-folder plus logxor logxor 0)
-        (partial-folder plus bitwise-xor bitwise-xor 0)
-        (partial-folder plus fxlogxor logxor 0)
-        (partial-folder plus fxxor logxor 0)
-        (partial-folder plus logand logand -1 exact-zero?)
-        (partial-folder plus bitwise-and bitwise-and -1 exact-zero?)
-        (partial-folder plus fxlogand logand -1 exact-zero?)
-        (partial-folder plus fxand logand -1 exact-zero?)
+        (partial-folder plus logior logior 0 exact-negone? 2)
+        (partial-folder plus logor logor 0 exact-negone? 2)
+        (partial-folder plus bitwise-ior bitwise-ior 0 exact-negone? 2)
+        (partial-folder plus fxlogior logor 0 exact-negone? 2)
+        (partial-folder plus fxior logor 0 exact-negone? 2)
+        (partial-folder plus fxlogor logor 0 exact-negone? 2)
+        (partial-folder plus logxor logxor 0 (lambda (x) #f) 2)
+        (partial-folder plus bitwise-xor bitwise-xor 0 (lambda (x) #f) 2)
+        (partial-folder plus fxlogxor logxor 0 (lambda (x) #f) 2)
+        (partial-folder plus fxxor logxor 0 (lambda (x) #f) 2)
+        (partial-folder plus logand logand -1 exact-zero? 2)
+        (partial-folder plus bitwise-and bitwise-and -1 exact-zero? 2)
+        (partial-folder plus fxlogand logand -1 exact-zero? 2)
+        (partial-folder plus fxand logand -1 exact-zero? 2)
         )
 
       (let ()

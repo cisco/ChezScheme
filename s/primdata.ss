@@ -946,6 +946,7 @@
   (debug-on-exception [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (default-record-equal-procedure [sig [() -> (maybe-procedure)] [(maybe-procedure) -> (void)]] [flags])
   (default-record-hash-procedure [sig [() -> (maybe-procedure)] [(maybe-procedure) -> (void)]] [flags])
+  (enable-arithmetic-left-associative [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-cross-library-optimization [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])

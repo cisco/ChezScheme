@@ -104,6 +104,8 @@
 
 (define enable-cross-library-optimization ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+(define enable-arithmetic-left-associative ($make-thread-parameter #f (lambda (x) (and x #t))))
+
 (define machine-type
   (lambda ()
     (constant machine-type-name)))

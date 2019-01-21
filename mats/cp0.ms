@@ -1698,6 +1698,218 @@
        6 -5 (#3%fxlogxor x y) (#3%fxlogxor 10 x y) (#3%fxlogxor -11 x y) (#3%fxlogxor 10 x y)))
 )
 
+
+
+(mat cp0-partial-folding-left-assoc
+ ; check partial folding of +, fx+, fl+, and cfl+ when constraint to left-associative
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f] 
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
+           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5))))
+    '(#2%list 0 3 7 (#2%+ x) (#2%+ x 0) (#2%+ x) (#2%+ x 3)
+       (#2%+ x 3 4) (#2%+ 3 x 4) (#2%+ 3 x -3) (#2%+ 3 x 4 y 5)
+       (begin (#2%+ +nan.0 x 4 y 5) +nan.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
+           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5))))
+    '(#3%list 0 3 7 x (#3%+ x 0) x (#3%+ x 3)
+       (#3%+ x 3 4) (#3%+ 3 x 4) (#3%+ 3 x -3) (#3%+ 3 x 4 y 5)
+       +nan.0))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (fx+) (fx+ 3) (fx+ 3 4) (fx+ x) (fx+ x 0) (fx+ 0 x) (fx+ x 3)
+           (fx+ x 3 4) (fx+ 3 x 4) (fx+ 3 x -3) (fx+ 3 x 4 y 5))))
+    '(#2%list 0 3 7 (#2%fx+ x) (#2%fx+ x 0) (#2%fx+ x) (#2%fx+ x 3)
+       (#2%fx+ x 3 4) (#2%fx+ 3 x 4) (#2%fx+ 3 x -3) (#2%fx+ 3 x 4 y 5)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (fx+) (fx+ 3) (fx+ 3 4) (fx+ x) (fx+ x 0) (fx+ 0 x) (fx+ x 3)
+           (fx+ x 3 4) (fx+ 3 x 4) (fx+ 3 x -3) (fx+ 3 x 4 y 5))))
+    '(#3%list 0 3 7 x x x (#3%fx+ 3 x)
+       (#3%fx+ 7 x) (#3%fx+ 7 x) x (#3%fx+ 12 x y)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (fl+) (fl+ 3.0) (fl+ 3.0 4.0) (fl+ x) (fl+ x 0.0) (fl+ x -0.0) (fl+ 0.0 x) (fl+ -0.0 x) (fl+ x 3.0)
+           (fl+ x 3.0 4.0) (fl+ 3.0 x 4.0) (fl+ 3.0 x -3.0) (fl+ (truncate -.5) x (/ -inf.0)) (fl+ 3.0 x 4.0 y 5.0)
+           (fl+ +nan.0 x 3.0 y 5.0) (fl+ 3.0 x +nan.0 y 5.0))))
+    '(#2%list 0.0 3.0 7.0 (#2%fl+ x) (#2%fl+ x 0.0) (#2%fl+ x -0.0) (#2%fl+ 0.0 x) (#2%fl+ x) (#2%fl+ x 3.0)
+       (#2%fl+ x 3.0 4.0) (#2%fl+ 3.0 x 4.0) (#2%fl+ 3.0 x -3.0) (#2%fl+ x -0.0) (#2%fl+ 3.0 x 4.0 y 5.0)
+       (begin (#2%fl+ +nan.0 x 3.0 y 5.0) +nan.0) (#2%fl+ 3.0 x +nan.0 y 5.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (fl+) (fl+ 3.0) (fl+ 3.0 4.0) (fl+ x) (fl+ x 0.0) (fl+ x -0.0) (fl+ 0.0 x) (fl+ -0.0 x) (fl+ x 3.0)
+           (fl+ x 3.0 4.0) (fl+ 3.0 x 4.0) (fl+ 3.0 x -3.0) (fl+ (truncate -.5) x (/ -inf.0)) (fl+ 3.0 x 4.0 y 5.0)
+           (fl+ +nan.0 x 3.0 y 5.0) (fl+ 3.0 x +nan.0 y 5.0))))
+    '(#3%list 0.0 3.0 7.0 x (#3%fl+ x 0.0) (#3%fl+ x -0.0) (#3%fl+ 0.0 x) x (#3%fl+ x 3.0)
+       (#3%fl+ x 3.0 4.0) (#3%fl+ 3.0 x 4.0) (#3%fl+ 3.0 x -3.0) (#3%fl+ x -0.0) (#3%fl+ 3.0 x 4.0 y 5.0)
+       +nan.0 (#3%fl+ 3.0 x +nan.0 y 5.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (cfl+) (cfl+ 3.0) (cfl+ 3.0 4.0) (cfl+ x) (cfl+ x 0.0) (cfl+ x -0.0) (cfl+ 0.0 x) (cfl+ -0.0 x) (cfl+ x 3.0)
+           (cfl+ x 3.0 4.0) (cfl+ 3.0 x 4.0) (cfl+ 3.0 x -3.0) (cfl+ (truncate -.5) x (/ -inf.0)) (cfl+ 3.0 x 4.0 y 5.0)
+           (cfl+ +nan.0+nan.0i x 3.0 y 5.0) (cfl+ 3.0 x +nan.0+nan.0i y 5.0))))
+    '(#2%list 0.0 3.0 7.0 (#2%cfl+ x) (#2%cfl+ x 0.0) (#2%cfl+ x -0.0) (#2%cfl+ 0.0 x) (#2%cfl+ x) (#2%cfl+ x 3.0)
+       (#2%cfl+ x 3.0 4.0) (#2%cfl+ 3.0 x 4.0) (#2%cfl+ 3.0 x -3.0) (#2%cfl+ x -0.0) (#2%cfl+ 3.0 x 4.0 y 5.0)
+       (begin (#2%cfl+ +nan.0+nan.0i x 3.0 y 5.0) +nan.0+nan.0i) (#2%cfl+ 3.0 x +nan.0+nan.0i y 5.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (cfl+) (cfl+ 3.0) (cfl+ 3.0 4.0) (cfl+ x) (cfl+ x 0.0) (cfl+ x -0.0) (cfl+ 0.0 x) (cfl+ -0.0 x) (cfl+ x 3.0)
+           (cfl+ x 3.0 4.0) (cfl+ 3.0 x 4.0) (cfl+ 3.0 x -3.0) (cfl+ (truncate -.5) x (/ -inf.0)) (cfl+ 3.0 x 4.0 y 5.0)
+           (cfl+ +nan.0+nan.0i x 3.0 y 5.0) (cfl+ 3.0 x +nan.0+nan.0i y 5.0))))
+    '(#3%list 0.0 3.0 7.0 x (#3%cfl+ x 0.0) (#3%cfl+ x -0.0) (#3%cfl+ 0.0 x) x (#3%cfl+ x 3.0)
+       (#3%cfl+ x 3.0 4.0) (#3%cfl+ 3.0 x 4.0) (#3%cfl+ 3.0 x -3.0) (#3%cfl+ x -0.0) (#3%cfl+ 3.0 x 4.0 y 5.0)
+       +nan.0+nan.0i (#3%cfl+ 3.0 x +nan.0+nan.0i y 5.0)))
+
+ ; check partial folding of *, fx*, fl*, and cfl*
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (*) (* 3) (* 3 4) (* x) (* x 1) (* 1 x) (* x 3)
+           (* x 3 4) (* 3 x 4) (* 3 x 1/3) (* 3 x 4 y 5)
+           (* 0 x 3 y 5) (* 3 x 0 y 5))))
+    '(#2%list 1 3 12 (#2%* x) (#2%* x 1) (#2%* x) (#2%* x 3)
+       (#2%* x 3 4) (#2%* 3 x 4) (#2%* 3 x 1/3) (#2%* 3 x 4 y 5)
+       (begin (#2%* 0 x 3 y 5) 0) (#2%* 3 x 0 y 5)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (*) (* 3) (* 3 4) (* x) (* x 1) (* 1 x) (* x 3)
+           (* x 3 4) (* 3 x 4) (* 3 x 1/3) (* 3 x 4 y 5)
+           (* 0 x 3 y 5) (* 3 x 0 y 5))))
+    '(#3%list 1 3 12 x (#3%* x 1) x (#3%* x 3)
+       (#3%* x 3 4) (#3%* 3 x 4) (#3%* 3 x 1/3) (#3%* 3 x 4 y 5)
+       0 (#3%* 3 x 0 y 5)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (fx*) (fx* 3) (fx* 3 4) (fx* x) (fx* x 1) (fx* 1 x) (fx* x 3)
+           (fx* x 3 4) (fx* 3 x 4) (fx* 1 x 1) (fx* 3 x 4 y 5)
+           (fx* 0 x 3 y 5) (fx* 3 x 0 y 5))))
+    '(#2%list 1 3 12 (#2%fx* x) (#2%fx* x 1) (#2%fx* x) (#2%fx* x 3)
+       (#2%fx* x 3 4) (#2%fx* 3 x 4) (#2%fx* x 1) (#2%fx* 3 x 4 y 5)
+       (begin (#2%fx* 0 x 3 y 5) 0) (#2%fx* 3 x 0 y 5)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (fx*) (fx* 3) (fx* 3 4) (fx* x) (fx* x 1) (fx* 1 x) (fx* x 3)
+           (fx* x 3 4) (fx* 3 x 4) (fx* 1 x 1) (fx* 3 x 4 y 5)
+           (fx* 3 x 0 y 5))))
+    '(#3%list 1 3 12 x x x (#3%fx* 3 x)
+       (#3%fx* 12 x) (#3%fx* 12 x) x (#3%fx* 60 x y)
+       0))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (fl*) (fl* 3.0) (fl* 3.0 4.0) (fl* x) (fl* x 1.0) (fl* 1.0 x) (fl* x 3.0)
+           (fl* x 3.0 4.0) (fl* 3.0 x 4.0) (fl* 3.0 x #i1/3) (fl* 3.0 x 4.0 y 5.0)
+           (fl* +nan.0 x 3.0 y 4.0) (fl* 3.0 x 4.0 y +nan.0))))
+    '(#2%list 1.0 3.0 12.0 (#2%fl* x) (#2%fl* x 1.0) (#2%fl* x) (#2%fl* x 3.0)
+       (#2%fl* x 3.0 4.0) (#2%fl* 3.0 x 4.0) (#2%fl* 3.0 x #i1/3) (#2%fl* 3.0 x 4.0 y 5.0)
+       (begin (#2%fl* +nan.0 x 3.0 y 4.0) +nan.0) (#2%fl* +3.0 x 4.0 y +nan.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (fl*) (fl* 3.0) (fl* 3.0 4.0) (fl* x) (fl* x 1.0) (fl* 1.0 x) (fl* x 3.0)
+           (fl* x 3.0 4.0) (fl* 3.0 x 4.0) (fl* 3.0 x #i1/3) (fl* 3.0 x 4.0 y 5.0)
+           (fl* +nan.0 x 3.0 y 4.0) (fl* 3.0 x 4.0 y +nan.0))))
+    '(#3%list 1.0 3.0 12.0 x (#3%fl* x 1.0) x (#3%fl* x 3.0)
+       (#3%fl* x 3.0 4.0) (#3%fl* 3.0 x 4.0) (#3%fl* 3.0 x #i1/3) (#3%fl* 3.0 x 4.0 y 5.0)
+       +nan.0 (#3%fl* +3.0 x 4.0 y +nan.0)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 2])
+      (expand/optimize
+        '(list
+           (cfl*) (cfl* 3.0) (cfl* 3.0 4.0) (cfl* x) (cfl* x 1.0) (cfl* 1.0 x) (cfl* x 3.0)
+           (cfl* x 3.0 4.0) (cfl* 3.0 x 4.0) (cfl* 3.0 x #i1/3) (cfl* 3.0 x 4.0 y 5.0)
+           (cfl* +nan.0+nan.0i x 3.0 y 4.0) (cfl* 3.0 x 4.0 y +nan.0+nan.0i))))
+    '(#2%list 1.0 3.0 12.0 (#2%cfl* x) (#2%cfl* x 1.0) (#2%cfl* x) (#2%cfl* x 3.0)
+       (#2%cfl* x 3.0 4.0) (#2%cfl* 3.0 x 4.0) (#2%cfl* 3.0 x #i1/3) (#2%cfl* 3.0 x 4.0 y 5.0)
+       (begin (#2%cfl* +nan.0+nan.0i x 3.0 y 4.0) +nan.0+nan.0i) (#2%cfl* 3.0 x 4.0 y +nan.0+nan.0i)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f]
+                   [run-cp0 (lambda (cp0 x) (cp0 x))]
+                   [enable-arithmetic-left-associative #t]
+                   [optimize-level 3])
+      (expand/optimize
+        '(list
+           (cfl*) (cfl* 3.0) (cfl* 3.0 4.0) (cfl* x) (cfl* x 1.0) (cfl* 1.0 x) (cfl* x 3.0)
+           (cfl* x 3.0 4.0) (cfl* 3.0 x 4.0) (cfl* 3.0 x #i1/3) (cfl* 3.0 x 4.0 y 5.0)
+           (cfl* +nan.0+nan.0i x 3.0 y 4.0) (cfl* 3.0 x 4.0 y +nan.0+nan.0i))))
+    '(#3%list 1.0 3.0 12.0 x (#3%cfl* x 1.0) x (#3%cfl* x 3.0)
+       (#3%cfl* x 3.0 4.0) (#3%cfl* 3.0 x 4.0) (#3%cfl* 3.0 x #i1/3) (#3%cfl* 3.0 x 4.0 y 5.0)
+       +nan.0+nan.0i (#3%cfl* 3.0 x 4.0 y +nan.0+nan.0i)))
+  )
+
 (mat cp0-apply
   (begin
     (define $permutations
@@ -1781,8 +1993,8 @@
       (lambda (groups) (equivalent-expansion? expr `(begin ,@(apply append groups) 10)))
       ($permutations
         (if (= (optimize-level) 3)
-            '(((#3%write 'a)) ((#3%write 'b)) ((#3%write 'c) (#3%write 'd) (#3%write 'e)))
-            '(((#2%write 'a)) ((#2%write 'b)) ((#2%write 'c) (#2%write 'd) (#2%write 'e)))))))
+            '(((#3%write 'a)) ((#3%write 'b)) ((#3%write 'c) (#3%write 'e) (#3%write 'd)))
+            '(((#2%write 'a)) ((#2%write 'b)) ((#2%write 'c) (#2%write 'e) (#2%write 'd)))))))
   (equivalent-expansion?
     (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize

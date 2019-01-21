@@ -1130,6 +1130,7 @@ generate-procedure-source-information
 compile-profile
 generate-interrupt-trap
 enable-cross-library-optimization
+enable-arithmetic-left-associative
 \endschemedisplay
 
 It restores the values after the file has been compiled.
@@ -2442,6 +2443,18 @@ when set to \scheme{#f}, the information is not included.
 Setting the parameter to \scheme{#f} potentially reduces the sizes
 of the resulting object files and the exposure of near-source
 information via the object file.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{enable-arithmetic-left-associative}{\categorythreadparameter}{enable-arithmetic-left-associative}
+\listlibraries
+\endentryheader
+
+This parameter controls whether the compiler is constrained to
+implement \scheme{+}, \scheme{fx+}, \scheme{fl+}, \scheme{cfl+},
+\scheme{*}, \scheme{fx*}, \scheme{fl*}, and \scheme{cfl*} as
+left-associative operations when given more than two arguments.
+The default is \scheme{#f}.
 
 %----------------------------------------------------------------------------
 \entryheader

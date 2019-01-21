@@ -568,7 +568,8 @@
                    [$compile-profile ($compile-profile)]
                    [generate-interrupt-trap (generate-interrupt-trap)]
                    [$optimize-closures ($optimize-closures)]
-                   [enable-cross-library-optimization (enable-cross-library-optimization)])
+                   [enable-cross-library-optimization (enable-cross-library-optimization)]
+                   [enable-arithmetic-left-associative (enable-arithmetic-left-associative)])
       (emit-header op (constant machine-type))
       (when hostop (emit-header hostop (host-machine-type)))
       (when wpoop (emit-header wpoop (host-machine-type)))
