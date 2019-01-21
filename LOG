@@ -1070,3 +1070,6 @@
 - fix `string-titlecase` on special-casing characters like #\xDF and
    #\xFB00
     5_4.ss, 5_4.ms
+- added enable-arithmetic-left-associative
+    cp0.ss, compile.ss, primdata.ss, front.ss, cp0.ms, system.stex
+
