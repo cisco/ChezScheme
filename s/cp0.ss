@@ -803,7 +803,7 @@
     (define make-nontail
       (lambda (ctxt e)
         (if (context-case ctxt
-              [(tail) (single-valued-nontail? e)]
+              [(tail) (single-valued-without-inspecting-continuation? e)]
               [(ignored) (single-valued? e)]
               [else #t])
             e
@@ -933,25 +933,44 @@
             ((ids->do-clause '()) clause)
             #t))))
 
-    (module (pure? ivory? ivory1? simple? simple1? simple/profile? simple/profile1? boolean-valued? single-valued? single-valued-nontail?)
+    (module (pure? ivory? ivory1? simple? simple1? simple/profile? simple/profile1? boolean-valued?
+                   single-valued? single-valued single-valued-join single-valued-reduce?
+                   single-valued-without-inspecting-continuation?)
+
+      ;; The memoization table has, for each key, either a flags integer
+      ;; or a pair of a flags integer and a value. The value corresponds to
+      ;; a use of `(with-memoize () ....)`, while uses of the flags integer
+      ;; are `(with-memoize (flag-known flag) ....)`.
+
       (define-syntax make-$memoize
         (syntax-rules ()
           [(_ flag-known flag)
            (lambda (e pred?)
              (let ([a (eq-hashtable-cell cp0-info-hashtable e 0)])
-               (let ([flags (cdr a)])
+               (let ([flags (let ([val (cdr a)]) (if (pair? val) (cdr val) val))])
                  (if (all-set? (cp0-info-mask flag-known) flags)
                      (all-set? (cp0-info-mask flag) flags)
                      (let ([bool (pred?)])
-                       (set-cdr! a (set-flags (if bool (cp0-info-mask flag-known flag) (cp0-info-mask flag-known)) flags))
-                       bool)))))]))
+                       (set-cdr! (let ([val (cdr a)]) (if (pair? val) val a))
+                                 (set-flags (if bool (cp0-info-mask flag-known flag) (cp0-info-mask flag-known))
+                                            flags))
+                       bool)))))]
+          [(_)
+           (lambda (e pred?)
+             (let ([a (eq-hashtable-cell cp0-info-hashtable e 0)])
+               (let ([val (cdr a)])
+                 (if (pair? val)
+                     (car val)
+                     (let ([r (pred?)])
+                       (set-cdr! a (cons r (cdr a)))
+                       r)))))]))
 
       (define-syntax with-memoize
         (lambda (x)
           (syntax-case x ()
-            [(k (flag-known flag) ?e e* ...) 
+            [(k (flag-info ...) ?e e* ...)
              (with-implicit (k memoize)
-               #'(let ([$memoize (make-$memoize flag-known flag)] [e ?e])
+               #'(let ([$memoize (make-$memoize flag-info ...)] [e ?e])
                    (define-syntax memoize
                      (syntax-rules ()
                        [(_ e1 e2 (... ...)) ($memoize e (lambda () e1 e2 (... ...)))]))
@@ -1244,36 +1263,59 @@
               [(pariah) #f]
               [else ($oops who "unrecognized record ~s" e)]))))
 
-      (define-who single-valued?
+      ;; Returns #t, #f, or a prelex for lambda that needs to be
+      ;; single-valued to imply #t. The prelex case is useful to
+      ;; detect a loop.
+      (define-who single-valued
         (lambda (e)
-          (with-memoize (single-valued-known single-valued) e
+          (with-memoize () e
             ; known to produce a single value
             (nanopass-case (Lsrc Expr) e
               [(quote ,d) #t]
               [(call ,preinfo ,e ,e* ...)
-               (let procedure-single-valued? ([e e] [e* e*])
+               (let procedure-single-valued ([e e] [e* e*])
                  (nanopass-case (Lsrc Expr) (result-exp e)
                    [,pr
                     (or (all-set? (prim-mask single-valued) (primref-flags pr))
                         (and e*
                              (let ([proc-e (extract-called-procedure pr e*)])
                                (and proc-e
-                                    (memoize (procedure-single-valued? proc-e #f))))))]
+                                    (memoize (procedure-single-valued proc-e #f))))))]
                    [(case-lambda ,preinfo ,cl* ...)
-                    (memoize (andmap (lambda (cl)
-                                       (nanopass-case (Lsrc CaseLambdaClause) cl
-                                         [(clause (,x* ...) ,interface ,body)
-                                          (single-valued? body)]))
-                                     cl*))]
+                    (memoize (fold-left (lambda (r cl)
+                                          (and r
+                                               (nanopass-case (Lsrc CaseLambdaClause) cl
+                                                 [(clause (,x* ...) ,interface ,body)
+                                                  (single-valued-join r (single-valued body))])))
+                                        #t
+                                        cl*))]
+                   [(ref ,maybe-src ,x)
+                    (let ([v (and (not (prelex-was-assigned x))
+                                  (let ([opnd (prelex-operand x)])
+                                    (and opnd
+                                         (operand-exp opnd))))])
+                      (and v
+                           (nanopass-case (Lsrc Expr) v
+                             [(case-lambda ,preinfo ,cl* ...)
+                              ;; Don't recur into the clauses, since that
+                              ;; could send us into a loop for a `letrec`
+                              ;; binding. But use the preinfo as a summary
+                              ;; or a way to tie a loop:
+                              (preinfo->single-valued preinfo)]
+                             [else #f])))]
+                   ;; Recognize call to a loop, and use the loop's preinfo in that case:
+                   [(letrec ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
+                    (and (eq? x1 x2)
+                         (preinfo->single-valued preinfo))]
                    [else #f]))]
               [(ref ,maybe-src ,x) #t]
               [(case-lambda ,preinfo ,cl* ...) #t]
-              [(if ,e1 ,e2 ,e3) (memoize (and (single-valued? e2) (single-valued? e3)))]
-              [(seq ,e1 ,e2) (memoize (single-valued? e2))]
+              [(if ,e1 ,e2 ,e3) (memoize (single-valued-join (single-valued e2) (single-valued e3)))]
+              [(seq ,e1 ,e2) (memoize (single-valued e2))]
               [(set! ,maybe-src ,x ,e) #t]
               [(immutable-list (,e* ...) ,e) #t]
-              [(letrec ([,x* ,e*] ...) ,body) (memoize (single-valued? body))]
-              [(letrec* ([,x* ,e*] ...) ,body) (memoize (single-valued? body))]
+              [(letrec ([,x* ,e*] ...) ,body) (memoize (single-valued body))]
+              [(letrec* ([,x* ,e*] ...) ,body) (memoize (single-valued body))]
               [,pr #t]
               [(record-cd ,rcd ,rtd-expr ,e) #t]
               [(record-ref ,rtd ,type ,index ,e) #t]
@@ -1283,12 +1325,43 @@
               [(record ,rtd ,rtd-expr ,e* ...) #t]
               [(pariah) #t]
               [(profile ,src) #t]
-              [(cte-optimization-loc ,box ,e) (memoize (single-valued? e))]
+              [(cte-optimization-loc ,box ,e) (memoize (single-valued e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
               [else ($oops who "unrecognized record ~s" e)]))))
 
-      (define-who single-valued-nontail?
+      (define (preinfo->single-valued preinfo)
+        ;; If the single-valued flag is set, simplify to #t,
+        ;; otherwise return the preinfo to mean "single-valued
+        ;; of this lambda is "single-valued".
+        (or (all-set? (constant code-flag-single-valued)
+                      (preinfo-lambda-flags preinfo))
+            preinfo))
+
+      (define single-valued-join
+        (lambda (a b)
+          (cond
+           [(eq? a b) a]
+           [(eq? a #t) b]
+           [(eq? b #t) a]
+           ;; If `a` and `b` are different preinfos, we currently give
+           ;; up, because a preinfo is used only to find a
+           ;; single-function fixpoint.
+           [else #f])))
+
+      (define-who single-valued?
+        (lambda (e)
+          (single-valued-reduce? (single-valued e))))
+
+      (define single-valued-reduce?
+        (lambda (r)
+          (cond
+           [(eq? r #t) #t]
+           [(eq? r #f) #f]
+           [else (all-set? (constant code-flag-single-valued)
+                           (preinfo-lambda-flags r))])))
+
+      (define-who single-valued-without-inspecting-continuation?
         (lambda (e)
           ;; Single-valued and does not observe or affect the
           ;; immediate continuation frame (so removing (an enclosing
@@ -4737,10 +4810,12 @@
          [(value tail)
           (bump sc 1)
           `(case-lambda ,preinfo
-             ,(let f ([cl* cl*] [mask 0] [known-single-valued? #t])
+             ,(let f ([cl* cl*] [mask 0] [known-single-valued #t])
                 (if (null? cl*)
                     (begin
-                      (when known-single-valued?
+                      (when (or (single-valued-reduce? known-single-valued)
+                                ;; Detect simple loop:
+                                (eq? known-single-valued preinfo))
                         (preinfo-lambda-flags-set! preinfo (fxior (preinfo-lambda-flags preinfo)
                                                                   (constant code-flag-single-valued))))
                       '())
@@ -4748,12 +4823,14 @@
                       [(clause (,x* ...) ,interface ,body)
                        (let ([new-mask (logor mask (if (fx< interface 0) (ash -1 (fx- -1 interface)) (ash 1 interface)))])
                          (if (= new-mask mask)
-                             (f (cdr cl*) new-mask known-single-valued?)
+                             (f (cdr cl*) new-mask known-single-valued)
                              (with-extended-env ((env x*) (env x* #f))
                                (let ([body (cp0 body 'tail env sc wd #f name)])
                                  (cons `(clause (,x* ...) ,interface ,body)
                                        (f (cdr cl*) new-mask
-                                          (and known-single-valued? (single-valued? body))))))))])))
+                                          (and known-single-valued
+                                               (single-valued-join known-single-valued
+                                                                   (single-valued body)))))))))])))
              ...)]
          [(effect ignored) void-rec]
          [(test) true-rec]

@@ -223,8 +223,10 @@
 (define-who procedure-known-single-valued?
   (lambda (x)
     (unless (procedure? x) ($oops who "~s is not a procedure" x))
-    (let ([c ($closure-code x)])
-      ($code-single-valued? c))))
+    (if (wrapper-procedure? x)
+        (procedure-known-single-valued? ($closure-ref x 0))
+        (let ([c ($closure-code x)])
+          ($code-single-valued? c)))))
 
 (let ()
   (define-syntax frob-proc
