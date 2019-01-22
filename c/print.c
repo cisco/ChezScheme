@@ -34,6 +34,7 @@ static void pvec PROTO((ptr x));
 static void pfxvector PROTO((ptr x));
 static void pbytevector PROTO((ptr x));
 static void pflonum PROTO((ptr x));
+static void pflodat PROTO((double x));
 static void pfixnum PROTO((ptr x));
 static void pbignum PROTO((ptr x));
 static void wrint PROTO((ptr x));
@@ -113,9 +114,9 @@ static void pfile(UNUSED ptr x) {
 }
 
 static void pinexactnum(x) ptr x; {
-    S_prin1(TYPE(&INEXACTNUM_REAL_PART(x),type_flonum));
+    pflodat(INEXACTNUM_REAL_PART(x));
     if (INEXACTNUM_IMAG_PART(x) >= 0.0) putchar('+');
-    S_prin1(TYPE(&INEXACTNUM_IMAG_PART(x),type_flonum));
+    pflodat(INEXACTNUM_IMAG_PART(x));
     putchar('i');
 }
 
@@ -246,10 +247,14 @@ static void pbytevector(x) ptr x; {
 }
 
 static void pflonum(x) ptr x; {
+  pflodat(FLODAT(x));
+}
+
+static void pflodat(x) double x; {
   char buf[256], *s;
 
  /* use snprintf to get it in a string */
-  (void) snprintf(buf, 256, "%.16g",FLODAT(x));
+  (void) snprintf(buf, 256, "%.16g", x);
 
  /* print the silly thing */
   printf("%s", buf);

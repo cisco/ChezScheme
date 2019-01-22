@@ -1027,6 +1027,21 @@
     cpnanopass.ss, x86_64.ss, x86.ss, foreign2.c, foreign.ms
 - added initialization of seginfo sorted and trigger_ephemerons fields.
     segment.c
+- redirecting output of first two checkboot runs to /dev/null so the
+  ignored exception, if any, does not show up in the make output.
+    s/Mf-base
+- fixed 7.ms to specify the relative path of testfile.boot
+    7.ms
+- profile counts are now maintained even for code that has been
+  reclaimed by the collector and must be released explicitly by the
+  programmer via (profile-release-counters).
+    pdhtml.ss, primdata.ss,
+    globals.h, externs.h, fasl.c, prim5.c, prim.c, alloc.c, scheme.c,
+    misc.ms,
+    release_notes.stex, system.stex
+- clarified required use of scheme-start to start an application
+  packaged as a boot file and added a short "myecho" example.
+    use.stex
 - add ordered guardians through a new optional argument to make-guardian
     prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
     cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
@@ -1072,4 +1087,3 @@
     5_4.ss, 5_4.ms
 - added enable-arithmetic-left-associative
     cp0.ss, compile.ss, primdata.ss, front.ss, cp0.ms, system.stex
-

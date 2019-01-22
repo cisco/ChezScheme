@@ -32,7 +32,6 @@ static iptr s_fxmul PROTO((iptr x, iptr y));
 static iptr s_fxdiv PROTO((iptr x, iptr y));
 static ptr s_trunc_rem PROTO((ptr x, ptr y));
 static ptr s_fltofx PROTO((ptr x));
-static ptr s_weak_cons PROTO((ptr car, ptr cdr));
 static ptr s_weak_pairp PROTO((ptr p));
 static ptr s_ephemeron_cons PROTO((ptr car, ptr cdr));
 static ptr s_ephemeron_pairp PROTO((ptr p));
@@ -86,7 +85,6 @@ static IBOOL s_fd_regularp PROTO((INT fd));
 static void s_nanosleep PROTO((ptr sec, ptr nsec));
 static ptr s_set_collect_trip_bytes PROTO((ptr n));
 static void c_exit PROTO((I32 status));
-static ptr find_pcode PROTO((void));
 static ptr s_get_reloc PROTO((ptr co));
 #ifdef PTHREADS
 static s_thread_rv_t s_backdoor_thread_start PROTO((void *p));
@@ -117,6 +115,8 @@ static ptr s_iconv_to_string PROTO((uptr cd, ptr in, uptr i, uptr iend, ptr out,
 static ptr s_multibytetowidechar PROTO((unsigned cp, ptr inbv));
 static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
 #endif
+static ptr s_profile_counters PROTO((void));
+static void s_set_profile_counters PROTO((ptr counters));
 
 #define require(test,who,msg,arg) if (!(test)) S_error1(who, msg, arg)
 
@@ -172,15 +172,6 @@ static ptr s_trunc_rem(x, y) ptr x, y; {
 
 static ptr s_fltofx(x) ptr x; {
     return FIX((iptr)FLODAT(x));
-}
-
-static ptr s_weak_cons(car, cdr) ptr car, cdr; {
-  ptr p;
-
-  tc_mutex_acquire()
-  p = S_cons_in(space_weakpair, 0, car, cdr);
-  tc_mutex_release()
-  return p;
 }
 
 static ptr s_weak_pairp(p) ptr p; {
@@ -893,6 +884,9 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
     CODEARITYMASK(co) = arity_mark;
     CODEINFO(co) = info;
     CODEPINFOS(co) = pinfos;
+    if (pinfos != Snil) {
+      S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
+    }
     return co;
 }
 
@@ -1452,6 +1446,14 @@ static void s_condition_signal(s_thread_cond_t *c) {
 }
 #endif
 
+static ptr s_profile_counters(void) {
+  return S_G.profile_counters;
+}
+
+static void s_set_profile_counters(ptr counters) {
+  S_G.profile_counters = counters;
+}
+
 void S_dump_tc(ptr tc) {
   INT i;
 
@@ -1492,7 +1494,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_ptr_in_heap", (void *)s_ptr_in_heap);
     Sforeign_symbol("(cs)generation", (void *)s_generation);
     Sforeign_symbol("(cs)s_fltofx", (void *)s_fltofx);
-    Sforeign_symbol("(cs)s_weak_cons", (void *)s_weak_cons);
+    Sforeign_symbol("(cs)s_weak_cons", (void *)S_weak_cons);
     Sforeign_symbol("(cs)s_weak_pairp", (void *)s_weak_pairp);
     Sforeign_symbol("(cs)s_ephemeron_cons", (void *)s_ephemeron_cons);
     Sforeign_symbol("(cs)s_ephemeron_pairp", (void *)s_ephemeron_pairp);
@@ -1647,7 +1649,6 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)log1p", (void *)s_log1p);
 #endif /* LOG1P */
 
-    Sforeign_symbol("(cs)find_pcode", (void *)find_pcode);
     Sforeign_symbol("(cs)s_get_reloc", (void *)s_get_reloc);
     Sforeign_symbol("(cs)getenv", (void *)s_getenv);
     Sforeign_symbol("(cs)putenv", (void *)s_putenv);
@@ -1677,27 +1678,8 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_multibytetowidechar", (void *)s_multibytetowidechar);
     Sforeign_symbol("(cs)s_widechartomultibyte", (void *)s_widechartomultibyte);
 #endif
-}
-
-static ptr find_pcode() {
-   ptr ls, p, *pp, *nl;
-   IGEN g;
-
-   ls = Snil;
-   for (g = 0; g <= static_generation; g++) {
-      pp = (ptr *)S_G.first_loc[space_code][g];
-      nl = (ptr *)S_G.next_loc[space_code][g];
-      while (pp != nl) {
-         if (*pp == forward_marker)
-            pp = (ptr *)*(pp + 1);
-         else {
-            p = TYPE((ptr)pp, type_typed_object);
-            if (CODEPINFOS(p) != Snil) ls = Scons(p, ls);
-            pp += size_code(CODELEN(p)) / sizeof(ptr);
-         }
-      }
-   }
-   return ls;
+    Sforeign_symbol("(cs)s_profile_counters", (void *)s_profile_counters);
+    Sforeign_symbol("(cs)s_set_profile_counters", (void *)s_set_profile_counters);
 }
 
 static ptr s_get_reloc(co) ptr co; {

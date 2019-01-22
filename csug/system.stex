@@ -3186,6 +3186,16 @@ The code generated when \scheme{compile-profile} is non-false is
 larger and less efficient, so this parameter should be set only
 when profile information is needed.
 
+The profile counters for code compiled when profile instrumentation
+is enabled are retained indefinitely, even if the code with which
+they are associated is reclaimed by the garbage collector.
+This results in more complete and accurate profile data but can lead
+to space leaks in programs that dynamically generate or load code.
+Such programs can avoid the potential space leak by releasing the
+counters explicitly via the procedure
+\index{\scheme{profile-release-counters}}\scheme{profile-release-counters}.
+
+
 \entryheader
 \formdef{profile}{\categorysyntax}{(profile \var{source-object})}
 \returns unspecified
@@ -3225,6 +3235,17 @@ that should be profiled.
 \noindent
 Calling this procedure causes profile information to be cleared, i.e.,
 the counts associated with each section of code are set to zero.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{profile-release-counters}{\categoryprocedure}{(profile-release-counters)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+Calling this procedure causes profile information associated with reclaimed
+code objects to be dropped.
 
 %----------------------------------------------------------------------------
 \entryheader

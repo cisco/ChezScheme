@@ -2,8 +2,8 @@
 
 \thisversion{Version 9.5.1}
 \thatversion{Version 8.4}
-\pubmonth{August}
-\pubyear{2018}
+\pubmonth{January}
+\pubyear{2019}
 
 \begin{document}
 
@@ -111,6 +111,19 @@ indicate whether the guardian is ordered or unordered. A guardian is
 unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
+
+\subsection{Profile data retained for reclaimed code (9.5.1)}
+
+Profile data is now retained indefinitely even for code objects
+that have been reclaimed by the garbage collector.
+Previously, the counters holding the data were reclaimed by the
+collector along with the code objects.
+This makes profile output more complete and accurate, but it does
+represent a potential space leak in programs that create or load
+and release code dynamically.
+Such programs can avoid the potential space leak by releasing the
+counters explicitly via the new procedure
+\scheme{profile-release-counters}.
 
 \subsection{Procedure source location without inspector information (9.5.1)}
 

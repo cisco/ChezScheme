@@ -80,6 +80,9 @@ static void main_init() {
 
     if (!S_boot_time) return;
 
+    S_protect(&S_G.profile_counters);
+    S_G.profile_counters = Snil;
+
     FXLENGTHBV(tc) = p = S_bytevector(256);
     for (i = 0; i < 256; i += 1) {
       BVIT(p, i) =

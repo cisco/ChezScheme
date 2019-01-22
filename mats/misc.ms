@@ -1895,13 +1895,8 @@
   (eqv?
     ($frumble (make-list 100 5))
     9860761315262647567646607066034827870915080438862787559628486633300781)
-  (andmap
-    ; if counts for define and lambda on the first two lines are available (haven't
-    ; been tossed by the collector), check that they are 1
-    (lambda (x) (= (car x) 1))
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (<= (list-ref x 4) 2))) (profile-dump-list)))
   (equal?
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (>= (list-ref x 4) 3))) (profile-dump-list))
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp1.ss")) (profile-dump-list))
     '((101 "testfile-cp1.ss" 36 258 3 5)
       (101 "testfile-cp1.ss" 40 50 3 9)
       (101 "testfile-cp1.ss" 41 46 3 10)
@@ -1927,6 +1922,8 @@
       (100 "testfile-cp1.ss" 247 248 9 24)
       (100 "testfile-cp1.ss" 249 250 9 26)
       (100 "testfile-cp1.ss" 251 252 9 28)
+      (1 "testfile-cp1.ss" 0 260 1 1)
+      (1 "testfile-cp1.ss" 19 259 2 3)
       (1 "testfile-cp1.ss" 59 60 4 9)
       (0 "testfile-cp1.ss" 128 178 7 15)
       (0 "testfile-cp1.ss" 129 136 7 16)
@@ -1943,11 +1940,8 @@
         (let ([ans ($frumble (append (make-list 50 5) (list 0) (make-list 50 7)))])
           ($return ans))))
     0)
-  (andmap
-    (lambda (x) (= (car x) 1))
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (<= (list-ref x 4) 2))) (profile-dump-list)))
   (equal?
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (>= (list-ref x 4) 3))) (profile-dump-list))
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp1.ss")) (profile-dump-list))
     '((152 "testfile-cp1.ss" 36 258 3 5)
       (152 "testfile-cp1.ss" 40 50 3 9)
       (152 "testfile-cp1.ss" 41 46 3 10)
@@ -1973,6 +1967,8 @@
       (100 "testfile-cp1.ss" 247 248 9 24)
       (100 "testfile-cp1.ss" 249 250 9 26)
       (100 "testfile-cp1.ss" 251 252 9 28)
+      (1 "testfile-cp1.ss" 0 260 1 1)
+      (1 "testfile-cp1.ss" 19 259 2 3)
       (1 "testfile-cp1.ss" 59 60 4 9)
       (1 "testfile-cp1.ss" 128 178 7 15)
       (1 "testfile-cp1.ss" 129 136 7 16)
@@ -1988,11 +1984,50 @@
         (set! $return k)
         ($retry 1)))
     111022302462515654042363166809082031)
-  (andmap
-    (lambda (x) (= (car x) 1))
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (<= (list-ref x 4) 2))) (profile-dump-list)))
   (equal?
-    (filter (lambda (x) (and (equal? (cadr x) "testfile-cp1.ss") (>= (list-ref x 4) 3))) (profile-dump-list))
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp1.ss")) (profile-dump-list))
+    '((152 "testfile-cp1.ss" 36 258 3 5)
+      (152 "testfile-cp1.ss" 40 50 3 9)
+      (152 "testfile-cp1.ss" 41 46 3 10)
+      (152 "testfile-cp1.ss" 47 49 3 16)
+      (151 "testfile-cp1.ss" 69 257 5 9)
+      (151 "testfile-cp1.ss" 78 86 5 18)
+      (151 "testfile-cp1.ss" 79 82 5 19)
+      (151 "testfile-cp1.ss" 83 85 5 23)
+      (151 "testfile-cp1.ss" 99 256 6 11)
+      (151 "testfile-cp1.ss" 103 113 6 15)
+      (151 "testfile-cp1.ss" 104 108 6 16)
+      (151 "testfile-cp1.ss" 109 110 6 21)
+      (151 "testfile-cp1.ss" 111 112 6 23)
+      (150 "testfile-cp1.ss" 193 255 8 15)
+      (150 "testfile-cp1.ss" 202 221 8 24)
+      (150 "testfile-cp1.ss" 203 211 8 25)
+      (150 "testfile-cp1.ss" 212 220 8 34)
+      (150 "testfile-cp1.ss" 213 216 8 35)
+      (150 "testfile-cp1.ss" 217 219 8 39)
+      (150 "testfile-cp1.ss" 240 254 9 17)
+      (150 "testfile-cp1.ss" 241 245 9 18)
+      (150 "testfile-cp1.ss" 246 253 9 23)
+      (150 "testfile-cp1.ss" 247 248 9 24)
+      (150 "testfile-cp1.ss" 249 250 9 26)
+      (150 "testfile-cp1.ss" 251 252 9 28)
+      (1 "testfile-cp1.ss" 0 260 1 1)
+      (1 "testfile-cp1.ss" 19 259 2 3)
+      (1 "testfile-cp1.ss" 59 60 4 9)
+      (1 "testfile-cp1.ss" 128 178 7 15)
+      (1 "testfile-cp1.ss" 129 136 7 16)
+      (1 "testfile-cp1.ss" 137 177 7 24)
+      (1 "testfile-cp1.ss" 149 164 7 36)
+      (1 "testfile-cp1.ss" 162 163 7 49)
+      (1 "testfile-cp1.ss" 165 176 7 52)
+      (1 "testfile-cp1.ss" 166 173 7 53)
+      (1 "testfile-cp1.ss" 174 175 7 61)))
+  (begin
+    (collect (collect-maximum-generation)) ; drop code object for the define and lambda
+    (profile-release-counters) ; drop proile information for the dropped code object
+    #t)
+  (equal?
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp1.ss")) (profile-dump-list))
     '((152 "testfile-cp1.ss" 36 258 3 5)
       (152 "testfile-cp1.ss" 40 50 3 9)
       (152 "testfile-cp1.ss" 41 46 3 10)
@@ -2027,6 +2062,88 @@
       (1 "testfile-cp1.ss" 165 176 7 52)
       (1 "testfile-cp1.ss" 166 173 7 53)
       (1 "testfile-cp1.ss" 174 175 7 61)))
+  ; test profiling with compiled files
+  (begin
+    (with-output-to-file "testfile-cp2.ss"
+      (lambda ()
+        (display-string "\
+(define cp2-fib
+  (rec fib
+    (lambda (n)
+      (cond
+        [(fx= n 0) 1]
+        [(fx= n 1) 1]
+        [else (+ (fib (- n 1)) (fib (- n 2)))]))))
+"))
+      'replace)
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #t])
+      (compile-file "testfile-cp2"))
+    (profile-clear)
+    (load "testfile-cp2.so")
+    #t)
+  (eqv? (cp2-fib 10) 89)
+  (equal?
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp2.ss")) (profile-dump-list))
+    '((177 "testfile-cp2.ss" 49 146 4 7)
+      (177 "testfile-cp2.ss" 64 73 5 10)
+      (177 "testfile-cp2.ss" 65 68 5 11)
+      (177 "testfile-cp2.ss" 69 70 5 15)
+      (177 "testfile-cp2.ss" 71 72 5 17)
+      (143 "testfile-cp2.ss" 86 95 6 10)
+      (143 "testfile-cp2.ss" 87 90 6 11)
+      (143 "testfile-cp2.ss" 91 92 6 15)
+      (143 "testfile-cp2.ss" 93 94 6 17)
+      (88 "testfile-cp2.ss" 113 144 7 15)
+      (88 "testfile-cp2.ss" 114 115 7 16)
+      (88 "testfile-cp2.ss" 116 129 7 18)
+      (88 "testfile-cp2.ss" 117 120 7 19)
+      (88 "testfile-cp2.ss" 121 128 7 23)
+      (88 "testfile-cp2.ss" 122 123 7 24)
+      (88 "testfile-cp2.ss" 124 125 7 26)
+      (88 "testfile-cp2.ss" 126 127 7 28)
+      (88 "testfile-cp2.ss" 130 143 7 32)
+      (88 "testfile-cp2.ss" 131 134 7 33)
+      (88 "testfile-cp2.ss" 135 142 7 37)
+      (88 "testfile-cp2.ss" 136 137 7 38)
+      (88 "testfile-cp2.ss" 138 139 7 40)
+      (88 "testfile-cp2.ss" 140 141 7 42)
+      (55 "testfile-cp2.ss" 96 97 6 20)
+      (34 "testfile-cp2.ss" 74 75 5 20)
+      (1 "testfile-cp2.ss" 0 149 1 1)
+      (1 "testfile-cp2.ss" 18 148 2 3)
+      (1 "testfile-cp2.ss" 23 26 2 8)
+      (1 "testfile-cp2.ss" 31 147 3 5)))
+  (begin
+    (collect (collect-maximum-generation)) ; drop code object for the define and lambda
+    (profile-release-counters) ; drop proile information for the dropped code object
+    #t)
+  (equal?
+    (filter (lambda (x) (equal? (cadr x) "testfile-cp2.ss")) (profile-dump-list))
+    '((177 "testfile-cp2.ss" 49 146 4 7)
+      (177 "testfile-cp2.ss" 64 73 5 10)
+      (177 "testfile-cp2.ss" 65 68 5 11)
+      (177 "testfile-cp2.ss" 69 70 5 15)
+      (177 "testfile-cp2.ss" 71 72 5 17)
+      (143 "testfile-cp2.ss" 86 95 6 10)
+      (143 "testfile-cp2.ss" 87 90 6 11)
+      (143 "testfile-cp2.ss" 91 92 6 15)
+      (143 "testfile-cp2.ss" 93 94 6 17)
+      (88 "testfile-cp2.ss" 113 144 7 15)
+      (88 "testfile-cp2.ss" 114 115 7 16)
+      (88 "testfile-cp2.ss" 116 129 7 18)
+      (88 "testfile-cp2.ss" 117 120 7 19)
+      (88 "testfile-cp2.ss" 121 128 7 23)
+      (88 "testfile-cp2.ss" 122 123 7 24)
+      (88 "testfile-cp2.ss" 124 125 7 26)
+      (88 "testfile-cp2.ss" 126 127 7 28)
+      (88 "testfile-cp2.ss" 130 143 7 32)
+      (88 "testfile-cp2.ss" 131 134 7 33)
+      (88 "testfile-cp2.ss" 135 142 7 37)
+      (88 "testfile-cp2.ss" 136 137 7 38)
+      (88 "testfile-cp2.ss" 138 139 7 40)
+      (88 "testfile-cp2.ss" 140 141 7 42)
+      (55 "testfile-cp2.ss" 96 97 6 20)
+      (34 "testfile-cp2.ss" 74 75 5 20)))
   (eqv? (profile-clear) (void))
   (begin
     (with-output-to-file "testfile.ss"
@@ -2034,7 +2151,7 @@
         (pretty-print
           '(define f (lambda () 0))))
       'replace)
-    (parameterize ([compile-profile #t]) (load "testfile.ss"))
+    (parameterize ([compile-profile #t]) (load "testfile.ss" compile))
     #t)
   (begin
     (with-output-to-file "testfile.ss"

@@ -887,7 +887,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         case fasl_type_code: {
             iptr n, m, a; INT flags; iptr free;
-            ptr co, reloc, name;
+            ptr co, reloc, name, pinfos;
             flags = bytein(f);
             free = uptrin(f);
             n = uptrin(f) /* length in bytes of code */;
@@ -898,7 +898,11 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             CODENAME(co) = name;
             faslin(tc, &CODEARITYMASK(co), t, pstrbuf, f);
             faslin(tc, &CODEINFO(co), t, pstrbuf, f);
-            faslin(tc, &CODEPINFOS(co), t, pstrbuf, f);
+            faslin(tc, &pinfos, t, pstrbuf, f);
+            CODEPINFOS(co) = pinfos;
+            if (pinfos != Snil) {
+              S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
+            }
             bytesin((octet *)&CODEIT(co, 0), n, f);
             m = uptrin(f);
             CODERELOC(co) = reloc = S_relocation_table(m);

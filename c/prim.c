@@ -195,6 +195,7 @@ static void s_instantiate_code_object() {
     ptr tc = get_thread_context();
     ptr old, cookie, proc;
     ptr new, oldreloc, newreloc;
+    ptr pinfos;
     uptr a, m, n;
     iptr i, size;
 
@@ -217,7 +218,10 @@ static void s_instantiate_code_object() {
     CODEARITYMASK(new) = CODEARITYMASK(old);
     CODEFREE(new) = CODEFREE(old);
     CODEINFO(new) = CODEINFO(old);
-    CODEPINFOS(new) = CODEPINFOS(old);
+    CODEPINFOS(new) = pinfos = CODEPINFOS(old);
+    if (pinfos != Snil) {
+      S_G.profile_counters = Scons(S_weak_cons(new, pinfos), S_G.profile_counters);
+    }
 
     for (i = 0; i < CODELEN(old); i++) CODEIT(new,i) = CODEIT(old,i);
 

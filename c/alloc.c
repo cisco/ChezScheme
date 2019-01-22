@@ -930,6 +930,14 @@ ptr S_relocation_table(n) iptr n; {
     return p;
 }
 
+ptr S_weak_cons(ptr car, ptr cdr) {
+  ptr p;
+  tc_mutex_acquire();
+  p = S_cons_in(space_weakpair, 0, car, cdr);
+  tc_mutex_release();
+  return p;
+}
+
 ptr S_phantom_bytevector(sz) uptr sz; {
     ptr tc = get_thread_context();
     ptr p;

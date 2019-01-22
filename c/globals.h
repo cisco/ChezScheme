@@ -78,6 +78,7 @@ EXTERN struct {
     ptr scheme_version_id;
     ptr make_load_binary_id;
     ptr load_binary;
+    ptr profile_counters;
 
   /* foreign.c */
     ptr foreign_static;

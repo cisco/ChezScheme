@@ -162,10 +162,10 @@ all: bootall ${Cheader} ${Cequates}
 # same as the last, i.e., the system is properly bootstrapped.
 allx: prettyclean saveboot
 	$(MAKE) all
-	if $(MAKE) checkboot; then echo fine ; else\
+	if $(MAKE) checkboot > /dev/null 2>&1; then echo fine ; else\
           $(MAKE) prettyclean saveboot &&\
           $(MAKE) all &&\
-          if $(MAKE) checkboot; then echo fine ; else\
+          if $(MAKE) checkboot > /dev/null 2>&1; then echo fine ; else\
             $(MAKE) prettyclean saveboot &&\
             $(MAKE) all &&\
             $(MAKE) checkboot ;\

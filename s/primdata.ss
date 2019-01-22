@@ -1540,6 +1540,7 @@
   (profile-dump-data [sig [(pathname) (pathname sub-list) -> (void)]] [flags true])
   (profile-dump-list [sig [() (ptr) (ptr sub-list) -> (list)]] [flags discard true])
   (profile-dump-html [sig [() (pathname) (pathname sub-list) -> (void)]] [flags true])
+  (profile-release-counters [sig [() -> (void)]] [flags true])
   (property-list [sig [(symbol) -> (list)]] [flags discard true safeongoodargs])
   (put-bytevector-some [sig [(binary-output-port bytevector) (binary-output-port bytevector length) (binary-output-port bytevector length length) -> (uint)]] [flags true])
   (put-hash-table! [sig [(old-hash-table ptr ptr) -> (void)]] [flags true])

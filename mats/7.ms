@@ -925,7 +925,7 @@
           "testfile-5.ss"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
+                      (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)
@@ -946,7 +946,7 @@
         (make-boot-file "testfile.boot" '("petite") "testfile-libs.so"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
+                      (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (pretty-print '(let () (import (B)) (printf "~s\n" b)) to-stdin)
@@ -973,7 +973,7 @@
           "testfile-5.so"))
       (let-values ([(to-stdin from-stdout from-stderr pid)
                     (open-process-ports
-                      (format "~a -b testfile.boot -q" (patch-exec-path *scheme*))
+                      (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))
                       (buffer-mode block)
                       (native-transcoder))])
         (close-output-port to-stdin)

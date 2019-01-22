@@ -144,6 +144,40 @@ uptr list_length(ptr ls) {
   return i;
 }
 
+#ifdef PRESERVE_FLONUM_EQ
+
+static void flonum_set_forwarded(ptr p, seginfo *si) {
+  uptr delta = (uptr)UNTYPE(p, type_flonum) - (uptr)build_ptr(si->number, 0);
+  delta >>= log2_ptr_bytes;
+  if (!si->forwarded_flonums) {
+    ptr ff;
+    uptr sz = (bytes_per_segment) >> (3 + log2_ptr_bytes);
+    find_room(space_data, 0, typemod, ptr_align(sz), ff);
+    memset(ff, 0, sz);
+    si->forwarded_flonums = ff;
+  }
+  si->forwarded_flonums[delta >> 3] |= (1 << (delta & 0x7));
+}
+
+static int flonum_is_forwarded_p(ptr p, seginfo *si) {
+  if (!si->forwarded_flonums)
+    return 0;
+  else {
+    uptr delta = (uptr)UNTYPE(p, type_flonum) - (uptr)build_ptr(si->number, 0);
+    delta >>= log2_ptr_bytes;
+    return si->forwarded_flonums[delta >> 3] & (1 << (delta & 0x7));
+  }
+}
+
+# define FLONUM_FWDADDRESS(p) *(ptr*)(UNTYPE(p, type_flonum))
+
+# define FORWARDEDP(p, si) ((TYPEBITS(p) == type_flonum) ? flonum_is_forwarded_p(p, si) : (FWDMARKER(p) == forward_marker))
+# define GET_FWDADDRESS(p) ((TYPEBITS(p) == type_flonum) ? FLONUM_FWDADDRESS(p) : FWDADDRESS(p))
+#else
+# define FORWARDEDP(p, si) (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum)
+# define GET_FWDADDRESS(p) FWDADDRESS(p)
+#endif
+
 #define relocate(ppp) {\
     ptr PP;\
     PP = *ppp;\
@@ -176,9 +210,9 @@ uptr list_length(ptr ls) {
     relocate_help_help(ppp, pp, SI)\
 }
 
-#define relocate_help_help(ppp, pp, si) {\
-  if (FWDMARKER(pp) == forward_marker && TYPEBITS(pp) != type_flonum)\
-    *ppp = FWDADDRESS(pp);\
+#define relocate_help_help(ppp, pp, si) {       \
+  if (FORWARDEDP(pp, si)) \
+    *ppp = GET_FWDADDRESS(pp); \
   else\
     *ppp = copy(pp, si);\
 }
@@ -430,8 +464,24 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           find_room(space_data, tg,
                       type_typed_object, size_inexactnum, p);
           INEXACTNUM_TYPE(p) = type_inexactnum;
+# ifdef PRESERVE_FLONUM_EQ
+          {
+            ptr pt;
+            pt = TYPE(&INEXACTNUM_REAL_PART(pp), type_flonum);
+            if (flonum_is_forwarded_p(pt, si))
+              INEXACTNUM_REAL_PART(p) = FLODAT(FLONUM_FWDADDRESS(pt));
+            else
+              INEXACTNUM_REAL_PART(p) = INEXACTNUM_REAL_PART(pp);
+            pt = TYPE(&INEXACTNUM_IMAG_PART(pp), type_flonum);
+            if (flonum_is_forwarded_p(pt, si))
+              INEXACTNUM_IMAG_PART(p) = FLODAT(FLONUM_FWDADDRESS(pt));
+            else
+              INEXACTNUM_IMAG_PART(p) = INEXACTNUM_IMAG_PART(pp);
+          }
+# else
           INEXACTNUM_REAL_PART(p) = INEXACTNUM_REAL_PART(pp);
           INEXACTNUM_IMAG_PART(p) = INEXACTNUM_IMAG_PART(pp);
+# endif
       } else if (TYPEP(tf, mask_bignum, type_bignum)) {
           iptr n;
           n = size_bignum(BIGLEN(pp));
@@ -601,7 +651,12 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
 #endif /* ENABLE_OBJECT_COUNTS */
         find_room(space_data, tg, type_flonum, size_flonum, p);
         FLODAT(p) = FLODAT(pp);
+# ifdef PRESERVE_FLONUM_EQ
+        flonum_set_forwarded(pp, si);
+        FLONUM_FWDADDRESS(pp) = p;
+# else
       /* no room for forwarding address, so let 'em be duplicated */
+# endif
         return p;
     } else {
       S_error_abort("copy(gc): illegal type");
@@ -857,8 +912,8 @@ static ptr copy_stack(old, length, clength) ptr old; iptr *length, clength; {
       if (!(si->space & space_old) || locked(obj)) { \
         INITGUARDIANNEXT(ls) = pend_hold_ls; \
         pend_hold_ls = ls; \
-      } else if (FWDMARKER(obj) == forward_marker && TYPEBITS(obj) != type_flonum) { \
-        INITGUARDIANOBJ(ls) = FWDADDRESS(obj); \
+      } else if (FORWARDEDP(obj, si)) { \
+        INITGUARDIANOBJ(ls) = GET_FWDADDRESS(obj); \
         INITGUARDIANNEXT(ls) = pend_hold_ls; \
         pend_hold_ls = ls; \
       } else { \
@@ -1145,7 +1200,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                      representative can't itself be a tconc, so we
                      won't discover any new tconcs at that point. */
                   ptr obj = GUARDIANOBJ(ls);
-                  if (FWDMARKER(obj) == forward_marker && TYPEBITS(obj) != type_flonum) {
+                  if (FORWARDEDP(obj, SegInfo(ptr_get_segment(obj)))) {
                     /* Object is reachable, so we might as well move
                        this one to the hold list --- via pend_hold_ls, which
                        leads to a copy to move to hold_ls */
@@ -1226,7 +1281,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
               for (; ls != Snil; ls = next) {
                 ptr obj = GUARDIANOBJ(ls);
                 next = GUARDIANNEXT(ls);
-                if (FWDMARKER(obj) == forward_marker && TYPEBITS(obj) != type_flonum) {
+                if (FORWARDEDP(obj, SegInfo(ptr_get_segment(obj)))) {
                   /* Will defintely move to hold_ls, but the entry
                      must be copied to move from pend_hold_ls to
                      hold_ls: */
@@ -1446,6 +1501,10 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
         if (g == static_generation) S_G.number_of_nonstatic_segments -= 1;
         si->next = S_G.occupied_segments[s][g];
         S_G.occupied_segments[s][g] = si;
+#ifdef PRESERVE_FLONUM_EQ
+        /* any flonums forwarded won't be reference anymore */
+        si->forwarded_flonums = NULL;
+#endif
       } else {
         chunkinfo *chunk = si->chunk;
         if (si->generation != static_generation) S_G.number_of_nonstatic_segments -= 1;
@@ -1549,8 +1608,8 @@ static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
   seginfo *si;
  /* adapted from relocate */
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
-    if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
-      *pp = FWDADDRESS(p);
+    if (FORWARDEDP(p, si)) {
+      *pp = GET_FWDADDRESS(p);
     } else {
       *pp = Sbwp_object;
     }
@@ -2355,7 +2414,7 @@ static void resweep_dirty_weak_pairs() {
                 if (si->space & space_old) {
                   if (locked(p)) {
                     youngest = tg;
-                  } else if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+                  } else if (FORWARDEDP(p, si)) {
                     *pp = FWDADDRESS(p);
                     youngest = tg;
                   } else {
@@ -2445,7 +2504,7 @@ static void check_ephemeron(ptr pe, int add_to_trigger) {
 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
-    if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+    if (FORWARDEDP(p, si)) {
       INITCAR(pe) = FWDADDRESS(p);
       relocate(&INITCDR(pe))
       if (!add_to_trigger)
@@ -2499,8 +2558,8 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
     if (si->space & space_old && !locked(p)) {
-      if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
-        INITCAR(pe) = FWDADDRESS(p);
+      if (FORWARDEDP(p, si)) {
+        INITCAR(pe) = GET_FWDADDRESS(p);
         relocate(&INITCDR(pe))
         youngest = tg;
       } else {
