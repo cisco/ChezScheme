@@ -4374,44 +4374,56 @@
               [(?x) (mtp ctxt empty-env sc wd name moi #f 3)]
               [(?x ?p) (mtp ctxt empty-env sc wd name moi ?p 3)]))))
 
-      (define-inline 2 make-guardian
-        [() (and likely-to-be-compiled?
+      (let ()
+        (define (build-make-guardian ordered-arg? ctxt empty-env sc wd name moi)
+          (and likely-to-be-compiled?
                  (cp0
-                   (let* ([tc (cp0-make-temp #t)] [ref-tc (build-ref tc)])
-                     (build-lambda '()
-                       (build-let (list tc)
-                         (list (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
-                                 (let ([zero `(quote 0)])
-                                   (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
-                                     (build-primcall 3 'cons (list ref-x ref-x))))))
-                         (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
-                           (list
-                             (list '()
-                               (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
-                                 (let ([y (cp0-make-temp #f)])
-                                   (build-let (list x) (list (build-primcall 3 'car (list ref-tc)))
-                                     `(if ,(build-primcall 3 'eq?
-                                             (list ref-x
-                                               (build-primcall 3 'cdr (list ref-tc))))
-                                          ,false-rec
-                                          ,(build-let (list y) (list (build-primcall 3 'car (list ref-x)))
-                                             `(seq
-                                                (seq
+                  (let* ([tc (cp0-make-temp #t)]
+                         [ref-tc (build-ref tc)]
+                         [ordered? (and ordered-arg? (cp0-make-temp #f))]
+                         [bool-ordered? (cp0-make-temp #t)]
+                         [bool-ordered?-ref (build-ref bool-ordered?)])
+                     (build-lambda (if ordered? (list ordered?) '())
+                       (build-let (list bool-ordered?)
+                         (list (if ordered?
+                                   `(if ,(build-ref ordered?) ,true-rec ,false-rec)
+                                   false-rec))
+                         (build-let (list tc)
+                           (list (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
+                                   (let ([zero `(quote 0)])
+                                     (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
+                                       (build-primcall 3 'cons (list ref-x ref-x))))))
+                           (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                             (list
+                               (list '()
+                                 (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
+                                   (let ([y (cp0-make-temp #f)])
+                                     (build-let (list x) (list (build-primcall 3 'car (list ref-tc)))
+                                       `(if ,(build-primcall 3 'eq?
+                                               (list ref-x
+                                                 (build-primcall 3 'cdr (list ref-tc))))
+                                            ,false-rec
+                                            ,(build-let (list y) (list (build-primcall 3 'car (list ref-x)))
+                                               `(seq
                                                   (seq
-                                                    ,(build-primcall 3 'set-car! (list ref-tc
-                                                                                       (build-primcall 3 'cdr (list ref-x))))
-                                                    ,(build-primcall 3 'set-car! (list ref-x false-rec)))
-                                                  ,(build-primcall 3 'set-cdr! (list ref-x false-rec)))
-                                                (ref #f ,y))))))))
-                             (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
-                               (list (list obj)
-                                 (build-primcall 3 '$install-guardian
-                                   (list ref-obj ref-obj ref-tc))))
-                             (let ([obj (cp0-make-temp #f)] [rep (cp0-make-temp #f)])
-                               (list (list obj rep)
-                                 (build-primcall 3 '$install-guardian
-                                   (list (build-ref obj) (build-ref rep) ref-tc)))))))))
-                   ctxt empty-env sc wd name moi))]))
+                                                    (seq
+                                                      ,(build-primcall 3 'set-car! (list ref-tc
+                                                                                         (build-primcall 3 'cdr (list ref-x))))
+                                                      ,(build-primcall 3 'set-car! (list ref-x false-rec)))
+                                                    ,(build-primcall 3 'set-cdr! (list ref-x false-rec)))
+                                                  (ref #f ,y))))))))
+                               (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
+                                 (list (list obj)
+                                   (build-primcall 3 '$install-guardian
+                                     (list ref-obj ref-obj ref-tc bool-ordered?-ref))))
+                               (let ([obj (cp0-make-temp #f)] [rep (cp0-make-temp #f)])
+                                 (list (list obj rep)
+                                   (build-primcall 3 '$install-guardian
+                                     (list (build-ref obj) (build-ref rep) ref-tc bool-ordered?-ref))))))))))
+                   ctxt empty-env sc wd name moi)))
+      (define-inline 2 make-guardian
+        [() (build-make-guardian #f ctxt empty-env sc wd name moi)]
+        [(?ordered?) (build-make-guardian #t ctxt empty-env sc wd name moi)])))
     ) ; with-output-language
 
   (define-pass cp0 : Lsrc (ir ctxt env sc wd name moi) -> Lsrc ()

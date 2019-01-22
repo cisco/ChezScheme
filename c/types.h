@@ -118,7 +118,8 @@ typedef int IFASLCODE;      /* fasl type codes */
 typedef struct _seginfo {
   unsigned char space;                      /* space the segment is in */
   unsigned char generation;                 /* generation the segment is in */
-  unsigned char sorted;                     /* sorted indicator---possibly to be incorporated into space flags? */
+  unsigned char sorted : 1;                 /* sorted indicator---possibly to be incorporated into space flags? */
+  unsigned char has_triggers : 1;           /* set if trigger_ephemerons or trigger_guardians is set */
   octet min_dirty_byte;                     /* dirty byte for full segment, effectively min(dirty_bytes) */
   uptr number;                              /* the segment number */
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
@@ -126,6 +127,7 @@ typedef struct _seginfo {
   struct _seginfo **dirty_prev;             /* pointer to the next pointer on the previous seginfo in the DirtySegments list */
   struct _seginfo *dirty_next;              /* pointer to the next seginfo on the DirtySegments list */
   ptr trigger_ephemerons;                   /* ephemerons to re-check if object in segment is copied out */
+  ptr trigger_guardians;                    /* guardians to re-check if object in segment is copied out */
   octet dirty_bytes[cards_per_segment];     /* one dirty byte per card */
 } seginfo;
 
