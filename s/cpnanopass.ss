@@ -5014,6 +5014,8 @@
           [(e) (%typed-object-check mask-code-mutable-closure type-code-mutable-closure ,e)])
         (define-inline 3 $code-arity-in-closure?
           [(e) (%typed-object-check mask-code-arity-in-closure type-code-arity-in-closure ,e)])
+        (define-inline 3 $code-single-valued?
+          [(e) (%typed-object-check mask-code-single-valued type-code-single-valued ,e)])
         (define-inline 2 $unbound-object
           [() `(quote ,($unbound-object))])
         (define-inline 2 void
@@ -11977,8 +11979,10 @@
         (define Ldoargerr (make-Ldoargerr))
         (define-$type-check (L13.5 Pred))
         (define make-info
-          (lambda (name interface*)
-            (make-info-lambda #f #f #f interface* name)))
+          (case-lambda
+           [(name interface*) (make-info name interface* #f)]
+           [(name interface* single-valued?)
+            (make-info-lambda #f #f #f interface* name (if single-valued? (constant code-flag-single-valued) 0))]))
         (define make-arg-opnd
           (lambda (n)
             (let ([regnum (length arg-registers)])
@@ -12002,7 +12006,7 @@
         (define (make-list*-procedure name)
           (with-output-language (L13.5 CaseLambdaExpr)
             (let ([Ltop (make-local-label 'ltop)])
-              `(lambda ,(make-info name '(-2)) 0 ()
+              `(lambda ,(make-info name '(-2) #t) 0 ()
                  (seq
                    (set! ,%ac0 ,(%inline - ,%ac0 (immediate 1)))
                    ; TODO: would be nice to avoid cmpl here
@@ -12554,7 +12558,7 @@
            [(cons*-procedure) (make-list*-procedure "cons*")]
            [($record-procedure)
             (let ([Ltop (make-local-label 'ltop)])
-              `(lambda ,(make-info "$record" '(-2)) 0 ()
+              `(lambda ,(make-info "$record" '(-2) #t) 0 ()
                  (if ,(%inline eq? ,%ac0 (immediate 0))
                      (seq (pariah) (goto ,Ldoargerr))
                      ,(%seq
@@ -12594,7 +12598,7 @@
                                      ,(f (cdr reg*) (fx+ i 1))))))))))]
            [(vector-procedure)
             (let ([Ltop (make-local-label 'ltop)])
-              `(lambda ,(make-info "vector" '(-1)) 0 ()
+              `(lambda ,(make-info "vector" '(-1) #t) 0 ()
                  (if ,(%inline eq? ,%ac0 (immediate 0))
                      ,(%seq
                         (set! ,%ac0 (literal ,(make-info-literal #f 'object '#() 0)))
@@ -12650,7 +12654,7 @@
                                      ,(f (cdr reg*) (fx+ i 1))))))))))]
            [(list-procedure)
             (let ([Ltop (make-local-label 'ltop)])
-              `(lambda ,(make-info "list" '(-1)) 0 ()
+              `(lambda ,(make-info "list" '(-1) #t) 0 ()
                  (if ,(%inline eq? ,%ac0 (immediate 0))
                      (seq
                        (set! ,%ac0 ,(%constant snil))
@@ -12875,7 +12879,7 @@
               (define (argcnt->max-fv n) (max (- n (length arg-registers)) 0))
               (let ([Ltop (make-local-label 'Ltop)] [Ltrue (make-local-label 'Ltrue)] [Lfail (make-local-label 'Lfail)])
                 (define iptr-bytes (in-context Triv (%constant ptr-bytes)))
-                `(lambda ,(make-info "bytevector=?" '(2)) ,(argcnt->max-fv 2) (,bv1 ,bv2 ,idx ,len2)
+                `(lambda ,(make-info "bytevector=?" '(2) #t) ,(argcnt->max-fv 2) (,bv1 ,bv2 ,idx ,len2)
                    ,(%seq
                       (set! ,bv1 ,(make-arg-opnd 1))
                       (set! ,bv2 ,(make-arg-opnd 2))

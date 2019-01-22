@@ -4737,18 +4737,23 @@
          [(value tail)
           (bump sc 1)
           `(case-lambda ,preinfo
-             ,(let f ([cl* cl*] [mask 0])
+             ,(let f ([cl* cl*] [mask 0] [known-single-valued? #t])
                 (if (null? cl*)
-                    '()
+                    (begin
+                      (when known-single-valued?
+                        (preinfo-lambda-flags-set! preinfo (fxior (preinfo-lambda-flags preinfo)
+                                                                  (constant code-flag-single-valued))))
+                      '())
                     (nanopass-case (Lsrc CaseLambdaClause) (car cl*)
                       [(clause (,x* ...) ,interface ,body)
                        (let ([new-mask (logor mask (if (fx< interface 0) (ash -1 (fx- -1 interface)) (ash 1 interface)))])
                          (if (= new-mask mask)
-                             (f (cdr cl*) new-mask)
-                             (cons
-                               (with-extended-env ((env x*) (env x* #f))
-                                 `(clause (,x* ...) ,interface ,(cp0 body 'tail env sc wd #f name)))
-                               (f (cdr cl*) new-mask))))])))
+                             (f (cdr cl*) new-mask known-single-valued?)
+                             (with-extended-env ((env x*) (env x* #f))
+                               (let ([body (cp0 body 'tail env sc wd #f name)])
+                                 (cons `(clause (,x* ...) ,interface ,body)
+                                       (f (cdr cl*) new-mask
+                                          (and known-single-valued? (single-valued? body))))))))])))
              ...)]
          [(effect ignored) void-rec]
          [(test) true-rec]
