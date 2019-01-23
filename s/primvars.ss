@@ -18,10 +18,11 @@
   (include "primref.ss")
 
   (define record-prim!
-    (lambda (prim unprefixed flags arity boolean-valued? result-arity signatures)
+    (lambda (prim unprefixed flags arity boolean-valued? true-valued? result-arity signatures)
       (unless (eq? unprefixed prim) ($sputprop prim '*unprefixed* unprefixed))
       (let* ([flags (if boolean-valued? (fxlogor flags (prim-mask boolean-valued)) flags)]
              [flags (if (eq? 'single result-arity) (fxlogor flags (prim-mask single-valued)) flags)]
+             [flags (if (eq? 'true true-valued?) (fxlogor flags (prim-mask true)) flags)]
              [arity (and (not (null? arity)) arity)])
         (when (and (eq? result-arity 'multiple) (any-set? (prim-mask single-valued) flags))
           ($oops 'prims "inconsistent single-value information for ~s" prim))
@@ -42,6 +43,7 @@
               '#,(datum->syntax #'* (vector-map priminfo-mask v-info))
               '#,(datum->syntax #'* (vector-map priminfo-arity v-info))
               '#,(datum->syntax #'* (vector-map priminfo-boolean? v-info))
+              '#,(datum->syntax #'* (vector-map priminfo-true? v-info))
               '#,(datum->syntax #'* (vector-map priminfo-result-arity v-info))
               '#,(datum->syntax #'* (vector-map priminfo-signatures v-info)))))))
 
