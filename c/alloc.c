@@ -911,3 +911,11 @@ ptr S_relocation_table(n) iptr n; {
     RELOCSIZE(p) = n;
     return p;
 }
+
+ptr S_weak_cons(ptr car, ptr cdr) {
+  ptr p;
+  tc_mutex_acquire();
+  p = S_cons_in(space_weakpair, 0, car, cdr);
+  tc_mutex_release();
+  return p;
+}
