@@ -320,6 +320,7 @@
               (def *binary-port binary-output-port))
             (def *cost-center (make-cost-center))
             (def *date (current-date))
+            (def *phantom-bytevector (make-phantom-bytevector 10))
             (def *eq-hashtable (make-eq-hashtable))
             (def *ftype-pointer (make-ftype-pointer double 0))
             (def *symbol-hashtable (make-hashtable symbol-hash eq?))
@@ -421,6 +422,7 @@
               [(pair) '(a . b) 'a #f]
               [(pathname) "a" 'a #f]
               [(pfixnum) 1 0 #f]
+              [(phantom-bytevector) *phantom-bytevector '#vu8(0) #f]
               [(port) (current-input-port) 0 #f]
               [(procedure) values 0 #f]
               [(ptr) 1.0+2.0i]
