@@ -1422,7 +1422,7 @@
   (make-boot-file [sig [(pathname sub-list pathname ...) -> (void)]] [flags true])
   (make-boot-header [sig [(pathname pathname pathname ...) -> (void)]] [flags true])
   (make-compile-time-value [sig [(ptr) (ptr ptr) -> (ptr)]] [flags pure unrestricted alloc])
-  (make-condition [feature pthreads] [sig [() (symbol) -> (condition-object)]] [flags pure unrestricted alloc])
+  (make-condition [feature pthreads] [sig [() (maybe-symbol) -> (condition-object)]] [flags pure unrestricted alloc])
   (make-continuation-condition [sig [(ptr) -> (condition)]] [flags pure unrestricted mifoldable discard])
   (make-cost-center [sig [() -> (cost-center)]] [flags unrestricted alloc])
   (make-ephemeron-eq-hashtable [sig [() (uint) -> (eq-hashtable)]] [flags alloc])
@@ -1435,7 +1435,7 @@
   (make-input-port [sig [(procedure string) -> (textual-input-port)]] [flags alloc])
   (make-input/output-port [sig [(procedure string string) -> (textual-input/output-port)]] [flags alloc])
   (make-list [sig [(length) (length ptr) -> (list)]] [flags alloc])
-  (make-mutex [feature pthreads] [sig [() (symbol) -> (mutex)]] [flags unrestricted alloc])
+  (make-mutex [feature pthreads] [sig [() (maybe-symbol) -> (mutex)]] [flags unrestricted alloc])
   (make-object-finder [sig [(procedure) (procedure ptr) (procedure ptr sub-ufixnum) -> (procedure)]] [flags alloc])
   (make-output-port [sig [(procedure string) -> (textual-output-port)]] [flags alloc])
   (make-parameter [sig [(ptr) (ptr procedure) -> (procedure)]] [flags true cp02 cp03])
@@ -1710,7 +1710,7 @@
   (with-output-to-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags])    ; has options argument
   (with-output-to-string [sig [(procedure) -> (string)]] [flags])
   (with-source-path [sig [(who pathname procedure) -> (ptr ...)]] [flags])
-)
+  )
 
 (define-symbol-flags* ([libraries] [flags system proc]) ; system procedures
   ($address-in-heap? [flags])

@@ -1532,15 +1532,14 @@
                 (t)
                 (void))))))))
 
-(set! make-mutex
+(set-who! make-mutex
   (case-lambda
     [()
      (let ([m ($make-mutex (mm) #f)])
        (mutex-guardian m)
        m)]
     [(name)
-     (unless (symbol? name)
-      ($oops 'make-condition "~s is not a symbol" name))
+     (unless (or (not name) (symbol? name)) ($oops who "~s is not a symbol or #f" name))
      (let ([m ($make-mutex (mm) name)])
        (mutex-guardian m)
        m)]))
@@ -1549,10 +1548,9 @@
   (lambda (x)
     ($mutex? x)))
 
-(set! mutex-name
+(set-who! mutex-name
   (lambda (m)
-    (unless (mutex? m)
-      ($oops 'mutex-name "~s is not a mutex" m))
+    (unless (mutex? m) ($oops who "~s is not a mutex" m))
     ($mutex-name m)))
 
 (set! mutex-acquire
@@ -1577,15 +1575,14 @@
         ($oops 'mutex-release "mutex is defunct"))
       (mr addr))))
 
-(set! make-condition
+(set-who! make-condition
   (case-lambda
     [()
      (let ([c ($make-condition (mc) #f)])
        (condition-guardian c)
        c)]
     [(name)
-     (unless (symbol? name)
-      ($oops 'make-condition "~s is not a symbol" name))
+     (unless (or (not name) (symbol? name)) ($oops who "~s is not a symbol or #f" name))
      (let ([c ($make-condition (mc) name)])
        (condition-guardian c)
        c)]))
@@ -1594,10 +1591,9 @@
   (lambda (x)
     ($condition? x)))
 
-(set! condition-name
+(set-who! condition-name
   (lambda (c)
-    (unless (thread-condition? c)
-      ($oops 'condition-name "~s is not a condition" c))
+    (unless (thread-condition? c) ($oops who "~s is not a condition" c))
     ($condition-name c)))
 
 (set! condition-wait

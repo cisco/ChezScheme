@@ -129,9 +129,9 @@ in all threads.
 \endnoskipentryheader
 
 \noindent
-\var{name}, if supplied, must be a symbol which identifies the mutex. The
-name is printed every time the mutex is printed, which is usefull for
-debugging.
+\var{name}, if supplied, must be a symbol which identifies the mutex, or
+\scheme{#f} for no name. The name is printed every time the mutex is
+printed, which is useful for debugging.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -220,8 +220,8 @@ Using \scheme{with-mutex} is generally more convenient and safer than using
 
 \noindent
 \var{name}, if supplied, must be a symbol which identifies the condition
-object. The name is printed every time the condition is printed, which is
-usefull for debugging.
+object, or \scheme{#f} for no name. The name is printed every time the
+condition is printed, which is useful for debugging.
 
 %----------------------------------------------------------------------------
 \entryheader

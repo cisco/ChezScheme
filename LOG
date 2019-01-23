@@ -1044,7 +1044,7 @@
     use.stex
 - add name fields for mutexes and condition variables, now `make-mutex` and
   `make-condition` accept an optional argument `name`, which must be a
-  symbol.  The name is printed every time the object is printed, which is
-  usefull for debugging
+  symbol or #f.  The name, if not #f, is printed every time the object is
+  printed, which is useful for debugging
     primdata.ss prims.ss print.ss
     thread.ms threads.stex
