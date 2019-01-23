@@ -14,7 +14,7 @@
 ;;; limitations under the License.
 
 (module priminfo (priminfo-unprefixed priminfo-libraries priminfo-mask priminfo-signatures priminfo-arity primvec
-                  get-priminfo priminfo-boolean? priminfo-result-arity)
+                  get-priminfo priminfo-boolean? priminfo-true? priminfo-result-arity)
   (define-record-type priminfo
     (nongenerative)
     (sealed #t)
@@ -54,6 +54,28 @@
           ;; produce a single value when it (never) returns.
           'single]
          [else 'multiple]))))
+
+  (define priminfo-true?
+    (lambda (info)
+      (let ([signature* (priminfo-signatures info)])
+        (cond
+         [(null? signature*) 'unknown]
+         [(andmap (lambda (sig)
+                    (let ([out (cdr sig)])
+                      (and (pair? out)
+                           (null? (cdr out))
+                           (or (pair? (car out))
+                           (not (or (eq? (car out) 'ptr)
+                                    (eq? (car out) 'sub-ptr)
+                                    (eq? (car out) 'boolean)
+                                    (eq? (car out) 'bottom)
+                                    (eq? (car out) 'who)
+                                    (let ([name (symbol->string (car out))])
+                                      (and (>= (string-length name) 6)
+                                           (string=? (substring name 0 6) "maybe-"))))))))) 
+                  signature*)
+          'true]
+         [else #;(newline) #;(display (list info)) 'other]))))
 
   (define signature->interface
     (lambda (sig)
