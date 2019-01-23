@@ -129,7 +129,7 @@ in all threads.
 \endnoskipentryheader
 
 \noindent
-\var{name}, if supplied, must be a symbol which identified the mutex. The
+\var{name}, if supplied, must be a symbol which identifies the mutex. The
 name is printed every time the mutex is printed, which is usefull for
 debugging.
 
