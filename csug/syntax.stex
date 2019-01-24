@@ -244,13 +244,13 @@ For example:
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{syntax->vector}{\categoryprocedure}{(syntax->vector \var{syntax-object})}
-\returns a list of syntax objects
+\returns a vector of syntax objects
 \listlibraries
 \endentryheader
 
 \noindent
 This procedure takes a syntax object representing
-a vector-structured form and returns a list of syntax objects, each representing
+a vector-structured form and returns a vector of syntax objects, each representing
 the corresponding subform of the input form.
 
 %Programmers are encouraged to use this procedure even when the current
