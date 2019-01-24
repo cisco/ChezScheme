@@ -240,7 +240,7 @@
   (acos [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (atan [sig [(number) (number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (sqrt [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (exact-integer-sqrt [sig [(integer) -> (integer integer)]] [flags pure mifoldable])
+  (exact-integer-sqrt [sig [(uint) -> (uint uint)]] [flags pure mifoldable])
   (expt [sig [(number number) -> (number)]] [flags pure discard true cp02 ieee r5rs]) ; can take too long to fold
   (make-rectangular [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (make-polar [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
