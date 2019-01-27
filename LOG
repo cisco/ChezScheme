@@ -1042,3 +1042,6 @@
 - clarified required use of scheme-start to start an application
   packaged as a boot file and added a short "myecho" example.
     use.stex
+- fix allocation of string/bytevector for a foreign-callable argument
+  or foreign-call return
+    cpnanopass.ss, foreign.ms, foreign2.c
