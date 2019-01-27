@@ -2539,6 +2539,29 @@
      v)
    14995143)
 
+  ;; regression test related to saving registers that hold allocated
+  ;; callable argument
+  (let* ([call-with-many-args (foreign-procedure "call_with_many_args" (void*) boolean)]
+         [result #f]
+         [cb (foreign-callable
+              (lambda (i s1 s2 s3 s4 i2 s6 s7 i3)
+                (set! result
+                      (and (eqv? i 0)
+                           (equal? (string->utf8 "this") s1)
+                           (equal? (string->utf8 "is") s2)
+                           (equal? (string->utf8 "working") s3)
+                           (equal? (string->utf8 "just") s4)
+                           (eqv? i2 1)
+                           (equal? (string->utf8 "fine") s6)
+                           (equal? (string->utf8 "or does it?") s7)
+                           (eqv? i3 2))))
+              (int u8* u8* u8* u8* int u8* u8* int)
+              void)])
+    (lock-object cb)
+    (call-with-many-args (foreign-callable-entry-point cb))
+    (unlock-object cb)
+    result)
+
 )
 
 (machine-case
