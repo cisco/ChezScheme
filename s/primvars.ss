@@ -20,6 +20,9 @@
   (define record-prim!
     (lambda (prim unprefixed flags arity boolean-valued? true-valued? result-arity)
       (unless (eq? unprefixed prim) ($sputprop prim '*unprefixed* unprefixed))
+      (unless (or (eq? (eq? true-valued? 'true) (all-set? (prim-mask true) flags))
+                  (eq? true-valued? 'unknown))
+        ($oops 'prims "inconsistent true-value information for ~s" prim))
       (let* ([flags (if boolean-valued? (fxlogor flags (prim-mask boolean-valued)) flags)]
              [flags (if (eq? 'single result-arity) (fxlogor flags (prim-mask single-valued)) flags)]
              [flags (if (eq? 'true true-valued?) (fxlogor flags (prim-mask true)) flags)]
