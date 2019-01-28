@@ -69,7 +69,6 @@
                                     (eq? (car out) 'sub-ptr)
                                     (eq? (car out) 'boolean)
                                     (eq? (car out) 'bottom)
-                                    (eq? (car out) 'who)
                                     (let ([name (symbol->string (car out))])
                                       (and (>= (string-length name) 6)
                                            (string=? (substring name 0 6) "maybe-"))))))))) 
