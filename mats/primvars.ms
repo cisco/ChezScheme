@@ -415,6 +415,7 @@
               [(maybe-transcoder) (native-transcoder) 0]
               [(maybe-ufixnum) 0 -1 (+ (most-positive-fixnum) 1) 'a]
               [(maybe-uint) 0 -1 'a]
+              [(maybe-who) 'who 17]
               [(message-condition) (make-message-condition 17) (make-who-condition 'who) 'q #f]
               [(number) 1+2i 'oops #f]
               [(old-hash-table) *old-hash-table '((a . b)) #f]
@@ -471,8 +472,7 @@
               [(uptr) 0 -1 'a (+ *max-uptr 1) #f]
               [(uptr/iptr) -1 'q (+ *max-uptr 1) (- *min-iptr 1) #f]
               [(vector) '#(a) "a" #f]
-              [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who]
-              [(who) 'who 17])
+              [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who])
             (meta-cond
               [(memq 'pthreads feature*)
                (declare-types

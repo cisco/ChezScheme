@@ -335,8 +335,8 @@
   (vector-fill! [sig [(vector ptr) -> (void)]] [flags true ieee r5rs])
   (vector-map [sig [(procedure vector vector ...) -> (vector)]] [flags cp03])
   (vector-for-each [sig [(procedure vector vector ...) -> (ptr ...)]] [flags cp03])
-  (error [sig [(who string ptr ...) -> (bottom)]] [flags abort-op])
-  (assertion-violation [sig [(who string ptr ...) -> (bottom)]] [flags abort-op])
+  (error [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
+  (assertion-violation [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
   (apply [sig [(procedure ptr ... list) -> (ptr ...)]] [flags cp02 ieee r5rs])
   (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs])
   (call/cc [sig [(procedure) -> (ptr ...)]] [flags])
@@ -800,7 +800,7 @@
   (syntax->datum [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
   (datum->syntax [sig [(identifier ptr) -> (syntax)]] [flags pure mifoldable discard true])
   (generate-temporaries [sig [(list) -> (list)]] [flags alloc])
-  (syntax-violation [sig [(who string ptr) (who string ptr ptr) -> (bottom)]] [flags abort-op])
+  (syntax-violation [sig [(maybe-who string ptr) (maybe-who string ptr ptr) -> (bottom)]] [flags abort-op])
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs unicode)] [flags primitive proc]) ; unicode
@@ -1135,7 +1135,7 @@
   (apropos [sig [(sub-ptr) (sub-ptr environment) -> (void)]] [flags true])
   (apropos-list [sig [(sub-ptr) (sub-ptr environment) -> (list)]] [flags alloc])
   (ash [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03])
-  (assertion-violationf [sig [(who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; 2nd arg is format string
+  (assertion-violationf [sig [(maybe-who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; 2nd arg is format string
   (asinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (atanh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (atom? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
@@ -1276,7 +1276,7 @@
   (environment-symbols [sig [(environment) -> (list)]] [flags true])
   (ephemeron-cons [sig [(ptr ptr) -> ((ptr . ptr))]] [flags unrestricted alloc])
   (ephemeron-pair? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (errorf [sig [(who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; second arg is format string
+  (errorf [sig [(maybe-who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; second arg is format string
   (eq-hashtable? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (eq-hashtable-cell [sig [(eq-hashtable ptr ptr) -> ((ptr . ptr))]] [flags true])
   (eq-hashtable-contains? [sig [(eq-hashtable ptr) -> (boolean)]] [flags discard])
@@ -1733,8 +1733,8 @@
   (virtual-register-count [sig [() -> (length)]] [flags pure unrestricted true cp02])
   (visit [sig [(pathname) -> (void)]] [flags true])
   (void [sig [() -> (void)]] [flags pure unrestricted mifoldable discard true])
-  (warning [sig [(who string sub-ptr ...) -> (ptr ...)]] [flags])
-  (warningf [sig [(who string sub-ptr ...) -> (ptr ...)]] [flags])
+  (warning [sig [(maybe-who string sub-ptr ...) -> (ptr ...)]] [flags])
+  (warningf [sig [(maybe-who string sub-ptr ...) -> (ptr ...)]] [flags])
   (weak-cons [sig [(ptr ptr) -> ((ptr . ptr))]] [flags unrestricted alloc])
   (weak-pair? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (with-cost-center [sig [(cost-center procedure) (ptr cost-center procedure) -> (ptr ...)]] [flags])
@@ -1742,7 +1742,7 @@
   (with-input-from-string [sig [(string procedure) -> (ptr ...)]] [flags])
   (with-output-to-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags])    ; has options argument
   (with-output-to-string [sig [(procedure) -> (string)]] [flags])
-  (with-source-path [sig [(who pathname procedure) -> (ptr ...)]] [flags])
+  (with-source-path [sig [(maybe-who pathname procedure) -> (ptr ...)]] [flags])
   (wrapper-procedure? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (wrapper-procedure-data [sig [(ptr) -> (ptr)]] [flags discard])
 )
@@ -2194,7 +2194,7 @@
   ($record-cas! [sig [(record sub-index ptr ptr) -> (boolean)]] [flags])
   ($record-equal-procedure [flags discard])
   ($record-hash-procedure [flags discard])
-  ($record-oops #;[sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
+  ($record-oops #;[sig [(maybe-who sub-ptr rtd) -> (bottom)]] [flags abort-op])
   ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard cp03])
   ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true])
   ($record-type-descriptor [flags pure mifoldable discard true])
