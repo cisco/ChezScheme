@@ -905,9 +905,9 @@
       (constant-case ptr-bits
         [(32) (declare-intrinsic dofretuns64 dofretuns64 (%ts %td %xp) (%ac0 %ac1) (%ac0))]
         [(64) (declare-intrinsic dofretuns64 dofretuns64 (%ts %td %xp) (%ac0) (%ac0))])
-      (declare-intrinsic dofretu8* dofretu8* (%ac0 %ts %td %cp) (%ac0) (%xp))
-      (declare-intrinsic dofretu16* dofretu16* (%ac0 %ts %td %cp) (%ac0) (%xp))
-      (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp) (%ac0) (%xp))
+      (declare-intrinsic dofretu8* dofretu8* (%ac0 %ts %td %cp %ac1) (%ac0) (%xp))
+      (declare-intrinsic dofretu16* dofretu16* (%ac0 %ts %td %cp %ac1) (%ac0) (%xp))
+      (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp %ac1) (%ac0) (%xp))
       (declare-intrinsic get-room get-room () (%xp) (%xp))
       (declare-intrinsic scan-remembered-set scan-remembered-set () () ())
       (declare-intrinsic reify-cc reify-cc (%xp %ac0 %ts) () (%td))
@@ -12457,7 +12457,6 @@
                                          (set! ,%xp (literal ,(make-info-literal #f 'object #vu8() 0)))
                                          (asm-return ,return-live* ...))
                                       ,(%seq
-                                         ; TODO: avoid use of ac1 by insisting that get-room preserve ts & td
                                          (set! ,(ref-reg %ac1) ,%td)
                                          (set! ,%td ,(%inline + ,%td
                                                        (immediate
