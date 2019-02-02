@@ -962,7 +962,9 @@
                  (if (pair? val)
                      (car val)
                      (let ([r (pred?)])
-                       (set-cdr! a (cons r (cdr a)))
+                       (let ([p (cdr a)])
+                         (unless (pair? p)
+                           (set-cdr! a (cons r p))))
                        r)))))]))
 
       (define-syntax with-memoize
