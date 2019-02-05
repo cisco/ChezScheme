@@ -1622,33 +1622,40 @@
 
     (define fold-primref
       (lambda (pr ctxt sc wd name moi)
-        (let ([opnds (app-opnds ctxt)] [outer-ctxt (app-ctxt ctxt)])
-          (let ([flags (primref-flags pr)])
-            (cond
-              [(and (eq? outer-ctxt 'effect)
-                    (if (all-set? (prim-mask unsafe) flags)
-                        (all-set? (prim-mask discard) flags)
-                        (and (all-set? (prim-mask (or unrestricted discard)) flags)
-                             (arity-okay? (primref-arity pr) (length opnds)))))
-                (residualize-seq '() opnds ctxt)
-                void-rec]
-              [(and (eq? outer-ctxt 'test)
-                    (all-set?
-                      (if (all-set? (prim-mask unsafe) flags)
-                          (prim-mask (or discard true))
-                          (prim-mask (or unrestricted discard true)))
-                      flags))
-                (residualize-seq '() opnds ctxt)
-                true-rec]
-              [(and (eq? outer-ctxt 'test)
-                    (all-set? (prim-mask true) flags))
-                (make-seq outer-ctxt
-                  (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)
-                  true-rec)]
-              [else (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)])))))
+        (let ([opnds (app-opnds ctxt)])
+          (convention-case (app-convention ctxt)
+            [(call)
+             (let ([flags (primref-flags pr)] [outer-ctxt (app-ctxt ctxt)])
+               (cond
+                 [(and (eq? outer-ctxt 'effect)
+                       (if (all-set? (prim-mask unsafe) flags)
+                           (all-set? (prim-mask discard) flags)
+                           (and (all-set? (prim-mask (or unrestricted discard)) flags)
+                                (arity-okay? (primref-arity pr) (length opnds)))))
+                  (residualize-seq '() opnds ctxt)
+                  void-rec]
+                 [(and (eq? outer-ctxt 'test)
+                       (all-set?
+                        (if (all-set? (prim-mask unsafe) flags)
+                            (prim-mask (or discard true))
+                            (prim-mask (or unrestricted discard true)))
+                        flags))
+                  (residualize-seq '() opnds ctxt)
+                  true-rec]
+                 [(and (eq? outer-ctxt 'test)
+                       (all-set? (prim-mask true) flags))
+                  (make-seq outer-ctxt
+                    (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)
+                    true-rec)]
+                 [else (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)]))]
+            [(apply2 apply3)
+             ; handler for apply will have turned the apply into a call if the last
+             ; argument is discovered to be a list.  nothing more we can do here.
+             (residualize-primcall pr #f opnds ctxt sc)]))))
 
     (define fold-primref2
       (lambda (pr sym opnds pflags ctxt sc wd name moi)
+        (safe-assert (convention-case (app-convention ctxt) [(call) #t] [else #f]))
         (let ([handler (or (and (all-set? (prim-mask unsafe) pflags)
                                 (all-set? (prim-mask cp03) pflags)
                                 ($sgetprop sym 'cp03 #f))
@@ -1656,11 +1663,7 @@
                                 ($sgetprop sym 'cp02 #f)))])
           (or (and handler
                    (let ([level (if (all-set? (prim-mask unsafe) pflags) 3 2)])
-                     (convention-case (app-convention ctxt)
-                       [(call) (handler level opnds ctxt sc wd name moi)]
-                       ; handler for apply will have turned the apply into a call if the last
-                       ; argument is discovered to be a list.  nothing more we can do here.
-                       [(apply2 apply3) #f])))
+                     (handler level opnds ctxt sc wd name moi)))
               (let ([args (value-visit-operands! opnds)])
                 (cond
                   [(and (all-set? (prim-mask mifoldable) pflags)
@@ -1670,13 +1673,18 @@
                      (residualize-seq '() opnds ctxt)
                      e)]
                   [else
-                    (residualize-seq opnds '() ctxt)
-                    (bump sc 1)
-                    (let ([preinfo (app-preinfo ctxt)])
-                      (convention-case (app-convention ctxt)
-                        [(call) `(call ,preinfo ,pr ,args ...)]
-                        [(apply2) (build-primcall preinfo 2 'apply (cons pr args))]
-                        [(apply3) (build-primcall preinfo 3 'apply (cons pr args))]))]))))))
+                   (residualize-primcall pr args opnds ctxt sc)]))))))
+
+    (define residualize-primcall
+      (lambda (pr args opnds ctxt sc)
+        (let ([args (or args (value-visit-operands! opnds))])
+          (residualize-seq opnds '() ctxt)
+          (bump sc 1)
+          (let ([preinfo (app-preinfo ctxt)])
+            (convention-case (app-convention ctxt)
+              [(call) `(call ,preinfo ,pr ,args ...)]
+              [(apply2) (build-primcall preinfo 2 'apply (cons pr args))]
+              [(apply3) (build-primcall preinfo 3 'apply (cons pr args))])))))
 
     (define objs-if-constant
       (lambda (e*)

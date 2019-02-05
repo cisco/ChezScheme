@@ -1042,3 +1042,7 @@
 - clarified required use of scheme-start to start an application
   packaged as a boot file and added a short "myecho" example.
     use.stex
+- fixed a bug in cp0 bug that could fold the apply of a primitive, where
+  the last argument is not a list, as if it were a call to the primitive
+  with those arguments
+    cp0.ss, cp0.ms
