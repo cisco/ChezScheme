@@ -636,6 +636,40 @@
             (tester))))
       (test2 10))
     11)
+  (test-cp0-expansion
+    '(lambda (x)
+       (call-with-values (lambda () (unbox x)) display))
+    (if (eqv? (optimize-level) 3)
+        '(lambda (x) (#3%display (#3%unbox x)))
+        '(lambda (x) (#2%display (#2%unbox x)))))
+  (test-cp0-expansion
+    '(lambda (x)
+       (call-with-values (lambda () (if x 1 2)) display))
+    (if (eqv? (optimize-level) 3)
+        '(lambda (x) (#3%display (if x 1 2)))
+        '(lambda (x) (#2%display (if x 1 2)))))
+  ; verify optimization of begin0 pattern
+  (test-cp0-expansion
+    '(lambda (x)
+       (call-with-values (lambda ()
+                           (call-with-values (lambda () (unbox x))
+                             (case-lambda
+                               [(x) (values x #f)]
+                               [args (values args #t)])))
+         (lambda (l apply?)
+           (newline)
+           (if apply?
+               (apply values l)
+               l))))
+    (if (eqv? (optimize-level) 3)
+        '(lambda (x)
+           (let ([temp (#3%unbox x)])
+             (#3%newline)
+             temp))
+        '(lambda (x)
+           (let ([temp (#2%unbox x)])
+             (#2%newline)
+             temp))))
 )
 
 (cp0-mat apply-partial-folding
