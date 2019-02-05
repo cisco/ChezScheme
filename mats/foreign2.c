@@ -443,3 +443,10 @@ EXPORT void call_many_times(void (*f)(iptr))
     j = k+2; k = l+2; l = m+2; m = m+2;
   }
 }
+
+typedef void (*many_arg_callback_t)(int i, const char* s1, const char* s2, const char* s3,
+                                    const char* s4, int i2, const char* s6, const char* s7, int i3);
+EXPORT void call_with_many_args(many_arg_callback_t callback)
+{
+    callback(0, "this", "is", "working", "just", 1, "fine", "or does it?", 2);
+}
