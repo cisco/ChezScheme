@@ -1046,3 +1046,6 @@
   the last argument is not a list, as if it were a call to the primitive
   with those arguments
     cp0.ss, cp0.ms
+- fix allocation of string/bytevector for a foreign-callable argument
+  or foreign-call return
+    cpnanopass.ss, foreign.ms, foreign2.c
