@@ -3832,6 +3832,8 @@ cp0.mo:Expected error in mat cp0-regression: "source-object-bfp: #f is not a sou
 cp0.mo:Expected error in mat cp0-regression: "source-object-efp: #f is not a source object".
 cp0.mo:Expected error in mat cp0-regression: "source-object-sfd: #f is not a source object".
 cp0.mo:Expected error in mat cp0-regression: "condition: #f is not a condition".
+cp0.mo:Expected error in mat cp0-regression: "apply: 0 is not a proper list".
+cp0.mo:Expected error in mat cp0-regression: "apply: 2 is not a proper list".
 cp0.mo:Expected error in mat expand/optimize: "incorrect argument count in call (expand/optimize)".
 cp0.mo:Expected error in mat expand/optimize: "expand/optimize: b is not an environment".
 cp0.mo:Expected error in mat expand/optimize: "incorrect argument count in call (expand/optimize (quote a) (quote b) (quote c))".

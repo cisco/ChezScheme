@@ -1605,6 +1605,17 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Invalid constant-folding of some calls to \protect\scheme{apply} (9.5.1)}
+
+A bug in the source optimizer (cp0) allowed constant-folding of some calls to
+\scheme{apply} where the last argument is not known to be a list.  For example,
+cp0 incorrectly reduced
+\scheme{(apply zero? 0)} to \scheme{#t}
+and reduced
+\scheme{(lambda (x) (apply box? x) x)} to \scheme{(lambda (x) x)},
+but now preserves these calls to \scheme{apply} so that they may raise an
+exception.
+
 \subsection{Disk-relative filenames in Windows (9.5.1)}
 
 In Windows, filenames that start with a disk designator but no
