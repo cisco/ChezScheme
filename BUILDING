@@ -86,8 +86,12 @@ if successful, creates several files and directories:
 
 * Within the workarea, the files Makefile, Mf-install, and Mf-boot.
 
-'./configure' supports various options, among which is --help, which
-can be used to list the supported options.
+'./configure' recognizes various options for controlling the type
+of build and the installation location.  For example, '--threads'
+requests a build with support for native threads, '--32' requests
+a 32-bit build, and '--installprefix <pathname>' specifies the
+installation root.  './configure --help' prints the supported
+options.
 
 The make file supports several targets:
 
