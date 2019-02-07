@@ -984,6 +984,33 @@
           (unless (eof-object? err) (error 'bootfile-test2 err))
           out)))
     "hello 1\nhello 2\nhello 3\nhello 4\nhello 5\n")
+  ; regression test to verify that we can evaluate a foreign-callable form inside the procedure to
+  ; which scheme-start is set, which was failing because its relocation information was discarded
+  ; by the static-generation collection.
+  (equal?
+    (begin
+      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+        (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
+          (machine-type) (machine-type) (if (windows?) ".exe" "")))
+      (mkfile "testfile.ss"
+        '(scheme-start
+           (lambda ()
+             (let ([x 0])
+               (printf "~s\n" (foreign-callable (lambda () (set! x (+ x 1)) x) () void))))))
+      (make-boot-file "testfile.boot" '("petite") "testfile.ss")
+      (let-values ([(to-stdin from-stdout from-stderr pid)
+                    (open-process-ports
+                      (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))
+                      (buffer-mode block)
+                      (native-transcoder))])
+        (close-output-port to-stdin)
+        (let ([out (get-string-all from-stdout)]
+              [err (get-string-all from-stderr)])
+          (close-input-port from-stdout)
+          (close-input-port from-stderr)
+          (unless (eof-object? err) (error 'bootfile-test2 err))
+          out)))
+    "#<code>\n")
 )
 
 (mat hostop

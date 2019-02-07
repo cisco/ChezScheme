@@ -1605,6 +1605,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Invalid memory reference instantiating \protect\scheme{foreign-callable} code object (9.5.1)}
+
+A bug that caused evaluation of a \scheme{foreign-callable} expression in
+code that has been collected into the static generation (e.g., when the
+\scheme{foreign-callable} form appears in code compiled to a boot file)
+to result in an invalid memory reference has been fixed.
+
 \subsection{Invalid constant-folding of some calls to \protect\scheme{apply} (9.5.1)}
 
 A bug in the source optimizer (cp0) allowed constant-folding of some calls to

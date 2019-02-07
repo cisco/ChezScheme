@@ -11076,7 +11076,7 @@
                `(lambda ,info ,max-fv (,local* ...) ,tlbody))))]
         [(fcallable ,info ,l)
          (let ([lambda-info (make-info-lambda #f #f #f (list (length (info-foreign-arg-type* info)))
-                              (info-foreign-name info))])
+                              (info-foreign-name info) (constant code-flag-template))])
            (fluid-let ([max-fv 0] [local* '()])
              (let ([tlbody (build-fcallable info l)])
                `(lambda ,lambda-info ,max-fv (,local* ...) ,tlbody))))]

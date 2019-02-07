@@ -102,6 +102,7 @@ typedef unsigned long long U64;
 #define code_data_disp 0x41
 #define code_flag_continuation 0x2
 #define code_flag_system 0x1
+#define code_flag_template 0x4
 #define code_flags_offset 0x8
 #define code_info_disp 0x31
 #define code_length_disp 0x9
