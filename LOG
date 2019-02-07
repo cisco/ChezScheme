@@ -1056,3 +1056,8 @@
     cmacros.ss, cpnanopass.ss,
     gc.c,
     7.ms
+- add hashtable-cells and add a size argument to hashtable-keys,
+  hashtable-values, and hashtable-entries
+    newhash.ss, primdata.ss,
+    hash.ms, root-experr*, patch*,
+    objects.stex, release_notes.stex
