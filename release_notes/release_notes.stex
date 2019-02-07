@@ -58,6 +58,14 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Extracting a subset of hashtable entries (9.5.1)}
+
+The new \scheme{hashtable-cells} function is similar to
+\scheme{hashtable-entries}, but it returns a vector of cells instead
+of two vectors. An optional argument to \scheme{hashtable-keys},
+\scheme{hashtable-values}, \scheme{hashtable-entries}, or \scheme{hashtable-cells}
+limits the size of the result vector.
+
 \subsection{Profile data retained for reclaimed code (9.5.1)}
 
 Profile data is now retained indefinitely even for code objects

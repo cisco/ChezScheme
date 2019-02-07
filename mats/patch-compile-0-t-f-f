@@ -4382,14 +4382,31 @@
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-clear!: #<eq hashtable> is not mutable".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-clear!: invalid size argument #t".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys)".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys $ht 72 43)".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: not-an-unsigned-integer is not a valid length".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys)".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys $ht 72)".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values)".
-! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values $ht 72)".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values $ht 72 43)".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: not-an-unsigned-integer is not a valid length".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries)".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries $ht 72 43)".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: not-an-unsigned-integer is not a valid length".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries)".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries $ht 72)".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells)".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells $ht 72 43)".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: not-an-unsigned-integer is not a valid length".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function)".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function $ht $ht)".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-hash-function: (hash . table) is not an eq hashtable".
@@ -4479,12 +4496,29 @@
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-keys>".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-keys>".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: not-an-unsigned-integer is not a valid length".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-keys>".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-keys>".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-values>".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-values>".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: not-an-unsigned-integer is not a valid length".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-entries>".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-entries>".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: not-an-unsigned-integer is not a valid length".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-entries>".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-entries>".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-cells>".
+! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-cells>".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: (hash . table) is not a hashtable".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: -79 is not a valid length".
+  hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: not-an-unsigned-integer is not a valid length".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-hash-function>".
 ! hash.mo:Expected error in mat hashtable-arguments: "incorrect number of arguments to #<procedure hashtable-hash-function>".
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-hash-function: (hash . table) is not an eq hashtable".

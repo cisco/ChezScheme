@@ -529,8 +529,8 @@
   (hashtable-update! [sig [(hashtable ptr procedure ptr) -> (void)]] [flags])
   (hashtable-copy [sig [(hashtable) (hashtable ptr) -> (hashtable)]] [flags alloc])
   (hashtable-clear! [sig [(hashtable) (hashtable sub-uint) -> (void)]] [flags true])
-  (hashtable-keys [sig [(hashtable) -> (vector)]] [flags alloc])
-  (hashtable-entries [sig [(hashtable) -> (vector vector)]] [flags alloc])
+  ((r6rs: hashtable-keys) [sig [(hashtable) -> (vector)]] [flags alloc])           ; no size argument
+  ((r6rs: hashtable-entries) [sig [(hashtable) -> (vector vector)]] [flags alloc]) ; no size argument
   (hashtable-equivalence-function [sig [(hashtable) -> (ptr)]] [flags])
   (hashtable-hash-function [sig [(hashtable) -> (ptr)]] [flags])
   (hashtable-mutable? [sig [(hashtable) -> (boolean)]] [flags mifoldable discard])
@@ -1373,7 +1373,10 @@
   (hash-table-for-each [sig [(old-hash-table procedure) -> (void)]] [flags])
   (hash-table-map [sig [(old-hash-table procedure) -> (list)]] [flags true])
   (hashtable-cell [sig [(old-hash-table ptr ptr) -> ((ptr . ptr))]] [flags true])
-  (hashtable-values [sig [(hashtable) -> (vector)]] [flags alloc])
+  (hashtable-cells [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
+  (hashtable-entries [sig [(hashtable) -> (vector vector)] [(hashtable uint) -> (vector vector)]] [flags alloc]) ; has size argument
+  (hashtable-keys [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])                  ; has size argument
+  (hashtable-values [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
   (hashtable-weak? [sig [(hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (iconv-codec [feature iconv] [sig [(sub-string) -> (codec)]] [flags pure true])
   (ieee-environment [sig [() -> (environment)]] [flags unrestricted alloc])
@@ -1785,6 +1788,7 @@
   ($dynamic-closure-counts [flags alloc])  ; added for closure instrumentation
   ($enum-set-members [flags])
   ($eol-style? [flags])
+  ($eq-hashtable-cells [flags discard])
   ($eq-hashtable-clear! [flags true])
   ($eq-hashtable-copy [flags true discard])
   ($eq-hashtable-entries [flags discard])
