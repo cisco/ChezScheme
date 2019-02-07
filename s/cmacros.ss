@@ -749,6 +749,7 @@
 
 (define-constant code-flag-system         #b0001)
 (define-constant code-flag-continuation   #b0010)
+(define-constant code-flag-template       #b0100)
 
 (define-constant fixnum-bits
   (case (constant ptr-bits)

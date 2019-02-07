@@ -1700,7 +1700,7 @@ static void sweep_code_object(tc, co) ptr tc, co; {
         S_set_code_obj("gc", RELOC_TYPE(entry), co, a, obj, item_off);
     }
 
-    if (target_generation == static_generation && !S_G.retain_static_relocation) {
+    if (target_generation == static_generation && !S_G.retain_static_relocation && (CODETYPE(co) & (code_flag_template << code_flags_offset)) == 0) {
       CODERELOC(co) = (ptr)0;
     } else {
       /* Don't copy non-oldspace relocation tables, since we may be

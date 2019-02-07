@@ -1049,3 +1049,10 @@
 - fix allocation of string/bytevector for a foreign-callable argument
   or foreign-call return
     cpnanopass.ss, foreign.ms, foreign2.c
+- foreign-callable code objects are now flagged as "templates", and
+  the collector now refuses to discard relocation information for
+  code objects marked as templates when copying them to the static
+  generation.
+    cmacros.ss, cpnanopass.ss,
+    gc.c,
+    7.ms
