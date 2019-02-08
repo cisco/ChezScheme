@@ -11485,8 +11485,27 @@
                                     (goto ,Lcopy-stack)))
                              ,load-xp/cp
                              (goto ,Lreturn)))
-                      ; 1 shot
-                      ,(%seq
+                      ; 1 shot, possibly opportunistic
+                      (if ,(%inline eq?
+                              ,(%mref ,xp/cp ,(constant continuation-stack-length-disp))
+                              (immediate ,(constant opportunistic-1-shot-flag)))
+                       ; opportunistic 1-shot, so merge with the current stack if possible,
+                       ; otherwise just treat as multishot
+                       ,(%seq
+                         (set! ,%ts ,(%inline + ,%td ,(%mref ,xp/cp ,(constant continuation-stack-disp))))
+                         (if ,(%inline eq? ,%sfp ,%ts)
+                             ; merge, and we assume that the stack link includes attachments
+                             ,(%seq
+                               (set! ,(%tc-ref scheme-stack-size) ,(%inline + ,%td ,(%tc-ref scheme-stack-size)))
+                               (set! ,(%tc-ref scheme-stack) ,(%mref ,xp/cp ,(constant continuation-stack-disp)))
+                               (set! ,(%tc-ref stack-link) ,(%mref ,xp/cp ,(constant continuation-link-disp)))
+                               (set! ,%ts ,(%mref ,xp/cp ,(constant continuation-attachments-disp)))
+                               (set! ,(%tc-ref attachments) ,%ts)
+                               (goto ,Lreturn))
+                             ; can't merge
+                             (goto ,Lmultishot)))
+                       ; General 1-shot
+                       ,(%seq
                          ; treat as multishot if clength + size(values) > length
                          ; conservative: some values may be in argument registers
                          ; AWK - very carefully using ts here as we are out of other registers
@@ -11553,52 +11572,62 @@
                                              (set! ,%xp ,(%mref ,xp/cp ,(constant continuation-return-address-disp)))
                                              (set! ,fv0 ,%xp)
                                              (jump ,(%mref ,%xp ,(constant return-address-mv-return-address-disp))
-                                               (,%ac0 ,arg-registers ... ,fv0))))])))))))))))
+                                               (,%ac0 ,arg-registers ... ,fv0))))]))))))))))))
         (define reify-cc-help
-          (lambda (finish)
+          (lambda (1-shot? finish)
             (with-output-language (L13 Tail)
-              (let ([Ltop (make-local-label 'Ltop)])
                 (%seq
                   (set! ,%td ,(%tc-ref stack-link))
-                  (set! ,%xp ,%td)
-                  (label ,Ltop)
-                  (set! ,%ac0 ,(%mref ,%xp ,(constant continuation-stack-clength-disp)))
-                  (if ,(%inline eq?
-                          ,(%mref ,%xp ,(constant continuation-stack-length-disp))
-                          ,%ac0)
-                       ,(%seq
-                          (set! ,%ac0
-                            (literal ,(make-info-literal #f 'library-code
-                                        (lookup-libspec dounderflow)
-                                        (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                          (if (if ,(%inline eq?
-                                        ,(%mref ,%td ,(constant continuation-attachments-disp))
-                                        ,(%constant sfalse))
-                                   (false)
-                                   ,(%inline eq? ,%ref-ret ,%ac0))
-                              ,(finish %td)
-                              ,(%seq
-                                 (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
-                                 (set! ,(%mref ,%xp ,(constant continuation-code-disp))
-                                   (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
-                                 (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
-                                 (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
-                                 (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
-                                 (set! ,%ref-ret ,%ac0)
-                                 (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
-                                 (set! ,(%tc-ref stack-link) ,%xp)
-                                 (set! ,%ac0 ,(%tc-ref scheme-stack))
-                                 (set! ,(%tc-ref scheme-stack) ,%sfp)
-                                 (set! ,(%mref ,%xp ,(constant continuation-stack-disp)) ,%ac0)
-                                 (set! ,%ac0 ,(%inline - ,%sfp ,%ac0))
-                                 (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
-                                 (set! ,(%mref ,%xp ,(constant continuation-stack-clength-disp)) ,%ac0)
-                                 (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,%ac0))
-                                 ,(finish %xp))))
-                       ,(%seq
-                          (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
-                          (set! ,%xp ,(%mref ,%xp ,(constant continuation-link-disp)))
-                          (goto ,Ltop)))))))))
+                  ,(let ([build-reify
+                          (lambda ()
+                            (%seq
+                              (set! ,%ac0
+                                (literal ,(make-info-literal #f 'library-code
+                                            (lookup-libspec dounderflow)
+                                            (fx+ (constant code-data-disp) (constant size-rp-header)))))
+                              (if (if ,(%inline eq?
+                                            ,(%mref ,%td ,(constant continuation-attachments-disp))
+                                            ,(%constant sfalse))
+                                       (false)
+                                       ,(%inline eq? ,%ref-ret ,%ac0))
+                                  ,(finish %td)
+                                  ,(%seq
+                                     (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
+                                     (set! ,(%mref ,%xp ,(constant continuation-code-disp))
+                                       (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
+                                     (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
+                                     (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
+                                     (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
+                                     (set! ,%ref-ret ,%ac0)
+                                     (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
+                                     (set! ,(%tc-ref stack-link) ,%xp)
+                                     (set! ,%ac0 ,(%tc-ref scheme-stack))
+                                     (set! ,(%tc-ref scheme-stack) ,%sfp)
+                                     (set! ,(%mref ,%xp ,(constant continuation-stack-disp)) ,%ac0)
+                                     (set! ,%ac0 ,(%inline - ,%sfp ,%ac0))
+                                     (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp))
+                                           ,(if 1-shot?
+                                                `(immediate ,(constant opportunistic-1-shot-flag))
+                                                %ac0))
+                                     (set! ,(%mref ,%xp ,(constant continuation-stack-clength-disp)) ,%ac0)
+                                     (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,%ac0))
+                                     ,(finish %xp)))))])
+                     (if 1-shot?
+                         (build-reify)
+                         ;; Promote existing 1-shot to multishot before reifying
+                         (let ([Ltop (make-local-label 'Ltop)])
+                           (%seq
+                             (set! ,%xp ,%td)
+                             (label ,Ltop)
+                             (set! ,%ac0 ,(%mref ,%xp ,(constant continuation-stack-clength-disp)))
+                             (if ,(%inline eq?
+                                     ,(%mref ,%xp ,(constant continuation-stack-length-disp))
+                                     ,%ac0)
+                                 ,(build-reify)
+                                 ,(%seq
+                                   (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
+                                   (set! ,%xp ,(%mref ,%xp ,(constant continuation-link-disp)))
+                                   (goto ,Ltop))))))))))))
       (Program : Program (ir) -> Program ()
         [(labels ([,l* ,le*] ...) ,l)
          `(labels ([,l* ,(map CaseLambdaExpr le* l*)] ...) ,l)])
@@ -11634,7 +11663,7 @@
                 ,(asm-enter
                    (%seq
                      (check-live ,other-reg* ...)
-                     ,(reify-cc-help
+                     ,(reify-cc-help #t
                        (lambda (reg)
                          (if (eq? reg %td)
                              `(asm-return ,%td ,other-reg* ...)
@@ -11642,19 +11671,10 @@
                                 (set! ,%td ,reg)
                                 (asm-return ,%td ,other-reg* ...)))))))))]
            [(callcc)
-            ;; Could be implemented using the `reify-cc` intrinsic, as follows,
-            ;; but, we inline `reify-cc` to save a few instructions
-            #;
-            `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
-               ,(%seq
-                  (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
-                  (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
-                  (set! ,(make-arg-opnd 1) ,%td)
-                  ,(do-call 1)))
             `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
                ,(%seq
                   (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
-                  ,(reify-cc-help
+                  ,(reify-cc-help #f
                     (lambda (reg)
                       (%seq
                         (set! ,(make-arg-opnd 1) ,reg)

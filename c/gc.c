@@ -600,8 +600,11 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             find_room(space_continuation, tg,
                         type_closure, size_continuation, p);
             SETCLOSCODE(p,code);
-          /* don't promote one-shots */
-            CONTLENGTH(p) = CONTLENGTH(pp);
+          /* don't promote general one-shots, but do promote opportunistic one-shots */
+            if (CONTLENGTH(pp) == opportunistic_1_shot_flag)
+              CONTLENGTH(p) = CONTCLENGTH(pp);
+            else
+              CONTLENGTH(p) = CONTLENGTH(pp);
             CONTCLENGTH(p) = CONTCLENGTH(pp);
             CONTWINDERS(p) = CONTWINDERS(pp);
             CONTATTACHMENTS(p) = CONTATTACHMENTS(pp);
