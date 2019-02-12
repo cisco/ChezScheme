@@ -22,18 +22,14 @@ m=none
 # The following variables determine where the executables, boot files,
 # example programs, and manual pages are installed.
 
-# InstallPrefix is the final destination base and will be reflected
-# in the generated manual page
-InstallPrefix=/usr
-
 # executable directory
-InstallBin=${InstallPrefix}/bin
+InstallBin=/usr/bin
 
 # library directory
-InstallLib=${InstallPrefix}/lib
+InstallLib=/usr/lib
 
 # man page directory
-InstallMan=${InstallPrefix}/man/man1
+InstallMan=/usr/man/man1
 
 # installation owner
 InstallOwner=
@@ -41,7 +37,8 @@ InstallOwner=
 # installation group
 InstallGroup=
 
-# Files are actually installed at ${TempRoot}${InstallPrefix}
+# Files are actually installed at ${TempRoot}${InstallBin},
+# ${TempRoot}${InstallLib}, and ${TempRoot}${InstallMan}.
 # This useful for testing the install process and for building
 # installation scripts
 TempRoot=

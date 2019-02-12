@@ -1132,3 +1132,8 @@
   we're not presently generating empty vectors (representing empty
   groups), but the fasl format permits them.
     7.ss
+- reverted the earlier change to restore indirection through
+  InstallPrefix, since it didn't and can't play well with the
+  generated config.h.  Instead removed InstallPrefix entirely so
+  it isn't an attractive hazzard.
+    configure, makefiles/Mf-install.in
