@@ -631,6 +631,32 @@ prec ;=> \var{exception: invalid syntax prec}
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{compile-time-value?}{\categoryprocedure}{(compile-time-value? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a compile-time value; \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define-syntax x (make-compile-time-value "eggs"))
+(compile-time-value? (top-level-syntax 'x)) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compile-time-value-value}{\categoryprocedure}{(compile-time-value-value \var{ctv})}
+\returns the value of a compile-time value
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define-syntax x (make-compile-time-value "eggs"))
+(compile-time-value-value (top-level-syntax 'x)) ;=> "eggs"
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{define-property}{\categorysyntax}{(define-property \var{id} \var{key} \var{expr})}
 \returns unspecified
 \listlibraries

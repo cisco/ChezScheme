@@ -527,6 +527,11 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat call/1cc: "attempt to invoke shot one-shot continuation".
+4.mo:Expected error in mat refcount-guardians: "unrecognized ftype name NO!".
+4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
+4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
+4.mo:Expected error in mat refcount-guardians: "ftype-guardian: (ka . blooie) is not an ftype pointer of the expected type #<ftd A>".
+4.mo:Expected error in mat refcount-guardians: "ftype-guardian: <ftype-pointer> is not an ftype pointer of the expected type #<ftd A>".
 4.mo:Expected error in mat $primitive: "fx+: a is not a fixnum".
 4.mo:Expected error in mat $primitive: "invalid primitive name fubar".
 4.mo:Expected error in mat $primitive: "incorrect argument count in call (car (quote a) (quote b))".
@@ -7024,8 +7029,9 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat maybe-compile: "invalid syntax (if) at line 2, char 1 of testfile-mc.ss".
 7.mo:Expected error in mat maybe-compile: "invalid syntax (define) at line 4, char 3 of testfile-mc.ss".
 7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
-7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
-7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
@@ -8284,6 +8290,7 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat make-compile-time-value: "first argument to lookup procedure is not an identifier (a)".
 8.mo:Expected error in mat make-compile-time-value: "second argument to lookup procedure is not an identifier "frip"".
 8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments to #<procedure rho>".
+8.mo:Expected error in mat make-compile-time-value: "compile-time-value-value: 17 is not a compile-time value".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".

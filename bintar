@@ -1,89 +1,73 @@
 #! /bin/csh -f
-if ($#argv < 3) then
-    echo "Usage: $BINTAR <release> <dist-type> <machine-type1> <machine-type2> ..."
-    exit(1)
-endif
-set release = $argv[1]
-if (!(-d $release)) then
-    echo Release $release does not exist or is not a directory
-    exit(1)
+
+set T = "."
+if ("$argv[1]" == "--target-dir") then
+    set T = "$argv[2]"
+    shift
+    shift
 endif
 
-switch ($argv[2])
-    case tar.gz:
-        if (!($?tarfile)) set tarfile = "$release"
-        foreach x ($argv[3-])
-            set tarfile = "$tarfile"-$x
-        end
-        set tarfile = "$tarfile".tar.gz
-        alias command 'tar -chf - \!* | gzip -c >' $tarfile
+if ($#argv != 2 && $#argv != 3) then
+    echo "Usage: $0 [ --target-dir <target-directory> ] <release> <machine-type> [ <workarea> ]"
+    exit 1
+endif
+
+set R = $argv[1]
+set M = $argv[2]
+if ($#argv == 2) then
+  set W = $M
+else
+  set W = $argv[3]
+endif
+
+if (!(-d $W)) then
+    echo "Error: work area $W does not exist or is not a directory"
+    exit 1
+endif
+
+if (!(-e $W/boot/$M)) then
+    echo "Error: "$
+    exit 1
+endif
+
+if (-e $R) then
+    echo "Error: $R already exists"
+    exit 1
+endif
+
+onintr error
+
+mkdir $R || goto error
+( cd $R ; ln -s ../LICENSE ../NOTICE . ) || goto error
+( cd $R ; ln -s ../$W/scheme.1.in ../$W/installsh ../$W/examples . ) || goto error
+( cd $R ; ln -s ../$W/Mf-install Makefile ) || goto error
+mkdir -p $R/boot/$M $R/bin/$M || goto error
+( cd $R/boot/$M ; ln -s ../../../$W/boot/$M/{scheme.h,petite.boot,scheme.boot} . ) || goto error
+
+switch ($M)
+    case a6nt:
+    case ta6nt:
+    case ti3nt:
+    case i3nt:
+        ( cd $R/boot/$M ; ln -s ../../../$W/boot/$M/{csv951md.lib,csv951mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) || goto error
+        ( cd $R/bin/$M ; ln -s ../../../$W/bin/$M/{scheme.exe,csv951.dll,csv951.lib,vcruntime140.lib} . ) || goto error
         breaksw
-    default
-        echo Unknown target $argv[2]
-        exit(1)
+    default:
+        ( cd $R/boot/$M ; ln -s ../../../$W/boot/$M/{main.o,kernel.o} . ) || goto error
+        ( cd $R/bin/$M ; ln -s ../../../$W/bin/$M/{scheme} . ) || goto error
+        breaksw
 endsw
 
-set files = ()
-set files = ($files $release/{Notice,ReadMe})
-set files = ($files $release/License)
-set files = ($files $release/examples/*)
-set files = ($files $release/custom/{ReadMe,custom.c})
-set files = ($files $release/custom/{crepl.c,sample.c,sample.ss})
-
-foreach m ($argv[3-])
-    set files = ($files $release/boot/$m/scheme.h)
-    set files = ($files $release/boot/$m/petite.boot)
-    set files = ($files $release/boot/$m/scheme.boot)
-    switch ($m)
-        case a6nt:
-        case ta6nt:
-        case ti3nt:
-        case i3nt:
-            set files = ($files $release/bin/$m/scheme.exe)
-            set files = ($files $release/bin/$m/csv951.dll)
-            set files = ($files $release/bin/$m/csv951.lib)
-            set files = ($files $release/bin/$m/vcruntime140.dll)
-            set files = ($files $release/boot/$m/csv951md.lib)
-            set files = ($files $release/boot/$m/csv951mt.lib)
-            set files = ($files $release/boot/$m/custommd.obj)
-            set files = ($files $release/boot/$m/custommt.obj)
-            set files = ($files $release/boot/$m/scheme.res)
-            set files = ($files $release/custom/Makefile.$m)
-            breaksw
-        default:
-            set files = ($files $release/bin/$m/scheme)
-            set files = ($files $release/boot/$m/custom.o)
-            set files = ($files $release/boot/$m/kernel.o)
-            set files = ($files $release/custom/Mf-$m)
-            if (! $?custom_make) then
-                set files = ($files $release/custom/{configure,Makefile.in,Mf-none,Mf-install.in,installsh})
-                set files = ($files $release/custom/scheme.1.in)
-                set custom_make
-            endif
-            breaksw
-    endsw
-end
-
-if ($?INTERACTIVE) then
-  ls -lL $files | more -10
-  askokay:
-    echo -n "Okay? (y/n) [y]: "
-    set ans = $<
-    if ("$ans" == "n") exit(1)
-    if ("$ans" != "" && "$ans" != "y") goto askokay
-
-  again:
-    echo "Command Alias:"
-    alias command
-    echo -n "Okay? (y/n) [y]: "
-    set ans = $<
-    if ("$ans" != "" && "$ans" != "y") then
-      if ("$ans" == "n") then
-        echo -n "Enter appropriate command: "
-        alias command "$<"
-      endif
-      goto again
-    endif
+set broken = `find -L $R -type l`
+if ($#broken != 0) then
+    echo "Error: missing $broken"
+    goto error
 endif
 
-command $files
+tar -czhf $T/csv$R-$M.tar.gz $R || goto error
+rm -rf $R
+exit
+
+error:
+rm -rf $R
+exit 1
