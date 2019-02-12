@@ -916,6 +916,17 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                 ptr old_end, new_end;
 
                 rep = GUARDIANREP(ls);
+              /* ftype_guardian_rep is a marker for reference-counted ftype pointer */
+                if (rep == ftype_guardian_rep) {
+                  int b; uptr *addr;
+                  rep = GUARDIANOBJ(ls);
+                  if (FWDMARKER(rep) == forward_marker) rep = FWDADDRESS(rep);
+                /* Caution: Building in assumption about shape of an ftype pointer */
+                  addr = RECORDINSTIT(rep, 0);
+                  LOCKED_DECR(addr, b);
+                  if (!b) continue;
+                }
+
                 relocate(&rep);
 
               /* if tconc was old it's been forwarded */
@@ -923,7 +934,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
 
                 old_end = Scdr(tconc);
                 /* allocating pair in tg means it will be swept, which is wasted effort, but should cause no harm */
-                new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
+                new_end = S_cons_in(space_impure, 0, FIX(0), FIX(0));
 #ifdef ENABLE_OBJECT_COUNTS
                 S_G.countof[tg][countof_pair] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */

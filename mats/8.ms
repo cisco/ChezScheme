@@ -6111,6 +6111,8 @@
           (lambda (r)
             (r #'a #'frip "extra stuff"))))
       a))
+  (error? ; not a compile-time value
+    (compile-time-value-value 17))
   (begin
     (with-output-to-file "testfile-mctv0.ss"
       (lambda ()
@@ -6132,6 +6134,7 @@
   (begin
     (import (testfile-mctv0))
     #t)
+  (compile-time-value? (make-compile-time-value 'fred))
   (begin
     (define-syntax frob (make-compile-time-value 'rabf))
     #t)
@@ -6180,6 +6183,7 @@
       (define-syntax x (make-compile-time-value 'xow)))
     #t)
   (eq? (let () (import (mctv l1)) (get-ctv x)) 'xow)
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(mctv l1)))) 'xow)
   (begin
     (with-output-to-file "testfile-mctv1.ss"
       (lambda ()
@@ -6190,6 +6194,19 @@
     (for-each separate-compile '(mctv1))
     #t)
   (eq? (let () (import (testfile-mctv1)) (get-ctv x)) 'xuko1)
+  (compile-time-value? (top-level-syntax 'x (environment '(testfile-mctv1))))
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(testfile-mctv1)))) 'xuko1)
+  (begin
+    (with-output-to-file "testfile-mctv1a.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mctv1a) (export x) (import (chezscheme))
+             (define-syntax x (make-compile-time-value 'xuko1)))))
+      'replace)
+    (for-each separate-compile '(mctv1a))
+    #t)
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(testfile-mctv1a)))) 'xuko1)
+  (eq? (let () (import (testfile-mctv1a)) (get-ctv x)) 'xuko1)
   (begin
     (with-output-to-file "testfile-mctv2.ss"
       (lambda ()

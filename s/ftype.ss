@@ -1307,7 +1307,33 @@ ftype operators:
            (trans #'ftype #'(a ...) #'fptr-expr 0)]
           [(_ ftype (a ...) fptr-expr ?idx)
            (identifier? #'ftype)
-           (trans #'ftype #'(a ...) #'fptr-expr #'?idx)]))))
+           (trans #'ftype #'(a ...) #'fptr-expr #'?idx)])))
+    (set! $trans-ftype-guardian
+      (lambda (q)
+        (lambda (r)
+          (syntax-case q ()
+            [(_ ftype)
+             (identifier? #'ftype)
+             (let ([ftd (expand-ftype-name r #'ftype)])
+               (unless (let lockable? ([ftd ftd])
+                         (cond
+                           [(ftd-base? ftd)
+                            (let ([type (filter-foreign-type (ftd-base-type ftd))])
+                              (and (memq type
+                                     (constant-case ptr-bits
+                                       [(64) '(unsigned-64 integer-64)]
+                                       [(32) '(unsigned-32 integer-32)]))
+                                   (not (ftd-base-swap? ftd))))]
+                           [(ftd-struct? ftd)
+                            (let ([ls (ftd-struct-field* ftd)])
+                              (if (null? ls)
+                                  #f
+                                  (lockable? (caddr (car ls)))))]
+                           [(ftd-union? ftd) (ormap lockable? (map cdr (ftd-union-field* ftd)))]
+                           [(ftd-array? ftd) (lockable? (ftd-array-ftd ftd))]
+                           [else #f]))
+                 (syntax-error q "first field must be a word-sized integer with native endianness"))
+               #`(($primitive #,(if (fx= (optimize-level) 3) 3 2) $make-ftype-guardian) '#,ftd))])))))
  ; procedural entry point for inspector to simplify bootstrapping
   (set! $ftype-pointer? (lambda (x) ($fptr? x)))
   (set! $make-fptr
@@ -2015,6 +2041,7 @@ ftype operators:
 (define-syntax make-ftype-pointer (lambda (x) ($trans-make-ftype-pointer x)))
 (define-syntax ftype-pointer? (lambda (x) ($trans-ftype-pointer? x)))
 (define-syntax ftype-sizeof (lambda (x) ($trans-ftype-sizeof x)))
+(define-syntax ftype-guardian (lambda (x) ($trans-ftype-guardian x)))
 (define-syntax ftype-&ref (lambda (x) ($trans-ftype-&ref x)))
 (define-syntax ftype-ref (lambda (x) ($trans-ftype-ref x)))
 (define-syntax ftype-locked-incr! (lambda (x) ($trans-ftype-locked-op! #'ftype-locked-incr! x #'$fptr-locked-incr!)))

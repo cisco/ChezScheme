@@ -21,18 +21,25 @@
 (let ()
 (include "types.ss")
 
+(define-record-type rcb
+  (nongenerative)
+  (sealed #t)
+  (fields
+    ip      ; input port
+    sfd     ; a source-file descriptor or #f
+    a?      ; if true, wrap s-expressions with source annotations
+    who     ; who's calling (read, read-token)
+    ))
+
 ;;; xdefine, xcall, xmvlet, and xvalues manage implicit arguments and
 ;;; return values for most of the procedures defined in this file.  This
 ;;; simplifies the code and makes it much easier to add new arguments
 ;;; universally.  The implicit variables are:
-;;;   [i ] ip       input port
+;;;   [i ] rcb      reader control block
 ;;;   [io] fp       current file position or #f
 ;;;   [i ] bfp      beginning file position or #f
 ;;;   [io] tb       token buffer
 ;;;   [io] it       insert table (for marks and references)
-;;;   [i ] sfd      a source file descriptor or #f
-;;;   [i ] a?       if true, wrap s-expressions with source annotations
-;;;   [i ] who      who's calling (read, read-token)
 ;;; i: input (xcall argument)
 ;;; o: output (xvalues return value)
 
@@ -40,22 +47,22 @@
   (lambda (x)
     (syntax-case x ()
       ((key args b1 b2 ...)
-       (with-implicit (key ip fp bfp tb it sfd a? who)
-         #'(lambda (ip fp bfp tb it sfd a? who . args) b1 b2 ...))))))
+       (with-implicit (key rcb fp bfp tb it)
+         #'(lambda (rcb fp bfp tb it . args) b1 b2 ...))))))
 
 (define-syntax xdefine
   (lambda (x)
     (syntax-case x ()
       ((key (name . args) b1 b2 ...)
-       (with-implicit (key ip fp bfp tb it sfd a? who)
-         #'(define (name ip fp bfp tb it sfd a? who . args) b1 b2 ...))))))
+       (with-implicit (key rcb fp bfp tb it)
+         #'(define (name rcb fp bfp tb it . args) b1 b2 ...))))))
 
 (define-syntax xcall
   (lambda (x)
     (syntax-case x ()
       ((key p arg ...)
-       (with-implicit (key ip fp bfp tb it sfd a? who)
-         #'(p ip fp bfp tb it sfd a? who arg ...))))))
+       (with-implicit (key rcb fp bfp tb it)
+         #'(p rcb fp bfp tb it arg ...))))))
 
 (define-syntax xmvlet
   (lambda (x)
@@ -150,24 +157,26 @@
     (syntax-case x ()
       ((key id b1 b2 ...)
        (identifier? #'id)
-       (with-implicit (key ip fp)
-         #'(let ((id (read-char ip)) (fp (and fp (+ fp 1)))) b1 b2 ...))))))
+       (with-implicit (key rcb fp)
+         #'(let ([id (read-char (rcb-ip rcb))])
+             (let ((fp (and fp (+ fp 1))))
+               b1 b2 ...)))))))
 
 (define-syntax with-peek-char
   (lambda (x)
     (syntax-case x ()
       ((key id b1 b2 ...)
        (identifier? #'id)
-       (with-implicit (key ip)
-         #'(let ((id (peek-char ip))) b1 b2 ...))))))
+       (with-implicit (key rcb)
+         #'(let ((id (peek-char (rcb-ip rcb)))) b1 b2 ...))))))
 
 (define-syntax with-unread-char
   (lambda (x)
     (syntax-case x ()
       [(key ?c b1 b2 ...)
-       (with-implicit (key ip fp)
+       (with-implicit (key rcb fp)
          #'(let ([c ?c])
-             (unless (eof-object? c) (unread-char c ip))
+             (unless (eof-object? c) (unread-char c (rcb-ip rcb)))
              (let ([fp (and fp (- fp 1))]) b1 b2 ...)))])))
 
 (define-record-type delayed-record
@@ -267,11 +276,12 @@
                (make-source sfd bfp efp)))])))
 
 (xdefine (rd-error ir? start? msg . args)
-  (cond
-    [(eq? ip (console-input-port)) ($lexical-error who msg args ip ir?)]
-    [(not fp) ($lexical-error who "~? on ~s" (list msg args ip) ip ir?)]
-    [sfd ($lexical-error who msg args ip ($make-source-object sfd bfp fp) start? ir?)]
-    [else ($lexical-error who "~? at char ~a of ~s" (list msg args (if start? bfp fp) ip) ip ir?)]))
+  (let ([ip (rcb-ip rcb)])
+    (cond
+      [(eq? ip (console-input-port)) ($lexical-error (rcb-who rcb) msg args ip ir?)]
+      [(not fp) ($lexical-error (rcb-who rcb) "~? on ~s" (list msg args ip) ip ir?)]
+      [(rcb-sfd rcb) ($lexical-error (rcb-who rcb) msg args ip ($make-source-object (rcb-sfd rcb) bfp fp) start? ir?)]
+      [else ($lexical-error (rcb-who rcb) "~? at char ~a of ~s" (list msg args (if start? bfp fp) ip) ip ir?)])))
 
 (xdefine (rd-eof-error s)
   (xcall rd-error #f #t "unexpected end-of-file reading ~a" s))
@@ -286,8 +296,8 @@
   (lambda (x)
     (syntax-case x ()
       [(k str)
-       (with-implicit (k ip xcall)
-         #'(when ($port-flags-set? ip (constant port-flag-r6rs))
+       (with-implicit (k rcb xcall)
+         #'(when ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs))
              (xcall rd-nonstandard-error str)))])))
 
 (xdefine (rd-nonstandard-delimiter-error c)
@@ -297,8 +307,8 @@
   (lambda (x)
     (syntax-case x ()
       [(k c)
-       (with-implicit (k ip xcall)
-         #'(when ($port-flags-set? ip (constant port-flag-r6rs))
+       (with-implicit (k rcb xcall)
+         #'(when ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs))
              (xcall rd-nonstandard-delimiter-error c)))])))
 
 (define-state (rd-token)
@@ -440,7 +450,7 @@
       [#\[ (nonstandard "#[...] record") (state-return record-brack #f)]
       [#\{ (nonstandard "#{...} gensym") (*state rd-token-gensym)]
       [#\& (nonstandard "#& box") (state-return box #f)]
-      [#\; (if (eq? who 'read-token)
+      [#\; (if (eq? (rcb-who rcb) 'read-token)
                (state-return quote 'datum-comment)
                (xmvlet (() (xcall rd-expression-comment)) (*state rd-token)))]
       [#\! (*state rd-token-hash-bang)]
@@ -453,12 +463,12 @@
            (with-read-char c
              (*state rd-token-symbol c 0 #f
                (state-lambda (n slashed?)
-                 (state-return atomic (list '$primitive (maybe-fold/intern ip tb n slashed?))))))]
+                 (state-return atomic (list '$primitive (maybe-fold/intern (rcb-ip rcb) tb n slashed?))))))]
       [#\: (nonstandard "#: gensym")
            (with-read-char c
              (*state rd-token-symbol c 0 #f
                (state-lambda (n slashed?)
-                 (state-return atomic (maybe-fold/gensym ip tb n slashed?)))))]
+                 (state-return atomic (maybe-fold/gensym (rcb-ip rcb) tb n slashed?)))))]
       [#\| (*state rd-token-block-comment 0)]
       [else (xcall rd-error #f #t "invalid sharp-sign prefix #~c" c)])))
 
@@ -489,7 +499,7 @@
                       (with-read-char c
                         (state-case c
                           [eof (xcall rd-eof-error "gensym")]
-                          [(#\}) (state-return atomic (maybe-fold/intern ip tb n m slashed1? slashed2?))]
+                          [(#\}) (state-return atomic (maybe-fold/intern (rcb-ip rcb) tb n m slashed1? slashed2?))]
                           [else (with-unread-char c
                                   (xcall rd-error #f #f
                                     "expected close brace terminating gensym syntax"))]))))])))))])))
@@ -539,7 +549,7 @@
        (with-read-char c
          (*state rd-token-symbol c 0 #f
            (state-lambda (m slashed?)
-             (state-return atomic (list '$primitive n (maybe-fold/intern ip tb m slashed?))))))]
+             (state-return atomic (list '$primitive n (maybe-fold/intern (rcb-ip rcb) tb m slashed?))))))]
       [else (xcall rd-error #f #t "invalid sharp-sign prefix ~a~a"
                       (substring tb 0 i)
                       c)])))
@@ -624,15 +634,15 @@
       [else #f]))
   (with-unread-char c
     (state-return atomic
-      (or (let ([x (maybe-fold/intern ip tb n #f)])
-            (if ($port-flags-set? ip (constant port-flag-r6rs))
+      (or (let ([x (maybe-fold/intern (rcb-ip rcb) tb n #f)])
+            (if ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs))
                 (r6rs-char-name x)
                 (char-name x)))
           (let ([s (substring tb 0 n)])
             (if (and (with-peek-char c (eof-object? c))
                      (valid-prefix? s
                        (map symbol->string
-                         (if ($port-flags-set? ip (constant port-flag-r6rs))
+                         (if ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs))
                              (map car r6rs-char-names)
                              (let-values ([(keys vals) (hashtable-entries char-name-table)])
                                (apply append (vector->list vals)))))))
@@ -665,18 +675,19 @@
   (cond
     [(ormap (lambda (a) (and (fx= (string-length (car a)) i) a)) undelimited*) =>
      (lambda (a)
-       (case (cdr a)
-         [(r6rs) ($set-port-flags! ip (constant port-flag-r6rs)) (*state rd-token)]
-         [(fold-case)
-          ($reset-port-flags! ip (constant port-flag-no-fold-case))
-          ($set-port-flags! ip (constant port-flag-fold-case))
-          (*state rd-token)]
-         [(no-fold-case)
-          ($reset-port-flags! ip (constant port-flag-fold-case))
-          ($set-port-flags! ip (constant port-flag-no-fold-case))
-          (*state rd-token)]
-         [(chezscheme) ($reset-port-flags! ip (constant port-flag-r6rs)) (*state rd-token)]
-         [else (xcall rd-error #f #t "unexpected #!~s" (car a))]))]
+       (let ([ip (rcb-ip rcb)])
+         (case (cdr a)
+           [(r6rs) ($set-port-flags! ip (constant port-flag-r6rs)) (*state rd-token)]
+           [(fold-case)
+            ($reset-port-flags! ip (constant port-flag-no-fold-case))
+            ($set-port-flags! ip (constant port-flag-fold-case))
+            (*state rd-token)]
+           [(no-fold-case)
+            ($reset-port-flags! ip (constant port-flag-fold-case))
+            ($set-port-flags! ip (constant port-flag-no-fold-case))
+            (*state rd-token)]
+           [(chezscheme) ($reset-port-flags! ip (constant port-flag-r6rs)) (*state rd-token)]
+           [else (xcall rd-error #f #t "unexpected #!~s" (car a))])))]
     [else
      (with-read-char c
        (state-case c
@@ -874,14 +885,14 @@
            (xcall rd-error #f #t "invalid character ~c in string hex escape" c1)))])))
 
 (xdefine (rd-make-number-or-symbol n)
-  (let ([z ($str->num tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
+  (let ([z ($str->num tb n 10 #f ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs)))])
     (cond
       [(number? z) z]
       [(eq? z 'norep) (xcall rd-error #t #t "cannot represent ~a" (substring tb 0 n))]
       [(eq? z '!r6rs) (xcall rd-nonstandard-error (format "~a number" (substring tb 0 n)))]
       [else
        (nonstandard (format "~a symbol" (substring tb 0 n)))
-       (maybe-fold/intern ip tb n #f)])))
+       (maybe-fold/intern (rcb-ip rcb) tb n #f)])))
 
 (define-state (rd-token-number-or-symbol i)
   (with-read-char c
@@ -907,7 +918,7 @@
       [else (*state rd-token-symbol c i #f rd-token-intern-nonstandard)])))
 
 (xdefine (rd-make-number n)
-  (let ([z ($str->num tb n 10 #f ($port-flags-set? ip (constant port-flag-r6rs)))])
+  (let ([z ($str->num tb n 10 #f ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs)))])
     (cond
       [(number? z) z]
       [(and (eq? z #f) (with-peek-char c (eof-object? c))) (xcall rd-eof-error "number")]
@@ -938,11 +949,11 @@
          (*state rd-token-number (fx+ i 1)))])))
 
 (define-state (rd-token-intern n slashed?)
-  (state-return atomic (maybe-fold/intern ip tb n slashed?)))
+  (state-return atomic (maybe-fold/intern (rcb-ip rcb) tb n slashed?)))
 
 (define-state (rd-token-intern-nonstandard n slashed?)
   (nonstandard (format "~a symbol" (substring tb 0 n)))
-  (state-return atomic (maybe-fold/intern ip tb n slashed?)))
+  (state-return atomic (maybe-fold/intern (rcb-ip rcb) tb n slashed?)))
 
 (define-state (rd-token-symbol c i slashed? next)
   (state-case c
@@ -1026,7 +1037,7 @@
         [else #f])
       (values value fp)
       (if (and (or (eq? type 'rparen) (eq? type 'rbrack))
-               (eq? ip (console-input-port)))
+               (eq? (rcb-ip rcb) (console-input-port)))
           (call-with-token rd-top-level)
           (xmvlet ((x stripped-x) (xcall rd type value))
             (values (if it (xcall rd-fix-graph x) x) fp)))))
@@ -1142,8 +1153,8 @@
 (xdefine (rd type value)
   (xmvlet ((x stripped) (xcall rd-help type value))
     (xvalues
-      (if (and a? (not (procedure? x))) ; don't annotate code
-          (make-annotation x ($make-source-object sfd bfp fp) stripped)
+      (if (rcb-a? rcb)
+          (make-annotation x ($make-source-object (rcb-sfd rcb) bfp fp) stripped)
           x)
       stripped)))
 
@@ -1191,7 +1202,7 @@
            (xmvlet ((rest stripped-rest) (xcall rd-paren-tail expr-bfp))
              (xvalues
                (cons first rest)
-               (and a? (cons stripped-first stripped-rest)))))]))))
+               (and (rcb-a? rcb) (cons stripped-first stripped-rest)))))]))))
 
 (xdefine (rd-paren-tail expr-bfp)
   (with-token (type value)
@@ -1218,7 +1229,7 @@
          (xmvlet ((rest stripped-rest) (xcall rd-paren-tail expr-bfp))
            (xvalues
              (cons first rest)
-             (and a? (cons stripped-first stripped-rest)))))])))
+             (and (rcb-a? rcb) (cons stripped-first stripped-rest)))))])))
 
 (xdefine (rd-brack-list)
   (let ([expr-bfp bfp])
@@ -1232,7 +1243,7 @@
            (xmvlet ((rest stripped-rest) (xcall rd-brack-tail expr-bfp))
              (xvalues
                (cons first rest)
-               (and a? (cons stripped-first stripped-rest)))))]))))
+               (and (rcb-a? rcb) (cons stripped-first stripped-rest)))))]))))
 
 (xdefine (rd-brack-tail expr-bfp)
   (with-token (type value)
@@ -1259,7 +1270,7 @@
          (xmvlet ((rest stripped-rest) (xcall rd-brack-tail expr-bfp))
            (xvalues
              (cons first rest)
-             (and a? (cons stripped-first stripped-rest)))))])))
+             (and (rcb-a? rcb) (cons stripped-first stripped-rest)))))])))
 
 (xdefine (rd-quote kind)
   (let ([expr-bfp bfp])
@@ -1269,7 +1280,7 @@
         [else (xmvlet ((x stripped-x) (xcall rd type value))
                 (xvalues
                   (list kind x)
-                  (and a? (list kind stripped-x))))]))))
+                  (and (rcb-a? rcb) (list kind stripped-x))))]))))
 
 (xdefine (rd-record)
   (let ([expr-bfp bfp])
@@ -1302,7 +1313,7 @@
                       (if (null? fds)
                           (xvalues
                             (apply (record-constructor rtd) vals)
-                            (and a? (apply (record-constructor rtd) stripped-vals)))
+                            (and (rcb-a? rcb) (apply (record-constructor rtd) stripped-vals)))
                           (if (and (apply (lambda (m t n)
                                             (or (eq? m 'immutable)
                                                 (not (eq? (filter-foreign-type t) 'scheme-object))))
@@ -1311,7 +1322,7 @@
                                        (delayed-record? (car vs))))
                               (xvalues
                                 (make-delayed-record rtd vals expr-bfp fp)
-                                (and a? (make-delayed-record rtd stripped-vals expr-bfp fp)))
+                                (and (rcb-a? rcb) (make-delayed-record rtd stripped-vals expr-bfp fp)))
                               (loop (cdr fds) (cdr vs)))))))))]
            [else (xcall rd-error #f #t "unrecognized record name ~s" name)])]))))
 
@@ -1332,25 +1343,25 @@
              (xmvlet ((rest stripped-rest) (xcall rd-record-tail expr-bfp (- n 1) name))
                (xvalues
                  (cons first rest)
-                 (and a? (cons stripped-first stripped-rest))))))])))
+                 (and (rcb-a? rcb) (cons stripped-first stripped-rest))))))])))
 
 (xdefine (rd-vector expr-bfp i)
   (with-token (type value)
     (case type
-      [(rparen) (xvalues (make-vector i) (and a? (make-vector i)))]
+      [(rparen) (xvalues (make-vector i) (and (rcb-a? rcb) (make-vector i)))]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "vector"))]
       [else
        (xmvlet ((x stripped-x) (xcall rd type value))
          (xmvlet ((v stripped-v) (xcall rd-vector expr-bfp (fx+ i 1)))
            (vector-set! v i x)
-           (when a? (vector-set! stripped-v i stripped-x))
+           (when (rcb-a? rcb) (vector-set! stripped-v i stripped-x))
            (xvalues v stripped-v)))])))
 
 (xdefine (rd-sized-vector n)
   (unless (and (fixnum? n) (fxnonnegative? n))
     (let ([bfp (and bfp (+ bfp 1))] [fp (and fp (- fp 1))])
       (xcall rd-error #f #t "invalid vector length ~s" n)))
-  (xcall rd-fill-vector bfp (make-vector n) (and a? (make-vector n)) 0 n))
+  (xcall rd-fill-vector bfp (make-vector n) (and (rcb-a? rcb) (make-vector n)) 0 n))
 
 (xdefine (rd-fill-vector expr-bfp v stripped-v i n)
   (with-token (type value)
@@ -1468,24 +1479,24 @@
         [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "box"))]
         [else
          (xmvlet ((x stripped-x) (xcall rd type value))
-           (xvalues (box x) (and a? (box stripped-x))))]))))
+           (xvalues (box x) (and (rcb-a? rcb) (box stripped-x))))]))))
 
 (xdefine (rd-mark n)
   (let ([a (eq-hashtable-cell it n #f)])
    ; set up insert(s) if not already present
-    (unless (cdr a) (set-cdr! a (cons (make-insert n bfp fp) (and a? (make-insert n bfp fp)))))
+    (unless (cdr a) (set-cdr! a (cons (make-insert n bfp fp) (and (rcb-a? rcb) (make-insert n bfp fp)))))
    ; check for duplicate marks
     (when (insert-seen (cadr a)) (xcall rd-error #f #t "duplicate mark #~s= seen" n))
    ; mark seen before reading so that error comes from second duplicate
     (insert-seen-set! (cadr a) #t)
-    (when a? (insert-seen-set! (cddr a) #t))
+    (when (rcb-a? rcb) (insert-seen-set! (cddr a) #t))
     (let ([expr-bfp bfp])
       (with-token (type value)
         (case type
           [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "graph mark"))]
           [else
            (xmvlet ((obj stripped-obj) (xcall rd type value))
-             (if a?
+             (if (rcb-a? rcb)
                  (let ([ins (cadr a)] [stripped-ins (cddr a)])
                    (if (eq? stripped-obj stripped-ins)
                        (begin
@@ -1503,8 +1514,8 @@
 (xdefine (rd-insert n)
   (let ([a (eq-hashtable-cell it n #f)])
    ; set up insert(s) if not already present
-    (unless (cdr a) (set-cdr! a (cons (make-insert n bfp fp) (and a? (make-insert n bfp fp)))))
-    (xvalues (cadr a) (and a? (cddr a)))))
+    (unless (cdr a) (set-cdr! a (cons (make-insert n bfp fp) (and (rcb-a? rcb) (make-insert n bfp fp)))))
+    (xvalues (cadr a) (and (rcb-a? rcb) (cddr a)))))
 
 (xdefine (rd-expression-comment) ; called from scanner
   (let ([expr-bfp bfp])
@@ -1524,7 +1535,7 @@
         (let ([fp (and (port-has-port-position? ip)
                        ($port-flags-set? ip (constant port-flag-char-positions))
                        (port-position ip))])
-          (let ([tb ""] [bfp fp] [it #f] [a? #f])
+          (let ([rcb (make-rcb ip sfd #f who)] [tb ""] [bfp fp] [it #f])
             (with-token (type value)
               (values type value bfp fp))))))
     (case-lambda
@@ -1549,7 +1560,7 @@
                     (and (port-has-port-position? ip)
                          ($port-flags-set? ip (constant port-flag-char-positions))
                          (port-position ip)))])
-        (let ([tb ""] [bfp fp] [it #f] [a? (and a? sfd fp #t)])
+        (let ([rcb (make-rcb ip sfd (and a? sfd fp #t) who)] [tb ""] [bfp fp] [it #f])
           (call-with-token rd-top-level)))))
   (set-who! get-datum
     (lambda (ip)
@@ -1651,17 +1662,17 @@
             (let loop ([fp 0] [accum '(0)])
               (let ([ch (read-char ip)])
                 (cond
-                 [(eof-object? ch)
-                  (close-input-port ip)
-                  (list->vector (reverse accum))]
-                 [(eqv? ch #\newline)
-                  (let ([fp (fx+ fp 1)])
-                    (loop fp (cons fp accum)))]
-                 [else
-                  (loop (fx+ fp 1) accum)]))))
+                  [(eof-object? ch)
+                   (close-input-port ip)
+                   (list->vector (reverse accum))]
+                  [(eqv? ch #\newline)
+                   (let ([fp (fx+ fp 1)])
+                     (loop fp (cons fp accum)))]
+                  [else
+                    (loop (fx+ fp 1) accum)]))))
           (when use-cache?
             (with-tc-mutex
-             (hashtable-set! source-lines-cache sfd (cons name table))))
+              (hashtable-set! source-lines-cache sfd (cons name table))))
           (binary-search table name))]
        [else (values)])))
 
@@ -1781,7 +1792,6 @@
             ; make c entry for x
             ($sputprop x '*char-name* c))
            (else ($oops 'char-name "~s is not a character" c))))])))
-
 ) ;let
 
 (define source-directories
