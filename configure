@@ -249,15 +249,15 @@ if [ "$w" = "" ] ; then
 fi
 
 if [ "$installbin" = "" ] ; then
-  installbin='${InstallPrefix}/bin'
+  installbin=$installprefix/bin
 fi
 
 if [ "$installlib" = "" ] ; then
-  installlib='${InstallPrefix}/lib'
+  installlib=$installprefix/lib
 fi
 
 if [ "$installman" = "" ] ; then
-  installman='${InstallPrefix}'/$installmansuffix
+  installman=$installprefix/$installmansuffix
 fi
 
 if [ "$disablex11" = "no" ] ; then
@@ -361,7 +361,6 @@ sed -e 's/$(m)/'$m'/g'\
     makefiles/Mf-boot.in > $w/Mf-boot
 
 sed -e "s;^m=none\$;m=$m;"\
-    -e "s;^InstallPrefix=.*\$;InstallPrefix=$installprefix;"\
     -e "s;^InstallBin=.*\$;InstallBin=$installbin;"\
     -e "s;^InstallLib=.*\$;InstallLib=$installlib;"\
     -e "s;^InstallMan=.*\$;InstallMan=$installman/man1;"\
