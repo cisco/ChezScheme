@@ -1,13 +1,13 @@
 "syntax.ss"
 ;;; syntax.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -5190,7 +5190,7 @@
                     (libdesc-clo*-set! desc '())
                     (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
-  
+
     ; invoking or visiting a possibly unloaded library occurs in two separate steps:
     ;   1. load library and all dependencies first, recompiling or reloading if requested and required
     ;   2. invoke or visit the library and dependencies
@@ -6354,7 +6354,7 @@
                 [_ #f])
         (syntax-error ex "invalid export spec"))))
 
-  (global-extend 'macro 'library
+  (define r6rs-library
     (lambda (orig)
       (syntax-case orig ()
         [(_ name exports imports form ...)
@@ -6374,7 +6374,37 @@
                         form ...)]
                   [_ (syntax-error #'imports "invalid library import subform")]))]
              [_ (syntax-error #'exports "invalid library export subform")]))])))
-)
+
+  (define r7rs-library
+    (lambda (orig)
+      (syntax-case orig ()
+	[(_ name body ...)
+         (let loop ((body** (syntax->list #'(body ...)))
+                    (import* '())
+                    (export* '())
+                    (form* '()))
+           (if (null? body**)
+               #`(library name
+		   (export #,@export*)
+		   (import #,@import*)
+		   #,@form*)
+               (let ((head (syntax->list (car body**))))
+                 (case (syntax->datum (car head))
+                   ((import) (loop (cdr body**)
+                                   (append (cdr head) import*)
+                                   export*
+                                   form*))
+                   ((export) (loop (cdr body**)
+                                   import*
+                                   (append (cdr head) export*)
+                                   form*))
+                   ((begin) (loop (cdr body**)
+                                  import*
+                                  export*
+                                  (append (cdr head) form*)))))))])))
+
+  (global-extend 'macro 'library r6rs-library)
+  (global-extend 'macro 'define-library (lambda (orig) (r6rs-library (r7rs-library orig)))))
 
 (global-extend 'macro 'top-level-program
   (lambda (orig)

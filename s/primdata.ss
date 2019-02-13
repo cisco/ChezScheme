@@ -1073,6 +1073,7 @@
   (include [flags])
   (indirect-export [flags])
   (library [flags])
+  (define-library [flags])
   (library-requirements-options [flags])
   (make-ftype-pointer [flags])
   (meta [flags])
