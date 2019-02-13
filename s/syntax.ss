@@ -6405,7 +6405,7 @@
                    ((begin) (loop (cdr body**)
                                   import*
                                   export*
-                                  (append (cdr head) form*)))))))])))
+                                  (append form* (cdr head))))))))])))
 
   (global-extend 'macro 'library r6rs-library)
   (global-extend 'macro 'define-library (lambda (orig) (r6rs-library (r7rs-library orig)))))
