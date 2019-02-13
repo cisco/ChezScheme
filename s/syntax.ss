@@ -6390,6 +6390,10 @@
 		   #,@form*)
                (let ((head (syntax->list (car body**))))
                  (case (syntax->datum (car head))
+		   ((include) (loop (cdr body**)
+				    import*
+				    export*
+				    (append form* (list (car body**)))))
                    ((import) (loop (cdr body**)
                                    (append (cdr head) import*)
                                    export*
