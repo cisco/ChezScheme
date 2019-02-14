@@ -7066,6 +7066,7 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in compile-whole-program: encountered library (testfile-deja-vu-one) in testfile-deja-vu-dup.wpo, but had already encountered it in testfile-deja-vu-two.wpo
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
 7.mo:Expected error in mat top-level-value-functions: "incorrect argument count in call (top-level-bound?)".
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: 45 is not a symbol".
