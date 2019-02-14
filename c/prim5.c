@@ -1377,6 +1377,7 @@ static void s_putenv(name, value) char *name, *value; {
   if ((s = malloc(n)) == (char *)NULL
        || snprintf(s, n, "%s=%s", name, value) < 0
        || putenv(s) != 0) {
+    free(s);
     ptr msg = S_strerror(errno);
 
     if (msg != Sfalse)
@@ -1384,6 +1385,7 @@ static void s_putenv(name, value) char *name, *value; {
     else
       S_error("putenv", "environment extension failed");
   }
+  free(s);
 #endif /* WIN32 */
 }
 
