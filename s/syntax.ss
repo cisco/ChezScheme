@@ -5180,8 +5180,8 @@
              (cond
                [(libdesc-import-code desc) =>
                 (lambda (p)
-                   (when (eq? p 'loading)
-                     ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
+                  (when (eq? p 'loading)
+                    ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
                   (libdesc-import-code-set! desc #f)
                   (on-reset (libdesc-import-code-set! desc p)
                     (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
