@@ -661,7 +661,7 @@
                                        (set! cpletrec-ran? #t)
                                        ($cpletrec (cptypes ($cp0 x #f))))
                                      x2)])
-                             (if cpletrec-ran? x ($cpletrec (cptypes x)))))]
+                             (if cpletrec-ran? x ($cpletrec x))))]
                     [x2b ($cpcheck x2a)]
                     [x2b ($cpcommonize x2b)])
                (when eoo (pretty-print ($uncprep x2b) eoo))
