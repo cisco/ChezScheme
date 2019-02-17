@@ -27,31 +27,17 @@
         (expand/optimize y)))]))
 
 (define-syntax cptypes/nocp0-equivalent-expansion?
+  ; When run-cp0 is call, use #3%$cptypes insted of the cp0 function provided.
+  ; This disables the reductions in cp0.ss, so it's posible to see
+  ; the isolated effect of the reduction in cptypes.ss. 
   (syntax-rules ()
     [(_ x y)
      (equivalent-expansion?
-      (parameterize ([enable-cp0 #f]
+      (parameterize ([run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
                      [#%$suppress-primitive-inlining #f]
                      #;[optimize-level (max (optimize-level) 2)])
         (expand/optimize x))
-      (parameterize ([enable-cp0 #f]
-                     [#%$suppress-primitive-inlining #f]
-                     #;[optimize-level (max (optimize-level) 2)])
-        (expand/optimize y)))]))
-
-(define-syntax cptypes/nocp0/alternative-equivalent-expansion?
-  (syntax-rules ()
-    [(_ x y)
-     (equivalent-expansion?
-      (parameterize ([enable-cp0 #f]
-                     [enable-type-recovery #f]
-                     [run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
-                     [#%$suppress-primitive-inlining #f]
-                     #;[optimize-level (max (optimize-level) 2)])
-        (expand/optimize x))
-      (parameterize ([enable-cp0 #f]
-                     [enable-type-recovery #f]
-                     [run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
+      (parameterize ([run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
                      [#%$suppress-primitive-inlining #f]
                      #;[optimize-level (max (optimize-level) 2)])
         (expand/optimize y)))]))
@@ -677,21 +663,6 @@
     '((lambda (x . r) (pair? r)) 1 2)
     '((lambda (x . r) #t) 1 2))
   (cptypes/nocp0-equivalent-expansion?
-    '((lambda (x . r) (null? r)) 1 2)
-    '((lambda (x . r) #f) 1 2))
-)
-
-(mat cptypes-rest-argument/alternative
-  (cptypes/nocp0/alternative-equivalent-expansion?
-    '((lambda (x . r) (pair? r)) 1)
-    '((lambda (x . r) #f) 1))
-  (cptypes/nocp0/alternative-equivalent-expansion?
-    '((lambda (x . r) (null? r)) 1)
-    '((lambda (x . r) #t) 1))
-  (cptypes/nocp0/alternative-equivalent-expansion?
-    '((lambda (x . r) (pair? r)) 1 2)
-    '((lambda (x . r) #t) 1 2))
-  (cptypes/nocp0/alternative-equivalent-expansion?
     '((lambda (x . r) (null? r)) 1 2)
     '((lambda (x . r) #f) 1 2))
 )

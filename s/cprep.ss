@@ -237,7 +237,7 @@
                               (set! cpletrec-ran? #t)
                               ($cpletrec (cptypes ($cp0 x $compiler-is-loaded?))))
                             ($cpvalid x))])
-                    (if cpletrec-ran? x ($cpletrec (cptypes x)))))))))
+                    (if cpletrec-ran? x ($cpletrec x))))))))
         (unless (environment? env)
           ($oops who "~s is not an environment" env))
         ; claim compiling-a-file to get cte as well as run-time code
