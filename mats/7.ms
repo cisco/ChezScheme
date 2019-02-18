@@ -286,19 +286,6 @@
 )
 
 (mat maybe-compile
-  (begin
-    (define touch
-      (lambda (objfn srcfn)
-        (let loop ()
-          (let ([p (open-file-input/output-port srcfn (file-options no-fail no-truncate))])
-            (put-u8 p (lookahead-u8 p))
-            (close-port p))
-          (when (file-exists? objfn)
-            (unless (time>? (file-modification-time srcfn) (file-modification-time objfn))
-              (sleep (make-time 'time-duration 1000000 1))
-              (loop))))
-        #t))
-    #t)
   (error? ; not a procedure
     (compile-program-handler 'ignore))
   (procedure? (compile-program-handler))
@@ -783,25 +770,15 @@
       "testdir/testfile-mc-1b")
     #t)
   (error? ; can't find testfile-mc-1a.ss
-    (let ([mt* (map file-modification-time '("testdir/testfile-mc-1b.so"))])
-      (separate-compile 'maybe-compile-library "testdir/testfile-mc-1b")
-      (map
-        (lambda (x y) (if (time=? x y) '= (if (time<? x y) '< '>)))
-        (map file-modification-time '("testdir/testfile-mc-1b.so"))
-        mt*)))
-  ; make sure maybe-compile-file doesn't wipe out b.so when it fails to find a.ss
-  (file-exists? "testdir/testfile-mc-1b.so")
-  (equal?
-    (let ([mt* (map file-modification-time '("testdir/testfile-mc-1b.so"))])
-      (separate-compile '(lambda (x)
-                           (parameterize ([source-directories (cons "testdir" (source-directories))])
-                             (maybe-compile-library x)))
-        "testdir/testfile-mc-1b")
-      (map
-        (lambda (x y) (if (time=? x y) '= (if (time<? x y) '< '>)))
-        (map file-modification-time '("testdir/testfile-mc-1b.so"))
-        mt*))
-    '(=))
+    (separate-compile 'maybe-compile-library "testdir/testfile-mc-1b"))
+  ; make sure maybe-compile-file wipes out b.so when it fails to find a.ss
+  (or (= (optimize-level) 3) (not (file-exists? "testdir/testfile-mc-1b.so")))
+  (begin
+    (separate-compile '(lambda (x)
+                         (parameterize ([source-directories (cons "testdir" (source-directories))])
+                           (maybe-compile-library x)))
+      "testdir/testfile-mc-1b")
+    #t)
   (touch "testdir/testfile-mc-1b.so" "testdir/testfile-mc-1a.ss")
   (equal?
     (let ([mt* (map file-modification-time '("testdir/testfile-mc-1b.so"))])
@@ -828,17 +805,12 @@
     '(>))
   (delete-file "testdir/testfile-mc-1a.ss")
   (error? ; maybe-compile-library: can't find testfile-mc-1a.ss
-    (let ([mt* (map file-modification-time '("testdir/testfile-mc-1b.so"))])
-      (separate-compile '(lambda (x)
-                           (parameterize ([source-directories (cons "testdir" (source-directories))])
-                             (maybe-compile-library x)))
-        "testdir/testfile-mc-1b")
-      (map
-        (lambda (x y) (if (time=? x y) '= (if (time<? x y) '< '>)))
-        (map file-modification-time '("testdir/testfile-mc-1b.so"))
-        mt*)))
-  ; make sure maybe-compile-file doesn't wipe out b.so when it fails to find a.ss
-  (file-exists? "testdir/testfile-mc-1b.so")
+    (separate-compile '(lambda (x)
+                         (parameterize ([source-directories (cons "testdir" (source-directories))])
+                           (maybe-compile-library x)))
+      "testdir/testfile-mc-1b"))
+  ; make sure maybe-compile-file wipes out b.so when it fails to find a.ss
+  (or (= (optimize-level) 3) (not (file-exists? "testdir/testfile-mc-1b.so")))
   (begin
     (rm-rf "testdir")
     #t)
@@ -883,6 +855,170 @@
       (close-port p))
     (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
     #t)
+  ; make sure maybe-compile-file handles missing include files gracefully
+  (begin
+    (mkfile "testfile-mc-3a.ss"
+      "hello from 3a!")
+    (mkfile "testfile-mc-3b.ss"
+      '(library (testfile-mc-3b)
+         (export q)
+         (import (chezscheme))
+         (define-syntax q
+           (begin
+             (printf "expanding testfile-mc-3b\n")
+             (lambda (x)
+               (printf "expanding q\n")
+               (include "./testfile-mc-3a.ss"))))))
+    (mkfile "testfile-mc-3.ss"
+      '(import (chezscheme) (testfile-mc-3b))
+      '(define-syntax qq
+         (begin
+           (printf "expanding testfile-mc-3\n")
+           (lambda (x)
+             (printf "expanding qq\n")
+             #'q)))
+      '(printf "qq => ~a\n" qq))
+    (delete-file "testfile-mc-3b.so")
+    (delete-file "testfile-mc-3.so")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t])
+           (maybe-compile-program x)))
+      'mc-3)
+    #t)
+  (begin
+    (delete-file "testfile-mc-3a.ss")
+    #t)
+  (error? ; separate-compile: no such file or directory: testfile-mc-3a.ss
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t])
+           (maybe-compile-program x)))
+      'mc-3))
+  ; make sure maybe-compile-file handles missing include files gracefully
+  (begin
+    (define-record-type hash-bang-chezscheme)
+    (record-writer (type-descriptor hash-bang-chezscheme) (lambda (x p wr) (display-string "#!chezscheme")))
+    (mkfile "testfile-mc-4a.ss"
+      "hello from 4a!")
+    (mkfile "testfile-mc-4b.ss"
+      (make-hash-bang-chezscheme)
+      '(library (testfile-mc-4b)
+         (export b)
+         (import (chezscheme))
+         (define-syntax q
+           (lambda (x)
+             (if (file-exists? "testfile-mc-4a.ss")
+                 (begin
+                   (printf "HEY!\n")
+                   (#%$require-include "./testfile-mc-4a.ss")
+                   (call-with-input-file "testfile-mc-4a.ss" read))
+                 (begin
+                   (printf "BARLEY!\n")
+                   "testfile-mc-4a is no more"))))
+         (define (b) q)))
+    (mkfile "testfile-mc-4.ss"
+      '(import (chezscheme) (testfile-mc-4b))
+      '(printf "q => ~a\n" (b)))
+    (delete-file "testfile-mc-4b.so")
+    (delete-file "testfile-mc-4.so")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t])
+           (maybe-compile-program x)))
+      'mc-4)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-4.so"))
+    "q => hello from 4a!\n")
+  (begin
+    (mkfile "testfile-mc-4a.ss"
+      "goodbye from 4a!")
+    (touch "testfile-mc-4.so" "testfile-mc-4a.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [import-notify #t])
+           (maybe-compile-program x)))
+      'mc-4)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-4.so"))
+    "q => goodbye from 4a!\n")
+  (begin
+    (delete-file "testfile-mc-4a.ss")
+    #t)
+  (begin
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [import-notify #t])
+           (maybe-compile-program x)))
+      'mc-4)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-4.so"))
+    "q => testfile-mc-4a is no more\n")
+  ; make sure maybe-compile-file handles missing include files gracefully
+  (begin
+    (define-record-type hash-bang-chezscheme)
+    (record-writer (type-descriptor hash-bang-chezscheme) (lambda (x p wr) (display-string "#!chezscheme")))
+    (mkfile "testfile-mc-5a.ss"
+      "hello from 5a!")
+    (mkfile "testfile-mc-5b.ss"
+      (make-hash-bang-chezscheme)
+      '(library (testfile-mc-5b)
+         (export q)
+         (import (chezscheme))
+         (define-syntax q
+           (lambda (x)
+             (if (file-exists? "testfile-mc-5a.ss")
+                 (begin
+                   (printf "HEY!\n")
+                   (#%$require-include "./testfile-mc-5a.ss")
+                   (call-with-input-file "testfile-mc-5a.ss" read))
+                 (begin
+                   (printf "BARLEY!\n")
+                   "testfile-mc-5a is no more"))))))
+    (mkfile "testfile-mc-5.ss"
+      '(import (chezscheme) (testfile-mc-5b))
+      '(define-syntax qq (lambda (x) #'q))
+      '(printf "qq => ~a\n" qq))
+    (delete-file "testfile-mc-5b.so")
+    (delete-file "testfile-mc-5.so")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t])
+           (maybe-compile-program x)))
+      'mc-5)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-5.so"))
+    "qq => hello from 5a!\n")
+  (begin
+    (mkfile "testfile-mc-5a.ss"
+      "goodbye from 5a!")
+    (touch "testfile-mc-5.so" "testfile-mc-5a.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [import-notify #t])
+           (maybe-compile-program x)))
+      'mc-5)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-5.so"))
+    "qq => goodbye from 5a!\n")
+  (begin
+    (delete-file "testfile-mc-5a.ss")
+    #t)
+  (begin
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [import-notify #t])
+           (maybe-compile-program x)))
+      'mc-5)
+    #t)
+  (equal?
+    (separate-eval '(load-program "testfile-mc-5.so"))
+    "qq => testfile-mc-5a is no more\n")
  )
 
 (mat make-boot-file
@@ -984,6 +1120,33 @@
           (unless (eof-object? err) (error 'bootfile-test2 err))
           out)))
     "hello 1\nhello 2\nhello 3\nhello 4\nhello 5\n")
+  ; regression test to verify that we can evaluate a foreign-callable form inside the procedure to
+  ; which scheme-start is set, which was failing because its relocation information was discarded
+  ; by the static-generation collection.
+  (equal?
+    (begin
+      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+        (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
+          (machine-type) (machine-type) (if (windows?) ".exe" "")))
+      (mkfile "testfile.ss"
+        '(scheme-start
+           (lambda ()
+             (let ([x 0])
+               (printf "~s\n" (foreign-callable (lambda () (set! x (+ x 1)) x) () void))))))
+      (make-boot-file "testfile.boot" '("petite") "testfile.ss")
+      (let-values ([(to-stdin from-stdout from-stderr pid)
+                    (open-process-ports
+                      (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))
+                      (buffer-mode block)
+                      (native-transcoder))])
+        (close-output-port to-stdin)
+        (let ([out (get-string-all from-stdout)]
+              [err (get-string-all from-stderr)])
+          (close-input-port from-stdout)
+          (close-input-port from-stderr)
+          (unless (eof-object? err) (error 'bootfile-test2 err))
+          out)))
+    "#<code>\n")
 )
 
 (mat hostop
@@ -3198,6 +3361,211 @@ evaluating module init
     "(9 . 5)\n")
 )
 
+(mat maybe-compile-whole
+  (begin
+    (delete-file "testfile-mcw-a1.so")
+    (delete-file "testfile-mcw-a1.wpo")
+    (delete-file "testfile-mcw-b1.so")
+    (delete-file "testfile-mcw-b1.wpo")
+    (delete-file "testfile-mcw-c1.so")
+    (delete-file "testfile-mcw-c1.wpo")
+    (with-output-to-file "testfile-mcw-ha1.ss"
+      (lambda ()
+        (pretty-print
+          '(define minor-msg-number 97)))
+      'replace)
+    (with-output-to-file "testfile-mcw-hb1.ss"
+      (lambda ()
+        (pretty-print
+          '(define major-msg-number 113)))
+      'replace)
+    (with-output-to-file "testfile-mcw-a1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-a1)
+             (export a)
+             (import (chezscheme))
+             (define a "hello from a"))))
+      'replace)
+    (with-output-to-file "testfile-mcw-b1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-b1)
+             (export b)
+             (import (chezscheme) (testfile-mcw-a1))
+             (include "testfile-mcw-ha1.ss")
+             (define b (lambda () (format "~a and b [~s]" a minor-msg-number))))))
+      'replace)
+    (with-output-to-file "testfile-mcw-c1.ss"
+      (lambda ()
+        (for-each pretty-print
+          '((import (chezscheme) (testfile-mcw-b1))
+            (include "testfile-mcw-hb1.ss")
+            (printf "~a and c [~s]\n" (b) major-msg-number))))
+      'replace)
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (compile-program x)))
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "hello from a and b [97] and c [113]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-a1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-a1)
+             (export a)
+             (import (chezscheme))
+             (define a "greetings from a"))))
+      'replace)
+    (touch "testfile-mcw-a1.so" "testfile-mcw-a1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (maybe-compile-program x)))
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "greetings from a and b [97] and c [113]\n")
+
+  (begin
+    (separate-compile
+      '(lambda (x)
+         (compile-whole-program (format "~a.wpo" x) (format "~a.so" x)) #f)
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "greetings from a and b [97] and c [113]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-a1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-a1)
+             (export a)
+             (import (chezscheme))
+             (define a "salutations from a"))))
+      'replace)
+    (touch "testfile-mcw-a1.so" "testfile-mcw-a1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (parameterize ([compile-program-handler
+                            (lambda (ifn ofn)
+                              (compile-program ifn ofn)
+                              (compile-whole-program (format "~a.wpo" (path-root ofn)) ofn #t))])
+             (maybe-compile-program x))))
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "salutations from a and b [97] and c [113]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-a1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-a1)
+             (export a)
+             (import (chezscheme))
+             (define a "goodbye from a"))))
+      'replace)
+    (touch "testfile-mcw-a1.so" "testfile-mcw-a1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (parameterize ([compile-program-handler
+                            (lambda (ifn ofn)
+                              (compile-program ifn ofn)
+                              (compile-whole-program (format "~a.wpo" (path-root ofn)) ofn #t))])
+             (maybe-compile-program x))))
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "goodbye from a and b [97] and c [113]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-hb1.ss"
+      (lambda ()
+        (pretty-print
+          '(define major-msg-number 773)))
+      'replace)
+    (touch "testfile-mcw-c1.so" "testfile-mcw-hb1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (parameterize ([compile-program-handler
+                            (lambda (ifn ofn)
+                              (compile-program ifn ofn)
+                              (compile-whole-program (format "~a.wpo" (path-root ofn)) ofn #t))])
+             (maybe-compile-program x))))
+      'mcw-c1)
+    #t)
+
+  (equal?
+    (separate-eval '(load-program "testfile-mcw-c1.so"))
+    "goodbye from a and b [97] and c [773]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-a1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mcw-a1)
+             (export a)
+             (import (chezscheme))
+             (define a "hello again from a"))))
+      'replace)
+    (touch "testfile-mcw-a1.so" "testfile-mcw-a1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (parameterize ([compile-library-handler
+                            (lambda (ifn ofn)
+                              (compile-library ifn ofn)
+                              (compile-whole-library (format "~a.wpo" (path-root ofn)) ofn))])
+             (maybe-compile-library x))))
+      'mcw-b1)
+    #t)
+
+  (equal?
+    (separate-eval '(let () (import (testfile-mcw-b1)) (printf "~a\n" (b))))
+    "hello again from a and b [97]\n")
+
+  (begin
+    (with-output-to-file "testfile-mcw-ha1.ss"
+      (lambda ()
+        (pretty-print
+          '(define minor-msg-number -53)))
+      'replace)
+    (touch "testfile-mcw-a1.so" "testfile-mcw-a1.ss")
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([compile-imported-libraries #t] [generate-wpo-files #t])
+           (parameterize ([compile-library-handler
+                            (lambda (ifn ofn)
+                              (compile-library ifn ofn)
+                              (compile-whole-library (format "~a.wpo" (path-root ofn)) ofn))])
+             (maybe-compile-library x))))
+      'mcw-b1)
+    #t)
+
+  (equal?
+    (separate-eval '(let () (import (testfile-mcw-b1)) (printf "~a\n" (b))))
+    "hello again from a and b [-53]\n")
+)
+
 (mat library-manager
   (begin
     (with-output-to-file "testfile-lm-a.ss"
@@ -3389,7 +3757,6 @@ evaluating module init
     "foo = 456\n"
     "\"odd\"\n"))
   )
-
 
 ;;; section 7.2:
 

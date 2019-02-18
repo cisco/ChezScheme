@@ -244,13 +244,13 @@ For example:
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{syntax->vector}{\categoryprocedure}{(syntax->vector \var{syntax-object})}
-\returns a list of syntax objects
+\returns a vector of syntax objects
 \listlibraries
 \endentryheader
 
 \noindent
 This procedure takes a syntax object representing
-a vector-structured form and returns a list of syntax objects, each representing
+a vector-structured form and returns a vector of syntax objects, each representing
 the corresponding subform of the input form.
 
 %Programmers are encouraged to use this procedure even when the current
@@ -626,6 +626,32 @@ is generated at expansion time.
 (prec-x r) ;=> 1
 (crec-z r) ;=> 3
 prec ;=> \var{exception: invalid syntax prec}
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compile-time-value?}{\categoryprocedure}{(compile-time-value? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a compile-time value; \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define-syntax x (make-compile-time-value "eggs"))
+(compile-time-value? (top-level-syntax 'x)) ;=> #t
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compile-time-value-value}{\categoryprocedure}{(compile-time-value-value \var{ctv})}
+\returns the value of a compile-time value
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(define-syntax x (make-compile-time-value "eggs"))
+(compile-time-value-value (top-level-syntax 'x)) ;=> "eggs"
 \endschemedisplay
 
 

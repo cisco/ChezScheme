@@ -414,6 +414,118 @@ the specified field, subtracts $1$ from the value, and writes the new
 value back into the field.
 Both return \scheme{#t} if the new value is 0, otherwise \scheme{#f}.
 
+\section{Reference counting with ftype guardians\label{SECTTHREADFTYPEGUARDIANS}}
+
+\index{\scheme{ftype-guardian}}%
+Applications that manage memory outside the Scheme heap can leverage
+the Scheme storage management system to help perform reference
+counting via \emph{ftype guardians}.
+In a reference-counted memory management system, each object holds
+a count of pointers to it.
+The count is incremented when a new pointer is created and decremented
+when a pointer is dropped.
+When the count reaches zero, the object is no longer needed and the
+memory it formerly occupied can be made available for some other
+purpose.
+
+\entryheader
+\formdef{ftype-guardian}{\categorysyntax}{(ftype-guardian \var{ftype-name})}
+\returns a new ftype guardian
+\listlibraries
+\endentryheader
+
+\var{ftype-name} must name an ftype.
+The first base field of the ftype (or one of the first base fields
+in the case of unions) must be a word-sized integer (iptr or uptr)
+with native endianness.
+This field is assumed to hold a reference count.
+
+The return value is a new ftype guardian \var{g}, with which
+ftype-pointers of type \var{ftype-name} (or some subtype of
+\var{ftype-name}) can be registered.
+An ftype pointer is registered with \var{g} by invoking \var{g}
+with the ftype pointer as an argument.
+
+An ftype guardian does not automatically protect from collection
+the ftype pointers registered with it,  as a normal guardian would
+do.
+Instead, for each registered ftype pointer that becomes inaccessible
+via normal (non-weak, non-guardian pointers), the guardian decrements
+the reference count of the object to which the ftype pointer points.
+If the resulting reference-count value is zero, the ftype pointer
+is preserved and can be retrieved from the guardian.
+If the resulting reference-count value is non-zero, however, the
+ftype pointer is not preserved.
+Objects retrieved from an ftype guardian (by calling it without
+arguments) are guaranteed to have zero reference counts, assuming
+reference counts are maintained properly by code outside the
+collector.
+
+The collector decrements the reference count using the equivalent
+of \index{\scheme{ftype-locked-decr!}}\scheme{ftype-locked-decr!}
+to support systems in which non-Scheme objects are stored in memory
+shared by multiple processes.
+In such systems, programs should themselves use
+\index{\scheme{ftype-locked-incr!}}\scheme{ftype-locked-incr!} and
+\scheme{ftype-locked-decr!} or non-Scheme equivalents (e.g., the C
+\index{\scheme{LOCKED_INCR}}\scheme{LOCKED_INCR} and
+\index{\scheme{LOCKED_INCR}}\scheme{LOCKED_DECR} macros in scheme.h,
+which are described in Section~\ref{SECTFOREIGNCLIB}) to maintain
+reference counts.
+
+The following example defines a simple ftype and an allocator for
+objects of that ftype that frees any objects of that ftype that were
+previously allocated and no longer accessible.
+
+\schemedisplay
+(module (A make-A free-dropped-As)
+  (define-ftype A
+    (struct
+      [refcount uptr]
+      [data int]))
+  (define g (ftype-guardian A))
+  (define free-dropped-As
+    (lambda ()
+      (let ([a (g)])
+        (when a
+          (printf "freeing ~s\n" (ftype-ref A (data) a))
+          (foreign-free (ftype-pointer-address a))
+          (free-dropped-As)))))
+  (define make-A
+    (lambda (n)
+      (free-dropped-As)
+      (let ([a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A)))])
+        (ftype-set! A (refcount) a 1)
+        (ftype-set! A (data) a n)
+        (g a)
+        a))))
+\endschemedisplay
+
+We can test this by allocating, dropping, and immediately collecting
+ftype pointers to A.
+
+\schemedisplay
+> (do ([i 10 (fx- i 1)])
+      ((fx= i 0))
+    (make-A i)
+    (collect))
+freeing 10
+freeing 9
+freeing 8
+freeing 7
+freeing 6
+freeing 5
+freeing 4
+freeing 3
+freeing 2
+> (free-dropped-As)
+freeing 1
+\endschemedisplay
+
+Objects guarded by an ftype guardian might contain pointers to other
+objects whose reference counts should also be incremented upon
+allocation of the containing object and decremented upon freeing
+of the containing object.
 
 \section{Thread Parameters\label{SECTTHREADPARAMETERS}}
 

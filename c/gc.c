@@ -1195,6 +1195,17 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                 next = GUARDIANNEXT(ls);
 
                 rep = GUARDIANREP(ls);
+              /* ftype_guardian_rep is a marker for reference-counted ftype pointer */
+                if (rep == ftype_guardian_rep) {
+                  int b; uptr *addr;
+                  rep = GUARDIANOBJ(ls);
+                  if (FWDMARKER(rep) == forward_marker) rep = FWDADDRESS(rep);
+                /* Caution: Building in assumption about shape of an ftype pointer */
+                  addr = RECORDINSTIT(rep, 0);
+                  LOCKED_DECR(addr, b);
+                  if (!b) continue;
+                }
+
                 if (!do_ordered && (GUARDIANORDERED(ls) == Strue)) {
                   /* Sweep from the representative, but don't copy the
                      representative itself; if the object stays uncopied by
@@ -1226,8 +1237,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
                   WITH_TOP_BACKREFERENCE(tconc, relocate(&rep));
 
                   old_end = Scdr(tconc);
-                /* allocating pair in tg means it will be swept, which is wasted effort, but should cause no harm */
-                  new_end = S_cons_in(space_impure, tg, FIX(0), FIX(0));
+                  new_end = S_cons_in(space_impure, 0, FIX(0), FIX(0));
 #ifdef ENABLE_OBJECT_COUNTS
                   S_G.countof[tg][countof_pair] += 1;
 #endif /* ENABLE_OBJECT_COUNTS */
@@ -2103,7 +2113,7 @@ static void sweep_code_object(tc, co) ptr tc, co; {
         S_set_code_obj("gc", RELOC_TYPE(entry), co, a, obj, item_off);
     }
 
-    if (target_generation == static_generation && !S_G.retain_static_relocation) {
+    if (target_generation == static_generation && !S_G.retain_static_relocation && (CODETYPE(co) & (code_flag_template << code_flags_offset)) == 0) {
       CODERELOC(co) = (ptr)0;
     } else {
       /* Don't copy non-oldspace relocation tables, since we may be

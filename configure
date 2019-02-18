@@ -365,7 +365,6 @@ sed -e 's/$(m)/'$m'/g'\
     makefiles/Mf-boot.in > $w/Mf-boot
 
 sed -e "s;^m=none\$;m=$m;"\
-    -e "s;^InstallPrefix=.*\$;InstallPrefix=$installprefix;"\
     -e "s;^InstallBin=.*\$;InstallBin=$installbin;"\
     -e "s;^InstallLib=.*\$;InstallLib=$installlib;"\
     -e "s;^InstallMan=.*\$;InstallMan=$installman/man1;"\

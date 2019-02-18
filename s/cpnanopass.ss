@@ -5736,6 +5736,17 @@
                  (set! ,(%mref ,t ,(constant guardian-entry-pending-disp)) ,(%constant snil))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
 
+        (define-inline 3 $install-ftype-guardian
+          [(e-obj e-tconc)
+           (bind #f (e-obj e-tconc)
+             (bind #t ([t (%constant-alloc typemod (constant size-guardian-entry))])
+               (%seq
+                 (set! ,(%mref ,t ,(constant guardian-entry-obj-disp)) ,e-obj)
+                 (set! ,(%mref ,t ,(constant guardian-entry-rep-disp)) (immediate ,(constant ftype-guardian-rep)))
+                 (set! ,(%mref ,t ,(constant guardian-entry-tconc-disp)) ,e-tconc)
+                 (set! ,(%mref ,t ,(constant guardian-entry-next-disp)) ,(%tc-ref guardian-entries))
+                 (set! ,(%tc-ref guardian-entries) ,t))))])
+
         (define-inline 3 $make-phantom-bytevector
           [()
            (bind #f ()
@@ -8470,6 +8481,50 @@
         (let ()
           (define build-bytevector
             (lambda (e*)
+              (define (find-k n)
+                (let loop ([bytes (constant-case ptr-bits [(32) 4] [(64) 8])]
+                           [type* (constant-case ptr-bits
+                                    [(32) '(unsigned-32 unsigned-16 unsigned-8)]
+                                    [(64) '(unsigned-64 unsigned-32 unsigned-16 unsigned-8)])])
+                  (let ([bytes/2 (fxsrl bytes 1)])
+                    (if (fx<= n bytes/2)
+                        (loop bytes/2 (cdr type*))
+                        (values bytes (car type*))))))
+              (define (build-chunk k n e*)
+                (define (build-shift e shift)
+                  (if (fx= shift 0) e (%inline sll ,e (immediate ,shift))))
+                (let loop ([k (constant-case native-endianness
+                                [(little) (fxmin k n)]
+                                [(big) k])]
+                           [e* (constant-case native-endianness
+                                 [(little) (reverse (if (fx<= n k) e* (list-head e* k)))]
+                                 [(big) e*])]
+                           [constant-part 0]
+                           [expression-part #f]
+                           [expression-shift 0]
+                           [mask? #f]) ; no need to mask the high-order byte
+                  (if (fx= k 0)
+                      (if expression-part
+                          (let ([expression-part (build-shift expression-part expression-shift)])
+                            (if (= constant-part 0)
+                                expression-part
+                                (%inline logor ,expression-part (immediate ,constant-part))))
+                          `(immediate ,constant-part))
+                      (let ([k (fx- k 1)]
+                            [constant-part (ash constant-part 8)]
+                            [expression-shift (fx+ expression-shift 8)])
+                        (if (null? e*)
+                            (loop k e* constant-part expression-part expression-shift #t)
+                            (let ([e (car e*)] [e* (cdr e*)])
+                              (if (fixnum-constant? e)
+                                  (loop k e* (logor constant-part (logand (constant-value e) #xff)) expression-part expression-shift #t)
+                                  (loop k e* constant-part
+                                    (let* ([e (build-unfix e)]
+                                           [e (if mask? (%inline logand ,e (immediate #xff)) e)])
+                                      (if expression-part
+                                          (%inline logor ,(build-shift expression-part expression-shift) ,e)
+                                          e))
+                                    0 #t))))))))
               (let ([len (length e*)])
                 (if (fx= len 0)
                     `(quote ,(bytevector))
@@ -8479,16 +8534,19 @@
                         `(seq
                            (set! ,(%mref ,t ,(constant bytevector-type-disp))
                              (immediate ,(+ (* len (constant bytevector-length-factor))
-                                               (constant type-bytevector))))
-                           ,(let f ([e* e*] [offset (constant bytevector-data-disp)])
-                              (let ([e (car e*)] [e* (cdr e*)])
+                                            (constant type-bytevector))))
+                           ;  build and store k-octet (k = 4 on 32-bit machines, k = 8 on 64-bit
+                           ;  machines) chunks, taking endianness into account.  for the last
+                           ;  chunk, set k = 1, 2, 4, or 8 depending on the number of octets
+                           ;  remaining, padding with zeros as necessary.
+                           ,(let f ([e* e*] [n (length e*)] [offset (constant bytevector-data-disp)])
+                              (let-values ([(k type) (find-k n)])
                                 `(seq
-                                   (inline ,(make-info-load 'unsigned-8 #f) ,%store
-                                     ,t ,%zero (immediate ,offset)
-                                     ,(if (fixnum-constant? e)
-                                          `(immediate ,(constant-value e))
-                                          (build-unfix e)))
-                                   ,(if (null? e*) t (f e* (fx+ offset 1)))))))))))))
+                                   (inline ,(make-info-load type #f) ,%store ,t ,%zero (immediate ,offset)
+                                     ,(build-chunk k n e*))
+                                   ,(if (fx<= n k)
+                                        t
+                                        (f (list-tail e* k) (fx- n k) (fx+ offset k)))))))))))))
 
           (define-inline 2 bytevector
             [e* (and (andmap
@@ -11641,7 +11699,7 @@
                `(lambda ,info ,max-fv (,local* ...) ,tlbody))))]
         [(fcallable ,info ,l)
          (let ([lambda-info (make-info-lambda #f #f #f (list (length (info-foreign-arg-type* info)))
-                              (info-foreign-name info))])
+                              (info-foreign-name info) (constant code-flag-template))])
            (fluid-let ([max-fv 0] [local* '()])
              (let ([tlbody (build-fcallable info l)])
                `(lambda ,lambda-info ,max-fv (,local* ...) ,tlbody))))]

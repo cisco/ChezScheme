@@ -700,17 +700,18 @@
 
 ;;; note: for type-char, leave at least fixnum-offset zeros at top of
 ;;; type byte to simplify char->integer conversion
-(define-constant type-boolean       #b00000110)
-(define-constant ptr sfalse         #b00000110)
-(define-constant ptr strue          #b00001110)
-(define-constant type-char          #b00010110)
-(define-constant ptr sunbound       #b00011110)
-(define-constant ptr snil           #b00100110)
-(define-constant ptr forward-marker #b00101110)
-(define-constant ptr seof           #b00110110)
-(define-constant ptr svoid          #b00111110)
-(define-constant ptr black-hole     #b01000110)
-(define-constant ptr sbwp           #b01001110)
+(define-constant type-boolean           #b00000110)
+(define-constant ptr sfalse             #b00000110)
+(define-constant ptr strue              #b00001110)
+(define-constant type-char              #b00010110)
+(define-constant ptr sunbound           #b00011110)
+(define-constant ptr snil               #b00100110)
+(define-constant ptr forward-marker     #b00101110)
+(define-constant ptr seof               #b00110110)
+(define-constant ptr svoid              #b00111110)
+(define-constant ptr black-hole         #b01000110)
+(define-constant ptr sbwp               #b01001110)
+(define-constant ptr ftype-guardian-rep #b01010110)
 
 ;;; on 32-bit machines, vectors get two primary tag bits, including
 ;;; one for the immutable flag, and so do bytevectors, so their maximum
@@ -753,11 +754,12 @@
 (define-constant type-phantom          #b01111110)
 (define-constant type-record                #b111)
 
-(define-constant code-flag-system           #b00001)
-(define-constant code-flag-continuation     #b00010)
-(define-constant code-flag-mutable-closure  #b00100)
-(define-constant code-flag-arity-in-closure #b01000)
-(define-constant code-flag-single-valued    #b10000)
+(define-constant code-flag-system           #b000001)
+(define-constant code-flag-continuation     #b000010)
+(define-constant code-flag-template         #b000100)
+(define-constant code-flag-mutable-closure  #b001000)
+(define-constant code-flag-arity-in-closure #b010000)
+(define-constant code-flag-single-valued    #b100000)
 
 (define-constant fixnum-bits
   (case (constant ptr-bits)
