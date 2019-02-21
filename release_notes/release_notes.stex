@@ -58,6 +58,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{R7RS compatibility extensions (9.6.0)}
+
+The reader now accepts \scheme{#\null} and \scheme{#\escape} as alternative
+spellings of the characters \scheme{#\nul} and \scheme{#\esc}, respectively.
+
 \subsection{Unicode 14.0 Support (9.6.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,

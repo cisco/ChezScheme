@@ -339,6 +339,8 @@ Second, it recognizes several nonstandard named characters:
 \scheme{#\rubout} (which is the same as \scheme{#\delete}),
 \scheme{#\bel} (which is the same as \scheme{#\alarm}),
 \scheme{#\vt} (which is the same as \scheme{#\vtab}),
+\scheme{#\escape} (which is the same as \scheme{#\esc}),
+\scheme{#\null} (which is the same as \scheme{#\nul}),
 \scheme{#\nel} (the Unicode NEL character), and
 \scheme{#\ls} (the Unicode LS character).
 The set of nonstandard character names may be changed via the procedure
