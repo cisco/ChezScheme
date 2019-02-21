@@ -778,7 +778,7 @@
          (with-read-char c
            (state-case c
              [eof (with-unread-char c (xcall rd-eof-error "string"))]
-             [(#\\ #\")
+             [(#\\ #\" #\|)
               (with-stretch-buffer i c
                 (*state rd-token-string (fx+ i 1)))]
              [(#\n #\a #\b #\f #\r #\t #\v)
@@ -1856,9 +1856,11 @@
   (char-name 'newline #\newline) ; must come after linefeed entry
   (char-name 'backspace #\backspace)
   (char-name 'rubout #\rubout)
+  (char-name 'null #\nul)
   (char-name 'nul #\nul)
   (char-name 'bel #\bel)
   (char-name 'vt #\vt)
+  (char-name 'escape #\esc)
   (char-name 'esc #\esc)
   (char-name 'vtab #\vtab)
   (char-name 'delete #\rubout)
