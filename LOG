@@ -1137,3 +1137,4 @@
   generated config.h.  Instead removed InstallPrefix entirely so
   it isn't an attractive hazzard.
     configure, makefiles/Mf-install.in
+- add #\null and #\escape as aliases for #\nul and #\esc (R7RS compatibility)
