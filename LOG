@@ -2338,3 +2338,5 @@
     s/cp0.ss s/cpnanopass.ss
 - add #\null and #\escape as aliases for #\nul and #\esc (R7RS compatibility)
     mats/6.ms s/read.ss
+- allow \| escape inside strings (R7RS compatibility)
+    mats/6.ms s/read.ss

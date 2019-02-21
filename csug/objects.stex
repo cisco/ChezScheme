@@ -420,8 +420,9 @@ ASCII code for the character.
 
 \section{Strings}
 
-{\ChezScheme} extends the standard string syntax with two character
-escapes: \scheme{\'}, which produces the single quote character, and
+{\ChezScheme} extends the standard string syntax with three character
+escapes: \scheme{\'}, which produces the single quote character,
+\scheme{\|}, which produces the vertical bar character, and
 \scheme{\\var{nnn}}, i.e., backslash followed by 3 octal digits,
 which produces the character equivalent of the octal value of
 the 3 digits.

@@ -854,6 +854,10 @@
               (nonstandard "\\' string character")
               (with-stretch-buffer i c
                 (*state rd-token-string (fx+ i 1)))]
+             [(#\|)
+              (nonstandard "\\| string character")
+              (with-stretch-buffer i c
+                (*state rd-token-string (fx+ i 1)))]
              [else (let ([bfp char-bfp])
                      (xcall rd-error #f #t "invalid string character \\~c" c))]))]
         [(#\newline #\nel #\ls)

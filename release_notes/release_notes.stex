@@ -63,6 +63,8 @@ Online versions of both books can be found at
 The reader now accepts \scheme{#\null} and \scheme{#\escape} as alternative
 spellings of the characters \scheme{#\nul} and \scheme{#\esc}, respectively.
 
+The reader now accepts \scheme{\|} inside strings.
+
 \subsection{Unicode 14.0 Support (9.6.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
