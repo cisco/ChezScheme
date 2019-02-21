@@ -1574,6 +1574,7 @@
   (eqv? (string-ref "\\\"\'" 0) #\\)
   (eqv? (string-ref "\\\"\'" 1) #\")
   (eqv? (string-ref "\\\"\'" 2) #\')
+  (eqv? (string-ref "\|\v" 0) #\|)
   (= (char->integer (string-ref "a\012" 1)) #o12 10)
   (= (char->integer (string-ref "a\015" 1)) #o15 13)
   (= (char->integer (string-ref "a\177" 1)) #o177 127)

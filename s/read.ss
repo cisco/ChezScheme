@@ -778,7 +778,7 @@
          (with-read-char c
            (state-case c
              [eof (with-unread-char c (xcall rd-eof-error "string"))]
-             [(#\\ #\")
+             [(#\\ #\" #\|)
               (with-stretch-buffer i c
                 (*state rd-token-string (fx+ i 1)))]
              [(#\n #\a #\b #\f #\r #\t #\v)
