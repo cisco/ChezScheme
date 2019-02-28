@@ -548,7 +548,7 @@
 (define check-prelex-flags
   (lambda (x after)
     (when ($enable-check-prelex-flags)
-      ($pass-time 'cpcheck-prelex-flags (lambda () (do-trace $cpcheck-prelex-flags x 'uncprep))))))
+      ($pass-time 'cpcheck-prelex-flags (lambda () (do-trace $cpcheck-prelex-flags x after))))))
 
 (define compile-file-help
   (lambda (op hostop wpoop machine sfd do-read outfn)
