@@ -1137,3 +1137,12 @@
   generated config.h.  Instead removed InstallPrefix entirely so
   it isn't an attractive hazzard.
     configure, makefiles/Mf-install.in
+- fixed bug in inline-lists: wasn't setting multiply-referenced flag
+  on p to account for the procedure? check at optimize-level 2.
+    cpletrec.ss
+- fixed bug in check-prelex-flags: was hardwiring $cpcheck-prelex-flags
+  "after" argument to 'uncprep rather than passing along its argument.
+    compile.ss
+- commented out local definition of sorry! so that problems detected
+  by $cpcheck-prelex-flags actually result in a raised exception.
+    cprep.ss
