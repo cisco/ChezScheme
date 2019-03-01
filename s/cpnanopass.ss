@@ -6063,9 +6063,9 @@
                                         ;; Non-NaN: compare bits
                                         (constant-case ptr-bits
                                           [(32)
-                                           (let ([d0 (if (eq? (constant-case native-endianness) (native-endianness)) 0 4)])
-                                             (let ([word1 ($object-ref 'iptr d (fx+ (constant flonum-data-disp) d0))]
-                                                   [word2 ($object-ref 'iptr d (fx+ (constant flonum-data-disp) (fx- 4 d0)))])
+                                           (let ([d0 (if (eq? (constant native-endianness) (native-endianness)) 0 4)])
+                                             (let ([word1 ($object-ref 'integer-32 d (fx+ (constant flonum-data-disp) d0))]
+                                                   [word2 ($object-ref 'integer-32 d (fx+ (constant flonum-data-disp) (fx- 4 d0)))])
                                                (build-and
                                                 (%inline eq?
                                                          ,(%mref ,e2 ,(constant flonum-data-disp))
@@ -6074,7 +6074,7 @@
                                                          ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))
                                                          (immediate ,word2)))))]
                                           [(64)
-                                           (let ([word ($object-ref 'iptr d (constant flonum-data-disp))])
+                                           (let ([word ($object-ref 'integer-64 d (constant flonum-data-disp))])
                                              (%inline eq?
                                                       ,(%mref ,e2 ,(constant flonum-data-disp))
                                                       (immediate ,word)))]
