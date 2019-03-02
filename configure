@@ -217,8 +217,20 @@ while [ $# != 0 ] ; do
     CFLAGS=*)
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       ;;
+    LD=*)
+      LD=`echo $1 | sed -e 's/^LD=//'`
+      ;;
     LDFLAGS=*)
       LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
+      ;;
+    AR=*)
+      AR=`echo $1 | sed -e 's/^AR=//'`
+      ;;
+    ARFLAGS=*)
+      ARFLAGS=`echo $1 | sed -e 's/^ARFLAGS=//'`
+      ;;
+    RANLIB=*)
+      RANLIB=`echo $1 | sed -e 's/^RANLIB=//'`
       ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
@@ -295,9 +307,14 @@ if [ "$help" = "yes" ]; then
   echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
+  echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   additional C preprocessor flags ($CPPFLAGS)"
   echo "  CFLAGS=<C compiler flags>         additional C compiler flags ($CFLAGS)"
+  echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags ($LDFLAGS)"
+  echo "  AR=<archiver>                     archiver"
+  echo "  ARFLAGS=<archiver flgs>           archiver flags"
+  echo "  RANLIB=<archive indexer>          archive indexer"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -402,7 +419,11 @@ cat > $w/c/Mf-config << END
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
+LD=$LD
 LDFLAGS=$LDFLAGS
 LIBCURSES=$LIBCURSES
 LIBNCURSES=$LIBNCURSES
+AR=$AR
+ARFLAGS=$ARFLAGS
+RANLIB=$RANLIB
 END

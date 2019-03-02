@@ -21,10 +21,11 @@ o = obj
 mdobj=windows.$o
 mdsrc=windows.c Makefile.$m cs.ico scheme.rc make.bat
 mdclean=vs.bat make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
+cross=f
 
 include Mf-base
 
-${Scheme}: make.bat
+${Scheme}${cross:f=}: make.bat
 	cmd.exe /c make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe
 	cp ../bin/$m/scheme.pdb ../bin/$m/petite.pdb
@@ -34,3 +35,20 @@ make.bat: vs.bat
 	echo 'set MAKEFLAGS=' >> $@
 	echo 'vs.bat amd64 && nmake /f Makefile.$m /nologo %*' >> $@
 	chmod +x $@
+
+# --------------------------------------------------
+# For cross-compilation, triggered by setting cross=t
+
+C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
+
+${Scheme}${cross:t=}: ${Kernel} ${Main}
+	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lRpcrt4 -luuid
+
+.c.$o:
+	$C -c -D${Cpu} -I${Include} -I../zlib $*.c
+
+${Kernel}: ${kernelobj} ../zlib/libz.a
+	$(LD) -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
+
+../zlib/configure.log:
+	(cd ../zlib; env CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" ./configure --uname=CYGWIN)

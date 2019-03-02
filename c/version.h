@@ -199,11 +199,17 @@ typedef int tputsputcchar;
 #define USE_VIRTUAL_ALLOC
 #define NAN_INCLUDE <math.h>
 #define MAKE_NAN(x) { x = sqrt(-1.0); }
-#define PATH_MAX _MAX_PATH
+#ifndef PATH_MAX
+# define PATH_MAX _MAX_PATH
+#endif
 typedef char *memcpy_t;
-#define _setjmp setjmp
-#define _longjmp longjmp
+#ifndef __MINGW32__
+# define _setjmp setjmp
+# define _longjmp longjmp
+#endif
+#ifndef __MINGW32__
 #define ftruncate _chsize_s
+#endif
 #define LOCK_SH 1
 #define LOCK_EX 2
 #define LOCK_NB 4

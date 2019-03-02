@@ -349,11 +349,24 @@ typedef struct {
 #define tc_mutex_release() {}
 #endif
 
+#ifdef __MINGW32__
+/* With MinGW on 64-bit Windows, setjmp/longjmp is not reliable. Using
+   __builtin_setjmp/__builtin_longjmp is reliable, but
+   __builtin_longjmp requires 1 as its second argument. So, allocate
+   room in the buffer for a return value. Using 16 bytes of extra
+   room should preserves any relavant alignment. */
+# define JMPBUF_RET(jb) (*(int *)((char *)(jb)+sizeof(jmp_buf)))
+# define CREATEJMPBUF() malloc(sizeof(jmp_buf)+16)
+# define FREEJMPBUF(jb) free(jb)
+# define SETJMP(jb) (JMPBUF_RET(jb) = 0, __builtin_setjmp(jb), JMPBUF_RET(jb))
+# define LONGJMP(jb,n) (JMPBUF_RET(jb) = n, __builtin_longjmp(jb, 1))
+#else
 /* assuming malloc will give us required alignment */
-#define CREATEJMPBUF() malloc(sizeof(jmp_buf))
-#define FREEJMPBUF(jb) free(jb)
-#define SETJMP(jb) _setjmp(jb)
-#define LONGJMP(jb,n) _longjmp(jb, n)
+# define CREATEJMPBUF() malloc(sizeof(jmp_buf))
+# define FREEJMPBUF(jb) free(jb)
+# define SETJMP(jb) _setjmp(jb)
+# define LONGJMP(jb,n) _longjmp(jb, n)
+#endif
 
 #define DOUNDERFLOW\
  &CODEIT(CLOSCODE(S_lookup_library_entry(library_dounderflow, 1)),size_rp_header)

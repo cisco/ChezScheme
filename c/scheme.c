@@ -389,7 +389,7 @@ void S_generic_invoke(tc, code) ptr tc; ptr code; {
     hdr.env = (I32)0;
     p = (ugly)((I32)&hdr + 2);
     p(tc);
-#elif defined(WIN32)
+#elif defined(WIN32) && !defined(__MINGW32__)
     __try {
       (*((void (*) PROTO((ptr)))(void *)&CODEIT(code,0)))(tc);
     }
