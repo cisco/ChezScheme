@@ -245,6 +245,10 @@ typedef char *memcpy_t;
 #define NSECMTIME(sb) 0
 #define ICONV_INBUF_TYPE char **
 #define UNUSED
+#if defined(__MINGW32__) && (machine_type == machine_type_ti3nt || machine_type == machine_type_i3nt)
+#define time_t __time64_t
+#define time _time64
+#endif
 #endif
 
 #if (machine_type == machine_type_i3ob || machine_type == machine_type_ti3ob || machine_type == machine_type_a6ob || machine_type == machine_type_ta6ob)
