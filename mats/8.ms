@@ -10871,6 +10871,39 @@
       (load-library "testfile-li3.so")
       (library-object-filename '(testfile-li3)))
     "testfile-li3.so")
+  (begin
+    (define (test-library-info file)
+      (separate-eval
+       `(load-library ,file)
+       ;; no import here
+       '(begin
+          (define (show f)
+            (guard (e [else (display-condition e) (newline)])
+              (pretty-print (f '(testfile-li3)))))
+          (show library-object-filename)
+          (show library-requirements)
+          (show library-version)
+          (show library-exports))
+       ;; now import
+       '(import (testfile-li3))
+       '(show library-exports)))
+    #t)
+  (equal?
+   (test-library-info "testfile-li3.ss")
+   (string-append
+    "#f\n"
+    "((rnrs (6)))\n"
+    "()\n"
+    "(x)\n"
+    "(x)\n"))
+  (equal?
+   (test-library-info "testfile-li3.so")
+   (string-append
+    "\"testfile-li3.so\"\n"
+    "((rnrs (6)))\n"
+    "()\n"
+    "(x)\n"
+    "(x)\n"))
 )
 
 (mat rnrs-eval

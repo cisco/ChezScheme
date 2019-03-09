@@ -38,13 +38,14 @@
 (define-record-type library/ct-info
   (parent library-info)
   (fields
+    (immutable interface-binding)
     ; NB: include-req* should go away with new recompile support that uses recompile-info
     (immutable include-req*)
     (immutable import-req*)
     (immutable visit-visit-req*)
     (immutable visit-req*)
     (immutable clo*))
-  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-3})
+  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-4})
   (sealed #t))
 
 (define-record-type library/rt-info

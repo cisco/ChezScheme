@@ -1321,6 +1321,7 @@
                                  (library-info-path info)
                                  (library-info-version info)
                                  (library-info-uid info)
+                                 (library/ct-info-interface-binding info)
                                  (library/ct-info-include-req* info)
                                  (library/ct-info-import-req* info)
                                  (library/ct-info-visit-visit-req* info)

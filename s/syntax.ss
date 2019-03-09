@@ -2351,6 +2351,7 @@
 
 (define-record-type ctdesc
   (fields
+    (immutable interface-binding) ; interface binding from chi-top-library
     (immutable include-req*)      ; libraries included when this library was compiled
     (immutable import-req*)       ; libraries imported when this library was imported
     (immutable visit-visit-req*)  ; libraries that must be visited (for meta definitions) when this library is visited
@@ -2361,7 +2362,7 @@
     (mutable export-id*)          ; ids that need to be reset when visit-code raises an exception
     (mutable import-code)
     (mutable visit-code))
-  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-2})
+  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-3})
   (sealed #t))
 
 (define-record-type rtdesc
@@ -2375,7 +2376,7 @@
 (module (libdesc-import-req* libdesc-include-req* libdesc-visit-visit-req* libdesc-visit-req*
          libdesc-loaded-import-reqs libdesc-loaded-import-reqs-set!
          libdesc-loaded-visit-reqs libdesc-loaded-visit-reqs-set!
-         libdesc-import-code libdesc-import-code-set!
+         libdesc-interface-binding libdesc-import-code libdesc-import-code-set!
          libdesc-visit-code libdesc-visit-code-set!
          libdesc-visit-id* libdesc-visit-id*-set!
          libdesc-clo* libdesc-clo*-set!)
@@ -2407,6 +2408,9 @@
   (define libdesc-loaded-visit-reqs-set!
     (lambda (desc x)
       (ctdesc-loaded-visit-reqs-set! (get-ctdesc desc) x)))
+  (define libdesc-interface-binding
+    (lambda (desc)
+      (ctdesc-interface-binding (get-ctdesc desc))))
   (define libdesc-import-code
     (lambda (desc)
       (ctdesc-import-code (get-ctdesc desc))))
@@ -2642,7 +2646,7 @@
                         (install-library library-path library-uid
                          ; import-code & visit-code is #f because vthunk invocation has already set up compile-time environment
                           (make-libdesc library-path library-version outfn #f
-                            (make-ctdesc include-req* import-req* visit-visit-req* visit-req* '() #t #t '() #f #f)
+                            (make-ctdesc interface-binding include-req* import-req* visit-visit-req* visit-req* '() #t #t '() #f #f)
                             (make-rtdesc invoke-req* #t
                               (top-level-eval-hook
                                 (build-lambda no-source '()
@@ -2666,6 +2670,7 @@
                                build-void
                                (lambda ()
                                  (make-library/ct-info library-path library-version library-uid
+                                   interface-binding
                                    include-req* import-req* visit-visit-req* visit-req*
                                    (fold-left (lambda (clo* dl db)
                                                 (if dl
@@ -2690,13 +2695,13 @@
                                                       ls)))
                                      '() env*)
                                    ; setup code
-                                   `(,(build-cte-install bound-id (build-data no-source interface-binding) '*system*)
-                                      ,@(if (null? env*)
-                                            '()
-                                            `(,(build-sequence no-source
-                                                 (map (lambda (x)
-                                                        (build-cte-install (car x) (build-data no-source (cdr x)) #f))
-                                                   env*)))))
+                                   ;; import-library installs the interface-binding
+                                   (if (null? env*)
+                                       '()
+                                       `(,(build-sequence no-source
+                                            (map (lambda (x)
+                                                   (build-cte-install (car x) (build-data no-source (cdr x)) #f))
+                                              env*))))
                                    ; visit code
                                    vcode*)))))))))
                 (let ([mb (car mb*)] [mb* (cdr mb*)])
@@ -5027,10 +5032,15 @@
 
     (set-who! library-exports
       (lambda (libref)
-        (let* ([binding (lookup-global (get-lib who libref))]
-               [iface (get-indirect-interface (binding-value binding))])
-          (unless (and (eq? (binding-type binding) '$module) (interface? iface))
-            ($oops who "unexpected binding ~s" binding))
+        (let* ([label (get-lib who libref)]
+               [ctdesc (libdesc-ctdesc (get-library-descriptor label))]
+               [interface-binding (and ctdesc (ctdesc-interface-binding ctdesc))]
+               [iface
+                (and (pair? interface-binding)
+                     (eq? (binding-type interface-binding) '$module)
+                     (get-indirect-interface (binding-value interface-binding)))])
+          (unless (interface? iface)
+            ($oops who "no compile-time information for library ~s" libref))
           (let* ([exports (interface-exports iface)]
                  [n (vector-length exports)])
             (let loop ([i 0] [ls '()])
@@ -5158,6 +5168,7 @@
                     (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
                     ($install-library-clo-info (libdesc-clo* desc))
                     (libdesc-clo*-set! desc '())
+                    ($sc-put-cte uid (libdesc-interface-binding desc) '*system*)
                     (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
   
@@ -5431,6 +5442,7 @@
           ($oops #f "attempting to re-install compile-time part of library ~s" (library-info-path linfo/ct))))
       (install-library/ct-desc (library-info-path linfo/ct) (library-info-version linfo/ct) uid ofn
         (make-ctdesc
+          (library/ct-info-interface-binding linfo/ct)
           (library/ct-info-include-req* linfo/ct)
           (library/ct-info-import-req* linfo/ct)
           (library/ct-info-visit-visit-req* linfo/ct)
@@ -5525,7 +5537,7 @@
     (lambda (path uid)
       (install-library path uid
         (make-libdesc path (if (eq? (car path) 'rnrs) '(6) '()) #f #t
-          (make-ctdesc '() '() '() '() '() #t #t '() #f #f)
+          (make-ctdesc (get-global-definition-hook uid) '() '() '() '() '() #t #t '() #f #f)
           (make-rtdesc '() #t #f)))))
   (set! $make-base-modules
     (lambda ()
