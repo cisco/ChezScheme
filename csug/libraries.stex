@@ -469,7 +469,7 @@ as follows.
 \begin{description}
 \item[\scheme{\var{library-spec}}:]
 all exports of the library identified by the Revised$^6$ Report \var{library-spec}
-(Chapter~\ref{TSPL:CHPTLIBRARIES}.
+(Chapter~\ref{TSPL:CHPTLIBRARIES}).
 
 \item[\scheme{\var{module-name}}:]
 all exports of module named by the identifier \var{module-name}
@@ -997,6 +997,51 @@ When the new parameter \scheme{import-notify} is set to a true value,
 \scheme{import} displays messages to the console-output port as it
 searches for the file containing each library it needs to load.
 The default value of this parameter is \scheme{#f}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{library-search-handler}{\categorythreadparameter}{library-search-handler}
+\listlibraries
+\endentryheader
+
+The value of parameter must be a procedure that follows the protocol described
+below for \scheme{default-library-search-handler}, which is the default value
+of this parameter.
+
+The value of this parameter is invoked to locate the source or object code for
+a library during \scheme{import}, \scheme{compile-whole-program}, or
+\scheme{compile-whole-library}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{default-library-search-handler}{\categoryprocedure}{(default-library-search-handler \var{who} \var{library} \var{directories} \var{extensions})}
+\returns see below
+\listlibraries
+\endentryheader
+
+This procedure is the default value of the \scheme{library-search-handler},
+which is
+called to locate the source or object code for a library
+during \scheme{import},
+\scheme{compile-whole-program}, or \scheme{compile-whole-library}.
+\var{who} is a symbol that provides context in \scheme{import-notify} messages.
+\var{library} is the name of the desired library.
+\var{directories} is a list of source and object directory pairs in
+the form returned by \scheme{library-directories}.
+\var{extensions} is a list of source and object extension pairs in the form
+returned by \scheme{library-extensions}.
+
+This procedure searches the specified directories until it finds a library source or
+object file with one of the specified extensions.
+If it finds the source file first, it constructs the corresponding
+object file path and checks whether the file exists.
+If it finds the object file first, the procedure looks for a corresponding
+source file with one of the given source extensions in a source directory paired
+with that object directory.
+The procedure returns three values:
+the file-system path of the library source file or \scheme{#f} if not found,
+the file-system path of the corresponding object file, which may be \scheme{#f},
+and a boolean that is true if the object file exists.
 
 \section{Library Inspection\label{SECTLIBRARYINSPECTION}}
 

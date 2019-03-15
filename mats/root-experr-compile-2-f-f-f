@@ -8380,6 +8380,13 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl2.ss did not define library (testfile-ewl2)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.ss did not define library (testfile-ewl6)".
 8.mo:Expected error in mat library-directories: "library (testfile-ld1) not found".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: "not-symbol" is not a symbol".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid library name bad-library-name".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid path list (("invalid" "path" "list"))".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid extension list (("bad") ("extensions"))".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: returned invalid source-file path (bad source path)".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: returned invalid object-file path (bad object path)".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: claimed object file was found but returned no object-file path".
 8.mo:Expected error in mat top-level-program: "invalid syntax (if (inc 3)) at line 4, char 1 of testfile.ss".
 8.mo:Expected error in mat top-level-program: "compiled program requires different compilation instance of (testfile-tlp1) from one already loaded".
 8.mo:Expected error in mat top-level-program: "read: #<n>(...) vector syntax is not allowed in #!r6rs mode at line 4, char 19 of testfile-tlp1.ss".
