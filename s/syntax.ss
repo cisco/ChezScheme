@@ -4693,6 +4693,17 @@
 
   (define library-search
     (lambda (who path dir* all-ext*)
+      (let-values ([(src-path obj-path obj-exists?) ((library-search-handler) who path dir* all-ext*)])
+        (unless (or (not src-path) (string? src-path))
+          ($oops 'library-search-handler "returned invalid source-file path ~s" src-path))
+        (unless (or (not obj-path) (string? obj-path))
+          ($oops 'library-search-handler "returned invalid object-file path ~s" obj-path))
+        (when (and obj-exists? (not obj-path))
+          ($oops 'library-search-handler "claimed object file was found but returned no object-file path"))
+        (values src-path obj-path obj-exists?))))
+
+  (define internal-library-search
+    (lambda (who path dir* all-ext*)
       (define-syntax with-message
         (syntax-rules ()
           [(_ msg e1 e2 ...)
@@ -4995,6 +5006,24 @@
   (set! $library-search
     (lambda (who path dir* all-ext*)
       (library-search who path dir* all-ext*)))
+
+  (set-who! default-library-search-handler
+    (lambda (caller path dir* all-ext*)
+      (define (string-pair? x) (and (pair? x) (string? (car x)) (string? (cdr x))))
+      (unless (symbol? caller) ($oops who "~s is not a symbol" caller))
+      (guard (c [else ($oops who "invalid library name ~s" path)])
+        (unless (list? path) (raise #f))
+        (let-values ([(path version uid) (create-library-uid path)])
+          (void)))
+      (unless (and (list? dir*) (andmap string-pair? dir*))
+        ($oops who "invalid path list ~s" dir*))
+      (unless (and (list? all-ext*) (andmap string-pair? all-ext*))
+        ($oops who "invalid extension list ~s" all-ext*))
+      (internal-library-search caller path dir* all-ext*)))
+
+  (set-who! library-search-handler
+    ($make-thread-parameter default-library-search-handler
+      (lambda (x) (unless (procedure? x) ($oops who "~s is not a procedure" x)) x)))
 
   (set! library-list
     (lambda ()
@@ -5400,7 +5429,7 @@
           (cond
             [(string? x) (parse-string x (library-extensions) default-obj-ext)]
             [(list? x) (parse-list who x default-obj-ext)]
-            [else ($oops who "invalid path list ~s" x)]))))))
+            [else ($oops who "invalid extension list ~s" x)]))))))
 
 (set! $install-program-desc
   (lambda (pinfo)
