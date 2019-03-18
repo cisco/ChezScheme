@@ -1251,3 +1251,6 @@
   embed git revision in exported source archives
     bintar/Makefile Mf-install.in wininstall/*nt.wxs
     s/Mf-base s/.gitattributes s/update-revision
+- ignore multiple-value return from interleaved init expressions in
+  top-level-program
+    syntax.ss, 8.ms
