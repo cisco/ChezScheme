@@ -58,7 +58,7 @@ $(R)/examples: $(R)
 
 $(R)/boot: $(R)
 	mkdir -p $(R)/boot/$(m)
-	( cd $(R)/boot/$(m) ; ln -s ../../../../boot/$(m)/{scheme.h,petite.boot,scheme.boot} . )
+	( cd $(R)/boot/$(m) ; ln -s ../../../../boot/$(m)/{scheme.h,petite.boot,scheme.boot,revision} . )
 	case $(m) in \
           *nt) \
             ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{csv953md.lib,csv953mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) \

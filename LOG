@@ -1247,3 +1247,7 @@
     newrelease pkg/Makefile release_notes.stex
 - update Windows spin-loop count for deleting files and directories
     windows.c
+- install a file containing revision information alongside boot files;
+  embed git revision in exported source archives
+    bintar/Makefile Mf-install.in wininstall/*nt.wxs
+    s/Mf-base s/.gitattributes s/update-revision
