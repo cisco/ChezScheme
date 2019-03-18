@@ -42,7 +42,7 @@ make.bat: vs.bat
 C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
 
 ${Scheme}${cross:t=}: ${Kernel} ${Main}
-	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lRpcrt4 -luuid
+	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
 
 .c.$o:
 	$C -c -D${Cpu} -I${Include} -I../zlib $*.c
