@@ -63,6 +63,9 @@
         <Component Id="cmp9E232A9AA21470428B81018123E55809" Guid="*">
           <File Id="fil643F2D7723E96BCA16E8A65804C66B4F" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\scheme.res" />
         </Component>
+        <Component Id="cmp5DCEF420C17742FE89FA4E1EDF6D52D0" Guid="*">
+          <File Id="filBE648AB0CC9C49A7BF6AB7F900EDAC2E" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\revision" />
+        </Component>
       </Directory>
     </DirectoryRef>
     <ComponentGroup Id="ta6nt">
@@ -82,6 +85,7 @@
       <ComponentRef Id="cmpA90C68A50E044FA5FC0FB07B663F6C90" />
       <ComponentRef Id="cmp36B1E9BFDE0DFCA8D1E65BBDAD82CE06" />
       <ComponentRef Id="cmp9E232A9AA21470428B81018123E55809" />
+      <ComponentRef Id="cmp5DCEF420C17742FE89FA4E1EDF6D52D0" />
     </ComponentGroup>
   </Fragment>
 </Wix>

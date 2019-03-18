@@ -63,6 +63,9 @@
         <Component Id="cmpDEDEC747F47B5ED89E854DCF25F0E14F" Guid="*">
           <File Id="filB7A76F46E9B4F0F7F7B74FEE339025B9" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\scheme.res" />
         </Component>
+        <Component Id="cmp3655144F524A4B35BDF8405560CEAB33" Guid="*">
+          <File Id="fil82E8648E5FB0461EAE31540CE784B2FF" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\revision" />
+        </Component>
       </Directory>
     </DirectoryRef>
   </Fragment>
@@ -84,6 +87,7 @@
       <ComponentRef Id="cmp31F220BF3C0B1F0A17C5C676A56112E2" />
       <ComponentRef Id="cmp8689231D780F12557A0906BBB4BDDC2C" />
       <ComponentRef Id="cmpDEDEC747F47B5ED89E854DCF25F0E14F" />
+      <ComponentRef Id="cmp3655144F524A4B35BDF8405560CEAB33" />
     </ComponentGroup>
   </Fragment>
 </Wix>

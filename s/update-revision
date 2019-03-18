@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ -d ../../.git ]; then
+  git describe --always --exclude='*' --abbrev=40 --dirty
+  echo 'git'
+elif [ -d ../../.hg ]; then
+  DIRTY="$(hg status -n --color never --pager never | head -1)"
+  hg log --limit 1 --template '{node}' --pager never
+  if [ -n "${DIRTY}" ]; then
+    echo '-dirty'
+  else
+    echo ''
+  fi
+  echo 'hg'
+elif [ -f ../../.hg_archival.txt ]; then
+  # hg archive and hgweb embed this file by default (see .hgrc archivemeta)
+  sed -n 's/^node: \(.*\)/\1/p' < ../../.hg_archival.txt
+  echo 'hg'
+else
+  # use export-subst git attribute to populate revision for git archive
+  echo '$Format:%H$'
+  echo 'git'
+fi
