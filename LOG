@@ -1087,7 +1087,7 @@
 - generated Mf-install InstallBin (InstallLib, InstallMan) now
   correctly indirects through InstallPrefix if the --installbin
   (--installlib, --installman) configure flag is not present.
-    src/configure
+    configure
 - removed definition of generate-procedure-source-information
     patch.ss
 - guardian tconc cells are now allocated in generation 0 in the hope
@@ -1187,3 +1187,14 @@
     compile.ss,
     7.ms,
     root-experr*, patch*
+- fixed failure to install examples for tarball installs
+    Mf-install.in
+- improved packaging support:
+  replaced bintar script with bintar directory and make file;
+  tarballs are created via "make create-tarball" and are placed in
+  the workarea's bintar directory.  added rpm directory and make
+  file for creating RPMs via "make create-rpm".  added pkg directory
+  and make file for creating OSX packages via "make create-pkg".
+    bintar (removed), bintar/Makefile (new), rpm/Makefile (new),
+    pkg/Makefile (new), pkg/rmpkg (new), workarea, checkin, newrelease,
+    Makefile.in, Makefile-workarea.in.

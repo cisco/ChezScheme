@@ -75,9 +75,17 @@ if ($status != 0) exit 1
 
 cd $W
 
-/bin/rm -f bintar
-sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../bintar > bintar
-set updatedfiles = ($updatedfiles bintar)
+/bin/rm bintar/Makefile
+sed -e "s/^v = .*/v = $R/" ../bintar/Makefile > bintar/Makefile
+set updatedfiles = ($updatedfiles bintar/Makefile)
+
+/bin/rm rpm/Makefile
+sed -e "s/^v = .*/v = $R/" ../rpm/Makefile > rpm/Makefile
+set updatedfiles = ($updatedfiles rpm/Makefile)
+
+/bin/rm pkg/Makefile
+sed -e "s/^v = .*/v = $R/" ../pkg/Makefile > pkg/Makefile
+set updatedfiles = ($updatedfiles pkg/Makefile)
 
 /bin/rm -f BUILDING
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
