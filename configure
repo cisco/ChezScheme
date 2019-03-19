@@ -42,7 +42,12 @@ disablecurses=no
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
+: ${LD:="ld"}
 : ${LDFLAGS:=""}
+: ${AR:="ar"}
+: ${ARFLAGS:="ruv"}
+: ${RANLIB:="ranlib"}
+: ${WINDRES:="windres"}
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -232,6 +237,9 @@ while [ $# != 0 ] ; do
     RANLIB=*)
       RANLIB=`echo $1 | sed -e 's/^RANLIB=//'`
       ;;
+    WINDRES=*)
+      WINDRES=`echo $1 | sed -e 's/^WINDRES=//'`
+      ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
       exit 1
@@ -315,6 +323,7 @@ if [ "$help" = "yes" ]; then
   echo "  AR=<archiver>                     archiver"
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
+  echo "  WINDRES=<resource compiler>       resource compiler"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -426,4 +435,5 @@ LIBNCURSES=$LIBNCURSES
 AR=$AR
 ARFLAGS=$ARFLAGS
 RANLIB=$RANLIB
+WINDRES=$WINDRES
 END

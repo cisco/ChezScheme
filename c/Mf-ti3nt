@@ -51,4 +51,6 @@ ${Kernel}: ${kernelobj} ../zlib/libz.a
 	$(LD) -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
 
 ../zlib/configure.log:
-	(cd ../zlib; env CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" ./configure --uname=CYGWIN)
+	echo "all:" >> ../zlib/Makefile
+	echo '\t$$(MAKE) -f win32/Makefile.gcc CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" RC="$(WINDRES)"' >> ../zlib/Makefile
+	touch ../zlib/configure.log
