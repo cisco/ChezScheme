@@ -33,10 +33,22 @@ test: build
 bootfiles: build
 	$(MAKE) -f Mf-boot
 
+create-bintar: build
+	(cd bintar && $(MAKE))
+
+create-rpm: create-bintar
+	(cd rpm && $(MAKE))
+
+create-pkg: create-bintar
+	(cd pkg && $(MAKE))
+
 clean:
 	rm -f petite.1 scheme.1
 	(cd s ; $(MAKE) clean)
 	(cd c ; $(MAKE) clean)
 	(cd mats ; $(MAKE) clean)
 	(cd examples ; $(MAKE) clean)
+	(cd bintar ; $(MAKE) clean)
+	(cd rpm ; $(MAKE) clean)
+	(cd pkg ; $(MAKE) clean)
 	rm -f Make.out

@@ -1,0 +1,37 @@
+#! /bin/csh -f
+
+# rmpkg
+# Copyright 1984-2017 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if ( $#argv != 1) then
+  echo "Usage: sudo $0 release"
+  echo "  e.g.,: sudo $0 8.4"
+  exit 1
+endif
+
+if ( `id -u` != 0 ) then
+    echo "$0 must be run as root (e.g., via sudo)"
+    exit 1
+endif
+
+set R = $1
+
+if (!(-e /usr/local/lib/csv$R)) then
+  echo "(Petite) Chez Scheme Version $R doesn't appear to be installed"
+  exit
+endif
+
+/bin/rm -rf /usr/local/bin/petite /usr/local/bin/scheme /usr/local/bin/scheme-script /usr/local/lib/csv$R /usr/local/share/man/man1/petite.1.gz /usr/local/share/man/man1/scheme.1.gz
+pkgutil --forget chezscheme

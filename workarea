@@ -237,6 +237,16 @@ case $M in
     ;;
 esac
 
+workdir $W/bintar
+(cd $W/bintar; workln ../../bintar/Makefile Makefile)
+
+workdir $W/rpm
+(cd $W/rpm; workln ../../rpm/Makefile Makefile)
+
+workdir $W/pkg
+(cd $W/pkg; workln ../../pkg/Makefile Makefile)
+(cd $W/pkg; workln ../../pkg/rmpkg rmpkg)
+
 (cd $W; workln ../LOG LOG)
 (cd $W; forceworkln2 ../nanopass nanopass)
 (cd $W; workln ../makefiles/installsh installsh)

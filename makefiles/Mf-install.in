@@ -126,7 +126,7 @@ maninstall: scheme.1 petite.1 ${Man}
 	if [ ${GzipManPages} = yes ] ; then gzip -f ${Man}/${InstallPetiteName}.1 ; fi
 
 liblibinstall: ${LibExamples}
-	$I -m 444 ../examples/* ${LibExamples}
+	$I -m 444 examples/* ${LibExamples}
 
 ${Lib}:
 	$I -d -m 755 ${Lib}
