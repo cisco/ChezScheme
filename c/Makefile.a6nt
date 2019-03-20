@@ -28,7 +28,7 @@ MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
 DLLLDFLAGS=/debug:full /machine:X64 /nologo
@@ -37,27 +37,29 @@ DLLLDFLAGS=/debug:full /machine:X64 /nologo
 EXELDFLAGS=/debug:full /machine:X64 /incremental:no /nologo /STACK:0x1000000
 
 # use following flags for debugging
-# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 # MDCFLAGS=$(CFLAGS) /MDd
 # MTCFLAGS=$(CFLAGS) /MTd
 
 SystemLib=rpcrt4.lib ole32.lib advapi32.lib User32.lib
 MDZlibLib=..\zlib\zlib.lib
 MTZlibLib=..\zlib\zlibmt.lib
+MDLZ4Lib=..\lz4\lib\liblz4.lib
+MTLZ4Lib=..\lz4\lib\liblz4mt.lib
 
 csrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-oce.c gc-ocd.c\
  number.c schsig.c io.c new-io.c print.c fasl.c vfasl.c stats.c\
  foreign.c prim.c prim5.c flushcache.c\
  windows.c\
- schlib.c thread.c expeditor.c scheme.c
+ schlib.c thread.c expeditor.c scheme.c compress.c
 
 cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-oce.obj gc-ocd.obj\
  number.obj schsig.obj io.obj new-io.obj print.obj fasl.obj vfasl.obj stats.obj\
  foreign.obj prim.obj prim5.obj flushcache.obj\
  windows.obj\
- schlib.obj thread.obj expeditor.obj scheme.obj
+ schlib.obj thread.obj expeditor.obj scheme.obj compress.obj
 
-hsrc=system.h types.h version.h globals.h externs.h segment.h gc.c thread.h sort.h itest.c
+hsrc=system.h types.h version.h globals.h externs.h compress.h segment.h gc.c thread.h sort.h itest.c
 
 .SUFFIXES:
 
@@ -66,13 +68,14 @@ all: $(Exec) $(MTKernelLib) $(MDKernelLib) $(MTMain)
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(hsrc)
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeInclude)/scheme.h
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ..\zlib/zconf.h ..\zlib/zlib.h
+$(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame.h
 
-$(MTKernelLib): $(csrc) $(MTZlibLib)
+$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
 	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib)
 
-$(MDKernelLib): $(csrc) $(MDZlibLib)
+$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
 	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib)
@@ -86,11 +89,11 @@ $(KernelDll): $(KernelLib)
 # conflicts with other dlls.  use 'depends <exefile>' to check.
 # we no longer attempt to rebase other the CRT dll since it
 # has already been signed.
-$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib)
+$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(KernelLib)
 	-del /f $(KernelDll)
 	cl /c $(MDCFLAGS) $(csrc)
-	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(SystemLib)
+	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
 	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
 
 $(MTMain): main.c
@@ -129,6 +132,18 @@ mdscheme.exe: $(ResFile) $(MDMain) $(MDKernelLib)
 	nmake /nologo -f win32/Makefile.msc clean
 	nmake /nologo -f win32/Makefile.msc AR="link /lib"
 	cd ../c
+
+$(MDLZ4Lib) $(MTLZ4Lib): ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c ../lz4/lib/lz4hc.c
+        cl /c /Fo../lz4/lib/lz4.obj $(MDCFLAGS) ../lz4/lib/lz4.c
+        cl /c /Fo../lz4/lib/lz4frame.obj $(MDCFLAGS) ../lz4/lib/lz4frame.c
+        cl /c /Fo../lz4/lib/lz4hc.obj $(MDCFLAGS) ../lz4/lib/lz4hc.c
+        cl /c /Fo../lz4/lib/xxhash.obj $(MDCFLAGS) ../lz4/lib/xxhash.c
+        lib /OUT:$(MDLZ4Lib) ../lz4/lib/lz4.obj ../lz4/lib/lz4frame.obj ../lz4/lib/lz4hc.obj ../lz4/lib/xxhash.obj
+        cl /c /Fo../lz4/lib/lz4mt.obj $(MTCFLAGS) ../lz4/lib/lz4.c
+        cl /c /Fo../lz4/lib/lz4framemt.obj $(MTCFLAGS) ../lz4/lib/lz4frame.c
+        cl /c /Fo../lz4/lib/lz4hcmt.obj $(MTCFLAGS) ../lz4/lib/lz4hc.c
+        cl /c /Fo../lz4/lib/xxhashmt.obj $(MTCFLAGS) ../lz4/lib/xxhash.c
+        lib /OUT:$(MTLZ4Lib) ../lz4/lib/lz4mt.obj ../lz4/lib/lz4framemt.obj ../lz4/lib/lz4hcmt.obj ../lz4/lib/xxhashmt.obj
 
 clean:
 	-del /f $(cobj) main.obj $(KernelExp)

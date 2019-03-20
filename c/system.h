@@ -28,7 +28,7 @@
 
 #include "version.h"
 #include <stdio.h>
-#include "zlib.h"
+#include "compress.h"
 #include <stddef.h>
 
 #include "thread.h"

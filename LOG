@@ -1249,3 +1249,10 @@
     compile.ss
 - minor build and new-release updates
     checkin, newrelease, Makefile.in, Makefile-workarea.in
+- change the default compression mode to LZ4 and add a compress-format 
+  parameter to select a compression format for output; input infers the
+  compression format
+    io.ss, bytevector.ss, back.ss, primdata.ss,
+    compress.c (new), new-io.c, fasl.c, scheme.c, compress.h (new),
+    externs.h, system.h, expeditor.c, configure, Mf-*, Makefile.*nt,
+    workarea, mat.ss, io.ms, io.stex, objects.stex, release_notes.stex

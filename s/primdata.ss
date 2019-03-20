@@ -926,6 +926,7 @@
   (compile-library-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (compile-profile [sig [() -> (ptr)] [(ptr) -> (void)]] [flags unrestricted])
   (compile-program-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (compress-format [sig [() -> (symbol)] [(symbol) -> (void)]] [flags])
   (console-error-port [sig [() -> (textual-output-port)] [(textual-output-port) -> (void)]] [flags])
   (console-input-port [sig [() -> (textual-input-port)] [(textual-input-port) -> (void)]] [flags])
   (console-output-port [sig [() -> (textual-output-port)] [(textual-output-port) -> (void)]] [flags])

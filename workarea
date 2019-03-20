@@ -172,6 +172,12 @@ for dir in `echo zlib` ; do
   fi
 done
 
+for dir in `echo lz4` ; do
+  if [ ! -e $W/$dir ] ; then
+    /bin/cp -R $dir $W/$dir
+  fi
+done
+
 workdir $W/boot
 workdir $W/boot/$M
 (cd $W/boot/$M; workln ../../../boot/$M/scheme.h scheme.h)

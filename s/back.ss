@@ -162,6 +162,14 @@
       (unless (procedure? x) ($oops who "~s is not a procedure" x))
       x)))
 
+(define-who compress-format
+  ($make-thread-parameter
+    'lz4
+    (lambda (x)
+      (unless (or (eq? x 'lz4) (eq? x 'gzip))
+        ($oops who "~s is not a supported format" x))
+      x)))
+
 (define-who debug-level
   ($make-thread-parameter
     1

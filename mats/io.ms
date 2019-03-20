@@ -2127,6 +2127,7 @@
 )
 
 (mat compression
+  (parameters [compress-format 'gzip] [compress-format 'lz4])
   (let ()
     (define cp
       (lambda (src dst)
@@ -3071,6 +3072,7 @@
 )
 
 (mat compression-textual
+  (parameters [compress-format 'gzip] [compress-format 'lz4])
   (let ()
     (define cp
       (lambda (src dst)
