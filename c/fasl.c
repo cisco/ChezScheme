@@ -195,7 +195,7 @@ typedef struct unbufFaslFileObj {
   ptr path;
   INT type;
   INT fd;
-  gzFile file;
+  glzFile file;
 } *unbufFaslFile;
 
 typedef struct faslFileObj {
@@ -317,7 +317,7 @@ ptr S_bv_fasl_read(ptr bv, ptr path) {
   return x;
 }
 
-ptr S_boot_read(gzFile file, const char *path) {
+ptr S_boot_read(glzFile file, const char *path) {
   ptr tc = get_thread_context();
   struct unbufFaslFileObj uffo;
 
@@ -346,14 +346,14 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
 
     switch (uf->type) {
       case UFFO_TYPE_GZ:
-        k = gzread(uf->file, s, (GZ_IO_SIZE_T)nx);
+        k = glzread(uf->file, s, (GZ_IO_SIZE_T)nx);
         if (k > 0)
           n -= k;
         else if (k == 0)
           return -1;
         else {
-          gzerror(uf->file, &errnum);
-          gzclearerr(uf->file);
+          glzerror(uf->file, &errnum);
+          glzclearerr(uf->file);
           if (errnum != Z_ERRNO || errno != EINTR)
             S_error1("", "error reading from ~a", uf->path);
         }
@@ -370,6 +370,8 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
       default:
         return -1;
     }
+
+    s += k;
   }
   return 0;
 }

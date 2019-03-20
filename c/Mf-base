@@ -24,11 +24,11 @@ Scheme=../bin/$m/scheme
 
 kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-oce.c\
  number.c schsig.c io.c new-io.c print.c fasl.c stats.c foreign.c prim.c prim5.c flushcache.c\
- schlib.c thread.c expeditor.c scheme.c
+ schlib.c thread.c expeditor.c scheme.c compress.c
 
 kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
 
-kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h itest.c 
+kernelhdr=system.h types.h version.h globals.h externs.h segment.h gc.c sort.h thread.h config.h compress.h itest.c 
 
 mainsrc=main.c
 
@@ -51,16 +51,20 @@ endif
 
 scheme.o: itest.c
 scheme.o main.o: config.h
-${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h
+${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h compress.h
 ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
-${kernelobj}: ../zlib/zconf.h ../zlib/zlib.h
+${kernelobj}: ${zlibHeaderDep} ${LZ4HeaderDep}
 gc-ocd.o gc-oce.o: gc.c
 
 ../zlib/zlib.h ../zlib/zconf.h: ../zlib/configure.log
 
 ../zlib/libz.a: ../zlib/configure.log
 	(cd ../zlib; ${MAKE})
+
+LZ4Sources=../lz4/lib/lz4.h ../lz4/lib/lz4frame.h \
+           ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c \
+           ../lz4/lib/lz4hc.c ../lz4/lib/xxhash.c
 
 clean:
 	rm -f *.$o ${mdclean}

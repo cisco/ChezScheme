@@ -58,6 +58,17 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Compression format (9.5.1)}
+
+The default format for compressed-file writing is now LZ4, while {\tt
+gzip} is still supported and can be enabled by setting
+\scheme{compress-format} to \scheme{'gzip}. Reading in compressed mode
+infers the format, so reading {\tt gzip}-compressed files will still
+work without changing \scheme{compress-format}. Reading LZ4-format
+files tends to be much faster than reading {\tt gzip}-format files, in
+most cases nearly eliminating the load-time cost of compressing
+compiled files.
+
 \subsection{Ftype guardians (9.5.1)}
 
 Applications that manage memory outside the Scheme heap can leverage
