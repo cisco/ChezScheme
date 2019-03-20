@@ -1202,3 +1202,5 @@
   compile-whole-library when a top-level expression is discovered while
   processing a wpo file.
     compile.ss
+- minor build and new-release updates
+    checkin, newrelease, Makefile.in, Makefile-workarea.in

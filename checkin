@@ -62,7 +62,7 @@ if (-e $W/scheme.1.in) then
   endif
 endif
 
-set tmpsdirs = (. c mats s examples unicode makefiles csug release_notes bintar rpm pkg)
+set tmpsdirs = (. c mats s examples unicode makefiles csug release_notes wininstall bintar rpm pkg)
 set sdirs = ()
 foreach x ($tmpsdirs)
     if (!(-e $x)) then
@@ -101,6 +101,7 @@ foreach x ($sdirs)
         case mats:
         case benchmarks:
         case examples:
+        case wininstall:
         case bintar:
         case rpm:
         case pkg:
