@@ -27,15 +27,18 @@ mdobj = i3le.o
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -D${Cpu} -I${Include} -I../zlib ${mdinclude} $*.c
+	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} ${mdinclude} $*.c
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ../zlib/libz.a
-	ld -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
+${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	ld -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; CFLAGS=-m64 ./configure --64)
+	(cd ../zlib; CFLAGS="${CFLAGS} -m64" ./configure --64)
+
+../lz4/lib/liblz4.a: ${LZ4Sources}
+	(cd ../lz4/lib; CFLAGS="${CFLAGS} -m64" ${MAKE} liblz4.a)

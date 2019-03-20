@@ -1454,24 +1454,25 @@
   )
 
   (let ()
-    ;; Store uncompressed size as u64:
+    ;; Store uncompressed size as u64, using high bit to indicate LZ4:
     (define uncompressed-length-length (ftype-sizeof integer-64))
     ;; Always big-endian, so that compressed data is portable.
     ;; It might be useful somehow that valid compressed data always starts
-    ;; with a 0 byte; otherwise, the expected size would be unrealistically big.
+    ;; with a 0 or 128 byte; otherwise, the expected size would be unrealistically big.
     (define uncompressed-length-endianness (endianness big))
 
     (define $bytevector-compress-size
-      (foreign-procedure "(cs)bytevector_compress_size" (iptr) uptr))
+      (foreign-procedure "(cs)bytevector_compress_size" (iptr boolean) uptr))
     (define $bytevector-compress
-      (foreign-procedure "(cs)bytevector_compress" (scheme-object iptr iptr scheme-object iptr iptr) scheme-object))
+      (foreign-procedure "(cs)bytevector_compress" (scheme-object iptr iptr scheme-object iptr iptr boolean) scheme-object))
     (define $bytevector-uncompress
-      (foreign-procedure "(cs)bytevector_uncompress" (scheme-object iptr iptr scheme-object iptr iptr) scheme-object))
+      (foreign-procedure "(cs)bytevector_uncompress" (scheme-object iptr iptr scheme-object iptr iptr boolean) scheme-object))
 
     (set-who! bytevector-compress
       (lambda (bv)
         (unless (bytevector? bv) (not-a-bytevector who bv))
-        (let* ([dest-max-len ($bytevector-compress-size (bytevector-length bv))]
+        (let* ([as-gz? (eq? 'gzip (compress-format))]
+               [dest-max-len ($bytevector-compress-size (bytevector-length bv) as-gz?)]
                [dest-alloc-len (min (+ dest-max-len uncompressed-length-length)
                                     ;; In the unlikely event of a non-fixnum requested size...
                                     (constant maximum-bytevector-length))]
@@ -1481,12 +1482,14 @@
                                          (fx- dest-alloc-len uncompressed-length-length)
                                          bv
                                          0
-                                         (bytevector-length bv))])
+                                         (bytevector-length bv)
+                                         as-gz?)])
             (cond
              [(string? r)
               ($oops who r bv)]
              [else
               ($bytevector-u64-set! dest-bv 0 (bytevector-length bv) uncompressed-length-endianness who)
+              (unless as-gz? (bytevector-u8-set! dest-bv 0 128)) ; set high bit for LZ4
               (bytevector-truncate! dest-bv (fx+ r uncompressed-length-length))])))))
 
     (set-who! bytevector-uncompress
@@ -1494,7 +1497,20 @@
         (unless (bytevector? bv) (not-a-bytevector who bv))
         (unless (>= (bytevector-length bv) uncompressed-length-length)
           ($oops who "invalid data in source bytevector ~s" bv))
-        (let ([dest-length ($bytevector-u64-ref bv 0 uncompressed-length-endianness who)])
+        (let* ([as-gz? (not (fx= 128 (bytevector-u8-ref bv 0)))]
+               [dest-length (cond
+                             [as-gz?
+                              ($bytevector-u64-ref bv 0 uncompressed-length-endianness who)]
+                             ;; Need to skip high bit; likely can skip first 4 bytes
+                             [(and (fx= 0 (bytevector-u8-ref bv 1))
+                                   (fx= 0 (bytevector-u8-ref bv 2))
+                                   (fx= 0 (bytevector-u8-ref bv 3)))
+                              ($bytevector-u32-ref bv 4 uncompressed-length-endianness who)]
+                             [else
+                              ;; Clear high bit the hard way
+                              (+ ($bytevector-u32-ref bv 4 uncompressed-length-endianness who)
+                                 (let ([v ($bytevector-u32-ref bv 0 uncompressed-length-endianness who)])
+                                   ((bitwise-arithmetic-shift-left (- v #x80000000) 32))))])])
           (unless (and (fixnum? dest-length)
                        ($fxu< dest-length (constant maximum-bytevector-length)))
             ($oops who "bytevector ~s claims invalid uncompressed size ~s" bv dest-length))
@@ -1504,7 +1520,8 @@
                                             dest-length
                                             bv
                                             uncompressed-length-length
-                                            (fx- (bytevector-length bv) uncompressed-length-length))])
+                                            (fx- (bytevector-length bv) uncompressed-length-length)
+                                            as-gz?)])
             (cond
              [(string? r) ($oops who r bv)]
              [(fx= r dest-length) dest-bv]

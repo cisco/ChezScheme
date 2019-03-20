@@ -11277,6 +11277,7 @@
 
 
 (mat bytevector-compress
+    (parameters [compress-format 'gzip] [compress-format 'lz4])
     (error? (bytevector-compress 7))
     (error? (bytevector-compress "hello"))
     (error? (bytevector-uncompress 7))
