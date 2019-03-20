@@ -1178,7 +1178,8 @@ is immutable; otherwise, the result is an immutable bytevector with the same con
 The result is the raw compressed data with a minimal header to record
 the uncompressed size and the compression mode. The result does not include
 the header that is written by port-based compression using the
-\scheme{compressed} option.
+\scheme{compressed} option. The compression format is determined by the
+\scheme{compress-format} parameter.
 
 
 %----------------------------------------------------------------------------

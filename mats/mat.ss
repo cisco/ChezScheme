@@ -19,7 +19,13 @@
 (eval-when (load eval)
   (define-syntax mat
     (lambda (x)
-      (syntax-case x ()
+      (syntax-case x (parameters)
+        [(_ x (parameters [param val] ...) e ...)
+         #'(for-each (lambda (p v)
+                       (parameterize ([p v])
+                         (mat x e ...)))
+                     (list param ...)
+                     (list val ...))]
         [(_ x e ...)
          (with-syntax ([(source ...)
                         (map (lambda (clause)
