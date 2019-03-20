@@ -3856,7 +3856,7 @@
               (if (null? ls*)
                   (and (apply = (map length e**))
                        (or (not all-quoted?) (fx<= (length (car e**)) 4))
-                       (let ([p (cp0-make-temp (fx> (length (car e**)) 1))]
+                       (let ([p (cp0-make-temp (or (fx= lvl 2) (fx> (length (car e**)) 1)))]
                              [temp** (map (lambda (e*)
                                             (map (lambda (x) (cp0-make-temp #f)) e*))
                                        e**)])

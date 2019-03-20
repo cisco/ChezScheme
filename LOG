@@ -1132,7 +1132,7 @@
 - generated Mf-install InstallBin (InstallLib, InstallMan) now
   correctly indirects through InstallPrefix if the --installbin
   (--installlib, --installman) configure flag is not present.
-    src/configure
+    configure
 - removed definition of generate-procedure-source-information
     patch.ss
 - guardian tconc cells are now allocated in generation 0 in the hope
@@ -1182,3 +1182,70 @@
   generated config.h.  Instead removed InstallPrefix entirely so
   it isn't an attractive hazzard.
     configure, makefiles/Mf-install.in
+- fixed bug in inline-lists: wasn't setting multiply-referenced flag
+  on p to account for the procedure? check at optimize-level 2.
+    cpletrec.ss
+- fixed bug in check-prelex-flags: was hardwiring $cpcheck-prelex-flags
+  "after" argument to 'uncprep rather than passing along its argument.
+    compile.ss
+- commented out local definition of sorry! so that problems detected
+  by $cpcheck-prelex-flags actually result in a raised exception.
+    cprep.ss
+- exposed the default-library-search-handler and a library-search-handler
+  parameter to permit more control over the search for libraries during
+  import, compile-whole-library, and compile-whole-program
+    syntax.ss, primdata.ss,
+    8.ms,
+    libraries.stex
+- added fix for whole program/library compilation bug with help from
+  @owaddell who originally reported the problem in issue 386.  this bug
+  arises from the way the parts of the combined library, and their
+  binary dependencies, are invoked when one of the constituent libraries
+  is invoked.  consider, for example, a combined library that contains
+  (A) and (B), where (B) depends on a binary library (C).  depending on
+  the sort order of (A) and (B), which may be unconstrained in the
+  partial ordering established by library dependencies, invoking (A) may
+  result in the invoke code for (B) being run first, without (B) ever
+  being explicitly invoked.  this can result in bindings required from
+  (C) by the invoke code in (B) to be unbound.  even in the case where
+  (A) comes before (B) in the topological sort, if they are combined
+  into the same cluster, (B)'s invoke code will be run as part of
+  invoking (A).  the solution is two part: first we extend the invoke
+  requirements of the first library in the cluster to include the binary
+  libraries that precede it in the topological sort and add a dependency
+  on the first library in the cluster to all of the other libraries in
+  the cluster.  this means no matter which library in the cluster is
+  invoked first, it will cause the first library to be invoked, in turn
+  ensuring the binary libraries that precede it are invoked.  when there
+  are multiple clusters, a dependency is added from each cluster to the
+  first library in the cluster that precedes it.  this ensures that
+  invoking a library in a later cluster first, will still cause all of
+  the dependencies of the previous clusters to be invoked.  ultimately,
+  these extra dependencies enforce an ordering on the invocation of the
+  source and binary libraries that matches the topological sort, even if
+  the topological sort was under constrained.  to maintain the property
+  that import requirements are a superset of the invoke and visit
+  requirements, we also extend the import requirements to include the
+  extended invoke requirements.  the import requirements are also added
+  to the dependency graph to further constrain the topological sort and
+  ensure that we do not introduce artificial cycles in the import graph.
+    compile.ss,
+    7.ms,
+    root-experr*, patch*
+- fixed failure to install examples for tarball installs
+    Mf-install.in
+- improved packaging support:
+  replaced bintar script with bintar directory and make file;
+  tarballs are created via "make create-tarball" and are placed in
+  the workarea's bintar directory.  added rpm directory and make
+  file for creating RPMs via "make create-rpm".  added pkg directory
+  and make file for creating OSX packages via "make create-pkg".
+    bintar (removed), bintar/Makefile (new), rpm/Makefile (new),
+    pkg/Makefile (new), pkg/rmpkg (new), workarea, checkin, newrelease,
+    Makefile.in, Makefile-workarea.in.
+- improved error message for compile-whole-program and
+  compile-whole-library when a top-level expression is discovered while
+  processing a wpo file.
+    compile.ss
+- minor build and new-release updates
+    checkin, newrelease, Makefile.in, Makefile-workarea.in

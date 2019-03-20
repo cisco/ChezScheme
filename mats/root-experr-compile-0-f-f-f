@@ -7066,6 +7066,7 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in compile-whole-program: encountered library (testfile-deja-vu-one) in testfile-deja-vu-dup.wpo, but had already encountered it in testfile-deja-vu-two.wpo
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
 7.mo:Expected error in mat top-level-value-functions: "incorrect argument count in call (top-level-bound?)".
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: 45 is not a symbol".
@@ -8380,6 +8381,13 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl2.ss did not define library (testfile-ewl2)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.ss did not define library (testfile-ewl6)".
 8.mo:Expected error in mat library-directories: "library (testfile-ld1) not found".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: "not-symbol" is not a symbol".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid library name bad-library-name".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid path list (("invalid" "path" "list"))".
+8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid extension list (("bad") ("extensions"))".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: returned invalid source-file path (bad source path)".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: returned invalid object-file path (bad object path)".
+8.mo:Expected error in mat library-search-handler: "library-search-handler: claimed object file was found but returned no object-file path".
 8.mo:Expected error in mat top-level-program: "invalid syntax (if (inc 3)) at line 4, char 1 of testfile.ss".
 8.mo:Expected error in mat top-level-program: "compiled program requires different compilation instance of (testfile-tlp1) from one already loaded".
 8.mo:Expected error in mat top-level-program: "read: #<n>(...) vector syntax is not allowed in #!r6rs mode at line 4, char 19 of testfile-tlp1.ss".

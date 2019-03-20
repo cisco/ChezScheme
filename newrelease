@@ -75,9 +75,17 @@ if ($status != 0) exit 1
 
 cd $W
 
-/bin/rm -f bintar
-sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../bintar > bintar
-set updatedfiles = ($updatedfiles bintar)
+/bin/rm bintar/Makefile
+sed -e "s/^v = .*/v = $R/" ../bintar/Makefile > bintar/Makefile
+set updatedfiles = ($updatedfiles bintar/Makefile)
+
+/bin/rm rpm/Makefile
+sed -e "s/^v = .*/v = $R/" ../rpm/Makefile > rpm/Makefile
+set updatedfiles = ($updatedfiles rpm/Makefile)
+
+/bin/rm pkg/Makefile
+sed -e "s/^v = .*/v = $R/" ../pkg/Makefile > pkg/Makefile
+set updatedfiles = ($updatedfiles pkg/Makefile)
 
 /bin/rm -f BUILDING
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
@@ -93,8 +101,8 @@ set updatedfiles = ($updatedfiles NOTICE)
 
 mkdir makefiles
 sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
-sed -e "s/csug[0-9]\.[0-9]\(\.[0-9]\)*/csug$R/" -e "s/csug[0-9]_[0-9]\(_[0-9]\)*/csug$underscoreR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
-set updatedfiles = ($updatedfiles makefiles/Mf-install.in)
+sed -e "s/csug[0-9]\.[0-9]/csug$MR.$mR/" -e "s/csug[0-9]_[0-9]/csug$MR""_$mR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
+set updatedfiles = ($updatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
 
 /bin/rm scheme.1.in
 sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)*/Chez Scheme Version $R/" ../scheme.1.in > scheme.1.in
@@ -139,12 +147,21 @@ sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" ../release_notes/
 set updatedfiles = ($updatedfiles release_notes/release_notes.stex)
 
 mkdir csug
-sed -e "s/Revised \(.*\) for Chez Scheme Version [^ ]*\./Revised \\INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version $R./" ../csug/copyright.stex > csug/copyright.stex
-sed -e "s/Revised \(.*\) for Chez Scheme Version [^ ]*<br>/Revised \\INSERTREVISIONMONTHSPACEYEAR for Chez Scheme Version $R<br>/" ../csug/csug.stex > csug/csug.stex
-set updatedfiles = ($updatedfiles csug/csug.stex)
+sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" ../csug/copyright.stex > csug/copyright.stex
+sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" ../csug/csug.stex > csug/csug.stex
+set updatedfiles = ($updatedfiles csug/copyright.stex csug/csug.stex)
+
+/bin/rm -f rpm/Makefile
+sed -e "s/^v = .*/v = $R/" ../rpm/Makefile > rpm/Makefile
+set updatedfiles = ($updatedfiles rpm/Makefile)
+
+/bin/rm -f pkg/Makefile
+sed -e "s/^v = .*/v = $R/" ../pkg/Makefile > pkg/Makefile
+set updatedfiles = ($updatedfiles pkg/Makefile)
 
 mkdir wininstall
 sed -e "s/VERSION := .*/VERSION := $R/" ../wininstall/Makefile > wininstall/Makefile
+set updatedfiles = ($updatedfiles wininstall/Makefile)
 foreach fn (wininstall/{,t}{a6,i3}nt.wxs)
   set updatedfiles = ($updatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/" ../$fn > $fn
