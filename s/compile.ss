@@ -852,7 +852,7 @@
               [(find-library who path "wpo" (map (lambda (ext) (cons (car ext) (string-append (path-root (cdr ext)) ".wpo"))) (library-extensions))) =>
                (lambda (fn)
                  (let*-values ([(hash-bang-line ir*) (read-input-file who fn)]
-                               [(no-program node*) (process-ir*! ir* fn #f libs-visible?)])
+                               [(no-program node* ignore-rcinfo*) (process-ir*! ir* fn #f libs-visible?)])
                    (values fn node*)))]
               [(find-library who path "so" (library-extensions)) =>
                (lambda (fn) (values fn (read-binary-file path fn libs-visible?)))]
@@ -901,10 +901,10 @@
                       ($oops who "malformed binary input file ~s" fn)))))))
         (define process-ir*!
           (lambda (ir* ifn capture-program? libs-visible?)
-            (let ([libs-in-file '()] [maybe-program #f])
+            (let ([libs-in-file '()] [maybe-program #f] [rcinfo* '()])
               (define-pass process-ir! : Lexpand (ir) -> * ()
                 (Outer : Outer (ir situation) -> * ()
-                  [,rcinfo (values)]
+                  [,rcinfo (set! rcinfo* (cons rcinfo rcinfo*)) (values)]
                   [(group ,[] ,[]) (values)]
                   [(visit-only ,[inner 'visit ->]) (values)]
                   [(revisit-only ,[inner 'revisit ->]) (values)])
@@ -955,7 +955,7 @@
                   (unless (library-node-rtir node)
                     ($oops who "missing run-time code for ~s" (library-node-path node))))
                 libs-in-file)
-              (values maybe-program libs-in-file))))
+              (values maybe-program libs-in-file rcinfo*))))
         (define record-ct-lib!
           (lambda (linfo/ct binary? situation ifn libs-visible?)
             (when (eq? situation 'revisit) ($oops who "encountered revisit-only compile-time library ~s while processing file ~s" (library-info-path linfo/ct) ifn))
@@ -1028,14 +1028,14 @@
                   (library-node-invoke-req* node)))
             (unless (node-depend* node)
               (node-depend*-set! node (find-dependencies (library-node-invoke-req* node))))))
-        (let-values ([(maybe-program node*) (process-ir*! ir* ifn capture-program? libs-visible?)])
+        (let-values ([(maybe-program node* rcinfo*) (process-ir*! ir* ifn capture-program? libs-visible?)])
           (when capture-program?
             (unless maybe-program ($oops who "missing entry program in file ~a" ifn))
             (unless (program-node-ir maybe-program) ($oops who "loading ~a did not define expected program pieces" ifn))
             (chase-program-dependencies! maybe-program))
           (for-each chase-library-dependencies! node*)
           (let-values ([(visible* invisible*) (partition library-node-visible? (vector->list (hashtable-values libs)))])
-            (values maybe-program visible* invisible* wpo*))))))
+            (values maybe-program visible* invisible* rcinfo* wpo*))))))
 
   (define topological-sort
     (lambda (program-entry library-entry*)
@@ -1302,6 +1302,14 @@
         (make-patch-env node*)))))
 
   (with-output-language (Lexpand Outer)
+    (define add-recompile-info
+      (lambda (rcinfo* body)
+        (fold-left
+          (lambda (body rcinfo)
+            `(group ,rcinfo ,body))
+          body
+          rcinfo*)))
+
     (define add-library-records
       (lambda (node* visit-lib* body)
         (fold-left
@@ -1346,18 +1354,20 @@
             body visit-lib*)))
 
     (define build-program-body
-      (lambda (program-entry node* visit-lib* invisible*)
-        (add-library-records node* visit-lib*
-          (add-library-records node* invisible*
-            (add-visit-lib-install* visit-lib*
-              (add-visit-lib-install* invisible*
-                `(revisit-only ,(build-combined-program-ir program-entry node*))))))))
+      (lambda (program-entry node* visit-lib* invisible* rcinfo*)
+        (add-recompile-info rcinfo*
+          (add-library-records node* visit-lib*
+            (add-library-records node* invisible*
+              (add-visit-lib-install* visit-lib*
+                (add-visit-lib-install* invisible*
+                  `(revisit-only ,(build-combined-program-ir program-entry node*)))))))))
 
     (define build-library-body
-      (lambda (node* visit-lib*)
-        (add-library-records node* visit-lib*
-          (add-visit-lib-install* visit-lib*
-            `(revisit-only ,(build-combined-library-ir node*)))))))
+      (lambda (node* visit-lib* rcinfo*)
+        (add-recompile-info rcinfo*
+          (add-library-records node* visit-lib*
+            (add-visit-lib-install* visit-lib*
+              `(revisit-only ,(build-combined-library-ir node*))))))))
 
   (define finish-compile
     (lambda (who msg ifn ofn hash-bang-line x1)
@@ -1420,12 +1430,12 @@
          (unless (string? ifn) ($oops who "~s is not a string" ifn))
          (unless (string? ofn) ($oops who "~s is not a string" ofn))
          (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
-                       [(program-entry lib* invisible* no-wpo*) (build-graph who ir* ifn #t #f libs-visible?)])
+                       [(program-entry lib* invisible* rcinfo* no-wpo*) (build-graph who ir* ifn #t #f libs-visible?)])
            (safe-assert program-entry)
            (safe-assert (null? no-wpo*))
            (let ([node* (topological-sort program-entry lib*)])
              (finish-compile who "whole program" ifn ofn hash-bang-line
-               (build-program-body program-entry node* lib* invisible*))
+               (build-program-body program-entry node* lib* invisible* rcinfo*))
              (build-required-library-list node* lib*)))])))
 
   (set-who! compile-whole-library
@@ -1433,7 +1443,7 @@
       (unless (string? ifn) ($oops who "~s is not a string" ifn))
       (unless (string? ofn) ($oops who "~s is not a string" ofn))
       (let*-values ([(hash-bang-line ir*) (read-input-file who ifn)]
-                    [(no-program lib* invisible* wpo*) (build-graph who ir* ifn #f (generate-wpo-files) #t)])
+                    [(no-program lib* invisible* rcinfo* wpo*) (build-graph who ir* ifn #f (generate-wpo-files) #t)])
         (safe-assert (not no-program))
         (safe-assert (null? invisible*))
         (safe-assert (or (not (generate-wpo-files)) (not (null? wpo*))))
@@ -1441,7 +1451,7 @@
         (let ([node* (topological-sort #f lib*)])
           (write-wpo-file who ofn wpo*)
           (finish-compile who "whole library" ifn ofn hash-bang-line
-            (build-library-body node* lib*))
+            (build-library-body node* lib* rcinfo*))
           (build-required-library-list node* lib*))))))
 
 (set! $c-make-code

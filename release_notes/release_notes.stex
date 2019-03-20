@@ -112,6 +112,41 @@ unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
 
+\subsection{Ftype guardians (9.5.1)}
+
+Applications that manage memory outside the Scheme heap can leverage
+new support for ftype guardians to help perform reference counting.
+An ftype guardian is like an ordinary guardian except that it does
+not necessarily save from collection each ftype pointer registered
+with it but instead decrements (atomically) a reference count at
+the head of the object to which the ftype pointer points.
+If the reference count becomes zero as a result of the decrement,
+it preserves the object so that it can be retrieved from the guardian
+and freed; otherwise it allows it to be collected.
+
+\subsection{Recompile information and whole-program optimization (9.5.1)}
+
+\scheme{compile-whole-program} and \scheme{compile-whole-library}
+now propagate recompile information from the named \scheme{wpo}
+file to the object file to support \scheme{maybe-compile-program}
+and \scheme{maybe-compile-library} in the case where the new object
+file overwrites the original object file.
+
+\subsection{Directly accessing the value of compile-time values (9.5.1)}
+
+The value of a compile-time value created by \scheme{make-compile-time-value}
+can be retrieved via the new procedure \scheme{compile-time-value-value}.
+The new predicate \scheme{compile-time-value?} can be used to determine if
+an object is a compile-time value.
+
+\subsection{Extracting a subset of hashtable entries (9.5.1)}
+
+The new \scheme{hashtable-cells} function is similar to
+\scheme{hashtable-entries}, but it returns a vector of cells instead
+of two vectors. An optional argument to \scheme{hashtable-keys},
+\scheme{hashtable-values}, \scheme{hashtable-entries}, or \scheme{hashtable-cells}
+limits the size of the result vector.
+
 \subsection{Profile data retained for reclaimed code (9.5.1)}
 
 Profile data is now retained indefinitely even for code objects
@@ -1659,6 +1694,34 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Automatic recompilation and missing include files (9.5.1)}
+
+A bug in automatic recompilation involving missing include files
+has been fixed.
+The bug caused automatic recompilation to fail, often with an
+exception in \scheme{file-modification-time}, when a file specified
+by an absolute pathname or pathname starting with "./" or "../" was
+included via \scheme{include} during a previous compilation run and
+is no longer present.
+
+\subsection{Invalid memory reference instantiating \protect\scheme{foreign-callable} code object (9.5.1)}
+
+A bug that caused evaluation of a \scheme{foreign-callable} expression in
+code that has been collected into the static generation (e.g., when the
+\scheme{foreign-callable} form appears in code compiled to a boot file)
+to result in an invalid memory reference has been fixed.
+
+\subsection{Invalid constant-folding of some calls to \protect\scheme{apply} (9.5.1)}
+
+A bug in the source optimizer (cp0) allowed constant-folding of some calls to
+\scheme{apply} where the last argument is not known to be a list.  For example,
+cp0 incorrectly reduced
+\scheme{(apply zero? 0)} to \scheme{#t}
+and reduced
+\scheme{(lambda (x) (apply box? x) x)} to \scheme{(lambda (x) x)},
+but now preserves these calls to \scheme{apply} so that they may raise an
+exception.
+
 \subsection{Disk-relative filenames in Windows (9.5.1)}
 
 In Windows, filenames that start with a disk designator but no
@@ -1955,6 +2018,21 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Better code for \protect\scheme{bytevector} (9.5.1)}
+
+The compiler now generates better inline code for the \scheme{bytevector}
+procedure.
+Instead of one byte memory write for each argument, it writes up
+to four (32-bit machines) or eight (64-bit machines) bytes at a
+time, which almost always results in fewer instructions and fewer
+writes.
+
+\subsection{\protect\scheme{vector-for-each} and \protect\scheme{string-for-each} improvement (9.5.1)}
+
+The last call to the procedure passed to \scheme{vector-for-each}
+or \scheme{string-for-each} is now reliably implemented as tail
+call, as was already the case for \scheme{for-each}.
 
 \subsection{Lambda commonization (9.5.1)}
 

@@ -237,16 +237,17 @@
          [(visit-stuff? x) (when (memq situation '(load visit)) (run-inner (visit-stuff-inner x)))]
          [else (run-inner x)])))
     (define run-vector
-      (lambda (x i)
-        (cond
-         [(fx= (fx+ i 1) (vector-length x))
-          (run-outer (vector-ref x i))]
-         [else
-          (run-outer (vector-ref x i))
-          (run-vector x (fx+ i 1))])))
+      (lambda (v)
+        (let ([n (vector-length v)])
+          (unless (fx= n 0)
+            (let loop ([i 0])
+              (let ([x (vector-ref v i)] [i (fx+ i 1)])
+                (if (fx= i n)
+                    (run-outer x) ; return value(s) of last form for load-compiled-from-port
+                    (begin (run-outer x) (loop i)))))))))
     (lambda (x)
       (cond
-       [(vector? x) (run-vector x 0)]
+       [(vector? x) (run-vector x)]
        [(Lexpand? x) ($interpret-backend x situation for-import? fn)]
        [else (run-outer x)])))
 
@@ -1373,7 +1374,7 @@
 
   (set! $pass-stats
     (lambda ()
-      (let-values ([(namev psv) (with-tc-mutex (hashtable-entries stats-ht))])
+      (define (build-result namev psv)
         (vector->list
           (vector-map
             (lambda (name ps) 
@@ -1383,7 +1384,23 @@
                 (pass-stats-gc-cpu ps)
                 (pass-stats-bytes ps)))
             namev
-            psv)))))
+            psv)))
+      (with-tc-mutex
+        (if outer-ps
+            (let ([cpu (current-time 'time-thread)]
+                  [gc-cpu (current-time 'time-collector-cpu)]
+                  [bytes (+ (bytes-deallocated) (bytes-allocated))])
+              (set-time-type! cpu 'time-duration)
+              (set-time-type! gc-cpu 'time-duration)
+              (pass-stats-cpu-set! outer-ps (add-duration (pass-stats-cpu outer-ps) cpu))
+              (pass-stats-gc-cpu-set! outer-ps (add-duration (pass-stats-gc-cpu outer-ps) gc-cpu))
+              (pass-stats-bytes-set! outer-ps (+ (pass-stats-bytes outer-ps) bytes))
+              (let ([result (call-with-values (lambda () (hashtable-entries stats-ht)) build-result)])
+                (pass-stats-cpu-set! outer-ps (subtract-duration (pass-stats-cpu outer-ps) cpu))
+                (pass-stats-gc-cpu-set! outer-ps (subtract-duration (pass-stats-gc-cpu outer-ps) gc-cpu))
+                (pass-stats-bytes-set! outer-ps (- (pass-stats-bytes outer-ps) bytes))
+                result))
+              (call-with-values (lambda () (hashtable-entries stats-ht)) build-result)))))
 
   (let ()
     (define who '$print-pass-stats)

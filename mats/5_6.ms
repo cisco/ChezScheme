@@ -1008,6 +1008,40 @@
       (u a p k f 1) (v b q l g 2) (w c r m h 3) (x d s n i 4)
       (y e t o j 5) (a u p k f 1) (b v q l g 2) (c w r m h 3)
       (d x s n i 4) (e y t o j 5)))
+ ; check for proper tail recursion
+   (equal?
+     (list
+       (let ([s (statistics)])
+         (let ([k 100000] [v '#(a b c)])
+           (let ([n k] [m 0])
+             (define (f) (unless (fx= n 0) (vector-for-each foo v)))
+             (define (foo x)
+               (set! m (+ m 1))
+               (when (eq? x (vector-ref v (fx- (vector-length v) 1)))
+                 (set! n (- n 1))
+                 (f)
+                 17)) ; blow tail recursion here
+             (f)
+             (list (> (sstats-bytes (sstats-difference (statistics) s))
+                      10000)
+                   (eqv? n 0)
+                   (eqv? m (* k (vector-length v)))))))
+       (let ([s (statistics)])
+         (let ([k 100000] [v '#(a b c)])
+           (let ([n k] [m 0])
+             (define (f) (unless (fx= n 0) (vector-for-each foo v)))
+             (define (foo x)
+               (set! m (+ m 1))
+               (when (eq? x (vector-ref v (fx- (vector-length v) 1)))
+                 (set! n (- n 1))
+                 (f)))
+             (f)
+             (list (<= 0
+                      (sstats-bytes (sstats-difference (statistics) s))
+                      1000)
+                   (eqv? n 0)
+                   (eqv? m (* k (vector-length v))))))))
+     '((#t #t #t) (#t #t #t)))
  )
 
 (define $merge-sort

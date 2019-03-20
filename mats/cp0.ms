@@ -367,6 +367,8 @@
                 (begin (b) (c)))
             (x)
             (y))))
+  (error? (apply zero? 0))
+  (error? (if (apply eof-object 1 2) 3 4))
 )
 
 (cp0-mat cp0-mrvs
@@ -697,6 +699,25 @@
   (test-cp0-expansion
     `(#3%apply #3%apply #3%+ '(1 (2 3 4)))
     10)
+  (test-cp0-expansion
+    `(apply apply apply + 1 '(2 3 (4 5 (6 7))))
+    28)
+  (test-cp0-expansion
+    `(let ([f apply]) (f f f * 1 '(2 3 (4 5 (6)))))
+    720)
+  (test-cp0-expansion
+   `(lambda (x) (apply (lambda (prim ls) (apply prim ls)) zero? (list x)))
+   (if (eqv? (optimize-level) 3)
+       '(lambda (x) (#3%apply #3%zero? x))
+       '(lambda (x) (#2%apply #2%zero? x))))
+  (test-cp0-expansion
+   `(apply (lambda (prim ls) (apply prim ls)) zero? (list (cons 0 '())))
+   #t)
+  (test-cp0-expansion
+   `(apply (lambda (prim ls) (apply prim ls)) zero? (cons 0 '()))
+   (if (eqv? (optimize-level) 3)
+       '(#3%apply #3%zero? 0)
+       '(#2%apply #2%zero? 0)))
 )
 
 (mat expand/optimize
@@ -2220,6 +2241,31 @@
         (if (= (optimize-level) 3)
             '(((#3%write 'a)) ((#3%write 'b)) ((#3%write 'c) (#3%write 'd) (#3%write 'e)))
             '(((#2%write 'a)) ((#2%write 'b)) ((#2%write 'c) (#2%write 'd) (#2%write 'e)))))))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(let ([x (cons 0 (list))]) (#%apply #%zero? x))))
+    #t)
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      ;; don't fold primitive in value context with bad apply convention
+      (expand/optimize '(#%apply #%zero? 0)))
+    (if (= (optimize-level) 3)
+        '(#3%apply #3%zero? 0)
+        '(#2%apply #2%zero? 0)))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      ;; don't fold primitive in test context with bad apply convention
+      (expand/optimize '(if (#%apply #%eof-object 1 2 3) 4 5)))
+    (if (= (optimize-level) 3)
+        '(if (#3%apply #3%eof-object 1 2 3) 4 5)
+        '(if (#2%apply #2%eof-object 1 2 3) 4 5)))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      ;; don't fold primitive in effect context with bad apply convention
+      (expand/optimize '(begin (#%apply #%box? 'step) 3)))
+    (if (= (optimize-level) 3)
+        '(begin (#3%apply #3%box? 'step) 3)
+        '(begin (#2%apply #2%box? 'step) 3)))
  )
 
 (mat cp0-car/cdr

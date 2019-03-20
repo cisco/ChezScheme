@@ -1087,6 +1087,98 @@
     5_4.ss, 5_4.ms
 - added enable-arithmetic-left-associative
     cp0.ss, compile.ss, primdata.ss, front.ss, cp0.ms, system.stex
+- fixed a bug in cp0 bug that could fold the apply of a primitive, where
+  the last argument is not a list, as if it were a call to the primitive
+  with those arguments
+    cp0.ss, cp0.ms
 - fix allocation of string/bytevector for a foreign-callable argument
   or foreign-call return
     cpnanopass.ss, foreign.ms, foreign2.c
+- foreign-callable code objects are now flagged as "templates", and
+  the collector now refuses to discard relocation information for
+  code objects marked as templates when copying them to the static
+  generation.
+    cmacros.ss, cpnanopass.ss,
+    gc.c,
+    7.ms
+- add hashtable-cells and add a size argument to hashtable-keys,
+  hashtable-values, and hashtable-entries
+    newhash.ss, primdata.ss,
+    hash.ms, root-experr*, patch*,
+    objects.stex, release_notes.stex
+- the body of load-library is now wrapped in a $pass-time with
+  to show the time spent loading libraries separately from the time
+  spent in expand.
+    syntax.ss
+- interpret now plays the pass-time game
+    interpret.ss
+- added compile-time-value? predicate and
+  compile-time-value-value accessor
+    syntax.ss, primdata.ss,
+    8.ms, primvars.ms, root-experr*
+- $pass-stats now returns accurrate stats for the currently timed
+  pass.
+    7.ss
+- compile-whole-program and compile-whole-library now propagate
+  recompile info from the named wpo file to the object file 
+  to support maybe-compile-program and maybe-compile-library in
+  the case where compile-whole-{program,library} overwrites the
+  original object file.
+    compile.ss,
+    7.ms, mat.ss, primvars.ms
+- replaced the ancient and unusable bintar with one that creates
+  a useful tarball for binary installs
+    bintar
+- generated Mf-install InstallBin (InstallLib, InstallMan) now
+  correctly indirects through InstallPrefix if the --installbin
+  (--installlib, --installman) configure flag is not present.
+    src/configure
+- removed definition of generate-procedure-source-information
+    patch.ss
+- guardian tconc cells are now allocated in generation 0 in the hope
+  that they can be released more quickly.
+    gc.c
+- added ftype-guardian syntax: (ftype-guardian A) creates a new
+  guardian for ftype pointers of type A, the first base field (or
+  one of the first base fields in the case of unions) of which must
+  be a word-sized integer with native endianness representing a
+  reference count.  ftype pointers are registered with and retrieved
+  from the guardian just like objects are registered with and
+  retrieved from any guardian.  the difference is that the garbage
+  collector decrements the reference count before resurrecting an
+  ftype pointer and resurrects only those whose reference counts
+  become zero, i.e., are ready for deallocation.
+    ftype.ss, cp0.ss, cmacros.ss, cpnanopass.ss, prims.ss, primdata.ss,
+    gc.c,
+    4.ms, root-experr*
+- fixed a bug in automatic recompilation handling of missing include
+  files specified with absolute pathnames or pathnames starting with
+  "./" or "..": was erroring out in file-modification-time with a
+  file-not-found or other exception rather than recompiling.
+    syntax.ss,
+    7.ms, root-experr*, patch*
+- changed inline vector-for-each and string-for-each code to
+  put the last call to the procedure in tail position, as was
+  already done for the library definitions and for the inline
+  code for for-each.
+    cp0.ss,
+    5_4.ms, 5_6.ms
+- the compiler now generates better inline code for the bytevector
+  procedure.  instead of one byte memory write for each argument,
+  it writes up to 4 (32-bit machines) or 8 (64-bit machines) bytes
+  at a time, which almost always results in fewer instructions and
+  fewer writes.
+    cpnanopass.ss,
+    bytevector.ms
+- packaged unchanging implicit reader arguments into a single record
+  to reduce the number of arguments.
+    read.ss
+- recoded run-vector to handle zero-length vectors.  it appears
+  we're not presently generating empty vectors (representing empty
+  groups), but the fasl format permits them.
+    7.ss
+- reverted the earlier change to restore indirection through
+  InstallPrefix, since it didn't and can't play well with the
+  generated config.h.  Instead removed InstallPrefix entirely so
+  it isn't an attractive hazzard.
+    configure, makefiles/Mf-install.in

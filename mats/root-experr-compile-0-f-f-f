@@ -527,25 +527,11 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat call/1cc: "attempt to invoke shot one-shot continuation".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (current-continuation-attachments (quote ()))".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any))".
-4.mo:Expected error in mat continuation-attachments: "call-setting-continuation-attachment: 10 is not a procedure".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any) void (quote bad-more))".
-4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments to #<procedure>".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none))".
-4.mo:Expected error in mat continuation-attachments: "call-with-current-continuation-attachment: 10 is not a procedure".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
-4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments to #<procedure void>".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments)".
-4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: 10 is not a continuation".
-4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: #<procedure> is not a continuation".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments (call/cc (lambda (...) x)) (quote bad-more))".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
-4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat refcount-guardians: "unrecognized ftype name NO!".
+4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
+4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
+4.mo:Expected error in mat refcount-guardians: "ftype-guardian: (ka . blooie) is not an ftype pointer of the expected type #<ftd A>".
+4.mo:Expected error in mat refcount-guardians: "ftype-guardian: <ftype-pointer> is not an ftype pointer of the expected type #<ftd A>".
 4.mo:Expected error in mat $primitive: "fx+: a is not a fixnum".
 4.mo:Expected error in mat $primitive: "invalid primitive name fubar".
 4.mo:Expected error in mat $primitive: "incorrect argument count in call (car (quote a) (quote b))".
@@ -3840,26 +3826,6 @@ misc.mo:Expected error in mat virtual-registers: "set-virtual-register!: invalid
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah)".
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah . 17)".
 misc.mo:Expected error in mat procedure-arity-mask: "procedure-arity-mask: 17 is not a procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure)".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args))".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args) 1)".
-misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1 is not a procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-a-procedure is not a procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: not-an-exact-integer is not an arity mask".
-misc.mo:Expected error in mat arity-wrapper-procedure: "make-arity-wrapper-procedure: 1.0 is not an arity mask".
-misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: 1 is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure> is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "arity-wrapper-procedure-data: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure!)".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: 1 is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure> is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data!)".
-misc.mo:Expected error in mat arity-wrapper-procedure: "incorrect argument count in call (set-arity-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: 1 is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure-data!: #<procedure> is not an arity wrapper procedure".
-misc.mo:Expected error in mat arity-wrapper-procedure: "set-arity-wrapper-procedure!: #<procedure $arity-wrapper-apply> is not an arity wrapper procedure".
 cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (cont0 (quote x))".
@@ -3871,6 +3837,8 @@ cp0.mo:Expected error in mat cp0-regression: "source-object-bfp: #f is not a sou
 cp0.mo:Expected error in mat cp0-regression: "source-object-efp: #f is not a source object".
 cp0.mo:Expected error in mat cp0-regression: "source-object-sfd: #f is not a source object".
 cp0.mo:Expected error in mat cp0-regression: "condition: #f is not a condition".
+cp0.mo:Expected error in mat cp0-regression: "apply: 0 is not a proper list".
+cp0.mo:Expected error in mat cp0-regression: "apply: 2 is not a proper list".
 cp0.mo:Expected error in mat expand/optimize: "incorrect argument count in call (expand/optimize)".
 cp0.mo:Expected error in mat expand/optimize: "expand/optimize: b is not an environment".
 cp0.mo:Expected error in mat expand/optimize: "incorrect argument count in call (expand/optimize (quote a) (quote b) (quote c))".
@@ -7061,8 +7029,9 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat maybe-compile: "invalid syntax (if) at line 2, char 1 of testfile-mc.ss".
 7.mo:Expected error in mat maybe-compile: "invalid syntax (define) at line 4, char 3 of testfile-mc.ss".
 7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
-7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: failed for "testfile-mc-1a.ss": no such file or directory
-7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in maybe-compile-library: file "testfile-mc-1a.ss" not found in source directories
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
+7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
@@ -7592,14 +7561,31 @@ hash.mo:Expected error in mat hashtable-arguments: "hashtable-clear!: #<eq hasht
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-clear!: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-clear!: invalid size argument #t".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys $ht 72 43)".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: -79 is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: not-an-unsigned-integer is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-keys $ht 72)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-keys: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values)".
-hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values $ht 72)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-values $ht 72 43)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: -79 is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-values: not-an-unsigned-integer is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries $ht 72 43)".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: -79 is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: not-an-unsigned-integer is not a valid length".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-entries $ht 72)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells $ht 72 43)".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: -79 is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: not-an-unsigned-integer is not a valid length".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function $ht $ht)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-hash-function: (hash . table) is not an eq hashtable".
@@ -8304,6 +8290,7 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat make-compile-time-value: "first argument to lookup procedure is not an identifier (a)".
 8.mo:Expected error in mat make-compile-time-value: "second argument to lookup procedure is not an identifier "frip"".
 8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments to #<procedure rho>".
+8.mo:Expected error in mat make-compile-time-value: "compile-time-value-value: 17 is not a compile-time value".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".

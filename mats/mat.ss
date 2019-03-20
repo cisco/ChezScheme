@@ -452,3 +452,15 @@
     (with-output-to-file filename
       (lambda () (for-each pretty-print expr*))
       'replace)))
+
+(define touch
+  (lambda (objfn srcfn)
+    (let loop ()
+      (let ([p (open-file-input/output-port srcfn (file-options no-fail no-truncate))])
+        (put-u8 p (lookahead-u8 p))
+        (close-port p))
+      (when (file-exists? objfn)
+        (unless (time>? (file-modification-time srcfn) (file-modification-time objfn))
+          (sleep (make-time 'time-duration 1000000 1))
+          (loop))))
+    #t))

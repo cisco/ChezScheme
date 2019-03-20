@@ -1843,7 +1843,34 @@ cell ;=> (#(a b c) . 3)
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{hashtable-keys}{\categoryprocedure}{(hashtable-keys \var{hashtable})}
+\formdef{hashtable-keys}{\categoryprocedure}{(hashtable-keys \var{hashtable} \var{size})}
+\returns a vector containing the keys in \var{hashtable}
+\listlibraries
+\endentryheader
+
+\noindent
+Identitcal to the Revised$^6$ Report counterpart, but allowing an optional
+\var{size} argument.
+If \var{size} is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than \var{size} elements.
+Different calls to \scheme{hashtable-keys}
+with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
+may return different subsets of \var{hashtable}'s keys.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(hashtable-set! ht 'a "one")
+(hashtable-set! ht 'b "two")
+(hashtable-set! ht 'c "three")
+(hashtable-keys ht) ;=> #(a b c) \var{or any permutation}
+(hashtable-keys ht 1) ;=> #(a) \var{or} #(b) \var{or} #(c)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{hashtable-values}{\categoryprocedure}{(hashtable-values \var{hashtable})}
+\formdef{hashtable-values}{\categoryprocedure}{(hashtable-values \var{hashtable} \var{size})}
 \returns a vector containing the values in \var{hashtable}
 \listlibraries
 \endentryheader
@@ -1852,6 +1879,11 @@ cell ;=> (#(a b c) . 3)
 Each value is the value of one of the keys in \var{hashtable}.
 Duplicate values are not removed.
 The values may appear in any order in the returned vector.
+If \var{size} is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than \var{size} elements.
+Different calls to \scheme{hashtable-values}
+with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
+may return different subsets of \var{hashtable}'s values.
 
 \schemedisplay
 (define ht (make-eq-hashtable))
@@ -1861,18 +1893,64 @@ The values may appear in any order in the returned vector.
 (hashtable-set! ht p2 "two")
 (hashtable-set! ht 'q "two")
 (hashtable-values ht) ;=> #("one" "two" "two") \var{or any permutation}
+(hashtable-values ht 1) ;=> #("one") \var{or} #("two")
 \endschemedisplay
 
-This procedure is equivalent to:
+This procedure is equivalent to calling \scheme{hashtable-entries} and returning only
+the second result, but it is more efficient since the separate vector of keys need
+not be created.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-entries}{\categoryprocedure}{(hashtable-entries \var{hashtable})}
+\formdef{hashtable-entries}{\categoryprocedure}{(hashtable-entries \var{hashtable} \var{size})}
+\returns two vectors containing the keys and values in \var{hashtable}
+\listlibraries
+\endentryheader
+
+\noindent
+Identitcal to the Revised$^6$ Report counterpart, but allowing an optional
+\var{size} argument.
+If \var{size} is specified, then it must be an exact, nonnegative integer, and the
+result vectors contain no more than \var{size} elements.
+Different calls to \scheme{hashtable-entries}
+with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
+may return different subsets of \var{hashtable}'s entries.
 
 \schemedisplay
-(lambda (ht)
-  (let-values ([(keys values) (hashtable-entries ht)])
-    values))
+(define ht (make-eq-hashtable))
+(hashtable-set! ht 'a "one")
+(hashtable-set! ht 'b "two")
+(hashtable-entries ht) ;=> #(a b) #("one" "two") \var{or the other permutation}
+(hashtable-entries ht 1) ;=> #(a) #("one") \var{or} #(b) #("two") 
 \endschemedisplay
 
-but more efficient since the separate vector of keys need
-not be created.
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable})}
+\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable} \var{size})}
+\returns a vector of up to \var{size} elements containing the cells of \var{hashtable}
+\listlibraries
+\endentryheader
+
+\noindent
+Each element of the result vector is the value of one of the cells in \var{hashtable}.
+The cells may appear in any order in the returned vector.
+If \var{size} is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than \var{size} cells.
+If \var{size} is not specified, then the result vector has \scheme{(hashtable-size \var{hashtable})} elements.
+Different calls to \scheme{hashtable-cells}
+with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
+may return different subsets of \var{hashtable}'s cells.
+
+\schemedisplay
+(define ht (make-eqv-hashtable))
+(hashtable-set! ht 1 'one)
+(hashtable-set! ht 2 'two)
+(hashtable-cells ht) ;=> #((1 . one) (2 . two)) \var{or} #((2 . two) (1 . one))
+(hashtable-cells ht 1) ;=> #((1 . one)) \var{or} #((2 . two))
+(hashtable-cells ht 0) ;=> #()
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
