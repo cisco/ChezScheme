@@ -1198,3 +1198,7 @@
     bintar (removed), bintar/Makefile (new), rpm/Makefile (new),
     pkg/Makefile (new), pkg/rmpkg (new), workarea, checkin, newrelease,
     Makefile.in, Makefile-workarea.in.
+- improved error message for compile-whole-program and
+  compile-whole-library when a top-level expression is discovered while
+  processing a wpo file.
+    compile.ss

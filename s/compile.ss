@@ -896,7 +896,7 @@
                   [(visit-only ,[inner 'visit ->]) (values)]
                   [(revisit-only ,[inner 'revisit ->]) (values)])
                 (Inner : Inner (ir situation) -> * ()
-                  [,lsrc ($oops who "encountered bare lsrc item while processing wpo file ~s" ($uncprep lsrc))]
+                  [,lsrc ($oops who "expected program or library form, but encountered top-level expression ~s processing wpo file ~a" ($uncprep lsrc) ifn)]
                   [,linfo/ct (let ([node (record-ct-lib! linfo/ct #f situation ifn libs-visible?)])
                                (when node (set! libs-in-file (cons node libs-in-file))))
                     (values)]
