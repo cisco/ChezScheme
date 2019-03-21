@@ -1204,3 +1204,6 @@
     compile.ss
 - minor build and new-release updates
     checkin, newrelease, Makefile.in, Makefile-workarea.in
+- added library-search-handler, compile-whole-library, and improved
+  packaging to the release notes.
+    release_notes/release_notes.stex
