@@ -71,7 +71,7 @@
  *
  *        -> {base-rtd}
  *
- *        -> {rtd}<faslrecord>
+ *        -> {rtd}<fasl uid><faslrecord>
  *
  *        -> {record}<faslrecord>
  *
@@ -696,24 +696,25 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         } case fasl_type_rtd: {
             ptr rtd, rtd_uid, plist, ls;
 
-            fasl_record(tc, x, t, pstrbuf, f);
-            rtd = *x;
-            rtd_uid = RECORDDESCUID(rtd);
+            faslin(tc, &rtd_uid, t, pstrbuf, f);
 
-           /* see if uid's property list already registers an rtd */
+           /* look for rtd on uid's property list */
             plist = SYMSPLIST(rtd_uid);
             for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
               if (Scar(ls) == S_G.rtd_key) {
-                ptr old_rtd = Scar(Scdr(ls));
-               /* if so, check new rtd against old rtd and return old rtd */
-                if (!rtd_equiv(rtd, old_rtd))
-                  S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(rtd), f->uf->path);
-                *x = old_rtd;
+                ptr tmp;
+                *x = rtd = Scar(Scdr(ls));
+                fasl_record(tc, &tmp, t, pstrbuf, f);
+                if (!rtd_equiv(tmp, rtd))
+                  S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf->path);
                 return;
               }
             }
 
-           /* if not, register it */
+            fasl_record(tc, x, t, pstrbuf, f);
+            rtd = *x;
+
+           /* register rtd on uid's property list */
             SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
             return;
         }

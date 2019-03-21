@@ -1,6 +1,6 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.1}
+\thisversion{Version 9.5.2}
 \thatversion{Version 8.4}
 \pubmonth{January}
 \pubyear{2019}
@@ -1662,6 +1662,27 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Fasl representation change for recursive ftypes (9.5.2)}
+
+A bug in the reading of mutually recursive ftype definitions from
+compiled files has been fixed.
+The bug was triggered by recursive ftype definitions in which one
+of the mutually recursive ftypes is a subtype of another, as in:
+
+\schemedisplay
+(define-ftype
+  [A (* B)]
+  [B (struct [h A])]))
+\endschemedisplay
+
+It manifested in the fasl reader raising bogus "incompatible record
+type" exceptions when two or more references to one of the ftypes
+occur in in separate compiled files or in separate top-level forms
+of a file compiled via \scheme{compile-file}.
+The bug could also have affected other record-type descriptors with
+cycles involving parent rtds and ``extra'' fields as well as fasl
+output created via \scheme{fasl-write}.
 
 \subsection{Unbound object resulting from libraries combined with \protect\scheme{compile-whole-library} (9.5.1)}
 
