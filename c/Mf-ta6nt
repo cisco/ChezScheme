@@ -45,12 +45,15 @@ ${Scheme}${cross:t=}: ${Kernel} ${Main}
 	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
 
 .c.$o:
-	$C -c -D${Cpu} -I${Include} -I../zlib $*.c
+	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
 
-${Kernel}: ${kernelobj} ../zlib/libz.a
-	$(LD) -r -X -o ${Kernel} ${kernelobj} ../zlib/libz.a
+${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	$(LD) -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ../zlib/configure.log:
 	echo "all:" >> ../zlib/Makefile
 	echo '\t$$(MAKE) -f win32/Makefile.gcc CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" RC="$(WINDRES)"' >> ../zlib/Makefile
 	touch ../zlib/configure.log
+
+../lz4/lib/liblz4.a: ${LZ4Sources}
+	(cd ../lz4/lib; CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" ${MAKE} liblz4.a)
