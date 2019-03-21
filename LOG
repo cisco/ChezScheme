@@ -1207,3 +1207,28 @@
 - added library-search-handler, compile-whole-library, and improved
   packaging to the release notes.
     release_notes/release_notes.stex
+
+9.5.2 changes:
+- updated version to 9.5.2
+    bintar/Makefile rpm/Makefile pkg/Makefile BUILDING NOTICE
+    makefiles/Mf-install.in makefiles/Makefile-csug.in scheme.1.in
+    c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt
+    mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea
+    c/scheme.rc s/7.ss s/cmacros.ss release_notes/release_notes.stex
+    csug/copyright.stex csug/csug.stex rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fixed handling of bintar, rpm, pkg make files
+    newrelease
+- fixed a bug in the fasl representation and reading of mutually
+  recursive ftypes where one of the members of the cycle is the
+  parent of another, which manifested in the fasl reader raising
+  bogus "incompatible record type" exceptions.  (The bug could also
+  affect other record-type descriptors with cycles involving parent
+  rtds and "extra" fields.)  object files created before this fix
+  are incompatible with builds with this fix, and objects files
+  created after this fix are incompatible builds without this fix.
+    fasl.ss, strip.ss,
+    fasl.c,
+    ftype.ms,
+    release_notes.stex

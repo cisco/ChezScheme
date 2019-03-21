@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version = 9.5.1
+version = 9.5.2
 m := $(shell find ../bin/* -type d | xargs basename)
 
 R = csv$(version)
