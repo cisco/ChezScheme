@@ -43,7 +43,7 @@ best to close ports explicitly whenever possible.
 allows the programmer to add new types of textual ports with
 arbitrary input/output semantics.
 It may be used, for example, to define any of the built-in
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g178">30</a>] stream types, i.e.,
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g179">30</a>] stream types, i.e.,
 <a name="./io:s1"></a>synonym streams,
 <a name="./io:s2"></a>broadcast streams,
 <a name="./io:s3"></a>concatenated streams,
@@ -750,7 +750,7 @@ flag is cleared; otherwise, the port's BOL flag is set.
 
 <p>
 The BOL flag is consulted by <tt>fresh-line</tt>
-(page&nbsp;<a href="./io.html#desc:fresh-line">240</a>) to determine if it needs to emit a
+(page&nbsp;<a href="./io.html#desc:fresh-line">242</a>) to determine if it needs to emit a
 newline.
 This flag is maintained automatically for file output ports, string output
 ports, and transcript ports.
@@ -2288,7 +2288,7 @@ character to <tt><i>textual-output-port</i></tt>, unless it can determine that t
 is already positioned at the start of a line.
 It does this by flushing the port and consulting the
 "beginning-of-line" (BOL) flag associated with the port.
-(See page&nbsp;<a href="./io.html#desc:set-port-bol">220</a>.)
+(See page&nbsp;<a href="./io.html#desc:set-port-bol">222</a>.)
 
 
 <p>
@@ -2756,7 +2756,7 @@ When the first argument is a port, output is sent to that port, as with
 
 <p>
 <i>Chez&nbsp;Scheme</i>'s implementation of <tt>format</tt> supports all of the
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g178">30</a>] format directives except for those specific
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g179">30</a>] format directives except for those specific
 to the Common Lisp pretty printer.
 Please consult a Common Lisp reference or the
 <a  href=http://www.lispworks.com/documentation/HyperSpec/Front/index.htm>Common Lisp Hyperspec</a>,
@@ -4782,10 +4782,10 @@ subprocess is terminated.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -1967,7 +1967,36 @@ cell&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(#(a&nbsp;b&nbsp;c)&n
 (set-cdr!&nbsp;cell&nbsp;4)<br>
 
 (hashtable-ref&nbsp;ht&nbsp;v&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;4</tt>
-<p><a name="./objects:s114"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-values&nbsp;<i>hashtable</i>)</tt></span>
+<p><a name="./objects:s114"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-keys&nbsp;<i>hashtable</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(hashtable-keys&nbsp;<i>hashtable</i>&nbsp;<i>size</i>)</tt></span>
+<br>
+<b>returns: </b>a vector containing the keys in <tt><i>hashtable</i></tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>Identitcal to the Revised<sup>6</sup> Report counterpart, but allowing an optional
+<tt><i>size</i></tt> argument.
+If <tt><i>size</i></tt> is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than <tt><i>size</i></tt> elements.
+Different calls to <tt>hashtable-keys</tt>
+with a <tt><i>size</i></tt> less than <tt>(hashtable-size&nbsp;<i>hashtable</i>)</tt>
+may return different subsets of <tt><i>hashtable</i></tt>'s keys.
+
+<p>
+
+<p><tt>(define&nbsp;ht&nbsp;(make-eq-hashtable))<br>
+
+(hashtable-set!&nbsp;ht&nbsp;'a&nbsp;"one")<br>
+
+(hashtable-set!&nbsp;ht&nbsp;'b&nbsp;"two")<br>
+
+(hashtable-set!&nbsp;ht&nbsp;'c&nbsp;"three")<br>
+
+(hashtable-keys&nbsp;ht)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#(a&nbsp;b&nbsp;c)&nbsp;<i>or&nbsp;any&nbsp;permutation</i><br>
+
+(hashtable-keys&nbsp;ht&nbsp;1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#(a)&nbsp;<i>or</i>&nbsp;#(b)&nbsp;<i>or</i>&nbsp;#(c)</tt>
+<p><a name="./objects:s115"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-values&nbsp;<i>hashtable</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(hashtable-values&nbsp;<i>hashtable</i>&nbsp;<i>size</i>)</tt></span>
 <br>
 <b>returns: </b>a vector containing the values in <tt><i>hashtable</i></tt>
 <br>
@@ -1976,6 +2005,11 @@ cell&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(#(a&nbsp;b&nbsp;c)&n
 <p>Each value is the value of one of the keys in <tt><i>hashtable</i></tt>.
 Duplicate values are not removed.
 The values may appear in any order in the returned vector.
+If <tt><i>size</i></tt> is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than <tt><i>size</i></tt> elements.
+Different calls to <tt>hashtable-values</tt>
+with a <tt><i>size</i></tt> less than <tt>(hashtable-size&nbsp;<i>hashtable</i>)</tt>
+may return different subsets of <tt><i>hashtable</i></tt>'s values.
 
 <p>
 
@@ -1991,21 +2025,70 @@ The values may appear in any order in the returned vector.
 
 (hashtable-set!&nbsp;ht&nbsp;'q&nbsp;"two")<br>
 
-(hashtable-values&nbsp;ht)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#("one"&nbsp;"two"&nbsp;"two")</tt>
-<p>This procedure is equivalent to:
+(hashtable-values&nbsp;ht)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#("one"&nbsp;"two"&nbsp;"two")&nbsp;<i>or&nbsp;any&nbsp;permutation</i><br>
 
-<p>
-
-<p><tt>(lambda&nbsp;(ht)<br>
-
-&nbsp;&nbsp;(let-values&nbsp;([(keys&nbsp;values)&nbsp;(hashtable-entries&nbsp;ht)])<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;values))</tt>
-<p>but more efficient since the separate vector of keys need
+(hashtable-values&nbsp;ht&nbsp;1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#("one")&nbsp;<i>or</i>&nbsp;#("two")</tt>
+<p>This procedure is equivalent to calling <tt>hashtable-entries</tt> and returning only
+the second result, but it is more efficient since the separate vector of keys need
 not be created.
 
 <p>
-<a name="./objects:s115"></a><span class=formdef><b>procedure</b>: <tt>(make-weak-eq-hashtable)</tt></span>
+<a name="./objects:s116"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-entries&nbsp;<i>hashtable</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(hashtable-entries&nbsp;<i>hashtable</i>&nbsp;<i>size</i>)</tt></span>
+<br>
+<b>returns: </b>two vectors containing the keys and values in <tt><i>hashtable</i></tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>Identitcal to the Revised<sup>6</sup> Report counterpart, but allowing an optional
+<tt><i>size</i></tt> argument.
+If <tt><i>size</i></tt> is specified, then it must be an exact, nonnegative integer, and the
+result vectors contain no more than <tt><i>size</i></tt> elements.
+Different calls to <tt>hashtable-entries</tt>
+with a <tt><i>size</i></tt> less than <tt>(hashtable-size&nbsp;<i>hashtable</i>)</tt>
+may return different subsets of <tt><i>hashtable</i></tt>'s entries.
+
+<p>
+
+<p><tt>(define&nbsp;ht&nbsp;(make-eq-hashtable))<br>
+
+(hashtable-set!&nbsp;ht&nbsp;'a&nbsp;"one")<br>
+
+(hashtable-set!&nbsp;ht&nbsp;'b&nbsp;"two")<br>
+
+(hashtable-entries&nbsp;ht)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#(a&nbsp;b)&nbsp;#("one"&nbsp;"two")&nbsp;<i>or&nbsp;the&nbsp;other&nbsp;permutation</i><br>
+
+(hashtable-entries&nbsp;ht&nbsp;1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#(a)&nbsp;#("one")&nbsp;<i>or</i>&nbsp;#(b)&nbsp;#("two")&nbsp;</tt>
+<p><a name="./objects:s117"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-cells&nbsp;<i>hashtable</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(hashtable-cells&nbsp;<i>hashtable</i>&nbsp;<i>size</i>)</tt></span>
+<br>
+<b>returns: </b>a vector of up to <tt><i>size</i></tt> elements containing the cells of <tt><i>hashtable</i></tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>Each element of the result vector is the value of one of the cells in <tt><i>hashtable</i></tt>.
+The cells may appear in any order in the returned vector.
+If <tt><i>size</i></tt> is specified, then it must be an exact, nonnegative integer, and the
+result vector contains no more than <tt><i>size</i></tt> cells.
+If <tt><i>size</i></tt> is not specified, then the result vector has <tt>(hashtable-size&nbsp;<i>hashtable</i>)</tt> elements.
+Different calls to <tt>hashtable-cells</tt>
+with a <tt><i>size</i></tt> less than <tt>(hashtable-size&nbsp;<i>hashtable</i>)</tt>
+may return different subsets of <tt><i>hashtable</i></tt>'s cells.
+
+<p>
+
+<p><tt>(define&nbsp;ht&nbsp;(make-eqv-hashtable))<br>
+
+(hashtable-set!&nbsp;ht&nbsp;1&nbsp;'one)<br>
+
+(hashtable-set!&nbsp;ht&nbsp;2&nbsp;'two)<br>
+
+(hashtable-cells&nbsp;ht)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#((1&nbsp;.&nbsp;one)&nbsp;(2&nbsp;.&nbsp;two))&nbsp;<i>or</i>&nbsp;#((2&nbsp;.&nbsp;two)&nbsp;(1&nbsp;.&nbsp;one))<br>
+
+(hashtable-cells&nbsp;ht&nbsp;1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#((1&nbsp;.&nbsp;one))&nbsp;<i>or</i>&nbsp;#((2&nbsp;.&nbsp;two))<br>
+
+(hashtable-cells&nbsp;ht&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#()</tt>
+<p><a name="./objects:s118"></a><span class=formdef><b>procedure</b>: <tt>(make-weak-eq-hashtable)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-weak-eq-hashtable&nbsp;<i>size</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-weak-eqv-hashtable)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-weak-eqv-hashtable&nbsp;<i>size</i>)</tt></span>
@@ -2042,7 +2125,7 @@ The effect of this can be observed via <tt>hashtable-keys</tt> and
 <p><tt>(define&nbsp;ht1&nbsp;(make-weak-eq-hashtable))<br>
 
 (define&nbsp;ht2&nbsp;(make-weak-eq-hashtable&nbsp;32))</tt>
-<p><a name="./objects:s116"></a><span class=formdef><b>procedure</b>: <tt>(make-ephemeron-eq-hashtable)</tt></span>
+<p><a name="./objects:s119"></a><span class=formdef><b>procedure</b>: <tt>(make-ephemeron-eq-hashtable)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-ephemeron-eq-hashtable&nbsp;<i>size</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-ephemeron-eqv-hashtable)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-ephemeron-eqv-hashtable&nbsp;<i>size</i>)</tt></span>
@@ -2067,7 +2150,7 @@ way as for an immutable weak hashtable.
 <p><tt>(define&nbsp;ht1&nbsp;(make-ephemeron-eq-hashtable))<br>
 
 (define&nbsp;ht2&nbsp;(make-ephemeron-eq-hashtable&nbsp;32))</tt>
-<p><a name="./objects:s117"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-weak?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s120"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-weak?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a weak eq or eqv hashtable, <tt>#f</tt> otherwise
 <br>
@@ -2079,7 +2162,7 @@ way as for an immutable weak hashtable.
 (define&nbsp;ht2&nbsp;(hashtable-copy&nbsp;ht1))<br>
 
 (hashtable-weak?&nbsp;ht2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./objects:s118"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-ephemeron?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s121"></a><span class=formdef><b>procedure</b>: <tt>(hashtable-ephemeron?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is an ephemeron eq or eqv hashtable, <tt>#f</tt> otherwise
 <br>
@@ -2091,7 +2174,7 @@ way as for an immutable weak hashtable.
 (define&nbsp;ht2&nbsp;(hashtable-copy&nbsp;ht1))<br>
 
 (hashtable-ephemeron?&nbsp;ht2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./objects:s119"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s122"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is an eq hashtable, <tt>#f</tt> otherwise
 <br>
@@ -2102,7 +2185,7 @@ way as for an immutable weak hashtable.
 (eq-hashtable?&nbsp;(make-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (eq-hashtable?&nbsp;'(not&nbsp;a&nbsp;hash&nbsp;table))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s120"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-weak?&nbsp;<i>hashtable</i>)</tt></span>
+<p><a name="./objects:s123"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-weak?&nbsp;<i>hashtable</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>hashtable</i></tt> is weak, <tt>#f</tt> otherwise
 <br>
@@ -2115,7 +2198,7 @@ way as for an immutable weak hashtable.
 <p><tt>(eq-hashtable-weak?&nbsp;(make-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (eq-hashtable-weak?&nbsp;(make-weak-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./objects:s121"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-ephemeron?&nbsp;<i>hashtable</i>)</tt></span>
+<p><a name="./objects:s124"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-ephemeron?&nbsp;<i>hashtable</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>hashtable</i></tt> uses ephemeron pairs, <tt>#f</tt> otherwise
 <br>
@@ -2128,7 +2211,7 @@ way as for an immutable weak hashtable.
 <p><tt>(eq-hashtable-ephemeron?&nbsp;(make-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (eq-hashtable-ephemeron?&nbsp;(make-ephemeron-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./objects:s122"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-set!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
+<p><a name="./objects:s125"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-set!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2146,7 +2229,7 @@ way as for an immutable weak hashtable.
 <p><tt>(define&nbsp;ht&nbsp;(make-eq-hashtable))<br>
 
 (eq-hashtable-set!&nbsp;ht&nbsp;'a&nbsp;73)</tt>
-<p><a name="./objects:s123"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-ref&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s126"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-ref&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -2175,7 +2258,7 @@ If no value is associated with <tt><i>key</i></tt> in <tt><i>hashtable</i></tt>,
 (eq-hashtable-ref&nbsp;ht&nbsp;p1&nbsp;55)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;73<br>
 
 (eq-hashtable-ref&nbsp;ht&nbsp;p2&nbsp;55)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;55</tt>
-<p><a name="./objects:s124"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-contains?&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
+<p><a name="./objects:s127"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-contains?&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if an association for <tt><i>key</i></tt> exists in <tt><i>hashtable</i></tt>, <tt>#f</tt> otherwise
 <br>
@@ -2197,7 +2280,7 @@ If no value is associated with <tt><i>key</i></tt> in <tt><i>hashtable</i></tt>,
 (eq-hashtable-contains?&nbsp;ht&nbsp;p1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (eq-hashtable-contains?&nbsp;ht&nbsp;p2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s125"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-update!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>procedure</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s128"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-update!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>procedure</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2252,7 +2335,7 @@ hash computations and hashtable lookups.
 &nbsp;&nbsp;0)<br>
 
 (eq-hashtable-ref&nbsp;ht&nbsp;'a&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;220</tt>
-<p><a name="./objects:s126"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-cell&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s129"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-cell&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>a pair (see below)
 <br>
@@ -2286,7 +2369,7 @@ cell&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(#(a&nbsp;b&nbsp;c)&n
 (set-cdr!&nbsp;cell&nbsp;4)<br>
 
 (eq-hashtable-ref&nbsp;ht&nbsp;v&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;4</tt>
-<p><a name="./objects:s127"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-delete!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
+<p><a name="./objects:s130"></a><span class=formdef><b>procedure</b>: <tt>(eq-hashtable-delete!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2318,7 +2401,7 @@ for <tt><i>key</i></tt> from <tt><i>hashtable</i></tt>.
 (eq-hashtable-contains?&nbsp;ht&nbsp;p2)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (eq-hashtable-delete!&nbsp;ht&nbsp;p2)</tt>
-<p><a name="./objects:s128"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s131"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is an eq hashtable, <tt>#f</tt> otherwise
 <br>
@@ -2329,7 +2412,7 @@ for <tt><i>key</i></tt> from <tt><i>hashtable</i></tt>.
 (symbol-hashtable?&nbsp;(make-hashtable&nbsp;symbol-hash&nbsp;eq?))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (symbol-hashtable?&nbsp;(make-eq-hashtable))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s129"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-set!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
+<p><a name="./objects:s132"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-set!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>value</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2353,7 +2436,7 @@ and equivalence function <tt>eq?</tt>, <tt>eqv?</tt>, <tt>equal?</tt>, or <tt>sy
 (symbol-hashtable-set!&nbsp;ht&nbsp;'a&nbsp;73)<br>
 
 (symbol-hashtable-ref&nbsp;ht&nbsp;'a&nbsp;#f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;73</tt>
-<p><a name="./objects:s130"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-ref&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s133"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-ref&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -2384,7 +2467,7 @@ If no value is associated with <tt><i>key</i></tt> in <tt><i>hashtable</i></tt>,
 (symbol-hashtable-ref&nbsp;ht&nbsp;k1&nbsp;"bye")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"hi"<br>
 
 (symbol-hashtable-ref&nbsp;ht&nbsp;k2&nbsp;"bye")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"bye"</tt>
-<p><a name="./objects:s131"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-contains?&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
+<p><a name="./objects:s134"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-contains?&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if an association for <tt><i>key</i></tt> exists in <tt><i>hashtable</i></tt>, <tt>#f</tt> otherwise
 <br>
@@ -2408,7 +2491,7 @@ and equivalence function <tt>eq?</tt>, <tt>eqv?</tt>, <tt>equal?</tt>, or <tt>sy
 (symbol-hashtable-contains?&nbsp;ht&nbsp;k1)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (symbol-hashtable-contains?&nbsp;ht&nbsp;k2&nbsp;)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s132"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-update!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>procedure</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s135"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-update!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>procedure</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2465,7 +2548,7 @@ hash computations and hashtable lookups.
 &nbsp;&nbsp;0)<br>
 
 (symbol-hashtable-ref&nbsp;ht&nbsp;'a&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;220</tt>
-<p><a name="./objects:s133"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-cell&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
+<p><a name="./objects:s136"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-cell&nbsp;<i>hashtable</i>&nbsp;<i>key</i>&nbsp;<i>default</i>)</tt></span>
 <br>
 <b>returns: </b>a pair (see below)
 <br>
@@ -2501,7 +2584,7 @@ cell&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(a-key&nbsp;.&nbsp;3)
 (set-cdr!&nbsp;cell&nbsp;4)<br>
 
 (symbol-hashtable-ref&nbsp;ht&nbsp;k&nbsp;0)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;4</tt>
-<p><a name="./objects:s134"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-delete!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
+<p><a name="./objects:s137"></a><span class=formdef><b>procedure</b>: <tt>(symbol-hashtable-delete!&nbsp;<i>hashtable</i>&nbsp;<i>key</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2541,7 +2624,7 @@ for <tt><i>key</i></tt> from <tt><i>hashtable</i></tt>.
 
 
 <p>
-<a name="./objects:s135"></a><a name="./objects:s136"></a>Chez Scheme extends the Revised<sup>6</sup> Report's <tt>define-record-type</tt>
+<a name="./objects:s138"></a><a name="./objects:s139"></a>Chez Scheme extends the Revised<sup>6</sup> Report's <tt>define-record-type</tt>
 syntax in one way, which is that it allows a generative record type
 to be declared explicitly as such (in a double-negative sort of way)
 by including a <tt>nongenerative</tt> clause with <tt>#f</tt> as the
@@ -2560,12 +2643,12 @@ time the <tt>define-record-clause</tt> is evaluated, rather than once
 at compile (expansion) time.
 
 <p>
-<a name="./objects:s137"></a><span class=formdef><b>thread parameter</b>: <tt>require-nongenerative-clause</tt></span>
+<a name="./objects:s140"></a><span class=formdef><b>thread parameter</b>: <tt>require-nongenerative-clause</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>This parameter holds a boolean value that determines whether
-<a name="./objects:s138"></a><tt>define-record-type</tt>
+<a name="./objects:s141"></a><tt>define-record-type</tt>
 requires a nongenerative clause.
 The default value is <tt>#f</tt>.
 The lead-in above describes why one might want to set this to <tt>#t</tt>.
@@ -2577,14 +2660,14 @@ The lead-in above describes why one might want to set this to <tt>#t</tt>.
 
 
 <p>
-<a name="./objects:s139"></a><a name="./objects:s140"></a>By default, the <a name="./objects:s141"></a><tt>equal?</tt> primitive
+<a name="./objects:s142"></a><a name="./objects:s143"></a>By default, the <a name="./objects:s144"></a><tt>equal?</tt> primitive
 compares record instances using <tt>eq?</tt>, i.e., it distinguishes
 non-eq? instances even if they are of the same type and have equal
 contents.
 A program can override this behavior for instances of a
 record type (and its subtypes that do not have their own equality
 procedures) by using
-<a name="./objects:s142"></a><tt>record-type-equal-procedure</tt>
+<a name="./objects:s145"></a><tt>record-type-equal-procedure</tt>
 to associate an equality procedure with the record-type descriptor
 (<tt><i>rtd</i></tt>) that describes the record type.
 
@@ -2597,7 +2680,7 @@ the instances.
 Two instances <tt><i>x</i></tt> and <tt><i>y</i></tt> share an equality procedure if
 they inherit an equality procedure from the same point in the inheritance
 chain, i.e., if
-<a name="./objects:s143"></a><tt>(record-equal-procedure&nbsp;<i>x</i>&nbsp;<i>y</i>)</tt>
+<a name="./objects:s146"></a><tt>(record-equal-procedure&nbsp;<i>x</i>&nbsp;<i>y</i>)</tt>
 returns a procedure (<tt><i>equal-proc</i></tt>) rather
 than <tt>#f</tt>.
 <tt><i>equal?</i></tt> passes <tt><i>equal-proc</i></tt> three arguments: the two
@@ -2611,19 +2694,19 @@ procedure, <tt>equal?</tt> returns <tt>#f</tt>.
 <p>
 A default equality procedure to be used for all record types (including
 opaque types) can be specified via the parameter
-<a name="./objects:s144"></a><tt>default-record-equal-procedure</tt>.
+<a name="./objects:s147"></a><tt>default-record-equal-procedure</tt>.
 The default equality procedure is used only if neither instance's type has or inherits
 a type-specific record equality procedure.
 
 <p>
-<a name="./objects:s145"></a><a name="./objects:s146"></a>Similarly, when the <a name="./objects:s147"></a><tt>equal-hash</tt>
+<a name="./objects:s148"></a><a name="./objects:s149"></a>Similarly, when the <a name="./objects:s150"></a><tt>equal-hash</tt>
 primitive hashes a record instance, it defaults to a value that is
 independent of the record type and contents of the instance.
 A program can override this behavior for instances of a
-record type by using <a name="./objects:s148"></a><tt>record-type-hash-procedure</tt>
+record type by using <a name="./objects:s151"></a><tt>record-type-hash-procedure</tt>
 to associate a hash procedure with the record-type descriptor (<tt><i>rtd</i></tt>)
 that describes the record type.
-The procedure <a name="./objects:s149"></a><tt>record-hash-procedure</tt> can be used to find
+The procedure <a name="./objects:s152"></a><tt>record-hash-procedure</tt> can be used to find
 the hash procedure for a given record instance, following the inheritance
 chain.
 <tt><i>equal-hash</i></tt> passes the hash procedure two arguments: the
@@ -2636,7 +2719,7 @@ of shared structure more efficient.
 <p>
 A default hash procedure to be used for all record types (including
 opaque types) can be specified via the parameter
-<a name="./objects:s150"></a><tt>default-record-hash-procedure</tt>.
+<a name="./objects:s153"></a><tt>default-record-hash-procedure</tt>.
 The default hash procedure is used only if an instance's type does not have or inherit
 a type-specific hash procedure.
 
@@ -2771,7 +2854,7 @@ to cyclic record structures.
 (hashtable-ref&nbsp;h&nbsp;graph2&nbsp;#f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
 
 (hashtable-ref&nbsp;h&nbsp;graph3&nbsp;#f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
-<p><a name="./objects:s151"></a><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>&nbsp;<i>equal-proc</i>)</tt></span>
+<p><a name="./objects:s154"></a><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>&nbsp;<i>equal-proc</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(record-type-equal-procedure&nbsp;<i>rtd</i>)</tt></span>
@@ -2798,7 +2881,7 @@ the property that it produces the same hash value for any two
 instances the equality procedure considers equal.
 
 <p>
-<a name="./objects:s152"></a><span class=formdef><b>procedure</b>: <tt>(record-equal-procedure&nbsp;<i>record<sub>1</sub></i>&nbsp;<i>record<sub>2</sub></i>)</tt></span>
+<a name="./objects:s155"></a><span class=formdef><b>procedure</b>: <tt>(record-equal-procedure&nbsp;<i>record<sub>1</sub></i>&nbsp;<i>record<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>the shared equality procedure for <tt><i>record<sub>1</sub></i></tt> and <tt><i>record<sub>2</sub></i></tt>, if there is one, otherwise <tt>#f</tt>
 <br>
@@ -2812,7 +2895,7 @@ equality procedure associated with the type is returned.
 Otherwise, <tt>#f</tt> is returned.
 
 <p>
-<a name="./objects:s153"></a><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>&nbsp;<i>hash-proc</i>)</tt></span>
+<a name="./objects:s156"></a><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>&nbsp;<i>hash-proc</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(record-type-hash-procedure&nbsp;<i>rtd</i>)</tt></span>
@@ -2842,7 +2925,7 @@ for any two instances the record type's equality procedure considers
 equal.
 
 <p>
-<a name="./objects:s154"></a><span class=formdef><b>procedure</b>: <tt>(record-hash-procedure&nbsp;<i>record</i>)</tt></span>
+<a name="./objects:s157"></a><span class=formdef><b>procedure</b>: <tt>(record-hash-procedure&nbsp;<i>record</i>)</tt></span>
 <br>
 <b>returns: </b>the hash procedure for <tt><i>record</i></tt>, if there is one, otherwise <tt>#f</tt>
 <br>
@@ -2856,7 +2939,7 @@ is returned.
 Otherwise, <tt>#f</tt> is returned.
 
 <p>
-<a name="./objects:s155"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-equal-procedure</tt></span>
+<a name="./objects:s158"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-equal-procedure</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2871,7 +2954,7 @@ the two instances and a procedure that should be used to recursively
 compare arbitrary values within the instances.
 
 <p>
-<a name="./objects:s156"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-hash-procedure</tt></span>
+<a name="./objects:s159"></a><span class=formdef><b>thread parameter</b>: <tt>default-record-hash-procedure</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2896,7 +2979,7 @@ equal procedure considers equivalent.
 
 
 <p>
-<a name="./objects:s157"></a><a name="./objects:s158"></a><a name="./objects:s159"></a>In addition to the Revised<sup>6</sup> Report record-type creation and definition
+<a name="./objects:s160"></a><a name="./objects:s161"></a><a name="./objects:s162"></a>In addition to the Revised<sup>6</sup> Report record-type creation and definition
 mechanisms, which are described in Chapter&nbsp;<a href="http://scheme.com/tspl4/./records.html#g138">9</a> of <i>The Scheme Programming Language, 4th Edition</i>,
 <i>Chez&nbsp;Scheme</i> continues to support pre-R6RS mechanisms for creating new
 data types, or <i>record types</i>, with fixed sets of named fields.
@@ -2998,7 +3081,7 @@ printer, and the inspector uses it to allow inspection and mutation of
 system- and user-defined records during debugging.
 
 <p>
-<a name="./objects:s160"></a><a name="./objects:s161"></a>A parent record
+<a name="./objects:s163"></a><a name="./objects:s164"></a>A parent record
 may be specified in the <tt>define-record</tt> syntax or as an optional
 argument to <tt>make-record-type</tt>.
 A new record inherits the parent record's fields, and each instance
@@ -3007,7 +3090,7 @@ type as well, so that accessors and mutators for the parent type may
 be used on instances of the new type.
 
 <p>
-<a name="./objects:s162"></a><a name="./objects:s163"></a>Record
+<a name="./objects:s165"></a><a name="./objects:s166"></a>Record
 type definitions may be classified as either generative or nongenerative.
 A new type results for each <i>generative</i> record definition,
 while only one type results for all occurrences of a given
@@ -3017,7 +3100,7 @@ and setters are applicable only to objects with the same type.
 
 <p>
 Syntactic (<tt>define-record</tt>) record definitions are
-<a name="./objects:s164"></a><i>expand-time generative</i> by default, which means that a new
+<a name="./objects:s167"></a><i>expand-time generative</i> by default, which means that a new
 record is created when the code is expanded.
 Expansion happens once for each form prior to compilation or
 interpretation, as when it is entered interactively, loaded from source,
@@ -3027,7 +3110,7 @@ form, e.g., in the body of a procedure called multiple times, always
 produce the same record type.
 
 <p>
-<a name="./objects:s165"></a>Separate <tt>define-record</tt> forms
+<a name="./objects:s168"></a>Separate <tt>define-record</tt> forms
 usually produce different types, even if the forms are textually
 identical.
 The only exception occurs when the name of a record is specified as
@@ -3043,7 +3126,7 @@ Scheme process.
 
 <p>
 Procedural (<tt>make-record-type</tt>) record definitions are
-<a name="./objects:s166"></a><i>run-time generative</i> by default.
+<a name="./objects:s169"></a><i>run-time generative</i> by default.
 That is, each call to <tt>make-record-type</tt> usually produces a new
 record type.
 As with the syntactic interface,
@@ -3108,7 +3191,7 @@ type.
 
 
 <p>
-<a name="./objects:s167"></a><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
+<a name="./objects:s170"></a><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>(define-record&nbsp;<i>name</i>&nbsp;<i>parent</i>&nbsp;(<i>fld<sub>1</sub></i>&nbsp;...)&nbsp;((<i>fld<sub>2</sub></i>&nbsp;<i>init</i>)&nbsp;...)&nbsp;(<i>opt</i>&nbsp;...))</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3191,7 +3274,7 @@ Each of these field names is bound to the value of the corresponding field
 during initialization.
 
 <p>
-<a name="./objects:s168"></a><a name="./objects:s169"></a>If
+<a name="./objects:s171"></a><a name="./objects:s172"></a>If
 <tt><i>parent</i></tt> is present, the record type named by <tt><i>parent</i></tt>
 is the parent of the record.
 The new record type inherits each of the parent record's fields,
@@ -3431,7 +3514,7 @@ immutable fields are involved.
 <p>
 
 <p><tt>'#1=#[triple&nbsp;#1#&nbsp;(3&nbsp;4)&nbsp;#1#]&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception</i></tt>
-<p><a name="./objects:s170"></a>The following example demonstrates
+<p><a name="./objects:s173"></a>The following example demonstrates
 the use of nongenerative record definitions.
 
 <p>
@@ -3476,13 +3559,13 @@ different source files or are compiled separately and loaded from
 different object files.
 
 <p>
-<a name="./objects:s171"></a><span class=formdef><b>syntax</b>: <tt>predicate</tt></span>
+<a name="./objects:s174"></a><span class=formdef><b>syntax</b>: <tt>predicate</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>prefix</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>constructor</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./objects:s172"></a><a name="./objects:s173"></a>These identifiers are auxiliary keywords for <tt>define-record</tt>.
+<p><a name="./objects:s175"></a><a name="./objects:s176"></a>These identifiers are auxiliary keywords for <tt>define-record</tt>.
 It is a syntax violation to reference these identifiers except in
 contexts where they are recognized as auxiliary keywords.
 <tt>mutable</tt> and <tt>immutable</tt> are also auxiliary keywords for
@@ -3491,7 +3574,7 @@ contexts where they are recognized as auxiliary keywords.
 
 
 <p>
-<a name="./objects:s174"></a><span class=formdef><b>syntax</b>: <tt>(type-descriptor&nbsp;<i>name</i>)</tt></span>
+<a name="./objects:s177"></a><span class=formdef><b>syntax</b>: <tt>(type-descriptor&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor associated with <tt><i>name</i></tt>
 <br>
@@ -3515,7 +3598,7 @@ interface routines described later in this section.
 <p><tt>(define-record&nbsp;frob&nbsp;())<br>
 
 (type-descriptor&nbsp;frob)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;record&nbsp;type&nbsp;frob&gt;</tt>
-<p><a name="./objects:s175"></a><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>name</i>)</tt></span>
+<p><a name="./objects:s178"></a><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor associated with <tt><i>name</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record-reader&nbsp;<i>rtd</i>)</tt></span>
@@ -3603,7 +3686,7 @@ continuation of the example above demonstrates.
 <p><tt>(record-reader&nbsp;'marble&nbsp;(type-descriptor&nbsp;marble))<br>
 
 (make-marble&nbsp;'pink&nbsp;'splendid)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#[marble&nbsp;pink&nbsp;splendid]</tt>
-<p><a name="./objects:s176"></a><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s179"></a><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the record writer associated with <tt><i>rtd</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record-writer&nbsp;<i>rtd</i>&nbsp;<i>procedure</i>)</tt></span>
@@ -3674,7 +3757,7 @@ of record.
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;m))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#&lt;record&nbsp;of&nbsp;type&nbsp;marble&gt;"</tt>
 <p>A print method may be called more than once during the printing of a
 single record to support cycle detection and graph printing
-(see <a name="./objects:s177"></a><tt>print-graph</tt>),
+(see <a name="./objects:s180"></a><tt>print-graph</tt>),
 so print
 methods that perform side effects other than printing to the given
 port are discouraged.
@@ -3713,12 +3796,12 @@ or numbers, may be printed by direct calls to <tt>display</tt> or
 &nbsp;&nbsp;&nbsp;&nbsp;ref-lexive))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#0=&lt;#0#&gt;</tt>
 <p>Print methods need not be concerned with handling nonfalse values of
 the parameters
-<a name="./objects:s178"></a><tt>print-level</tt>.
+<a name="./objects:s181"></a><tt>print-level</tt>.
 The printer handles <tt>print-level</tt> automatically even when
 user-defined print procedures are used.
 Since records typically contain a small, fixed number of fields, it
 is usually possible to ignore nonfalse values of
-<a name="./objects:s179"></a><tt>print-length</tt> as well.
+<a name="./objects:s182"></a><tt>print-length</tt> as well.
 
 <p>
 
@@ -3743,7 +3826,7 @@ is usually possible to ignore nonfalse values of
 &nbsp;&nbsp;&nbsp;&nbsp;(set-ref-contents!&nbsp;ref-lexive&nbsp;ref-lexive)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;ref-lexive))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;&lt;&lt;&lt;&lt;#[...]&gt;&gt;&gt;&gt;</tt>
-<p><a name="./objects:s180"></a><span class=formdef><b>thread parameter</b>: <tt>print-record</tt></span>
+<p><a name="./objects:s183"></a><span class=formdef><b>thread parameter</b>: <tt>print-record</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3756,7 +3839,7 @@ name of the record type as returned by <tt>record-type-name</tt>.
 
 
 <p>
-<a name="./objects:s181"></a><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
+<a name="./objects:s184"></a><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-record-type&nbsp;<i>parent-rtd</i>&nbsp;<i>type-name</i>&nbsp;<i>fields</i>)</tt></span>
 <br>
 <b>returns: </b>a record-type descriptor for a new record type
@@ -3797,7 +3880,7 @@ If the <tt>immutable</tt> class-specifier is present, the field is
 immutable; otherwise, the field is mutable.
 <tt><i>type</i></tt>, if present, specifies how the field is represented.
 The types are the same as those given in the description
-of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">174</a>.
+of <tt>define-record</tt> on page&nbsp;<a href="./objects.html#record-field-types">175</a>.
 
 <p>
 If a type is specified, the field can contain objects only of the
@@ -3892,7 +3975,7 @@ x&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;low&nbsp;quality&nb
 While field names are generally distinct, it is permissible for one field
 name to be the same as another in the list of fields or the same as
 an inherited name.
-In this case, <a name="./objects:s182"></a><a name="./objects:s183"></a>field ordinals
+In this case, <a name="./objects:s185"></a><a name="./objects:s186"></a>field ordinals
 must be used to select fields in calls to <tt>record-field-accessor</tt>
 and <tt>record-field-mutator</tt>.
 Ordinals range from zero through one less than the number of fields.
@@ -3917,7 +4000,7 @@ Parent fields come first, if any, followed by the fields in
 ((record-field-accessor&nbsp;r3&nbsp;4)&nbsp;x)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;e<br>
 
 ((record-field-accessor&nbsp;r3&nbsp;'t)&nbsp;x)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>unspecified</i></tt>
-<p><a name="./objects:s184"></a><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rcd</i>)</tt></span>
+<p><a name="./objects:s187"></a><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rcd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(record-constructor&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a constructor for records of the type represented by <tt><i>rtd</i></tt>
@@ -3934,7 +4017,7 @@ order given when the record-type descriptor was created.
 
 
 <p>
-<a name="./objects:s185"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessor&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s188"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessor&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b>an accessor for the identified field
 <br>
@@ -3952,7 +4035,7 @@ It returns the contents of the specified field of the record.
 
 
 <p>
-<a name="./objects:s186"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessible?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s189"></a><span class=formdef><b>procedure</b>: <tt>(record-field-accessible?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the specified field is accessible, otherwise <tt>#f</tt>
 <br>
@@ -3972,7 +4055,7 @@ instance of the record type.
 
 
 <p>
-<a name="./objects:s187"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutator&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s190"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutator&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b>a mutator for the identified field
 <br>
@@ -3992,7 +4075,7 @@ the specified field when the record-type descriptor was created.
 
 
 <p>
-<a name="./objects:s188"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutable?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
+<a name="./objects:s191"></a><span class=formdef><b>procedure</b>: <tt>(record-field-mutable?&nbsp;<i>rtd</i>&nbsp;<i>field-id</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the specified field is mutable, otherwise <tt>#f</tt>
 <br>
@@ -4014,7 +4097,7 @@ instance of the record type.
 
 
 <p>
-<a name="./objects:s189"></a><span class=formdef><b>procedure</b>: <tt>(record-type-name&nbsp;<i>rtd</i>)</tt></span>
+<a name="./objects:s192"></a><span class=formdef><b>procedure</b>: <tt>(record-type-name&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the name of the record-type represented by <tt><i>rtd</i></tt>
 <br>
@@ -4038,7 +4121,7 @@ is the "pretty" name of the gensym (see&nbsp;<a href="./objects.html#g56">7.9</a
 (define&nbsp;p&nbsp;(type-descriptor&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;))<br>
 
 (record-type-name&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"point"</tt>
-<p><a name="./objects:s190"></a><span class=formdef><b>procedure</b>: <tt>(record-type-symbol&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s193"></a><span class=formdef><b>procedure</b>: <tt>(record-type-symbol&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>the generated symbol associated with <tt><i>rtd</i></tt>
 <br>
@@ -4058,7 +4141,7 @@ is the "pretty" name of the gensym (see&nbsp;<a href="./objects.html#g56">7.9</a
 (define&nbsp;p&nbsp;(type-descriptor&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;))<br>
 
 (record-type-symbol&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&#123;point&nbsp;bdhavk1bwafxyss1-b&#125;</tt>
-<p><a name="./objects:s191"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-names&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s194"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-names&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a list of field names of the type represented by <tt><i>rtd</i></tt>
 <br>
@@ -4072,7 +4155,7 @@ The field names are symbols.
 <p><tt>(define-record&nbsp;triple&nbsp;((immutable&nbsp;x1)&nbsp;(mutable&nbsp;x2)&nbsp;(immutable&nbsp;x3)))<br>
 
 (record-type-field-names&nbsp;(type-descriptor&nbsp;triple))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(x1&nbsp;x2&nbsp;x3)</tt>
-<p><a name="./objects:s192"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-decls&nbsp;<i>rtd</i>)</tt></span>
+<p><a name="./objects:s195"></a><span class=formdef><b>procedure</b>: <tt>(record-type-field-decls&nbsp;<i>rtd</i>)</tt></span>
 <br>
 <b>returns: </b>a list of field declarations of the type represented by <tt><i>rtd</i></tt>
 <br>
@@ -4101,7 +4184,7 @@ under <tt>make-record-type</tt>.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;&nbsp;(mutable&nbsp;ptr&nbsp;y)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;&nbsp;(mutable&nbsp;ptr&nbsp;radius))</tt>
-<p><a name="./objects:s193"></a><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./objects:s196"></a><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a record, otherwise <tt>#f</tt>
 <br><span class=formdef><b>procedure</b>: <tt>(record?&nbsp;<i>obj</i>&nbsp;<i>rtd</i>)</tt></span>
@@ -4121,7 +4204,7 @@ record-type descriptor <tt><i>rtd</i></tt> is equivalent to the following.
 <p>
 
 <p><tt>(lambda&nbsp;(x)&nbsp;(record?&nbsp;x&nbsp;<i>rtd</i>))</tt>
-<p><a name="./objects:s194"></a><span class=formdef><b>procedure</b>: <tt>(record-type-descriptor&nbsp;<i>rec</i>)</tt></span>
+<p><a name="./objects:s197"></a><span class=formdef><b>procedure</b>: <tt>(record-type-descriptor&nbsp;<i>rec</i>)</tt></span>
 <br>
 <b>returns: </b>the record-type descriptor of <tt><i>rec</i></tt>
 <br>
@@ -4158,7 +4241,7 @@ rtd&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#&lt;record&nbsp;type&
 
 
 <p>
-<a name="./objects:s195"></a><span class=formdef><b>procedure</b>: <tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></span>
+<a name="./objects:s198"></a><span class=formdef><b>procedure</b>: <tt>(procedure-arity-mask&nbsp;<i>proc</i>)</tt></span>
 <br>
 <b>returns: </b>an exact integer bitmask identifying the accepted argument counts of <tt><i>proc</i></tt>
 <br>
@@ -4201,10 +4284,10 @@ encoding of all bits set is <tt>-1</tt>.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

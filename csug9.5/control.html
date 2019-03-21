@@ -275,7 +275,7 @@ transparently in many applications.
 One-shot continuations may be more efficient for some applications than
 multishot continuations.
 See the paper "Representing control in the presence of one-shot
-continuations"&nbsp;[<a class=citation href="./bibliography.html#g151">3</a>] for more information about
+continuations"&nbsp;[<a class=citation href="./bibliography.html#g152">3</a>] for more information about
 one-shot continuations, including how they are implemented in
 <i>Chez&nbsp;Scheme</i>.
 
@@ -350,7 +350,7 @@ and automatic garbage collection disabled.
 
 <p>
 <a name="./control:s12"></a>Engines are a high-level process abstraction supporting
-<a name="./control:s13"></a><i>timed preemption</i>&nbsp;[<a class=citation href="./bibliography.html#g163">15</a>,<a class=citation href="./bibliography.html#g172">24</a>].
+<a name="./control:s13"></a><i>timed preemption</i>&nbsp;[<a class=citation href="./bibliography.html#g164">15</a>,<a class=citation href="./bibliography.html#g173">24</a>].
 Engines may be used to simulate <a name="./control:s14"></a>multiprocessing, implement operating
 system kernels, and perform <a name="./control:s15"></a>nondeterministic computations.
 
@@ -395,7 +395,7 @@ from the point of interruption.
 <p>
 When an engine is applied to its arguments, it sets up a timer
 to fire in <tt><i>ticks</i></tt> time units.
-(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">322</a>.)
+(See <tt>set-timer</tt> on page&nbsp;<a href="./system.html#desc:set-timer">324</a>.)
 If the engine computation completes before the timer expires, the
 system invokes <tt><i>complete</i></tt>, passing 
 it the number of <tt><i>ticks</i></tt> left over and
@@ -822,10 +822,10 @@ passed to <tt>engine-return</tt>.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -651,7 +651,7 @@ The environment returned by this procedure is immutable.
 
 <p><tt>ieee-environment</tt> returns an environment containing
 bindings for the keywords and variables whose meanings are
-defined by the IEEE/ANSI Standard for Scheme&nbsp;[<a class=citation href="./bibliography.html#g174">26</a>].
+defined by the IEEE/ANSI Standard for Scheme&nbsp;[<a class=citation href="./bibliography.html#g175">26</a>].
 
 <p>
 The bindings for each of the identifiers in the IEEE environment are those
@@ -1754,7 +1754,7 @@ information in error messages.
 (see <tt>current-expand</tt>), initially <tt>sc-expand</tt>.
 
 <p>
-<a name="./system:s83"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">354</a>)
+<a name="./system:s83"></a>See also <tt>expand-output</tt> (page&nbsp;<a href="./system.html#desc:expand-output">356</a>)
 which can be used to request that the compiler or interpreter show
 expander output.
 
@@ -1893,7 +1893,7 @@ optimizations performed.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;odd?)])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(h&nbsp;n)))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;1025</tt>
-<p><a name="./system:s89"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">354</a>)
+<p><a name="./system:s89"></a>See also <tt>expand/optimize-output</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize-output">356</a>)
 which can be used to request that the compiler or interpreter show
 source-optimizer output.
 
@@ -2484,7 +2484,7 @@ This option is particularly useful for running RNRS top-level programs
 at optimize-level&nbsp;3 via the
 <a name="./system:s100"></a><tt>--program</tt> command-line option,
 since <tt>eval-when</tt> is ineffective for RNRS top-level programs as described
-on page&nbsp;<a href="./system.html#eval-when-tlp">345</a>.
+on page&nbsp;<a href="./system.html#eval-when-tlp">347</a>.
 
 
 <p>
@@ -2701,7 +2701,7 @@ procedure is inlined at points where it is called by other procedures,
 as well as copy propagation, constant folding, useless code
 elimination, and several related optimizations.
 The algorithm used by the optimizer is described in detail in the paper
-"Fast and effective procedure inlining"&nbsp;[<a class=citation href="./bibliography.html#g179">31</a>].
+"Fast and effective procedure inlining"&nbsp;[<a class=citation href="./bibliography.html#g180">31</a>].
 
 <p>
 When <tt>cp0</tt> is enabled, the programmer can count on the compiler
@@ -2953,8 +2953,8 @@ Similarly, when <tt>expand/optimize-output</tt> is set to a textual
 output port, the output of the source optimizer is printed.
 
 <p>
-<a name="./system:s118"></a><a name="./system:s119"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">339</a>) and
-<tt>expand-optimize</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize">340</a>), which
+<a name="./system:s118"></a><a name="./system:s119"></a>See also <tt>expand</tt> (page&nbsp;<a href="./system.html#desc:expand">341</a>) and
+<tt>expand-optimize</tt> (page&nbsp;<a href="./system.html#desc:expand/optimize">342</a>), which
 can be used to run the expander or the expander and source optimizer
 directly on an individual form.
 
@@ -5219,7 +5219,7 @@ follows:
 <p>In threaded versions of <i>Chez&nbsp;Scheme</i>, <tt>make-parameter</tt> creates
 global parameters.
 The procedure <tt>make-thread-parameter</tt>, described in
-Section&nbsp;<a href="./threads.html#g141">15.6</a>, may be used to make thread
+Section&nbsp;<a href="./threads.html#g142">15.7</a>, may be used to make thread
 parameters.
 
 
@@ -5591,10 +5591,10 @@ It is typically used only for system debugging.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

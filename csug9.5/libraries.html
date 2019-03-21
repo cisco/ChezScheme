@@ -210,7 +210,7 @@ This line may be replaced with
 <p>with <tt>/usr/bin</tt> replaced by the absolute path to the directory
 containing <tt>scheme-script</tt> if it is not in <tt>/usr/bin</tt>.
 The first form is recommended in the nonnormative appendices to the
-Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g177">29</a>], and works wherever
+Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g178">29</a>], and works wherever
 <tt>scheme-script</tt> appears in the path.
 
 <p>
@@ -453,7 +453,7 @@ be imported, as permitted by the Revised<sup>6</sup> Report.
 This frees the programmer from the obligation
 to do so and results in more generality as well as more
 precision in the set of libraries actually imported
-at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g169">21</a>,<a class=citation href="./bibliography.html#g167">19</a>].
+at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g170">21</a>,<a class=citation href="./bibliography.html#g168">19</a>].
 
 <p>
 An <tt><i>import-set</i></tt> must take one of the following forms:
@@ -497,7 +497,7 @@ as follows.
 <dl compact>
 <dt><tt><i>library-spec</i></tt>:<dd>
 all exports of the library identified by the Revised<sup>6</sup> Report <tt><i>library-spec</i></tt>
-(Chapter&nbsp;<a href="http://scheme.com/tspl4/./libraries.html#g142">10</a>.
+(Chapter&nbsp;<a href="http://scheme.com/tspl4/./libraries.html#g142">10</a>).
 
 <p>
 <dt><tt><i>module-name</i></tt>:<dd>
@@ -1130,13 +1130,59 @@ searches for the file containing each library it needs to load.
 The default value of this parameter is <tt>#f</tt>.
 
 <p>
+<a name="./libraries:s28"></a><span class=formdef><b>thread parameter</b>: <tt>library-search-handler</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>The value of parameter must be a procedure that follows the protocol described
+below for <tt>default-library-search-handler</tt>, which is the default value
+of this parameter.
+
+<p>
+The value of this parameter is invoked to locate the source or object code for
+a library during <tt>import</tt>, <tt>compile-whole-program</tt>, or
+<tt>compile-whole-library</tt>.
+
+<p>
+<a name="./libraries:s29"></a><span class=formdef><b>procedure</b>: <tt>(default-library-search-handler&nbsp;<i>who</i>&nbsp;<i>library</i>&nbsp;<i>directories</i>&nbsp;<i>extensions</i>)</tt></span>
+<br>
+<b>returns: </b>see below
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>This procedure is the default value of the <tt>library-search-handler</tt>,
+which is
+called to locate the source or object code for a library
+during <tt>import</tt>,
+<tt>compile-whole-program</tt>, or <tt>compile-whole-library</tt>.
+<tt><i>who</i></tt> is a symbol that provides context in <tt>import-notify</tt> messages.
+<tt><i>library</i></tt> is the name of the desired library.
+<tt><i>directories</i></tt> is a list of source and object directory pairs in
+the form returned by <tt>library-directories</tt>.
+<tt><i>extensions</i></tt> is a list of source and object extension pairs in the form
+returned by <tt>library-extensions</tt>.
+
+<p>
+This procedure searches the specified directories until it finds a library source or
+object file with one of the specified extensions.
+If it finds the source file first, it constructs the corresponding
+object file path and checks whether the file exists.
+If it finds the object file first, the procedure looks for a corresponding
+source file with one of the given source extensions in a source directory paired
+with that object directory.
+The procedure returns three values:
+the file-system path of the library source file or <tt>#f</tt> if not found,
+the file-system path of the corresponding object file, which may be <tt>#f</tt>,
+and a boolean that is true if the object file exists.
+
+<p>
 
 <h3><a name="g96"></a><a name="./libraries:h6"></a>Section 10.6. Library Inspection<a name="SECTLIBRARYINSPECTION"></a></h3>
 
 
 
 <p>
-<a name="./libraries:s28"></a><span class=formdef><b>procedure</b>: <tt>(library-list)</tt></span>
+<a name="./libraries:s30"></a><span class=formdef><b>procedure</b>: <tt>(library-list)</tt></span>
 <br>
 <b>returns: </b>a list of the libraries currently defined
 <br>
@@ -1146,7 +1192,7 @@ The default value of this parameter is <tt>#f</tt>.
 Section&nbsp;<a href="./libraries.html#g91">10.1</a> above.
 
 <p>
-<a name="./libraries:s29"></a><span class=formdef><b>procedure</b>: <tt>(library-version&nbsp;<i>libref</i>)</tt></span>
+<a name="./libraries:s31"></a><span class=formdef><b>procedure</b>: <tt>(library-version&nbsp;<i>libref</i>)</tt></span>
 <br>
 <b>returns: </b>the version of the specified library
 <br><span class=formdef><b>procedure</b>: <tt>(library-exports&nbsp;<i>libref</i>)</tt></span>
@@ -1261,7 +1307,7 @@ Otherwise, it returns <tt>#f</tt>.
 (library-object-filename&nbsp;'(A))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"A.so"<br>
 
 (library-object-filename&nbsp;'(B))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"B.so"</tt>
-<p><a name="./libraries:s30"></a><span class=formdef><b>syntax</b>: <tt>(library-requirements-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
+<p><a name="./libraries:s32"></a><span class=formdef><b>syntax</b>: <tt>(library-requirements-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>a library-requirements-options enumeration set
 <br>
@@ -1301,10 +1347,10 @@ is invoked.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

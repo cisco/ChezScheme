@@ -15,9 +15,9 @@
 
 
 
-<h2>Chez Scheme Version 9.5.1 Release Notes<br>
+<h2>Chez Scheme Version 9.5.2 Release Notes<br>
 
-January&nbsp;2019</h2>
+March&nbsp;2019</h2>
 
 <a name="g0"></a>
 
@@ -29,10 +29,10 @@ January&nbsp;2019</h2>
 
 <p>
 This document outlines the changes made to <i>Chez Scheme</i> for
-Version 9.5.1 since Version 8.4.
+Version 9.5.2 since Version 8.4.
 
 <p>
-Version 9.5.1 is supported for the following platforms.
+Version 9.5.2 is supported for the following platforms.
 The Chez Scheme machine type (returned by the <tt>machine-type</tt>
 procedure) is given in parentheses.
 
@@ -52,8 +52,8 @@ procedure) is given in parentheses.
 <p>
 This document contains three sections describing significant
 (1) <a class=static href="./release_notes.html#g1">functionality changes</a>,
-(2) <a class=static href="./release_notes.html#g87">bugs fixed</a>, and
-(3) <a class=static href="./release_notes.html#g123">performance enhancements</a>.
+(2) <a class=static href="./release_notes.html#g93">bugs fixed</a>, and
+(3) <a class=static href="./release_notes.html#g134">performance enhancements</a>.
 A version number listed in parentheses in the header for a change
 indicates the first minor release or internal prerelease to support
 the change.
@@ -82,7 +82,119 @@ Online versions of both books can be found at
 <a name="g2"></a>
 
 
-<h4><a name="./release_notes:h2"></a>2.1. Profile data retained for reclaimed code (9.5.1)</h4>
+<h4><a name="./release_notes:h2"></a>2.1. Improved packaging support (9.5.1)</h4>
+
+
+
+
+<p>
+The Chez Scheme <tt>Makefile</tt> has been enhanced with new targets for
+creating binary packages for Unix-like operating systems.
+The <tt>create-tarball</tt> target generates a binary tarball package for
+distribution, the <tt>create-rpm</tt> target generates a Linux RPM package, and
+the <tt>create-pkg</tt> target generates a macOS package file.
+
+<p>
+
+<a name="g3"></a>
+
+
+<h4><a name="./release_notes:h3"></a>2.2. Library search handler (9.5.1)</h4>
+
+
+
+
+<p>
+The new <tt>library-search-handler</tt> parameter controls how library source
+or object code is located when <tt>import</tt>, <tt>compile-whole-program</tt>,
+or <tt>compile-whole-library</tt> are used to load a library.
+The value of the <tt>library-search-handler</tt> parameter must be a procedure
+expecting four arguments: the <tt><i>who</i></tt> argument is a symbol that provides
+context in <tt>import-notify</tt> messages, the <tt><i>library</i></tt> argument is the
+name of the desired library, the <tt><i>directories</i></tt> is a list of source and
+object directory pairs in the form returned by <tt>library-directories</tt>,
+and the <tt><i>extensions</i></tt> parameter is a list of source and object extension
+pairs in the form returned by <tt>library-extensions</tt>.
+The default vaue of the <tt>library-search-handler</tt> is the newly exposed
+<tt>default-library-search-handler</tt> procedure.
+
+<p>
+
+<a name="g4"></a>
+
+
+<h4><a name="./release_notes:h4"></a>2.3. Ftype guardians (9.5.1)</h4>
+
+
+
+
+<p>
+Applications that manage memory outside the Scheme heap can leverage
+new support for ftype guardians to help perform reference counting.
+An ftype guardian is like an ordinary guardian except that it does
+not necessarily save from collection each ftype pointer registered
+with it but instead decrements (atomically) a reference count at
+the head of the object to which the ftype pointer points.
+If the reference count becomes zero as a result of the decrement,
+it preserves the object so that it can be retrieved from the guardian
+and freed; otherwise it allows it to be collected.
+
+<p>
+
+<a name="g5"></a>
+
+
+<h4><a name="./release_notes:h5"></a>2.4. Recompile information and whole-program optimization (9.5.1)</h4>
+
+
+
+
+<p>
+<tt>compile-whole-program</tt> and <tt>compile-whole-library</tt>
+now propagate recompile information from the named <tt>wpo</tt>
+file to the object file to support <tt>maybe-compile-program</tt>
+and <tt>maybe-compile-library</tt> in the case where the new object
+file overwrites the original object file.
+
+<p>
+
+<a name="g6"></a>
+
+
+<h4><a name="./release_notes:h6"></a>2.5. Directly accessing the value of compile-time values (9.5.1)</h4>
+
+
+
+
+<p>
+The value of a compile-time value created by <tt>make-compile-time-value</tt>
+can be retrieved via the new procedure <tt>compile-time-value-value</tt>.
+The new predicate <tt>compile-time-value?</tt> can be used to determine if
+an object is a compile-time value.
+
+<p>
+
+<a name="g7"></a>
+
+
+<h4><a name="./release_notes:h7"></a>2.6. Extracting a subset of hashtable entries (9.5.1)</h4>
+
+
+
+
+<p>
+The new <tt>hashtable-cells</tt> function is similar to
+<tt>hashtable-entries</tt>, but it returns a vector of cells instead
+of two vectors. An optional argument to <tt>hashtable-keys</tt>,
+<tt>hashtable-values</tt>, <tt>hashtable-entries</tt>, or <tt>hashtable-cells</tt>
+limits the size of the result vector.
+
+<p>
+
+<a name="g8"></a>
+
+
+<h4><a name="./release_notes:h8"></a>2.7. Profile data retained for reclaimed code (9.5.1)</h4>
 
 
 
@@ -101,10 +213,10 @@ counters explicitly via the new procedure
 
 <p>
 
-<a name="g3"></a>
+<a name="g9"></a>
 
 
-<h4><a name="./release_notes:h3"></a>2.2. Procedure source location without inspector information (9.5.1)</h4>
+<h4><a name="./release_notes:h9"></a>2.8. Procedure source location without inspector information (9.5.1)</h4>
 
 
 
@@ -117,10 +229,10 @@ other inspector information is not preserved.
 
 <p>
 
-<a name="g4"></a>
+<a name="g10"></a>
 
 
-<h4><a name="./release_notes:h4"></a>2.3. Atomic compare-and-set (9.5.1)</h4>
+<h4><a name="./release_notes:h10"></a>2.9. Atomic compare-and-set (9.5.1)</h4>
 
 
 
@@ -134,10 +246,10 @@ vector.
 
 <p>
 
-<a name="g5"></a>
+<a name="g11"></a>
 
 
-<h4><a name="./release_notes:h5"></a>2.4. Foreign-procedure thread activation (9.5.1)</h4>
+<h4><a name="./release_notes:h11"></a>2.10. Foreign-procedure thread activation (9.5.1)</h4>
 
 
 
@@ -154,10 +266,10 @@ work from threads that are otherwise unknown to the Scheme system.
 
 <p>
 
-<a name="g6"></a>
+<a name="g12"></a>
 
 
-<h4><a name="./release_notes:h6"></a>2.5. Garbage collection and threads (9.5.1)</h4>
+<h4><a name="./release_notes:h12"></a>2.11. Garbage collection and threads (9.5.1)</h4>
 
 
 
@@ -175,10 +287,10 @@ collect-request handler.
 
 <p>
 
-<a name="g7"></a>
+<a name="g13"></a>
 
 
-<h4><a name="./release_notes:h7"></a>2.6. Foreign-procedure struct arguments and results (9.5.1)</h4>
+<h4><a name="./release_notes:h13"></a>2.12. Foreign-procedure struct arguments and results (9.5.1)</h4>
 
 
 
@@ -196,10 +308,10 @@ the copied result, and the directly returned result is unspecified.
 
 <p>
 
-<a name="g8"></a>
+<a name="g14"></a>
 
 
-<h4><a name="./release_notes:h8"></a>2.7. Record equality and hashing (9.5, 9.5.1)</h4>
+<h4><a name="./release_notes:h14"></a>2.13. Record equality and hashing (9.5, 9.5.1)</h4>
 
 
 
@@ -222,10 +334,10 @@ type-specific equality and hashing procedures.
 
 <p>
 
-<a name="g9"></a>
+<a name="g15"></a>
 
 
-<h4><a name="./release_notes:h9"></a>2.8. Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.5)</h4>
+<h4><a name="./release_notes:h15"></a>2.14. Immutable vectors, fxvectors, bytevectors, strings, and boxes (9.5)</h4>
 
 
 
@@ -241,10 +353,10 @@ Any attempt to modify an immutable object causes an exception to be raised.
 
 <p>
 
-<a name="g10"></a>
+<a name="g16"></a>
 
 
-<h4><a name="./release_notes:h10"></a>2.9. Ephemeron pairs and hashtables (9.5)</h4>
+<h4><a name="./release_notes:h16"></a>2.15. Ephemeron pairs and hashtables (9.5)</h4>
 
 
 
@@ -263,10 +375,10 @@ mapping from being removed from the table.
 
 <p>
 
-<a name="g11"></a>
+<a name="g17"></a>
 
 
-<h4><a name="./release_notes:h11"></a>2.10. Optional timeout for <tt>condition-wait</tt> (9.5)</h4>
+<h4><a name="./release_notes:h17"></a>2.16. Optional timeout for <tt>condition-wait</tt> (9.5)</h4>
 
 
 
@@ -281,10 +393,10 @@ default).
 
 <p>
 
-<a name="g12"></a>
+<a name="g18"></a>
 
 
-<h4><a name="./release_notes:h12"></a>2.11. <tt>date-dst?</tt> and <tt>date-zone-name</tt> (9.5)</h4>
+<h4><a name="./release_notes:h18"></a>2.17. <tt>date-dst?</tt> and <tt>date-zone-name</tt> (9.5)</h4>
 
 
 
@@ -298,10 +410,10 @@ is now optional.
 
 <p>
 
-<a name="g13"></a>
+<a name="g19"></a>
 
 
-<h4><a name="./release_notes:h13"></a>2.12. <tt>procedure-arity-mask</tt> (9.5)</h4>
+<h4><a name="./release_notes:h19"></a>2.18. <tt>procedure-arity-mask</tt> (9.5)</h4>
 
 
 
@@ -317,10 +429,10 @@ such as <tt><i>list*</i></tt>, is -2 (all but bit 0 set).
 
 <p>
 
-<a name="g14"></a>
+<a name="g20"></a>
 
 
-<h4><a name="./release_notes:h14"></a>2.13. Bytevector compression (9.5)</h4>
+<h4><a name="./release_notes:h20"></a>2.19. Bytevector compression (9.5)</h4>
 
 
 
@@ -333,10 +445,10 @@ compression functionality that is used for files with the
 
 <p>
 
-<a name="g15"></a>
+<a name="g21"></a>
 
 
-<h4><a name="./release_notes:h15"></a>2.14. Line caching and source objects (9.5)</h4>
+<h4><a name="./release_notes:h21"></a>2.20. Line caching and source objects (9.5)</h4>
 
 
 
@@ -359,10 +471,10 @@ source-location lookup can be adjusted, too.
 
 <p>
 
-<a name="g16"></a>
+<a name="g22"></a>
 
 
-<h4><a name="./release_notes:h16"></a>2.15. High-precision clock time in Windows 8 and up (9.5)</h4>
+<h4><a name="./release_notes:h22"></a>2.21. High-precision clock time in Windows 8 and up (9.5)</h4>
 
 
 
@@ -373,10 +485,10 @@ clock time function for the current date and time.
 
 <p>
 
-<a name="g17"></a>
+<a name="g23"></a>
 
 
-<h4><a name="./release_notes:h17"></a>2.16. Printing of non-standard (extended) identifiers (9.5)</h4>
+<h4><a name="./release_notes:h23"></a>2.22. Printing of non-standard (extended) identifiers (9.5)</h4>
 
 
 
@@ -394,10 +506,10 @@ The default value of this parameter is <tt>#f</tt>.
 
 <p>
 
-<a name="g18"></a>
+<a name="g24"></a>
 
 
-<h4><a name="./release_notes:h18"></a>2.17. Expression-editor Unicode support (9.5)</h4>
+<h4><a name="./release_notes:h24"></a>2.23. Expression-editor Unicode support (9.5)</h4>
 
 
 
@@ -409,10 +521,10 @@ line-wrapping.
 
 <p>
 
-<a name="g19"></a>
+<a name="g25"></a>
 
 
-<h4><a name="./release_notes:h19"></a>2.18. Extensions to whole-program, whole-library optimization (9.3.1, 9.3.4)</h4>
+<h4><a name="./release_notes:h25"></a>2.24. Extensions to whole-program, whole-library optimization (9.3.1, 9.3.4)</h4>
 
 
 
@@ -431,10 +543,10 @@ leaves all imported libraries visible.
 
 <p>
 
-<a name="g20"></a>
+<a name="g26"></a>
 
 
-<h4><a name="./release_notes:h20"></a>2.19. 24-, 40-, 48-, and 56-bit bit-field containers (9.3.3)</h4>
+<h4><a name="./release_notes:h26"></a>2.25. 24-, 40-, 48-, and 56-bit bit-field containers (9.3.3)</h4>
 
 
 
@@ -445,10 +557,10 @@ The total size of the fields within an ftype <tt>bits</tt> can now be
 
 <p>
 
-<a name="g21"></a>
+<a name="g27"></a>
 
 
-<h4><a name="./release_notes:h21"></a>2.20. Object-counting for static-generation collections (9.3.3)</h4>
+<h4><a name="./release_notes:h27"></a>2.26. Object-counting for static-generation collections (9.3.3)</h4>
 
 
 
@@ -459,10 +571,10 @@ all collections targeting the static generation.
 
 <p>
 
-<a name="g22"></a>
+<a name="g28"></a>
 
 
-<h4><a name="./release_notes:h22"></a>2.21. Support for off-line profile profile-dump processing (9.3.2)</h4>
+<h4><a name="./release_notes:h28"></a>2.27. Support for off-line profile profile-dump processing (9.3.2)</h4>
 
 
 
@@ -487,10 +599,10 @@ custom mechanism.
 
 <p>
 
-<a name="g23"></a>
+<a name="g29"></a>
 
 
-<h4><a name="./release_notes:h23"></a>2.22. More support for controlling return of memory to the O/S (9.3.2)</h4>
+<h4><a name="./release_notes:h29"></a>2.28. More support for controlling return of memory to the O/S (9.3.2)</h4>
 
 
 
@@ -506,10 +618,10 @@ do so for younger generations we well.
 
 <p>
 
-<a name="g24"></a>
+<a name="g30"></a>
 
 
-<h4><a name="./release_notes:h24"></a>2.23. sstats changes (9.3.1)</h4>
+<h4><a name="./release_notes:h30"></a>2.29. sstats changes (9.3.1)</h4>
 
 
 
@@ -522,10 +634,10 @@ are now exact integers.
 
 <p>
 
-<a name="g25"></a>
+<a name="g31"></a>
 
 
-<h4><a name="./release_notes:h25"></a>2.24. <tt>library-group</tt> eliminated (9.3.1)</h4>
+<h4><a name="./release_notes:h31"></a>2.30. <tt>library-group</tt> eliminated (9.3.1)</h4>
 
 
 
@@ -540,10 +652,10 @@ This is an <i>incompatible change</i>.
 
 <p>
 
-<a name="g26"></a>
+<a name="g32"></a>
 
 
-<h4><a name="./release_notes:h26"></a>2.25. Support for Version&nbsp;7 interaction-environment semantics eliminated (9.3.1)</h4>
+<h4><a name="./release_notes:h32"></a>2.31. Support for Version&nbsp;7 interaction-environment semantics eliminated (9.3.1)</h4>
 
 
 
@@ -580,10 +692,10 @@ This is an <i>incompatible change</i>.
 
 <p>
 
-<a name="g27"></a>
+<a name="g33"></a>
 
 
-<h4><a name="./release_notes:h27"></a>2.26. Explicit specification of profile source locations (9.3.1)</h4>
+<h4><a name="./release_notes:h33"></a>2.32. Explicit specification of profile source locations (9.3.1)</h4>
 
 
 
@@ -605,10 +717,10 @@ both.
 
 <p>
 
-<a name="g28"></a>
+<a name="g34"></a>
 
 
-<h4><a name="./release_notes:h28"></a>2.27. "Maybe" file (re)compilation (9.3.1)</h4>
+<h4><a name="./release_notes:h34"></a>2.33. "Maybe" file (re)compilation (9.3.1)</h4>
 
 
 
@@ -630,10 +742,10 @@ or file only under similar circumstances.
 
 <p>
 
-<a name="g29"></a>
+<a name="g35"></a>
 
 
-<h4><a name="./release_notes:h29"></a>2.28. New primitives for querying memory utilization (9.3.1)</h4>
+<h4><a name="./release_notes:h35"></a>2.34. New primitives for querying memory utilization (9.3.1)</h4>
 
 
 
@@ -664,10 +776,10 @@ to the current memory bytes.
 
 <p>
 
-<a name="g30"></a>
+<a name="g36"></a>
 
 
-<h4><a name="./release_notes:h30"></a>2.29. Unicode 7.0 support (9.3.1)</h4>
+<h4><a name="./release_notes:h36"></a>2.35. Unicode 7.0 support (9.3.1)</h4>
 
 
 
@@ -679,10 +791,10 @@ have now been updated to Unicode 7.0.
 
 <p>
 
-<a name="g31"></a>
+<a name="g37"></a>
 
 
-<h4><a name="./release_notes:h31"></a>2.30. Linux PowerPC (32-bit) support (9.3)</h4>
+<h4><a name="./release_notes:h37"></a>2.36. Linux PowerPC (32-bit) support (9.3)</h4>
 
 
 
@@ -696,10 +808,10 @@ should be compiled using the GNU C&nbsp;compiler's <tt>-m32</tt> option.
 
 <p>
 
-<a name="g32"></a>
+<a name="g38"></a>
 
 
-<h4><a name="./release_notes:h32"></a>2.31. Printed representation of procedures (9.2.1)</h4>
+<h4><a name="./release_notes:h38"></a>2.37. Printed representation of procedures (9.2.1)</h4>
 
 
 
@@ -710,10 +822,10 @@ file and beginning file position when available.
 
 <p>
 
-<a name="g33"></a>
+<a name="g39"></a>
 
 
-<h4><a name="./release_notes:h33"></a>2.32. I/O errors writing to the console error port (9.2.1)</h4>
+<h4><a name="./release_notes:h39"></a>2.38. I/O errors writing to the console error port (9.2.1)</h4>
 
 
 
@@ -730,10 +842,10 @@ the other end of a pipe or socket having been closed.
 
 <p>
 
-<a name="g34"></a>
+<a name="g40"></a>
 
 
-<h4><a name="./release_notes:h34"></a>2.33. C locking macros (9.2.1)</h4>
+<h4><a name="./release_notes:h40"></a>2.39. C locking macros (9.2.1)</h4>
 
 
 
@@ -753,10 +865,10 @@ of the increment or decrement is zero, otherwise false (zero).
 
 <p>
 
-<a name="g35"></a>
+<a name="g41"></a>
 
 
-<h4><a name="./release_notes:h35"></a>2.34. New <tt>compile-to-file</tt> procedure (9.2.1)</h4>
+<h4><a name="./release_notes:h41"></a>2.40. New <tt>compile-to-file</tt> procedure (9.2.1)</h4>
 
 
 
@@ -768,10 +880,10 @@ output pathname.
 
 <p>
 
-<a name="g36"></a>
+<a name="g42"></a>
 
 
-<h4><a name="./release_notes:h36"></a>2.35. Whole-program optimization (9.2)</h4>
+<h4><a name="./release_notes:h42"></a>2.41. Whole-program optimization (9.2)</h4>
 
 
 
@@ -800,10 +912,10 @@ an optional <tt><i>wpo output port</i></tt>.
 
 <p>
 
-<a name="g37"></a>
+<a name="g43"></a>
 
 
-<h4><a name="./release_notes:h37"></a>2.36. Type-specific symbol-hashtable operators (9.2)<a name="sec:symbol-hashtables"></a></h4>
+<h4><a name="./release_notes:h43"></a>2.42. Type-specific symbol-hashtable operators (9.2)<a name="sec:symbol-hashtables"></a></h4>
 
 
 
@@ -836,14 +948,14 @@ or <tt>symbol=?</tt> as the equivalence function.
 These primitives are more efficient at optimize-level 3 than their
 generic counterparts when both are applied to symbol hashtables.
 The performance of symbol hashtables has been improved even when the new
-operators are not used (Section&nbsp;<a href="./release_notes.html#g134">4.11</a>).
+operators are not used (Section&nbsp;<a href="./release_notes.html#g147">4.13</a>).
 
 <p>
 
-<a name="g38"></a>
+<a name="g44"></a>
 
 
-<h4><a name="./release_notes:h38"></a>2.37. <tt>strip-fasl-file</tt> is now machine-independent (9.2)</h4>
+<h4><a name="./release_notes:h44"></a>2.43. <tt>strip-fasl-file</tt> is now machine-independent (9.2)</h4>
 
 
 
@@ -855,10 +967,10 @@ Chez Scheme version is the same.
 
 <p>
 
-<a name="g39"></a>
+<a name="g45"></a>
 
 
-<h4><a name="./release_notes:h39"></a>2.38. <tt>source-file-descriptor</tt> and <tt>locate-source</tt> (9.2)</h4>
+<h4><a name="./release_notes:h45"></a>2.44. <tt>source-file-descriptor</tt> and <tt>locate-source</tt> (9.2)</h4>
 
 
 
@@ -883,10 +995,10 @@ file is found.
 
 <p>
 
-<a name="g40"></a>
+<a name="g46"></a>
 
 
-<h4><a name="./release_notes:h40"></a>2.39. Compressed compiled scripts and partially compressed files (9.2)</h4>
+<h4><a name="./release_notes:h46"></a>2.45. Compressed compiled scripts and partially compressed files (9.2)</h4>
 
 
 
@@ -918,10 +1030,10 @@ system.
 
 <p>
 
-<a name="g41"></a>
+<a name="g47"></a>
 
 
-<h4><a name="./release_notes:h41"></a>2.40. Change in library import handling (9.2)</h4>
+<h4><a name="./release_notes:h47"></a>2.46. Change in library import handling (9.2)</h4>
 
 
 
@@ -937,10 +1049,10 @@ This is an <i>incompatible change</i>.
 
 <p>
 
-<a name="g42"></a>
+<a name="g48"></a>
 
 
-<h4><a name="./release_notes:h42"></a>2.41. Change in fasl-strip options (9.1)</h4>
+<h4><a name="./release_notes:h48"></a>2.47. Change in fasl-strip options (9.1)</h4>
 
 
 
@@ -964,10 +1076,10 @@ have to be modified to omit the option or to replace it with
 
 <p>
 
-<a name="g43"></a>
+<a name="g49"></a>
 
 
-<h4><a name="./release_notes:h43"></a>2.42. Library loading (9.1)</h4>
+<h4><a name="./release_notes:h49"></a>2.48. Library loading (9.1)</h4>
 
 
 
@@ -1005,10 +1117,10 @@ and revisit code.
 
 <p>
 
-<a name="g44"></a>
+<a name="g50"></a>
 
 
-<h4><a name="./release_notes:h44"></a>2.43. Finding objects in the heap (9.1)</h4>
+<h4><a name="./release_notes:h50"></a>2.49. Finding objects in the heap (9.1)</h4>
 
 
 
@@ -1070,10 +1182,10 @@ tables from being discarded.
 
 <p>
 
-<a name="g45"></a>
+<a name="g51"></a>
 
 
-<h4><a name="./release_notes:h45"></a>2.44. Object counts (9.1)</h4>
+<h4><a name="./release_notes:h51"></a>2.50. Object counts (9.1)</h4>
 
 
 
@@ -1115,10 +1227,10 @@ as types in the <tt>object-counts</tt> return value.)
 
 <p>
 
-<a name="g46"></a>
+<a name="g52"></a>
 
 
-<h4><a name="./release_notes:h46"></a>2.45. Native-eol style is now none (9.1)</h4>
+<h4><a name="./release_notes:h52"></a>2.51. Native-eol style is now none (9.1)</h4>
 
 
 
@@ -1132,10 +1244,10 @@ This is an <i>incompatible change</i>.
 
 <p>
 
-<a name="g47"></a>
+<a name="g53"></a>
 
 
-<h4><a name="./release_notes:h47"></a>2.46. Library-requirements options (9.1)</h4>
+<h4><a name="./release_notes:h53"></a>2.52. Library-requirements options (9.1)</h4>
 
 
 
@@ -1162,10 +1274,10 @@ of these options.
 
 <p>
 
-<a name="g48"></a>
+<a name="g54"></a>
 
 
-<h4><a name="./release_notes:h48"></a>2.47. Nested object size and composition (9.1)</h4>
+<h4><a name="./release_notes:h54"></a>2.53. Nested object size and composition (9.1)</h4>
 
 
 
@@ -1235,10 +1347,10 @@ can be used to prevent the relocation tables from being discarded.
 
 <p>
 
-<a name="g49"></a>
+<a name="g55"></a>
 
 
-<h4><a name="./release_notes:h49"></a>2.48. Showing expander and optimizer output (9.1)</h4>
+<h4><a name="./release_notes:h55"></a>2.54. Showing expander and optimizer output (9.1)</h4>
 
 
 
@@ -1254,10 +1366,10 @@ textual output port, the output of the source optimizer is printed.
 
 <p>
 
-<a name="g50"></a>
+<a name="g56"></a>
 
 
-<h4><a name="./release_notes:h50"></a>2.49. Undefined-variable warnings (9.1)</h4>
+<h4><a name="./release_notes:h56"></a>2.55. Undefined-variable warnings (9.1)</h4>
 
 
 
@@ -1283,10 +1395,10 @@ The checks are also visible in the output of <tt>expand/optimize</tt>.
 
 <p>
 
-<a name="g51"></a>
+<a name="g57"></a>
 
 
-<h4><a name="./release_notes:h51"></a>2.50. Detecting accidental use of generative record types (9.1)</h4>
+<h4><a name="./release_notes:h57"></a>2.56. Detecting accidental use of generative record types (9.1)</h4>
 
 
 
@@ -1310,10 +1422,10 @@ clause with <tt>#f</tt> for the uid, i.e., <tt>(nongenerative&nbsp;#f)</tt>.
 
 <p>
 
-<a name="g52"></a>
+<a name="g58"></a>
 
 
-<h4><a name="./release_notes:h52"></a>2.51. Improved support for cross compilation (9.1)</h4>
+<h4><a name="./release_notes:h58"></a>2.57. Improved support for cross compilation (9.1)</h4>
 
 
 
@@ -1328,10 +1440,10 @@ machine.
 
 <p>
 
-<a name="g53"></a>
+<a name="g59"></a>
 
 
-<h4><a name="./release_notes:h53"></a>2.52. Linux ARMv6 (32-bit) support (9.1)</h4>
+<h4><a name="./release_notes:h59"></a>2.58. Linux ARMv6 (32-bit) support (9.1)</h4>
 
 
 
@@ -1344,10 +1456,10 @@ should be compiled using the GNU C&nbsp;compiler's <tt>-m32</tt> option.
 
 <p>
 
-<a name="g54"></a>
+<a name="g60"></a>
 
 
-<h4><a name="./release_notes:h54"></a>2.53. Source information in ftype ref/set! error messages (9.0)</h4>
+<h4><a name="./release_notes:h60"></a>2.59. Source information in ftype ref/set! error messages (9.0)</h4>
 
 
 
@@ -1362,10 +1474,10 @@ indices.
 
 <p>
 
-<a name="g55"></a>
+<a name="g61"></a>
 
 
-<h4><a name="./release_notes:h55"></a>2.54. <tt>compile-to-port</tt> top-level-program dependencies (9.0)</h4>
+<h4><a name="./release_notes:h61"></a>2.60. <tt>compile-to-port</tt> top-level-program dependencies (9.0)</h4>
 
 
 
@@ -1378,10 +1490,10 @@ Otherwise, the return value is unspecified.
 
 <p>
 
-<a name="g56"></a>
+<a name="g62"></a>
 
 
-<h4><a name="./release_notes:h56"></a>2.55. Better feedback for record-type mismatches (9.0)</h4>
+<h4><a name="./release_notes:h62"></a>2.61. Better feedback for record-type mismatches (9.0)</h4>
 
 
 
@@ -1395,10 +1507,10 @@ mutability differ.
 
 <p>
 
-<a name="g57"></a>
+<a name="g63"></a>
 
 
-<h4><a name="./release_notes:h57"></a>2.56. <tt>enable-cross-library-optimization</tt> parameter (9.0)</h4>
+<h4><a name="./release_notes:h63"></a>2.62. <tt>enable-cross-library-optimization</tt> parameter (9.0)</h4>
 
 
 
@@ -1417,10 +1529,10 @@ the object file.
 
 <p>
 
-<a name="g58"></a>
+<a name="g64"></a>
 
 
-<h4><a name="./release_notes:h58"></a>2.57. Stripping object files (9.0)</h4>
+<h4><a name="./release_notes:h64"></a>2.63. Stripping object files (9.0)</h4>
 
 
 
@@ -1460,10 +1572,10 @@ This strips library visit code from compiled libraries.
 
 <p>
 
-<a name="g59"></a>
+<a name="g65"></a>
 
 
-<h4><a name="./release_notes:h59"></a>2.58. Ftype array bound of zero (9.0)</h4>
+<h4><a name="./release_notes:h65"></a>2.64. Ftype array bound of zero (9.0)</h4>
 
 
 
@@ -1477,10 +1589,10 @@ are determined dynamically.
 
 <p>
 
-<a name="g60"></a>
+<a name="g66"></a>
 
 
-<h4><a name="./release_notes:h60"></a>2.59. <tt>compile-profile</tt> no longer implies <tt>generate-inspector-information</tt> (9.0)</h4>
+<h4><a name="./release_notes:h66"></a>2.65. <tt>compile-profile</tt> no longer implies <tt>generate-inspector-information</tt> (9.0)</h4>
 
 
 
@@ -1493,10 +1605,10 @@ This is no longer the case.
 
 <p>
 
-<a name="g61"></a>
+<a name="g67"></a>
 
 
-<h4><a name="./release_notes:h61"></a>2.60. <tt>case</tt> now uses <tt>member</tt> (9.0)</h4>
+<h4><a name="./release_notes:h67"></a>2.66. <tt>case</tt> now uses <tt>member</tt> (9.0)</h4>
 
 
 
@@ -1518,10 +1630,10 @@ compatibility with the R6RS standard.
 
 <p>
 
-<a name="g62"></a>
+<a name="g68"></a>
 
 
-<h4><a name="./release_notes:h62"></a>2.61. <tt>write</tt> and <tt>display</tt> and foreign addresses (9.0)</h4>
+<h4><a name="./release_notes:h68"></a>2.67. <tt>write</tt> and <tt>display</tt> and foreign addresses (9.0)</h4>
 
 
 
@@ -1537,10 +1649,10 @@ still print as fixnums.
 
 <p>
 
-<a name="g63"></a>
+<a name="g69"></a>
 
 
-<h4><a name="./release_notes:h63"></a>2.62. Profile-directed optimization (9.0)</h4>
+<h4><a name="./release_notes:h69"></a>2.68. Profile-directed optimization (9.0)</h4>
 
 
 
@@ -1642,10 +1754,10 @@ The built-in <tt>case</tt> form is implemented in terms of
 
 <p>
 
-<a name="g64"></a>
+<a name="g70"></a>
 
 
-<h4><a name="./release_notes:h64"></a>2.63. New <tt>ssize_t</tt> foreign type (9.0)</h4>
+<h4><a name="./release_notes:h70"></a>2.69. New <tt>ssize_t</tt> foreign type (9.0)</h4>
 
 
 
@@ -1656,10 +1768,10 @@ It is the signed analogue of <tt>size_t</tt>.
 
 <p>
 
-<a name="g65"></a>
+<a name="g71"></a>
 
 
-<h4><a name="./release_notes:h65"></a>2.64. Guardian representatives (9.0)</h4>
+<h4><a name="./release_notes:h71"></a>2.70. Guardian representatives (9.0)</h4>
 
 
 
@@ -1671,10 +1783,10 @@ of the guarded object when the guarded object is no longer accessible.
 
 <p>
 
-<a name="g66"></a>
+<a name="g72"></a>
 
 
-<h4><a name="./release_notes:h66"></a>2.65. Library reloading on dependency change (9.0)</h4>
+<h4><a name="./release_notes:h72"></a>2.71. Library reloading on dependency change (9.0)</h4>
 
 
 
@@ -1686,10 +1798,10 @@ since the library was compiled.
 
 <p>
 
-<a name="g67"></a>
+<a name="g73"></a>
 
 
-<h4><a name="./release_notes:h67"></a>2.66. Expression-editor filename completion (8.9.5)</h4>
+<h4><a name="./release_notes:h73"></a>2.72. Expression-editor filename completion (8.9.5)</h4>
 
 
 
@@ -1703,10 +1815,10 @@ completion for strings that cross line boundaries.
 
 <p>
 
-<a name="g68"></a>
+<a name="g74"></a>
 
 
-<h4><a name="./release_notes:h68"></a>2.67. New lock mechanisms and elimination of old lock mechanism (8.9.5)</h4>
+<h4><a name="./release_notes:h74"></a>2.73. New lock mechanisms and elimination of old lock mechanism (8.9.5)</h4>
 
 
 
@@ -1779,10 +1891,10 @@ must specify a word-size integer represented using the native endianness.
 
 <p>
 
-<a name="g69"></a>
+<a name="g75"></a>
 
 
-<h4><a name="./release_notes:h69"></a>2.68. <tt>ftype-pointer-null?</tt>, <tt>ftype-pointer=?</tt> (8.9.5)</h4>
+<h4><a name="./release_notes:h75"></a>2.74. <tt>ftype-pointer-null?</tt>, <tt>ftype-pointer=?</tt> (8.9.5)</h4>
 
 
 
@@ -1804,14 +1916,14 @@ although the compiler also now
 tries to avoid allocation when the result of a call to
 <tt>ftype-pointer-address</tt> is directly compared with 0 or with the
 result of another call to <tt>ftype-pointer-address</tt>, as described
-in Section&nbsp;<a href="./release_notes.html#g141">4.18</a>.
+in Section&nbsp;<a href="./release_notes.html#g154">4.20</a>.
 
 <p>
 
-<a name="g70"></a>
+<a name="g76"></a>
 
 
-<h4><a name="./release_notes:h70"></a>2.69. <tt>gensym</tt>'s new optional unique-name argument (8.9.5)</h4>
+<h4><a name="./release_notes:h76"></a>2.75. <tt>gensym</tt>'s new optional unique-name argument (8.9.5)</h4>
 
 
 
@@ -1824,10 +1936,10 @@ to be distinct from the new gensym.
 
 <p>
 
-<a name="g71"></a>
+<a name="g77"></a>
 
 
-<h4><a name="./release_notes:h71"></a>2.70. GC times now maintained with finer granularity (8.9.5)</h4>
+<h4><a name="./release_notes:h77"></a>2.76. GC times now maintained with finer granularity (8.9.5)</h4>
 
 
 
@@ -1842,10 +1954,10 @@ much better accuracy.
 
 <p>
 
-<a name="g72"></a>
+<a name="g78"></a>
 
 
-<h4><a name="./release_notes:h72"></a>2.71. New time types for tracking collection times (8.9.5)</h4>
+<h4><a name="./release_notes:h78"></a>2.77. New time types for tracking collection times (8.9.5)</h4>
 
 
 
@@ -1864,10 +1976,10 @@ with lower precision.
 
 <p>
 
-<a name="g73"></a>
+<a name="g79"></a>
 
 
-<h4><a name="./release_notes:h73"></a>2.72. New storage-management introspection procedures (8.9.5)</h4>
+<h4><a name="./release_notes:h79"></a>2.78. New storage-management introspection procedures (8.9.5)</h4>
 
 
 
@@ -1902,10 +2014,10 @@ procedures.
 
 <p>
 
-<a name="g74"></a>
+<a name="g80"></a>
 
 
-<h4><a name="./release_notes:h74"></a>2.73. New time-object manipulation procedures (8.9.5)</h4>
+<h4><a name="./release_notes:h80"></a>2.79. New time-object manipulation procedures (8.9.5)</h4>
 
 
 
@@ -1948,10 +2060,10 @@ versions.
 
 <p>
 
-<a name="g75"></a>
+<a name="g81"></a>
 
 
-<h4><a name="./release_notes:h75"></a>2.74. Better reporting of profile counts (8.9.4, 8.9.5)</h4>
+<h4><a name="./release_notes:h81"></a>2.80. Better reporting of profile counts (8.9.4, 8.9.5)</h4>
 
 
 
@@ -1982,10 +2094,10 @@ expression.
 
 <p>
 
-<a name="g76"></a>
+<a name="g82"></a>
 
 
-<h4><a name="./release_notes:h76"></a>2.75. Virtual registers (8.9.4)</h4>
+<h4><a name="./release_notes:h82"></a>2.81. Virtual registers (8.9.4)</h4>
 
 
 
@@ -2050,10 +2162,10 @@ the registers.
 
 <p>
 
-<a name="g77"></a>
+<a name="g83"></a>
 
 
-<h4><a name="./release_notes:h77"></a>2.76. 24-, 40-, 48-, and 56-bit integer values (8.9.3)</h4>
+<h4><a name="./release_notes:h83"></a>2.82. 24-, 40-, 48-, and 56-bit integer values (8.9.3)</h4>
 
 
 
@@ -2105,10 +2217,10 @@ is aligned on an arbitrary byte boundary.
 
 <p>
 
-<a name="g78"></a>
+<a name="g84"></a>
 
 
-<h4><a name="./release_notes:h78"></a>2.77. New <tt>pariah</tt> expression (8.9.3)</h4>
+<h4><a name="./release_notes:h84"></a>2.83. New <tt>pariah</tt> expression (8.9.3)</h4>
 
 
 
@@ -2147,10 +2259,10 @@ mechanism is beneficial and whether the benefit of using the
 
 <p>
 
-<a name="g79"></a>
+<a name="g85"></a>
 
 
-<h4><a name="./release_notes:h79"></a>2.78. Improved automatic library recompilation (8.9.2)</h4>
+<h4><a name="./release_notes:h85"></a>2.84. Improved automatic library recompilation (8.9.2)</h4>
 
 
 
@@ -2170,10 +2282,10 @@ to a true value.)
 
 <p>
 
-<a name="g80"></a>
+<a name="g86"></a>
 
 
-<h4><a name="./release_notes:h80"></a>2.79. Redundant profile information (8.9.2)</h4>
+<h4><a name="./release_notes:h86"></a>2.85. Redundant profile information (8.9.2)</h4>
 
 
 
@@ -2193,10 +2305,10 @@ where the code has been optimized away.
 
 <p>
 
-<a name="g81"></a>
+<a name="g87"></a>
 
 
-<h4><a name="./release_notes:h81"></a>2.80. New <tt>compile-to-port</tt> procedure (8.9.2)</h4>
+<h4><a name="./release_notes:h87"></a>2.86. New <tt>compile-to-port</tt> procedure (8.9.2)</h4>
 
 
 
@@ -2210,10 +2322,10 @@ output port.
 
 <p>
 
-<a name="g82"></a>
+<a name="g88"></a>
 
 
-<h4><a name="./release_notes:h82"></a>2.81. Debug levels (8.9.1)</h4>
+<h4><a name="./release_notes:h88"></a>2.87. Debug levels (8.9.1)</h4>
 
 
 
@@ -2305,10 +2417,10 @@ debug&gt;&nbsp;i<br>
 
 &nbsp;&nbsp;1:&nbsp;#&lt;system&nbsp;continuation&nbsp;in&nbsp;new-cafe&gt;</tt>
 <p>
-<a name="g83"></a>
+<a name="g89"></a>
 
 
-<h4><a name="./release_notes:h83"></a>2.82. Cost centers (8.9.1)</h4>
+<h4><a name="./release_notes:h89"></a>2.88. Cost centers (8.9.1)</h4>
 
 
 
@@ -2416,10 +2528,10 @@ This procedure resets the costs recorded by <tt><i>cost-center</i></tt> to zero.
 
 <p>
 
-<a name="g84"></a>
+<a name="g90"></a>
 
 
-<h4><a name="./release_notes:h84"></a>2.83. Experimental access to hardware performance counters (8.9.1)</h4>
+<h4><a name="./release_notes:h90"></a>2.89. Experimental access to hardware performance counters (8.9.1)</h4>
 
 
 
@@ -2483,10 +2595,10 @@ registers and possibly a different configuration for those registers.
 
 <p>
 
-<a name="g85"></a>
+<a name="g91"></a>
 
 
-<h4><a name="./release_notes:h85"></a>2.84. New inspector functionality (8.9.1)</h4>
+<h4><a name="./release_notes:h91"></a>2.90. New inspector functionality (8.9.1)</h4>
 
 
 
@@ -2508,10 +2620,10 @@ variables, are handled more smoothly than in previous versions.
 
 <p>
 
-<a name="g86"></a>
+<a name="g92"></a>
 
 
-<h4><a name="./release_notes:h86"></a>2.85. Fasl support for records with non-ptr fields (8.4.1)</h4>
+<h4><a name="./release_notes:h92"></a>2.91. Fasl support for records with non-ptr fields (8.4.1)</h4>
 
 
 
@@ -2528,20 +2640,145 @@ in fasl files does not generally make sense.
 
 <p>
 
-<a name="g87"></a>
+<a name="g93"></a>
 
 
-<h3><a name="./release_notes:h87"></a>3. Bug Fixes</h3>
+<h3><a name="./release_notes:h93"></a>3. Bug Fixes</h3>
 
 
 <a name="section:bugfixes"></a>
 
 <p>
 
-<a name="g88"></a>
+<a name="g94"></a>
 
 
-<h4><a name="./release_notes:h88"></a>3.1. Disk-relative filenames in Windows (9.5.1)</h4>
+<h4><a name="./release_notes:h94"></a>3.1. Fasl representation change for recursive ftypes (9.5.2)</h4>
+
+
+
+
+<p>
+A bug in the reading of mutually recursive ftype definitions from
+compiled files has been fixed.
+The bug was triggered by recursive ftype definitions in which one
+of the mutually recursive ftypes is a subtype of another, as in:
+
+<p>
+
+<p><tt>(define-ftype<br>
+
+&nbsp;&nbsp;[A&nbsp;(*&nbsp;B)]<br>
+
+&nbsp;&nbsp;[B&nbsp;(struct&nbsp;[h&nbsp;A])]))</tt>
+<p>It manifested in the fasl reader raising bogus "incompatible record
+type" exceptions when two or more references to one of the ftypes
+occur in in separate compiled files or in separate top-level forms
+of a file compiled via <tt>compile-file</tt>.
+The bug could also have affected other record-type descriptors with
+cycles involving parent rtds and "extra" fields as well as fasl
+output created via <tt>fasl-write</tt>.
+
+<p>
+
+<a name="g95"></a>
+
+
+<h4><a name="./release_notes:h95"></a>3.2. Unbound object resulting from libraries combined with <tt>compile-whole-library</tt> (9.5.1)</h4>
+
+
+
+
+<p>
+A bug in <tt>compile-whole-library</tt> that allowed the invoke code for a
+library included in the combined library body to be executed without first
+invoking its binary library dependencies has been fixed.
+This bug could arise when a member of a combined library was invoked without
+invoking the requirements of the other libraries it was combined with.  For
+instance, consider the case where libraries <tt>(A)</tt> and <tt>(B)</tt> are
+combined and <tt>(B)</tt> has dependencies on library <tt>(A)</tt> and binary
+library <tt>(C)</tt>.
+One possible sort order of this graph is <tt>(C)</tt>, <tt>(A)</tt>,
+<tt>(B)</tt>, where the invoke code for <tt>(A)</tt> and <tt>(B)</tt> are
+combined into a single block of invoke code.  If library <tt>(A)</tt> is
+invoked first, it will implicitly cause the invoke code for <tt>(B)</tt> to be
+invoked without invoking the code for <tt>(C)</tt>.
+We address this by adding explicit dependencies between <tt>(A)</tt> and all
+the binary libraries that precede it and all of the other libraries clustered
+with <tt>(A)</tt> and <tt>(A)</tt>, such that no matter which library clustered
+with <tt>(A)</tt> is invoked firts, <tt>(A)</tt> will be invoked, causing all
+binary libraries that precede <tt>(A)</tt> to be invoked.
+It is also possible for a similar problem to exist between clusters, where
+invoking a later cluster may invoke an earlier cluster without invoking the
+binary dependencies for the earlier cluster.
+We address this issue by adding an invoke requirement between each cluster and
+the first library in the cluster that precedes it.
+These extended invoke requirements are also added to the import requirements
+for each library, and the dependency graph is enhanced with import requirement
+links to ensure these are taken into account during the topological sort.
+
+
+<p>
+
+<a name="g96"></a>
+
+
+<h4><a name="./release_notes:h96"></a>3.3. Automatic recompilation and missing include files (9.5.1)</h4>
+
+
+
+
+<p>
+A bug in automatic recompilation involving missing include files
+has been fixed.
+The bug caused automatic recompilation to fail, often with an
+exception in <tt>file-modification-time</tt>, when a file specified
+by an absolute pathname or pathname starting with "./" or "../" was
+included via <tt>include</tt> during a previous compilation run and
+is no longer present.
+
+<p>
+
+<a name="g97"></a>
+
+
+<h4><a name="./release_notes:h97"></a>3.4. Invalid memory reference instantiating <tt>foreign-callable</tt> code object (9.5.1)</h4>
+
+
+
+
+<p>
+A bug that caused evaluation of a <tt>foreign-callable</tt> expression in
+code that has been collected into the static generation (e.g., when the
+<tt>foreign-callable</tt> form appears in code compiled to a boot file)
+to result in an invalid memory reference has been fixed.
+
+<p>
+
+<a name="g98"></a>
+
+
+<h4><a name="./release_notes:h98"></a>3.5. Invalid constant-folding of some calls to <tt>apply</tt> (9.5.1)</h4>
+
+
+
+
+<p>
+A bug in the source optimizer (cp0) allowed constant-folding of some calls to
+<tt>apply</tt> where the last argument is not known to be a list.  For example,
+cp0 incorrectly reduced
+<tt>(apply&nbsp;zero?&nbsp;0)</tt> to <tt>#t</tt>
+and reduced
+<tt>(lambda&nbsp;(x)&nbsp;(apply&nbsp;box?&nbsp;x)&nbsp;x)</tt> to <tt>(lambda&nbsp;(x)&nbsp;x)</tt>,
+but now preserves these calls to <tt>apply</tt> so that they may raise an
+exception.
+
+<p>
+
+<a name="g99"></a>
+
+
+<h4><a name="./release_notes:h99"></a>3.6. Disk-relative filenames in Windows (9.5.1)</h4>
 
 
 
@@ -2562,10 +2799,10 @@ remove trailing directory separators on Windows.
 
 <p>
 
-<a name="g89"></a>
+<a name="g100"></a>
 
 
-<h4><a name="./release_notes:h89"></a>3.2. Globally unique names on non-Windows systems no longer contain the IP address (9.5.1)</h4>
+<h4><a name="./release_notes:h100"></a>3.7. Globally unique names on non-Windows systems no longer contain the IP address (9.5.1)</h4>
 
 
 
@@ -2577,10 +2814,10 @@ unique identifier.
 
 <p>
 
-<a name="g90"></a>
+<a name="g101"></a>
 
 
-<h4><a name="./release_notes:h90"></a>3.3. Invalid memory reference from <tt>fxvector</tt> calls (9.5)</h4>
+<h4><a name="./release_notes:h101"></a>3.8. Invalid memory reference from <tt>fxvector</tt> calls (9.5)</h4>
 
 
 
@@ -2595,10 +2832,10 @@ other primitive operations.
 
 <p>
 
-<a name="g91"></a>
+<a name="g102"></a>
 
 
-<h4><a name="./release_notes:h91"></a>3.4. Incorrect return code when <tt>exit</tt> is called with multiple arguments (9.5)</h4>
+<h4><a name="./release_notes:h102"></a>3.9. Incorrect return code when <tt>exit</tt> is called with multiple arguments (9.5)</h4>
 
 
 
@@ -2609,10 +2846,10 @@ values has been fixed.
 
 <p>
 
-<a name="g92"></a>
+<a name="g103"></a>
 
 
-<h4><a name="./release_notes:h92"></a>3.5. Boot files containing compiled library code fail to load (9.5)</h4>
+<h4><a name="./release_notes:h103"></a>3.10. Boot files containing compiled library code fail to load (9.5)</h4>
 
 
 
@@ -2624,10 +2861,10 @@ file or appear within a later boot file.
 
 <p>
 
-<a name="g93"></a>
+<a name="g104"></a>
 
 
-<h4><a name="./release_notes:h93"></a>3.6. Misleading cyclic dependency error (9.5)</h4>
+<h4><a name="./release_notes:h104"></a>3.11. Misleading cyclic dependency error (9.5)</h4>
 
 
 
@@ -2644,10 +2881,10 @@ an imported library.
 
 <p>
 
-<a name="g94"></a>
+<a name="g105"></a>
 
 
-<h4><a name="./release_notes:h94"></a>3.7. Incomplete handling of import specs within standalone export forms (9.5)</h4>
+<h4><a name="./release_notes:h105"></a>3.12. Incomplete handling of import specs within standalone export forms (9.5)</h4>
 
 
 
@@ -2659,10 +2896,10 @@ fixed.
 
 <p>
 
-<a name="g95"></a>
+<a name="g106"></a>
 
 
-<h4><a name="./release_notes:h95"></a>3.8. Permission denied after deleting files or directories in Windows (9.5)</h4>
+<h4><a name="./release_notes:h106"></a>3.13. Permission denied after deleting files or directories in Windows (9.5)</h4>
 
 
 
@@ -2675,10 +2912,10 @@ permission denied. This race condition is now mitigated.
 
 <p>
 
-<a name="g96"></a>
+<a name="g107"></a>
 
 
-<h4><a name="./release_notes:h96"></a>3.9. Incorrect handling of offset in
+<h4><a name="./release_notes:h107"></a>3.14. Incorrect handling of offset in
 <tt>date-&gt;time-utc</tt> on Windows (9.5)</h4>
 
 
@@ -2692,10 +2929,10 @@ fixed.
 
 <p>
 
-<a name="g97"></a>
+<a name="g108"></a>
 
 
-<h4><a name="./release_notes:h97"></a>3.10. Compiler mishandling of fx /carry operations (9.5)</h4>
+<h4><a name="./release_notes:h108"></a>3.15. Compiler mishandling of fx /carry operations (9.5)</h4>
 
 
 
@@ -2708,10 +2945,10 @@ folding certain calls to <tt>fx+/carry</tt>, <tt>fx-/carry</tt>, and
 
 <p>
 
-<a name="g98"></a>
+<a name="g109"></a>
 
 
-<h4><a name="./release_notes:h98"></a>3.11. Compiler mishandling of nested <tt>call-with-values</tt> calls (9.5)</h4>
+<h4><a name="./release_notes:h109"></a>3.16. Compiler mishandling of nested <tt>call-with-values</tt> calls (9.5)</h4>
 
 
 
@@ -2723,10 +2960,10 @@ nested calls to <tt>call-with-values</tt> has been fixed.
 
 <p>
 
-<a name="g99"></a>
+<a name="g110"></a>
 
 
-<h4><a name="./release_notes:h99"></a>3.12. Incorrect expansion of <tt>define-values</tt> of no values (9.5)</h4>
+<h4><a name="./release_notes:h110"></a>3.17. Incorrect expansion of <tt>define-values</tt> of no values (9.5)</h4>
 
 
 
@@ -2738,10 +2975,10 @@ a non-definition form when used to define no values has been fixed.
 
 <p>
 
-<a name="g100"></a>
+<a name="g111"></a>
 
 
-<h4><a name="./release_notes:h100"></a>3.13. Optimizer dropping <tt>pariah</tt> forms (9.5)</h4>
+<h4><a name="./release_notes:h111"></a>3.18. Optimizer dropping <tt>pariah</tt> forms (9.5)</h4>
 
 
 
@@ -2753,10 +2990,10 @@ has been fixed.
 
 <p>
 
-<a name="g101"></a>
+<a name="g112"></a>
 
 
-<h4><a name="./release_notes:h101"></a>3.14. Invalid memory references involving complex numbers (9.5)</h4>
+<h4><a name="./release_notes:h112"></a>3.19. Invalid memory references involving complex numbers (9.5)</h4>
 
 
  
@@ -2769,10 +3006,10 @@ of inexact complex numbers has been fixed.
 
 <p>
 
-<a name="g102"></a>
+<a name="g113"></a>
 
 
-<h4><a name="./release_notes:h102"></a>3.15. Overflow detection for left-shift operations on fixnums (9.5)</h4>
+<h4><a name="./release_notes:h113"></a>3.20. Overflow detection for left-shift operations on fixnums (9.5)</h4>
 
 
 
@@ -2785,10 +3022,10 @@ cases has been fixed.
 
 <p>
 
-<a name="g103"></a>
+<a name="g114"></a>
 
 
-<h4><a name="./release_notes:h103"></a>3.16. Missing <tt>enum-set-indexer</tt> argument check (9.5)</h4>
+<h4><a name="./release_notes:h114"></a>3.21. Missing <tt>enum-set-indexer</tt> argument check (9.5)</h4>
 
 
 
@@ -2800,10 +3037,10 @@ causing an invalid memory reference when passed a non-symbol argument has been f
 
 <p>
 
-<a name="g104"></a>
+<a name="g115"></a>
 
 
-<h4><a name="./release_notes:h104"></a>3.17. Storage for inaccessible mutexes and conditions is reclaimed (9.5)</h4>
+<h4><a name="./release_notes:h115"></a>3.22. Storage for inaccessible mutexes and conditions is reclaimed (9.5)</h4>
 
 
 
@@ -2814,10 +3051,10 @@ The C heap storage for inaccessible mutexes and conditions is now reclaimed.
 
 <p>
 
-<a name="g105"></a>
+<a name="g116"></a>
 
 
-<h4><a name="./release_notes:h105"></a>3.18. Missing guardian entries when a thread exits (9.5)</h4>
+<h4><a name="./release_notes:h116"></a>3.23. Missing guardian entries when a thread exits (9.5)</h4>
 
 
 
@@ -2829,10 +3066,10 @@ thread exits has been fixed.
 
 <p>
 
-<a name="g106"></a>
+<a name="g117"></a>
 
 
-<h4><a name="./release_notes:h106"></a>3.19. Incorrect code for certain nested <tt>if</tt> patterns (9.5)</h4>
+<h4><a name="./release_notes:h117"></a>3.24. Incorrect code for certain nested <tt>if</tt> patterns (9.5)</h4>
 
 
 
@@ -2860,10 +3097,10 @@ evaluates to 1.
 
 <p>
 
-<a name="g107"></a>
+<a name="g118"></a>
 
 
-<h4><a name="./release_notes:h107"></a>3.20. Leaked or unexpected <tt>cpvalid-defer</tt> form (9.5)</h4>
+<h4><a name="./release_notes:h118"></a>3.25. Leaked or unexpected <tt>cpvalid-defer</tt> form (9.5)</h4>
 
 
 
@@ -2877,10 +3114,10 @@ message regarding a leaked or unexpected <tt>cpvalid-defer</tt> form.
 
 <p>
 
-<a name="g108"></a>
+<a name="g119"></a>
 
 
-<h4><a name="./release_notes:h108"></a>3.21. <tt>string-&gt;number</tt> and reader numeric syntax issues (9.4)</h4>
+<h4><a name="./release_notes:h119"></a>3.26. <tt>string-&gt;number</tt> and reader numeric syntax issues (9.4)</h4>
 
 
 
@@ -2920,10 +3157,10 @@ denormalized floating-point numbers.
 
 <p>
 
-<a name="g109"></a>
+<a name="g120"></a>
 
 
-<h4><a name="./release_notes:h109"></a>3.22. <tt>date-&gt;time-utc</tt> ignoring zone-offset field (9.4)</h4>
+<h4><a name="./release_notes:h120"></a>3.27. <tt>date-&gt;time-utc</tt> ignoring zone-offset field (9.4)</h4>
 
 
 
@@ -2935,10 +3172,10 @@ zone-offset field.
 
 <p>
 
-<a name="g110"></a>
+<a name="g121"></a>
 
 
-<h4><a name="./release_notes:h110"></a>3.23. <tt>wchar</tt> and <tt>wchar_t</tt> record field types fail to inline in Windows (9.4)</h4>
+<h4><a name="./release_notes:h121"></a>3.28. <tt>wchar</tt> and <tt>wchar_t</tt> record field types fail to inline in Windows (9.4)</h4>
 
 
 
@@ -2949,10 +3186,10 @@ On Windows, the source optimizer has been fixed to handle <tt>wchar</tt> and
 
 <p>
 
-<a name="g111"></a>
+<a name="g122"></a>
 
 
-<h4><a name="./release_notes:h111"></a>3.24. path-related procedures cause invalid memory reference with non-string arguments in Windows (9.4)</h4>
+<h4><a name="./release_notes:h122"></a>3.29. path-related procedures cause invalid memory reference with non-string arguments in Windows (9.4)</h4>
 
 
 
@@ -2962,10 +3199,10 @@ On Windows, the path-related procedures now raise an appropriate exception when 
 
 <p>
 
-<a name="g112"></a>
+<a name="g123"></a>
 
 
-<h4><a name="./release_notes:h112"></a>3.25. Mutex acquisition bug (9.4)</h4>
+<h4><a name="./release_notes:h123"></a>3.30. Mutex acquisition bug (9.4)</h4>
 
 
 
@@ -2976,10 +3213,10 @@ The bug typically presented as a spurious "recursively locked" exception.
 
 <p>
 
-<a name="g113"></a>
+<a name="g124"></a>
 
 
-<h4><a name="./release_notes:h113"></a>3.26. <tt>dynamic-wind</tt> mistakenly enabling interrupts (9.3.3)</h4>
+<h4><a name="./release_notes:h124"></a>3.31. <tt>dynamic-wind</tt> mistakenly enabling interrupts (9.3.3)</h4>
 
 
 
@@ -2993,10 +3230,10 @@ Interrupts are now properly enabled only when the optional
 
 <p>
 
-<a name="g114"></a>
+<a name="g125"></a>
 
 
-<h4><a name="./release_notes:h114"></a>3.27. Incorrect optimization of various primitives (9.3.1)</h4>
+<h4><a name="./release_notes:h125"></a>3.32. Incorrect optimization of various primitives (9.3.1)</h4>
 
 
 
@@ -3013,10 +3250,10 @@ source optimizer to treat <tt>null-environment</tt>,
 
 <p>
 
-<a name="g115"></a>
+<a name="g126"></a>
 
 
-<h4><a name="./release_notes:h115"></a>3.28. Increased allocation ceiling under 32-bit Windows (9.3.1)</h4>
+<h4><a name="./release_notes:h126"></a>3.33. Increased allocation ceiling under 32-bit Windows (9.3.1)</h4>
 
 
 
@@ -3030,10 +3267,10 @@ system.
 
 <p>
 
-<a name="g116"></a>
+<a name="g127"></a>
 
 
-<h4><a name="./release_notes:h116"></a>3.29. Syntax errors for <tt>let</tt> and <tt>let*</tt> (9.2.1)</h4>
+<h4><a name="./release_notes:h127"></a>3.34. Syntax errors for <tt>let</tt> and <tt>let*</tt> (9.2.1)</h4>
 
 
 
@@ -3048,10 +3285,10 @@ for both <tt>let</tt> and <tt>let*</tt>.
 
 <p>
 
-<a name="g117"></a>
+<a name="g128"></a>
 
 
-<h4><a name="./release_notes:h117"></a>3.30. Dropped <tt>profile-dump-html</tt> calls (9.0)</h4>
+<h4><a name="./release_notes:h128"></a>3.35. Dropped <tt>profile-dump-html</tt> calls (9.0)</h4>
 
 
 
@@ -3063,10 +3300,10 @@ to be dropped at optimize-level 3 has been fixed.
 
 <p>
 
-<a name="g118"></a>
+<a name="g129"></a>
 
 
-<h4><a name="./release_notes:h118"></a>3.31. Proper treatment of imported meta bindings (8.9.3)</h4>
+<h4><a name="./release_notes:h129"></a>3.36. Proper treatment of imported meta bindings (8.9.3)</h4>
 
 
 
@@ -3085,10 +3322,10 @@ in a syntax error.
 
 <p>
 
-<a name="g119"></a>
+<a name="g130"></a>
 
 
-<h4><a name="./release_notes:h119"></a>3.32. Reexport of identifiers with properties (8.9.3)</h4>
+<h4><a name="./release_notes:h130"></a>3.37. Reexport of identifiers with properties (8.9.3)</h4>
 
 
 
@@ -3103,10 +3340,10 @@ from a third library <tt>(C)</tt> has been fixed.
 
 <p>
 
-<a name="g120"></a>
+<a name="g131"></a>
 
 
-<h4><a name="./release_notes:h120"></a>3.33. Cyclic record-type descriptors (8.4.1)</h4>
+<h4><a name="./release_notes:h131"></a>3.38. Cyclic record-type descriptors (8.4.1)</h4>
 
 
 
@@ -3123,10 +3360,10 @@ incorrect behavior or invalid memory references.
 
 <p>
 
-<a name="g121"></a>
+<a name="g132"></a>
 
 
-<h4><a name="./release_notes:h121"></a>3.34. Invalid folding of record accesses (8.4.1)</h4>
+<h4><a name="./release_notes:h132"></a>3.39. Invalid folding of record accesses (8.4.1)</h4>
 
 
 
@@ -3139,10 +3376,10 @@ invalid memory references or other compile-time errors, has been fixed.
 
 <p>
 
-<a name="g122"></a>
+<a name="g133"></a>
 
 
-<h4><a name="./release_notes:h122"></a>3.35. 4GB+ allocation for Windows x86_64 (8.4.1)</h4>
+<h4><a name="./release_notes:h133"></a>3.40. 4GB+ allocation for Windows x86_64 (8.4.1)</h4>
 
 
 
@@ -3154,20 +3391,53 @@ x86_64 has been fixed.
 
 <p>
 
-<a name="g123"></a>
+<a name="g134"></a>
 
 
-<h3><a name="./release_notes:h123"></a>4. Performance Enhancements</h3>
+<h3><a name="./release_notes:h134"></a>4. Performance Enhancements</h3>
 
 
 <a name="section:performance"></a>
 
 <p>
 
-<a name="g124"></a>
+<a name="g135"></a>
 
 
-<h4><a name="./release_notes:h124"></a>4.1. Lambda commonization (9.5.1)</h4>
+<h4><a name="./release_notes:h135"></a>4.1. Better code for <tt>bytevector</tt> (9.5.1)</h4>
+
+
+
+
+<p>
+The compiler now generates better inline code for the <tt>bytevector</tt>
+procedure.
+Instead of one byte memory write for each argument, it writes up
+to four (32-bit machines) or eight (64-bit machines) bytes at a
+time, which almost always results in fewer instructions and fewer
+writes.
+
+<p>
+
+<a name="g136"></a>
+
+
+<h4><a name="./release_notes:h136"></a>4.2. <tt>vector-for-each</tt> and <tt>string-for-each</tt> improvement (9.5.1)</h4>
+
+
+
+
+<p>
+The last call to the procedure passed to <tt>vector-for-each</tt>
+or <tt>string-for-each</tt> is now reliably implemented as tail
+call, as was already the case for <tt>for-each</tt>.
+
+<p>
+
+<a name="g137"></a>
+
+
+<h4><a name="./release_notes:h137"></a>4.3. Lambda commonization (9.5.1)</h4>
 
 
 
@@ -3185,10 +3455,10 @@ commonization.
 
 <p>
 
-<a name="g125"></a>
+<a name="g138"></a>
 
 
-<h4><a name="./release_notes:h125"></a>4.2. Improved compile times (9.5.1)</h4>
+<h4><a name="./release_notes:h138"></a>4.4. Improved compile times (9.5.1)</h4>
 
 
 
@@ -3204,10 +3474,10 @@ that are live at the same time and therefore cannot share a location.
 
 <p>
 
-<a name="g126"></a>
+<a name="g139"></a>
 
 
-<h4><a name="./release_notes:h126"></a>4.3. Improved oblist management (9.3.3)</h4>
+<h4><a name="./release_notes:h139"></a>4.5. Improved oblist management (9.3.3)</h4>
 
 
 
@@ -3223,10 +3493,10 @@ to just a handful on contemporary hardware.
 
 <p>
 
-<a name="g127"></a>
+<a name="g140"></a>
 
 
-<h4><a name="./release_notes:h127"></a>4.4. Reduced maximum-generation collection overhead (9.3.3)</h4>
+<h4><a name="./release_notes:h140"></a>4.6. Reduced maximum-generation collection overhead (9.3.3)</h4>
 
 
 
@@ -3242,10 +3512,10 @@ release of memory to the O/S is enabled, has been cut.
 
 <p>
 
-<a name="g128"></a>
+<a name="g141"></a>
 
 
-<h4><a name="./release_notes:h128"></a>4.5. Faster library load times (9.3.1)</h4>
+<h4><a name="./release_notes:h141"></a>4.7. Faster library load times (9.3.1)</h4>
 
 
 
@@ -3257,10 +3527,10 @@ loaded.
 
 <p>
 
-<a name="g129"></a>
+<a name="g142"></a>
 
 
-<h4><a name="./release_notes:h129"></a>4.6. Partially static record instances (9.3.1)</h4>
+<h4><a name="./release_notes:h142"></a>4.8. Partially static record instances (9.3.1)</h4>
 
 
 
@@ -3306,10 +3576,10 @@ accessors produced by expansion of the record definition.
 
 <p>
 
-<a name="g130"></a>
+<a name="g143"></a>
 
 
-<h4><a name="./release_notes:h130"></a>4.7. More source-optimizer improvements (9.3.1)</h4>
+<h4><a name="./release_notes:h143"></a>4.9. More source-optimizer improvements (9.3.1)</h4>
 
 
 
@@ -3375,10 +3645,10 @@ expressions and thus enable more inlining within the same size limits.
 
 <p>
 
-<a name="g131"></a>
+<a name="g144"></a>
 
 
-<h4><a name="./release_notes:h131"></a>4.8. Improved foreign-pointer address handling (9.3.1)</h4>
+<h4><a name="./release_notes:h144"></a>4.10. Improved foreign-pointer address handling (9.3.1)</h4>
 
 
 
@@ -3394,10 +3664,10 @@ directly to the result of <tt>ftype-ref</tt>, <tt>ftype-&amp;ref</tt>, or
 
 <p>
 
-<a name="g132"></a>
+<a name="g145"></a>
 
 
-<h4><a name="./release_notes:h132"></a>4.9. New source optimizations (9.2.1)</h4>
+<h4><a name="./release_notes:h145"></a>4.11. New source optimizations (9.2.1)</h4>
 
 
 
@@ -3414,10 +3684,10 @@ e.g., the second clause in
 
 <p>
 
-<a name="g133"></a>
+<a name="g146"></a>
 
 
-<h4><a name="./release_notes:h133"></a>4.10. Reduced stack requirements after large apply (9.2)</h4>
+<h4><a name="./release_notes:h146"></a>4.12. Reduced stack requirements after large apply (9.2)</h4>
 
 
 
@@ -3430,10 +3700,10 @@ This space is now reclaimed during the next collection.
 
 <p>
 
-<a name="g134"></a>
+<a name="g147"></a>
 
 
-<h4><a name="./release_notes:h134"></a>4.11. Improved symbol-hashtables performance (9.2)<a name="sec:symbol-hashtable-performance"></a></h4>
+<h4><a name="./release_notes:h147"></a>4.13. Improved symbol-hashtables performance (9.2)<a name="sec:symbol-hashtable-performance"></a></h4>
 
 
 
@@ -3443,14 +3713,14 @@ The performance of operations on symbol hashtables has been improved
 generally over previous releases by eliminating call overhead for the
 hash and equality functions.
 Further improvements are possible with the use of the new type-specific
-symbol-hashtable operators (Section&nbsp;<a href="./release_notes.html#g37">2.36</a>).
+symbol-hashtable operators (Section&nbsp;<a href="./release_notes.html#g43">2.42</a>).
 
 <p>
 
-<a name="g135"></a>
+<a name="g148"></a>
 
 
-<h4><a name="./release_notes:h135"></a>4.12. Reduced library-invocation time, memory consumption (9.1)</h4>
+<h4><a name="./release_notes:h148"></a>4.14. Reduced library-invocation time, memory consumption (9.1)</h4>
 
 
 
@@ -3465,10 +3735,10 @@ when it is needed.
 
 <p>
 
-<a name="g136"></a>
+<a name="g149"></a>
 
 
-<h4><a name="./release_notes:h136"></a>4.13. Discarding relocation tables for static code objects (9.1)</h4>
+<h4><a name="./release_notes:h149"></a>4.15. Discarding relocation tables for static code objects (9.1)</h4>
 
 
 
@@ -3484,10 +3754,10 @@ code object (around 20% in our tests).
 
 <p>
 
-<a name="g137"></a>
+<a name="g150"></a>
 
 
-<h4><a name="./release_notes:h137"></a>4.14. Guardian registration (9.1)</h4>
+<h4><a name="./release_notes:h150"></a>4.16. Guardian registration (9.1)</h4>
 
 
 
@@ -3502,10 +3772,10 @@ longer requires synchronization.
 
 <p>
 
-<a name="g138"></a>
+<a name="g151"></a>
 
 
-<h4><a name="./release_notes:h138"></a>4.15. Generated code improvements (9.1)</h4>
+<h4><a name="./release_notes:h151"></a>4.17. Generated code improvements (9.1)</h4>
 
 
 
@@ -3517,10 +3787,10 @@ performance improvements in the range of 1-5% in our tests.
 
 <p>
 
-<a name="g139"></a>
+<a name="g152"></a>
 
 
-<h4><a name="./release_notes:h139"></a>4.16. Reduced collector overhead for large heaps (9.0)</h4>
+<h4><a name="./release_notes:h152"></a>4.18. Reduced collector overhead for large heaps (9.0)</h4>
 
 
 
@@ -3542,10 +3812,10 @@ This is now fixed for all heap sizes at just a few microseconds.
 
 <p>
 
-<a name="g140"></a>
+<a name="g153"></a>
 
 
-<h4><a name="./release_notes:h140"></a>4.17. Reduced mutation overhead (9.0)</h4>
+<h4><a name="./release_notes:h153"></a>4.19. Reduced mutation overhead (9.0)</h4>
 
 
 
@@ -3557,10 +3827,10 @@ generations when objects are mutated.
 
 <p>
 
-<a name="g141"></a>
+<a name="g154"></a>
 
 
-<h4><a name="./release_notes:h141"></a>4.18. Improved foreign-pointer address handling (8.9.5)<a name="ftpaopt"></a></h4>
+<h4><a name="./release_notes:h154"></a>4.20. Improved foreign-pointer address handling (8.9.5)<a name="ftpaopt"></a></h4>
 
 
 
@@ -3626,10 +3896,10 @@ reducing overhead by the cost of a procedure call.
 
 <p>
 
-<a name="g142"></a>
+<a name="g155"></a>
 
 
-<h4><a name="./release_notes:h142"></a>4.19. Improved performance when profiling (8.9.5)</h4>
+<h4><a name="./release_notes:h155"></a>4.21. Improved performance when profiling (8.9.5)</h4>
 
 
 
@@ -3644,10 +3914,10 @@ our tests.)
 
 <p>
 
-<a name="g143"></a>
+<a name="g156"></a>
 
 
-<h4><a name="./release_notes:h143"></a>4.20. New compiler back-end (8.9.1, 8.9.2, 8.9.5)</h4>
+<h4><a name="./release_notes:h156"></a>4.22. New compiler back-end (8.9.1, 8.9.2, 8.9.5)</h4>
 
 
 
@@ -3662,15 +3932,15 @@ back end is faster (14-40% depending on architecture and optimization
 level) in our tests.
 These improvements are independent of improvements
 resulting from cross-library constant folding and inlining
-(Section&nbsp;<a href="./release_notes.html#g146">4.23</a>).
+(Section&nbsp;<a href="./release_notes.html#g159">4.25</a>).
 The code generated for a specific program might be faster or slower.
 
 <p>
 
-<a name="g144"></a>
+<a name="g157"></a>
 
 
-<h4><a name="./release_notes:h144"></a>4.21. Open-coding of <tt>make-guardian</tt> (8.9.4)</h4>
+<h4><a name="./release_notes:h157"></a>4.23. Open-coding of <tt>make-guardian</tt> (8.9.4)</h4>
 
 
 
@@ -3684,10 +3954,10 @@ resurrected objects.
 
 <p>
 
-<a name="g145"></a>
+<a name="g158"></a>
 
 
-<h4><a name="./release_notes:h145"></a>4.22. Improved open-coding of <tt>make-parameter</tt> and <tt>make-thread-parameter</tt> (8.9.4)</h4>
+<h4><a name="./release_notes:h158"></a>4.24. Improved open-coding of <tt>make-parameter</tt> and <tt>make-thread-parameter</tt> (8.9.4)</h4>
 
 
 
@@ -3701,10 +3971,10 @@ argument was a <tt>lambda</tt> expression or primitive name.)
 
 <p>
 
-<a name="g146"></a>
+<a name="g159"></a>
 
 
-<h4><a name="./release_notes:h146"></a>4.23. Cross-library constant folding and inlining (8.9.2)<a name="subsection:clcfai"></a></h4>
+<h4><a name="./release_notes:h159"></a>4.25. Cross-library constant folding and inlining (8.9.2)<a name="subsection:clcfai"></a></h4>
 
 
 

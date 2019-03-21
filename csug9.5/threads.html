@@ -55,7 +55,7 @@ whose property lists are being modified or accessed differ.
 <p>
 In this context, most I/O operations should be considered destructive,
 since they might modify a port's internal structure; see also
-Section&nbsp;<a href="./threads.html#g142">15.7</a> for information on buffered ports.
+Section&nbsp;<a href="./threads.html#g143">15.8</a> for information on buffered ports.
 
 <p>
 Use of operators that are not thread-safe without proper synchronization
@@ -458,15 +458,168 @@ the specified field, subtracts 1 from the value, and writes the new
 value back into the field.
 Both return <tt>#t</tt> if the new value is 0, otherwise <tt>#f</tt>.
 
+<p>
+
+<h3><a name="g141"></a><a name="./threads:h6"></a>Section 15.6. Reference counting with ftype guardians<a name="SECTTHREADFTYPEGUARDIANS"></a></h3>
+
+
+
+<p>
+<a name="./threads:s19"></a>Applications that manage memory outside the Scheme heap can leverage
+the Scheme storage management system to help perform reference
+counting via <i>ftype guardians</i>.
+In a reference-counted memory management system, each object holds
+a count of pointers to it.
+The count is incremented when a new pointer is created and decremented
+when a pointer is dropped.
+When the count reaches zero, the object is no longer needed and the
+memory it formerly occupied can be made available for some other
+purpose.
+
+<p>
+<a name="./threads:s20"></a><span class=formdef><b>syntax</b>: <tt>(ftype-guardian&nbsp;<i>ftype-name</i>)</tt></span>
+<br>
+<b>returns: </b>a new ftype guardian
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt><i>ftype-name</i></tt> must name an ftype.
+The first base field of the ftype (or one of the first base fields
+in the case of unions) must be a word-sized integer (iptr or uptr)
+with native endianness.
+This field is assumed to hold a reference count.
+
+<p>
+The return value is a new ftype guardian <tt><i>g</i></tt>, with which
+ftype-pointers of type <tt><i>ftype-name</i></tt> (or some subtype of
+<tt><i>ftype-name</i></tt>) can be registered.
+An ftype pointer is registered with <tt><i>g</i></tt> by invoking <tt><i>g</i></tt>
+with the ftype pointer as an argument.
+
+<p>
+An ftype guardian does not automatically protect from collection
+the ftype pointers registered with it,  as a normal guardian would
+do.
+Instead, for each registered ftype pointer that becomes inaccessible
+via normal (non-weak, non-guardian pointers), the guardian decrements
+the reference count of the object to which the ftype pointer points.
+If the resulting reference-count value is zero, the ftype pointer
+is preserved and can be retrieved from the guardian.
+If the resulting reference-count value is non-zero, however, the
+ftype pointer is not preserved.
+Objects retrieved from an ftype guardian (by calling it without
+arguments) are guaranteed to have zero reference counts, assuming
+reference counts are maintained properly by code outside the
+collector.
+
+<p>
+The collector decrements the reference count using the equivalent
+of <a name="./threads:s21"></a><tt>ftype-locked-decr!</tt>
+to support systems in which non-Scheme objects are stored in memory
+shared by multiple processes.
+In such systems, programs should themselves use
+<a name="./threads:s22"></a><tt>ftype-locked-incr!</tt> and
+<tt>ftype-locked-decr!</tt> or non-Scheme equivalents (e.g., the C
+<a name="./threads:s23"></a><tt>LOCKED_INCR</tt> and
+<a name="./threads:s24"></a><tt>LOCKED_DECR</tt> macros in scheme.h,
+which are described in Section&nbsp;<a href="./foreign.html#g34">4.8</a>) to maintain
+reference counts.
+
+<p>
+The following example defines a simple ftype and an allocator for
+objects of that ftype that frees any objects of that ftype that were
+previously allocated and no longer accessible.
 
 <p>
 
-<h3><a name="g141"></a><a name="./threads:h6"></a>Section 15.6. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
+<p><tt>(module&nbsp;(A&nbsp;make-A&nbsp;free-dropped-As)<br>
+
+&nbsp;&nbsp;(define-ftype&nbsp;A<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(struct<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[refcount&nbsp;uptr]<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[data&nbsp;int]))<br>
+
+&nbsp;&nbsp;(define&nbsp;g&nbsp;(ftype-guardian&nbsp;A))<br>
+
+&nbsp;&nbsp;(define&nbsp;free-dropped-As<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(lambda&nbsp;()<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;([a&nbsp;(g)])<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when&nbsp;a<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(printf&nbsp;"freeing&nbsp;~s\n"&nbsp;(ftype-ref&nbsp;A&nbsp;(data)&nbsp;a))<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(foreign-free&nbsp;(ftype-pointer-address&nbsp;a))<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(free-dropped-As)))))<br>
+
+&nbsp;&nbsp;(define&nbsp;make-A<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(lambda&nbsp;(n)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(free-dropped-As)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;([a&nbsp;(make-ftype-pointer&nbsp;A&nbsp;(foreign-alloc&nbsp;(ftype-sizeof&nbsp;A)))])<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ftype-set!&nbsp;A&nbsp;(refcount)&nbsp;a&nbsp;1)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ftype-set!&nbsp;A&nbsp;(data)&nbsp;a&nbsp;n)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(g&nbsp;a)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a))))</tt>
+<p>We can test this by allocating, dropping, and immediately collecting
+ftype pointers to A.
+
+<p>
+
+<p><tt>&gt;&nbsp;(do&nbsp;([i&nbsp;10&nbsp;(fx-&nbsp;i&nbsp;1)])<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((fx=&nbsp;i&nbsp;0))<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(make-A&nbsp;i)<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;(collect))<br>
+
+freeing&nbsp;10<br>
+
+freeing&nbsp;9<br>
+
+freeing&nbsp;8<br>
+
+freeing&nbsp;7<br>
+
+freeing&nbsp;6<br>
+
+freeing&nbsp;5<br>
+
+freeing&nbsp;4<br>
+
+freeing&nbsp;3<br>
+
+freeing&nbsp;2<br>
+
+&gt;&nbsp;(free-dropped-As)<br>
+
+freeing&nbsp;1</tt>
+<p>Objects guarded by an ftype guardian might contain pointers to other
+objects whose reference counts should also be incremented upon
+allocation of the containing object and decremented upon freeing
+of the containing object.
+
+<p>
+
+<h3><a name="g142"></a><a name="./threads:h7"></a>Section 15.7. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
 
 
 
 <p>
-<a name="./threads:s19"></a><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>)</tt></span>
+<a name="./threads:s25"></a><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>&nbsp;<i>procedure</i>)</tt></span>
 <br>
 <b>returns: </b>a new thread parameter
@@ -504,7 +657,7 @@ in the nonthreaded versions of the system.
 
 <p>
 
-<h3><a name="g142"></a><a name="./threads:h7"></a>Section 15.7. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
+<h3><a name="g143"></a><a name="./threads:h8"></a>Section 15.8. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
 
 
 
@@ -544,13 +697,13 @@ acquiring a mutex for each I/O operation.
 
 <p>
 
-<h3><a name="g143"></a><a name="./threads:h8"></a>Section 15.8. Example: Bounded Queues</h3>
+<h3><a name="g144"></a><a name="./threads:h9"></a>Section 15.9. Example: Bounded Queues</h3>
 
 
 
 <p>
 The following code, taken from the article
-"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g158">10</a>],"
+"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g159">10</a>],"
 implements a bounded queue using many of the
 thread-system features.
 A bounded queue has a fixed number of available slots.  
@@ -804,7 +957,7 @@ Adding&nbsp;job&nbsp;#9&nbsp;=&nbsp;(lambda&nbsp;()&nbsp;(fib&nbsp;26))<br>
 ...</tt>
 <p>Additional examples, including definitions of suspendable threads and
 threads that automatically terminate when they become inaccessible, are
-given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g158">10</a>]."
+given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g159">10</a>]."
 
 
 <p>
@@ -815,10 +968,10 @@ given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliograp
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

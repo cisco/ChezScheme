@@ -282,12 +282,12 @@ For example:
 (list?&nbsp;(with-syntax&nbsp;([(x&nbsp;...)&nbsp;#'(a&nbsp;b&nbsp;c)])&nbsp;#'(x&nbsp;...)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
 <p><a name="./syntax:s7"></a><span class=formdef><b>procedure</b>: <tt>(syntax-&gt;vector&nbsp;<i>syntax-object</i>)</tt></span>
 <br>
-<b>returns: </b>a list of syntax objects
+<b>returns: </b>a vector of syntax objects
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>This procedure takes a syntax object representing
-a vector-structured form and returns a list of syntax objects, each representing
+a vector-structured form and returns a vector of syntax objects, each representing
 the corresponding subform of the input form.
 
 
@@ -761,7 +761,27 @@ is generated at expansion time.
 (crec-z&nbsp;r)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;3<br>
 
 prec&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception:&nbsp;invalid&nbsp;syntax&nbsp;prec</i></tt>
-<p><a name="./syntax:s16"></a><span class=formdef><b>syntax</b>: <tt>(define-property&nbsp;<i>id</i>&nbsp;<i>key</i>&nbsp;<i>expr</i>)</tt></span>
+<p><a name="./syntax:s16"></a><span class=formdef><b>procedure</b>: <tt>(compile-time-value?&nbsp;<i>obj</i>)</tt></span>
+<br>
+<b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a compile-time value; <tt>#f</tt> otherwise
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>
+<p><tt>(define-syntax&nbsp;x&nbsp;(make-compile-time-value&nbsp;"eggs"))<br>
+
+(compile-time-value?&nbsp;(top-level-syntax&nbsp;'x))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
+<p><a name="./syntax:s17"></a><span class=formdef><b>procedure</b>: <tt>(compile-time-value-value&nbsp;<i>ctv</i>)</tt></span>
+<br>
+<b>returns: </b>the value of a compile-time value
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>
+<p><tt>(define-syntax&nbsp;x&nbsp;(make-compile-time-value&nbsp;"eggs"))<br>
+
+(compile-time-value-value&nbsp;(top-level-syntax&nbsp;'x))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"eggs"</tt>
+<p><a name="./syntax:s18"></a><span class=formdef><b>syntax</b>: <tt>(define-property&nbsp;<i>id</i>&nbsp;<i>key</i>&nbsp;<i>expr</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -830,7 +850,7 @@ x&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"x-value"<br>
 (let&nbsp;([x&nbsp;"inner-x-value"])&nbsp;(get-info&nbsp;x))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
 <p>For debugging, it is often useful to have a form that retrieves
 an arbitrary property, given an identifier and a key.
-The <a name="./syntax:s17"></a><tt>get-property</tt> macro below does
+The <a name="./syntax:s19"></a><tt>get-property</tt> macro below does
 just that.
 
 <p>
@@ -989,7 +1009,7 @@ prec&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;<i>exception:&nbsp;in
 
 
 <p>
-<a name="./syntax:s18"></a>Modules are used to help organize programs into separate
+<a name="./syntax:s20"></a>Modules are used to help organize programs into separate
 parts that interact cleanly via declared interfaces.
 Although modular programming is typically used to facilitate the development
 of large programs possibly written by many individuals, it may also be
@@ -1016,11 +1036,11 @@ allowing the remaining bindings in the set to be visible.
 Some of the text and examples given in this section are
 adapted from the paper
 "Extending the scope of syntactic
-abstraction"&nbsp;[<a class=citation href="./bibliography.html#g180">32</a>], which describes modules and their
+abstraction"&nbsp;[<a class=citation href="./bibliography.html#g181">32</a>], which describes modules and their
 implementation in more detail.
 
 <p>
-<a name="./syntax:s19"></a><span class=formdef><b>syntax</b>: <tt>(module&nbsp;<i>name</i>&nbsp;<i>interface</i>&nbsp;<i>defn</i>&nbsp;...&nbsp;<i>init</i>&nbsp;...)</tt></span>
+<a name="./syntax:s21"></a><span class=formdef><b>syntax</b>: <tt>(module&nbsp;<i>name</i>&nbsp;<i>interface</i>&nbsp;<i>defn</i>&nbsp;...&nbsp;<i>init</i>&nbsp;...)</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>(module&nbsp;<i>interface</i>&nbsp;<i>defn</i>&nbsp;...&nbsp;<i>init</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1486,7 +1506,7 @@ mutually recursive and separately compilable modules as follows.
 <br>
 <br>
 (let&nbsp;()&nbsp;(import-only&nbsp;e)&nbsp;(even?&nbsp;38))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./syntax:s20"></a><span class=formdef><b>syntax</b>: <tt>only</tt></span>
+<p><a name="./syntax:s22"></a><span class=formdef><b>syntax</b>: <tt>only</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>except</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>add-prefix</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>drop-prefix</tt></span>
@@ -1518,14 +1538,14 @@ equally well for and within modules.
 
 
 <p>
-Five modules are built-in to <i>Chez&nbsp;Scheme</i>: <a name="./syntax:s21"></a><tt>scheme</tt>,
-<a name="./syntax:s22"></a><tt>r5rs</tt>, <a name="./syntax:s23"></a><tt>r5rs-syntax</tt>, <a name="./syntax:s24"></a><tt>ieee</tt>, and
-<a name="./syntax:s25"></a><tt>$system</tt>.
+Five modules are built-in to <i>Chez&nbsp;Scheme</i>: <a name="./syntax:s23"></a><tt>scheme</tt>,
+<a name="./syntax:s24"></a><tt>r5rs</tt>, <a name="./syntax:s25"></a><tt>r5rs-syntax</tt>, <a name="./syntax:s26"></a><tt>ieee</tt>, and
+<a name="./syntax:s27"></a><tt>$system</tt>.
 Each module is immutable, i.e., the exported bindings cannot be
 altered.
 
 <p>
-<a name="./syntax:s26"></a><span class=formdef><b>module</b>: <tt>scheme</tt></span>
+<a name="./syntax:s28"></a><span class=formdef><b>module</b>: <tt>scheme</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1533,7 +1553,7 @@ altered.
 (variables, keywords, and module names) built into <i>Chez&nbsp;Scheme</i>.
 
 <p>
-<a name="./syntax:s27"></a><span class=formdef><b>module</b>: <tt>r5rs</tt></span>
+<a name="./syntax:s29"></a><span class=formdef><b>module</b>: <tt>r5rs</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1543,10 +1563,10 @@ Revised<sup>5</sup> Report on Scheme.
 The bindings exported from <tt>r5rs</tt> are precisely those that are
 available within an expression evaluated via <tt>eval</tt> with the
 environment specifier returned by
-<a name="./syntax:s28"></a><tt>scheme-report-environment</tt>.
+<a name="./syntax:s30"></a><tt>scheme-report-environment</tt>.
 
 <p>
-<a name="./syntax:s29"></a><span class=formdef><b>module</b>: <tt>r5rs-syntax</tt></span>
+<a name="./syntax:s31"></a><span class=formdef><b>module</b>: <tt>r5rs-syntax</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1555,10 +1575,10 @@ defined in the Revised<sup>5</sup> Report on Scheme.
 The bindings exported from <tt>r5rs-syntax</tt> are precisely those that are
 available within an expression evaluated via <tt>eval</tt> with the
 environment specifier returned by
-<a name="./syntax:s30"></a><tt>null-environment</tt>.
+<a name="./syntax:s32"></a><tt>null-environment</tt>.
 
 <p>
-<a name="./syntax:s31"></a><span class=formdef><b>module</b>: <tt>ieee</tt></span>
+<a name="./syntax:s33"></a><span class=formdef><b>module</b>: <tt>ieee</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1568,11 +1588,11 @@ ANSI/IEEE standard for Scheme.
 The bindings exported from <tt>ieee</tt> are precisely those that are
 available within an expression evaluated via <tt>eval</tt> with the
 environment specifier returned by
-<a name="./syntax:s32"></a><tt>ieee-environment</tt>.
+<a name="./syntax:s34"></a><tt>ieee-environment</tt>.
 
 
 <p>
-<a name="./syntax:s33"></a><span class=formdef><b>module</b>: <tt>$system</tt></span>
+<a name="./syntax:s35"></a><span class=formdef><b>module</b>: <tt>$system</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1587,7 +1607,7 @@ into <i>Chez&nbsp;Scheme</i> along with various undocumented system bindings.
 
 
 <p>
-<a name="./syntax:s34"></a><span class=formdef><b>syntax</b>: <tt>(meta&nbsp;.&nbsp;<i>definition</i>)</tt></span>
+<a name="./syntax:s36"></a><span class=formdef><b>syntax</b>: <tt>(meta&nbsp;.&nbsp;<i>definition</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1703,7 +1723,7 @@ expansion time and can be used in contexts where definitions are
 expected as well as in expression contexts.
 
 <p>
-<a name="./syntax:s35"></a><span class=formdef><b>syntax</b>: <tt>(meta-cond&nbsp;<i>clause<sub>1</sub></i>&nbsp;<i>clause<sub>2</sub></i>&nbsp;...)</tt></span>
+<a name="./syntax:s37"></a><span class=formdef><b>syntax</b>: <tt>(meta-cond&nbsp;<i>clause<sub>1</sub></i>&nbsp;<i>clause<sub>2</sub></i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -1772,7 +1792,7 @@ below.
 
 
 <p>
-<a name="./syntax:s36"></a><span class=formdef><b>syntax</b>: <tt>(alias&nbsp;<i>id<sub>1</sub></i>&nbsp;<i>id<sub>2</sub></i>)</tt></span>
+<a name="./syntax:s38"></a><span class=formdef><b>syntax</b>: <tt>(alias&nbsp;<i>id<sub>1</sub></i>&nbsp;<i>id<sub>2</sub></i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1844,7 +1864,7 @@ the definition of the right-hand-side identifier, e.g.:
 
 
 <p>
-<a name="./syntax:s37"></a>When source code is read from a file by <tt>load</tt>,
+<a name="./syntax:s39"></a>When source code is read from a file by <tt>load</tt>,
 <tt>compile-file</tt>, or variants of these, such as
 <tt>load-library</tt>, the reader attaches <i>annotations</i> to each
 object read from the file.
@@ -1870,7 +1890,7 @@ four components: an expression, possibly with annotated subexpressions,
 a <i>source object</i>, a stripped version of the expression, and
 usage options.
 Annotations can be created via
-<a name="./syntax:s38"></a><tt>make-annotation</tt>, which has
+<a name="./syntax:s40"></a><tt>make-annotation</tt>, which has
 three required arguments corresponding to the first three components
 and an optional fourth argument corresponding to the fourth component.
 The second argument must be a source object, and the third argument should be a
@@ -1901,7 +1921,7 @@ instead introduce explicit <tt>profile</tt> forms
 locations to be profiled.
 
 <p>
-<a name="./syntax:s39"></a>Source objects are also values of a type distinct from other types and
+<a name="./syntax:s41"></a>Source objects are also values of a type distinct from other types and
 also have three or five components: a <i>source-file descriptor</i> (sfd),
 a beginning file position (bfp), an ending file position (efp),
 an optional beginning line, and an optional beginning
@@ -1910,7 +1930,7 @@ bfp and efp identify the range of character positions occupied by the object
 in the file, with the bfp being inclusive and the efp being exclusive.
 The line and column are either both numbers or both not present.
 A source object can be created via
-<a name="./syntax:s40"></a><tt>make-source-object</tt>, which
+<a name="./syntax:s42"></a><tt>make-source-object</tt>, which
 takes either three or five arguments corresponding to these components.
 The first argument must be a source-file descriptor, the second and
 third must be nonnegative exact integers, the second must not be
@@ -1918,7 +1938,7 @@ greater than the third, and the fourth and fifth (if provided) must
 be positive exact integers.
 
 <p>
-<a name="./syntax:s41"></a>Source-file descriptors are also values of a type distinct
+<a name="./syntax:s43"></a>Source-file descriptors are also values of a type distinct
 from all other types and have two components: the file's path,
 represented by a string, and a checksum, represented by a number.
 The path might or might not be an absolute path depending on how
@@ -1929,7 +1949,7 @@ when the file is created and checked by tools that look for the
 source file to make sure that the proper file has been found and
 has not been modified.
 Source-file descriptors can be created with
-<a name="./syntax:s42"></a><tt>make-source-file-descriptor</tt>,
+<a name="./syntax:s44"></a><tt>make-source-file-descriptor</tt>,
 which accepts two arguments: a string naming the path and a binary
 input port, along with an optional third boolean argument, <tt><i>reset?</i></tt>,
 which defaults to false.
@@ -1985,13 +2005,13 @@ and described in more detail later in this section.
 (source-file-descriptor-path&nbsp;<i>sfd</i>)&nbsp;<img src="math/csug/4.gif" alt="<graphic>">&nbsp;<i>obj</i></tt>
 <p>A program might open a source file with
 <tt>open-file-input-port</tt>, create an sfd using
-<a name="./syntax:s43"></a><tt>make-source-file-descriptor</tt>,
+<a name="./syntax:s45"></a><tt>make-source-file-descriptor</tt>,
 create a textual port from the binary port using transcoded-port, and
 create source objects and annotations for each of the objects it reads
 from the file.
 If a custom reader is not required, the Scheme
 reader can be used to read annotations via the
-<a name="./syntax:s44"></a><tt>get-datum/annotations</tt>
+<a name="./syntax:s46"></a><tt>get-datum/annotations</tt>
 procedure:
 
 <p>
@@ -2025,13 +2045,13 @@ Two additional procedures complete the set of annotation-related primitives:
 <p><tt>(open-source-file&nbsp;<i>sfd</i>)&nbsp;<img src="math/csug/4.gif" alt="<graphic>">&nbsp;#f&nbsp;or&nbsp;<i>port</i><br>
 
 (syntax-&gt;annotation&nbsp;<i>obj</i>)&nbsp;<img src="math/csug/4.gif" alt="<graphic>">&nbsp;#f&nbsp;or&nbsp;<i>annotation</i></tt>
-<p><a name="./syntax:s45"></a><tt>open-source-file</tt> attempts to
+<p><a name="./syntax:s47"></a><tt>open-source-file</tt> attempts to
 locate and open the source file identified by <tt><i>sfd</i></tt>.
 It returns a textual input port, positioned at the beginning of the file,
 if successful, and <tt>#f</tt> otherwise.
 
 <p>
-<a name="./syntax:s46"></a><tt>syntax-&gt;annotation</tt> accepts
+<a name="./syntax:s48"></a><tt>syntax-&gt;annotation</tt> accepts
 a syntax object.
 If the syntax object's expression is annotated, it returns the
 annotation; otherwise, it returns <tt>#f</tt>.
@@ -2043,7 +2063,7 @@ The procedure <tt>datum-&gt;syntax</tt> accepts either an
 annotated or unannotated input datum.
 
 <p>
-<a name="./syntax:s47"></a><span class=formdef><b>procedure</b>: <tt>(make-annotation&nbsp;<i>obj</i>&nbsp;<i>source-object</i>&nbsp;<i>stripped-obj</i>)</tt></span>
+<a name="./syntax:s49"></a><span class=formdef><b>procedure</b>: <tt>(make-annotation&nbsp;<i>obj</i>&nbsp;<i>source-object</i>&nbsp;<i>stripped-obj</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-annotation&nbsp;<i>obj</i>&nbsp;<i>source-object</i>&nbsp;<i>stripped-obj</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>an annotation
@@ -2066,37 +2086,37 @@ reporting and run-time error reporting and inspection; annotations
 marked <tt>profile</tt> are used for profiling.
 
 <p>
-<a name="./syntax:s48"></a><span class=formdef><b>procedure</b>: <tt>(annotation?&nbsp;<i>obj</i>)</tt></span>
+<a name="./syntax:s50"></a><span class=formdef><b>procedure</b>: <tt>(annotation?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is an annotation, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s49"></a><span class=formdef><b>procedure</b>: <tt>(annotation-expression&nbsp;<i>annotation</i>)</tt></span>
+<p><a name="./syntax:s51"></a><span class=formdef><b>procedure</b>: <tt>(annotation-expression&nbsp;<i>annotation</i>)</tt></span>
 <br>
 <b>returns: </b>the expression component of <tt><i>annotation</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s50"></a><span class=formdef><b>procedure</b>: <tt>(annotation-source&nbsp;<i>annotation</i>)</tt></span>
+<p><a name="./syntax:s52"></a><span class=formdef><b>procedure</b>: <tt>(annotation-source&nbsp;<i>annotation</i>)</tt></span>
 <br>
 <b>returns: </b>the source-object component of <tt><i>annotation</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s51"></a><span class=formdef><b>procedure</b>: <tt>(annotation-stripped&nbsp;<i>annotation</i>)</tt></span>
+<p><a name="./syntax:s53"></a><span class=formdef><b>procedure</b>: <tt>(annotation-stripped&nbsp;<i>annotation</i>)</tt></span>
 <br>
 <b>returns: </b>the stripped component of <tt><i>annotation</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s52"></a><span class=formdef><b>procedure</b>: <tt>(annotation-options&nbsp;<i>annotation</i>)</tt></span>
+<p><a name="./syntax:s54"></a><span class=formdef><b>procedure</b>: <tt>(annotation-options&nbsp;<i>annotation</i>)</tt></span>
 <br>
 <b>returns: </b>the options enumeration set of <tt><i>annotation</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s53"></a><span class=formdef><b>procedure</b>: <tt>(make-source-object&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>&nbsp;<i>efp</i>)</tt></span>
+<p><a name="./syntax:s55"></a><span class=formdef><b>procedure</b>: <tt>(make-source-object&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>&nbsp;<i>efp</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-source-object&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>&nbsp;<i>efp</i>&nbsp;<i>line</i>&nbsp;<i>column</i>)</tt></span>
 <br>
 <b>returns: </b>a source-object
@@ -2109,43 +2129,43 @@ should not be greater than <tt><i>efp</i></tt>.
 <tt><i>line</i></tt> and <tt><i>column</i></tt> must be exact positive integers.
 
 <p>
-<a name="./syntax:s54"></a><span class=formdef><b>procedure</b>: <tt>(source-object?&nbsp;<i>obj</i>)</tt></span>
+<a name="./syntax:s56"></a><span class=formdef><b>procedure</b>: <tt>(source-object?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a source object, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s55"></a><span class=formdef><b>procedure</b>: <tt>(source-object-sfd&nbsp;<i>source-object</i>)</tt></span>
+<p><a name="./syntax:s57"></a><span class=formdef><b>procedure</b>: <tt>(source-object-sfd&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>the sfd component of <tt><i>source-object</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s56"></a><span class=formdef><b>procedure</b>: <tt>(source-object-bfp&nbsp;<i>source-object</i>)</tt></span>
+<p><a name="./syntax:s58"></a><span class=formdef><b>procedure</b>: <tt>(source-object-bfp&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>the bfp component of <tt><i>source-object</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s57"></a><span class=formdef><b>procedure</b>: <tt>(source-object-efp&nbsp;<i>source-object</i>)</tt></span>
+<p><a name="./syntax:s59"></a><span class=formdef><b>procedure</b>: <tt>(source-object-efp&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>the efp component of <tt><i>source-object</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s58"></a><span class=formdef><b>procedure</b>: <tt>(source-object-line&nbsp;<i>source-object</i>)</tt></span>
+<p><a name="./syntax:s60"></a><span class=formdef><b>procedure</b>: <tt>(source-object-line&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>the line component of <tt><i>source-object</i></tt> if present, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s59"></a><span class=formdef><b>procedure</b>: <tt>(source-object-column&nbsp;<i>source-object</i>)</tt></span>
+<p><a name="./syntax:s61"></a><span class=formdef><b>procedure</b>: <tt>(source-object-column&nbsp;<i>source-object</i>)</tt></span>
 <br>
 <b>returns: </b>the column component of <tt><i>source-object</i></tt> if present, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s60"></a><span class=formdef><b>thread parameter</b>: <tt>current-make-source-object</tt></span>
+<p><a name="./syntax:s62"></a><span class=formdef><b>thread parameter</b>: <tt>current-make-source-object</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2160,7 +2180,7 @@ to a file-position object, instead of delaying the conversion to
 <tt>locate-source</tt>.
 
 <p>
-<a name="./syntax:s61"></a><span class=formdef><b>procedure</b>: <tt>(make-source-file-descriptor&nbsp;<i>string</i>&nbsp;<i>binary-input-port</i>)</tt></span>
+<a name="./syntax:s63"></a><span class=formdef><b>procedure</b>: <tt>(make-source-file-descriptor&nbsp;<i>string</i>&nbsp;<i>binary-input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-source-file-descriptor&nbsp;<i>string</i>&nbsp;<i>binary-input-port</i>&nbsp;<i>reset?</i>)</tt></span>
 <br>
 <b>returns: </b>a source-file descriptor
@@ -2175,19 +2195,19 @@ original position, as if via <tt>port-position</tt>.
 Otherwise, it is left pointing at end-of-file.
 
 <p>
-<a name="./syntax:s62"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor?&nbsp;<i>obj</i>)</tt></span>
+<a name="./syntax:s64"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a source-file descriptor, otherwise <tt>#f</tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s63"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor-checksum&nbsp;<i>sfd</i>)</tt></span>
+<p><a name="./syntax:s65"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor-checksum&nbsp;<i>sfd</i>)</tt></span>
 <br>
 <b>returns: </b>the checksum component of <tt><i>sfd</i></tt>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./syntax:s64"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor-path&nbsp;<i>sfd</i>)</tt></span>
+<p><a name="./syntax:s66"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor-path&nbsp;<i>sfd</i>)</tt></span>
 <br>
 <b>returns: </b>the path component of <tt><i>sfd</i></tt>
 <br>
@@ -2196,7 +2216,7 @@ Otherwise, it is left pointing at end-of-file.
 <p><tt><i>sfd</i></tt> must be a source-file descriptor.
 
 <p>
-<a name="./syntax:s65"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor&nbsp;<i>path</i>&nbsp;<i>checksum</i>)</tt></span>
+<a name="./syntax:s67"></a><span class=formdef><b>procedure</b>: <tt>(source-file-descriptor&nbsp;<i>path</i>&nbsp;<i>checksum</i>)</tt></span>
 <br>
 <b>returns: </b>a new source-file-descriptor
 <br>
@@ -2207,7 +2227,7 @@ This procedure can be used to construct custom source-file descriptors or to rec
 source-file descriptors from the <tt><i>path</i></tt> and <tt><i>checksum</i></tt> components.
 
 <p>
-<a name="./syntax:s66"></a><span class=formdef><b>syntax</b>: <tt>(annotation-option-set&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
+<a name="./syntax:s68"></a><span class=formdef><b>syntax</b>: <tt>(annotation-option-set&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>an annotation-options enumeration set
 <br>
@@ -2218,7 +2238,7 @@ control whether the annotation is used for debugging, profiling, both, or neithe
 Accordingly, each <tt><i>symbol</i></tt> must be either <tt><i>debug</i></tt> or <tt>profile</tt>.
 
 <p>
-<a name="./syntax:s67"></a><span class=formdef><b>procedure</b>: <tt>(syntax-&gt;annotation&nbsp;<i>obj</i>)</tt></span>
+<a name="./syntax:s69"></a><span class=formdef><b>procedure</b>: <tt>(syntax-&gt;annotation&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>an annotation or <tt>#f</tt>
 <br>
@@ -2228,7 +2248,7 @@ Accordingly, each <tt><i>symbol</i></tt> must be either <tt><i>debug</i></tt> or
 the annotation is returned.
 
 <p>
-<a name="./syntax:s68"></a><span class=formdef><b>procedure</b>: <tt>(get-datum/annotations&nbsp;<i>textual-input-port</i>&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>)</tt></span>
+<a name="./syntax:s70"></a><span class=formdef><b>procedure</b>: <tt>(get-datum/annotations&nbsp;<i>textual-input-port</i>&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -2252,7 +2272,7 @@ characters, since file positions do not necessarily correspond
 to character positions.
 
 <p>
-<a name="./syntax:s69"></a><span class=formdef><b>procedure</b>: <tt>(open-source-file&nbsp;<i>sfd</i>)</tt></span>
+<a name="./syntax:s71"></a><span class=formdef><b>procedure</b>: <tt>(open-source-file&nbsp;<i>sfd</i>)</tt></span>
 <br>
 <b>returns: </b>a port or <tt>#f</tt>
 <br>
@@ -2268,7 +2288,7 @@ the source directories when the file's checksum does not match the
 checksum recorded in <tt><i>sfd</i></tt>.
 
 <p>
-<a name="./syntax:s70"></a><span class=formdef><b>procedure</b>: <tt>(locate-source&nbsp;<i>sfd</i>&nbsp;<i>pos</i>)</tt></span>
+<a name="./syntax:s72"></a><span class=formdef><b>procedure</b>: <tt>(locate-source&nbsp;<i>sfd</i>&nbsp;<i>pos</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(locate-source&nbsp;<i>sfd</i>&nbsp;<i>pos</i>&nbsp;<i>use-cache?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -2294,7 +2314,7 @@ the source directories when the file's checksum does not match the
 checksum recorded in <tt><i>sfd</i></tt>.
 
 <p>
-<a name="./syntax:s71"></a><span class=formdef><b>procedure</b>: <tt>(locate-source-object-source&nbsp;<i>source-object</i>&nbsp;<i>get-start?</i>&nbsp;<i>use-cache?</i>)</tt></span>
+<a name="./syntax:s73"></a><span class=formdef><b>procedure</b>: <tt>(locate-source-object-source&nbsp;<i>source-object</i>&nbsp;<i>get-start?</i>&nbsp;<i>use-cache?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -2317,7 +2337,7 @@ this procedure calls <tt>locate-source</tt> on
 depending on <tt><i>get-start?</i></tt>, and <tt><i>use-cache?</i></tt>.
 
 <p>
-<a name="./syntax:s72"></a><span class=formdef><b>thread parameter</b>: <tt>current-locate-source-object-source</tt></span>
+<a name="./syntax:s74"></a><span class=formdef><b>thread parameter</b>: <tt>current-locate-source-object-source</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2338,10 +2358,10 @@ caches, and the filesystem in a way different from
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2018 Cisco Systems, Inc.<br>
+Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2019 for Chez Scheme Version 9.5.1<br>
+Revised March 2019 for Chez Scheme Version 9.5.2<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
