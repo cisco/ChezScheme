@@ -58,6 +58,29 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Improved packaging support (9.5.1)}
+
+The Chez Scheme \scheme{Makefile} has been enhanced with new targets for
+creating binary packages for Unix-like operating systems.
+The \scheme{create-tarball} target generates a binary tarball package for
+distribution, the \scheme{create-rpm} target generates a Linux RPM package, and
+the \scheme{create-pkg} target generates a macOS package file.
+
+\subsection{Library search handler (9.5.1)}
+
+The new \scheme{library-search-handler} parameter controls how library source
+or object code is located when \scheme{import}, \scheme{compile-whole-program},
+or \scheme{compile-whole-library} are used to load a library.
+The value of the \scheme{library-search-handler} parameter must be a procedure
+expecting four arguments: the \var{who} argument is a symbol that provides
+context in \scheme{import-notify} messages, the \var{library} argument is the
+name of the desired library, the \var{directories} is a list of source and
+object directory pairs in the form returned by \scheme{library-directories},
+and the \var{extensions} parameter is a list of source and object extension
+pairs in the form returned by \scheme{library-extensions}.
+The default vaue of the \scheme{library-search-handler} is the newly exposed
+\scheme{default-library-search-handler} procedure.
+
 \subsection{Ftype guardians (9.5.1)}
 
 Applications that manage memory outside the Scheme heap can leverage
@@ -1639,6 +1662,36 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Unbound object resulting from libraries combined with \protect\scheme{compile-whole-library} (9.5.1)}
+
+A bug in \scheme{compile-whole-library} that allowed the invoke code for a
+library included in the combined library body to be executed without first
+invoking its binary library dependencies has been fixed.
+This bug could arise when a member of a combined library was invoked without
+invoking the requirements of the other libraries it was combined with.  For
+instance, consider the case where libraries \scheme{(A)} and \scheme{(B)} are
+combined and \scheme{(B)} has dependencies on library \scheme{(A)} and binary
+library \scheme{(C)}.
+One possible sort order of this graph is \scheme{(C)}, \scheme{(A)},
+\scheme{(B)}, where the invoke code for \scheme{(A)} and \scheme{(B)} are
+combined into a single block of invoke code.  If library \scheme{(A)} is
+invoked first, it will implicitly cause the invoke code for \scheme{(B)} to be
+invoked without invoking the code for \scheme{(C)}.
+We address this by adding explicit dependencies between \scheme{(A)} and all
+the binary libraries that precede it and all of the other libraries clustered
+with \scheme{(A)} and \scheme{(A)}, such that no matter which library clustered
+with \scheme{(A)} is invoked firts, \scheme{(A)} will be invoked, causing all
+binary libraries that precede \scheme{(A)} to be invoked.
+It is also possible for a similar problem to exist between clusters, where
+invoking a later cluster may invoke an earlier cluster without invoking the
+binary dependencies for the earlier cluster.
+We address this issue by adding an invoke requirement between each cluster and
+the first library in the cluster that precedes it.
+These extended invoke requirements are also added to the import requirements
+for each library, and the dependency graph is enhanced with import requirement
+links to ensure these are taken into account during the topological sort.
+
 
 \subsection{Automatic recompilation and missing include files (9.5.1)}
 
