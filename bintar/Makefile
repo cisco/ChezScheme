@@ -61,7 +61,7 @@ $(R)/boot: $(R)
 	( cd $(R)/boot/$(m) ; ln -s ../../../../boot/$(m)/{scheme.h,petite.boot,scheme.boot} . )
 	case $(m) in \
           *nt) \
-            ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{csv951md.lib,csv951mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) \
+            ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{csv952md.lib,csv952mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) \
             ;; \
           *) \
             ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{main.o,kernel.o} . ) \
@@ -72,7 +72,7 @@ $(R)/bin: $(R)
 	mkdir -p $(R)/bin/$(m)
 	case $(m) in \
           *nt) \
-            ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/{scheme.exe,csv951.dll,csv951.lib,vcruntime140.lib} . ) \
+            ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/{scheme.exe,csv952.dll,csv952.lib,vcruntime140.lib} . ) \
             ;; \
           *) \
             ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/scheme . ) \
