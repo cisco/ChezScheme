@@ -72,12 +72,12 @@ $(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame
 $(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib)
 
 $(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib)
 
 # nmake builds Dll twice if we list it with $(KernelLib) below
 $(KernelDll): $(KernelLib)
