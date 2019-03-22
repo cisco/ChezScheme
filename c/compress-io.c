@@ -49,6 +49,7 @@ typedef struct lz4File_in {
   LZ4F_dctx *dctx;
   void *in_buffer, *out_buffer;
   int in_pos, in_len, out_pos, out_len;
+  int frame_ended;
   int err;
   size_t stream_pos;
   off_t init_pos;
@@ -96,6 +97,7 @@ static glzFile glzdopen_lz4_pos(int fd, const char *mode, off_t init_pos) {
     lz4->in_len = 0;
     lz4->out_len = 0;
     lz4->out_pos = 0;
+    lz4->frame_ended = 0;
     lz4->err = 0;
     lz4->stream_pos = 0;
     lz4->init_pos = init_pos;
@@ -271,10 +273,15 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
            to that buffer: */
         if (count >= (out_len >> 1)) {
           size_t direct_out_len = count;
+
+          if (lz4->frame_ended && ((char *)lz4->in_buffer)[lz4->in_pos] == 0)
+            return 0; /* count 0 after frame as stream terminator */
+
           amt = LZ4F_decompress(lz4->dctx,
                                 buffer, &direct_out_len,
                                 (char *)lz4->in_buffer + lz4->in_pos, &in_len,
                                 NULL);
+          lz4->frame_ended = (amt == 0);
         
           if (LZ4F_isError(amt)) {
             lz4->err = amt;
@@ -292,10 +299,14 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
         }
 
         if (in_len > 0) {
+          if (lz4->frame_ended && ((char *)lz4->in_buffer)[lz4->in_pos] == 0)
+            return 0; /* count 0 after frame as stream terminator */
+
           amt = LZ4F_decompress(lz4->dctx,
                                 lz4->out_buffer, &out_len,
                                 (char *)lz4->in_buffer + lz4->in_pos, &in_len,
                                 NULL);
+          lz4->frame_ended = (amt == 0);
         
           if (LZ4F_isError(amt)) {
             lz4->err = amt;
