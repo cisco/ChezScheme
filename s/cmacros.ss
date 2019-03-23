@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x00090501)
+(define-constant scheme-version #x00090503)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -695,17 +695,18 @@
 
 ;;; note: for type-char, leave at least fixnum-offset zeros at top of
 ;;; type byte to simplify char->integer conversion
-(define-constant type-boolean       #b00000110)
-(define-constant ptr sfalse         #b00000110)
-(define-constant ptr strue          #b00001110)
-(define-constant type-char          #b00010110)
-(define-constant ptr sunbound       #b00011110)
-(define-constant ptr snil           #b00100110)
-(define-constant ptr forward-marker #b00101110)
-(define-constant ptr seof           #b00110110)
-(define-constant ptr svoid          #b00111110)
-(define-constant ptr black-hole     #b01000110)
-(define-constant ptr sbwp           #b01001110)
+(define-constant type-boolean           #b00000110)
+(define-constant ptr sfalse             #b00000110)
+(define-constant ptr strue              #b00001110)
+(define-constant type-char              #b00010110)
+(define-constant ptr sunbound           #b00011110)
+(define-constant ptr snil               #b00100110)
+(define-constant ptr forward-marker     #b00101110)
+(define-constant ptr seof               #b00110110)
+(define-constant ptr svoid              #b00111110)
+(define-constant ptr black-hole         #b01000110)
+(define-constant ptr sbwp               #b01001110)
+(define-constant ptr ftype-guardian-rep #b01010110)
 
 ;;; on 32-bit machines, vectors get two primary tag bits, including
 ;;; one for the immutable flag, and so do bytevectors, so their maximum
@@ -749,6 +750,7 @@
 
 (define-constant code-flag-system         #b0001)
 (define-constant code-flag-continuation   #b0010)
+(define-constant code-flag-template       #b0100)
 
 (define-constant fixnum-bits
   (case (constant ptr-bits)

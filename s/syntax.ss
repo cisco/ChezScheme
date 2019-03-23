@@ -966,8 +966,8 @@
   (nongenerative #{g0 cz18zz6lfwg7mc7m-a})
   (sealed #t))
 
-(define-record-type (compile-time-value $make-compile-time-value compile-time-value?)
-  (fields (immutable value))
+(define-record-type (compile-time-value $make-compile-time-value $compile-time-value?)
+  (fields (immutable value $compile-time-value-value))
   (nongenerative #{g0 c0f3a5187l98t2ef-a})
   (sealed #t))
 
@@ -1077,7 +1077,7 @@
       [(procedure? x) (make-binding 'macro x)]
       [(core-transformer? x) (core-transformer-binding x)]
       [(variable-transformer? x) (make-binding 'macro! (variable-transformer-procedure x))]
-      [(compile-time-value? x) (make-binding 'ctv x)]
+      [($compile-time-value? x) (make-binding 'ctv x)]
       [else ($oops who "invalid transformer ~s" x)])))
 
 (define defer-or-eval-transformer
@@ -3660,7 +3660,7 @@
                           "first argument to lookup procedure is not an identifier"))
                       (let ([b (lookup (id->label id empty-wrap) r)])
                         (case (binding-type b)
-                          [(ctv) (compile-time-value-value (binding-value b))]
+                          [(ctv) ($compile-time-value-value (binding-value b))]
                           [else #f]))]
                      [(id key-id)
                       (unless (identifier? id)
@@ -4693,6 +4693,17 @@
 
   (define library-search
     (lambda (who path dir* all-ext*)
+      (let-values ([(src-path obj-path obj-exists?) ((library-search-handler) who path dir* all-ext*)])
+        (unless (or (not src-path) (string? src-path))
+          ($oops 'library-search-handler "returned invalid source-file path ~s" src-path))
+        (unless (or (not obj-path) (string? obj-path))
+          ($oops 'library-search-handler "returned invalid object-file path ~s" obj-path))
+        (when (and obj-exists? (not obj-path))
+          ($oops 'library-search-handler "claimed object file was found but returned no object-file path"))
+        (values src-path obj-path obj-exists?))))
+
+  (define internal-library-search
+    (lambda (who path dir* all-ext*)
       (define-syntax with-message
         (syntax-rules ()
           [(_ msg e1 e2 ...)
@@ -4841,70 +4852,77 @@
                                                                ($oops/c #f ($make-recompile-condition path)
                                                                  "can't find include file ~a included by ~a when building ~a"
                                                                  include-req src-path obj-path))])
+                                               ; with-source-path tries to open include-req if it has to search for it ...
                                                (with-source-path 'include include-req
                                                  (lambda (include-req)
-                                                   (lambda ()
-                                                     (when (time>? (file-modification-time include-req) obj-time)
-                                                       (with-message (format "include file ~a is newer than ~a" include-req obj-path)
-                                                         ($oops/c #f ($make-recompile-condition path)
-                                                           "include file ~a is newer than ~a"
-                                                           include-req obj-path)))))))))
+                                                   ; ... but not if it is an absolute path or begins with "./" or "..", so we
+                                                   ; call file-modification time before leaving the "missing include file"
+                                                   ; guard in case it doesn't actually exist.
+                                                   (let ([t (file-modification-time include-req)])
+                                                     (lambda ()
+                                                       (when (time>? t obj-time)
+                                                         (with-message (format "include file ~a is newer than ~a" include-req obj-path)
+                                                           ($oops/c #f ($make-recompile-condition path)
+                                                             "include file ~a is newer than ~a"
+                                                             include-req obj-path))))))))))
                                           (libdesc-include-req* (get-library-descriptor found-uid))))))
                                   found-uid)]
                                [else ($oops #f "loading ~a did not define library ~s" src-path path)]))])
             (verify-uid found-uid src-path)
             found-uid)))
-      (cond
-        [(search-loaded-libraries path) =>
-         (lambda (found-uid)
-           (verify-version path version-ref found-uid #f #f)
-           (verify-uid found-uid #f)
-           (let ([desc (get-library-descriptor found-uid)])
-             (if ct?
-                 (unless (libdesc-ctdesc desc)
-                   (with-message (format "attempting to 'visit' previously 'revisited' ~s for library ~s compile-time info" (libdesc-outfn desc) path)
-                     ($visit #f (libdesc-outfn desc))))
-                 (unless (libdesc-rtdesc desc)
-                   (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" (libdesc-outfn desc) path)
-                     ($revisit #f (libdesc-outfn desc))))))
-          ; need to call load-deps even if our library was already loaded,
-          ; since we might, say, have previously loaded its invoke dependencies and
-          ; now want to load its import dependencies
-           (load-deps found-uid)
-           found-uid)]
-        [else
-         (let-values ([(src-path obj-path obj-exists?) (library-search 'import path (library-directories) (library-extensions))])
-           (if src-path
-               (if obj-exists?
-                   (if (equal? obj-path src-path)
-                       (with-message "source path and object path are the same"
-                         (with-message (format "loading ~s" src-path)
-                           (do-load-library src-path 'load)))
-                       (if (time>=? (file-modification-time obj-path) (file-modification-time src-path))
-                           (with-message "object file is not older"
-                             (with-message (format "loading object file ~s" obj-path)
-                               (do-load/reload/recompile-library src-path obj-path
-                                 (and (compile-imported-libraries) $compiler-is-loaded?))))
-                           (with-message "object file is older"
-                             (if (and (compile-imported-libraries) $compiler-is-loaded?)
-                                 (with-message (format "compiling ~s to ~s" src-path obj-path)
-                                   (do-compile-library src-path obj-path))
-                                 (with-message (format "loading source file ~s" src-path)
-                                   (do-load-library src-path 'load))))))
-                   (if (and (compile-imported-libraries) $compiler-is-loaded?)
-                       (with-message (format "compiling ~s to ~s" src-path obj-path)
-                         (let f ([p obj-path])
-                           (let ([p (path-parent p)])
-                             (unless (or (string=? p "") (file-exists? p))
-                               (f p)
-                               (with-message (format "creating subdirectory ~s" p) (mkdir p)))))
-                         (do-compile-library src-path obj-path))
-                       (with-message (format "loading source file ~s" src-path)
-                         (do-load-library src-path 'load))))
-               (if obj-exists?
-                   (with-message (format "loading object file ~s" obj-path)
-                     (do-load-library obj-path (if ct? 'load 'revisit)))
-                   ($oops #f "library ~s not found" path))))])))
+      ($pass-time 'load-library
+        (lambda ()
+          (cond
+            [(search-loaded-libraries path) =>
+             (lambda (found-uid)
+               (verify-version path version-ref found-uid #f #f)
+               (verify-uid found-uid #f)
+               (let ([desc (get-library-descriptor found-uid)])
+                 (if ct?
+                     (unless (libdesc-ctdesc desc)
+                       (with-message (format "attempting to 'visit' previously 'revisited' ~s for library ~s compile-time info" (libdesc-outfn desc) path)
+                         ($visit #f (libdesc-outfn desc))))
+                     (unless (libdesc-rtdesc desc)
+                       (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" (libdesc-outfn desc) path)
+                         ($revisit #f (libdesc-outfn desc))))))
+              ; need to call load-deps even if our library was already loaded,
+              ; since we might, say, have previously loaded its invoke dependencies and
+              ; now want to load its import dependencies
+               (load-deps found-uid)
+               found-uid)]
+            [else
+             (let-values ([(src-path obj-path obj-exists?) (library-search 'import path (library-directories) (library-extensions))])
+               (if src-path
+                   (if obj-exists?
+                       (if (equal? obj-path src-path)
+                           (with-message "source path and object path are the same"
+                             (with-message (format "loading ~s" src-path)
+                               (do-load-library src-path 'load)))
+                           (if (time>=? (file-modification-time obj-path) (file-modification-time src-path))
+                               (with-message "object file is not older"
+                                 (with-message (format "loading object file ~s" obj-path)
+                                   (do-load/reload/recompile-library src-path obj-path
+                                     (and (compile-imported-libraries) $compiler-is-loaded?))))
+                               (with-message "object file is older"
+                                 (if (and (compile-imported-libraries) $compiler-is-loaded?)
+                                     (with-message (format "compiling ~s to ~s" src-path obj-path)
+                                       (do-compile-library src-path obj-path))
+                                     (with-message (format "loading source file ~s" src-path)
+                                       (do-load-library src-path 'load))))))
+                       (if (and (compile-imported-libraries) $compiler-is-loaded?)
+                           (with-message (format "compiling ~s to ~s" src-path obj-path)
+                             (let f ([p obj-path])
+                               (let ([p (path-parent p)])
+                                 (unless (or (string=? p "") (file-exists? p))
+                                   (f p)
+                                   (with-message (format "creating subdirectory ~s" p) (mkdir p)))))
+                             (do-compile-library src-path obj-path))
+                           (with-message (format "loading source file ~s" src-path)
+                             (do-load-library src-path 'load))))
+                   (if obj-exists?
+                       (with-message (format "loading object file ~s" obj-path)
+                         (do-load-library obj-path (if ct? 'load 'revisit)))
+                       ($oops #f "library ~s not found" path))))])))))
 
   (define version-okay?
     (lambda (version-ref version)
@@ -4988,6 +5006,24 @@
   (set! $library-search
     (lambda (who path dir* all-ext*)
       (library-search who path dir* all-ext*)))
+
+  (set-who! default-library-search-handler
+    (lambda (caller path dir* all-ext*)
+      (define (string-pair? x) (and (pair? x) (string? (car x)) (string? (cdr x))))
+      (unless (symbol? caller) ($oops who "~s is not a symbol" caller))
+      (guard (c [else ($oops who "invalid library name ~s" path)])
+        (unless (list? path) (raise #f))
+        (let-values ([(path version uid) (create-library-uid path)])
+          (void)))
+      (unless (and (list? dir*) (andmap string-pair? dir*))
+        ($oops who "invalid path list ~s" dir*))
+      (unless (and (list? all-ext*) (andmap string-pair? all-ext*))
+        ($oops who "invalid extension list ~s" all-ext*))
+      (internal-library-search caller path dir* all-ext*)))
+
+  (set-who! library-search-handler
+    ($make-thread-parameter default-library-search-handler
+      (lambda (x) (unless (procedure? x) ($oops who "~s is not a procedure" x)) x)))
 
   (set! library-list
     (lambda ()
@@ -5144,8 +5180,8 @@
              (cond
                [(libdesc-import-code desc) =>
                 (lambda (p)
-                   (when (eq? p 'loading)
-                     ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
+                  (when (eq? p 'loading)
+                    ($oops #f "attempt to import library ~s while it is still being loaded" (libdesc-path desc)))
                   (libdesc-import-code-set! desc #f)
                   (on-reset (libdesc-import-code-set! desc p)
                     (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
@@ -5247,9 +5283,16 @@
                                  (lambda (rcinfo)
                                    (andmap
                                      (lambda (x)
-                                       (with-source-path who x
-                                         (lambda (x)
-                                           (time<=? (with-new-who who (lambda () (file-modification-time x))) ofn-mod-time))))
+                                       ((guard (c [else (with-message (with-output-to-string
+                                                                        (lambda ()
+                                                                          (display-string "failed to find include file: ")
+                                                                          (display-condition c)))
+                                                          (lambda () #f))])
+                                          (with-source-path who x
+                                            (lambda (x)
+                                              (lambda ()
+                                                (and (file-exists? x)
+                                                     (time<=? (file-modification-time x) ofn-mod-time))))))))
                                      (recompile-info-include-req* rcinfo)))
                                  rcinfo*))
                           (if (compile-imported-libraries)
@@ -5386,7 +5429,7 @@
           (cond
             [(string? x) (parse-string x (library-extensions) default-obj-ext)]
             [(list? x) (parse-list who x default-obj-ext)]
-            [else ($oops who "invalid path list ~s" x)]))))))
+            [else ($oops who "invalid extension list ~s" x)]))))))
 
 (set! $install-program-desc
   (lambda (pinfo)
@@ -6459,7 +6502,7 @@
 (record-writer (type-descriptor compile-time-value)
   (lambda (x p wr)
     (display "#<compile-time-value " p)
-    (wr (compile-time-value-value x) p)
+    (wr ($compile-time-value-value x) p)
     (display ">" p)))
 
 (record-writer syntax-object-rtd ; from types.ss
@@ -6982,6 +7025,15 @@
 (set-who! make-compile-time-value
   (lambda (x)
     ($make-compile-time-value x)))
+
+(set-who! compile-time-value?
+  (lambda (x)
+    ($compile-time-value? x)))
+
+(set-who! compile-time-value-value
+  (lambda (x)
+    (unless ($compile-time-value? x) ($oops who "~s is not a compile-time value" x))
+    ($compile-time-value-value x)))
 
 (set! $syntax->src
   (lambda (x)

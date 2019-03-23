@@ -17,8 +17,8 @@ MAKEFLAGS += --no-print-directory
 PREFIX=
 
 build:
-	(cd c ; $(MAKE))
-	(cd s ; $(MAKE) bootstrap)
+	(cd c && $(MAKE))
+	(cd s && $(MAKE) bootstrap)
 
 install: build
 	$(MAKE) -f Mf-install
@@ -27,16 +27,28 @@ uninstall:
 	$(MAKE) -f Mf-install uninstall
 
 test: build
-	(cd mats ; $(MAKE) allx)
+	(cd mats && $(MAKE) allx)
 	@echo "test run complete.  check $(PREFIX)mats/summary for errors."
 
 bootfiles: build
 	$(MAKE) -f Mf-boot
 
+create-bintar: build
+	(cd bintar && $(MAKE))
+
+create-rpm: create-bintar
+	(cd rpm && $(MAKE))
+
+create-pkg: create-bintar
+	(cd pkg && $(MAKE))
+
 clean:
 	rm -f petite.1 scheme.1
-	(cd s ; $(MAKE) clean)
-	(cd c ; $(MAKE) clean)
-	(cd mats ; $(MAKE) clean)
-	(cd examples ; $(MAKE) clean)
+	(cd s && $(MAKE) clean)
+	(cd c && $(MAKE) clean)
+	(cd mats && $(MAKE) clean)
+	(cd examples && $(MAKE) clean)
+	(cd bintar && $(MAKE) clean)
+	(cd rpm && $(MAKE) clean)
+	(cd pkg && $(MAKE) clean)
 	rm -f Make.out

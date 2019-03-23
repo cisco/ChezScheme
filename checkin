@@ -62,7 +62,7 @@ if (-e $W/scheme.1.in) then
   endif
 endif
 
-set tmpsdirs = (. c mats s examples unicode makefiles csug release_notes)
+set tmpsdirs = (. c mats s examples unicode makefiles csug release_notes wininstall bintar rpm pkg)
 set sdirs = ()
 foreach x ($tmpsdirs)
     if (!(-e $x)) then
@@ -90,8 +90,6 @@ echo '*** running "make clean" in source directories ***'
 foreach x ($sdirs)
     switch ($x)
         case .:
-            (cd $W; /bin/rm -f petite.1 scheme.1)
-            (cd $W; /bin/rm -f Make.out)
         case unicode:
         case unicode/UNIDATA:
         case makefiles:
@@ -103,7 +101,11 @@ foreach x ($sdirs)
         case mats:
         case benchmarks:
         case examples:
-            (cd $W/$x; make clean > /dev/null)
+        case wininstall:
+        case bintar:
+        case rpm:
+        case pkg:
+            (cd $W/$x; make clean >& /dev/null)
             breaksw
         default:
             echo "checkin error: unexpected sdir $x"
@@ -231,13 +233,6 @@ if ($#oldsfiles != 0) then
     echo ""
 endif
 
-foreach x ($bdirs)
-    set x = ./$x
-    if (!(-d $x)) then
-        mkdir -p $x || goto error
-    endif
-end
-
 set oldbfiles = ()
 foreach x ($bfiles)
     if (-e $x) set oldbfiles = ($oldbfiles $x)
@@ -291,6 +286,7 @@ if ($#bfiles != 0) then
             @ n = $i + 4
         endif
         echo -n "$x "
+	if (!(-e $x:h)) mkdir -p $x:h || goto error
         mv $W/$x $x || goto error
     end
     echo ""

@@ -927,6 +927,40 @@
       "apkf1" "bqlg2" "crmh3" "dsni4" "etoj5" "uapkf1"
       "vbqlg2" "wcrmh3" "xdsni4" "yetoj5" "aupkf1" "bvqlg2"
       "cwrmh3" "dxsni4" "eytoj5"))
+ ; check for proper tail recursion
+   (equal?
+     (list
+       (let ([s (statistics)])
+         (let ([k 100000] [str "abc"])
+           (let ([n k] [m 0])
+             (define (f) (unless (fx= n 0) (string-for-each foo str)))
+             (define (foo x)
+               (set! m (+ m 1))
+               (when (char=? x (string-ref str (fx- (string-length str) 1)))
+                 (set! n (- n 1))
+                 (f)
+                 17)) ; blow tail recursion here
+             (f)
+             (list (> (sstats-bytes (sstats-difference (statistics) s))
+                      10000)
+                   (eqv? n 0)
+                   (eqv? m (* k (string-length str)))))))
+       (let ([s (statistics)])
+         (let ([k 100000] [str "abc"])
+           (let ([n k] [m 0])
+             (define (f) (unless (fx= n 0) (string-for-each foo str)))
+             (define (foo x)
+               (set! m (+ m 1))
+               (when (char=? x (string-ref str (fx- (string-length str) 1)))
+                 (set! n (- n 1))
+                 (f)))
+             (f)
+             (list (<= 0
+                      (sstats-bytes (sstats-difference (statistics) s))
+                      1000)
+                   (eqv? n 0)
+                   (eqv? m (* k (string-length str))))))))
+     '((#t #t #t) (#t #t #t)))
  )
 
 (mat string-xcase-errors

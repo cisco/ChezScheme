@@ -1,8 +1,8 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.1}
+\thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{January}
+\pubmonth{March}
 \pubyear{2019}
 
 \begin{document}
@@ -58,12 +58,70 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Mutexes and condition variables can have names (9.5.1)}
+\subsection{Mutexes and condition variables can have names (9.5.3)}
 
 The procedures \scheme{make-mutex} and \scheme{make-condition} now
 accept an optional argument \scheme{name}, which must be a symbol
 that identifies the object. The name is printed every time the mutex
 or condition object is printed, which is useful for debugging.
+
+\subsection{Improved packaging support (9.5.1)}
+
+The Chez Scheme \scheme{Makefile} has been enhanced with new targets for
+creating binary packages for Unix-like operating systems.
+The \scheme{create-tarball} target generates a binary tarball package for
+distribution, the \scheme{create-rpm} target generates a Linux RPM package, and
+the \scheme{create-pkg} target generates a macOS package file.
+
+\subsection{Library search handler (9.5.1)}
+
+The new \scheme{library-search-handler} parameter controls how library source
+or object code is located when \scheme{import}, \scheme{compile-whole-program},
+or \scheme{compile-whole-library} are used to load a library.
+The value of the \scheme{library-search-handler} parameter must be a procedure
+expecting four arguments: the \var{who} argument is a symbol that provides
+context in \scheme{import-notify} messages, the \var{library} argument is the
+name of the desired library, the \var{directories} is a list of source and
+object directory pairs in the form returned by \scheme{library-directories},
+and the \var{extensions} parameter is a list of source and object extension
+pairs in the form returned by \scheme{library-extensions}.
+The default vaue of the \scheme{library-search-handler} is the newly exposed
+\scheme{default-library-search-handler} procedure.
+
+\subsection{Ftype guardians (9.5.1)}
+
+Applications that manage memory outside the Scheme heap can leverage
+new support for ftype guardians to help perform reference counting.
+An ftype guardian is like an ordinary guardian except that it does
+not necessarily save from collection each ftype pointer registered
+with it but instead decrements (atomically) a reference count at
+the head of the object to which the ftype pointer points.
+If the reference count becomes zero as a result of the decrement,
+it preserves the object so that it can be retrieved from the guardian
+and freed; otherwise it allows it to be collected.
+
+\subsection{Recompile information and whole-program optimization (9.5.1)}
+
+\scheme{compile-whole-program} and \scheme{compile-whole-library}
+now propagate recompile information from the named \scheme{wpo}
+file to the object file to support \scheme{maybe-compile-program}
+and \scheme{maybe-compile-library} in the case where the new object
+file overwrites the original object file.
+
+\subsection{Directly accessing the value of compile-time values (9.5.1)}
+
+The value of a compile-time value created by \scheme{make-compile-time-value}
+can be retrieved via the new procedure \scheme{compile-time-value-value}.
+The new predicate \scheme{compile-time-value?} can be used to determine if
+an object is a compile-time value.
+
+\subsection{Extracting a subset of hashtable entries (9.5.1)}
+
+The new \scheme{hashtable-cells} function is similar to
+\scheme{hashtable-entries}, but it returns a vector of cells instead
+of two vectors. An optional argument to \scheme{hashtable-keys},
+\scheme{hashtable-values}, \scheme{hashtable-entries}, or \scheme{hashtable-cells}
+limits the size of the result vector.
 
 \subsection{Profile data retained for reclaimed code (9.5.1)}
 
@@ -1612,6 +1670,85 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Fasl representation change for recursive ftypes (9.5.2)}
+
+A bug in the reading of mutually recursive ftype definitions from
+compiled files has been fixed.
+The bug was triggered by recursive ftype definitions in which one
+of the mutually recursive ftypes is a subtype of another, as in:
+
+\schemedisplay
+(define-ftype
+  [A (* B)]
+  [B (struct [h A])]))
+\endschemedisplay
+
+It manifested in the fasl reader raising bogus "incompatible record
+type" exceptions when two or more references to one of the ftypes
+occur in in separate compiled files or in separate top-level forms
+of a file compiled via \scheme{compile-file}.
+The bug could also have affected other record-type descriptors with
+cycles involving parent rtds and ``extra'' fields as well as fasl
+output created via \scheme{fasl-write}.
+
+\subsection{Unbound object resulting from libraries combined with \protect\scheme{compile-whole-library} (9.5.1)}
+
+A bug in \scheme{compile-whole-library} that allowed the invoke code for a
+library included in the combined library body to be executed without first
+invoking its binary library dependencies has been fixed.
+This bug could arise when a member of a combined library was invoked without
+invoking the requirements of the other libraries it was combined with.  For
+instance, consider the case where libraries \scheme{(A)} and \scheme{(B)} are
+combined and \scheme{(B)} has dependencies on library \scheme{(A)} and binary
+library \scheme{(C)}.
+One possible sort order of this graph is \scheme{(C)}, \scheme{(A)},
+\scheme{(B)}, where the invoke code for \scheme{(A)} and \scheme{(B)} are
+combined into a single block of invoke code.  If library \scheme{(A)} is
+invoked first, it will implicitly cause the invoke code for \scheme{(B)} to be
+invoked without invoking the code for \scheme{(C)}.
+We address this by adding explicit dependencies between \scheme{(A)} and all
+the binary libraries that precede it and all of the other libraries clustered
+with \scheme{(A)} and \scheme{(A)}, such that no matter which library clustered
+with \scheme{(A)} is invoked firts, \scheme{(A)} will be invoked, causing all
+binary libraries that precede \scheme{(A)} to be invoked.
+It is also possible for a similar problem to exist between clusters, where
+invoking a later cluster may invoke an earlier cluster without invoking the
+binary dependencies for the earlier cluster.
+We address this issue by adding an invoke requirement between each cluster and
+the first library in the cluster that precedes it.
+These extended invoke requirements are also added to the import requirements
+for each library, and the dependency graph is enhanced with import requirement
+links to ensure these are taken into account during the topological sort.
+
+
+\subsection{Automatic recompilation and missing include files (9.5.1)}
+
+A bug in automatic recompilation involving missing include files
+has been fixed.
+The bug caused automatic recompilation to fail, often with an
+exception in \scheme{file-modification-time}, when a file specified
+by an absolute pathname or pathname starting with "./" or "../" was
+included via \scheme{include} during a previous compilation run and
+is no longer present.
+
+\subsection{Invalid memory reference instantiating \protect\scheme{foreign-callable} code object (9.5.1)}
+
+A bug that caused evaluation of a \scheme{foreign-callable} expression in
+code that has been collected into the static generation (e.g., when the
+\scheme{foreign-callable} form appears in code compiled to a boot file)
+to result in an invalid memory reference has been fixed.
+
+\subsection{Invalid constant-folding of some calls to \protect\scheme{apply} (9.5.1)}
+
+A bug in the source optimizer (cp0) allowed constant-folding of some calls to
+\scheme{apply} where the last argument is not known to be a list.  For example,
+cp0 incorrectly reduced
+\scheme{(apply zero? 0)} to \scheme{#t}
+and reduced
+\scheme{(lambda (x) (apply box? x) x)} to \scheme{(lambda (x) x)},
+but now preserves these calls to \scheme{apply} so that they may raise an
+exception.
+
 \subsection{Disk-relative filenames in Windows (9.5.1)}
 
 In Windows, filenames that start with a disk designator but no
@@ -1908,6 +2045,21 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Better code for \protect\scheme{bytevector} (9.5.1)}
+
+The compiler now generates better inline code for the \scheme{bytevector}
+procedure.
+Instead of one byte memory write for each argument, it writes up
+to four (32-bit machines) or eight (64-bit machines) bytes at a
+time, which almost always results in fewer instructions and fewer
+writes.
+
+\subsection{\protect\scheme{vector-for-each} and \protect\scheme{string-for-each} improvement (9.5.1)}
+
+The last call to the procedure passed to \scheme{vector-for-each}
+or \scheme{string-for-each} is now reliably implemented as tail
+call, as was already the case for \scheme{for-each}.
 
 \subsection{Lambda commonization (9.5.1)}
 

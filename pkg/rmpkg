@@ -1,4 +1,6 @@
-# Mf-ta6nt
+#! /bin/csh -f
+
+# rmpkg
 # Copyright 1984-2017 Cisco Systems, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = ta6nt
+if ( $#argv != 1) then
+  echo "Usage: sudo $0 release"
+  echo "  e.g.,: sudo $0 8.4"
+  exit 1
+endif
 
-fsrc = foreign1.c foreign2.c foreign3.c foreign4.c
-fobj = foreign1.so
-mdclean = cat_flush.exe cat_flush.obj foreign1.exp foreign1.lib foreign1.obj foreign2.obj foreign3.obj
+if ( `id -u` != 0 ) then
+    echo "$0 must be run as root (e.g., via sudo)"
+    exit 1
+endif
 
-include Mf-base
+set R = $1
 
-foreign1.so: $(fsrc)
-	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv953.lib $(fsrc)"
+if (!(-e /usr/local/lib/csv$R)) then
+  echo "(Petite) Chez Scheme Version $R doesn't appear to be installed"
+  exit
+endif
 
-cat_flush: cat_flush.c
-	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /MD /nologo $<"
+/bin/rm -rf /usr/local/bin/petite /usr/local/bin/scheme /usr/local/bin/scheme-script /usr/local/lib/csv$R /usr/local/share/man/man1/petite.1.gz /usr/local/share/man/man1/scheme.1.gz
+pkgutil --forget chezscheme

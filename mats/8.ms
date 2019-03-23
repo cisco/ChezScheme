@@ -6111,6 +6111,8 @@
           (lambda (r)
             (r #'a #'frip "extra stuff"))))
       a))
+  (error? ; not a compile-time value
+    (compile-time-value-value 17))
   (begin
     (with-output-to-file "testfile-mctv0.ss"
       (lambda ()
@@ -6132,6 +6134,7 @@
   (begin
     (import (testfile-mctv0))
     #t)
+  (compile-time-value? (make-compile-time-value 'fred))
   (begin
     (define-syntax frob (make-compile-time-value 'rabf))
     #t)
@@ -6180,6 +6183,7 @@
       (define-syntax x (make-compile-time-value 'xow)))
     #t)
   (eq? (let () (import (mctv l1)) (get-ctv x)) 'xow)
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(mctv l1)))) 'xow)
   (begin
     (with-output-to-file "testfile-mctv1.ss"
       (lambda ()
@@ -6190,6 +6194,19 @@
     (for-each separate-compile '(mctv1))
     #t)
   (eq? (let () (import (testfile-mctv1)) (get-ctv x)) 'xuko1)
+  (compile-time-value? (top-level-syntax 'x (environment '(testfile-mctv1))))
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(testfile-mctv1)))) 'xuko1)
+  (begin
+    (with-output-to-file "testfile-mctv1a.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-mctv1a) (export x) (import (chezscheme))
+             (define-syntax x (make-compile-time-value 'xuko1)))))
+      'replace)
+    (for-each separate-compile '(mctv1a))
+    #t)
+  (eq? (compile-time-value-value (top-level-syntax 'x (environment '(testfile-mctv1a)))) 'xuko1)
+  (eq? (let () (import (testfile-mctv1a)) (get-ctv x)) 'xuko1)
   (begin
     (with-output-to-file "testfile-mctv2.ss"
       (lambda ()
@@ -9610,6 +9627,144 @@
           (equal? (library-extensions) `(,@'((".a1.sls" . ".a1.so") (".boo" . ".booso") (".crud" . ".junk")) ,@default)))
         (parameterize ([library-extensions ".a1.sls:.boo::.booso:.crud::.junk:"])
           (equal? (library-extensions) `(,@'((".a1.sls" . ".a1.so") (".boo" . ".booso") (".crud" . ".junk")) ,@default)))))
+)
+
+(mat library-search-handler
+  (procedure? (library-search-handler))
+  (eq? (library-search-handler) default-library-search-handler)
+  (error? (default-library-search-handler "not-symbol" '(lib) '() '()))
+  (error? (default-library-search-handler 'import 'bad-library-name '() '()))
+  (error? (default-library-search-handler 'import '(lib) '(("invalid" "path" "list")) '()))
+  (error? (default-library-search-handler 'import '(lib) '(("foo" . "bar")) '(("bad") ("extensions"))))
+  (error?
+   (parameterize ([library-search-handler
+                   (lambda (who path dir* all-ext*)
+                     (values '(bad source path) #f #f))])
+     (eval '(import (foo)))))
+  (error?
+   (parameterize ([library-search-handler
+                   (lambda (who path dir* all-ext*)
+                     (values #f '(bad object path) #f))])
+     (eval '(import (foo)))))
+  (error?
+   (parameterize ([library-search-handler
+                   (lambda (who path dir* all-ext*)
+                     (values #f #f #t))])
+     (eval '(import (foo)))))
+  (begin
+    (mkdir "lsh-testdir")
+    (mkdir "lsh-testdir/src1")
+    (mkdir "lsh-testdir/src2")
+    (mkdir "lsh-testdir/obj")
+    #t)
+  (begin
+    (with-output-to-file "lsh-testdir/src1/lib.ss"
+      (lambda ()
+        (pretty-print
+         '(library (lib) (export a) (import (scheme))
+            (define a "src1 provided this a"))))
+      'replace)
+    (with-output-to-file "lsh-testdir/src2/lib.ss"
+      (lambda ()
+        (pretty-print
+         '(library (lib) (export a) (import (scheme))
+            (define a "a from src2"))))
+      'replace)
+    (with-output-to-file "lsh-testdir/src2/foo.ss"
+      (lambda ()
+        (pretty-print
+         '(library (foo) (export a) (import (scheme) (lib)))))
+      'replace)
+    (parameterize ([generate-wpo-files #t]
+                   [compile-imported-libraries #t]
+                   [library-directories '(("src2" . "obj"))])
+      (compile-file "lsh-testdir/src2/lib.ss" "lsh-testdir/obj/lib.so")
+      (compile-file "lsh-testdir/src2/foo.ss" "lsh-testdir/obj/foo.so"))
+    #t)
+  (equal?
+   "a from src2\n"
+   (separate-eval
+    '(cd "lsh-testdir")
+    '(library-extensions '((".ss" . ".so")))
+    '(library-directories '(("src2" . "obj") ("src1" . "obj")))
+    '(library-search-handler
+      (lambda (who path dir* all-ext*)
+        (let-values ([(src-path obj-path obj-exists?)
+                      (default-library-search-handler who path dir* all-ext*)])
+          (assert (equal? src-path "src2/lib.ss"))
+          (assert (equal? obj-path "obj/lib.so"))
+          (assert obj-exists?)
+          (values src-path obj-path obj-exists?))))
+    '(printf "~a\n" (let () (import (lib)) a))))
+  (equal?
+   "src1 provided this a\n"
+   (separate-eval
+    '(cd "lsh-testdir")
+    '(library-extensions '((".ss" . ".so")))
+    '(library-directories '(("src2" . "obj") ("src1" . "obj")))
+    '(library-search-handler
+      (lambda (who path dir* all-ext*)
+        (assert (eq? who 'import))
+        (assert (equal? path '(lib)))
+        (assert (equal? dir* (library-directories)))
+        (assert (equal? all-ext* (library-extensions)))
+        ;; switcheroo
+        (values "src1/lib.ss" #f #f)))
+    '(printf "~a\n" (let () (import (lib)) a))))
+  (equal?
+   (string-append
+    "compiling src1/lib.ss with output to obj/lib-compiled.so\n"
+    "src1 provided this a\n")
+   (separate-eval
+    '(cd "lsh-testdir")
+    '(compile-imported-libraries #t)
+    '(library-search-handler
+      (lambda (who path dir* all-ext*)
+        (values "src1/lib.ss" "obj/lib-compiled.so" #f)))
+    '(printf "~a\n" (let () (import (lib)) a))))
+  ;; the default library-search-handler finds obj/lib.wpo
+  ;; so no libraries are needed at run time
+  (equal?
+    "()\n"
+   (separate-eval
+    '(cd "lsh-testdir")
+    '(library-extensions '((".ss" . ".so")))
+    '(library-directories '(("src1" . "obj") ("src2" . "obj")))
+    '(compile-whole-library "obj/foo.wpo" "foo.library")))
+  (equal?
+   "((lib))\n"
+   (separate-eval
+    '(cd "lsh-testdir")
+    '(library-extensions '((".ss" . ".so")))
+    '(library-directories '(("src1" . "obj") ("src2" . "obj")))
+    '(define (check who path dir*)
+       (assert (eq? who 'compile-whole-library))
+       (assert (equal? path '(lib)))
+       (assert (equal? dir* (library-directories))))
+    '(library-search-handler
+      (lambda (who path dir* all-ext*)
+        (check who path dir*)
+        (assert (equal? all-ext* '((".ss" . ".wpo"))))
+        ;; default search finds the wpo file, but ...
+        (let-values ([(src-path obj-path obj-exists?)
+                      (default-library-search-handler who path dir* all-ext*)])
+          ;; user reordered library-directories since compiling the wpo file
+          (assert (equal? src-path "src1/lib.ss"))
+          (assert (equal? obj-path "obj/lib.wpo"))
+          (assert obj-exists?))
+        ;; ... we install a new handler that returns the object file instead
+        (library-search-handler
+         (lambda (who path dir* all-ext*)
+           (check who path dir*)
+           (assert (equal? all-ext* (library-extensions)))
+           (values #f "obj/lib.so" #t)))
+        ;; ... and report no .wpo file found so we fall back to the
+        ;; library-search-handler just installed
+        (values #f #f #f)))
+    '(compile-whole-library "obj/foo.wpo" "foo.library")))
+  (begin
+    (rm-rf "lsh-testdir")
+    #t)
 )
 
 (mat compile-imported-libraries
