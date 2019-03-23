@@ -2876,6 +2876,42 @@
         (ftype-set! fcf-B (next) x (make-ftype-pointer fcf-B 0))
         (ftype-pointer? (ftype-ref fcf-B (next) x)))
       (lambda () (foreign-free addr))))
+  ; regression test: verify that we can fasl in a cyclic ftd that's already registered on its uid
+  (begin
+    (mkfile "testfile-ftype3.ss"
+      '(define-ftype
+         [ftype3-A (* ftype3-B)]
+         [ftype3-B (struct [h ftype3-A])]))
+    (compile-file "testfile-ftype3")
+    #t)
+  (begin ; once should prove it
+    (load "testfile-ftype3.so")
+    (ftype-pointer? ftype3-A (make-ftype-pointer ftype3-B 0)))
+  (begin ; twice for that warm fuzzy feeling
+    (load "testfile-ftype3.so")
+    (ftype-pointer? ftype3-A (make-ftype-pointer ftype3-B 0)))
+  (begin
+    (mkfile "testfile-ftype4.ss"
+      '(define-ftype
+         [ftype4-A (struct [q (* ftype4-B)])]
+         [ftype4-B (struct [h (* ftype4-A)])]))
+    (compile-file "testfile-ftype4")
+    #t)
+  (begin ; once should prove it
+    (load "testfile-ftype4.so")
+      (ftype-pointer? ftype4-A (make-ftype-pointer ftype4-A 0)))
+  (begin ; twice for that warm fuzzy feeling
+    (load "testfile-ftype4.so")
+    (ftype-pointer? ftype4-B (make-ftype-pointer ftype4-B 0)))
+  (begin
+    (mkfile "testfile-ftype5.ss"
+      '(define-ftype
+         [ftype5-A (struct [q (* ftype4-A)])]))
+    (compile-file "testfile-ftype5")
+    #t)
+  (begin
+    (load "testfile-ftype5.so")
+    (ftype-pointer? ftype5-A (make-ftype-pointer ftype5-A 0)))
 )
 
 (mat ftype-bits

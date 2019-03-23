@@ -109,7 +109,7 @@
            separate-compile separate-eval run-script patch-exec-path $record->vector
            $cat_flush
            test-cp0-expansion
-           mkfile rm-rf)))
+           mkfile rm-rf touch)))
     (let loop ([ls (remp gensym? (oblist))] [bad '()])
       (if (null? ls)
           (or (null? bad)
@@ -370,6 +370,7 @@
               [(char) #\a 0 #f]
               [(codec) latin-1-codec 0 #f]
               [(code) (closure-code 'values) 0 #f]
+              [(compile-time-value) (make-compile-time-value 17)]
               [(condition) (make-who-condition 'me) 'the-who]
               [(continuation-condition) (call/cc make-continuation-condition) (make-who-condition 'who) #f]
               [(cost-center) *cost-center '(a) #f]

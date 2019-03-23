@@ -1622,33 +1622,40 @@
 
     (define fold-primref
       (lambda (pr ctxt sc wd name moi)
-        (let ([opnds (app-opnds ctxt)] [outer-ctxt (app-ctxt ctxt)])
-          (let ([flags (primref-flags pr)])
-            (cond
-              [(and (eq? outer-ctxt 'effect)
-                    (if (all-set? (prim-mask unsafe) flags)
-                        (all-set? (prim-mask discard) flags)
-                        (and (all-set? (prim-mask (or unrestricted discard)) flags)
-                             (arity-okay? (primref-arity pr) (length opnds)))))
-                (residualize-seq '() opnds ctxt)
-                void-rec]
-              [(and (eq? outer-ctxt 'test)
-                    (all-set?
-                      (if (all-set? (prim-mask unsafe) flags)
-                          (prim-mask (or discard true))
-                          (prim-mask (or unrestricted discard true)))
-                      flags))
-                (residualize-seq '() opnds ctxt)
-                true-rec]
-              [(and (eq? outer-ctxt 'test)
-                    (all-set? (prim-mask true) flags))
-                (make-seq outer-ctxt
-                  (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)
-                  true-rec)]
-              [else (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)])))))
+        (let ([opnds (app-opnds ctxt)])
+          (convention-case (app-convention ctxt)
+            [(call)
+             (let ([flags (primref-flags pr)] [outer-ctxt (app-ctxt ctxt)])
+               (cond
+                 [(and (eq? outer-ctxt 'effect)
+                       (if (all-set? (prim-mask unsafe) flags)
+                           (all-set? (prim-mask discard) flags)
+                           (and (all-set? (prim-mask (or unrestricted discard)) flags)
+                                (arity-okay? (primref-arity pr) (length opnds)))))
+                  (residualize-seq '() opnds ctxt)
+                  void-rec]
+                 [(and (eq? outer-ctxt 'test)
+                       (all-set?
+                        (if (all-set? (prim-mask unsafe) flags)
+                            (prim-mask (or discard true))
+                            (prim-mask (or unrestricted discard true)))
+                        flags))
+                  (residualize-seq '() opnds ctxt)
+                  true-rec]
+                 [(and (eq? outer-ctxt 'test)
+                       (all-set? (prim-mask true) flags))
+                  (make-seq outer-ctxt
+                    (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)
+                    true-rec)]
+                 [else (fold-primref2 pr (primref-name pr) opnds flags ctxt sc wd name moi)]))]
+            [(apply2 apply3)
+             ; handler for apply will have turned the apply into a call if the last
+             ; argument is discovered to be a list.  nothing more we can do here.
+             (residualize-primcall pr #f opnds ctxt sc)]))))
 
     (define fold-primref2
       (lambda (pr sym opnds pflags ctxt sc wd name moi)
+        (safe-assert (convention-case (app-convention ctxt) [(call) #t] [else #f]))
         (let ([handler (or (and (all-set? (prim-mask unsafe) pflags)
                                 (all-set? (prim-mask cp03) pflags)
                                 ($sgetprop sym 'cp03 #f))
@@ -1656,11 +1663,7 @@
                                 ($sgetprop sym 'cp02 #f)))])
           (or (and handler
                    (let ([level (if (all-set? (prim-mask unsafe) pflags) 3 2)])
-                     (convention-case (app-convention ctxt)
-                       [(call) (handler level opnds ctxt sc wd name moi)]
-                       ; handler for apply will have turned the apply into a call if the last
-                       ; argument is discovered to be a list.  nothing more we can do here.
-                       [(apply2 apply3) #f])))
+                     (handler level opnds ctxt sc wd name moi)))
               (let ([args (value-visit-operands! opnds)])
                 (cond
                   [(and (all-set? (prim-mask mifoldable) pflags)
@@ -1670,13 +1673,18 @@
                      (residualize-seq '() opnds ctxt)
                      e)]
                   [else
-                    (residualize-seq opnds '() ctxt)
-                    (bump sc 1)
-                    (let ([preinfo (app-preinfo ctxt)])
-                      (convention-case (app-convention ctxt)
-                        [(call) `(call ,preinfo ,pr ,args ...)]
-                        [(apply2) (build-primcall preinfo 2 'apply (cons pr args))]
-                        [(apply3) (build-primcall preinfo 3 'apply (cons pr args))]))]))))))
+                   (residualize-primcall pr args opnds ctxt sc)]))))))
+
+    (define residualize-primcall
+      (lambda (pr args opnds ctxt sc)
+        (let ([args (or args (value-visit-operands! opnds))])
+          (residualize-seq opnds '() ctxt)
+          (bump sc 1)
+          (let ([preinfo (app-preinfo ctxt)])
+            (convention-case (app-convention ctxt)
+              [(call) `(call ,preinfo ,pr ,args ...)]
+              [(apply2) (build-primcall preinfo 2 'apply (cons pr args))]
+              [(apply3) (build-primcall preinfo 3 'apply (cons pr args))])))))
 
     (define objs-if-constant
       (lambda (e*)
@@ -3602,7 +3610,7 @@
               (if (null? ls*)
                   (and (apply = (map length e**))
                        (or (not all-quoted?) (fx<= (length (car e**)) 4))
-                       (let ([p (cp0-make-temp (fx> (length (car e**)) 1))]
+                       (let ([p (cp0-make-temp (or (fx= lvl 2) (fx> (length (car e**)) 1)))]
                              [temp** (map (lambda (e*)
                                             (map (lambda (x) (cp0-make-temp #f)) e*))
                                        e**)])
@@ -3927,26 +3935,29 @@
                     (let ([p (cp0-make-temp #t)]
                           [n (cp0-make-temp #t)]
                           [i (cp0-make-temp #t)]
+                          [j (cp0-make-temp #t)]
                           [do (cp0-make-temp #t)]
                           [v (cp0-make-temp #t)]
                           [v* (map (lambda (x) (cp0-make-temp #f)) ?v*)])
                       (build-lambda (cons* p v v*)
-                        (build-let (list n)
-                          (list (build-primcall 3 'vector-length
-                                  (list (build-ref v))))
-                          (build-named-let do (list i) (list `(quote 0))
-                            `(if ,(build-primcall 3 'fx=
-                                    (list (build-ref i) (build-ref n)))
-                                 ,void-rec
-                                 ,(make-seq 'value
-                                    `(call ,(app-preinfo ctxt) (ref #f ,p)
-                                       ,(map (lambda (x)
-                                               (build-primcall 3 'vector-ref
-                                                 (list (build-ref x) (build-ref i))))
-                                          (cons v v*)) ...)
-                                    `(call ,(make-preinfo) (ref #f ,do)
-                                       ,(build-primcall 3 'fx1+
-                                          (list (build-ref i))))))))))
+                        (build-let (list n) (list (build-primcall 3 'vector-length (list (build-ref v))))
+                          `(if ,(build-primcall 3 'fx= (list (build-ref n) `(quote 0)))
+                               ,void-rec
+                               ,(build-named-let do (list i) (list `(quote 0))
+                                  (build-let (list j) (list (build-primcall 3 'fx1+ (list (build-ref i))))
+                                    `(if ,(build-primcall 3 'fx= (list (build-ref j) (build-ref n)))
+                                         (call ,(app-preinfo ctxt) (ref #f ,p)
+                                           ,(map (lambda (x)
+                                                   (build-primcall 3 'vector-ref
+                                                     (list (build-ref x) (build-ref i))))
+                                              (cons v v*)) ...)
+                                         ,(make-seq 'value
+                                            `(call ,(app-preinfo ctxt) (ref #f ,p)
+                                               ,(map (lambda (x)
+                                                       (build-primcall 3 'vector-ref
+                                                         (list (build-ref x) (build-ref i))))
+                                                  (cons v v*)) ...)
+                                            `(call ,(make-preinfo) (ref #f ,do) (ref #f ,j))))))))))
                     ctxt empty-env sc wd name moi))])])
 
       (define-inline 3 string-for-each ; should combine with vector-for-each
@@ -3999,26 +4010,29 @@
                     (let ([p (cp0-make-temp #t)]
                           [n (cp0-make-temp #t)]
                           [i (cp0-make-temp #t)]
+                          [j (cp0-make-temp #t)]
                           [do (cp0-make-temp #t)]
                           [s (cp0-make-temp #t)]
                           [s* (map (lambda (x) (cp0-make-temp #f)) ?s*)])
                       (build-lambda (cons* p s s*)
-                        (build-let (list n)
-                          (list (build-primcall 3 'string-length
-                                  (list (build-ref s))))
-                          (build-named-let do (list i) (list `(quote 0))
-                            `(if ,(build-primcall 3 'fx=
-                                    (list (build-ref i) (build-ref n)))
-                                 ,void-rec
-                                 ,(make-seq 'value
-                                    `(call ,(app-preinfo ctxt) (ref #f ,p)
-                                       ,(map (lambda (x)
-                                               (build-primcall 3 'string-ref
-                                                 (list (build-ref x) (build-ref i))))
-                                          (cons s s*)) ...)
-                                    `(call ,(make-preinfo) (ref #f ,do)
-                                       ,(build-primcall 3 'fx1+
-                                          (list (build-ref i))))))))))
+                        (build-let (list n) (list (build-primcall 3 'string-length (list (build-ref s))))
+                          `(if ,(build-primcall 3 'fx= (list (build-ref n) `(quote 0)))
+                               ,void-rec
+                               ,(build-named-let do (list i) (list `(quote 0))
+                                  (build-let (list j) (list (build-primcall 3 'fx1+ (list (build-ref i))))
+                                    `(if ,(build-primcall 3 'fx= (list (build-ref j) (build-ref n)))
+                                         (call ,(app-preinfo ctxt) (ref #f ,p)
+                                           ,(map (lambda (x)
+                                                   (build-primcall 3 'string-ref
+                                                     (list (build-ref x) (build-ref i))))
+                                              (cons s s*)) ...)
+                                         ,(make-seq 'value
+                                            `(call ,(app-preinfo ctxt) (ref #f ,p)
+                                               ,(map (lambda (x)
+                                                       (build-primcall 3 'string-ref
+                                                         (list (build-ref x) (build-ref i))))
+                                                  (cons s s*)) ...)
+                                            `(call ,(make-preinfo) (ref #f ,do) (ref #f ,j))))))))))
                     ctxt empty-env sc wd name moi))])])
 
       (define-inline 3 fold-right
@@ -4374,18 +4388,20 @@
               [(?x) (mtp ctxt empty-env sc wd name moi #f 3)]
               [(?x ?p) (mtp ctxt empty-env sc wd name moi ?p 3)]))))
 
-      (define-inline 2 make-guardian
-        [() (and likely-to-be-compiled?
+      (let ()
+        (define inline-make-guardian
+          (lambda (ctxt empty-env sc wd name moi formal* make-setter-clauses)
+            (and likely-to-be-compiled?
                  (cp0
                    (let* ([tc (cp0-make-temp #t)] [ref-tc (build-ref tc)])
-                     (build-lambda '()
+                     (build-lambda formal*
                        (build-let (list tc)
                          (list (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
                                  (let ([zero `(quote 0)])
                                    (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
                                      (build-primcall 3 'cons (list ref-x ref-x))))))
                          (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
-                           (list
+                           (cons
                              (list '()
                                (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
                                  (let ([y (cp0-make-temp #f)])
@@ -4399,19 +4415,46 @@
                                                 (seq
                                                   (seq
                                                     ,(build-primcall 3 'set-car! (list ref-tc
-                                                                                       (build-primcall 3 'cdr (list ref-x))))
+                                                                                   (build-primcall 3 'cdr (list ref-x))))
                                                     ,(build-primcall 3 'set-car! (list ref-x false-rec)))
                                                   ,(build-primcall 3 'set-cdr! (list ref-x false-rec)))
                                                 (ref #f ,y))))))))
-                             (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
-                               (list (list obj)
-                                 (build-primcall 3 '$install-guardian
-                                   (list ref-obj ref-obj ref-tc))))
-                             (let ([obj (cp0-make-temp #f)] [rep (cp0-make-temp #f)])
-                               (list (list obj rep)
-                                 (build-primcall 3 '$install-guardian
-                                   (list (build-ref obj) (build-ref rep) ref-tc)))))))))
-                   ctxt empty-env sc wd name moi))]))
+                             (make-setter-clauses ref-tc))))))
+                   ctxt empty-env sc wd name moi))))
+
+        (define-inline 2 make-guardian
+          [() (inline-make-guardian ctxt empty-env sc wd name moi
+                '()
+                (lambda (ref-tc)
+                  (list 
+                    (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
+                      (list (list obj)
+                        (build-primcall 3 '$install-guardian
+                          (list ref-obj ref-obj ref-tc))))
+                    (let ([obj (cp0-make-temp #f)] [rep (cp0-make-temp #f)])
+                      (list (list obj rep)
+                        (build-primcall 3 '$install-guardian
+                          (list (build-ref obj) (build-ref rep) ref-tc)))))))])
+      
+        (define-inline 2 $make-ftype-guardian
+          [(?ftd)
+           (let ([ftd (cp0-make-temp #f)])
+             (inline-make-guardian ctxt empty-env sc wd name moi
+               (list ftd)
+               (lambda (ref-tc)
+                 (list
+                   (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
+                     (list (list obj)
+                       (let ([e (build-primcall 3 '$install-ftype-guardian
+                                  (list ref-obj ref-tc))])
+                         (if (fx= level 3)
+                             e
+                             (let ([ref-ftd (build-ref ftd)])
+                               `(seq
+                                  (if ,(build-primcall 3 'record? (list ref-obj ref-ftd))
+                                      ,void-rec
+                                      ,(build-primcall 3 '$ftype-guardian-oops (list ref-ftd ref-obj)))
+                                  ,e))))))))))])))
     ) ; with-output-language
 
   (define-pass cp0 : Lsrc (ir ctxt env sc wd name moi) -> Lsrc ()

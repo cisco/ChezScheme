@@ -28,7 +28,7 @@
     (vector ty vfasl)
     (fxvector ty viptr)
     (bytevector ty bv)
-    (record ty size nflds rtd pad-ty* fld*)
+    (record maybe-uid size nflds rtd pad-ty* fld*) ; maybe-uid => rtd
     (closure offset c)
     (flonum high low)
     (small-integer iptr)
@@ -172,6 +172,13 @@
             (vector-set! v i
               (let ([key (read-fasl p g)])
                 (cons key (read-fasl p g))))))))
+    (define (read-record p g maybe-uid)
+      (let* ([size (read-uptr p)] [nflds (read-uptr p)] [rtd (read-fasl p g)])
+        (let loop ([n nflds] [rpad-ty* '()] [rfld* '()])
+          (if (fx= n 0)
+              (fasl-record maybe-uid size nflds rtd (reverse rpad-ty*) (reverse rfld*))
+              (let* ([pad-ty (read-byte p)] [fld (read-fld p g (fxlogand pad-ty #x0f))])
+                (loop (fx- n 1) (cons pad-ty rpad-ty*) (cons fld rfld*)))))))
     (define (read-fasl p g)
       (let ([ty (read-byte p)])
         (fasl-type-case ty
@@ -202,13 +209,8 @@
                      ((fx= i n) bv)
                    (bytevector-u8-set! bv i (read-byte p))))))]
           [(fasl-type-base-rtd) (fasl-tuple ty '#())]
-          [(fasl-type-rtd fasl-type-record)
-           (let* ([size (read-uptr p)] [nflds (read-uptr p)] [rtd (read-fasl p g)])
-             (let loop ([n nflds] [rpad-ty* '()] [rfld* '()])
-               (if (fx= n 0)
-                   (fasl-record ty size nflds rtd (reverse rpad-ty*) (reverse rfld*))
-                   (let* ([pad-ty (read-byte p)] [fld (read-fld p g (fxlogand pad-ty #x0f))])
-                     (loop (fx- n 1) (cons pad-ty rpad-ty*) (cons fld rfld*))))))]
+          [(fasl-type-rtd) (read-record p g (read-fasl p g))]
+          [(fasl-type-record) (read-record p g #f)]
           [(fasl-type-closure)
            (let* ([offset (read-uptr p)]
                   [c (read-fasl p g)])
@@ -326,9 +328,9 @@
       (define fasl-record?
         (lambda (uname x)
           (fasl-case (follow-indirect x)
-            [record (ty size nflds rtd pad-ty* fld*)
+            [record (maybe-uid size nflds rtd pad-ty* fld*)
               (fasl-case (follow-indirect rtd)
-                [record (rtd-ty rtd-size rtd-nflds rtd-rtd rtd-pad-ty* rtd-fld*)
+                [record (rtd-uid rtd-size rtd-nflds rtd-rtd rtd-pad-ty* rtd-fld*)
                   (and (> (length rtd-fld*) uid-index)
                        (field-case (list-ref rtd-fld* uid-index)
                          [ptr (fasl)
@@ -351,7 +353,7 @@
               (unless (fasl-record? uname x)
                 (sorry! "unexpected type of object ~s" x))
               (fasl-case (follow-indirect x)
-                [record (ty size nflds rtd pad-ty* fld*)
+                [record (maybe-uid size nflds rtd pad-ty* fld*)
                   (unless (> (length fld*) index)
                     (sorry! "fewer fields than expected for ~s" x))
                   (let ([fld (list-ref fld* index)])
@@ -401,11 +403,12 @@
           [vector (ty vfasl) (build-graph! x t (build-vfasl! vfasl))]
           [fxvector (ty viptr) (build-graph! x t void)]
           [bytevector (ty viptr) (build-graph! x t void)]
-          [record (ty size nflds rtd pad-ty* fld*)
+          [record (maybe-uid size nflds rtd pad-ty* fld*)
            (if (and strip-source-annotations? (fasl-annotation? x))
                (build! (fasl-annotation-stripped x) t)
                (build-graph! x t
                  (lambda ()
+                   (when maybe-uid (build! maybe-uid t))
                    (build! rtd t)
                    (for-each (lambda (fld)
                                (field-case fld
@@ -538,12 +541,16 @@
                (write-byte p ty)
                (write-uptr p (bytevector-length bv))
                (put-bytevector p bv)))]
-          [record (ty size nflds rtd pad-ty* fld*)
+          [record (maybe-uid size nflds rtd pad-ty* fld*)
            (if (and strip-source-annotations? (fasl-annotation? x))
                (write-fasl p t (fasl-annotation-stripped x))
                (write-graph p t x
                  (lambda ()
-                   (write-byte p ty)
+                   (if maybe-uid
+                       (begin
+                         (write-byte p (constant fasl-type-rtd))
+                         (write-fasl p t maybe-uid))
+                       (write-byte p (constant fasl-type-record)))
                    (write-uptr p size)
                    (write-uptr p nflds)
                    (write-fasl p t rtd)
@@ -695,14 +702,14 @@
             (fasl-case x
               [closure (offset c) #t]
               [revisit (fasl) #t]
-              [record (ty size nflds rtd pad-ty* fld*) (revisit-record? x)]
+              [record (maybe-uid size nflds rtd pad-ty* fld*) (revisit-record? x)]
               [else #f])))
         (fasl-case x
           [entry (fasl)
             (fasl-case fasl
               [closure (offset c) x]
               [revisit (fasl) x]
-              [record (ty size nflds rtd pad-ty* fld*) (and (revisit-record? fasl) x)]
+              [record (maybe-uid size nflds rtd pad-ty* fld*) (and (revisit-record? fasl) x)]
               [group (vfasl)
                (let ([fasl* (filter revisit-stuff? (vector->list vfasl))])
                  (and (not (null? fasl*))
@@ -831,8 +838,10 @@
                        [vector (ty vfasl) (and (eqv? ty1 ty2) (vandmap fasl=? vfasl1 vfasl2))]
                        [fxvector (ty viptr) (and (eqv? ty1 ty2) (vandmap = viptr1 viptr2))]
                        [bytevector (ty bv) (and (eqv? ty1 ty2) (bytevector=? bv1 bv2))]
-                       [record (ty size nflds rtd pad-ty* fld*)
-                        (and (eqv? ty1 ty2)
+                       [record (maybe-uid size nflds rtd pad-ty* fld*)
+                        (and (if maybe-uid1
+                                 (and maybe-uid2 (fasl=? maybe-uid1 maybe-uid2))
+                                 (not maybe-uid2))
                              (eqv? size1 size2)
                              (eqv? nflds1 nflds2)
                              (fasl=? rtd1 rtd2)

@@ -257,7 +257,7 @@
 
       (define-pass cpcheck-prelex-flags : Lsrc (ir) -> Lsrc ()
         (definitions
-          (define sorry!
+          #;(define sorry!
             (lambda (who str . arg*)
               (apply fprintf (console-output-port) str arg*)
               (newline (console-output-port))))

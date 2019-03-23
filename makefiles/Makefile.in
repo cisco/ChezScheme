@@ -34,13 +34,22 @@ docs: build
 	(cd csug && $(MAKE) m=$(m))
 	(cd release_notes && $(MAKE) m=$(m))
 
+create-bintar:
+	(cd $(workarea) && $(MAKE) create-bintar)
+
+create-rpm:
+	(cd $(workarea) && $(MAKE) create-rpm)
+
+create-pkg:
+	(cd $(workarea) && $(MAKE) create-pkg)
+
 clean:
 	(cd $(workarea) && $(MAKE) clean)
 
 distclean:
-	(cd csug ; if [ -e Makefile ] ; then make reallyreallyclean ; fi)
+	(cd csug && if [ -e Makefile ] ; then make reallyreallyclean ; fi)
 	rm -f csug/Makefile
-	(cd release_notes ; if [ -e Makefile ] ; then make reallyreallyclean ; fi)
+	(cd release_notes && if [ -e Makefile ] ; then make reallyreallyclean ; fi)
 	rm -f release_notes/Makefile
 	rm -rf $(workarea)
 	rm -f Makefile

@@ -1409,10 +1409,21 @@
 
 (define-who $install-guardian
   (lambda (obj rep tconc)
-    (unless (and (pair? tconc) (pair? (car tconc)) (pair? (cdr tconc))) ($oops who "~s is not a tconc" tconc))
+    ; tconc is assumed to be valid at all call sites
     (#3%$install-guardian obj rep tconc)))
 
+(define-who $install-ftype-guardian
+  (lambda (obj tconc)
+    ; tconc is assumed to be valid at all call sites
+    (#3%$install-ftype-guardian obj tconc)))
+
+(define-who $ftype-guardian-oops
+  (lambda (ftd obj)
+    ($oops 'ftype-guardian "~s is not an ftype pointer of the expected type ~s" obj ftd)))
+
 (define make-guardian (lambda () (#2%make-guardian)))
+
+(define $make-ftype-guardian (lambda (ftd) (#2%$make-ftype-guardian ftd)))
 
 (define $address-in-heap?
   (foreign-procedure "(cs)s_addr_in_heap" (uptr) boolean))
