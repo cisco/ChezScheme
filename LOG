@@ -1048,3 +1048,6 @@
   printed, which is useful for debugging
     primdata.ss prims.ss print.ss
     thread.ms threads.stex
+- add procedures `$make-mutex` and `$make-condition`, which accept one
+  argument that is expected to be a symbol or #f, but that is not checked.
+    prims.ss
