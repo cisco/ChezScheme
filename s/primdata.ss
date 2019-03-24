@@ -1718,7 +1718,7 @@
   (with-output-to-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags])    ; has options argument
   (with-output-to-string [sig [(procedure) -> (string)]] [flags])
   (with-source-path [sig [(who pathname procedure) -> (ptr ...)]] [flags])
-  )
+)
 
 (define-symbol-flags* ([libraries] [flags system proc]) ; system procedures
   ($address-in-heap? [flags])
