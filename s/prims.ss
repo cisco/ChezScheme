@@ -1490,7 +1490,9 @@
   (lambda (ftd obj)
     ($oops 'ftype-guardian "~s is not an ftype pointer of the expected type ~s" obj ftd)))
 
-(define make-guardian (lambda () (#2%make-guardian)))
+(define make-guardian (case-lambda
+                        [() (#2%make-guardian)]
+                        [(o) (#2%make-guardian o)]))
 
 (define $make-ftype-guardian (lambda (ftd) (#2%$make-ftype-guardian ftd)))
 
