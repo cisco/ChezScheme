@@ -1243,3 +1243,5 @@
     bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
     wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
     wininstall/ti3nt.wxs
+- fixed welcome text and copyright year in macOS package
+    newrelease pkg/Makefile release_notes.stex
