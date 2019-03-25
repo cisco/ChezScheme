@@ -1663,6 +1663,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Welcome text in macOS package file (9.5.2)}
+
+The welcome text and copyright year in the macOS package file was
+corrected.
+
 \subsection{Fasl representation change for recursive ftypes (9.5.2)}
 
 A bug in the reading of mutually recursive ftype definitions from
