@@ -1245,3 +1245,5 @@
     wininstall/ti3nt.wxs
 - fixed welcome text and copyright year in macOS package
     newrelease pkg/Makefile release_notes.stex
+- update Windows spin-loop count for deleting files and directories
+    windows.c
