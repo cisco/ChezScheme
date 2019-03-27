@@ -8918,7 +8918,7 @@
            (#2%list
              #t
              #t
-             (#2%record-type-descriptor? rcd)
+             (#3%record? rcd #!base-rtd)
              (#2%record-constructor-descriptor? rtd)
              #t
              #t
