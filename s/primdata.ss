@@ -967,7 +967,6 @@
   (generate-interrupt-trap [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (generate-procedure-source-information [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (generate-profile-forms [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
-  (generate-vfasl [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (generate-wpo-files [sig [() -> (boolean)] [(ptr) -> (void)]] [flags])
   (gensym-count [sig [() -> (uint)] [(uint) -> (void)]] [flags])
   (gensym-prefix [sig [() -> (ptr)] [(ptr) -> (void)]] [flags unrestricted])
