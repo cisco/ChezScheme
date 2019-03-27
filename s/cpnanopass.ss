@@ -2827,32 +2827,6 @@
              ,[e*] ...)
            (guard (and (eq? (primref-name pr) '$top-level-value) (symbol? d)))
            `(call ,info0 ,mdcl0 ,(Symref d) ,e* ...)]
-          [(call ,info0 ,mdcl0
-             (call ,info1 ,mdcl1 ,pr
-               (call ,info2 ,mdcl2 ,pr2 (quote ,d)))
-             ,[e*] ...)
-           (guard (and (eq? (primref-name pr) '$make-shift-attachment)
-                       (eq? (primref-name pr2) '$top-level-value) (symbol? d)))
-           `(call ,info0 ,mdcl0 (call ,info1 ,mdcl1 ,(Symref (primref-name pr)) ,(Symref d)) ,e* ...)]
-          [(call ,info ,mdcl (call ,info2 ,mdcl2 ,pr0 ,pr) ,e* ...)
-           (guard (eq? (primref-name pr0) '$make-shift-attachment)
-                  ;; FIXME: need a less fragile way to avoid multiple results
-                  ;; Exclude inlined primitives that return more than one value:
-                  (not (memq (primref-name pr) '(values call/cc call-with-current-continuation call/1cc))))
-           (cond
-            [(handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*)
-             => (lambda (e)
-                  (let ([t (make-tmp 't)])
-                    `(let ([,t ,(Expr e)])
-                       (seq
-                        (attachment-set pop)
-                        ,t))))]
-            [else
-             (let ([e* (map Expr e*)])
-                (let ([info (if (any-set? (prim-mask abort-op) (primref-flags pr))
-                                (make-info-call (info-call-src info) (info-call-sexpr info) (info-call-check? info) #t #t)
-                                info)])
-                  `(call ,info ,mdcl (call ,info2 ,mdcl2 ,(Symref (primref-name pr0)) ,(Symref (primref-name pr))) ,e* ...)))])]
           [(call ,info ,mdcl ,pr ,e* ...)
            (cond
              [(and
@@ -5710,18 +5684,6 @@
             [(e-proc e-arity-mask e-data)
              (bind #f (e-proc e-arity-mask e-data)
                (make-wrapper-closure-alloc e-proc e-arity-mask e-data (lookup-libspec arity-wrapper-apply)))]))
-
-        (define-inline 3 $make-shift-attachment
-          [(e-proc)
-           (bind #f (e-proc)
-             (bind #t ([c (%constant-alloc type-closure (fx* 3 (constant ptr-bytes)))])
-               (%seq
-                 (set! ,(%mref ,c ,(constant closure-code-disp))
-                       (literal ,(make-info-literal #f 'library
-                                      (lookup-libspec $shift-attachment)
-                                      (constant code-data-disp))))
-                 (set! ,(%mref ,c ,(constant closure-data-disp)) ,e-proc)
-                 ,c)))])
 
         (define-inline 3 $install-guardian
           [(e-obj e-rep e-tconc ordered?)
