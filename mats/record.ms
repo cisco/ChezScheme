@@ -8586,8 +8586,9 @@
              (if b (frob-x x) 72)))))
     `(lambda (b)
        (if b
-          (#3%$record-oops 'frob-x 'x ',record-type-descriptor?)
-           72)))
+           (#3%$record-oops 'frob-x 'x ',record-type-descriptor?)
+           (#2%void))
+       72))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
