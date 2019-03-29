@@ -2873,7 +2873,7 @@
                (display "1")
                (list q n))))))
     '(lambda (v)
-       (let ([v2 (if (#2%vector? v) v (#2%error))])
+       (let ([v2 (begin (if (#2%vector? v) (#2%void) (#2%error)) v)])
          (let ([q (#2%vector-sort v2)] [n (#3%vector-length v)])
            (#2%display "1")
            (#2%list q n)))))
@@ -2886,7 +2886,7 @@
                (display "1")
                (list q n))))))
     '(lambda (v)
-       (let ([q (#2%vector-sort (if (#2%vector? v) v (#2%error)))]
+       (let ([q (#2%vector-sort (begin (if (#2%vector? v) (#2%void) (#2%error)) v))]
              [n (if v v 72)])
          (#2%display "1")
          (#2%list q n))))

@@ -688,10 +688,15 @@ Notes:
                         [(f-types3) (or f-types3 types3)])
             (let ([ir `(if ,e1 ,e2 ,e3)])
               (cond
-                [(predicate-implies? ret2 'bottom) ;check bottom first
+                [(and (predicate-implies? ret2 'bottom)  ;check bottom first
+                      (predicate-implies? ret3 'bottom)) ;check bottom first
                  (values ir ret3 types3 t-types3 f-types3)]
+                [(predicate-implies? ret2 'bottom) ;check bottom first
+                 (values (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3)
+                         ret3 types3 t-types3 f-types3)]
                 [(predicate-implies? ret3 'bottom) ;check bottom first
-                 (values ir ret2 types2 t-types2 f-types2)]
+                 (values (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2)
+                         ret2 types2 t-types2 f-types2)]
                 [else
                  (let ([new-types (pred-env-union/super-base types2 t-types1
                                                              types3 f-types1
