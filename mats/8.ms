@@ -10715,6 +10715,18 @@
          (remprop 'tlp-spam 'spam)
          (remprop 'tlp-spam 'tlp)
          #t))
+  ; make sure we ignore return value(s) of interleaved init expressions
+  (equal?
+   (with-output-to-string
+     (lambda ()
+       ; prevent cp0 from fixing the problem
+       (parameterize ([run-cp0 (lambda (f x) x)])
+         (eval '(top-level-program (import (scheme))
+                  (define (f) (printf "hello\n") (values 1 2 3))
+                  (f)
+                  (define x 'world)
+                  (pretty-print x))))))
+   "hello\nworld\n")
 )
 
 (mat library-meta

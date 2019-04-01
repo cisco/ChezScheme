@@ -63,6 +63,9 @@
         <Component Id="cmpA1A08D93E33D200E737ED7E9673100F8" Guid="*">
           <File Id="filF377753EF1FFEC581D561C6EB05D2FB0" KeyPath="yes" Source="..\i3nt\boot\i3nt\scheme.res" />
         </Component>
+        <Component Id="cmpFD106B9815864071BE791879BE1131D7" Guid="*">
+          <File Id="fil0461DC04F30E4D8CA37904E3EC271BCB" KeyPath="yes" Source="..\i3nt\boot\i3nt\revision" />
+        </Component>
       </Directory>
     </DirectoryRef>
     <ComponentGroup Id="i3nt">
@@ -82,6 +85,7 @@
       <ComponentRef Id="cmp155E5F6F7512A742AA9C3889EAB1E514" />
       <ComponentRef Id="cmpC59467C5684EC25FD89D53A93AECC3BB" />
       <ComponentRef Id="cmpA1A08D93E33D200E737ED7E9673100F8" />
+      <ComponentRef Id="cmpFD106B9815864071BE791879BE1131D7" />
     </ComponentGroup>
   </Fragment>
 </Wix>

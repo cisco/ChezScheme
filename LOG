@@ -1243,12 +1243,20 @@
     bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
     wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
     wininstall/ti3nt.wxs
+- fixed welcome text and copyright year in macOS package
+    newrelease pkg/Makefile release_notes.stex
+- update Windows spin-loop count for deleting files and directories
+    windows.c
+- install a file containing revision information alongside boot files;
+  embed git revision in exported source archives
+    bintar/Makefile Mf-install.in wininstall/*nt.wxs
+    s/Mf-base s/.gitattributes s/update-revision
+- ignore multiple-value return from interleaved init expressions in
+  top-level-program
+    syntax.ss, 8.ms
 - add name fields for mutexes and condition variables, now `make-mutex` and
   `make-condition` accept an optional argument `name`, which must be a
   symbol or #f.  The name, if not #f, is printed every time the object is
   printed, which is useful for debugging
     primdata.ss prims.ss print.ss
     thread.ms threads.stex
-- add procedures `$make-mutex` and `$make-condition`, which accept one
-  argument that is expected to be a symbol or #f, but that is not checked.
-    prims.ss

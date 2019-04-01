@@ -2830,7 +2830,8 @@
                   [interleaved-init (frob)
                    (process-bindings mb* r
                      (cons (build-lexical-var no-source 't) dv*)
-                     (cons frob de*))]
+                     (cons (make-frob #`(begin #,(frob-e frob) (void)) (frob-meta? frob))
+                      de*))]
                   [else (process-bindings mb* r dv* de*)]))))))))
 
 (define chi-top-module

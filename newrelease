@@ -156,7 +156,9 @@ sed -e "s/^version = .*/version = $R/" ../rpm/Makefile > rpm/Makefile
 set updatedfiles = ($updatedfiles rpm/Makefile)
 
 /bin/rm pkg/Makefile
-sed -e "s/^version = .*/version = $R/" ../pkg/Makefile > pkg/Makefile
+sed -e "s/^version = .*/version = $R/" \
+    -e "s/&copy; .* Cisco Systems/\&copy; `date +%Y` Cisco Systems/" \
+     ../pkg/Makefile > pkg/Makefile
 set updatedfiles = ($updatedfiles pkg/Makefile)
 
 mkdir wininstall

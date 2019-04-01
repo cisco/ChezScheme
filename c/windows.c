@@ -386,7 +386,7 @@ int S_windows_rmdir(const char *pathname) {
     if (!(rc = _wrmdir(wpathname))) {
       // Spin loop until Windows deletes the directory.
       int n;
-      for (n = 100; n > 0; n--) {
+      for (n = 1000; n > 0; n--) {
         if (_wrmdir(wpathname) && (errno == ENOENT)) break;
       }
       return 0;
@@ -420,7 +420,7 @@ int S_windows_unlink(const char *pathname) {
     if (!(rc = _wunlink(wpathname))) {
       // Spin loop until Windows deletes the file.
       int n;
-      for (n = 100; n > 0; n--) {
+      for (n = 1000; n > 0; n--) {
         if (_wunlink(wpathname) && (errno == ENOENT)) break;
       }
       return 0;
