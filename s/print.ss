@@ -667,7 +667,7 @@ floating point returns with (1 0 -1 ...).
            (cond
             (($mutex-name x) =>
              (lambda (name)
-               (display-string "#<mutex ")
+               (display-string "#<mutex " p)
                (wrsymbol (symbol->string name) p)
                (write-char #\> p)))
             (else (display-string "#<mutex>" p)))]
