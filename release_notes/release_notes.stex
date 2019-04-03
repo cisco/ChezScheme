@@ -58,6 +58,14 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Mutexes and condition variables can have names (9.5.3)}
+
+The procedures \scheme{make-mutex} and \scheme{make-condition} now
+accept an optional argument \scheme{name}, which must be a symbol
+that identifies the object or \scheme{f} for no name. The name is
+printed every time the mutex or condition object is printed, which
+is useful for debugging.
+
 \subsection{Improved packaging support (9.5.1)}
 
 The Chez Scheme \scheme{Makefile} has been enhanced with new targets for
