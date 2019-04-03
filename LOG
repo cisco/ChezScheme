@@ -1254,3 +1254,9 @@
 - ignore multiple-value return from interleaved init expressions in
   top-level-program
     syntax.ss, 8.ms
+- add name fields for mutexes and condition variables, now `make-mutex` and
+  `make-condition` accept an optional argument `name`, which must be a
+  symbol or #f.  The name, if not #f, is printed every time the object is
+  printed, which is useful for debugging
+    primdata.ss prims.ss print.ss
+    thread.ms threads.stex
