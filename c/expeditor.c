@@ -527,6 +527,7 @@ static void s_ee_write_char(wchar_t c) {
 }
 
 #else /* WIN32 */
+#include <limits.h>
 #ifdef SOLARIS
 #define NCURSES_CONST
 #define CHTYPE int
