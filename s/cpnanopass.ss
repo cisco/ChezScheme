@@ -5707,6 +5707,8 @@
                  (set! ,(%mref ,t ,(constant guardian-entry-rep-disp)) (immediate ,(constant ftype-guardian-rep)))
                  (set! ,(%mref ,t ,(constant guardian-entry-tconc-disp)) ,e-tconc)
                  (set! ,(%mref ,t ,(constant guardian-entry-next-disp)) ,(%tc-ref guardian-entries))
+                 (set! ,(%mref ,t ,(constant guardian-entry-ordered?-disp)) ,(%constant sfalse))
+                 (set! ,(%mref ,t ,(constant guardian-entry-pending-disp)) ,(%constant snil))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
 
         (define-inline 3 $make-phantom-bytevector
