@@ -42,6 +42,14 @@ disablex11=no
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
 : ${LDFLAGS:=""}
+zlibInc=-I../zlib
+LZ4Inc=-I../lz4/lib
+zlibDep=../zlib/libz.a
+LZ4Dep=../lz4/lib/liblz4.a
+zlibLib=../zlib/libz.a
+LZ4Lib=../lz4/lib/liblz4.a
+zlibHeaderDep="../zlib/zconf.h ../zlib/zlib.h"
+LZ4HeaderDep="../lz4/lib/lz4.h ../lz4/lib/lz4frame.h"
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -216,6 +224,18 @@ while [ $# != 0 ] ; do
     LDFLAGS=*)
       LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
       ;;
+    ZLIB=*)
+      zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
+      zlibInc=
+      zlibDep=
+      zlibHeaderDep=
+      ;;
+    LZ4=*)
+      LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
+      LZ4Inc=
+      LZ4Dep=
+      LZ4HeaderDep=
+      ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
       exit 1
@@ -294,6 +314,8 @@ if [ "$help" = "yes" ]; then
   echo "  CPPFLAGS=<C preprocessor flags>   additional C preprocessor flags ($CPPFLAGS)"
   echo "  CFLAGS=<C compiler flags>         additional C compiler flags ($CFLAGS)"
   echo "  LDFLAGS=<linker flags>            additional linker flags ($LDFLAGS)"
+  echo "  ZLIB=<lib>                        link to static <lib> instead of own zlib"
+  echo "  LZ4=<lib>                         link to static <lib> instead of own LZ4"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -331,9 +353,18 @@ else
     (curl  -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -zxf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
   fi
 
-  if [ ! -f 'zlib/configure' ] ; then
-    rmdir zlib > /dev/null 2>&1
-    (curl -L -o v1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz && tar -xzf v1.2.11.tar.gz && mv zlib-1.2.11 zlib && rm v1.2.11.tar.gz) || exit 1
+  if [ "${zlibDep}" != "" ] ; then
+    if [ ! -f 'zlib/configure' ] ; then
+      rmdir zlib > /dev/null 2>&1
+      (curl -L -o v1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz && tar -xzf v1.2.11.tar.gz && mv zlib-1.2.11 zlib && rm v1.2.11.tar.gz) || exit 1
+    fi
+  fi
+  
+  if [ "${LZ4Dep}" != "" ] ; then
+    if [ ! -f 'lz4/lib/Makefile' ] ; then
+      rmdir lz4 > /dev/null 2>&1
+      (curl -L -o v1.8.3.tar.gz https://github.com/lz4/lz4/archive/v1.8.3.tar.gz && tar -xzf v1.8.3.tar.gz && mv lz4-1.8.3 lz4 && rm v1.8.3.tar.gz) || exit 1
+    fi
   fi
 
   if [ ! -f 'stex/Mf-stex' ] ; then
@@ -389,4 +420,12 @@ CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
 LDFLAGS=$LDFLAGS
+zlibInc=$zlibInc
+LZ4Inc=$LZ4Inc
+zlibDep=$zlibDep
+LZ4Dep=$LZ4Dep
+zlibLib=$zlibLib
+LZ4Lib=$LZ4Lib
+zlibHeaderDep=$zlibHeaderDep
+LZ4HeaderDep=$LZ4HeaderDep
 END
