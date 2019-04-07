@@ -131,9 +131,15 @@ in all threads.
 %----------------------------------------------------------------------------
 \noskipentryheader
 \formdef{make-mutex}{\categoryprocedure}{(make-mutex)}
+\formdef{make-mutex}{\categoryprocedure}{(make-mutex \var{name})}
 \returns a new mutex object
 \listlibraries
 \endnoskipentryheader
+
+\noindent
+\var{name}, if supplied, must be a symbol which identifies the mutex, or
+\scheme{#f} for no name. The name is printed every time the mutex is
+printed, which is useful for debugging.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -215,9 +221,15 @@ Using \scheme{with-mutex} is generally more convenient and safer than using
 %----------------------------------------------------------------------------
 \noskipentryheader
 \formdef{make-condition}{\categoryprocedure}{(make-condition)}
+\formdef{make-condition}{\categoryprocedure}{(make-condition \var{name})}
 \returns a new condition object
 \listlibraries
 \endnoskipentryheader
+
+\noindent
+\var{name}, if supplied, must be a symbol which identifies the condition
+object, or \scheme{#f} for no name. The name is printed every time the
+condition is printed, which is useful for debugging.
 
 %----------------------------------------------------------------------------
 \entryheader

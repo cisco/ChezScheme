@@ -934,7 +934,8 @@ Documentation notes:
     (define (hcabs hc) (if (fx< hc 0) (fxnot hc) hc))
 
     (define (update hc k)
-      (fxlogxor (#3%fx+ (#3%fxsll hc 2) hc) k))
+      (let ([hc2 (#3%fx+ hc (#3%fxsll (#3%fx+ hc k) 10))])
+        (fxlogxor hc2 (fxsrl hc2 6))))
 
     (define bytevector-hash
       (lambda (bv)

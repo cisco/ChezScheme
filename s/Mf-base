@@ -97,6 +97,7 @@ PetiteBoot = ../boot/$m/petite.boot
 SchemeBoot = ../boot/$m/scheme.boot
 Cheader = ../boot/$m/scheme.h
 Cequates = ../boot/$m/equates.h
+Revision = ../boot/$m/revision
 
 # The following controls the patch files loaded before compiling, typically used only
 # to load a new compiler for cross compilation
@@ -152,11 +153,11 @@ allsrc =\
  np-languages.ss bitset.ss fxmap.ss
 
 # doit uses a different Scheme process to compile each target
-doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates}
+doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Revision}
 
 # all uses a single Scheme process to compile all targets.  this is typically
 # faster when most of the targets need to be recompiled.
-all: bootall ${Cheader} ${Cequates}
+all: bootall ${Cheader} ${Cequates} ${Revision}
 
 # allx runs all up to three times and checks to see if the new boot file is the
 # same as the last, i.e., the system is properly bootstrapped.
@@ -177,7 +178,7 @@ ifneq ($(OS),Windows_NT)
 endif
 
 # bootstrap runs allx if any sources have changed since the last bootstrap
-bootstrap: ${allsrc}
+bootstrap: ${allsrc} | ${Revision}
 	$(MAKE) allx
 	touch bootstrap
 
@@ -516,6 +517,10 @@ ${Cequates}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss pri
 	(if `cmp -s ${Cequates} ${Cequates}.bak`;\
           then mv -f ${Cequates}.bak ${Cequates};\
           else rm -f ${Cequates}.bak; fi)
+
+.PHONY: ${Revision}
+${Revision}: update-revision
+	@./update-revision > ${Revision}
 
 examples:
 	( cd ../examples && ${MAKE} all Scheme="${Scheme} ../s/${patchfile}" )

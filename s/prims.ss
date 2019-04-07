@@ -1555,10 +1555,12 @@
 (define fork-thread)
 (define make-mutex)
 (define mutex?)
+(define mutex-name)
 (define mutex-acquire)
 (define mutex-release)
 (define make-condition)
 (define thread-condition?)
+(define condition-name)
 (define condition-wait)
 (define condition-signal)
 (define condition-broadcast)
@@ -1585,14 +1587,28 @@
 (define ts (foreign-procedure "(cs)threads" () scheme-object))
 
 (define-record-type (condition $make-condition $condition?)
-  (fields (mutable addr $condition-addr $condition-addr-set!))
+  (fields (mutable addr $condition-addr $condition-addr-set!)
+          (immutable name $condition-name))
   (nongenerative)
   (sealed #t))
 
 (define-record-type (mutex $make-mutex $mutex?)
-  (fields (mutable addr $mutex-addr $mutex-addr-set!))
+  (fields (mutable addr $mutex-addr $mutex-addr-set!)
+          (immutable name $mutex-name))
   (nongenerative)
   (sealed #t))
+
+(define make-mutex-no-check
+  (lambda (name)
+    (let ([m ($make-mutex (mm) name)])
+      (mutex-guardian m)
+      m)))
+
+(define make-condition-no-check
+  (lambda (name)
+    (let ([c ($make-condition (mc) name)])
+      (condition-guardian c)
+      c)))
 
 (define mutex-guardian (make-guardian))
 (define condition-guardian (make-guardian))
@@ -1612,15 +1628,21 @@
                 (t)
                 (void))))))))
 
-(set! make-mutex
-  (lambda ()
-    (let ([m ($make-mutex (mm))])
-      (mutex-guardian m)
-      m)))
+(set-who! make-mutex
+  (case-lambda
+    [() (make-mutex-no-check #f)]
+    [(name)
+     (unless (or (not name) (symbol? name)) ($oops who "~s is not a symbol or #f" name))
+     (make-mutex-no-check name)]))
 
 (set! mutex?
   (lambda (x)
     ($mutex? x)))
+
+(set-who! mutex-name
+  (lambda (m)
+    (unless (mutex? m) ($oops who "~s is not a mutex" m))
+    ($mutex-name m)))
 
 (set! mutex-acquire
   (case-lambda
@@ -1644,15 +1666,21 @@
         ($oops 'mutex-release "mutex is defunct"))
       (mr addr))))
 
-(set! make-condition
-  (lambda ()
-    (let ([c ($make-condition (mc))])
-      (condition-guardian c)
-      c)))
+(set-who! make-condition
+  (case-lambda
+    [() (make-condition-no-check #f)]
+    [(name)
+     (unless (or (not name) (symbol? name)) ($oops who "~s is not a symbol or #f" name))
+     (make-condition-no-check name)]))
 
 (set! thread-condition?
   (lambda (x)
     ($condition? x)))
+
+(set-who! condition-name
+  (lambda (c)
+    (unless (thread-condition? c) ($oops who "~s is not a condition" c))
+    ($condition-name c)))
 
 (set! condition-wait
   (case-lambda
@@ -1713,8 +1741,8 @@
               ($condition-addr-set! c 0)))
           (f))))))
 
-(set! $tc-mutex ($make-mutex ($raw-tc-mutex)))
-(set! $collect-cond ($make-condition ($raw-collect-cond)))
+(set! $tc-mutex ($make-mutex ($raw-tc-mutex) '$tc-mutex))
+(set! $collect-cond ($make-condition ($raw-collect-cond) '$collect-cond))
 
 (set! get-initial-thread
   (let ([thread (car (ts))])

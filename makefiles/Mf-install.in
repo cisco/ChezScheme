@@ -55,10 +55,11 @@ InstallScriptName=scheme-script
 #                 no changes should be needed below this point                #
 ###############################################################################
 
-Version=csv9.5.1
+Version=csv9.5.3
 Include=boot/$m
 PetiteBoot=boot/$m/petite.boot
 SchemeBoot=boot/$m/scheme.boot
+Revision=boot/$m/revision
 Scheme=bin/$m/scheme
 Petite=bin/$m/petite
 InstallLibExamples=${InstallLib}/${Version}/examples
@@ -118,6 +119,7 @@ libbininstall: ${LibBin}
 	$I -m 444 ${Include}/kernel.o ${LibBin}
 	$I -m 444 ${Include}/main.o ${LibBin}
 	$I -m 444 ${Include}/scheme.h ${LibBin}
+	$I -m 444 ${Revision} ${LibBin}/revision
 
 maninstall: scheme.1 petite.1 ${Man}
 	$I -m 444 scheme.1 ${Man}/${InstallSchemeName}.1

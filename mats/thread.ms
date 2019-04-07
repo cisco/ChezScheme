@@ -82,11 +82,20 @@
 
 (when-threaded
 (mat thread
-  (let ([m (make-mutex)] [c (make-condition)])
+  (let ([m (make-mutex)] [c (make-condition)]
+        [m2 (make-mutex 'mname)] [c2 (make-condition 'cname)])
     (and (mutex? m)
          (thread-condition? c)
+         (mutex? m2)
+         (thread-condition? c2)
          (not (mutex? c))
          (not (thread-condition? m))
+         (not (mutex? c2))
+         (not (thread-condition? m2))
+         (not (mutex-name m))
+         (not (condition-name c))
+         (eq? 'mname (mutex-name m2))
+         (eq? 'cname (condition-name c2))
          (not (mutex? 'mutex))
          (not (thread-condition? 'condition))))
   (thread? (get-initial-thread))

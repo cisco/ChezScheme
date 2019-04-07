@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version = 9.5.1
+version = 9.5.3
 m := $(shell find ../bin/* -type d | xargs basename)
 
 R = csv$(version)
@@ -58,10 +58,10 @@ $(R)/examples: $(R)
 
 $(R)/boot: $(R)
 	mkdir -p $(R)/boot/$(m)
-	( cd $(R)/boot/$(m) ; ln -s ../../../../boot/$(m)/{scheme.h,petite.boot,scheme.boot} . )
+	( cd $(R)/boot/$(m) ; ln -s ../../../../boot/$(m)/{scheme.h,petite.boot,scheme.boot,revision} . )
 	case $(m) in \
           *nt) \
-            ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{csv951md.lib,csv951mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) \
+            ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{csv953md.lib,csv953mt.lib,mainmd.obj,mainmt.obj,scheme.res} . ) \
             ;; \
           *) \
             ( cd $R/boot/$(m) ; ln -s ../../../../boot/$(m)/{main.o,kernel.o} . ) \
@@ -72,7 +72,7 @@ $(R)/bin: $(R)
 	mkdir -p $(R)/bin/$(m)
 	case $(m) in \
           *nt) \
-            ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/{scheme.exe,csv951.dll,csv951.lib,vcruntime140.lib} . ) \
+            ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/{scheme.exe,csv953.dll,csv953.lib,vcruntime140.lib} . ) \
             ;; \
           *) \
             ( cd $R/bin/$(m) ; ln -s ../../../../bin/$(m)/scheme . ) \

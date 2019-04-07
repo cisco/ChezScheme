@@ -75,18 +75,6 @@ if ($status != 0) exit 1
 
 cd $W
 
-/bin/rm bintar/Makefile
-sed -e "s/^v = .*/v = $R/" ../bintar/Makefile > bintar/Makefile
-set updatedfiles = ($updatedfiles bintar/Makefile)
-
-/bin/rm rpm/Makefile
-sed -e "s/^v = .*/v = $R/" ../rpm/Makefile > rpm/Makefile
-set updatedfiles = ($updatedfiles rpm/Makefile)
-
-/bin/rm pkg/Makefile
-sed -e "s/^v = .*/v = $R/" ../pkg/Makefile > pkg/Makefile
-set updatedfiles = ($updatedfiles pkg/Makefile)
-
 /bin/rm -f BUILDING
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
@@ -105,7 +93,9 @@ sed -e "s/csug[0-9]\.[0-9]/csug$MR.$mR/" -e "s/csug[0-9]_[0-9]/csug$MR""_$mR/" .
 set updatedfiles = ($updatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
 
 /bin/rm scheme.1.in
-sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)*/Chez Scheme Version $R/" ../scheme.1.in > scheme.1.in
+sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)* .* [0-9][0-9]*/Chez Scheme Version $R `date +'%B %Y'`/" \
+    -e "s/Copyright .* Cisco Systems, Inc./Copyright `date +%Y` Cisco Systems, Inc./" \
+  ../scheme.1.in > scheme.1.in
 set updatedfiles = ($updatedfiles scheme.1.in)
 
 /bin/rm -f c/Makefile.{,t}{i3,a6}nt
@@ -147,16 +137,28 @@ sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" ../release_notes/
 set updatedfiles = ($updatedfiles release_notes/release_notes.stex)
 
 mkdir csug
-sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" ../csug/copyright.stex > csug/copyright.stex
-sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" ../csug/csug.stex > csug/csug.stex
+sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" \
+    -e "s/n\\copyright~ .* Cisco Systems, Inc./n\\copyright~`date +%Y` Cisco Systems, Inc./" \
+  ../csug/copyright.stex > csug/copyright.stex
+sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" \
+    -e "s/nCopyright &copy; .* Cisco Systems, Inc./nCopyright \&copy; `date +%Y` Cisco Systems, Inc./" \
+  ../csug/csug.stex > csug/csug.stex
 set updatedfiles = ($updatedfiles csug/copyright.stex csug/csug.stex)
 
-/bin/rm -f rpm/Makefile
-sed -e "s/^v = .*/v = $R/" ../rpm/Makefile > rpm/Makefile
+/bin/rm bintar/Makefile
+sed -e "s/^version = .*/version = $R/" \
+    -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" \
+  ../bintar/Makefile > bintar/Makefile
+set updatedfiles = ($updatedfiles bintar/Makefile)
+
+/bin/rm rpm/Makefile
+sed -e "s/^version = .*/version = $R/" ../rpm/Makefile > rpm/Makefile
 set updatedfiles = ($updatedfiles rpm/Makefile)
 
-/bin/rm -f pkg/Makefile
-sed -e "s/^v = .*/v = $R/" ../pkg/Makefile > pkg/Makefile
+/bin/rm pkg/Makefile
+sed -e "s/^version = .*/version = $R/" \
+    -e "s/&copy; .* Cisco Systems/\&copy; `date +%Y` Cisco Systems/" \
+     ../pkg/Makefile > pkg/Makefile
 set updatedfiles = ($updatedfiles pkg/Makefile)
 
 mkdir wininstall

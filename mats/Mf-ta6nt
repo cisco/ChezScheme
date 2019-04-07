@@ -22,7 +22,7 @@ mdclean = cat_flush.exe cat_flush.obj foreign1.exp foreign1.lib foreign1.obj for
 include Mf-base
 
 foreign1.so: $(fsrc)
-	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv951.lib $(fsrc)"
+	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv953.lib $(fsrc)"
 
 cat_flush: cat_flush.c
 	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /MD /nologo $<"

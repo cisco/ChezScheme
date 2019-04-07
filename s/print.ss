@@ -592,10 +592,14 @@ floating point returns with (1 0 -1 ...).
      (if-feature pthreads
        (begin
          (define $condition? thread-condition?)
-         (define $mutex? mutex?))
+         (define $condition-name condition-name)
+         (define $mutex? mutex?)
+         (define $mutex-name mutex-name))
        (begin
          (define $condition? (lambda (x) #f))
-         (define $mutex? (lambda (x) #f))))
+         (define $condition-name (lambda (x) #f))
+         (define $mutex? (lambda (x) #f))
+         (define $mutex-name (lambda (x) #f))))
      (cond
        [($immediate? x)
         (type-case x
@@ -651,8 +655,22 @@ floating point returns with (1 0 -1 ...).
           [(bytevector?) (wrvector bytevector-length bytevector-u8-ref "vu8" x r lev len d? env p)]
           [(flonum?) (wrflonum #f x r d? p)]
           ; catch before record? case
-          [($condition?) (display-string "#<condition>" p)]
-          [($mutex?) (display-string "#<mutex>" p)]
+          [($condition?)
+           (cond
+            (($condition-name x) =>
+             (lambda (name)
+               (display-string "#<condition " p)
+               (wrsymbol (symbol->string name) p)
+               (write-char #\> p)))
+            (else (display-string "#<condition>" p)))]
+          [($mutex?)
+           (cond
+            (($mutex-name x) =>
+             (lambda (name)
+               (display-string "#<mutex " p)
+               (wrsymbol (symbol->string name) p)
+               (write-char #\> p)))
+            (else (display-string "#<mutex>" p)))]
           [(base-rtd?) (display-string "#!base-rtd" p)]
           [($record?)
            (if (print-record)

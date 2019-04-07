@@ -1,4 +1,4 @@
-/* system.h
+/* compress-io.c
  * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #ifdef WIN32
+#include <io.h>
 # define WIN32_IZE(id) _ ## id
 # define GLZ_O_BINARY O_BINARY
 #else
@@ -269,7 +270,7 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
       if (in_avail > 0) {
         size_t amt, out_len = USE_LZ4_BUFFER_SIZE, in_len = in_avail;
 
-        /* For a larger enough result buffer, try to decompress directly
+        /* For a large enough result buffer, try to decompress directly
            to that buffer: */
         if (count >= (out_len >> 1)) {
           size_t direct_out_len = count;
@@ -284,15 +285,15 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
           lz4->frame_ended = (amt == 0);
         
           if (LZ4F_isError(amt)) {
-            lz4->err = amt;
+            lz4->err = (int)amt;
             return -1;
           }
 
-          lz4->in_pos += in_len;
+          lz4->in_pos += (int)in_len;
 
           if (direct_out_len) {
             lz4->stream_pos += direct_out_len;
-            return direct_out_len;
+            return (int)direct_out_len;
           }
 
           in_len = in_avail - in_len;
@@ -309,12 +310,12 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
           lz4->frame_ended = (amt == 0);
         
           if (LZ4F_isError(amt)) {
-            lz4->err = amt;
+            lz4->err = (int)amt;
             return -1;
           }
           
-          lz4->in_pos += in_len;
-          lz4->out_len = out_len;
+          lz4->in_pos += (int)in_len;
+          lz4->out_len = (int)out_len;
           lz4->out_pos = 0;
         }
       } else {
@@ -324,7 +325,7 @@ int glzread(glzFile file, void *buffer, unsigned int count) {
     }
 
     if (lz4->out_pos < lz4->out_len) {
-      unsigned amt = lz4->out_len - lz4->out_pos;
+      unsigned int amt = lz4->out_len - lz4->out_pos;
       if (amt > count) amt = count;
       memcpy(buffer, (char *)lz4->out_buffer + lz4->out_pos, amt);
       lz4->out_pos += amt;
@@ -350,12 +351,12 @@ int glzwrite(glzFile file, void *buffer, unsigned int count) {
                                    lz4->in_buffer, lz4->in_pos,
                                    NULL);
       if (LZ4F_isError(out_len)) {
-        lz4->err = out_len;
+        lz4->err = (int)out_len;
         return -1;
       }
 
       lz4->in_pos = 0;
-      lz4->out_len = out_len;
+      lz4->out_len = (int)out_len;
       lz4->out_pos = 0;
     }
 
@@ -394,20 +395,20 @@ long glzseek(glzFile file, long offset, int whence) {
   else if (file->mode == is_lz4_write) {
     lz4File_out *lz4 = (lz4File_out *)file->lz4;
     if (whence == SEEK_CUR)
-      offset += lz4->stream_pos;
+      offset += (long)lz4->stream_pos;
     if (offset >= 0) {
       while ((size_t)offset > lz4->stream_pos) {
         size_t amt = (size_t)offset - lz4->stream_pos;
         if (amt > 8) amt = 8;
-        if (glzwrite(file, "\0\0\0\0\0\0\0\0", amt) < 0)
+        if (glzwrite(file, "\0\0\0\0\0\0\0\0", (unsigned int)amt) < 0)
           return -1;
       }
     }
-    return lz4->stream_pos;
+    return (long)lz4->stream_pos;
   } else if (file->mode == is_lz4_read) {
     lz4File_in *lz4 = (lz4File_in *)file->lz4;
     if (whence == SEEK_CUR)
-      offset += lz4->stream_pos;
+      offset += (long)lz4->stream_pos;
     if (offset < 0)
       offset = 0;
     if ((size_t)offset < lz4->stream_pos) {
@@ -428,10 +429,10 @@ long glzseek(glzFile file, long offset, int whence) {
       char buffer[32];
       size_t amt = (size_t)offset - lz4->stream_pos;
       if (amt > sizeof(buffer)) amt = sizeof(buffer);
-      if (glzread(file, buffer, amt) < 0)
+      if (glzread(file, buffer, (unsigned int)amt) < 0)
         return -1;
     }
-    return lz4->stream_pos;
+    return (long)lz4->stream_pos;
   } else
     return 0;
 }

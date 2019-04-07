@@ -1,4 +1,4 @@
-VERSION := 9.5.1
+VERSION := 9.5.3
 WIXEXTENSIONS := -ext WixUIExtension -ext WixBalExtension
 
 ChezScheme.exe: x86/bundle.wixobj ChezScheme32.msi ChezScheme64.msi

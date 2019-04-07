@@ -4,16 +4,16 @@
     <DirectoryRef Id="D_bin">
       <Directory Id="D_bin_ta6nt" Name="ta6nt">
         <Component Id="cmpA67EF6318D00B4209BFCD0BFDCDF781C" Guid="*">
-          <File Id="fil6AE7892DB37FF6D2C21B5EC064C90DE5" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.dll" />
+          <File Id="fil6AE7892DB37FF6D2C21B5EC064C90DE5" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv953.dll" />
         </Component>
         <Component Id="cmpF41FF9DE554F79FB6FBD85E5B80A5221" Guid="*">
-          <File Id="fil9157F8FB18F1F75BE50A64A9C227BF61" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.exp" />
+          <File Id="fil9157F8FB18F1F75BE50A64A9C227BF61" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv953.exp" />
         </Component>
         <Component Id="cmp372F759C97C3C69E4C336B81D807E4F5" Guid="*">
-          <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.lib" />
+          <File Id="fil602A8BBB83416294672AA22507E6452A" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv953.lib" />
         </Component>
         <Component Id="cmp009F56824D2716FAAC978FE17A4D947D" Guid="*">
-          <File Id="filDD0E7D06D27FC4C00388CB48E4B2818C" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv951.pdb" />
+          <File Id="filDD0E7D06D27FC4C00388CB48E4B2818C" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\csv953.pdb" />
         </Component>
         <Component Id="cmp50972D99EC9DDA63E4BC6E29DAA592D0" Guid="*">
           <File Id="fil8A260A0B8935F8F9011AA2EDB9147BDE" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\petite.exe" />
@@ -40,10 +40,10 @@
     <DirectoryRef Id="D_boot">
       <Directory Id="D_boot_ta6nt" Name="ta6nt">
         <Component Id="cmpCBDB945622604667783C3C57A0427DF5" Guid="*">
-          <File Id="filD3E4E45F8404EE812C5DAFCBEB2502AA" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv951md.lib" />
+          <File Id="filD3E4E45F8404EE812C5DAFCBEB2502AA" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv953md.lib" />
         </Component>
         <Component Id="cmpD7880184C113065E511275EFD531D589" Guid="*">
-          <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv951mt.lib" />
+          <File Id="filDC2D7E1DB036BAE5B7FFA7FE14F3CD69" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\csv953mt.lib" />
         </Component>
         <Component Id="cmp5211817ED85951CDAF2FD5E2419BD211" Guid="*">
           <File Id="fil21839A8D4062A72DEAB3156D77EEE82A" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\mainmd.obj" />
@@ -62,6 +62,9 @@
         </Component>
         <Component Id="cmp9E232A9AA21470428B81018123E55809" Guid="*">
           <File Id="fil643F2D7723E96BCA16E8A65804C66B4F" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\scheme.res" />
+        </Component>
+        <Component Id="cmp5DCEF420C17742FE89FA4E1EDF6D52D0" Guid="*">
+          <File Id="filBE648AB0CC9C49A7BF6AB7F900EDAC2E" KeyPath="yes" Source="..\ta6nt\boot\ta6nt\revision" />
         </Component>
       </Directory>
     </DirectoryRef>
@@ -82,6 +85,7 @@
       <ComponentRef Id="cmpA90C68A50E044FA5FC0FB07B663F6C90" />
       <ComponentRef Id="cmp36B1E9BFDE0DFCA8D1E65BBDAD82CE06" />
       <ComponentRef Id="cmp9E232A9AA21470428B81018123E55809" />
+      <ComponentRef Id="cmp5DCEF420C17742FE89FA4E1EDF6D52D0" />
     </ComponentGroup>
   </Fragment>
 </Wix>

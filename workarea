@@ -206,8 +206,8 @@ case $M in
   *nt)
     (cd $W/boot/$M; workln ../../../boot/$M/mainmd.obj mainmd.obj)
     (cd $W/boot/$M; workln ../../../boot/$M/mainmt.obj mainmt.obj)
-    (cd $W/boot/$M; workln ../../../boot/$M/csv951md.lib csv951md.lib)
-    (cd $W/boot/$M; workln ../../../boot/$M/csv951mt.lib csv951mt.lib)
+    (cd $W/boot/$M; workln ../../../boot/$M/csv953md.lib csv953md.lib)
+    (cd $W/boot/$M; workln ../../../boot/$M/csv953mt.lib csv953mt.lib)
     (cd $W/boot/$M; workln ../../../boot/$M/scheme.res scheme.res)
     ;;
   *)
@@ -222,8 +222,8 @@ case $M in
   *nt)
     (cd $W/bin/$M; workln ../../../bin/$M/scheme.exe scheme.exe)
     (cd $W/bin/$M; forceworkln2 scheme.exe petite.exe)
-    (cd $W/bin/$M; workln ../../../bin/$M/csv951.dll csv951.dll)
-    (cd $W/bin/$M; workln ../../../bin/$M/csv951.lib csv951.lib)
+    (cd $W/bin/$M; workln ../../../bin/$M/csv953.dll csv953.dll)
+    (cd $W/bin/$M; workln ../../../bin/$M/csv953.lib csv953.lib)
     ;;
   *)
     (cd $W/bin/$M; workln ../../../bin/$M/scheme scheme)

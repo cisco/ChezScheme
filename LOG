@@ -1249,10 +1249,67 @@
     compile.ss
 - minor build and new-release updates
     checkin, newrelease, Makefile.in, Makefile-workarea.in
+- added library-search-handler, compile-whole-library, and improved
+  packaging to the release notes.
+    release_notes/release_notes.stex
+
+9.5.2 changes:
+- updated version to 9.5.2
+    bintar/Makefile rpm/Makefile pkg/Makefile BUILDING NOTICE
+    makefiles/Mf-install.in makefiles/Makefile-csug.in scheme.1.in
+    c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt
+    mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea
+    c/scheme.rc s/7.ss s/cmacros.ss release_notes/release_notes.stex
+    csug/copyright.stex csug/csug.stex rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fixed handling of bintar, rpm, pkg make files
+    newrelease
+- fixed a bug in the fasl representation and reading of mutually
+  recursive ftypes where one of the members of the cycle is the
+  parent of another, which manifested in the fasl reader raising
+  bogus "incompatible record type" exceptions.  (The bug could also
+  affect other record-type descriptors with cycles involving parent
+  rtds and "extra" fields.)  object files created before this fix
+  are incompatible with builds with this fix, and objects files
+  created after this fix are incompatible builds without this fix.
+    fasl.ss, strip.ss,
+    fasl.c,
+    ftype.ms,
+    release_notes.stex
+
+9.5.3 changes:
+- updated version to 9.5.3
+    BUILDING NOTICE makefiles/Mf-install.in makefiles/Makefile-csug.in
+    scheme.1.in c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt
+    c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt
+    mats/Mf-ti3nt workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/copyright.stex csug/csug.stex
+    bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs
+- fixed welcome text and copyright year in macOS package
+    newrelease pkg/Makefile release_notes.stex
+- update Windows spin-loop count for deleting files and directories
+    windows.c
+- install a file containing revision information alongside boot files;
+  embed git revision in exported source archives
+    bintar/Makefile Mf-install.in wininstall/*nt.wxs
+    s/Mf-base s/.gitattributes s/update-revision
+- ignore multiple-value return from interleaved init expressions in
+  top-level-program
+    syntax.ss, 8.ms
+- add name fields for mutexes and condition variables, now `make-mutex` and
+  `make-condition` accept an optional argument `name`, which must be a
+  symbol or #f.  The name, if not #f, is printed every time the object is
+  printed, which is useful for debugging
+    primdata.ss prims.ss print.ss
+    thread.ms threads.stex
 - change the default compression mode to LZ4 and add a compress-format 
   parameter to select a compression format for output; input infers the
   compression format
     io.ss, bytevector.ss, back.ss, primdata.ss,
     compress.c (new), new-io.c, fasl.c, scheme.c, compress.h (new),
     externs.h, system.h, expeditor.c, configure, Mf-*, Makefile.*nt,
-    workarea, mat.ss, io.ms, io.stex, objects.stex, release_notes.stex
+    workarea, mat.ss, io.ms, io.stex, objects.stex, release_notes.stex,
+    root-experr*, patch*

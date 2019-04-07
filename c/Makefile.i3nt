@@ -17,11 +17,11 @@ m = i3nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-KernelDll = ..\bin\$m\csv951.dll
-KernelLib = ..\bin\$m\csv951.lib
-MTKernelLib = ..\boot\$m\csv951mt.lib
-MDKernelLib = ..\boot\$m\csv951md.lib
-KernelExp = ..\bin\$m\csv951.exp
+KernelDll = ..\bin\$m\csv953.dll
+KernelLib = ..\bin\$m\csv953.lib
+MTKernelLib = ..\boot\$m\csv953mt.lib
+MDKernelLib = ..\boot\$m\csv953md.lib
+KernelExp = ..\bin\$m\csv953.exp
 Exec = ..\bin\$m\scheme.exe
 MTMain = ..\boot\$m\mainmt.obj
 MDMain = ..\boot\$m\mainmd.obj
@@ -72,12 +72,12 @@ $(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame
 $(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib)
 
 $(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib)
 
 # nmake builds Dll twice if we list it with $(KernelLib) below
 $(KernelDll): $(KernelLib)

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 m := $(shell find ../bin/* -type d | xargs basename)
-version = 9.5.1
+version = 9.5.3
 release = 1
 
 DOTUSER = $(shell ls -ld . | sed -e 's/[^ ]* *[^ ]* *\([^ ]*\).*/\1/')
@@ -75,10 +75,9 @@ $(BUILDROOT)/Distribution: $(BUILDROOT)
 	chmod 644 $(BUILDROOT)/Distribution
 
 $(BUILDROOT)/Resources/en.lproj/Welcome.html: $(BUILDROOT)/Resources/en.lproj
-	echo 'cat << EOF > $(RESOURCES)/en.lproj/Welcome.html' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
-	echo '<html>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
+	echo '<html>' > $(BUILDROOT)/Resources/en.lproj/Welcome.html
 	echo '<h3>Chez Scheme Version $(version)</h3>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
-	echo '<p>Copyright (c) 2017 Cisco Systems, Inc.</p>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
+	echo '<p>Copyright &copy; 2019 Cisco Systems, Inc.</p>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
 	echo '<p>Chez Scheme is a programming language and an implementation of that language, with supporting tools and documentation.</p>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
 	echo '</html>' >> $(BUILDROOT)/Resources/en.lproj/Welcome.html
 	chmod 644 $(BUILDROOT)/Resources/en.lproj/Welcome.html

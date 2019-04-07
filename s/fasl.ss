@@ -68,6 +68,9 @@
 (define bld-record
   (lambda (x t a? d)
     (unless (eq? x #!base-rtd)
+      (when (record-type-descriptor? x)
+        ; fasl representation for record-type-descriptor includes uid separately and as part of the record
+        (bld (record-type-uid x) t a? d))
       (really-bld-record x t a? d))))
 
 (define really-bld-record
@@ -431,6 +434,7 @@
       (cond
         [(record-type-descriptor? x)
          (put-u8 p (constant fasl-type-rtd))
+         (wrf (record-type-uid x) p t a?)
          (wrf-fields (maybe-remake-rtd x) p t a?)]
         [else
          (put-u8 p (constant fasl-type-record))
