@@ -2157,9 +2157,12 @@
   ($recompile-importer-path [flags])
   ($record [flags cp02 unrestricted alloc]) ; first arg should be an rtd, but we don't check
   ($record? [flags pure mifoldable discard])
+  ($record-cas! [sig [(record sub-index ptr ptr) -> (boolean)]] [flags])
   ($record-equal-procedure [flags discard])
   ($record-hash-procedure [flags discard])
   ($record-oops #;[sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
+  ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard])
+  ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true])
   ($record-type-descriptor [flags pure mifoldable discard true])
   ($record-type-field-offsets [flags pure mifoldable discard true])
   ($reloc [flags])
