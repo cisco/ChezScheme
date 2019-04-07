@@ -188,19 +188,18 @@ void S_resize_oblist(void) {
   S_G.oblist = new_oblist;
 }
 
-/* hash function: multiplier weights each character, h = n factors in the length */
-#define multiplier 3
+#define MIX_HASH(hc) (hc += (hc << 10), hc ^= (hc >> 6))
 
 static iptr hash(const unsigned char *s, iptr n) {
-  iptr h = n + 401887359;
-  while (n--) h = h * multiplier + *s++;
-  return h & most_positive_fixnum;
+  uptr h = (uptr)n + 401887359;
+  while (n--) { h += *s++; MIX_HASH(h); }
+  return (iptr)h & most_positive_fixnum;
 }
 
 static iptr hash_sc(const string_char *s, iptr n) {
-  iptr h = n + 401887359;
-  while (n--) h = h * multiplier + Schar_value(*s++);
-  return h & most_positive_fixnum;
+  uptr h = (uptr)n + 401887359;
+  while (n--) { h += Schar_value(*s++); MIX_HASH(h); }
+  return (iptr)h & most_positive_fixnum;
 }
 
 static iptr hash_uname(const string_char *s, iptr n) {
