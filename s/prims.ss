@@ -1177,6 +1177,21 @@
   (lambda (s)
     (#3%immutable-fxvector? s)))
 
+; not safe
+(define $record-ref
+   (lambda (v i)
+      (#3%$record-ref v i)))
+
+; not safe
+(define $record-set!
+   (lambda (v i x)
+      (#3%$record-set! v i x)))
+
+; not safe
+(define $record-cas!
+   (lambda (v i old-x new-x)
+      (#3%$record-cas! v i old-x new-x)))
+
 (define cons (lambda (x y) (cons x y)))
 
 (define car

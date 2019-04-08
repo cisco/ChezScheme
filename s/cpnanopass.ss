@@ -8328,6 +8328,33 @@
                       ,(go e-v e-i e-new)
                       ,(build-libcall #t src sexpr vector-set-fixnum! e-v e-i e-new)))])))
           (let ()
+            (define (go e-v e-i)
+              (nanopass-case (L7 Expr) e-i
+                [(quote ,d)
+                 (guard (target-fixnum? d))
+                 (%mref ,e-v ,(+ (fix d) (constant record-data-disp)))]
+                [else (%mref ,e-v ,e-i ,(constant record-data-disp))]))
+            (define-inline 3 $record-ref
+              [(e-v e-i) (go e-v e-i)]))
+          (let ()
+            (define (go e-v e-i e-new)
+              (nanopass-case (L7 Expr) e-i
+                [(quote ,d)
+                 (guard (target-fixnum? d))
+                 (build-dirty-store e-v (+ (fix d) (constant record-data-disp)) e-new)]
+                [else (build-dirty-store e-v e-i (constant record-data-disp) e-new)]))
+            (define-inline 3 $record-set!
+              [(e-v e-i e-new) (go e-v e-i e-new)]))
+          (let ()
+            (define (go e-v e-i e-old e-new)
+              (nanopass-case (L7 Expr) e-i
+                [(quote ,d)
+                 (guard (target-fixnum? d))
+                 (build-dirty-store e-v %zero (+ (fix d) (constant record-data-disp)) e-new (make-build-cas e-old) build-cas-seq)]
+                [else (build-dirty-store e-v e-i (constant record-data-disp) e-new (make-build-cas e-old) build-cas-seq)]))
+            (define-inline 3 $record-cas!
+              [(e-v e-i e-old e-new) (go e-v e-i e-old e-new)]))
+          (let ()
             (define build-bytevector-ref-check
               (lambda (e-bits e-bv e-i check-mutable?)
                 (nanopass-case (L7 Expr) e-bits
