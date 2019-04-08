@@ -20,12 +20,16 @@
   (define-syntax mat
     (lambda (x)
       (syntax-case x (parameters)
-        [(_ x (parameters [param val] ...) e ...)
-         #'(for-each (lambda (p v)
+        [(_ x (parameters [param val ...] ...) e ...)
+         #'(let f ([p* (list param ...)] [v** (list (list val ...) ...)])
+             (if (null? p*)
+                 (mat x e ...)
+                 (let ([p (car p*)])
+                   (for-each
+                     (lambda (v)
                        (parameterize ([p v])
-                         (mat x e ...)))
-                     (list param ...)
-                     (list val ...))]
+                         (f (cdr p*) (cdr v**))))
+                     (car v**)))))]
         [(_ x e ...)
          (with-syntax ([(source ...)
                         (map (lambda (clause)

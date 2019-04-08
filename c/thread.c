@@ -121,6 +121,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   GUARDIANENTRIES(tc) = Snil;
 
+  LZ4OUTBUFFER(tc) = NULL;
+
   tc_mutex_release()
 
   return thread;
@@ -224,7 +226,9 @@ static IBOOL destroy_thread(tc) ptr tc; {
         }
       }
 
-      free((void *)THREADTC(thread));
+      if (LZ4OUTBUFFER(tc) != NULL) free(LZ4OUTBUFFER(tc));
+
+      free((void *)tc);
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
       break;
