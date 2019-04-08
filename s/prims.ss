@@ -1880,7 +1880,11 @@
 
   (set-who! make-phantom-bytevector
     (lambda (n)
-      (unless (and ($integer-64? n) (>= n 0))
+      (define addr?
+        (constant-case ptr-bits
+          [(32) $integer-32?]
+          [(64) $integer-64?]))
+      (unless (and (addr? n) (>= n 0))
         ($oops who "~s is not a valid phantom bytevector length" n))
       (let ([ph ($make-phantom-bytevector)])
         ($phantom-bytevector-adjust! ph n)
@@ -1893,8 +1897,12 @@
   
   (set-who! set-phantom-bytevector-length!
     (lambda (ph n)
+      (define addr?
+        (constant-case ptr-bits
+          [(32) $integer-32?]
+          [(64) $integer-64?]))
       (unless (phantom-bytevector? ph) ($oops who "~s is not a phantom bytevector" ph))
-      (unless (and ($integer-64? n) (>= n 0))
+      (unless (and (addr? n) (>= n 0))
         ($oops who "~s is not a valid phantom bytevector length" n))
       ($phantom-bytevector-adjust! ph n))))
 
