@@ -264,7 +264,7 @@ implementation notes:
     (foreign-procedure "(cs)new_open_output_fd"
       (string int
        boolean boolean boolean
-       boolean boolean boolean boolean boolean)
+       boolean boolean boolean boolean)
       scheme-object))
   (define $open-input/output-fd
     (foreign-procedure "(cs)new_open_input_output_fd"
@@ -310,7 +310,7 @@ implementation notes:
   (define $compress-input-fd
     (foreign-procedure "(cs)compress_input_fd" (int integer-64) scheme-object))
   (define $compress-output-fd
-    (foreign-procedure "(cs)compress_output_fd" (int boolean) scheme-object))
+    (foreign-procedure "(cs)compress_output_fd" (int) scheme-object))
   (module (clear-open-files register-open-file registered-open-file? unregister-open-file)
     (define open-files #f)
     (define file-guardian)
@@ -645,14 +645,17 @@ implementation notes:
 
   (define binary-file-port-close-port
     (lambda (who p)
-      (unregister-open-file p)
-      (let ([msg ($close-fd ($port-info p) (port-gz-mode p))])
-        (unless (eq? #t msg) (port-oops who p msg)))
-      (mark-port-closed! p)
       (when (input-port? p)
         (set-port-eof! p #f)
         (set-binary-port-input-size! p 0))
-      (when (output-port? p) (set-binary-port-output-size! p 0))))
+      (when (output-port? p) (set-binary-port-output-size! p 0))
+      (unregister-open-file p)
+      ; mark port closed before closing fd.  if an interrupt occurs, we'd prefer
+      ; that the fd's resources never be freed than to have an open port floating
+      ; around with fd resources that have already been freed.
+      (mark-port-closed! p)
+      (let ([msg ($close-fd ($port-info p) (port-gz-mode p))])
+        (unless (eq? #t msg) (port-oops who p msg)))))
 
   (define-syntax binary-file-port-port-position
     (syntax-rules ()
@@ -3185,7 +3188,7 @@ implementation notes:
                                   ; reposition to 'unread' any compressed data in the input buffer
                                   (set-port-position! p fp)
                                   ($compress-input-fd fd fp))
-                                ($compress-output-fd fd (eq? (compress-format) 'gzip)))])
+                                ($compress-output-fd fd))])
                   (when (string? gzfd) ($oops who "failed for ~s: ~(~a~)" p gzfd))
                   (unless (eqv? gzfd fd) ; uncompressed input port
                     (assert (box? gzfd))
@@ -4091,8 +4094,7 @@ implementation notes:
           (let ([fd (critical-section
                       ($open-output-fd filename perms
                         no-create no-fail no-truncate
-                        append lock replace compressed
-                        (and compressed (eq? (compress-format) 'gzip))))])
+                        append lock replace compressed))])
             (when (pair? fd) (open-oops who filename options fd))
             (open-binary-fd-output-port who filename fd #t b-mode lock compressed)))))
 

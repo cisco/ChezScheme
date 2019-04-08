@@ -208,8 +208,10 @@ Section~\ref{TSPL:SECTOPENINGFILES} of {\TSPLFOUR}.
 \item[\var{compressed}:]
 An output file should be compressed when written; and a compressed input
 file should be decompressed when read. The compression format for output
-is determined by the \scheme{compress-format} parameter, while the compression
-format on input is inferred.
+is determined by the \index{\scheme{compress-format}}\scheme{compress-format}
+parameter, while the compression format on input is inferred.
+The compression level, which is relevant only for output, is determined
+by the \index{\scheme{compress-level}}\scheme{compress-level} parameter.
 
 \item[\var{replace}:]
 For output files only, replace (remove and recreate) the existing file if
@@ -975,8 +977,10 @@ will be compressed.
 If the port is an input port, subsequent input will be decompressed
 if and only if the port is currently pointing at compressed data.
 The compression format for output
-is determined by the \scheme{compress-format} parameter, while the compression
-format on input is inferred.
+is determined by the \index{\scheme{compress-format}}\scheme{compress-format}
+parameter, while the compression format on input is inferred.
+The compression level, which is relevant only for output, is determined
+by the \index{\scheme{compress-level}}\scheme{compress-level} parameter.
 This procedure has no effect if the port is already set for compression.
 
 %----------------------------------------------------------------------------
@@ -986,23 +990,41 @@ This procedure has no effect if the port is already set for compression.
 \endnoskipentryheader
 
 \noindent
-\scheme{compress-format} is a parameter that determines the
-compression algorithm and format that is used for output. Currently,
-the possible values of the parameter are \scheme{'lz4} (the default)
-and \scheme{'gzip}.
+\scheme{compress-format} determines the
+compression algorithm and format used for output. Currently,
+the possible values of the parameter are the symbols \scheme{lz4} (the default)
+and \scheme{gzip}.
 
-The \scheme{'lz4} format uses the LZ4 compression library developed by
+The \scheme{lz4} format uses the LZ4 compression library developed by
 Yann Collet.
 It is therefore compatible with the \scheme{lz4} program, which
 means that \scheme{lz4} may be used to uncompress files produced
 by {\ChezScheme} and visa versa.
 
-The \scheme{'gzip} format uses the zlib compression library developed by
+The \scheme{gzip} format uses the zlib compression library developed by
 Jean-loup Gailly and Mark Adler.
 It is therefore compatible with the \scheme{gzip} program, which
 means that \scheme{gzip} may be used to uncompress files produced
 by {\ChezScheme} and visa versa.
 
+Reading \scheme{lz4}-compressed data tends to be much faster than reading
+\scheme{gzip}-compressed data, while \scheme{gzip}-compressed data tends to 
+be significantly smaller.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compress-level}{\categorythreadparameter}{compress-level}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{compress-level} determines the amount of effort spent on
+compression and is thus relevant only for output.
+It can be set to one of the symbols \scheme{low},
+\scheme{medium}, \scheme{high}, or \scheme{maximum}, which are
+listed in order from shortest to longest expected compression time
+and least to greatest expected effectiveness.
+Its default value is \scheme{medium}.
 
 \section{String Ports\label{SECTIOSTRINGPORTS}}
 
@@ -1858,7 +1880,11 @@ The default behavior is to raise an exception.
 The mutually exclusive \scheme{compressed} and
 \scheme{uncompressed} options determine whether the output file is to
 be compressed.
-The compression format is determined by the \scheme{compress-format} parameter.
+The compression format and level are determined by the
+\index{\scheme{compress-format}}\scheme{compress-format}
+and
+\index{\scheme{compress-level}}\scheme{compress-level}
+parameters.
 Files are uncompressed by default, so the \scheme{uncompressed}
 option is useful only as documentation.
 

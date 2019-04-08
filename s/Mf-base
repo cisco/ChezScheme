@@ -24,15 +24,23 @@ o = 3
 # d is the debug level at which the system should be built
 d = 0
 
-# cl (xcl) determines the commonization level
+# cl determines the commonization level
 cl = (commonization-level)
 
 # i determines whether inspector-information is generated: f for false, t for true
 i = f
 
-# cp0 (xcp0) determines the number of cp0 (source optimizer) iterations run
+# cp0 determines the number of cp0 (source optimizer) iterations run
 cp0 = 2
-xcp0 = 2
+
+# cc determines whether compiled files are compressed
+cc = t
+
+# xf determines the compression foramt
+xf = (compress-format)
+
+# xl determine the compression level
+xl = (compress-level)
 
 # p (xp) determines whether source profiling is enabled: f for false, t for true.
 p = f
@@ -214,6 +222,9 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
              '(when #$(bp) (compile-profile (quote block)))'\
              '(when #$(loadspd) (profile-load-data "${ProfileDumpSource}"))'\
@@ -238,6 +249,9 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
              '(when #$(bp) (compile-profile (quote block)))'\
              '(when #$(loadspd) (profile-load-data "${ProfileDumpSource}"))'\
@@ -265,6 +279,9 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
              '(subset-mode (quote system))'\
              '(compile-file "$*.ss" "$*.so")'\
@@ -275,6 +292,9 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$(xp) (compile-profile (quote source)))'\
              '(when #$(xbp) (compile-profile (quote block)))'\
              '(generate-inspector-information #$i)'\
@@ -344,6 +364,9 @@ cmacros.so: cmacros.ss machine.def layout.ss
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
              '(subset-mode (quote system))'\
              '(compile-file "$*.ss" "$*.so")'\
@@ -356,6 +379,9 @@ priminfo.so: priminfo.ss primdata.ss cmacros.so
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
              '(subset-mode (quote system))'\
              '(compile-file "$*.ss" "$*.so")'\
@@ -369,6 +395,9 @@ mkheader.so: mkheader.ss cmacros.so primvars.so env.so
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
              '(subset-mode (quote system))'\
              '(compile-file "$*.ss" "$*.so")'\
@@ -381,6 +410,9 @@ nanopass.so: $(shell echo ../nanopass/nanopass/*) ../nanopass/nanopass.ss
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
              '(collect-trip-bytes (expt 2 24))'\
              '(collect-request-handler (lambda () (collect 0 1)))'\
@@ -404,6 +436,9 @@ script.all makescript:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
              '(when #$(bp) (compile-profile (quote block)))'\
              '(when #$(loadspd) (profile-load-data "${ProfileDumpSource}"))'\
@@ -440,6 +475,9 @@ script-static.all:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
              '(when #$(bp) (compile-profile (quote block)))'\
              '(generate-inspector-information #$i)'\
@@ -462,6 +500,9 @@ script-dynamic.all:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
              '(when #$(bp) (compile-profile (quote block)))'\
              '(generate-inspector-information #$i)'\

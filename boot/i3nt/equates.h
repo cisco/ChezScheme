@@ -22,6 +22,13 @@ typedef unsigned __int64 U64;
 #define $c_func_closure_record_index 0x3
 #define $c_func_code_object_index 0x2
 #define $c_func_code_record_index 0x1
+#define COMPRESS_FORMAT_BITS 0x3
+#define COMPRESS_GZIP 0x0
+#define COMPRESS_HIGH 0x2
+#define COMPRESS_LOW 0x0
+#define COMPRESS_LZ4 0x1
+#define COMPRESS_MAX 0x3
+#define COMPRESS_MEDIUM 0x1
 #define ERROR_CALL_ARGUMENT_COUNT 0x4
 #define ERROR_CALL_NONPROCEDURE 0x3
 #define ERROR_CALL_NONPROCEDURE_SYMBOL 0x2
@@ -498,7 +505,7 @@ typedef unsigned __int64 U64;
 #define size_rp_header 0x10
 #define size_rtd_counts 0x410
 #define size_symbol 0x18
-#define size_tc 0x148
+#define size_tc 0x150
 #define size_thread 0x8
 #define size_tlc 0x10
 #define size_typed_object 0x8
@@ -549,13 +556,15 @@ typedef unsigned __int64 U64;
 #define tc_ac0_disp 0x4
 #define tc_ac1_disp 0x8
 #define tc_active_disp 0x8C
-#define tc_alloc_counter_disp 0x138
+#define tc_alloc_counter_disp 0x140
 #define tc_ap_disp 0x18
 #define tc_arg_regs_disp 0x0
 #define tc_block_counter_disp 0xDC
 #define tc_cchain_disp 0x80
 #define tc_code_ranges_to_flush_disp 0x84
 #define tc_compile_profile_disp 0x108
+#define tc_compress_format_disp 0x12C
+#define tc_compress_level_disp 0x130
 #define tc_cp_disp 0x10
 #define tc_current_error_disp 0xD8
 #define tc_current_input_disp 0xD0
@@ -572,15 +581,16 @@ typedef unsigned __int64 U64;
 #define tc_generate_procedure_source_information_disp 0x110
 #define tc_generate_profile_forms_disp 0x114
 #define tc_guardian_entries_disp 0x7C
-#define tc_instr_counter_disp 0x130
+#define tc_instr_counter_disp 0x138
 #define tc_keyboard_interrupt_pending_disp 0xC8
+#define tc_lz4_out_buffer_disp 0x134
 #define tc_meta_level_disp 0x104
 #define tc_null_immutable_bytevector_disp 0xFC
 #define tc_null_immutable_fxvector_disp 0xF8
 #define tc_null_immutable_string_disp 0x100
 #define tc_null_immutable_vector_disp 0xF4
 #define tc_optimize_level_disp 0x118
-#define tc_parameters_disp 0x140
+#define tc_parameters_disp 0x148
 #define tc_random_seed_disp 0x88
 #define tc_real_eap_disp 0x38
 #define tc_ret_disp 0x20
@@ -905,13 +915,15 @@ typedef unsigned __int64 U64;
 #define AC0(x) (*((void* *)((uptr)(x)+4)))
 #define AC1(x) (*((void* *)((uptr)(x)+8)))
 #define ACTIVE(x) (*((I32 *)((uptr)(x)+140)))
-#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+312)))
+#define ALLOCCOUNTER(x) (*((U64 *)((uptr)(x)+320)))
 #define AP(x) (*((void* *)((uptr)(x)+24)))
 #define ARGREGS(x,i) (((void* *)((uptr)(x)+0))[i])
 #define BLOCKCOUNTER(x) (*((ptr *)((uptr)(x)+220)))
 #define CCHAIN(x) (*((ptr *)((uptr)(x)+128)))
 #define CODERANGESTOFLUSH(x) (*((ptr *)((uptr)(x)+132)))
 #define COMPILEPROFILE(x) (*((ptr *)((uptr)(x)+264)))
+#define COMPRESSFORMAT(x) (*((ptr *)((uptr)(x)+300)))
+#define COMPRESSLEVEL(x) (*((ptr *)((uptr)(x)+304)))
 #define CP(x) (*((void* *)((uptr)(x)+16)))
 #define CURRENTERROR(x) (*((ptr *)((uptr)(x)+216)))
 #define CURRENTINPUT(x) (*((ptr *)((uptr)(x)+208)))
@@ -928,15 +940,16 @@ typedef unsigned __int64 U64;
 #define GENERATEPROCEDURESOURCEINFORMATION(x) (*((ptr *)((uptr)(x)+272)))
 #define GENERATEPROFILEFORMS(x) (*((ptr *)((uptr)(x)+276)))
 #define GUARDIANENTRIES(x) (*((ptr *)((uptr)(x)+124)))
-#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+304)))
+#define INSTRCOUNTER(x) (*((U64 *)((uptr)(x)+312)))
 #define KEYBOARDINTERRUPTPENDING(x) (*((ptr *)((uptr)(x)+200)))
+#define LZ4OUTBUFFER(x) (*((void* *)((uptr)(x)+308)))
 #define METALEVEL(x) (*((ptr *)((uptr)(x)+260)))
 #define NULLIMMUTABLEBYTEVECTOR(x) (*((ptr *)((uptr)(x)+252)))
 #define NULLIMMUTABLEFXVECTOR(x) (*((ptr *)((uptr)(x)+248)))
 #define NULLIMMUTABLESTRING(x) (*((ptr *)((uptr)(x)+256)))
 #define NULLIMMUTABLEVECTOR(x) (*((ptr *)((uptr)(x)+244)))
 #define OPTIMIZELEVEL(x) (*((ptr *)((uptr)(x)+280)))
-#define PARAMETERS(x) (*((ptr *)((uptr)(x)+320)))
+#define PARAMETERS(x) (*((ptr *)((uptr)(x)+328)))
 #define RANDOMSEED(x) (*((U32 *)((uptr)(x)+136)))
 #define REAL_EAP(x) (*((void* *)((uptr)(x)+56)))
 #define RET(x) (*((void* *)((uptr)(x)+32)))
