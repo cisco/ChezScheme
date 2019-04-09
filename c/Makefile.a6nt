@@ -96,12 +96,12 @@ $(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib)
 	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
 	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
 
-$(MTMain): main.c
+$(MTMain): main.c $(SchemeInclude)/scheme.h
 	-del /f $(MTMain)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) main.c
 	copy main.obj $(MTMain)
 
-$(MDMain): main.c
+$(MDMain): main.c $(SchemeInclude)/scheme.h
 	-del /f $(MDMain)
 	cl /c $(MDCFLAGS) main.c
 	copy main.obj $(MDMain)
