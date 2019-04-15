@@ -2197,7 +2197,7 @@
   ($record-equal-procedure [flags discard])
   ($record-hash-procedure [flags discard])
   ($record-oops #;[sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
-  ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard])
+  ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags mifoldable discard cp03])
   ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true])
   ($record-type-descriptor [flags pure mifoldable discard true])
   ($record-type-field-offsets [flags pure mifoldable discard true])

@@ -9044,3 +9044,114 @@
            (#2%list #t #t)
            (#2%list #f (#2%record-type-sealed? rtd))))))
  )
+
+(mat cp0-kar-kons-$record-ref-optimizations
+  (eq? (let ()
+         (define-record kons (kar kdr))
+         (#3%$record-ref (make-kons 'a 'b) 0))
+       'a)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record kons (kar kdr))
+           (#3%$record-ref (make-kons 'a 'b) 0))))
+    ''a)
+  (eq? (let ()
+         (define-record kons (kar kdr))
+         (#3%$record-ref (make-kons 'a 'b) 1))
+       'b)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record kons (kar kdr))
+           (#3%$record-ref (make-kons 'a 'b) 1))))
+    ''b)
+
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-record kons (kar kdr))
+        (display (#3%$record-ref (make-kons (begin (display 1) (display 2) 3)
+                                            (begin (display 4) (display 5) 6))
+                                 0))))
+    "45123") ;"12453" is also correct
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+          (define-record kons (kar kdr))
+          (display (#3%$record-ref (make-kons (begin (display 1) (display 2) 3)
+                                              (begin (display 4) (display 5) 6))
+                                   0)))))
+    '(#2%display 
+      (begin
+        (#2%display 4)
+        (#2%display 5)
+        (#2%display 1)
+        (#2%display 2)
+        3)))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-record kons (kar kdr))
+        (display (#3%$record-ref (make-kons (begin (display 1) (display 2) 3)
+                                            (begin (display 4) (display 5) 6))
+                                 1))))
+    "45126") ;"12456" is also correct
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+          (define-record kons (kar kdr))
+          (display (#3%$record-ref (make-kons (begin (display 1) (display 2) 3)
+                                              (begin (display 4) (display 5) 6))
+                                   1)))))
+    '(#2%display
+      (begin
+        (#2%display 4)
+        (#2%display 5)
+        (#2%display 1)
+        (#2%display 2)
+        6)))
+
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-record kons (kar kdr))
+        (display (#3%$record-ref (begin (display 1) (make-kons 2 3))
+                                 (begin (display 4) 0)))))
+    "412") ;"142" is also correct
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+          (define-record kons (kar kdr))
+          (display (#3%$record-ref (begin (display 1) (make-kons 2 3))
+                                   (begin (display 4) 0))))))
+    '(#2%display
+      (begin
+        (#2%display 4)
+        (#2%display 1)
+        2)))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-record kons (kar kdr))
+        (display (#3%$record-ref (begin (display 1) (make-kons 2 3))
+                                 (begin (display 4) 1)))))
+    "413") ;"143" is also correct
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+          (define-record kons (kar kdr))
+          (display (#3%$record-ref (begin (display 1) (make-kons 2 3))
+                                   (begin (display 4) 1))))))
+    '(#2%display
+      (begin
+        (#2%display 4)
+        (#2%display 1)
+        3)))
+)

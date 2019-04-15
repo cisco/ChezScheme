@@ -3828,6 +3828,32 @@
                 `(record ,rtd ,rtd-expr ,(map value-visit-operand! ?e*) ...))]
              [else #f]))])
 
+      (define-inline 3 $record-ref
+        [(?r ?i)
+         (let ([i-expr (value-visit-operand! ?i)])
+           (nanopass-case (Lsrc Expr) (result-exp i-expr)
+             [(quote ,d)
+              (guard (and (fixnum? d) (fx>= d 0)))
+              (let ([r-expr (value-visit-operand! ?r)])
+                (nanopass-case (Lsrc Expr) (result-exp r-expr)
+                  [(record ,rtd1 ,rtd-expr1 ,e* ...)
+                   (let loop ([e* e*] [re* '()] [index d])
+                     (and (not (null? e*))
+                          (if (fx= index 0)
+                              (let ([e (car e*)] [e* (rappend re* (cdr e*))])
+                                (define main (if (null? e*)
+                                                 (make-nontail ctxt e)
+                                                 (make-1seq ctxt
+                                                   (make-seq* 'ignored e*)
+                                                   (make-nontail ctxt e))))
+                                (residualize-seq (list ?r ?i) '() ctxt)
+                                (non-result-exp i-expr
+                                  (non-result-exp r-expr
+                                    main)))
+                              (loop (cdr e*) (cons (car e*) re*) (fx- index 1)))))]
+                  [else #f]))]
+              [else #f]))])
+
       (let ()
         (define null-rec?
           (lambda (?ls)
