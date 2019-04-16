@@ -4694,26 +4694,27 @@
                 (cp0 rtd-expr 'effect env sc wd #f moi)
                 (map (lambda (e) (cp0 e 'effect env sc wd #f moi)) e*)))
             true-rec)])]
-      [(record-ref ,rtd ,type ,index ,e)
+      [(record-ref ,rtd ,type ,index ,e0)
        (context-case ctxt
-         [(effect) (cp0 e 'effect env sc wd name moi)]
+         [(effect) (cp0 e0 'effect env sc wd name moi)]
          [else
-          (let ([e (cp0 e 'value env sc wd name moi)])
-            (or (nanopass-case (Lsrc Expr) (result-exp e)
+          (let ([e0 (cp0 e0 'value env sc wd name moi)])
+            (or (nanopass-case (Lsrc Expr) (result-exp e0)
                   [(quote ,d)
                    (and (record? d rtd)
-                        (make-seq ctxt e `(quote ,((csv7:record-field-accessor rtd index) d))))]
+                        (make-seq ctxt e0 `(quote ,((csv7:record-field-accessor rtd index) d))))]
                   [(record ,rtd1 ,rtd-expr ,e* ...)
                    (let loop ([e* e*] [re* '()] [index index])
                      (and (not (null? e*))
-                          (if (= index 0)
+                          (if (fx= index 0)
                               (let ([e (car e*)] [e* (rappend re* (cdr e*))])
-                                (if (null? e*)
-                                    e
-                                    (make-seq ctxt (make-seq* 'effect e*) e)))
+                                (non-result-exp e0
+                                  (if (null? e*)
+                                      e
+                                      (make-seq ctxt (make-seq* 'effect e*) e))))
                               (loop (cdr e*) (cons (car e*) re*) (fx- index 1)))))]
                   [else #f])
-                (nanopass-case (Lsrc Expr) (result-exp/indirect-ref e)
+                (nanopass-case (Lsrc Expr) (result-exp/indirect-ref e0)
                   [(record ,rtd1 ,rtd-expr ,e* ...)
                    (and (> (length e*) index)
                         (not (fld-mutable? (list-ref (rtd-flds rtd) index)))
@@ -4724,9 +4725,9 @@
                                  [,pr (all-set? (prim-mask proc) (primref-flags pr))]
                                  [else #f])
                                ; recur to cp0 to get inlining, folding, etc.
-                               (cp0 e ctxt env sc wd name moi))))]
+                               (non-result-exp e0 (cp0 e ctxt env sc wd name moi)))))]
                   [else #f])
-                (begin (bump sc 1) `(record-ref ,rtd ,type ,index ,e))))])]
+                (begin (bump sc 1) `(record-ref ,rtd ,type ,index ,e0))))])]
       [(record-set! ,rtd ,type ,index ,[cp0 : e1 'value env sc wd #f moi -> e1] ,[cp0 : e2 'value env sc wd #f moi -> e2])
        `(record-set! ,rtd ,type ,index ,e1 ,e2)]
       [(record-type ,rtd ,e) (cp0 e ctxt env sc wd name moi)]
