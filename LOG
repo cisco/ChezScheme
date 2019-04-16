@@ -1337,3 +1337,9 @@
     externs.h, compress-io.c, new-io.c, scheme.c, fasl.c
 - added entries for mutex-name and mutex-thread
     threads.stex
+- fix record-ref reduction in cp0
+  in expressions like
+    (record-ref ... (begin (newline) (record ...)))
+  the reduction was dropping the possible side effect expressions
+  in this case the (newline).
+    cp0.ss
