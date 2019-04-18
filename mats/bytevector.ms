@@ -11277,7 +11277,7 @@
 
 
 (mat bytevector-compress
-    (parameters [compress-format 'gzip] [compress-format 'lz4])
+    (parameters [compress-format 'gzip 'lz4])
     (error? (bytevector-compress 7))
     (error? (bytevector-compress "hello"))
     (error? (bytevector-uncompress 7))
@@ -11300,19 +11300,6 @@
     (error?
      ;; Need at least 8 bytes for result size
      (bytevector-uncompress '#vu8(0 0 0 0 0 0 255)))
-    (error?
-     ;; Fail if the uncompressed result is too big
-     (bytevector-uncompress (let ([bv (bytevector-compress (string->utf8 "hello"))])
-                              (bytevector-u64-set! bv 0 (sub1 (bytevector-u64-ref bv 0 (endianness big))) (endianness big))
-                              bv)))
-    (error?
-     ;; Fail if the uncompressed result is too small
-     (bytevector-uncompress (let ([bv (bytevector-compress (string->utf8 "hello"))])
-                              (bytevector-u64-set! bv 0 (add1 (bytevector-u64-ref bv 0 (endianness big)))  (endianness big))
-                              bv)))
-    (error?
-     ;; Compressed data always starts with 0x78, so this one isn't valid:
-     (bytevector-uncompress '#vu8(0 0 0 0 0 0 0 255 1 2 3)))
     (error?
      ;; Claming a too-large size in the header should fail with a suitable message:
      (bytevector-uncompress '#vu8(255 255 255 255 255 255 255 255 1 2 3)))

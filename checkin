@@ -294,7 +294,7 @@ endif
 
 delete:
 
-set tmpfiles = `(cd $W; find . -name zlib -prune -o -type f -print)`
+set tmpfiles = `(cd $W; find . -name zlib -prune -o -name lz4 -prune -o -type f -print)`
 set files = ()
 foreach x ($tmpfiles)
     set files = ($x $files)

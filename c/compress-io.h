@@ -1,5 +1,5 @@
 /* compress-io.h
- * Copyright 1984-2017 Cisco Systems, Inc.
+ * Copyright 1984-2019 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,13 @@
  * limitations under the License.
  */
 
-#include "zlib.h"
-
-struct lz4File;
-
 typedef struct glzFile_r {
-  int mode;
+  INT fd;
+  IBOOL inputp;
+  INT format;
   union {
-    gzFile gz;
-    struct lz4File *lz4;
+    struct gzFile_s *gz;
+    struct lz4File_in_r *lz4_in;
+    struct lz4File_out_r *lz4_out;
   };
 } *glzFile;
-
-glzFile glzdopen_gz(int fd, const char *mode);
-glzFile glzdopen_lz4(int fd, const char *mode);
-glzFile glzdopen(int fd, const char *mode);
-glzFile glzopen(const char *path, const char *mode);
-#ifdef WIN32
-glzFile glzopen_w(wchar_t *path, const char *mode);
-#endif
-int glzdirect(glzFile file);
-int glzclose(glzFile file);
-
-int glzread(glzFile file, void *buffer, unsigned int count);
-int glzwrite(glzFile file, void *buffer, unsigned int count);
-long glzseek(glzFile file, long offset, int whence);
-int glzgetc(glzFile file);
-int glzungetc(int c, glzFile file);
-int glzrewind(glzFile file);
-
-void glzerror(glzFile file, int *errnum);
-void glzclearerr(glzFile fdfile);
