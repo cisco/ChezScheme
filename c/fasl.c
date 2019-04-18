@@ -177,6 +177,7 @@
  */
 
 #include "system.h"
+#include "zlib.h"
 
 #ifdef WIN32
 #include <io.h>
@@ -346,14 +347,14 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
 
     switch (uf->type) {
       case UFFO_TYPE_GZ:
-        k = glzread(uf->file, s, (GZ_IO_SIZE_T)nx);
+        k = S_glzread(uf->file, s, (GZ_IO_SIZE_T)nx);
         if (k > 0)
           n -= k;
         else if (k == 0)
           return -1;
         else {
-          glzerror(uf->file, &errnum);
-          glzclearerr(uf->file);
+          S_glzerror(uf->file, &errnum);
+          S_glzclearerr(uf->file);
           if (errnum != Z_ERRNO || errno != EINTR)
             S_error1("", "error reading from ~a", uf->path);
         }
