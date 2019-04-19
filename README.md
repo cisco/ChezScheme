@@ -1,4 +1,9 @@
-[![Build Status](https://travis-ci.org/cisco/ChezScheme.svg?branch=master)](https://travis-ci.org/cisco/ChezScheme)
+This variant of Chez Scheme is patched for Racket. It doesn't include
+boot files; instead, Racket can generate initial boot files from Chez
+Scheme's source. For more information, see "racket/src/cs/README.txt"
+in Racket sources.
+
+----------------------------------------
 
 Chez Scheme is both a programming language and an implementation
 of that language, with supporting tools and documentation.
