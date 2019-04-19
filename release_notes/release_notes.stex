@@ -1695,6 +1695,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Compiler dropping affects from record-accessor calls (9.5.3)}
+
+A bug that could cause the source optimizer to drop effects within
+the argument of a record-accessor call has been fixed.
+
 \subsection{Welcome text in macOS package file (9.5.2)}
 
 The welcome text and copyright year in the macOS package file was
