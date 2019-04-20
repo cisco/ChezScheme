@@ -1555,13 +1555,13 @@
       (record-case dest-ea
         [(index) (size index-reg base-reg)
          (cond
-           [(and (fxzero? size) (not (eq? base-reg %ebp))) #f]
+           [(and (eqv? size 0) (not (eq? base-reg %ebp))) #f]
            [(ax-byte-size? size) (build byte size)]
            [else (build long size)])]
         [(literal@) stuff (cons 'abs stuff)]
         [(disp) (size reg)
          (cond
-           [(and (fxzero? size) (not (eq? reg %ebp))) #f] ; indirect
+           [(and (eqv? size 0) (not (eq? reg %ebp))) #f] ; indirect
            [(ax-byte-size? size) (build byte size)]
            [else (build long size)])]
         [(reg) r #f]
@@ -1611,13 +1611,13 @@
           (record-case dest-ea
             [(index) (size index-reg base-reg)
              (cond
-               [(and (fxzero? size) (not (eq? base-reg %ebp))) #b00]
+               [(and (eqv? size 0) (not (eq? base-reg %ebp))) #b00]
                [(ax-byte-size? size) #b01]
                [else #b10])]
             [(literal@) stuff #b00]   
             [(disp) (size reg)
              (cond
-               [(and (fxzero? size) (not (eq? reg %ebp))) #b00] ; indirect
+               [(and (eqv? size 0) (not (eq? reg %ebp))) #b00] ; indirect
                [(ax-byte-size? size) #b01]
                [else #b10])]
             [(reg) r #b11]
