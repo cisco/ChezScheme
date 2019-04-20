@@ -608,9 +608,9 @@ TODO:
 
   (define (error-help warning? who whoarg message irritants basecond)
     (unless (or (eq? whoarg #f) (string? whoarg) (symbol? whoarg))
-      ($oops who "invalid who argument ~s" whoarg))
+      ($oops who "invalid who argument ~s (message = ~s, irritants = ~s)" whoarg message irritants))
     (unless (string? message)
-      ($oops who "invalid message argument ~s" message))
+      ($oops who "invalid message argument ~s (who = ~s, irritants = ~s)" message whoarg irritants))
     (let ([c (if whoarg
                  (if irritants
                      (condition basecond
@@ -640,7 +640,9 @@ TODO:
     (lambda (whoarg message . irritants)
       (error-help #f who whoarg message irritants favcond)))
 
-  (set! $oops assertion-violationf)
+  (set-who! $oops
+    (lambda (whoarg message . irritants)
+      (error-help #f who whoarg message irritants favcond)))
 
   (set-who! $oops/c
     (lambda (whoarg basecond message . irritants)

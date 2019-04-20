@@ -1343,3 +1343,13 @@
   the reduction was dropping the possible side effect expressions
   in this case the (newline).
     cp0.ss
+- zero?, fxzero?, positive?, fxpositive?, etc., now go through
+  (a suitably modified) relop-length so that, for example,
+  (zero? (length x)) results in the same code as (null? x).  added
+  correctness tests for these and all of the other predicates that
+  go through relop-length.
+    cpnanopass.ss, 5_2.ms
+- assertion-violationf and friends now show the who, message, and
+  irritants in the original call when who or message is found not to
+  be of the right type.
+    exceptions.ss
