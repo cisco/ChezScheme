@@ -1353,3 +1353,6 @@
   irritants in the original call when who or message is found not to
   be of the right type.
     exceptions.ss
+- fix incorrect uses of fxzero? x86.ss backend, since a 32-bit
+  immediate is not necessarily a fixnum
+    x86.ss
