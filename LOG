@@ -1356,3 +1356,6 @@
 - fix incorrect uses of fxzero? x86.ss backend, since a 32-bit
   immediate is not necessarily a fixnum
     x86.ss
+- added MinGW/MSYS build support for Windows and configuration for
+  Travis-CI testing of all Windows builds
+    BUILDING, .travis*, wininstall/Makefile
