@@ -196,19 +196,20 @@ The make file supports several targets:
 
 WINDOWS
 
-Building Chez Scheme under 64-bit Windows with Cygwin or Bash/WSL
-follows the instructions above, except that 'make install' and 'make
-uninstall' are not supported. On Bash/WSL, the build directory must be
-in a location with a Windows path such as /mnt/c, and the 'OS'
-environment variable must be set to 'Windows_NT' to indicate a build
-for Windows, as opposed to a build for Linux on Windows:
+Building Chez Scheme under 64-bit Windows with Bash/WSL, MinGW/MSYS,
+or Cygwin follows the instructions above, except that 'make install'
+and 'make uninstall' are not supported. On Bash/WSL, the build
+directory must be in a location with a Windows path such as /mnt/c,
+and the 'OS' environment variable must be set to 'Windows_NT' to
+indicate a build for Windows, as opposed to a build for Linux on
+Windows:
 
 env OS=Windows_NT ./configure
 env OS=Windows_NT make
 
 Prerequisites:
 
-* Cygwin or Bash/WSL with bash, git, grep, make, sed, etc.
+* Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed, etc.
 * Microsoft Visual Studio 2017 or 2015
 * WiX Toolset (for making an install)
 
@@ -251,7 +252,7 @@ http://gnuwin32.sourceforge.net/packages/libiconv.htm
 
 An alternative that uses the Windows API can be found at:
 
-https://github.com/win-iconv/win-iconv
+https://github.com/burgerrg/win-iconv/releases
 
 If the DLL is not present, the iconv tests will fail.  No other tests
 should be affected.
