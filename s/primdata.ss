@@ -893,7 +893,7 @@
 
 (define-symbol-flags* ([libraries] [flags primitive proc]) ; constant parameters
   (directory-separator [sig [() -> (char)]] [flags pure unrestricted true cp02])
-  (get-initial-thread [sig [() -> (boolean)]] [flags pure unrestricted true])
+  (get-initial-thread [feature pthreads] [sig [() -> (thread)]] [flags pure unrestricted true])
   (get-process-id [sig [() -> (uint)]] [flags pure unrestricted])
   (get-thread-id [sig [() -> (uint)]] [flags discard unrestricted])
   (machine-type [sig [() -> (symbol)]] [flags pure unrestricted true cp02])
