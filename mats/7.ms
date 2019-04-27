@@ -4787,9 +4787,11 @@ evaluating module init
     #t)
   (check-references (list (gensym)
                           (vector (gensym) (box (cons (gensym) (gensym))) (gensym))
-                          (let ([v (gensym)])
-                            (lambda ()
-                              v))
+                          (if (eq? (current-eval) interpret)
+                              'skip ; closures in interpreter don't capture only free variables
+                              (let ([v (gensym)])
+                                (lambda ()
+                                  v)))
                           ;; make sure `weak-cons` doesn't retain
                           (weak-cons (gensym) #f)
                           (let ([v (gensym)])
