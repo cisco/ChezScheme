@@ -1147,8 +1147,9 @@
             (compute-size-increments (list th))
             ;; Main result: detected size of `bstr` in the thread
             ;; while it was part of the continuation
-            (and (> (car pre-sizes) N)
-                 (< (car post-sizes) N))))))
+            (or (eq? (current-eval) interpret) ; interpreter continuaton is not precise enough
+                (and (> (car pre-sizes) N)
+                     (< (car post-sizes) N)))))))
 )
 
 (mat compute-composition
