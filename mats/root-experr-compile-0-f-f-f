@@ -1,7 +1,7 @@
 primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
 primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
-primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
-primvars.mo:Expected error in mat parameterize: "incorrect number of arguments to #<procedure x>".
+primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments 1 to #<procedure>".
+primvars.mo:Expected error in mat parameterize: "incorrect number of arguments 0 to #<procedure x>".
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
@@ -28,71 +28,71 @@ primvars.mo:Expected error in mat print-radix: "print-radix: 37 is not between 2
 primvars.mo:Expected error in mat print-radix: "print-radix: 1 is not between 2 and 36".
 primvars.mo:Expected error in mat timer-interrupt-handler: "timer-interrupt-handler: midnight is not a procedure".
 primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input port string> is not a textual output port".
-3.mo:Expected error in mat matrest1: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
+3.mo:Expected error in mat matrest1: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest2: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest2: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest3: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest3: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest3: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest4: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest4: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest4: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest4: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest5: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest5: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest5: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest5: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest5: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 5 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest6: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 6 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 5 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest7: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 7 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 6 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 5 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest8: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 8 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 7 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 6 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 5 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest9: "incorrect number of arguments 0 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 9 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 8 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 7 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 6 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 5 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 4 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 3 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 2 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 1 to #<procedure matrestf>".
+3.mo:Expected error in mat matrest10: "incorrect number of arguments 0 to #<procedure matrestf>".
 3.mo:Expected error in mat application: "attempt to apply non-procedure ((a b c))".
 3.mo:Expected error in mat case-lambda: "incorrect argument count in call ((case-lambda))".
 3.mo:Expected error in mat case-lambda: "incorrect argument count in call (f 3 4 5)".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 1 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 4 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 1 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 4 to #<procedure foo>".
+3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
 3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) (eq? x (...))))".
 3.mo:Expected error in mat letrec: "variable f is not bound".
 3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
@@ -527,6 +527,25 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat dynamic-wind: "variable gook is not bound".
 4.mo:Expected error in mat call/1cc: "attempt to invoke shot one-shot continuation".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (current-continuation-attachments (quote ()))".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any))".
+4.mo:Expected error in mat continuation-attachments: "call-setting-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any) void (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments 0 to #<procedure>".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none))".
+4.mo:Expected error in mat continuation-attachments: "call-with-current-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments 1 to #<procedure void>".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments)".
+4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: 10 is not a continuation".
+4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: #<procedure> is not a continuation".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments (call/cc (lambda (...) x)) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat refcount-guardians: "unrecognized ftype name NO!".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
@@ -1038,6 +1057,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat /: "/: a is not a number".
 5_3.mo:Expected error in mat /: "/: a is not a number".
 5_3.mo:Expected error in mat /: "/: a is not a number".
+5_3.mo:Expected error in mat /: "/: undefined for 0".
+5_3.mo:Expected error in mat /: "/: undefined for 0".
+5_3.mo:Expected error in mat /: "/: undefined for 0".
 5_3.mo:Expected error in mat nan?: "nan?: a is not a real number".
 5_3.mo:Expected error in mat nan?: "nan?: 3+4i is not a real number".
 5_3.mo:Expected error in mat nan?: "nan?: 3.0-0.0i is not a real number".
@@ -1252,6 +1274,14 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat expt: "expt: a is not a number".
 5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -1".
 5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and 0+1i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -1".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -1.0".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -2.0+3.0i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and 0.0+3.0i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -0.0+3.0i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and +nan.0+3.0i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and 0+3i".
+5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -1/2".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod)".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod 5)".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod 4 5)".
@@ -1466,9 +1496,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat bitwise-first-bit-set: "incorrect argument count in call (bitwise-first-bit-set 75 32)".
 5_3.mo:Expected error in mat bitwise-first-bit-set: "bitwise-first-bit-set: 3.0 is not an exact integer".
 5_3.mo:Expected error in mat bitwise-first-bit-set: "bitwise-first-bit-set: a is not an exact integer".
-5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments to #<procedure $quotient-remainder>".
-5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments to #<procedure $quotient-remainder>".
-5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments to #<procedure $quotient-remainder>".
+5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments 0 to #<procedure $quotient-remainder>".
+5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments 1 to #<procedure $quotient-remainder>".
+5_3.mo:Expected error in mat $quotient-remainder: "incorrect number of arguments 3 to #<procedure $quotient-remainder>".
 5_3.mo:Expected error in mat $quotient-remainder: "$quotient-remainder: undefined for 0".
 5_3.mo:Expected error in mat lognot: "lognot: #<void> is not an exact integer".
 5_3.mo:Expected error in mat lognot: "lognot: "hello" is not an exact integer".
@@ -3661,19 +3691,24 @@ misc.mo:Expected error in mat argcnt-check: "incorrect argument count in call (f
 misc.mo:Expected error in mat argcnt-check: "incorrect argument count in call (f)".
 misc.mo:Expected error in mat argcnt-check: "incorrect argument count in call (f #t)".
 misc.mo:Expected error in mat argcnt-check: "attempt to apply non-procedure 3".
-misc.mo:Expected error in mat inspect: "incorrect number of arguments to #<procedure ref>".
+misc.mo:Expected error in mat inspect: "incorrect number of arguments 0 to #<procedure ref>".
 misc.mo:Expected error in mat inspect: "inspector-object: invalid message creep to object type pair".
-misc.mo:Expected error in mat inspect: "incorrect number of arguments to #<procedure size>".
+misc.mo:Expected error in mat inspect: "incorrect number of arguments 0 to #<procedure size>".
 misc.mo:Expected error in mat inspect: "inspector-object: invalid generation oops".
 misc.mo:Expected error in mat compute-size: "compute-size: invalid generation -1".
 misc.mo:Expected error in mat compute-size: "compute-size: invalid generation dynamic".
+misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: not-a-list is not a list".
+misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: 0 is not a list".
+misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation -1".
+misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation "static"".
+misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation ()".
 misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".
 misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation "static"".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: 17 is not a procedure".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation 5".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation oldgen".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation -1".
-misc.mo:Expected error in mat make-object-finder: "incorrect number of arguments to #<procedure find-next>".
+misc.mo:Expected error in mat make-object-finder: "incorrect number of arguments 1 to #<procedure find-next>".
 misc.mo:Expected error in mat subset: "subset-mode: ieee is not valid subset mode".
 misc.mo:Expected error in mat subset: "subset-mode: r4rs is not valid subset mode".
 misc.mo:Expected error in mat subset: "subset-mode: r5rs is not valid subset mode".
@@ -3836,6 +3871,38 @@ misc.mo:Expected error in mat virtual-registers: "set-virtual-register!: invalid
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah)".
 misc.mo:Expected error in mat pariah: "invalid syntax (pariah . 17)".
 misc.mo:Expected error in mat procedure-arity-mask: "procedure-arity-mask: 17 is not a procedure".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-wrapper-procedure)".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-wrapper-procedure (lambda args args))".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-wrapper-procedure (lambda args args) 1)".
+misc.mo:Expected error in mat wrapper-procedure: "make-wrapper-procedure: 1 is not a procedure".
+misc.mo:Expected error in mat wrapper-procedure: "make-wrapper-procedure: not-a-procedure is not a procedure".
+misc.mo:Expected error in mat wrapper-procedure: "make-wrapper-procedure: not-an-exact-integer is not an arity mask".
+misc.mo:Expected error in mat wrapper-procedure: "make-wrapper-procedure: 1.0 is not an arity mask".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure)".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args))".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (make-arity-wrapper-procedure (lambda args args) 1)".
+misc.mo:Expected error in mat wrapper-procedure: "make-arity-wrapper-procedure: 1 is not a procedure".
+misc.mo:Expected error in mat wrapper-procedure: "make-arity-wrapper-procedure: not-a-procedure is not a procedure".
+misc.mo:Expected error in mat wrapper-procedure: "make-arity-wrapper-procedure: not-an-exact-integer is not an arity mask".
+misc.mo:Expected error in mat wrapper-procedure: "make-arity-wrapper-procedure: 1.0 is not an arity mask".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 3 to #<procedure>".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 3 to #<procedure>".
+misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: 1 is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure!)".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: 1 is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data!)".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: 1 is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: -1 is not a valid phantom bytevector length".
+misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: 1267650600228229401496703205376 is not a valid phantom bytevector length".
+misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: x is not a valid phantom bytevector length".
 cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (cont0 (quote x))".
@@ -4099,7 +4166,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
 6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
-6.mo:Expected error in mat port-handler: "incorrect number of arguments to #<procedure non-generic-port-handler>".
+6.mo:Expected error in mat port-handler: "incorrect number of arguments 0 to #<procedure non-generic-port-handler>".
 6.mo:Expected error in mat port-handler: "non-generic-port-handler: cannot handle message foo with argument count 0".
 6.mo:Expected error in mat port-handler: "non-generic-port-handler: cannot handle message foo with argument count 1".
 6.mo:Expected error in mat port-handler: "non-generic-port-handler: cannot handle message read-char with argument count 0".
@@ -7373,7 +7440,7 @@ record.mo:Expected error in mat record25: "invalid value ate for foreign type ip
 record.mo:Expected error in mat record25: "invalid value #\9 for foreign type uptr".
 record.mo:Expected error in mat record25: "invalid value 10 for foreign type float".
 record.mo:Expected error in mat record25: "invalid value 11.0+0.0i for foreign type double".
-record.mo:Expected error in mat record25: "incorrect number of arguments to #<procedure make-r25-bar>".
+record.mo:Expected error in mat record25: "incorrect number of arguments 18 to #<procedure make-r25-bar>".
 record.mo:Expected error in mat record25: "invalid value 12.0 for foreign type long-long".
 record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
 record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
@@ -7409,47 +7476,47 @@ record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructo
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
 record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
 record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 2 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
 record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure predicate>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure predicate>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 3 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure predicate>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 2 to #<procedure predicate>".
 record.mo:Expected error in mat r6rs-records-syntactic: "variable point-x-set! is not bound".
 record.mo:Expected error in mat r6rs-records-syntactic: "variable point-y-set! is not bound".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure accessor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure accessor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure accessor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 2 to #<procedure accessor>".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-mutator: field 0 of #<record type point> is immutable".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-mutator: field 1 of #<record type point> is immutable".
 record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure constructor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure predicate>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure predicate>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 3 to #<procedure constructor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure predicate>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 2 to #<procedure predicate>".
 record.mo:Expected error in mat r6rs-records-syntactic: "variable point-x-set! is not bound".
 record.mo:Expected error in mat r6rs-records-syntactic: "variable point-y-set! is not bound".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure accessor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure accessor>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
-record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure accessor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 2 to #<procedure accessor>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 3 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 3 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure mutator>".
+record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 3 to #<procedure mutator>".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
 record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
@@ -7503,8 +7570,8 @@ hash.mo:Expected error in mat old-hash-table: "put-hash-table!: ((a . b)) is not
 hash.mo:Expected error in mat old-hash-table: "remove-hash-table!: ((a . b)) is not an eq hashtable".
 hash.mo:Expected error in mat old-hash-table: "hash-table-map: ((a . b)) is not an eq hashtable".
 hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".
-hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
-hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments to #<procedure>".
+hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
+hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (make-eq-hashtable 3 #t)".
 hash.mo:Expected error in mat hashtable-arguments: "make-eq-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat hashtable-arguments: "make-eq-hashtable: invalid size argument #t".
@@ -7596,7 +7663,7 @@ hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in 
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells $ht 72 43)".
-hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-size: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: -79 is not a valid length".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: not-an-unsigned-integer is not a valid length".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function)".
@@ -8298,11 +8365,11 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat quasisyntax: "misplaced aux keyword (unsyntax-splicing)".
 8.mo:Expected error in mat quasisyntax: "misplaced aux keyword unsyntax".
 8.mo:Expected error in mat quasisyntax: "misplaced aux keyword unsyntax-splicing".
-8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments to #<procedure rho>".
+8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments 0 to #<procedure rho>".
 8.mo:Expected error in mat make-compile-time-value: "first argument to lookup procedure is not an identifier (a)".
 8.mo:Expected error in mat make-compile-time-value: "first argument to lookup procedure is not an identifier (a)".
 8.mo:Expected error in mat make-compile-time-value: "second argument to lookup procedure is not an identifier "frip"".
-8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments to #<procedure rho>".
+8.mo:Expected error in mat make-compile-time-value: "incorrect number of arguments 3 to #<procedure rho>".
 8.mo:Expected error in mat make-compile-time-value: "compile-time-value-value: 17 is not a compile-time value".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
 8.mo:Expected error in mat make-compile-time-value: "invalid syntax frob".
@@ -8584,8 +8651,8 @@ fx.mo:Expected error in mat fx>=?: "fx>=?: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fx>=?: "fx>=?: <int> is not a fixnum".
 fx.mo:Expected error in mat fx>=?: "fx>=?: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx>=?: "incorrect argument count in call (fx>=? 1)".
-fx.mo:Expected error in mat $fxu<: "incorrect number of arguments to #<procedure $fxu<>".
-fx.mo:Expected error in mat $fxu<: "incorrect number of arguments to #<procedure $fxu<>".
+fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 1 to #<procedure $fxu<>".
+fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 3 to #<procedure $fxu<>".
 fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx+: "fx+: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fx+: "fx+: fixnum overflow with arguments <int> and 1".
@@ -10111,10 +10178,10 @@ date.mo:Expected error in mat conversions/sleep: "sleep: 20 is not a time record
 exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
 exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
 exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+oop.mo:Expected error in mat oop: "incorrect number of arguments 0 to #<procedure make-<a>>".
+oop.mo:Expected error in mat oop: "incorrect number of arguments 2 to #<procedure make-<a>>".
+oop.mo:Expected error in mat oop: "incorrect number of arguments 1 to #<procedure m1>".
+oop.mo:Expected error in mat oop: "incorrect number of arguments 3 to #<procedure m1>".
 oop.mo:Expected error in mat oop: "m1: not applicable to 17".
 oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
 oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
