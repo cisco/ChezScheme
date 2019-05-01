@@ -637,7 +637,7 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
   return copy_normalize(&BIGIT(W(tc),0),xl+yl,sign);
 }
 
-#define SHORTMIN (most_negative_fixnum / (1 << (fixnum_bits / 2)))
+#define SHORTMIN ((most_negative_fixnum / (1 << (fixnum_bits / 2))) + 1)
 #define SHORTMAX (most_positive_fixnum / (1 << (fixnum_bits / 2)))
 #define SHORTRANGE(x) ((x) >= SHORTMIN && (x) <= SHORTMAX)
 
