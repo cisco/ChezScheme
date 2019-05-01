@@ -1313,3 +1313,5 @@
     externs.h, system.h, expeditor.c, configure, Mf-*, Makefile.*nt,
     workarea, mat.ss, io.ms, io.stex, objects.stex, release_notes.stex,
     root-experr*, patch*
+- fix multiply of most negative fixnum to itself on 64-bit platforms
+    number.c, 5_3.ms
