@@ -334,6 +334,26 @@
           '(lambda (x y z f)
             (let ([t (vector? x)])
               (if (if y #f z) (f t 1) (f t 2))))))
+  (cptypes-equivalent-expansion?
+     '(lambda (t b)
+       (if (if t (newline) (unbox b)) (vector? b) (box? b)))
+     '(lambda (t b)
+       (if (if t (newline) (unbox b)) (vector? b) #t)))
+  (cptypes-equivalent-expansion?
+     '(lambda (t b)
+       (if (if t (unbox b) (newline)) (vector? b) (box? b)))
+     '(lambda (t b)
+       (if (if t (unbox b) (newline)) (vector? b) #t)))
+  (cptypes-equivalent-expansion?
+     '(lambda (t b)
+       (if (if t #f (unbox b)) (vector? b) (box? b)))
+     '(lambda (t b)
+       (if (if t #f (unbox b)) #f (box? b))))
+  (cptypes-equivalent-expansion?
+     '(lambda (t b)
+       (if (if t (unbox b) #f) (vector? b) (box? b)))
+     '(lambda (t b)
+       (if (if t (unbox b) #f) #f (box? b))))
 )
 
 (mat cptype-directly-applied-case-lambda

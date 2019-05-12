@@ -138,27 +138,38 @@ Notes:
     (nongenerative #{pred-$record/ref zc0e8e4cs8scbwhdj7qpad6k3-0})
     (sealed #t))
 
-  (module (pred-env-empty
+  (module (pred-env-empty pred-env-bottom
            pred-env-add pred-env-remove/base pred-env-lookup
            pred-env-intersect/base pred-env-union/super-base
            pred-env-rebase
            pred-intersect pred-union)
     (import fxmap)
+    
+    ; a fake fxmap that is full of 'bottom
+    (define-record-type $bottom
+      (nongenerative #{$bottom koj7zosgebxioicmj4lgopip0-0})
+      (sealed #t))
+
+    (define bottom-fxmap (make-$bottom))
 
     (define pred-env-empty empty-fxmap)
+
+    (define pred-env-bottom bottom-fxmap)
 
     (define (pred-env-add/key types key pred)
       (cond
         [(and pred
-              (not (eq? pred 'ptr))) ; filter 'ptr to reduce the size
+              (not (eq? pred 'ptr)) ; filter 'ptr to reduce the size
+              (not (eq? types bottom-fxmap)))
          (let ([old (fxmap-ref types key #f)])
            (cond
              [(not old)
               (fxmap-set types key pred)]
              [else (let ([new (pred-intersect old pred)])
-                     (if (eq? old new)
-                         types
-                        (fxmap-set types key new)))]))]
+                     (cond
+                       [(eq? new old) types]
+                       [(eq? new 'bottom) bottom-fxmap]
+                       [else (fxmap-set types key new)]))]))]
         [else
          types]))
 
@@ -168,12 +179,21 @@ Notes:
          (pred-env-add/key types (prelex-counter x) pred)]
         [else types]))
 
+    ; When types is bottom-fxmap, the "association" is not removed
     (define (pred-env-remove/base types x base)
-      (fxmap-remove/base types (prelex-counter x) base))
+      (cond
+        [(eq? types bottom-fxmap)
+         bottom-fxmap]
+        [else
+         (fxmap-remove/base types (prelex-counter x) base)]))
 
     (define (pred-env-lookup types x)
-      (and (not (prelex-assigned x))
-           (fxmap-ref types (prelex-counter x) #f)))
+      (cond
+        [(eq? types bottom-fxmap)
+         'bottom]
+        [else
+         (and (not (prelex-assigned x))
+              (fxmap-ref types (prelex-counter x) #f))]))
 
     ; This is conceptually the intersection of the types in `types` and `from`
     ; but since 'ptr is not stored to save space and time, the implementation
@@ -183,6 +203,9 @@ Notes:
     ; 'number _and_ 'exact-integer -> 'exact-integer
     (define (pred-env-intersect/base types from base)
       (cond
+        [(or (eq? types bottom-fxmap)
+             (eq? from bottom-fxmap))
+         bottom-fxmap]
         [(fx> (fxmap-changes from) (fxmap-changes types))
          (pred-env-intersect/base from types base)]
         [else
@@ -219,7 +242,8 @@ Notes:
     ; [missing 'ptr] _or_ 'vector -> [missing 'ptr]
     ; 'box _or_ 'boolean -> [missing 'ptr]
     ; 'number _or_ 'exact-integer -> 'number
-    (define (pred-env-union/from from base types new-base)
+    ; *Internals auxilary function. Does not check bottom-fxmap.*
+    (define ($pred-env-union/from from base types new-base)
       ; Calculate the union of types and from, and intersect it with new-base
       ; Iterate over the difference of from and base.
       (let ([ret new-base])
@@ -245,20 +269,30 @@ Notes:
                                        base
                                        new-base)
       ; Calculate the union of types and from, and intersect it with new-base
-      ; Use the intermediate bases to minimize the amount of operations
-      ; required. In particular, base should be the base of types/b and from/b.
-      (let ([size-types (fx- (fxmap-changes types) (fxmap-changes base))]
-            [size-from (fx- (fxmap-changes from) (fxmap-changes base))]
-            [size-new (fx+ (fx- (fxmap-changes types) (fxmap-changes types/b))
-                           (fx- (fxmap-changes from) (fxmap-changes from/b)))])
-        (cond
-          [(and (fx<= size-types size-from) (fx<= size-types size-new))
-           (pred-env-union/from types base from new-base)]
-          [(fx<= size-from size-new)
-           (pred-env-union/from from base types new-base)]
-          [else
-           (let ([temp (pred-env-union/from from from/b types new-base)])
-             (pred-env-union/from types types/b from temp))])))
+      ; Use the intermediate bases types/b and from/b to minimize the amount
+      ; of operations required.
+      ; In particular, base should be the base of types/b, from/b and new-base.
+      (cond
+        [(eq? new-base bottom-fxmap)
+         bottom-fxmap]
+        [(eq? types bottom-fxmap)
+         (pred-env-rebase from base new-base)]
+        [(eq? from bottom-fxmap)
+         (pred-env-rebase types base new-base)]
+        [else
+         (let ([size-types (fx- (fxmap-changes types) (fxmap-changes base))]
+               [size-from (fx- (fxmap-changes from) (fxmap-changes base))]
+               [size-new (fx+ (fx- (fxmap-changes types) (fxmap-changes types/b))
+                              (fx- (fxmap-changes from) (fxmap-changes from/b)))])
+           (cond
+             [(and (fx<= size-types size-from) (fx<= size-types size-new))
+              ($pred-env-union/from types base from new-base)]
+             [(fx<= size-from size-new)
+              ($pred-env-union/from from base types new-base)]
+             [else
+              (let ([temp ($pred-env-union/from from from/b types new-base)])
+                ; temp is never bottom-fxmap here
+                ($pred-env-union/from types types/b from temp))]))]))
 
     (define (pred-union x y)
       (cond
@@ -274,27 +308,32 @@ Notes:
         [else #f]))
 
     (define (pred-env-rebase types base new-base)
-      (let ([ret types])
-        (fxmap-for-each/diff (lambda (key x y)
-                               (let ([z (fxmap-ref types key #f)])
-                                 ;x-> new-base
-                                 ;y-> base
-                                 ;z-> types
-                                 (if (eq? x z)
-                                     (set! ret (fxmap-reset/base ret key new-base))
-                                     (set! ret (fxmap-advance/base ret key new-base)))))
-                             (lambda (key x)
-                               (let ([z (fxmap-ref types key #f)])
-                                 ;x-> new-base
-                                 ;z-> types
-                                 (if (eq? x z)
-                                     (set! ret (fxmap-reset/base ret key new-base))
-                                     (set! ret (fxmap-advance/base ret key new-base)))))
-                             (lambda (key x)
-                               ($impoops 'pred-env-rebase "unexpected value ~s in base environment ~s" x base))
-                             new-base
-                             base)
-        ret))
+      (cond
+        [(or (eq? types bottom-fxmap)
+             (eq? new-base bottom-fxmap))
+         bottom-fxmap]
+        [else
+         (let ([ret types])
+           (fxmap-for-each/diff (lambda (key x y)
+                                  (let ([z (fxmap-ref types key #f)])
+                                    ;x-> new-base
+                                    ;y-> base
+                                    ;z-> types
+                                    (if (eq? x z)
+                                        (set! ret (fxmap-reset/base ret key new-base))
+                                        (set! ret (fxmap-advance/base ret key new-base)))))
+                                (lambda (key x)
+                                  (let ([z (fxmap-ref types key #f)])
+                                    ;x-> new-base
+                                    ;z-> types
+                                    (if (eq? x z)
+                                        (set! ret (fxmap-reset/base ret key new-base))
+                                        (set! ret (fxmap-advance/base ret key new-base)))))
+                                (lambda (key x)
+                                  ($impoops 'pred-env-rebase "unexpected value ~s in base environment ~s" x base))
+                                new-base
+                                base)
+           ret)]))
  )
 
   (define (pred-env-add/ref types r pred)
@@ -637,6 +676,18 @@ Notes:
 
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
+
+  (define (Expr/fix-tf-types ir ctxt types)
+    (let-values ([(ir ret types t-types f-types)
+                  (Expr ir ctxt types)])
+      (values ir ret
+              types
+              (if (predicate-implies? ret false-rec)
+                  pred-env-bottom
+                  (or t-types types))
+              (if (predicate-implies? ret 'true)
+                  pred-env-bottom
+                  (or f-types types)))))
 )
     (Expr : Expr (ir ctxt types) -> Expr (ret types t-types f-types)
       [(quote ,d)
@@ -646,7 +697,7 @@ Notes:
          [(test)
           (let ([t (pred-env-lookup types x)])
             (cond
-              [(predicate-implies-not? t false-rec)
+              [(predicate-implies? t 'true)
                (values true-rec true-rec types #f #f)]
               [(predicate-implies? t false-rec)
                (values false-rec false-rec types #f #f)]
@@ -669,16 +720,16 @@ Notes:
       [(seq ,[e1 'effect types -> e1 ret1 types t-types f-types] ,e2)
        (cond
          [(predicate-implies? ret1 'bottom)
-          (values e1 ret1 types #f #f)]
+          (values e1 'bottom pred-env-bottom #f #f)]
          [else
           (let-values ([(e2 ret types t-types f-types)
                         (Expr e2 ctxt types)])
             (values (make-seq ctxt e1 e2) ret types t-types f-types))])]
-      [(if ,[e1 'test types -> e1 ret1 types1 t-types1 f-types1] ,e2 ,e3)
+      [(if ,[Expr/fix-tf-types : e1 'test types -> e1 ret1 types1 t-types1 f-types1] ,e2 ,e3)
        (cond
          [(predicate-implies? ret1 'bottom) ;check bottom first
-          (values e1 ret1 types #f #f)]
-         [(predicate-implies-not? ret1 false-rec)
+          (values e1 'bottom pred-env-bottom #f #f)]
+         [(predicate-implies? ret1 'true)
           (let-values ([(e2 ret types t-types f-types)
                         (Expr e2 ctxt types1)])
             (values (make-seq ctxt e1 e2) ret types t-types f-types))]
@@ -687,21 +738,15 @@ Notes:
                         (Expr e3 ctxt types1)])
             (values (make-seq ctxt e1 e3) ret types t-types f-types))]
          [else
-          (let*-values ([(t-types1) (or t-types1 types1)]
-                        [(f-types1) (or f-types1 types1)]
-                        [(e2 ret2 types2 t-types2 f-types2)
-                         (Expr e2 ctxt t-types1)]
-                        [(t-types2) (or t-types2 types2)]
-                        [(f-types2) (or f-types2 types2)]
-                        [(e3 ret3 types3 t-types3 f-types3)
-                         (Expr e3 ctxt f-types1)]
-                        [(t-types3) (or t-types3 types3)]
-                        [(f-types3) (or f-types3 types3)])
+          (let-values ([(e2 ret2 types2 t-types2 f-types2)
+                        (Expr/fix-tf-types e2 ctxt t-types1)]
+                       [(e3 ret3 types3 t-types3 f-types3)
+                        (Expr/fix-tf-types e3 ctxt f-types1)])
             (let ([ir `(if ,e1 ,e2 ,e3)])
               (cond
                 [(and (predicate-implies? ret2 'bottom)  ;check bottom first
                       (predicate-implies? ret3 'bottom)) ;check bottom first
-                 (values ir ret3 types3 t-types3 f-types3)]
+                 (values ir 'bottom pred-env-bottom #f #f)]
                 [(predicate-implies? ret2 'bottom) ;check bottom first
                  (values (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3)
                          ret3 types3 t-types3 f-types3)]
@@ -714,21 +759,11 @@ Notes:
                                                              types1
                                                              types1)])
                    (values ir
-                           (cond
-                             [(and (eq? ctxt 'test)
-                                   (predicate-implies-not? ret2 false-rec)
-                                   (predicate-implies-not? ret3 false-rec))
-                              true-rec]
-                             [else
-                              (pred-union ret2 ret3)])
+                           (pred-union ret2 ret3)
                            new-types
                            (cond
                              [(not (eq? ctxt 'test))
                               #f] ; don't calculate t-types outside a test context
-                             [(predicate-implies? ret2 false-rec)
-                              (pred-env-rebase t-types3 types1 new-types)]
-                             [(predicate-implies? ret3 false-rec)
-                              (pred-env-rebase t-types2 types1 new-types)]
                              [(and (eq? types2 t-types2)
                                    (eq? types3 t-types3))
                               #f] ; don't calculate t-types when it will be equal to new-types
@@ -740,10 +775,6 @@ Notes:
                            (cond
                              [(not (eq? ctxt 'test))
                               #f] ; don't calculate f-types outside a test context
-                             [(predicate-implies-not? ret2 false-rec)
-                              (pred-env-rebase f-types3 types1 new-types)]
-                             [(predicate-implies-not? ret3 false-rec)
-                              (pred-env-rebase f-types2 types1 new-types)]
                              [(and (eq? types2 f-types2)
                                    (eq? types3 f-types3))
                               #f] ; don't calculate t-types when it will be equal to new-types
@@ -771,9 +802,9 @@ Notes:
                                      (pred-env-add/ref t (car e*) pred)))))])
            (cond
              [(predicate-implies? ret 'bottom)
-              (values `(call ,preinfo ,pr ,e* ...) ret t #f #f)]
+              (values `(call ,preinfo ,pr ,e* ...) 'bottom pred-env-bottom #f #f)]
              [(not (arity-okay? (primref-arity pr) (length e*)))
-              (values `(call ,preinfo ,pr ,e* ...) 'bottom t #f #f)]
+              (values `(call ,preinfo ,pr ,e* ...) 'bottom pred-env-bottom #f #f)]
              [(and (fx= (length e*) 2)
                    (or (eq? (primref-name pr) 'eq?)
                        (eq? (primref-name pr) 'eqv?)))
@@ -968,7 +999,7 @@ Notes:
                    (if (fx= i 0)
                        (list (if (null? r*) null-rec 'pair))
                        (cons (car r*) (f (fx- i 1) (cdr r*))))))))
-           (lambda () (values ir 'bottom types #f #f))))]
+           (lambda () (values ir 'bottom pred-env-bottom #f #f))))]
       [(call ,preinfo ,[e0 'value types -> e0 ret0 types0 t-types0 f-types0]
              ,[e* 'value types -> e* r* t* t-t* f-t*]  ...)
        (values `(call ,preinfo ,e0 ,e* ...)
