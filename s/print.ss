@@ -1040,6 +1040,8 @@ floating point returns with (1 0 -1 ...).
                        (display-precision (fxmax m (integer-length (vector-ref dx 0))) p)
                        (display-precision m p)))]
                 [else
+                 (void)
+                 #;
                  (let ([m (integer-length (vector-ref dx 0))])
                    (when (fx< 0 m 53) (display-precision m p)))]))))))
 
