@@ -927,6 +927,7 @@
   (compile-profile [sig [() -> (ptr)] [(ptr) -> (void)]] [flags unrestricted])
   (compile-program-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (compress-format [sig [() -> (symbol)] [(sub-symbol) -> (void)]] [flags])
+  (compress-level [sig [() -> (symbol)] [(sub-symbol) -> (void)]] [flags])
   (console-error-port [sig [() -> (textual-output-port)] [(textual-output-port) -> (void)]] [flags])
   (console-input-port [sig [() -> (textual-input-port)] [(textual-input-port) -> (void)]] [flags])
   (console-output-port [sig [() -> (textual-output-port)] [(textual-output-port) -> (void)]] [flags])
@@ -1749,7 +1750,6 @@
   ($address-in-heap? [flags])
   ($address->object [flags])
   ($allocate-thread-parameter [feature pthreads] [flags alloc])
-  ($annotation-options [flags])
   ($apply [flags])
   ($assembly-output [flags])
   ($as-time-goes-by [flags])
@@ -1851,10 +1851,8 @@
   ($fasl-file-equal? #;[sig [(pathname pathname) (pathname pathname ptr) -> (boolean)]] [flags])
   ($fasl-out [flags])
   ($fasl-start [flags])
-  ($fasl-strip-options [flags])
   ($fasl-table [flags])
   ($fasl-wrf-graph [flags])
-  ($file-options [flags])
   ($filter-conv [flags])
   ($filter-foreign-type [flags])
   ($fixed-path? [flags])
@@ -2087,7 +2085,6 @@
   ($keep-live [flags])
   ($last-new-vector-element [flags])
   ($lexical-error [flags])
-  ($library-requirements-options [flags])
   ($library-search [flags])
   ($list-length [flags single-valued])
   ($load-library [flags])
@@ -2308,6 +2305,13 @@
   ($with-fasl-target [flags])
   ($write-pretty-quick [flags])
   ($xscript-port? [flags])
+)
+
+(define-symbol-flags* ([libraries] [flags system]) ; system options sets
+  ($annotation-options [flags])
+  ($fasl-strip-options [flags])
+  ($file-options [flags])
+  ($library-requirements-options [flags])
 )
 
 (define-symbol-flags* ([libraries] [flags system proc]) ; system parameters

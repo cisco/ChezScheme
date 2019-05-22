@@ -3656,18 +3656,12 @@ bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress:
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: uncompressed #vu8(0 0 0 0 0 0 ...) is larger than expected size".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: uncompressed size 5 for #vu8(0 0 0 0 0 0 ...) is smaller than expected size 6".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: internal error uncompressing #vu8(128 0 0 0 0 0 ...)".
-bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: uncompressed size 5 for #vu8(128 0 0 0 0 0 ...) is smaller than expected size 6".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
 misc.mo:Expected error in mat compiler1: "variable i-am-not-bound is not bound".
@@ -6865,6 +6859,22 @@ io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 0
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: -15 is not a positive fixnum".
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: <int> is not a positive fixnum".
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 1024.0 is not a positive fixnum".
+io.mo:Expected error in mat compress-parameters: "compress-format: foo is not a supported format".
+io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
+io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
+io.mo:Expected error in mat compress-parameters: "compress-level: 1 is not a supported level".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
+io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
+io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
 io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
 io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
 io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".

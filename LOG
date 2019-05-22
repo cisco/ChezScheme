@@ -1313,5 +1313,101 @@
     externs.h, system.h, expeditor.c, configure, Mf-*, Makefile.*nt,
     workarea, mat.ss, io.ms, io.stex, objects.stex, release_notes.stex,
     root-experr*, patch*
-- fix multiply of most negative fixnum to itself on 64-bit platforms
-    number.c, 5_3.ms
+- added compress-level parameter to select a compression level for
+  file writing and changed the default for lz4 compression to do a
+  better job compressing.  finished splitting glz input routines
+  apart from glz output routines and did a bit of other restructuring.
+  removed gzxfile struct-as-bytevector wrapper and moved its fd
+  into glzFile.  moved DEACTIVATE to before glzdopen_input calls
+  in S_new_open_input_fd and S_compress_input_fd, since glzdopen_input
+  reads from the file and could block.  the compress format and now
+  level are now recorded directly the thread context.  replaced
+  as-gz? flag bit in compressed bytevector header word with a small
+  number of bits recording the compression format at the bottom of
+  the header word.  flushed a couple of bytevector compression mats
+  that depended on the old representation.  (these last few changes
+  should make adding new compression formats easier.)  added
+  s-directory build options to choose whether to compress and, if
+  so, the format and level.
+    compress-io.h, compress-io.c, new-io.c, equates.h, system.h,
+    scheme.c, gc.c,
+    io.ss, cmacros.ss, back.ss, bytevector.ss, primdata.ss, s/Mf-base,
+    io.ms, mat.ss, bytevector.ms, root-experr*,
+    release_notes.stex, io.stex, system.stex, objects.stex
+- improved the effectiveness of LZ4 boot-file compression to within
+  15% of gzip by increasing the lz4 output-port in_buffer size to
+  1<<18.  With the previous size (1<<14) LZ4-compressed boot files
+  were about 50% larger.  set the lz4 input-port in_buffer and
+  out_buffer sizes to 1<<12 and 1<<14.  there's no clear win at
+  present for larger input-port buffer sizes.
+    compress-io.c
+- To reduce the memory hit for the increased output-port in_buffer
+  size and the corresponding increase in computed out_buffer size,
+  one output-side out_buffer is now allocated (lazily) per thread
+  and stored in the thread context.  The other buffers are now
+  directly a part of the lz4File_out and lz4File_in structures
+  rather than allocated separately.
+    compress-io.c, scheme.c, gc.c,
+    cmacros.ss
+- split out the buffer emit code from glzwrite_lz4 into a
+  separate glzemit_lz4 helper that is now also used by gzclose
+  so we can avoid dealing with a NULL buffer in glzwrite_lz4.
+  glzwrite_lz4 also uses it to writing large buffers directly and
+  avoid the memcpy.
+    compress-io.c
+- replaced lz4File_out and lz4File_in mode enumeration with the
+  compress format and inputp boolean.  using switch to check and
+  raising exceptions for unexpected values to further simplify
+  adding new compression formats in the future.
+    compress-io.c
+- replaced the never-defined struct lz4File pointer in glzFile
+  union with the more specific struct lz4File_in_r and Lz4File_out_r
+  pointers.
+    compress-io.h, compress-io.c
+- added free of lz4 structures to gzclose.  also changed file-close
+  logic generally so that (1) port is marked closed before anything is
+  freed to avoid dangling pointers in the case of an interrupt or
+  error, and (2) structures are freed even in the case of a write
+  or close error, before the error is reported.  also now mallocing
+  glz and lz4 structures after possibility of errors have passed where
+  possible and freeing them when not.
+    compress-io.c,
+    io.ss
+- added return-value checks to malloc calls and to a couple of other
+  C-library calls.
+    compress-io.c
+- corrected EINTR checks to look at errno rather than return codes.
+    compress-io.c
+- added S_ prefixes to the glz* exports
+    externs.h, compress-io.c, new-io.c, scheme.c, fasl.c
+- added entries for mutex-name and mutex-thread
+    threads.stex
+- fix record-ref reduction in cp0
+  in expressions like
+    (record-ref ... (begin (newline) (record ...)))
+  the reduction was dropping the possible side effect expressions
+  in this case the (newline).
+    cp0.ss
+- zero?, fxzero?, positive?, fxpositive?, etc., now go through
+  (a suitably modified) relop-length so that, for example,
+  (zero? (length x)) results in the same code as (null? x).  added
+  correctness tests for these and all of the other predicates that
+  go through relop-length.
+    cpnanopass.ss, 5_2.ms
+- assertion-violationf and friends now show the who, message, and
+  irritants in the original call when who or message is found not to
+  be of the right type.
+    exceptions.ss
+- fix incorrect uses of fxzero? x86.ss backend, since a 32-bit
+  immediate is not necessarily a fixnum
+    x86.ss
+- added MinGW/MSYS build support for Windows and configuration for
+  Travis-CI testing of all Windows builds
+    BUILDING, .travis*, wininstall/Makefile
+- fix multiply of -2^30 with itself on 64-bit platforms
+    number.c, 5_3.ms, release_notes.stex
+- fixed typo in description of case macro
+    csug/control.stex
+- fix signatures of $annotation-options, $fasl-strip-options,
+  $file-options, and $library-requirements-options
+    primdata.ss

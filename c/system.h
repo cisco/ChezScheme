@@ -28,12 +28,13 @@
 
 #include "version.h"
 #include <stdio.h>
-#include "compress-io.h"
 #include <stddef.h>
 
 #include "thread.h"
 
 #include "types.h"
+
+#include "compress-io.h"
 
 #ifndef EXTERN
 #define EXTERN extern

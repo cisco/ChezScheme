@@ -1,5 +1,6 @@
 VERSION := 9.5.3
 WIXEXTENSIONS := -ext WixUIExtension -ext WixBalExtension
+export MSYS_NO_PATHCONV=1
 
 ChezScheme.exe: x86/bundle.wixobj ChezScheme32.msi ChezScheme64.msi
 	cmd.exe /c light.bat -nologo $(WIXEXTENSIONS) $< -out $@

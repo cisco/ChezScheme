@@ -163,12 +163,38 @@
       x)))
 
 (define-who compress-format
-  ($make-thread-parameter
-    'lz4
-    (lambda (x)
-      (unless (or (eq? x 'lz4) (eq? x 'gzip))
-        ($oops who "~s is not a supported format" x))
-      x)))
+  (case-lambda
+    [()
+     (let ([x ($tc-field 'compress-format ($tc))])
+       (cond
+         [(eqv? x (constant COMPRESS-GZIP)) 'gzip]
+         [(eqv? x (constant COMPRESS-LZ4)) 'lz4]
+         [else ($oops who "unexpected $compress-format value ~s" x)]))]
+    [(x)
+     ($tc-field 'compress-format ($tc)
+       (case x
+         [(gzip) (constant COMPRESS-GZIP)]
+         [(lz4) (constant COMPRESS-LZ4)]
+         [else ($oops who "~s is not a supported format" x)]))]))
+
+(define-who compress-level
+  (case-lambda
+    [()
+     (let ([x ($tc-field 'compress-level ($tc))])
+       (cond
+         [(eqv? x (constant COMPRESS-LOW)) 'low]
+         [(eqv? x (constant COMPRESS-MEDIUM)) 'medium]
+         [(eqv? x (constant COMPRESS-HIGH)) 'high]
+         [(eqv? x (constant COMPRESS-MAX)) 'maximum]
+         [else ($oops who "unexpected $compress-level value ~s" x)]))]
+    [(x)
+     ($tc-field 'compress-level ($tc)
+       (case x
+         [(low) (constant COMPRESS-LOW)]
+         [(medium) (constant COMPRESS-MEDIUM)]
+         [(high) (constant COMPRESS-HIGH)]
+         [(maximum) (constant COMPRESS-MAX)]
+         [else ($oops who "~s is not a supported level" x)]))]))
 
 (define-who debug-level
   ($make-thread-parameter

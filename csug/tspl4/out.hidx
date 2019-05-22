@@ -241,7 +241,6 @@
 #(index-entry "./records.html#./records:s22" ("rtd") ("rtd") "331" "" "")
 #(index-entry "./records.html#./records:s21" ("record-type descriptor") ("record-type descriptor") "331" "" "")
 #(index-entry "./records.html#./records:s20" ("make-record-type-descriptor") ("\\scheme{make-record-type-descriptor}") "331" "emph" "")
-#(index-entry "./records.html#./records:s19" ("make-record-type-descriptor") ("make-record-type-descriptor") "331" "" "")
 #(index-entry "./records.html#./records:s18" ("rtd") ("rtd") "331" "" "")
 #(index-entry "./records.html#./records:s17" ("record-type descriptor") ("record-type descriptor") "331" "" "")
 #(index-entry "./records.html#./records:s16" ("parent-rtd") ("\\scheme{parent-rtd}") "331" "emph" "")

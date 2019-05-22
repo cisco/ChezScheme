@@ -1894,6 +1894,9 @@ static void sweep_thread(p) ptr p; {
     /* immediate SUPPRESSPRIMITIVEINLINING */
     relocate(&DEFAULTRECORDEQUALPROCEDURE(tc))
     relocate(&DEFAULTRECORDHASHPROCEDURE(tc))
+    relocate(&COMPRESSFORMAT(tc))
+    relocate(&COMPRESSLEVEL(tc))
+    /* void* LZ4OUTBUFFER(tc) */
     /* U64 INSTRCOUNTER(tc) */
     /* U64 ALLOCCOUNTER(tc) */
     relocate(&PARAMETERS(tc))

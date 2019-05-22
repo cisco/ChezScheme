@@ -93,7 +93,7 @@ be reordered to put those that are most frequently executed first.
     [i 1]
     [ii 2]
     [iii 3]
-    [(iiii iv) 3]
+    [(iiii iv) 4]
     [else 'out-of-range])) ;=> 2
 
 (define p

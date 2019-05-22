@@ -216,6 +216,16 @@ continuation invocation, the mutex is reacquired.
 Using \scheme{with-mutex} is generally more convenient and safer than using
 \scheme{mutex-acquire} and \scheme{mutex-release} directly.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{mutex-name}{\categoryprocedure}{(mutex-name \var{mutex})}
+\returns the name associated with \var{mutex}, if any; otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{mutex} must be a mutex.
+
 \section{Conditions}
 
 %----------------------------------------------------------------------------
@@ -291,6 +301,16 @@ condition identified by \var{cond}.
 
 \scheme{condition-broadcast} releases all of the threads waiting for the
 condition identified by \var{cond}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{condition-name}{\categoryprocedure}{(condition-name \var{condition})}
+\returns the name associated with \var{condition}, if any; otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{condition} must be a condition.
 
 \section{Locks\label{SECTTHREADLOCKS}}
 

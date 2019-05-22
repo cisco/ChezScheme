@@ -184,6 +184,27 @@ extern wchar_t *S_malloc_wide_pathname PROTO((const char *inpath));
 #endif
 extern IBOOL S_fixedpathp PROTO((const char *inpath));
 
+/* compress-io.c */
+extern glzFile S_glzdopen_output PROTO((INT fd, INT compress_format, INT compress_level));
+extern glzFile S_glzdopen_input PROTO((INT fd));
+extern glzFile S_glzopen_input PROTO((const char *path));
+#ifdef WIN32
+extern glzFile S_glzopen_input_w PROTO((const wchar_t *path));
+#endif
+extern IBOOL S_glzdirect PROTO((glzFile file));
+extern INT S_glzclose PROTO((glzFile file));
+
+extern INT S_glzread PROTO((glzFile file, void *buffer, UINT count));
+extern INT S_glzwrite PROTO((glzFile file, void *buffer, UINT count));
+extern long S_glzseek PROTO((glzFile file, long offset, INT whence));
+extern INT S_glzgetc PROTO((glzFile file));
+extern INT S_glzungetc PROTO((INT c, glzFile file));
+extern INT S_glzrewind PROTO((glzFile file));
+
+extern void S_glzerror PROTO((glzFile file, INT *errnum));
+extern void S_glzclearerr PROTO((glzFile fdfile));
+
+
 /* new-io.c */
 extern INT S_gzxfile_fd PROTO((ptr x));
 extern glzFile S_gzxfile_gzfile PROTO((ptr x));
@@ -191,14 +212,14 @@ extern ptr S_new_open_input_fd PROTO((const char *filename, IBOOL compressed));
 extern ptr S_new_open_output_fd PROTO((
   const char *filename, INT mode,
   IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed, IBOOL as_gz));
+  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
 extern ptr S_new_open_input_output_fd PROTO((
   const char *filename, INT mode,
   IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
   IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
 extern ptr S_close_fd PROTO((ptr file, IBOOL gzflag));
 extern ptr S_compress_input_fd PROTO((INT fd, I64 fp));
-extern ptr S_compress_output_fd PROTO((INT fd, IBOOL as_gz));
+extern ptr S_compress_output_fd PROTO((INT fd));
 
 extern ptr S_bytevector_read PROTO((ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag));
 extern ptr S_bytevector_read_nb PROTO((ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag));
@@ -213,13 +234,13 @@ extern ptr S_get_fd_length PROTO((ptr file, IBOOL gzflag));
 extern ptr S_set_fd_length PROTO((ptr file, ptr length, IBOOL gzflag));
 extern void S_new_io_init PROTO((void));
 
-extern uptr S_bytevector_compress_size PROTO((iptr s_count, IBOOL as_gz));
+extern uptr S_bytevector_compress_size PROTO((iptr s_count, INT compress_format));
 extern ptr S_bytevector_compress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
                                         ptr src_bv, iptr s_start, iptr s_count,
-                                        IBOOL as_gz));
+                                        INT compress_format));
 extern ptr S_bytevector_uncompress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
                                           ptr src_bv, iptr s_start, iptr s_count,
-                                          IBOOL as_gz));
+                                          INT compress_format));
 
 /* thread.c */
 extern void S_thread_init PROTO((void));

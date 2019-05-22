@@ -637,9 +637,13 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
   return copy_normalize(&BIGIT(W(tc),0),xl+yl,sign);
 }
 
-#define SHORTMIN ((most_negative_fixnum / (1 << (fixnum_bits / 2))) + 1)
-#define SHORTMAX (most_positive_fixnum / (1 << (fixnum_bits / 2)))
-#define SHORTRANGE(x) ((x) >= SHORTMIN && (x) <= SHORTMAX)
+/* SHORTRANGE is -floor(sqrt(most_positive_fixnum))..floor(sqrt(most_positive_fixnum)).
+   We don't use sqrt because it rounds up for fixnum_bits = 61 */
+#if (fixnum_bits == 30)
+#define SHORTRANGE(x) (-23170 <= (x) && (x) <= 23170)
+#elif (fixnum_bits == 61)
+#define SHORTRANGE(x) (-0x3FFFFFFF <= (x) && (x) <= 0x3FFFFFFF)
+#endif
 
 ptr S_mul(x, y) ptr x, y; {
   ptr tc = get_thread_context();

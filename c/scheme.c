@@ -589,17 +589,17 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
     path = name;
 
     if (fd != -1) {
-      file = glzdopen(fd, "rb");
+      file = S_glzdopen_input(fd);
     } else {
 #ifdef WIN32
       expandedpath = S_malloc_wide_pathname(path);
-      file = glzopen_w(expandedpath, "rb");
+      file = S_glzopen_input_w(expandedpath);
 #else
       expandedpath = S_malloc_pathname(path);
-      file = glzopen(expandedpath, "rb");
+      file = S_glzopen_input(expandedpath);
 #endif
       /* assumption (seemingly true based on a glance at the source code):
-         glzopen doesn't squirrel away a pointer to expandedpath. */
+         S_glzopen_input doesn't squirrel away a pointer to expandedpath. */
       free(expandedpath);
     }
 
@@ -615,14 +615,14 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
     if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
    /* check for magic number */
-    if (glzgetc(file) != fasl_type_header ||
-        glzgetc(file) != 0 ||
-        glzgetc(file) != 0 ||
-        glzgetc(file) != 0 ||
-        glzgetc(file) != 'c' ||
-        glzgetc(file) != 'h' ||
-        glzgetc(file) != 'e' ||
-        glzgetc(file) != 'z') {
+    if (S_glzgetc(file) != fasl_type_header ||
+        S_glzgetc(file) != 0 ||
+        S_glzgetc(file) != 0 ||
+        S_glzgetc(file) != 0 ||
+        S_glzgetc(file) != 'c' ||
+        S_glzgetc(file) != 'h' ||
+        S_glzgetc(file) != 'e' ||
+        S_glzgetc(file) != 'z') {
       fprintf(stderr, "malformed fasl-object header in %s\n", path);
       S_abnormal_exit();
     }
@@ -630,7 +630,7 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
    /* check version */
     if (zget_uptr(file, &n) != 0) {
       fprintf(stderr, "unexpected end of file on %s\n", path);
-      glzclose(file);
+      S_glzclose(file);
       S_abnormal_exit();
     }
 
@@ -638,21 +638,21 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
       fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
      /* use separate fprintf since S_format_scheme_version returns static string */
       fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
-      glzclose(file);
+      S_glzclose(file);
       S_abnormal_exit();
     }
 
    /* check machine type */
     if (zget_uptr(file, &n) != 0) {
       fprintf(stderr, "unexpected end of file on %s\n", path);
-      glzclose(file);
+      S_glzclose(file);
       S_abnormal_exit();
     }
 
     if (n != machine_type) {
       fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
               S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
-      glzclose(file);
+      S_glzclose(file);
       S_abnormal_exit();
     }
   } else {
@@ -675,13 +675,13 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
 
 #ifdef WIN32
       expandedpath = S_malloc_wide_pathname(path);
-      file = glzopen_w(expandedpath, "rb");
+      file = S_glzopen_input_w(expandedpath);
 #else
       expandedpath = S_malloc_pathname(path);
-      file = glzopen(expandedpath, "rb");
+      file = S_glzopen_input(expandedpath);
 #endif
       /* assumption (seemingly true based on a glance at the source code):
-         glzopen doesn't squirrel away a pointer to expandedpath. */
+         S_glzopen_input doesn't squirrel away a pointer to expandedpath. */
       free(expandedpath);
       if (!file) {
         if (verbose) fprintf(stderr, "trying %s...cannot open\n", path);
@@ -691,23 +691,23 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
       if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
      /* check for magic number */
-      if (glzgetc(file) != fasl_type_header ||
-          glzgetc(file) != 0 ||
-          glzgetc(file) != 0 ||
-          glzgetc(file) != 0 ||
-          glzgetc(file) != 'c' ||
-          glzgetc(file) != 'h' ||
-          glzgetc(file) != 'e' ||
-          glzgetc(file) != 'z') {
+      if (S_glzgetc(file) != fasl_type_header ||
+          S_glzgetc(file) != 0 ||
+          S_glzgetc(file) != 0 ||
+          S_glzgetc(file) != 0 ||
+          S_glzgetc(file) != 'c' ||
+          S_glzgetc(file) != 'h' ||
+          S_glzgetc(file) != 'e' ||
+          S_glzgetc(file) != 'z') {
         if (verbose) fprintf(stderr, "malformed fasl-object header in %s\n", path);
-        glzclose(file);
+        S_glzclose(file);
         continue;
       }
 
      /* check version */
       if (zget_uptr(file, &n) != 0) {
         if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-        glzclose(file);
+        S_glzclose(file);
         continue;
       }
 
@@ -717,14 +717,14 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
          /* use separate fprintf since S_format_scheme_version returns static string */
           fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
         }
-        glzclose(file);
+        S_glzclose(file);
         continue;
       }
 
      /* check machine type */
       if (zget_uptr(file, &n) != 0) {
         if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-        glzclose(file);
+        S_glzclose(file);
         continue;
       }
 
@@ -732,7 +732,7 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
         if (verbose)
           fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
                   S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
-        glzclose(file);
+        S_glzclose(file);
         continue;
       }
 
@@ -742,56 +742,56 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
 
   if (verbose) fprintf(stderr, "version and machine type check\n");
 
-  if (glzgetc(file) != '(') {  /* ) */
+  if (S_glzgetc(file) != '(') {  /* ) */
     fprintf(stderr, "malformed boot file %s\n", path);
-    glzclose(file);
+    S_glzclose(file);
     S_abnormal_exit();
   }
 
   /* ( */
-  if ((c = glzgetc(file)) == ')') {
+  if ((c = S_glzgetc(file)) == ')') {
     if (boot_count != 0) {
       fprintf(stderr, "base boot file %s must come before other boot files\n", path);
-      glzclose(file);
+      S_glzclose(file);
       S_abnormal_exit();
     }
   } else {
     if (boot_count == 0) {
       for (;;) {
-        glzungetc(c, file);
+        S_glzungetc(c, file);
        /* try to load heap or boot file this boot file requires */
         if (zgetstr(file, buf, PATH_MAX) != 0) {
           fprintf(stderr, "unexpected end of file on %s\n", path);
-          glzclose(file);
+          S_glzclose(file);
           S_abnormal_exit();
         }
         if (find_boot(buf, ".boot", -1, 0)) break;
-        if ((c = glzgetc(file)) == ')') {
+        if ((c = S_glzgetc(file)) == ')') {
           char *sep; char *wastebuf[8];
           fprintf(stderr, "cannot find subordinate boot file ");
-          glzrewind(file);
-          (void) glzread(file, wastebuf, 8); /* magic number */
+          S_glzrewind(file);
+          (void) S_glzread(file, wastebuf, 8); /* magic number */
           (void) zget_uptr(file, &n); /* version */
           (void) zget_uptr(file, &n); /* machine type */
-          (void) glzgetc(file);        /* open paren */
+          (void) S_glzgetc(file);        /* open paren */
           for (sep = ""; ; sep = "or ") {
-            if ((c = glzgetc(file)) == ')') break;
-            glzungetc(c, file);
+            if ((c = S_glzgetc(file)) == ')') break;
+            S_glzungetc(c, file);
             (void) zgetstr(file, buf, PATH_MAX);
             fprintf(stderr, "%s%s.boot ", sep, buf);
           }
           fprintf(stderr, "required by %s\n", path);
-          glzclose(file);
+          S_glzclose(file);
           S_abnormal_exit();
         }
       }
     }
 
    /* skip to end of header */
-    while ((c = glzgetc(file)) != ')') {
+    while ((c = S_glzgetc(file)) != ')') {
       if (c < 0) {
         fprintf(stderr, "malformed boot file %s\n", path);
-        glzclose(file);
+        S_glzclose(file);
         S_abnormal_exit();
       }
     }
@@ -812,11 +812,11 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
 static uptr zget_uptr(glzFile file, uptr *pn) {
   uptr n, m; int c; octet k;
 
-  if ((c = glzgetc(file)) < 0) return -1;
+  if ((c = S_glzgetc(file)) < 0) return -1;
   k = (octet)c;
   n = k >> 1;
   while (k & 1) {
-    if ((c = glzgetc(file)) < 0) return -1;
+    if ((c = S_glzgetc(file)) < 0) return -1;
     k = (octet)c;
     m = n << 7;
     if (m >> 7 != n) return -1;
@@ -830,9 +830,9 @@ static INT zgetstr(file, s, max) glzFile file; char *s; iptr max; {
   ICHAR c;
 
   while (max-- > 0) {
-    if ((c = glzgetc(file)) < 0) return -1;
+    if ((c = S_glzgetc(file)) < 0) return -1;
     if (c == ' ' || c == ')') {
-      if (c == ')') glzungetc(c, file);
+      if (c == ')') S_glzungetc(c, file);
       *s = 0;
       return 0;
     }
@@ -927,7 +927,7 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   }
 
   S_G.load_binary = Sfalse;
-  glzclose(bd[n].file);
+  S_glzclose(bd[n].file);
 }
 
 /***************************************************************************/
@@ -1144,6 +1144,8 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     /* #scheme-init enables interrupts */
     TRAP(tc) = (ptr)most_positive_fixnum;
     DISABLECOUNT(tc) = Sfixnum(1);
+    COMPRESSFORMAT(tc) = FIX(COMPRESS_LZ4);
+    COMPRESSLEVEL(tc) = FIX(COMPRESS_MEDIUM);
 
     load(tc, i++, 1);
     S_boot_time = 0;

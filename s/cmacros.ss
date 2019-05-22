@@ -534,6 +534,15 @@
 
 (define-constant SEOF -1)
 
+(define-constant COMPRESS-GZIP 0)
+(define-constant COMPRESS-LZ4 1)
+(define-constant COMPRESS-FORMAT-BITS 3)
+
+(define-constant COMPRESS-LOW 0)
+(define-constant COMPRESS-MEDIUM 1)
+(define-constant COMPRESS-HIGH 2)
+(define-constant COMPRESS-MAX 3)
+
 (define-constant SICONV-DUNNO 0)
 (define-constant SICONV-INVALID 1)
 (define-constant SICONV-INCOMPLETE 2)
@@ -1404,6 +1413,9 @@
    [ptr suppress-primitive-inlining]
    [ptr default-record-equal-procedure]
    [ptr default-record-hash-procedure]
+   [ptr compress-format]
+   [ptr compress-level]
+   [void* lz4-out-buffer]
    [U64 instr-counter]
    [U64 alloc-counter]
    [ptr parameters]))

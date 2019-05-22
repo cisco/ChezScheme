@@ -2627,6 +2627,11 @@ When this parameter is \scheme{#t}, the default, \scheme{compile-file},
 \scheme{compile-program}, \scheme{compile-to-file},
 \scheme{compile-whole-program}, and \scheme{strip-fasl-file} compress
 the object files they create.
+The compression format and level are determined by the
+\index{\scheme{compress-format}}\scheme{compress-format}
+and
+\index{\scheme{compress-level}}\scheme{compress-level}
+parameters.
 
 
 %----------------------------------------------------------------------------
