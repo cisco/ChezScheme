@@ -1363,3 +1363,6 @@
     number.c, 5_3.ms, release_notes.stex
 - fixed typo in description of case macro
     csug/control.stex
+- fix signatures of $annotation-options, $fasl-strip-options,
+  $file-options, and $library-requirements-options
+    primdata.ss
