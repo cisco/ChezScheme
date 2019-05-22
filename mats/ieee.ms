@@ -88,7 +88,7 @@
    ; and should not be rounded up to a normalized number
    (equal?
      (number->string (string->number "2.2250738585072011e-308"))
-     "2.225073858507201e-308|52")
+     "2.225073858507201e-308")
    (equal?
      (decode-float (string->number "2.2250738585072011e-308"))
      '#(#b1111111111111111111111111111111111111111111111111111 -1074 1))
@@ -98,7 +98,7 @@
      '#(#b1111111111111111111111111111111111111111111111111111 -1074 1))
    (equal?
      (number->string (string->number "#b1.111111111111111111111111111111111111111111111111111011e-1111111111"))
-     "2.225073858507201e-308|52")
+     "2.225073858507201e-308")
    ; slightly higher number should be rounded up
    (equal?
      (number->string (string->number "2.2250738585072012e-308"))
