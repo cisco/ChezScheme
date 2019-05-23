@@ -1366,3 +1366,5 @@
 - fix signatures of $annotation-options, $fasl-strip-options,
   $file-options, and $library-requirements-options
     primdata.ss
+- small fix in relop-length to enable the optimization
+    cpnanopass.ss
