@@ -188,7 +188,7 @@
           [(_ prim)
            (let ()
              (define (f x)
-               (and
+               (list
                  (prim (#3%length x) 0)
                  (prim 0 (#3%length x))
                  (prim (#3%length x) 1)
@@ -204,7 +204,7 @@
                  (let ([n (length x)])
                    (equal?
                      (f x)
-                     (and
+                     (list
                        (prim n 0)
                        (prim 0 n)
                        (prim n 1)

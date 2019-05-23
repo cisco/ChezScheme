@@ -1368,3 +1368,5 @@
     primdata.ss
 - small fix in relop-length to enable the optimization
     cpnanopass.ss
+- make test for relop-length more sensitive
+    5_2.ms
