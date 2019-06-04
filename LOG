@@ -1370,3 +1370,5 @@
     cpnanopass.ss
 - make test for relop-length more sensitive
     5_2.ms
+- added support for Microsoft Visual Studio 2019 on Windows
+    BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
