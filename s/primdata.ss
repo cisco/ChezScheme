@@ -195,7 +195,7 @@
   (exact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
   (inexact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
   (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs])
-  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard safeongoodargs])
+  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard]) ; no safeongoodargs because it fails with +inf.0
   ((r6rs: <) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
   ((r6rs: <=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
   ((r6rs: =) [sig [(number number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
@@ -730,7 +730,7 @@
 
 (define-symbol-flags* ([libraries (rnrs r5rs)] [flags primitive proc])
   (exact->inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard ieee r5rs]) ; no safeongoodargs because it fails with +inf.0
   (quotient [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (remainder [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (modulo [sig [(number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
