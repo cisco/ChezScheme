@@ -85,7 +85,7 @@ static ptr bvstring(const char *s) {
 
 /* multiplier weights each character, h = n factors in the length */
 static iptr symhash(s) const char *s; {
-  iptr n, h;
+  uptr n, h;
 
   h = n = strlen(s);
   while (n--) h = h * multiplier + *s++;
