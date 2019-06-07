@@ -3885,8 +3885,8 @@
           (define RELOP< -2)
           (define RELOP<= -1)
           (define RELOP= 0)
-          (define RELOP>= 2)
-          (define RELOP> 1)
+          (define RELOP>= 1)
+          (define RELOP> 2)
           (define (mirror op) (fx- op))
           (define go
             (lambda (op e n)
@@ -3939,7 +3939,7 @@
           (define relop-length
             (case-lambda
               [(op e) (relop-length1 op e 0)]
-              [(op e1 e2) (or (relop-length2 op e1 e2) (relop-length2 (mirror op) e1 e2))])))
+              [(op e1 e2) (or (relop-length2 op e1 e2) (relop-length2 (mirror op) e2 e1))])))
         (define make-ftype-pointer-equal?
           (lambda (e1 e2)
             (bind #f (e1 e2)
