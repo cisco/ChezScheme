@@ -215,7 +215,7 @@
   (* [sig [(number ...) -> (number)]] [flags arith-op partial-folder safeongoodargs ieee r5rs])
   (- [sig [(number number ...) -> (number)]] [flags arith-op partial-folder safeongoodargs ieee r5rs])
   (/ [sig [(number number ...) -> (number)]] [flags arith-op partial-folder ieee r5rs])
-  (abs [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (abs [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (div-and-mod [sig [(number number) -> (number number)]] [flags discard])
   (div [sig [(number number) -> (number)]] [flags arith-op mifoldable discard])
   (mod [sig [(number number) -> (number)]] [flags arith-op mifoldable discard])
@@ -226,10 +226,10 @@
   (lcm [sig [(number ...) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (numerator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
   (denominator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
-  (floor [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (ceiling [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (truncate [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (round [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (floor [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (ceiling [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (truncate [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (round [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (rationalize [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
   (exp [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (log [sig [(number) (number number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
@@ -242,12 +242,12 @@
   (sqrt [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (exact-integer-sqrt [sig [(integer) -> (integer integer)]] [flags discard discard]) ; could be mifoldable if multiple values were handled
   (expt [sig [(number number) -> (number)]] [flags pure discard true cp02 ieee r5rs]) ; can take too long to fold
-  (make-rectangular [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (make-polar [sig [(number number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (real-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (imag-part [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (magnitude [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (angle [sig [(number) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (make-rectangular [sig [(real real) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (make-polar [sig [(real real) -> (number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (real-part [sig [(number) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (imag-part [sig [(number) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (magnitude [sig [(number) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
+  (angle [sig [(number) -> (real)]] [flags arith-op mifoldable discard ieee r5rs]) ; not safeongoodargs due to 0
   ((r6rs: number->string) [sig [(number) (number sub-ufixnum) (number sub-ufixnum sub-ufixnum) -> (string)]] [flags alloc ieee r5rs]) ; radix restricted to 2, 4, 8, 16
   ((r6rs: string->number) [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard ieee r5rs]) ; radix restricted to 2, 4, 8, 16
   (not [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs cp02])
