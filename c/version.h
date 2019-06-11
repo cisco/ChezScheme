@@ -152,6 +152,7 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+#define USE_OSSP_UUID
 #endif
 
 #if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb)
@@ -185,6 +186,8 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE const char **
 #define UNUSED __attribute__((__unused__))
+#define USE_NETBSD_UUID
+#define USE_MBRTOWC_L
 #endif
 
 #if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
@@ -281,6 +284,7 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+#define USE_OSSP_UUID
 #endif
 
 #if (machine_type == machine_type_i3osx || machine_type == machine_type_ti3osx || machine_type == machine_type_a6osx || machine_type == machine_type_ta6osx)

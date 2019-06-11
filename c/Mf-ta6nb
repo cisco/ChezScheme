@@ -36,6 +36,7 @@ ${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
 
 ${Scheme}: ${Kernel} ${Main}
 	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+	paxctl +m ${Scheme}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m64" ./configure --64)

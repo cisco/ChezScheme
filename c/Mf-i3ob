@@ -17,7 +17,7 @@ m = i3ob
 Cpu = I386
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
-mdclib = -L/usr/local/lib -liconv -lm $(LIBNCURSES)
+mdclib = -L/usr/local/lib -liconv -lm $(LIBNCURSES) -lossp-uuid
 C = ${CC} ${CPPFLAGS} -Wpointer-arith -Werror -O ${CFLAGS}
 o = o
 mdsrc = i3le.c
@@ -35,7 +35,7 @@ ${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
 	ld -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -Wl,--export-dynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+	$C -rdynamic -Wl,--export-dynamic -Wl,-zwxneeded -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m32" ./configure)
