@@ -1284,6 +1284,7 @@
   (eq-hashtable-ephemeron? [sig [(eq-hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (eq-hashtable-ref [sig [(eq-hashtable ptr ptr) -> (ptr)]] [flags discard])
   (eq-hashtable-set! [sig [(eq-hashtable ptr ptr) -> (void)]] [flags true])
+  (eq-hashtable-try-atomic-cell [sig [(eq-hashtable ptr ptr) -> (ptr)]] [flags])
   (eq-hashtable-update! [sig [(eq-hashtable ptr procedure ptr) -> (void)]] [flags])
   (eq-hashtable-weak? [sig [(eq-hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (eval [sig [(ptr) (ptr environment) -> (ptr ...)]] [flags])  ; not restricted to two arguments

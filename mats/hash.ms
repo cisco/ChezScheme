@@ -848,6 +848,17 @@
     (eq-hashtable-cell $wht 'a 'b 'c))
   (error? ; not a hashtable
     (eq-hashtable-cell '(hash . table) 'a 'b))
+ ; eq-hashtable-try-atomic-cell
+  (error? ; wrong argument count
+    (eq-hashtable-try-atomic-cell))
+  (error? ; wrong argument count
+    (eq-hashtable-try-atomic-cell $wht))
+  (error? ; wrong argument count
+    (eq-hashtable-try-atomic-cell $wht 'a))
+  (error? ; wrong argument count
+    (eq-hashtable-try-atomic-cell $wht 'a 'b 'c))
+  (error? ; not a hashtable
+    (eq-hashtable-try-atomic-cell '(hash . table) 'a 'b))
  ; eq-hashtable-weak?
   (error? ; wrong argument count
     (eq-hashtable-weak?))
@@ -1617,13 +1628,15 @@
           [wht (make-weak-eq-hashtable)]
           [eht (make-ephemeron-eq-hashtable)])
       (let ([ls2 (map (lambda (a1) (eq-hashtable-cell ht (car a1) (cdr a1))) ls1)]
+            [ls2-2 (map (lambda (a1) (eq-hashtable-try-atomic-cell ht (car a1) (cdr a1))) ls1)]
             [ls3 (map (lambda (a1) (hashtable-cell wht (car a1) (cdr a1))) ls1)]
             [ls4 (map (lambda (a1) (hashtable-cell eht (car a1) (cdr a1))) ls1)])
-        (unless (andmap (lambda (a1 a2 a3 a4)
+        (unless (andmap (lambda (a1 a2 a2-2 a3 a4)
                           (and (eq? (car a1) (car a2))
+                               (eq? a2 a2-2)
                                (eq? (car a2) (car a3))
                                (eq? (car a2) (car a4))))
-                        ls1 ls2 ls3 ls4)
+                        ls1 ls2 ls2-2 ls3 ls4)
           (errorf #f "keys are not eq"))
         (unless (andmap (lambda (a1 a2 a3 a4)
                           (and (eq? (cdr a1) (cdr a2))

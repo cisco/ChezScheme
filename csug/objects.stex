@@ -2255,6 +2255,23 @@ cell ;=> (#(a b c) . 3)
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{eq-hashtable-try-atomic-cell}{\categoryprocedure}{(eq-hashtable-try-atomic-cell \var{hashtable} \var{key} \var{default})}
+\returns a pair or \scheme{#f} (see below)
+\listlibraries
+\endentryheader
+
+Like \scheme{eq-hashtable-cell}, but safe for use from multiple
+threads at the same time as long as only this function is used on a
+particular hash table by any thread. To handle certain forms of
+contention, the result may be \scheme{#f}, in which case the operation
+might be retried. An even more significant constraint is that the hash
+table will not be resized interally as needed to provide constant-time
+behavior. Use \scheme{eq-hashtable-set!} or a similar operation from a
+single thread (e.g., during a collect-reqest handler) to allow the
+opportunity of resizing.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{eq-hashtable-delete!}{\categoryprocedure}{(eq-hashtable-delete! \var{hashtable} \var{key})}
 \returns unspecified
 \listlibraries

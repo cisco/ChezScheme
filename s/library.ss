@@ -1381,6 +1381,16 @@
 (let ()
   (include "hashtable-types.ss")
 
+  (define (ht-size-cas! ht old new)
+    (let-syntax ([size-field-pos
+                  (lambda (stx)
+                    (include "hashtable-types.ss")
+                    (let loop ([names (csv7:record-type-field-names (record-type-descriptor ht))])
+                      (if (eq? (car names) 'size)
+                          0
+                          (fx+ 1 (loop (cdr names))))))])
+      ($record-cas! ht (size-field-pos) old new)))
+
   ;;; eq hashtable operations must be compiled with
   ;;; generate-interrupt-trap #f and optimize-level 3
   ;;; so they can't be interrupted by a collection
@@ -1459,6 +1469,28 @@
             (vector-set! vec idx ($make-tlc h keyval b))
             (incr-size! h vec)
             keyval))))
+
+    ;; Note: never adjusts the vector size. Use `eq-hashtable-set!`
+    ;; with exclusive access (perhaps in a GC callback) to enable
+    ;; resizing.
+    (define-library-entry (eq-hashtable-try-atomic-cell h x v)
+      (let* ([vec (ht-vec h)]
+             [idx (fxlogand ($fxaddress x) (fx- (vector-length vec) 1))]
+             [b (vector-ref vec idx)])
+        (lookup-keyval x b
+          values
+          (let ([keyval (let ([subtype (eq-ht-subtype h)])
+                          (cond
+                           [(eq? subtype (constant eq-hashtable-subtype-normal)) (cons x v)]
+                           [(eq? subtype (constant eq-hashtable-subtype-weak)) (weak-cons x v)]
+                           [else (ephemeron-cons x v)]))])
+            (and (vector-cas! vec idx b ($make-tlc h keyval b))
+                 (let loop ()
+                   (let* ([old-size (ht-size h)]
+                          [size (fx+ old-size 1)])
+                     (or (ht-size-cas! h old-size size)
+                         (loop))))
+                 keyval)))))
   
     (let ()
       (define do-set!

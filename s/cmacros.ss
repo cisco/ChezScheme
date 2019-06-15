@@ -2663,6 +2663,7 @@
      (eq-hashtable-contains? #f 2 #f #t)
      (eq-hashtable-cell #f 3 #f #t)
      (eq-hashtable-set! #f 3 #f #t)
+     (eq-hashtable-try-atomic-cell #f 3 #f #t)
      (eq-hashtable-update! #f 4 #f #t)
      (eq-hashtable-delete! #f 2 #f #t)
      (symbol-hashtable-ref #f 3 #f #t)

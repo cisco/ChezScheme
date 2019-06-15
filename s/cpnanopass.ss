@@ -6014,6 +6014,8 @@
           [(e1 e2 e3 e4) (build-libcall #f src sexpr eq-hashtable-update! e1 e2 e3 e4)])
         (define-inline 3 eq-hashtable-cell
           [(e1 e2 e3) (build-libcall #f src sexpr eq-hashtable-cell e1 e2 e3)])
+        (define-inline 3 eq-hashtable-try-atomic-cell
+          [(e1 e2 e3) (build-libcall #f src sexpr eq-hashtable-try-atomic-cell e1 e2 e3)])
         (define-inline 3 eq-hashtable-delete!
           [(e1 e2) (build-libcall #f src sexpr eq-hashtable-delete! e1 e2)])
         (define-inline 3 symbol-hashtable-ref

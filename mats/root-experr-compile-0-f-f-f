@@ -7746,6 +7746,11 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count 
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht (quote a))".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht (quote a) (quote b) (quote c))".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-try-atomic-cell: (hash . table) is not an eq hashtable".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak?)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-weak?: (hash . table) is not an eq hashtable".

@@ -606,6 +606,12 @@ Documentation notes:
         ($oops 'eq-hashtable-cell "~s is not an eq hashtable" h))
       (#3%eq-hashtable-cell h x v)))
 
+  (set! eq-hashtable-try-atomic-cell
+    (lambda (h x v)
+      (unless (eq-ht? h)
+        ($oops 'eq-hashtable-try-atomic-cell "~s is not an eq hashtable" h))
+      (#3%eq-hashtable-try-atomic-cell h x v)))
+
   (set! eq-hashtable-delete!
     (lambda (h x)
       (unless (eq-ht? h)
