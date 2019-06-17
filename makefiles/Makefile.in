@@ -47,9 +47,9 @@ clean:
 	(cd $(workarea) && $(MAKE) clean)
 
 distclean:
-	(cd csug && if [ -e Makefile ] ; then make reallyreallyclean ; fi)
+	(cd csug && if [ -e Makefile ] ; then $(MAKE) reallyreallyclean ; fi)
 	rm -f csug/Makefile
-	(cd release_notes && if [ -e Makefile ] ; then make reallyreallyclean ; fi)
+	(cd release_notes && if [ -e Makefile ] ; then $(MAKE) reallyreallyclean ; fi)
 	rm -f release_notes/Makefile
 	rm -rf $(workarea)
 	rm -f Makefile
