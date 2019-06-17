@@ -49,8 +49,6 @@ off64_t lseek64(int,off64_t,int);
 
 #if defined(__GNUC__) || defined(__clang__)
 #define NORETURN __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define NORETURN __declspec(noreturn)
 #else
 #define NORETURN
 #endif /* defined(__GNUC__) || defined(__clang__) */
