@@ -1324,7 +1324,7 @@
       [(x)
        (type-case x
          [(flonum?)
-          (if (negated-flonum? x)
+          (if (fl< x 0.0)
               (fl-make-rectangular ($fllog (fl- x)) pi)
               ($fllog x))]
          [($inexactnum?) (cfllog x)]
@@ -1527,7 +1527,7 @@
    (lambda (x)
       (type-case x
          [(flonum?)
-          (if (and (negated-flonum? x) (not ($nan? x)))
+          (if (fl< x 0.0)
               (fl-make-rectangular 0.0 ($flsqrt (flabs x)))
               ($flsqrt x))]
          [($inexactnum?) (cflsqrt x)]

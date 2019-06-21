@@ -413,7 +413,7 @@
 
 (mat sqrt
    ; from Kahan
-   (== (sqrt -0.0) +0.0+0.0i)
+   (== (sqrt -0.0) -0.0) ; the grounds that (negative? -0.0) => #f
    (== (sqrt -4.0) +0.0+2.0i)
    (== (sqrt -inf.0) +0.0+inf.0i)
    (== (sqrt 0.0+inf.0i) +inf.0+inf.0i)
@@ -505,7 +505,7 @@
    (== (log 1.0) 0.0)
    (== (log +inf.0) +inf.0)
 
-   (== (log -0.0) (make-rectangular -inf.0 +pi))
+   (== (log -0.0) -inf.0) ; on the grounds that (negative? -0.0) => #f
    (== (log -1.0) (make-rectangular 0.0 +pi))
    (== (log -inf.0) (make-rectangular +inf.0 +pi))
 
@@ -528,7 +528,7 @@
    (== (log 1.0) 0.0)
    (== (log +inf.0) +inf.0)
 
-   (== (log -0.0) (make-rectangular -inf.0 +pi))
+   (== (log -0.0) -inf.0)  ; on the grounds that (negative? -0.0) => #f
    (== (log -1.0) (make-rectangular 0.0 +pi))
    (== (log -inf.0) (make-rectangular +inf.0 +pi))
 
