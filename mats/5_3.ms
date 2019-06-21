@@ -2186,6 +2186,8 @@
     (fl= (round 0.5000000000000001) 1.0)
     (eqv? (round 0.0) 0.0)
     (eqv? (round -0.0) -0.0)
+    (eqv? (round -0.5) -0.0)
+    (eqv? (round -0.6) -1.0)
  )
 
 (mat abs

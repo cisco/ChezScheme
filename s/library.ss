@@ -630,9 +630,11 @@
           (if (fl< x threshold+)
               (fl- (fl+ x threshold+) threshold+)
               x)
-          (if (fl> x threshold-)
-              (fl- (fl+ x threshold-) threshold-)
-              x))))
+          (if (fl>= x -0.5)
+              -0.0 ; keep negative
+              (if (fl> x threshold-)
+                  (fl- (fl+ x threshold-) threshold-)
+                  x)))))
 
 ;;; The generic comparison entries assume the fixnum case is inlined.
 

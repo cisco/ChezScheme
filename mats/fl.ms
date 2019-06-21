@@ -654,6 +654,11 @@
     (fl= (flround 2.5) 2.0)
     (fl= (flround 0.5000000000000000) 0.0)
     (fl= (flround 0.5000000000000001) 1.0)
+    (eqv? (flround 0.0) 0.0)
+    (eqv? (flround -0.0) -0.0)
+    (eqv? (flround 0.5) 0.0)
+    (eqv? (flround -0.5) -0.0)
+    (fl= (flround -0.5000000000000001) -1.0)
  )
 
 (mat flinteger?
