@@ -2242,7 +2242,7 @@
 ***************
 *** 2175,2204 ****
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
-  bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e100".
+  bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e+100".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".
 ! bytevector.mo:Expected error in mat bytevector-length: "incorrect argument count in call (bytevector-length)".
 ! bytevector.mo:Expected error in mat bytevector-length: "incorrect argument count in call (bytevector-length #vu8() #vu8())".
@@ -2273,7 +2273,7 @@
   bytevector.mo:Expected error in mat bytevector-s8-set!: "bytevector-s8-set!: 3 is not a valid index for #vu8(3 4 5)".
 --- 2175,2204 ----
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
-  bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e100".
+  bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e+100".
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".
 ! bytevector.mo:Expected error in mat bytevector-length: "incorrect number of arguments 0 to #<procedure bytevector-length>".
 ! bytevector.mo:Expected error in mat bytevector-length: "incorrect number of arguments 2 to #<procedure bytevector-length>".
@@ -3184,7 +3184,7 @@
 *** 2892,2901 ****
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness get-real".
-  bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e23".
+  bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e+23".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref)".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref $v1)".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref $v1 0)".
@@ -3195,7 +3195,7 @@
 --- 2892,2901 ----
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness get-real".
-  bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e23".
+  bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e+23".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect number of arguments 0 to #<procedure bytevector-u64-ref>".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect number of arguments 1 to #<procedure bytevector-u64-ref>".
 ! bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect number of arguments 2 to #<procedure bytevector-u64-ref>".
@@ -3207,7 +3207,7 @@
 *** 2911,2921 ****
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness get-real".
-  bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e23".
+  bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e+23".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set!)".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1)".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1 0)".
@@ -3219,7 +3219,7 @@
 --- 2911,2921 ----
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness (quote bonkers)".
   bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness get-real".
-  bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e23".
+  bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e+23".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect number of arguments 0 to #<procedure bytevector-s64-set!>".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect number of arguments 1 to #<procedure bytevector-s64-set!>".
 ! bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect number of arguments 2 to #<procedure bytevector-s64-set!>".

@@ -709,12 +709,12 @@
  )
 
 (mat fp-output
-  (equal? (number->string 1e23) "1e23")
+  (equal? (number->string 1e23) "1e+23")
   (equal? (number->string 4.450147717014403e-308) "4.450147717014403e-308")
   (equal? (number->string 1.1665795231290236e-302) "1.1665795231290236e-302")
  ; fp printing algorithm always rounds up on ties
   (equal? (number->string 3.6954879760742188e-6) "3.6954879760742188e-6")
-  (equal? (number->string 5.629499534213123e14) "5.629499534213123e14")
+  (equal? (number->string 5.629499534213123e14) "5.629499534213123e+14")
  )
 
 (mat string->number

@@ -2143,7 +2143,7 @@ bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 256".
 bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -129".
 bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 500".
 bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
-bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e100".
+bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 1e+100".
 bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".
 bytevector.mo:Expected error in mat bytevector-length: "incorrect argument count in call (bytevector-length)".
 bytevector.mo:Expected error in mat bytevector-length: "incorrect argument count in call (bytevector-length #vu8() #vu8())".
@@ -2861,7 +2861,7 @@ bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: inv
 bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness (quote bonkers)".
 bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness get-real".
-bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e23".
+bytevector.mo:Expected error in mat bytevector-s64-ref: "bytevector-s64-ref: unrecognized endianness 1e+23".
 bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref)".
 bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref $v1)".
 bytevector.mo:Expected error in mat bytevector-u64-ref: "incorrect argument count in call (bytevector-u64-ref $v1 0)".
@@ -2880,7 +2880,7 @@ bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: inv
 bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: invalid index 4.0 for bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness (quote bonkers)".
 bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness get-real".
-bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e23".
+bytevector.mo:Expected error in mat bytevector-u64-ref: "bytevector-u64-ref: unrecognized endianness 1e+23".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set!)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1)".
 bytevector.mo:Expected error in mat bytevector-s64-set!: "incorrect argument count in call (bytevector-s64-set! $v1 0)".
@@ -8766,7 +8766,7 @@ fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments -4097 
 fx.mo:Expected error in mat fxsll: "fxsll: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: a is not a fixnum".
-fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: 1e23 is not a fixnum".
+fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: 1e+23 is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: <int> is not a fixnum".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: invalid shift count -1".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments 1 and <int>".

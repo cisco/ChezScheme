@@ -1008,6 +1008,7 @@ floating point returns with (1 0 -1 ...).
                         (write-char (flonum-digit->char u) p)
                         (loop (cdr s))))))
             (write-char #\e p)
+            (when (fxpositive? e) (write-char #\+ p))
             (wrfixnum e r #t p)))
 
       (define display-precision
