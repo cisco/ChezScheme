@@ -31,10 +31,13 @@ mdobj = arm32le.o
 include Mf-base
 
 ${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	ld -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+	${LD} -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
-${Scheme}: ${Kernel} ${Main}
-	$C -rdynamic -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
+${Scheme}: ${KernelLib} ${zlibDep} ${LZ4Dep} ${Main}
+	$C -rdynamic -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; ./configure)

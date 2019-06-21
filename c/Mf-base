@@ -19,6 +19,7 @@ Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot
 Kernel=../boot/$m/kernel.$o
+KernelLib=../boot/$m/libkernel.a
 Main=../boot/$m/main.$o
 Scheme=../bin/$m/scheme
 

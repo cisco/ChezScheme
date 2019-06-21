@@ -41,14 +41,17 @@ make.bat: vs.bat
 
 C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
 
-${Scheme}${cross:t=}: ${Kernel} ${Main}
-	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
+${Scheme}${cross:t=}: ${Main} ${KernelLib} ${zlibDep} ${LZ4Dep}
+	$C -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
 
 .c.$o:
 	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
 
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
 ${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	$(LD) -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+	${LD} -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ../zlib/configure.log:
 	echo "all:" >> ../zlib/Makefile

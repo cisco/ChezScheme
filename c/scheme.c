@@ -43,10 +43,15 @@ static void main_init PROTO((void));
 static void idiot_checks PROTO((void));
 static INT run_script PROTO((const char *who, const char *scriptfile, INT argc, const char *argv[], IBOOL programp));
 
+extern void scheme_include(void);
+  
 static void main_init() {
     ptr tc = get_thread_context();
     ptr p;
     INT i;
+
+  /* create dependency for linker */
+    scheme_statics();
 
   /* force thread inline allocation to go through find_room until ready */
     AP(tc) = (ptr)0;

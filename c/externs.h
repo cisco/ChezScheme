@@ -418,3 +418,6 @@ extern char *S_windows_getcwd(char *buffer, int maxlen);
 /* expeditor.c */
 extern void S_expeditor_init PROTO((void));
 #endif /* FEATURE_EXPEDITOR */
+
+/* statics.c */
+extern void scheme_statics();
