@@ -45,6 +45,16 @@ off64_t lseek64(int,off64_t,int);
 #include <setjmp.h>
 #endif
 
+#if !defined(NORETURN)
+# if defined(__GNUC__) || defined(__clang__)
+#  define NORETURN __attribute__((noreturn))
+# elif defined(_MSC_VER)
+#  define NORETURN __declspec(noreturn)
+# else
+#  define NORETURN
+# endif /* defined(__GNUC__) || defined(__clang__) */
+#endif /* !defined(NORETURN) */
+
 /* external procedure declarations */
 /* prototypes gen. by ProtoGen Version 0.31 (Haydn Huntley) 1/18/93 */
 
@@ -305,13 +315,13 @@ extern void S_handle_overflood PROTO((void));
 extern void S_handle_apply_overflood PROTO((void));
 extern void S_overflow PROTO((ptr tc, iptr frame_request));
 extern void S_error_reset PROTO((const char *s));
-extern void S_error_abort PROTO((const char *s));
-extern void S_abnormal_exit PROTO((void));
+extern NORETURN void S_error_abort PROTO((const char *s));
+extern NORETURN void S_abnormal_exit PROTO((void));
 extern void S_error PROTO((const char *who, const char *s));
 extern void S_error1 PROTO((const char *who, const char *s, ptr x));
 extern void S_error2 PROTO((const char *who, const char *s, ptr x, ptr y));
 extern void S_error3 PROTO((const char *who, const char *s, ptr x, ptr y, ptr z));
-extern void S_boot_error PROTO((const ptr who, ptr s, ptr args));
+extern NORETURN void S_boot_error PROTO((const ptr who, ptr s, ptr args));
 extern void S_handle_docall_error PROTO((void));
 extern void S_handle_arg_error PROTO((void));
 extern void S_handle_nonprocedure_symbol PROTO((void));
