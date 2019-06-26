@@ -2983,13 +2983,7 @@
                          (let ([th (lambda () (if (output-port? x) (construct-proc (port-output-buffer x) next-proc) next-proc))])
                            (if (input-port? x) (construct-proc (port-input-buffer x) (th)) (th))))]
                       [(thread? x)
-                       (let ([tc ($object-ref 'scheme-object x (constant thread-tc-disp))])
-                         (if (eqv? tc 0)
-                             next-proc
-                             (let f ([disp-list tc-ptr-offsets])
-                               (if (null? disp-list)
-                                   next-proc
-                                   (construct-proc ($object-ref 'scheme-object tc (car disp-list)) (f (cdr tc-ptr-offsets)))))))]
+                       (construct-proc (thread->objects x) (thread->stack-objects x) next-proc)]
                       [($tlc? x) (construct-proc ($tlc-ht x) ($tlc-keyval x) ($tlc-next x) next-proc)]
                       [else ($oops who "missing case for ~s" x)])])
               ; check if this node is what we're looking for
