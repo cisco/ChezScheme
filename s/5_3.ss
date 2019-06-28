@@ -1519,7 +1519,16 @@
                   0
                   ($impoops 'expt "undefined for values ~s and ~s" x y))]
              [(eq? x 1) 1]
-             [(floatable? y) (expt x (inexact y))]
+             [(and (floatable? y)
+                   (let ([y (inexact y)])
+                     ;; Don't use this case if `(inexact y)` loses
+                     ;; precision and becomes an an integer, in which
+                     ;; case the result would be real (but should be
+                     ;; non-real complex)
+                     (and (not (and (flonum? y)
+                                    ($flinteger? y)))
+                          y)))
+              => (lambda (y) (expt x y))]
              [else (exp (* y (log x)))])]
          [else (nonnumber-error 'expt y)])))
 

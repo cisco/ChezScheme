@@ -2477,6 +2477,10 @@
     (cfl~= (expt 7.7-11.11i -2.0) (* (/ 1.0 7.7-11.11i) (/ 1.0 7.7-11.11i)))
     (~= (expt 11 1/2) (sqrt 11))
     (fl~= (expt 1.5e-20 0.5) (sqrt 1.5e-20))
+    (cfl~= -0.0+0.0i (expt -0.1 1000000000000001/3)) ; inexact approx of second arg is non-integer
+    (eqv? +inf.0+inf.0i (expt -0.1 -1000000000000001/3)) ; inexact approx of second arg is non-integer
+    (cfl~= -0.0+0.0i (expt -0.1 100000000000000000001/3)) ;  inexact approx of second arg is integer
+    (eqv? -inf.0-inf.0i (expt -0.1 -100000000000000000001/3)) ; inexact approx of second arg is integer
    ; test cp0 handling of expt
     (begin
       (define $probably-should-not-use
