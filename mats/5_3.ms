@@ -2816,6 +2816,10 @@
     (let ([x 0.5+1.5i]) (cfl~= (asin (sin x)) x))
     (let ([x 0.5-1.5i]) (cfl~= (asin (sin x)) x))
     (let ([z 2.2-1.1i]) (cfl~= (asin z) (/ (asinh (* +1.0i z)) +1.0i)))
+    (fl~= 1.5707963267948966 (real-part (asin +inf.0)))
+    (eqv? -inf.0 (imag-part (asin +inf.0)))
+    (fl~= -1.5707963267948966 (real-part (asin -inf.0)))
+    (eqv? +inf.0 (imag-part (asin -inf.0)))
  )
 
 (mat acos
@@ -2834,6 +2838,8 @@
                              (* +1.0i (sqrt (/ (- 1 z) 2))))))
                 +1.0i)))
     (let ([x 10+10.0i]) (cfl~= (+ (asin x) (acos x)) (/ pi 2)))
+    (fl~= 1.5707963267948966 (real-part (acos -inf.0i)))
+    (eqv? +inf.0 (imag-part (acos -inf.0i)))
  )
 
 (mat atan

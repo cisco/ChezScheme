@@ -468,7 +468,7 @@
             [z+ (cflsqrt (cfl+ 1.0 z))])
          (let ([a (cfl-real-part z-)] [b (cfl-imag-part z-)]
                [c (cfl-real-part z+)] [d (cfl-imag-part z+)])
-            (fl-make-rectangular (fl* 2.0 ($flatan (fl/ a c)))
+            (fl-make-rectangular (fl* 2.0 (flatan2 a c))
                                  (flasinh (fl- (fl* b c) (fl* a d))))))))
 
 (define cflasin
@@ -484,7 +484,9 @@
          (let ([a (cfl-real-part z-)] [b (cfl-imag-part z-)]
                [c (cfl-real-part z+)] [d (cfl-imag-part z+)])
             (fl-make-rectangular
-               ($flatan (fl/ (cfl-real-part z) (fl- (fl* a c) (fl* b d))))
+               (flatan2 (cfl-real-part z) (if (flonum? z)
+                                              0.0
+                                              (fl- (fl* a c) (fl* b d))))
                (flasinh (fl- (fl* a d) (fl* b c))))))))
 
 (define cflasinh
