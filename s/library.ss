@@ -232,9 +232,37 @@
        ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
        (let ([a ($inexactnum-real-part x)] [b ($inexactnum-imag-part x)]
              [c ($inexactnum-real-part y)] [d ($inexactnum-imag-part y)])
-          (let ([t (fl+ (fl* c c) (fl* d d))])
+         ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
+         (define (simpler-divide a b c d)
+           ;; Direct calculuation does not work as well for complex numbers with
+           ;; large parts, such as `(/ 1e+300+1e+300i 4e+300+4e+300i)`, but it
+           ;; works better for small parts, as in `(/ 0.0+0.0i 1+1e-320i)`
+           (let ([t (fl+ (fl* c c) (fl* d d))])
              (fl-make-rectangular (fl/ (fl+ (fl* a c) (fl* b d)) t)
-                                  (fl/ (fl- (fl* b c) (fl* a d)) t))))]))
+                                  (fl/ (fl- (fl* b c) (fl* a d)) t))))
+         ;; Let r = c/d or d/c, depending on which is larger
+         (cond
+          [(fl< (flabs c) (flabs d))
+           (let ([r (fl/ d c)])
+             (if (infinity? r)
+                 ;; Too large; try form that works better with small c or d
+                 (simpler-divide a b c d)
+                 ;; a+bi / c+di => 
+                 (let ([x (fl+ c (fl* d r))]) ; x = c+dd/c = (cc+dd)/c
+                   ;; (a+br)/x + ((b-ar)/x)i = (a+bd/c)c/(cc+dd) + ((b-ad/c)c/(cc+dd))i
+                   ;; = (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
+                   (fl-make-rectangular (fl/ (fl+ a (fl* b r)) x)
+                                        (fl/ (fl- b (fl* a r)) x)))))]
+          [else
+           (let ([r (fl/ c d)])
+             (if (infinity? r)
+                 ;; Too large; try form that works better with small c or d
+                 (simpler-divide a b c d)
+                 (let ([x (fl+ d (fl* c r))]) ; x = d+cc/d = (cc+dd)/d
+                   ;; (b+ar)/x + ((br-a)/x)i = (b+ac/d)d/(cc+dd) + ((bc/d-a)d/(cc+dd))i
+                   ;; = (bd+ac)/(cc+dd) + ((bc-ad)/(cc+dd))i
+                   (fl-make-rectangular (fl/ (fl+ b (fl* a r)) x)
+                                        (fl/ (fl- (fl* b r) a) x)))))]))]))
 
 (let ()
   (define char-oops
