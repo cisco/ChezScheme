@@ -8058,9 +8058,9 @@
                         (build-dirty-store e-p ibuffer-disp e-b))
                    ,(bind #t ([e-length (if (eq? port-type 'textual)
                                             (translate
-                                              (%inline logxor
+                                              (%inline logand
                                                  ,(%mref ,e-b ,(constant string-type-disp))
-                                                 ,(%constant type-string))
+                                                 (immediate ,(fx- (expt 2 (constant string-length-offset)))))
                                               (constant string-length-offset)
                                               (constant string-char-offset))
                                             (%inline srl

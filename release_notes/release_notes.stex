@@ -1749,6 +1749,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{String ports form immutable strings (9.5.4)}
+
+A bug that miscalculated the buffer size for
+\scheme{open-string-input-port} given an immutable string has been
+fixed.
+
 \subsection{Multiplying $-2^{30}$ with itself on 64-bit platforms (9.5.3)}
 
 A bug that produced the wrong sign when multiplying $-2^{30}$ with
