@@ -1372,3 +1372,5 @@
     5_2.ms
 - added support for Microsoft Visual Studio 2019 on Windows
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
+- fixed open-string-input-port on immutable strings
+    cpnanopass.ss, io.ms, release_notes.stex
