@@ -105,17 +105,21 @@
                       (let ([c (get-u8 p)])
                         (cons (integer->char c) (f)))))))))
           "a b c d e")
-  (equal? (call-with-port
-           (open-file-input-port "testfile.ss")
-           (lambda (p)
-             (list->string
-              (let f ()
-                (let ([c (lookahead-u8 p)])
-                  (if (eof-object? c)
-                      '()
-                      (let ([c (get-u8 p)])
-                        (cons (integer->char c) (f)))))))))
-          "a b c d e")
+  (andmap (lambda (p)
+            (equal? (call-with-port
+                     p
+                     (lambda (p)
+                       (list->string
+                        (let f ()
+                          (let ([c (lookahead-u8 p)])
+                            (if (eof-object? c)
+                                '()
+                                (let ([c (get-u8 p)])
+                                  (cons (integer->char c) (f)))))))))
+                    "a b c d e"))
+          (list (open-file-input-port "testfile.ss")
+                (open-bytevector-input-port '#vu8(97 32 98 32 99 32 100 32 101))
+                (open-bytevector-input-port (bytevector->immutable-bytevector '#vu8(97 32 98 32 99 32 100 32 101)))))
   ; test various errors related to input ports
   (begin (set! ip (open-file-input-port "testfile.ss"))
          (and (port? ip) (input-port? ip)))
@@ -1292,21 +1296,24 @@
     (define $bop (let-values ([(op get) (open-bytevector-output-port)]) (set-binary-port-output-buffer! op #vu8(1 2 3 4 5)) op))
     #t)
   ; textual input
-  (equal?
-    (let ([ip (open-string-input-port "hello")])
-      (let ([buffer0 (textual-port-input-buffer ip)]
-            [index0 (textual-port-input-index ip)]
-            [size0 (textual-port-input-size ip)]
-            [count0 (textual-port-input-count ip)])
-        (read-char ip)
-        (list
-          (list buffer0 index0 size0 count0)
-          (list
-            (textual-port-input-buffer ip)
-            (textual-port-input-index ip)
-            (textual-port-input-size ip)
-            (textual-port-input-count ip)))))
-    '(("hello" 0 5 5) ("hello" 1 5 4)))
+  (andmap (lambda (str)
+            (equal?
+             (let ([ip (open-string-input-port str)])
+               (let ([buffer0 (textual-port-input-buffer ip)]
+                     [index0 (textual-port-input-index ip)]
+                     [size0 (textual-port-input-size ip)]
+                     [count0 (textual-port-input-count ip)])
+                 (read-char ip)
+                 (list
+                  (list buffer0 index0 size0 count0)
+                  (list
+                   (textual-port-input-buffer ip)
+                   (textual-port-input-index ip)
+                   (textual-port-input-size ip)
+                   (textual-port-input-count ip)))))
+             '(("hello" 0 5 5) ("hello" 1 5 4))))
+          (list "hello"
+                (string->immutable-string "hello")))
   (equal?
     (let ([ip (open-string-input-port "hello")])
       (let ([buffer0 (textual-port-input-buffer ip)]
