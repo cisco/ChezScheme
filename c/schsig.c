@@ -21,7 +21,7 @@
 static void S_promote_to_multishot PROTO((ptr k));
 static void split PROTO((ptr k, ptr *s));
 static void reset_scheme PROTO((void));
-static void do_error PROTO((iptr type, const char *who, const char *s, ptr args));
+static NORETURN void do_error PROTO((iptr type, const char *who, const char *s, ptr args));
 static void handle_call_error PROTO((ptr tc, iptr type, ptr x));
 static void init_signal_handlers PROTO((void));
 static void keyboard_interrupt PROTO((ptr tc));

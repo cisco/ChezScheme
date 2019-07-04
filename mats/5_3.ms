@@ -2401,7 +2401,7 @@
     (error? (expt 0 -1))
     (error? (expt 0 +1i))
     (eqv? (expt 2+2i 4) -64)
-    (eqv? (expt 10.0 -20) 1e-20)
+    (fl~= (expt 10.0 -20) 1e-20)
     (eqv? (expt 2 10) 1024)
     (eqv? (expt 0 0) 1)
     (eqv? (expt 1.0 0) 1)

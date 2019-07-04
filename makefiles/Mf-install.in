@@ -51,6 +51,13 @@ InstallSchemeName=scheme
 InstallPetiteName=petite
 InstallScriptName=scheme-script
 
+# Whether to install "kernel.o" or "libkernel.a"
+InstallKernelTarget=installkernellib
+
+# Maybe install libz.a and liblz4.a by setting to "installzlib" and "installliz4"
+InstallZlibTarget=
+InstallLZ4Target=
+
 ###############################################################################
 #                 no changes should be needed below this point                #
 ###############################################################################
@@ -74,7 +81,7 @@ PetitePath=${Bin}/${InstallPetiteName}
 SchemePath=${Bin}/${InstallSchemeName}
 SchemeScriptPath=${Bin}/${InstallScriptName}
 
-install: bininstall libbininstall maninstall liblibinstall
+install: bininstall libbininstall maninstall liblibinstall ${InstallKernelTarget}
 
 uninstall:
 	rm -rf ${Lib}
@@ -116,10 +123,21 @@ libbininstall: ${LibBin}
           ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallSchemeName}.boot;\
         fi
 	ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallScriptName}.boot;
-	$I -m 444 ${Include}/kernel.o ${LibBin}
 	$I -m 444 ${Include}/main.o ${LibBin}
 	$I -m 444 ${Include}/scheme.h ${LibBin}
 	$I -m 444 ${Revision} ${LibBin}/revision
+
+installkernelobj: ${LibBin}
+	$I -m 444 ${Include}/kernel.o ${LibBin}
+
+installkernellib: ${LibBin} ${InstallZlibTarget} ${InstallLZ4Target}
+	$I -m 444 ${Include}/libkernel.a ${LibBin}
+
+installzlib: ${LibBin}
+	$I -m 444 zlib/libz.a ${LibBin}
+
+installlz4: ${LibBin}
+	$I -m 444 lz4/lib/liblz4.a ${LibBin}
 
 maninstall: scheme.1 petite.1 ${Man}
 	$I -m 444 scheme.1 ${Man}/${InstallSchemeName}.1

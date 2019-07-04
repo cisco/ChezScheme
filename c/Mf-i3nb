@@ -31,14 +31,15 @@ mdobj = i3le.o
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
-${Scheme}: ${KernelLib} ${zlibDep} ${LZ4Dep} ${Main}
-	$C -rdynamic -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS}
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
+	paxctl +m ${Scheme}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m32" ./configure)

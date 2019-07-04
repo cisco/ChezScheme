@@ -170,6 +170,7 @@ typedef int tputsputcchar;
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
+struct timespec;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
 typedef int tputsputcchar;
@@ -206,6 +207,7 @@ typedef int tputsputcchar;
 # define PATH_MAX _MAX_PATH
 #endif
 typedef char *memcpy_t;
+struct timespec;
 #ifndef __MINGW32__
 # define _setjmp setjmp
 # define _longjmp longjmp
@@ -247,6 +249,7 @@ typedef char *memcpy_t;
 #define NSECCTIME(sb) 0
 #define NSECMTIME(sb) 0
 #define ICONV_INBUF_TYPE char **
+struct timespec;
 #define UNUSED
 #if defined(__MINGW32__) && (machine_type == machine_type_ti3nt || machine_type == machine_type_i3nt)
 #define time_t __time64_t
@@ -268,6 +271,7 @@ typedef char *memcpy_t;
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
+struct timespec;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
 typedef int tputsputcchar;

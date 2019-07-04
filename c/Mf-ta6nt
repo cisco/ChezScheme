@@ -36,13 +36,13 @@ make.bat: vs.bat
 	echo 'vs.bat amd64 && nmake /f Makefile.$m /nologo %*' >> $@
 	chmod +x $@
 
-# --------------------------------------------------
-# For cross-compilation, triggered by setting cross=t
+# -------------------------------------------------------
+# For cross-compilation, triggered by setting cross=t o=o
 
 C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
 
-${Scheme}${cross:t=}: ${Main} ${KernelLib} ${zlibDep} ${LZ4Dep}
-	$C -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
+${Scheme}${cross:t=}: ${Main} ${Kernel} ${KernelLinkDeps}
+	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
 
 .c.$o:
 	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
@@ -50,8 +50,8 @@ ${Scheme}${cross:t=}: ${Main} ${KernelLib} ${zlibDep} ${LZ4Dep}
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ../zlib/configure.log:
 	echo "all:" >> ../zlib/Makefile

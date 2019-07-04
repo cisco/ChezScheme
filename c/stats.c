@@ -253,7 +253,8 @@ void S_gettime(INT typeno, struct timespec *tp) {
 #ifdef CLOCK_THREAD_CPUTIME_ID
       if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, tp) == 0) return;
 #endif
-     /* fall through to utc case in case no thread timer */
+     /* fall through */
+     /* to utc case in case no thread timer */
     case time_process:
 #ifdef CLOCK_PROCESS_CPUTIME_ID
       if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, tp) == 0) return;
@@ -283,7 +284,8 @@ void S_gettime(INT typeno, struct timespec *tp) {
 #ifdef CLOCK_HIGHRES
       if (clock_gettime(CLOCK_HIGHRES, tp) == 0) return;
 #endif
-     /* fall through to utc case in case no monotonic timer */
+     /* fall through */
+     /* to utc case in case no monotonic timer */
     case time_utc:
 #ifdef CLOCK_REALTIME_HR
       if (clock_gettime(CLOCK_REALTIME_HR, tp) == 0) return;

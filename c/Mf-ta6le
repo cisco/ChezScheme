@@ -16,7 +16,7 @@
 m = ta6le
 Cpu = X86_64
 
-mdclib = -lm -ldl $(LIBNCURSES) -lpthread -lrt -luuid
+mdclib = -lm -ldl ${ncursesLib} -lpthread -lrt -luuid
 C = ${CC} ${CPPFLAGS} -m64 -msse2 -Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough -O2 -D_REENTRANT -pthread ${CFLAGS}
 o = o
 mdsrc = i3le.c
@@ -30,14 +30,14 @@ mdobj = i3le.o
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -melf_x86_64 -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -melf_x86_64 -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
-${Scheme}: ${KernelLib} ${zlibDep} ${LZ4Dep} ${Main}
-	$C -rdynamic -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS}
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m64" ./configure --64)

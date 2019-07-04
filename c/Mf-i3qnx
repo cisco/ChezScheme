@@ -16,7 +16,7 @@
 m = i3qnx
 Cpu = I386
 
-mdclib = -lm /usr/local/lib/libiconv.so -lsocket $(LIBNCURSES)
+mdclib = -lm /usr/local/lib/libiconv.so -lsocket ${ncursesLib}
 C = qcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -N2048K ${CFLAGS}
 o = o
 mdsrc = i3le.c
@@ -31,14 +31,14 @@ LocalInclude = /usr/local/include
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -mi386nto -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -mi386nto -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
-${Scheme}: ${KernelLib} ${zlibDep} ${LZ4Dep} ${Main}
-	$C -Wl,--export-dynamic -o ${Scheme} ${Main} ${KernelLib} ${mdclib} ${zlibLib} ${LZ4Lib} ${LDFLAGS}
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -Wl,--export-dynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m32" ./configure)
