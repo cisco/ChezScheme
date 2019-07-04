@@ -247,6 +247,12 @@ while [ $# != 0 ] ; do
           installlz4target=installlz4
       fi
       ;;
+    --kernelobj)
+      Kernel=KernelO
+      installkerneltarget=installkernelobj
+      installzlibtarget=
+      installlz4target=
+      ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
       ;;
@@ -353,6 +359,7 @@ if [ "$help" = "yes" ]; then
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --libkernel                       build libkernel.a instead of kernel.o"
+  echo "  --kernelobj                       build kernel.o (the default)"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
