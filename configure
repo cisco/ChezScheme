@@ -56,10 +56,10 @@ zlibLib=../zlib/libz.a
 LZ4Lib=../lz4/lib/liblz4.a
 zlibHeaderDep="../zlib/zconf.h ../zlib/zlib.h"
 LZ4HeaderDep="../lz4/lib/lz4.h ../lz4/lib/lz4frame.h"
-Kernel=KernelO
-installkerneltarget=installkernelobj
-installzlibtarget=
-installlz4target=
+Kernel=KernelLib
+installkerneltarget=installkernellib
+installzlibtarget=installzlib
+installlz4target=installlz4
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -354,8 +354,8 @@ if [ "$help" = "yes" ]; then
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
-  echo "  --libkernel                       build libkernel.a instead of kernel.o"
-  echo "  --kernelobj                       build kernel.o (the default)"
+  echo "  --libkernel                       build libkernel.a (the default)"
+  echo "  --kernelobj                       build kernel.o instead of libkernel.a"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
