@@ -1385,3 +1385,5 @@
     s/update-revision, BUILDING
 - export `ee-backward-delete-sexp` binding in the expression-editor module.
     expeditor.ss
+- remove dead stores in files
+    c/compress-io.c, c/new-io.c
