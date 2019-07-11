@@ -1374,3 +1374,4 @@
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
 - fixed open-string-input-port on immutable strings
     cpnanopass.ss, io.ms, release_notes.stex
+- use setenv rather than putenv on non WIN32 environments
