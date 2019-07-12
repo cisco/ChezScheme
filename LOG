@@ -1385,3 +1385,5 @@
     s/update-revision, BUILDING
 - export `ee-backward-delete-sexp` binding in the expression-editor module.
     expeditor.ss
+- prevent access before start of array
+    c/scheme.c
