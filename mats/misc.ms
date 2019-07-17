@@ -5303,6 +5303,7 @@
           '(1 2 3))
   (error? ((make-arity-wrapper-procedure (lambda args args) 1 #f) 1 2 3))
   (error? ((make-arity-wrapper-procedure (lambda args args) (expt 2 100) #f) 1 2 3))
+  (equal? (make-list 100 'ok) (apply (make-arity-wrapper-procedure (lambda args args) -1 #f) (make-list 100 'ok)))
 
   (equal? (procedure-arity-mask (make-wrapper-procedure (lambda args args) 1 #f))
           1)

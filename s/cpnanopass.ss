@@ -12882,7 +12882,7 @@
                                     ,(fail)))
                                ;; Arg count is > fixnum width; allow if the fixnum
                                ;; is negative
-                               (if ,(%inline u< ,%ts (immediate 0))
+                               (if ,(%inline < ,%ts (immediate 0))
                                    ,e
                                    ,(fail)))
                            ;; Arity is a bignum...
