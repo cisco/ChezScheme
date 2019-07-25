@@ -1389,3 +1389,5 @@
     expeditor.c
 - prevent access before start of array
     scheme.c
+- remove dead stores in files
+    compress-io.c, new-io.c

@@ -329,7 +329,7 @@ INT S_glzclose(glzFile glz) {
 #ifdef EINTR
           if (r < 0 && errno == EINTR) continue;
 #endif
-	  if (r == 0) { r = Z_ERRNO; saved_errno = errno; }
+	  if (r == 0) { saved_errno = errno; }
           break;
         }
         (void)LZ4F_freeDecompressionContext(lz4->dctx);
