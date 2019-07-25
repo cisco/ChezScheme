@@ -24,7 +24,7 @@
 (define-constant size_t-bits 64)
 (define-constant ptrdiff_t-bits 64)
 (define-constant wchar-bits 32)
-(define-constant time-t-bits 32)
+(define-constant time-t-bits 64)
 (define-constant max-float-alignment 8)
 (define-constant max-integer-alignment 8)
 (define-constant asm-arg-reg-max 5)

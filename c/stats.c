@@ -65,7 +65,50 @@ ptr S_unique_id() {
               Sunsigned32(u.foo[3]))));
 }
 
-#else /* WIN32 */
+#elif defined(USE_OSSP_UUID) /* WIN32 */
+
+#include <ossp/uuid.h>
+
+ptr S_unique_id() {
+  uuid_t *uuid;
+  U32 bin[4];
+  void *bin_ptr = &bin;
+  size_t bin_len = sizeof(bin);
+
+  uuid_create(&uuid);
+  uuid_make(uuid, UUID_MAKE_V4);
+  uuid_export(uuid, UUID_FMT_BIN, &bin_ptr, &bin_len);
+  uuid_destroy(uuid);
+
+  return S_add(S_ash(Sunsigned32(bin[0]), Sinteger(8*3*sizeof(U32))),
+           S_add(S_ash(Sunsigned32(bin[1]), Sinteger(8*2*sizeof(U32))),
+             S_add(S_ash(Sunsigned32(bin[2]), Sinteger(8*sizeof(U32))),
+              Sunsigned32(bin[3]))));
+}
+
+#elif defined(USE_NETBSD_UUID) /* USE_OSSP_UUID */
+
+#include <uuid.h>
+
+ptr S_unique_id() {
+  uuid_t uuid;
+  uint32_t status;
+  unsigned char bin[16];
+  ptr n;
+  unsigned int i;
+
+  uuid_create(&uuid, &status);
+  uuid_enc_le(bin, &uuid);
+
+  n = Sinteger(0);
+  for (i = 0; i < sizeof(bin); i++) {
+    n = S_add(n, S_ash(Sinteger(bin[i]), Sinteger(8*i)));
+  }
+
+  return n;
+}
+
+#else /* USE_NETBSD_UUID */
 
 #include <uuid/uuid.h>
 
@@ -210,7 +253,8 @@ void S_gettime(INT typeno, struct timespec *tp) {
 #ifdef CLOCK_THREAD_CPUTIME_ID
       if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, tp) == 0) return;
 #endif
-     /* fall through to utc case in case no thread timer */
+     /* fall through */
+     /* to utc case in case no thread timer */
     case time_process:
 #ifdef CLOCK_PROCESS_CPUTIME_ID
       if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, tp) == 0) return;
@@ -240,7 +284,8 @@ void S_gettime(INT typeno, struct timespec *tp) {
 #ifdef CLOCK_HIGHRES
       if (clock_gettime(CLOCK_HIGHRES, tp) == 0) return;
 #endif
-     /* fall through to utc case in case no monotonic timer */
+     /* fall through */
+     /* to utc case in case no monotonic timer */
     case time_utc:
 #ifdef CLOCK_REALTIME_HR
       if (clock_gettime(CLOCK_REALTIME_HR, tp) == 0) return;

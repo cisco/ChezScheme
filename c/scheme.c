@@ -39,10 +39,15 @@ static void main_init PROTO((void));
 static void idiot_checks PROTO((void));
 static INT run_script PROTO((const char *who, const char *scriptfile, INT argc, const char *argv[], IBOOL programp));
 
+extern void scheme_include(void);
+  
 static void main_init() {
     ptr tc = get_thread_context();
     ptr p;
     INT i;
+
+  /* create dependency for linker */
+    scheme_statics();
 
   /* force thread inline allocation to go through find_room until ready */
     AP(tc) = (ptr)0;
@@ -385,7 +390,7 @@ void S_generic_invoke(tc, code) ptr tc; ptr code; {
     hdr.env = (I32)0;
     p = (ugly)((I32)&hdr + 2);
     p(tc);
-#elif defined(WIN32)
+#elif defined(WIN32) && !defined(__MINGW32__)
     __try {
       (*((void (*) PROTO((ptr)))(void *)&CODEIT(code,0)))(tc);
     }
