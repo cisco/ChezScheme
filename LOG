@@ -1375,6 +1375,7 @@
 - fixed open-string-input-port on immutable strings
     cpnanopass.ss, io.ms, release_notes.stex
 - use setenv rather than putenv on non WIN32 environments
+    c/prim5.c, csug/system.stex
 - restore {Free,Open,Net}BSD build, support Windows cross-compile
   via MinGW, add configuration options, and add helper makefile targets
     expenditor.c, thread.c, stats.c, statics.c, scheme.c, main.c, types.h,
