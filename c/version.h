@@ -152,6 +152,7 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+#define USE_OSSP_UUID
 #endif
 
 #if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb)
@@ -169,6 +170,7 @@ typedef int tputsputcchar;
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
+struct timespec;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
 typedef int tputsputcchar;
@@ -185,6 +187,8 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE const char **
 #define UNUSED __attribute__((__unused__))
+#define USE_NETBSD_UUID
+#define USE_MBRTOWC_L
 #endif
 
 #if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
@@ -199,11 +203,18 @@ typedef int tputsputcchar;
 #define USE_VIRTUAL_ALLOC
 #define NAN_INCLUDE <math.h>
 #define MAKE_NAN(x) { x = sqrt(-1.0); }
-#define PATH_MAX _MAX_PATH
+#ifndef PATH_MAX
+# define PATH_MAX _MAX_PATH
+#endif
 typedef char *memcpy_t;
-#define _setjmp setjmp
-#define _longjmp longjmp
+struct timespec;
+#ifndef __MINGW32__
+# define _setjmp setjmp
+# define _longjmp longjmp
+#endif
+#ifndef __MINGW32__
 #define ftruncate _chsize_s
+#endif
 #define LOCK_SH 1
 #define LOCK_EX 2
 #define LOCK_NB 4
@@ -238,6 +249,7 @@ typedef char *memcpy_t;
 #define NSECCTIME(sb) 0
 #define NSECMTIME(sb) 0
 #define ICONV_INBUF_TYPE char **
+struct timespec;
 #define UNUSED
 #endif
 
@@ -255,6 +267,7 @@ typedef char *memcpy_t;
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
+struct timespec;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
 typedef int tputsputcchar;
@@ -271,6 +284,7 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+#define USE_OSSP_UUID
 #endif
 
 #if (machine_type == machine_type_i3osx || machine_type == machine_type_ti3osx || machine_type == machine_type_a6osx || machine_type == machine_type_ta6osx)

@@ -59,12 +59,13 @@ static const char *path_last(const char *p) {
   return p;
 }
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define GETENV Sgetenv
 #define GETENV_FREE free
 int wmain(int argc, wchar_t* wargv[], wchar_t* wenvp[]) {
   const char** argv = (char**)malloc((argc + 1) * sizeof(char*));
-  for (int i = 0; i < argc; i++) {
+  int i;
+  for (i = 0; i < argc; i++) {
     wchar_t* warg = wargv[i];
     if (NULL == (argv[i] = Swide_to_utf8(warg))) {
       fprintf_s(stderr, "Invalid argument: %S\n", warg);
