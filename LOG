@@ -1387,3 +1387,5 @@
     expeditor.ss
 - fix ee_read_char to handle ^@ properly
     expeditor.c
+- prevent access before start of array
+    scheme.c
