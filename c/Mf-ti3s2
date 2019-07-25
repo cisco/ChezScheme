@@ -16,7 +16,7 @@
 m = ti3s2
 Cpu = I386
 
-mdclib = -lnsl -ldl -lm -lpthread -lcurses -lrt
+mdclib = -lnsl -ldl -lm -lpthread ${cursesLib} -lrt
 C = ${CC} ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -D_REENTRANT ${CFLAGS}
 o = o
 mdsrc = i3le.c
@@ -30,11 +30,14 @@ mdobj = i3le.o
 
 include Mf-base
 
-${Kernel}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	ld -melf_i386 -r -X -o ${Kernel} ${kernelobj} ${zlibLib} ${LZ4Lib}
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -melf_i386 -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
-${Scheme}: ${Kernel} ${Main}
-	$C -o ${Scheme} ${Kernel} ${Main} ${mdclib} ${LDFLAGS}
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
 	(cd ../zlib; CFLAGS="${CFLAGS} -m32" ./configure)

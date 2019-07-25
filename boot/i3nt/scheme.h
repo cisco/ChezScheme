@@ -114,8 +114,8 @@ EXPORT iptr Sinteger_value PROTO((ptr));
 #define Sunsigned_value(x) (uptr)Sinteger_value(x)
 EXPORT int Sinteger32_value PROTO((ptr));
 #define Sunsigned32_value(x) (unsigned int)Sinteger32_value(x)
-EXPORT __int64 Sinteger64_value PROTO((ptr));
-#define Sunsigned64_value(x) (unsigned __int64)Sinteger64_value(x)
+EXPORT long long Sinteger64_value PROTO((ptr));
+#define Sunsigned64_value(x) (unsigned long long)Sinteger64_value(x)
 
 /* Mutators */
 EXPORT void Sset_box PROTO((ptr, ptr));
@@ -153,8 +153,8 @@ EXPORT ptr Sinteger PROTO((iptr));
 EXPORT ptr Sunsigned PROTO((uptr));
 EXPORT ptr Sinteger32 PROTO((int));
 EXPORT ptr Sunsigned32 PROTO((unsigned int));
-EXPORT ptr Sinteger64 PROTO((__int64));
-EXPORT ptr Sunsigned64 PROTO((unsigned __int64));
+EXPORT ptr Sinteger64 PROTO((long long));
+EXPORT ptr Sunsigned64 PROTO((unsigned long long));
 
 /* Miscellaneous */
 EXPORT ptr Stop_level_value PROTO((ptr));

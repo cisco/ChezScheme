@@ -14,8 +14,8 @@ typedef short I16;
 typedef unsigned short U16;
 typedef int I32;
 typedef unsigned int U32;
-typedef __int64 I64;
-typedef unsigned __int64 U64;
+typedef long long I64;
+typedef unsigned long long U64;
 
 /* constants from cmacros.ss */
 #define $c_func_closure_index 0x4
@@ -682,14 +682,14 @@ typedef unsigned __int64 U64;
 #define typed_object_type_disp 0x1
 #define typedef_i16 "short"
 #define typedef_i32 "int"
-#define typedef_i64 "__int64"
+#define typedef_i64 "long long"
 #define typedef_i8 "char"
 #define typedef_iptr "int"
 #define typedef_ptr "void *"
 #define typedef_string_char "unsigned int"
 #define typedef_u16 "unsigned short"
 #define typedef_u32 "unsigned int"
-#define typedef_u64 "unsigned __int64"
+#define typedef_u64 "unsigned long long"
 #define typedef_u8 "unsigned char"
 #define typedef_uptr "unsigned int"
 #define typemod 0x8
