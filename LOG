@@ -1383,3 +1383,5 @@
     a6ob.def, ta6ob.def, a6nb.def, ta6nb.def, i3nt.def, ti3nt.def,
     c/Mf-*, build.bat, makefiles/Makefile.in, makefiles/Mf-install.in,
     s/update-revision, BUILDING
+- export `ee-backward-delete-sexp` binding in the expression-editor module.
+    expeditor.ss
