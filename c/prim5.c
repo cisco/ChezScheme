@@ -1372,11 +1372,7 @@ static void s_putenv(name, value) char *name, *value; {
   if (rc == 0)
     S_error1("putenv", "environment extension failed: ~a", S_LastErrorString());
 #else /* WIN32 */
-  iptr n; char *s;
-  n = strlen(name) + strlen(value) + 2;
-  if ((s = malloc(n)) == (char *)NULL
-       || snprintf(s, n, "%s=%s", name, value) < 0
-       || putenv(s) != 0) {
+  if (setenv(name, value, 1) != 0) {
     ptr msg = S_strerror(errno);
 
     if (msg != Sfalse)

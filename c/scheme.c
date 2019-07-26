@@ -534,7 +534,7 @@ static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *
   /* unless entry was null, append name and ext onto path and return true with
    * updated path, sp, and possibly dsp */
     if (s != *sp) {
-      if (!DIRMARKERP(*(p - 1))) { setp(PATHSEP); }
+      if ((p > path) && !DIRMARKERP(*(p - 1))) { setp(PATHSEP); }
       t = name;
       while (*t != 0) setp(*t++);
       t = ext;

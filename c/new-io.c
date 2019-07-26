@@ -842,8 +842,6 @@ ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
         if (!is_valid_lz4_length(s_count))
           return Sstring("source bytevector ~s is too large");
 
-        destLen = (int)d_count;
-
         destLen = LZ4_compress_default((char *)&BVIT(src_bv, s_start), (char *)&BVIT(dest_bv, d_start), (int)s_count, (int)d_count);
 
         if (destLen > 0)

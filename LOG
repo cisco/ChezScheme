@@ -1419,10 +1419,20 @@
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
 - fixed open-string-input-port on immutable strings
     cpnanopass.ss, io.ms, release_notes.stex
+- use setenv rather than putenv on non WIN32 environments
+    prim5.c, system.stex
 - restore {Free,Open,Net}BSD build, support Windows cross-compile
   via MinGW, add configuration options, and add helper makefile targets
     expenditor.c, thread.c, stats.c, statics.c, scheme.c, main.c, types.h,
     externs.h, globals.h, nocurses.h, version.h, system.h, segment.h,
     a6ob.def, ta6ob.def, a6nb.def, ta6nb.def, i3nt.def, ti3nt.def,
     c/Mf-*, build.bat, makefiles/Makefile.in, makefiles/Mf-install.in,
-    misc.ms, s/update-revision, BUILDING
+    s/update-revision, BUILDING
+- export `ee-backward-delete-sexp` binding in the expression-editor module.
+    expeditor.ss
+- fix ee_read_char to handle ^@ properly
+    expeditor.c
+- prevent access before start of array
+    scheme.c
+- remove dead stores in files
+    compress-io.c, new-io.c
