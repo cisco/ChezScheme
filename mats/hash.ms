@@ -510,6 +510,15 @@
     (hashtable-cell $ht 'a 'b 'c))
   (error? ; not a hashtable
     (hashtable-cell '(hash . table) 'a 'b))
+ ; hashtable-ref-cell
+  (error? ; wrong argument count
+    (hashtable-ref-cell))
+  (error? ; wrong argument count
+   (hashtable-ref-cell $ht))
+  (error? ; wrong argument count
+    (hashtable-ref-cell $ht 'a 'b))
+  (error? ; not a hashtable
+    (hashtable-ref-cell '(hash . table) 'a 'b))
  ; hashtable-delete!
   (error? ; wrong argument count
     (hashtable-delete!))
@@ -695,6 +704,19 @@
   (error? ; invalid hash-function return value
     (let ([ht (make-hashtable (lambda (x) 1+2i) equal?)])
       (hashtable-cell ht 'any 0)))
+  ; hashtable-ref-cell
+  (error? ; invalid hash-function return value
+    (let ([ht (make-hashtable (lambda (x) "oops") equal?)])
+      (hashtable-ref-cell ht 'any)))
+  #;(error? ; invalid hash-function return value
+    (let ([ht (make-hashtable (lambda (x) -7) equal?)])
+      (hashtable-ref-cell ht 'any)))
+  (error? ; invalid hash-function return value
+    (let ([ht (make-hashtable (lambda (x) 3.5) equal?)])
+      (hashtable-ref-cell ht 'any)))
+  (error? ; invalid hash-function return value
+    (let ([ht (make-hashtable (lambda (x) 1+2i) equal?)])
+      (hashtable-ref-cell ht 'any)))
   ; hashtable-delete!
   (error? ; invalid hash-function return value
     (let ([ht (make-hashtable (lambda (x) "oops") equal?)])
@@ -848,6 +870,15 @@
     (eq-hashtable-cell $wht 'a 'b 'c))
   (error? ; not a hashtable
     (eq-hashtable-cell '(hash . table) 'a 'b))
+ ; eq-hashtable-ref-cell
+  (error? ; wrong argument count
+    (eq-hashtable-ref-cell))
+  (error? ; wrong argument count
+    (eq-hashtable-ref-cell $wht))
+  (error? ; wrong argument count
+    (eq-hashtable-ref-cell $wht 'a 'b))
+  (error? ; not a hashtable
+    (eq-hashtable-ref-cell '(hash . table) 'a))
  ; eq-hashtable-try-atomic-cell
   (error? ; wrong argument count
     (eq-hashtable-try-atomic-cell))
@@ -986,6 +1017,21 @@
     (symbol-hashtable-cell $symht '(a) 'b))
   (error? ; not a symbol
     (hashtable-cell $symht '(a) 'b))
+ ; symbol-hashtable-ref-cell
+  (error? ; wrong argument count
+    (symbol-hashtable-ref-cell))
+  (error? ; wrong argument count
+    (symbol-hashtable-ref-cell $symht))
+  (error? ; wrong argument count
+    (symbol-hashtable-ref-cell $symht 'a 'b))
+  (error? ; not a hashtable
+    (symbol-hashtable-ref-cell '(hash . table) 'a))
+  (error? ; not a symbol hashtable
+    (symbol-hashtable-ref-cell $ht 'a))
+  (error? ; not a symbol
+    (symbol-hashtable-ref-cell $symht '(a)))
+  (error? ; not a symbol
+    (hashtable-ref-cell $symht '(a)))
 )
 
 (mat eqv-hashtable-arguments
@@ -1631,6 +1677,15 @@
             [ls2-2 (map (lambda (a1) (eq-hashtable-try-atomic-cell ht (car a1) (cdr a1))) ls1)]
             [ls3 (map (lambda (a1) (hashtable-cell wht (car a1) (cdr a1))) ls1)]
             [ls4 (map (lambda (a1) (hashtable-cell eht (car a1) (cdr a1))) ls1)])
+        (let ([ls2* (map (lambda (a1) (eq-hashtable-ref-cell ht (car a1))) ls1)]
+              [ls3* (map (lambda (a1) (hashtable-ref-cell wht (car a1))) ls1)]
+              [ls4* (map (lambda (a1) (hashtable-ref-cell eht (car a1))) ls1)])
+          (unless (andmap (lambda (a2 a2* a3 a3* a4 a4*)
+                            (and (eq? a2 a2*)
+                                 (eq? a3 a3*)
+                                 (eq? a4 a4*)))
+                          ls2 ls2* ls3 ls3* ls4 ls4*)
+            (errorf #f "hashtable-ref-cell and hashtable-cell do not retrieve the same cells")))
         (unless (andmap (lambda (a1 a2 a2-2 a3 a4)
                           (and (eq? (car a1) (car a2))
                                (eq? a2 a2-2)
@@ -2993,6 +3048,15 @@
       (let ([ls2 (map (lambda (a1) (hashtable-cell ht (car a1) (cdr a1))) ls1)]
             [ls3 (map (lambda (a1) (hashtable-cell wht (car a1) (cdr a1))) ls1)]
             [ls4 (map (lambda (a1) (hashtable-cell eht (car a1) (cdr a1))) ls1)])
+        (let ([ls2* (map (lambda (a1) (hashtable-ref-cell ht (car a1))) ls1)]
+              [ls3* (map (lambda (a1) (hashtable-ref-cell wht (car a1))) ls1)]
+              [ls4* (map (lambda (a1) (hashtable-ref-cell eht (car a1))) ls1)])
+          (unless (andmap (lambda (a2 a2* a3 a3* a4 a4*)
+                            (and (eq? a2 a2*)
+                                 (eq? a3 a3*)
+                                 (eq? a4 a4*)))
+                          ls2 ls2* ls3 ls3* ls4 ls4*)
+            (errorf #f "hashtable-ref-cell and hashtable-cell do not retrieve the same cells")))
         (unless (andmap (lambda (a1 a2 a3 a4)
                           (and (eqv? (car a1) (car a2))
                                (eqv? (car a2) (car a3))
@@ -3475,12 +3539,14 @@
       (and (pair? a)
            (eq? (car a) g)
            (eq? (cdr a) s)
+           (eq? a (symbol-hashtable-ref-cell h g))
            (begin
              (hashtable-set! h g 'feisty)
              (eq? (cdr a) 'feisty))
            (begin
              (set-cdr! a (list "feisty"))
              (equal? (hashtable-ref h g #f) '("feisty"))))))
+  (eq? (symbol-hashtable-ref-cell h (gensym)) #f)
  ; test hashtable-copy when some keys may have moved
  ; symbol hashes don't change, but keeping test adapted from eq-hashtable mats anyway
   (let ([t (parameterize ([collect-request-handler void])
@@ -3684,6 +3750,9 @@
       (set-cdr! a (cons (cdr a) 'vb))
       a)
     '(#vu8(1 2 3) . (bv . vb)))
+  (eq? (hashtable-cell $ght3 #vu8(1 2 3) 'bv)
+       (hashtable-ref-cell $ght3 #vu8(1 2 3)))
+  (eq? (hashtable-ref-cell $ght3 (gensym)) #f)
   (equal-entries? $ght3 '#((a . b) 1e23 #vu8(1 2 3)) '#(161 14 (bv . vb)))
   (let () ; carl's test program, with a few additions
     (define cov:prof-hash

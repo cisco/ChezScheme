@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2019-06-15 20:51:38.000000000 -0600
---- errors-compile-0-f-t-f	2019-06-15 20:58:59.000000000 -0600
+*** errors-compile-0-f-f-f	2019-07-26 13:30:16.000000000 -0400
+--- errors-compile-0-f-t-f	2019-07-26 13:41:01.000000000 -0400
 ***************
 *** 125,131 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".

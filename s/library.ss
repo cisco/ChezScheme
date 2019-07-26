@@ -1478,6 +1478,13 @@
           (vector-ref vec (fxlogand ($fxaddress x) (fx- (vector-length vec) 1))))
         cdr v))
   
+    (define-library-entry (eq-hashtable-ref-cell h x)
+      (lookup-keyval x
+        (let ([vec (ht-vec h)])
+          (vector-ref vec (fxlogand ($fxaddress x) (fx- (vector-length vec) 1))))
+        (lambda (x) x)
+        #f))
+
     (define-library-entry (eq-hashtable-contains? h x)
       (lookup-keyval x
         (let ([vec (ht-vec h)])
@@ -1615,6 +1622,17 @@
                     (let ([a (car b)])
                       (if (eq? (car a) x) (cdr a) (loop (cdr b)))))))
             (pariah v))))
+
+    (define-library-entry (symbol-hashtable-ref-cell h x)
+      (let ([hc ($symbol-hash x)])
+        (if hc
+            (let ([vec (ht-vec h)])
+              (let loop ([b (vector-ref vec (fxlogand hc (fx- (vector-length vec) 1)))])
+                (if (null? b)
+                    #f
+                    (let ([a (car b)])
+                      (if (eq? (car a) x) a (loop (cdr b)))))))
+            (pariah #f))))
 
     (define-library-entry (symbol-hashtable-contains? h x)
       (let ([hc ($symbol-hash x)])

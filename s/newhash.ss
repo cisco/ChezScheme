@@ -61,12 +61,14 @@ Documentation notes:
 
 ;;; other generic hash operators
 (define hashtable-cell)
+(define hashtable-ref-cell)              ; hashtable key
 (define hashtable-weak?)                 ; hashtable
 (define hashtable-ephemeron?)            ; hashtable
 
 ;;; eq-hashtable operators
 (define make-weak-eq-hashtable)          ; [k], k >= 0
 (define eq-hashtable-ref)                ; eq-hashtable key default
+(define eq-hashtable-ref-cell)           ; eq-hashtable key
 (define eq-hashtable-contains?)          ; eq-hashtable key
 (define eq-hashtable-set!)               ; eq-hashtable key obj
 (define eq-hashtable-update!)            ; eq-hashtable key proc default
@@ -78,6 +80,7 @@ Documentation notes:
 ;;; eq-hashtable operators
 (define make-symbol-hashtable)           ; [k], k >= 0
 (define symbol-hashtable-ref)            ; symbol-hashtable key default
+(define symbol-hashtable-ref-cell)       ; symbol-hashtable key
 (define symbol-hashtable-contains?)      ; symbol-hashtable key
 (define symbol-hashtable-set!)           ; symbol-hashtable key obj
 (define symbol-hashtable-update!)        ; symbol-hashtable key proc default
@@ -132,6 +135,15 @@ Documentation notes:
               v
               (let ([a (car b)])
                 (if (equiv? (car a) x) (cdr a) (loop (cdr b)))))))))
+
+  (define $gen-hashtable-ref-cell
+    (lambda (h x who)
+      (let ([vec (ht-vec h)] [equiv? (gen-ht-equiv? h)])
+        (let loop ([b (vector-ref vec (do-hash (gen-ht-hash h) x (fx- (vector-length vec) 1) who))])
+          (if (null? b)
+              #f
+              (let ([a (car b)])
+                (if (equiv? (car a) x) a (loop (cdr b)))))))))
 
   (define $gen-hashtable-contains?
     (lambda (h x who)
@@ -335,6 +347,12 @@ Documentation notes:
       (if (eqv-generic? x)
           ($gen-hashtable-ref (eqv-ht-genht h) x v who)
           (#3%eq-hashtable-ref (eqv-ht-eqht h) x v))))
+
+  (define $eqv-hashtable-ref-cell
+    (lambda (h x who)
+      (if (eqv-generic? x)
+          ($gen-hashtable-ref-cell (eqv-ht-genht h) x who)
+          (#3%eq-hashtable-ref-cell (eqv-ht-eqht h) x))))
 
   (define $eqv-hashtable-contains?
     (lambda (h x who)
@@ -576,6 +594,12 @@ Documentation notes:
         ($oops 'eq-hashtable-ref "~s is not an eq hashtable" h))
       (#3%eq-hashtable-ref h x v)))
 
+  (set! eq-hashtable-ref-cell
+    (lambda (h x)
+      (unless (eq-ht? h)
+        ($oops 'eq-hashtable-ref-cell "~s is not an eq hashtable" h))
+      (#3%eq-hashtable-ref-cell h x)))
+
   (set! eq-hashtable-contains?
     (lambda (h x)
       (unless (eq-ht? h)
@@ -652,6 +676,12 @@ Documentation notes:
       (unless (symbol? x) ($oops who "~s is not a symbol" x))
       (#3%symbol-hashtable-ref h x v)))
 
+    (set-who! symbol-hashtable-ref-cell
+      (lambda (h x)
+        (unless (symbol-ht? h) ($oops who "~s is not a symbol hashtable" h))
+        (unless (symbol? x) ($oops who "~s is not a symbol" x))
+        (#3%symbol-hashtable-ref-cell h x)))
+
   (set-who! symbol-hashtable-contains?
     (lambda (h x)
       (unless (symbol-ht? h) ($oops who "~s is not a symbol hashtable" h))
@@ -698,6 +728,18 @@ Documentation notes:
          (#3%symbol-hashtable-ref h x v)]
         [(eqv) ($eqv-hashtable-ref h x v who)]
         [else ($gen-hashtable-ref h x v who)])))
+
+  (set-who! hashtable-ref-cell
+    (lambda (h x)
+      (unless (xht? h)
+        ($oops who "~s is not a hashtable" h))
+      (case (xht-type h)
+        [(eq) (#3%eq-hashtable-ref-cell h x)]
+        [(symbol)
+         (unless (symbol? x) ($oops 'symbol-hash "~s is not a symbol" x))
+         (#3%symbol-hashtable-ref-cell h x)]
+        [(eqv) ($eqv-hashtable-ref-cell h x who)]
+        [else ($gen-hashtable-ref-cell h x who)])))
 
   (set-who! hashtable-contains?
     (lambda (h x)

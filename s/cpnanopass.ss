@@ -6006,6 +6006,8 @@
           [() (build-libcall #f src sexpr event)])
         (define-inline 3 eq-hashtable-ref
           [(e1 e2 e3) (build-libcall #f src sexpr eq-hashtable-ref e1 e2 e3)])
+	(define-inline 3 eq-hashtable-ref-cell
+	  [(e1 e2) (build-libcall #f src sexpr eq-hashtable-ref-cell e1 e2)])
         (define-inline 3 eq-hashtable-contains?
           [(e1 e2) (build-libcall #f src sexpr eq-hashtable-contains? e1 e2)])
         (define-inline 3 eq-hashtable-set!
@@ -6020,6 +6022,8 @@
           [(e1 e2) (build-libcall #f src sexpr eq-hashtable-delete! e1 e2)])
         (define-inline 3 symbol-hashtable-ref
           [(e1 e2 e3) (build-libcall #f src sexpr symbol-hashtable-ref e1 e2 e3)])
+	(define-inline 3 symbol-hashtable-ref-cell
+          [(e1 e2) (build-libcall #f src sexpr symbol-hashtable-ref-cell e1 e2)])
         (define-inline 3 symbol-hashtable-contains?
           [(e1 e2) (build-libcall #f src sexpr symbol-hashtable-contains? e1 e2)])
         (define-inline 3 symbol-hashtable-set!

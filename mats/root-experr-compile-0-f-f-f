@@ -7635,6 +7635,10 @@ hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in 
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cell $ht (quote a))".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cell $ht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cell: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell $ht)".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell $ht (quote a) (quote b))".
+hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell (quote (hash . table)) (quote a) (quote b))".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete!)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete! $ht)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete! $ht (quote a) (quote b))".
@@ -7703,6 +7707,9 @@ hash.mo:Expected error in mat hash-return-value: "hashtable-update!: invalid has
 hash.mo:Expected error in mat hash-return-value: "hashtable-cell: invalid hash-function #<procedure> return value "oops" for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-cell: invalid hash-function #<procedure> return value 3.5 for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-cell: invalid hash-function #<procedure> return value 1+2i for any".
+hash.mo:Expected error in mat hash-return-value: "hashtable-ref-cell: invalid hash-function #<procedure> return value "oops" for any".
+hash.mo:Expected error in mat hash-return-value: "hashtable-ref-cell: invalid hash-function #<procedure> return value 3.5 for any".
+hash.mo:Expected error in mat hash-return-value: "hashtable-ref-cell: invalid hash-function #<procedure> return value 1+2i for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value "oops" for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 3.5 for any".
 hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 1+2i for any".
@@ -7746,6 +7753,10 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count 
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell $wht)".
+hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell $wht (quote a) (quote b))".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-ref-cell: (hash . table) is not an eq hashtable".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht (quote a))".
@@ -7806,6 +7817,13 @@ hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument co
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: (hash . table) is not a symbol hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: #<eq hashtable> is not a symbol hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: (a) is not a symbol".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hash: (a) is not a symbol".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell)".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell $symht)".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell $symht (quote a) (quote b))".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: (hash . table) is not a symbol hashtable".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: #<eq hashtable> is not a symbol hashtable".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: (a) is not a symbol".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hash: (a) is not a symbol".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count in call (make-weak-eqv-hashtable 3 #t)".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument -1".

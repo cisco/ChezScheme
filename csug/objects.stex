@@ -1849,6 +1849,35 @@ cell ;=> (#(a b c) . 3)
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{hashtable-ref-cell}{\categoryprocedure}{(hashtable-ref-cell \var{hashtable} \var{key})}
+\returns a pair if \var{key} is in \var{hashtable}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a hashtable.
+\var{key} may be any Scheme value.
+
+If \var{key} is associated with a value in \var{hashtable}, then it returns a pair
+whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
+this pair effectively updates the table to associate \var{key} with a new value.
+The \var{key} in the car field should not be changed.
+
+If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define v (vector 'a 'b 'c))
+(hashtable-ref-cell ht v) ;=> #f
+(hashtable-set! ht v 3)
+(define cell (hashtable-ref-cell ht v))
+cell ;=> ((#a b c) . 3)
+(hashtable-ref ht v 0) ;=> 3
+(set-cdr! cell 4)
+(hashtable-ref ht v 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{hashtable-keys}{\categoryprocedure}{(hashtable-keys \var{hashtable})}
 \formdef{hashtable-keys}{\categoryprocedure}{(hashtable-keys \var{hashtable} \var{size})}
 \returns a vector containing the keys in \var{hashtable}
@@ -2272,6 +2301,35 @@ opportunity of resizing.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{eq-hashtable-ref-cell}{\categoryprocedure}{(eq-hashtable-ref-cell \var{hashtable} \var{key})}
+\returns a pair if \var{key} is in \var{hashtable}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be an eq hashtable.
+\var{key} may be any Scheme value.
+
+If \var{key} is associated with a value in \var{hashtable}, then it returns a pair
+whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
+this pair effectively updates the table to associate \var{key} with a new value.
+The \var{key} in the car field should not be changed.
+
+If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
+
+\schemedisplay
+(define ht (make-eq-hashtable))
+(define v (vector 'a 'b 'c))
+(eq-hashtable-ref-cell ht v) ;=> #f
+(eq-hashtable-set! ht v 3)
+(define cell (eq-hashtable-ref-cell ht v))
+cell ;=> ((#a b c) . 3)
+(eq-hashtable-ref ht v 0) ;=> 3
+(set-cdr! cell 4)
+(eq-hashtable-ref ht v 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{eq-hashtable-delete!}{\categoryprocedure}{(eq-hashtable-delete! \var{hashtable} \var{key})}
 \returns unspecified
 \listlibraries
@@ -2450,6 +2508,37 @@ The \var{key} should not be changed.
 (define ht (make-hashtable symbol-hash eq?))
 (define k 'a-key)
 (define cell (symbol-hashtable-cell ht k 3))
+cell ;=> (a-key . 3)
+(symbol-hashtable-ref ht k 0) ;=> 3
+(set-cdr! cell 4)
+(symbol-hashtable-ref ht k 0) ;=> 4
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{symbol-hashtable-ref-cell}{\categoryprocedure}{(symbol-hashtable-ref-cell \var{hashtable} \var{key})}
+\returns a pair if \var{key} is in \var{hashtable}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\var{hashtable} must be a mutable symbol hashtable.
+(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+\var{key} must be a symbol.
+
+If \var{key} is associated with a value in \var{hashtable}, then it returns a pair
+whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
+this pair effectively updates the table to associate \var{key} with a new value.
+The \var{key} in the car field should not be changed.
+
+If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
+
+\schemedisplay
+(define ht (make-hashtable symbol-hash eq?))
+(define k 'a-key)
+(symbol-hashtable-ref-cell ht k) ;=> #f
+(symbol-hashtable-set! ht k 3)
+(define cell (symbol-hashtable-ref-cell ht k))
 cell ;=> (a-key . 3)
 (symbol-hashtable-ref ht k 0) ;=> 3
 (set-cdr! cell 4)

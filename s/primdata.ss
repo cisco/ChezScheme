@@ -1283,6 +1283,7 @@
   (eq-hashtable-delete! [sig [(eq-hashtable ptr) -> (void)]] [flags true])
   (eq-hashtable-ephemeron? [sig [(eq-hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (eq-hashtable-ref [sig [(eq-hashtable ptr ptr) -> (ptr)]] [flags discard])
+  (eq-hashtable-ref-cell [sig [(eq-hashtable ptr) -> (prt)]] [flags discard])
   (eq-hashtable-set! [sig [(eq-hashtable ptr ptr) -> (void)]] [flags true])
   (eq-hashtable-try-atomic-cell [sig [(eq-hashtable ptr ptr) -> (maybe-pair)]] [flags])
   (eq-hashtable-update! [sig [(eq-hashtable ptr procedure ptr) -> (void)]] [flags])
@@ -1397,6 +1398,7 @@
   (hashtable-cells [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
   (hashtable-entries [sig [(hashtable) -> (vector vector)] [(hashtable uint) -> (vector vector)]] [flags discard]) ; has size argument
   (hashtable-keys [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])                    ; has size argument
+  (hashtable-ref-cell [sig [(hashtable ptr) -> (ptr)]] [flags discard])
   (hashtable-values [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
   (hashtable-weak? [sig [(hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (iconv-codec [feature iconv] [sig [(sub-string) -> (codec)]] [flags pure true])
@@ -1687,6 +1689,7 @@
   (symbol-hashtable-contains? [sig [(symbol-hashtable ptr) -> (boolean)]] [flags discard])
   (symbol-hashtable-delete! [sig [(symbol-hashtable ptr) -> (void)]] [flags true])
   (symbol-hashtable-ref [sig [(symbol-hashtable symbol ptr) -> (ptr)]] [flags discard])
+  (symbol-hashtable-ref-cell [sig [(symbol-hashtable symbol) -> (ptr)]] [flags discard])
   (symbol-hashtable-set! [sig [(symbol-hashtable symbol ptr) -> (void)]] [flags true])
   (symbol-hashtable-update! [sig [(symbol-hashtable symbol procedure ptr) -> (void)]] [flags])
   (syntax->annotation [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
