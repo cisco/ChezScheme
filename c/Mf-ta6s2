@@ -16,7 +16,7 @@
 m = ta6s2
 Cpu = X86_64
 
-mdclib = -lnsl -ldl -lm -lpthread ${cursesLib} -lrt
+mdclib = -lnsl -ldl -lm -lpthread ${cursesLib} -lrt -luuid
 C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wextra -Werror -O2 -D_REENTRANT ${CFLAGS}
 o = o
 mdsrc = i3le.c
@@ -31,7 +31,7 @@ mdobj = i3le.o
 include Mf-base
 
 ${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -melf_x86_64 -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
+	${LD} -r -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
