@@ -1391,3 +1391,5 @@
     scheme.c
 - remove dead stores in files
     compress-io.c, new-io.c
+- fixed tab character in makefiles
+    c/Mf-*nt

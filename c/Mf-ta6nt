@@ -55,7 +55,7 @@ ${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
 
 ../zlib/configure.log:
 	echo "all:" >> ../zlib/Makefile
-	echo '\t$$(MAKE) -f win32/Makefile.gcc CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" RC="$(WINDRES)"' >> ../zlib/Makefile
+	echo '	$$(MAKE) -f win32/Makefile.gcc CC="$(CC)" CFLAGS="$(CFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" RC="$(WINDRES)"' >> ../zlib/Makefile
 	touch ../zlib/configure.log
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
