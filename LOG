@@ -1393,3 +1393,4 @@
     compress-io.c, new-io.c
 - fixed tab character in makefiles
     c/Mf-*nt
+- restore building on Solaris

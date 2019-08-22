@@ -462,7 +462,11 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
     }
   }
 #else
+# if defined(SOLARIS)
+  tzoff = tmxp->tm_isdst ? -altzone : -timezone;
+# else
   tzoff = tmxp->tm_gmtoff;
+# endif
   if (given_tzoff == Sfalse) {
 # if defined(__linux__) || defined(SOLARIS)
     /* Linux and Solaris set `tzname`: */
