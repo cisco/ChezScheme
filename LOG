@@ -1393,3 +1393,5 @@
     compress-io.c, new-io.c
 - fixed tab character in makefiles
     c/Mf-*nt
+- use case-insensitive search for ".exe" on Windows
+    c/scheme.c

@@ -1107,7 +1107,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
       iptr n;
 
       n = strlen(name) - 4;
-      if (n >= 0 && (strcmp(name + n, ".exe") == 0 || strcmp(name + n, ".EXE") == 0)) {
+      if (n >= 0 && (_stricmp(name + n, ".exe") == 0)) {
         strcpy(buf, name);
         buf[n] = 0;
         name = buf;
