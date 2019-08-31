@@ -49,8 +49,6 @@ void S_gc_init() {
 
   for (g = 0; g <= static_generation; g++) {
     S_G.guardians[g] = Snil;
-    S_G.locked_objects[g] = Snil;
-    S_G.unlocked_objects[g] = Snil;
   }
   S_G.max_nonstatic_generation = 
     S_G.new_max_nonstatic_generation = 
@@ -199,7 +197,7 @@ IBOOL Slocked_objectp(x) ptr x; {
   tc_mutex_acquire()
 
   ans = 0;
-  for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
+  for (ls = si->locked_objects; ls != Snil; ls = Scdr(ls)) {
     if (x == Scar(ls)) {
       ans = 1;
       break;
@@ -212,14 +210,18 @@ IBOOL Slocked_objectp(x) ptr x; {
 }
 
 ptr S_locked_objects(void) {
-  IGEN g; ptr ans; ptr ls;
+  IGEN g; ptr ans; ptr ls; ISPC s; seginfo *si;
 
   tc_mutex_acquire()
 
   ans = Snil;
   for (g = 0; g <= static_generation; INCRGEN(g)) {
-    for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
-      ans = Scons(Scar(ls), ans);
+    for (s = 0; s <= max_real_space; s += 1) {
+      for (si = S_G.occupied_segments[s][g]; si != NULL; si = si->next) {
+        for (ls = si->locked_objects; ls != Snil; ls = Scdr(ls)) {
+          ans = Scons(Scar(ls), ans);
+        }
+      }
     }
   }
 
@@ -237,12 +239,12 @@ void Slock_object(x) ptr x; {
   if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
     S_pants_down += 1;
    /* add x to locked list. remove from unlocked list */
-    S_G.locked_objects[g] = S_cons_in((g == 0 ? space_new : space_impure), g, x, S_G.locked_objects[g]);
+    si->locked_objects = S_cons_in((g == 0 ? space_new : space_impure), g, x, si->locked_objects);
     if (S_G.enable_object_counts) {
       if (g != 0) S_G.countof[g][countof_pair] += 1;
     }
     if (si->space & space_locked)
-      (void)remove_first_nomorep(x, &S_G.unlocked_objects[g], 0);
+      (void)remove_first_nomorep(x, &si->unlocked_objects, 0);
     S_pants_down -= 1;
   }
 
@@ -258,8 +260,8 @@ void Sunlock_object(x) ptr x; {
     S_pants_down += 1;
    /* remove first occurrence of x from locked list. if there are no
       others, add x to unlocked list */
-    if (remove_first_nomorep(x, &S_G.locked_objects[g], si->space & space_locked)) {
-      S_G.unlocked_objects[g] = S_cons_in((g == 0 ? space_new : space_impure), g, x, S_G.unlocked_objects[g]);
+    if (remove_first_nomorep(x, &si->locked_objects, si->space & space_locked)) {
+      si->unlocked_objects = S_cons_in((g == 0 ? space_new : space_impure), g, x, si->unlocked_objects);
       if (S_G.enable_object_counts) {
         if (g != 0) S_G.countof[g][countof_pair] += 1;
       }
@@ -759,8 +761,6 @@ void S_do_gc(IGEN mcg, IGEN tg) {
       }
     }
     S_G.guardians[new_g] = S_G.guardians[old_g]; S_G.guardians[old_g] = Snil;
-    S_G.locked_objects[new_g] = S_G.locked_objects[old_g]; S_G.locked_objects[old_g] = Snil;
-    S_G.unlocked_objects[new_g] = S_G.unlocked_objects[old_g]; S_G.unlocked_objects[old_g] = Snil;
     S_G.buckets_of_generation[new_g] = S_G.buckets_of_generation[old_g]; S_G.buckets_of_generation[old_g] = NULL;
     if (S_G.enable_object_counts) {
       INT i; ptr ls;

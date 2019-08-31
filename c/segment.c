@@ -239,6 +239,8 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
   si->has_triggers = 0;
   si->trigger_ephemerons = 0;
   si->trigger_guardians = 0;
+  si->locked_objects = Snil;
+  si->unlocked_objects = Snil;
 #ifdef PRESERVE_FLONUM_EQ
   si->forwarded_flonums = NULL;
 #endif

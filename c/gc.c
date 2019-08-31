@@ -26,6 +26,7 @@
 static ptr append_bang PROTO((ptr ls1, ptr ls2));
 static uptr count_unique PROTO((ptr ls));
 static uptr list_length PROTO((ptr ls));
+static ptr copy_list PROTO((ptr ls, IGEN tg));
 static ptr dosort PROTO((ptr ls, uptr n));
 static ptr domerge PROTO((ptr l1, ptr l2));
 static IBOOL search_locked PROTO((ptr p));
@@ -47,10 +48,14 @@ static void sweep_continuation PROTO((ptr p));
 static void sweep_stack PROTO((uptr base, uptr size, uptr ret));
 static void sweep_record PROTO((ptr x));
 static int scan_record_for_self PROTO((ptr x));
-static IGEN sweep_dirty_record PROTO((ptr x));
+static IGEN sweep_dirty_record PROTO((ptr x, IGEN tg, IGEN youngest));
+static IGEN sweep_dirty_port PROTO((ptr x, IGEN tg, IGEN youngest));
+static IGEN sweep_dirty_symbol PROTO((ptr x, IGEN tg, IGEN youngest));
 static void sweep_code_object PROTO((ptr tc, ptr co));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void sweep_dirty PROTO((void));
+static IGEN sweep_dirty_intersecting PROTO((ptr lst, ptr *pp, ptr *ppend, IGEN tg, IGEN youngest));
+static IGEN sweep_dirty_bytes PROTO((ptr *pp, ptr *ppend, ptr *pu, ptr *puend, IGEN tg, IGEN youngest));
 static void resweep_dirty_weak_pairs PROTO((void));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
@@ -61,6 +66,7 @@ static void check_ephemeron PROTO((ptr pe, int add_to_trigger));
 static void check_pending_ephemerons PROTO(());
 static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
 static void clear_trigger_ephemerons PROTO(());
+static void sanitize_locked_segment PROTO((seginfo *si));
 
 /* MAXPTR is used to pad the sorted_locked_object vector.  The pad value must be greater than any heap address */
 #define MAXPTR ((ptr)-1)
@@ -133,6 +139,13 @@ static uptr count_unique(ls) ptr ls; { /* assumes ls is sorted and nonempty */
     }
   }
   return i;
+}
+
+static ptr copy_list(ptr ls, IGEN tg) {
+  ptr ls2 = Snil;
+  for (; ls != Snil; ls = Scdr(ls))
+    ls2 = S_cons_in(space_impure, tg, Scar(ls), ls2);
+  return ls2;
 }
 
 #define CARLT(x, y) (Scar(x) < Scar(y))
@@ -1034,10 +1047,14 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     /* note: append_bang and dosort reuse pairs, which can result in older
      * objects pointing to newer ones...but we don't care since they are all
      * oldspace and going away after this collection. */
-    for (g = 0; g <= mcg; g += 1) {
-      ls = append_bang(S_G.locked_objects[g], ls);
-      S_G.locked_objects[g] = Snil;
-      S_G.unlocked_objects[g] = Snil;
+   {
+     seginfo *si;
+     for (si = oldspacesegments; si != NULL; si = si->next) {
+       ptr copied = copy_list(si->locked_objects, tg);
+       ls = append_bang(si->locked_objects, ls);
+       si->locked_objects = copied;
+       si->unlocked_objects = Snil;
+      }
     }
     if (ls == Snil) {
       sorted_locked_objects = FIX(0);
@@ -1066,14 +1083,6 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
 
       /* fill remaining slots with largest ptr value */
       while (i < n) { INITVECTIT(v, i) = MAXPTR; i += 1; }
-    }
-
-    /* sweep older locked and unlocked objects */
-    for (g = mcg + 1; g <= static_generation; INCRGEN(g)) {
-      for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls))
-        sweep(tc, Scar(ls), 0);
-      for (ls = S_G.unlocked_objects[g]; ls != Snil; ls = Scdr(ls))
-        sweep(tc, Scar(ls), 0);
     }
 
     /* sweep younger locked objects, working from sorted vector to avoid redundant sweeping of duplicates */
@@ -1352,20 +1361,6 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
    /* still-pending ephemerons all go to bwp */
     clear_trigger_ephemerons();
 
-   /* forward car fields of locked and unlocked older weak pairs */
-    for (g = mcg + 1; g <= static_generation; INCRGEN(g)) {
-      for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
-        ptr x = Scar(ls);
-        if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
-      }
-      for (ls = S_G.unlocked_objects[g]; ls != Snil; ls = Scdr(ls)) {
-        ptr x = Scar(ls);
-        if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
-      }
-    }
-
    /* forward car fields of locked oldspace weak pairs */
     if (sorted_locked_objects != FIX(0)) {
       uptr i; ptr x, v, *vp;
@@ -1459,10 +1454,9 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
    /* post-collection handling of locked objects.  This must come after
       any use of relocate or any other use of sorted_locked_objects */
     if (sorted_locked_objects != FIX(0)) {
-      ptr ls, lsnew, x, v, *vp; iptr i;
+      ptr x, v, *vp; iptr i;
 
       v = sorted_locked_objects;
-      lsnew = tg == mcg ? Snil : S_G.locked_objects[tg];
 
       /* work from sorted vector to avoid redundant processing of duplicates */
       i = Svector_length(v);
@@ -1472,7 +1466,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
 
         /* promote the segment(s) containing x to the target generation.
            reset the space_old bit to prevent the segments from being
-           reclaimed; set the locked bit to prevent sweeping by
+           reclaimed; sanitize the segments to support sweeping by
            sweep_dirty (since the segments may contain a mix of objects,
            many of which have been discarded). */
         n = size_object(x);
@@ -1485,22 +1479,13 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
         a2 = (ptr)((uptr)a1 + n - 1);
         for (seg = addr_get_segment(a1); seg <= addr_get_segment(a2); seg += 1) {
           seginfo *si = SegInfo(seg);
-          si->generation = tg;
-          si->space = (si->space & ~space_old) | space_locked;
+          if (!(si->space  & space_locked)) {
+            si->generation = tg;
+            si->space = (si->space & ~space_old) | space_locked;
+            sanitize_locked_segment(si);
+          }
         }
       } while (--i != 0 && (x = *++vp) != MAXPTR);
-
-      /* append entire list, including duplicates, to target-generation list.  we do so
-         even when tg == static_generation so we can keep track of static objects that need to
-         be swept at the start of collection.  (we could weed out pure static objects.) */
-      for (ls = locked_oldspace_objects; ls != Snil; ls = Scdr(ls)) {
-        lsnew = S_cons_in(space_impure, tg, Scar(ls), lsnew);
-#ifdef ENABLE_OBJECT_COUNTS
-        S_G.countof[tg][countof_pair] += 1;
-#endif /* ENABLE_OBJECT_COUNTS */
-      }
-
-      S_G.locked_objects[tg] = lsnew;
     }
 
   /* move old space segments to empty space */
@@ -2030,12 +2015,9 @@ static int scan_record_for_self(x) ptr x; {
   return 0;
 }
 
-static IGEN sweep_dirty_record(x) ptr x; {
-    ptr *pp; ptr num; ptr rtd; IGEN tg, youngest;
+static IGEN sweep_dirty_record(x, tg, youngest) ptr x; IGEN tg, youngest; {
+    ptr *pp; ptr num; ptr rtd;
     PUSH_BACKREFERENCE(x)
-
-    tg = target_generation;
-    youngest = 0xff;
 
    /* warning: assuming rtd is immutable */
     rtd = RECORDINSTTYPE(x);
@@ -2076,6 +2058,50 @@ static IGEN sweep_dirty_record(x) ptr x; {
     POP_BACKREFERENCE()
 
     return youngest;
+}
+
+static IGEN sweep_dirty_port(p, tg, youngest) ptr p; IGEN tg, youngest; {
+  PUSH_BACKREFERENCE(p)
+
+  relocate_dirty(&PORTHANDLER(p),tg,youngest)
+  relocate_dirty(&PORTINFO(p),tg,youngest)
+  relocate_dirty(&PORTNAME(p),tg,youngest)
+
+  if (PORTTYPE(p) & PORT_FLAG_OUTPUT) {
+    iptr n = (iptr)PORTOLAST(p) - (iptr)PORTOBUF(p);
+    relocate_dirty(&PORTOBUF(p),tg,youngest)
+    PORTOLAST(p) = (ptr)((iptr)PORTOBUF(p) + n);
+  }
+
+  if (PORTTYPE(p) & PORT_FLAG_INPUT) {
+    iptr n = (iptr)PORTILAST(p) - (iptr)PORTIBUF(p);
+    relocate_dirty(&PORTIBUF(p),tg,youngest)
+    PORTILAST(p) = (ptr)((iptr)PORTIBUF(p) + n);
+  }
+
+  POP_BACKREFERENCE()
+
+  return youngest;
+}
+
+static IGEN sweep_dirty_symbol(p, tg, youngest) ptr p; IGEN tg, youngest; {
+  ptr val, code;
+  PUSH_BACKREFERENCE(p)
+
+  val = SYMVAL(p);
+  relocate_dirty(&val,tg,youngest)
+  INITSYMVAL(p) = val;
+  code = Sprocedurep(val) ? CLOSCODE(val) : SYMCODE(p);
+  relocate_dirty(&code,tg,youngest)
+  INITSYMCODE(p,code);
+  relocate_dirty(&INITSYMPLIST(p),tg,youngest)
+  relocate_dirty(&INITSYMSPLIST(p),tg,youngest)
+  relocate_dirty(&INITSYMNAME(p),tg,youngest)
+  relocate_dirty(&INITSYMHASH(p),tg,youngest)
+
+  POP_BACKREFERENCE()
+
+  return youngest;
 }
 
 static void sweep_code_object(tc, co) ptr tc, co; {
@@ -2164,13 +2190,49 @@ static void record_dirty_segment(IGEN from_g, IGEN to_g, seginfo *si) {
   }
 }
 
+#define SIMPLE_DIRTY_SPACE_P(s) (((s) == space_weakpair) || ((s) == space_ephemeron) || ((s) == space_symbol) || ((s) == space_port))
+
+static void sanitize_locked_segment(seginfo *si) {
+  /* If `si` is for weak pairs, ephemeron pairs, or other things that
+     are guaranteed to stay on a single segment, make the segment safe
+     for handling by `sweep_dirty`, where memory not occupied by
+     objects in `si->locked_objects` is "zeroed" out in a way that it
+     can be traversed. This is merely convenient and efficient for
+     some kinds of segments, but it's required for weak and ephemeron
+     pairs. */
+  ISPC s = si->space & ~space_locked;
+
+  if (SIMPLE_DIRTY_SPACE_P(s)) {
+    ptr ls;
+    ptr *pp, *ppend;
+
+    /* Sort locked objects */
+    si->locked_objects = ls = dosort(si->locked_objects, list_length(si->locked_objects));
+
+    pp = build_ptr(si->number, 0);
+    ppend = (ptr *)((uptr)pp + bytes_per_segment);
+
+    /* Zero out unused memory */
+    while (pp < ppend) {
+      if ((ls != Snil) && (pp == UNTYPE_ANY(Scar(ls)))) {
+        pp = (ptr *)((uptr)pp + size_object(Scar(ls)));
+        ls = Scdr(ls);
+      } else {
+        *pp = FIX(0);
+        pp++;
+      }
+    }
+  }
+}
+
 static void sweep_dirty(void) {
-  IGEN tg, mcg, youngest, min_youngest, pg;
+  IGEN tg, mcg, youngest, min_youngest;
   ptr *pp, *ppend, *nl;
   uptr seg, d;
   ISPC s;
   IGEN from_g, to_g;
   seginfo *dirty_si, *nextsi;
+  IBOOL check_locked;
 
   PUSH_BACKREFERENCE(Snil) /* '() => from unspecified old object */
 
@@ -2195,10 +2257,19 @@ static void sweep_dirty(void) {
         seg = dirty_si->number;
         s = dirty_si->space;
 
-        if (s & space_locked) continue;
-
         /* reset min dirty byte so we can detect if byte is set while card is swept */
         dirty_si->min_dirty_byte = 0xff;
+
+        check_locked = 0;
+        if (s & space_locked) {
+          s &= ~space_locked;
+          if (!SIMPLE_DIRTY_SPACE_P(s)) {
+            /* Only consider cards that intersect with
+               `locked_objects`, `unlocked_objects`, or a
+               segment-spanning object from a preceding page */
+            check_locked = 1;
+          }
+        }
 
         min_youngest = 0xff;
         nl = from_g == tg ? (ptr *)orig_next_loc[s] : (ptr *)S_G.next_loc[s][from_g];
@@ -2231,7 +2302,33 @@ static void sweep_dirty(void) {
                 /* assume we won't find any wrong-way pointers */
                 youngest = 0xff;
 
-                if ((s == space_impure) || (s == space_impure_typed_object) || (s == space_closure)) {
+                if (check_locked) {
+                  /* Look only at bytes that intersect with a locked or unlocked object */
+                  ptr backp;
+                  seginfo *prev_si;
+
+                  youngest = sweep_dirty_intersecting(dirty_si->locked_objects, pp, ppend, tg, youngest);
+                  youngest = sweep_dirty_intersecting(dirty_si->unlocked_objects, pp, ppend, tg, youngest);
+
+                  /* Look for previous segment that might have locked objects running into this one */
+                  backp = (ptr)((uptr)build_ptr(seg, 0) - ptr_bytes);
+                  while (1) {
+                    ISPC s2;
+                    prev_si = MaybeSegInfo(ptr_get_segment(backp));
+                    if (!prev_si) break;
+                    s2 = prev_si->space;
+                    if (!(s2 & space_locked)) break;
+                    s2 &= ~space_locked;
+                    if (SIMPLE_DIRTY_SPACE_P(s2)) break;
+                    if ((prev_si->locked_objects != Snil) || (prev_si->unlocked_objects != Snil)) {
+                      youngest = sweep_dirty_intersecting(prev_si->locked_objects, pp, ppend, tg, youngest);
+                      youngest = sweep_dirty_intersecting(prev_si->unlocked_objects, pp, ppend, tg, youngest);
+                      break;
+                    } else {
+                      backp = (ptr)(((uptr)backp) - bytes_per_segment);
+                    }
+                  }
+                } else if ((s == space_impure) || (s == space_impure_typed_object) || (s == space_closure)) {
                   while (pp < ppend && *pp != forward_marker) {
                     /* handle two pointers at a time */
                     relocate_dirty(pp,tg,youngest)
@@ -2251,23 +2348,11 @@ static void sweep_dirty(void) {
                     (size_symbol / sizeof(ptr));
 
                   while (pp < ppend && *pp != forward_marker) { /* might overshoot card by part of a symbol.  no harm. */
-                    ptr val, code, p = TYPE((ptr)pp, type_symbol);
-                    PUSH_BACKREFERENCE(p)
+                    ptr p = TYPE((ptr)pp, type_symbol);
 
-                    val = SYMVAL(p);
-                    relocate_dirty(&val,tg,youngest)
-                    INITSYMVAL(p) = val;
-                    code = Sprocedurep(val) ? CLOSCODE(val) : SYMCODE(p);
-                    relocate_dirty(&code,tg,youngest)
-                    INITSYMCODE(p,code);
-                    relocate_dirty(&INITSYMPLIST(p),tg,youngest)
-                    relocate_dirty(&INITSYMSPLIST(p),tg,youngest)
-                    relocate_dirty(&INITSYMNAME(p),tg,youngest)
-                    relocate_dirty(&INITSYMHASH(p),tg,youngest)
+                    youngest = sweep_dirty_symbol(p, tg, youngest);
 
                     pp += size_symbol / sizeof(ptr);
-
-                    POP_BACKREFERENCE()
                   }
                 } else if (s == space_port) {
                   /* old ports cannot overlap segment boundaries
@@ -2282,27 +2367,10 @@ static void sweep_dirty(void) {
 
                   while (pp < ppend && *pp != forward_marker) { /* might overshoot card by part of a port.  no harm. */
                     ptr p = TYPE((ptr)pp, type_typed_object);
-                    PUSH_BACKREFERENCE(p)
 
-                    relocate_dirty(&PORTHANDLER(p),tg,youngest)
-                    relocate_dirty(&PORTINFO(p),tg,youngest)
-                    relocate_dirty(&PORTNAME(p),tg,youngest)
-
-                    if (PORTTYPE(p) & PORT_FLAG_OUTPUT) {
-                      iptr n = (iptr)PORTOLAST(p) - (iptr)PORTOBUF(p);
-                      relocate_dirty(&PORTOBUF(p),tg,youngest)
-                      PORTOLAST(p) = (ptr)((iptr)PORTOBUF(p) + n);
-                    }
-
-                    if (PORTTYPE(p) & PORT_FLAG_INPUT) {
-                      iptr n = (iptr)PORTILAST(p) - (iptr)PORTIBUF(p);
-                      relocate_dirty(&PORTIBUF(p),tg,youngest)
-                      PORTILAST(p) = (ptr)((iptr)PORTIBUF(p) + n);
-                    }
+                    youngest = sweep_dirty_port(p, tg, youngest);
 
                     pp += size_port / sizeof(ptr);
-
-                    POP_BACKREFERENCE()
                   }
                 } else if (s == space_impure_record) { /* abandon hope all ye who enter here */
                   uptr j; ptr p, pnext; seginfo *si;
@@ -2345,8 +2413,7 @@ static void sweep_dirty(void) {
                     /* quit on end of segment */
                     if (FWDMARKER(p) == forward_marker) break;
 
-                    pg = sweep_dirty_record(p);
-                    if (pg < youngest) youngest = pg;
+                    youngest = sweep_dirty_record(p, tg, youngest);
                     p = (ptr)((iptr)p +
                         size_record_inst(UNFIX(RECORDDESCSIZE(
                               RECORDINSTTYPE(p)))));
@@ -2389,6 +2456,82 @@ static void sweep_dirty(void) {
   }
 
   POP_BACKREFERENCE()
+}
+
+IGEN sweep_dirty_intersecting(ptr lst, ptr *pp, ptr *ppend, IGEN tg, IGEN youngest)
+{
+  ptr p, *pu, *puend;
+
+  for (; lst != Snil; lst = Scdr(lst)) {
+    p = (ptr *)Scar(lst);
+
+    pu = (ptr*)UNTYPE_ANY(p);
+    puend = (ptr*)((uptr)pu + size_object(p));
+
+    if (((pu >= pp) && (pu < ppend))
+        || ((puend >= pp) && (puend < ppend))
+        || ((pu <= pp) && (puend >= ppend))) {
+      /* Overlaps, so sweep */
+      ITYPE t = TYPEBITS(p);
+
+      if (t == type_pair) {
+        youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
+      } else if (t == type_closure) {
+        ptr code;
+
+        code = CLOSCODE(p);
+        if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
+          youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
+        }
+      } else if (t == type_symbol) {
+        youngest = sweep_dirty_symbol(p, tg, youngest);
+      } else if (t == type_flonum) {
+        /* nothing to sweep */
+      } else {
+        ptr tf = TYPEFIELD(p);
+        if (TYPEP(tf, mask_vector, type_vector)
+            || TYPEP(tf, mask_box, type_box)
+            || ((iptr)tf == type_tlc)) {
+          /* impure objects */
+          youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
+        } else if (TYPEP(tf, mask_string, type_string)
+                   || TYPEP(tf, mask_bytevector, type_bytevector)
+                   || TYPEP(tf, mask_fxvector, type_fxvector)) {
+          /* nothing to sweep */;
+        } else if (TYPEP(tf, mask_record, type_record)) {
+          youngest = sweep_dirty_record(p, tg, youngest);
+        } else if (((iptr)tf == type_ratnum)
+                   || ((iptr)tf == type_exactnum)
+                   || TYPEP(tf, mask_bignum, type_bignum)) {
+          /* immutable */
+        } else if (TYPEP(tf, mask_port, type_port)) {
+          youngest = sweep_dirty_port(p, tg, youngest);
+        } else if (TYPEP(tf, mask_code, type_code)) {
+          /* immutable */
+        } else if (((iptr)tf == type_rtd_counts)
+                   || ((iptr)tf == type_phantom)) {
+          /* nothing to sweep */;
+        } else {
+          S_error_abort("sweep_dirty_intersection(gc): unexpected type");
+        }
+      }
+    }
+  }
+
+  return youngest;
+}
+
+IGEN sweep_dirty_bytes(ptr *pp, ptr *ppend, ptr *pu, ptr *puend, IGEN tg, IGEN youngest)
+{
+  if (pu < pp) pu = pp;
+  if (puend > ppend) puend = ppend;
+
+  while (pu < puend) {
+    relocate_dirty(pu,tg,youngest)
+    pu += 1;
+  }
+
+  return youngest;
 }
 
 static void resweep_dirty_weak_pairs() {

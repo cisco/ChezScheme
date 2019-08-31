@@ -3551,6 +3551,18 @@
     (let ([ls ($locked-objects)])
       (unless (null? ls) (errorf #f "found locked objects ~s" ls))
       #t))
+
+  ;; Make sure a locked object that spans segments is appropriately
+  ;; swept when it's modified to ceate a backpointer
+  (let* ([N 100000]
+         [v (make-vector N)])
+    (lock-object v)
+    (collect 0)
+    (let ([p (cons 1 2)])
+      (vector-set! v (sub1 N) p)
+      (collect 0)
+      (set-car! p 'yes)
+      (equal? '(yes . 2) (vector-ref v (sub1 N)))))
 )
 
 (mat eval-order

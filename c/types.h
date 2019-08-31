@@ -134,6 +134,8 @@ typedef struct _seginfo {
   struct _seginfo *dirty_next;              /* pointer to the next seginfo on the DirtySegments list */
   ptr trigger_ephemerons;                   /* ephemerons to re-check if object in segment is copied out */
   ptr trigger_guardians;                    /* guardians to re-check if object in segment is copied out */
+  ptr locked_objects;                       /* list of objects (including duplicates) for locked in this segment */
+  ptr unlocked_objects;                     /* list of objects (no duplicates) for formerly locked */
 #ifdef PRESERVE_FLONUM_EQ
   octet *forwarded_flonums;                 /* bitmap of flonums whose payload is a forwarding pointer */
 #endif

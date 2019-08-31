@@ -120,8 +120,6 @@ EXTERN struct S_G_struct {
 
   /* gc.c */
     ptr guardians[static_generation+1];
-    ptr locked_objects[static_generation+1];
-    ptr unlocked_objects[static_generation+1];
     IGEN min_free_gen;
     IGEN new_min_free_gen;
     IGEN max_nonstatic_generation;
