@@ -955,7 +955,6 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     seginfo *oldspacesegments, *si, *nextsi;
     ptr ls;
     bucket_pointer_list *buckets_to_rebuild;
-    ptr locked_oldspace_objects;
 
    /* flush instruction cache: effectively clear_code_mod but safer */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
@@ -1058,12 +1057,11 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     }
     if (ls == Snil) {
       sorted_locked_objects = FIX(0);
-      locked_oldspace_objects = Snil;
     } else {
       ptr v, x, y; uptr i, n;
 
       /* dosort is destructive, so have to store the result back */
-      locked_oldspace_objects = ls = dosort(ls, list_length(ls));
+      ls = dosort(ls, list_length(ls));
 
       /* create vector of smallest size n=2^k-1 that will fit all of
          the list's unique elements */
