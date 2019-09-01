@@ -3562,6 +3562,7 @@
       (vector-set! v (sub1 N) p)
       (collect 0)
       (set-car! p 'yes)
+      (unlock-object v)
       (equal? '(yes . 2) (vector-ref v (sub1 N)))))
 )
 

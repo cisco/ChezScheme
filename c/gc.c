@@ -2213,8 +2213,10 @@ static void sanitize_locked_segment(seginfo *si) {
     /* Zero out unused memory */
     while (pp < ppend) {
       if ((ls != Snil) && (pp == UNTYPE_ANY(Scar(ls)))) {
+        ptr a = Scar(ls);
         pp = (ptr *)((uptr)pp + size_object(Scar(ls)));
-        ls = Scdr(ls);
+        while ((ls != Snil) && (Scar(ls) == a))
+          ls = Scdr(ls);
       } else {
         *pp = FIX(0);
         pp++;
