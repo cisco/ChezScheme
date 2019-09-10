@@ -5575,8 +5575,7 @@
           (define hand-coded-closure?
             (lambda (name)
               (not (memq name '(nuate nonprocedure-code error-invoke invoke
-                                      $wrapper-apply wrapper-apply arity-wrapper-apply
-                                      $shift-attachment)))))
+                                      $wrapper-apply wrapper-apply arity-wrapper-apply)))))
           (define-inline 2 $hand-coded
             [(name)
              (nanopass-case (L7 Expr) name
@@ -11574,6 +11573,7 @@
                                (set! ,(%tc-ref scheme-stack) ,(%mref ,xp/cp ,(constant continuation-stack-disp)))
                                (set! ,(%tc-ref stack-link) ,(%mref ,xp/cp ,(constant continuation-link-disp)))
                                (set! ,%ts ,(%mref ,xp/cp ,(constant continuation-attachments-disp)))
+                               (set! ,(%tc-ref cached-frame) ,xp/cp) ; save for fast immediate realloc
                                (set! ,(%tc-ref attachments) ,%ts)
                                (goto ,Lreturn))
                              ; can't merge
@@ -11666,9 +11666,18 @@
                                        ,(%inline eq? ,%ref-ret ,%ac0))
                                   ,(finish %td)
                                   ,(%seq
-                                     (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
-                                     (set! ,(%mref ,%xp ,(constant continuation-code-disp))
-                                       (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp))))
+                                     ,(let ([alloc
+                                             (%seq
+                                              (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
+                                              (set! ,(%mref ,%xp ,(constant continuation-code-disp))
+                                                    (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp)))))])
+                                        (if 1-shot?
+                                            (%seq
+                                             (set! ,%xp ,(%tc-ref cached-frame))
+                                             (if ,(%inline eq? ,%xp ,(%constant sfalse))
+                                                 ,alloc
+                                                 (set! ,(%tc-ref cached-frame) ,(%constant sfalse))))
+                                            alloc))
                                      (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
                                      (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
                                      (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
@@ -12004,13 +12013,24 @@
                (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp)))
                ,(make-push))]
              [(reify-and-set)
-              (%seq
-               (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
-               (set! ,ats ,(%tc-ref attachments))
-               (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
-                   (nop)
-                   (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
-               ,(make-push))]
+              (let ([tmp (make-tmp 'uf)])
+                (%seq
+                 ;; Fast check for existing reified, first
+                 (set! ,%td ,(%tc-ref stack-link))
+                 (set! ,tmp (literal ,(make-info-literal #f 'library-code
+                                        (lookup-libspec dounderflow)
+                                        (fx+ (constant code-data-disp) (constant size-rp-header)))))
+                 (set! ,ats ,(%tc-ref attachments))
+                 (if (if ,(%inline eq?
+                                   ,(%mref ,%td ,(constant continuation-attachments-disp))
+                                   ,(%constant sfalse))
+                         (false)
+                         ,(%inline eq? ,%ref-ret ,tmp))
+                     (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
+                         (nop)
+                         (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
+                     (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall)))
+                 ,(make-push)))]
              [else
               ($oops who "unexpected attachment-set mode ~s" aop)]))])
       (Tail : Tail  (ir) -> Tail  ()
@@ -12941,32 +12961,6 @@
                          (set! ,(ref-reg %cp) ,%td)
                          (jump ,(%mref ,%td ,(constant closure-code-disp))
                                (,%ac0 ,(reg-cons* %ret arg-registers) ...)))))])))]
-           [($shift-attachment)
-            ;; Reify the continuation, but dropping the first `attachments` element,
-            ;; which must be present, so that the attachment will be popped
-            ;; on return from the continuation
-            (let ([info (make-info "$shift-attachment" '())])
-              (info-lambda-fv*-set! info '(proc))
-              `(lambda ,info 0 ()
-                ,(%seq
-                  (set! ,(ref-reg %ac1) ,%ac0) ; save argument count
-                  (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
-                  (set! ,%ts ,(%mref ,%td ,(constant continuation-attachments-disp)))
-                  (set! ,(%mref ,%td ,(constant continuation-attachments-disp)) ,(%mref ,%ts ,(constant pair-cdr-disp)))
-                  (set! ,%ac0 ,(ref-reg %ac1)) ; restore argument count
-                  ,(meta-cond
-                    [(real-register? '%cp)
-                     (%seq
-                       (set! ,%cp ,(%mref ,%cp ,(constant closure-data-disp)))
-                       (jump ,(%mref ,%cp ,(constant closure-code-disp))
-                             (,%ac0 ,%cp ,(reg-cons* %ret arg-registers) ...)))]
-                    [else
-                     (%seq
-                       (set! ,%td ,(ref-reg %cp))
-                       (set! ,%td ,(%mref ,%td ,(constant closure-data-disp)))
-                       (set! ,(ref-reg %cp) ,%td)
-                       (jump ,(%mref ,%td ,(constant closure-code-disp))
-                             (,%ac0 ,(reg-cons* %ret arg-registers) ...)))]))))]
            [(bytevector=?)
             (let ([bv1 (make-tmp 'bv1)] [bv2 (make-tmp 'bv2)] [idx (make-tmp 'idx)] [len2 (make-tmp 'len2)])
               (define (argcnt->max-fv n) (max (- n (length arg-registers)) 0))

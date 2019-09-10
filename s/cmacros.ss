@@ -1379,6 +1379,7 @@
    [iptr scheme-stack-size]
    [ptr winders]
    [ptr attachments]
+   [ptr cached-frame]
    [ptr U]
    [ptr V]
    [ptr W]
@@ -2696,7 +2697,6 @@
      ($wrapper-apply #f 0 #f #f)
      (wrapper-apply #f 0 #f #f)
      (arity-wrapper-apply #f 0 #f #f)
-     ($shift-attachment #f 0 #f #f)
   ))
 
 (let ()
