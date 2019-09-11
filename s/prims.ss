@@ -389,11 +389,17 @@
       ($oops who "~s is not a procedure" p))
     (#3%call-setting-continuation-attachment v (lambda () (p)))))
 
-(define-who call-with-current-continuation-attachment
+(define-who call-getting-continuation-attachment
   (lambda (default-val p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#3%call-with-current-continuation-attachment default-val (lambda (x) (p x)))))
+    (#3%call-getting-continuation-attachment default-val (lambda (x) (p x)))))
+
+(define-who call-consuming-continuation-attachment
+  (lambda (default-val p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-consuming-continuation-attachment default-val (lambda (x) (p x)))))
 
 (define $code? (lambda (x) ($code? x)))
 

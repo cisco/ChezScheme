@@ -1181,7 +1181,8 @@
   (bytevector-compress [sig [(ptr) -> (ptr)]] [flags])
   (bytevector-uncompress [sig [(ptr) -> (ptr)]] [flags])
   (call/1cc [sig [(procedure) -> (ptr ...)]] [flags])
-  (call-with-current-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-consuming-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-getting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument
   (call-setting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])

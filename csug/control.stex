@@ -306,9 +306,10 @@ since an error or long-running computation can leave interrupts
 and automatic garbage collection disabled.
 
 %----------------------------------------------------------------------------
-\entryheader\label{call-setting-continuation-attachment}\label{call-with-current-continuation-attachment}
+\entryheader\label{call-setting-continuation-attachment}\label{call-getting-current-continuation-attachment}\label{call-consuming-current-continuation-attachment}
 \formdef{call-setting-continuation-attachment}{\categoryprocedure}{(call-setting-continuation-attachment \var{val} \var{procedure})}
-\formdef{call-with-current-continuation-attachment}{\categoryprocedure}{(call-with-current-continuation-attachment \var{default-val} \var{procedure})}
+\formdef{call-getting-continuation-attachment}{\categoryprocedure}{(call-getting-continuation-attachment \var{default-val} \var{procedure})}
+\formdef{call-consuming-continuation-attachment}{\categoryprocedure}{(call-consuming-continuation-attachment \var{default-val} \var{procedure})}
 \returns the values returned by \var{procedure}
 \listlibraries
 \endentryheader
@@ -321,7 +322,7 @@ current continuation to \var{val}. The continuation of the call to
 current continuation). If the current continuation already has an
 attachment, it is replaced by \var{val}.
 
-\scheme{call-with-current-continuation-attachment} calls
+\scheme{call-getting-continuation-attachment} calls
 \var{procedure} with one argument: the current continuation's
 attachment, if any, or the value of \var{default-val} if the current
 continuation has no attachment. The continuation of the call to
@@ -329,11 +330,24 @@ continuation has no attachment. The continuation of the call to
 \scheme{call-with-current-continuation-attachment} (i.e., it is still
 the current continuation).
 
+\scheme{call-consuming-continuation-attachment} is like
+\scheme{call-getting-continuation-attachment}, but if the
+current continuation has an attachment, the attachment is
+removed.
+
 \schemedisplay
+(call-getting-continuation-attachment
+ 'nothing
+ (lambda (a) a)))) ; => nothing
+
+(call-consuming-continuation-attachment
+ 'nothing
+ (lambda (a) a)))) ; => nothing
+
 (call-setting-continuation-attachment
  'milk
  (lambda ()
-  (call-with-current-continuation-attachment
+  (call-getting-continuation-attachment
    'nothing
    (lambda (a) a)))) ; => milk
 
@@ -341,7 +355,8 @@ the current continuation).
  'milk
  (lambda ()
   (list
-   (call-with-current-continuation-attachment
+   ; not in tail position:
+   (call-getting-continuation-attachment
     'nothing
     (lambda (a) a))))) ; => (nothing)
 
@@ -349,7 +364,7 @@ the current continuation).
  (call-setting-continuation-attachment
   'milk
   (lambda ()
-   (call-with-current-continuation-attachment
+   (call-getting-continuation-attachment
     'nothing
     (lambda (a) a))))) ; => (milk)
 
@@ -359,9 +374,19 @@ the current continuation).
   (call-setting-continuation-attachment
    'water
    (lambda ()
-     (call-with-current-continuation-attachment
+     (call-getting-continuation-attachment
        'nothing
        (lambda (a) a)))))) ; => water
+
+(call-setting-continuation-attachment
+ 'milk
+ (lambda ()
+  (call-consuming-continuation-attachment
+   'water
+   (lambda (a)
+     (call-getting-continuation-attachment
+       'nothing
+       (lambda (b) (list a b))))))) ; => (milk nothing)
 \endschemedisplay
 
 %----------------------------------------------------------------------------

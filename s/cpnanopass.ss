@@ -1559,19 +1559,36 @@
 
     (define-pass np-recognize-attachment : L4.875 (ir) -> L4.9375 ()
       (definitions
+        ;; Modes:
+        ;;   - 'tail => in tail position, unknown whether continuation is reified
+        ;;              or whether attachment exists
+        ;;   - 'tail/some => in tail position, continuation is reified,
+        ;;              attachment definitely exists
+        ;;   - 'tail/none => in tail position, continuation is reified,
+        ;;              attachment definitely does not exist
+        ;;   - 'non/none => not in tail position, no attachment pushed
+        ;;   - 'non/some => not in tail position, attachment pushed and needs
+        ;;             to be popped when leaving the nested context (which
+        ;;             may involve transferring to a reified continuation
+        ;;             if a function is called in relative tail position)
         (define return
           (lambda (mode x)
             (case mode
-              [(pop) (with-output-language (L4.9375 Expr)
-                       `(seq
-                          (attachment-set pop)
-                          ,x))]
+              [(non/some) (with-output-language (L4.9375 Expr)
+                           `(seq
+                             (attachment-set pop)
+                             ,x))]
               [else x])))
-        (define ->in-wca
+        (define ->in-set
           (lambda (mode)
             (case mode
-              [(non-tail pop) 'pop]
-              [(tail tail/reified) 'tail/reified])))
+              [(non/none non/some) 'non/some]
+              [(tail tail/some tail/none) 'tail/some])))
+        (define ->in-consume
+          (lambda (mode)
+            (case mode
+              [(non/none non/some) 'non/none]
+              [(tail tail/some tail/none) 'tail/none])))
         (define info-call->shifting-info-call
           (lambda (info)
             (make-info-call (info-call-src info) (info-call-sexpr info)
@@ -1585,60 +1602,82 @@
       (CaseLambdaClause : CaseLambdaClause (cl) -> CaseLambdaClause ()
         [(clause (,x* ...) ,interface ,[Expr : body 'tail -> body])
          `(clause (,x* ...) ,interface ,body)])
-      (Expr : Expr (ir [mode 'non-tail]) -> Expr ()
+      ;; See start of pass for description of `mode`
+      (Expr : Expr (ir [mode 'non/none]) -> Expr ()
         [,x (return mode x)]
-        [(letrec ([,x* ,[le* 'non-tail -> le*]] ...) ,[body])
+        [(letrec ([,x* ,[le* 'non/none -> le*]] ...) ,[body])
          `(letrec ([,x* ,le*] ...) ,body)]
-        [(call ,info ,mdcl ,pr ,[e1 'non-tail -> e1]
-               (case-lambda ,info2 (clause () ,interface ,[body (->in-wca mode) -> body])))
+        [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
+               (case-lambda ,info2 (clause () ,interface ,[body (->in-set mode) -> body])))
          (guard (and (eq? (primref-name pr) 'call-setting-continuation-attachment)
                      (= interface 0)))
          (case mode
-           [(pop tail/reified)
+           [(non/some tail/some)
             ;; Definitely an attachment in place
             `(seq (attachment-set set ,e1) ,body)]
+           [(tail/none)
+            ;; Definitely not an attachment in place; continuation is reified
+            `(seq (attachment-set push ,e1) ,body)]
            [(tail)
             ;; Check dynamically for reified continuation and attachment
             `(seq (attachment-set reify-and-set ,e1) ,body)]
-           [(non-tail)
+           [(non/none)
             ;; Push attachment; `body` has been adjusted to pop
             `(seq (attachment-set push ,e1) ,body)])]
-        [(call ,info ,mdcl ,pr ,[e1 'non-tail -> e1]
+        [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
                (case-lambda ,info2 (clause (,x) ,interface ,[body])))
-         (guard (and (eq? (primref-name pr) 'call-with-current-continuation-attachment)
+         (guard (and (eq? (primref-name pr) 'call-getting-continuation-attachment)
                      (= interface 1)))
          (case mode
-           [(non-tail)
-            ;; No surrounding `with-continuation-attachment`
+           [(non/none tail/none)
+            ;; No surrounding `call-setting-continuation-attachment`
             `(let ([,x ,e1]) ,body)]
-           [(pop tail/reified)
-            ;; Defintely an attachment in place
+           [(non/some tail/some)
+            ;; Definitely an attachment in place
             `(seq ,e1 (let ([,x (attachment-get)]) ,body))]
            [else
             ;; Check dynamically for attachment
             `(let ([,x (attachment-get ,e1)]) ,body)])]
-        [(call ,info ,mdcl ,[e 'non-tail -> e] ,[e* 'non-tail -> e*] ...)
+        [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
+               (case-lambda ,info2 (clause (,x) ,interface ,[body (->in-consume mode) -> body])))
+         (guard (and (eq? (primref-name pr) 'call-consuming-continuation-attachment)
+                     (= interface 1)))
+         ;; Currently, `call-consuming-continuation-attachment` in tail position
+         ;; reifies the continuation, because we expect it to be combined with
+         ;; `call-setting-continuation-attachment` in `body`. Since the continuation
+         ;; is reified here, `call-setting-continuation-attachment` can simply push.
+         (case mode
+           [(non/none tail/none)
+            ;; No surrounding `call-setting-continuation-attachment`, but reified if tail
+            `(let ([,x ,e1]) ,body)]
+           [(non/some tail/some)
+            ;; Definitely an attachment in place
+            `(seq ,e1 (let ([,x (attachment-consume)]) ,body))]
+           [else
+            ;; Check dynamically for attachment, and also reify for tail
+            `(let ([,x (attachment-consume ,e1)]) ,body)])]
+        [(call ,info ,mdcl ,[e 'non/none -> e] ,[e* 'non/none -> e*] ...)
          (let ([info (case mode
-                       [(pop) (info-call->shifting-info-call info)]
+                       [(non/some) (info-call->shifting-info-call info)]
                        [else info])])
            `(call ,info ,mdcl ,e ,e* ...))]
-        [(foreign-call ,info ,[e 'non-tail -> e] ,[e* 'non-tail -> e*] ...)
+        [(foreign-call ,info ,[e 'non/none -> e] ,[e* 'non/none -> e*] ...)
          (return mode `(foreign-call ,info ,e ,e* ...))]
         [(fcallable ,info) (return mode `(fcallable ,info))]
         [(label ,l ,[body]) `(label ,l ,body)]
-        [(mvlet ,[e 'non-tail -> e] ((,x** ...) ,interface* ,[body*]) ...)
+        [(mvlet ,[e 'non/none -> e] ((,x** ...) ,interface* ,[body*]) ...)
          `(mvlet ,e ((,x** ...) ,interface* ,body*) ...)]
-        [(mvcall ,info ,[e1 'non-tail -> e1] ,[e2 'non-tail -> e2])
+        [(mvcall ,info ,[e1 'non/none -> e1] ,[e2 'non/none -> e2])
          (let ([info (case mode
-                       [(pop) (info-call->consumer-shifting-info-call info #t)]
+                       [(non/some) (info-call->consumer-shifting-info-call info #t)]
                        [else (info-call->consumer-shifting-info-call info #f)])])
            `(mvcall ,info ,e1 ,e2))]
-        [(let ([,x* ,[e* 'non-tail -> e*]] ...) ,[body])
+        [(let ([,x* ,[e* 'non/none -> e*]] ...) ,[body])
          `(let ([,x* ,e*] ...) ,body)]
         [(case-lambda ,info ,[cl] ...) (return mode `(case-lambda ,info ,cl ...))]
         [(quote ,d) (return mode `(quote ,d))]
-        [(if ,[e0 'non-tail -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
-        [(seq ,[e0 'non-tail -> e0] ,[e1]) `(seq ,e0 ,e1)]
+        [(if ,[e0 'non/none -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
+        [(seq ,[e0 'non/none -> e0] ,[e1]) `(seq ,e0 ,e1)]
         [(profile ,src) `(profile ,src)]
         [(pariah) `(pariah)]
         [,pr (return mode pr)]
@@ -10042,6 +10081,10 @@
          (Triv* e*
            (lambda (t*)
              (k `(attachment-get ,t* ...))))]
+        [(attachment-consume ,e* ...)
+         (Triv* e*
+           (lambda (t*)
+             (k `(attachment-consume ,t* ...))))]
         [(attachment-set ,aop ,e* ...)
          (Triv* e*
            (lambda (t*)
@@ -10405,6 +10448,8 @@
          `(tail (mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...)))]
         [(set! ,[lvalue] (attachment-get ,[t*] ...))
          `(set! ,lvalue (attachment-get ,t* ...))]
+        [(set! ,[lvalue] (attachment-consume ,[t*] ...))
+         `(set! ,lvalue (attachment-consume ,t* ...))]
         [(label ,l ,[ebody]) `(seq (label ,l) ,ebody)]
         [(trap-check ,ioc ,[ebody]) `(seq (trap-check ,ioc) ,ebody)]
         [(overflow-check ,[ebody]) `(seq (overflow-check) ,ebody)]
@@ -11710,7 +11755,44 @@
                                  ,(%seq
                                    (set! ,(%mref ,%xp ,(constant continuation-stack-length-disp)) ,%ac0)
                                    (set! ,%xp ,(%mref ,%xp ,(constant continuation-link-disp)))
-                                   (goto ,Ltop))))))))))))
+                                   (goto ,Ltop)))))))))))
+        (define (build-attachment-get lvalue t consume? reify?)
+          (let ([uf (make-tmp 'uf)]
+                [sl (make-tmp 'sl)]
+                [ats (make-tmp 'ats)])
+            (with-output-language (L13 Effect)
+              (%seq
+               (set! ,uf (literal ,(make-info-literal #f 'library-code
+                                         (lookup-libspec dounderflow)
+                                         (fx+ (constant code-data-disp) (constant size-rp-header)))))
+               (if ,(%inline eq? ,%ref-ret ,uf)
+                   ;; Maybe reified, so maybe an attachment
+                   ,(%seq
+                     (set! ,sl ,(%tc-ref stack-link))
+                     (set! ,ats ,(%tc-ref attachments))
+                     (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,ats)
+                         ;; Reified, no attachment
+                         (set! ,lvalue ,t)
+                         (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,(%constant sfalse))
+                             ;; Not reified, so no attachment
+                             ,(if (not reify?)
+                                  `(set! ,lvalue ,t)
+                                  (%seq
+                                   (set! ,lvalue ,t) 
+                                   (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))))
+                             ;; Reified with attachment
+                             ,(let ([get `(set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))])
+                                (if consume?
+                                    (%seq
+                                     (set! ,(%tc-ref attachments) ,(%mref ,ats ,(constant pair-cdr-disp)))
+                                     ,get)
+                                    get)))))
+                   ;; Not reified, so no attachment
+                   ,(if (not reify?)
+                        `(set! ,lvalue ,t)
+                        (%seq
+                         (set! ,lvalue ,t)
+                         (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))))))))))
       (Program : Program (ir) -> Program ()
         [(labels ([,l* ,le*] ...) ,l)
          `(labels ([,l* ,(map CaseLambdaExpr le* l*)] ...) ,l)])
@@ -11904,7 +11986,9 @@
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
          ($oops who "Effect is responsible for handling mvcalls")]
         [(attachment-get ,t* ...)
-         ($oops who "Effect is responsible for handling attachment-gets")])
+         ($oops who "Effect is responsible for handling attachment-gets")]
+        [(attachment-consume ,t* ...)
+         ($oops who "Effect is responsible for handling attachment-consumes")])
       (Effect : Effect (ir) -> Effect ()
         [(do-rest ,fixed-args)
          (if (fx<= fixed-args dorest-intrinsic-max)
@@ -11963,25 +12047,18 @@
         [(set! ,[lvalue] (attachment-get ,[t]))
          ;; Default expression => need to check for reified continuation
          ;; and attachment beyond it
-         (let ([uf (make-tmp 'uf)]
-               [sl (make-tmp 'sl)]
-               [ats (make-tmp 'ats)])
+         (build-attachment-get lvalue t #f #f)]
+        [(set! ,[lvalue] (attachment-consume))
+         ;; No default expression => an attachment is certainly available
+         (let ([ats (make-tmp 'ats)])
            (%seq
-            (set! ,uf (literal ,(make-info-literal #f 'library-code
-                                      (lookup-libspec dounderflow)
-                                      (fx+ (constant code-data-disp) (constant size-rp-header)))))
-            (if ,(%inline eq? ,%ref-ret ,uf)
-                ;; Reified, so maybe an attachment
-                ,(%seq
-                  (set! ,sl ,(%tc-ref stack-link))
-                  (set! ,ats ,(%tc-ref attachments))
-                  (if (if ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,ats)
-                          (true)
-                          ,(%inline eq? ,(%mref ,sl ,(constant continuation-attachments-disp)) ,(%constant sfalse)))
-                      (set! ,lvalue ,t)
-                      (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))
-                ;; Not reified, so no attachment
-                (set! ,lvalue ,t))))]
+            (set! ,ats ,(%tc-ref attachments))
+            (set! ,(%tc-ref attachments)  ,(%mref ,ats ,(constant pair-cdr-disp)))
+            (set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))))]
+        [(set! ,[lvalue] (attachment-consume ,[t]))
+         ;; Default expression => need to check for reified continuation
+         ;; and attachment beyond it
+         (build-attachment-get lvalue t #t #t)]
         [(attachment-set ,aop)
          (case aop
            [(pop)

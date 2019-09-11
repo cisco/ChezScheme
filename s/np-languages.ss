@@ -393,7 +393,8 @@
     (entry CaseLambdaExpr)
     (Expr (e body)
       (+ (attachment-set aop e* ...)
-         (attachment-get e* ...))))
+         (attachment-get e* ...)
+         (attachment-consume e* ...))))
 
  ; moves all case lambda expressions into rhs of letrec
   (define-language L5 (extends L4.9375)
@@ -669,7 +670,8 @@
          (inline info prim t* ...)               => (inline info prim t* ...)
          (mvcall info e t)                       => (mvcall e t)
          (foreign-call info t t* ...)
-         (attachment-get t* ...)))
+         (attachment-get t* ...)
+         (attachment-consume t* ...)))
     (Expr (e body)
       (- lvalue
          (values info e* ...)
@@ -683,7 +685,8 @@
          (set! lvalue e)
          (mvcall info e1 e2)
          (foreign-call info e e* ...)
-         (attachment-get e* ...))
+         (attachment-get e* ...)
+         (attachment-consume e* ...))
       (+ rhs
          (values info t* ...)
          (set! lvalue rhs))))

@@ -3185,10 +3185,15 @@
   (error? (call-setting-continuation-attachment 'any void 'bad-more))
   (error? (call-setting-continuation-attachment 'any (lambda (x) x)))
 
-  (error? (call-with-current-continuation-attachment 'none))
-  (error? (call-with-current-continuation-attachment 'none 10))
-  (error? (call-with-current-continuation-attachment 'none (lambda (a) a) 'bad-more))
-  (error? (call-with-current-continuation-attachment 'none void))
+  (error? (call-getting-continuation-attachment 'none))
+  (error? (call-getting-continuation-attachment 'none 10))
+  (error? (call-getting-continuation-attachment 'none (lambda (a) a) 'bad-more))
+  (error? (call-getting-continuation-attachment 'none void))
+
+  (error? (call-consuming-continuation-attachment 'none))
+  (error? (call-consuming-continuation-attachment 'none 10))
+  (error? (call-consuming-continuation-attachment 'none (lambda (a) a) 'bad-more))
+  (error? (call-consuming-continuation-attachment 'none void))
 
   (error? (continuation-next-attachments))
   (error? (continuation-next-attachments 10))
@@ -3196,7 +3201,8 @@
   (error? (continuation-next-attachments (call/cc (lambda (x) x)) 'bad-more))
 
   (equal? (void) (call-setting-continuation-attachment 'any void))
-  (equal? 'none (call-with-current-continuation-attachment 'none (lambda (a) a)))
+  (equal? 'none (call-getting-continuation-attachment 'none (lambda (a) a)))
+  (equal? 'none (call-consuming-continuation-attachment 'none (lambda (a) a)))
   (equal? '() (continuation-next-attachments (call/cc (lambda (x) x))))
 
   (equal? '() (current-continuation-attachments))
@@ -3232,14 +3238,28 @@
           (call-setting-continuation-attachment
            'yes
            (lambda ()
-            (call-with-current-continuation-attachment
+            (call-getting-continuation-attachment
              'no
              (lambda (v) v)))))
   (equal? 'yes
           (call-setting-continuation-attachment
            'yes
            (lambda ()
-            (call-with-current-continuation-attachment
+            (call-consuming-continuation-attachment
+             'no
+             (lambda (v) v)))))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-getting-continuation-attachment
+             'no
+             values))))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-consuming-continuation-attachment
              'no
              values))))
   (equal? '(no)
@@ -3247,7 +3267,7 @@
            'yes
            (lambda ()
             (list
-             (call-with-current-continuation-attachment
+             (call-getting-continuation-attachment
               'no
               (lambda (v) v))))))
   (equal? '(no)
@@ -3255,9 +3275,86 @@
            'yes
            (lambda ()
             (list
-             (call-with-current-continuation-attachment
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v) v))))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-getting-continuation-attachment
               'no
               values)))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-consuming-continuation-attachment
+              'no
+              values)))))
+  (equal? '(yes yes)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-getting-continuation-attachment
+              'no
+              (lambda (a)
+                (call-getting-continuation-attachment
+                'no
+                 (lambda (b)
+                   (list a b))))))))
+  (equal? '(yes no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (a)
+                (call-consuming-continuation-attachment
+                'no
+                 (lambda (b)
+                   (list a b))))))))
+  (equal? '(yes again)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-getting-continuation-attachment
+              'no
+              (lambda (a)
+                (call-setting-continuation-attachment
+                 'again
+                 (lambda ()
+                   (call-getting-continuation-attachment
+                    'no
+                    (lambda (b)
+                      (list a b))))))))))
+  (equal? '(yes again)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (a)
+                (call-setting-continuation-attachment
+                 'again
+                 (lambda ()
+                   (call-consuming-continuation-attachment
+                    'no
+                    (lambda (b)
+                      (list a b))))))))))
+  (equal? '(no again)
+          (call-consuming-continuation-attachment
+           'no
+           (lambda (a)
+             (call-setting-continuation-attachment
+              'again
+              (lambda ()
+                (call-consuming-continuation-attachment
+                 'no
+                 (lambda (b)
+                   (list a b))))))))
   (begin
    (define (call-with-yep f)
      (call-setting-continuation-attachment
@@ -3267,6 +3364,14 @@
      (call-setting-continuation-attachment
       'yeah
        f))
+   (define (call-with-nothing f)
+     (#%$value
+      (f)))
+   (define (call-with-nothing-in-split f)
+     ((call/cc
+       (lambda (k)
+         (#%$split-continuation k 0)
+         f))))
    (define-syntax call-with-yeah*
      (syntax-rules ()
        [(_ f)
@@ -3274,9 +3379,18 @@
          'yeah
          f)]))
    (define (get-or-nope)
-     (call-with-current-continuation-attachment
+     (call-getting-continuation-attachment
       'nope
       (lambda (x) x)))
+   (define (consume-or-nope)
+     (call-consuming-continuation-attachment
+      'nope
+      (lambda (x) x)))
+   (define (consume-or-nope-cps k)
+     (lambda ()
+       (call-consuming-continuation-attachment
+        'nope
+        (lambda (x) (k x)))))
    (define (return-one) 1)
    (define (act-like-list . l) l)
    (define not-a-procedure 'something-else)
@@ -3290,6 +3404,7 @@
             r)))
     #t)
   (equal? 'yep (call-with-yep get-or-nope))
+  (equal? 'yep (call-with-yep consume-or-nope))
   (equal? 'yeah (call-with-yep (lambda () (call-with-yeah get-or-nope))))
   (equal? '(yeah) (call-with-yep (lambda () (call-with-yeah current-continuation-attachments))))
   (equal? '((yeah yep)) (call-with-yep (lambda () (list (call-with-yeah current-continuation-attachments)))))
@@ -3307,6 +3422,10 @@
   (equal? '(nope) (call-with-yep (lambda () (call-with-yeah* (lambda () (act-like-list (get-or-nope)))))))
   (equal? '(yeah) (call-with-yep (lambda () (list (call-with-yeah* (lambda () (get-or-nope)))))))
   (equal? '(yeah) (call-with-yep (lambda () (act-like-list (call-with-yeah* (lambda () (get-or-nope)))))))
+
+  (equal? 'nope (call-with-yep (consume-or-nope-cps
+                                (lambda (v)
+                                  (get-or-nope)))))
 
   (error? (call-with-yep (lambda () (call-with-yeah* (lambda () (not-a-procedure))))))
   (error? (call-with-yep (lambda () (list (call-with-yeah* (lambda () (not-a-procedure)))))))
@@ -3390,7 +3509,7 @@
              (call-with-values (lambda () (return-three-values))
                (case-lambda
                 [(x y z)
-                 (call-with-current-continuation-attachment
+                 (call-getting-continuation-attachment
                   'nope
                   (lambda (a) (list a x y z)))])))))
 
@@ -3455,6 +3574,28 @@
                         (lambda ()
                           ;; Not detected as a loop, but as a direct call
                           (loop (add1 i)))))])))))
+  (equal? 'yes
+          (call-with-nothing
+           (lambda ()
+             ;; This "consuming" will need to reify the continuation
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v)
+                (call-setting-continuation-attachment
+                 'yes
+                 (lambda ()
+                   (get-or-nope))))))))
+  (equal? 'yes
+          (call-with-nothing-in-split
+           (lambda ()
+             ;; This "consuming" will need to reify the continuation
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v)
+                (call-setting-continuation-attachment
+                 'yes
+                 (lambda ()
+                   (get-or-nope))))))))
  )
  
 ;;; section 4-7:
