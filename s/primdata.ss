@@ -902,6 +902,7 @@
   (petite? [sig [() -> (boolean)]] [flags pure unrestricted])
   (scheme-version [sig [() -> (string)]] [flags pure unrestricted true])
   (scheme-version-number [sig [() -> (uint uint uint)]] [flags discard unrestricted])
+  (scheme-fork-version-number [sig [() -> (uint uint uint uint)]] [flags discard unrestricted])
   (threaded? [sig [() -> (boolean)]] [flags pure unrestricted cp02])
 )
 

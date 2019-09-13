@@ -153,11 +153,17 @@
   (define scheme-version ; adapted from 7.ss
     (let ([n (constant scheme-version)])
       (if (= (logand n 255) 0)
-          (format "~d.~d"
-            (ash n -16)
-            (logand (ash n -8) 255))
-          (format "~d.~d.~d"
-            (ash n -16)
+          (if (= (logand n 255) 0)
+              (format "~d.~d"
+                (ash n -24)
+                (logand (ash n -16) 255))
+              (format "~d.~d.~d"
+                (ash n -24)
+                (logand (ash n -16) 255)
+                (logand (ash n -8) 255)))
+          (format "~d.~d.~d.~d"
+            (ash n -24)
+            (logand (ash n -16) 255)
             (logand (ash n -8) 255)
             (logand n 255)))))
 

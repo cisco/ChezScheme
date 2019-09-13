@@ -624,11 +624,17 @@
 (define $format-scheme-version
   (lambda (n)
     (if (= (logand n 255) 0)
-        (format "~d.~d"
-          (ash n -16)
-          (logand (ash n -8) 255))
-        (format "~d.~d.~d"
-          (ash n -16)
+        (if (= (logand n 255) 0)
+            (format "~d.~d"
+              (ash n -24)
+              (logand (ash n -16) 255))
+            (format "~d.~d.~d"
+              (ash n -24)
+              (logand (ash n -16) 255)
+              (logand (ash n -8) 255)))
+        (format "~d.~d.~d.~d"
+          (ash n -24)
+          (logand (ash n -16) 255)
           (logand (ash n -8) 255)
           (logand n 255)))))
 
@@ -639,7 +645,16 @@
   (lambda ()
     (let ([n (constant scheme-version)])
       (values
-        (ash n -16)
+        (ash n -24)
+        (logand (ash n -16) 255)
+        (logand (ash n -8) 255)))))
+
+(define scheme-fork-version-number
+  (lambda ()
+    (let ([n (constant scheme-version)])
+      (values
+        (ash n -24)
+        (logand (ash n -16) 255)
         (logand (ash n -8) 255)
         (logand n 255)))))
 
