@@ -1695,7 +1695,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{\protect\code{putenv} memory leak (9.5.3)}
+\subsection{\protect\scheme{__collect_safe}, x86\_64, and floating-point arguments or results (9.5.3)}
+
+The \scheme{__collect_safe} mode for a foreign call or callable now
+correctly preserves floating-point registers used for arguments or
+results while activating or deactivating a thread on x86\_64.
+
+\subsection{\protect\scheme{putenv} memory leak (9.5.3)}
 
 \scheme{putenv} now calls the host system's \scheme{setenv} instead of
 \scheme{putenv} on non-Windows hosts and avoids allocating memory that
