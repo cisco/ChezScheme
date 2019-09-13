@@ -1395,3 +1395,5 @@
     c/Mf-*nt
 - use case-insensitive search for ".exe" on Windows
     c/scheme.c
+- fix __collect_safe for x86_64 and floating-point arguments or results
+    x86_64.ss, foreign.ms, release_notes.stex
