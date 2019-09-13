@@ -2786,7 +2786,7 @@
                                    ;; pass by reference on the stack
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
-                                     regs fp-rregs i (fx+ isp 8))])])]
+                                     regs fp-regs i (fx+ isp 8))])])]
                               [else
                                (if (< i 4)
                                    (let ([reg (vector-ref vint i)])
