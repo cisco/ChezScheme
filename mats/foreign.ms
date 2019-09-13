@@ -2969,6 +2969,51 @@
   (check-union [x i64 43] [y int 0])
   (check-union [x float 58.0] [y int 0])
   (check-union [x double 68.0] [y int 0])
+
+  ;; Check that `__collect_safe` saves a argument and result floating-point registers
+  ;; while activating and deacttiving a thread
+  (let ()
+    (define-ftype T (struct [d double] [i integer-8] [n int]))
+    (define sum_pre_double_double_double_double_double_double_double_double
+      (foreign-procedure __collect_safe
+                         "f4_sum_pre_double_double_double_double_double_double_double_double_struct_double_i8_int"
+                         (double double double double double double double double (& T))
+                         double))
+    (let* ([p (foreign-alloc (ftype-sizeof T))]
+           [a (make-ftype-pointer T p)])
+      (ftype-set! T (d) a 1.25)
+      (ftype-set! T (i) a 10)
+      (ftype-set! T (n) a 100)
+      (let loop ([i 1000000])
+        (cond
+         [(zero? i) (foreign-free p) #t]
+         [else
+          (let ([v (sum_pre_double_double_double_double_double_double_double_double 8.25 9.25 10.25 11.25 12.25 13.25 14.25 15.25 a)])
+            (and (= 205.25 v)
+                 (loop (sub1 i))))]))))
+  (let ()
+    (define-ftype T (struct [d double] [i integer-8] [n int]))
+    (define-ftype callback (function __collect_safe ((& T)) double))
+    (define cb_send (foreign-procedure __collect_safe
+                                       "f4_cb_send_struct_double_i8_int"
+                                       ((* callback)) double))
+    (let ([cb (make-ftype-pointer
+               callback
+               (lambda (r)
+                 (+ (ftype-ref T (d) r)
+                    (ftype-ref T (i) r)
+                    (ftype-ref T (n) r))))])
+      (let loop ([i 1000000])
+        (cond
+         [(zero? i)
+          (unlock-object
+           (foreign-callable-code-object
+            (ftype-pointer-address cb)))
+          #t]
+         [else
+          (let ([v (cb_send cb)])
+            (and (= v 112.25)
+                 (loop (sub1 i))))]))))
   )
 
 (mat collect-safe

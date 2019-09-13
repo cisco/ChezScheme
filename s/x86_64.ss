@@ -2718,37 +2718,37 @@
                                  (set! ,reg ,(%inline sll ,reg (immediate 16)))
                                  ,(loop tmp 2 x-offset)
                                  (set! ,reg ,(%inline + ,reg ,tmp))))]))]))))]
-                 [add-int-regs
-                  (lambda (ints iint vint regs)
+                 [add-regs
+                  (lambda (ints ir vr regs)
                     (cond
                      [(fx= 0 ints) regs]
                      [else
-                      (add-int-regs (fx- ints 1) (fx+ iint 1) vint
-                                    (cons (vector-ref vint iint) regs))]))]
+                      (add-regs (fx- ints 1) (fx+ ir 1) vr
+                                (cons (vector-ref vr ir) regs))]))]
                  [do-args
                   (lambda (types vint vfp)
                     (if-feature windows
-                      (let loop ([types types] [locs '()] [regs '()] [i 0] [isp 0])
+                      (let loop ([types types] [locs '()] [regs '()] [fp-regs '()] [i 0] [isp 0])
                         (if (null? types)
-                            (values isp 0 locs regs)
+                            (values isp 0 locs regs fp-regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< i 4)
                                    (let ([reg (vector-ref vint i)])
                                      (loop (cdr types)
                                        (cons (load-double-reg2 (vector-ref vfp i) reg) locs)
-                                       (cons reg regs) (fx+ i 1) isp))
+                                       (cons reg regs) (cons (vector-ref vfp i) fp-regs) (fx+ i 1) isp))
                                    (loop (cdr types)
                                      (cons (load-double-stack isp) locs)
-                                     regs i (fx+ isp 8)))]
+                                     regs fp-regs i (fx+ isp 8)))]
                               [(fp-single-float)
                                (if (< i 4)
                                    (loop (cdr types)
                                      (cons (load-single-reg (vector-ref vfp i)) locs)
-                                     regs (fx+ i 1) isp)
+                                     regs (cons (vector-ref vfp i) fp-regs) (fx+ i 1) isp)
                                    (loop (cdr types)
                                      (cons (load-single-stack isp) locs)
-                                     regs i (fx+ isp 8)))]
+                                     regs fp-regs i (fx+ isp 8)))]
                               [(fp-ftd& ,ftd)
                                (cond
                                 [(memv ($ftd-size ftd) '(1 2 4 8))
@@ -2762,17 +2762,17 @@
                                      ;; float or double
                                      (loop (cdr types)
                                        (cons (load-content-regs '(sse) ($ftd-size ftd) i i vint vfp) locs)
-                                       (add-int-regs 1 i vint regs) (fx+ i 1) isp)]
+                                       (add-regs 1 i vint regs) (add-regs 1 i vfp fp-regs) (fx+ i 1) isp)]
                                     [else
                                      ;; integer
                                      (loop (cdr types)
                                        (cons (load-content-regs '(integer) ($ftd-size ftd) i i vint vfp) locs)
-                                       (add-int-regs 1 i vint regs) (fx+ i 1) isp)])]
+                                       (add-regs 1 i vint regs) fp-regs(fx+ i 1) isp)])]
                                   [else
                                    ;; pass as value on the stack
                                    (loop (cdr types)
                                      (cons (load-content-stack isp ($ftd-size ftd)) locs)
-                                     regs i (fx+ isp (align ($ftd-size ftd) 8)))])]
+                                     regs fp-regs i (fx+ isp (align ($ftd-size ftd) 8)))])]
                                 [else
                                  ;; pass by reference in register or by reference on the stack
                                  (cond
@@ -2781,42 +2781,42 @@
                                    (let ([reg (vector-ref vint i)])
                                      (loop (cdr types)
                                        (cons (load-int-reg (car types) reg) locs)
-                                       (cons reg regs) (fx+ i 1) isp))]
+                                       (cons reg regs) fp-regs (fx+ i 1) isp))]
                                   [else
                                    ;; pass by reference on the stack
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
-                                     regs i (fx+ isp 8))])])]
+                                     regs fp-rregs i (fx+ isp 8))])])]
                               [else
                                (if (< i 4)
                                    (let ([reg (vector-ref vint i)])
                                      (loop (cdr types)
                                        (cons (load-int-reg (car types) reg) locs)
-                                       (cons reg regs)
+                                       (cons reg regs) fp-regs
                                        (fx+ i 1) isp))
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
-                                     regs i (fx+ isp 8)))])))
-                      (let loop ([types types] [locs '()] [regs '()] [iint 0] [ifp 0] [isp 0])
+                                     regs fp-regs i (fx+ isp 8)))])))
+                      (let loop ([types types] [locs '()] [regs '()] [fp-regs '()] [iint 0] [ifp 0] [isp 0])
                         (if (null? types)
-                            (values isp ifp locs regs)
+                            (values isp ifp locs regs fp-regs)
                             (nanopass-case (Ltype Type) (car types)
                               [(fp-double-float)
                                (if (< ifp 8)
                                    (loop (cdr types)
                                      (cons (load-double-reg (vector-ref vfp ifp)) locs)
-                                     regs iint (fx+ ifp 1) isp)
+                                     regs (cons (vector-ref vfp ifp) fp-regs) iint (fx+ ifp 1) isp)
                                    (loop (cdr types)
                                      (cons (load-double-stack isp) locs)
-                                     regs iint ifp (fx+ isp 8)))]
+                                     regs fp-regs iint ifp (fx+ isp 8)))]
                               [(fp-single-float)
                                (if (< ifp 8)
                                    (loop (cdr types)
                                      (cons (load-single-reg (vector-ref vfp ifp)) locs)
-                                     regs iint (fx+ ifp 1) isp)
+                                     regs (cons (vector-ref vfp ifp) fp-regs) iint (fx+ ifp 1) isp)
                                    (loop (cdr types)
                                      (cons (load-single-stack isp) locs)
-                                     regs iint ifp (fx+ isp 8)))]
+                                     regs fp-regs iint ifp (fx+ isp 8)))]
                               [(fp-ftd& ,ftd)
                                (let* ([classes (classify-eightbytes ftd)]
                                       [ints (count 'integer classes)]
@@ -2826,23 +2826,23 @@
                                    ;; pass on the stack
                                    (loop (cdr types)
                                          (cons (load-content-stack isp ($ftd-size ftd)) locs)
-                                         regs iint ifp (fx+ isp (align ($ftd-size ftd) 8)))]
+                                         regs fp-regs iint ifp (fx+ isp (align ($ftd-size ftd) 8)))]
                                   [else
                                    ;; pass in registers
                                    (loop (cdr types)
                                          (cons (load-content-regs classes ($ftd-size ftd) iint ifp vint vfp) locs)
-                                         (add-int-regs ints iint vint regs)
+                                         (add-regs ints iint vint regs) (add-regs fps ifp vfp fp-regs)
                                          (fx+ iint ints) (fx+ ifp fps) isp)]))]
                               [else
                                (if (< iint 6)
                                    (let ([reg (vector-ref vint iint)])
                                      (loop (cdr types)
                                        (cons (load-int-reg (car types) reg) locs)
-                                       (cons reg regs)
+                                       (cons reg regs) fp-regs
                                        (fx+ iint 1) ifp isp))
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
-                                     regs iint ifp (fx+ isp 8)))])))))])
+                                     regs fp-regs iint ifp (fx+ isp 8)))])))))])
           (define (add-deactivate adjust-active? t0 live* result-live* e)
             (cond
              [adjust-active?
@@ -2961,14 +2961,14 @@
                    [fill-result-here? (result-fits-in-registers? result-classes)]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*) (make-vint) (make-vfp))
-                (lambda (frame-size nfp locs live*)
+                (lambda (frame-size nfp locs live* fp-live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
                       (returnem frame-size locs
                         (lambda (t0)
                           (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
                                  [c-call
-                                  (add-deactivate adjust-active? t0 live*
+                                  (add-deactivate adjust-active? t0 (append fp-live* live*)
                                    (get-result-regs fill-result-here? result-type result-classes)
                                    (if-feature windows
                                      (%seq
@@ -3298,12 +3298,14 @@
                             [int* (list %rax %rdx)]
                             [fp* (list %Cfpretval %Cfparg2)]
                             [accum '()]
-                            [live* '()])
+                            [live* '()]
+                            [fp-live* '()])
                    (cond
                     [(null? result-classes)
                      (values (lambda ()
                                (if (pair? (cdr accum)) `(seq ,(car accum) ,(cadr accum)) (car accum)))
-                             live*)]
+                             live*
+                             fp-live*)]
                     [(eq? (car result-classes) 'integer)
                      (loop (cdr result-classes)
                            (fx+ offset 8)
@@ -3311,7 +3313,8 @@
                            fp*
                            (cons `(set! ,(car int*) ,(%mref ,%sp ,offset))
                                  accum)
-                           (cons (car int*) live*))]
+                           (cons (car int*) live*)
+                           fp-live*)]
                     [(eq? (car result-classes) 'sse)
                      (loop (cdr result-classes)
                            (fx+ offset 8)
@@ -3319,29 +3322,35 @@
                            (cdr fp*)
                            (cons `(inline ,(make-info-loadfl (car fp*)) ,%load-double ,%sp ,%zero (immediate ,offset))
                                  accum)
-                           live*)]))]
+                           live*
+                           (cons (car fp*) fp-live*))]))]
                 [else
                  (values (lambda ()
                            ;; Return pointer that was filled; destination was the first argument
                            `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows (if adjust-active? 96 80) 48))))
-                         (list %Cretval))])]
+                         (list %Cretval)
+                         '())])]
               [(fp-double-float)
                (values
                 (lambda (x)
                   `(inline ,(make-info-loadfl %Cfpretval) ,%load-double ,x ,%zero ,(%constant flonum-data-disp)))
-                '())]
+                '()
+                (list %Cfpretval))]
               [(fp-single-float)
                (values
                 (lambda (x)
                   `(inline ,(make-info-loadfl %Cfpretval) ,%load-double->single ,x ,%zero ,(%constant flonum-data-disp)))
-                '())]
+                '()
+                (list %Cfpretval))]
               [(fp-void)
                (values (lambda () `(nop))
+                       '()
                        '())]
               [else
                (values(lambda (x)
                         `(set! ,%Cretval ,x))
-                      (list %Cretval))]))
+                      (list %Cretval)
+                      '())]))
           (define (unactivate result-regs)
             (let ([e `(seq
                        (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) (if-feature windows 72 176))))
@@ -3361,7 +3370,7 @@
                      [synthesize-first? (and result-classes
                                              (result-fits-in-registers? result-classes))]
                      [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*) adjust-active?)])
-                (let-values ([(get-result result-regs) (do-result result-type result-classes adjust-active?)])
+                (let-values ([(get-result result-regs result-fp-regs) (do-result result-type result-classes adjust-active?)])
                   (values
                    (lambda ()
                      (%seq
@@ -3418,7 +3427,7 @@
                       ((lambda (e)
                          (if adjust-active?
                              (%seq
-                              ,(unactivate result-regs)
+                              ,(unactivate (append result-fp-regs result-regs))
                               ,e)
                              e))
                        (%seq
