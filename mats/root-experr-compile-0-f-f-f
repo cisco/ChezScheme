@@ -532,9 +532,13 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat continuation-attachments: "call-setting-continuation-attachment: 10 is not a procedure".
 4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-setting-continuation-attachment (quote any) void (quote bad-more))".
 4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments 0 to #<procedure>".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none))".
-4.mo:Expected error in mat continuation-attachments: "call-with-current-continuation-attachment: 10 is not a procedure".
-4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-with-current-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-getting-continuation-attachment (quote none))".
+4.mo:Expected error in mat continuation-attachments: "call-getting-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-getting-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
+4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments 1 to #<procedure void>".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-consuming-continuation-attachment (quote none))".
+4.mo:Expected error in mat continuation-attachments: "call-consuming-continuation-attachment: 10 is not a procedure".
+4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (call-consuming-continuation-attachment (quote none) (lambda (a) a) (quote bad-more))".
 4.mo:Expected error in mat continuation-attachments: "incorrect number of arguments 1 to #<procedure void>".
 4.mo:Expected error in mat continuation-attachments: "incorrect argument count in call (continuation-next-attachments)".
 4.mo:Expected error in mat continuation-attachments: "continuation-next-attachments: 10 is not a continuation".
