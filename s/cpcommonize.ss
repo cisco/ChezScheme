@@ -547,7 +547,7 @@
                              (nanopass-case (Lcommonize1 Expr) (binding-e helper-b)
                                [(case-lambda ,preinfo (clause (,x* ...) ,interface ,body))
                                 (loop (binding-helper-b helper-b) (map (propagate (map cons x* e*)) (map Arg (binding-helper-arg* helper-b))))])
-                             `(call ,(make-preinfo)
+                             `(call ,(make-preinfo-call)
                                 ,(let ([t (binding-x helper-b)])
                                    (if (prelex-referenced t)
                                        (set-prelex-multiply-referenced! t #t)

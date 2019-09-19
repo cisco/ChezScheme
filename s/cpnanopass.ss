@@ -1051,7 +1051,8 @@
            (let ([e* (map CaseLambdaExpr e* uvar*)])
              `(letrec ([,uvar* ,e*] ...) ,(Expr body))))]
         [(call ,preinfo ,e ,[e*] ...)
-         `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (fx< (optimize-level) 3) #f #f)
+         (unless (preinfo-call? preinfo) (error 'preinfo-call "oops"))
+         `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (preinfo-call-check? preinfo) #f #f)
             ,(Expr e) ,e* ...)]
         [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
          (let ([info (make-info-foreign conv* arg-type* result-type)])

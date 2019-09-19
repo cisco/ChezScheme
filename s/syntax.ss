@@ -550,7 +550,7 @@
 (define build-call
   (lambda (ae e e*)
     (build-profile ae
-      `(call ,(make-preinfo (ae->src ae) #f) ,e ,e* ...))))
+      `(call ,(make-preinfo-call (ae->src ae) #f (fx< (optimize-level) 3)) ,e ,e* ...))))
 
 (define build-application
   ; used by chi-application.  pulls profile form off e if e is a lambda expression

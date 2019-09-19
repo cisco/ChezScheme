@@ -157,7 +157,13 @@
                [(call ,preinfo ,e ,e* ...)
                 (cache-sexpr preinfo
                   (lambda ()
-                    `(,(uncprep e) ,@(map uncprep e*))))]
+                    (let ([a `(,(uncprep e) ,@(map uncprep e*))])
+                      (if (or (preinfo-call-check? preinfo)
+                              ;; Reporting `#3%$app` is redundant for unsafe mode.
+                              ;; Note that we're losing explicit `#2%$app`s.
+                              (>= (optimize-level) 3))
+                          a
+                          (cons '#3%$app a)))))]
                [,pr (let ([sym (primref-name pr)])
                       (if sexpr?
                           ($sgetprop sym '*unprefixed* sym)

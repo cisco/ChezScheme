@@ -141,7 +141,7 @@ Handling letrec and letrec*
             ;; can be removed by other compiler passes if the argument obviously produces
             ;; a single value.
             (fold-right (lambda (e body)
-                          (let ([e (if pure? e `(call ,(make-preinfo) ,(lookup-primref 3 '$value) ,e))])
+                          (let ([e (if pure? e `(call ,(make-preinfo-call) ,(lookup-primref 3 '$value) ,e))])
                             `(seq ,e ,body)))
                         body e*)))
         (define build-let
@@ -232,7 +232,7 @@ Handling letrec and letrec*
                                               (cons lhs lhs*)
                                               lhs*)))
                             '() cb*)])
-              (build-let (make-preinfo) (make-preinfo-lambda) rclhs* (map (lambda (x) `(quote ,(void))) rclhs*)
+              (build-let (make-preinfo-call) (make-preinfo-lambda) rclhs* (map (lambda (x) `(quote ,(void))) rclhs*)
                 (build-letrec (map binding-lhs lb*) (map binding-rhs lb*)
                   (fold-right (lambda (b body)
                                 (let ([lhs (binding-lhs b)] [rhs (binding-rhs b)])
@@ -262,7 +262,7 @@ Handling letrec and letrec*
                     [(and (not (prelex-assigned lhs)) (lambda? rhs))
                      (build-letrec (list lhs) (list rhs) body)]
                     [(not (memq b (node-link* b)))
-                     (build-let (make-preinfo) (make-preinfo-lambda) (list lhs) (list rhs) body)]
+                     (build-let (make-preinfo-call) (make-preinfo-lambda) (list lhs) (list rhs) body)]
                     [else (grisly-letrec '() b* body)]))
                 (let-values ([(lb* cb*) (partition
                                           (lambda (b)

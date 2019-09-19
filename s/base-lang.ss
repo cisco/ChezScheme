@@ -18,6 +18,7 @@
          sorry! make-preinfo preinfo? preinfo-lambda? preinfo-sexpr preinfo-sexpr-set! preinfo-src
          make-preinfo-lambda preinfo-lambda-name preinfo-lambda-name-set! preinfo-lambda-flags
          preinfo-lambda-flags-set! preinfo-lambda-libspec
+         make-preinfo-call preinfo-call? preinfo-call-check?
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
          target-fixnum? target-bignum?)
@@ -182,6 +183,19 @@
           [(src sexpr libspec) ((pargs->new src sexpr) libspec #f 0)]
           [(src sexpr libspec name) ((pargs->new src sexpr) libspec name 0)]
           [(src sexpr libspec name flags) ((pargs->new src sexpr) libspec name flags)]))))
+
+  (define-record-type preinfo-call
+    (nongenerative #{preinfo-call e23pkvo5btgapnzomqgegm-7})
+    (parent preinfo)
+    (sealed #t)
+    (fields check?)
+    (protocol
+      (lambda (pargs->new)
+        (case-lambda
+          [() ((pargs->new) #t)]
+          [(src) ((pargs->new src) #t)]
+          [(src sexpr) ((pargs->new src sexpr) #t)]
+          [(src sexpr check?) ((pargs->new src sexpr) check?)]))))
 
   ; language of foreign types
   (define-language Ltype 

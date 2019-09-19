@@ -1756,6 +1756,7 @@
   ($address-in-heap? [flags])
   ($address->object [flags])
   ($allocate-thread-parameter [feature pthreads] [flags alloc])
+  ($app [flags])
   ($apply [flags])
   ($assembly-output [flags])
   ($as-time-goes-by [flags])

@@ -95,7 +95,7 @@
             (lambda (ids vals body)
               (if (null? ids)
                   body
-                  `(call ,(make-preinfo)
+                  `(call ,(make-preinfo-call)
                      (case-lambda ,(make-preinfo-lambda)
                        (clause (,ids ...) ,(length ids) ,body))
                      ,vals ...))))

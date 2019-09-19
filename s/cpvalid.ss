@@ -32,7 +32,7 @@
           (lambda (ids vals body)
             (if (null? ids)
                 body
-                `(call ,(make-preinfo)
+                `(call ,(make-preinfo-call)
                    (case-lambda ,(make-preinfo-lambda)
                      (clause (,ids ...) ,(length ids) ,body))
                    ,vals ...))))
@@ -205,7 +205,7 @@
                           `(seq
                              (if (ref #f ,valid-flag)
                                  (quote ,(void))
-                                 (call ,(make-preinfo) ,(lookup-primref 2 '$source-violation)
+                                 (call ,(make-preinfo-call) ,(lookup-primref 2 '$source-violation)
                                    (quote #f)
                                    (quote ,maybe-src)
                                    (quote #t)

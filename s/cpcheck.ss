@@ -169,10 +169,10 @@
             ,(Expr body ctxt)))]
       [,pr (let ([arity (primref-arity pr)]) (when arity (check! ctxt arity))) pr]
       [(record-ref ,rtd ,type ,index ,[e #f -> e])
-       `(call ,(make-preinfo) ,(lookup-primref 3 '$object-ref)
+       `(call ,(make-preinfo-call) ,(lookup-primref 3 '$object-ref)
           (quote ,type) ,e (quote ,(record-field-offset rtd index)))]
       [(record-set! ,rtd ,type ,index ,[e1 #f -> e1] ,[e2 #f -> e2])
-       `(call ,(make-preinfo) ,(lookup-primref 3 '$object-set!)
+       `(call ,(make-preinfo-call) ,(lookup-primref 3 '$object-set!)
           (quote ,type) ,e1 (quote ,(record-field-offset rtd index)) ,e2)]
       [(record ,rtd ,[rtd-expr #f -> rtd-expr] ,[e* #f -> e*] ...)
        (let ([rtd (maybe-remake-rtd rtd)])
@@ -184,19 +184,19 @@
                                 (if (eq? (filter-foreign-type type) 'scheme-object)
                                     filler*
                                     (cons
-                                      `(call ,(make-preinfo) ,(lookup-primref 3 '$object-set!)
+                                      `(call ,(make-preinfo-call) ,(lookup-primref 3 '$object-set!)
                                          (quote ,type) (ref #f ,rec-t) (quote ,(fld-byte fld)) ,e)
                                       filler*))))
                             '() fld* e*)])
              (if (null? filler*)
-                 `(call ,(make-preinfo) ,(lookup-primref 3 '$record) ,rtd-expr ,e* ...)
+                 `(call ,(make-preinfo-call) ,(lookup-primref 3 '$record) ,rtd-expr ,e* ...)
                  (begin
                    (set-prelex-referenced! rec-t #t)
                    (set-prelex-multiply-referenced! rec-t #t)
-                   `(call ,(make-preinfo)
+                   `(call ,(make-preinfo-call)
                       (case-lambda ,(make-preinfo-lambda)
                         (clause (,rec-t) 1 ,(build-sequence filler* `(ref #f ,rec-t))))
-                      (call ,(make-preinfo) ,(lookup-primref 3 '$record) ,rtd-expr
+                      (call ,(make-preinfo-call) ,(lookup-primref 3 '$record) ,rtd-expr
                         ,(map (lambda (arg) (cond [(eqv? arg 0) `(quote 0)] [else arg]))
                            (make-record-call-args fld* (rtd-size rtd) e*))
                         ...)))))))]

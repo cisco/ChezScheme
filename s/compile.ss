@@ -1098,7 +1098,7 @@
     (define gen-var (lambda (sym) (make-prelex sym 0 #f #f)))
     (define build-let
       (lambda (ids exprs body)
-        `(call ,(make-preinfo) ,(build-lambda ids body) ,exprs ...)))
+        `(call ,(make-preinfo-call) ,(build-lambda ids body) ,exprs ...)))
 
     (define build-lambda
       (lambda (ids body)
@@ -1107,7 +1107,7 @@
 
     (define build-call
       (lambda (e . e*)
-        `(call ,(make-preinfo) ,e ,e* ...)))
+        `(call ,(make-preinfo-call) ,e ,e* ...)))
 
     (define-syntax build-primcall
       ; written as a macro to give lookup-primref a chance to lookup the primref at expansion time

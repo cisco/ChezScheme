@@ -357,6 +357,13 @@
 ;; the argument expression definitely produces a single value.
 (define $value (lambda (x) x))
 
+;; Intended mainly for use as `#3%$app` to indicate that no check
+;; is needed to ensure that the first argument is a function, as
+;; recognized in cp0.
+(define $app
+  (lambda (f . args)
+    (#2%apply f args)))
+
 (define call-with-values
   (lambda (producer consumer)
     (unless (procedure? producer)

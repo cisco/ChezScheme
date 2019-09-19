@@ -673,7 +673,7 @@
     (module (build-primcall)
       (define $build-primcall
         (case-lambda
-          [(primref args) ($build-primcall (make-preinfo) primref args)]
+          [(primref args) ($build-primcall (make-preinfo-call) primref args)]
           [(preinfo primref args) `(call ,preinfo ,primref ,args ...)]))
       (define-syntax build-primcall
         (syntax-rules ()
@@ -718,12 +718,12 @@
     (define build-let
       (case-lambda
         [(lambda-preinfo ids exps body)
-         (build-call (make-preinfo) (build-lambda lambda-preinfo ids body) exps)]
-        [(ids exps body) (build-call (make-preinfo) (build-lambda ids body) exps)]))
+         (build-call (make-preinfo-call) (build-lambda lambda-preinfo ids body) exps)]
+        [(ids exps body) (build-call (make-preinfo-call) (build-lambda ids body) exps)]))
 
     (define build-named-let
       (lambda (name ids exps body)
-        `(call ,(make-preinfo)
+        `(call ,(make-preinfo-call)
            (letrec ([,name ,(build-lambda ids body)])
              (ref #f ,name))
            ,exps ...)))
@@ -4106,7 +4106,7 @@
                                                  ,(map (lambda (x)
                                                          (build-primcall 3 'car (list (build-ref x))))
                                                     ls*) ...)
-                                              `(call ,(make-preinfo) (ref #f ,do) (ref #f ,r)
+                                              `(call ,(make-preinfo-call) (ref #f ,do) (ref #f ,r)
                                                  ,(map (lambda (x)
                                                          (build-primcall 3 'cdr (list (build-ref x))))
                                                     (cdr ls*)) ...)))))))))
@@ -4229,7 +4229,7 @@
                                                        (build-primcall 3 'vector-ref
                                                          (list (build-ref x) (build-ref i))))
                                                   (cons v v*)) ...)
-                                            `(call ,(make-preinfo) (ref #f ,do) (ref #f ,j))))))))))
+                                            `(call ,(make-preinfo-call) (ref #f ,do) (ref #f ,j))))))))))
                     ctxt empty-env sc wd name moi))])])
 
       (define-inline 3 string-for-each ; should combine with vector-for-each
@@ -4304,7 +4304,7 @@
                                                        (build-primcall 3 'string-ref
                                                          (list (build-ref x) (build-ref i))))
                                                   (cons s s*)) ...)
-                                            `(call ,(make-preinfo) (ref #f ,do) (ref #f ,j))))))))))
+                                            `(call ,(make-preinfo-call) (ref #f ,do) (ref #f ,j))))))))))
                     ctxt empty-env sc wd name moi))])])
 
       (define-inline 3 fold-right
@@ -4349,7 +4349,7 @@
                                            (ref #f ,acc)
                                            ,(map build-ref carls*)
                                            ...)
-                                         (call ,(make-preinfo) (ref #f ,do)
+                                         (call ,(make-preinfo-call) (ref #f ,do)
                                            (call ,(app-preinfo ctxt) (ref #f ,p)
                                              (ref #f ,acc)
                                              ,(map build-ref carls*)
@@ -4396,7 +4396,7 @@
                                                        (build-primcall 3 'car
                                                          (list (build-ref x))))
                                                   ls*) ...)
-                                             (call ,(make-preinfo) (ref #f ,do) (ref #f ,r)
+                                             (call ,(make-preinfo-call) (ref #f ,do) (ref #f ,r)
                                                ,(map (lambda (x)
                                                        (build-primcall 3 'cdr
                                                          (list (build-ref x))))
@@ -4445,7 +4445,7 @@
                                                         ls*) ...))
                                             `(if (ref #f ,t)
                                                  (ref #f ,t)
-                                                 (call ,(make-preinfo) (ref #f ,do) (ref #f ,r)
+                                                 (call ,(make-preinfo-call) (ref #f ,do) (ref #f ,r)
                                                    ,(map (lambda (x)
                                                            (build-primcall 3 'cdr
                                                              (list (build-ref x))))
@@ -4596,11 +4596,11 @@
                            (let ([orig-x (cp0-make-temp #f)] [p (cp0-make-temp #t)])
                              (build-lambda (list orig-x p)
                                (maybe-add-procedure-check ?p level "make-parameter" p
-                                 (build-let (list x) (list `(call ,(make-preinfo) (ref #f ,p) (ref #f ,orig-x)))
+                                 (build-let (list x) (list `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,orig-x)))
                                    (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
                                      (list
                                        (list '() (build-ref x))
-                                       (list (list v) `(set! #f ,x (call ,(make-preinfo) (ref #f ,p) (ref #f ,v))))))))))
+                                       (list (list v) `(set! #f ,x (call ,(make-preinfo-call) (ref #f ,p) (ref #f ,v))))))))))
                            (build-lambda (list x)
                              (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
                                (list
@@ -4639,11 +4639,11 @@
                                  (maybe-add-procedure-check ?p level "make-thread-parameter" p
                                    (build-let (list x)
                                      (list (build-primcall 3 '$allocate-thread-parameter
-                                             (list `(call ,(make-preinfo) (ref #f ,p) (ref #f ,orig-x)))))
+                                             (list `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,orig-x)))))
                                      (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
                                        (list
                                          (list '() (mtp-ref x))
-                                         (list (list v) (mtp-set x `(call ,(make-preinfo) (ref #f ,p) (ref #f ,v))))))))))
+                                         (list (list v) (mtp-set x `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,v))))))))))
                              (build-lambda (list orig-x)
                                (build-let (list x)
                                  (list (build-primcall 3 '$allocate-thread-parameter
@@ -4829,6 +4829,11 @@
        ;; it cleans up and normalizes output, which is at least helpful
        ;; for testing
        (cp0 `(seq ,e1 (call ,preinfo ,pr ,e2)) ctxt env sc wd name moi)]
+      [(call ,preinfo ,pr ,e ,e* ...)
+       (guard (eq? (primref-name pr) '$app))
+       (let ([preinfo (make-preinfo-call (preinfo-src preinfo) (preinfo-sexpr preinfo)
+                                         (not (all-set? (prim-mask unsafe) (primref-flags pr))))])
+         (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
       [(call ,preinfo ,e ,e* ...)
        (let ()
          (define lift-let
