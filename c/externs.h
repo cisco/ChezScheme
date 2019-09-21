@@ -89,12 +89,6 @@ extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,
 extern ptr S_inexactnum PROTO((double rp, double ip));
 extern ptr S_exactnum PROTO((ptr a, ptr b));
 extern ptr S_thread PROTO((ptr tc));
-extern ptr S_ifile PROTO((iptr icount, ptr name, iptr fd, ptr info, iptr flags, char *ilast,
-                  ptr ibuf));
-extern ptr S_ofile PROTO((iptr ocount, ptr name, iptr fd, ptr info, iptr flags, char *olast,
-            ptr obuf));
-extern ptr S_iofile PROTO((iptr icount, iptr ocount, ptr name, iptr fd, ptr info, iptr flags,
-            char *ilast, ptr ibuf, char *olast, ptr obuf));
 extern ptr S_string PROTO((const char *s, iptr n));
 extern ptr S_bignum PROTO((iptr n, IBOOL sign));
 extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
@@ -103,7 +97,7 @@ extern ptr S_weak_cons PROTO((ptr car, ptr cdr));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
-ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, ptr path));
+ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, IFASLCODE situation, ptr path));
 ptr S_bv_fasl_read PROTO((ptr bv, ptr path));
 /* S_boot_read's f argument is really gzFile, but zlib.h is not included everywhere */
 ptr S_boot_read PROTO((glzFile file, const char *path));

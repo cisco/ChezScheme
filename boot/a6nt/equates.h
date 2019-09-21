@@ -70,6 +70,7 @@ typedef unsigned long long U64;
 #define STRVNCATE 0x1
 #define address_bits 0x40
 #define alloc_waste_maximum 0x800
+#define annotation_all 0x3
 #define annotation_debug 0x1
 #define annotation_profile 0x2
 #define architecture x86_64
@@ -208,14 +209,13 @@ typedef unsigned long long U64;
 #define fasl_type_graph 0x10
 #define fasl_type_graph_def 0x11
 #define fasl_type_graph_ref 0x12
-#define fasl_type_group 0x21
 #define fasl_type_header 0x0
 #define fasl_type_immediate 0xC
-#define fasl_type_immutable_box 0x28
-#define fasl_type_immutable_bytevector 0x27
-#define fasl_type_immutable_fxvector 0x26
-#define fasl_type_immutable_string 0x25
-#define fasl_type_immutable_vector 0x24
+#define fasl_type_immutable_box 0x29
+#define fasl_type_immutable_bytevector 0x28
+#define fasl_type_immutable_fxvector 0x27
+#define fasl_type_immutable_string 0x26
+#define fasl_type_immutable_vector 0x25
 #define fasl_type_inexactnum 0x5
 #define fasl_type_large_integer 0xA
 #define fasl_type_library 0xE
@@ -231,6 +231,7 @@ typedef unsigned long long U64;
 #define fasl_type_symbol_hashtable 0x20
 #define fasl_type_vector 0x4
 #define fasl_type_visit 0x22
+#define fasl_type_visit_revisit 0x24
 #define fasl_type_weak_pair 0x1E
 #define fixnum_bits 0x3D
 #define fixnum_factor 0x8
@@ -467,7 +468,6 @@ typedef unsigned long long U64;
 #define return_address_livemask_disp -0x20
 #define return_address_mv_return_address_disp -0x8
 #define return_address_toplink_disp -0x18
-#define revisit_tag 0x1
 #define rp_header_frame_size_disp 0x10
 #define rp_header_livemask_disp 0x0
 #define rp_header_mv_return_address_disp 0x18
@@ -707,7 +707,6 @@ typedef unsigned long long U64;
 #define vector_length_offset 0x4
 #define vector_type_disp 0x1
 #define virtual_register_count 0x10
-#define visit_tag 0x0
 #define wchar_bits 0x10
 
 /* constants from declare-c-entries */

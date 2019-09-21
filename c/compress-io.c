@@ -561,7 +561,7 @@ long S_glzseek(glzFile glz, long offset, INT whence) {
           lz4->stream_pos = 0;
         }
         while ((size_t)offset > lz4->stream_pos) {
-          char buffer[32];
+          static char buffer[1024];
           size_t amt = (size_t)offset - lz4->stream_pos;
           if (amt > sizeof(buffer)) amt = sizeof(buffer);
           if (glzread_lz4(lz4, buffer, (UINT)amt) < 0)

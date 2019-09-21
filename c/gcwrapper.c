@@ -33,6 +33,7 @@ void S_gc_init() {
   S_checkheap = 0; /* 0 for disabled, 1 for enabled */
   S_checkheap_errors = 0; /* count of errors detected by checkheap */
   checkheap_noisy = 0; /* 0 for error output only; 1 for more noisy output */
+  S_G.prcgeneration = static_generation;
 
   if (S_checkheap) {
     printf(checkheap_noisy ? "NB: check_heap is enabled and noisy\n" : "NB: check_heap_is_enabled\n");
@@ -800,6 +801,9 @@ void S_do_gc(IGEN mcg, IGEN tg) {
         }
       }
     }
+
+   /* tell profile_release_counters to scan only through new_g */
+    if (S_G.prcgeneration == old_g) S_G.prcgeneration = new_g;
 
    /* finally reset max_nonstatic_generation */
     S_G.min_free_gen = S_G.new_min_free_gen;

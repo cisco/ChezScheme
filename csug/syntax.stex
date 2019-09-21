@@ -1767,7 +1767,7 @@ marked \scheme{profile} are used for profiling.
 \entryheader
 \formdef{make-source-object}{\categoryprocedure}{(make-source-object \var{sfd} \var{bfp} \var{efp})}
 \formdef{make-source-object}{\categoryprocedure}{(make-source-object \var{sfd} \var{bfp} \var{efp} \var{line} \var{column})}
-\returns a source-object
+\returns a source object
 \listlibraries
 \endentryheader
 
@@ -2007,3 +2007,167 @@ Adjust this parameter to control the way that source locations are
 extracted from source objects, possibly using recorded information,
 caches, and the filesystem in a way different from
 \scheme{locate-source-object-object}.
+
+
+\section{Source Tables\label{SECTSYNTAXSOURCETABLES}}
+
+Source tables provide an efficient way to associate information
+with source objects both in memory and on disk, such as the coverage information
+saved to \scheme{.covin} files when
+\index{\scheme{generate-covin-files}}\scheme{generate-covin-files} is
+set to \scheme{#t}
+and the profile counts associated with source objects by
+\index{\scheme{with-profile-tracker}}\scheme{with-profile-tracker}
+(Section~\ref{SECTMISCPROFILE}).
+
+Source tables are manipulated via hashtable-like accessors and setters
+(Section~\ref{SECTMISCHASHTABLES}, {\TSPLFOUR} Section~\ref{TSPL:SECTHASHTABLES}), e.g.,
+\index{\scheme{source-table-ref}}\scheme{source-table-ref} and \index{\scheme{source-table-set!}}\scheme{source-table-set!}.
+They can be saved to files via
+\index{\scheme{put-source-table}}\scheme{put-source-table}
+and restored via
+\index{\scheme{get-source-table!}}\scheme{get-source-table!}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-source-table}{\categoryprocedure}{(make-source-table)}
+\returns a source table
+\listlibraries
+\endentryheader
+
+A source table contains associations between source objects and arbitrary
+values.  For purposes of the source-table operations described below, two
+source objects are the same if they have the same source-file descriptor,
+equal beginning file positions and equal ending file positions.
+Two source-file descriptors are the same if they have the same path and
+checksum.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table?}{\categoryprocedure}{(source-table? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a source-table; \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-set!}{\categoryprocedure}{(source-table-set! \var{source-table} \var{source-object} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\scheme{source-table-set!} associates \var{source-object}
+with \var{obj} in \var{source-table}, replacing the
+existing association, if any.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-ref}{\categoryprocedure}{(source-table-ref \var{source-table} \var{source-object} \var{default})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\var{default} may be any Scheme value.
+
+\scheme{source-table-ref} returns the value
+associated with \var{source-object} in \var{source-table}.
+If no value is associated with \var{source-object} in \var{source-table},
+\scheme{source-table-ref} returns \var{default}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-contains?}{\categoryprocedure}{(source-table-contains? \var{source-table} \var{source-object})}
+\returns \scheme{#t} if an association for \var{source-object} exists in \var{source-table}, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-cell}{\categoryprocedure}{(source-table-cell \var{source-table} \var{source-object} \var{default})}
+\returns a pair (see below)
+\listlibraries
+\endentryheader
+
+\noindent
+\var{default} may be any Scheme value.
+
+If no value is associated with \var{source-object} in \var{source-table},
+\scheme{source-table-cell} modifies \var{source-table} to associate \var{source-object} with
+\var{default}.
+Regardless, it returns a pair whose car is \var{source-object} and whose cdr is
+the associated value.
+Changing the cdr of this pair effectively updates the table to
+associate \var{source-object} with a new value.
+The car field of the pair should not be modified.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-delete!}{\categoryprocedure}{(source-table-delete! \var{source-table} \var{source-object})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\scheme{source-table-delete!} drops the association
+for \var{source-object} from \var{source-table}, if
+one exists.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{source-table-size}{\categoryprocedure}{(source-table-size \var{source-table})}
+\returns the number of entries in \var{source-table}
+\listlibraries
+\endentryheader
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{put-source-table}{\categoryprocedure}{(put-source-table \var{textual-output-port} \var{source-table})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+This procedure writes a representation of the information stored in \var{source-table} to the port.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{get-source-table!}{\categoryprocedure}{(get-source-table! \var{textual-input-port} \var{source-table})}
+\formdef{get-source-table!}{\categoryprocedure}{(get-source-table! \var{textual-input-port} \var{source-table} \var{combine})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+The port must be positioned at a representation of source-table
+information written by some previous call to \scheme{put-source-table},
+which reads the information and merges it into \scheme{source-table}.
+
+If present and non-false, \var{combine} must be a procedure and
+should accept two arguments.
+It is called whenever associations for the same source object are
+present both in \var{source-table} and in the information read from
+the port.
+In this case, \var{combine} is passed two arguments: the associated
+value from \var{source-table} and the associated value from the
+port (in that order) and must return one value, which is recorded
+as the new associated value for the source object in \var{source-table}.
+
+If \var{combine} is not present, \var{combine} is \scheme{#f}, or
+no association for a source object read from the port already exists
+in \var{source-table}, the value read from the port is recorded as
+the associated value of the source object in \var{source-table}.
+
+\schemedisplay
+(define st (make-source-table))
+(call-with-port (open-input-file "profile.out1")
+  (lambda (ip) (get-source-table! ip st)))
+(call-with-port (open-input-file "profile.out2")
+  (lambda (ip) (get-source-table! ip st +)))
+\endschemedisplay

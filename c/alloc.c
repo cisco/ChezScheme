@@ -656,64 +656,6 @@ ptr S_exactnum(a, b) ptr a, b; {
     return p;
 }
 
-ptr S_ifile(icount, name, fd, info, flags, ilast, ibuf)
-        iptr flags, icount; char *ilast; iptr fd; ptr name, ibuf, info; {
-    ptr tc = get_thread_context();
-    ptr p;
-
-    thread_find_room(tc, type_typed_object, size_port, p);
-    PORTTYPE(p) = flags | type_port;
-    PORTNAME(p) = name;
-  /* PORTHANDLER is really a ptr only when PORTTYPE & PORT_FLAG_PROC_HANDLER is true */
-    PORTHANDLER(p) = (ptr)fd;
-    PORTINFO(p) = info;
-    PORTICNT(p) = icount;
-    PORTILAST(p) = (ptr)ilast;
-    PORTIBUF(p) = ibuf;
-  /* leave output buffer and last uninitialized for input only ports */
-    PORTOCNT(p) = 0;
-    return p;
-}
-
-ptr S_ofile(ocount, name, fd, info, flags, olast, obuf)
-        iptr flags, ocount; char *olast; iptr fd; ptr name, obuf, info; {
-    ptr tc = get_thread_context();
-    ptr p;
-
-    thread_find_room(tc, type_typed_object, size_port, p);
-    PORTTYPE(p) = flags | type_port;
-    PORTNAME(p) = name;
-  /* PORTHANDLER is really a ptr only when PORTTYPE & PORT_FLAG_PROC_HANDLER is true */
-    PORTHANDLER(p) = (ptr)fd;
-    PORTINFO(p) = info;
-    PORTOCNT(p) = ocount;
-    PORTOLAST(p) = (ptr)olast;
-    PORTOBUF(p) = obuf;
-  /* leave input buffer and last uninitialized for output only ports */
-    PORTICNT(p) = 0;
-    return p;
-}
-
-ptr S_iofile(icount, ocount, name, fd, info, flags, ilast, ibuf, olast, obuf)
-        iptr flags, icount, ocount; char *ilast, *olast; iptr fd; ptr name, ibuf, obuf, info; {
-    ptr tc = get_thread_context();
-    ptr p;
-
-    thread_find_room(tc, type_typed_object, size_port, p);
-    PORTTYPE(p) = flags | type_port;
-    PORTNAME(p) = name;
-  /* PORTHANDLER is really a ptr only when PORTTYPE & PORT_FLAG_PROC_HANDLER is true */
-    PORTHANDLER(p) = (ptr)fd;
-    PORTINFO(p) = info;
-    PORTICNT(p) = icount;
-    PORTILAST(p) = (ptr)ilast;
-    PORTIBUF(p) = ibuf;
-    PORTOCNT(p) = ocount;
-    PORTOLAST(p) = (ptr)olast;
-    PORTOBUF(p) = obuf;
-    return p;
-}
-
 /* S_string returns a new string of length n.  If s is not NULL, it is
  * copied into the new string.  If n < 0, then s must be non-NULL,
  * and the length of s (by strlen) determines the length of the string */

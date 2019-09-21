@@ -876,7 +876,7 @@
     'a)
  ; verify optimization of or pattern
   (equivalent-expansion?
-    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2] [compile-profile #f])
       (expand/optimize
         '(lambda (x y) (if (not (or (fx< x y) (fx> y x))) x y))))
     '(lambda (x.0 y.1)
@@ -884,7 +884,7 @@
            y.1
            x.0)))
   (equivalent-expansion?
-    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2] [compile-profile #f])
       (expand/optimize
         '(lambda (x y) (if (or (fx< x y) (fx> y x)) x y))))
     '(lambda (x y) (if (if (#2%fx< x y) #t (#2%fx> y x)) x y)))
@@ -2707,7 +2707,7 @@
     ; does push (make-message-condition y) because it is pure, even though one of the vars (z) is assigned
     '(lambda (y) (let ([z #f]) (#3%list (lambda () (set! z 15) z) (#3%make-message-condition y)))))
   (equivalent-expansion?
-    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2] [compile-profile #f])
       (expand/optimize
         '(let ()
            (define-record foo ((immutable boolean x)))
@@ -2720,7 +2720,7 @@
          #t
          e2))
   (equivalent-expansion?
-    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 3])
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 3] [compile-profile #f])
       (expand/optimize
         '(let ()
            (define-record foo ((immutable boolean x)))

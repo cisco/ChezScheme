@@ -8331,7 +8331,7 @@
       (record? (make-xftr) (record-type-descriptor prnt)))
     #f)
   (equivalent-expansion?
-    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [compile-profile #f])
       (expand/optimize
         '(lambda (x)
            (define-record-type bar)
@@ -8340,7 +8340,7 @@
        (#3%record? x (#2%$make-record-type-descriptor #!base-rtd 'bar #f #f #f #f '#() 'define-record-type))))
 
   (equivalent-expansion?
-    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [compile-profile #f])
       (expand/optimize
         '(lambda (x)
            (define-record-type bar (sealed #t))
@@ -8782,7 +8782,7 @@
     '(lambda (a) (#3%list (#3%cons a a) a)))
   ; oscar's example
   (equivalent-expansion?
-    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [compile-profile #f])
       (expand/optimize
         '(let ()
            (import scheme)
@@ -8795,7 +8795,7 @@
                r)))))
     `(lambda (x) (#3%$record ',record-type-descriptor? 37 (#2%+ 1 (#2%+ 1 x)))))
   (equivalent-expansion?
-    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [compile-profile #f])
       (expand/optimize
         '(let ()
            (import scheme)

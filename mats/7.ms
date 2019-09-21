@@ -117,7 +117,27 @@
     (define-values (o get) (open-bytevector-output-port))
     (compile-to-port '((define lcfp1 'worked) 'loaded) o)
     (eq? 'loaded (load-compiled-from-port (open-bytevector-input-port (get)))))
-  (eq? 'worked lcfp1)
+  (begin
+    (define lcfp-bv
+      (let-values ([(o get) (open-bytevector-output-port)])
+        (compile-to-port
+          '((printf "revisit\n")
+            (define-syntax $lcfp-a (begin (printf "visit\n") (lambda (x) 0)))
+            (eval-when (visit revisit) (printf "visit-revisit\n"))
+            (eval-when (visit) 'visit-return)
+            'revisit-return)
+          o)
+        (get)))
+    #t)
+  (equal?
+    (with-output-to-string (lambda () (printf "result = ~s\n" (load-compiled-from-port (open-bytevector-input-port lcfp-bv)))))
+    "revisit\nvisit\nvisit-revisit\nresult = revisit-return\n")
+  (equal?
+    (with-output-to-string (lambda () (printf "result = ~s\n" (visit-compiled-from-port (open-bytevector-input-port lcfp-bv)))))
+    "visit\nvisit-revisit\nresult = visit-return\n")
+  (equal?
+    (with-output-to-string (lambda () (printf "result = ~s\n" (revisit-compiled-from-port (open-bytevector-input-port lcfp-bv)))))
+    "revisit\nvisit-revisit\nresult = revisit-return\n")
 )
 
 (mat compile-to-file
@@ -1168,7 +1188,7 @@
                          (define b1 "23.5")
                          (define-syntax b2 (identifier-syntax (cons b1 b1))))
                        (define c (lambda (x) (import b) (vector b2 x)))))
-                   op #f #f ',(machine-type) hostop))))))
+                   op #f #f #f ',(machine-type) hostop))))))
       "testfile-hop1")
     (with-output-to-file "testfile-hop2.ss"
       (lambda ()
@@ -2710,14 +2730,14 @@ evaluating module init
       "testfile-cwl-b5")
     "()\n")
 
-  (error? ; attempting to re-install run-time part of library (testfile-cwl-a5)
+  (error? ; attempting to re-install compile-time (or run-time) part of library (testfile-cwl-a5)
     (separate-eval
       '(let ()
          (import (testfile-cwl-c5))
          (import (testfile-cwl-b5))
          (list (fib+fact 10) (ack+fact 3 4)))))
 
-  (error? ; attempting to re-install run-time part of library (testfile-cwl-a5)
+  (error? ; attempting to re-install compile-time (or run-time) part of library (testfile-cwl-a5)
     (separate-eval
       '(eval '(list (fib+fact 10) (ack+fact 3 4))
              (environment '(chezscheme) '(testfile-cwl-c5) '(testfile-cwl-b5)))))
@@ -2738,7 +2758,7 @@ evaluating module init
     (separate-compile 'cwl-d5)
     #t)
 
-  (error? ; attempting to re-install run-time part of library (testfile-cwl-a5) with uid #{testfile-cwl-a5 ???}
+  (error? ; attempting to re-install compile-time (or run-time) part of library (testfile-cwl-a5)
     (separate-eval '(load "testfile-cwl-d5.so")))
 
   (begin
@@ -2763,14 +2783,14 @@ evaluating module init
   (delete-file "testfile-cwl-a5.so")
   (delete-file "testfile-cwl-a5.wpo")
 
-  (error? ; attempting to re-install run-time part of library (testfile-cwl-a5) with uid #{testfile-cwl-a5 ???}
+  (error? ; attempting to re-install compile-time (or run-time) part of library (testfile-cwl-a5)
     (separate-eval
       '(let ()
          (import (testfile-cwl-c5))
          (import (testfile-cwl-b5))
          (list (fib+fact 10) (ack+fact 3 4)))))
 
-  (error? ; attempting to re-install run-time part of library (testfile-cwl-a5) with uid #{testfile-cwl-a5 ???}
+  (error? ; attempting to re-install compile-time (or run-time) part of library (testfile-cwl-a5)
     (separate-eval
       '(let ()
          (import (testfile-cwl-b5))
@@ -4165,6 +4185,7 @@ evaluating module init
     "import: found corresponding object file \"testfile-lm-a.so\"\n"
     "import: object file is not older\n"
     "import: loading object file \"testfile-lm-a.so\"\n"
+    "attempting to 'revisit' previously 'visited' \"testfile-lm-a.so\" for library (testfile-lm-a) run-time info\n"
     "rt-a rhs\n"
     "c = 456\n"))
   (equal?
@@ -4180,6 +4201,7 @@ evaluating module init
     "import: found corresponding object file \"testfile-lm-c.so\"\n"
     "import: object file is not older\n"
     "import: loading object file \"testfile-lm-c.so\"\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-c.so\" for library (testfile-lm-c) run-time info\n"
     "import: attempting to 'revisit' previously 'visited' \"testfile-lm-a.so\" for library (testfile-lm-a) run-time info\n"
     "rt-a rhs\n"
     "456\n"))
@@ -4197,6 +4219,7 @@ evaluating module init
     "import: object file is not older\n"
     "import: loading object file \"testfile-lm-b.so\"\n"
     "import: attempting to 'visit' previously 'revisited' \"testfile-lm-a.so\" for library (testfile-lm-a) compile-time info\n"
+    "import: attempting to 'revisit' previously 'visited' \"testfile-lm-b.so\" for library (testfile-lm-b) run-time info\n"
     "\"odd\"\n"))
   (equal?
    (separate-eval

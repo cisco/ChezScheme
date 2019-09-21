@@ -846,20 +846,8 @@ static INT zgetstr(file, s, max) glzFile file; char *s; iptr max; {
 static IBOOL loadecho = 0;
 #define LOADSKIP 0
 
-static void handle_visit_revisit(tc, p) ptr tc; ptr p; {
-  ptr a = Scar(p);
-
-  if (a == FIX(visit_tag) || a == FIX(revisit_tag)) {
-    ptr d = Scdr(p);
-    if (Sprocedurep(d)) {
-      S_initframe(tc, 0);
-      INITCDR(p) = boot_call(tc, d, 0);
-    }
-  }
-}
-
 static int set_load_binary(iptr n) {
-  if (SYMVAL(S_G.scheme_version_id) == sunbound) return 0; // set by back.ss
+  if (!Ssymbolp(SYMVAL(S_G.scheme_version_id))) return 0; // set by back.ss
   ptr make_load_binary = SYMVAL(S_G.make_load_binary_id);
   if (Sprocedurep(make_load_binary)) {
     S_G.load_binary = Scall3(make_load_binary, Sstring_utf8(bd[n].path, -1), Sstring_to_symbol("load"), Sfalse);
@@ -912,12 +900,8 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
         if (Sprocedurep(y)) {
           S_initframe(tc, 0);
           INITVECTIT(x, j) = boot_call(tc, y, 0);
-        } else if (Spairp(y)) {
-          handle_visit_revisit(tc, y);
         }
       }
-    } else if (Spairp(x)) {
-      handle_visit_revisit(tc, x);
     }
     if (loadecho) {
       S_prin1(x);

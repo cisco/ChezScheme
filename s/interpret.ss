@@ -673,16 +673,16 @@
      (ibeval ($build-install-library/ct-code uid export-id* import-code visit-code))]
     [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
      (ibeval ($build-install-library/rt-code uid dl* db* dv* de* body))]
-    [,linfo/rt ($install-library/rt-desc linfo/rt for-import? ofn)]
-    [,linfo/ct ($install-library/ct-desc linfo/ct for-import? ofn)]
-    [,pinfo ($install-program-desc pinfo)]
+    [(library/rt-info ,linfo/rt) ($install-library/rt-desc linfo/rt for-import? ofn)]
+    [(library/ct-info ,linfo/ct) ($install-library/ct-desc linfo/ct for-import? ofn)]
+    [(program-info ,pinfo) ($install-program-desc pinfo)]
     [else (sorry! who "unexpected language form ~s" ir)])
   (Outer : Outer (ir) -> * (val)
     ; can't use cata since (Outer outer1) might return 0 or more than one value
     [(group ,outer1 ,outer2) (Outer outer1) (Outer outer2)]
     [(visit-only ,inner) (unless (eq? situation 'revisit) (Inner inner))]
     [(revisit-only ,inner) (unless (eq? situation 'visit) (Inner inner))]
-    [,rcinfo (void)]
+    [(recompile-info ,rcinfo) (void)]
     [,inner (Inner inner)]
     [else (sorry! who "unexpected language form ~s" ir)])
   (Outer ir))

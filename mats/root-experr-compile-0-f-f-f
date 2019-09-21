@@ -1,3 +1,54 @@
+primvars.mo:Expected error testing (environment (quote 0)): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (a . b))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote #f)): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (environment (quote 0) (quote (chezscheme))): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (a . b)) (quote (chezscheme))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote #f) (quote (chezscheme))): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote 0)): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (a . b))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote #f)): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (environment (quote 0) (quote (chezscheme)) (quote (chezscheme))): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (a . b)) (quote (chezscheme)) (quote (chezscheme))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote #f) (quote (chezscheme)) (quote (chezscheme))): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote 0) (quote (chezscheme))): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (a . b)) (quote (chezscheme))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote #f) (quote (chezscheme))): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote 0)): Exception in environment: invalid library reference 0
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote (a . b))): Exception in environment: invalid library reference (a . b)
+primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote #f)): Exception in environment: invalid library reference #f
+primvars.mo:Expected error testing (base-exception-handler (quote 0)): Exception in default-exception-handler: 0 is not a procedure
+primvars.mo:Expected error testing (base-exception-handler (quote #f)): Exception in default-exception-handler: #f is not a procedure
+primvars.mo:Expected error testing (eval 1.0+2.0i (quote ((a . b)))): Exception in compile: ((a . b)) is not an environment
+primvars.mo:Expected error testing (eval 1.0+2.0i (quote #f)): Exception in compile: #f is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b)))): Exception in sc-expand: ((a . b)) is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f)): Exception in sc-expand: #f is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i): Exception in sc-expand: ((a . b)) is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i): Exception in sc-expand: #f is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i 1.0+2.0i): Exception in sc-expand: ((a . b)) is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i): Exception in sc-expand: #f is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: ((a . b)) is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: #f is not an environment
+primvars.mo:Expected error testing (expand 1.0+2.0i *env 1.0+2.0i 1.0+2.0i (quote a)): Exception in sc-expand: a is not a string or #f
+primvars.mo:Expected error testing (make-input-port (quote 0) "a"): Exception in make-input-port: fixnum handler no longer supported; use open-fd-input-port
+primvars.mo:Expected error testing (make-input/output-port (quote 0) "a" "a"): Exception in make-input/output-port: fixnum handler no longer supported; use open-fd-input-port
+primvars.mo:Expected error testing (make-output-port (quote 0) "a"): Exception in make-output-port: fixnum handler no longer supported; use open-fd-input-port
+primvars.mo:Expected error testing (make-sstats (quote "no-time") *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value "no-time" is not a time record
+primvars.mo:Expected error testing (make-sstats (quote #f) *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value #f is not a time record
+primvars.mo:Expected error testing (make-sstats *time (quote "no-time") (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: real value "no-time" is not a time record
+primvars.mo:Expected error testing (make-sstats *time (quote #f) (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: real value #f is not a time record
+primvars.mo:Expected error testing (make-sstats *time *time (quote 2.0) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: bytes value 2.0 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (quote 1/2) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: bytes value 1/2 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (quote #f) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: bytes value #f is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (quote 2.0) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-count value 2.0 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (quote 1/2) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-count value 1/2 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (quote #f) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-count value #f is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) (quote "no-time") *time (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-cpu value "no-time" is not a time record
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) (quote #f) *time (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-cpu value #f is not a time record
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time (quote "no-time") (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-real value "no-time" is not a time record
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time (quote #f) (- (most-negative-fixnum) 1)): Exception in make-sstats: gc-real value #f is not a time record
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 2.0)): Exception in make-sstats: gc-bytes value 2.0 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 1/2)): Exception in make-sstats: gc-bytes value 1/2 is not an exact integer
+primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote #f)): Exception in make-sstats: gc-bytes value #f is not an exact integer
 primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
 primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
 primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
@@ -14,7 +65,7 @@ primvars.mo:Expected error in mat current-output-port: "current-output-port: #<i
 primvars.mo:Expected error in mat eval-syntax-expanders-when: "eval-syntax-expanders-when: invalid eval-when list (compiling)".
 primvars.mo:Expected error in mat gensym-count: "gensym-count: "g" is not a nonnegative integer".
 primvars.mo:Expected error in mat keyboard-interrupt-handler: "keyboard-interrupt-handler: 0 is not a procedure".
-primvars.mo:Expected error in mat optimize-level: "optimize-level: 4 is not valid optimize level".
+primvars.mo:Expected error in mat optimize-level: "optimize-level: 4 is not a valid optimize level".
 primvars.mo:Expected error in mat pretty-line-length: "pretty-line-length: -1 is not a positive fixnum".
 primvars.mo:Expected error in mat pretty-line-length: "pretty-line-length: <int> is not a positive fixnum".
 primvars.mo:Expected error in mat pretty-one-line-limit: "pretty-one-line-limit: 0 is not a positive fixnum".
@@ -330,12 +381,12 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: lists (a b) and (p q r) differ in length".
 4.mo:Expected error in mat fold-right: "fold-right: lists (1 2) and (p q r) differ in length".
-4.mo:Expected error in mat fold-right: "map: a is not a proper list".
-4.mo:Expected error in mat fold-right: "map: a is not a proper list".
-4.mo:Expected error in mat fold-right: "map: (a . b) is not a proper list".
-4.mo:Expected error in mat fold-right: "map: (a . b) is not a proper list".
-4.mo:Expected error in mat fold-right: "map: (a a a a a a ...) is circular".
-4.mo:Expected error in mat fold-right: "map: (a a a a a a ...) is circular".
+4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
+4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
+4.mo:Expected error in mat fold-right: "fold-right: (a . b) is not a proper list".
+4.mo:Expected error in mat fold-right: "fold-right: (a . b) is not a proper list".
+4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
+4.mo:Expected error in mat fold-right: "fold-right: (a a a a a a ...) is circular".
 4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
 4.mo:Expected error in mat fold-right: "fold-right: a is not a proper list".
@@ -3634,6 +3685,41 @@ bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress:
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+profile.mo:Expected error in mat compile-profile: "compile-profile: invalid mode src [must be #f, #t, source, or block]".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump (quote ()))".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-clear (quote ()))".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-list #t (quote ()) 3)".
+profile.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump 17".
+profile.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump (17)".
+profile.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump ((a . 17))".
+profile.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump ((#<source abc[0:3]> . q))".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-html "" (quote ()) 3)".
+profile.mo:Expected error in mat compile-profile: "profile-dump-html: (prefix) is not a string".
+profile.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump 17".
+profile.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump (17)".
+profile.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump ((a . 17))".
+profile.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump ((#<source abc[0:3]> . q))".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-data)".
+profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-data "profile.data" (quote ()) (quote q))".
+profile.mo:Expected error in mat compile-profile: "profile-dump-data: #t is not a string".
+profile.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump 17".
+profile.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump (17)".
+profile.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump ((a . 17))".
+profile.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump ((#<source abc[0:3]> . q))".
+profile.mo:Expected error in mat compile-profile: "profile-load-data: what? is not a string".
+profile.mo:Expected error in mat compile-profile: "profile-palette: palette #() has too few entries".
+profile.mo:Expected error in mat compile-profile: "profile-palette: palette #(("black" . "white")) has too few entries".
+profile.mo:Expected error in mat compile-profile: "profile-palette: palette #(("black" . "white") ("red" . "white")) has too few entries".
+profile.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") #("red" "white") ("blue" . "black"))".
+profile.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") ("red" . "white") ("blue" . black))".
+profile.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") ("red" . "white") (255 . "black"))".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected error in mat profile-form: "invalid syntax (profile)".
+profile.mo:Expected error in mat profile-form: "invalid syntax (profile 1 2 3)".
+profile.mo:Expected error in mat profile-form: "profile subform is not a source object 3".
 misc.mo:Expected error in mat compiler1: "variable i-am-not-bound is not bound".
 misc.mo:Expected error in mat compiler1: "attempt to apply non-procedure oops".
 misc.mo:Expected error in mat compiler1: "incorrect argument count in call (g (list))".
@@ -3668,10 +3754,10 @@ misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid g
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation oldgen".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation -1".
 misc.mo:Expected error in mat make-object-finder: "incorrect number of arguments to #<procedure find-next>".
-misc.mo:Expected error in mat subset: "subset-mode: ieee is not valid subset mode".
-misc.mo:Expected error in mat subset: "subset-mode: r4rs is not valid subset mode".
-misc.mo:Expected error in mat subset: "subset-mode: r5rs is not valid subset mode".
-misc.mo:Expected error in mat subset: "subset-mode: #t is not valid subset mode".
+misc.mo:Expected error in mat subset: "subset-mode: ieee is not a valid subset mode".
+misc.mo:Expected error in mat subset: "subset-mode: r4rs is not a valid subset mode".
+misc.mo:Expected error in mat subset: "subset-mode: r5rs is not a valid subset mode".
+misc.mo:Expected error in mat subset: "subset-mode: #t is not a valid subset mode".
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier force".
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier force".
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier cons".
@@ -3712,41 +3798,6 @@ misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable
 misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable a".
 misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
 misc.mo:Expected error in mat cpletrec: "attempt to assign undefined variable b".
-misc.mo:Expected error in mat compile-profile: "compile-profile: invalid mode src [must be #f, #t, source, or block]".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump (quote ()))".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-clear (quote ()))".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-list #t (quote ()) 3)".
-misc.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump 17".
-misc.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump (17)".
-misc.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump ((a . 17))".
-misc.mo:Expected error in mat compile-profile: "profile-dump-list: invalid dump ((#<source abc[0:3]> . q))".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-html "" (quote ()) 3)".
-misc.mo:Expected error in mat compile-profile: "profile-dump-html: (prefix) is not a string".
-misc.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump 17".
-misc.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump (17)".
-misc.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump ((a . 17))".
-misc.mo:Expected error in mat compile-profile: "profile-dump-html: invalid dump ((#<source abc[0:3]> . q))".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-data)".
-misc.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump-data "profile.data" (quote ()) (quote q))".
-misc.mo:Expected error in mat compile-profile: "profile-dump-data: #t is not a string".
-misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump 17".
-misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump (17)".
-misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump ((a . 17))".
-misc.mo:Expected error in mat compile-profile: "profile-dump-data: invalid dump ((#<source abc[0:3]> . q))".
-misc.mo:Expected error in mat compile-profile: "profile-load-data: what? is not a string".
-misc.mo:Expected error in mat compile-profile: "profile-palette: palette #() has too few entries".
-misc.mo:Expected error in mat compile-profile: "profile-palette: palette #(("black" . "white")) has too few entries".
-misc.mo:Expected error in mat compile-profile: "profile-palette: palette #(("black" . "white") ("red" . "white")) has too few entries".
-misc.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") #("red" "white") ("blue" . "black"))".
-misc.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") ("red" . "white") ("blue" . black))".
-misc.mo:Expected error in mat compile-profile: "profile-palette: invalid palette #(("black" . "white") ("red" . "white") (255 . "black"))".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected error in mat profile-form: "invalid syntax (profile)".
-misc.mo:Expected error in mat profile-form: "invalid syntax (profile 1 2 3)".
-misc.mo:Expected error in mat profile-form: "profile subform is not a source object 3".
 misc.mo:Expected error in mat strip-fasl-file: "invalid fasl strip option ratfink".
 misc.mo:Expected error in mat strip-fasl-file: "strip-fasl-file: #<enum-set> is not a string".
 misc.mo:Expected error in mat strip-fasl-file: "strip-fasl-file: #<enum-set> is not a string".
@@ -3759,7 +3810,7 @@ misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for 
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
-misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 2".
+misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 3".
 misc.mo:Expected error in mat cost-center: "incorrect argument count in call (make-cost-center (quote foo))".
 misc.mo:Expected error in mat cost-center: "with-cost-center: foo is not a cost center".
 misc.mo:Expected error in mat cost-center: "with-cost-center: bar is not a procedure".
@@ -4048,8 +4099,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat port-operations: "with-output-to-string: (this too?) is not a procedure".
 6.mo:Expected error in mat port-operations: "incorrect argument count in call (eof-object #!eof)".
 6.mo:Expected error in mat port-operations: "read: unexpected end-of-file reading quote at char 0 of #<input port string>".
-6.mo:Expected error in mat port-operations: "read: more than one item found after dot (.) on #<input port testfile.ss>".
-6.mo:Expected error in mat port-operations: "read: parenthesized list terminated by bracket on #<input port testfile.ss>".
+6.mo:Expected error in mat port-operations: "read: more than one item found after dot (.) before file-position 15 of #<input port testfile.ss>; the character position might differ".
+6.mo:Expected error in mat port-operations: "read: parenthesized list terminated by bracket before file-position 11 of #<input port testfile.ss>; the character position might differ".
 6.mo:Expected error in mat port-operations1: "incorrect argument count in call (open-input-output-file)".
 6.mo:Expected error in mat port-operations1: "open-input-output-file: furball is not a string".
 6.mo:Expected error in mat port-operations1: "open-input-output-file: failed for /probably/not/a/good/path: no such file or directory".
@@ -4114,7 +4165,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat string-escapes: "read: invalid character " in string hex escape at char 3 of #<input port string>".
 6.mo:Expected error in mat string-escapes: "read: invalid character * in string hex escape at char 3 of #<input port string>".
 6.mo:Expected error in mat string-escapes: "read: invalid character g in string hex escape at char 3 of #<input port string>".
-6.mo:Expected error in mat read-token: "read-token: invalid number syntax #eat on #<input port testfile.ss>".
+6.mo:Expected error in mat read-token: "read-token: invalid number syntax #eat at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unsupported old fasl format detected---use new format with binary i/o at line 4, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unsupported old fasl format detected---use new format with binary i/o at line 4, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unsupported old fasl format detected---use new format with binary i/o at line 4, char 1 of testfile.ss".
@@ -7080,11 +7131,11 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a1) not found
-7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install run-time part of library (testfile-cwl-a5)
-7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install run-time part of library (testfile-cwl-a5)
-7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install run-time part of library (testfile-cwl-a5)
-7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install run-time part of library (testfile-cwl-a5)
-7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install run-time part of library (testfile-cwl-a5)
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install compile-time part of library (testfile-cwl-a5)
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in environment: attempting to re-install compile-time part of library (testfile-cwl-a5)
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in environment: attempting to re-install compile-time part of library (testfile-cwl-a5)
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install compile-time part of library (testfile-cwl-a5)
+7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install compile-time part of library (testfile-cwl-a5)
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
@@ -8399,9 +8450,9 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl4.ss did not define library (testfile-ewl4)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl5.ss did not define library (testfile-ewl5)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.ss did not define library (testfile-ewl6)".
-8.mo:Expected error in mat eval-when-library: "loading testfile-ewl1.ss did not define library (testfile-ewl1)".
-8.mo:Expected error in mat eval-when-library: "loading testfile-ewl2.ss did not define library (testfile-ewl2)".
-8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.ss did not define library (testfile-ewl6)".
+8.mo:Expected error in mat eval-when-library: "loading testfile-ewl1.so did not define library (testfile-ewl1)".
+8.mo:Expected error in mat eval-when-library: "loading testfile-ewl2.so did not define library (testfile-ewl2)".
+8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.so did not define library (testfile-ewl6)".
 8.mo:Expected error in mat library-directories: "library (testfile-ld1) not found".
 8.mo:Expected error in mat library-search-handler: "default-library-search-handler: "not-symbol" is not a symbol".
 8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid library name bad-library-name".
@@ -8578,9 +8629,9 @@ fx.mo:Expected error in mat fx=?: "fx=?: (a) is not a fixnum".
 fx.mo:Expected error in mat fx=?: "fx=?: <int> is not a fixnum".
 fx.mo:Expected error in mat fx=?: "fx=?: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx=?: "incorrect argument count in call (fx=? 1)".
-fx.mo:Expected error in mat fx<?: "fx<: a is not a fixnum".
-fx.mo:Expected error in mat fx<?: "fx<: <int> is not a fixnum".
-fx.mo:Expected error in mat fx<?: "fx<: <-int> is not a fixnum".
+fx.mo:Expected error in mat fx<?: "fx<?: a is not a fixnum".
+fx.mo:Expected error in mat fx<?: "fx<?: <int> is not a fixnum".
+fx.mo:Expected error in mat fx<?: "fx<?: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx<?: "incorrect argument count in call (fx<? 1)".
 fx.mo:Expected error in mat fx>?: "fx>?: "hi" is not a fixnum".
 fx.mo:Expected error in mat fx>?: "fx>?: <int> is not a fixnum".
