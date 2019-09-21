@@ -1244,6 +1244,9 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     }
 
     S_resize_oblist();
+
+    /* tell profile_release_counters to look for bwp'd counters at least through tg */
+    if (S_G.prcgeneration < tg) S_G.prcgeneration = tg;
 }
 
 #define sweep_space(s, body)\

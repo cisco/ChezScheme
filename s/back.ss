@@ -119,6 +119,11 @@
     (lambda (x)
       (and x #t))))
 
+(define-who generate-covin-files
+  ($make-thread-parameter #f
+    (lambda (x)
+      (and x #t))))
+
 (define $enable-check-prelex-flags
   ($make-thread-parameter #f
     (lambda (x)

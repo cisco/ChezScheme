@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "Chez Scheme Version 9.5.3 March 2019"
+.TH SCHEME 1 "Chez Scheme Version 9.5.3 September 2019"
 .SH NAME
 \fIChez Scheme\fP
 .br
@@ -72,8 +72,11 @@ Disables the expression editor.
 .B --eehistory off | \fIfile\fP
 Set expression-editor history file or disable restore and save of history.
 .TP
-.B ---enable-object-counts
+.B --enable-object-counts
 Have collector maintain object counts.
+.TP
+.B --retain-static-relocation
+Keep reloc information for compute-size, etc.
 .TP
 .B -b \fIfile\fP, --boot \fIfile\fP
 Load boot code from \fIfile\fP.

@@ -156,9 +156,12 @@
         [(pair? x) (bld-graph x t a? bld-pair)]
         [(vector? x) (bld-graph x t a? bld-vector)]
         [(or (symbol? x) (string? x)) (bld-graph x t a? bld-simple)]
+        ; this check must go before $record? check
         [(and (annotation? x) (not a?))
          (bld (annotation-stripped x) t a?)]
+        ; this check must go before $record? check
         [(eq-hashtable? x) (bld-graph x t a? bld-ht)]
+        ; this check must go before $record? check
         [(symbol-hashtable? x) (bld-graph x t a? bld-ht)]
         [($record? x) (bld-graph x t a? bld-record)]
         [(box? x) (bld-graph x t a? bld-box)]
@@ -299,7 +302,7 @@
             (wrf-bytevector-loop (fx+ i 1))))))))
 
 ; Written as: fasl-tag rtd field ...
-(module (wrf-record really-wrf-record)
+(module (wrf-record really-wrf-record wrf-annotation)
   (define maybe-remake-rtd
     (lambda (rtd)
       (if (eq? (machine-type) ($target-machine))
@@ -430,7 +433,18 @@
          (wrf-fields (maybe-remake-rtd x) p t a?)]
         [else
          (put-u8 p (constant fasl-type-record))
-         (wrf-fields x p t a?)]))))
+         (wrf-fields x p t a?)])))
+
+  (define wrf-annotation
+    (lambda (x p t a?)
+      (define maybe-remake-annotation
+        (lambda (x a?)
+          (if (fx= (annotation-flags x) a?)
+              x
+              (make-annotation (annotation-expression x) (annotation-source x) (annotation-stripped x) a?))))
+      (put-u8 p (constant fasl-type-record))
+      (wrf-fields (maybe-remake-annotation x a?) p t a?)))
+)
 
 (define wrf-eqht
   (lambda (x p t a?)
@@ -547,11 +561,16 @@
          [(string? x) (wrf-graph x p t a? wrf-string)]
          [(fxvector? x) (wrf-graph x p t a? wrf-fxvector)]
          [(bytevector? x) (wrf-graph x p t a? wrf-bytevector)]
-         [(and (annotation? x) (not a?))
-          (wrf (annotation-stripped x) p t a?)]
-        ; this check must go before $record? check
+         ; this check must go before $record? check
+         [(annotation? x)
+          (if a?
+              (wrf-graph x p t a? wrf-annotation)
+              (wrf (annotation-stripped x) p t a?))]
+         ; this check must go before $record? check
          [(eq-hashtable? x) (wrf-graph x p t a? wrf-eqht)]
+         ; this check must go before $record? check
          [(symbol-hashtable? x) (wrf-graph x p t a? wrf-symht)]
+         ; this check must go before $record? check
          [(hashtable? x) ($oops 'fasl-write "invalid fasl object ~s" x)]
          [($record? x) (wrf-graph x p t a? wrf-record)]
          [(vector? x) (wrf-graph x p t a? wrf-vector)]
@@ -571,7 +590,7 @@
          [else ($oops 'fasl-write "invalid fasl object ~s" x)])))
 
 (define start
-  (lambda (p t proc)
+  (lambda (p t situation proc)
     (dump-graph)
     (let-values ([(bv* size)
                   (let-values ([(p extractor) ($open-bytevector-list-output-port)])
@@ -581,18 +600,19 @@
                         (put-uptr p n)))
                     (proc p)
                     (extractor))])
+      (put-u8 p situation)
       (put-u8 p (constant fasl-type-fasl-size))
       (put-uptr p size)
       (for-each (lambda (bv) (put-bytevector p bv)) bv*))))
 
 (module (fasl-write fasl-file)
-  ; when called from fasl-write or fasl-file, pass #t for a? to preserve annotations;
+  ; when called from fasl-write or fasl-file, always preserve annotations;
   ; otherwise use value passed in by the compiler
   (define fasl-one
     (lambda (x p)
       (let ([t (make-table)])
-         (bld x t #t)
-         (start p t (lambda (p) (wrf x p t #t))))))
+        (bld x t (constant annotation-all))
+        (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf x p t (constant annotation-all)))))))
 
   (define-who fasl-write
     (lambda (x p)
@@ -628,7 +648,7 @@
     (emit-header p (constant machine-type-any))
     (let ([t (make-table)])
       (bld-graph x t #f really-bld-record)
-      (start p t (lambda (p) (wrf-graph x p t #f really-wrf-record))))))
+      (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf-graph x p t #f really-wrf-record))))))
 
 ($fasl-target (make-target bld-graph bld wrf start make-table wrf-graph fasl-base-rtd fasl-write fasl-file))
 )
@@ -642,7 +662,7 @@
   (set! $fasl-bld-graph (lambda (x t a? handler) ((target-fasl-bld-graph (fasl-target)) x t a? handler)))
   (set! $fasl-enter (lambda (x t a?) ((target-fasl-enter (fasl-target)) x t a?)))
   (set! $fasl-out (lambda (x p t a?) ((target-fasl-out (fasl-target)) x p t a?)))
-  (set! $fasl-start (lambda (p t proc) ((target-fasl-start (fasl-target)) p t proc)))
+  (set! $fasl-start (lambda (p t situation proc) ((target-fasl-start (fasl-target)) p t situation proc)))
   (set! $fasl-table (lambda () ((target-fasl-table (fasl-target)))))
   (set! $fasl-wrf-graph (lambda (x p t a? handler) ((target-fasl-wrf-graph (fasl-target)) x p t a? handler)))
   (set! $fasl-base-rtd (lambda (x p) ((target-fasl-base-rtd (fasl-target)) x p)))

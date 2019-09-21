@@ -279,7 +279,11 @@
   (let ([ip (rcb-ip rcb)])
     (cond
       [(eq? ip (console-input-port)) ($lexical-error (rcb-who rcb) msg args ip ir?)]
-      [(not fp) ($lexical-error (rcb-who rcb) "~? on ~s" (list msg args ip) ip ir?)]
+      [(not fp)
+       (let ([pos (and (port-has-port-position? ip) (port-position ip))])
+         (if pos
+             ($lexical-error (rcb-who rcb) "~? before file-position ~s of ~s; the character position might differ" (list msg args pos ip) ip ir?)
+             ($lexical-error (rcb-who rcb) "~? on ~s" (list msg args ip) ip ir?)))]
       [(rcb-sfd rcb) ($lexical-error (rcb-who rcb) msg args ip ($make-source-object (rcb-sfd rcb) bfp fp) start? ir?)]
       [else ($lexical-error (rcb-who rcb) "~? at char ~a of ~s" (list msg args (if start? bfp fp) ip) ip ir?)])))
 
@@ -1526,30 +1530,33 @@
          (xmvlet ((x stripped-x) (xcall rd type value))
            (xvalues))]))))
 
-(set! read-token
-  (let ([who 'read-token])
+(set-who! read-token
+  (let ()
     (define read-token
-      (lambda (ip sfd)
+      (lambda (ip sfd fp)
         (when (port-closed? ip)
           ($oops who "not permitted on closed port ~s" ip))
-        (let ([fp (and (port-has-port-position? ip)
-                       ($port-flags-set? ip (constant port-flag-char-positions))
-                       (port-position ip))])
+        (let ([fp (or fp
+                      (and ($port-flags-set? ip (constant port-flag-char-positions))
+                           (port-has-port-position? ip)
+                           (port-position ip)))])
           (let ([rcb (make-rcb ip sfd #f who)] [tb ""] [bfp fp] [it #f])
             (with-token (type value)
               (values type value bfp fp))))))
     (case-lambda
-      [() (read-token (current-input-port) #f)]
+      [() (read-token (current-input-port) #f #f)]
       [(ip)
        (unless (and (input-port? ip) (textual-port? ip))
          ($oops who "~s is not a textual input port" ip))
-       (read-token ip #f)]
-      [(ip sfd)
+       (read-token ip #f #f)]
+      [(ip sfd fp)
        (unless (and (input-port? ip) (textual-port? ip))
          ($oops who "~s is not a textual input port" ip))
-       (unless (or (not sfd) (source-file-descriptor? sfd))
+       (unless (source-file-descriptor? sfd)
          ($oops who "~s is not a source-file descriptor" sfd))
-       (read-token ip sfd)])))
+       (unless (and (integer? fp) (exact? fp) (>= fp 0))
+         ($oops who "~s is not a valid file position" fp))
+       (read-token ip sfd fp)])))
 
 (let ()
   (define do-read
@@ -1557,8 +1564,8 @@
       (when (port-closed? ip)
         ($oops who "not permitted on closed port ~s" ip))
       (let ([fp (or fp
-                    (and (port-has-port-position? ip)
-                         ($port-flags-set? ip (constant port-flag-char-positions))
+                    (and ($port-flags-set? ip (constant port-flag-char-positions))
+                         (port-has-port-position? ip)
                          (port-position ip)))])
         (let ([rcb (make-rcb ip sfd (and a? sfd fp #t) who)] [tb ""] [bfp fp] [it #f])
           (call-with-token rd-top-level)))))
@@ -1578,7 +1585,7 @@
     (lambda (ip sfd fp)
       (unless (and (input-port? ip) (textual-port? ip))
         ($oops who "~s is not a textual input port" ip))
-      (unless (or (not sfd) (source-file-descriptor? sfd))
+      (unless (source-file-descriptor? sfd)
         ($oops who "~s is not a source-file descriptor" sfd))
       (unless (and (integer? fp) (exact? fp) (>= fp 0))
         ($oops who "~s is not a valid file position" fp))

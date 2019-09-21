@@ -452,12 +452,23 @@
          ; make sure no collection occurs before profile data is dumped
          (parameterize ([compile-profile #t] [collect-request-handler void])
            (load "testfile.ss" compile)
-           (profile-dump-data "testfile.pd"))
+           (profile-dump-data "testfile.pd" (remp preexisting-profile-dump-entry? (profile-dump))))
          ; make sure collections are restarted
          (collect)))
      "(11 10 1 10 0)\n")
    (begin
      (profile-load-data "testfile.pd")
+     #t)
+   (equal?
+     (with-output-to-string
+       (lambda ()
+         (load "testfile.ss" compile)))
+     "(1 11 1 10 0)\n")
+   (begin
+     (profile-clear-database)
+     #t)
+   (begin
+     (profile-load-data "testfile.pd" "testfile.pd")
      #t)
    (equal?
      (with-output-to-string
@@ -560,7 +571,7 @@
         (parameterize ([compile-profile #t]) (load "testfile.ss" compile))))
     "AAAAAAAAAAB")
   (begin
-    (profile-dump-data "testfile.pd")
+    (profile-dump-data "testfile.pd" (remp preexisting-profile-dump-entry? (profile-dump)))
     (profile-load-data "testfile.pd")
     #t)
   (equal?

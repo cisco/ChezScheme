@@ -19,7 +19,7 @@
   (define-threaded fasl-count)
 
   (define-datatype fasl
-    (entry fasl)
+    (entry situation fasl)
     (header version machine dependencies)
     (pair vfasl)
     (tuple ty vfasl)
@@ -38,10 +38,7 @@
     (code flags free name arity-mask info pinfo* bytes m vreloc)
     (atom ty uptr)
     (reloc type-etc code-offset item-offset fasl)
-    (indirect g i)
-    (group vfasl)
-    (visit fasl)
-    (revisit fasl))
+    (indirect g i))
 
   (define-datatype field
     (ptr fasl)
@@ -118,10 +115,15 @@
             ty
             (fasl-type-case ty
               [(fasl-type-header) (read-header p)]
-              [(fasl-type-fasl-size)
-               (let ([size (read-uptr p)])
-                 (fasl-entry (read-fasl p #f)))]
-              [else (bogus "expected header or entry in ~a" (port-name p))]))))
+              [(fasl-type-visit fasl-type-revisit fasl-type-visit-revisit)
+               (let ([situation ty])
+                 (let ([ty (read-byte p)])
+                   (fasl-type-case ty
+                     [(fasl-type-fasl-size)
+                      (let ([size (read-uptr p)])
+                        (fasl-entry situation (read-fasl p #f)))]
+                     [else (bogus "expected fasl-size in ~a" (port-name p))])))]
+              [else (bogus "expected header or situation in ~a" (port-name p))]))))
     (define (read-header p)
       (let* ([bv (constant fasl-header)] [n (bytevector-length bv)])
         (do ([i 1 (fx+ i 1)])
@@ -279,9 +281,6 @@
            (let ([n (read-uptr p)])
              (or (vector-ref g n)
                  (fasl-indirect g n)))]
-          [(fasl-type-group) (fasl-group (read-vfasl p g (read-uptr p)))]
-          [(fasl-type-visit) (fasl-visit (read-fasl p g))]
-          [(fasl-type-revisit) (fasl-revisit (read-fasl p g))]
           [else (bogus "unexpected fasl code ~s in ~a" ty (port-name p))]))))
 
   (define read-script-header
@@ -394,7 +393,7 @@
             (lambda ()
               (vector-for-each (lambda (fasl) (build! fasl t)) vfasl))))
         (fasl-case x
-          [entry (fasl) (sorry! "unexpected fasl-record-type entry")]
+          [entry (situation fasl) (sorry! "unexpected fasl-record-type entry")]
           [header (version machine dependencies) (sorry! "unexpected fasl-record-type header")]
           [pair (vfasl) (build-graph! x t (build-vfasl! vfasl))]
           [tuple (ty vfasl) (build-graph! x t (build-vfasl! vfasl))]
@@ -445,17 +444,14 @@
                (vector-for-each (lambda (reloc) (build! reloc t)) vreloc)))]
           [atom (ty uptr) (void)]
           [reloc (type-etc code-offset item-offset fasl) (build! fasl t)]
-          [indirect (g i) (build! (vector-ref g i) t)]
-          [group (vfasl) ((build-vfasl! vfasl))]
-          [visit (fasl) (build! fasl t)]
-          [revisit (fasl) (build! fasl t)])))
+          [indirect (g i) (build! (vector-ref g i) t)])))
 
     (define write-entry
       (lambda (p x)
         (fasl-case x
           [header (version machine dependencies)
            (write-header p version machine dependencies)]
-          [entry (fasl)
+          [entry (situation fasl)
            (let ([t (make-table)])
              (build! fasl t)
              (let ([bv (call-with-bytevector-output-port
@@ -465,6 +461,7 @@
                                (write-byte p (constant fasl-type-graph))
                                (write-uptr p n)))
                            (write-fasl p t fasl)))])
+               (write-byte p situation)
                (write-byte p (constant fasl-type-fasl-size))
                (write-uptr p (bytevector-length bv))
                (put-bytevector p bv)))]
@@ -499,7 +496,7 @@
     (define write-fasl
       (lambda (p t x)
         (fasl-case x
-          [entry (fasl) (sorry! "unexpected fasl-record-type entry")]
+          [entry (situation fasl) (sorry! "unexpected fasl-record-type entry")]
           [header (version machine dependencies) (sorry! "unexpected fasl-record-type header")]
           [pair (vfasl)
            (write-graph p t x
@@ -641,17 +638,7 @@
            (write-uptr p code-offset)
            (when (fxlogtest type-etc 2) (write-uptr p item-offset))
            (write-fasl p t fasl)]
-          [indirect (g i) (write-fasl p t (vector-ref g i))]
-          [group (vfasl)
-           (write-byte p (constant fasl-type-group))
-           (write-uptr p (vector-length vfasl))
-           (vector-for-each (lambda (fasl) (write-fasl p t fasl)) vfasl)]
-          [visit (fasl)
-           (write-byte p (constant fasl-type-visit))
-           (write-fasl p t fasl)]
-          [revisit (fasl)
-           (write-byte p (constant fasl-type-revisit))
-           (write-fasl p t fasl)])))
+          [indirect (g i) (write-fasl p t (vector-ref g i))])))
 
     (define write-byte
       (lambda (p x)
@@ -685,39 +672,21 @@
             ((fx= i n))
             (write-uptr p (char->integer (string-ref x i)))))))
 
-    (module (fasl-program-info? fasl-library/rt-info?)
+    (module (fasl-program-info? fasl-library/rt-info? fasl-recompile-info?)
       (import (nanopass))
       (include "base-lang.ss")
       (include "expand-lang.ss")
       (define fasl-program-info? (fasl-record-predicate (record-type-descriptor program-info)))
-      (define fasl-library/rt-info? (fasl-record-predicate (record-type-descriptor library/rt-info))))
+      (define fasl-library/rt-info? (fasl-record-predicate (record-type-descriptor library/rt-info)))
+      (define fasl-recompile-info? (fasl-record-predicate (record-type-descriptor recompile-info))))
 
     (define keep-revisit-info
       (lambda (x)
-        (define revisit-record?
-          (lambda (x)
-            (or (fasl-program-info? x) (fasl-library/rt-info? x))))
-        (define revisit-stuff?
-          (lambda (x)
-            (fasl-case x
-              [closure (offset c) #t]
-              [revisit (fasl) #t]
-              [record (maybe-uid size nflds rtd pad-ty* fld*) (revisit-record? x)]
-              [else #f])))
         (fasl-case x
-          [entry (fasl)
-            (fasl-case fasl
-              [closure (offset c) x]
-              [revisit (fasl) x]
-              [record (maybe-uid size nflds rtd pad-ty* fld*) (and (revisit-record? fasl) x)]
-              [group (vfasl)
-               (let ([fasl* (filter revisit-stuff? (vector->list vfasl))])
-                 (and (not (null? fasl*))
-                      (fasl-entry
-                        (if (null? (cdr fasl*))
-                            (car fasl*)
-                            (fasl-vector (constant fasl-type-vector) (list->vector fasl*))))))]
-              [else #f])]
+          [entry (situation fasl)
+           (and (or (eqv? situation (constant fasl-type-revisit))
+                    (eqv? situation (constant fasl-type-visit-revisit)))
+                x)]
           [header (version machine dependencies) x]
           [else (sorry! "expected entry or header, got ~s" x)])))
 
@@ -821,7 +790,7 @@
                    (begin
                      (set-cdr! a entry2)
                      (cmp-case fasl-case entry1 entry2
-                       [entry (fasl) (fasl=? fasl1 fasl2)]
+                       [entry (situation fasl) (and (= situation1 situation2) (fasl=? fasl1 fasl2))]
                        [header (version machine dependencies)
                         (and (equal? version1 version2)
                              (equal? machine1 machine2)
@@ -907,10 +876,7 @@
                              (eqv? code-offset1 code-offset2)
                              (eqv? item-offset1 item-offset2)
                              (fasl=? fasl1 fasl2))]
-                       [indirect (g i) (sorry! "unexpected indirect")]
-                       [group (vfasl) (vandmap fasl=? vfasl1 vfasl2)]
-                       [visit (fasl) (fasl=? fasl1 fasl2)]
-                       [revisit (fasl) (fasl=? fasl1 fasl2)])))))))
+                       [indirect (g i) (sorry! "unexpected indirect")])))))))
 
     (set-who! $fasl-file-equal?
       (rec fasl-file-equal?

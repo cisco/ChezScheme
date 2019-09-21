@@ -641,7 +641,7 @@ implementation notes:
 
   (define binary-file-port-clear-output
     (lambda (who p)
-      (set-binary-port-output-size! p 0)))
+      (set-binary-port-output-index! p 0)))
 
   (define binary-file-port-close-port
     (lambda (who p)
@@ -4061,7 +4061,7 @@ implementation notes:
   (set-who! output-port-buffer-mode
     (lambda (output-port)
       (unless (output-port? output-port)
-        ($oops who "~s is not an output-port" output-port))
+        ($oops who "~s is not an output port" output-port))
       (cond
         [($port-flags-set? output-port (constant port-flag-block-buffered))
          (buffer-mode block)]
@@ -4329,9 +4329,7 @@ implementation notes:
              [new-buffer (make-bytevector new-length)])
           (bytevector-copy! old-buffer 0 new-buffer 0
                             (fxmin (bytevector-length old-buffer) old-size))
-          (set-binary-port-output-buffer! p new-buffer)
-          ;; set size to one less than real size so 'put' always has room
-          (set-binary-port-output-size! p (fx1- new-length)))))
+          (set-binary-port-output-buffer! p new-buffer))))
 
     (define port-length
       (lambda (who p)
@@ -4444,7 +4442,6 @@ implementation notes:
                  (binary-port-output-buffer p)
                  (port-length #f p))])
           (set-binary-port-output-buffer! p #vu8())
-          (set-binary-port-output-size! p 0)
           (let ([info ($port-info p)])
             (bytevector-output-port-info-index-set! info 0)
             (bytevector-output-port-info-length-set! info 0))
@@ -4645,9 +4642,7 @@ implementation notes:
              [new-buffer (make-string new-length)])
           (string-copy! old-buffer 0 new-buffer 0
                         (fxmin (string-length old-buffer) old-size))
-          (set-textual-port-output-buffer! p new-buffer)
-          ;; set size to one less than real size so 'put' always has room
-          (set-textual-port-output-size! p (fx1- new-length)))))
+          (set-textual-port-output-buffer! p new-buffer))))
 
     (define port-length
        (lambda (who p)
@@ -4769,7 +4764,6 @@ implementation notes:
                (textual-port-output-buffer p)
                (port-length #f p))])
         (set-textual-port-output-buffer! p "")
-        (set-textual-port-output-size! p 0)
         (let ([info ($port-info p)])
           (string-output-port-info-index-set! info 0)
           (string-output-port-info-length-set! info 0))
@@ -5560,13 +5554,18 @@ implementation notes:
            ($oops who "invalid count argument ~s" n))
          ($block-write who p s n)])))
 
-  (set-who! char-ready?
-    (lambda (input-port)
-      (unless (and (input-port? input-port) (textual-port? input-port))
-        ($oops who "~s is not a textual input port" input-port))
+  (let ()
+    (define ($char-ready? input-port who)
       (or (not (port-input-empty? input-port))
           (port-flag-eof-set? input-port)
-          (call-port-handler ready? who input-port))))
+          (call-port-handler ready? who input-port)))
+    (set-who! char-ready?
+      (case-lambda
+        [() ($char-ready? (current-input-port) who)]
+        [(input-port)
+         (unless (and (input-port? input-port) (textual-port? input-port))
+           ($oops who "~s is not a textual input port" input-port))
+         ($char-ready? input-port who)])))
 
   (set-who! clear-input-port
     (rec clear-input-port

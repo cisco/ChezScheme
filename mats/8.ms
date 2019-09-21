@@ -8487,7 +8487,7 @@
     "inside testfile-a3-9\n")
   (equal?
     (with-output-to-string (lambda () (load "testfile-a3-10.so")))
-    "outside (testfile-a3-8)\ninside testfile-a3-10\n")
+    "inside testfile-a3-10\n")
 )
 
 (mat library4
@@ -10381,7 +10381,7 @@
     (parameterize ([console-output-port (open-output-string)])
       (eval '(lambda () (import (testfile-imno2)) y))
       (get-output-string (console-output-port)))
-    "import: did not find source file \"testfile-imno2.chezscheme.sls\"\nimport: found source file \"testfile-imno2.ss\"\nimport: did not find corresponding object file \"testfile-imno2.so\"\nimport: loading source file \"testfile-imno2.ss\"\nimport: did not find source file \"testfile-imno1.chezscheme.sls\"\nimport: found source file \"testfile-imno1.ss\"\nimport: found corresponding object file \"testfile-imno1.so\"\nimport: object file is not older\nimport: loading object file \"testfile-imno1.so\"\n")
+    "import: did not find source file \"testfile-imno2.chezscheme.sls\"\nimport: found source file \"testfile-imno2.ss\"\nimport: did not find corresponding object file \"testfile-imno2.so\"\nimport: loading source file \"testfile-imno2.ss\"\nimport: did not find source file \"testfile-imno1.chezscheme.sls\"\nimport: found source file \"testfile-imno1.ss\"\nimport: found corresponding object file \"testfile-imno1.so\"\nimport: object file is not older\nimport: loading object file \"testfile-imno1.so\"\nattempting to 'revisit' previously 'visited' \"testfile-imno1.so\" for library (testfile-imno1) run-time info\n")
   (eq? (import-notify #f) (void))
 )
 

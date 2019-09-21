@@ -458,7 +458,7 @@
 (define-library-entry (fx<= x y) (fxnonfixnum2 'fx<= x y))
 (define-library-entry (fx>= x y) (fxnonfixnum2 'fx>= x y))
 (define-library-entry (fx=? x y) (fxnonfixnum2 'fx=? x y))
-(define-library-entry (fx<? x y) (fxnonfixnum2 'fx< x y))
+(define-library-entry (fx<? x y) (fxnonfixnum2 'fx<? x y))
 (define-library-entry (fx>? x y) (fxnonfixnum2 'fx>? x y))
 (define-library-entry (fx<=? x y) (fxnonfixnum2 'fx<=? x y))
 (define-library-entry (fx>=? x y) (fxnonfixnum2 'fx>=? x y))
