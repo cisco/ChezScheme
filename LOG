@@ -1752,3 +1752,7 @@
     configure
 - fixed declaration of condition wait (timeout -> maybe-timeout)
     primdata.ms
+- added "invalid code page ~s" to set of messages considered valid
+  argument-type-check error messages, for Windows multibyte->string
+  and string->multibyte.
+    primvars.ms
