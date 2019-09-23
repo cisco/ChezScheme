@@ -623,7 +623,8 @@
                                                                              "~s is not between 2 and 36"
                                                                              "invalid palette ~s"
                                                                              "bit argument ~s is not 0 or 1"
-                                                                             "unrecognized type ~s")))
+                                                                             "unrecognized type ~s"
+                                                                             "invalid code page ~s")))
                                                                     (equal? (condition-irritants c) (list bad)))
                                                                (and (or (member (condition-message c)
                                                                           '("~s is not a valid index for ~s"
