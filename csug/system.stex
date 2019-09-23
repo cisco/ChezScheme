@@ -996,7 +996,7 @@ of \var{input-port} as previously created by functions like \scheme{compile-file
 The return value is the value of the last expression whose compiled
 form is in \var{input-port}. If \var{input-port} is empty, then the
 result value is unspecified.
-The port left at end-of-file but is not closed.
+The port is left at end-of-file but is not closed.
 
 
 %----------------------------------------------------------------------------
@@ -1015,7 +1015,7 @@ of \var{input-port} as previously created by functions like \scheme{compile-file
 The return value is the value of the last expression whose last non-revisit compiled
 form is in \var{input-port}. If there are no such forms, then the
 result value is unspecified.
-The port left at end-of-file but is not closed.
+The port is left at end-of-file but is not closed.
 
 
 %----------------------------------------------------------------------------
@@ -1034,7 +1034,7 @@ of \var{input-port} as previously created by functions like \scheme{compile-file
 The return value is the value of the last expression whose last non-visit compiled
 form is in \var{input-port}. If there are no such forms, then the
 result value is unspecified.
-The port left at end-of-file but is not closed.
+The port is left at end-of-file but is not closed.
 
 
 %----------------------------------------------------------------------------
