@@ -11613,12 +11613,13 @@
                        ,(%seq
                          (set! ,%ts ,(%inline + ,%td ,(%mref ,xp/cp ,(constant continuation-stack-disp))))
                          (if ,(%inline eq? ,%sfp ,%ts)
-                             ; merge, and we assume that the stack link includes attachments
+                             ; merge, and we assume that the continuation includes attachments
                              ,(%seq
                                (set! ,(%tc-ref scheme-stack-size) ,(%inline + ,%td ,(%tc-ref scheme-stack-size)))
                                (set! ,(%tc-ref scheme-stack) ,(%mref ,xp/cp ,(constant continuation-stack-disp)))
                                (set! ,(%tc-ref stack-link) ,(%mref ,xp/cp ,(constant continuation-link-disp)))
                                (set! ,%ts ,(%mref ,xp/cp ,(constant continuation-attachments-disp)))
+                               (set! ,(%mref ,xp/cp ,(constant continuation-stack-clength-disp)) (immediate 0)) ; in case GC sees it
                                (set! ,(%tc-ref cached-frame) ,xp/cp) ; save for fast immediate realloc
                                (set! ,(%tc-ref attachments) ,%ts)
                                (goto ,Lreturn))

@@ -3596,6 +3596,26 @@
                  'yes
                  (lambda ()
                    (get-or-nope))))))))
+  (begin
+   (define (gc-and-capture-continuation)
+     (collect 0)
+     (call/cc
+      (lambda (k)
+        (lambda ()
+          (k (lambda () 8))))))
+   (equal? 8
+           (let ([v (call/1cc
+                     (lambda (ek)
+                       (let ([v (call-setting-continuation-attachment
+                                 'v
+                                 (lambda ()
+                                   (gc-and-capture-continuation)))])
+                         (if (number? v)
+                             (add1 v)
+                             v))))])
+             (if (procedure? v)
+                 (v)
+                 'no))))
  )
  
 ;;; section 4-7:

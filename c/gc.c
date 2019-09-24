@@ -83,6 +83,7 @@ static ptr sweep_loc[max_real_space+1];
 static ptr orig_next_loc[max_real_space+1];
 static ptr sorted_locked_objects;
 static ptr tlcs_to_rehash;
+static ptr conts_to_promote;
 static ptr recheck_guardians_ls;
 
 #ifdef ENABLE_BACKREFERENCE
@@ -613,10 +614,12 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             find_room(space_continuation, tg,
                         type_closure, size_continuation, p);
             SETCLOSCODE(p,code);
-          /* don't promote general one-shots, but do promote opportunistic one-shots */
-            if (CONTLENGTH(pp) == opportunistic_1_shot_flag)
+          /* don't promote general one-shots, but promote opportunistic one-shots */
+            if (CONTLENGTH(pp) == opportunistic_1_shot_flag) {
               CONTLENGTH(p) = CONTCLENGTH(pp);
-            else
+              /* may need to recur at end to promote link: */
+              conts_to_promote = S_cons_in(space_new, 0, p, conts_to_promote);
+            } else
               CONTLENGTH(p) = CONTLENGTH(pp);
             CONTCLENGTH(p) = CONTCLENGTH(pp);
             CONTWINDERS(p) = CONTWINDERS(pp);
@@ -963,6 +966,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     }
 
     tlcs_to_rehash = Snil;
+    conts_to_promote = Snil;
 
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
       ptr tc = (ptr)THREADTC(Scar(ls));
@@ -1571,6 +1575,14 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
         SETVECTIT(vec, new_idx, tlc);
       }
       tlcs_to_rehash = Scdr(tlcs_to_rehash);
+    }
+
+    /* Promote opportunistic 1-shot continuations, because we can no
+       longer cached one and we can no longer reliably fuse the stack
+       back. */
+    while (conts_to_promote != Snil) {
+      S_promote_to_multishot(CONTLINK(Scar(conts_to_promote)));
+      conts_to_promote = Scdr(conts_to_promote);
     }
 
     S_resize_oblist();

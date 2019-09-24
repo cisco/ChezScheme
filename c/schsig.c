@@ -18,7 +18,6 @@
 #include <setjmp.h>
 
 /* locally defined functions */
-static void S_promote_to_multishot PROTO((ptr k));
 static void split PROTO((ptr k, ptr *s));
 static void reset_scheme PROTO((void));
 static NORETURN void do_error PROTO((iptr type, const char *who, const char *s, ptr args));
@@ -38,7 +37,7 @@ void S_put_scheme_arg(tc, n, x) ptr tc; iptr n; ptr x; {
     else FRAME(tc, n - asm_arg_reg_cnt) = x;
 }
 
-static void S_promote_to_multishot(k) ptr k; {
+void S_promote_to_multishot(k) ptr k; {
     while (CONTLENGTH(k) != CONTCLENGTH(k)) {
         CONTLENGTH(k) = CONTCLENGTH(k);
         k = CONTLINK(k);

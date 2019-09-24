@@ -325,6 +325,7 @@ extern ptr S_get_scheme_arg PROTO((ptr tc, iptr n));
 extern void S_put_scheme_arg PROTO((ptr tc, iptr n, ptr x));
 extern iptr S_continuation_depth PROTO((ptr k));
 extern ptr S_single_continuation PROTO((ptr k, iptr n));
+extern void S_promote_to_multishot PROTO((ptr k));
 extern void S_split_and_resize PROTO((void));
 extern void S_handle_overflow PROTO((void));
 extern void S_handle_overflood PROTO((void));
