@@ -1495,21 +1495,20 @@
 
   (define finish-compile
     (lambda (who msg ifn ofn hash-bang-line x1)
-      (let ([op ($open-file-output-port who ofn (file-options replace))])
-        (on-reset (delete-file ofn #f)
-          (on-reset (close-port op)
-            (with-coverage-file who ofn
-              (lambda (source-table)
-                (when hash-bang-line (put-bytevector op hash-bang-line))
-                (when (compile-compressed) (port-file-compressed! op))
-                (parameterize ([$target-machine (constant machine-type-name)]
-                               ; dummy sfd for block-profile optimization
-                               [$sfd (make-source-file-descriptor ifn #xc7 #xc7c7)]
-                               [$block-counter 0])
-                  (when source-table ($insert-profile-src! source-table x1))
-                  (emit-header op (constant machine-type))
-                  (let-values ([(rcinfo* final*) (compile-file-help1 x1 msg)])
-                    (compile-file-help2 op (list rcinfo*) (list final*)))))))))))
+      (with-object-file who ofn #f
+        (lambda (op)
+          (with-coverage-file who ofn
+            (lambda (source-table)
+              (when hash-bang-line (put-bytevector op hash-bang-line))
+              (when (compile-compressed) (port-file-compressed! op))
+              (parameterize ([$target-machine (constant machine-type-name)]
+                             ; dummy sfd for block-profile optimization
+                             [$sfd (make-source-file-descriptor ifn #xc7 #xc7c7)]
+                             [$block-counter 0])
+                (when source-table ($insert-profile-src! source-table x1))
+                (emit-header op (constant machine-type))
+                (let-values ([(rcinfo* final*) (compile-file-help1 x1 msg)])
+                  (compile-file-help2 op (list rcinfo*) (list final*))))))))))
 
   (define write-wpo-file
     (lambda (who ofn ir*)
