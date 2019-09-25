@@ -1756,3 +1756,6 @@
   argument-type-check error messages, for Windows multibyte->string
   and string->multibyte.
     primvars.ms
+- used with-object-file to restore accidentally dropped close-port in
+  compile-whole-program and compile-whole-library
+    compile.ss
