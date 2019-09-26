@@ -1443,7 +1443,7 @@
 - removed a broken primvars mat and updated two others.  in each case,
   the mat was looking for information about primitives in the wrong
   (i.e., old) place and silently succeeding when it didn't find any
-  primitives to tests.  the revised mats (along with a few others) now
+  primitives to test.  the revised mats (along with a few others) now
   check to make sure at least one identifier has the information they
   look for.  the removed mat was checking for library information that
   is now compiled in, so the mat is now unnecessary.  the others were
@@ -1596,7 +1596,7 @@
     7.ss, primdata.ss,
     7.ms,
     system.stex
-- increased amount read when seeking an lz4-encrypted input
+- increased amount read when seeking an lz4-compressed input
   file from 32 to 1024 bytes at a time
     compress-io.c
 - replaced the fasl a? parameter value #t with an "all" flag value
@@ -1759,5 +1759,5 @@
 - used with-object-file to restore accidentally dropped close-port in
   compile-whole-program and compile-whole-library
     compile.ss
-- initialized variable to enable compilation with 9.1.0 at -O3
+- initialized variable to enable compilation with gcc 9.1.0 at -O3
     c/scheme.c
