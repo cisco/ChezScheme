@@ -572,7 +572,8 @@ static void check_boot_file_state PROTO((const char *who));
 
 static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IBOOL errorp; {
   char pathbuf[PATH_MAX], buf[PATH_MAX];
-  uptr n; INT c;
+  uptr n = 0;
+  INT c;
   const char *path;
 #ifdef WIN32
   wchar_t *expandedpath;
