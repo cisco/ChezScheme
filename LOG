@@ -1759,3 +1759,5 @@
 - used with-object-file to restore accidentally dropped close-port in
   compile-whole-program and compile-whole-library
     compile.ss
+- initialized variable to enable compilation with 9.1.0 at -O3
+    c/scheme.c
