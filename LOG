@@ -1761,3 +1761,7 @@
     compile.ss
 - initialized variable to enable compilation with gcc 9.1.0 at -O3
     c/scheme.c
+- added missing Inner wrappers around the library/ct-info and
+  library-rt-info records in the code for compile-whole-xxx.
+    compile.ss,
+    7.ms

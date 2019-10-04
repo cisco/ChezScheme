@@ -3891,6 +3891,21 @@ evaluating module init
         (delete-file (format "testfile-deja-vu-~a.~a" (car stem) (car ext)))))
     #t)
 
+  ; verify compatibility of generate-covin-files and generate-wpo-files
+  (begin
+    (mkfile "testfile-cwl-a14.ss"
+      '(library (testfile-cwl-a14) (export a) (import (scheme)) (define a 123)))
+    (parameterize ([generate-covin-files #t]
+                   [generate-wpo-files #t])
+      (compile-library "testfile-cwl-a14")
+      (compile-whole-library "testfile-cwl-a14.wpo" "testfile-cwl-a14.library"))
+    #t)
+
+  (file-exists? "testfile-cwl-a14.covin")
+
+  (eqv?
+    (let () (import (testfile-cwl-a14)) a)
+    123)
 )
 
 (mat maybe-compile-whole
