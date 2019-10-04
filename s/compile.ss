@@ -1406,13 +1406,14 @@
                 (let* ([info (library-node-rtinfo node)]
                        [uid (library-info-uid info)])
                   `(group (revisit-only
-                            ,(make-library/rt-info
-                               (library-info-path info)
-                               (library-info-version info)
-                               uid
-                               (requirements-join
-                                 (library/rt-info-invoke-req* info)
-                                 (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f)))))
+                            (library/ct-info
+                              ,(make-library/rt-info
+                                 (library-info-path info)
+                                 (library-info-version info)
+                                 uid
+                                 (requirements-join
+                                   (library/rt-info-invoke-req* info)
+                                   (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f))))))
                      ,body))))
           body node*)))
 
@@ -1422,22 +1423,23 @@
           (lambda (body visit-lib)
             (if (library-node-binary? visit-lib)
                 body
-                `(group (visit-only
-                          ,(let* ([info (library-node-ctinfo visit-lib)]
-                                  [uid (library-info-uid info)])
-                             (make-library/ct-info
-                               (library-info-path info)
-                               (library-info-version info)
-                               uid
-                               (requirements-join
-                                 (library/ct-info-import-req* info)
-                                 (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f)))
-                               (library/ct-info-visit-visit-req* info)
-                               (library/ct-info-visit-req* info)
-                               (if (library-node-visible? visit-lib)
-                                   (library/ct-info-clo* info)
-                                   '()))))
-                   ,body)))
+                (let* ([info (library-node-ctinfo visit-lib)]
+                       [uid (library-info-uid info)])
+                  `(group (visit-only
+                            (library/ct-info
+                              ,(make-library/ct-info
+                                 (library-info-path info)
+                                 (library-info-version info)
+                                 uid
+                                 (requirements-join
+                                   (library/ct-info-import-req* info)
+                                   (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f)))
+                                 (library/ct-info-visit-visit-req* info)
+                                 (library/ct-info-visit-req* info)
+                                 (if (library-node-visible? visit-lib)
+                                     (library/ct-info-clo* info)
+                                     '()))))
+                     ,body))))
           body visit-lib*)))
 
     (define add-visit-lib-install*
