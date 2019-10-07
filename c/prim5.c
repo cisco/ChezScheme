@@ -1596,6 +1596,10 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_float", (void *)s_float);
     Sforeign_symbol("(cs)s_flrandom", (void *)s_flrandom);
     Sforeign_symbol("(cs)s_fxrandom", (void *)s_fxrandom);
+    Sforeign_symbol("(cs)s_random_state_next_integer", (void *)S_random_state_next_integer);
+    Sforeign_symbol("(cs)s_random_state_next_double", (void *)S_random_state_next_double);
+    Sforeign_symbol("(cs)s_random_state_init", (void *)S_random_state_init);
+    Sforeign_symbol("(cs)s_random_state_check", (void *)S_random_state_check);
     Sforeign_symbol("(cs)s_integer_length", (void *)S_integer_length);
     Sforeign_symbol("(cs)s_big_first_bit_set", (void *)S_big_first_bit_set);
     Sforeign_symbol("(cs)s_make_code", (void *)s_make_code);

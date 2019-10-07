@@ -50,13 +50,13 @@ csrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-oce.c gc-ocd.c
  number.c schsig.c io.c new-io.c print.c fasl.c vfasl.c stats.c\
  foreign.c prim.c prim5.c flushcache.c\
  windows.c\
- schlib.c thread.c expeditor.c scheme.c compress-io.c
+ schlib.c thread.c expeditor.c scheme.c compress-io.c random.c
 
 cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-oce.obj gc-ocd.obj\
  number.obj schsig.obj io.obj new-io.obj print.obj fasl.obj vfasl.obj stats.obj\
  foreign.obj prim.obj prim5.obj flushcache.obj\
  windows.obj\
- schlib.obj thread.obj expeditor.obj scheme.obj compress-io.obj
+ schlib.obj thread.obj expeditor.obj scheme.obj compress-io.obj random.obj
 
 hsrc=system.h types.h version.h globals.h externs.h compress-io.h segment.h gc.c thread.h sort.h itest.c
 

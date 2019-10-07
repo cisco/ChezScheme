@@ -34,7 +34,7 @@ KernelLibLinkLibs=${zlibLib} ${LZ4Lib}
 
 kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-ocd.c gc-oce.c\
  number.c schsig.c io.c new-io.c print.c fasl.c vfasl.c stats.c foreign.c prim.c prim5.c flushcache.c\
- schlib.c thread.c expeditor.c scheme.c compress-io.c
+ schlib.c thread.c expeditor.c scheme.c compress-io.c random.c
 
 kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
 

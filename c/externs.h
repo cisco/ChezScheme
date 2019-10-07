@@ -420,5 +420,12 @@ extern char *S_windows_getcwd(char *buffer, int maxlen);
 extern void S_expeditor_init PROTO((void));
 #endif /* FEATURE_EXPEDITOR */
 
+/* random.c */
+uptr S_random_state_next_integer PROTO((ptr s, uptr n));
+double S_random_state_next_double PROTO((ptr s));
+void S_random_state_init PROTO((ptr s, UINT x));
+IBOOL S_random_state_check PROTO((double x10, double x11, double x12,
+                                  double x20, double x21, double x22));
+
 /* statics.c */
 extern void scheme_statics();

@@ -424,6 +424,7 @@
               [(pathname) "a" 'a #f]
               [(pfixnum) 1 0 #f]
               [(phantom-bytevector) *phantom-bytevector '#vu8(0) #f]
+              [(pseudo-random-generator) *pseudo-random-generator #f]
               [(port) (current-input-port) 0 #f]
               [(procedure) values 0 #f]
               [(ptr) 1.0+2.0i]

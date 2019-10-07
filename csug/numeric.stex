@@ -1419,6 +1419,86 @@ random seed to the argument.
     (eqv? (random 1.0) r1))) ;=> #t
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-pseudo-random-generator}{\categoryprocedure}{(make-pseudo-random-generator)}
+\returns a fresh pseudo-random generator
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+Creates a pseduo-random generator state for use with
+\scheme{pseduo-random-generator-next!}. This generator use a more
+modern algorithm than \scheme{random} and generates number sequences
+that better approximate true randomness.
+
+The initial state of the pseduo-random generator is based on the
+current time, which is good enough for generating variability in most
+programs but not good enough for security purposes.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pseudo-random-generator?}{\categoryprocedure}{(pseudo-random-generator? \var{val})}
+\returns a boolean
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+Checks whether \var{val} is a pseudo-random generator state.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pseudo-random-generator-next!}{\categoryprocedure}{(pseudo-random-generator-next! \var{prgen})}
+\formdef{pseudo-random-generator-next!}{\categoryprocedure}{(pseudo-random-generator-next! \var{prgen} \var{below-int})}
+\returns a pseduo-random number
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{prgen} must be a psuedo-random generator state. If \var{below-int} is
+provided, it must be a positive, exact integer.
+
+Steps a pseduo-random generator to produce a number. The result is an
+inexact number between \scheme{0.0} (inclusive) and \scheme{1.0}
+(exclusive) if \var{below-int} is not provided. If \scheme{below-int} is
+provided, the result is an exact integer between \scheme{0} (inclusive)
+and \scheme{below-int} (exclusive).
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pseudo-random-generator-seed!}{\categoryprocedure}{(pseudo-random-generator-seed! \var{prgen} \var{seed-int})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{prgen} must be a psuedo-random generator state, and \var{seed-int} must
+be a positive, exact integer.
+
+Sets the state of a pseduo-random generator using only 31 or so bits
+of \var{seed-int}. This procedure is useful for initializing the state
+of a pseduo-random generator to one of a small number of known states
+for triggering predicatble output, but it is not a good way to put a
+generator into an unpredictable state.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pseudo-random-generator->vector}{\categoryprocedure}{(pseudo-random-generator->vector \var{prgen})}
+\formdef{vector->pseudo-random-generator}{\categoryprocedure}{(vector->pseudo-random-generator \var{vec})}
+\formdef{vector->pseudo-random-generator!}{\categoryprocedure}{(vector->pseudo-random-generator! \var{prgen} \var{vec})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{prgen} must be a psuedo-random generator state, and \var{vec} must
+be a vector previously produced by \scheme{pseudo-random-generator->vector}.
+
+\scheme{pseudo-random-generator->vector} converts the current state of
+a pseduo-random generator to a vector of numbers, \scheme{vector->pseudo-random-generator}
+creates a fresh pseudo-random generator with the same state, and
+\scheme{vector->pseudo-random-generator!}
+changes an existing pseudo-random generator to have the same state.
 
 
 \section{Miscellaneous Numeric Operations\label{SECTNUMERICMISC}}

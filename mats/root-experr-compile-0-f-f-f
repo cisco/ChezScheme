@@ -1308,6 +1308,27 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument 0".
 5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument -1".
 5_3.mo:Expected error in mat random-seed: "random-seed: invalid argument <int>".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a pseudo-random generator 10".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a pseudo-random generator #(1 2 3)".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer "apple"".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer -10".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer -1267650600228229401496703205376".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer 10.0".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a pseudo-random generator 10".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a pseudo-random generator #(1 2 3)".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer 10.0".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer -1".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator->vector: not a pseudo-random generator 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector #(1 2 3 4 5)".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector #(1.0 2 3 4 5 6)".
+5_3.mo:Expected error in mat pseudo-random-generator: "exact?: #f is not a number".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector #(0 0 0 0 0 0)".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator!: not a pseudo-random generator 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator!: not a valid pseudo-random generator state vector 0".
+5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator!: not a valid pseudo-random generator state vector #(0 0 0 0 0 0)".
 5_3.mo:Expected error in mat inexact: "incorrect argument count in call (inexact)".
 5_3.mo:Expected error in mat inexact: "incorrect argument count in call (inexact 1 2)".
 5_3.mo:Expected error in mat inexact: "inexact: a is not a number".

@@ -2597,6 +2597,115 @@
              [else (nonexact-integer-error '$quotient-remainder x)])]
          [else (nonexact-integer-error '$quotient-remainder y)])))
 
+(let ()
+  (define-record pseudo-random-generator
+    ((mutable double x10)
+     (mutable double x11)
+     (mutable double x12)
+     (mutable double x20)
+     (mutable double x21)
+     (mutable double x22))
+    ()
+    ((constructor create-pseudo-random-generator)
+     (predicate is-pseudo-random-generator?)))
+
+  (set! pseudo-random-generator?
+        (lambda (x) (is-pseudo-random-generator? x)))
+
+  (let ([init! (foreign-procedure "(cs)s_random_state_init" (scheme-object unsigned) void)])
+    (set! make-pseudo-random-generator
+          (lambda ()
+            (let ([s (create-pseudo-random-generator 0.0 0.0 0.0 0.0 0.0 0.0)]
+                  [t (current-time 'time-utc)])
+              (init! s (bitwise-and (+ (time-second t) (time-nanosecond t))
+                                    #xFFFFFFFF))
+              s)))
+    (set-who! pseudo-random-generator-seed!
+      (lambda (s n)
+        (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
+        (unless (or (and (fixnum? n) (fxpositive? n))
+                    (and (bignum? n)  ($bigpositive? n)))
+          ($oops who "not a positive exact integer ~s" n))
+        (init! s (bitwise-and n #xFFFFFFFF)))))
+
+  (set-who! pseudo-random-generator-next!
+     (let ([random-double (foreign-procedure "(cs)s_random_state_next_double"
+                            (scheme-object) double)]
+           [random-int (foreign-procedure "(cs)s_random_state_next_integer"
+                            (scheme-object uptr) uptr)])
+       (case-lambda
+        [(s)
+         (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
+         (random-double s)]
+        [(s x)
+         (define (random-integer s x)
+           (modulo (let loop ([bits (integer-length x)])
+                     (cond
+                      [(<= bits 0) 0]
+                      [else (bitwise-ior (bitwise-arithmetic-shift-left (loop (- bits 24)) 24)
+                                         (random-int s #xFFFFFF))]))
+                   x))
+         (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
+         (cond
+          [(fixnum? x)
+           (unless (fxpositive? x) ($oops who "not a positive exact integer ~s" x))
+           (meta-cond
+            [(fixnum? 4294967087)
+             (if (fx< x 4294967087)
+                 (random-int s x)
+                 (random-integer s x))]
+            [else
+             (random-int s x)])]
+          [(bignum? x)
+           (unless ($bigpositive? x) ($oops who "not a positive exact integer ~s" x))
+           (random-integer s x)]
+          [else
+           ($oops who "not a positive exact integer ~s" x)])])))
+
+  (set-who! pseudo-random-generator->vector
+    (lambda (s)
+      (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
+      (vector (inexact->exact (pseudo-random-generator-x10 s))
+              (inexact->exact (pseudo-random-generator-x11 s))
+              (inexact->exact (pseudo-random-generator-x12 s))
+              (inexact->exact (pseudo-random-generator-x20 s))
+              (inexact->exact (pseudo-random-generator-x21 s))
+              (inexact->exact (pseudo-random-generator-x22 s)))))
+
+  (let ([vector->prgen
+         (let ([ok? (foreign-procedure "(cs)s_random_state_check" (double double double double double double) boolean)])
+           (lambda (who s v)
+             (define (bad-vector)
+               ($oops who "not a valid pseudo-random generator state vector ~s" v))
+             (define (int->double i)
+               (unless (and (exact? i) (integer? i)) (bad-vector))
+               (exact->inexact i))
+             (unless (and (vector? v) (= 6 (vector-length v))) (bad-vector))
+             (let ([x10 (int->double (vector-ref v 0))]
+                   [x11 (int->double (vector-ref v 1))]
+                   [x12 (int->double (vector-ref v 2))]
+                   [x20 (int->double (vector-ref v 3))]
+                   [x21 (int->double (vector-ref v 4))]
+                   [x22 (int->double (vector-ref v 5))])
+               (unless (ok? x10 x11 x12 x20 x21 x22) (bad-vector))
+               (cond
+                [s
+                 (set-pseudo-random-generator-x10! s x10)
+                 (set-pseudo-random-generator-x11! s x11)
+                 (set-pseudo-random-generator-x12! s x12)
+                 (set-pseudo-random-generator-x20! s x20)
+                 (set-pseudo-random-generator-x21! s x21)
+                 (set-pseudo-random-generator-x22! s x22)]
+                [else
+                 (create-pseudo-random-generator x10 x11 x12 x20 x21 x22)]))))])
+
+    (set-who! vector->pseudo-random-generator
+      (lambda (vec) (vector->prgen who #f vec)))
+    (set-who! vector->pseudo-random-generator!
+      (lambda (s vec)
+        (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
+        (vector->prgen who s vec)))))
+
 (set! random
    (let ([fxrandom (foreign-procedure "(cs)s_fxrandom"
                       (scheme-object) scheme-object)]

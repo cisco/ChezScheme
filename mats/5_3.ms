@@ -2567,6 +2567,80 @@
       #t)
  )
 
+(mat pseudo-random-generator
+    (pseudo-random-generator? (make-pseudo-random-generator))
+    (not (pseudo-random-generator? 10))
+    (not (pseudo-random-generator? (vector 1 2 3)))
+
+    (error? (pseudo-random-generator-next! 10))
+    (error? (pseudo-random-generator-next! (vector 1 2 3)))
+
+    (error? (pseudo-random-generator-next! (make-pseudo-random-generator) "apple"))
+    (error? (pseudo-random-generator-next! (make-pseudo-random-generator) 0))
+    (error? (pseudo-random-generator-next! (make-pseudo-random-generator) -10))
+    (error? (pseudo-random-generator-next! (make-pseudo-random-generator) (- (expt 2 100))))
+    (error? (pseudo-random-generator-next! (make-pseudo-random-generator) 10.0))
+
+    (error? (pseudo-random-generator-seed! 10 10))
+    (error? (pseudo-random-generator-seed! (vector 1 2 3) 10))
+    (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) 10.0))
+    (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) 0))
+    (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) -1))
+
+    (error? (pseudo-random-generator->vector 0))
+    (error? (vector->pseudo-random-generator 0))
+    (error? (vector->pseudo-random-generator (vector 1 2 3 4 5)))
+    (error? (vector->pseudo-random-generator (vector 1.0 2 3 4 5 6)))
+    (error? (vector->pseudo-random-generator (vector 1 #f 3 4 5 6)))
+    (error? (vector->pseudo-random-generator (vector 0 0 0 0 0 0))) ; would be degenerate state
+    (error? (vector->pseudo-random-generator! 0 (vector 1 2 3 4 5)))
+    (error? (vector->pseudo-random-generator! (make-pseudo-random-generator) 0))
+    (error? (vector->pseudo-random-generator! (make-pseudo-random-generator) (vector 0 0 0 0 0 0)))
+
+    (begin
+      (define prgen (make-pseudo-random-generator))
+      (define init-pregen-vec (pseudo-random-generator->vector prgen))
+      (vector? init-pregen-vec))
+    (equal? init-pregen-vec (pseudo-random-generator->vector prgen))
+    (begin
+      (define first-prgen-number (pseudo-random-generator-next! prgen))
+      (inexact? first-prgen-number))
+    (and (<= 0.0 first-prgen-number)
+         (< first-prgen-number 1.0))
+    (not (equal? init-pregen-vec (pseudo-random-generator->vector prgen)))
+    (= first-prgen-number
+       (pseudo-random-generator-next!
+        (vector->pseudo-random-generator init-pregen-vec)))
+    (let loop ([i 10000])
+      (or (zero? i)
+          (let ([n (pseudo-random-generator-next! prgen i)])
+            (and (exact? n)
+                 (integer? n)
+                 (< -1 n i)
+                 (loop (sub1 i))))))
+    (equal? (void) (vector->pseudo-random-generator! prgen init-pregen-vec))
+    (= first-prgen-number (pseudo-random-generator-next! prgen))
+    (equal? (void) (pseudo-random-generator-seed! prgen 45))
+    (= 0.970453319804345 (pseudo-random-generator-next! prgen))
+    (= 0.41754101818626094 (pseudo-random-generator-next! prgen))
+    (= 0.13061439482676662 (pseudo-random-generator-next! prgen))
+    (let ([hits (make-vector 10)])
+      (let loop ([i 1000])
+        (unless (zero? i)
+          (let* ([n (pseudo-random-generator-next! prgen (expt 10 1000))]
+                 [k (quotient n (expt 10 999))])
+            (vector-set! hits k (add1 (vector-ref hits k)))
+            (loop (sub1 i)))))
+      ;; We expect about 100 hits in each bin. Having less than 50 or
+      ;; more than 150 should be so etxremely unlikely that we can rely on
+      ;; it not happning:
+      (let loop ([i (vector-length hits)])
+        (or (= i 0)
+            (and (< 50 (vector-ref hits (sub1 i)) 150)
+                 (loop (sub1 i))))))
+ )
+      
+
 (mat inexact
     (error? (inexact))
     (error? (inexact 1 2))
