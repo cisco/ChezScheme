@@ -1473,7 +1473,7 @@ and \scheme{below-int} (exclusive).
 
 \noindent
 \var{prgen} must be a psuedo-random generator state, and \var{seed-int} must
-be a positive, exact integer.
+be a nonnegative, exact integer.
 
 Sets the state of a pseduo-random generator using only 31 or so bits
 of \var{seed-int}. This procedure is useful for initializing the state

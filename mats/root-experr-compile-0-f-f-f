@@ -1317,9 +1317,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-next!: not a positive exact integer 10.0".
 5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a pseudo-random generator 10".
 5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a pseudo-random generator #(1 2 3)".
-5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer 10.0".
-5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer 0".
-5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a positive exact integer -1".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a nonnegative exact integer 10.0".
+5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator-seed!: not a nonnegative exact integer -1".
 5_3.mo:Expected error in mat pseudo-random-generator: "pseudo-random-generator->vector: not a pseudo-random generator 0".
 5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector 0".
 5_3.mo:Expected error in mat pseudo-random-generator: "vector->pseudo-random-generator: not a valid pseudo-random generator state vector #(1 2 3 4 5)".

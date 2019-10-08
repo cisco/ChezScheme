@@ -2623,9 +2623,9 @@
     (set-who! pseudo-random-generator-seed!
       (lambda (s n)
         (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
-        (unless (or (and (fixnum? n) (fxpositive? n))
+        (unless (or (and (fixnum? n) (fx>= n 0))
                     (and (bignum? n)  ($bigpositive? n)))
-          ($oops who "not a positive exact integer ~s" n))
+          ($oops who "not a nonnegative exact integer ~s" n))
         (init! s (bitwise-and n #xFFFFFFFF)))))
 
   (set-who! pseudo-random-generator-next!

@@ -2584,7 +2584,6 @@
     (error? (pseudo-random-generator-seed! 10 10))
     (error? (pseudo-random-generator-seed! (vector 1 2 3) 10))
     (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) 10.0))
-    (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) 0))
     (error? (pseudo-random-generator-seed! (make-pseudo-random-generator) -1))
 
     (error? (pseudo-random-generator->vector 0))
