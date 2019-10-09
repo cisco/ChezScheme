@@ -406,9 +406,9 @@
     (eval `(,noexpand ,x))))
 
 (define local-eval-hook
-  ; for local macro transformers, use interpreter
+  ; for local macro transformers, use interpreter unless profiling is enabled
   (lambda (x)
-    (interpret `(,noexpand ,x))))
+    ((if (compile-profile) eval interpret) `(,noexpand ,x))))
 
 (define define-top-level-value-hook $set-top-level-value!)
 
