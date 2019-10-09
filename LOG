@@ -1765,3 +1765,7 @@
   library-rt-info records in the code for compile-whole-xxx.
     compile.ss,
     7.ms
+- local-eval-hook now calls eval rather than interpret when profiling
+  is enabled, so local transformer code can be profiled.
+    syntax.ss,
+    profile.ms

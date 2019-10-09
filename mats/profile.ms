@@ -605,6 +605,70 @@
       '(load-program "testfile-cp3.so")
       '(cdr (find (lambda (x) (equal? (source-file-descriptor-path (source-object-sfd (car x))) "testfile-ca3.ss")) (profile-dump))))
     "(0 . 1)\n123\n")
+
+  ; verify that we get profiling information for local macro transformers
+  (begin
+    (call-with-port (open-output-file "testfile-cp4.ss" 'replace)
+      (lambda (op)
+        (put-string op "\
+(let ()
+  (define-syntax a
+    (lambda (q)
+      (define square
+        (lambda (n)
+          (* n n)))
+      (syntax-case q ()
+        [(_ x (d ...) e)
+         #`(let ([x (quote #,(map square (datum (d ...))))])
+             e)])))
+  (pretty-print (list (a b (8 6 7) b) (a b (5 3 0 9) (list b)))))")))
+    (delete-file "testfile-cp4.so")
+    (parameterize ([print-gensym #f] [current-eval compile] [compile-profile #t])
+      (compile-file "testfile-cp4"))
+    #t)
+  (equal?
+    (sort (lambda (x y) (< (list-ref x 2) (list-ref y 2)))
+      (filter (lambda (x) (equal? (list-ref x 1) "testfile-cp4.ss"))
+        (profile-dump-list)))
+    '((1 "testfile-cp4.ss" 31 232 3 5)     ; first transformer count ...
+      (2 "testfile-cp4.ss" 72 102 5 9)
+      (7 "testfile-cp4.ss" 94 101 6 11)
+      (7 "testfile-cp4.ss" 95 96 6 12)
+      (7 "testfile-cp4.ss" 97 98 6 14)
+      (7 "testfile-cp4.ss" 99 100 6 16)
+      (2 "testfile-cp4.ss" 110 231 7 7)
+      (2 "testfile-cp4.ss" 123 124 7 20)
+      (2 "testfile-cp4.ss" 162 229 9 10)
+      (2 "testfile-cp4.ss" 182 210 9 30)
+      (2 "testfile-cp4.ss" 183 186 9 31)
+      (2 "testfile-cp4.ss" 187 193 9 35)
+      (2 "testfile-cp4.ss" 194 209 9 42)   ; ... last transformer count
+      ))
+  (begin
+    (collect (collect-maximum-generation))
+    (profile-release-counters)
+    #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (revisit "testfile-cp4.so")))
+    "((64 36 49) ((25 9 0 81)))\n")
+  (equal?
+    (sort (lambda (x y) (< (list-ref x 2) (list-ref y 2)))
+      (filter (lambda (x) (equal? (list-ref x 1) "testfile-cp4.ss"))
+        (profile-dump-list)))
+    '((1 "testfile-cp4.ss" 0 299 1 1)      ; top-level let
+      (1 "testfile-cp4.ss" 236 298 11 3)   ; pretty-print call ...
+      (1 "testfile-cp4.ss" 237 249 11 4)   ; ... and subforms
+      (1 "testfile-cp4.ss" 250 297 11 17)
+      (1 "testfile-cp4.ss" 251 255 11 18)
+      (1 "testfile-cp4.ss" 256 271 11 23)
+      (1 "testfile-cp4.ss" 269 270 11 36)
+      (1 "testfile-cp4.ss" 272 296 11 39)
+      (1 "testfile-cp4.ss" 287 295 11 54)
+      (1 "testfile-cp4.ss" 288 292 11 55)
+      (1 "testfile-cp4.ss" 293 294 11 60)
+      ))
 )
 
 (mat profile-form
