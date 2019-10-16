@@ -5004,6 +5004,7 @@
             (or (nanopass-case (Lsrc Expr) (result-exp e0)
                   [(quote ,d)
                    (and (record? d rtd)
+                        (not (csv7:record-field-mutable? rtd index))
                         (make-seq ctxt e0 `(quote ,((csv7:record-field-accessor rtd index) d))))]
                   [(record ,rtd1 ,rtd-expr ,e* ...)
                    (let loop ([e* e*] [re* '()] [index index])
