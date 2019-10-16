@@ -5798,7 +5798,7 @@
            (#3%$object-set! 'scheme-object ',record? ,fixnum? 23)
            (#2%write 'b)
            (#2%write 'c)
-           17))))
+           (#3%$object-ref 'scheme-object ',record? ,fixnum?)))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -5818,7 +5818,7 @@
            (#3%$object-set! 'scheme-object ',record? ,fixnum? 23)
            (#3%write 'b)
            (#3%write 'c)
-           17))))
+           (#3%$object-ref 'scheme-object ',record? ,fixnum?)))))
 
   (equal?
     (with-output-to-string
