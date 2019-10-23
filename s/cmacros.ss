@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050303)
+(define-constant scheme-version #x09050304)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2656,7 +2656,8 @@
      (ormap1 #f 2 #f #t)
      (put-bytevector-some #f 4 #f #t)
      (put-string-some #f 4 #f #t)
-     (reify-cc #f 0 #f #f)
+     (reify-1cc #f 0 #f #f)
+     (maybe-reify-cc #f 0 #f #f)
      (dofretu8* #f 1 #f #f)
      (dofretu16* #f 1 #f #f)
      (dofretu32* #f 1 #f #f)

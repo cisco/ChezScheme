@@ -15,6 +15,14 @@ limitations under the License.
 
 ----------------------------------------------------------------------------
 
+This variant of Chez Scheme is patched for Racket. It doesn't include
+boot files; instead, Racket can generate initial boot files from Chez
+Scheme's source. For more information, see "racket/src/cs/README.txt"
+in Racket sources. After you have boot files, then the directions below
+should work.
+
+----------------------------------------------------------------------------
+
 This directory contains the sources for Chez Scheme, plus boot and header
 files for various supported machine types.
 

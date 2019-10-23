@@ -910,7 +910,8 @@
       (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp %ac1) (%ac0) (%xp))
       (declare-intrinsic get-room get-room () (%xp) (%xp))
       (declare-intrinsic scan-remembered-set scan-remembered-set () () ())
-      (declare-intrinsic reify-cc reify-cc (%xp %ac0 %ts) () (%td))
+      (declare-intrinsic reify-1cc reify-1cc (%xp %ac0 %ts) () (%td))
+      (declare-intrinsic maybe-reify-cc maybe-reify-cc (%xp %ac0 %ts) () (%td))
       (declare-intrinsic dooverflow dooverflow () () ())
       (declare-intrinsic dooverflood dooverflood () (%xp) ())
       ; a dorest routine takes all of the register and frame arguments from the rest
@@ -1657,6 +1658,19 @@
            [else
             ;; Check dynamically for attachment, and also reify for tail
             `(let ([,x (attachment-consume ,e1)]) ,body)])]
+        [(call ,info ,mdcl ,pr
+               (case-lambda ,info2 (clause (,x) ,interface ,[body mode -> body])))
+         (guard (and (memq mode '(tail tail/none tail/some))
+                     (eq? (primref-name pr) 'call/cc)
+                     (= interface 1)))
+         ;; Since we're in tail position, we can just reify the continuation and
+         ;; put the stack link in the argument variable.
+         (let ([cop (case mode
+                      [(tail/some tail/none)
+                       ;; Already reified
+                       'get]
+                      [else 'reify])])
+           `(let ([,x (continuation-get ,cop)]) ,body))]
         [(call ,info ,mdcl ,[e 'non/none -> e] ,[e* 'non/none -> e*] ...)
          (let ([info (case mode
                        [(non/some) (info-call->shifting-info-call info)]
@@ -2204,7 +2218,7 @@
                         b*)
                       c))))))
           (module (make-bank deposit retain borrow)
-            ; NB: borrowing is probably cubic at present
+            ; NB: borrowing is probably cubic at pre<sent
             ; might should represent bank as a prefix tree
             (define sort-free
               (lambda (free*)
@@ -10090,6 +10104,7 @@
          (Triv* e*
            (lambda (t*)
              (k `(attachment-set ,aop ,t* ...))))]
+        [(continuation-get ,cop) (k `(continuation-get ,cop))]
         [(foreign-call ,info ,e0 ,e1* ...)
          (Triv* (cons e0 e1*)
            (lambda (t*)
@@ -10451,6 +10466,8 @@
          `(set! ,lvalue (attachment-get ,t* ...))]
         [(set! ,[lvalue] (attachment-consume ,[t*] ...))
          `(set! ,lvalue (attachment-consume ,t* ...))]
+        [(set! ,[lvalue] (continuation-get ,cop))
+         `(set! ,lvalue (continuation-get ,cop))]
         [(label ,l ,[ebody]) `(seq (label ,l) ,ebody)]
         [(trap-check ,ioc ,[ebody]) `(seq (trap-check ,ioc) ,ebody)]
         [(overflow-check ,[ebody]) `(seq (overflow-check) ,ebody)]
@@ -10469,7 +10486,8 @@
                        ,(f `(seq (label ,(car l*)) ,(car e*)) (cdr l*) (cdr e*)))))
               (label ,join)))]
         [(values ,info ,t* ...) `(nop)]
-        [(attachment-get ,t* ...) `(nop)])
+        [(attachment-get ,t* ...) `(nop)]
+        [(continuation-get ,cop) `(nop)])
       (Tail : Expr (ir) -> Tail ()
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
@@ -10668,11 +10686,11 @@
                           x)))))
           (define add-reify-cc-save
             (lambda (live-reg* e)
-              ;; Save and restore any live registers that may be used by the `reify-cc` instrinsic.
+              ;; Save and restore any live registers that may be used by the `reify-1cc` instrinsic.
               ;; Since we can't use temporaries at this point --- %sfp is already moved --- manually
               ;; allocate a few registers (that may not be real registers) and hope that we
               ;; have enough.
-              (let* ([reify-cc-modify-reg* (intrinsic-modify-reg* reify-cc)]
+              (let* ([reify-cc-modify-reg* (intrinsic-modify-reg* reify-1cc)]
                      [tmp-reg* (reg-list %ac1 %yp)]
                      [save-reg* (fold-left (lambda (reg* r)
                                              (cond
@@ -10729,7 +10747,7 @@
                                            [(mref ,x1 ,x2 ,imm) (cons x1 (cons x2 live-reg*))]
                                            [else live-reg*]))
                                    (%seq
-                                    (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))
+                                    (set! ,%td (inline ,(intrinsic-info-asmlib reify-1cc #f) ,%asmlibcall))
                                     (set! ,%ts ,(%mref ,%td ,(constant continuation-attachments-disp)))
                                     (set! ,(%mref ,%td ,(constant continuation-attachments-disp)) ,(%mref ,%ts ,(constant pair-cdr-disp)))))
                                  ,e)]
@@ -11788,7 +11806,7 @@
                                   `(set! ,lvalue ,t)
                                   (%seq
                                    (set! ,lvalue ,t) 
-                                   (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))))
+                                   (set! ,%td (inline ,(intrinsic-info-asmlib reify-1cc #f) ,%asmlibcall))))
                              ;; Reified with attachment
                              ,(let ([get `(set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))])
                                 (if consume?
@@ -11801,7 +11819,7 @@
                         `(set! ,lvalue ,t)
                         (%seq
                          (set! ,lvalue ,t)
-                         (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall))))))))))
+                         (set! ,%td (inline ,(intrinsic-info-asmlib reify-1cc #f) ,%asmlibcall))))))))))
       (Program : Program (ir) -> Program ()
         [(labels ([,l* ,le*] ...) ,l)
          `(labels ([,l* ,(map CaseLambdaExpr le* l*)] ...) ,l)])
@@ -11827,17 +11845,18 @@
            [(dorest3) (make-do-rest 3 frame-args-offset)]
            [(dorest4) (make-do-rest 4 frame-args-offset)]
            [(dorest5) (make-do-rest 5 frame-args-offset)]
-           [(reify-cc)
+           [(reify-1cc maybe-reify-cc)
             (let ([other-reg* (fold-left (lambda (live* kill) (remq kill live*))
                                          (vector->list regvec)
                                          ;; Registers used by `reify-cc-help` output,
                                          ;; plus `%ts` so that we have one to allocate
-                                         (reg-list %xp %td %ac0 %ts))])
-              `(lambda ,(make-named-info-lambda "reify-cc" '(0)) 0 ()
+                                         (reg-list %xp %td %ac0 %ts))]
+                  [1cc? (eq? sym 'reify-1cc)])
+              `(lambda ,(make-named-info-lambda (if 1cc? "reify-1cc" "maybe-reify-cc") '(0)) 0 ()
                 ,(asm-enter
                    (%seq
                      (check-live ,other-reg* ...)
-                     ,(reify-cc-help #t #t
+                     ,(reify-cc-help 1cc? 1cc?
                        (lambda (reg)
                          (if (eq? reg %td)
                              `(asm-return ,%td ,other-reg* ...)
@@ -11997,7 +12016,9 @@
         [(attachment-get ,t* ...)
          ($oops who "Effect is responsible for handling attachment-gets")]
         [(attachment-consume ,t* ...)
-         ($oops who "Effect is responsible for handling attachment-consumes")])
+         ($oops who "Effect is responsible for handling attachment-consumes")]
+        [(continuation-get ,cop)
+         ($oops who "Effect is responsible for handling continuatio-get")])
       (Effect : Effect (ir) -> Effect ()
         [(do-rest ,fixed-args)
          (if (fx<= fixed-args dorest-intrinsic-max)
@@ -12115,10 +12136,18 @@
                      (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
                          (nop)
                          (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
-                     (set! ,%td (inline ,(intrinsic-info-asmlib reify-cc #f) ,%asmlibcall)))
+                     (set! ,%td (inline ,(intrinsic-info-asmlib reify-1cc #f) ,%asmlibcall)))
                  ,(make-push)))]
              [else
-              ($oops who "unexpected attachment-set mode ~s" aop)]))])
+              ($oops who "unexpected attachment-set mode ~s" aop)]))]
+        [(set! ,[lvalue] (continuation-get ,cop))
+         (case cop
+           [(get) `(set! ,lvalue ,(%tc-ref stack-link))]
+           [(reify) (%seq
+                     (set! ,%td (inline ,(intrinsic-info-asmlib maybe-reify-cc #f) ,%asmlibcall))
+                     (set! ,lvalue ,%td))]
+           [else
+            ($oops who "unexpected continuation-set mode ~s" cop)])])
       (Tail : Tail  (ir) -> Tail  ()
         [(entry-point (,x* ...) ,dcl ,mcp ,tlbody)
          (unless (andmap (lambda (x) (eq? (uvar-type x) 'ptr)) x*)
