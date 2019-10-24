@@ -3402,7 +3402,16 @@
        (and (pair? ats)
             (equal? (car ats) v)
             r)))
-    #t)
+   (define (callcc-after-attachment proc)
+     (call-setting-continuation-attachment
+      'attach
+      (lambda ()
+        ;; Expect this `call/cc` to be inlined, but most promote
+        ;; the continuation created by `call-setting-continuation-attachment`
+        (call/cc
+         (lambda (k)
+           (proc k))))))
+   #t)
   (equal? 'yep (call-with-yep get-or-nope))
   (equal? 'yep (call-with-yep consume-or-nope))
   (equal? 'yeah (call-with-yep (lambda () (call-with-yeah get-or-nope))))
@@ -3616,6 +3625,11 @@
              (if (procedure? v)
                  (v)
                  'no))))
+  (let ([proc (callcc-after-attachment
+               (lambda (k)
+                 (lambda ()
+                   (k (lambda () #t)))))])
+    (proc))
  )
  
 ;;; section 4-7:

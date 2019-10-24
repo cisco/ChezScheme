@@ -1665,12 +1665,7 @@
                      (= interface 1)))
          ;; Since we're in tail position, we can just reify the continuation and
          ;; put the stack link in the argument variable.
-         (let ([cop (case mode
-                      [(tail/some tail/none)
-                       ;; Already reified
-                       'get]
-                      [else 'reify])])
-           `(let ([,x (continuation-get ,cop)]) ,body))]
+         `(let ([,x (continuation-get)]) ,body)]
         [(call ,info ,mdcl ,[e 'non/none -> e] ,[e* 'non/none -> e*] ...)
          (let ([info (case mode
                        [(non/some) (info-call->shifting-info-call info)]
@@ -10104,7 +10099,7 @@
          (Triv* e*
            (lambda (t*)
              (k `(attachment-set ,aop ,t* ...))))]
-        [(continuation-get ,cop) (k `(continuation-get ,cop))]
+        [(continuation-get) (k `(continuation-get))]
         [(foreign-call ,info ,e0 ,e1* ...)
          (Triv* (cons e0 e1*)
            (lambda (t*)
@@ -10466,8 +10461,8 @@
          `(set! ,lvalue (attachment-get ,t* ...))]
         [(set! ,[lvalue] (attachment-consume ,[t*] ...))
          `(set! ,lvalue (attachment-consume ,t* ...))]
-        [(set! ,[lvalue] (continuation-get ,cop))
-         `(set! ,lvalue (continuation-get ,cop))]
+        [(set! ,[lvalue] (continuation-get))
+         `(set! ,lvalue (continuation-get))]
         [(label ,l ,[ebody]) `(seq (label ,l) ,ebody)]
         [(trap-check ,ioc ,[ebody]) `(seq (trap-check ,ioc) ,ebody)]
         [(overflow-check ,[ebody]) `(seq (overflow-check) ,ebody)]
@@ -10487,7 +10482,7 @@
               (label ,join)))]
         [(values ,info ,t* ...) `(nop)]
         [(attachment-get ,t* ...) `(nop)]
-        [(continuation-get ,cop) `(nop)])
+        [(continuation-get) `(nop)])
       (Tail : Expr (ir) -> Tail ()
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
@@ -12017,7 +12012,7 @@
          ($oops who "Effect is responsible for handling attachment-gets")]
         [(attachment-consume ,t* ...)
          ($oops who "Effect is responsible for handling attachment-consumes")]
-        [(continuation-get ,cop)
+        [(continuation-get)
          ($oops who "Effect is responsible for handling continuatio-get")])
       (Effect : Effect (ir) -> Effect ()
         [(do-rest ,fixed-args)
@@ -12140,14 +12135,10 @@
                  ,(make-push)))]
              [else
               ($oops who "unexpected attachment-set mode ~s" aop)]))]
-        [(set! ,[lvalue] (continuation-get ,cop))
-         (case cop
-           [(get) `(set! ,lvalue ,(%tc-ref stack-link))]
-           [(reify) (%seq
-                     (set! ,%td (inline ,(intrinsic-info-asmlib maybe-reify-cc #f) ,%asmlibcall))
-                     (set! ,lvalue ,%td))]
-           [else
-            ($oops who "unexpected continuation-set mode ~s" cop)])])
+        [(set! ,[lvalue] (continuation-get))
+         (%seq
+          (set! ,%td (inline ,(intrinsic-info-asmlib maybe-reify-cc #f) ,%asmlibcall))
+          (set! ,lvalue ,%td))])
       (Tail : Tail  (ir) -> Tail  ()
         [(entry-point (,x* ...) ,dcl ,mcp ,tlbody)
          (unless (andmap (lambda (x) (eq? (uvar-type x) 'ptr)) x*)

@@ -387,21 +387,16 @@
     (lambda (x)
       (memq x '(push pop set reify-and-set))))
 
-  (define continuation-op?
-    (lambda (x)
-      (memq x '(get reify))))
-
  ; exposes continuation-attachment operations
   (define-language L4.9375 (extends L4.875)
     (terminals
-     (+ (attachment-op (aop))
-        (continuation-op (cop))))
+     (+ (attachment-op (aop))))
     (entry CaseLambdaExpr)
     (Expr (e body)
       (+ (attachment-set aop e* ...)
          (attachment-get e* ...)
          (attachment-consume e* ...)
-         (continuation-get cop))))
+         (continuation-get))))
 
  ; moves all case lambda expressions into rhs of letrec
   (define-language L5 (extends L4.9375)
@@ -679,7 +674,7 @@
          (foreign-call info t t* ...)
          (attachment-get t* ...)
          (attachment-consume t* ...)
-         (continuation-get cop)))
+         (continuation-get)))
     (Expr (e body)
       (- lvalue
          (values info e* ...)
@@ -695,7 +690,7 @@
          (foreign-call info e e* ...)
          (attachment-get e* ...)
          (attachment-consume e* ...)
-         (continuation-get cop))
+         (continuation-get))
       (+ rhs
          (values info t* ...)
          (set! lvalue rhs))))
