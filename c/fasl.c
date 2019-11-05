@@ -383,7 +383,7 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
 static void uf_skipbytes(unbufFaslFile uf, iptr n) {
   switch (uf->type) {
     case UFFO_TYPE_GZ:
-       if (S_glzseek(uf->file, n, SEEK_CUR) == -1) {
+       if (S_glzseek(uf->file, (long)n, SEEK_CUR) == -1) {
          S_error1("", "error seeking ~a", uf->path);
        }
        break;
