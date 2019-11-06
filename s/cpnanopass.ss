@@ -2880,9 +2880,9 @@
            (cond
              [(and
                (or (not (info-call-shift-attachment? info))
-                   ;; FIXME: need a less fragile way to avoid multiple results
-                   ;; Exclude inlined primitives that return more than one value:
-                   (not (memq (primref-name pr) '(values call/cc call-with-current-continuation call/1cc))))
+                   ;; Note: single-valued also implies that the primitive doesn't
+                   ;; tail-call an arbitary function (which might inspect attachments):
+                   (all-set? (prim-mask single-valued) (primref-flags pr)))
                (handle-prim (info-call-src info) (info-call-sexpr info) (primref-level pr) (primref-name pr) e*))
               => (lambda (e)
                    (let ([e (Expr e)])

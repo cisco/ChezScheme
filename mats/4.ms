@@ -3630,6 +3630,24 @@
                  (lambda ()
                    (k (lambda () #t)))))])
     (proc))
+
+  (equal?
+   '(2 2)
+   (let ([f (parameterize ([run-cp0
+                            ;; Disable cp0 inlining of `for-each`:
+                            (lambda (cp0 e) e)])
+              (eval '(lambda (g l)
+                       (let-values ([(x y)
+                                     (call-setting-continuation-attachment
+                                      'hi
+                                      (lambda ()
+                                        ;; Could be by `cpnanopoass`, but make
+                                        ;; sure it's constrained by the fact that
+                                        ;; `for-each` can tail-call `g`:
+                                        (#3%for-each g l)))])
+                         (list x y)))))])
+     (f (lambda (x) (values x x)) (list 1 2))))
+
  )
  
 ;;; section 4-7:
