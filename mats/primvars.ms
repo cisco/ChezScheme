@@ -510,7 +510,8 @@
                            (lambda (good.bad*)
                              (loop in* (cons (car good.bad*) rgood*) (cons (cdr good.bad*) rbad**)))]
                           [else (errorf 'fuzz-prim-args "unhandled type ~s" in)])))))))
-          (when (flags-set? primitive proc)
+          (when (and (flags-set? primitive proc)
+                     (not (flags-set? system proc)))
             (for-each
               (lambda (in*)
                 (good/bad in*
