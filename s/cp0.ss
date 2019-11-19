@@ -2408,10 +2408,33 @@
       (define-inline 3 (boolean=? symbol=? r6rs:char=? r6rs:char-ci=? r6rs:string=? r6rs:string-ci=?)
         [(arg1 arg2 . arg*) (handle-equality ctxt arg1 (cons arg2 arg*))])
 
-      (define-inline 3 (ash
-                         bitwise-arithmetic-shift bitwise-arithmetic-shift-left
-                         bitwise-arithmetic-shift-right)
-        [(x y) (handle-shift 3 ctxt x y)])
+      (let ()
+        (define (try-fold-ash-op op ctxt x y)
+          (let ([xval (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! x))
+                        [(quote ,d) (and (exact? d) (integer? d) d)]
+                        [else #f])]
+                [yval (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! y))
+                        [(quote ,d) (and (fixnum? d) (fx< -1000 d 1000) d)]
+                        [else #f])])
+            (and xval
+                 yval
+                 (let ([r (guard (c [#t #f]) (op xval yval))])
+                   (when r
+                     (residualize-seq '() (list x y) ctxt)
+                     `(quote ,r))))))
+        (define-syntax define-inline-ash-op
+          (syntax-rules ()
+            [(_ op)
+             (begin
+               (define-inline 2 op
+                 [(x y) (try-fold-ash-op op ctxt x y)])
+               (define-inline 3 op
+                 [(x y) (or (try-fold-ash-op op ctxt x y)
+                            (handle-shift 3 ctxt x y))]))]))
+        (define-inline-ash-op ash)
+        (define-inline-ash-op bitwise-arithmetic-shift)
+        (define-inline-ash-op bitwise-arithmetic-shift-left)
+        (define-inline-ash-op bitwise-arithmetic-shift-right))
 
       (define-inline 3 fxbit-field ; expose internal fx ops for partial optimization
         [(?n ?start ?end)

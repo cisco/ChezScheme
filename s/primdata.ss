@@ -28,9 +28,9 @@
   (bitwise-copy-bit [sig [(sint uint bit) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
   (bitwise-bit-field [sig [(sint sub-uint sub-uint) -> (uint)]] [flags arith-op mifoldable discard safeongoodargs])
   (bitwise-copy-bit-field [sig [(sint sub-uint sub-uint sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
-  (bitwise-arithmetic-shift [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
-  (bitwise-arithmetic-shift-left [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
-  (bitwise-arithmetic-shift-right [sig [(sint uint) -> (sint)]] [flags arith-op mifoldable discard cp03 safeongoodargs])
+  (bitwise-arithmetic-shift [sig [(sint sint) -> (sint)]] [flags arith-op discard cp02 cp03 safeongoodargs])
+  (bitwise-arithmetic-shift-left [sig [(sint uint) -> (sint)]] [flags arith-op discard cp02 cp03 safeongoodargs])
+  (bitwise-arithmetic-shift-right [sig [(sint uint) -> (sint)]] [flags arith-op discard cp02 cp03 safeongoodargs])
   (bitwise-rotate-bit-field [sig [(sint sub-uint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
   (bitwise-reverse-bit-field [sig [(sint sub-uint sub-uint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
 )
@@ -1136,7 +1136,7 @@
   (append! [sig [() -> (null)] [(list ... ptr) -> (ptr)]] [flags cp02])
   (apropos [sig [(sub-ptr) (sub-ptr environment) -> (void)]] [flags true])
   (apropos-list [sig [(sub-ptr) (sub-ptr environment) -> (list)]] [flags alloc])
-  (ash [sig [(sint sint) -> (sint)]] [flags arith-op mifoldable discard cp03])
+  (ash [sig [(sint sint) -> (sint)]] [flags arith-op discard cp02 cp03]) ; can take too long to fold
   (assertion-violationf [sig [(maybe-who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; 2nd arg is format string
   (asinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (atanh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
