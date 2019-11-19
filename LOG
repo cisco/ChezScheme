@@ -1769,3 +1769,6 @@
   is enabled, so local transformer code can be profiled.
     syntax.ss,
     profile.ms
+- don't fold ash in cp0 when the shift is too big
+  fix also bitwise-arithmetic-shift/-right/-left.
+    primdata.ss, cp0.ss, 5_3.ms
