@@ -351,7 +351,7 @@ ptr S_gmtime(ptr tzoff, ptr tspair) {
   if (tzoff == Sfalse) {
     if (localtime_r(&tx, &tmx) == NULL) return Sfalse;
     tmx.tm_isdst = -1; /* have mktime determine the DST status */
-    if (mktime(&tmx) == (time_t)-1) return Sfalse;
+    mktime(&tmx);
     (void) adjust_time_zone(dtvec, &tmx, Sfalse);
   } else {
     tx += Sinteger_value(tzoff);
