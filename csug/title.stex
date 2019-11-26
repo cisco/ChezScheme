@@ -17,7 +17,7 @@
 \leftline{}
 \vskip 6pc
 
-{\titlefont\hbox to \textwidth{Chez Scheme Version 9\hfil}}
+{\titlefont\hbox to \textwidth{\CSVersion\hfil}}
 \vskip 10pt
 {\titlefont\hbox to \textwidth{User's Guide\hfil}}
 

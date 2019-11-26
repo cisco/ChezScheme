@@ -35,6 +35,7 @@
 /csug/*.rfm
 /csug/csug.sfm
 /csug/csug.toc
+/csug/csug.out
 /csug/*.hidx
 /csug/libslisted*
 /csug/libsrecorded*

@@ -39,7 +39,12 @@
       [(11) "November"]
       [(12) "December"])
     (date-year d)))
+(printf "\\def\\CSVersion{~a}" (scheme-version))
 \endgenerated
+
+\iflatex
+\usepackage{hyperref}
+\fi
 
 \iflatex
 \usepackage{graphicx}
@@ -69,7 +74,6 @@ Revised} \revisiondate\raw{ for Chez Scheme Version 9.5.3<br>
 }}
 \documenttitle[csug.css]{Chez Scheme Version 9 User's Guide}
 \fi
-
 
 \newcommand{\ChezScheme}{\textsl{Chez~Scheme}}
 \newcommand{\PetiteChezScheme}{\textsl{Petite~Chez~Scheme}}
