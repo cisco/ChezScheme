@@ -1132,6 +1132,7 @@ generate-interrupt-trap
 enable-cross-library-optimization
 enable-arithmetic-left-associative
 enable-error-source-expression
+enable-type-recovery
 \endschemedisplay
 
 It restores the values after the file has been compiled.
@@ -2836,6 +2837,18 @@ would be reduced to \scheme{3628800}, but
 \noindent
 would be left unchanged, although the optimizer may take a while to
 reach this decision if the effort and outer unroll limits are large.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{enable-type-recovery}{\categorythreadparameter}{enable-type-recovery}
+\listlibraries
+\endentryheader
+
+A parameter that controls whether the compiler attempts to improve
+programs by performing a pass similar to type inference, which can
+avoid more checks and statically resolve more predicates than
+\scheme{cp0} by itself, but at the cost of extra compile time. The
+default is \scheme{#t}.
 
 %----------------------------------------------------------------------------
 \entryheader
