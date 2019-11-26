@@ -117,6 +117,8 @@
 
 (define enable-type-recovery ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+(define enable-error-source-expression ($make-thread-parameter #t (lambda (x) (and x #t))))
+
 (define machine-type
   (lambda ()
     (constant machine-type-name)))

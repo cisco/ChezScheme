@@ -95,29 +95,37 @@
 
         (define argcnt-error
           (lambda (preinfo f args)
-            (let ([call (parameterize ([print-gensym #f] [print-level 3] [print-length 6])
-                          (format "~s" (preinfo-sexpr preinfo)))])
-              `(seq ,f
-                 ,(build-sequence args
-                    (cond
-                      [(preinfo-src preinfo) =>
-                       (lambda (src)
-                         ($source-warning 'compile src #t
-                           "possible incorrect argument count in call ~a"
-                           call)
+            (let* ([call (parameterize ([print-gensym #f] [print-level 3] [print-length 6])
+                           (format "~s" (preinfo-sexpr preinfo)))]
+                   [warn (lambda (src)
+                           ($source-warning 'compile src #t
+                             "possible incorrect argument count in call ~a"
+                             call))])
+              (cond
+               [(enable-error-source-expression)
+                `(seq ,f
+                   ,(build-sequence args
+                      (cond
+                        [(preinfo-src preinfo) =>
+                         (lambda (src)
+                           (warn src)
+                           `(call ,preinfo
+                              ,(lookup-primref 2 '$source-violation)
+                              (quote #f)
+                              (quote ,src)
+                              (quote #t)
+                              (quote "incorrect argument count in call ~a")
+                              (quote ,call)))]
+                        [else
                          `(call ,preinfo
-                            ,(lookup-primref 2 '$source-violation)
+                            ,(lookup-primref 2 '$oops)
                             (quote #f)
-                            (quote ,src)
-                            (quote #t)
                             (quote "incorrect argument count in call ~a")
-                            (quote ,call)))]
-                      [else
-                       `(call ,preinfo
-                          ,(lookup-primref 2 '$oops)
-                          (quote #f)
-                          (quote "incorrect argument count in call ~a")
-                          (quote ,call))]))))))))
+                            (quote ,call))])))]
+               [else
+                ;; Just report warning, if source, and keep original call
+                (cond [(preinfo-src preinfo) => warn])
+                `(call ,preinfo ,f ,args ...)]))))))
     (Expr : Expr (ir [ctxt #f]) -> Expr ()
       [(quote ,d) ir]
       [(ref ,maybe-src ,x)

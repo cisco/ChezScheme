@@ -1131,6 +1131,7 @@ compile-profile
 generate-interrupt-trap
 enable-cross-library-optimization
 enable-arithmetic-left-associative
+enable-error-source-expression
 \endschemedisplay
 
 It restores the values after the file has been compiled.
@@ -2598,6 +2599,16 @@ implement \scheme{+}, \scheme{fx+}, \scheme{fl+}, \scheme{cfl+},
 \scheme{*}, \scheme{fx*}, \scheme{fl*}, and \scheme{cfl*} as
 left-associative operations when given more than two arguments.
 The default is \scheme{#f}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{enable-error-source-expression}{\categorythreadparameter}{enable-error-source-expression}
+\listlibraries
+\endentryheader
+
+This parameter controls whether the compiler can convert erroneous
+expressions into a call to an error function that shows the expression
+as an S-expression. The default is \scheme{#t}.
 
 %----------------------------------------------------------------------------
 \entryheader

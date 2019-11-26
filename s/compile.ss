@@ -577,6 +577,7 @@
                    [$optimize-closures ($optimize-closures)]
                    [enable-cross-library-optimization (enable-cross-library-optimization)]
                    [enable-arithmetic-left-associative (enable-arithmetic-left-associative)]
+                   [enable-error-source-expression (enable-error-source-expression)]
                    [enable-type-recovery (enable-type-recovery)])
       (emit-header op (constant machine-type))
       (when hostop (emit-header hostop (host-machine-type)))
