@@ -300,6 +300,8 @@
   (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
   (string->symbol [sig [(string) -> (symbol)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
+  (string->uninterned-symbol [sig [(string) -> (symbol)]] [flags true discard])
+  (uninterned-symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (char? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (char->integer [sig [(char) -> (fixnum)]] [flags pure mifoldable discard safeongoodargs true ieee r5rs])
   (integer->char [sig [(sub-ufixnum) -> (char)]] [flags pure mifoldable discard true ieee r5rs])

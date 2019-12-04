@@ -652,6 +652,15 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = S_intern3(&STRIT(*pstrbuf, 0), pn, &STRIT(*pstrbuf, pn), un, Sfalse, Sfalse);
             return;
         }
+        case fasl_type_uninterned_symbol: {
+            iptr i, n;
+            ptr str;
+            n = uptrin(f);
+            str = S_string((char *)0, n);
+            for (i = 0; i != n; i += 1) Sstring_set(str, i, uptrin(f));
+            *x = S_uninterned(str);
+            return;
+        }
         case fasl_type_ratnum:
             *x = S_rational(FIX(0), FIX(0));
             faslin(tc, &RATNUM(*x), t, pstrbuf, f);

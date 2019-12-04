@@ -105,3 +105,22 @@
     (error? (putprop "hi" 'key 'value))
     (error? (property-list '(a b c)))
  )
+
+(mat uninterned-symbol
+     (symbol? (string->uninterned-symbol "hello"))
+     (uninterned-symbol? (string->uninterned-symbol "hello"))
+     (not (gensym? (string->uninterned-symbol "hello")))
+
+     (equal? "hello" (symbol->string (string->uninterned-symbol "hello")))
+
+     (not (eq? (string->uninterned-symbol "hello")
+               (string->uninterned-symbol "hello")))
+
+     (let-values ([(o get) (open-bytevector-output-port)])
+       (let ([s (string->uninterned-symbol "hello")])
+         (fasl-write (list s s) o)
+         (let ([r (fasl-read (open-bytevector-input-port (get)))])
+           (and (eq? (car r) (cadr r))
+                (equal? "hello" (symbol->string (car r)))))))
+
+     )

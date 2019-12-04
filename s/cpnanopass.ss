@@ -1225,7 +1225,7 @@
               [(string? x) x]
               [(symbol? x)
                (let ([name ($symbol-name x)])
-                 (if (pair? name) (cdr name) name))]
+                 (if (pair? name) (or (cdr name) (car name)) name))]
               [(eq? #f x) #f]
               [else (error 'np-discover-names "x is not a name" x)]))))
       (Expr : Expr (ir name moi) -> Expr ()
@@ -9503,8 +9503,18 @@
                (%type-check mask-symbol type-symbol ,e)
                (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
                  `(if ,t
-                      ,(%type-check mask-pair type-pair ,t)
+                      ,(build-and (%type-check mask-pair type-pair ,t)
+                                  (build-and (%mref ,t ,(constant pair-cdr-disp))
+                                             (%constant strue)))
                       ,(%constant strue)))))])
+        (define-inline 2 uninterned-symbol?
+          [(e)
+           (bind #t (e)
+             (build-and
+               (%type-check mask-symbol type-symbol ,e)
+               (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
+                     (build-and (%type-check mask-pair type-pair ,t)
+                                (build-not (%mref ,t ,(constant pair-cdr-disp)))))))])
         (let ()
           (define build-make-symbol
             (lambda (e-name)
@@ -9541,7 +9551,10 @@
              (bind #t ([e-name (%mref ,e-sym ,(constant symbol-name-disp))])
                `(if ,e-name
                     (if ,(%type-check mask-pair type-pair ,e-name)
-                        ,(%mref ,e-name ,(constant pair-cdr-disp))
+                        ,(bind #t ([e-cdr (%mref ,e-name ,(constant pair-cdr-disp))])
+                               `(if ,e-cdr
+                                    ,e-cdr
+                                    ,(%mref ,e-name ,(constant pair-car-disp))))
                         ,e-name)
                     ,(%primcall #f sexpr $gensym->pretty-name ,e-sym))))])
         (define-inline 3 $fxaddress

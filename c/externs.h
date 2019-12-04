@@ -315,6 +315,7 @@ extern void S_prim_init PROTO((void));
 extern ptr S_strerror PROTO((INT errnum));
 extern void S_prim5_init PROTO((void));
 extern void S_dump_tc PROTO((ptr tc));
+extern ptr S_uninterned PROTO((ptr x));
 
 /* print.c */
 extern void S_print_init PROTO((void));

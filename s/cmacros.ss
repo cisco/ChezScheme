@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050305)
+(define-constant scheme-version #x09050306)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -457,6 +457,7 @@
 
 (define-constant fasl-type-begin 41)
 (define-constant fasl-type-phantom 42)
+(define-constant fasl-type-uninterned-symbol 43)
 
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
@@ -1242,7 +1243,7 @@
   ([ptr value]
    [ptr pvalue]
    [ptr plist]
-   [ptr name]
+   [ptr name] ; (cons str #f) => uninterned; #f or (cons ptr str) => gensym
    [ptr splist]
    [ptr hash]))
 

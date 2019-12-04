@@ -962,6 +962,25 @@ static ptr s_strings_to_gensym(ptr pname_str, ptr uname_str) {
                    pname_str, uname_str);
 }
 
+ptr S_uninterned(x) ptr x; {
+  ptr sym;
+  static uptr hc;
+
+  require(Sstringp(x),"string->uninterned-symbol","~s is not a string",x);
+
+  sym = S_symbol(Scons(x, Sfalse));
+
+  /* Wraparound on `hc++` is ok. It's technically illegal with
+     threads, since multiple thread might increment `hc` at the same
+     time; we don't care if we miss an increment sometimes, and we
+     assume compilers won't take this as a license for arbitrarily bad
+     behavior: */
+  hc++;
+  INITSYMHASH(sym) = FIX(hc);
+
+  return sym;
+}
+
 static ptr s_mkdir(const char *inpath, INT mode) {
   INT status; ptr res; char *path;
 
@@ -1516,6 +1535,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_intern3", (void *)s_intern3);
     Sforeign_symbol("(cs)s_strings_to_gensym", (void *)s_strings_to_gensym);
     Sforeign_symbol("(cs)s_intern_gensym", (void *)S_intern_gensym);
+    Sforeign_symbol("(cs)s_uninterned", (void *)S_uninterned);
     Sforeign_symbol("(cs)cputime", (void *)S_cputime);
     Sforeign_symbol("(cs)realtime", (void *)S_realtime);
     Sforeign_symbol("(cs)clock_gettime", (void *)S_clock_gettime);

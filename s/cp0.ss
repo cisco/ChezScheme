@@ -4876,7 +4876,7 @@
                   (not (preinfo-lambda-name preinfo)))
          (preinfo-lambda-name-set! preinfo
            (let ([x ($symbol-name name)])
-             (if (pair? x) (cdr x) x))))
+             (if (pair? x) (or (cdr x) (car x)) x))))
        (context-case ctxt
          [(value tail)
           (bump sc 1)

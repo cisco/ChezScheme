@@ -250,6 +250,9 @@
          (put-u8 p (constant fasl-type-gensym))
          (wrf-string-help (symbol->string x) p)
          (wrf-string-help uname p))]
+      [(uninterned-symbol? x)
+       (put-u8 p (constant fasl-type-uninterned-symbol))
+       (wrf-string-help (symbol->string x) p)]
       [else
        (put-u8 p (constant fasl-type-symbol))
        (wrf-string-help (symbol->string x) p)])))

@@ -1550,7 +1550,7 @@ These parameters are not consulted until that time; setting them when
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{gensym?}{\categoryprocedure}{(gensym? \var{obj})}
-\returns \scheme{#t} if \var{obj} is gensym, \scheme{#f} otherwise
+\returns \scheme{#t} if \var{obj} is a gensym, \scheme{#f} otherwise
 \listlibraries
 \endentryheader
 
@@ -1562,6 +1562,63 @@ These parameters are not consulted until that time; setting them when
 (gensym? (gensym)) ;=> #t
 (gensym? '#{g2 bcsfg5eq4e9b3h9o-c}) ;=> #t
 \endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string->uninterned-symbol}{\categoryprocedure}{(string->uninterned-symbol \var{str})}
+\returns a fresh uninterned symbol
+\listlibraries
+\endentryheader
+
+\var{str} must be a string.
+
+Returns an uninterned symbol that prints the same as a symbol
+constructed from \var{str}, but which is not \scheme{eq?} to any
+other symbol.
+
+When an uninterned symbol is converted by the fasl writer, the fasl
+reader will allocate a fresh uninterned symbol each time the fasl
+stream is read. Multiple occurrences of the same uninterned symbol in
+the fasl writer's argument will become multiple occurrences of the
+same new uninterned symbol in the fasl reader's result for the stream.
+
+\noskip\schemedisplay
+(string->uninterned-symbol "z") ;=> z
+(uninterned-symbol? (string->uninterned-symbol "z")) ;=> #t
+(symbol? (string->uninterned-symbol "z")) ;=> #t
+(gensym? (string->uninterned-symbol "z")) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{uninterned-symbol?}{\categoryprocedure}{(uninterned-symbol? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an uninterned symbol, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(uninterned-symbol? (string->symbol "z")) ;=> #f
+(uninterned-symbol? (gensym "z")) ;=> #f
+(uninterned-symbol? (string->uninterned-symbol "z")) ;=> #t
+\endschemedisplay
+
+
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{uninterned-symbol?}{\categoryprocedure}{(uninterned-symbol? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an uninterned symbol, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(uninterned-symbol? (string->symbol "z")) ;=> #f
+(uninterned-symbol? (gensym "z")) ;=> #f
+(uninterned-symbol? (string->uninterned-symbol "z")) ;=> #t
+\endschemedisplay
+
 
 
 %----------------------------------------------------------------------------
