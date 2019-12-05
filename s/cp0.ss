@@ -658,9 +658,19 @@
           [(quote ,d) d]
           [else (sorry! who "~s is not a constant" x)])))
 
+    (define (name-preinfo-lambda! preinfo name)
+      (when (and (symbol? name)
+                 ;; Avoid replacing a name from an optimized-away `let` pattern:
+                 (not (preinfo-lambda-name preinfo)))
+        (preinfo-lambda-name-set! preinfo
+           (let ([x ($symbol-name name)])
+             (if (pair? x) (or (cdr x) (car x)) x)))))
+    
     (define preinfo-call->preinfo-lambda
-      (lambda (preinfo)
-        (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo))))
+      (lambda (preinfo name)
+        (let ([new-preinfo (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo))])
+          (name-preinfo-lambda! new-preinfo name)
+          new-preinfo)))
 
     (define build-quote
       (lambda (d)
@@ -3166,7 +3176,7 @@
                       (residualize-seq '() (list ?rtd) ctxt)
                       (finish ctxt sc wd moi
                         (let ([t (cp0-make-temp #f)])
-                          (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) (list t)
+                          (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) (list t)
                             (build-primcall 3
                               (if (record-type-sealed? rtd) '$sealed-record? 'record?)
                               (list (build-ref t) rtd-expr))))))
@@ -3176,7 +3186,7 @@
                       (finish ctxt sc wd moi
                         (let ([rtd-t (cp0-make-temp #f)] [t (cp0-make-temp #f)])
                           (build-let (list rtd-t) (list (operand-value ?rtd))
-                            (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) (list t)
+                            (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) (list t)
                               (build-primcall 3
                                 (if (record-type-sealed? rtd) '$sealed-record? 'record?)
                                 (list (build-ref t) (build-ref rtd-t))))))))))]))
@@ -3216,7 +3226,7 @@
                                              check*))))
                                    '() fld* t*)
                                  '())])
-                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) t*
+                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) t*
                   (let ([expr `(record ,rtd ,rtd-e ,(map build-ref t*) ...)])
                     (if (null? check*)
                         expr
@@ -3400,13 +3410,13 @@
                              (cond
                                [(fx= level 3)
                                 (residualize-seq '() (list ?rtd ?field) ctxt)
-                                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) (list rec-t) expr)]
+                                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) (list rec-t) expr)]
                                [(nanopass-case (Lsrc Expr) rtd-e
                                   [(quote ,d) #t]
                                   [(ref ,maybe-src ,x) #t]
                                   [else #f])
                                 (residualize-seq '() (list ?rtd ?field) ctxt)
-                                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) (list rec-t)
+                                (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) (list rec-t)
                                   `(seq
                                      (if ,(build-primcall 3 'record?
                                             (list (build-ref rec-t) rtd-e))
@@ -3421,7 +3431,7 @@
                                 (let ([rtd-t (cp0-make-temp #t)])
                                   (residualize-seq (list ?rtd) (list ?field) ctxt)
                                   (build-let (list rtd-t) (list (operand-value ?rtd))
-                                    (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt)) (list rec-t)
+                                    (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt)) (list rec-t)
                                       `(seq
                                          (if ,(build-primcall 3 'record?
                                                 (list (build-ref rec-t) (build-ref rtd-t)))
@@ -3453,7 +3463,7 @@
                                   (cond
                                     [(fx= level 3)
                                      (residualize-seq '() (list ?rtd ?field) ctxt)
-                                     (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                     (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                        (list rec-t val-t)
                                        expr)]
                                     [(nanopass-case (Lsrc Expr) rtd-e
@@ -3461,7 +3471,7 @@
                                        [(ref ,maybe-src ,x) #t]
                                        [else #f])
                                      (residualize-seq '() (list ?rtd ?field) ctxt)
-                                     (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                     (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                        (list rec-t val-t)
                                        (make-seq 'value
                                          `(if ,(build-primcall 3 'record?
@@ -3486,7 +3496,7 @@
                                       (let ([rtd-t (cp0-make-temp #t)])
                                         (residualize-seq (list ?rtd) (list ?field) ctxt)
                                         (build-let (list rtd-t) (list (operand-value ?rtd))
-                                          (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                          (build-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                             (list rec-t val-t)
                                             (make-seq 'value
                                               `(if ,(build-primcall 3 'record?
@@ -4597,12 +4607,12 @@
                              (build-lambda (list orig-x p)
                                (maybe-add-procedure-check ?p level "make-parameter" p
                                  (build-let (list x) (list `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,orig-x)))
-                                   (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                   (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                      (list
                                        (list '() (build-ref x))
                                        (list (list v) `(set! #f ,x (call ,(make-preinfo-call) (ref #f ,p) (ref #f ,v))))))))))
                            (build-lambda (list x)
-                             (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                             (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                (list
                                  (list '() (build-ref x))
                                  (list (list v) `(set! #f ,x (ref #f ,v))))))))
@@ -4640,7 +4650,7 @@
                                    (build-let (list x)
                                      (list (build-primcall 3 '$allocate-thread-parameter
                                              (list `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,orig-x)))))
-                                     (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                     (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                        (list
                                          (list '() (mtp-ref x))
                                          (list (list v) (mtp-set x `(call ,(make-preinfo-call) (ref #f ,p) (ref #f ,v))))))))))
@@ -4648,7 +4658,7 @@
                                (build-let (list x)
                                  (list (build-primcall 3 '$allocate-thread-parameter
                                          (list (build-ref orig-x))))
-                                 (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                                 (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                                    (list
                                      (list '() (mtp-ref x))
                                      (list (list v) (mtp-set x (build-ref v)))))))))
@@ -4672,7 +4682,7 @@
                                  (let ([zero `(quote 0)])
                                    (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
                                      (build-primcall 3 'cons (list ref-x ref-x))))))
-                         (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                         (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))
                            (cons
                              (list '()
                                (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
@@ -4871,12 +4881,7 @@
          (let-values ([(e args) (lift-let e e*)])
            (cp0-call preinfo e (build-operands args env wd moi) ctxt env sc wd name moi)))]
       [(case-lambda ,preinfo ,cl* ...)
-       (when (and (symbol? name)
-                  ;; Avoid replacing a name from an optimized-away `let` pattern:
-                  (not (preinfo-lambda-name preinfo)))
-         (preinfo-lambda-name-set! preinfo
-           (let ([x ($symbol-name name)])
-             (if (pair? x) (or (cdr x) (car x)) x))))
+       (name-preinfo-lambda! preinfo name)
        (context-case ctxt
          [(value tail)
           (bump sc 1)
