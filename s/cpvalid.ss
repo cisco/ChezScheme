@@ -194,25 +194,32 @@
           (lambda (what maybe-src id p x)
             (if (and p (not (eq? (proxy-state p) 'protected)))
                 (let ([valid-flag (prelex-info-valid-flag id)])
-                  (if valid-flag
-                      (let ([name (prelex-name id)])
-                        (let ([mesg (format "attempt to ~a undefined variable ~~s" what)])
-                          (when (undefined-variable-warnings)
-                            ($source-warning #f maybe-src #t (format "possible ~a" mesg) name))
-                          (if (prelex-referenced valid-flag)
-                              (set-prelex-multiply-referenced! valid-flag #t)
-                              (set-prelex-referenced! valid-flag #t))
-                          `(seq
-                             (if (ref #f ,valid-flag)
-                                 (quote ,(void))
-                                 (call ,(make-preinfo-call) ,(lookup-primref 2 '$source-violation)
-                                   (quote #f)
-                                   (quote ,maybe-src)
-                                   (quote #t)
-                                   (quote ,mesg)
-                                   (quote ,name)))
-                             ,x)))
-                      x))
+                  (cond
+                   [valid-flag
+                    (if (prelex-referenced valid-flag)
+                        (set-prelex-multiply-referenced! valid-flag #t)
+                        (set-prelex-referenced! valid-flag #t))
+                    (if (enable-error-source-expression)
+                        (let ([name (prelex-name id)])
+                          (let ([mesg (format "attempt to ~a undefined variable ~~s" what)])
+                            (when (undefined-variable-warnings)
+                              ($source-warning #f maybe-src #t (format "possible ~a" mesg) name))
+                            `(seq
+                              (if (ref #f ,valid-flag)
+                                  (quote ,(void))
+                                  (call ,(make-preinfo-call) ,(lookup-primref 2 '$source-violation)
+                                        (quote #f)
+                                        (quote ,maybe-src)
+                                        (quote #t)
+                                        (quote ,mesg)
+                                        (quote ,name)))
+                              ,x)))
+                        `(seq
+                          (if (ref #f ,valid-flag)
+                              (quote ,(void))
+                              (call ,(make-preinfo-call) ,(lookup-primref 2 '$unknown-undefined-violation)))
+                          ,x))]
+                   [else x]))
                 x))))
 
       ; wl = worklist

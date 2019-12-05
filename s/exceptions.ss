@@ -706,6 +706,11 @@ TODO:
       (error-help #f who #f message #f
         (condition (make-undefined-violation) (make-syntax-violation id #f)))))
 
+  (set-who! $unknown-undefined-violation
+    (lambda ()
+      (error-help #f who #f "undefined" #f
+        (make-undefined-violation))))
+
   (set-who! $lexical-error
     (case-lambda
       [(whoarg msg args port ir?)
