@@ -87,10 +87,10 @@
     (define read-uptr
       (lambda (p)
         (let ([k (read-byte p)])
-          (let f ([k k] [n (fxsrl k 1)])
-            (if (fxlogbit? 0 k)
+          (let f ([k k] [n (fxand k #x7F)])
+            (if (fxlogbit? 7 k)
                 (let ([k (read-byte p)])
-                  (f k (logor (ash n 7) (fxsrl k 1))))
+                  (f k (logor (ash n 7) (fxand k #x7F))))
                 n)))))
     (define read-byte-or-eof
       (lambda (p)
@@ -663,10 +663,10 @@
           (sorry! "received negative input ~s" n))
         (let f ([n n] [cbit 0])
           (if (and (fixnum? n) (fx<= n 127))
-              (write-byte p (fxlogor (fxsll n 1) cbit))
+              (write-byte p (fxlogor n cbit))
               (begin
-                (f (ash n -7) 1)
-                (write-byte p (fxlogor (fxsll (logand n #x7f) 1) cbit)))))))
+                (f (ash n -7) 128)
+                (write-byte p (fxlogor (logand n #x7f) cbit)))))))
 
     (define write-iptr
       (lambda (p x)

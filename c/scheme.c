@@ -819,13 +819,13 @@ static uptr zget_uptr(glzFile file, uptr *pn) {
 
   if ((c = S_glzgetc(file)) < 0) return -1;
   k = (octet)c;
-  n = k >> 1;
-  while (k & 1) {
+  n = k & 0x7F;
+  while (k & 128) {
     if ((c = S_glzgetc(file)) < 0) return -1;
     k = (octet)c;
     m = n << 7;
     if (m >> 7 != n) return -1;
-    n = m | (k >> 1);
+    n = m | (k  & 0x7F);
   }
   *pn = n;
   return 0;

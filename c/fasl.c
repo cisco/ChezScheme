@@ -393,12 +393,12 @@ static uptr uf_uptrin(unbufFaslFile uf) {
   uptr n, m; octet k;
 
   k = uf_bytein(uf);
-  n = k >> 1;
-  while (k & 1) {
+  n = k & 0x7F;
+  while (k & 0x80) {
     k = uf_bytein(uf);
     m = n << 7;
     if (m >> 7 != n) toolarge(uf->path);
-    n = m | (k >> 1);
+    n = m | (k & 0x7F);
   }
 
   return n;
@@ -571,12 +571,12 @@ static uptr uptrin(faslFile f) {
   uptr n, m; octet k;
 
   k = bytein(f);
-  n = k >> 1;
-  while (k & 1) {
+  n = (k & 0x7F);
+  while (k & 0x80) {
     k = bytein(f);
     m = n << 7;
     if (m >> 7 != n) toolarge(f->uf->path);
-    n = m | (k >> 1);
+    n = m | (k & 0x7F);
   }
 
   return n;

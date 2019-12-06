@@ -127,10 +127,10 @@
         ($oops 'compiler-internal "put-uptr received negative input ~s" n))
       (let f ([n n] [cbit 0])
         (if (and (fixnum? n) (fx<= n 127))
-            (put-u8 p (fxlogor (fxsll n 1) cbit))
+            (put-u8 p (fxlogor n cbit))
             (begin
-              (f (ash n -7) 1)
-              (put-u8 p (fxlogor (fxsll (logand n #x7f) 1) cbit)))))))
+              (f (ash n -7) 128)
+              (put-u8 p (fxlogor (logand n #x7f) cbit)))))))
 )
 
 (define emit-header
