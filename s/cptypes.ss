@@ -317,7 +317,7 @@ Notes:
     (lambda (obj)
       ; okay to copy obj if (eq? (faslin (faslout x)) x) => #t or (in the case of numbers and characters)
       ; the value of (eq? x x) is unspecified
-      (or (symbol? obj)
+      (or (and (symbol? obj) (not (uninterned-symbol? obj)))
           (number? obj)
           (char? obj)
           (boolean? obj)
