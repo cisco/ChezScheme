@@ -268,7 +268,7 @@ Notes:
                  (and (predicate-implies? x t)
                       (predicate-implies? y t)))
                '(char null-or-pair $record
-                 gensym symbol
+                 gensym uninterned-symbol interned-symbol symbol
                  fixnum exact-integer flonum real number
                  boolean true ptr))] ; ensure they are order from more restrictive to less restrictive
         [else #f]))
@@ -382,6 +382,8 @@ Notes:
       [bytevector? 'bytevector]
       [fxvector? 'fxvector]
       [gensym? 'gensym]
+      [uninterned-symbol? 'uninterned-symbol]
+      #;[interned-symbol? 'interned-symbol]
       [symbol? 'symbol]
       [char? 'char]
       [boolean? 'boolean]
@@ -416,6 +418,8 @@ Notes:
       [bytevector 'bytevector]
       [fxvector 'fxvector]
       [gensym 'gensym]
+      [uninterned-symbol 'uninterned-symbol]
+      [interned-symbol 'interned-symbol]
       [symbol 'symbol]
       [char 'char]
       [bottom 'bottom] ;pseudo-predicate
@@ -502,7 +506,14 @@ Notes:
                                 (eq? x 'real)
                                 (check-constant-is? x number?))]
                   [(gensym) (check-constant-is? x gensym?)]
+                  [(uninterned-symbol) (check-constant-is? x uninterned-symbol?)]
+                  [(interned-symbol) (check-constant-is? x (lambda (x)
+                                                             (and (symbol? x)
+                                                                  (not (gensym? x))
+                                                                  (not (uninterned-symbol? x)))))]
                   [(symbol) (or (eq? x 'gensym)
+                                (eq? x 'uninterned-symbol)
+                                (eq? x 'interned-symbol)
                                 (check-constant-is? x symbol?))]
                   [(char) (check-constant-is? x char?)]
                   [(boolean) (check-constant-is? x boolean?)]
