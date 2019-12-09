@@ -21,6 +21,9 @@ SchemeBoot=../boot/$m/scheme.boot
 Main=../boot/$m/main.$o
 Scheme=../bin/$m/scheme
 
+# CFLAGS is propagated separately:
+SetConfigEnv = CC="${CC}" CPPFLAGS="${CPPFLAGS}"
+
 # One of these sets is referenced in Mf-config to select between
 # linking with kernel.o or libkernel.a
 
