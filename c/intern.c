@@ -224,7 +224,12 @@ static ptr mkstring(const string_char *s, iptr n) {
   iptr i;
   ptr str = S_string(NULL, n);
   for (i = 0; i != n; i += 1) STRIT(str, i) = s[i];
+  STRTYPE(str) |= string_immutable_flag;
   return str;
+}
+
+ptr S_mkstring(const string_char *s, iptr n) {
+  return mkstring(s, n);
 }
 
 /* handles single-byte characters, implicit length */
@@ -292,7 +297,8 @@ ptr S_intern_sc(const string_char *name, iptr n, ptr name_str) {
     b = b->next;
   }
 
-  /* if (name_str == Sfalse) */ name_str = mkstring(name, n);
+  if ((name_str == Sfalse) || !(STRTYPE(name_str) & string_immutable_flag))
+    name_str = mkstring(name, n);
   sym = S_symbol(name_str);
   INITSYMHASH(sym) = FIX(hc);
   oblist_insert(sym, idx, 0);
@@ -328,8 +334,10 @@ ptr S_intern3(const string_char *pname, iptr plen, const string_char *uname, ipt
     b = b->next;
   }
 
-  if (pname_str == Sfalse) pname_str = mkstring(pname, plen);
-  if (uname_str == Sfalse) uname_str = mkstring(uname, ulen);
+  if ((pname_str == Sfalse) || !(STRTYPE(pname_str) & string_immutable_flag))
+    pname_str = mkstring(pname, plen);
+  if ((uname_str == Sfalse)  || !(STRTYPE(uname_str) & string_immutable_flag))
+    uname_str = mkstring(uname, ulen);
   sym = S_symbol(Scons(uname_str, pname_str));
   INITSYMHASH(sym) = FIX(hc);
   oblist_insert(sym, idx, 0);

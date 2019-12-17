@@ -967,6 +967,8 @@ ptr S_uninterned(x) ptr x; {
   static uptr hc;
 
   require(Sstringp(x),"string->uninterned-symbol","~s is not a string",x);
+  if (!(STRTYPE(x) & string_immutable_flag))
+    x = S_mkstring(&STRIT(x, 0), Sstring_length(x));
 
   sym = S_symbol(Scons(x, Sfalse));
 

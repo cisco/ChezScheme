@@ -25,6 +25,7 @@
     (not (eq? (gensym "hi")
          (gensym "hi")))
     (equal? (symbol->string (gensym "hi")) "hi")
+    (immutable-string? (symbol->string (gensym "hi")))
     (error? (gensym '#(a b c)))
  )
 
@@ -68,6 +69,7 @@
 
 (mat symbol->string
     (equal? (symbol->string 'foo) "foo")
+    (immutable-string? (symbol->string 'foo))
     (equal? (symbol->string (string->symbol "hi")) "hi")
     (equal? (symbol->string (gensym "hi there")) "hi there")
     (error? (symbol->string 3))
@@ -80,7 +82,7 @@
     (gensym->unique-string 3))
   (error? ; not a gensym
     (gensym->unique-string 'spam))
-  (string? (gensym->unique-string (gensym)))
+  (immutable-string? (gensym->unique-string (gensym)))
   (equal?
     (gensym->unique-string '#{g0 e6sfz8u1obe67hsew4stu0-0})
     "e6sfz8u1obe67hsew4stu0-0")
@@ -112,6 +114,7 @@
      (not (gensym? (string->uninterned-symbol "hello")))
 
      (equal? "hello" (symbol->string (string->uninterned-symbol "hello")))
+     (immutable-string? (symbol->string (string->uninterned-symbol "hello")))
 
      (not (eq? (string->uninterned-symbol "hello")
                (string->uninterned-symbol "hello")))

@@ -9537,13 +9537,17 @@
                 (set! ,(%mref ,t ,(constant pair-cdr-disp)) ,e-pname)
                 (set! ,(%mref ,t ,(constant pair-car-disp)) ,(%constant sfalse))
                 ,(build-make-symbol t))))
-          (define-inline 3 gensym
+          (define-inline 3 $gensym
             [() (build-make-symbol (%constant sfalse))]
             [(e-pname) (bind #f (e-pname) (go e-pname))]
             [(e-pname e-uname) #f])
+          (define-inline 3 gensym
+            [() (build-make-symbol (%constant sfalse))]
+            [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]
+            [(e-pname e-uname) #f])
           (define-inline 2 gensym
             [() (build-make-symbol (%constant sfalse))]
-            [(e-pname) (and (constant? string? e-pname) (go e-pname))]
+            [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]
             [(e-pname e-uname) #f]))
         (define-inline 3 symbol->string
           [(e-sym)

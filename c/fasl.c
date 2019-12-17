@@ -658,6 +658,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             n = uptrin(f);
             str = S_string((char *)0, n);
             for (i = 0; i != n; i += 1) Sstring_set(str, i, uptrin(f));
+            STRTYPE(str) |= string_immutable_flag;
             *x = S_uninterned(str);
             return;
         }

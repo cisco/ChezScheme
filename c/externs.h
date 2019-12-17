@@ -177,6 +177,7 @@ extern ptr S_intern3 PROTO((const string_char *pname, iptr plen, const string_ch
 extern ptr S_intern4 PROTO((ptr sym));
 extern void S_intern_gensym PROTO((ptr g));
 extern void S_retrofit_nonprocedure_code PROTO((void));
+extern ptr S_mkstring PROTO((const string_char *s, iptr n));
 
 /* io.c */
 extern IBOOL S_file_existsp PROTO((const char *inpath, IBOOL followp));

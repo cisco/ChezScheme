@@ -178,12 +178,14 @@
               (let ([name ($symbol-name sym)])
                 (if (not name)
                     (let ([uname (generate-unique-name)])
+                      ($string-set-immutable! uname)
                       ($set-symbol-name! sym
                         (cons uname (generate-pretty-name)))
                       ($intern-gensym sym)
                       uname)
                     (or (car name)
                         (let ([uname (generate-unique-name)])
+                          ($string-set-immutable! uname)
                           (set-car! name uname)
                           ($intern-gensym sym)
                           uname))))))))))
@@ -197,14 +199,27 @@
       [(x)
        (unless (and (or (fixnum? x) (bignum? x)) (>= x 0))
          ($oops 'gensym-count "~s is not a nonnegative integer" x))
-       (set! count x)]))
+       (set! count x)])) 
   (set-who! gensym
     (case-lambda
       [() (#3%gensym)]
       [(pretty-name)
-       (unless (string? pretty-name) ($oops who "~s is not a string" pretty-name))
-       (#3%gensym pretty-name)]
+       (if (immutable-string? pretty-name)
+           (#3%$gensym pretty-name)
+           (if (string? pretty-name)
+               (#3%$gensym (string->immutable-string pretty-name))
+               ($oops who "~s is not a string" pretty-name)))]
       [(pretty-name unique-name)
        (unless (string? pretty-name) ($oops who "~s is not a string" pretty-name))
        (unless (string? unique-name) ($oops who "~s is not a string" unique-name))
+       ($strings->gensym pretty-name unique-name)]))
+  (set-who! $gensym
+    (case-lambda
+      [() (#3%$gensym)]
+      [(pretty-name)
+       (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
+       (#3%$gensym pretty-name)]
+      [(pretty-name unique-name)
+       (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
+       (unless (immutable-string? unique-name) ($oops who "~s is not an immutable string" unique-name))
        ($strings->gensym pretty-name unique-name)])))

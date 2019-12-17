@@ -2061,6 +2061,7 @@
   ($gc-cpu-time [flags true])
   ($gc-real-time [flags true])
   ($generation [flags single-valued])
+  ($gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc]) ; needs immutable strings
   ($gensym->pretty-name [flags single-valued])
   ($guard [flags])
   ($hand-coded [flags single-valued])
