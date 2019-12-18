@@ -300,8 +300,6 @@
   (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
   (string->symbol [sig [(string) -> (interned-symbol)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
-  (string->uninterned-symbol [sig [(string) -> (uninterned-symbol)]] [flags true discard safeongoodargs])
-  (uninterned-symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (char? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (char->integer [sig [(char) -> (fixnum)]] [flags pure mifoldable discard safeongoodargs true ieee r5rs])
   (integer->char [sig [(sub-ufixnum) -> (char)]] [flags pure mifoldable discard true ieee r5rs])
@@ -1672,6 +1670,7 @@
   (statistics [sig [() -> (sstats)]] [flags unrestricted alloc])
   (string->multibyte [feature windows] [sig [(sub-uint string) -> (bytevector)]] [flags true discard])
   (string->number [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard]) ; radix not restricted to 2, 4, 8, 16
+  (string-append-immutable [sig [(string ...) -> (string)]] [flags alloc safeongoodargs ieee r5rs])
   (string<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])        ; not restricted to 2+ arguments
   (string<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs])         ; not restricted to 2+ arguments
   (string=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard cp03 safeongoodargs])         ; not restricted to 2+ arguments
@@ -1684,6 +1683,7 @@
   (string-ci>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; not restricted to 2+ arguments
   (string-copy! [sig [(string sub-length string sub-length sub-length) -> (void)]] [flags true])
   (string->immutable-string [sig [(string) -> (string)]] [flags alloc safeongoodargs])
+  (string->uninterned-symbol [sig [(string) -> (uninterned-symbol)]] [flags true discard safeongoodargs])
   (string-truncate! [sig [(string length) -> (string)]] [flags true])
   (strip-fasl-file [sig [(pathname pathname fasl-strip-options) -> (void)]] [flags true])
   (sub1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
@@ -1733,6 +1733,7 @@
   (unbox [sig [(box) -> (ptr)]] [flags mifoldable discard safeongoodargs])
   (unget-u8 [sig [(binary-input-port eof/u8) -> (void)]] [flags true])
   (unget-char [sig [(textual-input-port eof/char) -> (void)]] [flags true])
+  (uninterned-symbol? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (unlock-object [sig [(ptr) -> (void)]] [flags unrestricted true])
   (unread-char [sig [(char) (char textual-input-port) -> (void)]] [flags true])
   (utf-16-codec [sig [() -> (codec)] [(sub-symbol) -> (codec)]] [flags pure true]) ; has optional eness argument

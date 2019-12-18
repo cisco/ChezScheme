@@ -661,11 +661,28 @@
        (and (equal? x "          ")
             (not (eq? x (string-append x)))))
     (equal? (string-append "abc") "abc")
+    (not (immutable-string? (string-append (string->immutable-string "abc"))))
     (equal? (string-append "abc" "xyz") "abcxyz")
     (equal? (string-append "hi " "there " "mom") "hi there mom")
+    (not (immutable-string? (string-append "hi " "there " "mom")))
     (equal? (string-append "" "there") "there")
     (equal? (string-append "hi " "") "hi ")
     (eqv? (string-append "" "") "")
+ )
+
+(mat string-append-immutable
+    (error? (string-append-immutable 'a))
+    (error? (string-append-immutable "hi" 'b))
+    (error? (string-append-immutable "hi" 'b "there"))
+    (eqv? (string-append-immutable) (string->immutable-string ""))
+    (equal? (string-append-immutable "abc") "abc")
+    (immutable-string? (string-append-immutable "abc"))
+    (equal? (string-append-immutable "abc" "xyz") "abcxyz")
+    (equal? (string-append-immutable "hi " "there " "mom") "hi there mom")
+    (immutable-string? (string-append-immutable "hi " "there " "mom"))
+    (equal? (string-append-immutable "" "there") "there")
+    (equal? (string-append-immutable "hi " "") "hi ")
+    (eqv? (string-append-immutable "" "") (string->immutable-string ""))
  )
 
 (mat substring

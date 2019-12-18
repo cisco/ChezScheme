@@ -30,30 +30,48 @@
                 ((fx= i n) s2)
                 (string-set! s2 j (string-ref s1 i)))))))
 
-(define-who string-append
-  (case-lambda
-    [(s1 s2)
-     (unless (string? s1) ($oops who "~s is not a string" s1))
-     (unless (string? s2) ($oops who "~s is not a string" s2))
-     (let ([n1 (string-length s1)] [n2 (string-length s2)])
-       (let ([n (+ n1 n2)])
-         (unless (fixnum? n) ($oops who "result string size ~s is not a fixnum" n))
-         (let ([s (make-string n)])
-           (string-copy! s1 0 s 0 n1)
-           (string-copy! s2 0 s n1 n2)
-           s)))]
-    [args
-     (let f ([ls args] [n 0])
-       (if (null? ls)
-           (if (fixnum? n)
-               (make-string n)
-               ($oops who "result string size ~s is not a fixnum" n))
-           (let ([s1 (car ls)])
-             (unless (string? s1) ($oops who "~s is not a string" s1))
-             (let ([m (string-length s1)])
-               (let ([s2 (f (cdr ls) (+ n m))])
-                 (string-copy! s1 0 s2 n m)
-                 s2)))))]))
+(let ()
+  (define do-string-append2
+    (lambda (who s1 s2)
+      (unless (string? s1) ($oops who "~s is not a string" s1))
+      (unless (string? s2) ($oops who "~s is not a string" s2))
+      (let ([n1 (string-length s1)] [n2 (string-length s2)])
+        (let ([n (+ n1 n2)])
+          (unless (fixnum? n) ($oops who "result string size ~s is not a fixnum" n))
+          (let ([s (make-string n)])
+            (string-copy! s1 0 s 0 n1)
+            (string-copy! s2 0 s n1 n2)
+            s)))))
+
+  (define do-string-append
+    (lambda (who args)
+      (let f ([ls args] [n 0])
+        (if (null? ls)
+            (if (fixnum? n)
+                (make-string n)
+                ($oops who "result string size ~s is not a fixnum" n))
+            (let ([s1 (car ls)])
+              (unless (string? s1) ($oops who "~s is not a string" s1))
+              (let ([m (string-length s1)])
+                (let ([s2 (f (cdr ls) (+ n m))])
+                  (string-copy! s1 0 s2 n m)
+                  s2)))))))
+
+  (define (immutable! str)
+    (cond
+     [(eqv? str "") ($tc-field 'null-immutable-string ($tc))]
+     [else ($string-set-immutable! str)
+           str]))
+
+  (set-who! string-append
+    (case-lambda
+     [(s1 s2) (do-string-append2 who s1 s2)]
+     [args (do-string-append who args)]))
+
+  (set-who! string-append-immutable
+    (case-lambda
+     [(s1 s2) (immutable! (do-string-append2 who s1 s2))]
+     [args (immutable! (do-string-append who args))])))
 
 (define string->list
    (lambda (s)

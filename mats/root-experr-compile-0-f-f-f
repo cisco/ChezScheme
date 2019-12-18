@@ -2136,6 +2136,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
 5_5.mo:Expected error in mat string-append: "string-append: b is not a string".
 5_5.mo:Expected error in mat string-append: "string-copy: a is not a string".
+5_5.mo:Expected error in mat string-append-immutable: "string-append-immutable: a is not a string".
+5_5.mo:Expected error in mat string-append-immutable: "string-append-immutable: b is not a string".
+5_5.mo:Expected error in mat string-append-immutable: "string-append-immutable: b is not a string".
 5_5.mo:Expected error in mat substring: "incorrect argument count in call (substring)".
 5_5.mo:Expected error in mat substring: "incorrect argument count in call (substring "hi")".
 5_5.mo:Expected error in mat substring: "incorrect argument count in call (substring "hi" 0)".

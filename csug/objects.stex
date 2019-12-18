@@ -430,7 +430,8 @@ recently.
 \index{immutable strings}\index{mutable strings}%
 All strings are mutable by default, including constants.
 A program can create immutable strings via
-\index{\scheme{string->immutable-string}}\scheme{string->immutable-string}.
+\index{\scheme{string->immutable-string}}\scheme{string->immutable-string}
+or \index{\scheme{string-append-immutable}}\scheme{string-append-immutable}.
 Any attempt to modify an immutable string causes an exception to be raised.
 
 The length and indices of a string in {\ChezScheme} are always fixnums.
@@ -582,6 +583,16 @@ is immutable; otherwise, the result is an immutable string with the same content
 (string-set! s 0 #\a) ;=> \var{exception: not mutable}
 \endschemedisplay
 
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string-append-immutable}{\categoryprocedure}{(string-append-immutable \var{string} \dots)}
+\returns an immutable string that appends the argument \var{string}s
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{string-append}, but produces an immutable string.
 
 \section{Vectors}
 
