@@ -2211,9 +2211,20 @@
 (set! $/
    (lambda (who x y)
       (type-case y
-         [(fixnum? bignum?)
+         [(fixnum?)
           (type-case x
-             [(fixnum? bignum?)
+             [(fixnum?)
+              ;; Trying `fxquotient` followed by a `fx*` check
+              ;; is so much faster (in the case that it works)
+              ;; that it's worth a try
+              (when (eq? y 0) (domain-error who y))
+              (if (fx= x (constant most-negative-fixnum))
+                  (integer/ x y) ; in case `y` is -1
+                  (let ([q (fxquotient x y)])
+                    (if (fx= x (fx* y q))
+                        q
+                        (integer/ x y))))]
+             [(bignum?)
               (when (eq? y 0) (domain-error who y))
               (integer/ x y)]
              [(ratnum?)
@@ -2221,6 +2232,18 @@
               (/ ($ratio-numerator x) (* y ($ratio-denominator x)))]
              [($exactnum?)
               (when (eq? y 0) (domain-error who y))
+              (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
+             [($inexactnum?)
+              (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
+             [(flonum?) (inexact-exact/ x y)]
+             [else (nonnumber-error who x)])]
+         [(bignum?)
+          (type-case x
+             [(fixnum? bignum?)
+              (integer/ x y)]
+             [(ratnum?)
+              (/ ($ratio-numerator x) (* y ($ratio-denominator x)))]
+             [($exactnum?)
               (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
              [($inexactnum?)
               (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
