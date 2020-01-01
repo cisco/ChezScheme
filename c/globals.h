@@ -135,7 +135,6 @@ EXTERN struct S_G_struct {
     uptr phantom_sizes[static_generation+1];
 
   /* intern.c */
-    iptr *oblist_length_pointer;
     iptr oblist_length;
     iptr oblist_count;
     bucket **oblist;
