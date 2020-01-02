@@ -794,6 +794,10 @@
                 (record-equal? e1 e2 (if (eq? ctxt 'test) 'test 'value))
                 (simple? e1))
            e1]
+          [(and (cp0-constant? (lambda (x) (eq? x #f)) e3)
+                (cp0-constant? (lambda (x) (eq? x #t)) e2)
+                (or (boolean-valued? e1) (eq? ctxt 'test)))
+           (make-nontail ctxt e1)]
           [(nanopass-case (Lsrc Expr) (result-exp e1)
              [(if ,e11 ,[result-exp : e12 -> re12] ,[result-exp : e13 -> re13])
               (if (and (cp0-constant? re12) (cp0-constant? re13))

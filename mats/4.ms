@@ -316,7 +316,7 @@
   (equivalent-expansion? 
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) #t #f)) e1 e2)))
-     '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) e1 e2)))
+     '(if (begin (set! x y) (set! z y) (#2%zero? h)) e1 e2))
 
   (equivalent-expansion? 
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
