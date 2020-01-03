@@ -2411,7 +2411,7 @@
       (let ()
         (define (try-fold-ash-op op ctxt x y)
           (let ([xval (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! x))
-                        [(quote ,d) (and (exact? d) (integer? d) d)]
+                        [(quote ,d) (and (integer? d) (exact? d) d)]
                         [else #f])]
                 [yval (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! y))
                         [(quote ,d) (and (fixnum? d) (fx< -1000 d 1000) d)]
