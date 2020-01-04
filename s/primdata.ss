@@ -180,8 +180,8 @@
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs base)] [flags primitive proc])
-  (eqv? [sig [(ptr ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02 ieee r5rs])
-  (eq? [sig [(ptr ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02 ieee r5rs])
+  (eqv? [sig [(ptr ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02 cptypes2 ieee r5rs])
+  (eq? [sig [(ptr ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02 cptypes2 ieee r5rs])
   (equal? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted mifoldable discard cp02 ieee r5rs])
   (procedure? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs cp02])
   (number? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
@@ -192,8 +192,8 @@
   (real-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (rational-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (integer-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (exact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
-  (inexact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (exact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2 ieee r5rs])
+  (inexact? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2 ieee r5rs])
   (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs])
   (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard]) ; no safeongoodargs because it fails with +inf.0
   ((r6rs: <) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
@@ -288,7 +288,7 @@
   (cddddr [sig [(#15#) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (null? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (list? [sig [(ptr) -> (boolean)]] [flags unrestricted mifoldable discard ieee r5rs])
-  (list [sig [(ptr ...) -> (list)]] [flags unrestricted alloc cp02 ieee r5rs])
+  (list [sig [(ptr ...) -> (list)]] [flags unrestricted alloc cp02 cptypes2 ieee r5rs])
   (length [sig [(list) -> (length)]] [flags mifoldable discard true ieee r5rs])
   (append [sig [() -> (null)] [(list ... ptr) -> (ptr)]] [flags discard ieee r5rs cp02])
   (reverse [sig [(list) -> (list)]] [flags alloc ieee r5rs])
@@ -1580,7 +1580,7 @@
   (ratnum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (read-token [sig [() (textual-input-port) (textual-input-port sfd) -> (symbol ptr maybe-uint maybe-uint)]] [flags])
   (real-time [sig [() -> (uint)]] [flags unrestricted alloc])
-  (record? [sig [(ptr) (ptr rtd) -> (boolean)]] [flags pure mifoldable discard cp02])
+  (record? [sig [(ptr) (ptr rtd) -> (boolean)]] [flags pure mifoldable discard cp02 cptypes2])
   (record-constructor [sig [(sub-ptr) -> (procedure)]] [flags cp02]) ; accepts rtd or rcd
   (record-constructor-descriptor? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02])
   (record-equal-procedure [sig [(record record) -> (maybe-procedure)]] [flags discard])
@@ -1785,7 +1785,7 @@
   ($allocate-thread-parameter [feature pthreads] [flags single-valued alloc])
   ($app [flags])
   ($app/no-inline [flags])
-  ($apply [flags])
+  ($apply [sig [(procedure exact-integer list) -> (ptr ...)]] [flags])
   ($assembly-output [flags single-valued])
   ($as-time-goes-by [flags])
   ($bignum-length [flags single-valued pure true])
@@ -2229,7 +2229,7 @@
   ($real-sym-name [flags single-valued])
   ($recompile-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($recompile-importer-path [flags single-valued])
-  ($record [flags single-valued cp02 unrestricted alloc]) ; first arg should be an rtd, but we don't check
+  ($record [flags single-valued cp02 cptypes2 unrestricted alloc]) ; first arg should be an rtd, but we don't check
   ($record? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($record-cas! [sig [(record sub-index ptr ptr) -> (boolean)]] [flags single-valued])
   ($record-equal-procedure [flags single-valued discard])
@@ -2255,7 +2255,7 @@
   ($sc-put-cte [flags single-valued])
   ($sc-put-property! [flags single-valued])
   ($script [flags single-valued])
-  ($sealed-record? [sig [(ptr rtd) -> (boolean)]] [flags pure mifoldable]) ; first argument may be not a record
+  ($sealed-record? [sig [(ptr rtd) -> (boolean)]] [flags pure mifoldable cptypes2]) ; first argument may be not a record
   ($seginfo-generation [flags single-valued])
   ($seginfo-space [flags single-valued])
   ($set-code-byte! [flags single-valued])

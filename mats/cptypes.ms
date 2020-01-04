@@ -670,6 +670,12 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (number? x) (#2%odd? x)))
          '(lambda (x) (when (number? x) (#3%odd? x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x) (#2%exact? x)))
+    '(lambda (x) (when (number? x) (#3%exact? x))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (#2%exact? x))
+         '(lambda (x) (#3%exact? x))))
 )
 
 (mat cptypes-rest-argument
@@ -685,4 +691,16 @@
   (cptypes/nocp0-equivalent-expansion?
     '((lambda (x . r) (null? r)) 1 2)
     '((lambda (x . r) #f) 1 2))
+)
+
+(mat cptypes-delay
+  (cptypes-equivalent-expansion?
+    '(lambda (b) (map (lambda (x) (box? b)) (unbox b)))
+    '(lambda (b) (map (lambda (x) #t) (unbox b))))
+  (cptypes-equivalent-expansion?
+    '(lambda (b) (list (lambda (x) (box? b)) (unbox b)))
+    '(lambda (b) (list (lambda (x) #t) (unbox b))))
+  (cptypes-equivalent-expansion?
+    '(lambda (b) (list (unbox b) (lambda (x) (box? b))))
+    '(lambda (b) (list (unbox b) (lambda (x) #t))))
 )
