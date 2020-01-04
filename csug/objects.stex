@@ -1211,6 +1211,148 @@ Uncompresses a \var{bytevector} produced by
 as the original given to \scheme{bytevector-compress}.
 
 
+\section{Stencil Vectors}
+
+\index{stencil vectors}Stencil vectors are like vectors, but a stencil
+vector has a mask fixnum that is accessible via
+\scheme{stencil-vector-mask} and that also determines the stencil
+vector's size. Since the size is limited to
+\scheme{(stencil-vector-mask-width)}, which is no more than the number
+of bits in a fixnum, the size of a stencil vector is limited.
+
+A stencil vector provides a more compact representation than a vector
+with one element dedicated to the mask. It also provides more
+efficient functional update through the \scheme{stencil-vector-update}
+function. A stencil vector is useful, for example, to implement
+sparse nodes in a trie.
+
+\index{\scheme{#stencil}}Stencil vectors are written with
+the prefix \scheme{#stencil}, followed by a hexadecimal mask mask in square
+brackets, and followed by a parenthesized sequence of elements.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-mask-width}{\categoryprocedure}{(stencil-vector-mask-width)}
+\returns a fixnum: the number of bits in a stencil vector mask
+\listlibraries
+\endentryheader
+
+\noindent
+The result is always less than \scheme{(fixnum-width)]}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector?}{\categoryprocedure}{(stencil-vector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is a stencil vector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector}{\categoryprocedure}{(stencil-vector \var{mask} \var{obj} \dots)}
+\returns a stencil vector with the given mask and content
+\listlibraries
+\endentryheader
+
+\noindent
+\var{mask} must be a nonnegative fixnum less than
+\scheme{(fxsll 1 (stencil-vector-mask-width))},
+and the number of supplied \var{obj}s must be the
+same as \scheme{(fxpopcount mask)}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-mask}{\categoryprocedure}{(stencil-vector-mask \var{stencil-vector})}
+\formdef{stencil-vector-length}{\categoryprocedure}{(stencil-vector-length \var{stencil-vector})}
+\returns the mask or length (as determined by the mask) of \var{stencil-vector}
+\listlibraries
+\endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-ref}{\categoryprocedure}{(stencil-vector-ref \var{stencil-vector} \var{n})}
+\returns the object at position \var{n} in \var{stencil-vector}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum that is less than the length of \var{stencil-vector}.
+
+Stencil vector elements are accessed by position---unrelated to the
+stencil vector's mask, except that the number of valid positions is
+determined by the mask.
+
+Conceptually, each stensil vector element corresponds to a bit in the
+stencil vector's mask. To convert a a bit position \var{bit} to an
+index, where the lowest set bit corresponds to the first element of
+the stencil vector, use the following calculation:
+
+\scheme{(fxpopcount (fxand (stencil-vector-mask \var{stencil-vector}) (fx- \var{bit} 1)))}
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-set!}{\categoryprocedure}{(stencil-vector-set! \var{stencil-vector} \var{n} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum that is less than the length of \var{stencil-vector}.
+
+Installs \var{obj} at position \var{n} within \var{stencil-vector}.
+See \scheme{stencil-vector-ref} for more information about positions
+in stencil vectors.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-update}{\categoryprocedure}{(stencil-vector-update \var{stencil-vector} \var{remove-bits} \var{add-bits} \var{obj} \dots)}
+\returns a new stencil vector adapted frmo \var{stencil-vector}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{remove-bits} and \var{add-bits} must be nonnegative fixnums, and then must be less
+than \scheme{(fxsll 1 (stencil-vector-mask-width))}. Furthermore:
+
+\begin{itemize}
+
+ \item \var{remove-bits}
+       must have a subset of the bits in the mask of \var{stencil-vector},
+
+  \item \var{add-bits} must have a set of bits that do not overlap the
+        subtraction of \var{remove-bits} from the mask of
+        \var{stencil-vector}, and
+
+ \item the number of supplied \var{obj}s must match \scheme{(fxpopcount add-bits)}.
+
+\end{itemize}
+
+Returns a new stencil vector that has all of the elements of
+\var{stencil-vector}, except the ones identified by the bits in
+\var{remove-bits}. The new stencil vector also has the given \var{obj}s at
+positions determined by \var{add-bits}. Elements copied from \var{stencil-vector}
+to the new vector retain their relative positions corresponding to their
+bits in the \var{stencil-vector} mask. Individual bits in a mask, \var{remove-bits},
+and \var{add-bits} are mapped to element positions as described in the documentation
+of \scheme{stencil-vector-ref}. The mask of the new stencil mask is the mask of
+\var{stencil-vector} minus \var{remove-bits} plus \var{add-bits}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-truncate!}{\categoryprocedure}{(stencil-vector-truncate! \var{stencil-vector} \var{mask})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{mask} must be a nonnegative fixnum that has fewer bits set than in the current mask of \var{stencil-vector}.
+
+Changes the mask of \var{stencil-vector} to \var{mask}, discarding any
+elements of the vector beyond the first \scheme{(fxpopcount \var{mask})} elements.
+There is no requirement that \var{mask} has any bits in common with
+the current mask of \var{stencil-vector}.
+
+
 \section{Boxes\label{SECTBOXES}}
 
 \index{boxes}Boxes are single-cell objects that are primarily useful for providing

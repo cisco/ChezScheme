@@ -1300,3 +1300,153 @@
              (collect 0)
              (eq? g1 (vector-ref vec2 2))))))
 )
+
+(mat stencil-vector
+  (>= (stencil-vector-mask-width) 24)
+  (stencil-vector? (stencil-vector 1 0))
+  (not (stencil-vector? 10))
+
+  (begin
+    (define alphabet-sv (stencil-vector #b10101010101010101010 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j))
+    (define mod-sv (stencil-vector #b1001 'a 'b))
+    (and (stencil-vector? alphabet-sv)
+         (stencil-vector? mod-sv)))
+
+  (error? (stencil-vector 'x))
+  (error? (stencil-vector -1))
+  (error? (stencil-vector 0 'apple))
+  (error? (stencil-vector 3 'apple))
+  (error? (stencil-vector 3 'apple))
+  (error? (stencil-vector (expt 2 (stencil-vector-mask-width)) 'a))
+
+  (error? (stencil-vector-length 3))
+  (error? (stencil-vector-mask 3))
+  (error? (stencil-vector-ref 3 0))
+
+  (eqv? 2 (stencil-vector-length (stencil-vector 3 'apple 'banana)))
+  (eqv? 3 (stencil-vector-mask (stencil-vector 3 'apple 'banana)))
+  (eqv? 2 (stencil-vector-length (stencil-vector 514 'apple 'banana)))
+  (eqv? 514 (stencil-vector-mask (stencil-vector 514 'apple 'banana)))
+  (eqv? 10 (stencil-vector-length (stencil-vector 1023 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j)))
+  (eqv? 1 (stencil-vector-length (stencil-vector (expt 2 (sub1 (stencil-vector-mask-width))) 'a)))
+  (eqv? 1 (stencil-vector-length (stencil-vector (expt 2 (- (stencil-vector-mask-width) 2)) 'a)))
+
+  (error? (stencil-vector-ref (stencil-vector 0) 0))
+  (error? (stencil-vector-ref (stencil-vector 3 'apple 'banana) 2))
+  (error? (stencil-vector-ref (stencil-vector 3 'apple 'banana) -1))
+  (error? (stencil-vector-ref (stencil-vector 3 'apple 'banana) (expt 2 100)))
+  (error? (stencil-vector-ref (stencil-vector 3 'apple 'banana) 1.0))
+
+  (eq? 'a (stencil-vector-ref alphabet-sv 0))
+  (eq? 'f (stencil-vector-ref alphabet-sv 5))
+  (eq? 'j (stencil-vector-ref alphabet-sv 9))
+
+  (error? (stencil-vector-set! (stencil-vector 0) 0 'x))
+  (error? (stencil-vector-set! (stencil-vector 3 'apple 'banana) 2 'x))
+  (error? (stencil-vector-set! (stencil-vector 3 'apple 'banana) -1 'x))
+  (error? (stencil-vector-set! (stencil-vector 3 'apple 'banana) (expt 2 100) 'x))
+  (error? (stencil-vector-set! (stencil-vector 3 'apple 'banana) 1.0 'x))
+
+  (equal? '(ok b) (begin
+                    (stencil-vector-set! mod-sv 0 'ok)
+                    (list (stencil-vector-ref mod-sv 0)
+                          (stencil-vector-ref mod-sv 1))))
+
+  (error? (stencil-vector-update 1 0 1 'z))
+  (error? (stencil-vector-update alphabet-sv 0 2 'z))
+  (error? (stencil-vector-update alphabet-sv 1 0))
+  (error? (stencil-vector-update alphabet-sv 0 1))
+  (error? (stencil-vector-update alphabet-sv 0 1 'a 'b))
+
+  ;; add 1
+  (let ([v (stencil-vector-update alphabet-sv 0 1 'z)])
+    (and (eqv? 11 (stencil-vector-length v))
+         (eq? 'z (stencil-vector-ref v 0))
+         (eq? 'a (stencil-vector-ref v 1))
+         (eq? 'b (stencil-vector-ref v 2))
+         (eq? 'j (stencil-vector-ref v 10))))
+  ;; add 2
+  (let ([v (stencil-vector-update alphabet-sv 0 #b10001 'z 'w)])
+    (and (eqv? 12 (stencil-vector-length v))
+         (eq? 'z (stencil-vector-ref v 0))
+         (eq? 'a (stencil-vector-ref v 1))
+         (eq? 'b (stencil-vector-ref v 2))
+         (eq? 'w (stencil-vector-ref v 3))
+         (eq? 'c (stencil-vector-ref v 4))
+         (eq? 'j (stencil-vector-ref v 11))))
+  ;; remove 1
+  (let ([v (stencil-vector-update alphabet-sv 2 0)])
+    (and (eqv? 9 (stencil-vector-length v))
+         (eq? 'b (stencil-vector-ref v 0))
+         (eq? 'c (stencil-vector-ref v 1))
+         (eq? 'j (stencil-vector-ref v 8))))
+  ;; remove 2
+  (let ([v (stencil-vector-update alphabet-sv #b10000010 0)])
+    (and (eqv? 8 (stencil-vector-length v))
+         (eq? 'b (stencil-vector-ref v 0))
+         (eq? 'c (stencil-vector-ref v 1))
+         (eq? 'e (stencil-vector-ref v 2))
+         (eq? 'j (stencil-vector-ref v 7))))
+  ;; add 2 and remove 2
+  (let ([v (stencil-vector-update alphabet-sv #b10000010 #b10001 'z 'w)])
+    (and (eqv? 10 (stencil-vector-length v))
+         (eq? 'z (stencil-vector-ref v 0))
+         (eq? 'b (stencil-vector-ref v 1))
+         (eq? 'w (stencil-vector-ref v 2))
+         (eq? 'c (stencil-vector-ref v 3))
+         (eq? 'e (stencil-vector-ref v 4))
+         (eq? 'j (stencil-vector-ref v 9))))
+  ;; remove all
+  (eqv? 0 (stencil-vector-length (stencil-vector-update alphabet-sv #b10101010101010101010 0)))
+
+  (error? (stencil-vector-truncate! 1 0))
+  (error? (stencil-vector-truncate! (stencil-vector 0) 1))
+  (error? (stencil-vector-truncate! (stencil-vector 7) 15))
+  (error? (stencil-vector-truncate! (stencil-vector 6) 7))
+  (let ([sv (stencil-vector 7 1 2 3)])
+    (stencil-vector-truncate! sv 3)
+    (and (stencil-vector? sv)
+         (eqv? (stencil-vector-mask sv) 3)
+         (eqv? (stencil-vector-ref sv 0) 1)
+         (eqv? (stencil-vector-ref sv 1) 2)))
+  (let ([sv (stencil-vector 7 1 2 3)])
+    (stencil-vector-truncate! sv 6)
+    (and (stencil-vector? sv)
+         (eqv? (stencil-vector-mask sv) 6)
+         (eqv? (stencil-vector-ref sv 0) 1)
+         (eqv? (stencil-vector-ref sv 1) 2)))
+
+  ;; check fasl:
+  (let ([s (stencil-vector 42 'a 'b 'c)])
+    (define-values (o get) (open-bytevector-output-port))
+    (fasl-write s o)
+    (equal? s (fasl-read (open-bytevector-input-port (get)))))
+   
+  ;; try to check GC interaction
+  (let loop ([n 100000]
+             [v1 (stencil-vector 7 'a 'b 'c)]
+             [v2 (stencil-vector 28 "a" "b" "c")]
+             [v3 (stencil-vector 15 (vector 'x) (vector 'y) (vector 'z)  (vector 'w))])
+    (or (fx= n 0)
+        (and
+         (fx= (stencil-vector-mask v1) 7)
+         (eqv? (stencil-vector-ref v1 1) 'b)
+         (fx= (stencil-vector-mask v2) 28)
+         (equal? (stencil-vector-ref v2 0) "a")
+         (equal? (stencil-vector-ref v2 1) "b")
+         (equal? (stencil-vector-ref v2 2) "c")
+         (fx= (stencil-vector-mask v3) 15)
+         (equal? (stencil-vector-ref v3 0) '#(x))
+         (equal? (stencil-vector-ref v3 1) '#(y))
+         (equal? (stencil-vector-ref v3 2) '#(z))
+         (equal? (stencil-vector-ref v3 3) '#(w))
+         (loop (fx- n 1)
+               (stencil-vector-update
+                (stencil-vector-update v1 3 1 'a)
+                0 2 'b)
+               (stencil-vector-update v2 12 12 (string #\a) (string #\b))
+               (stencil-vector-update
+                (stencil-vector-update v3 6 16 (vector 'extra))
+                16 6 (vector 'y) (vector 'z))))))
+
+  )

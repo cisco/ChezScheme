@@ -581,6 +581,18 @@
          [(1) (#3%fxlogbit1 k n)]
          [else ($oops who "invalid bit value ~s" b)])))
 
+   (set! fxpopcount
+      (lambda (x)
+         (#2%fxpopcount x)))
+
+   (set! fxpopcount32
+      (lambda (x)
+         (#2%fxpopcount32 x)))
+
+   (set! fxpopcount16
+      (lambda (x)
+         (#2%fxpopcount16 x)))
+
    (set! fxeven?
       (lambda (x)
          (#2%fxeven? x)))

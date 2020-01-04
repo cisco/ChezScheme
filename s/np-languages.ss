@@ -573,6 +573,7 @@
   (declare-primitive logor value #t)
   (declare-primitive logxor value #t)
   (declare-primitive lognot value #t)
+  (declare-primitive popcount value #t) ; x86_64 only
   (declare-primitive move value #t)
   (declare-primitive * value #t)
   (declare-primitive */ovfl value #f)

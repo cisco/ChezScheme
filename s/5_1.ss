@@ -136,6 +136,17 @@
                            k
                            (let ([k (e? (vector-ref x i) (vector-ref y i) k)])
                               (and k (f (fx+ i 1) k)))))))))]
+          [(stencil-vector? x)
+           (and (stencil-vector? y)
+             (fx= (stencil-vector-mask x) (stencil-vector-mask y))
+             (let ([n (stencil-vector-length x)])
+                 (if (union-find ht x y)
+                     0
+                     (let f ([i 0] [k (fx- k 1)])
+                       (if (fx= i n)
+                           k
+                           (let ([k (e? (stencil-vector-ref x i) (stencil-vector-ref y i) k)])
+                              (and k (f (fx+ i 1) k))))))))]
           [(string? x) (and (string? y) (string=? x y) k)]
           [(flonum? x) (and (flonum? y) ($fleqv? x y) k)]
           [($inexactnum? x)
@@ -195,6 +206,15 @@
                          k
                          (let ([k (e? (vector-ref x i) (vector-ref y i) k)])
                             (and k (f (fx+ i 1) k))))))))]
+            [(stencil-vector? x)
+             (and (stencil-vector? y)
+               (fx= (stencil-vector-mask x) (stencil-vector-mask y))                  
+               (let ([n (stencil-vector-length x)])
+                 (let f ([i 0] [k k])
+                   (if (fx= i n)
+                       k
+                       (let ([k (e? (stencil-vector-ref x i) (stencil-vector-ref y i) k)])
+                          (and k (f (fx+ i 1) k)))))))]
             [(string? x) (and (string? y) (string=? x y) k)]
             [(flonum? x) (and (flonum? y) ($fleqv? x y) k)]
             [($inexactnum? x)
@@ -252,6 +272,18 @@
                               (vector-ref y i)
                               (fx- k 1))])
                      (and k (f (fx+ i 1) k))))))))]
+      [(stencil-vector? x)
+       (and (stencil-vector? y)
+         (fx= (stencil-vector-mask x) (stencil-vector-mask y))
+         (let ([n (stencil-vector-length x)])
+           (let f ([i 0] [k k])
+             (if (or (fx= i n) (fx<= k 0))
+                 k
+                 (let ([k (precheck?
+                            (stencil-vector-ref x i)
+                            (stencil-vector-ref y i)
+                            (fx- k 1))])
+                   (and k (f (fx+ i 1) k)))))))]
       [(string? x) (and (string? y) (string=? x y) k)]
       [(flonum? x) (and (flonum? y) ($fleqv? x y) k)]
       [($inexactnum? x)

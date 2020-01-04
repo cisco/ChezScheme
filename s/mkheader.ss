@@ -248,6 +248,7 @@
         (deftotypep "Sfxvectorp" ($ mask-fxvector) ($ type-fxvector))
         (deftotypep "Sbytevectorp" ($ mask-bytevector) ($ type-bytevector))
         (deftotypep "Sstringp" ($ mask-string) ($ type-string))
+        (deftotypep "Sstencil_vectorp" ($ mask-stencil-vector) ($ type-stencil-vector))
         (deftotypep "Sbignump" ($ mask-bignum) ($ type-bignum))
         (deftotypep "Sboxp" ($ mask-box) ($ type-box))
         (deftotypep "Sinexactnump" ($ mask-inexactnum) ($ type-inexactnum))
@@ -297,6 +298,12 @@
 
         (defref Sunbox box ref)
   
+        (def "Sstencil_vector_length(x)"
+          (format "Spopcount(((uptr)~a)>>~d)"
+            (access "x" vector type)
+            ($ stencil-vector-mask-offset)))
+        (defref Sstencil_vector_ref vector data)
+        
         (export "iptr" "Sinteger_value" "(ptr)")
         (def "Sunsigned_value(x)" "(uptr)Sinteger_value(x)")
         (export (constant typedef-i32) "Sinteger32_value" "(ptr)")
@@ -845,6 +852,9 @@
 
         (defref BYTEVECTOR_TYPE bytevector type)
         (defref BVIT bytevector data)
+
+        (defref STENVECTTYPE stencil-vector type)
+        (definit INITSTENVECTIT stencil-vector data)
 
         (defref INEXACTNUM_TYPE inexactnum type)
         (defref INEXACTNUM_REAL_PART inexactnum real)

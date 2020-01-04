@@ -19,6 +19,7 @@
 #ifndef WIN32
 #include <sys/wait.h>
 #endif /* WIN32 */
+#include "popcount.h"
 
 #define enable_object_counts do_not_use_enable_object_counts_in_this_file_use_ifdef_ENABLE_OBJECT_COUNTS_instead
 
@@ -390,6 +391,21 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
           copy_ptrs(type_typed_object, p, pp, n);
         /* pad if necessary */
           if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
+      } else if (TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+          iptr len, n;
+          ISPC s;
+          len = Sstencil_vector_length(pp);
+          n = size_stencil_vector(len);
+#ifdef ENABLE_OBJECT_COUNTS
+          S_G.countof[tg][countof_stencil_vector] += 1;
+          S_G.bytesof[tg][countof_stencil_vector] += n;
+#endif /* ENABLE_OBJECT_COUNTS */
+        /* assumes stencil types look like immediate; if not, stencil vectors will need their own space */
+          s = (BACKREFERENCES_ENABLED ? space_impure_typed_object : space_impure);
+          find_room(s, tg, type_typed_object, n, p);
+          copy_ptrs(type_typed_object, p, pp, n);
+        /* pad if necessary */
+          if ((len & 1) == 0) INITSTENVECTIT(p, len) = FIX(0);
       } else if (TYPEP(tf, mask_string, type_string)) {
           iptr n;
           n = size_string(Sstring_length(pp));
@@ -733,6 +749,8 @@ static void sweep(ptr tc, ptr p, IBOOL sweep_pure) {
  /* typed objects */
   } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
     sweep_ptrs(&INITVECTIT(p, 0), Svector_length(p));
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+    sweep_ptrs(&INITVECTIT(p, 0), Sstencil_vector_length(p));
   } else if (TYPEP(tf, mask_string, type_string) || TYPEP(tf, mask_bytevector, type_bytevector) || TYPEP(tf, mask_fxvector, type_fxvector)) {
     /* nothing to sweep */;
   } else if (TYPEP(tf, mask_record, type_record)) {
@@ -828,6 +846,11 @@ static void sweep_in_old(ptr tc, ptr p) {
  /* typed objects */
   } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
     if (scan_ptrs_for_self(&INITVECTIT(p, 0), Svector_length(p), p)) {
+      relocate(&p)
+      return;
+    }
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+    if (scan_ptrs_for_self(&INITSTENVECTIT(p, 0), Sstencil_vector_length(p), p)) {
       relocate(&p)
       return;
     }
@@ -1741,6 +1764,8 @@ static iptr size_object(p) ptr p; {
   /* typed objects */
     } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_vector, type_vector)) {
         return size_vector(Svector_length(p));
+    } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+        return size_vector(Sstencil_vector_length(p));
     } else if (TYPEP(tf, mask_string, type_string)) {
         return size_string(Sstring_length(p));
     } else if (TYPEP(tf, mask_bytevector, type_bytevector)) {
@@ -2503,6 +2528,7 @@ IGEN sweep_dirty_intersecting(ptr lst, ptr *pp, ptr *ppend, IGEN tg, IGEN younge
       } else {
         ptr tf = TYPEFIELD(p);
         if (TYPEP(tf, mask_vector, type_vector)
+            || TYPEP(tf, mask_stencil_vector, type_stencil_vector)
             || TYPEP(tf, mask_box, type_box)
             || ((iptr)tf == type_tlc)) {
           /* impure objects */

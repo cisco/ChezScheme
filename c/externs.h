@@ -82,6 +82,7 @@ extern ptr S_null_immutable_vector PROTO((void));
 extern ptr S_null_immutable_fxvector PROTO((void));
 extern ptr S_null_immutable_bytevector PROTO((void));
 extern ptr S_null_immutable_string PROTO((void));
+extern ptr S_stencil_vector PROTO((uptr mask));
 extern ptr S_record PROTO((iptr n));
 extern ptr S_closure PROTO((ptr cod, iptr n));
 extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,

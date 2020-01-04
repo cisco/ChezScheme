@@ -699,6 +699,9 @@
          (go info op t t y)
          `(set! ,(make-live-info) ,z ,t)))])
 
+  (define-instruction value popcount
+    [(op (z ur) (x ur mem)) `(set! ,(make-live-info) ,z (asm ,info ,asm-popcount ,x))])
+
   (define-instruction value move
     [(op (z mem) (x ur imm32))
      `(set! ,(make-live-info) ,z ,x)]
@@ -997,7 +1000,7 @@
                      asm-logtest asm-fl-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label asm-rp-header
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
-                     asm-fl-cvt asm-fl-store asm-fl-load asm-flt asm-trunc asm-div
+                     asm-fl-cvt asm-fl-store asm-fl-load asm-flt asm-trunc asm-div asm-popcount
                      asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-flop-2 asm-flsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
@@ -1138,6 +1141,8 @@
 
   (define-op locked-cmpxchg (*) locked-cmpxchg-op)
 
+  (define-op popcount (*) popcount-op)
+
   ; also do inc-reg dec-reg
 
   ; the following are forms of the call instruction and push the return address
@@ -1145,7 +1150,7 @@
   #;(define-op bsrl      branch-always-op long #b11101000) ; pc-relative
   (define-op bsr       bsr-op)
 
-  ; the following are forms of the jmp instruction
+  ; the followin<g are forms of the jmp instruction
   (define-op jmp       jump-op #b100) ; reg/mem indirect
   (define-op bra       bra-op)
 
@@ -1577,6 +1582,18 @@
               [3 op-code]
               [0 (fxlogand (ax-ea-reg-code reg) 7)]))))))
 
+  (define popcount-op
+    (lambda (op size dest-reg src-ea code*)
+      (begin
+        (emit-code (op dest-reg src-ea code*)
+          (build byte #xF3)
+          (ax-ea-rex (if (eq? size 'quad) 1 0) src-ea dest-reg size)
+          (build byte #x0F)
+          (build byte #xB8)
+          (ax-ea-modrm-reg src-ea dest-reg)
+          (ax-ea-sib src-ea)
+          (ax-ea-addr-disp src-ea)))))
+
   (define-syntax emit-code
     (lambda (x)
       (define build-maybe-cons*
@@ -1589,6 +1606,25 @@
         [(_ (op opnd ... ?code*) chunk ...)
          (build-maybe-cons* #'(chunk ...)
            #'(aop-cons* `(asm ,op ,opnd ...) ?code*))])))
+
+  (define-syntax emit-literal-code
+    (lambda (x)
+      (syntax-case x ()
+        [(_ (op opnd ... ?code*) hexlike ...)
+         #`(emit-code (op opnd ... ?code*) (encode-hex-like hexlike) ...)])))
+
+  (define-syntax encode-hex-like
+    (lambda (x)
+      (syntax-case x ()
+        [(k hexlike)
+         (let ([n (let ([v (syntax->datum #'hexlike)])
+                    (if (number? v)
+                        ;; parsed as decimal; reparse as hex
+                        (string->number (number->string v) 16)
+                        ;; parsed as ymbol
+                        (string->number (symbol->string v) 16)))])
+           (with-syntax ([n (datum->syntax #'k n)])
+             #`(build byte n)))])))
 
   (define-who ax-size-code
     (lambda (x)
@@ -1946,6 +1982,11 @@
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
         (emit mulsi src1 src0 dest code*))))
+
+  (define asm-popcount
+    (lambda (code* dest src)
+      (Trivit (src)
+        (emit popcount (cons 'reg dest) src code*))))
 
   (define-who asm-addop
     (lambda (op)

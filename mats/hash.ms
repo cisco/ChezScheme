@@ -3828,6 +3828,11 @@
          (exact? hc)
          (>= hc 0)
          (= (string-ci-hash "HelLo") hc)))
+  (let ([hc (equal-hash (stencil-vector 3 'one 'two))])
+    (and (integer? hc)
+         (exact? hc)
+         (>= hc 0)
+         (= (equal-hash (stencil-vector 3 'one 'two)) hc)))
   (let f ([ls (oblist)])
     (define okay?
       (lambda (x)

@@ -2511,6 +2511,7 @@
                                 "apple" 'banana
                                 (make-vfasl-demo 10 "11")
                                 (vector 1 'two "three")
+                                (stencil-vector 30 'one 2.0 0+3i "four")
                                 (box 88)
                                 "" '#() '#vu8() (make-fxvector 0)
                                 (string->immutable-string "") (vector->immutable-vector '#())
@@ -2523,7 +2524,8 @@
                                   (positive? (string-length a)))
                              (and (vector? a)
                                   (positive? (vector-length a)))
-                             (box? a))
+                             (box? a)
+                             (stencil-vector? a))
                          (equal? a b))
                     (and (vfasl-demo? a)
                          (vfasl-demo? b)
@@ -2531,7 +2533,9 @@
                                  (vfasl-demo-x b))
                          (equal? (vfasl-demo-y a)
                                  (vfasl-demo-y b)))
-                    (printf "~s ~s\n" a b)))
+                    (begin
+                      (printf "~s ~s\n" a b)
+                      #f)))
               vfasl-content
               v))
     (compile-to-file (list `(define (vfasled) ',vfasl-content)

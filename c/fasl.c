@@ -178,6 +178,7 @@
 
 #include "system.h"
 #include "zlib.h"
+#include "popcount.h"
 
 #ifdef WIN32
 #include <io.h>
@@ -719,6 +720,15 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               else
                 BYTEVECTOR_TYPE(*x) |= bytevector_immutable_flag;
             }
+            return;
+        }
+        case fasl_type_stencil_vector: {
+            uptr mask; iptr n; ptr *p;
+            mask = uptrin(f);
+            *x = S_stencil_vector(mask);
+            p = &INITSTENVECTIT(*x, 0);
+            n = Spopcount(mask);
+            while (n--) faslin(tc, p++, t, pstrbuf, f);
             return;
         }
         case fasl_type_base_rtd: {

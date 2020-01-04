@@ -15,6 +15,7 @@
  */
 
 #include "system.h"
+#include "popcount.h"
 
 /* locally defined functions */
 static void maybe_fire_collector PROTO((void));
@@ -594,6 +595,19 @@ ptr S_null_immutable_string() {
   find_room(space_new, 0, type_typed_object, size_string(0), v);
   VECTTYPE(v) = (0 << string_length_offset) | type_string | string_immutable_flag;
   return v;
+}
+
+ptr S_stencil_vector(mask) uptr mask; {
+    ptr tc;
+    ptr p; iptr d;
+    iptr n = Spopcount(mask);
+
+    tc = get_thread_context();
+
+    d = size_stencil_vector(n);
+    thread_find_room(tc, type_typed_object, d, p);
+    VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type_stencil_vector;
+    return p;
 }
 
 ptr S_record(n) iptr n; {

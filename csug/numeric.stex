@@ -1376,6 +1376,21 @@ bits in a fixnum, i.e.,
 (fxsra -64 3) ;=> -8
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxpopcount}{\categoryprocedure}{(fxpopcount \var{fixnum} \dots)}
+\formdef{fxpopcount32}{\categoryprocedure}{(fxpopcount32 \var{fixnum} \dots)}
+\formdef{fxpopcount16}{\categoryprocedure}{(fxpopcount16 \var{fixnum} \dots)}
+\returns number of bits set in \var{fixnum}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{fixnum} must be non-negative, and it must have a width of no more than 32 for
+\scheme{fxpopcount32} or no more than 16 for \scheme{fxpopcount16}.
+\var{fixnum} is treated as a two's complement integer, regardless
+of the underlying representation.
+
 
 \section{Random Number Generation\label{SECTNUMERICRANDOM}}
 

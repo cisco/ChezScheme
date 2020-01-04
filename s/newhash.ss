@@ -1064,6 +1064,16 @@ Documentation notes:
                            (let ([i/2 (fxsrl (fx+ i 1) 1)])
                              (let-values ([(hc i^) (f (vector-ref x j) hc i/2)])
                                (g (fx+ j 1) hc (fx+ (fx- i i/2) i^))))))))]
+              [(stencil-vector? x)
+               (let ([n (stencil-vector-length x)] [hc (update hc 517766377)])
+                 (if (fx= n 0)
+                     (values hc i)
+                     (let g ([j 0] [hc hc] [i i])
+                       (if (or (fx= j n) (fx= i 0))
+                           (values hc i)
+                           (let ([i/2 (fxsrl (fx+ i 1) 1)])
+                             (let-values ([(hc i^) (f (stencil-vector-ref x j) hc i/2)])
+                               (g (fx+ j 1) hc (fx+ (fx- i i/2) i^))))))))]
               [(null? x) (values (update hc 496904691) i)]
               [(box? x) (f (unbox x) (update hc 410225874) i)]
               [(symbol? x) (values (update hc (symbol-hash x)) i)]

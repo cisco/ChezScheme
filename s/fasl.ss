@@ -65,6 +65,14 @@
                (bld (vector-ref x i) t a? d)
                (bldvec (fx+ i 1)))))))
 
+(define bld-stencil-vector
+   (lambda (x t a? d)
+      (let ([len (stencil-vector-length x)])
+         (let bldvec ([i 0])
+            (unless (fx= i len)
+               (bld (stencil-vector-ref x i) t a? d)
+               (bldvec (fx+ i 1)))))))
+
 (define bld-record
   (lambda (x t a? d)
     (unless (eq? x #!base-rtd)
@@ -163,6 +171,7 @@
       (cond
         [(pair? x) (bld-graph x t a? d #t bld-pair)]
         [(vector? x) (bld-graph x t a? d #t bld-vector)]
+        [(stencil-vector? x) (bld-graph x t a? d #t bld-stencil-vector)]
         [(or (symbol? x) (string? x)) (bld-graph x t a? d #t bld-simple)]
         [(and (annotation? x) (not a?))
          (bld (annotation-stripped x) t a? d)]
@@ -308,6 +317,16 @@
           (let ([x (bytevector-u8-ref x i)])
             (put-u8 p x)
             (wrf-bytevector-loop (fx+ i 1))))))))
+
+(define wrf-stencil-vector
+   (lambda (x p t a?)
+      (put-u8 p (constant fasl-type-stencil-vector))
+      (put-uptr p (stencil-vector-mask x))
+      (let ([n (stencil-vector-length x)]) 
+         (let wrf-stencil-vector-loop ([i 0])
+            (unless (fx= i n)
+               (wrf (stencil-vector-ref x i) p t a?)
+               (wrf-stencil-vector-loop (fx+ i 1)))))))
 
 ; Written as: fasl-tag rtd field ...
 (module (wrf-record really-wrf-record)
@@ -571,6 +590,7 @@
          [(hashtable? x) ($oops 'fasl-write "invalid fasl object ~s" x)]
          [($record? x) (wrf-graph x p t a? wrf-record)]
          [(vector? x) (wrf-graph x p t a? wrf-vector)]
+         [(stencil-vector? x) (wrf-graph x p t a? wrf-stencil-vector)]
          [(char? x) (wrf-char x p)]
          [(box? x) (wrf-graph x p t a? wrf-box)]
          [(large-integer? x) (wrf-graph x p t a? wrf-large-integer)]

@@ -457,7 +457,7 @@
          (case ((object) 'type)
             [(pair) (ref-list n)]
             [(continuation procedure vector fxvector bytevector string record
-              ftype-struct ftype-union ftype-array ftype-bits)
+              ftype-struct ftype-union ftype-array ftype-bits stencil-vector)
              (ref n)]
             [else (invalid-movement)]))))
 
@@ -496,6 +496,7 @@
          [(vector) vector-dispatch-table]
          [(fxvector) fxvector-dispatch-table]
          [(bytevector) bytevector-dispatch-table]
+         [(stencil-vector) stencil-vector-dispatch-table]
          [(record) record-dispatch-table]
          [(string) string-dispatch-table]
          [(box) box-dispatch-table]
@@ -1009,6 +1010,31 @@
    [("length" . "l")
     "display bytevector length"
     (() (show "   ~d elements" ((object) 'length)))]
+
+   [("ref" . "r")
+    "inspect [nth] element"
+    (() (ref 0))
+    ((n) (ref n))]
+
+   [("show" . "s")
+     "show [n] elements"
+     (() (display-refs ((object) 'length)))
+     ((n)
+      (range-check n ((object) 'length))
+      (display-refs n))]
+
+))
+
+(define stencil-vector-dispatch-table
+ (make-dispatch-table
+
+   [("length" . "l")
+    "display stencil vector length"
+    (() (show "   ~d elements" ((object) 'length)))]
+
+   [("mask" . "m")
+    "display stencil vector mask"
+    (() (show "   #x~x" ((object) 'mask)))]
 
    [("ref" . "r")
     "inspect [nth] element"
@@ -1895,6 +1921,19 @@
         [write (p) (write x p)]
         [print (p) (pretty-print x p)]))
 
+    (define make-stencil-vector-object
+      (make-object-maker stencil-vector (x)
+        [value () x]
+        [length () (stencil-vector-length x)]
+        [mask () (stencil-vector-mask x)]
+        [ref (i)
+          (unless (and (fixnum? i) (fx< -1 i (stencil-vector-length x)))
+            ($oops 'stencil-vector-object "invalid index ~s" i))
+          (make-object (stencil-vector-ref x i))]
+        [size (g) (compute-size x g)]
+        [write (p) (write x p)]
+        [print (p) (pretty-print x p)]))
+
     (define make-phantom-object
       (make-object-maker phantom-bytevector (x)
         [value () x]
@@ -2383,6 +2422,7 @@
           [(vector? x) (make-vector-object x)]
           [(fxvector? x) (make-fxvector-object x)]
           [(bytevector? x) (make-bytevector-object x)]
+          [(stencil-vector? x) (make-stencil-vector-object x)]
           ; ftype-pointer? test must come before record? test
           [($ftype-pointer? x) (make-ftype-pointer-object x)]
           [(or (record? x) (and (eq? (subset-mode) 'system) ($record? x)))
@@ -2587,6 +2627,12 @@
                     ((fx= i n) size)))]
                [(fxvector? x) (align (fx+ (constant header-size-fxvector) (fx* (fxvector-length x) (constant ptr-bytes))))]
                [(bytevector? x) (align (fx+ (constant header-size-bytevector) (bytevector-length x)))]
+               [(stencil-vector? x)
+                (let ([n (stencil-vector-length x)])
+                  (do ([i 0 (fx+ i 1)]
+                       [size (align (fx+ (constant header-size-stencil-vector) (fx* (stencil-vector-length x) (constant ptr-bytes))))
+                         (fx+ size (compute-size (stencil-vector-ref x i)))])
+                    ((fx= i n) size)))]
                [($record? x)
                 (let ([rtd ($record-type-descriptor x)])
                   (fold-left (lambda (size fld)
@@ -2736,7 +2782,7 @@
                               (vector-set! count-vec i (cons 1 size))))]
                        ...))))])))
       (define-counters (type-names type-counts incr!)
-        pair symbol vector fxvector bytevector string box flonum bignum ratnum exactnum
+        pair symbol vector fxvector bytevector stencil-vector string box flonum bignum ratnum exactnum
         inexactnum continuation stack procedure code-object reloc-table port thread tlc
         rtd-counts phantom)
       (define compute-composition!
@@ -2766,6 +2812,14 @@
              (vector-for-each compute-composition! x)]
             [(fxvector? x) (incr! fxvector (align (fx+ (constant header-size-fxvector) (fx* (fxvector-length x) (constant ptr-bytes)))))]
             [(bytevector? x) (incr! bytevector (align (fx+ (constant header-size-bytevector) (bytevector-length x))))]
+            [(stencil-vector? x)
+             (let ([len (stencil-vector-length x)])
+               (incr! stencil-vector (align (fx+ (constant header-size-stencil-vector) (fx* len (constant ptr-bytes)))))
+               (let loop ([i len])
+                 (unless (fx= i 0)
+                   (let ([i (fx- i 1)])
+                     (compute-composition! (stencil-vector-ref x i))
+                     (loop i)))))]
             [($record? x)
              (let ([rtd ($record-type-descriptor x)])
                (let ([p (eq-hashtable-ref rtd-ht rtd #f)] [size (align (rtd-size rtd))])
@@ -2918,6 +2972,12 @@
                            (if (fx= i n)
                                next-proc
                                (construct-proc (vector-ref x i) (f (fx+ i 1))))))]
+                      [(stencil-vector? x)
+                       (let ([n (stencil-vector-length x)])
+                         (let f ([i 0])
+                           (if (fx= i n)
+                               next-proc
+                               (construct-proc (stencil-vector-ref x i) (f (fx+ i 1))))))]
                       [($record? x)
                        (let ([rtd ($record-type-descriptor x)])
                          (construct-proc rtd

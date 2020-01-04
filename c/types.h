@@ -227,6 +227,7 @@ typedef struct _bucket_pointer_list {
 /* size macros for variable-sized objects */
 
 #define size_vector(n) ptr_align(header_size_vector + (n)*ptr_bytes)
+#define size_stencil_vector(n) ptr_align(header_size_stencil_vector + (n)*ptr_bytes)
 #define size_closure(n) ptr_align(header_size_closure + (n)*ptr_bytes)
 #define size_string(n) ptr_align(header_size_string + (n)*string_char_bytes)
 #define size_fxvector(n) ptr_align(header_size_fxvector + (n)*ptr_bytes)

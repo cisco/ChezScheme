@@ -2171,7 +2171,8 @@
         (define-inline-constant-parameter (most-negative-fixnum least-fixnum) (constant most-negative-fixnum))
         (define-inline-constant-parameter (most-positive-fixnum greatest-fixnum) (constant most-positive-fixnum))
         (define-inline-constant-parameter (fixnum-width) (constant fixnum-bits))
-        (define-inline-constant-parameter (virtual-register-count) (constant virtual-register-count)))
+        (define-inline-constant-parameter (virtual-register-count) (constant virtual-register-count))
+        (define-inline-constant-parameter (stencil-vector-mask-width) (constant stencil-vector-mask-bits)))
 
       (define-inline 2 directory-separator?
         [(c) (visit-and-maybe-extract* char? ([dc c])
@@ -2755,6 +2756,9 @@
         (fold (fxlogbit? tfixnum? tfixnum?) boolean? #2%logbit?)
         (fold (fxlogbit0 u<fxwidth-1? tfixnum?) tfixnum? #2%logbit0)
         (fold (fxlogbit1 u<fxwidth-1? tfixnum?) tfixnum? #2%logbit1)
+        (fold (fxpopcount tfixnum?) tfixnum? #2%fxpopcount)
+        (fold (fxpopcount32 tfixnum?) tfixnum? #2%fxpopcount32)
+        (fold (fxpopcount16 tfixnum?) tfixnum? #2%fxpopcount16)
 
         (fold (fxarithmetic-shift tfixnum? s<fxwidth?) tfixnum? #2%bitwise-arithmetic-shift handle-shift)
         (fold (fxarithmetic-shift-left tfixnum? u<fxwidth?) tfixnum? #2%bitwise-arithmetic-shift-left handle-shift)

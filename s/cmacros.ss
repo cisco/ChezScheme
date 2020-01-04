@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050309)
+(define-constant scheme-version #x0905030A)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -455,9 +455,11 @@
 (define-constant fasl-type-immutable-bytevector 39)
 (define-constant fasl-type-immutable-box 40)
 
-(define-constant fasl-type-begin 41)
-(define-constant fasl-type-phantom 42)
-(define-constant fasl-type-uninterned-symbol 43)
+(define-constant fasl-type-stencil-vector 41)
+
+(define-constant fasl-type-begin 42)
+(define-constant fasl-type-phantom 43)
+(define-constant fasl-type-uninterned-symbol 44)
 
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
@@ -695,7 +697,8 @@
 (define-constant countof-guardian 23)
 (define-constant countof-oblist 24)
 (define-constant countof-ephemeron 25)
-(define-constant countof-types 26)
+(define-constant countof-stencil-vector 26)
+(define-constant countof-types 27)
 
 ;;; type-fixnum is assumed to be all zeros by at least by vector, fxvector,
 ;;; and bytevector index checks
@@ -745,7 +748,6 @@
 (define-constant type-string                #b010)
 (define-constant type-fxvector              #b011)
 ; #b100 occupied by vectors on 32-bit machines, unused on 64-bit machines
-; #b101 occupied by type-immutable-bytevector
 (define-constant type-other-number         #b0110) ; bit 3 reset for numbers
 (define-constant type-bignum              #b00110) ; bit 4 reset for bignums
 (define-constant type-positive-bignum    #b000110)
@@ -755,11 +757,12 @@
 (define-constant type-exactnum         #b01010110)
 (define-constant type-box               #b0001110) ; bit 3 set for non-numbers
 (define-constant type-immutable-box    #b10001110) ; low 7 bits match `type-box`
-(define-constant type-port             #b00011110)
+(define-constant type-stencil-vector     #b011110) ; remianing bits for stencil; type looks like immediate
 ; #b00101110 (forward_marker) must not be used
 (define-constant type-code             #b00111110)
+(define-constant type-port             #b11001110)
 (define-constant type-thread           #b01001110)
-(define-constant type-tlc              #b01011110)
+(define-constant type-tlc              #b10111110)
 (define-constant type-rtd-counts       #b01101110)
 (define-constant type-phantom          #b01111110)
 (define-constant type-record                #b111)
@@ -917,6 +920,7 @@
 (define-constant mask-rtd-counts   (constant byte-constant-mask))
 (define-constant mask-record            #b111)
 (define-constant mask-port               #xFF)
+(define-constant mask-stencil-vector     #x3F)
 (define-constant mask-binary-port
   (fxlogor (fxsll (constant port-flag-binary) (constant port-flags-offset))
            (constant mask-port)))
@@ -990,6 +994,10 @@
 (define-constant fxvector-length-factor (expt 2 (constant fxvector-length-offset)))
 (define-constant bytevector-length-factor (expt 2 (constant bytevector-length-offset)))
 (define-constant char-factor          (expt 2 (constant char-data-offset)))
+
+(define-constant stencil-vector-mask-offset  (integer-length (constant mask-stencil-vector)))
+(define-constant stencil-vector-mask-bits    (fx- (constant ptr-bits)
+                                                  (constant stencil-vector-mask-offset)))
 
 ;;; record-datatype must be defined before we include layout.ss
 ;;; (maybe should move into that file??)
@@ -1270,6 +1278,10 @@
    (define-primitive-structure-disps bytevector type-typed-object
      ([iptr type]
       [octet data 0]))])
+
+(define-primitive-structure-disps stencil-vector type-typed-object
+  ([iptr type]
+   [ptr data 0]))
 
 ; WARNING: implementation of real-part and imag-part assumes that
 ; flonums are subobjects of inexactnums.
@@ -2652,6 +2664,9 @@
      (bitwise-bit-set? #f 2 #f #t)
      (fxbit-set? #f 2 #f #t)
      (fxcopy-bit #f 2 #t #t)
+     (fxpopcount #f 1 #t #t)
+     (fxpopcount16 #f 1 #t #t)
+     (fxpopcount32 #f 1 #t #t)
      (reverse #f 1 #f #t)
      (andmap1 #f 2 #f #t)
      (ormap1 #f 2 #f #t)
@@ -2687,6 +2702,8 @@
      (safe-put-u8 #f 2 #f #t)
      (safe-put-char #f 2 #f #t)
      (safe-unread-char #f 2 #f #t)
+     (stencil-vector-mask #f 1 #t #t)
+     (stencil-vector-tag #f 1 #t #t)
      (dorest0 #f 0 #f #t)
      (dorest1 #f 0 #f #t)
      (dorest2 #f 0 #f #t)

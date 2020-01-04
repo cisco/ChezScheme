@@ -15,6 +15,7 @@
  */
 
 #include "system.h"
+#include "popcount.h"
 
 /*
 
@@ -1030,6 +1031,14 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
           copy_ptrs(type_typed_object, p, pp, n);
           /* pad if necessary */
           if ((len & 1) == 0) INITVECTIT(p, len) = FIX(0);
+      } else if (TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+          iptr len, n;
+          len = Sstencil_vector_length(pp);
+          n = size_stencil_vector(len);
+          FIND_ROOM(vfi, vspace_impure, type_typed_object, n, p);
+          copy_ptrs(type_typed_object, p, pp, n);
+          /* pad if necessary */
+          if ((len & 1) == 0) INITSTENVECTIT(p, len) = FIX(0);
       } else if (TYPEP(tf, mask_string, type_string)) {
           iptr n;
           n = size_string(Sstring_length(pp));
@@ -1238,6 +1247,10 @@ static uptr sweep(vfasl_info *vfi, ptr p) {
     uptr len = Svector_length(p);
     sweep_ptrs(vfi, &INITVECTIT(p, 0), len);
     return size_vector(len);
+  } else if (tf = TYPEFIELD(p), TYPEP(tf, mask_stencil_vector, type_stencil_vector)) {
+    uptr len = Sstencil_vector_length(p);
+    sweep_ptrs(vfi, &INITSTENVECTIT(p, 0), len);
+    return size_stencil_vector(len);
   } else if (TYPEP(tf, mask_record, type_record)) {
     return sweep_record(vfi, p);
   } else if (TYPEP(tf, mask_box, type_box)) {

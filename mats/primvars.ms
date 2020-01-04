@@ -473,6 +473,7 @@
               [(uptr) 0 -1 'a (+ *max-uptr 1) #f]
               [(uptr/iptr) -1 'q (+ *max-uptr 1) (- *min-iptr 1) #f]
               [(vector) '#(a) "a" #f]
+              [(stencil-vector) (stencil-vector 7 1 2 3) "a" #f]
               [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who])
             (meta-cond
               [(memq 'pthreads feature*)

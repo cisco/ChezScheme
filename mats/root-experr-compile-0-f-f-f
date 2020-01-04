@@ -1725,6 +1725,19 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for 0".
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for a".
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for (a)".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: #f is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: 1.0 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: 1267650600228229401496703205376 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: -1 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: #f is not a 32-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: 1.0 is not a 32-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: 1267650600228229401496703205376 is not a 32-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount32: -1 is not a 32-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount16: #f is not a 16-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount16: 1.0 is not a 16-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount16: 1267650600228229401496703205376 is not a 16-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount16: 1048576 is not a 16-bit fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount16: -1 is not a 16-bit fixnum".
 5_4.mo:Expected error in mat char=?/char-ci=?: "incorrect argument count in call (char=?)".
 5_4.mo:Expected error in mat char=?/char-ci=?: "char=?: a is not a character".
 5_4.mo:Expected error in mat char=?/char-ci=?: "char=?: a is not a character".
@@ -4068,6 +4081,34 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1267650600228229401496703205376 is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: -1 is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 5 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask x".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask -1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 0 does not match given number of items 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 3 does not match given number of items 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 3 does not match given number of items 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask 288230376151711744".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-length: 3 is not a stencil vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-mask: 3 is not a vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 3 is not a stencil vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index -1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 1267650600228229401496703205376".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 1.0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index -1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 1267650600228229401496703205376".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 1.0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: 1 is not a stencil vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: stencil already has bits in 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: stencil does not have all bits in 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: 1 is not a stencil vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: new mask 1 is larger than old mask 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 7 does not match given number of items 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 6 does not match given number of items 0".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: a is not a string".
 5_7.mo:Expected error in mat gensym: "gensym: #(a b c) is not a string".
