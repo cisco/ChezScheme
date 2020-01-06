@@ -2419,9 +2419,10 @@
             (and xval
                  yval
                  (let ([r (guard (c [#t #f]) (op xval yval))])
-                   (when r
-                     (residualize-seq '() (list x y) ctxt)
-                     `(quote ,r))))))
+                   (cond
+                    [r (residualize-seq '() (list x y) ctxt)
+                       `(quote ,r)]
+                    [else #f])))))
         (define-syntax define-inline-ash-op
           (syntax-rules ()
             [(_ op)
