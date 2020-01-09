@@ -417,6 +417,40 @@ ptr S_close_fd(ptr file, IBOOL gzflag) {
 #define IO_SIZE_T size_t
 #endif /* WIN32 */
 
+int os_read(ptr tc, INT fd, unsigned char *buf, IO_SIZE_T size, int *m) {
+#ifdef WIN32
+  if (fd == 0) {
+
+    // There may be a race condition or other problem with this signal mask.
+    // Originally it was placed deeper down, right next to the win32 API
+    // call, but this failed to mask the signal for some confusing reason.
+
+    if (!SetConsoleCtrlHandler(NULL, TRUE)) {
+      *m = -1;
+      return 1;
+    }
+
+    *m = S_windows_stdin_read(buf, size);
+
+    if (!SetConsoleCtrlHandler(NULL, FALSE))
+      return 1;
+
+    return 0;
+
+  } else
+#endif /* WIN32 */
+  {
+    int flag = 0;
+
+    FD_EINTR_GUARD(*m >= 0 || Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)),
+                   flag,
+                   *m = READ(fd, buf, size));
+
+    return flag;
+  }
+}
+
+
 /* Returns string on error, #!eof on end-of-file and integer-count otherwise */
 ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
   INT saved_errno = 0;
@@ -433,33 +467,20 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
 #endif
 
   LOCKandDEACTIVATE(tc, bv)
-#ifdef WIN32
-  if (!gzflag && fd == 0) {
-    DWORD error_code;
-    SetConsoleCtrlHandler(NULL, TRUE);
-    SetLastError(0);
-    m = _read(0, &BVIT(bv,start), (IO_SIZE_T)count);
-    error_code = GetLastError();
-    SetConsoleCtrlHandler(NULL, FALSE);
-    if (m == 0 && error_code == 0x3e3) {
-      KEYBOARDINTERRUPTPENDING(tc) = Strue;
-      SOMETHINGPENDING(tc) = Strue;
-    }
-  } else
-#endif /* WIN32 */
   {
     if (!gzflag) {
-      FD_EINTR_GUARD(
-        m >= 0 || Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)), flag,
-        m = READ(fd,&BVIT(bv,start),(IO_SIZE_T)count));
+        int len = 0;
+        flag = os_read(tc, fd, &BVIT(bv, start), (IO_SIZE_T)count, &len);
+        m = len;
     } else {
       GZ_EINTR_GUARD(
         1, m >= 0 || Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)),
         flag, gzfile,
         m = S_glzread(gzfile, &BVIT(bv,start), (GZ_IO_SIZE_T)count));
     }
-  }
+
   saved_errno = errno;
+  }
   REACTIVATEandUNLOCK(tc, bv)
 
   if (Sboolean_value(KEYBOARDINTERRUPTPENDING(tc))) {
@@ -535,6 +556,21 @@ ptr S_bytevector_read_nb(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag)
 #endif /* WIN32 */
 }
 
+
+int os_write(INT fd, unsigned char *buf, IO_SIZE_T size) {
+#ifdef WIN32
+
+  if (fd == 1)
+    return S_windows_stdout_write(buf, size);
+
+  else if (fd == 2)
+    return S_windows_stderr_write(buf, size);
+#endif
+
+  return WRITE(fd, buf, size);
+}
+
+
 ptr S_bytevector_write(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
   iptr i, s, c;
   ptr tc = get_thread_context();
@@ -552,6 +588,7 @@ ptr S_bytevector_write(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
   /* if we could know that fd is nonblocking, we wouldn't need to deactivate.
      we could test ioctl, but some other thread could change it before we actually
      get around to writing. */
+
     LOCKandDEACTIVATE(tc, bv)
     if (gzflag) {
      /* strangely, gzwrite returns 0 on error */
@@ -561,7 +598,7 @@ ptr S_bytevector_write(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
         i = S_glzwrite(gzfile, &BVIT(bv,s), (GZ_IO_SIZE_T)cx));
     } else {
       FD_EINTR_GUARD(i >= 0 || Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)),
-                     flag, i = WRITE(fd, &BVIT(bv,s), (IO_SIZE_T)cx));
+                     flag, i = os_write(fd, &BVIT(bv,s), (IO_SIZE_T)cx));
     }
     saved_errno = errno;
     REACTIVATEandUNLOCK(tc, bv)
@@ -616,7 +653,7 @@ ptr S_put_byte(ptr file, INT byte, IBOOL gzflag) {
       i = S_glzwrite(gzfile, buf, 1));
   } else {
     FD_EINTR_GUARD(i >= 0 || Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)),
-                   flag, i = WRITE(fd, buf, 1));
+                   flag, i = os_write(fd, buf, 1));
   }
   saved_errno = errno;
   REACTIVATE(tc)
