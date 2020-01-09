@@ -396,6 +396,14 @@ extern int S_windows_stat64(const char *pathname, struct STATBUF *buffer);
 extern int S_windows_system(const char *command);
 extern int S_windows_unlink(const char *pathname);
 extern char *S_windows_getcwd(char *buffer, int maxlen);
+
+extern int S_windows_stdin_read(unsigned char *buf, int size);
+extern int S_windows_stdout_write(unsigned char *buf, int size);
+extern int S_windows_stderr_write(unsigned char *buf, int size);
+extern int S_windows_console_write_utf8(HANDLE h, unsigned char *b_ptr, int b_n, int *written);
+extern int S_windows_console_read_utf8(HANDLE h, unsigned char *output, int want, int *got);
+
+
 #endif /* WIN32 */
 
 #ifdef FEATURE_EXPEDITOR
