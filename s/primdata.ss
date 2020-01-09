@@ -2227,7 +2227,7 @@
   ($record-cas! [sig [(record sub-index ptr ptr) -> (boolean)]] [flags single-valued])
   ($record-equal-procedure [flags single-valued discard])
   ($record-hash-procedure [flags single-valued discard])
-  ($record-oops [sig [(who sub-ptr rtd) -> (bottom)]] [flags abort-op])
+  ($record-oops [sig [(maybe-who sub-ptr rtd) -> (bottom)]] [flags abort-op])
   ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags single-valued discard cp03])
   ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true])
   ($record-type-descriptor [flags single-valued pure mifoldable discard true])
