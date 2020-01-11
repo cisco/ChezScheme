@@ -1378,9 +1378,9 @@ bits in a fixnum, i.e.,
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{fxpopcount}{\categoryprocedure}{(fxpopcount \var{fixnum} \dots)}
-\formdef{fxpopcount32}{\categoryprocedure}{(fxpopcount32 \var{fixnum} \dots)}
-\formdef{fxpopcount16}{\categoryprocedure}{(fxpopcount16 \var{fixnum} \dots)}
+\formdef{fxpopcount}{\categoryprocedure}{(fxpopcount \var{fixnum})}
+\formdef{fxpopcount32}{\categoryprocedure}{(fxpopcount32 \var{fixnum})}
+\formdef{fxpopcount16}{\categoryprocedure}{(fxpopcount16 \var{fixnum})}
 \returns number of bits set in \var{fixnum}
 \listlibraries
 \endentryheader
@@ -1390,6 +1390,11 @@ bits in a fixnum, i.e.,
 \scheme{fxpopcount32} or no more than 16 for \scheme{fxpopcount16}.
 \var{fixnum} is treated as a two's complement integer, regardless
 of the underlying representation.
+
+See also \scheme{fxbit-count}, which produces the same result as
+\scheme{fxpopcount} for the domain of \scheme{fxpopcount}. Because
+\scheme{fxbit-count} also handles negative arguments, however, it does
+not map as simply to certain processor instructions.
 
 
 \section{Random Number Generation\label{SECTNUMERICRANDOM}}

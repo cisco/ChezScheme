@@ -2489,23 +2489,9 @@
       (make-count-table)))
   (define $fxbit-count
     (lambda (n)
-      (if (fx= n 0)
-          0
-          (constant-case ptr-bits
-            [(64)
-             (fx+ (bytevector-u8-ref count-table (fxlogand n #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 8) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 16) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 24) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 32) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 40) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 48) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 56) #xff)))]
-            [(32)
-             (fx+ (bytevector-u8-ref count-table (fxlogand n #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 8) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 16) #xff))
-                  (bytevector-u8-ref count-table (fxlogand (fxsrl n 24) #xff)))]))))
+      (if (fx< n 0)
+          (fxnot (fxpopcount (fxnot n)))
+          (fxpopcount n))))
   (define $big-bit-count
     (lambda (n)
       (let ([end (fx+ (fx* ($bignum-length n) (constant bigit-bytes)) (constant bignum-data-disp))])
