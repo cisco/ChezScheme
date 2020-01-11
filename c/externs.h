@@ -118,6 +118,9 @@ extern void S_set_code_obj PROTO((char *who, IFASLCODE typ, ptr p, iptr n,
 extern ptr S_get_code_obj PROTO((IFASLCODE typ, ptr p, iptr n, iptr o));
 extern int S_fasl_stream_read PROTO((void *stream, octet *dest, iptr n));
 extern int S_fasl_intern_rtd(ptr *x);
+#ifdef X86_64
+extern void x86_64_set_popcount_present PROTO((ptr code));
+#endif
 
 /* vfasl.c */
 extern ptr S_to_vfasl PROTO((ptr v));

@@ -131,6 +131,8 @@
 (define-hand-coded-library-entry $wrapper-apply)
 (define-hand-coded-library-entry wrapper-apply)
 (define-hand-coded-library-entry arity-wrapper-apply)
+(define-hand-coded-library-entry popcount-slow) ; before fxpopcount use
+(define-hand-coded-library-entry cpu-features)  ; before fxpopcount use
 
 (define $instantiate-code-object ($hand-coded '$instantiate-code-object))
 

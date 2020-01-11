@@ -42,6 +42,10 @@ static void install_library_entry(n, x) ptr n, x; {
         S_G.nonprocedure_code = x;
         S_retrofit_nonprocedure_code();
     }
+#ifdef X86_64
+    if (n == FIX(library_cpu_features))
+      x86_64_set_popcount_present(x);
+#endif
 }
 
 ptr S_lookup_library_entry(n, errorp) iptr n; IBOOL errorp; {

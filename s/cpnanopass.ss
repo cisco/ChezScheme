@@ -995,6 +995,11 @@
       (sealed #t)
       (fields offset))
 
+    (define-record-type info-inline (nongenerative)
+      (parent info)
+      (sealed #t)
+      (fields))
+
     (module ()
       (record-writer (record-type-descriptor info-load)
         (lambda (x p wr)
@@ -5723,7 +5728,8 @@
           (define hand-coded-closure?
             (lambda (name)
               (not (memq name '(nuate nonprocedure-code error-invoke invoke
-                                      $wrapper-apply wrapper-apply arity-wrapper-apply)))))
+                                      $wrapper-apply wrapper-apply arity-wrapper-apply
+                                      popcount-slow cpu-features)))))
           (define-inline 2 $hand-coded
             [(name)
              (nanopass-case (L7 Expr) name
@@ -13384,6 +13390,32 @@
                        (in %ac0 %ac1 scheme-args)
                        (out %cp %xp %yp %ts %td extra-regs))
                     (goto ,Lexit))))]
+           [(popcount-slow)
+            `(lambda ,(make-info "popcount-slow" '()) 0 ()
+               ,(constant-case architecture
+                  [(x86_64)
+                   `(seq
+                     (set! ,%rax (inline ,(make-info-inline) ,%popcount ,%rdi))
+                     (asm-c-return ,null-info ,%rdi ,%rax))]
+                  [else
+                   ;; Generate anything, since this should not get called
+                   `(seq
+                     (set! ,%ac0 (immediate 0))
+                     (jump ,%ref-ret (,%ac0)))]))]
+           [(cpu-features)
+            `(lambda ,(make-info "cpu-features" '()) 0 ()
+               ,(constant-case architecture
+                  [(x86_64)
+                    (%seq
+                      (set! ,%rdi ,%rbx) ; %rbx must be preserved
+                      (set! ,%rax (inline ,(make-info-kill* (reg-list %rbx %rcx %rdx)) ,%cpuid))
+                      (set! ,%rbx ,%rdi)
+                      (asm-c-return ,null-info ,%rax ,%rbx))]
+                  [else
+                   ;; Generate anything, since this should not get called
+                   `(seq
+                     (set! ,%ac0 (immediate 0))
+                     (jump ,%ref-ret (,%ac0)))]))]
            [else ($oops who "unrecognized hand-coded name ~s" sym)])]))
 
     (define-pass np-expose-allocation-pointer : L13.5 (ir) -> L14 ()

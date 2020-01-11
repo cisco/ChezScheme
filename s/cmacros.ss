@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905030A)
+(define-constant scheme-version #x0905030B)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -500,7 +500,7 @@
   (sparc reloc-sparcabs reloc-sparcrel)
   (sparc64 reloc-sparc64abs reloc-sparc64rel)
   (ppc reloc-ppccall reloc-ppcload)
-  (x86_64 reloc-x86_64-call reloc-x86_64-jump)
+  (x86_64 reloc-x86_64-call reloc-x86_64-jump reloc-x86_64-popcount)
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump))
 
@@ -2716,6 +2716,8 @@
      ($wrapper-apply #f 0 #f #f)
      (wrapper-apply #f 0 #f #f)
      (arity-wrapper-apply #f 0 #f #f)
+     (popcount-slow #f 0 #f #t)
+     (cpu-features #f 0 #f #t)
   ))
 
 (let ()

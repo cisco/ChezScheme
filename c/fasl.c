@@ -241,6 +241,7 @@ static uptr ppc32_get_jump PROTO((void *address));
 #ifdef X86_64
 static void x86_64_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr x86_64_get_jump PROTO((void *address));
+static void x86_64_set_popcount PROTO((void *address, uptr item));
 #endif /* X86_64 */
 #ifdef SPARC64
 static INT extract_reg_from_sethi PROTO((void *address));
@@ -1293,6 +1294,9 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
         case reloc_x86_64_call:
             x86_64_set_jump(address, item, 1);
             break;
+        case reloc_x86_64_popcount:
+            x86_64_set_popcount(address, item);
+            break;
 #endif /* X86_64 */
 #ifdef SPARC64
         case reloc_sparc64abs:
@@ -1363,6 +1367,9 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
         case reloc_x86_64_jump:
         case reloc_x86_64_call:
             item = x86_64_get_jump(address);
+            break;
+        case reloc_x86_64_popcount:
+            item = (uptr)Svector_ref(S_G.library_entry_vector, library_popcount_slow) + o;
             break;
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -1509,18 +1516,20 @@ static uptr ppc32_get_jump(void *address) {
 #endif /* PPC32 */
 
 #ifdef X86_64
+
 static void x86_64_set_jump(void *address, uptr item, IBOOL callp) {
   I64 disp = (I64)item - ((I64)address + 5); /* 5 = size of call instruction */
   if ((I32)disp == disp) {
     *(octet *)address = callp ? 0xE8 : 0xE9;  /* call or jmp disp32 opcode */
     *(I32 *)((uptr)address + 1) = (I32)disp;
-    *((octet *)address + 5) = 0x90; /* nop */
-    *((octet *)address + 6) = 0x90; /* nop */
-    *((octet *)address + 7) = 0x90; /* nop */
-    *((octet *)address + 8) = 0x90; /* nop */
-    *((octet *)address + 9) = 0x90; /* nop */
-    *((octet *)address + 10) = 0x90; /* nop */
-    *((octet *)address + 11) = 0x90; /* nop */
+    /* 7-byte nop: */
+    *((octet *)address + 5) = 0x0F;
+    *((octet *)address + 6) = 0x1F;
+    *((octet *)address + 7) = 0x80;
+    *((octet *)address + 8) = 0x00;
+    *((octet *)address + 9) = 0x00;
+    *((octet *)address + 10) = 0x00;
+    *((octet *)address + 11) = 0x00;
   } else {
     *(octet *)address = 0x48; /* REX w/REX.w set */
     *((octet *)address + 1)= 0xB8;  /* MOV imm64 to RAX */
@@ -1538,6 +1547,36 @@ static uptr x86_64_get_jump(void *address) {
    /* must be short form: call/jmp */
     return ((uptr)address + 5) + *(I32 *)((uptr)address + 1);
 }
+
+static int popcount_present;
+
+static void x86_64_set_popcount(void *address, uptr item) {
+  if (!popcount_present) {
+    x86_64_set_jump(address, item, 1);
+  } else {
+    *((octet *)address + 0) = 0x48; /* REX */
+    *((octet *)address + 1) = 0x31; /* XOR RAX, RAX - avoid false dependency */
+    *((octet *)address + 2) = 0xc0;
+    *((octet *)address + 3) = 0xF3;
+    *((octet *)address + 4) = 0x48; /* REX */
+    *((octet *)address + 5) = 0x0F; /* POPCNT */
+    *((octet *)address + 6) = 0xB8;
+    *((octet *)address + 7) = 0xC7; /* RDI -> RAX */
+    /* 4-byte nop: */
+    *((octet *)address + 8) = 0x0F;
+    *((octet *)address + 9) = 0x1F;
+    *((octet *)address + 10) = 0x40;
+    *((octet *)address + 11) = 0x00;
+  }
+}
+
+void x86_64_set_popcount_present(ptr code) {
+  /* cpu_features returns ECX after CPUID for function 1 */
+  int (*cpu_features)() = (int (*)())((uptr)code + code_data_disp);
+  if (cpu_features() & (1 << 23))
+    popcount_present = 1;
+}
+
 #endif /* X86_64 */
 
 #ifdef SPARC64

@@ -1027,6 +1027,10 @@
              (libspec-index (lookup-libspec nonprocedure-code)))
         (def "library_dounderflow"
              (libspec-index (lookup-libspec dounderflow)))
+        (def "library_popcount_slow"
+             (libspec-index (lookup-libspec popcount-slow)))
+        (def "library_cpu_features"
+             (libspec-index (lookup-libspec cpu-features)))
 
       )))
 )

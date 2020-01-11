@@ -204,6 +204,10 @@
                               (let ([a1 (fx- a 12)] [x* (cons (mkcode x) x*)])
                                 (let ([r ($reloc (constant reloc-x86_64-call) n (fx- a1 ra))])
                                   (mkc0 (cdr c*) a (cons r r*) a1 x*)))]
+                             [(x86_64-popcount) (n x)
+                              (let ([a1 (fx- a 12)] [x* (cons (mkcode x) x*)])
+                                (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
+                                  (mkc0 (cdr c*) a (cons r r*) a1 x*)))]
                              [else (c-assembler-output-error c)])]
                           [else (c-assembler-output-error c)])]))))
              p))]
@@ -258,7 +262,7 @@
                              [else (void)])]
                           [(x86_64)
                            (record-case x
-                             [(x86_64-jump x86_64-call) (n x) (build x d)]
+                             [(x86_64-jump x86_64-call x86_64-popcount) (n x) (build x d)]
                              [else (void)])]
                           [(arm32)
                            (record-case x
@@ -393,6 +397,10 @@
                         [(x86_64-call) (n x)
                          (let ([a1 (fx- a 12)]) ; 10-byte moviq followed by 2-byte call
                            (let ([r ($reloc (constant reloc-x86_64-call) n (fx- a1 ra))])
+                             (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                        [(x86_64-popcount) (n x)
+                         (let ([a1 (fx- a 12)]) ; like a call, for worst case
+                           (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
                              (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                         [else (c-assembler-output-error c)])]
                      [else (c-assembler-output-error c)])]))))]))
