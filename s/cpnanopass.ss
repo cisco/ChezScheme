@@ -13396,7 +13396,7 @@
                   [(x86_64)
                    `(seq
                      (set! ,%rax (inline ,(make-info-inline) ,%popcount ,%rdi))
-                     (asm-c-return ,null-info ,%rdi ,%rax))]
+                     (asm-c-return ,null-info ,%rax))]
                   [else
                    ;; Generate anything, since this should not get called
                    `(seq
@@ -13407,9 +13407,9 @@
                ,(constant-case architecture
                   [(x86_64)
                     (%seq
-                      (set! ,%rdi ,%rbx) ; %rbx must be preserved
+                      (set! ,%r8 ,%rbx) ; %rbx must be preserved
                       (set! ,%rax (inline ,(make-info-kill* (reg-list %rbx %rcx %rdx)) ,%cpuid))
-                      (set! ,%rbx ,%rdi)
+                      (set! ,%rbx ,%r8)
                       (asm-c-return ,null-info ,%rax ,%rbx))]
                   [else
                    ;; Generate anything, since this should not get called

@@ -1561,7 +1561,7 @@ static void x86_64_set_popcount(void *address, uptr item) {
     *((octet *)address + 4) = 0x48; /* REX */
     *((octet *)address + 5) = 0x0F; /* POPCNT */
     *((octet *)address + 6) = 0xB8;
-    *((octet *)address + 7) = 0xC7; /* RDI -> RAX */
+    *((octet *)address + 7) = 0xC1; /* RCX -> RAX */
     /* 4-byte nop: */
     *((octet *)address + 8) = 0x0F;
     *((octet *)address + 9) = 0x1F;
