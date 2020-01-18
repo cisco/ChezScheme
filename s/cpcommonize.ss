@@ -113,8 +113,8 @@
          (values `(record-set! ,rtd ,type ,index ,e1 ,e2) (fx+ size1 size2 1))]
         [(record ,rtd ,[rtd-expr size] ,[e* size*] ...)
          (values `(record ,rtd ,rtd-expr ,e* ...) (apply fx+ size size*))]
-        [(cte-optimization-loc ,box ,[e size])
-         (values `(cte-optimization-loc ,box ,e) size)]
+        [(cte-optimization-loc ,box ,[e size] ,exts)
+         (values `(cte-optimization-loc ,box ,e ,exts) size)]
         [(immutable-list (,[e* size*] ...) ,[e size])
          (values `(immutable-list (,e* ...) ,e) (apply fx+ size size*))]
         [(quote ,d) (values `(quote ,d) 1)]
@@ -398,11 +398,11 @@
                                                        (same-type? result-type1 result-type2)
                                                        `(fcallable (,conv1* ...) ,(f e1 e2) (,arg-type1* ...) ,result-type1))]
                                                  [else #f])]
-                                              [(cte-optimization-loc ,box1 ,e1)
+                                              [(cte-optimization-loc ,box1 ,e1 ,exts1)
                                                (nanopass-case (Lcommonize1 Expr) e2
-                                                 [(cte-optimization-loc ,box2 ,e2)
+                                                 [(cte-optimization-loc ,box2 ,e2 ,exts2)
                                                   (and (eq? box1 box2)
-                                                       `(cte-optimization-loc ,box1 ,(f e1 e2)))]
+                                                       `(cte-optimization-loc ,box1 ,(f e1 e2) ,exts1))]
                                                  [else #f])]
                                               [else (sorry! who "unhandled record ~s" e1)])])
                                         (return (iffalse #f (parameterize ([print-level 3] [print-length 5]) (printf "unify failed for ~s and ~s (call-position ~s)\n" e1 e2 call-position?))) '()))]))

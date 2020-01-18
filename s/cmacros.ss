@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905030C)
+(define-constant scheme-version #x0905030D)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1660,7 +1660,12 @@
   (boolean-valued                #b0010000000)
   (single-valued-known           #b0100000000)
   (single-valued                 #b1000000000)
-)
+  )
+
+(define-flags preinfo-call-mask
+  (unchecked                    #b01)
+  (no-inline                    #b10)
+  )
 
 (define-syntax define-flag-field
   (lambda (exp)

@@ -382,8 +382,8 @@ Handling letrec and letrec*
       [,pr (values pr #t)]
       [(moi) (values ir #t)]
       [(pariah) (values ir #t)]
-      [(cte-optimization-loc ,box ,[e pure?])
-       (values `(cte-optimization-loc ,box ,e) pure?)]
+      [(cte-optimization-loc ,box ,[e pure?] ,exts)
+       (values `(cte-optimization-loc ,box ,e ,exts) pure?)]
       [(profile ,src) (values ir #f)]
       [else (sorry! who "unhandled record ~s" ir)])
     (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()

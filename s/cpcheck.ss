@@ -208,7 +208,7 @@
                         ,(map (lambda (arg) (cond [(eqv? arg 0) `(quote 0)] [else arg]))
                            (make-record-call-args fld* (rtd-size rtd) e*))
                         ...)))))))]
-      [(cte-optimization-loc ,box ,[e #f -> e]) e]
+      [(cte-optimization-loc ,box ,[e #f -> e] ,exts) e]
       [(immutable-list (,e* ...) ,[e]) e]
       [(moi) ir]
       [(pariah) ir]

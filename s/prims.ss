@@ -369,6 +369,10 @@
   (lambda (f . args)
     (#2%apply f args)))
 
+(define $app/no-inline
+  (lambda (f . args)
+    (#2%apply f args)))
+
 (define call-with-values
   (lambda (producer consumer)
     (unless (procedure? producer)

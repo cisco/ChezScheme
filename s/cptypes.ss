@@ -1059,8 +1059,8 @@ Notes:
                ret types #f #f)]
       [(moi) (values ir #f types #f #f)]
       [(pariah) (values ir void-rec types #f #f)]
-      [(cte-optimization-loc ,box ,[e 'value types -> e ret types t-types f-types])
-       (values `(cte-optimization-loc ,box ,e)
+      [(cte-optimization-loc ,box ,[e 'value types -> e ret types t-types f-types] ,exts)
+       (values `(cte-optimization-loc ,box ,e ,exts)
                ret types #f #f)]
       [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) (values ir #f types #f #f)]

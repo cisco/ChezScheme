@@ -18,7 +18,7 @@
          sorry! make-preinfo preinfo? preinfo-lambda? preinfo-sexpr preinfo-sexpr-set! preinfo-src
          make-preinfo-lambda preinfo-lambda-name preinfo-lambda-name-set! preinfo-lambda-flags
          preinfo-lambda-flags-set! preinfo-lambda-libspec
-         make-preinfo-call preinfo-call? preinfo-call-check?
+         make-preinfo-call preinfo-call? preinfo-call-flags preinfo-call-check? preinfo-call-can-inline?
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
          target-fixnum? target-bignum?)
@@ -185,17 +185,23 @@
           [(src sexpr libspec name flags) ((pargs->new src sexpr) libspec name flags)]))))
 
   (define-record-type preinfo-call
-    (nongenerative #{preinfo-call e23pkvo5btgapnzomqgegm-7})
+    (nongenerative #{preinfo-call e23pkvo5btgapnzomqgegm-8})
     (parent preinfo)
     (sealed #t)
-    (fields check?)
+    (fields flags)
     (protocol
       (lambda (pargs->new)
         (case-lambda
-          [() ((pargs->new) #t)]
-          [(src) ((pargs->new src) #t)]
-          [(src sexpr) ((pargs->new src sexpr) #t)]
-          [(src sexpr check?) ((pargs->new src sexpr) check?)]))))
+          [() ((pargs->new) (preinfo-call-mask))]
+          [(src) ((pargs->new src) (preinfo-call-mask))]
+          [(src sexpr) ((pargs->new src sexpr) (preinfo-call-mask))]
+          [(src sexpr flags) ((pargs->new src sexpr) flags)]))))
+
+  (define (preinfo-call-check? preinfo)
+    (not (all-set? (preinfo-call-mask unchecked) (preinfo-call-flags preinfo))))
+
+  (define (preinfo-call-can-inline? preinfo)
+    (not (all-set? (preinfo-call-mask no-inline) (preinfo-call-flags preinfo))))
 
   ; language of foreign types
   (define-language Ltype 
@@ -242,7 +248,8 @@
       (convention (conv))
       (maybe-string (name))
       (symbol (sym type))
-      (primref (pr)))
+      (primref (pr))
+      (list (exts)))
     (Expr (e body rtd-expr)
       pr
       (moi)
@@ -262,7 +269,7 @@
       (record rtd rtd-expr e* ...)
       (record-ref rtd type index e)
       (record-set! rtd type index e1 e2)
-      (cte-optimization-loc box e)
+      (cte-optimization-loc box e exts)
       (foreign (conv* ...) name e (arg-type* ...) result-type)
       (fcallable (conv* ...) e (arg-type* ...) result-type)
       (profile src)                                         => (profile)

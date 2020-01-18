@@ -878,15 +878,24 @@
             ($unbound-object? obj)
             (record-type-descriptor? obj))))
 
-    (define externally-inlinable?
-      (lambda (clause)
+    ;; Returns #f if the clause is not externally inlinable
+    (define externally-inlinable
+      (lambda (clause exts)
         (call/cc
-          (lambda (exit)
+         (lambda (exit)
             (define bump!
               (let ([size 0])
                 (lambda ()
                   (set! size (fx+ size 1))
                   (when (fx> size score-limit) (exit #f)))))
+            (define find-ext
+              (lambda (x)
+                (let loop ([exts exts])
+                  (cond
+                   [(null? exts) #f]
+                   [(eq? (prelex-name x) (prelex-name (caar exts)))
+                    (cdar exts)]
+                   [else (loop (cdr exts))]))))
             (define (ids->do-clause ids)
               (rec do-clause
                 (lambda (clause)
@@ -894,58 +903,72 @@
                     (rec do-expr
                       (lambda (e)
                         (nanopass-case (Lsrc Expr) e
-                          [(quote ,d) (if (okay-to-copy? d) (bump!) (exit #f))]
-                          [(moi) (bump!)]
-                          [,pr (bump!)]
-                          [(ref ,maybe-src ,x) (unless (memq x ids) (exit #f)) (bump!)]
-                          [(seq ,[do-expr : e1] ,[do-expr : e2]) (void)]
-                          [(if ,[do-expr : e1] ,[do-expr : e2] ,[do-expr : e3]) (void)]
+                          [(quote ,d) (if (okay-to-copy? d) (begin (bump!) e) (exit #f))]
+                          [(moi) (bump!) e]
+                          [,pr (bump!) e]
+                          [(ref ,maybe-src ,x) (cond
+                                                [(memq x ids) (bump!) e]
+                                                [(find-ext x)
+                                                 => (lambda (label)
+                                                      (bump!)
+                                                      (let ([preinfo (make-preinfo-call #f #f (preinfo-call-mask unchecked no-inline))])
+                                                        (build-primcall preinfo 3 '$top-level-value (list `(quote ,label)))))]
+                                                [else
+                                                 (exit #f)])]
+                          [(seq ,[do-expr : e1] ,[do-expr : e2]) `(seq ,e1 ,e2)]
+                          [(if ,[do-expr : e1] ,[do-expr : e2] ,[do-expr : e3]) `(if ,e1 ,e2 ,e3)]
                           [(set! ,maybe-src ,x ,e)
                            (unless (memq x ids) (exit #f))
                            (bump!)
                            (do-expr e)]
                           [(call ,preinfo ,e ,e* ...)
                            ; reject calls to gensyms, since they might represent library exports,
-                           ; and we have no way to set up the required invoke dependencies
+                           ; and we have no way to set up the required invoke dependencies, unless
+                           ; we're not emiting invoke dependencies anyway
                            (when (and (nanopass-case (Lsrc Expr) e
                                         [,pr (eq? (primref-name pr) '$top-level-value)]
                                         [else #f])
                                       (= (length e*) 1)
-                                      (cp0-constant? gensym? (car e*)))
+                                      (cp0-constant? gensym? (car e*))
+                                      (not (expand-omit-library-invocations)))
                              (exit #f))
                            (bump!)
-                           (do-expr e)
-                           (for-each do-expr e*)]
+                           `(call ,preinfo ,(do-expr e) ,(map do-expr e*) ...)]
                           [(case-lambda ,preinfo ,cl* ...)
                            (bump!)
-                           (for-each (ids->do-clause ids) cl*)]
+                           `(case-lambda ,preinfo ,(map (ids->do-clause ids) cl*) ...)]
                           [(letrec ([,x* ,e*] ...) ,body)
                            (bump!)
                            (safe-assert (andmap (lambda (x) (not (prelex-operand x))) x*))
                            (let ([do-expr (ids->do-expr (append x* ids))])
-                             (for-each do-expr e*)
-                             (do-expr body))]
+                             `(letrec ([,x* ,(map do-expr e*)] ...) ,(do-expr body)))]
                           [(letrec* ([,x* ,e*] ...) ,body)
                            (bump!)
                            (safe-assert (andmap (lambda (x) (not (prelex-operand x))) x*))
                            (let ([do-expr (ids->do-expr (append x* ids))])
-                             (for-each do-expr e*)
-                             (do-expr body))]
-                          [(record-type ,rtd ,[do-expr : e]) (void)]
-                          [(record-cd ,rcd ,rtd-expr ,[do-expr : e]) (void)]
-                          [(record-ref ,rtd ,type ,index ,[do-expr : e]) (bump!)]
-                          [(record-set! ,rtd ,type ,index ,[do-expr : e1] ,[do-expr : e2]) (bump!)]
-                          [(record ,rtd ,[do-expr : rtd-expr] ,[do-expr : e*] ...) (bump!)]
-                          [(immutable-list (,[e*] ...) ,[e]) (void)]
-                          [(pariah) (void)]
-                          [(profile ,src) (void)]
+                             `(letrec* ([,x* ,(map do-expr e*)] ...) ,(do-expr body)))]
+                          [(record-type ,rtd ,[do-expr : e]) `(record-type ,rtd ,e)]
+                          [(record-cd ,rcd ,rtd-expr ,[do-expr : e]) `(record-cd ,rcd ,rtd-expr ,e)]
+                          [(record-ref ,rtd ,type ,index ,[do-expr : e])
+                           (bump!)
+                           `(record-ref ,rtd ,type ,index ,e)]
+                          [(record-set! ,rtd ,type ,index ,[do-expr : e1] ,[do-expr : e2])
+                           (bump!)
+                           `(record-set! ,rtd ,type ,index ,e1 ,e2)]
+                          [(record ,rtd ,[do-expr : rtd-expr] ,[do-expr : e*] ...)
+                           (bump!)
+                           `(record ,rtd ,rtd-expr ,e* ...)]
+                          [(immutable-list (,[e*] ...) ,[e])
+                           `(immutable-list (,e* ...) ,e)]
+                          [(pariah) e]
+                          [(profile ,src) e]
                           [else (exit #f)]))))
                   (nanopass-case (Lsrc CaseLambdaClause) clause
                     [(clause (,x* ...) ,interface ,body)
                      (safe-assert (andmap (lambda (x) (not (prelex-operand x))) x*))
-                     ((ids->do-expr (append x* ids)) body)]))))
-            ((ids->do-clause '()) clause)
-            #t))))
+                     (with-output-language (Lsrc CaseLambdaClause)
+                       `(clause (,x* ...) ,interface ,((ids->do-expr (append x* ids)) body)))]))))
+            ((ids->do-clause '()) clause)))))
 
     (module (pure? ivory? ivory1? simple? simple1? simple/profile? simple/profile1? boolean-valued?
                    single-valued? single-valued single-valued-join single-valued-reduce?
@@ -1042,7 +1065,7 @@
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap pure1? e*) (pure? body)))]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap pure1? e*) (pure? e)))]
               [(profile ,src) #t]
-              [(cte-optimization-loc ,box ,e) (memoize (pure? e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (pure? e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (pure1? e))]
               [(pariah) #t]
@@ -1106,7 +1129,7 @@
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap ivory1? e*) (ivory? body)))]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap ivory1? e*) (ivory? e)))]
               [(profile ,src) #t]
-              [(cte-optimization-loc ,box ,e) (memoize (ivory? e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (ivory? e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (ivory1? e))]
               [(pariah) #t]
@@ -1156,7 +1179,7 @@
               [(record ,rtd ,rtd-expr ,e* ...) (memoize (and (simple1? rtd-expr) (andmap simple1? e*)))]
               [(pariah) #f]
               [(profile ,src) #f]
-              [(cte-optimization-loc ,box ,e) (memoize (simple? e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (simple? e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (simple1? e))]
               [else ($oops who "unrecognized record ~s" e)]))))
@@ -1207,7 +1230,7 @@
               [(record ,rtd ,rtd-expr ,e* ...) (memoize (and (simple/profile1? rtd-expr) (andmap simple/profile1? e*)))]
               [(pariah) #t]
               [(profile ,src) #t]
-              [(cte-optimization-loc ,box ,e) (memoize (simple/profile? e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (simple/profile? e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) (memoize (simple/profile1? e))]
               [else ($oops who "unrecognized record ~s" e)]))))
@@ -1270,7 +1293,7 @@
               [(record-set! ,rtd ,type ,index ,e1 ,e2) #f]
               [(record ,rtd ,rtd-expr ,e* ...) #f]
               [(immutable-list (,e* ...) ,e) #f]
-              [(cte-optimization-loc ,box ,e) (memoize (boolean-valued? e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (boolean-valued? e))]
               [(profile ,src) #f]
               [(set! ,maybe-src ,x ,e) #f]
               [(moi) #f]
@@ -1341,7 +1364,7 @@
               [(record ,rtd ,rtd-expr ,e* ...) #t]
               [(pariah) #t]
               [(profile ,src) #t]
-              [(cte-optimization-loc ,box ,e) (memoize (single-valued e))]
+              [(cte-optimization-loc ,box ,e ,exts) (memoize (single-valued e))]
               [(moi) #t]
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
               [else ($oops who "unrecognized record ~s" e)]))))
@@ -1807,7 +1830,9 @@
              (context-case ctxt
                [(test) true-rec]
                [(app)
-                (with-values (find-lambda-clause rhs ctxt)
+                (with-values (if (preinfo-call-can-inline? (app-preinfo ctxt))
+                                 (find-lambda-clause rhs ctxt)
+                                 (values))
                   (case-lambda
                     [(ids body)
                      (let ([limit (if (passive-scorer? sc)
@@ -2906,6 +2931,7 @@
            [(quote ,d)
             (cond
               [(and (symbol? d) (okay-to-handle?)
+                    (preinfo-call-can-inline? (app-preinfo ctxt)) ; $top-level-value may be marked by previous inline
                     (assq ($target-machine) ($cte-optimization-info d))) =>
                (lambda (as)
                  (let ([opt (cdr as)])
@@ -2922,8 +2948,24 @@
                         ; reprocess to complete inlining done in the same cp0 pass and, more
                         ; importantly, to rewrite any prelexes so multiple call sites don't
                         ; result in multiple bindings for the same prelexes
-                        [(app) (residualize-seq '() (list x) ctxt)
-                               (cp0 opt (app-ctxt ctxt) empty-env sc wd (app-name ctxt) moi)]
+                        [(app)
+                         (and
+                          ;; Check that enclosing call allows inlining, which is a
+                          ;; separate specification from the nested `$top-level-value` call:
+                          (preinfo-call-can-inline? (app-preinfo (app-ctxt ctxt)))
+                          ;; The `case-lambda` form for inlining may have fewer cases
+                          ;; than the actual binding, so only try to inline if there's
+                          ;; a matching clause
+                          (let ([n (length (app-opnds (app-ctxt ctxt)))])
+                            (cond
+                             [(ormap (lambda (cl)
+                                       (nanopass-case (Lsrc CaseLambdaClause) cl
+                                         [(clause (,x* ...) ,interface ,body)
+                                          (= n interface)]))
+                                     cl*)
+                              (residualize-seq '() (list x) ctxt)
+                              (cp0 opt (app-ctxt ctxt) empty-env sc wd (app-name ctxt) moi)]
+                             [else #f])))]
                         [else #f])]
                      [else #f])))]
               [else #f])]
@@ -4874,7 +4916,17 @@
       [(call ,preinfo ,pr ,e ,e* ...)
        (guard (eq? (primref-name pr) '$app))
        (let ([preinfo (make-preinfo-call (preinfo-src preinfo) (preinfo-sexpr preinfo)
-                                         (not (all-set? (prim-mask unsafe) (primref-flags pr))))])
+                                         (if (all-set? (prim-mask unsafe) (primref-flags pr))
+                                             (preinfo-call-mask unchecked)
+                                             (preinfo-call-mask)))])
+         (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
+      [(call ,preinfo ,pr ,e ,e* ...)
+       (guard (eq? (primref-name pr) '$app/no-inline))
+       (let ([preinfo (make-preinfo-call (preinfo-src preinfo) (preinfo-sexpr preinfo)
+                                         (set-flags (if (all-set? (prim-mask unsafe) (primref-flags pr))
+                                                        (preinfo-call-mask unchecked)
+                                                        (preinfo-call-mask))
+                                                    (preinfo-call-mask no-inline)))])
          (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
       [(call ,preinfo ,e ,e* ...)
        (let ()
@@ -5076,7 +5128,7 @@
        `(immutable-list (,e*  ...) ,e)]
       [(moi) (if moi `(quote ,moi) ir)]
       [(pariah) ir]
-      [(cte-optimization-loc ,box ,[cp0 : e ctxt env sc wd name moi -> e])
+      [(cte-optimization-loc ,box ,[cp0 : e ctxt env sc wd name moi -> e] ,exts)
        (when (enable-cross-library-optimization)
          (let ()
            (define update-box!
@@ -5093,11 +5145,21 @@
                    (let ([rhs (result-exp (operand-value (prelex-operand x)))])
                      (nanopass-case (Lsrc Expr) rhs
                        [(case-lambda ,preinfo ,cl* ...)
-                        (when (andmap externally-inlinable? cl*)
-                          (update-box! box rhs))]
+                        ;; Function registered for inlining may report fewer clauses
+                        ;; than supported by the original, since only inlinable clauses
+                        ;; are kept
+                        (let ([cl* (fold-right (lambda (cl cl*)
+                                                 (let ([cl (externally-inlinable cl exts)])
+                                                   (if cl
+                                                       (cons cl cl*)
+                                                       cl*)))
+                                               '()
+                                               cl*)])
+                          (when (pair? cl*)
+                            (update-box! box `(case-lambda ,preinfo ,cl* ...))))]
                        [else #f])))]
              [else (void)])))
-       `(cte-optimization-loc ,box ,e)]
+       `(cte-optimization-loc ,box ,e ,exts)]
       [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) ir]
       [else ($oops who "unrecognized record ~s" ir)])

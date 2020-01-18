@@ -1185,14 +1185,15 @@
       (lambda (node)
         (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
           [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
-           (fold-right
-             (lambda (dl db dv body)
-               (if dl
-                   `(seq ,(build-primcall '$set-top-level-value! `(quote ,dl)
-                            `(cte-optimization-loc ,db (ref #f ,dv)))
-                      ,body)
-                   body))
-             (build-void) dl* db* dv*)])))
+           (let ([exts ($build-library-exts dl* dv*)])
+             (fold-right
+               (lambda (dl db dv body)
+                 (if dl
+                     `(seq ,(build-primcall '$set-top-level-value! `(quote ,dl)
+                              `(cte-optimization-loc ,db (ref #f ,dv) ,exts))
+                        ,body)
+                     body))
+               (build-void) dl* db* dv*))])))
 
     (define make-patch-env
       (lambda (cluster*)

@@ -550,7 +550,10 @@
 (define build-call
   (lambda (ae e e*)
     (build-profile ae
-      `(call ,(make-preinfo-call (ae->src ae) #f (fx< (optimize-level) 3)) ,e ,e* ...))))
+      (let ([flags (if (fx< (optimize-level) 3)
+                       (preinfo-call-mask)
+                       (preinfo-call-mask unchecked))])
+        `(call ,(make-preinfo-call (ae->src ae) #f flags) ,e ,e* ...)))))
 
 (define build-application
   ; used by chi-application.  pulls profile form off e if e is a lambda expression
@@ -593,11 +596,11 @@
     (build-profile ae `(set! ,(ae->src ae) ,var ,exp))))
 
 (define build-cte-optimization-loc
-  (lambda (box exp)
+  (lambda (box exp exts)
     ; box is for cp0 to store optimization info, if it pleases.  the box is eq? to
     ; the box on the system property list for the library global label and
     ; stored in the library/ct-info record for the file.
-    `(cte-optimization-loc ,box ,exp)))
+    `(cte-optimization-loc ,box ,exp ,exts)))
 
 (define build-primitive-reference
   (lambda (ae name)
@@ -841,17 +844,28 @@
 
 (define build-library-body
   (lambda (ae labels boxes vars val-exps body-exp)
-    (build-letrec* ae vars val-exps
-      (fold-right
-        (lambda (label box var body)
-          (if label
-              `(seq
-                 ,(build-global-assignment no-source label
-                    (build-cte-optimization-loc box
-                      (build-lexical-reference no-source var)))
-                 ,body)
-              body))
-        body-exp labels boxes vars))))
+    (let ([exts (build-library-exts labels vars)])
+      (build-letrec* ae vars val-exps
+        (fold-right
+          (lambda (label box var body)
+            (if label
+                `(seq
+                   ,(build-global-assignment no-source label
+                      (build-cte-optimization-loc box
+                        (build-lexical-reference no-source var)
+                        exts))
+                   ,body)
+                body))
+          body-exp labels boxes vars)))))
+
+(define (build-library-exts labels vars)
+  (fold-left (lambda (exts label var)
+               (if label
+                   (cons (cons var label) exts)
+                   exts))
+             '()
+             labels
+             vars))
 
 (define build-lexical-var
   (lambda (ae id)
@@ -7225,6 +7239,9 @@
 (set! $noexpand?
   (lambda (x)
     (and (pair? x) (equal? (car x) noexpand))))
+
+
+(set! $build-library-exts build-library-exts)
 ))
 
 (current-expand sc-expand)

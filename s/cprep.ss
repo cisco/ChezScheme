@@ -157,13 +157,20 @@
                [(call ,preinfo ,e ,e* ...)
                 (cache-sexpr preinfo
                   (lambda ()
-                    (let ([a `(,(uncprep e) ,@(map uncprep e*))])
-                      (if (or (preinfo-call-check? preinfo)
-                              ;; Reporting `#3%$app` is redundant for unsafe mode.
-                              ;; Note that we're losing explicit `#2%$app`s.
-                              (>= (optimize-level) 3))
-                          a
-                          (cons '#3%$app a)))))]
+                    (nanopass-case (Lsrc Expr) e
+                      [,pr `(,(uncprep e) ,@(map uncprep e*))]
+                      [else
+                       (let ([a `(,(uncprep e) ,@(map uncprep e*))])
+                         (if (or (preinfo-call-check? preinfo)
+                                 ;; Reporting `#3%$app` is redundant for unsafe mode.
+                                 ;; Note that we're losing explicit `#2%$app`s.
+                                 (>= (optimize-level) 3))
+                             (if (preinfo-call-can-inline? preinfo)
+                                 a
+                                 (cons '$app/no-inline a))
+                             (if (preinfo-call-can-inline? preinfo)
+                                 (cons '#3%$app a)
+                                 (cons '#3%$app/no-inline a))))])))]
                [,pr (let ([sym (primref-name pr)])
                       (if sexpr?
                           ($sgetprop sym '*unprefixed* sym)
@@ -210,7 +217,7 @@
                [(moi) ''moi]
                [(pariah) `(pariah (void))]
                [(profile ,src) `(void)]
-               [(cte-optimization-loc ,box ,[e]) e]
+               [(cte-optimization-loc ,box ,[e] ,exts) e]
                ; for debugging:
                [(cpvalid-defer ,[e]) `(cpvalid-defer ,e)]
                [else ($oops who "unexpected record ~s" x)])))
