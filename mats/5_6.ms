@@ -1317,7 +1317,9 @@
   (error? (stencil-vector 0 'apple))
   (error? (stencil-vector 3 'apple))
   (error? (stencil-vector 3 'apple))
-  (error? (stencil-vector (expt 2 (stencil-vector-mask-width)) 'a))
+
+  (<= (stencil-vector-mask-width) 58) ; so the next test reports the same error on all platforms
+  (error? (stencil-vector (expt 2 58) 'a))
 
   (error? (stencil-vector-length 3))
   (error? (stencil-vector-mask 3))
