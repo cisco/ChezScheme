@@ -1769,3 +1769,7 @@
   is enabled, so local transformer code can be profiled.
     syntax.ss,
     profile.ms
+- fix compiler bug related to call-with-values and a first argument
+  whose body result is compiled to an allocation, inline form, or
+  foreign call
+    cpnanopass.ss, 3.ms
