@@ -908,7 +908,8 @@
                           [,pr (bump!) e]
                           [(ref ,maybe-src ,x) (cond
                                                 [(memq x ids) (bump!) e]
-                                                [(find-ext x)
+                                                [(and (not (prelex-was-assigned x))
+                                                      (find-ext x))
                                                  => (lambda (label)
                                                       (bump!)
                                                       (let ([preinfo (make-preinfo-call #f #f (preinfo-call-mask unchecked no-inline))])
