@@ -2069,6 +2069,24 @@
         (lambda l (equal? l '((7)))))
       #t
       #f)
+
+  ; regression test for handling mvcall with inline form
+  (equal?
+   '(result x)
+   (let ([bx (box #f)])
+     (define-record-type thing
+       (fields pos)
+       (nongenerative #{thing hlg584lmg5htbdauw7dkid2sh-0}))
+     (set-box! bx (make-thing 'x))
+     (let ([posx (unbox bx)])
+       (cons 'result
+             (call-with-values
+                 (lambda ()
+                   (if (thing? posx)
+                       ;; compiled as inline load:
+                       (thing-pos posx)
+                       (do-something-else)))
+               list)))))
 )
 
 (mat let-values
