@@ -10434,7 +10434,7 @@
                    (let ([tmp (make-tmp 't)])
                      `(seq
                         (set! ,tmp ,rhs)
-                        (mvcall ,(make-info-call-like info '()) #f ,consumer ,tmp ())))]
+                        ,(k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,tmp ()))))]
                   [else ; set! & mvset
                    `(seq ,e ,(k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,(%constant svoid) ())))]))))))
       (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
