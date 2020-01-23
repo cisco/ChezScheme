@@ -5526,6 +5526,24 @@
   (find-define-m-as-one (expand '(let () (import (define-m-as-one)) m)))
 )
 
+(mat enable-unsafe-application
+  (begin
+   (define (get-uncprep-form e)
+     (let ([r #f])
+       (parameterize ([run-cp0 (lambda (cp0 e)
+                                 (parameterize ([enable-unsafe-application #f])
+                                   (set! r (#%$uncprep e)))
+                                 e)])
+         (expand/optimize e))
+       r))
+   #t)
+  (equivalent-expansion? (get-uncprep-form '(lambda (x) (x)))
+                         '(lambda (x) (x)))
+  (equivalent-expansion? (parameterize ([enable-unsafe-application #t])
+                           (get-uncprep-form '(lambda (x) (x))))
+                         '(lambda (x) (#3%$app x)))
+  )
+
 (mat phantom-bytevector
   (phantom-bytevector? (make-phantom-bytevector 0))
   (not (phantom-bytevector? 10))

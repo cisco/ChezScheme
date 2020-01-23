@@ -550,9 +550,10 @@
 (define build-call
   (lambda (ae e e*)
     (build-profile ae
-      (let ([flags (if (fx< (optimize-level) 3)
-                       (preinfo-call-mask)
-                       (preinfo-call-mask unchecked))])
+      (let ([flags (if (or (fx>= (optimize-level) 3)
+                           (enable-unsafe-application))
+                       (preinfo-call-mask unchecked)
+                       (preinfo-call-mask))])
         `(call ,(make-preinfo-call (ae->src ae) #f flags) ,e ,e* ...)))))
 
 (define build-application

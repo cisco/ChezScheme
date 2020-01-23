@@ -106,6 +106,8 @@
 
 (define enable-arithmetic-left-associative ($make-thread-parameter #f (lambda (x) (and x #t))))
 
+(define enable-unsafe-application ($make-thread-parameter #f (lambda (x) (and x #t))))
+
 (define-who current-generate-id
   ($make-thread-parameter
    (lambda (sym)

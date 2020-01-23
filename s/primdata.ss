@@ -958,6 +958,7 @@
   (enable-object-counts [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-type-recovery [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (enable-error-source-expression [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
+  (enable-unsafe-application [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (eval-syntax-expanders-when [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
   (expand-omit-library-invocations [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (expand-output [sig [() -> (maybe-textual-output-port)] [(maybe-textual-output-port) -> (void)]] [flags])

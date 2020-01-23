@@ -164,7 +164,8 @@
                          (if (or (preinfo-call-check? preinfo)
                                  ;; Reporting `#3%$app` is redundant for unsafe mode.
                                  ;; Note that we're losing explicit `#2%$app`s.
-                                 (>= (optimize-level) 3))
+                                 (>= (optimize-level) 3)
+                                 (enable-unsafe-application))
                              (if (preinfo-call-can-inline? preinfo)
                                  a
                                  (cons '$app/no-inline a))

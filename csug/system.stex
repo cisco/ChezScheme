@@ -1132,6 +1132,7 @@ generate-interrupt-trap
 enable-cross-library-optimization
 enable-arithmetic-left-associative
 enable-error-source-expression
+enable-unsafe-application
 enable-type-recovery
 \endschemedisplay
 
@@ -2610,6 +2611,17 @@ The default is \scheme{#f}.
 This parameter controls whether the compiler can convert erroneous
 expressions into a call to an error function that shows the expression
 as an S-expression. The default is \scheme{#t}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{enable-unsafe-application}{\categorythreadparameter}{enable-unsafe-application}
+\listlibraries
+\endentryheader
+
+This parameter controls whether application forms are compiled as
+unsafe (i.e., no check whether the target is a procedure), even when
+the value of \scheme{optimize-level} is less than \scheme{3}. The
+default is \scheme{#f}.
 
 %----------------------------------------------------------------------------
 \entryheader
