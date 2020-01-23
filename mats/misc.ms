@@ -1720,6 +1720,53 @@
     (strip-fasl-file "testfile-sff-3.so" "testfile-sff-3.so"
       (fasl-strip-options compile-time-information))
     (= (object-file-size "testfile-sff-3.so") n))
+  (begin
+    (mkfile "testfile-sff-4.ss"
+      '(library (testfile-sff-4) (export a b c) (import (chezscheme))
+         (define-syntax a (identifier-syntax 12))
+         (define b 13)
+         (meta define c 14)))
+    (mkfile "testfile-sff-4p.ss"
+      '(import (chezscheme) (testfile-sff-4))
+      '(write b))
+    (separate-compile
+      '(lambda (x) (parameterize ([compile-imported-libraries #t]) (compile-program x)))
+      'sff-4p)
+    #t)
+  (equal?
+    (separate-eval
+      '(let ()
+         (import (testfile-sff-4))
+         (define-syntax cc (lambda (x) c))
+         (printf "a = ~s, b = ~s, c = ~s\n" a b cc)))
+    "a = 12, b = 13, c = 14\n")
+  (equal?
+    (separate-eval
+      '(let ([x (with-output-to-string (lambda () (load-program "testfile-sff-4p.so")))])
+         (printf "b = ~a, a = ~s\n" x (eval 'a (environment '(testfile-sff-4))))))
+    "b = 13, a = 12\n")
+  (begin
+    (strip-fasl-file "testfile-sff-4.so" "testfile-sff-4.so"
+      (fasl-strip-options compile-time-information))
+    #t)
+  (error? ; no compile-time info
+    (separate-eval
+      '(let ()
+         (import (testfile-sff-4))
+         (list a b))))
+  (error? ; no compile-time info
+    (separate-eval
+      '(let ([x (with-output-to-string (lambda () (load-program "testfile-sff-4p.so")))])
+         (printf "b = ~a, a = ~s\n" x (eval 'a (environment '(testfile-sff-4)))))))
+  (error? ; no compile-time info
+    (separate-eval
+      '(let ([x (with-output-to-string (lambda () (load-program "testfile-sff-4p.so")))])
+         (printf "b = ~a, a = ~s\n" x (eval '(let () (import (testfile-sff-4)) a))))))
+  (error? ; no compile-time info
+    (separate-eval
+      '(parameterize ([import-notify #t])
+         (let ([x (with-output-to-string (lambda () (load-program "testfile-sff-4p.so")))])
+           (printf "b = ~a, a = ~s\n" x (eval '(let () (import (testfile-sff-4)) a)))))))
 )
 
 (mat $fasl-file-equal?

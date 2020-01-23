@@ -401,6 +401,7 @@
               [(ftype-pointer) *ftype-pointer 0 *time #f]
               [(fxvector) '#vfx(0) "a" #f]
               [(gensym) *genny 'sym #f]
+              [(guardian) (make-guardian) values "oops" #f]
               [(hashtable) *eq-hashtable '((a . b)) #f]
               [(identifier) #'x 'x 17 #f]
               [(import-spec) '(chezscheme) 0 '(a . b) #f]

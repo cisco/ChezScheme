@@ -2360,10 +2360,11 @@
     (immutable path)
     (immutable version)
     (immutable outfn)        ; string if imported from or compiled to an object file, else #f
+    (immutable importer)     ; string if we know why this was imported, for error messages
     (immutable system?)
     (immutable ctdesc)
     (immutable rtdesc))
-  (nongenerative #{libdesc c9z2lszhwazzhbi56x5v5p-1})
+  (nongenerative #{libdesc c9z2lszhwazzhbi56x5v5p-2})
   (sealed #t))
 
 (define-record-type ctdesc
@@ -2371,13 +2372,12 @@
     (immutable import-req*)       ; libraries imported when this library was imported
     (immutable visit-visit-req*)  ; libraries that must be visited (for meta definitions) when this library is visited
     (immutable visit-req*)        ; libraries that must be invoked (for regular definitions) when this library is visited
-    (mutable clo*)                ; cross-library optimization information
     (mutable loaded-import-reqs)
     (mutable loaded-visit-reqs)
     (mutable export-id*)          ; ids that need to be reset when visit-code raises an exception
     (mutable import-code)
     (mutable visit-code))
-  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-3})
+  (nongenerative #{ctdesc bthma8spr7lds76z4hlmr9-4})
   (sealed #t))
 
 (define-record-type rtdesc
@@ -2393,8 +2393,7 @@
          libdesc-loaded-visit-reqs libdesc-loaded-visit-reqs-set!
          libdesc-import-code libdesc-import-code-set!
          libdesc-visit-code libdesc-visit-code-set!
-         libdesc-visit-id* libdesc-visit-id*-set!
-         libdesc-clo* libdesc-clo*-set!)
+         libdesc-visit-id* libdesc-visit-id*-set!)
   (define get-ctdesc
     (lambda (desc)
       (or (libdesc-ctdesc desc)
@@ -2437,13 +2436,7 @@
       (ctdesc-export-id* (get-ctdesc desc))))
   (define libdesc-visit-id*-set!
     (lambda (desc x)
-      (ctdesc-export-id*-set! (get-ctdesc desc) x)))
-  (define libdesc-clo*
-    (lambda (desc)
-      (ctdesc-clo* (get-ctdesc desc))))
-  (define libdesc-clo*-set!
-    (lambda (desc x)
-      (ctdesc-clo*-set! (get-ctdesc desc) x))))
+      (ctdesc-export-id*-set! (get-ctdesc desc) x))))
 
 (module (libdesc-invoke-req*
          libdesc-loaded-invoke-reqs libdesc-loaded-invoke-reqs-set!
@@ -2478,55 +2471,69 @@
 (define visit-library
  ; library must already have been loaded, as well as those in its visit-req* list
   (lambda (uid)
+    (define (go desc)
+      (cond
+        [(libdesc-visit-code desc) =>
+         (lambda (p)
+           (when (eq? p 'loading)
+             ($oops #f "attempt to visit library ~s while it is still being loaded" (libdesc-path desc)))
+           (when (eq? p 'pending)
+             ($oops #f "cyclic dependency involving visit of library ~s" (libdesc-path desc)))
+           (libdesc-visit-code-set! desc 'pending)
+           (on-reset
+             (begin
+               (for-each (lambda (id) ($sc-put-cte id (make-binding 'visit uid) #f)) (libdesc-visit-id* desc))
+               (libdesc-visit-code-set! desc p))
+             (for-each (lambda (req) (visit-library (libreq-uid req))) (libdesc-visit-visit-req* desc))
+             (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-visit-req* desc))
+             (p))
+           (libdesc-visit-code-set! desc #f)
+           (libdesc-visit-id*-set! desc '()))]))
     (cond
       [(get-library-descriptor uid) =>
        (lambda (desc)
-         (cond
-           [(not (libdesc-ctdesc desc))
-            (with-message (format "attempting to 'visit' previously 'revisited' ~s for library ~s compile-time info" (libdesc-outfn desc) (libdesc-path desc))
-              ($visit #f (libdesc-outfn desc)))
-            (visit-library uid)]
-           [(libdesc-visit-code desc) =>
-            (lambda (p)
-              (when (eq? p 'loading)
-                ($oops #f "attempt to visit library ~s while it is still being loaded" (libdesc-path desc)))
-              (when (eq? p 'pending)
-                ($oops #f "cyclic dependency involving visit of library ~s" (libdesc-path desc)))
-              (libdesc-visit-code-set! desc 'pending)
-              (on-reset
-                (begin
-                  (for-each (lambda (id) ($sc-put-cte id (make-binding 'visit uid) #f)) (libdesc-visit-id* desc))
-                  (libdesc-visit-code-set! desc p))
-                (for-each (lambda (req) (visit-library (libreq-uid req))) (libdesc-visit-visit-req* desc))
-                (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-visit-req* desc))
-                (p))
-              (libdesc-visit-code-set! desc #f)
-              (libdesc-visit-id*-set! desc '()))]))]
+         (if (libdesc-ctdesc desc)
+             (go desc)
+             (let ([fn (libdesc-outfn desc)])
+               ; this probably can't happen...we have probably already imported the library
+               ; for us to encounter something that forces us to visit the library
+               (with-message (format "attempting to 'visit' previously 'revisited' ~s for library ~s compile-time info" fn (libdesc-path desc))
+                 ($visit #f fn #f))
+               (let ([desc (get-library-descriptor uid)])
+                 (unless (libdesc-ctdesc desc)
+                   ($oops #f "visiting ~a did not define compile-time information for library ~s" fn (libdesc-path desc)))
+                 (go desc)))))]
       [else ($oops #f "library ~:s is not defined" uid)])))
 
 (define invoke-library
  ; library must already have been loaded, as well as those in its invoke-req* list
   (lambda (uid)
+    (define (go desc)
+      (cond
+        [(libdesc-invoke-code desc) =>
+         (lambda (p)
+           (when (eq? p 'loading)
+             ($oops #f "attempt to invoke library ~s while it is still being loaded" (libdesc-path desc)))
+           (when (eq? p 'pending)
+             ($oops #f "cyclic dependency involving invocation of library ~s" (libdesc-path desc)))
+           (libdesc-invoke-code-set! desc 'pending)
+           (on-reset (libdesc-invoke-code-set! desc p)
+             (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
+             (p))
+           (libdesc-invoke-code-set! desc #f))]))
     (cond
       [(get-library-descriptor uid) =>
        (lambda (desc)
-         (cond
-           [(not (libdesc-rtdesc desc))
-            (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" (libdesc-outfn desc) (libdesc-path desc))
-              ($revisit #f (libdesc-outfn desc)))
-            (invoke-library uid)]
-           [(libdesc-invoke-code desc) =>
-            (lambda (p)
-              (when (eq? p 'loading)
-                ($oops #f "attempt to invoke library ~s while it is still being loaded" (libdesc-path desc)))
-              (when (eq? p 'pending)
-                ($oops #f "cyclic dependency involving invocation of library ~s" (libdesc-path desc)))
-              (libdesc-invoke-code-set! desc 'pending)
-              (on-reset (libdesc-invoke-code-set! desc p)
-                (for-each (lambda (req) (invoke-library (libreq-uid req))) (libdesc-invoke-req* desc))
-                (p))
-              (libdesc-invoke-code-set! desc #f))]))]
-      [else ($oops #f "library ~:s is not defined" uid)])))
+         (if (libdesc-rtdesc desc)
+             (go desc)
+             (let ([fn (libdesc-outfn desc)])
+               (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" fn (libdesc-path desc))
+                 ($revisit #f fn #f))
+               (let ([desc (get-library-descriptor uid)])
+                 (unless (libdesc-ctdesc desc)
+                   ($oops #f "revisiting ~a did not define run-time information for library ~s" fn (libdesc-path desc)))
+                 (go desc)))))]
+        [else ($oops #f "library ~:s is not defined" uid)])))
 
 (define-threaded require-invoke
   (lambda (uid)
@@ -2566,7 +2573,7 @@
                   (cond
                     [(not (libdesc-rtdesc desc))
                      (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" (libdesc-outfn desc) (libdesc-path desc))
-                       ($revisit #f (libdesc-outfn desc)))
+                       ($revisit #f (libdesc-outfn desc) #f))
                      (retry)]
                     [(libdesc-invoke-code desc) =>
                      (lambda (p)
@@ -2674,8 +2681,8 @@
                         (vthunk) ; might as well do this now.  visit-req* have already been invoked
                         (install-library library-path library-uid
                          ; import-code & visit-code is #f because vthunk invocation has already set up compile-time environment
-                          (make-libdesc library-path library-version outfn #f
-                            (make-ctdesc import-req* visit-visit-req* visit-req* '() #t #t '() #f #f)
+                          (make-libdesc library-path library-version outfn #f #f
+                            (make-ctdesc import-req* visit-visit-req* visit-req* #t #t '() #f #f)
                             (make-rtdesc invoke-req* #t
                               (top-level-eval-hook
                                 (build-lambda no-source '()
@@ -2701,12 +2708,7 @@
                                (lambda ()
                                  (build-library/ct-info
                                    (make-library/ct-info library-path library-version library-uid
-                                     import-req* visit-visit-req* visit-req*
-                                     (fold-left (lambda (clo* dl db)
-                                                  (if dl
-                                                      (cons (cons dl db) clo*)
-                                                      clo*))
-                                       '() dl* db*)))))
+                                     import-req* visit-visit-req* visit-req*))))
                             ,(rt-eval/residualize rtem
                                build-void
                                (lambda ()
@@ -2724,14 +2726,22 @@
                                                       (cons label ls)
                                                       ls)))
                                      '() env*)
-                                   ; setup code
+                                   ; import code
                                    `(,(build-cte-install bound-id (build-data no-source interface-binding) '*system*)
-                                      ,@(if (null? env*)
-                                            '()
-                                            `(,(build-sequence no-source
-                                                 (map (lambda (x)
-                                                        (build-cte-install (car x) (build-data no-source (cdr x)) #f))
-                                                   env*)))))
+                                     ,@(let ([clo* (fold-left (lambda (clo* dl db)
+                                                                (if dl
+                                                                    (cons (cons dl db) clo*)
+                                                                    clo*))
+                                                     '() dl* db*)])
+                                         (if (null? clo*)
+                                             '()
+                                             `(,(build-primcall #f 3 '$install-library-clo-info (build-data #f clo*)))))
+                                     ,@(if (null? env*)
+                                           '()
+                                           `(,(build-sequence no-source
+                                                (map (lambda (x)
+                                                       (build-cte-install (car x) (build-data no-source (cdr x)) #f))
+                                                  env*)))))
                                    ; visit code
                                    vcode*)))))))))
                 (let ([mb (car mb*)] [mb* (cdr mb*)])
@@ -4574,7 +4584,7 @@
 (module (install-library install-library/ct-desc install-library/rt-desc
          install-library/ct-code install-library/rt-code uninstall-library
          create-library-uid load-library lookup-library)
-  (module (search-loaded-libraries record-loaded-library! delete-loaded-library! list-loaded-libraries)
+  (module (search-loaded-libraries record-loaded-library delete-loaded-library list-loaded-libraries loaded-libraries-root)
     (module (make-root insert-path delete-path search-path list-paths)
       (define-record-type dir
         (fields (immutable name) (immutable dir*) (immutable file*))
@@ -4652,42 +4662,48 @@
           (Dir '() root '()))))
     (define root (make-root))
     (define search-loaded-libraries
-      (lambda (path)
-        (search-path root path)))
-    (define delete-loaded-library!
-      (lambda (path)
-        (set! root (delete-path root path))))
-    (define record-loaded-library!
-      (lambda (path uid)
-        (set! root (insert-path root path uid))))
+      (case-lambda
+        [(path) (search-path root path)]
+        [(root path) (search-path root path)]))
+    (define delete-loaded-library
+      (case-lambda
+        [(path) (set! root (delete-path root path))]
+        [(root path) (delete-path root path)]))
+    (define record-loaded-library
+      (case-lambda
+        [(path uid) (set! root (insert-path root path uid))]
+        [(root path uid) (insert-path root path uid)]))
     (define list-loaded-libraries
-      (lambda ()
-        (list-paths root))))
+      (case-lambda
+        [() (list-paths root)]
+        [(root) (list-paths root)]))
+    (define loaded-libraries-root
+      (lambda () root)))
 
   (define install-library/ct-desc
-    (lambda (path version uid outfn ctdesc)
+    (lambda (path version uid outfn importer ctdesc)
       (with-tc-mutex
-        (record-loaded-library! path uid)
+        (record-loaded-library path uid)
         (put-library-descriptor uid
-          (make-libdesc path version outfn #f
-            ctdesc
-            (let ([desc (get-library-descriptor uid)])
+          (let ([desc (get-library-descriptor uid)])
+            (make-libdesc path version outfn (or (and desc (libdesc-importer desc)) importer) #f
+              ctdesc
               (and desc (libdesc-rtdesc desc))))))))
 
   (define install-library/rt-desc
-    (lambda (path version uid outfn rtdesc)
+    (lambda (path version uid outfn importer rtdesc)
       (with-tc-mutex
-        (record-loaded-library! path uid)
+        (record-loaded-library path uid)
         (put-library-descriptor uid
-          (make-libdesc path version outfn #f
-            (let ([desc (get-library-descriptor uid)])
-              (and desc (libdesc-ctdesc desc)))
-            rtdesc)))))
+          (let ([desc (get-library-descriptor uid)])
+            (make-libdesc path version outfn (or (and desc (libdesc-importer desc)) importer) #f
+              (and desc (libdesc-ctdesc desc))
+              rtdesc))))))
 
   (define install-library
     (lambda (path uid desc)
       (with-tc-mutex
-        (record-loaded-library! path uid)
+        (record-loaded-library path uid)
         (when desc (put-library-descriptor uid desc)))))
 
   (define-who install-library/ct-code
@@ -4712,7 +4728,7 @@
     (lambda (path uid)
       (with-tc-mutex
         (rem-library-descriptor uid)
-        (delete-loaded-library! path))))
+        (delete-loaded-library path))))
 
   (define create-library-uid
     (lambda (name)
@@ -4846,17 +4862,28 @@
         (lambda (found-uid src-file-path)
           (when needed-uid
             (unless (eq? found-uid needed-uid)
-              (if src-file-path
-                  ($oops/c #f ($make-recompile-condition importer-path)
-                    "compiled ~s requires different compilation instance of ~s from one found in ~a"
-                    (or importer-path 'program) path src-file-path)
-                  ($oops/c #f ($make-recompile-condition importer-path)
-                    "compiled ~s requires different compilation instance of ~s from one already loaded"
-                    (or importer-path 'program) path))))))
+              (let ([c ($make-recompile-condition importer-path)] [importer-path (or importer-path 'program)])
+                (if src-file-path
+                    ($oops/c #f c
+                      "loading ~a yielded a different compilation instance of ~s from that required by compiled ~s"
+                      src-file-path
+                      path
+                      importer-path)
+                    (let-values ([(outfn original-importer)
+                                  (let ([desc (get-library-descriptor found-uid)])
+                                    (if desc
+                                        (values (libdesc-outfn desc) (libdesc-importer desc))
+                                        (values #f #f)))])
+                      ($oops/c #f c
+                        "compiled ~s requires a different compilation instance of ~s from the one previously ~:[compiled~;~:*loaded from ~a~]~@[ and originally imported by ~a~]"
+                        importer-path
+                        path
+                        outfn
+                        original-importer))))))))
       (define do-load-library
         (lambda (file-path situation)
           (parameterize ([source-directories (cons (path-parent file-path) (source-directories))])
-            ($load-library file-path situation))
+            ($load-library file-path situation importer-path))
           (cond
             [(search-loaded-libraries path) =>
              (lambda (found-uid)
@@ -4889,7 +4916,7 @@
               (maybe-compile-library src-path obj-path)
               (unless compiled?
                 (with-message (format "no need to recompile, so loading ~s" obj-path)
-                  ($load-library obj-path (if ct? 'visit 'revisit)))))
+                  ($load-library obj-path (if ct? 'visit 'revisit) importer-path))))
             (cond
               [(search-loaded-libraries path) =>
                (lambda (found-uid)
@@ -4937,36 +4964,37 @@
                       ; (a) and (b) but only (b) is one of the dependencies, we won't necessarily
                       ; reload if a.ss is newer than a.so.
                       (with-message "object file is not older"
-                        (with-message (format "loading object file ~s" obj-path)
-                          (let ([found-uid (guard (c [(and ($recompile-condition? c) (eq? ($recompile-importer-path c) path))
-                                                      (with-message (format "reloading ~s because a dependency has changed" src-path)
-                                                        (parameterize ([source-directories (cons (path-parent src-path) (source-directories))])
-                                                          ($load-library src-path 'load)))
-                                                      (cond
-                                                        [(search-loaded-libraries path) =>
-                                                         (lambda (found-uid)
-                                                           (verify-version path version-ref found-uid obj-path src-path)
-                                                           (load-deps found-uid)
-                                                           found-uid)]
-                                                        [else ($oops #f "reloading ~a did not define library ~s" src-path path)])])
-                                             (parameterize ([source-directories (cons (path-parent src-path) (source-directories))])
-                                               (guard (c [(and (irritants-condition? c) (member obj-path (condition-irritants c)))
-                                                          (with-message (with-output-to-string
-                                                                          (lambda ()
-                                                                            (display-string "failed to load object file: ")
-                                                                            (display-condition c)))
-                                                            ($oops/c #f ($make-recompile-condition path)
-                                                              "problem loading object file ~a ~s" obj-path c))])
-                                                 ($load-library obj-path (if ct? 'visit 'revisit))))
-                                             (cond
-                                               [(search-loaded-libraries path) =>
-                                                (lambda (found-uid)
-                                                  (verify-version path version-ref found-uid obj-path src-path)
-                                                  (load-deps found-uid)
-                                                  found-uid)]
-                                               [else ($oops #f "loading ~a did not define library ~s" obj-path path)]))])
-                            (verify-uid found-uid src-path)
-                            found-uid)))
+                        (let ([found-uid (guard (c [(and ($recompile-condition? c) (eq? ($recompile-importer-path c) path))
+                                                    (with-message (format "reloading ~s because a dependency has changed" src-path)
+                                                      (parameterize ([source-directories (cons (path-parent src-path) (source-directories))])
+                                                        ($load-library src-path 'load importer-path)))
+                                                    (cond
+                                                      [(search-loaded-libraries path) =>
+                                                       (lambda (found-uid)
+                                                         (verify-version path version-ref found-uid obj-path src-path)
+                                                         (load-deps found-uid)
+                                                         found-uid)]
+                                                      [else ($oops #f "reloading ~a did not define library ~s" src-path path)])])
+                                           (parameterize ([source-directories (cons (path-parent src-path) (source-directories))])
+                                             (guard (c [(and (irritants-condition? c) (member obj-path (condition-irritants c)))
+                                                        (with-message (with-output-to-string
+                                                                        (lambda ()
+                                                                          (display-string "failed to load object file: ")
+                                                                          (display-condition c)))
+                                                          ($oops/c #f ($make-recompile-condition path)
+                                                            "problem loading object file ~a ~s" obj-path c))])
+                                               (let ([situation (if ct? 'visit 'revisit)])
+                                                 (with-message (format "~sing object file ~s" situation obj-path)
+                                                   ($load-library obj-path situation importer-path)))))
+                                           (cond
+                                             [(search-loaded-libraries path) =>
+                                              (lambda (found-uid)
+                                                (verify-version path version-ref found-uid obj-path src-path)
+                                                (load-deps found-uid)
+                                                found-uid)]
+                                             [else ($oops #f "loading ~a did not define library ~s" obj-path path)]))])
+                          (verify-uid found-uid src-path)
+                          found-uid))
                       (load-source)))
                 (load-source)))))
       ($pass-time 'load-library
@@ -4980,10 +5008,10 @@
                  (if ct?
                      (unless (libdesc-ctdesc desc)
                        (with-message (format "attempting to 'visit' previously 'revisited' ~s for library ~s compile-time info" (libdesc-outfn desc) path)
-                         ($visit #f (libdesc-outfn desc))))
+                         ($visit #f (libdesc-outfn desc) importer-path)))
                      (unless (libdesc-rtdesc desc)
                        (with-message (format "attempting to 'revisit' previously 'visited' ~s for library ~s run-time info" (libdesc-outfn desc) path)
-                         ($revisit #f (libdesc-outfn desc))))))
+                         ($revisit #f (libdesc-outfn desc) importer-path)))))
               ; need to call load-deps even if our library was already loaded,
               ; since we might, say, have previously loaded its invoke dependencies and
               ; now want to load its import dependencies
@@ -5011,8 +5039,9 @@
                            (with-message (format "loading source file ~s" src-path)
                              (do-load-library src-path 'load))))
                    (if obj-exists?
-                       (with-message (format "loading object file ~s" obj-path)
-                         (do-load-library obj-path (if ct? 'visit 'revisit)))
+                       (let ([situation (if ct? 'visit 'revisit)])
+                         (with-message (format "~sing object file ~s" situation obj-path)
+                           (do-load-library obj-path situation)))
                        ($oops #f "library ~s not found" path))))])))))
 
   (define version-okay?
@@ -5119,6 +5148,168 @@
   (set! library-list
     (lambda ()
       (list-loaded-libraries)))
+
+  (set-who! verify-loadability
+    (lambda (situation . input*)
+      (define (parse-inputs input*)
+        (let ([default-libdirs (library-directories)])
+          (let loop ([input* input*] [rlibdirs* '()] [rfn* '()])
+            (if (null? input*)
+                (values (reverse rlibdirs*) (reverse rfn*))
+                (let ([input (car input*)] [input* (cdr input*)])
+                  (cond
+                    [(string? input) (loop input* (cons default-libdirs rlibdirs*) (cons input rfn*))]
+                    [(and (pair? input) (string? (car input)) (guard (c [else #f]) (parameterize ([library-directories (cdr input)]) #t)))
+                     (loop input* (cons (cdr input) rlibdirs*) (cons (car input) rfn*))]
+                    [else ($oops who "invalid input ~s: expected either a string or a pair of a string and a valid library-directories value" input)]))))))
+      (define (get-lpinfo fn situation)
+        (let ([fn (let ([host-fn (format "~a.~s" (path-root fn) (machine-type))])
+                    (if (file-exists? host-fn) host-fn fn))])
+          (let ([ip ($open-file-input-port who fn)])
+            (on-reset (close-port ip)
+              (let ([fp (let ([start-pos (port-position ip)])
+                          (if (and (eqv? (get-u8 ip) (char->integer #\#))
+                                   (eqv? (get-u8 ip) (char->integer #\!))
+                                   (let ([b (get-u8 ip)]) (or (eqv? b (char->integer #\space)) (eqv? b (char->integer #\/)))))
+                              (let loop ([fp 3])
+                                (let ([b (get-u8 ip)])
+                                  (if (eof-object? b)
+                                      fp
+                                      (let ([fp (+ fp 1)])
+                                        (if (eqv? b (char->integer #\newline))
+                                            fp
+                                            (loop fp))))))
+                              (begin (set-port-position! ip start-pos) 0)))])
+                (port-file-compressed! ip)
+                (unless ($compiled-file-header? ip) ($oops who "missing header for compiled file ~s" fn))
+                (let ([x (fasl-read ip)])
+                  (unless (recompile-info? x) ($oops who "expected recompile info at start of ~s, found ~a" fn x)))
+                (let loop ([rlpinfo* '()])
+                  (let ([x (fasl-read ip situation)])
+                    (if (or (library-info? x) (program-info? x))
+                        (loop (cons x rlpinfo*)) 
+                        (begin (close-port ip) (reverse rlpinfo*))))))))))
+      (unless (memq situation '(load visit revisit)) ($oops who "invalid situation ~s; should be one of load, visit, or revisit" situation))
+      (let-values ([(libdirs* fn*) (parse-inputs input*)])
+        (let ([root (loaded-libraries-root)] [uid-ht (make-eq-hashtable)])
+          (define (check-ctdesc-libreqs! ctdesc importer)
+            (unless (ctdesc-loaded-import-reqs ctdesc)
+              (for-each (check-libreq! #t importer) (ctdesc-import-req* ctdesc))
+              (ctdesc-loaded-import-reqs-set! ctdesc #t))
+            (unless (ctdesc-loaded-visit-reqs ctdesc)
+              (for-each (check-libreq! #t importer) (ctdesc-visit-visit-req* ctdesc))
+              (for-each (check-libreq! #f importer) (ctdesc-visit-req* ctdesc))
+              (ctdesc-loaded-visit-reqs-set! ctdesc #t)))
+          (define (check-rtdesc-libreqs! rtdesc importer)
+            (unless (rtdesc-loaded-invoke-reqs rtdesc)
+              (for-each (check-libreq! #f importer) (rtdesc-invoke-req* rtdesc))
+              (rtdesc-loaded-invoke-reqs-set! rtdesc #t)))
+          (define (check-libreq! visit? importer)
+            (lambda (libreq)
+              (let ([path (libreq-path libreq)])
+                (define (check-uid! found-uid obj-path)
+                  (unless (eq? found-uid (libreq-uid libreq))
+                    (if obj-path
+                        ($oops who
+                          "loading ~a yielded a different compilation instance of ~s from that required by ~a"
+                          obj-path
+                          path
+                          importer)
+                        (let-values ([(outfn original-importer)
+                                      (let ([desc (get-library-descriptor found-uid)])
+                                        (if desc
+                                            (values (libdesc-outfn desc) (libdesc-importer desc))
+                                            (values #f #f)))])
+                          ($oops who
+                            "~a requires a different compilation instance of ~s from the one previously ~:[compiled~;~:*loaded from ~a~]~@[ and originally imported by ~a~]"
+                            importer
+                            path
+                            outfn
+                            original-importer)))))
+                (cond
+                  [(search-loaded-libraries root path) =>
+                   (lambda (found-uid)
+                     (with-message (format "~s is already loaded...checking for compatibility" path)
+                       (check-uid! found-uid #f)
+                       (let ([desc (or (hashtable-ref uid-ht found-uid #f) (get-library-descriptor found-uid))])
+                         (unless desc ($oops who "cyclic dependency involving import of library ~s" path))
+                         (if visit?
+                             (cond
+                               [(libdesc-ctdesc desc) => (lambda (ctdesc) (check-ctdesc-libreqs! ctdesc importer))]
+                               [else
+                                 (with-message "~s compile-time info for ~s has not yet been loaded...loading now"
+                                   (check-fn! 'visit (libdesc-outfn desc) importer)
+                                   (let ([desc (hashtable-ref uid-ht found-uid #f)])
+                                     (unless (and desc (libdesc-ctdesc desc))
+                                       ($oops who "visiting ~s does not define compile-time information for ~s" (libdesc-outfn desc) path))))])
+                             (cond
+                               [(libdesc-rtdesc desc) => (lambda (rtdesc) (check-rtdesc-libreqs! rtdesc importer))]
+                               [else
+                                 (with-message "~s run-time info for ~s has not yet been loaded...loading now"
+                                   (check-fn! 'revisit (libdesc-outfn desc) importer)
+                                   (let ([desc (hashtable-ref uid-ht found-uid #f)])
+                                     (unless (and desc (libdesc-rtdesc desc))
+                                       ($oops who "revisiting ~s does not define run-time information for ~s" (libdesc-outfn desc) path))))])))))]
+                  [else
+                   (let-values ([(src-path obj-path obj-exists?) (library-search who path (library-directories) (library-extensions))])
+                     (unless obj-exists? ($oops who "cannot find object file for library ~s" path))
+                     (check-fn! (if visit? 'visit 'revisit) obj-path importer)
+                     (let ([found-uid (search-loaded-libraries root path)])
+                       (unless found-uid ($oops who "loading ~s did not define library ~s" obj-path path))
+                       (check-uid! found-uid obj-path)
+                       (let ([desc (hashtable-ref uid-ht found-uid #f)])
+                         (if visit?
+                             (unless (and desc (libdesc-ctdesc desc))
+                               ($oops who "visiting ~s does not define compile-time information for ~s" obj-path path))
+                             (unless (and desc (libdesc-rtdesc desc))
+                               ($oops who "revisiting ~s does not define run-time information for ~s" obj-path path))))))]))))
+          (define (check-fn! situation fn importer)
+            (with-message (format "checking ~aability of ~a" situation fn)
+              ; register each of the libraries in the file before chasing any of the dependencies
+              ; to handle out-of-order info records and whole programs or libraries that depend on a
+              ; binary library which in turn depends on an embedded library.  this also more closely
+              ; mirrors what happens when the file is actually loaded
+              ((fold-left
+                 (lambda (th lpinfo)
+                   (cond
+                     [(library/ct-info? lpinfo)
+                      (with-message (format "found ~a import-req* = ~s, visit-visit-req* = ~s, visit-req* = ~s" fn
+                                      (map libreq-path (library/ct-info-import-req* lpinfo))
+                                      (map libreq-path (library/ct-info-visit-visit-req* lpinfo))
+                                      (map libreq-path (library/ct-info-visit-req* lpinfo)))
+                        (let ([ctdesc (make-ctdesc
+                                        (library/ct-info-import-req* lpinfo)
+                                        (library/ct-info-visit-visit-req* lpinfo)
+                                        (library/ct-info-visit-req* lpinfo)
+                                        #f #f '() 'loading 'loading)])
+                          (let ([path (library-info-path lpinfo)] [uid (library-info-uid lpinfo)])
+                            (set! root (record-loaded-library root path uid))
+                            (hashtable-set! uid-ht uid
+                              (let ([desc (or (hashtable-ref uid-ht uid #f) (get-library-descriptor uid))])
+                                (make-libdesc path (library-info-version lpinfo) fn (or (and desc (libdesc-importer desc)) importer) #f
+                                  ctdesc
+                                  (and desc (libdesc-rtdesc desc))))))
+                          (lambda () (th) (check-ctdesc-libreqs! ctdesc fn))))]
+                     [(library/rt-info? lpinfo)
+                      (with-message (format "found ~a invoke-req* = ~s" fn
+                                      (map libreq-path (library/rt-info-invoke-req* lpinfo)))
+                        (let ([rtdesc (make-rtdesc (library/rt-info-invoke-req* lpinfo) #f 'loading)])
+                          (let ([path (library-info-path lpinfo)] [uid (library-info-uid lpinfo)])
+                            (set! root (record-loaded-library root path uid))
+                            (hashtable-set! uid-ht uid
+                              (let ([desc (or (hashtable-ref uid-ht uid #f) (get-library-descriptor uid))])
+                                (make-libdesc path (library-info-version lpinfo) fn (or (and desc (libdesc-importer desc)) importer) #f
+                                  (and desc (libdesc-ctdesc desc))
+                                  rtdesc))))
+                          (lambda () (th) (check-rtdesc-libreqs! rtdesc fn))))]
+                     [(program-info? lpinfo)
+                      (with-message (format "found ~a invoke-req* = ~s" fn
+                                      (map libreq-path (program-info-invoke-req* lpinfo)))
+                        (lambda () (th) (for-each (check-libreq! #f fn) (program-info-invoke-req* lpinfo))))]
+                     [else ($oops who "unexpected library/program info record ~s" lpinfo)]))
+                 void
+                 (get-lpinfo fn situation)))))
+          (for-each (lambda (libdirs fn) (parameterize ([library-directories libdirs]) (check-fn! situation fn #f))) libdirs* fn*)))))
 
   (let ()
     (define maybe-get-lib
@@ -5276,8 +5467,6 @@
                   (libdesc-import-code-set! desc #f)
                   (on-reset (libdesc-import-code-set! desc p)
                     (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
-                    ($install-library-clo-info (libdesc-clo* desc))
-                    (libdesc-clo*-set! desc '())
                     (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
   
@@ -5433,7 +5622,7 @@
                 (s2 i (fx+ i 1)))))
       (s0 0)))
 
-  (define (parse-list who ls make-obj)
+  (define (parse-list who what ls make-obj)
     (let f ([ls ls])
       (if (null? ls)
           '()
@@ -5442,7 +5631,7 @@
               [(string? x) (cons (cons x (make-obj x)) (f (cdr ls)))]
               [(and (pair? x) (string? (car x)) (string? (cdr x)))
                (cons (cons (car x) (cdr x)) (f (cdr ls)))]
-              [else ($oops who "invalid input-list element ~s" x)])))))
+              [else ($oops who (format "invalid ~a element ~~s" what) x)])))))
 
   (set-who! library-directories
     (rec library-directories
@@ -5451,7 +5640,7 @@
         (lambda (x)
           (cond
             [(string? x) (parse-string x (library-directories) values)]
-            [(list? x) (parse-list who x values)]
+            [(list? x) (parse-list who "path-list" x values)]
             [else ($oops who "invalid path list ~s" x)])))))
 
   (set-who! library-extensions
@@ -5468,7 +5657,7 @@
               (string-append (path-root src-ext) ".so")))
           (cond
             [(string? x) (parse-string x (library-extensions) default-obj-ext)]
-            [(list? x) (parse-list who x default-obj-ext)]
+            [(list? x) (parse-list who "extension-list" x default-obj-ext)]
             [else ($oops who "invalid extension list ~s" x)]))))))
 
 (set! $install-program-desc
@@ -5493,27 +5682,26 @@
       clo*)))
 
 (set! $install-library/ct-desc
-  (lambda (linfo/ct for-import? ofn)
+  (lambda (linfo/ct for-import? importer ofn)
     (let ([uid (library-info-uid linfo/ct)])
       (when for-import?
         (when (let ([desc (get-library-descriptor uid)]) (and desc (libdesc-ctdesc desc)))
           ($oops #f "attempting to re-install compile-time part of library ~s" (library-info-path linfo/ct))))
-      (install-library/ct-desc (library-info-path linfo/ct) (library-info-version linfo/ct) uid ofn
+      (install-library/ct-desc (library-info-path linfo/ct) (library-info-version linfo/ct) uid ofn importer
         (make-ctdesc
           (library/ct-info-import-req* linfo/ct)
           (library/ct-info-visit-visit-req* linfo/ct)
           (library/ct-info-visit-req* linfo/ct)
-          (library/ct-info-clo* linfo/ct)
           #f #f '() 'loading 'loading)))))
 
 (set! $install-library/rt-desc
-  (lambda (linfo/rt for-import? ofn)
+  (lambda (linfo/rt for-import? importer ofn)
     (let ([uid (library-info-uid linfo/rt)])
       (when for-import?
         (when (let ([desc (get-library-descriptor uid)]) (and desc (libdesc-rtdesc desc)))
           ($oops #f "attempting to re-install run-time part of library ~s" (library-info-path linfo/rt))))
-      (install-library/rt-desc (library-info-path linfo/rt) (library-info-version linfo/rt)
-        uid ofn (make-rtdesc (library/rt-info-invoke-req* linfo/rt) #f 'loading)))))
+      (install-library/rt-desc (library-info-path linfo/rt) (library-info-version linfo/rt) uid ofn importer
+        (make-rtdesc (library/rt-info-invoke-req* linfo/rt) #f 'loading)))))
 
 (set! $install-library/ct-code
   (lambda (uid export-id* import-code visit-code)
@@ -5592,8 +5780,8 @@
   (define-who install-system-library
     (lambda (path uid)
       (install-library path uid
-        (make-libdesc path (if (eq? (car path) 'rnrs) '(6) '()) #f #t
-          (make-ctdesc '() '() '() '() #t #t '() #f #f)
+        (make-libdesc path (if (eq? (car path) 'rnrs) '(6) '()) #f #f #t
+          (make-ctdesc '() '() '() #t #t '() #f #f)
           (make-rtdesc '() #t #f)))))
   (set! $make-base-modules
     (lambda ()

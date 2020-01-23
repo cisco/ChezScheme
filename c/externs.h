@@ -139,6 +139,7 @@ extern void S_set_enable_object_counts PROTO((IBOOL eoc));
 extern ptr S_object_counts PROTO((void));
 extern void S_do_gc PROTO((IGEN g, IGEN gtarget));
 extern ptr S_locked_objects PROTO((void));
+extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
 extern void S_check_heap PROTO((IBOOL aftergc));
 

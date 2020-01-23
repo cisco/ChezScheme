@@ -40,9 +40,8 @@
   (fields
     (immutable import-req*)
     (immutable visit-visit-req*)
-    (immutable visit-req*)
-    (immutable clo*))
-  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-4})
+    (immutable visit-req*))
+  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-3})
   (sealed #t))
 
 (define-record-type library/rt-info

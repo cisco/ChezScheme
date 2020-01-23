@@ -851,7 +851,7 @@ static int set_load_binary(iptr n) {
   if (!Ssymbolp(SYMVAL(S_G.scheme_version_id))) return 0; // set by back.ss
   ptr make_load_binary = SYMVAL(S_G.make_load_binary_id);
   if (Sprocedurep(make_load_binary)) {
-    S_G.load_binary = Scall3(make_load_binary, Sstring_utf8(bd[n].path, -1), Sstring_to_symbol("load"), Sfalse);
+    S_G.load_binary = Scall1(make_load_binary, Sstring_utf8(bd[n].path, -1));
     return 1;
   }
   return 0;

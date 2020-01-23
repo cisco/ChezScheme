@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{September}
+\pubmonth{December}
 \pubyear{2019}
 
 \begin{document}
@@ -57,6 +57,32 @@ Online versions of both books can be found at
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
+
+\subsection{Verifying loadability of libraries and programs (9.5.3)}
+
+The new procedure \scheme{verify-loadability} can be used to
+determine, without actually loading any object code or defining any
+libraries, whether a set of object files and the object files
+satisfying their library dependencies, direct or indirect, are
+present, readable, and mutually compatible.
+
+To support loadability verification, information about libraries
+and top-level programs within an object file is now placed at the
+top of the file, just after recompile information.  This change can
+be detected by unusual setups, e.g., a source file that interleaves
+library definitions and top-level forms that call library-list, but
+is backward compatible for standard use cases in which each file
+contains one or more libraries possibly followed by a top-level
+program.
+
+\subsection{Unregistering objects from guardians (9.5.3)}
+
+The set of as-yet unresurrected objects registered with a guardian
+can be unregistered and retrieved by means of the new primitive
+\scheme{unregister-guardian}.
+Consult the user's guide for usage and caveats.
+Guardians can now be distinguished from other procedures (and other
+objects) via the new primitive \scheme{guardian?}.
 
 \subsection{Coverage support and source tables (9.5.3)}
 

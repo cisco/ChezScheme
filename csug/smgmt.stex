@@ -275,7 +275,12 @@ e.g.:
 
 Collection can also be temporarily disabled using
 \scheme{critical-section}, which prevents any interrupts from
-occurring.
+being handled.
+
+In the threaded versions of {\ChezScheme}, the collect-request
+handler is invoked by a single thread with all other threads
+temporarily suspended.
+
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -547,7 +552,6 @@ reference, and that non-weak reference prevents the car field from becoming
 (bwp-object? (car p)) ;=> #t
 \endschemedisplay
 
-
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{make-guardian}{\categoryprocedure}{(make-guardian)}
@@ -791,6 +795,86 @@ each header, in which \scheme{do-free} would take just the
 foreign address as an argument.
 This would allow the header to be dropped from the Scheme
 heap as soon as it becomes inaccessible.
+
+Guardians can also be created via
+\index{\scheme{ftype-guardian}}\scheme{ftype-guardian}, which
+supports reference counting of foreign objects.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{guardian?}{\categoryprocedure}{(guardian? \var{obj})}
+\returns \scheme{#t} if obj is a guardian, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(guardian? (make-guardian)) ;=> #t
+(guardian? (ftype-guardian iptr)) ;=> #t
+(guardian? (lambda x x)) ;=> #f
+(guardian? "oops") ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{unregister-guardian}{\categoryprocedure}{(unregister-guardian \var{guardian})}
+\returns see below
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{unregister-guardian} unregisters the
+as-yet unresurrected objects currently registered with the guardian,
+with one caveat.
+
+The caveat, which applies only to threaded versions of {\ChezScheme},
+is that objects registered with the guardian by other threads since
+the last garbage collection might not be unregistered.
+To ensure that all objects are unregistered in a multithreaded
+application, a single thread can be used both to register and
+unregister objects.
+Alternatively, an application can arrange to define a
+\index{\scheme{collect-request-handler}}collect-request
+handler that calls \scheme{unregister-guardian} after it calls
+\scheme{collect}.
+
+In any case, \scheme{unregister-guardian} returns a list containing each object
+(or its representative, if specified) that it unregisters, with
+duplicates as appropriate if the same object is registered more
+than once with the guardian.
+Objects already resurrected but not yet retrieved from the guardian
+are not included in the list but remain retrievable from the
+guardian.
+
+In the current implementation, \scheme{unregister-guardian} takes time proportional
+to the number of unresurrected objects currently registered with
+all guardians rather than those registered just with
+the corresponding guardian.
+
+The example below assumes no collections occur except for those resulting from
+explicit calls to \scheme{collect}.
+
+\schemedisplay
+(define g (make-guardian))
+(define x (cons 'a 'b))
+(define y (cons 'c 'd))
+(g x)
+(g x)
+(g y)
+(g y)
+(set! y #f)
+(collect 0 0)
+(unregister-guardian g) ;=> ((a . b) (a . b))
+(g) ;=> (c . d)
+(g) ;=> (c . d)
+(g) ;=> #f
+\endschemedisplay
+
+\scheme{unregister-guardian} can also be used to unregister ftype
+pointers registered with guardians created by
+\index{\scheme{ftype-guardian}}\scheme{ftype-guardian}
+(Section~\ref{SECTTHREADFTYPEGUARDIANS}).
+
 
 \section{Locking Objects\label{SECTSMGMTLOCKING}}
 

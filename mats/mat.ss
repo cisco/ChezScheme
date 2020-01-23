@@ -458,7 +458,11 @@
       (close-port to-stdin)
       (let* ([stdout-stuff (slurp from-stdout)]
              [stderr-stuff (slurp from-stderr)])
-        (unless (string=? stderr-stuff "") (errorf who "~a" stderr-stuff))
+        (when (string=? stderr-stuff "")
+          (printf "$separate-eval command succeeeded with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff))
+        (unless (string=? stderr-stuff "")
+          (printf "$separate-eval command failed with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff)
+          (errorf who "~a" stderr-stuff))
         (close-port from-stdout)
         (close-port from-stderr)
         stdout-stuff)))
@@ -516,12 +520,13 @@
 (define test-cp0-expansion
   (rec test-cp0-expansion
     (case-lambda
-      [(expr result) (test-cp0-expansion equivalent-expansion? expr result)]
-      [(equiv? expr result)
-       (equiv?
-         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-           (expand/optimize `(let () (import scheme) ,expr)))
-         result)])))
+      [(expr expected) (test-cp0-expansion equivalent-expansion? expr expected)]
+      [(equiv? expr expected)
+       (let ([actual (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+                       (expand/optimize `(let () (import scheme) ,expr)))])
+         (unless (equiv? actual expected)
+           (errorf 'test-cp0-expansion "expected ~s for ~s, got ~s\n" expected expr actual))
+         #t)])))
 
 (define rm-rf
   (lambda (path)

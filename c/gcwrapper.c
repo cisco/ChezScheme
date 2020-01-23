@@ -271,6 +271,33 @@ void Sunlock_object(x) ptr x; {
   tc_mutex_release()
 }
 
+ptr s_help_unregister_guardian(ptr *pls, ptr tconc, ptr result) {
+  ptr rep, ls;
+  while ((ls = *pls) != Snil) {
+    if (GUARDIANTCONC(ls) == tconc) {
+      result = Scons(((rep = GUARDIANREP(ls)) == ftype_guardian_rep ? GUARDIANOBJ(ls) : rep), result);
+      *pls = ls = GUARDIANNEXT(ls);
+    } else {
+      ls = *(pls = &GUARDIANNEXT(ls));
+    }
+  }
+  return result;
+}
+
+ptr S_unregister_guardian(ptr tconc) {
+  ptr result, tc; IGEN g;
+  tc_mutex_acquire()
+  tc = get_thread_context();
+  /* in the interest of thread safety, gather entries only in the current thread, ignoring any others */
+  result = s_help_unregister_guardian(&GUARDIANENTRIES(tc), tconc, Snil);
+  /* plus, of course, any already known to the storage-management system */
+  for (g = 0; g <= static_generation; INCRGEN(g)) {
+    result = s_help_unregister_guardian(&S_G.guardians[g], tconc, result);
+  }
+  tc_mutex_release()
+  return result;
+}
+
 #ifndef WIN32
 void S_register_child_process(INT child) {
   tc_mutex_acquire()

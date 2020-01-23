@@ -452,6 +452,14 @@ When the count reaches zero, the object is no longer needed and the
 memory it formerly occupied can be made available for some other
 purpose.
 
+Ftype guardians are similar to guardians created by
+\index{\scheme{make-guardian}}\scheme{make-guardian}
+(Section~\ref{SECTGUARDWEAKPAIRS}).
+The \index{\scheme{guardian?}}\scheme{guardian?} procedure returns
+true for both, and the
+\index{\scheme{unregister-guardian}}\scheme{unregister-guardian}
+procedure can be used to unregister objects registered with either.
+
 \entryheader
 \formdef{ftype-guardian}{\categorysyntax}{(ftype-guardian \var{ftype-name})}
 \returns a new ftype guardian
@@ -550,6 +558,7 @@ Objects guarded by an ftype guardian might contain pointers to other
 objects whose reference counts should also be incremented upon
 allocation of the containing object and decremented upon freeing
 of the containing object.
+
 
 \section{Thread Parameters\label{SECTTHREADPARAMETERS}}
 
