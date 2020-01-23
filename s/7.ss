@@ -657,7 +657,7 @@
     (lambda ()
       (unless s
         (set! s
-          (format "~:[Petite ~;~]Cisco-internal Chez Scheme Version ~a"
+          (format "~:[Petite ~;~]Chez Scheme Version ~a"
             $compiler-is-loaded?
             $scheme-version)))
       s)))
