@@ -109,6 +109,7 @@ typedef unsigned long long U64;
 #define code_closure_length_disp 0x29
 #define code_data_disp 0x41
 #define code_flag_continuation 0x2
+#define code_flag_guardian 0x8
 #define code_flag_system 0x1
 #define code_flag_template 0x4
 #define code_flags_offset 0x8
@@ -347,6 +348,7 @@ typedef unsigned long long U64;
 #define mask_fixnum 0x7
 #define mask_flonum 0x7
 #define mask_fxvector 0x7
+#define mask_guardian_code 0x8FF
 #define mask_immediate 0x7
 #define mask_inexactnum 0xFFFFFFFFFFFFFFFF
 #define mask_input_port 0x1FF
@@ -646,6 +648,7 @@ typedef unsigned long long U64;
 #define type_fixnum 0x0
 #define type_flonum 0x2
 #define type_fxvector 0x3
+#define type_guardian_code 0x83E
 #define type_immediate 0x6
 #define type_immutable_box 0x8E
 #define type_immutable_bytevector 0x5

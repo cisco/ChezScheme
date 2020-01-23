@@ -49,6 +49,8 @@ primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fi
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 2.0)): Exception in make-sstats: gc-bytes value 2.0 is not an exact integer
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 1/2)): Exception in make-sstats: gc-bytes value 1/2 is not an exact integer
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote #f)): Exception in make-sstats: gc-bytes value #f is not an exact integer
+primvars.mo:Expected error testing (verify-loadability (quote #!eof)): Exception in verify-loadability: invalid situation #!eof; should be one of load, visit, or revisit
+primvars.mo:Expected error testing (verify-loadability (quote #f)): Exception in verify-loadability: invalid situation #f; should be one of load, visit, or revisit
 primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
 primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
 primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
@@ -3802,6 +3804,10 @@ misc.mo:Expected error in mat strip-fasl-file: "invalid fasl strip option ratfin
 misc.mo:Expected error in mat strip-fasl-file: "strip-fasl-file: #<enum-set> is not a string".
 misc.mo:Expected error in mat strip-fasl-file: "strip-fasl-file: #<enum-set> is not a string".
 misc.mo:Expected error in mat strip-fasl-file: "strip-fasl-file: "testfile.so" is not a fasl-strip-options object".
+misc.mo:Expected error in mat strip-fasl-file: "separate-eval: Exception: loading testfile-sff-4.so did not define library (testfile-sff-4)
+misc.mo:Expected error in mat strip-fasl-file: "separate-eval: Exception in environment: loading testfile-sff-4.so did not define compile-time information for library (testfile-sff-4)
+misc.mo:Expected error in mat strip-fasl-file: "separate-eval: Exception: loading testfile-sff-4.so did not define compile-time information for library (testfile-sff-4)
+misc.mo:Expected error in mat strip-fasl-file: "separate-eval: Exception: loading testfile-sff-4.so did not define compile-time information for library (testfile-sff-4)
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: testfile-fatfib1.so is not a string".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: testfile-fatfib1.so is not a string".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: 13.4 is not a string".
@@ -3810,7 +3816,7 @@ misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for 
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
-misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 3".
+misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 4".
 misc.mo:Expected error in mat cost-center: "incorrect argument count in call (make-cost-center (quote foo))".
 misc.mo:Expected error in mat cost-center: "with-cost-center: foo is not a cost center".
 misc.mo:Expected error in mat cost-center: "with-cost-center: bar is not a procedure".
@@ -7130,6 +7136,10 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-a9) while it is still being loaded
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a1) not found
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install compile-time part of library (testfile-cwl-a5)
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in environment: attempting to re-install compile-time part of library (testfile-cwl-a5)
@@ -7140,6 +7150,41 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-c6) not found
 7.mo:Expected error in mat compile-whole-library: "separate-compile: Exception in compile-whole-library: encountered visit-only run-time library (testfile-cwl-a9) while processing file "testfile-cwl-a9.wpo"
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in compile-whole-program: encountered library (testfile-deja-vu-one) in testfile-deja-vu-dup.wpo, but had already encountered it in testfile-deja-vu-two.wpo
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid situation never; should be one of load, visit, or revisit".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid situation never; should be one of load, visit, or revisit".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid situation #f; should be one of load, visit, or revisit".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input hello: expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input (a . "testdir"): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input #("a" "testdir"): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input hello: expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input (a . "testdir"): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input ("a" . hello): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input ("a" "src" . "obj"): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input ("a" ("src" "obj")): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: invalid input ("a" (("src" "obj"))): expected either a string or a pair of a string and a valid library-directories value".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: failed for probably not found: no such file or directory".
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clB1)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clB1)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clC1)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clC1)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: testdir-dist2/testfile-clA.so requires a different compilation instance of (testfile-clB) from the one previously compiled
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: testdir-dist2/testfile-clA.so requires a different compilation instance of (testfile-clB) from the one previously compiled
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: loading testfile-clC.so yielded a different compilation instance of (testfile-clC) from that required by compiled program
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: loading testfile-clC.so yielded a different compilation instance of (testfile-clC) from that required by testfile-clA.so
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: loading testfile-clC.so yielded a different compilation instance of (testfile-clC) from that required by testfile-clA.so
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: loading testdir-dist1/testfile-clB.so yielded a different compilation instance of (testfile-clB) from that required by testdir-dist2/testfile-clA.so
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: testdir-dist2/testfile-clA.so requires a different compilation instance of (testfile-clB) from the one previously compiled
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: incompatible record type Q in testfile-clPE.so
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: testdir-obj/testfile-clH1.so requires a different compilation instance of (testfile-clH0) from the one previously compiled
+7.mo:Expected error in mat verify-loadability: "verify-loadability: cannot find object file for library (testfile-clI0)".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: cannot find object file for library (testfile-clI0)".
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clJ0)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: library (testfile-clJ0) not found
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-clJ2)
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: library (testfile-clJ2) not found
+7.mo:Expected error in mat verify-loadability: "verify-loadability: loading "testfile-clK0.so" did not define library (testfile-clK0)".
+7.mo:Expected error in mat verify-loadability: "verify-loadability: visiting "testfile-clK0.so" does not define compile-time information for (testfile-clK0)".
+7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: loading testfile-clK0.so did not define library (testfile-clK0)
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
 7.mo:Expected error in mat top-level-value-functions: "incorrect argument count in call (top-level-bound?)".
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: 45 is not a symbol".
@@ -8410,7 +8455,7 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat library1: "attempt to export assigned variable $l1-x".
 8.mo:Expected error in mat library1: "attempt to export assigned variable $l1-x".
 8.mo:Expected error in mat library1: "library ($l1-ham) not found".
-8.mo:Expected error in mat library1: "compiled program requires different compilation instance of (testfile-b2) from one found in testfile-b2.ss".
+8.mo:Expected error in mat library1: "loading testfile-b2.ss yielded a different compilation instance of (testfile-b2) from that required by compiled program".
 8.mo:Expected error in mat library1: "attempt to reference unbound identifier cons".
 8.mo:Expected error in mat library1: "invalid library reference (add-prefix (rnrs eval) x)".
 8.mo:Expected error in mat library1: "invalid library reference (drop-prefix (rnrs eval) x)".
@@ -8445,6 +8490,11 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat library2: "invalid context for library form (library (foo) (export) (import (scheme)) (library (bar) (export) (import)))".
 8.mo:Expected error in mat library2: "invalid context for library form (library (foo) (export) (import))".
 8.mo:Expected error in mat library2: "invalid context for library form (library (bar) (export) (import))".
+8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-d1) requires a different compilation instance of (testfile-l7-a1) from the one previously loaded from testfile-l7-a1.so and originally imported by (testfile-l7-b1)
+8.mo:Expected error in mat library7: "separate-eval: Exception: loading testfile-l7-a1.ss yielded a different compilation instance of (testfile-l7-a1) from that required by compiled (testfile-l7-d1)
+8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-d1) requires a different compilation instance of (testfile-l7-a1) from the one previously loaded from testfile-l7-a1.so
+8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-c1) requires a different compilation instance of (testfile-l7-a1) from the one previously loaded from testfile-l7-a1.so
+8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-d1) requires a different compilation instance of (testfile-l7-a1) from the one previously compiled
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl1.ss did not define library (testfile-ewl1)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl3.ss did not define library (testfile-ewl3)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl4.ss did not define library (testfile-ewl4)".
@@ -8453,7 +8503,16 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl1.so did not define library (testfile-ewl1)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl2.so did not define library (testfile-ewl2)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl6.so did not define library (testfile-ewl6)".
+8.mo:Expected error in mat library-directories: "library-directories: invalid path list ("a" . hello)".
+8.mo:Expected error in mat library-directories: "library-directories: invalid path list ("a" "src" . "obj")".
+8.mo:Expected error in mat library-directories: "library-directories: invalid path-list element ("src")".
+8.mo:Expected error in mat library-directories: "library-directories: invalid path-list element ("src" "obj")".
+8.mo:Expected error in mat library-directories: "library-directories: invalid path-list element (("src" "obj"))".
 8.mo:Expected error in mat library-directories: "library (testfile-ld1) not found".
+8.mo:Expected error in mat library-extensions: "library-extensions: invalid extension list \x2E;a1.sls".
+8.mo:Expected error in mat library-extensions: "library-extensions: invalid extension-list element (".foo")".
+8.mo:Expected error in mat library-extensions: "library-extensions: invalid extension-list element (".foo" ".bar")".
+8.mo:Expected error in mat library-extensions: "library-extensions: invalid extension-list element ((".junk"))".
 8.mo:Expected error in mat library-search-handler: "default-library-search-handler: "not-symbol" is not a symbol".
 8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid library name bad-library-name".
 8.mo:Expected error in mat library-search-handler: "default-library-search-handler: invalid path list (("invalid" "path" "list"))".
@@ -8462,7 +8521,7 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat library-search-handler: "library-search-handler: returned invalid object-file path (bad object path)".
 8.mo:Expected error in mat library-search-handler: "library-search-handler: claimed object file was found but returned no object-file path".
 8.mo:Expected error in mat top-level-program: "invalid syntax (if (inc 3)) at line 4, char 1 of testfile.ss".
-8.mo:Expected error in mat top-level-program: "compiled program requires different compilation instance of (testfile-tlp1) from one already loaded".
+8.mo:Expected error in mat top-level-program: "compiled program requires a different compilation instance of (testfile-tlp1) from the one previously compiled".
 8.mo:Expected error in mat top-level-program: "read: #<n>(...) vector syntax is not allowed in #!r6rs mode at line 4, char 19 of testfile-tlp1.ss".
 8.mo:Expected error in mat top-level-program: "read: #<n>(...) vector syntax is not allowed in #!r6rs mode at line 2, char 31 of testfile-tlp.ss".
 8.mo:Expected error in mat top-level-program: "read: #<n>(...) vector syntax is not allowed in #!r6rs mode at line 4, char 19 of testfile-tlp1.ss".

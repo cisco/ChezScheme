@@ -447,7 +447,7 @@
 
 (define with-whacked-optimization-locs
   (lambda (x1 th)
-    (define ht (make-hashtable symbol-hash eq?))
+    (define ht (make-eq-hashtable))
     (define-pass whack! : Lexpand (ir f) -> * ()
       (Outer : Outer (ir) -> * ()
         [,inner (Inner ir)]
@@ -456,17 +456,20 @@
         [(revisit-only ,[]) (values)]
         [else (values)])
       (Inner : Inner (ir) -> * ()
-        [(library/ct-info ,linfo/ct) (for-each f (library/ct-info-clo* linfo/ct)) (values)]
+        [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
+         (for-each f db*)
+         (values)]
         [else (values)]))
     (whack! x1
-      (lambda (x)
-        (let ([b (cdr x)])
-          (symbol-hashtable-set! ht (car x) (unbox b))
-          (set-box! b '()))))
+      (lambda (db)
+        (when db
+          (eq-hashtable-set! ht db (unbox db))
+          (set-box! db '()))))
     (th)
     (whack! x1
-      (lambda (x)
-        (set-box! (cdr x) (symbol-hashtable-ref ht (car x) '()))))))
+      (lambda (db)
+        (when db
+          (set-box! db (eq-hashtable-ref ht db '())))))))
 
 (define check-prelex-flags
   (lambda (x after)
@@ -495,10 +498,10 @@
       (emit-header op (constant machine-type))
       (when hostop (emit-header hostop (host-machine-type)))
       (when wpoop (emit-header wpoop (host-machine-type)))
-      (let cfh0 ([n 1] [rrcinfo** '()] [rfinal** '()])
+      (let cfh0 ([n 1] [rrcinfo** '()] [rlpinfo** '()] [rfinal** '()])
         (let ([x0 ($pass-time 'read do-read)])
           (if (eof-object? x0)
-              (compile-file-help2 op (reverse rrcinfo**) (reverse rfinal**))
+              (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**))
               (let ()
                 (define source-info-string
                   (and (or ($assembly-output) (expand-output) (expand/optimize-output))
@@ -538,7 +541,7 @@
                               (let ([t ($fasl-table)])
                                 ($fasl-enter x1 t (constant annotation-all))
                                 ($fasl-start wpoop t (constant fasl-type-visit-revisit) (lambda (p) ($fasl-out x1 p t (constant annotation-all)))))))))))
-                  (let-values ([(rcinfo* final*) (compile-file-help1 x1 source-info-string)])
+                  (let-values ([(rcinfo* lpinfo* final*) (compile-file-help1 x1 source-info-string)])
                     (when hostop
                       ; the host library file contains expander output possibly augmented with
                       ; cross-library optimization information inserted by cp0.  this write must come
@@ -549,7 +552,7 @@
                             (let ([t ($fasl-table)])
                               ($fasl-enter x1 t (constant annotation-all))
                               ($fasl-start hostop t (constant fasl-type-visit-revisit) (lambda (p) ($fasl-out x1 p t (constant annotation-all)))))))))
-                    (cfh0 (+ n 1) (cons rcinfo* rrcinfo**) (cons final* rfinal**)))))))))))
+                    (cfh0 (+ n 1) (cons rcinfo* rrcinfo**) (cons lpinfo* rlpinfo**) (cons final* rfinal**)))))))))))
 
 (define library/program-info?
   (lambda (x)
@@ -631,7 +634,7 @@
         (fprintf (expand-output) "~%;; expand output for ~a\n" source-info-string))
       (pretty-print ($uncprep x1) (expand-output))
       (flush-output-port (expand-output)))
-    (let loop ([chunk* (expand-Lexpand x1)] [rx2b* '()] [rfinal* '()] [rrcinfo* '()])
+    (let loop ([chunk* (expand-Lexpand x1)] [rx2b* '()] [rfinal* '()] [rlpinfo* '()] [rrcinfo* '()])
       (if (null? chunk*)
           (begin
             (when (expand/optimize-output)
@@ -658,12 +661,12 @@
                           rx2b*)])
                 (pretty-print (if (fx= (length e*) 1) (car e*) `(begin ,@(reverse e*))) (expand/optimize-output))
                 (flush-output-port (expand/optimize-output))))
-            (values (reverse rrcinfo*) (reverse rfinal*)))
+            (values (reverse rrcinfo*) (reverse rlpinfo*) (reverse rfinal*)))
           (let ([x1 (car chunk*)] [chunk* (cdr chunk*)])
             (define finish-compile
               (lambda (x1 f)
                 (if (library/program-info? x1)
-                    (loop chunk* (cons (f x1) rx2b*) (cons (f `(object ,x1)) rfinal*) rrcinfo*)
+                    (loop chunk* (cons (f x1) rx2b*) rfinal* (cons (f `(object ,x1)) rlpinfo*) rrcinfo*)
                     (let* ([waste (check-prelex-flags x1 'before-cpvalid)]
                            [x2 ($pass-time 'cpvalid (lambda () (do-trace $cpvalid x1)))]
                            [waste (check-prelex-flags x2 'cpvalid)]
@@ -688,15 +691,15 @@
                            [waste (check-prelex-flags x2b 'cpcommonize)]
                            [x7 (do-trace $np-compile x2b #t)]
                            [x8 ($c-make-closure x7)])
-                      (loop chunk* (cons (f x2b) rx2b*) (cons (f x8) rfinal*) rrcinfo*)))))
+                      (loop chunk* (cons (f x2b) rx2b*) (cons (f x8) rfinal*) rlpinfo* rrcinfo*)))))
             (cond
-              [(recompile-info? x1) (loop chunk* (cons x1 rx2b*) rfinal* (cons x1 rrcinfo*))]
+              [(recompile-info? x1) (loop chunk* (cons x1 rx2b*) rfinal* rlpinfo* (cons x1 rrcinfo*))]
               [(visit-chunk? x1) (finish-compile (visit-chunk-chunk x1) (lambda (x) `(visit-stuff . ,x)))]
               [(revisit-chunk? x1) (finish-compile (revisit-chunk-chunk x1) (lambda (x) `(revisit-stuff . ,x)))]
               [else (finish-compile x1 values)]))))))
 
 (define compile-file-help2
-  (lambda (op rcinfo** final**)
+  (lambda (op rcinfo** lpinfo** final**)
     (define (libreq-hash x) (symbol-hash (libreq-uid x)))
     (define (libreq=? x y) (eq? (libreq-uid x) (libreq-uid y)))
     (let ([import-ht (make-hashtable libreq-hash libreq=?)]
@@ -728,7 +731,8 @@
                       [(revisit-stuff) x (c-print-fasl x op (constant fasl-type-revisit))]
                       [else (c-print-fasl x op (constant fasl-type-visit-revisit))]))
                   final*))
-              final**)))))))
+              ; inserting #t after lpinfo as an end-of-header marker
+              (append lpinfo** (cons (list `(object #t)) final**)))))))))
 
 (define (new-extension new-ext fn)
   (let ([old-ext (path-extension fn)])
@@ -809,15 +813,15 @@
                  (with-object-file who iofn
                    (lambda (op)
                      (emit-header op (constant machine-type))
-                       (let loop ([x1* (reverse rx1*)] [rrcinfo** (list rcinfo*)] [rfinal** '()])
+                       (let loop ([x1* (reverse rx1*)] [rrcinfo** (list rcinfo*)] [rlpinfo** '()] [rfinal** '()])
                          (if (null? x1*)
-                             (compile-file-help2 op (reverse rrcinfo**) (reverse rfinal**))
-                             (let-values ([(rcinfo* final*)
+                             (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**))
+                             (let-values ([(rcinfo* lpinfo* final*)
                                            (let ([x1 (car x1*)])
                                              (if (recompile-info? x1)
-                                                 (values (list x1) '())
+                                                 (values (list x1) '() '())
                                                  (compile-file-help1 (car x1*) "host library")))])
-                               (loop (cdr x1*) (cons rcinfo* rrcinfo**) (cons final* rfinal**))))))))]
+                               (loop (cdr x1*) (cons rcinfo* rrcinfo**) (cons lpinfo* rlpinfo**) (cons final* rfinal**))))))))]
               [(recompile-info? x1) (loop rx1* (cons x1 rcinfo*) rother*)]
               [(Lexpand? x1) (loop (cons x1 rx1*) rcinfo* rother*)]
               [else (loop rx1* rcinfo* (cons x1 rother*))])))))))
@@ -959,6 +963,8 @@
                                      (let ([node (record-rt-lib! x #t fn libs-visible?)])
                                        (when node (set! libs-in-file (cons node libs-in-file))))]
                                     [(program-info? x) ($oops who "found program while looking for library ~s in ~a" path fn)]
+                                    ; NB: this is here to support the #t inserted by compile-file-help2 after header information
+                                    [(eq? x #t)]
                                     [else ($oops who "unexpected value ~s read from ~a" x fn)])
                                   (loop!))))))
                       ($oops who "malformed binary input file ~s" fn)))))))
@@ -1406,7 +1412,7 @@
                 (let* ([info (library-node-rtinfo node)]
                        [uid (library-info-uid info)])
                   `(group (revisit-only
-                            (library/ct-info
+                            (library/rt-info
                               ,(make-library/rt-info
                                  (library-info-path info)
                                  (library-info-version info)
@@ -1435,12 +1441,19 @@
                                    (library/ct-info-import-req* info)
                                    (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f)))
                                  (library/ct-info-visit-visit-req* info)
-                                 (library/ct-info-visit-req* info)
-                                 (if (library-node-visible? visit-lib)
-                                     (library/ct-info-clo* info)
-                                     '()))))
+                                 (library/ct-info-visit-req* info))))
                      ,body))))
           body visit-lib*)))
+
+    (define add-program-record
+      (lambda (node body)
+        `(group (revisit-only
+                  (program-info
+                    ,(make-program-info
+                       (program-node-uid node)
+                       ; NB: possibly list direct or indirect binary library reqs here
+                       (program-node-invoke-req* node))))
+             ,body)))
 
     (define add-visit-lib-install*
       (lambda (visit-lib* body)
@@ -1481,9 +1494,10 @@
           (add-library/rt-records #f node*
             (add-library/ct-records #f visit-lib*
               (add-library/ct-records #f invisible*
-                (add-visit-lib-install* visit-lib*
-                  (add-visit-lib-install* invisible*
-                    `(revisit-only ,(build-combined-program-ir program-entry node*))))))))))
+                (add-program-record program-entry
+                  (add-visit-lib-install* visit-lib*
+                    (add-visit-lib-install* invisible*
+                      `(revisit-only ,(build-combined-program-ir program-entry node*)))))))))))
 
     (define build-library-body
       (lambda (node* visit-lib* rcinfo*)
@@ -1509,8 +1523,8 @@
                              [$block-counter 0])
                 (when source-table ($insert-profile-src! source-table x1))
                 (emit-header op (constant machine-type))
-                (let-values ([(rcinfo* final*) (compile-file-help1 x1 msg)])
-                  (compile-file-help2 op (list rcinfo*) (list final*))))))))))
+                (let-values ([(rcinfo* lpinfo* final*) (compile-file-help1 x1 msg)])
+                  (compile-file-help2 op (list rcinfo*) (list lpinfo*) (list final*))))))))))
 
   (define write-wpo-file
     (lambda (who ofn ir*)
@@ -1529,19 +1543,21 @@
 
   (define build-required-library-list
     (lambda (node* visit-lib*)
-      (fold-left (lambda (ls visit-lib)
-                   (if (library-node-binary? visit-lib)
-                       (let ([path (library-node-path visit-lib)])
-                         (if (member path ls)
-                             ls
-                             (cons path ls)))
-                       ls))
-        (fold-left (lambda (ls node)
-                     (if (library-node-binary? node)
-                         (cons (library-node-path node) ls)
-                         ls))
-          '() node*)
-        visit-lib*)))
+      (let ([ht (make-hashtable symbol-hash eq?)])
+        (fold-left
+          (lambda (ls node)
+            (if (and (library-node-binary? node) (not (symbol-hashtable-contains? ht (library-node-uid node))))
+                (cons (library-node-path node) ls)
+                ls))
+          (fold-left
+            (lambda (ls node)
+              (if (library-node-binary? node)
+                  (begin
+                    (symbol-hashtable-set! ht (library-node-uid node) #t)
+                    (cons (library-node-path node) ls))
+                  ls))
+            '() node*)
+          visit-lib*))))
 
   ;; TODO: Add automatic recompliation ala scheme import/load-library
   (set-who! compile-whole-program

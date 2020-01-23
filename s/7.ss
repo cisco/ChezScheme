@@ -213,8 +213,8 @@
 
 (let ()
   (define do-load-binary
-    (lambda (who fn ip situation for-import?)
-      (let ([load-binary (make-load-binary who fn situation for-import?)])
+    (lambda (who fn ip situation for-import? importer)
+      (let ([load-binary (make-load-binary who fn situation for-import? importer)])
         (let ([x (fasl-read ip situation)])
           (unless (eof-object? x)
             (let loop ([x x])
@@ -223,7 +223,7 @@
                     (load-binary x)
                     (begin (load-binary x) (loop next-x))))))))))
 
-  (define (make-load-binary who fn situation for-import?)
+  (define (make-load-binary who fn situation for-import? importer)
     (module (Lexpand? recompile-info? library/ct-info? library/rt-info? program-info?)
       (import (nanopass))
       (include "base-lang.ss")
@@ -231,14 +231,16 @@
     (lambda (x)
       (cond
         [(procedure? x) (x)]
-        [(library/rt-info? x) ($install-library/rt-desc x for-import? fn)]
-        [(library/ct-info? x) ($install-library/ct-desc x for-import? fn)]
+        [(library/rt-info? x) ($install-library/rt-desc x for-import? importer fn)]
+        [(library/ct-info? x) ($install-library/ct-desc x for-import? importer fn)]
         [(program-info? x) ($install-program-desc x)]
         [(recompile-info? x) (void)]
-        [(Lexpand? x) ($interpret-backend x situation for-import? fn)]
+        [(Lexpand? x) ($interpret-backend x situation for-import? importer fn)]
+        ; NB: this is here to support the #t inserted by compile-file-help2 after header information
+        [(eq? x #t) (void)]
         [else ($oops who "unexpected value ~s read from ~a" x fn)])))
 
-  (define (do-load who fn situation for-import? ksrc)
+  (define (do-load who fn situation for-import? importer ksrc)
     (let ([ip ($open-file-input-port who fn)])
       (on-reset (close-port ip)
         (let ([fp (let ([start-pos (port-position ip)])
@@ -257,7 +259,7 @@
           (port-file-compressed! ip)
           (if ($compiled-file-header? ip)
               (begin
-                (do-load-binary who fn ip situation for-import?)
+                (do-load-binary who fn ip situation for-import? importer)
                 (close-port ip))
               (begin
                 (when ($port-flags-set? ip (constant port-flag-compressed))
@@ -274,26 +276,26 @@
                   (ksrc ip sfd ($make-read ip sfd fp)))))))))
 
   (set! $make-load-binary
-    (lambda (fn situation for-import?)
-      (make-load-binary '$make-load-binary fn situation for-import?)))
+    (lambda (fn)
+      (make-load-binary '$make-load-binary fn 'load #f #f)))
 
   (set-who! load-compiled-from-port
     (lambda (ip)
       (unless (and (input-port? ip) (binary-port? ip))
         ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'load #f)))
+      (do-load-binary who (port-name ip) ip 'load #f #f)))
 
   (set-who! visit-compiled-from-port
     (lambda (ip)
       (unless (and (input-port? ip) (binary-port? ip))
         ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'visit #f)))
+      (do-load-binary who (port-name ip) ip 'visit #f #f)))
 
   (set-who! revisit-compiled-from-port
     (lambda (ip)
       (unless (and (input-port? ip) (binary-port? ip))
         ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'revisit #f)))
+      (do-load-binary who (port-name ip) ip 'revisit #f #f)))
 
   (set-who! load-program
     (rec load-program
@@ -304,7 +306,7 @@
          (unless (procedure? ev) ($oops who "~s is not a procedure" ev))
          (with-source-path who fn
            (lambda (fn)
-             (do-load who fn 'load #f
+             (do-load who fn 'load #f #f
                (lambda (ip sfd do-read)
                  ($set-port-flags! ip (constant port-flag-r6rs))
                  (let loop ([x* '()])
@@ -325,7 +327,7 @@
          (unless (procedure? ev) ($oops who "~s is not a procedure" ev))
          (with-source-path who fn
            (lambda (fn)
-             (do-load who fn 'load #f
+             (do-load who fn 'load #f #f
                (lambda (ip sfd do-read)
                  ($set-port-flags! ip (constant port-flag-r6rs))
                  (let loop ()
@@ -339,11 +341,11 @@
     ; like load, but sets #!r6rs mode and does not use with-source-path,
     ; since syntax.ss load-library has already determined the path.
     ; adds fn's directory to source-directories
-    (lambda (fn situation)
+    (lambda (fn situation importer)
       (define who 'import)
       (let ([fn (let ([host-fn (format "~a.~s" (path-root fn) (machine-type))])
                   (if (file-exists? host-fn) host-fn fn))])
-        (do-load who fn situation #t
+        (do-load who fn situation #t importer
           (lambda (ip sfd do-read)
             ($set-port-flags! ip (constant port-flag-r6rs))
             (parameterize ([source-directories (cons (path-parent fn) (source-directories))])
@@ -363,7 +365,7 @@
          (unless (procedure? ev) ($oops who "~s is not a procedure" ev))
          (with-source-path who fn
            (lambda (fn)
-             (do-load who fn 'load #f
+             (do-load who fn 'load #f #f
                (lambda (ip sfd do-read)
                  (let loop ()
                    (let ([x (do-read)])
@@ -373,20 +375,20 @@
                  (close-port ip)))))])))
 
   (set! $visit
-    (lambda (who fn)
-      (do-load who fn 'visit #t #f)))
+    (lambda (who fn importer)
+      (do-load who fn 'visit #t importer #f)))
 
   (set! $revisit
-    (lambda (who fn)
-      (do-load who fn 'revisit #t #f)))
+    (lambda (who fn importer)
+      (do-load who fn 'revisit #t importer #f)))
 
   (set-who! visit
     (lambda (fn)
-      (do-load who fn 'visit #f #f)))
+      (do-load who fn 'visit #f #f #f)))
 
   (set-who! revisit
     (lambda (fn)
-      (do-load who fn 'revisit #f #f))))
+      (do-load who fn 'revisit #f #f #f))))
 
 (let ()
   (module sstats-record (make-sstats sstats? sstats-cpu sstats-real
@@ -655,7 +657,7 @@
     (lambda ()
       (unless s
         (set! s
-          (format "~:[Petite ~;~]Chez Scheme Version ~a"
+          (format "~:[Petite ~;~]Cisco-internal Chez Scheme Version ~a"
             $compiler-is-loaded?
             $scheme-version)))
       s)))

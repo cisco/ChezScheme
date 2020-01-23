@@ -5407,6 +5407,18 @@
                  (set! ,(%mref ,t ,(constant guardian-entry-next-disp)) ,(%tc-ref guardian-entries))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
 
+        (define-inline 2 guardian?
+          [(e)
+           (bind #t (e)
+             (build-and
+               (%type-check mask-closure type-closure ,e)
+               (%type-check mask-guardian-code type-guardian-code
+                 ,(%mref
+                    ,(%inline -
+                      ,(%mref ,e ,(constant closure-code-disp))
+                      ,(%constant code-data-disp))
+                    ,(constant code-type-disp)))))])
+
         (define-inline 2 virtual-register-count
           [() `(quote ,(constant virtual-register-count))])
         (let ()

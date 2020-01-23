@@ -1773,3 +1773,88 @@
   whose body result is compiled to an allocation, inline form, or
   foreign call
     cpnanopass.ss, 3.ms
+- improved error reporting for library compilation-instance errors:
+  now including the name of the object file from which the "wrong"
+  compilation instance was loaded, if it was loaded from (or compiled
+  to) an object file and the original importing library, if it was
+  previously loaded from an object file due to a library import.
+    syntax.ss, 7.ss, interpret.ss,
+    8.ms, root-experr*
+- removed situation and for-input? arguments from $make-load-binary,
+  since the only consumer always passes 'load and #f.
+    7.ss,
+    scheme.c
+- $separate-eval now prints the stderr and stdout of the subprocess
+  to help in diagnosing separate-eval and separate-compile issues.
+    mat.ss
+- added unregister-guardian, which can be used to unregister
+  the unressurected objects registered with any guardian.  guardian?
+  can be used to distinguish guardian procedures from other objects.
+    cp0.ss, cmacros.ss, cpnanopass.ss, ftype.ss, primdata.ss,
+    prims.ss,
+    gcwrapper.c, prim.c, externs.h,
+    4.ms, primvars.ms
+    release_notes.stex
+    smgmt.stex, threads.stex
+- added verify-loadability.  given a situation (visit, revisit,
+  or load) and zero or more pathnames (each of which may be optionally
+  paired with a library search path), verity-loadability checks
+  whether the set of object files named by those pathnames and any
+  additional object files required by library requirements in the
+  given situation can be loaded together.  it raises an exception
+  in each case where actually attempting to load the files would
+  raise an exception and additionally in cases where loading files
+  would result in the compilation or loading of source files in
+  place of the object files.  if the check is successful,
+  verity-loadability returns an unspecified value.  in either case,
+  although portions of the object files are read, none of the
+  information read from the object files is retained, and none of
+  the object code is read, so there are no side effects other than
+  the file operations and possibly the raising of an exception.
+  library and program info records are now moved to the top of each
+  object file produced by one of the file compilation routines,
+  just after recompile info, with a marker to allow verity-loadability
+  to stop reading once it reads all such records.  this change is
+  not entirely backward compatible; the repositioning of the records
+  can be detected by a call to list-library made from a loaded file
+  before the definition of one or more libraries.  it is fully
+  backward compatible for typical library files that contain a
+  single library definition and nothing else.  adding this feature
+  required changes to the object-file format and corresponding
+  changes in the compiler and library manager.  it also required
+  moving cross-library optimization information from library/ct-info
+  records (which verity-loadability must read) to the invoke-code
+  for each library (which verity-loadability  does not read) to
+  avoid reading and permanently associating record-type descriptors
+  in the code with their uids.
+    compile.ss, syntax.ss, expand-lang.ss, primdata.ss, 7.ss,
+    7.ms, misc.ms, root-experr*, patch*,
+    system.stex, release_notes.stex
+- fixed a bug that bit only with the compiler compiled at
+  optimize-level 2: add-library/rt-records was building a library/ct-info
+  wrapper rather than a library/rt-info wrapper.
+    compile.ss
+- fixed a bug in visit-library that could result in an indefinite
+  recursion: it was not checking to make sure the call to $visit
+  actually added compile-time info to the libdesc record.  it's not
+  clear, however, whether the libdesc record can be missing
+  compile-time information on entry to visit-library, so the code
+  that calls $visit (and now checks for compile-time information
+  having been added) might not be reachable.  ditto for
+  revisit-library.
+    syntax.ss
+    syntax.ss, primdata.ss,
+    7.ms, root-experr*, patch*,
+    system.stex, release_notes.stex
+- added some argument-error checks for library-directories and
+  library-extensions, and fixed up the error messages a bit.
+    syntax.ss,
+    7.ms, root-experr*
+- compile-whole-program now inserts the program record into the
+  object file for the benefit of verify-loadability.
+    syntax.ss,
+    7.ms, root-experr*
+- changed 'loading' import-notify messages to the more precise
+  'visiting' or 'revisiting' in a couple of places.
+    syntax.ss,
+    7.ms, 8.ms

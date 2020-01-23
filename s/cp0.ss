@@ -4395,13 +4395,17 @@
             (and likely-to-be-compiled?
                  (cp0
                    (let* ([tc (cp0-make-temp #t)] [ref-tc (build-ref tc)])
+                     ; if the free variables of the closure created for a guardian changes, the code
+                     ; for unregister-guardian in prims.ss might also need to be updated
                      (build-lambda formal*
                        (build-let (list tc)
                          (list (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
                                  (let ([zero `(quote 0)])
                                    (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
                                      (build-primcall 3 'cons (list ref-x ref-x))))))
-                         (build-case-lambda (preinfo-call->preinfo-lambda (app-preinfo ctxt))
+                         (build-case-lambda (let ([preinfo (app-preinfo ctxt)])
+                                              (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo) #f #f
+                                                (constant code-flag-guardian)))
                            (cons
                              (list '()
                                (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
@@ -4424,8 +4428,7 @@
                    ctxt empty-env sc wd name moi))))
 
         (define-inline 2 make-guardian
-          [() (inline-make-guardian ctxt empty-env sc wd name moi
-                '()
+          [() (inline-make-guardian ctxt empty-env sc wd name moi '()
                 (lambda (ref-tc)
                   (list 
                     (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])

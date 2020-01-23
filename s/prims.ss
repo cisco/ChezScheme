@@ -1417,6 +1417,28 @@
     ; tconc is assumed to be valid at all call sites
     (#3%$install-ftype-guardian obj tconc)))
 
+(define guardian?
+  (lambda (g)
+    (#3%guardian? g)))
+
+(define-who unregister-guardian
+  (let ([fp (foreign-procedure "(cs)unregister_guardian" (scheme-object) scheme-object)])
+    (define probable-tconc? ; full tconc? could be expensive ...
+      (lambda (x)
+        (and (pair? x) (pair? (car x)) (pair? (cdr x)))))
+    (lambda (g)
+      (unless (guardian? g) ($oops who "~s is not a guardian" g))
+      ; at present, guardians should have either one free variable (the tcond) or two(the tconc and an ftd)
+      ; but we just look for a probable tconc among whatever free variables it has
+      (fp (let ([n ($code-free-count ($closure-code g))])
+            (let loop ([i 0])
+              (if (fx= i n)
+                  ($oops #f "failed to find a tconc among the free variables of guardian ~s" g)
+                  (let ([x ($closure-ref g i)])
+                    (if (probable-tconc? x)
+                        x
+                        (loop (fx+ i 1)))))))))))
+
 (define-who $ftype-guardian-oops
   (lambda (ftd obj)
     ($oops 'ftype-guardian "~s is not an ftype pointer of the expected type ~s" obj ftd)))

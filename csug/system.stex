@@ -979,6 +979,52 @@ The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
 determines the set of directories searched for source files not identified
 by absolute path names.
 
+%----------------------------------------------------------------------------
+
+\entryheader
+\formdef{verify-loadability}{\categoryprocedure}{(verify-loadability \var{situation} \var{input} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{situation} must be one of the symbols \scheme{visit}, \scheme{revisit}, or \scheme{load}.
+Each \var{input} must be a string pathname or a pair of a string pathname and a library search path.
+Each of the pathnames should name a file containing object code for a set of libraries and
+top-level programs, such as would be produced by
+\index{\scheme{compile-program}}\scheme{compile-program},
+\index{\scheme{compile-library}}\scheme{compile-library},
+\index{\scheme{compile-whole-program}}\scheme{compile-whole-program},
+or
+\index{\scheme{compile-whole-library}}\scheme{compile-whole-library}.
+A library search path must be a suitable argument for
+\index{\scheme{library-directories}}\scheme{library-directories}.
+
+\scheme{verify-loadability} verifies, without actually loading any
+code or definining any libraries, whether the object files named
+by the specified pathnames and their library dependencies, direct
+or indirect, are present, readable, and mutually compatible.
+The type of dependencies for each named object file is determined
+by the \var{situation} argument: compile-time dependencies for
+\var{visit}, run-time dependencies for \var{revisit} and both for
+\var{load}.
+
+For each input pathname that is paired with a search path,
+the \scheme{library-directories} parameter is parameterized to the
+library search path during the recursive search for dependencies
+of the programs and libraries found in the object file named by the
+pathname.
+
+If \scheme{verify-loadabilty} finds a problem, such as a missing
+library dependency or compilation-instance mismatch, it raises an
+exception with an appropriate condition.
+Otherwise, it returns an unspecified value.
+
+Since \scheme{verify-loadability} does not load or run any code
+from the files it processes, it cannot determine whether errors
+unrelated to missing or unreadable files or mutual compatibility
+will occur when the files are actually loaded.
+
 
 %----------------------------------------------------------------------------
 \entryheader
