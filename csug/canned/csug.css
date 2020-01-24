@@ -1,1 +1,35 @@
-../csug.css
+BODY {background-color: #FFFFFF}
+
+a:link, a:active, a:visited { color:#005568; text-decoration:underline }
+a:hover { color:white; text-decoration:underline; background:#005568 }
+
+a.plain:link, a.plain:active, a.plain:visited { color:#005568; text-decoration:none }
+a.plain:hover { color:white; text-decoration:none; background:#005568 }
+
+a.toc:link, a.toc:active, a.toc:visited {font-family: sans-serif; color:#005568; text-decoration:none}
+a.toc:hover {font-family: sans-serif; color:white; text-decoration:none; background:#005568}
+
+a.image:link, a.image:active, a.image:visited, a.image:hover {
+  color: #005568;
+  background: #FFFFFF;
+}
+
+ul.tocchapter { list-style: none; }
+ul.tocsection { list-style: circle; color: #C41230 }
+
+hr.copyright { width: 50% }
+
+input.default { background: #ffffff; color: #000000; vertical-align: middle}
+
+h1, h2, h3, h4 {font-family: sans-serif; color: #005568}
+h1 {font-size: 2em}
+h2 {margin-top: 30px; font-size: 1.5em}
+h3 {margin-top: 30px; font-size: 1.17em}
+h1, h2, h3, h4 {font-weight: bold}
+
+.title { font-family: sans-serif; font-weight: bold; font-size: 2.5em; color: #005568; white-space: nowrap}
+
+.formdef { color: #005568 }
+
+table.indent {margin-left: 20px}
+
