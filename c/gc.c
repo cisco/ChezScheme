@@ -238,7 +238,7 @@ static int flonum_is_forwarded_p(ptr p, seginfo *si) {
     XCP = *(pcp);\
     if ((SI = SegInfo(ptr_get_segment(XCP)))->space & space_old) {      \
         iptr CO;\
-        CO = ENTRYOFFSET(XCP) + ((uptr)XCP - (uptr)&ENTRYOFFSET(XCP));\
+        CO = ENTRYOFFSET(XCP) + ((uptr)XCP - (uptr)ENTRYOFFSETADDR(XCP));\
         relocate_code(pcp,XCP,CO,SI)\
     }\
 }
@@ -1975,7 +1975,7 @@ static void sweep_stack(base, fp, ret) uptr base, fp, ret; {
     } else {
       iptr index;
 
-      relocate(&ENTRYLIVEMASK(oldret))
+      relocate(ENTRYNONCOMPACTLIVEMASKADDR(oldret))
       num = ENTRYLIVEMASK(oldret);
       index = BIGLEN(num);
       while (index-- != 0) {

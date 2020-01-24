@@ -41,6 +41,7 @@
         (fold-right (lambda (x rest) 
                       (case x
                         [(#\-) (cons #\_ rest)]
+                        [(#\+) (cons #\_ rest)]
                         [(#\?) (cons #\p rest)]
                         [(#\>) rest]
                         [(#\*) (cons #\s rest)]
@@ -969,6 +970,9 @@
         (defref RPHEADERFRAMESIZE rp-header frame-size)
         (defref RPHEADERLIVEMASK rp-header livemask)
         (defref RPHEADERTOPLINK rp-header toplink)
+
+        (defref RPCOMPACTHEADERMASKANDSIZE rp-compact-header mask+size+mode)
+        (defref RPCOMPACTHEADERTOPLINK rp-compact-header toplink)
 
         (nl)
         (comment "machine types")

@@ -836,7 +836,8 @@
                      asm-logand asm-lognot
                      asm-logtest asm-fl-relop asm-relop asm-logrelop
                      asm-indirect-jump asm-literal-jump
-                     asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label asm-rp-header
+                     asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label
+                     asm-rp-header asm-rp-compact-header
                      asm-indirect-call asm-condition-code
                      asm-trunc asm-flt
                      asm-lock asm-lock+/- asm-cas
@@ -2119,21 +2120,41 @@
     (let ([mrv-error `(abs ,(constant code-data-disp)
                         (library-code ,(lookup-libspec values-error)))])
       (lambda (code* mrvl fs lpm func code-size)
-        (cons*
-          (if (target-fixnum? lpm)
-              `(long . ,(fix lpm))
-              `(abs 0 (object ,lpm)))
-          (aop-cons* `(asm livemask: ,(format "~b" lpm))
-            '(code-top-link)
-            (aop-cons* `(asm code-top-link)
-              `(long . ,fs)
-              (aop-cons* `(asm "frame size:" ,fs)
-                (if mrvl
-                    (asm-data-label code* mrvl 0 func code-size)
-                    (cons*
-                      mrv-error
-                      (aop-cons* `(asm "mrv point:" ,mrv-error)
-                        code*))))))))))
+        (let* ([code* (cons* `(long . ,fs)
+                             (aop-cons* `(asm "frame size:" ,fs)
+                                        code*))]
+               [code* (cons* (if (target-fixnum? lpm)
+                                 `(long . ,(fix lpm))
+                                 `(abs 0 (object ,lpm)))
+                             (aop-cons* `(asm livemask: ,(format "~b" lpm))
+                                        code*))]
+               [code* (if mrvl
+                          (asm-data-label code* mrvl 0 func code-size)
+                          (cons*
+                           mrv-error
+                           (aop-cons* `(asm "mrv point:" ,mrv-error)
+                                      code*)))]
+               [code* (cons*
+                       '(code-top-link)
+                       (aop-cons* `(asm code-top-link)
+                                  code*))])
+          code*))))
+
+  (define asm-rp-compact-header
+    (lambda (code* err? fs lpm func code-size)
+      (let* ([code* (cons* `(long . ,(fxior (constant compact-header-mask)
+                                            (if err?
+                                                (constant compact-header-values-error-mask)
+                                                0)
+                                            (fxsll fs (constant compact-frame-words-offset))
+                                            (fxsll lpm (constant compact-frame-mask-offset))))
+                           (aop-cons* `(asm "mrv pt:" (,lpm ,fs ,(if err? 'error 'continue)))
+                                      code*))]
+             [code* (cons*
+                     '(code-top-link)
+                     (aop-cons* `(asm code-top-link)
+                                code*))])
+        code*)))
 
   (define asm-return 
     (lambda () 

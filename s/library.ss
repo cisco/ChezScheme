@@ -109,6 +109,9 @@
     ((null? (cdr args)) (k (car args)))
     (else (#2%apply k args)))) ; library apply not available yet
 
+;; before anything that returns multiple values
+(define-hand-coded-library-entry values-error)
+
 ;;; dounderflow & nuate must come before callcc
 (define-hand-coded-library-entry dounderflow)
 (define-hand-coded-library-entry nuate)
@@ -126,7 +129,6 @@
 (define-hand-coded-library-entry dofretu16*)
 (define-hand-coded-library-entry dofretu32*)
 (define-hand-coded-library-entry domvleterr)
-(define-hand-coded-library-entry values-error)
 (define-hand-coded-library-entry bytevector=?)
 (define-hand-coded-library-entry $wrapper-apply)
 (define-hand-coded-library-entry wrapper-apply)

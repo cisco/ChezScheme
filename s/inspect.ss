@@ -2503,8 +2503,15 @@
                x*]
               [else
                (let* ([ret ($object-ref 'scheme-object frame 0)]
-                      [size ($object-ref 'scheme-object ret (constant return-address-frame-size-disp))]
-                      [livemask ($object-ref 'scheme-object ret (constant return-address-livemask-disp))]
+                      [mask+size+mode ($object-ref 'iptr ret (constant compact-return-address-mask+size+mode-disp))]
+                      [compact? (fxlogtest mask+size+mode (constant compact-header-mask))]
+                      [size (if (not compact?)
+                                ($object-ref 'scheme-object ret (constant return-address-frame-size-disp))
+                                (fxand (fxsrl mask+size+mode (constant compact-frame-words-offset))
+                                       (constant compact-frame-words-mask)))]
+                      [livemask (if (not compact?)
+                                    ($object-ref 'scheme-object ret (constant return-address-livemask-disp))
+                                    (fxsrl mask+size+mode (constant compact-frame-mask-offset)))]
                       [next-frame (fx- frame size)])
                  (let frame-loop ([p (fx+ next-frame 1)] [livemask livemask] [x* x*])
                    (if (eqv? livemask 0)

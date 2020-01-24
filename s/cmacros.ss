@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905030E)
+(define-constant scheme-version #x0905030F)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1522,10 +1522,10 @@
    [ptr link]))
 
 (define-primitive-structure-disps rp-header typemod
-  ([ptr livemask]
-   [uptr toplink]
-   [iptr frame-size]
-   [uptr mv-return-address]))
+  ([uptr toplink]
+   [uptr mv-return-address]
+   [ptr livemask]
+   [iptr frame-size])) ; low bit is 0 to distinguish from a `rp-compact-header`
 (define-constant return-address-mv-return-address-disp
   (- (constant rp-header-mv-return-address-disp) (constant size-rp-header)))
 (define-constant return-address-frame-size-disp
@@ -1534,6 +1534,32 @@
   (- (constant rp-header-toplink-disp) (constant size-rp-header)))
 (define-constant return-address-livemask-disp
   (- (constant rp-header-livemask-disp) (constant size-rp-header)))
+
+(define-primitive-structure-disps rp-compact-header typemod
+  ([uptr toplink]
+   [iptr mask+size+mode])) ; low bit is 1 to distinguish from a `rp-header`
+;; mask+size+mode: bit 0 is 1 [=> compact-header-mask]
+;;
+;;                 bit 1 is 0 for mv-return-address = return-address
+;;                 bit 1 is 1 for mv-return-address = values-error
+;;
+;;                 bits 2 through 1+compact-frame-size-bits = frame size in words
+;;
+;;                 remaining bits are livemask
+(define-constant compact-header-mask              #b01)
+(define-constant compact-header-values-error-mask #b10)
+(define-constant compact-frame-words-offset 2)
+(define-constant compact-frame-words-bits
+  (constant-case ptr-bits
+    [(32) 4]
+    [(64) 5]))
+(define-constant compact-frame-max-words (fx- (expt 2 (constant compact-frame-words-bits)) 1))
+(define-constant compact-frame-words-mask (constant compact-frame-max-words))
+(define-constant compact-frame-mask-offset (fx+ 2 (constant compact-frame-words-bits)))
+(define-constant compact-return-address-toplink-disp
+  (- (constant rp-compact-header-toplink-disp) (constant size-rp-compact-header)))
+(define-constant compact-return-address-mask+size+mode-disp
+  (- (constant rp-compact-header-mask+size+mode-disp) (constant size-rp-compact-header)))
 
 (define-syntax bigit-type
   (lambda (x)

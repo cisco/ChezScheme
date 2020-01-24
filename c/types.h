@@ -272,9 +272,22 @@ typedef struct _bucket_pointer_list {
 #define FWDMARKER(p) FORWARDMARKER((uptr)UNTYPE_ANY(p))
 #define FWDADDRESS(p) FORWARDADDRESS((uptr)UNTYPE_ANY(p))
 
-#define ENTRYFRAMESIZE(x) RPHEADERFRAMESIZE((uptr)(x) - size_rp_header)
-#define ENTRYOFFSET(x) RPHEADERTOPLINK((uptr)(x) - size_rp_header)
-#define ENTRYLIVEMASK(x) RPHEADERLIVEMASK((uptr)(x) - size_rp_header)
+#define ISENTRYCOMPACT(x) (RPCOMPACTHEADERMASKANDSIZE((uptr)(x) - size_rp_compact_header) & compact_header_mask)
+#define COMPACTENTRYFIELD(x, offset) (RPCOMPACTHEADERMASKANDSIZE((uptr)(x) - size_rp_compact_header) >> offset)
+
+#define ENTRYFRAMESIZE(x) (ISENTRYCOMPACT(x)                            \
+                           ? ((COMPACTENTRYFIELD(x, compact_frame_words_offset) & compact_frame_words_mask) << log2_ptr_bytes) \
+                           : RPHEADERFRAMESIZE((uptr)(x) - size_rp_header))
+#define ENTRYOFFSET(x) (ISENTRYCOMPACT(x)                               \
+                        ? RPCOMPACTHEADERTOPLINK((uptr)(x) - size_rp_compact_header) \
+                        : RPHEADERTOPLINK((uptr)(x) - size_rp_header))
+#define ENTRYOFFSETADDR(x) (ISENTRYCOMPACT(x)                               \
+                            ? &RPCOMPACTHEADERTOPLINK((uptr)(x) - size_rp_compact_header) \
+                            : &RPHEADERTOPLINK((uptr)(x) - size_rp_header))
+#define ENTRYLIVEMASK(x) (ISENTRYCOMPACT(x)                             \
+                          ? FIX(COMPACTENTRYFIELD(x, compact_frame_mask_offset)) \
+                          : RPHEADERLIVEMASK((uptr)(x) - size_rp_header))
+#define ENTRYNONCOMPACTLIVEMASKADDR(x) (&RPHEADERLIVEMASK((uptr)(x) - size_rp_header))
 
 #define PORTFD(x) ((iptr)PORTHANDLER(x))
 #define PORTGZFILE(x) ((gzFile)(PORTHANDLER(x)))

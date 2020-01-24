@@ -70,6 +70,8 @@
     local-label-trap-check local-label-trap-check-set!
     direct-call-label? make-direct-call-label
     direct-call-label-referenced direct-call-label-referenced-set!
+    return-point-label? make-return-point-label
+    return-point-label-compact? return-point-label-compact?-set!
     Lsrc Lsrc? Ltype Ltype? unparse-Ltype unparse-Lsrc
     lookup-primref primref? primref-level primref-name primref-flags primref-arity
     preinfo-src preinfo-sexpr preinfo-lambda-name preinfo-lambda-flags preinfo-lambda-libspec
@@ -274,6 +276,16 @@
         (lambda (name)
           ((pargs->new name) #f)))))
 
+  (define-record-type return-point-label
+    (parent local-label)
+    (nongenerative)
+    (sealed #t)
+    (fields (mutable compact?))
+    (protocol
+      (lambda (pargs->new)
+        (lambda (name)
+          ((pargs->new name) #f)))))
+
   (module ()
     (define lookup-unique-label
       (let ([ht (make-eq-hashtable)])
@@ -296,6 +308,10 @@
   (define maybe-label?
     (lambda (x)
       (or (eq? x #f) (label? x))))
+
+  (define return-label?
+    (lambda (x)
+      (or (eq? x 'continue) (maybe-label? x))))
 
  ; language to replace prelex with uvar, create info records out of some of the complex
  ; records, and make sure other record types have been discarded.  also formally sets up
@@ -825,10 +841,11 @@
       (immediate (imm fs))
       (exact-integer (lpm))
       (info (info))
-      (maybe-label (mrvl))
+      (return-label (mrvl))
       (label (l rpl))
       (source-object (src))
-      (symbol (sym)))
+      (symbol (sym))
+      (boolean (as-fallthrough)))
     (Program (prog)
       (labels ([l* le*] ...) l)                   => (letrec ([l* le*] ...) (l)))
     (CaseLambdaExpr (le)
@@ -859,7 +876,7 @@
       (overflood-check)
       (fcallable-overflow-check)
       (new-frame info rpl* ... rpl)
-      (return-point info rpl mrvl (cnfv* ...))
+      (return-point info rpl mrvl as-fallthrough (cnfv* ...))
       (rp-header mrvl fs lpm)
       (remove-frame info)
       (restore-local-saves info)
@@ -956,7 +973,8 @@
       (live-info (live-info))
       (info (info))
       (label (l rpl))
-      (maybe-label (mrvl))
+      (return-label (mrvl))
+      (boolean (error-on-values as-fallthrough))
       (fixnum (max-fv offset))
       (block (block entry-block)))
     (Program (pgm)
@@ -981,8 +999,9 @@
       (overflow-check live-info)
       (overflood-check live-info)
       (fcallable-overflow-check live-info)
-      (return-point info rpl mrvl (cnfv* ...))
+      (return-point info rpl mrvl as-fallthrough (cnfv* ...))
       (rp-header mrvl fs lpm)
+      (rp-compact-header error-on-values fs lpm)
       (remove-frame live-info info)
       (restore-local-saves live-info info)
       (shift-arg live-info reg imm info)
@@ -1005,7 +1024,7 @@
     (Effect (e)
       (- (remove-frame live-info info)
          (restore-local-saves live-info info)
-         (return-point info rpl mrvl (cnfv* ...))
+         (return-point info rpl mrvl as-fallthrough (cnfv* ...))
          (shift-arg live-info reg imm info)
          (check-live live-info reg* ...))
       (+ (fp-offset live-info imm)))

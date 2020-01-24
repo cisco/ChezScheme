@@ -25,7 +25,8 @@ machs=$machs$sep2$last
 
 m=""
 w=""
-threads=no
+threads=yes
+nothreads=no
 temproot=""
 help=no
 gzipmanpages=yes
@@ -171,6 +172,9 @@ while [ $# != 0 ] ; do
     --threads)
       threads=yes
       ;;
+    --nothreads)
+      threads=no
+      ;;
     --64)
       bits=64
       ;;
@@ -307,7 +311,7 @@ if [ "$bits" = "" ] ; then
 fi
 
 if [ "$threads" = "" ] ; then
-  threads=no
+  threads=yes
 fi
 
 if [ "$m" = "" ] ; then
@@ -351,6 +355,7 @@ if [ "$help" = "yes" ]; then
   echo "  --machine=<machine type>          explicitly specify machine type ($m)"
   echo "  -m=<machine type>                 same as --machine <machine type> ($m)"
   echo "  --threads                         specify threaded version ($threads)"
+  echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
