@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g126"></a>
+<a name="g127"></a>
 <a name="./smgmt:h0"></a>
 
 <h1>Chapter 13. Storage Management<a name="CHPTSMGMT"></a></h1>
@@ -23,7 +23,7 @@ procedures that may be used to control its operation.
 
 <p>
 
-<h3><a name="g127"></a><a name="./smgmt:h1"></a>Section 13.1. Garbage Collection<a name="SECTSMGMTGC"></a></h3>
+<h3><a name="g128"></a><a name="./smgmt:h1"></a>Section 13.1. Garbage Collection<a name="SECTSMGMTGC"></a></h3>
 
 
 
@@ -138,7 +138,7 @@ period of time.
 <p>
 Additional information on <i>Chez&nbsp;Scheme</i>'s collector can be found in the
 report "Don't stop the BiBOP:  Flexible and efficient
-storage management for dynamically typed languages"&nbsp;[<a class=citation href="./bibliography.html#g162">13</a>].
+storage management for dynamically typed languages"&nbsp;[<a class=citation href="./bibliography.html#g163">13</a>].
 
 
 <p>
@@ -288,7 +288,13 @@ e.g.:
 <p><tt>(collect-request-handler&nbsp;void)</tt>
 <p>Collection can also be temporarily disabled using
 <tt>critical-section</tt>, which prevents any interrupts from
-occurring.
+being handled.
+
+<p>
+In the threaded versions of <i>Chez&nbsp;Scheme</i>, the collect-request
+handler is invoked by a single thread with all other threads
+temporarily suspended.
+
 
 <p>
 <a name="./smgmt:s18"></a><span class=formdef><b>global parameter</b>: <tt>release-minimum-generation</tt></span>
@@ -343,7 +349,7 @@ calls into the operating system to request and free memory space.
 
 <p>
 
-<h3><a name="g128"></a><a name="./smgmt:h2"></a>Section 13.2. Weak Pairs, Ephemeron Pairs, and Guardians<a name="SECTGUARDWEAKPAIRS"></a></h3>
+<h3><a name="g129"></a><a name="./smgmt:h2"></a>Section 13.2. Weak Pairs, Ephemeron Pairs, and Guardians<a name="SECTGUARDWEAKPAIRS"></a></h3>
 
 
 
@@ -379,8 +385,8 @@ actions can be performed using the data stored within the objects.
 
 <p>
 The implementation of guardians and weak pairs used by <i>Chez&nbsp;Scheme</i>
-is described in&nbsp;[<a class=citation href="./bibliography.html#g161">12</a>]. Ephemerons are described
-in&nbsp;[<a class=citation href="./bibliography.html#g172">23</a>], but the implementation in <i>Chez&nbsp;Scheme</i>
+is described in&nbsp;[<a class=citation href="./bibliography.html#g162">12</a>]. Ephemerons are described
+in&nbsp;[<a class=citation href="./bibliography.html#g173">23</a>], but the implementation in <i>Chez&nbsp;Scheme</i>
 avoids quadratic-time worst-case behavior.
 
 <p>
@@ -900,8 +906,102 @@ This would allow the header to be dropped from the Scheme
 heap as soon as it becomes inaccessible.
 
 <p>
+Guardians can also be created via
+<a name="./smgmt:s30"></a><tt>ftype-guardian</tt>, which
+supports reference counting of foreign objects.
 
-<h3><a name="g129"></a><a name="./smgmt:h3"></a>Section 13.3. Locking Objects<a name="SECTSMGMTLOCKING"></a></h3>
+<p>
+<a name="./smgmt:s31"></a><span class=formdef><b>procedure</b>: <tt>(guardian?&nbsp;<i>obj</i>)</tt></span>
+<br>
+<b>returns: </b><tt>#t</tt> if obj is a guardian, <tt>#f</tt> otherwise
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>
+<p><tt>(guardian?&nbsp;(make-guardian))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
+
+(guardian?&nbsp;(ftype-guardian&nbsp;iptr))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t<br>
+
+(guardian?&nbsp;(lambda&nbsp;x&nbsp;x))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
+
+(guardian?&nbsp;"oops")&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
+<p><a name="./smgmt:s32"></a><span class=formdef><b>procedure</b>: <tt>(unregister-guardian&nbsp;<i>guardian</i>)</tt></span>
+<br>
+<b>returns: </b>see below
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>unregister-guardian</tt> unregisters the
+as-yet unresurrected objects currently registered with the guardian,
+with one caveat.
+
+<p>
+The caveat, which applies only to threaded versions of <i>Chez&nbsp;Scheme</i>,
+is that objects registered with the guardian by other threads since
+the last garbage collection might not be unregistered.
+To ensure that all objects are unregistered in a multithreaded
+application, a single thread can be used both to register and
+unregister objects.
+Alternatively, an application can arrange to define a
+<a name="./smgmt:s33"></a>collect-request
+handler that calls <tt>unregister-guardian</tt> after it calls
+<tt>collect</tt>.
+
+<p>
+In any case, <tt>unregister-guardian</tt> returns a list containing each object
+(or its representative, if specified) that it unregisters, with
+duplicates as appropriate if the same object is registered more
+than once with the guardian.
+Objects already resurrected but not yet retrieved from the guardian
+are not included in the list but remain retrievable from the
+guardian.
+
+<p>
+In the current implementation, <tt>unregister-guardian</tt> takes time proportional
+to the number of unresurrected objects currently registered with
+all guardians rather than those registered just with
+the corresponding guardian.
+
+<p>
+The example below assumes no collections occur except for those resulting from
+explicit calls to <tt>collect</tt>.
+
+<p>
+
+<p><tt>(define&nbsp;g&nbsp;(make-guardian))<br>
+
+(define&nbsp;x&nbsp;(cons&nbsp;'a&nbsp;'b))<br>
+
+(define&nbsp;y&nbsp;(cons&nbsp;'c&nbsp;'d))<br>
+
+(g&nbsp;x)<br>
+
+(g&nbsp;x)<br>
+
+(g&nbsp;y)<br>
+
+(g&nbsp;y)<br>
+
+(set!&nbsp;y&nbsp;#f)<br>
+
+(collect&nbsp;0&nbsp;0)<br>
+
+(unregister-guardian&nbsp;g)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;((a&nbsp;.&nbsp;b)&nbsp;(a&nbsp;.&nbsp;b))<br>
+
+(g)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(c&nbsp;.&nbsp;d)<br>
+
+(g)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(c&nbsp;.&nbsp;d)<br>
+
+(g)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f</tt>
+<p><tt>unregister-guardian</tt> can also be used to unregister ftype
+pointers registered with guardians created by
+<a name="./smgmt:s34"></a><tt>ftype-guardian</tt>
+(Section&nbsp;<a href="./threads.html#g142">15.6</a>).
+
+
+<p>
+
+<h3><a name="g130"></a><a name="./smgmt:h3"></a>Section 13.3. Locking Objects<a name="SECTSMGMTLOCKING"></a></h3>
 
 
 
@@ -910,11 +1010,11 @@ All pointers from C variables or data structures to Scheme objects
 should generally be discarded before entry (or reentry) into Scheme.
 When this guideline cannot be followed, the object may be
 <i>locked</i> via <tt>lock-object</tt> or via the equivalent
-C library procedure <a name="./smgmt:s30"></a><tt>Slock_object</tt>
+C library procedure <a name="./smgmt:s35"></a><tt>Slock_object</tt>
 (Section&nbsp;<a href="./foreign.html#g34">4.8</a>).
 
 <p>
-<a name="./smgmt:s31"></a><span class=formdef><b>procedure</b>: <tt>(lock-object&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s36"></a><span class=formdef><b>procedure</b>: <tt>(lock-object&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -930,7 +1030,7 @@ Locking can also lead to accidental retention of storage if objects
 are not unlocked.
 Objects may be unlocked via <tt>unlock-object</tt> or the equivalent
 C library procedure
-<a name="./smgmt:s32"></a><tt>Sunlock_object</tt>.
+<a name="./smgmt:s37"></a><tt>Sunlock_object</tt>.
 
 <p>
 Locking immediate values, such as fixnums, booleans, and characters,
@@ -938,7 +1038,7 @@ or objects that have been made static is unnecessary but harmless.
 
 
 <p>
-<a name="./smgmt:s33"></a><span class=formdef><b>procedure</b>: <tt>(unlock-object&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s38"></a><span class=formdef><b>procedure</b>: <tt>(unlock-object&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -964,7 +1064,7 @@ or objects that have been made static is unnecessary and ineffective but harmles
 
 
 <p>
-<a name="./smgmt:s34"></a><span class=formdef><b>procedure</b>: <tt>(locked-object?&nbsp;<i>obj</i>)</tt></span>
+<a name="./smgmt:s39"></a><span class=formdef><b>procedure</b>: <tt>(locked-object?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is locked, immediate, or static
 <br>
@@ -983,7 +1083,7 @@ booleans, and characters, and objects that have been made static.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

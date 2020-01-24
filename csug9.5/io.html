@@ -43,7 +43,7 @@ best to close ports explicitly whenever possible.
 allows the programmer to add new types of textual ports with
 arbitrary input/output semantics.
 It may be used, for example, to define any of the built-in
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g179">30</a>] stream types, i.e.,
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g180">30</a>] stream types, i.e.,
 <a name="./io:s1"></a>synonym streams,
 <a name="./io:s2"></a>broadcast streams,
 <a name="./io:s3"></a>concatenated streams,
@@ -247,7 +247,11 @@ Section&nbsp;<a href="http://scheme.com/tspl4/./io.html#g123">7.2</a> of <i>The 
 <dl compact>
 <dt><tt><i>compressed</i></tt>:<dd>
 An output file should be compressed when written; and a compressed input
-file should be decompressed when read.
+file should be decompressed when read. The compression format for output
+is determined by the <a name="./io:s7"></a><tt>compress-format</tt>
+parameter, while the compression format on input is inferred.
+The compression level, which is relevant only for output, is determined
+by the <a name="./io:s8"></a><tt>compress-level</tt> parameter.
 
 <p>
 <dt><tt><i>replace</i></tt>:<dd>
@@ -357,7 +361,7 @@ used for a textual port whenever the transcoder is implicit, as for
 predicate <tt>transcoder?</tt>, which should be standard but is not.
 
 <p>
-<a name="./io:s7"></a><span class=formdef><b>procedure</b>: <tt>(utf-16-codec)</tt></span>
+<a name="./io:s9"></a><span class=formdef><b>procedure</b>: <tt>(utf-16-codec)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(utf-16-codec&nbsp;<i>endianness</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(utf-16le-codec)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(utf-16be-codec)</tt></span>
@@ -429,7 +433,7 @@ in little-endian or big-endian format with no BOM.
 
 
 <p>
-<a name="./io:s8"></a><span class=formdef><b>procedure</b>: <tt>(iconv-codec&nbsp;<i>code-page</i>)</tt></span>
+<a name="./io:s10"></a><span class=formdef><b>procedure</b>: <tt>(iconv-codec&nbsp;<i>code-page</i>)</tt></span>
 <br>
 <b>returns: </b>a codec
 <br>
@@ -464,7 +468,7 @@ current directory of the process the first time <tt>iconv-codec</tt>
 is called.
 
 <p>
-<a name="./io:s9"></a><span class=formdef><b>thread parameter</b>: <tt>current-transcoder</tt></span>
+<a name="./io:s11"></a><span class=formdef><b>thread parameter</b>: <tt>current-transcoder</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -477,7 +481,7 @@ Its initial value is the value of the <tt>native-transcoder</tt> procedure.
 
 
 <p>
-<a name="./io:s10"></a><span class=formdef><b>procedure</b>: <tt>(transcoder?&nbsp;<i>obj</i>)</tt></span>
+<a name="./io:s12"></a><span class=formdef><b>procedure</b>: <tt>(transcoder?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a transcoder, <tt>#f</tt> otherwise
 <br>
@@ -499,7 +503,7 @@ output ports as arguments accept input/output ports as well, i.e., an
 input/output port is both an input port and an output port.
 
 <p>
-<a name="./io:s11"></a><span class=formdef><b>procedure</b>: <tt>(make-input-port&nbsp;<i>handler</i>&nbsp;<i>input-buffer</i>)</tt></span>
+<a name="./io:s13"></a><span class=formdef><b>procedure</b>: <tt>(make-input-port&nbsp;<i>handler</i>&nbsp;<i>input-buffer</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-output-port&nbsp;<i>handler</i>&nbsp;<i>output-buffer</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-input/output-port&nbsp;<i>handler</i>&nbsp;<i>input-buffer</i>&nbsp;<i>output-buffer</i>)</tt></span>
 <br>
@@ -509,7 +513,7 @@ input/output port is both an input port and an output port.
 
 <p><tt><i>handler</i></tt> must be a procedure, and
 <tt><i>input-buffer</i></tt> and <tt><i>output-buffer</i></tt> must be strings.
-Each procedure creates a <a name="./io:s12"></a>generic port.
+Each procedure creates a <a name="./io:s14"></a>generic port.
 The handler associated with the port is <tt><i>handler</i></tt>, the
 input buffer is <tt><i>input-buffer</i></tt>, and the
 output buffer is <tt><i>output-buffer</i></tt>.
@@ -527,7 +531,7 @@ The length of an input or output buffer may be zero, in which case
 buffering is effectively disabled.
 
 <p>
-<a name="./io:s13"></a><span class=formdef><b>procedure</b>: <tt>(port-handler&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s15"></a><span class=formdef><b>procedure</b>: <tt>(port-handler&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>a procedure
 <br>
@@ -540,7 +544,7 @@ For ports created by <tt>open-input-file</tt> and similar procedures,
 the same manner as any other handler.
 
 <p>
-<a name="./io:s14"></a><span class=formdef><b>procedure</b>: <tt>(port-input-buffer&nbsp;<i>input-port</i>)</tt></span>
+<a name="./io:s16"></a><span class=formdef><b>procedure</b>: <tt>(port-input-buffer&nbsp;<i>input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(port-input-size&nbsp;<i>input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(port-input-index&nbsp;<i>input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(textual-port-input-buffer&nbsp;<i>textual-input-port</i>)</tt></span>
@@ -561,7 +565,7 @@ more efficient than their generic counterparts.
 
 
 <p>
-<a name="./io:s15"></a><span class=formdef><b>procedure</b>: <tt>(set-port-input-index!&nbsp;<i>input-port</i>&nbsp;<i>n</i>)</tt></span>
+<a name="./io:s17"></a><span class=formdef><b>procedure</b>: <tt>(set-port-input-index!&nbsp;<i>input-port</i>&nbsp;<i>n</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-port-input-size!&nbsp;<i>input-port</i>&nbsp;<i>n</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-port-input-buffer!&nbsp;<i>input-port</i>&nbsp;<i>x</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-textual-port-input-index!&nbsp;<i>textual-input-port</i>&nbsp;<i>n</i>)</tt></span>
@@ -597,7 +601,7 @@ The variants specialized to textual or binary ports are slightly
 more efficient than their generic counterparts.
 
 <p>
-<a name="./io:s16"></a><span class=formdef><b>procedure</b>: <tt>(port-input-count&nbsp;<i>input-port</i>)</tt></span>
+<a name="./io:s18"></a><span class=formdef><b>procedure</b>: <tt>(port-input-count&nbsp;<i>input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(textual-port-input-count&nbsp;<i>textual-input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(binary-port-input-count&nbsp;<i>binary-input-port</i>)</tt></span>
 <br>
@@ -614,7 +618,7 @@ The variants specialized to textual or binary ports are slightly
 more efficient than their generic counterpart.
 
 <p>
-<a name="./io:s17"></a><span class=formdef><b>procedure</b>: <tt>(port-input-empty?&nbsp;<i>input-port</i>)</tt></span>
+<a name="./io:s19"></a><span class=formdef><b>procedure</b>: <tt>(port-input-empty?&nbsp;<i>input-port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the port's input buffer contains no more data, otherwise <tt>#f</tt>
 <br>
@@ -624,7 +628,7 @@ more efficient than their generic counterpart.
 computing or returning the actual count.
 
 <p>
-<a name="./io:s18"></a><span class=formdef><b>procedure</b>: <tt>(port-output-buffer&nbsp;<i>output-port</i>)</tt></span>
+<a name="./io:s20"></a><span class=formdef><b>procedure</b>: <tt>(port-output-buffer&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(port-output-size&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(port-output-index&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(textual-port-output-buffer&nbsp;<i>output-port</i>)</tt></span>
@@ -645,7 +649,7 @@ more efficient than their generic counterparts.
 
 
 <p>
-<a name="./io:s19"></a><span class=formdef><b>procedure</b>: <tt>(set-port-output-index!&nbsp;<i>output-port</i>&nbsp;<i>n</i>)</tt></span>
+<a name="./io:s21"></a><span class=formdef><b>procedure</b>: <tt>(set-port-output-index!&nbsp;<i>output-port</i>&nbsp;<i>n</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-port-output-size!&nbsp;<i>output-port</i>&nbsp;<i>n</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-port-output-buffer!&nbsp;<i>output-port</i>&nbsp;<i>x</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(set-textual-port-output-index!&nbsp;<i>textual-output-port</i>&nbsp;<i>n</i>)</tt></span>
@@ -681,7 +685,7 @@ The variants specialized to textual or binary ports are slightly
 more efficient than their generic counterparts.
 
 <p>
-<a name="./io:s20"></a><span class=formdef><b>procedure</b>: <tt>(port-output-count&nbsp;<i>output-port</i>)</tt></span>
+<a name="./io:s22"></a><span class=formdef><b>procedure</b>: <tt>(port-output-count&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(textual-port-output-count&nbsp;<i>textual-output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(binary-port-output-count&nbsp;<i>binary-output-port</i>)</tt></span>
 <br>
@@ -699,7 +703,7 @@ The variants specialized to textual or binary ports are slightly
 more efficient than their generic counterpart.
 
 <p>
-<a name="./io:s21"></a><span class=formdef><b>procedure</b>: <tt>(port-output-full?&nbsp;<i>output-port</i>)</tt></span>
+<a name="./io:s23"></a><span class=formdef><b>procedure</b>: <tt>(port-output-full?&nbsp;<i>output-port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the port's input buffer has no more room, otherwise <tt>#f</tt>
 <br>
@@ -709,7 +713,7 @@ more efficient than their generic counterpart.
 computing or returning the actual count.
 
 <p>
-<a name="./io:s22"></a><span class=formdef><b>procedure</b>: <tt>(mark-port-closed!&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s24"></a><span class=formdef><b>procedure</b>: <tt>(mark-port-closed!&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -721,7 +725,7 @@ It is typically used by handlers upon receipt of a <tt>close-port</tt>
 message.
 
 <p>
-<a name="./io:s23"></a><span class=formdef><b>procedure</b>: <tt>(port-closed?&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s25"></a><span class=formdef><b>procedure</b>: <tt>(port-closed?&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>port</i></tt> is closed, <tt>#f</tt> otherwise
 <br>
@@ -738,7 +742,7 @@ message.
 &nbsp;&nbsp;(close-port&nbsp;p)<br>
 
 &nbsp;&nbsp;(port-closed?&nbsp;p))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./io:s24"></a><a name="desc:set-port-bol"></a>
+<p><a name="./io:s26"></a><a name="desc:set-port-bol"></a>
 <span class=formdef><b>procedure</b>: <tt>(set-port-bol!&nbsp;<i>output-port</i>&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -750,7 +754,7 @@ flag is cleared; otherwise, the port's BOL flag is set.
 
 <p>
 The BOL flag is consulted by <tt>fresh-line</tt>
-(page&nbsp;<a href="./io.html#desc:fresh-line">242</a>) to determine if it needs to emit a
+(page&nbsp;<a href="./io.html#desc:fresh-line">243</a>) to determine if it needs to emit a
 newline.
 This flag is maintained automatically for file output ports, string output
 ports, and transcript ports.
@@ -763,13 +767,13 @@ The port is always flushed immediately before the flag is consulted, so it
 need not be maintained on a per-character basis for buffered ports.
 
 <p>
-<a name="./io:s25"></a><span class=formdef><b>procedure</b>: <tt>(port-bol?&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s27"></a><span class=formdef><b>procedure</b>: <tt>(port-bol?&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>port</i></tt>'s BOL flag is set, <tt>#f</tt> otherwise
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./io:s26"></a><span class=formdef><b>procedure</b>: <tt>(set-port-eof!&nbsp;<i>input-port</i>&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./io:s28"></a><span class=formdef><b>procedure</b>: <tt>(set-port-eof!&nbsp;<i>input-port</i>&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -814,7 +818,7 @@ zero bytes.
 (get-u8&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#!eof<br>
 
 (get-u8&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;0</tt>
-<p><a name="./io:s27"></a><span class=formdef><b>procedure</b>: <tt>(port-name&nbsp;<i>port</i>)</tt></span>
+<p><a name="./io:s29"></a><span class=formdef><b>procedure</b>: <tt>(port-name&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>the name associated with <tt><i>port</i></tt>
 <br>
@@ -834,7 +838,7 @@ For file ports, the name is typically a string naming the file.
 (let&nbsp;([p&nbsp;(open-output-string)])<br>
 
 &nbsp;&nbsp;(port-name&nbsp;p))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"string"</tt>
-<p><a name="./io:s28"></a><span class=formdef><b>procedure</b>: <tt>(set-port-name!&nbsp;<i>port</i>&nbsp;<i>obj</i>)</tt></span>
+<p><a name="./io:s30"></a><span class=formdef><b>procedure</b>: <tt>(set-port-name!&nbsp;<i>port</i>&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -845,7 +849,7 @@ a string or <tt>#f</tt> (denoting no name).
 
 
 <p>
-<a name="./io:s29"></a><span class=formdef><b>procedure</b>: <tt>(port-length&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s31"></a><span class=formdef><b>procedure</b>: <tt>(port-length&nbsp;<i>port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-length&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>the length of the file or other object to which <tt><i>port</i></tt> refers
@@ -877,7 +881,7 @@ for compressed files on 32-bit versions of the system.
 <tt>file-length</tt> is identical to <tt>port-length</tt>.
 
 <p>
-<a name="./io:s30"></a><span class=formdef><b>procedure</b>: <tt>(set-port-length!&nbsp;<i>port</i>&nbsp;<i>len</i>)</tt></span>
+<a name="./io:s32"></a><span class=formdef><b>procedure</b>: <tt>(set-port-length!&nbsp;<i>port</i>&nbsp;<i>len</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(port-has-set-port-length!?&nbsp;<i>port</i>)</tt></span>
@@ -908,7 +912,7 @@ undefined.
 
 
 <p>
-<a name="./io:s31"></a><span class=formdef><b>procedure</b>: <tt>(port-nonblocking?&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s33"></a><span class=formdef><b>procedure</b>: <tt>(port-nonblocking?&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the port is in nonblocking mode, <tt>#f</tt> otherwise
 <br><span class=formdef><b>procedure</b>: <tt>(port-has-port-nonblocking??&nbsp;<i>port</i>)</tt></span>
@@ -924,7 +928,7 @@ reflecting whether the port is in nonblocking mode.
 
 
 <p>
-<a name="./io:s32"></a><span class=formdef><b>procedure</b>: <tt>(set-port-nonblocking!&nbsp;<i>port</i>&nbsp;<i>obj</i>)</tt></span>
+<a name="./io:s34"></a><span class=formdef><b>procedure</b>: <tt>(set-port-nonblocking!&nbsp;<i>port</i>&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br><span class=formdef><b>procedure</b>: <tt>(port-has-set-port-nonblocking!?&nbsp;<i>port</i>)</tt></span>
@@ -970,7 +974,7 @@ no room is available.
 Nonblocking mode is not supported under Windows.
 
 <p>
-<a name="./io:s33"></a><span class=formdef><b>procedure</b>: <tt>(file-position&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s35"></a><span class=formdef><b>procedure</b>: <tt>(file-position&nbsp;<i>port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-position&nbsp;<i>port</i>&nbsp;<i>pos</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -996,7 +1000,7 @@ for compressed files on 32-bit versions of the system.
 
 
 <p>
-<a name="./io:s34"></a><span class=formdef><b>procedure</b>: <tt>(clear-input-port)</tt></span>
+<a name="./io:s36"></a><span class=formdef><b>procedure</b>: <tt>(clear-input-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(clear-input-port&nbsp;<i>input-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1010,7 +1014,7 @@ This may be necessary, for example, to clear any type-ahead from the keyboard
 in preparation for an urgent query.
 
 <p>
-<a name="./io:s35"></a><span class=formdef><b>procedure</b>: <tt>(clear-output-port)</tt></span>
+<a name="./io:s37"></a><span class=formdef><b>procedure</b>: <tt>(clear-output-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(clear-output-port&nbsp;<i>output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1025,7 +1029,7 @@ interactive port in preparation for an urgent message.
 
 
 <p>
-<a name="./io:s36"></a><span class=formdef><b>procedure</b>: <tt>(flush-output-port)</tt></span>
+<a name="./io:s38"></a><span class=formdef><b>procedure</b>: <tt>(flush-output-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(flush-output-port&nbsp;<i>output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -1043,7 +1047,7 @@ without a newline to be sent to the console output port or to force output
 to appear on a file without delay.
 
 <p>
-<a name="./io:s37"></a><span class=formdef><b>procedure</b>: <tt>(port-file-compressed!&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s39"></a><span class=formdef><b>procedure</b>: <tt>(port-file-compressed!&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1057,8 +1061,54 @@ If the port is an output port, subsequent output sent to the port
 will be compressed.
 If the port is an input port, subsequent input will be decompressed
 if and only if the port is currently pointing at compressed data.
+The compression format for output
+is determined by the <a name="./io:s40"></a><tt>compress-format</tt>
+parameter, while the compression format on input is inferred.
+The compression level, which is relevant only for output, is determined
+by the <a name="./io:s41"></a><tt>compress-level</tt> parameter.
 This procedure has no effect if the port is already set for compression.
 
+<p>
+<a name="./io:s42"></a><span class=formdef><b>thread parameter</b>: <tt>compress-format</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>compress-format</tt> determines the
+compression algorithm and format used for output. Currently,
+the possible values of the parameter are the symbols <tt>lz4</tt> (the default)
+and <tt>gzip</tt>.
+
+<p>
+The <tt>lz4</tt> format uses the LZ4 compression library developed by
+Yann Collet.
+It is therefore compatible with the <tt>lz4</tt> program, which
+means that <tt>lz4</tt> may be used to uncompress files produced
+by <i>Chez&nbsp;Scheme</i> and visa versa.
+
+<p>
+The <tt>gzip</tt> format uses the zlib compression library developed by
+Jean-loup Gailly and Mark Adler.
+It is therefore compatible with the <tt>gzip</tt> program, which
+means that <tt>gzip</tt> may be used to uncompress files produced
+by <i>Chez&nbsp;Scheme</i> and visa versa.
+
+<p>
+Reading <tt>lz4</tt>-compressed data tends to be much faster than reading
+<tt>gzip</tt>-compressed data, while <tt>gzip</tt>-compressed data tends to 
+be significantly smaller.
+
+<p>
+<a name="./io:s43"></a><span class=formdef><b>thread parameter</b>: <tt>compress-level</tt></span>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>compress-level</tt> determines the amount of effort spent on
+compression and is thus relevant only for output.
+It can be set to one of the symbols <tt>low</tt>,
+<tt>medium</tt>, <tt>high</tt>, or <tt>maximum</tt>, which are
+listed in order from shortest to longest expected compression time
+and least to greatest expected effectiveness.
+Its default value is <tt>medium</tt>.
 
 <p>
 
@@ -1083,13 +1133,13 @@ supported as primitive by the implementation.
 
 
 <p>
-<a name="./io:s38"></a><span class=formdef><b>procedure</b>: <tt>(open-input-string&nbsp;<i>string</i>)</tt></span>
+<a name="./io:s44"></a><span class=formdef><b>procedure</b>: <tt>(open-input-string&nbsp;<i>string</i>)</tt></span>
 <br>
 <b>returns: </b>a new string input port
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>A <a name="./io:s39"></a>string input port is similar to a file input port, except that
+<p>A <a name="./io:s45"></a>string input port is similar to a file input port, except that
 characters and objects drawn from the port come from <tt><i>string</i></tt>
 rather than from a file.
 
@@ -1105,7 +1155,7 @@ It is not necessary to close a string port, although it is okay to do so.
 &nbsp;&nbsp;(let&nbsp;([x&nbsp;(read&nbsp;p)])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(list&nbsp;x&nbsp;(read&nbsp;p))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(hi&nbsp;mom!)</tt>
-<p><a name="./io:s40"></a><span class=formdef><b>procedure</b>: <tt>(with-input-from-string&nbsp;<i>string</i>&nbsp;<i>thunk</i>)</tt></span>
+<p><a name="./io:s46"></a><span class=formdef><b>procedure</b>: <tt>(with-input-from-string&nbsp;<i>string</i>&nbsp;<i>thunk</i>)</tt></span>
 <br>
 <b>returns: </b>the values returned by <tt><i>thunk</i></tt>
 <br>
@@ -1123,13 +1173,13 @@ application of <tt><i>thunk</i></tt>.
 &nbsp;&nbsp;(lambda&nbsp;()<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(eval&nbsp;(read))))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(3&nbsp;.&nbsp;4)</tt>
-<p><a name="./io:s41"></a><span class=formdef><b>procedure</b>: <tt>(open-output-string)</tt></span>
+<p><a name="./io:s47"></a><span class=formdef><b>procedure</b>: <tt>(open-output-string)</tt></span>
 <br>
 <b>returns: </b>a new string output port
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>A <a name="./io:s42"></a>string output port is similar to a file output port, except that
+<p>A <a name="./io:s48"></a>string output port is similar to a file output port, except that
 characters and objects written to the port are placed in a string
 (which grows as needed) rather than to a file.
 The string built by writing to a string output port may be obtained
@@ -1139,7 +1189,7 @@ It is not necessary to close a string port, although it is okay to do so.
 
 
 <p>
-<a name="./io:s43"></a><span class=formdef><b>procedure</b>: <tt>(get-output-string&nbsp;<i>string-output-port</i>)</tt></span>
+<a name="./io:s49"></a><span class=formdef><b>procedure</b>: <tt>(get-output-string&nbsp;<i>string-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>the string associated with <tt><i>string-output-port</i></tt>
 <br>
@@ -1168,7 +1218,7 @@ written using string-output ports to produce string output.
 
 
 <p>
-<a name="./io:s44"></a><span class=formdef><b>procedure</b>: <tt>(with-output-to-string&nbsp;<i>thunk</i>)</tt></span>
+<a name="./io:s50"></a><span class=formdef><b>procedure</b>: <tt>(with-output-to-string&nbsp;<i>thunk</i>)</tt></span>
 <br>
 <b>returns: </b>a string containing the output
 <br>
@@ -1196,7 +1246,7 @@ port is returned, as with <tt>get-output-string</tt>.
 
 
 <p>
-<a name="./io:s45"></a><span class=formdef><b>thread parameter</b>: <tt>file-buffer-size</tt></span>
+<a name="./io:s51"></a><span class=formdef><b>thread parameter</b>: <tt>file-buffer-size</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1210,7 +1260,7 @@ When called with a positive fixnum <tt><i>k</i></tt>,
 it sets the current buffer size to <tt><i>k</i></tt>.
 
 <p>
-<a name="./io:s46"></a><span class=formdef><b>procedure</b>: <tt>(file-port?&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s52"></a><span class=formdef><b>procedure</b>: <tt>(file-port?&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>port</i></tt> is a file port, <tt>#f</tt> otherwise
 <br>
@@ -1223,7 +1273,7 @@ a string, bytevector, or custom  port.
 
 
 <p>
-<a name="./io:s47"></a><span class=formdef><b>procedure</b>: <tt>(port-file-descriptor&nbsp;<i>port</i>)</tt></span>
+<a name="./io:s53"></a><span class=formdef><b>procedure</b>: <tt>(port-file-descriptor&nbsp;<i>port</i>)</tt></span>
 <br>
 <b>returns: </b>the file descriptor associated with <tt><i>port</i></tt>
 <br>
@@ -1240,7 +1290,7 @@ returns <tt>#t</tt>.
 
 
 <p>
-<a name="./io:s48"></a><span class=formdef><b>thread parameter</b>: <tt>custom-port-buffer-size</tt></span>
+<a name="./io:s54"></a><span class=formdef><b>thread parameter</b>: <tt>custom-port-buffer-size</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1258,7 +1308,7 @@ it sets the current buffer size to <tt><i>k</i></tt>.
 
 
 <p>
-<a name="./io:s49"></a><span class=formdef><b>global parameter</b>: <tt>console-input-port</tt></span>
+<a name="./io:s55"></a><span class=formdef><b>global parameter</b>: <tt>console-input-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1273,7 +1323,7 @@ The initial value of this parameter is a port tied to the standard
 input (stdin) stream of the Scheme process.
 
 <p>
-<a name="./io:s50"></a><span class=formdef><b>thread parameter</b>: <tt>current-input-port</tt></span>
+<a name="./io:s56"></a><span class=formdef><b>thread parameter</b>: <tt>current-input-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1293,7 +1343,7 @@ value of <tt>console-input-port</tt>.
 
 
 <p>
-<a name="./io:s51"></a><span class=formdef><b>procedure</b>: <tt>(open-input-file&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s57"></a><span class=formdef><b>procedure</b>: <tt>(open-input-file&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-input-file&nbsp;<i>path</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>a new input port
@@ -1317,7 +1367,8 @@ An option list is a list containing zero or more symbolic option names.
 <p>
 The mutually exclusive <tt>compressed</tt> and
 <tt>uncompressed</tt> options determine whether the input file
-should be decompressed if it is compressed.
+should be decompressed if it is compressed (where the compression
+format is inferred).
 (See <tt>open-output-file</tt>.)
 The default is <tt>uncompressed</tt>, so the <tt>uncompressed</tt>
 option is useful only as documentation.
@@ -1347,7 +1398,7 @@ The Revised<sup>6</sup> Report version of <tt>open-input-file</tt> does not
 support the optional <tt><i>options</i></tt> argument.
 
 <p>
-<a name="./io:s52"></a><span class=formdef><b>procedure</b>: <tt>(call-with-input-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>)</tt></span>
+<a name="./io:s58"></a><span class=formdef><b>procedure</b>: <tt>(call-with-input-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(call-with-input-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>the values returned by <tt><i>procedure</i></tt>
@@ -1383,7 +1434,7 @@ The Revised<sup>6</sup> Report version of <tt>call-with-input-file</tt> does not
 support the optional <tt><i>input</i></tt> argument.
 
 <p>
-<a name="./io:s53"></a><span class=formdef><b>procedure</b>: <tt>(with-input-from-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>)</tt></span>
+<a name="./io:s59"></a><span class=formdef><b>procedure</b>: <tt>(with-input-from-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(with-input-from-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>the values returned by <tt><i>thunk</i></tt>
@@ -1416,7 +1467,7 @@ The Revised<sup>6</sup> Report version of <tt>with-input-from-file</tt> does not
 support the optional <tt><i>options</i></tt> argument.
 
 <p>
-<a name="./io:s54"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input-port&nbsp;<i>fd</i>)</tt></span>
+<a name="./io:s60"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input-port&nbsp;<i>fd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-input-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-input-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -1438,7 +1489,7 @@ arguments.
 The file descriptor is closed when the port is closed.
 
 <p>
-<a name="./io:s55"></a><span class=formdef><b>procedure</b>: <tt>(standard-input-port)</tt></span>
+<a name="./io:s61"></a><span class=formdef><b>procedure</b>: <tt>(standard-input-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-input-port&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-input-port&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -1459,7 +1510,7 @@ it to an implementation-dependent buffering mode (<tt>block</tt> in
 <i>Chez&nbsp;Scheme</i>) and binary output.
 
 <p>
-<a name="./io:s56"></a><span class=formdef><b>procedure</b>: <tt>(get-string-some&nbsp;<i>textual-input-port</i>)</tt></span>
+<a name="./io:s62"></a><span class=formdef><b>procedure</b>: <tt>(get-string-some&nbsp;<i>textual-input-port</i>)</tt></span>
 <br>
 <b>returns: </b>a nonempty string or the eof object
 <br>
@@ -1480,7 +1531,7 @@ In this case, an empty string is returned.
 
 
 <p>
-<a name="./io:s57"></a><span class=formdef><b>procedure</b>: <tt>(get-string-some!&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
+<a name="./io:s63"></a><span class=formdef><b>procedure</b>: <tt>(get-string-some!&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
 <b>returns: </b>the count of characters read, as an exact nonnegative integer, or the eof object
 <br>
@@ -1513,7 +1564,7 @@ otherwise, it reads at least one character but no more than are available
 when the first character becomes available.
 
 <p>
-<a name="./io:s58"></a><span class=formdef><b>procedure</b>: <tt>(get-bytevector-some!&nbsp;<i>binary-input-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
+<a name="./io:s64"></a><span class=formdef><b>procedure</b>: <tt>(get-bytevector-some!&nbsp;<i>binary-input-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
 <b>returns: </b>the count of bytes read, as an exact nonnegative integer, or the eof object
 <br>
@@ -1546,7 +1597,7 @@ otherwise, it reads at least one byte but no more than are available
 when the first byte becomes available.
 
 <p>
-<a name="./io:s59"></a><span class=formdef><b>procedure</b>: <tt>(unread-char&nbsp;<i>char</i>)</tt></span>
+<a name="./io:s65"></a><span class=formdef><b>procedure</b>: <tt>(unread-char&nbsp;<i>char</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(unread-char&nbsp;<i>char</i>&nbsp;<i>textual-input-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(unget-char&nbsp;<i>textual-input-port</i>&nbsp;<i>char</i>)</tt></span>
 <br>
@@ -1632,7 +1683,7 @@ should be used instead.
 
 
 <p>
-<a name="./io:s60"></a><span class=formdef><b>procedure</b>: <tt>(unget-u8&nbsp;<i>binary-input-port</i>&nbsp;<i>octet</i>)</tt></span>
+<a name="./io:s66"></a><span class=formdef><b>procedure</b>: <tt>(unget-u8&nbsp;<i>binary-input-port</i>&nbsp;<i>octet</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -1647,7 +1698,7 @@ without an intervening call to <tt>get-u8</tt>.
 
 
 <p>
-<a name="./io:s61"></a><span class=formdef><b>procedure</b>: <tt>(input-port-ready?&nbsp;<i>input-port</i>)</tt></span>
+<a name="./io:s67"></a><span class=formdef><b>procedure</b>: <tt>(input-port-ready?&nbsp;<i>input-port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if data is available on <tt><i>input-port</i></tt>, <tt>#f</tt> otherwise
 <br>
@@ -1663,7 +1714,7 @@ If it cannot determine from the port whether input is ready,
 Otherwise, it returns <tt>#f</tt>.
 
 <p>
-<a name="./io:s62"></a><span class=formdef><b>procedure</b>: <tt>(char-ready?)</tt></span>
+<a name="./io:s68"></a><span class=formdef><b>procedure</b>: <tt>(char-ready?)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(char-ready?&nbsp;<i>textual-input-port</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if a character is available on <tt><i>textual-input-port</i></tt>, <tt>#f</tt> otherwise
@@ -1676,7 +1727,7 @@ restricted to textual input ports.
 
 
 <p>
-<a name="./io:s63"></a><span class=formdef><b>procedure</b>: <tt>(block-read&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>)</tt></span>
+<a name="./io:s69"></a><span class=formdef><b>procedure</b>: <tt>(block-read&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(block-read&nbsp;<i>textual-input-port</i>&nbsp;<i>string</i>&nbsp;<i>count</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -1699,14 +1750,21 @@ the buffered input or a portion thereof is returned; otherwise
 <tt>block-read</tt> bypasses the buffer entirely.
 
 <p>
-<a name="./io:s64"></a><span class=formdef><b>procedure</b>: <tt>(read-token)</tt></span>
+<a name="./io:s70"></a><span class=formdef><b>procedure</b>: <tt>(read-token)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(read-token&nbsp;<i>textual-input-port</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(read-token&nbsp;<i>textual-input-port</i>&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>Parsing of a Scheme datum is conceptually performed in two steps.
+<p><tt><i>sfd</i></tt> must be a source-file descriptor.
+<tt><i>bfp</i></tt> must be an exact nonnegative integer and should be the
+character position of the next character to be read from
+<tt><i>textual-input-port</i></tt>.
+
+<p>
+Parsing of a Scheme datum is conceptually performed in two steps.
 First, the sequence of characters that form the datum are grouped into
 <tt>tokens</tt>, such as symbols, numbers, left parentheses, and
 double quotes.
@@ -1735,12 +1793,18 @@ One token is read from the input port and returned as four values:
 
 <p>
 <dt><tt><i>start</i></tt>:<dd> the position of the first character of the token,
-relative to the starting position of the input port, and
+relative to the starting position of the input port (or <tt>#f</tt>,
+if the position cannot be determined), and
 
 <p>
 <dt><tt><i>end</i></tt>:<dd> the first position beyond the token,
-relative to the starting position of the input port.
+relative to the starting position of the input port (or <tt>#f</tt>,
+if the position cannot be determined).
 </dl>
+
+<p>
+The input port is left pointing to the first character position beyond
+the token.
 
 <p>
 When the token type fully specifies the token,
@@ -1782,8 +1846,18 @@ The set of token types is likely to change in future releases of the
 system; check the release notes for details on such changes.
 
 <p>
-The input port is left pointing to the first character position beyond
-the token, i.e., <tt><i>end</i></tt> characters from the starting position.
+Specifying <tt><i>sfd</i></tt> and <tt><i>bfp</i></tt> improves the quality of error messages,
+guarantees <tt><i>start</i></tt> and <tt><i>end</i></tt> can be determined,
+and eliminates the overhead of asking for a file position on each call
+to <tt>read-token</tt>.
+In most cases, <tt><i>bfp</i></tt> should be 0 for the first call
+to <tt>read-token</tt> at the start of a file,
+and it should be the fourth return value (<tt><i>end</i></tt>) of the preceding
+call to <tt>read-token</tt> for each subsequent
+call.
+This protocol is necessary to handle files containing multiple-byte
+characters, since file positions do not necessarily correspond
+to character positions.
 
 <p>
 
@@ -1851,7 +1925,7 @@ using the relative positions given by <tt><i>start</i></tt> and <tt><i>end</i></
 
 
 <p>
-<a name="./io:s65"></a><span class=formdef><b>global parameter</b>: <tt>console-output-port</tt></span>
+<a name="./io:s71"></a><span class=formdef><b>global parameter</b>: <tt>console-output-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1867,7 +1941,7 @@ output (stdout) stream of the Scheme process.
 
 
 <p>
-<a name="./io:s66"></a><span class=formdef><b>thread parameter</b>: <tt>current-output-port</tt></span>
+<a name="./io:s72"></a><span class=formdef><b>thread parameter</b>: <tt>current-output-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1888,7 +1962,7 @@ value of <tt>console-output-port</tt>.
 
 
 <p>
-<a name="./io:s67"></a><span class=formdef><b>thread parameter</b>: <tt>console-error-port</tt></span>
+<a name="./io:s73"></a><span class=formdef><b>thread parameter</b>: <tt>console-error-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1911,7 +1985,7 @@ Otherwise, this parameter is initially set to a different port tied to the
 standard error (stderr) stream of the Scheme process.
 
 <p>
-<a name="./io:s68"></a><span class=formdef><b>thread parameter</b>: <tt>current-error-port</tt></span>
+<a name="./io:s74"></a><span class=formdef><b>thread parameter</b>: <tt>current-error-port</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1928,7 +2002,7 @@ The initial value of this parameter is the same port as the initial
 value of <tt>console-error-port</tt>.
 
 <p>
-<a name="./io:s69"></a><span class=formdef><b>procedure</b>: <tt>(open-output-file&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s75"></a><span class=formdef><b>procedure</b>: <tt>(open-output-file&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-output-file&nbsp;<i>path</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>a new output port
@@ -1970,12 +2044,11 @@ The default behavior is to raise an exception.
 The mutually exclusive <tt>compressed</tt> and
 <tt>uncompressed</tt> options determine whether the output file is to
 be compressed.
-Compression is performed with the use of the
-zlib compression library developed by
-Jean-loup Gailly and Mark Adler.
-It is therefore compatible with the <tt>gzip</tt> program, which
-means that <tt>gzip</tt> may be used to uncompress files produced
-by <i>Chez&nbsp;Scheme</i> and visa versa.
+The compression format and level are determined by the
+<a name="./io:s76"></a><tt>compress-format</tt>
+and
+<a name="./io:s77"></a><tt>compress-level</tt>
+parameters.
 Files are uncompressed by default, so the <tt>uncompressed</tt>
 option is useful only as documentation.
 
@@ -2026,7 +2099,7 @@ The Revised<sup>6</sup> Report version of <tt>open-output-file</tt> does not
 support the optional <tt><i>options</i></tt> argument.
 
 <p>
-<a name="./io:s70"></a><span class=formdef><b>procedure</b>: <tt>(call-with-output-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>)</tt></span>
+<a name="./io:s78"></a><span class=formdef><b>procedure</b>: <tt>(call-with-output-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(call-with-output-file&nbsp;<i>path</i>&nbsp;<i>procedure</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>the values returned by <tt><i>procedure</i></tt>
@@ -2063,7 +2136,7 @@ support the optional <tt><i>options</i></tt> argument.
 
 
 <p>
-<a name="./io:s71"></a><span class=formdef><b>procedure</b>: <tt>(with-output-to-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>)</tt></span>
+<a name="./io:s79"></a><span class=formdef><b>procedure</b>: <tt>(with-output-to-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(with-output-to-file&nbsp;<i>path</i>&nbsp;<i>thunk</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>the value returned by <tt><i>thunk</i></tt>
@@ -2096,7 +2169,7 @@ The Revised<sup>6</sup> Report version of <tt>with-output-to-file</tt> does not
 support the optional <tt><i>options</i></tt> argument.
 
 <p>
-<a name="./io:s72"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>)</tt></span>
+<a name="./io:s80"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -2118,7 +2191,7 @@ arguments.
 The file descriptor is closed when the port is closed.
 
 <p>
-<a name="./io:s73"></a><span class=formdef><b>procedure</b>: <tt>(standard-output-port)</tt></span>
+<a name="./io:s81"></a><span class=formdef><b>procedure</b>: <tt>(standard-output-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-output-port&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-output-port&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -2141,7 +2214,7 @@ it to an implementation-dependent buffering mode (<tt>line</tt> in
 
 
 <p>
-<a name="./io:s74"></a><span class=formdef><b>procedure</b>: <tt>(standard-error-port)</tt></span>
+<a name="./io:s82"></a><span class=formdef><b>procedure</b>: <tt>(standard-error-port)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-error-port&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(standard-error-port&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -2166,7 +2239,7 @@ it to an implementation-dependent buffering mode (<tt>none</tt> in
 
 
 <p>
-<a name="./io:s75"></a><span class=formdef><b>procedure</b>: <tt>(put-bytevector-some&nbsp;<i>binary-output-port</i>&nbsp;<i>bytevector</i>)</tt></span>
+<a name="./io:s83"></a><span class=formdef><b>procedure</b>: <tt>(put-bytevector-some&nbsp;<i>binary-output-port</i>&nbsp;<i>bytevector</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(put-bytevector-some&nbsp;<i>binary-output-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(put-bytevector-some&nbsp;<i>binary-output-port</i>&nbsp;<i>bytevector</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
@@ -2189,7 +2262,7 @@ the system would have to block to write more bytes.
 
 
 <p>
-<a name="./io:s76"></a><span class=formdef><b>procedure</b>: <tt>(put-string-some&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>)</tt></span>
+<a name="./io:s84"></a><span class=formdef><b>procedure</b>: <tt>(put-string-some&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(put-string-some&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(put-string-some&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>&nbsp;<i>start</i>&nbsp;<i>n</i>)</tt></span>
 <br>
@@ -2212,7 +2285,7 @@ the system would have to block to write more characters.
 
 
 <p>
-<a name="./io:s77"></a><span class=formdef><b>procedure</b>: <tt>(display-string&nbsp;<i>string</i>)</tt></span>
+<a name="./io:s85"></a><span class=formdef><b>procedure</b>: <tt>(display-string&nbsp;<i>string</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(display-string&nbsp;<i>string</i>&nbsp;<i>textual-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -2228,7 +2301,7 @@ within the string are not escaped.
 <tt>display</tt> for displaying strings.
 
 <p>
-<a name="./io:s78"></a><span class=formdef><b>procedure</b>: <tt>(block-write&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>)</tt></span>
+<a name="./io:s86"></a><span class=formdef><b>procedure</b>: <tt>(block-write&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(block-write&nbsp;<i>textual-output-port</i>&nbsp;<i>string</i>&nbsp;<i>count</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -2248,7 +2321,7 @@ In any case, the contents of <tt><i>string</i></tt> are written immediately,
 without passing through the buffer.
 
 <p>
-<a name="./io:s79"></a><span class=formdef><b>procedure</b>: <tt>(truncate-port&nbsp;<i>output-port</i>)</tt></span>
+<a name="./io:s87"></a><span class=formdef><b>procedure</b>: <tt>(truncate-port&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(truncate-port&nbsp;<i>output-port</i>&nbsp;<i>pos</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(truncate-file&nbsp;<i>output-port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(truncate-file&nbsp;<i>output-port</i>&nbsp;<i>pos</i>)</tt></span>
@@ -2272,7 +2345,7 @@ can be called on a port only if <tt>port-has-set-port-length!?</tt> and
 
 
 <p>
-<a name="./io:s80"></a><a name="desc:fresh-line"></a>
+<a name="./io:s88"></a><a name="desc:fresh-line"></a>
 <span class=formdef><b>procedure</b>: <tt>(fresh-line)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(fresh-line&nbsp;<i>textual-output-port</i>)</tt></span>
 <br>
@@ -2298,7 +2371,7 @@ It does this by flushing the port and consulting the
 
 
 <p>
-<a name="./io:s81"></a><span class=formdef><b>procedure</b>: <tt>(open-input-output-file&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s89"></a><span class=formdef><b>procedure</b>: <tt>(open-input-output-file&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-input-output-file&nbsp;<i>path</i>&nbsp;<i>options</i>)</tt></span>
 <br>
 <b>returns: </b>a new input-output port
@@ -2331,7 +2404,7 @@ but may also be closed with either
 <tt>close-output-port</tt>.
 
 <p>
-<a name="./io:s82"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>)</tt></span>
+<a name="./io:s90"></a><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(open-fd-input/output-port&nbsp;<i>fd</i>&nbsp;<i>b-mode</i>&nbsp;<i>?transcoder</i>)</tt></span>
 <br>
@@ -2368,12 +2441,12 @@ Under other operating systems, and when an <tt>iconv</tt> DLL is
 available under Windows, <tt>bytevector-&gt;string</tt> and
 <tt>string-&gt;bytevector</tt> can be used with a transcoder based
 on a codec constructed via
-<a name="./io:s83"></a><tt>iconv-codec</tt>
+<a name="./io:s91"></a><tt>iconv-codec</tt>
 to achieve the same results, with more control over the handling
 of invalid characters and line endings.
 
 <p>
-<a name="./io:s84"></a><span class=formdef><b>procedure</b>: <tt>(multibyte-&gt;string&nbsp;<i>code-page</i>&nbsp;<i>bytevector</i>)</tt></span>
+<a name="./io:s92"></a><span class=formdef><b>procedure</b>: <tt>(multibyte-&gt;string&nbsp;<i>code-page</i>&nbsp;<i>bytevector</i>)</tt></span>
 <br>
 <b>returns: </b>a string containing the characters encoded in <tt><i>bytevector</i></tt>
 <br><span class=formdef><b>procedure</b>: <tt>(string-&gt;multibyte&nbsp;<i>code-page</i>&nbsp;<i>string</i>)</tt></span>
@@ -2420,7 +2493,7 @@ pretty-printer controls, also described later in this section, and also
 by the generic input/output controls described in Section&nbsp;<a href="./io.html#g86">9.14</a>.
 
 <p>
-<a name="./io:s85"></a><span class=formdef><b>procedure</b>: <tt>(pretty-print&nbsp;<i>obj</i>)</tt></span>
+<a name="./io:s93"></a><span class=formdef><b>procedure</b>: <tt>(pretty-print&nbsp;<i>obj</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(pretty-print&nbsp;<i>obj</i>&nbsp;<i>textual-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -2452,7 +2525,7 @@ For example,
 &nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;fact&nbsp;([i&nbsp;n]&nbsp;[a&nbsp;1])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;(=&nbsp;i&nbsp;0)&nbsp;a&nbsp;(fact&nbsp;(-&nbsp;i&nbsp;1)&nbsp;(*&nbsp;a&nbsp;i))))))</tt>
-<p><a name="./io:s86"></a><span class=formdef><b>procedure</b>: <tt>(pretty-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
+<p><a name="./io:s94"></a><span class=formdef><b>procedure</b>: <tt>(pretty-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -2466,7 +2539,7 @@ not appear in the output file.
 If the file named by <tt><i>ofn</i></tt> already exists, it is replaced.
 
 <p>
-<a name="./io:s87"></a><span class=formdef><b>procedure</b>: <tt>(pretty-format&nbsp;<i>sym</i>)</tt></span>
+<a name="./io:s95"></a><span class=formdef><b>procedure</b>: <tt>(pretty-format&nbsp;<i>sym</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br><span class=formdef><b>procedure</b>: <tt>(pretty-format&nbsp;<i>sym</i>&nbsp;<i>fmt</i>)</tt></span>
@@ -2558,7 +2631,7 @@ exactly.
 <dt><tt>(bracket&nbsp;.&nbsp;<i>fmt-tail</i>)</tt>:<dd>
 This matches any list-structured input and prints the input enclosed
 in square brackets, i.e.,
-<a name="./io:s88"></a><tt>[</tt> and <a name="./io:s89"></a><tt>]</tt>,
+<a name="./io:s96"></a><tt>[</tt> and <a name="./io:s97"></a><tt>]</tt>,
 rather than parentheses.
 
 <p>
@@ -2653,7 +2726,7 @@ if they don't all fit on one line.
 Each body form is indented by the standard indentation.
 
 <p>
-<a name="./io:s90"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-line-length</tt></span>
+<a name="./io:s98"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-line-length</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>pretty-one-line-limit</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -2663,7 +2736,7 @@ Each body form is indented by the standard indentation.
 <p>
 The parameters <tt>pretty-line-length</tt> and
 <tt>pretty-one-line-limit</tt> control the output produced by
-<a name="./io:s91"></a><tt>pretty-print</tt>.
+<a name="./io:s99"></a><tt>pretty-print</tt>.
 <tt>pretty-line-length</tt> determines after which character position (starting
 from the first) on a line the pretty printer attempts to cut off output.
 This is a soft limit only; if necessary, the pretty-printer will go beyond
@@ -2677,7 +2750,7 @@ It is also a soft limit.
 
 
 <p>
-<a name="./io:s92"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-initial-indent</tt></span>
+<a name="./io:s100"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-initial-indent</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2685,7 +2758,7 @@ It is also a soft limit.
 
 <p>
 The parameter <tt>pretty-initial-indent</tt> is used to tell
-<a name="./io:s93"></a><tt>pretty-print</tt> where on an output
+<a name="./io:s101"></a><tt>pretty-print</tt> where on an output
 line it has been called.
 If <tt>pretty-initial-indent</tt> is zero (the default), <tt>pretty-print</tt>
 assumes that the first line of output it produces will start at the
@@ -2696,7 +2769,7 @@ printing of subsequent lines.
 
 
 <p>
-<a name="./io:s94"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-standard-indent</tt></span>
+<a name="./io:s102"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-standard-indent</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2709,7 +2782,7 @@ expressions, from the form's keyword or first subexpression.
 
 
 <p>
-<a name="./io:s95"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-maximum-lines</tt></span>
+<a name="./io:s103"></a><span class=formdef><b>thread parameter</b>: <tt>pretty-maximum-lines</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2726,7 +2799,7 @@ nonnegative fixnum <tt><i>n</i></tt>, at most <tt><i>n</i></tt> lines are printe
 
 
 <p>
-<a name="./io:s96"></a><span class=formdef><b>procedure</b>: <tt>(format&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
+<a name="./io:s104"></a><span class=formdef><b>procedure</b>: <tt>(format&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(format&nbsp;#f&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(format&nbsp;#t&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(format&nbsp;<i>textual-output-port</i>&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
@@ -2735,7 +2808,7 @@ nonnegative fixnum <tt><i>n</i></tt>, at most <tt><i>n</i></tt> lines are printe
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./io:s97"></a>When the first argument to format is a string or <tt>#f</tt> (first and
+<p><a name="./io:s105"></a>When the first argument to format is a string or <tt>#f</tt> (first and
 second forms above),
 <tt>format</tt> constructs an output string from <tt><i>format-string</i></tt> and the
 objects <tt><i>obj</i>&nbsp;...</tt>.
@@ -2756,7 +2829,7 @@ When the first argument is a port, output is sent to that port, as with
 
 <p>
 <i>Chez&nbsp;Scheme</i>'s implementation of <tt>format</tt> supports all of the
-Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g179">30</a>] format directives except for those specific
+Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g180">30</a>] format directives except for those specific
 to the Common Lisp pretty printer.
 Please consult a Common Lisp reference or the
 <a  href=http://www.lispworks.com/documentation/HyperSpec/Front/index.htm>Common Lisp Hyperspec</a>,
@@ -2904,7 +2977,7 @@ appears in Section&nbsp;<a href="http://scheme.com/tspl4/./examples.html#g180">1
 
 
 <p>
-<a name="./io:s98"></a><span class=formdef><b>procedure</b>: <tt>(printf&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
+<a name="./io:s106"></a><span class=formdef><b>procedure</b>: <tt>(printf&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(fprintf&nbsp;<i>textual-output-port</i>&nbsp;<i>format-string</i>&nbsp;<i>obj</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -2937,7 +3010,7 @@ and graph-structured objects.
  
 
 <p>
-<a name="./io:s99"></a><a name="desc:char-name"></a>
+<a name="./io:s107"></a><a name="desc:char-name"></a>
 <span class=formdef><b>procedure</b>: <tt>(char-name&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -3049,7 +3122,7 @@ not be readable.
 
 
 <p>
-<a name="./io:s100"></a><span class=formdef><b>thread parameter</b>: <tt>print-char-name</tt></span>
+<a name="./io:s108"></a><span class=formdef><b>thread parameter</b>: <tt>print-char-name</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3069,7 +3142,7 @@ Otherwise, these procedures use the names established by
 (parameterize&nbsp;([print-char-name&nbsp;#t])<br>
 
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;#\x3))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#\\etx"</tt>
-<p><a name="./io:s101"></a><span class=formdef><b>thread parameter</b>: <tt>case-sensitive</tt></span>
+<p><a name="./io:s109"></a><span class=formdef><b>thread parameter</b>: <tt>case-sensitive</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3106,7 +3179,7 @@ If neither has been seen, they are folded if and only if
 'ABC&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;abc<br>
 
 (eq?&nbsp;'abc&nbsp;'ABC)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#t</tt>
-<p><a name="./io:s102"></a><span class=formdef><b>thread parameter</b>: <tt>print-graph</tt></span>
+<p><a name="./io:s110"></a><span class=formdef><b>thread parameter</b>: <tt>print-graph</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3115,12 +3188,12 @@ If neither has been seen, they are folded if and only if
 locate and print objects with shared structure, including
 cycles, in a notation that may be read subsequently with <tt>read</tt>.
 This notation employs the syntax
-<a name="./io:s103"></a>"<tt>#<i>n</i>=<i>obj</i></tt>,"
+<a name="./io:s111"></a>"<tt>#<i>n</i>=<i>obj</i></tt>,"
 where <tt><i>n</i></tt>
 is a nonnegative integer and <tt><i>obj</i></tt> is the printed representation
 of an object, to label the first occurrence of <tt><i>obj</i></tt> in the output.
 The syntax
-<a name="./io:s104"></a>"<tt>#<i>n</i>#</tt>"
+<a name="./io:s112"></a>"<tt>#<i>n</i>#</tt>"
 is used to refer to the object labeled by
 <tt><i>n</i></tt> thereafter in the output.
 <tt>print-graph</tt> is set to <tt>#f</tt> by default.
@@ -3159,12 +3232,12 @@ strings of <tt>format</tt>, <tt>printf</tt>, and <tt>fprintf</tt> are printed as
 
 &nbsp;&nbsp;&nbsp;&nbsp;(format&nbsp;"~s"&nbsp;x)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#0=(#0#&nbsp;.&nbsp;#0#)"</tt>
 <p>The graph syntax is understood by the procedure
-<a name="./io:s105"></a><tt>read</tt>, allowing graph structures
+<a name="./io:s113"></a><tt>read</tt>, allowing graph structures
 to be printed and read consistently.
 
 
 <p>
-<a name="./io:s106"></a><span class=formdef><b>thread parameter</b>: <tt>print-level</tt></span>
+<a name="./io:s114"></a><span class=formdef><b>thread parameter</b>: <tt>print-level</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>print-length</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -3183,7 +3256,7 @@ When <tt>print-level</tt> is set to a nonnegative integer <tt><i>n</i></tt>,
 traverse only <tt><i>n</i></tt> levels deep into nested structures.
 If a structure being printed exceeds <tt><i>n</i></tt> levels of nesting,
 the substructure beyond that point is replaced in the output by an
-<a name="./io:s107"></a><a name="./io:s108"></a>ellipsis
+<a name="./io:s115"></a><a name="./io:s116"></a>ellipsis
 (&nbsp;<tt>...</tt>&nbsp;).
 <tt>print-level</tt> is set to <tt>#f</tt> by default, which places
 no limit on the number of levels printed.
@@ -3193,7 +3266,7 @@ When <tt>print-length</tt> is set to a nonnegative integer <tt><i>n</i></tt>, th
 procedures <tt>write</tt> and <tt>pretty-print</tt>
 print only <tt><i>n</i></tt> elements of a list or vector,
 replacing the remainder of the list or vector with an
-<a name="./io:s109"></a><a name="./io:s110"></a>ellipsis
+<a name="./io:s117"></a><a name="./io:s118"></a>ellipsis
 (&nbsp;<tt>...</tt>&nbsp;).
 <tt>print-length</tt> is set to <tt>#f</tt> by default, which places
 no limit on the number of elements printed.
@@ -3232,7 +3305,7 @@ printed (see also <tt>print-graph</tt>).
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[print-length&nbsp;3])<br>
 
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;'((((a)&nbsp;b)&nbsp;c)&nbsp;d&nbsp;e&nbsp;f&nbsp;g)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"(((...)&nbsp;c)&nbsp;d&nbsp;e&nbsp;...)"</tt>
-<p><a name="./io:s111"></a><span class=formdef><b>thread parameter</b>: <tt>print-radix</tt></span>
+<p><a name="./io:s119"></a><span class=formdef><b>thread parameter</b>: <tt>print-radix</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3268,18 +3341,18 @@ is also affected by <tt>print-radix</tt>.
 (parameterize&nbsp;([print-radix&nbsp;16])<br>
 
 &nbsp;&nbsp;(format&nbsp;"~a"&nbsp;11242957))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"AB8DCD"</tt>
-<p><a name="./io:s112"></a><span class=formdef><b>thread parameter</b>: <tt>print-gensym</tt></span>
+<p><a name="./io:s120"></a><span class=formdef><b>thread parameter</b>: <tt>print-gensym</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./io:s113"></a><a name="./io:s114"></a>When
+<p><a name="./io:s121"></a><a name="./io:s122"></a>When
 <tt>print-gensym</tt> is set to <tt>#t</tt> (the default)
 gensyms are printed with an
 extended symbol syntax that includes both the pretty name and the unique
 name of the gensym: 
-<a name="./io:s115"></a><tt>#&#123;<i>pretty-name</i>&nbsp;<i>unique-name</i>&#125;</tt>.
+<a name="./io:s123"></a><tt>#&#123;<i>pretty-name</i>&nbsp;<i>unique-name</i>&#125;</tt>.
 When set to <tt>pretty</tt>, the pretty name only is shown, with the
-prefix <a name="./io:s116"></a><tt>#:</tt>.
+prefix <a name="./io:s124"></a><tt>#:</tt>.
 When set to <tt>pretty/suffix</tt>,
 the printer prints the gensym's "pretty" name along with a
 suffix based on the gensym's "unique" name, separated by a dot (&nbsp;"."&nbsp;).
@@ -3340,12 +3413,12 @@ the output.
 &nbsp;&nbsp;(parameterize&nbsp;([print-gensym&nbsp;'pretty/suffix])<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(format&nbsp;"~s&nbsp;~s&nbsp;~s"&nbsp;g1&nbsp;g2&nbsp;g3)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"x.1&nbsp;x.2&nbsp;y.3"</tt>
-<p><a name="./io:s117"></a><span class=formdef><b>thread parameter</b>: <tt>print-brackets</tt></span>
+<p><a name="./io:s125"></a><span class=formdef><b>thread parameter</b>: <tt>print-brackets</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p>When <tt>print-brackets</tt> is set to a true value, the pretty printer
-(see <a name="./io:s118"></a><tt>pretty-print</tt>) uses square
+(see <a name="./io:s126"></a><tt>pretty-print</tt>) uses square
 brackets rather than parentheses around certain subexpressions of
 common control structures, e.g., around <tt>let</tt> bindings and
 <tt>cond</tt> clauses.
@@ -3367,7 +3440,7 @@ common control structures, e.g., around <tt>let</tt> bindings and
 &nbsp;&nbsp;&nbsp;&nbsp;(pretty-print&nbsp;'(let&nbsp;([x&nbsp;3])&nbsp;x)&nbsp;p)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"(let&nbsp;((x&nbsp;3))&nbsp;x)<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;(get-output-string&nbsp;p)))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="gifs/ghostRightarrow.gif">&nbsp;"</tt>
-<p><a name="./io:s119"></a><span class=formdef><b>thread parameter</b>: <tt>print-extended-identifiers</tt></span>
+<p><a name="./io:s127"></a><span class=formdef><b>thread parameter</b>: <tt>print-extended-identifiers</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3421,7 +3494,7 @@ For example:
 <p><tt>(1+&nbsp;---&nbsp;&#123;&nbsp;&#125;&nbsp;.xyz)<br>
 
 \x31;23</tt>
-<p><a name="./io:s120"></a><span class=formdef><b>thread parameter</b>: <tt>print-vector-length</tt></span>
+<p><a name="./io:s128"></a><span class=formdef><b>thread parameter</b>: <tt>print-vector-length</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3433,7 +3506,7 @@ and all fxvectors between the "<tt>#vfx</tt>" and open parenthesis.
 This parameter is set to <tt>#f</tt> by default.
 
 <p>
-<a name="./io:s121"></a>When <tt>print-vector-length</tt> is set to a
+<a name="./io:s129"></a>When <tt>print-vector-length</tt> is set to a
 true value, <tt>write</tt>, <tt>put-datum</tt>, and <tt>pretty-print</tt>
 also suppress duplicated trailing elements in the vector to
 reduce the amount of output.
@@ -3464,7 +3537,7 @@ such objects is also affected by the setting of
 (parameterize&nbsp;([print-vector-length&nbsp;#t])<br>
 
 &nbsp;&nbsp;(format&nbsp;"~s"&nbsp;(fxvector&nbsp;1&nbsp;2&nbsp;3&nbsp;4&nbsp;4&nbsp;4)))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"#6vfx(1&nbsp;2&nbsp;3&nbsp;4)"</tt>
-<p><a name="./io:s122"></a><span class=formdef><b>thread parameter</b>: <tt>print-precision</tt></span>
+<p><a name="./io:s130"></a><span class=formdef><b>thread parameter</b>: <tt>print-precision</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3478,7 +3551,7 @@ included, as per the precision argument to
 <tt>number-&gt;string</tt>.
 
 <p>
-<a name="./io:s123"></a><span class=formdef><b>thread parameter</b>: <tt>print-unicode</tt></span>
+<a name="./io:s131"></a><span class=formdef><b>thread parameter</b>: <tt>print-unicode</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -3504,7 +3577,7 @@ other printing characters, as if by <tt>put-char</tt>.
 
 
 <p>
-<a name="./io:s124"></a>The procedures <tt>write</tt> and <tt>pretty-print</tt> print objects in a
+<a name="./io:s132"></a>The procedures <tt>write</tt> and <tt>pretty-print</tt> print objects in a
 human readable format.
 For objects with external datum representations, the output produced by
 <tt>write</tt> and <tt>pretty-print</tt> is also machine-readable with
@@ -3536,8 +3609,7 @@ input port, must be used instead.
 
 
 <p>
-<a name="./io:s125"></a><span class=formdef><b>procedure</b>: <tt>(fasl-write&nbsp;<i>obj</i>&nbsp;<i>binary-output-port</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(fasl-read&nbsp;<i>binary-input-port</i>)</tt></span>
+<a name="./io:s133"></a><span class=formdef><b>procedure</b>: <tt>(fasl-write&nbsp;<i>obj</i>&nbsp;<i>binary-output-port</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3548,13 +3620,6 @@ input port, must be used instead.
 An exception is raised with condition-type <tt>&amp;assertion</tt> if
 <tt><i>obj</i></tt> or any portion of <tt><i>obj</i></tt> has no external fasl representation,
 e.g., if <tt><i>obj</i></tt> is or contains a procedure.
-
-<p>
-<tt>fasl-read</tt> reads one object from
-<tt><i>binary-input-port</i></tt>, which must be positioned at the
-front of an object written in fasl format.
-<tt>fasl-read</tt> returns the eof object if the file is positioned
-at the end of file.
 
 <p>
 
@@ -3572,7 +3637,50 @@ at the end of file.
 (fasl-read&nbsp;bip)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#!eof<br>
 
 (close-port&nbsp;bip)</tt>
-<p><a name="./io:s126"></a><span class=formdef><b>procedure</b>: <tt>(fasl-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
+<p><a name="./io:s134"></a><span class=formdef><b>procedure</b>: <tt>(fasl-read&nbsp;<i>binary-input-port</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(fasl-read&nbsp;<i>binary-input-port <i>situation</i></i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>If present, <tt><i>situation</i></tt> must be one of the symbols <tt>load</tt>,
+<tt>visit</tt>, or <tt>revisit</tt>.
+It defaults to <tt>load</tt>.
+
+<p>
+<tt>fasl-read</tt> reads one object from
+<tt><i>binary-input-port</i></tt>, which must be positioned at the
+front of an object written in fasl format.
+<tt>fasl-read</tt> returns the eof object if the file is positioned
+at the end of file.
+If the situation is <tt>visit</tt>, <tt>fasl-read</tt> skips over 
+any revisit (run-time-only) objects, and
+if the situation is <tt>revisit</tt>, <tt>fasl-read</tt> skips over 
+any visit (compile-time-only) objects.
+It doesn't skip any if the situation is <tt>load</tt>.
+Similarly, objects marked as both visit and revisit (e.g., object code
+corresponding to source code within an <tt>eval-when</tt> form with
+situation <tt>load</tt> or situations <tt>visit</tt> and <tt>revisit</tt>)
+are never skipped.
+
+<p>
+
+<p><tt>(define&nbsp;bop&nbsp;(open-file-output-port&nbsp;"tmp.fsl"))<br>
+
+(fasl-write&nbsp;'(a&nbsp;b&nbsp;c)&nbsp;bop)<br>
+
+(close-port&nbsp;bop)
+<br>
+<br>
+(define&nbsp;bip&nbsp;(open-file-input-port&nbsp;"tmp.fsl"))<br>
+
+(fasl-read&nbsp;bip)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;(a&nbsp;b&nbsp;c)<br>
+
+(fasl-read&nbsp;bip)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#!eof<br>
+
+(close-port&nbsp;bip)</tt>
+<p><a name="./io:s135"></a><span class=formdef><b>procedure</b>: <tt>(fasl-file&nbsp;<i>ifn</i>&nbsp;<i>ofn</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3598,7 +3706,7 @@ If the file named by <tt><i>ofn</i></tt> already exists, it is replaced.
 This section describes operations on files, directories, and pathnames.
 
 <p>
-<a name="./io:s127"></a><span class=formdef><b>global parameter</b>: <tt>current-directory</tt></span>
+<a name="./io:s136"></a><span class=formdef><b>global parameter</b>: <tt>current-directory</tt></span>
 <br><span class=formdef><b>global parameter</b>: <tt>cd</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -3613,7 +3721,7 @@ directory pathname.
 <tt>cd</tt> is bound to the same parameter.
 
 <p>
-<a name="./io:s128"></a><span class=formdef><b>procedure</b>: <tt>(directory-list&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s137"></a><span class=formdef><b>procedure</b>: <tt>(directory-list&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b>a list of file names
 <br>
@@ -3627,7 +3735,7 @@ type <tt>&amp;i/o-filename</tt> if <tt><i>path</i></tt> does not name a director
 or if the process cannot list the directory.
 
 <p>
-<a name="./io:s129"></a><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s138"></a><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-exists?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> exists, <tt>#f</tt> otherwise
@@ -3647,7 +3755,7 @@ optional <tt><i>follow?</i></tt> argument.
 Whether it follows symbolic links is unspecified.
 
 <p>
-<a name="./io:s130"></a><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s139"></a><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-regular?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a regular file, <tt>#f</tt> otherwise
@@ -3659,7 +3767,7 @@ If the optional <tt><i>follow?</i></tt> argument is true (the default),
 <tt>file-regular?</tt> follows symbolic links; otherwise it does not.
 
 <p>
-<a name="./io:s131"></a><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s140"></a><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-directory?&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a directory, <tt>#f</tt> otherwise
@@ -3671,7 +3779,7 @@ If the optional <tt><i>follow?</i></tt> argument is true (the default),
 this procedure follows symbolic links; otherwise it does not.
 
 <p>
-<a name="./io:s132"></a><span class=formdef><b>procedure</b>: <tt>(file-symbolic-link?&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s141"></a><span class=formdef><b>procedure</b>: <tt>(file-symbolic-link?&nbsp;<i>path</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the file named by <tt><i>path</i></tt> is a symbolic link, <tt>#f</tt> otherwise
 <br>
@@ -3682,7 +3790,7 @@ this procedure follows symbolic links; otherwise it does not.
 determination.
 
 <p>
-<a name="./io:s133"></a><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>)</tt></span>
+<a name="./io:s142"></a><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(file-access-time&nbsp;<i>path/port</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b>the access time of the specified file
@@ -3709,11 +3817,11 @@ In this case, <tt><i>follow?</i></tt> is ignored.
 
 <p>
 The returned times are represented as time objects
-(Section&nbsp;<a href="./system.html#g119">12.10</a>).
+(Section&nbsp;<a href="./system.html#g120">12.10</a>).
 
 
 <p>
-<a name="./io:s134"></a><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s143"></a><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(mkdir&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -3737,7 +3845,7 @@ type <tt>&amp;i/o-filename</tt> if the directory cannot be created.
 
 
 <p>
-<a name="./io:s135"></a><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s144"></a><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(delete-file&nbsp;<i>path</i>&nbsp;<i>error?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -3759,7 +3867,7 @@ optional <tt><i>error?</i></tt> argument but behaves as if <tt><i>error?</i></tt
 is true.
 
 <p>
-<a name="./io:s136"></a><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s145"></a><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(delete-directory&nbsp;<i>path</i>&nbsp;<i>error?</i>)</tt></span>
 <br>
 <b>returns: </b>see below
@@ -3778,7 +3886,7 @@ The behavior is unspecified if the directory is not empty, but on
 most systems the operations will not succeed.
 
 <p>
-<a name="./io:s137"></a><span class=formdef><b>procedure</b>: <tt>(rename-file&nbsp;<i>old-pathname</i>&nbsp;<i>new-pathname</i>)</tt></span>
+<a name="./io:s146"></a><span class=formdef><b>procedure</b>: <tt>(rename-file&nbsp;<i>old-pathname</i>&nbsp;<i>new-pathname</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3791,7 +3899,7 @@ If the file does not exist or cannot be renamed,
 an exception is raised with condition type <tt>&amp;i/o-filename</tt>.
 
 <p>
-<a name="./io:s138"></a><span class=formdef><b>procedure</b>: <tt>(chmod&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
+<a name="./io:s147"></a><span class=formdef><b>procedure</b>: <tt>(chmod&nbsp;<i>path</i>&nbsp;<i>mode</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -3815,7 +3923,7 @@ If the file does not exist or the permissions cannot be changed,
 an exception is raised with condition type <tt>&amp;i/o-filename</tt>.
 
 <p>
-<a name="./io:s139"></a><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s148"></a><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(get-mode&nbsp;<i>path</i>&nbsp;<i>follow?</i>)</tt></span>
 <br>
 <b>returns: </b>the current permissions mode for <tt><i>path</i></tt>
@@ -3831,7 +3939,7 @@ this procedure follows symbolic links; otherwise it does not.
 
 
 <p>
-<a name="./io:s140"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator?&nbsp;<i>char</i>)</tt></span>
+<a name="./io:s149"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator?&nbsp;<i>char</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>char</i></tt> is a directory separator, <tt>#f</tt> otherwise
 <br>
@@ -3842,7 +3950,7 @@ current machine types, and <tt>#\\</tt> is a directory separator
 under Windows.
 
 <p>
-<a name="./io:s141"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator)</tt></span>
+<a name="./io:s150"></a><span class=formdef><b>procedure</b>: <tt>(directory-separator)</tt></span>
 <br>
 <b>returns: </b>the preferred directory separator
 <br>
@@ -3852,7 +3960,7 @@ under Windows.
 <tt>#\/</tt> for other systems.
 
 <p>
-<a name="./io:s142"></a><span class=formdef><b>procedure</b>: <tt>(path-first&nbsp;<i>path</i>)</tt></span>
+<a name="./io:s151"></a><span class=formdef><b>procedure</b>: <tt>(path-first&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-rest&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-last&nbsp;<i>path</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(path-parent&nbsp;<i>path</i>)</tt></span>
@@ -3993,7 +4101,7 @@ This section presents the definitions for three types of generic ports:
 two-way ports, transcript ports, and process ports.
 
 <p>
-<p><b>Two-way ports.</b>&nbsp;&nbsp;<a name="./io:s143"></a>The first example defines <tt>make-two-way-port</tt>, which constructs a
+<p><b>Two-way ports.</b>&nbsp;&nbsp;<a name="./io:s152"></a>The first example defines <tt>make-two-way-port</tt>, which constructs a
 textual input/output port from a given pair of textual input and output ports.
 For example:
 
@@ -4088,7 +4196,7 @@ passed off to the input port.
 
 
 <p>
-<p><b>Transcript ports.</b>&nbsp;&nbsp;<a name="./io:s144"></a>The next example defines <tt>make-transcript-port</tt>, which constructs a
+<p><b>Transcript ports.</b>&nbsp;&nbsp;<a name="./io:s153"></a>The next example defines <tt>make-transcript-port</tt>, which constructs a
 textual input/output port from three ports:  a textual input port <tt><i>ip</i></tt> and two textual
 output ports, <tt><i>op</i></tt> and <tt><i>tp</i></tt>.
 Input read from a transcript port comes from <tt><i>ip</i></tt>, and output
@@ -4443,7 +4551,7 @@ i.e., if only one "thread" of the computation can have access to the
 port.
 
 <p>
-<p><b>Process ports.</b>&nbsp;&nbsp;<a name="./io:s145"></a><a name="./io:s146"></a>The final example
+<p><b>Process ports.</b>&nbsp;&nbsp;<a name="./io:s154"></a><a name="./io:s155"></a>The final example
 demonstrates how to incorporate the socket interface
 defined in Section&nbsp;<a href="./foreign.html#g35">4.9</a> into a generic port that
 allows transparent communication with subprocesses via normal Scheme
@@ -4785,7 +4893,7 @@ subprocess is terminated.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

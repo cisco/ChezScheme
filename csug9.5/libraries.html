@@ -210,7 +210,7 @@ This line may be replaced with
 <p>with <tt>/usr/bin</tt> replaced by the absolute path to the directory
 containing <tt>scheme-script</tt> if it is not in <tt>/usr/bin</tt>.
 The first form is recommended in the nonnormative appendices to the
-Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g178">29</a>], and works wherever
+Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g179">29</a>], and works wherever
 <tt>scheme-script</tt> appears in the path.
 
 <p>
@@ -240,7 +240,7 @@ resides, if not <tt>/usr/bin</tt>.
 
 <p>
 The <tt>load-program</tt> procedure, described in
-Section&nbsp;<a href="./system.html#g113">12.4</a>, is used like <tt>load</tt>:
+Section&nbsp;<a href="./system.html#g114">12.4</a>, is used like <tt>load</tt>:
 
 <p>
 
@@ -256,14 +256,14 @@ system starts up and begins to run the program.
 Thus, the line may be present even in a file loaded by <tt>load-program</tt>.
 In fact, <tt>load-program</tt> is ultimately used by the other two
 mechanisms described above, via the value of the <tt>scheme-program</tt>
-parameter described in Section&nbsp;<a href="./system.html#g117">12.8</a>, and it is
+parameter described in Section&nbsp;<a href="./system.html#g118">12.8</a>, and it is
 <tt>load-program</tt> that scans past the <tt>#!</tt> line, if present,
 before evaluating the program.
 
 <p>
 A top-level program may be compiled with the
 <a name="./libraries:s10"></a><tt>compile-program</tt>
-procedure described in Section&nbsp;<a href="./system.html#g113">12.4</a>.
+procedure described in Section&nbsp;<a href="./system.html#g114">12.4</a>.
 <tt>compile-program</tt> copies the <tt>#!</tt> line from the source
 file to the object file, followed by a compiled version of the source
 code.
@@ -453,7 +453,7 @@ be imported, as permitted by the Revised<sup>6</sup> Report.
 This frees the programmer from the obligation
 to do so and results in more generality as well as more
 precision in the set of libraries actually imported
-at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g170">21</a>,<a class=citation href="./bibliography.html#g168">19</a>].
+at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g171">21</a>,<a class=citation href="./bibliography.html#g169">19</a>].
 
 <p>
 An <tt><i>import-set</i></tt> must take one of the following forms:
@@ -1350,7 +1350,7 @@ is invoked.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -486,7 +486,7 @@ those expressions are scoped where the <tt>include</tt> form appears.
 
 <p>
 In <i>Chez&nbsp;Scheme</i>'s implementation of <tt>include</tt>,
-the parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g114">12.5</a>)
+the parameter <tt>source-directories</tt> (Section&nbsp;<a href="./system.html#g115">12.5</a>)
 determines the set of directories searched for source files not identified
 by absolute path names.
 
@@ -1036,7 +1036,7 @@ allowing the remaining bindings in the set to be visible.
 Some of the text and examples given in this section are
 adapted from the paper
 "Extending the scope of syntactic
-abstraction"&nbsp;[<a class=citation href="./bibliography.html#g181">32</a>], which describes modules and their
+abstraction"&nbsp;[<a class=citation href="./bibliography.html#g182">32</a>], which describes modules and their
 implementation in more detail.
 
 <p>
@@ -1917,7 +1917,7 @@ for debugging purposes and mark only one of them <tt>profile</tt>
 to avoid duplicate counts.
 It might also be useful to mark no expressions <tt>profile</tt> and
 instead introduce explicit <tt>profile</tt> forms
-(Section&nbsp;<a href="./system.html#g116">12.7</a>) to identify the set of source
+(Section&nbsp;<a href="./system.html#g117">12.7</a>) to identify the set of source
 locations to be profiled.
 
 <p>
@@ -2119,7 +2119,7 @@ marked <tt>profile</tt> are used for profiling.
 <p><a name="./syntax:s55"></a><span class=formdef><b>procedure</b>: <tt>(make-source-object&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>&nbsp;<i>efp</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-source-object&nbsp;<i>sfd</i>&nbsp;<i>bfp</i>&nbsp;<i>efp</i>&nbsp;<i>line</i>&nbsp;<i>column</i>)</tt></span>
 <br>
-<b>returns: </b>a source-object
+<b>returns: </b>a source object
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -2353,6 +2353,175 @@ caches, and the filesystem in a way different from
 <tt>locate-source-object-object</tt>.
 
 
+<p>
+
+<h3><a name="g109"></a><a name="./syntax:h12"></a>Section 11.12. Source Tables<a name="SECTSYNTAXSOURCETABLES"></a></h3>
+
+
+
+<p>
+Source tables provide an efficient way to associate information
+with source objects both in memory and on disk, such as the coverage information
+saved to <tt>.covin</tt> files when
+<a name="./syntax:s75"></a><tt>generate-covin-files</tt> is
+set to <tt>#t</tt>
+and the profile counts associated with source objects by
+<a name="./syntax:s76"></a><tt>with-profile-tracker</tt>
+(Section&nbsp;<a href="./system.html#g117">12.7</a>).
+
+<p>
+Source tables are manipulated via hashtable-like accessors and setters
+(Section&nbsp;<a href="./objects.html#g59">7.12</a>, <i>The Scheme Programming Language, 4th Edition</i> Section&nbsp;<a href="http://scheme.com/tspl4/./objects.html#g119">6.13</a>), e.g.,
+<a name="./syntax:s77"></a><tt>source-table-ref</tt> and <a name="./syntax:s78"></a><tt>source-table-set!</tt>.
+They can be saved to files via
+<a name="./syntax:s79"></a><tt>put-source-table</tt>
+and restored via
+<a name="./syntax:s80"></a><tt>get-source-table!</tt>.
+
+<p>
+<a name="./syntax:s81"></a><span class=formdef><b>procedure</b>: <tt>(make-source-table)</tt></span>
+<br>
+<b>returns: </b>a source table
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>A source table contains associations between source objects and arbitrary
+values.  For purposes of the source-table operations described below, two
+source objects are the same if they have the same source-file descriptor,
+equal beginning file positions and equal ending file positions.
+Two source-file descriptors are the same if they have the same path and
+checksum.
+
+<p>
+<a name="./syntax:s82"></a><span class=formdef><b>procedure</b>: <tt>(source-table?&nbsp;<i>obj</i>)</tt></span>
+<br>
+<b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a source-table; <tt>#f</tt> otherwise
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><a name="./syntax:s83"></a><span class=formdef><b>procedure</b>: <tt>(source-table-set!&nbsp;<i>source-table</i>&nbsp;<i>source-object</i>&nbsp;<i>obj</i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>source-table-set!</tt> associates <tt><i>source-object</i></tt>
+with <tt><i>obj</i></tt> in <tt><i>source-table</i></tt>, replacing the
+existing association, if any.
+
+
+<p>
+<a name="./syntax:s84"></a><span class=formdef><b>procedure</b>: <tt>(source-table-ref&nbsp;<i>source-table</i>&nbsp;<i>source-object</i>&nbsp;<i>default</i>)</tt></span>
+<br>
+<b>returns: </b>see below
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt><i>default</i></tt> may be any Scheme value.
+
+<p>
+<tt>source-table-ref</tt> returns the value
+associated with <tt><i>source-object</i></tt> in <tt><i>source-table</i></tt>.
+If no value is associated with <tt><i>source-object</i></tt> in <tt><i>source-table</i></tt>,
+<tt>source-table-ref</tt> returns <tt><i>default</i></tt>.
+
+
+<p>
+<a name="./syntax:s85"></a><span class=formdef><b>procedure</b>: <tt>(source-table-contains?&nbsp;<i>source-table</i>&nbsp;<i>source-object</i>)</tt></span>
+<br>
+<b>returns: </b><tt>#t</tt> if an association for <tt><i>source-object</i></tt> exists in <tt><i>source-table</i></tt>, <tt>#f</tt> otherwise
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><a name="./syntax:s86"></a><span class=formdef><b>procedure</b>: <tt>(source-table-cell&nbsp;<i>source-table</i>&nbsp;<i>source-object</i>&nbsp;<i>default</i>)</tt></span>
+<br>
+<b>returns: </b>a pair (see below)
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt><i>default</i></tt> may be any Scheme value.
+
+<p>
+If no value is associated with <tt><i>source-object</i></tt> in <tt><i>source-table</i></tt>,
+<tt>source-table-cell</tt> modifies <tt><i>source-table</i></tt> to associate <tt><i>source-object</i></tt> with
+<tt><i>default</i></tt>.
+Regardless, it returns a pair whose car is <tt><i>source-object</i></tt> and whose cdr is
+the associated value.
+Changing the cdr of this pair effectively updates the table to
+associate <tt><i>source-object</i></tt> with a new value.
+The car field of the pair should not be modified.
+
+
+<p>
+<a name="./syntax:s87"></a><span class=formdef><b>procedure</b>: <tt>(source-table-delete!&nbsp;<i>source-table</i>&nbsp;<i>source-object</i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt>source-table-delete!</tt> drops the association
+for <tt><i>source-object</i></tt> from <tt><i>source-table</i></tt>, if
+one exists.
+
+
+<p>
+<a name="./syntax:s88"></a><span class=formdef><b>procedure</b>: <tt>(source-table-size&nbsp;<i>source-table</i>)</tt></span>
+<br>
+<b>returns: </b>the number of entries in <tt><i>source-table</i></tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><a name="./syntax:s89"></a><span class=formdef><b>procedure</b>: <tt>(put-source-table&nbsp;<i>textual-output-port</i>&nbsp;<i>source-table</i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>This procedure writes a representation of the information stored in <tt><i>source-table</i></tt> to the port.
+
+
+<p>
+<a name="./syntax:s90"></a><span class=formdef><b>procedure</b>: <tt>(get-source-table!&nbsp;<i>textual-input-port</i>&nbsp;<i>source-table</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(get-source-table!&nbsp;<i>textual-input-port</i>&nbsp;<i>source-table</i>&nbsp;<i>combine</i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p>The port must be positioned at a representation of source-table
+information written by some previous call to <tt>put-source-table</tt>,
+which reads the information and merges it into <tt>source-table</tt>.
+
+<p>
+If present and non-false, <tt><i>combine</i></tt> must be a procedure and
+should accept two arguments.
+It is called whenever associations for the same source object are
+present both in <tt><i>source-table</i></tt> and in the information read from
+the port.
+In this case, <tt><i>combine</i></tt> is passed two arguments: the associated
+value from <tt><i>source-table</i></tt> and the associated value from the
+port (in that order) and must return one value, which is recorded
+as the new associated value for the source object in <tt><i>source-table</i></tt>.
+
+<p>
+If <tt><i>combine</i></tt> is not present, <tt><i>combine</i></tt> is <tt>#f</tt>, or
+no association for a source object read from the port already exists
+in <tt><i>source-table</i></tt>, the value read from the port is recorded as
+the associated value of the source object in <tt><i>source-table</i></tt>.
+
+<p>
+
+<p><tt>(define&nbsp;st&nbsp;(make-source-table))<br>
+
+(call-with-port&nbsp;(open-input-file&nbsp;"profile.out1")<br>
+
+&nbsp;&nbsp;(lambda&nbsp;(ip)&nbsp;(get-source-table!&nbsp;ip&nbsp;st)))<br>
+
+(call-with-port&nbsp;(open-input-file&nbsp;"profile.out2")<br>
+
+&nbsp;&nbsp;(lambda&nbsp;(ip)&nbsp;(get-source-table!&nbsp;ip&nbsp;st&nbsp;+)))</tt>
+<p>
+
 
 
 <hr class=copyright align=left>
@@ -2361,7 +2530,7 @@ caches, and the filesystem in a way different from
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

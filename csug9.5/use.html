@@ -351,7 +351,7 @@ This may be accomplished by setting the
 <p><tt>echo&nbsp;'(reset-handler&nbsp;abort)&nbsp;(compile-file&nbsp;"<i>filename</i>")'&nbsp;|&nbsp;scheme&nbsp;-q</tt>
 <p>One can also redefine the
 <a name="./use:s8"></a><tt>base-exception-handler</tt>
-(Section&nbsp;<a href="./system.html#g110">12.1</a>) to achieve a similar effect
+(Section&nbsp;<a href="./system.html#g111">12.1</a>) to achieve a similar effect
 while exercising more control over the format of the messages that
 are produced.
 
@@ -418,7 +418,7 @@ are shown separated by commas.
 
 <p>
 Detailed descriptions of the editing commands are given in
-Chapter&nbsp;<a href="./expeditor.html#g130">14</a>, which also describes parameters that allow
+Chapter&nbsp;<a href="./expeditor.html#g131">14</a>, which also describes parameters that allow
 control over the expression editor, mechanisms for adding or changing key
 bindings, and mechanisms for creating new commands.
 
@@ -1365,8 +1365,8 @@ program, e.g.:
 control parameters and also with the storage manager's run-time
 operation.
 The compiler-control parameters, including <tt>optimize-level</tt>, are
-described in Section&nbsp;<a href="./system.html#g115">12.6</a>, and the storage manager
-control parameters are described in Section&nbsp;<a href="./smgmt.html#g127">13.1</a>.
+described in Section&nbsp;<a href="./system.html#g116">12.6</a>, and the storage manager
+control parameters are described in Section&nbsp;<a href="./smgmt.html#g128">13.1</a>.
 
 <p>
 <a name="./use:s51"></a>Finally, it is often useful to "profile" your code to determine that
@@ -1383,7 +1383,7 @@ These operators can make code more readable when used judiciously,
 but they can slow down time-critical code.
 
 <p>
-Section&nbsp;<a href="./system.html#g116">12.7</a> describes how to use the compiler's support
+Section&nbsp;<a href="./system.html#g117">12.7</a> describes how to use the compiler's support
 for automatic profiling.
 Be sure that profiling is not enabled when you compile your production
 code, since the code introduced into the generated code to perform the
@@ -1612,7 +1612,7 @@ it may be necessary to make some adjustments to a file to be
 compiled if the file contains expressions or definitions that
 affect the compilation of subsequent forms in the file.
 This can be accomplished via <tt>eval-when</tt>
-(Section&nbsp;<a href="./system.html#g113">12.4</a>).
+(Section&nbsp;<a href="./system.html#g114">12.4</a>).
 This is not typically necessary or desirable if the application consists
 of a set of RNRS libraries and programs.
 
@@ -2049,7 +2049,7 @@ boot files.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

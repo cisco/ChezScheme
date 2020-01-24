@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g135"></a>
+<a name="g136"></a>
 <a name="./threads:h0"></a>
 
 <h1>Chapter 15. Thread System<a name="CHPTTHREADS"></a></h1>
@@ -55,7 +55,7 @@ whose property lists are being modified or accessed differ.
 <p>
 In this context, most I/O operations should be considered destructive,
 since they might modify a port's internal structure; see also
-Section&nbsp;<a href="./threads.html#g143">15.8</a> for information on buffered ports.
+Section&nbsp;<a href="./threads.html#g144">15.8</a> for information on buffered ports.
 
 <p>
 Use of operators that are not thread-safe without proper synchronization
@@ -88,7 +88,7 @@ synchronized across processors.
 
 <p>
 
-<h3><a name="g136"></a><a name="./threads:h1"></a>Section 15.1. Thread Creation</h3>
+<h3><a name="g137"></a><a name="./threads:h1"></a>Section 15.1. Thread Creation</h3>
 
 
 
@@ -136,18 +136,24 @@ in all threads.
 
 <p>
 
-<h3><a name="g137"></a><a name="./threads:h2"></a>Section 15.2. Mutexes</h3>
+<h3><a name="g138"></a><a name="./threads:h2"></a>Section 15.2. Mutexes</h3>
 
 
 
 <p>
 <a name="./threads:s6"></a><span class=formdef><b>procedure</b>: <tt>(make-mutex)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(make-mutex&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>a new mutex object
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./threads:s7"></a><span class=formdef><b>procedure</b>: <tt>(mutex?&nbsp;<i>obj</i>)</tt></span>
+<p><tt><i>name</i></tt>, if supplied, must be a symbol which identifies the mutex, or
+<tt>#f</tt> for no name. The name is printed every time the mutex is
+printed, which is useful for debugging.
+
+<p>
+<a name="./threads:s7"></a><span class=formdef><b>procedure</b>: <tt>(mutex?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a mutex, <tt>#f</tt> otherwise
 <br>
@@ -223,25 +229,40 @@ Using <tt>with-mutex</tt> is generally more convenient and safer than using
 <tt>mutex-acquire</tt> and <tt>mutex-release</tt> directly.
 
 <p>
+<a name="./threads:s11"></a><span class=formdef><b>procedure</b>: <tt>(mutex-name&nbsp;<i>mutex</i>)</tt></span>
+<br>
+<b>returns: </b>the name associated with <tt><i>mutex</i></tt>, if any; otherwise <tt>#f</tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
 
-<h3><a name="g138"></a><a name="./threads:h3"></a>Section 15.3. Conditions</h3>
+<p><tt><i>mutex</i></tt> must be a mutex.
+
+<p>
+
+<h3><a name="g139"></a><a name="./threads:h3"></a>Section 15.3. Conditions</h3>
 
 
 
 <p>
-<a name="./threads:s11"></a><span class=formdef><b>procedure</b>: <tt>(make-condition)</tt></span>
+<a name="./threads:s12"></a><span class=formdef><b>procedure</b>: <tt>(make-condition)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(make-condition&nbsp;<i>name</i>)</tt></span>
 <br>
 <b>returns: </b>a new condition object
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./threads:s12"></a><span class=formdef><b>procedure</b>: <tt>(thread-condition?&nbsp;<i>obj</i>)</tt></span>
+<p><tt><i>name</i></tt>, if supplied, must be a symbol which identifies the condition
+object, or <tt>#f</tt> for no name. The name is printed every time the
+condition is printed, which is useful for debugging.
+
+<p>
+<a name="./threads:s13"></a><span class=formdef><b>procedure</b>: <tt>(thread-condition?&nbsp;<i>obj</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if <tt><i>obj</i></tt> is a condition object, <tt>#f</tt> otherwise
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><a name="./threads:s13"></a><span class=formdef><b>procedure</b>: <tt>(condition-wait&nbsp;<i>cond</i>&nbsp;<i>mutex</i>)</tt></span>
+<p><a name="./threads:s14"></a><span class=formdef><b>procedure</b>: <tt>(condition-wait&nbsp;<i>cond</i>&nbsp;<i>mutex</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(condition-wait&nbsp;<i>cond</i>&nbsp;<i>mutex</i>&nbsp;<i>timeout</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the calling thread was awakened by the condition, <tt>#f</tt> if the calling thread timed out waiting
@@ -268,7 +289,7 @@ reacquired and <tt>condition-wait</tt> returns.
 
 
 <p>
-<a name="./threads:s14"></a><span class=formdef><b>procedure</b>: <tt>(condition-signal&nbsp;<i>cond</i>)</tt></span>
+<a name="./threads:s15"></a><span class=formdef><b>procedure</b>: <tt>(condition-signal&nbsp;<i>cond</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -282,7 +303,7 @@ condition identified by <tt><i>cond</i></tt>.
 
 
 <p>
-<a name="./threads:s15"></a><span class=formdef><b>procedure</b>: <tt>(condition-broadcast&nbsp;<i>cond</i>)</tt></span>
+<a name="./threads:s16"></a><span class=formdef><b>procedure</b>: <tt>(condition-broadcast&nbsp;<i>cond</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
@@ -295,13 +316,22 @@ condition identified by <tt><i>cond</i></tt>.
 condition identified by <tt><i>cond</i></tt>.
 
 <p>
+<a name="./threads:s17"></a><span class=formdef><b>procedure</b>: <tt>(condition-name&nbsp;<i>condition</i>)</tt></span>
+<br>
+<b>returns: </b>the name associated with <tt><i>condition</i></tt>, if any; otherwise <tt>#f</tt>
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
 
-<h3><a name="g139"></a><a name="./threads:h4"></a>Section 15.4. Locks<a name="SECTTHREADLOCKS"></a></h3>
+<p><tt><i>condition</i></tt> must be a condition.
+
+<p>
+
+<h3><a name="g140"></a><a name="./threads:h4"></a>Section 15.4. Locks<a name="SECTTHREADLOCKS"></a></h3>
 
 
 
 <p>
-<a name="./threads:s16"></a>Locks are more primitive but more flexible and efficient than mutexes
+<a name="./threads:s18"></a>Locks are more primitive but more flexible and efficient than mutexes
 and can be used in situations where the added mutex functionality
 is not needed or desired.
 They can also be used independently of the thread system
@@ -360,7 +390,7 @@ disciplined manner.
 (ftype-lock!&nbsp;uptr&nbsp;()&nbsp;lock)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;#f<br>
 
 (ftype-unlock!&nbsp;uptr&nbsp;()&nbsp;lock)</tt>
-<p><a name="./threads:s17"></a><span class=formdef><b>syntax</b>: <tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></span>
+<p><a name="./threads:s19"></a><span class=formdef><b>syntax</b>: <tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>(ftype-init-lock!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
@@ -419,7 +449,7 @@ Otherwise, it returns without changing the lock.
 
 <p>
 
-<h3><a name="g140"></a><a name="./threads:h5"></a>Section 15.5. Locked increment and decrement<a name="SECTTHREADLOCKEDINCRDECR"></a></h3>
+<h3><a name="g141"></a><a name="./threads:h5"></a>Section 15.5. Locked increment and decrement<a name="SECTTHREADLOCKEDINCRDECR"></a></h3>
 
 
 
@@ -428,7 +458,7 @@ The locked operations described here can be used when just an atomic
 increment or decrement is required.
 
 <p>
-<a name="./threads:s18"></a><span class=formdef><b>syntax</b>: <tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></span>
+<a name="./threads:s20"></a><span class=formdef><b>syntax</b>: <tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>)</tt></span>
 <br><span class=formdef><b>syntax</b>: <tt>(ftype-locked-incr!&nbsp;<i>ftype-name</i>&nbsp;(<i>a</i>&nbsp;...)&nbsp;<i>fptr-expr</i>&nbsp;<i>index</i>)</tt></span>
 <br>
 <b>returns: </b><tt>#t</tt> if the updated value is 0, <tt>#f</tt> otherwise
@@ -460,12 +490,12 @@ Both return <tt>#t</tt> if the new value is 0, otherwise <tt>#f</tt>.
 
 <p>
 
-<h3><a name="g141"></a><a name="./threads:h6"></a>Section 15.6. Reference counting with ftype guardians<a name="SECTTHREADFTYPEGUARDIANS"></a></h3>
+<h3><a name="g142"></a><a name="./threads:h6"></a>Section 15.6. Reference counting with ftype guardians<a name="SECTTHREADFTYPEGUARDIANS"></a></h3>
 
 
 
 <p>
-<a name="./threads:s19"></a>Applications that manage memory outside the Scheme heap can leverage
+<a name="./threads:s21"></a>Applications that manage memory outside the Scheme heap can leverage
 the Scheme storage management system to help perform reference
 counting via <i>ftype guardians</i>.
 In a reference-counted memory management system, each object holds
@@ -477,7 +507,16 @@ memory it formerly occupied can be made available for some other
 purpose.
 
 <p>
-<a name="./threads:s20"></a><span class=formdef><b>syntax</b>: <tt>(ftype-guardian&nbsp;<i>ftype-name</i>)</tt></span>
+Ftype guardians are similar to guardians created by
+<a name="./threads:s22"></a><tt>make-guardian</tt>
+(Section&nbsp;<a href="./smgmt.html#g129">13.2</a>).
+The <a name="./threads:s23"></a><tt>guardian?</tt> procedure returns
+true for both, and the
+<a name="./threads:s24"></a><tt>unregister-guardian</tt>
+procedure can be used to unregister objects registered with either.
+
+<p>
+<a name="./threads:s25"></a><span class=formdef><b>syntax</b>: <tt>(ftype-guardian&nbsp;<i>ftype-name</i>)</tt></span>
 <br>
 <b>returns: </b>a new ftype guardian
 <br>
@@ -514,14 +553,14 @@ collector.
 
 <p>
 The collector decrements the reference count using the equivalent
-of <a name="./threads:s21"></a><tt>ftype-locked-decr!</tt>
+of <a name="./threads:s26"></a><tt>ftype-locked-decr!</tt>
 to support systems in which non-Scheme objects are stored in memory
 shared by multiple processes.
 In such systems, programs should themselves use
-<a name="./threads:s22"></a><tt>ftype-locked-incr!</tt> and
+<a name="./threads:s27"></a><tt>ftype-locked-incr!</tt> and
 <tt>ftype-locked-decr!</tt> or non-Scheme equivalents (e.g., the C
-<a name="./threads:s23"></a><tt>LOCKED_INCR</tt> and
-<a name="./threads:s24"></a><tt>LOCKED_DECR</tt> macros in scheme.h,
+<a name="./threads:s28"></a><tt>LOCKED_INCR</tt> and
+<a name="./threads:s29"></a><tt>LOCKED_DECR</tt> macros in scheme.h,
 which are described in Section&nbsp;<a href="./foreign.html#g34">4.8</a>) to maintain
 reference counts.
 
@@ -612,21 +651,22 @@ objects whose reference counts should also be incremented upon
 allocation of the containing object and decremented upon freeing
 of the containing object.
 
-<p>
-
-<h3><a name="g142"></a><a name="./threads:h7"></a>Section 15.7. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
-
-
 
 <p>
-<a name="./threads:s25"></a><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>)</tt></span>
+
+<h3><a name="g143"></a><a name="./threads:h7"></a>Section 15.7. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
+
+
+
+<p>
+<a name="./threads:s30"></a><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>)</tt></span>
 <br><span class=formdef><b>procedure</b>: <tt>(make-thread-parameter&nbsp;<i>object</i>&nbsp;<i>procedure</i>)</tt></span>
 <br>
 <b>returns: </b>a new thread parameter
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>See Section&nbsp;<a href="./system.html#g122">12.13</a> for a general
+<p>See Section&nbsp;<a href="./system.html#g123">12.13</a> for a general
 discussion of parameters and the use of the optional second argument.
 
 <p>
@@ -657,7 +697,7 @@ in the nonthreaded versions of the system.
 
 <p>
 
-<h3><a name="g143"></a><a name="./threads:h8"></a>Section 15.8. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
+<h3><a name="g144"></a><a name="./threads:h8"></a>Section 15.8. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
 
 
 
@@ -697,13 +737,13 @@ acquiring a mutex for each I/O operation.
 
 <p>
 
-<h3><a name="g144"></a><a name="./threads:h9"></a>Section 15.9. Example: Bounded Queues</h3>
+<h3><a name="g145"></a><a name="./threads:h9"></a>Section 15.9. Example: Bounded Queues</h3>
 
 
 
 <p>
 The following code, taken from the article
-"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g159">10</a>],"
+"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g160">10</a>],"
 implements a bounded queue using many of the
 thread-system features.
 A bounded queue has a fixed number of available slots.  
@@ -957,7 +997,7 @@ Adding&nbsp;job&nbsp;#9&nbsp;=&nbsp;(lambda&nbsp;()&nbsp;(fib&nbsp;26))<br>
 ...</tt>
 <p>Additional examples, including definitions of suspendable threads and
 threads that automatically terminate when they become inaccessible, are
-given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g159">10</a>]."
+given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g160">10</a>]."
 
 
 <p>
@@ -971,7 +1011,7 @@ given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliograp
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised March 2019 for Chez Scheme Version 9.5.2<br>
+Revised January 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
