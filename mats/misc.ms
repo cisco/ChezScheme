@@ -5541,7 +5541,9 @@
                          '(lambda (x) (x)))
   (equivalent-expansion? (parameterize ([enable-unsafe-application #t])
                            (get-uncprep-form '(lambda (x) (x))))
-                         '(lambda (x) (#3%$app x)))
+                         (if (= 3 (optimize-level))
+                             '(lambda (x) (x))
+                             '(lambda (x) (#3%$app x))))
   )
 
 (mat phantom-bytevector
