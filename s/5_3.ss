@@ -2129,7 +2129,40 @@
       (type-case x
          [(fixnum? bignum?)
           (type-case y
-             [(fixnum? bignum?) (integer* x y)]
+             [(fixnum?) (integer* x y)]
+             [(bignum?) (if (fixnum? x)
+                            (integer* x y)
+                            (let ()
+                              ;; _Modern Computer Arithmetic_, Brent and Zimmermann
+                              (define (karatsuba x y)
+                                (define xl (if (bignum? x) ($bignum-length x) 0))
+                                (define yl (if (bignum? y) ($bignum-length y) 0))
+                                (cond
+                                 [(and (fx< xl 10) (fx< yl 10))
+                                  (integer* x y)]
+                                 [else
+                                  (let* ([k (fx* (fxquotient (fxmax xl yl) 2) (constant bigit-bits))]
+                                         [x-hi (ash x (fx- k))]
+                                         [y-hi (ash y (fx- k))]
+                                         [x-lo (- x (ash x-hi k))]
+                                         [y-lo (- y (ash y-hi k))]
+                                         [c0 (karatsuba x-lo y-lo)]
+                                         [c1 (karatsuba x-hi y-hi)]
+                                         [c1-c2 (cond
+                                                 [(< x-lo x-hi)
+                                                  (cond
+                                                   [(< y-lo y-hi)
+                                                    (- c1 (karatsuba (- x-hi x-lo) (- y-hi y-lo)))]
+                                                   [else
+                                                    (+ c1 (karatsuba (- x-hi x-lo) (- y-lo y-hi)))])]
+                                                 [else
+                                                  (cond
+                                                   [(< y-lo y-hi)
+                                                    (+ c1 (karatsuba (- x-lo x-hi) (- y-hi y-lo)))]
+                                                   [else
+                                                    (- c1 (karatsuba (- x-lo x-hi) (- y-lo y-hi)))])])])
+                                    (+ c0 (integer-ash (+ c0 c1-c2) k) (integer-ash c1 (fx* 2 k))))]))
+                              (karatsuba x y)))]
              [(ratnum?) (/ (* x ($ratio-numerator y)) ($ratio-denominator y))]
              [($exactnum? $inexactnum?)
               (make-rectangular (* x (real-part y)) (* x (imag-part y)))]
