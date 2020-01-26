@@ -704,3 +704,358 @@
     '(lambda (b) (list (unbox b) (lambda (x) (box? b))))
     '(lambda (b) (list (unbox b) (lambda (x) #t))))
 )
+
+(mat cptypes-call-with-values
+  ; The single value case is handled by cp0
+  (cptypes-equivalent-expansion?
+    '(lambda (v)
+       (call-with-values
+        (lambda () (vector-ref v 0))
+        (lambda (y) (list (vector? v) (vector-ref v 1) y))))
+    '(lambda (v)
+       (call-with-values
+        (lambda () (vector-ref v 0))
+        (lambda (y) (list #t (vector-ref v 1) y)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (t)
+       (call-with-values
+        (lambda () (if t (box 2) (box 3)))
+        (lambda (y) (list y (box? y)))))
+    '(lambda (t)
+       (call-with-values
+        (lambda () (if t (box 2) (box 3)))
+        (lambda (y) (list y #t)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 2))
+        (lambda (y) (display (unbox b))))
+       (box? b))
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 2))
+        (lambda (y) (display (unbox b))))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 2))
+        (lambda (y) (display y)))
+       (box? b))
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 2))
+        (lambda (y) (display y)))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 (values 2 3)))
+        (lambda (x y) (list x y (box? b)))))
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 (values 2 3)))
+        (lambda (x y) (list x y #t)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (lambda (x y) (display (list x y (unbox b)))))
+       (box? b))
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (lambda (x y) (display (list x y (unbox b)))))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 (values 2 3)))
+        (lambda (x y) (display (list x y))))
+       (box? b))
+    '(lambda (b)
+       (call-with-values
+        (lambda () (if (unbox b) 1 (values 2 3)))
+        (lambda (x y) (display (list x y))))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (call-with-values
+        (case-lambda 
+          [() (if (unbox b) 1 (values 2 3))]
+          [(x) (error 'e "")])
+        (lambda (x y) (list x y (box? b)))))
+    '(lambda (b)
+       (call-with-values
+        (case-lambda 
+          [() (if (unbox b) 1 (values 2 3))]
+          [(x) (error 'e "")])
+        (lambda (x y) (list x y #t)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (case-lambda
+         [(x y) (display (list x y (unbox b)))]
+         [(x) (error 'e "")]))
+       (box? b))
+    '(lambda (t b)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (case-lambda
+         [(x y) (display (list x y (unbox b)))]
+         [(x) (error 'e "")]))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (call-with-values
+        (case-lambda 
+          [() (if (unbox b) 1 (values 2 3))]
+          [(x) (error 'e "")])
+        (lambda (x y) (display (list x y))))
+       (box? b))
+    '(lambda (b)
+       (call-with-values
+        (case-lambda 
+          [() (if (unbox b) 1 (values 2 3))]
+          [(x) (error 'e "")])
+        (lambda (x y) (display (list x y))))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (t b)
+       (call-with-values
+        (begin (display (unbox b)) (lambda () (if t 1 (values b 2))))
+        (lambda (x y) (list x y (box? b)))))
+    '(lambda (t b)
+       (call-with-values
+        (begin (display (unbox b)) (lambda () (if t 1 (values b 2))))
+        (lambda (x y) (list x y #t)))))
+  ; This is difficult to handle in cptypes, so I ignored it.
+  ; But it is anyway handled by cp0.
+  #;(cptypes-equivalent-expansion?
+      '(lambda (t b)
+         (call-with-values
+          (lambda () (if t 1 (values b (box? b))))
+          (begin (display (unbox b)) (lambda (x y) (list x y b)))))
+      '(lambda (t b)
+         (call-with-values
+          (lambda () (if t 1 (values b #t)))
+          (begin (display (unbox b)) (lambda (x y) (list x y b))))))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (t)
+       (number?
+        (call-with-values
+         (lambda () (if t 1 (values 2 3)))
+         (case-lambda [(x y) 2] [(x) 1]))))
+    '(lambda (t)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (case-lambda [(x y) 2] [(x) 1]))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (t)
+       (number?
+        (call-with-values
+         (lambda () (if t 1 (values 2 3)))
+         (case-lambda [(x y) 2] [(x) (error 'e "")]))))
+    '(lambda (t)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+        (case-lambda [(x y) 2] [(x) (error 'e "")]))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (t f)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+         f)
+       (procedure? f))
+    '(lambda (t f)
+       (call-with-values
+        (lambda () (if t 1 (values 2 3)))
+         f)
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (t f)
+       (call-with-values
+        f
+        (lambda (x y) (+ x y)))
+       (procedure? f))
+    '(lambda (t f)
+       (call-with-values
+        f
+        (lambda (x y) (+ x y)))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (t f)
+       (when (box? f)
+         (call-with-values
+          (lambda () (if t 1 (values 2 3)))
+          f)
+         111))
+    '(lambda (t f)
+       (when (box? f)
+         (call-with-values
+          (lambda () (if t 1 (values 2 3)))
+          f)
+         222)))
+  (cptypes-equivalent-expansion?
+    '(lambda (t f)
+       (when (box? f)
+         (call-with-values
+          f
+          (lambda (x y) (+ x y)))
+         111))
+    '(lambda (t f)
+       (when (box? f)
+         (call-with-values
+          f
+          (lambda (x y) (+ x y)))
+         222)))
+)
+
+(mat cptypes-apply
+  (cptypes-equivalent-expansion?
+    '(lambda (l b)
+       (apply (lambda (x) (display (list (unbox b) x))) l)
+       (box? b))
+    '(lambda (l b)
+       (apply (lambda (x) (display (list (unbox b) x))) l)
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (l b)
+       (apply (lambda (x y) (display (list (unbox b) x))) 7 l)
+       (box? b))
+    '(lambda (l b)
+       (apply (lambda (x y) (display (list (unbox b) x))) 7 l)
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (l b)
+       (apply (lambda (x) (display (list b x))) (unbox b))
+       (box? b))
+    '(lambda (l b)
+       (apply (lambda (x) (display (list b x))) (unbox b))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (l b)
+       (apply (lambda (x y) (display (list b x y))) 7 (unbox b))
+       (box? b))
+    '(lambda (l b)
+       (apply (lambda (x y) (display (list b x y))) 7 (unbox b))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    ; with #3% the argument may be inlined and then executed in reverse order
+    '(lambda (l b)
+       (#2%apply (lambda (x y) (list (box? b) x y)) 7 (unbox b)))
+    '(lambda (l b)
+       (#2%apply (lambda (x y) (list #t x y)) 7 (unbox b))))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (l b)
+       (apply
+        (case-lambda 
+          [(x) (list (unbox b) x)]
+          [(x y) (error 'e "")])
+        l)
+       (box? b)) 
+    '(lambda (l b)
+       (apply
+        (case-lambda 
+          [(x) (list (unbox b) x)]
+          [(x y) (error 'e "")])
+        l)
+       #t)) 
+
+  (cptypes-equivalent-expansion?
+    '(lambda (l)
+       (number?
+        (apply (lambda (x y) (+ x y)) l)))
+    '(lambda (l)
+       (apply (lambda (x y) (+ x y)) l)
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (l)
+       (number?
+        (apply
+         (case-lambda
+          [(x y) (+ x y)]
+          [()  (error 'e "")])
+         l)))
+    '(lambda (l)
+       (apply
+        (case-lambda
+         [(x y) (+ x y)]
+         [()  (error 'e "")])
+        l)
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (f l)
+       (apply f l)
+       (procedure? f))
+    '(lambda (f l)
+       (apply f l)
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (t f)
+       (when (box? f)
+         (apply f l)
+         111))
+    '(lambda (t f)
+       (when (box? f)
+         (apply f l)
+         222)))
+)
+
+(mat cptypes-dynamic-wind
+  (cptypes-equivalent-expansion?
+    '(lambda (f)
+       (box? (dynamic-wind (lambda (x) #f) (lambda () (box (f))) (lambda () #f))))
+    '(lambda (f)
+       (begin
+         (dynamic-wind (lambda (x) #f) (lambda () (box (f))) (lambda () #f))
+         #t)))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () #f) (lambda () #f))
+       (box? b))
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () #f) (lambda () #f))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (dynamic-wind (lambda (x) #f) (lambda () (unbox b)) (lambda () #f))
+       (box? b))
+    '(lambda (b)
+       (dynamic-wind (lambda (x) #f) (lambda () (unbox b)) (lambda () #f))
+       #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (dynamic-wind (lambda (x) #f) (lambda () #f) (lambda () (unbox b)))
+       (box? b))
+    '(lambda (b)
+       (dynamic-wind (lambda (x) #f) (lambda () #f) (lambda () (unbox b)))
+       #t))
+
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () (box? b)) (lambda () #f)))
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () #t) (lambda () #f))))
+  (cptypes-equivalent-expansion?
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () #f) (lambda () (box? b))))
+    '(lambda (b)
+       (dynamic-wind (lambda (x) (unbox b)) (lambda () #f) (lambda () #t) )))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (b)
+            (dynamic-wind (lambda () #f) (lambda (x) (unbox b)) (lambda () (box? b))))
+         '(lambda (b)
+            (dynamic-wind (lambda () #f) (lambda (x) (unbox b)) (lambda () #t)))))
+)

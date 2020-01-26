@@ -2255,10 +2255,10 @@
   (equivalent-expansion?
     (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       ;; don't fold primitive in test context with bad apply convention
-      (expand/optimize '(if (#%apply #%eof-object 1 2 3) 4 5)))
+      (expand/optimize '(if (#%apply #%pair? 1 2 3) 4 5)))
     (if (= (optimize-level) 3)
-        '(if (#3%apply #3%eof-object 1 2 3) 4 5)
-        '(if (#2%apply #2%eof-object 1 2 3) 4 5)))
+        '(if (#3%apply #3%pair? 1 2 3) 4 5)
+        '(if (#2%apply #2%pair? 1 2 3) 4 5)))
   (equivalent-expansion?
     (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       ;; don't fold primitive in effect context with bad apply convention

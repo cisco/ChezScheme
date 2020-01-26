@@ -776,6 +776,74 @@ Notes:
                                         body))])
                        ($sputprop 'prim 'key handler)) ...)))])))
 
+      ; Similar to define-specialize, but the arguments are not analyzed yet,
+      ; so it's necesary to use Expr, Expr/call or a similar function to analyze them.
+      ; Also, the variables ret, ntypes and (get-type <arg>) are not available.
+      (define-syntax define-specialize/unrestricted
+        (lambda (x)
+          (define (make-get-type-name id)
+            (datum->syntax-object id
+              (gensym (string-append (symbol->string (syntax->datum id))
+                                     "-ret-type"))))
+          (syntax-case x ()
+            [(_key lev prim clause ...)
+             (identifier? #'prim)
+             #'(_key lev (prim) clause ...)]
+            [(_key lev (prim ...) clause ...)
+             (andmap identifier? #'(prim ...))
+             (with-implicit (_key level prim-name preinfo pr ctxt oldtypes)
+               (with-syntax
+                 ([key (case (datum lev)
+                         [(2) #'cptypes2x]
+                         [(3) #'cptypes3x]
+                         [else ($oops #f "invalid inline level ~s" (datum lev))])]
+                  [body
+                    (let loop ([clauses #'(clause ...)])
+                      (if (null? clauses)
+                          #'(unhandled preinfo pr e* ctxt oldtypes)
+                          (with-syntax ((rest (loop (cdr clauses))))
+                            (syntax-case (car clauses) ()
+                              [((x ...) b1 b2 ...)
+                               #;guard: (andmap identifier? #'(x ...))
+                               (with-syntax ([n (length #'(x ...))])
+                                 #'(if (eq? count n)
+                                       (apply (lambda (x ...)
+                                                b1 b2 ...) e*)
+                                       rest))]
+                              [(r b1 b2 ...)
+                               #;guard: (identifier? #'r)
+                               #'(apply
+                                  (lambda r
+                                    b1 b2 ...) e*)]
+                              [((x ... . r) b1 b2 ...)
+                               #;guard: (and (andmap identifier? #'(x ...)) (identifier? #'r))
+                               (with-syntax ([n (length #'(x ...))])
+                                 #'(if (fx>= count n)
+                                       (apply 
+                                         (lambda (x ... . r)
+                                           b1 b2 ...) e*)
+                                       rest))]))))])
+                 (for-each
+                   (lambda (sym-name)
+                     (let ([sym-key (datum key)])
+                       (if (getprop sym-name sym-key #f)
+                           (warningf #f "duplicate ~s handler for ~s" sym-key sym-name)
+                           (putprop sym-name sym-key #t))
+                       (unless (all-set?
+                                 (case (datum lev)
+                                   [(2) (prim-mask cptypes2x)]
+                                   [(3) (prim-mask cptypes3x)])
+                                 ($sgetprop sym-name '*flags* 0))
+                         (warningf #f "undeclared ~s handler for ~s~%" sym-key sym-name))))
+                   (datum (prim ...)))
+                 #'(begin
+                     (let ([handler (lambda (preinfo pr e* ctxt oldtypes unhandled)
+                                      (let ([level (if (all-set? (prim-mask unsafe) (primref-flags pr)) 3 2)]    
+                                            [prim-name 'prim]
+                                            [count (length e*)])
+                                        body))])
+                       ($sputprop 'prim 'key handler)) ...)))])))
+
       (define-syntax (get-type stx)
         (lambda (lookup)
           (syntax-case stx ()
@@ -859,6 +927,84 @@ Notes:
                  [else
                   (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
 
+      (define-specialize/unrestricted 2 call-with-values
+        [(e1 e2) (let-values ([(e1 ret1 types1 t-types1 f-types1)
+                               (Expr/call e1 'value oldtypes oldtypes)])
+                   (let-values ([(e2 ret2 types2 t-types2 f-types2)
+                                 (Expr/call e2 ctxt types1 oldtypes)])
+                     (values `(call ,preinfo ,pr ,e1 ,e2)
+                             (if (predicate-implies? ret1 'bottom) ; check if necesary
+                                 'bottom
+                                 ret2)
+                             types2 t-types2 f-types2)))])
+
+      (define-specialize/unrestricted 2 apply
+        [(proc . e*) (let-values ([(e* r* t* t-t* f-t*)
+                                   (map-values 5 (lambda (e) (Expr e 'value oldtypes)) e*)])
+                     (let ([mtypes (fold-left (lambda (f t) (pred-env-intersect/base f t oldtypes)) oldtypes t*)])
+                       (let-values ([(proc retproc typesproc t-typesproc f-typesproc)
+                                     (Expr/call proc ctxt mtypes oldtypes)])
+                         (values `(call ,preinfo ,pr ,proc ,e* ...)
+                                 retproc typesproc t-typesproc f-typesproc))))])
+
+      (define-specialize/unrestricted 2 $apply
+        [(proc n args) (let*-values ([(n rn tn t-tn f-tn)
+                                      (Expr n 'value oldtypes)]
+                                     [(args rargs targs t-targs f-targs)
+                                      (Expr args 'value oldtypes)])
+                         (let* ([predn (primref->argument-predicate pr 1 #t)]
+                                [tn (if (predicate-implies-not? rn predn)
+                                        'bottom
+                                        tn)]
+                                [tn (pred-env-add/ref tn n predn)]
+                                [predargs (primref->argument-predicate pr 2 #t)]
+                                [targs (if (predicate-implies-not? rargs predargs)
+                                        'bottom
+                                        targs)]
+                                [targs (pred-env-add/ref targs args predargs)]
+                                [mtypes (pred-env-intersect/base tn targs oldtypes)])
+                           (let-values ([(proc retproc typesproc t-typesproc f-typesproc)
+                                         (Expr/call proc ctxt mtypes oldtypes)])
+                             (values `(call ,preinfo ,pr ,proc ,n ,args)
+                                     retproc typesproc t-typesproc f-typesproc))))])
+
+      (let ()
+        (define (handle-dynamic-wind critical? in body out ctxt oldtypes)
+          (let*-values ([(critical? rcritical? tcritical? t-tcritical? f-tcritical?)
+                         (if critical?
+                             (Expr critical? 'value oldtypes)
+                             (values #f #f oldtypes #f #f))]
+                        [(ìn rin tin t-tin f-tin)
+                         (Expr/call in 'value tcritical? oldtypes)]
+                        [(body rbody tbody t-tbody f-tbody)
+                         (Expr/call body 'value tin oldtypes)] ; it's almost possible to use ctxt instead of 'value here
+                        [(out rout tout t-tout f-tout)
+                         (Expr/call out 'value tin oldtypes)]) ; use tin instead of tbody in case of error or jump.
+            (let* ([n-types (pred-env-intersect/base tbody tout tin)]
+                   [t-types (and (eq? ctxt 'test)
+                                 t-tbody
+                                 (pred-env-rebase t-tbody tin n-types))]
+                   [f-types (and (eq? ctxt 'test)
+                                 f-tbody
+                                 (pred-env-rebase f-tbody tin n-types))])
+              (values critical? in body out rbody n-types t-types f-types))))
+        
+        (define-specialize/unrestricted 2 r6rs:dynamic-wind
+          [(in body out) (let-values ([(critical? in body out ret n-types t-types f-types)
+                                       (handle-dynamic-wind #f in body out ctxt oldtypes)])
+                           (values `(call ,preinfo ,pr ,in ,body ,out)
+                                   ret n-types t-types f-types))])
+        (define-specialize/unrestricted 2 dynamic-wind
+          [(in body out) (let-values ([(critical? in body out ret n-types t-types f-types)
+                                       (handle-dynamic-wind #f in body out ctxt oldtypes)])
+                           (values `(call ,preinfo ,pr ,in ,body ,out)
+                                   ret n-types t-types f-types))]
+          [(critical? in body out) (let-values ([(critical? in body out ret n-types t-types f-types)
+                                                 (handle-dynamic-wind critical? in body out ctxt oldtypes)])
+                                     (values `(call ,preinfo ,pr ,critical? ,in ,body ,out)
+                                             ret n-types t-types f-types))])
+      )
+
   ))
 
   (with-output-language (Lsrc Expr)
@@ -884,7 +1030,24 @@ Notes:
                  #f)])))
 
   (define (fold-call/primref preinfo pr e* ctxt oldtypes)
-    (fold-primref/next preinfo pr e* ctxt oldtypes))
+    (fold-primref/unrestricted preinfo pr e* ctxt oldtypes))
+
+  (define (fold-primref/unrestricted preinfo pr e* ctxt oldtypes)
+    (let* ([flags (primref-flags pr)]
+           [prim-name (primref-name pr)]
+           [handler (or (and (all-set? (prim-mask unsafe) flags)
+                             (all-set? (prim-mask cptypes3x) flags)
+                             ($sgetprop prim-name 'cptypes3x #f))
+                        (and (all-set? (prim-mask cptypes2x) flags)
+                             ($sgetprop prim-name 'cptypes2x #f)))])
+      (if handler
+          (call-with-values
+            (lambda () (handler preinfo pr e* ctxt oldtypes fold-primref/next))
+            (case-lambda
+              [(ir2 ret2 types2 t-types2 f-types2)
+               (values ir2 ret2 types2 t-types2 f-types2)]
+              [else ($oops 'fold-primref "result of inline handler can't be #f")]))
+          (fold-primref/next preinfo pr e* ctxt oldtypes))))
 
   (define (fold-primref/next preinfo pr e* ctxt oldtypes)
     (let-values ([(t e* r* t* t-t* f-t*)
@@ -1340,7 +1503,7 @@ Notes:
             ; currently all the flags use the same bit
             (let ([used (map (lambda (key) (and (getprop sym key #f)
                                                 (begin (remprop sym 'cp02) #t)))
-                             '(cptypes2 cptypes3))])
+                             '(cptypes2 cptypes3 cptypes2x cptypes3x))])
               (when (andmap not used)
                 ($oops 'çptypes "no cptypes handler for ~s" sym))))))
       (oblist))

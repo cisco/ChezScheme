@@ -337,12 +337,12 @@
   (vector-for-each [sig [(procedure vector vector ...) -> (ptr ...)]] [flags cp03])
   (error [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
   (assertion-violation [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
-  (apply [sig [(procedure ptr ... list) -> (ptr ...)]] [flags cp02 ieee r5rs])
+  (apply [sig [(procedure ptr ... list) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
   (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs])
   (call/cc [sig [(procedure) -> (ptr ...)]] [flags])
   (values [sig [(ptr ...) -> (ptr ...)]] [flags unrestricted discard cp02 ieee r5rs])
-  (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 ieee r5rs])
-  ((r6rs: dynamic-wind) [sig [(procedure procedure procedure) -> (ptr ...)]] [flags ieee r5rs])      ; restricted to 3 arguments
+  (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
+  ((r6rs: dynamic-wind) [sig [(procedure procedure procedure) -> (ptr ...)]] [flags cptypes2x ieee r5rs])      ; restricted to 3 arguments
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs bytevectors)] [flags keyword])
@@ -1270,7 +1270,7 @@
   (display-condition [sig [(ptr) (ptr textual-output-port) -> (void)]] [flags])
   (display-statistics [sig [() (textual-output-port) -> (void)]] [flags true])
   (display-string [sig [(string) (string textual-output-port) -> (void)]] [flags true])
-  (dynamic-wind [sig [(procedure procedure procedure) (ptr procedure procedure procedure) -> (ptr ...)]] [flags ieee r5rs])
+  (dynamic-wind [sig [(procedure procedure procedure) (ptr procedure procedure procedure) -> (ptr ...)]] [flags cptypes2x ieee r5rs])
   (enable-interrupts [sig [() -> (uint)]] [flags true])
   (engine-block [sig [() -> (ptr)]] [flags])
   (engine-return [sig [(ptr ...) -> (bottom)]] [flags abort-op])
@@ -1785,7 +1785,7 @@
   ($allocate-thread-parameter [feature pthreads] [flags single-valued alloc])
   ($app [flags])
   ($app/no-inline [flags])
-  ($apply [sig [(procedure exact-integer list) -> (ptr ...)]] [flags])
+  ($apply [sig [(procedure exact-integer list) -> (ptr ...)]] [flags cptypes2x])
   ($assembly-output [flags single-valued])
   ($as-time-goes-by [flags])
   ($bignum-length [flags single-valued pure true])
