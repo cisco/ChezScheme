@@ -3127,6 +3127,14 @@
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -31) #x-100000000)
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -32) #x-80000000)
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -33) #x-40000000)
+   (eqv? (bitwise-arithmetic-shift 10 (- (expt 2 100))) 0)
+   (eqv? (bitwise-arithmetic-shift (expt 10 100) (- (expt 2 100))) 0)
+   (eqv? (bitwise-arithmetic-shift -10 (- (expt 2 100))) -1)
+   (eqv? (bitwise-arithmetic-shift (- (expt 10 100)) (- (expt 2 100))) -1)
+   (eqv? (bitwise-arithmetic-shift 0 (- (expt 2 100))) 0)
+   (eqv? (bitwise-arithmetic-shift 0 (- (expt 2 100))) 0)
+   (eqv? (bitwise-arithmetic-shift 0 (expt 2 100)) 0)
+   (eqv? (bitwise-arithmetic-shift 0 (expt 2 100)) 0)
 )
 
 (mat bitwise-arithmetic-shift-left/right

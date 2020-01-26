@@ -2402,11 +2402,17 @@
            [else (nonexact-integer-error who x)])]
         [(bignum?)
          (type-case x
-           [(fixnum? bignum?)
-            (let ([k (if (negative? n)
-                         (most-negative-fixnum)
-                         (most-positive-fixnum))])
-              (ash (ash x k) (- n k)))]
+           [(fixnum?)
+            (cond
+             [(fx= x 0) 0]
+             [($bigpositive? n) ($oops who "out of memory")]
+             [(fxpositive? x) 0]
+             [else -1])]
+           [(bignum?)
+            (cond
+             [($bigpositive? n) ($oops who "out of memory")]
+             [($bigpositive? x) 0]
+             [else -1])]
            [else (nonexact-integer-error who x)])]
         [else (nonexact-integer-error who n)])))
 
