@@ -545,7 +545,7 @@
                              [(clause (,x* ...) ,interface ,body) interface]))
                       clauses))
             ($oops #f "libspec interface mismatch ~s" libspec))
-          `(case-lambda ,(make-preinfo-lambda (ae->src ae) #f libspec) ,clauses ...))))))
+          `(case-lambda ,(make-preinfo-lambda (ae->src ae) #f libspec (symbol->string (libspec-name libspec))) ,clauses ...))))))
 
 (define build-call
   (lambda (ae e e*)

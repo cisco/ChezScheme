@@ -85,7 +85,7 @@ static IBOOL s_fd_regularp PROTO((INT fd));
 static void s_nanosleep PROTO((ptr sec, ptr nsec));
 static ptr s_set_collect_trip_bytes PROTO((ptr n));
 static void c_exit PROTO((I32 status));
-static ptr s_get_reloc PROTO((ptr co));
+static ptr s_get_reloc PROTO((ptr co, IBOOL with_offsets));
 #ifdef PTHREADS
 static s_thread_rv_t s_backdoor_thread_start PROTO((void *p));
 static iptr s_backdoor_thread PROTO((ptr p));
@@ -1704,10 +1704,14 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_set_profile_counters", (void *)s_set_profile_counters);
 }
 
-static ptr s_get_reloc(co) ptr co; {
+static ptr s_get_reloc(co, with_offsets) ptr co; IBOOL with_offsets; {
   ptr t, ls; uptr a, m, n;
 
   require(Scodep(co),"s_get_reloc","~s is not a code object",co);
+
+  if (s_generation(co) == FIX(static_generation))
+    return Snil;
+
   ls = Snil;
   t = CODERELOC(co);
   m = RELOCSIZE(t);
@@ -1726,13 +1730,17 @@ static ptr s_get_reloc(co) ptr co; {
     a += code_off;
     obj = S_get_code_obj(RELOC_TYPE(entry), co, a, item_off);
     if (!Sfixnump(obj)) {
-      ptr x;
-      for (x = ls; ; x = Scdr(x)) {
-        if (x == Snil) {
-          ls = Scons(obj,ls);
-          break;
-        } else if (Scar(x) == obj)
-          break;
+      if (with_offsets) {
+        ls = Scons(Scons(obj, FIX(a-code_data_disp)), ls);
+      } else {
+        ptr x;
+        for (x = ls; ; x = Scdr(x)) {
+          if (x == Snil) {
+            ls = Scons(obj,ls);
+            break;
+          } else if (Scar(x) == obj)
+            break;
+        }
       }
     }
   }

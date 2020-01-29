@@ -2181,7 +2181,7 @@
 
     (define get-reloc-objs
       (foreign-procedure "(cs)s_get_reloc"
-        (scheme-object) scheme-object))
+        (scheme-object boolean) scheme-object))
 
     (module (get-code-src get-code-sexpr)
       (include "types.ss")
@@ -2200,13 +2200,15 @@
         [name () ($code-name x)]
         [info () (make-object ($code-info x))]
         [free-count () ($code-free-count x)]
+        [arity-mask () ($code-arity-mask x)]
         [source ()
           (cond
             [(get-code-sexpr x) => make-object]
             [else #f])]
         [source-path () (return-source (get-code-src x))]
         [source-object () (get-code-src x)]
-        [reloc () (make-object (get-reloc-objs x))]
+        [reloc () (make-object (get-reloc-objs x #f))]
+        [reloc+offset () (make-object (get-reloc-objs x #t))]
         [size (g) (compute-size x g)]
         [write (p) (write x p)]
         [print (p) (pretty-print x p)]))
