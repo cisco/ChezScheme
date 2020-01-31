@@ -2812,6 +2812,7 @@
           [(eof-object? x) (constant seof)]
           [($unbound-object? x) (constant sunbound)]
           [(bwp-object? x) (constant sbwp)]
+          [(eq? x '#1=#1#) (constant black-hole)]
           [(target-fixnum? x) (fix x)]
           [(char? x) (+ (* (constant char-factor) (char->integer x)) (constant type-char))]
           [else #f])))
@@ -6257,6 +6258,7 @@
                   (eqv? obj "")
                   (eqv? obj '#())
                   (eqv? obj '#vu8())
+                  (eqv? obj '#0=#0#)
                   (eq? obj (void))
                   (eof-object? obj)
                   (bwp-object? obj)
