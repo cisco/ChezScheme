@@ -9716,6 +9716,11 @@
                [else #f])])
           (define-inline 2 $sealed-record?
             [(e e-rtd) (build-sealed-isa? e e-rtd)])
+          (define-inline 3 $record-type-field-count
+            [(e) (%inline srl ,(%inline - ,(%mref ,e ,(constant record-type-size-disp))
+                                        (immediate ,(fxsll (fx- (constant record-data-disp) (constant record-type-disp))
+                                                           (constant fixnum-offset))))
+                          ,(%constant log2-ptr-bytes))])
           (define-inline 2 eq-hashtable?
             [(e) (let ([rtd (let () (include "hashtable-types.ss") (record-type-descriptor eq-ht))])
                    (let ([e-rtd `(quote ,rtd)])

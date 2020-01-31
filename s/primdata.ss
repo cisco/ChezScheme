@@ -2236,6 +2236,7 @@
   ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true])
   ($record-type-descriptor [flags single-valued pure mifoldable discard true])
   ($record-type-field-offsets [flags single-valued pure mifoldable discard true])
+  ($record-type-field-count [sig [(ptr) -> (fixnum)]] [flags single-valued pure mifoldable discard true])
   ($reloc [flags single-valued])
   ($remake-rtd [flags single-valued])
   ($report-string [flags single-valued])

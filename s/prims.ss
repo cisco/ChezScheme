@@ -2054,6 +2054,12 @@
   (unless ($record? r) ($oops who "~s is not a record" r))
   (#3%$record-type-descriptor r))
 
+;; Assumes that the record that has only pointer fields:
+(define-who ($record-type-field-count rtd)
+  (unless (record-type-descriptor? rtd)
+    ($oops who "~s is not a record type descriptor" rtd))
+  ($record-type-field-count rtd))
+
 (define-who utf8->string
   (let ()
     (define slurp
