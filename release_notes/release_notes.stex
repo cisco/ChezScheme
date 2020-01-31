@@ -58,6 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.3)}
+
+Console I/O now supports characters from the Unicode Basic
+Multilingual Plane in Windows. Windows consoles do not yet support the
+supplementary planes.
+
 \subsection{Bytevector compression and compression level (9.5.3)}
 
 The procedure \scheme{bytevector-compress} now selects the level of

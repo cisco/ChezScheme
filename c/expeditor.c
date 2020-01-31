@@ -68,11 +68,6 @@ static IBOOL s_ee_init_term(void) {
   return init_status;
 }
 
-
-static int utf16_is_surrogate(WORD uc) {
-  return (uc - 0xd800u) < 2048u;
-}
-
 /* returns char, eof, #t (winched), or #f (nothing ready), the latter
    only if blockp is false */
 static ptr s_ee_read_char(IBOOL blockp) {
@@ -82,7 +77,7 @@ static ptr s_ee_read_char(IBOOL blockp) {
   ptr tc;
 #endif /* PTHREADS */
   BOOL succ;
-  static char buf[10];
+  static wchar_t buf[10];
   static int bufidx = 0;
   static int buflen = 0;
   static int rptcnt = 0;
@@ -100,7 +95,7 @@ static ptr s_ee_read_char(IBOOL blockp) {
     if (!blockp) {
        DWORD NumberOfEvents;
        if (!GetNumberOfConsoleInputEvents(hStdin, &NumberOfEvents))
-         S_error1("expeditor", "error getting console info: ~a",
+         S_error1("expeditor", "error getting console input: ~a",
                     S_LastErrorString());
        if (NumberOfEvents == 0) return Sfalse;
     }
@@ -130,22 +125,15 @@ static ptr s_ee_read_char(IBOOL blockp) {
         KEY_EVENT_RECORD ker = irInBuf[0].Event.KeyEvent; 
         rptcnt = ker.wRepeatCount;
         if (ker.bKeyDown) {
-          WCHAR c;
+          wchar_t c;
 
           if (c = ker.uChar.UnicodeChar) {
-           /* translate ^@ 2) and ^<space> to nul */
-              if (c == 0x20 && (ker.dwControlKeyState
-                                & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))) {
+            /* translate ^<space> to nul */
+            if (c == 0x20 && (ker.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)))
               buf[0] = 0;
+            else
+              buf[0] = c;
             buflen = 1;
-
-              } else if (utf16_is_surrogate(c)) {
-                return Schar('\0');
-
-              } else {
-                return Schar(c);
-              }
-
           } else {
             switch (ker.wVirtualKeyCode) {
               case VK_DELETE:
@@ -521,35 +509,14 @@ static ptr s_ee_get_clipboard(void) {
 
   if (OpenClipboard((HWND)0)) {
     HANDLE h = GetClipboardData(CF_UNICODETEXT);
-     
-    if (h != (HANDLE *)0) {
-      wchar_t *s = (wchar_t *)GlobalLock(h);
-
-      if (s != NULL) {
-        int sz8 = WideCharToMultiByte(CP_UTF8,
-                                      WC_ERR_INVALID_CHARS,
-                                      s, -1,
-                                      NULL,
-                                      0, NULL, NULL);
-        if (sz8 > 0) {
-          unsigned char *buf = (unsigned char*) malloc(sz8);
-
-          if (buf != NULL) {
-            if (WideCharToMultiByte(CP_UTF8,
-                                    WC_ERR_INVALID_CHARS,
-                                    s, -1,
-                                    buf,
-                                    sz8, NULL, NULL)) {
-
-              x = Sstring_utf8(buf, sz8 - 1);
-            }
-
-            free(buf);
-          }
-        }
+    if (h != NULL) {
+      wchar_t *w = (wchar_t*)GlobalLock(h);
+      if (w != NULL) {
+        char *s = Swide_to_utf8(w);
+        x = Sstring_utf8(s, -1);
+        free(s);
+        GlobalUnlock(h);
       }
-
-      GlobalUnlock(h);
     }
     CloseClipboard();
   }
@@ -557,7 +524,7 @@ static ptr s_ee_get_clipboard(void) {
   return x;
 }
 
-static void s_ee_write_char(wchar_t c) { // TODO: utf-32 chars?
+static void s_ee_write_char(wchar_t c) {
   DWORD n;
   WriteConsoleW(hStdout, &c, 1, &n, NULL);
 }

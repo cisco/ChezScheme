@@ -1947,3 +1947,5 @@
     io.stex, objects.stex, release_notes.stex
 - fix fasl-read signature
     primdata.ss
+- console I/O on Windows now supports Unicode characters in the BMP
+    expeditor.c, new-io.c, release_notes.stex
