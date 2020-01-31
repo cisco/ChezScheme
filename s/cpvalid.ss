@@ -568,4 +568,7 @@
 
   (set! $cpvalid
     (lambda (x)
-      (if (= (optimize-level) 3) x (cpvalid x)))))
+      (if (or (= (optimize-level) 3)
+              (enable-unsafe-variable-reference))
+          x
+          (cpvalid x)))))

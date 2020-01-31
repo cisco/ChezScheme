@@ -5546,6 +5546,41 @@
                              '(lambda (x) (#3%$app x))))
   )
 
+(mat enable-unsafe-variable-reference
+  (begin
+   (define (get-uncprep-form e)
+     (let ([r #f])
+       (parameterize ([run-cp0 (lambda (cp0 e)
+                                 (set! r (#%$uncprep e))
+                                 e)])
+         (expand/optimize e))
+       r))
+   #t)
+  (equivalent-expansion? (get-uncprep-form '(lambda (x) (letrec ([y y]) (+ y x))))
+                         (if (= 3 (optimize-level))
+                             '(lambda (x)
+                                (letrec ([y y])
+                                  (#3%+ y x)))
+                             '(lambda (x)
+                                (let ([valid? #f])
+                                  (letrec ([y (begin
+                                                (if valid?
+                                                    (#2%void)
+                                                    (#2%$source-violation #f #f #t "attempt to reference undefined variable ~s" 'y))
+                                                y)])
+                                    (set! valid?  #t)
+                                    (#2%+ y x))))))
+  (equivalent-expansion? (parameterize ([enable-unsafe-variable-reference #t])
+                           (get-uncprep-form '(lambda (x) (letrec ([y y]) (+ y x)))))
+                         (if (= 3 (optimize-level))
+                             '(lambda (x)
+                                (letrec ([y y])
+                                  (#3%+ y x)))
+                             '(lambda (x)
+                                (letrec ([y y])
+                                  (#2%+ y x)))))
+  )
+
 (mat phantom-bytevector
   (phantom-bytevector? (make-phantom-bytevector 0))
   (not (phantom-bytevector? 10))

@@ -2625,6 +2625,17 @@ default is \scheme{#f}.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{enable-unsafe-variable-reference}{\categorythreadparameter}{enable-unsafe-variable-reference}
+\listlibraries
+\endentryheader
+
+This parameter controls whether references to \scheme{letrec}-bound
+variables are compiled unsafe (i.e., no check whether the variable has
+a value), even when the value of \scheme{optimize-level} is less than
+\scheme{3}. The default is \scheme{#f}.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{generate-wpo-files}{\categorythreadparameter}{generate-wpo-files}
 \listlibraries
 \endentryheader
