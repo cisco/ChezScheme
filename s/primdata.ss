@@ -1874,6 +1874,7 @@
   ($errno->string [flags single-valued])
   ($error-handling-mode? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($event [flags single-valued])
+  ($event-and-resume [flags])
   ($exactnum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($exactnum-imag-part [flags single-valued])
   ($exactnum-real-part [flags single-valued])

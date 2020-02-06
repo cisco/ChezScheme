@@ -620,6 +620,10 @@
       (lambda ()
         (make-libspec-label 'call-error (lookup-libspec call-error)
           (reg-list %ret %cp))))
+    (define make-Levent-detour
+      (lambda ()
+        (make-libspec-label 'event-detour (lookup-libspec event-detour)
+          (reg-cons* %ret %cp %ac0 arg-registers))))
 
     (module (frame-vars get-fv)
       (define-threaded frame-vars)
@@ -10766,29 +10770,22 @@
                   (tail ,tl)
                   ,(f `(seq (label ,(car l*)) ,(car tl*)) (cdr l*) (cdr tl*)))))]))
 
-    (define-pass np-insert-trap-check : L11 (ir) -> L11.5 ()
-      (Effect : Effect (ir) -> Effect ()
-        [(trap-check ,ioc)
-         `(seq
-            (set! ,(ref-reg %trap) ,(%inline -/eq ,(ref-reg %trap) (immediate 1)))
-            (if (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)
-                ,(%seq
-                   (pariah)
-                   (mvcall ,(make-info-call #f #f #f #t #f) #f
-                     (literal ,(make-info-literal #f 'library
-                                 (if ioc
-                                     (lookup-does-not-expect-headroom-libspec event)
-                                     (lookup-libspec event))
-                                 0))
-                     ()))
-                (nop)))]))
-
-    (define-pass np-flatten-case-lambda : L11.5 (ir) -> L12 ()
+    (define-pass np-flatten-case-lambda : L11 (ir) -> L12 ()
       (definitions
         (define Ldoargerr (make-Ldoargerr))
         (define Ldomvleterr (make-Ldomvleterr))
+        (define Levent-detour (make-Levent-detour))
         (define flatten-clauses
-          (lambda (info cl* dcl*)
+          (lambda (info cl* dcl* detour-trap-check?)
+            (define (maybe-drop-trap-check tl)
+              (if detour-trap-check?
+                  (nanopass-case (L11 Tail) tl
+                    [(seq (trap-check ,ioc) ,tl) tl]
+                    [(seq (overflow-check) ,tl)
+                     (with-output-language (L11 Tail)
+                       `(seq (overflow-check) ,(maybe-drop-trap-check tl)))]
+                    [else ($oops who "expected trap check at ~s" tl)])
+                  tl))
             (let ([libspec (info-lambda-libspec info)])
               (with-output-language (L12 Tail)
                 (when libspec
@@ -10803,10 +10800,10 @@
                       (if (null? cl*)
                           (values local* (or tlbody (%constant svoid)))
                           (if (or libspec (direct-call-label-referenced (car dcl*)))
-                              (nanopass-case (L11.5 CaseLambdaClause) (car cl*)
+                              (nanopass-case (L11 CaseLambdaClause) (car cl*)
                                 [(clause (,x* ...) (,local1* ...) ,mcp ,interface ,tlbody1)
                                  (loop (cdr cl*) (cdr dcl*) (maybe-cons mcp (append x* local1* local*))
-                                   (let ([tlbody1 `(entry-point (,x* ...) ,(car dcl*) ,mcp ,(Tail tlbody1))])
+                                   (let ([tlbody1 `(entry-point (,x* ...) ,(car dcl*) ,mcp ,(Tail (maybe-drop-trap-check tlbody1)))])
                                      (if tlbody
                                          `(seq (tail ,tlbody) ,tlbody1)
                                          tlbody1)))])
@@ -10814,9 +10811,9 @@
                     (let f ([cl* cl*] [dcl* dcl*])
                       (if (null? cl*)
                           (values '() `(seq (pariah) (goto ,Ldoargerr)))
-                          (nanopass-case (L11.5 CaseLambdaClause) (car cl*)
+                          (nanopass-case (L11 CaseLambdaClause) (car cl*)
                             [(clause (,x* ...) (,local* ...) ,mcp ,interface ,tlbody)
-                             (let ([tlbody `(entry-point (,x* ...) ,(car dcl*) ,mcp ,(Tail tlbody))])
+                             (let ([tlbody `(entry-point (,x* ...) ,(car dcl*) ,mcp ,(Tail (maybe-drop-trap-check tlbody)))])
                                (if (fx< interface 0)
                                    (let ([fixed-args (lognot interface)])
                                      (let ([tlbody (if (uvar-referenced? (list-ref x* fixed-args))
@@ -10865,20 +10862,61 @@
                             `(if ,(%inline eq? ,%ac0
                                       (immediate ,interface))
                                  ,ebody
-                                 ,next-ebody))))))))))
+                                 ,next-ebody)))))))))
+        (define (maybe-add-detour-trap-check tl detour-trap-check?)
+          (if detour-trap-check?
+              (with-output-language (L12 Tail)
+                (%seq
+                 (set! ,(ref-reg %trap) ,(%inline -/eq ,(ref-reg %trap) (immediate 1)))
+                 (if (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)
+                     (seq (pariah) (goto ,Levent-detour))
+                     (nop))
+                 ,tl))
+              tl)))
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
         [(case-lambda ,info ,cl* ...)
-         (let-values ([(local* tlbody) (flatten-clauses info cl* (info-lambda-dcl* info))])
-           (safe-assert (nodups local*))
-           (info-lambda-dcl*-set! info (filter direct-call-label-referenced (info-lambda-dcl* info)))
-           `(lambda ,info (,local* ...) ,tlbody))])
+         (let* ([detour-trap-check? (and (not (info-lambda-libspec info))
+                                         (andmap
+                                          (lambda (cl dcl)
+                                            (and
+                                             (not (direct-call-label-referenced dcl))
+                                             (nanopass-case (L11 CaseLambdaClause) cl
+                                               [(clause (,x* ...) (,local1* ...) ,mcp ,interface ,tlbody)
+                                                (let loop ([tlbody tlbody])
+                                                  (nanopass-case (L11 Tail) tlbody
+                                                    [(seq (trap-check ,ioc) ,tlbody) #t]
+                                                    [(seq (overflow-check) ,tlbody) (loop tlbody)]
+                                                    [else #f]))])))
+                                          cl* (info-lambda-dcl* info)))])
+           (let-values ([(local* tlbody) (flatten-clauses info cl* (info-lambda-dcl* info) detour-trap-check?)])
+             (safe-assert (nodups local*))
+             (info-lambda-dcl*-set! info (filter direct-call-label-referenced (info-lambda-dcl* info)))
+             `(lambda ,info (,local* ...) ,(maybe-add-detour-trap-check tlbody detour-trap-check?))))])
       (Tail : Tail (ir) -> Tail ())
       (Effect : Effect (ir) -> Effect ()
         [(mvset ,info (,mdcl ,[t0?] ,[t1] ...) (,[t*] ...) ((,x** ...) ,interface* ,l*) ...)
          `(mvset ,info (,mdcl ,t0? ,t1 ...) (,t* ...) ((,x** ...) ...)
                  ,(flatten-mvclauses x** interface* l*))]))
 
-    (define-pass np-impose-calling-conventions : L12 (ir) -> L13 ()
+    ;; converts any `trap-check` effects not lifted out by `np-flatten-case-lambda`
+    (define-pass np-insert-trap-check : L12 (ir) -> L12.5 ()
+      (Effect : Effect (ir) -> Effect ()
+        [(trap-check ,ioc)
+         `(seq
+            (set! ,(ref-reg %trap) ,(%inline -/eq ,(ref-reg %trap) (immediate 1)))
+            (if (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)
+                ,(%seq
+                   (pariah)
+                   (mvcall ,(make-info-call #f #f #f #t #f) #f
+                     (literal ,(make-info-literal #f 'library
+                                 (if ioc
+                                     (lookup-does-not-expect-headroom-libspec event)
+                                     (lookup-libspec event))
+                                 0))
+                     ()))
+                (nop)))]))
+
+    (define-pass np-impose-calling-conventions : L12.5 (ir) -> L13 ()
       (definitions
         (import (only asm-module asm-foreign-call asm-foreign-callable asm-enter))
         (define newframe-info-for-mventry-point)
@@ -11061,7 +11099,7 @@
                                  (not shift-attachment?))
                              (direct-call)
                              (finish-call #f #f (in-context Triv `(label-ref ,mdcl 0)))))
-                       (nanopass-case (L12 Triv) t
+                       (nanopass-case (L12.5 Triv) t
                          ; if the expression in the cp position #f, and we have an mdcl, this is
                          ; a hackish workaround for not having a good way to express maybe-Expr
                          [(literal ,info)
@@ -11112,7 +11150,7 @@
                     (label ,mrvl))))))
           (define store-cp?
             (lambda (t)
-              (nanopass-case (L12 Triv) t
+              (nanopass-case (L12.5 Triv) t
                 [(literal ,info) #f]
                 [else #t])))
           (define build-nontail-call
@@ -13193,6 +13231,12 @@
            [(dooverflood) ((make-do/ret (intrinsic-entry-live* dooverflood) (intrinsic-return-live* dooverflood)) #f "dooverflood" (lookup-c-entry handle-overflood))]
            [(scan-remembered-set) ((make-do/ret (intrinsic-entry-live* scan-remembered-set) (intrinsic-return-live* scan-remembered-set)) (in-context Lvalue (%tc-ref ret)) "scan-remembered-set" (lookup-c-entry scan-remembered-set))]
            [(get-room) ((make-do/ret (intrinsic-entry-live* get-room) (intrinsic-return-live* get-room)) (in-context Lvalue (%tc-ref ret)) "get-room" (lookup-c-entry get-more-room))]
+           [(event-detour)
+            ;; Jumping to `event-detour` while arguments are still in place is an alternative
+            ;; to making a normal function call to `$event` (which requires more instructions).
+            ;; Leads to `$event-and-resume`, which calls `$event` and then retries the call
+            ;; that had just started.
+            (make-do/call (in-context Lvalue (%tc-ref ret)) "event-detour" (lookup-c-entry handle-event-detour))]
            [(nonprocedure-code)
             `(lambda ,(make-info "nonprocedure-code" '()) 0 ()
                ,(%seq
@@ -17159,8 +17203,8 @@
               (pass np-remove-complex-opera* unparse-L10)
               (pass np-push-mrvs unparse-L10.5)
               (pass np-normalize-context unparse-L11)
-              (pass np-insert-trap-check unparse-L11.5)
               (pass np-flatten-case-lambda unparse-L12)
+              (pass np-insert-trap-check unparse-L12.5)
               (pass np-impose-calling-conventions unparse-L13)
               np-after-calling-conventions)))))
 

@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050311)
+(define-constant scheme-version #x09050312)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2555,6 +2555,7 @@
      (domvleterr #f 0 #f #f)
      (doargerr #f 0 #f #f)
      (get-room #f 0 #f #f)
+     (event-detour #f 0 #f #f)
      (map1 #f 2 #f #t)
      (map2 #f 3 #f #t)
      (for-each1 #f 2 #f #t)
@@ -2786,6 +2787,7 @@
      handle-values-error
      handle-mvlet-error
      handle-arg-error
+     handle-event-detour
      foreign-entry
      install-library-entry
      get-more-room

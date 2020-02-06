@@ -49,7 +49,7 @@
     L5 unparse-L5 L6 unparse-L6 L7 unparse-L7
     L9 unparse-L9 L9.5 unparse-L9.5 L9.75 unparse-L9.75
     L10 unparse-L10 L10.5 unparse-L10.5 L11 unparse-L11
-    L11.5 unparse-L11.5 L12 unparse-L12 L13 unparse-L13 L13.5 unparse-L13.5 L14 unparse-L14
+    L12 unparse-L12 L12.5 unparse-L12.5 L13 unparse-L13 L13.5 unparse-L13.5 L14 unparse-L14
     L15a unparse-L15a L15b unparse-L15b L15c unparse-L15c L15d unparse-L15d
     L15e unparse-L15e
     L16 unparse-L16
@@ -791,14 +791,7 @@
          (attachment-set aop t* ...)
          (tail tl))))
 
-  (define-language L11.5 (extends L11)
-    (entry Program)
-    (terminals
-      (- (boolean (ioc))))
-    (Effect (e body)
-      (- (trap-check ioc))))
-
-  (define-language L12 (extends L11.5)
+  (define-language L12 (extends L11)
     (terminals
       (- (fixnum (interface offset))
          (label (l)))
@@ -819,6 +812,13 @@
          ; mventry-point can appear only within an mvset ebody
          ; ideally, grammar would reflect this
          (mventry-point (x* ...) l))))
+
+  (define-language L12.5 (extends L12)
+    (entry Program)
+    (terminals
+      (- (boolean (ioc))))
+    (Effect (e ebody)
+      (- (trap-check ioc))))
 
   (define exact-integer?
     (lambda (x)

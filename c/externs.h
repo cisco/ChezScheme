@@ -350,6 +350,7 @@ extern void S_handle_arg_error PROTO((void));
 extern void S_handle_nonprocedure_symbol PROTO((void));
 extern void S_handle_values_error PROTO((void));
 extern void S_handle_mvlet_error PROTO((void));
+extern void S_handle_event_detour PROTO((void));
 extern void S_register_scheme_signal PROTO((iptr sig));
 extern void S_fire_collector PROTO((void));
 extern NORETURN void S_noncontinuable_interrupt PROTO((void));

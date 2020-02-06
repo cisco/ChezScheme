@@ -117,6 +117,7 @@ EXTERN struct S_G_struct {
     ptr nuate_id;
     ptr null_continuation_id;
     ptr collect_request_pending_id;
+    ptr event_and_resume_id;
 
   /* gc.c */
     ptr guardians[static_generation+1];

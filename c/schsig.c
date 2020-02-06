@@ -458,6 +458,23 @@ void S_handle_mvlet_error() {
     handle_call_error(tc, ERROR_MVLET, Sfalse);
 }
 
+void S_handle_event_detour() {
+    ptr tc = get_thread_context();
+    ptr resume_proc = CP(tc);
+    ptr resume_args = Snil;
+    iptr argcnt, i;
+
+    argcnt = (iptr)AC0(tc);
+    for (i = argcnt; i > 0; i--) {
+      resume_args = Scons(S_get_scheme_arg(tc, i), resume_args);
+    }
+
+    CP(tc) = S_symbol_value(S_G.event_and_resume_id);
+    S_put_scheme_arg(tc, 1, resume_proc);
+    S_put_scheme_arg(tc, 2, resume_args);
+    AC0(tc) = (ptr)2;
+}
+
 static void keyboard_interrupt(ptr tc) {
   KEYBOARDINTERRUPTPENDING(tc) = Strue;
   SOMETHINGPENDING(tc) = Strue;
@@ -692,6 +709,9 @@ void S_schsig_init() {
 
         S_protect(&S_G.error_id);
         S_G.error_id = S_intern((const unsigned char *)"$c-error");
+
+        S_protect(&S_G.event_and_resume_id);
+        S_G.event_and_resume_id = S_intern((const unsigned char *)"$event-and-resume");
     }
 
 

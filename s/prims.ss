@@ -1558,6 +1558,10 @@
 
 (define $event (lambda () ($event)))
 
+(define $event-and-resume (lambda (proc args)
+                            ($event)
+                            (apply proc args)))
+
 (define $tc (lambda () ($tc)))
 (define $thread-list (lambda () ($thread-list)))
 
