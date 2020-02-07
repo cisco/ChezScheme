@@ -425,6 +425,7 @@ static void handle_call_error(tc, type, x) ptr tc; iptr type; ptr x; {
 void S_handle_docall_error() {
     ptr tc = get_thread_context();
 
+    AC0(tc) = (ptr)0;
     handle_call_error(tc, ERROR_CALL_NONPROCEDURE, CP(tc));
 }
 
@@ -465,14 +466,28 @@ void S_handle_event_detour() {
     iptr argcnt, i;
 
     argcnt = (iptr)AC0(tc);
-    for (i = argcnt; i > 0; i--) {
-      resume_args = Scons(S_get_scheme_arg(tc, i), resume_args);
-    }
 
-    CP(tc) = S_symbol_value(S_G.event_and_resume_id);
-    S_put_scheme_arg(tc, 1, resume_proc);
-    S_put_scheme_arg(tc, 2, resume_args);
-    AC0(tc) = (ptr)2;
+    if (argcnt < asm_arg_reg_cnt) {
+      /* Avoid allocation by passing arguments directly; this case
+         should always happen if the right number of arguments are
+         passed to a function, because the compiler will only use
+         `detour-event` when the expected number is small enough. */
+      for (i = argcnt; i > 0; i--)
+        S_put_scheme_arg(tc, i+1, S_get_scheme_arg(tc, i));
+      S_put_scheme_arg(tc, 1, resume_proc);
+      CP(tc) = S_symbol_value(S_G.event_and_resume_id);
+      AC0(tc) = (ptr)(argcnt+1);
+    } else {
+      /* At least one argument can go in a register, otherwise the
+         compiler would not use `detour-event` for any functions. */
+      for (i = argcnt; i > 0; i--)
+        resume_args = Scons(S_get_scheme_arg(tc, i), resume_args);
+      resume_args = Scons(resume_proc, resume_args);
+ 
+      CP(tc) = S_symbol_value(S_G.event_and_resume_star_id);
+      S_put_scheme_arg(tc, 1, resume_args);
+      AC0(tc) = (ptr)2;
+    }
 }
 
 static void keyboard_interrupt(ptr tc) {
@@ -712,6 +727,9 @@ void S_schsig_init() {
 
         S_protect(&S_G.event_and_resume_id);
         S_G.event_and_resume_id = S_intern((const unsigned char *)"$event-and-resume");
+
+        S_protect(&S_G.event_and_resume_star_id);
+        S_G.event_and_resume_star_id = S_intern((const unsigned char *)"$event-and-resume*");
     }
 
 

@@ -1875,6 +1875,7 @@
   ($error-handling-mode? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($event [flags single-valued])
   ($event-and-resume [flags])
+  ($event-and-resume* [flags])
   ($exactnum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($exactnum-imag-part [flags single-valued])
   ($exactnum-real-part [flags single-valued])
@@ -2081,6 +2082,7 @@
   ($generation [flags single-valued])
   ($gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc]) ; needs immutable strings
   ($gensym->pretty-name [flags single-valued])
+  ($get-timer [flags single-valued])
   ($guard [flags])
   ($hand-coded [flags single-valued])
   ($hashtable-report [flags true])

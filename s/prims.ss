@@ -598,6 +598,10 @@
          ($oops '$set-timer "~s is not a positive fixnum" ticks))
       ($set-timer ticks)))
 
+(define $get-timer
+  (lambda ()
+    ($get-timer)))
+
 (define $fx+?
    (lambda (x y)
       ($fx+? x y)))
@@ -1558,9 +1562,37 @@
 
 (define $event (lambda () ($event)))
 
-(define $event-and-resume (lambda (proc args)
-                            ($event)
-                            (apply proc args)))
+(let ()
+  (define (inc)
+    ;; make up for decrement that will happen immediately on retry:
+    (let ([t ($get-timer)])
+      (when (fx< t (most-positive-fixnum))
+        ($set-timer (fx+ t 1)))))
+
+  (set! $event-and-resume
+        (case-lambda
+         [(proc)
+          ($event)
+          (inc)
+          (proc)]
+         [(proc arg)
+          ($event)
+          (inc)
+          (proc arg)]
+         [(proc arg1 arg2)
+          ($event)
+          (inc)
+          (proc arg1 arg2)]
+         [(proc . args)
+          ($event)
+          (inc)
+          (apply proc args)]))
+
+  (set! $event-and-resume*
+        (lambda (proc+args)
+          ($event)
+          (inc)
+          (apply (car proc+args) (cdr proc+args)))))
 
 (define $tc (lambda () ($tc)))
 (define $thread-list (lambda () ($thread-list)))

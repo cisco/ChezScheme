@@ -9807,6 +9807,8 @@
                    `(seq
                       (set! ,(ref-reg %trap) ,(build-unfix e))
                       ,t)))])
+        (define-inline 3 $get-timer
+          [() (build-fix (ref-reg %trap))])
         (define-inline 3 directory-separator?
           [(e) (if-feature windows
                  (bind #t (e)
@@ -10882,11 +10884,12 @@
                                              (not (direct-call-label-referenced dcl))
                                              (nanopass-case (L11 CaseLambdaClause) cl
                                                [(clause (,x* ...) (,local1* ...) ,mcp ,interface ,tlbody)
-                                                (let loop ([tlbody tlbody])
-                                                  (nanopass-case (L11 Tail) tlbody
-                                                    [(seq (trap-check ,ioc) ,tlbody) #t]
-                                                    [(seq (overflow-check) ,tlbody) (loop tlbody)]
-                                                    [else #f]))])))
+                                                (and (fx< -1 interface (constant asm-arg-reg-cnt))
+                                                     (let loop ([tlbody tlbody])
+                                                       (nanopass-case (L11 Tail) tlbody
+                                                         [(seq (trap-check ,ioc) ,tlbody) #t]
+                                                         [(seq (overflow-check) ,tlbody) (loop tlbody)]
+                                                         [else #f])))])))
                                           cl* (info-lambda-dcl* info)))])
            (let-values ([(local* tlbody) (flatten-clauses info cl* (info-lambda-dcl* info) detour-trap-check?)])
              (safe-assert (nodups local*))
