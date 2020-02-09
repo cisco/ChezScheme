@@ -463,30 +463,31 @@ void S_handle_event_detour() {
     ptr tc = get_thread_context();
     ptr resume_proc = CP(tc);
     ptr resume_args = Snil;
-    iptr argcnt, i;
+    iptr argcnt, stack_avail, i;
 
     argcnt = (iptr)AC0(tc);
+    stack_avail = (((uptr)ESP(tc) - (uptr)SFP(tc)) >> log2_ptr_bytes) - 1;
 
-    if (argcnt < asm_arg_reg_cnt) {
-      /* Avoid allocation by passing arguments directly; this case
-         should always happen if the right number of arguments are
-         passed to a function, because the compiler will only use
-         `detour-event` when the expected number is small enough. */
+    if (argcnt < (stack_avail + asm_arg_reg_cnt)) {
+      /* Avoid allocation by passing arguments directly. The compiler
+         will only use `detour-event` when the expected number is
+         small enough to avoid allocation (unless the function expected
+         to allocate a list of arguments, anyway). */
       for (i = argcnt; i > 0; i--)
         S_put_scheme_arg(tc, i+1, S_get_scheme_arg(tc, i));
       S_put_scheme_arg(tc, 1, resume_proc);
       CP(tc) = S_symbol_value(S_G.event_and_resume_id);
       AC0(tc) = (ptr)(argcnt+1);
     } else {
-      /* At least one argument can go in a register, otherwise the
-         compiler would not use `detour-event` for any functions. */
+      /* We're assuming that either at least one argument can go in a
+         register or stack slop will save us. */
       for (i = argcnt; i > 0; i--)
         resume_args = Scons(S_get_scheme_arg(tc, i), resume_args);
       resume_args = Scons(resume_proc, resume_args);
  
       CP(tc) = S_symbol_value(S_G.event_and_resume_star_id);
       S_put_scheme_arg(tc, 1, resume_args);
-      AC0(tc) = (ptr)2;
+      AC0(tc) = (ptr)1;
     }
 }
 

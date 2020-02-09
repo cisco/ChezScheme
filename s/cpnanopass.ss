@@ -10884,7 +10884,7 @@
                                              (not (direct-call-label-referenced dcl))
                                              (nanopass-case (L11 CaseLambdaClause) cl
                                                [(clause (,x* ...) (,local1* ...) ,mcp ,interface ,tlbody)
-                                                (and (fx< -1 interface (constant asm-arg-reg-cnt))
+                                                (and (fx< interface (constant event-resume-max-preferred-arg-cnt))
                                                      (let loop ([tlbody tlbody])
                                                        (nanopass-case (L11 Tail) tlbody
                                                          [(seq (trap-check ,ioc) ,tlbody) #t]

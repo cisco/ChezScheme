@@ -1583,6 +1583,16 @@
           ($event)
           (inc)
           (proc arg1 arg2)]
+         [(proc arg1 arg2 arg3)
+          ($event)
+          (inc)
+          (proc arg1 arg2 arg3)]
+         [(proc arg1 arg2 arg3 arg4)
+          ($event)
+          (inc)
+          (proc arg1 arg2 arg3 arg4)]
+         ;; Cases above should cover `event-resume-max-preferred-arg-cnt`,
+         ;; including `proc` in th count
          [(proc . args)
           ($event)
           (inc)

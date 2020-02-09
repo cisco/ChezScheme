@@ -1988,6 +1988,10 @@
 ;;; stack underflow/continuation invocation
 (define-constant underflow-limit (* (constant ptr-bytes) 16))
 
+;; Number of arguments (including procedure) that can be handled
+;; by `$event-and-resume` without allocating:
+(define-constant event-resume-max-preferred-arg-cnt 5)
+
 ;;; check assumptions
 (let ([x (fxsrl (constant type-char)
            (fx- (constant char-data-offset)
