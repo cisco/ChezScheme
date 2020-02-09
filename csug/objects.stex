@@ -2500,7 +2500,9 @@ cell ;=> (#(a b c) . 3)
 \endentryheader
 
 Like \scheme{eq-hashtable-cell}, but safe for use from multiple
-threads at the same time as long as only this function is used on a
+threads at the same time as long as only this function,
+\scheme{eq-hashtable-ref}, \scheme{eq-hashtable-ref-cell},
+and \scheme{eq-hashtable-contains?} are used on a
 particular hash table by any thread. To handle certain forms of
 contention, the result may be \scheme{#f}, in which case the operation
 might be retried. An even more significant constraint is that the hash
