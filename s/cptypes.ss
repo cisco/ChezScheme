@@ -72,7 +72,7 @@ Notes:
     (definitions
   (define prelex-counter
     (let ()
-      (define count 0)
+      (define-threaded count 0)
       (lambda (x)
         (or (prelex-operand x)
             (let ([c count])
@@ -601,9 +601,11 @@ Notes:
                [else
                 'ptr])))))
 
-  (define primref->result-predicate/cache (make-hashtable equal-hash equal?))
+  (define-threaded primref->result-predicate/cache #f)
 
   (define (primref->result-predicate pr)
+    (unless primref->result-predicate/cache
+      (set! primref->result-predicate/cache (make-hashtable equal-hash equal?)))
     (let ([key (primref-name pr)])
       (if (hashtable-contains? primref->result-predicate/cache key)
           (hashtable-ref primref->result-predicate/cache key #f)
@@ -655,9 +657,11 @@ Notes:
             [else
              'bottom])])))
 
-  (define primref->argument-predicate/cache (make-hashtable equal-hash equal?))
+  (define-threaded primref->argument-predicate/cache #f)
 
   (define (primref->argument-predicate pr pos extend?)
+    (unless primref->argument-predicate/cache
+      (set! primref->argument-predicate/cache (make-hashtable equal-hash equal?)))
     (let ([key (list (primref-name pr) pos extend?)])
       (if (hashtable-contains? primref->argument-predicate/cache key)
           (hashtable-ref primref->argument-predicate/cache key #f)
