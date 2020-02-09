@@ -931,6 +931,7 @@ Notes:
                  [else
                   (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
 
+      #;
       (define-specialize/unrestricted 2 call-with-values
         [(e1 e2) (let-values ([(e1 ret1 types1 t-types1 f-types1)
                                (Expr/call e1 'value oldtypes oldtypes)])
