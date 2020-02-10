@@ -85,10 +85,16 @@
   (lambda (x t a? d)
     (let ([rtd ($record-type-descriptor x)])
       (bld rtd t a? d)
-      (do ([flds (rtd-flds rtd) (cdr flds)] [i 0 (+ i 1)])
-        ((null? flds))
-        (when (memq (fld-type (car flds)) '(scheme-object ptr))
-          (bld ((csv7:record-field-accessor rtd i) x) t a? d))))))
+      (let ([flds (rtd-flds rtd)])
+        (if (fixnum? flds)
+            (let loop ([i 0])
+              (unless (fx= i flds)
+                (bld ($record-ref x i) t a? d)
+                (loop (fx+ i 1))))
+            (do ([flds flds (cdr flds)] [i 0 (+ i 1)])
+              ((null? flds))
+              (when (memq (fld-type (car flds)) '(scheme-object ptr))
+                (bld ((csv7:record-field-accessor rtd i) x) t a? d))))))))
 
 (define bld-ht
   (lambda (x t a? d)
@@ -385,7 +391,7 @@
                         [else ($oops 'fasl-write "unexpected difference in filtered foreign type ~s for unfiltered type ~s" filtered-type type)])
                 ($oops 'fasl-write "host value ~s for type ~s is too big for target" val type))))))
       (define put-field
-        (lambda (target-fld pad val)
+        (lambda (field-type field-addr pad val)
           (define put-i64
             (lambda (p val)
               (constant-case ptr-bits
@@ -395,7 +401,7 @@
             (syntax-rules ()
               [(_ fasl-fld-type)
                (put-u8 p (fxlogor (fxsll pad 4) (constant fasl-fld-type)))]))
-          (let ([type (fld-type target-fld)] [addr (fld-byte target-fld)])
+          (let ([type field-type] [addr field-addr])
             ; using filter-foreign-type to get target filtering
             (case (filter-foreign-type type)
               [(scheme-object) (put-padty fasl-fld-ptr) (wrf val p t a?) (constant ptr-bytes)]
@@ -433,17 +439,23 @@
              [target-rtd (maybe-remake-rtd host-rtd)]
              [target-fld* (rtd-flds target-rtd)])
         (put-uptr p (rtd-size target-rtd))
-        (put-uptr p (length target-fld*))
+        (put-uptr p (if (fixnum? target-fld*) target-fld* (length target-fld*)))
         (wrf host-rtd p t a?)
-        (fold-left
-          (lambda (last-target-addr host-fld target-fld)
-            (let ([val (get-field host-fld)])
-              (check-field target-fld val)
-              (let ([target-addr (fld-byte target-fld)])
-                (fx+ target-addr (put-field host-fld (fx- target-addr last-target-addr) val)))))
-          (constant record-data-disp)
-          (rtd-flds host-rtd)
-          target-fld*))))
+        (if (fixnum? target-fld*)
+            (let loop ([i 0] [addr (constant record-data-disp)])
+              (unless (fx= i target-fld*)
+                (let ([sz (put-field 'scheme-object addr 0 ($record-ref x i))])
+                  (loop (fx+ i 1) (fx+ addr sz)))))
+            (fold-left
+              (lambda (last-target-addr host-fld target-fld)
+                (let ([val (get-field host-fld)])
+                  (check-field target-fld val)
+                  (let ([target-addr (fld-byte target-fld)])
+                    (fx+ target-addr (put-field (fld-type host-fld) (fld-byte host-fld)
+                                                (fx- target-addr last-target-addr) val)))))
+              (constant record-data-disp)
+              (rtd-flds host-rtd)
+              target-fld*)))))
 
   (define wrf-record
     (lambda (x p t a?)

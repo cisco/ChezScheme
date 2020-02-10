@@ -123,6 +123,7 @@
   (define rtd-parent (csv7:record-field-accessor #!base-rtd 'parent))
   (define rtd-size (csv7:record-field-accessor #!base-rtd 'size))
   (define rtd-pm (csv7:record-field-accessor #!base-rtd 'pm))
+  (define rtd-mpm (csv7:record-field-accessor #!base-rtd 'mpm))
 
   ; compile-time rtds (ctrtds)
   (define ctrtd-opaque-known #b0000001)
@@ -141,6 +142,39 @@
     (lambda (rtd)
       (or (not (ctrtd? rtd))
           (fxlogtest (ctrtd-flags rtd) ctrtd-opaque-known))))
+
+  (define rtd-all-immutable?
+    (lambda (rtd)
+      (let ([flds (rtd-flds rtd)])
+        (cond
+         [(fixnum? flds) (eqv? 0 (rtd-mpm rtd))]
+         [else
+          (andmap (lambda (fld) (not (fld-mutable? fld))) flds)]))))
+
+  (define rtd-all-immutable-scheme-objects?
+    (lambda (rtd)
+      (let ([flds (rtd-flds rtd)])
+        (cond
+         [(fixnum? flds)
+          (eqv? 0 (rtd-mpm rtd))]
+         [else
+          (andmap (lambda (fld)
+                    (and (not (fld-mutable? fld))
+                         (eq? (filter-foreign-type (fld-type fld)) 'scheme-object)))
+                  flds)]))))
+
+  (define rtd-immutable-field?
+    (lambda (rtd index)
+      (let ([flds (rtd-flds rtd)])
+        (cond
+         [(fixnum? flds)
+          (not (bitwise-bit-set? (rtd-mpm rtd) (fx+ index 1)))]
+         [else
+          (not (fld-mutable? (list-ref flds index)))]))))
+
+  (define rtd-make-fld
+    (lambda (rtd index)
+      (make-fld 'unknown (bitwise-bit-set? (rtd-mpm rtd) (fx+ index 1)) 'scheme-object 0)))
 
   (with-output-language (Lsrc Expr)
     (define void-rec `(quote ,(void)))
@@ -551,17 +585,20 @@
             ; from a rhs.
             [(record ,rtd ,rtd-expr ,e* ...)
              (let-values ([(liftmt* liftme* e*)
-                           (let ([fld* (rtd-flds rtd)])
-                             (let f ([e* e*] [fld* fld*])
+                           (let ([fld* (rtd-flds rtd)]
+                                 [mpm (rtd-mpm rtd)])
+                             (let f ([e* e*] [fld* (and (not (fixnum? fld*)) fld*)] [idx 0])
                                (if (null? e*)
                                    (values '() '() '())
                                    (let ([e (car e*)])
-                                     (let-values ([(liftmt* liftme* e*) (f (cdr e*) (cdr fld*))])
+                                     (let-values ([(liftmt* liftme* e*) (f (cdr e*) (and fld* (cdr fld*)) (fx+ idx 1))])
                                        (if (nanopass-case (Lsrc Expr) e
                                              [(ref ,maybe-src ,x) #f]
                                              [(quote ,d) #f]
                                              [,pr #f]
-                                             [else (not (fld-mutable? (car fld*)))])
+                                             [else (not (if fld*
+                                                            (fld-mutable? (car fld*))
+                                                            (bitwise-bit-set? mpm (fx+ idx 1))))])
                                            (let ([t (cp0-make-temp #f)])
                                              (values (cons t liftmt*) (cons e liftme*) (cons (build-ref t) e*)))
                                            (values liftmt* liftme* (cons e e*))))))))])
@@ -1053,10 +1090,7 @@
               [(record-ref ,rtd ,type ,index ,e) #f]
               [(record-set! ,rtd ,type ,index ,e1 ,e2) #f]
               [(record ,rtd ,rtd-expr ,e* ...)
-               (and (andmap (lambda (fld)
-                              (and (not (fld-mutable? fld))
-                                   (eq? (filter-foreign-type (fld-type fld)) 'scheme-object)))
-                      (rtd-flds rtd))
+               (and (rtd-all-immutable-scheme-objects? rtd)
                     (memoize (and (pure1? rtd-expr) (andmap pure1? e*))))]
               [(set! ,maybe-src ,x ,e) #f]
               [(record-cd ,rcd ,rtd-expr ,e) (memoize (pure1? e))]
@@ -1115,12 +1149,12 @@
               [(seq ,e1 ,e2) (memoize (and (ivory? e1) (ivory? e2)))]
               [(record-ref ,rtd ,type ,index ,e) 
                ; here ivory? differs from pure?
-               (and (not (fld-mutable? (list-ref (rtd-flds rtd) index)))
+               (and (rtd-immutable-field? rtd index)
                     (memoize (ivory1? e)))]
               [(record-set! ,rtd ,type ,index ,e1 ,e2) #f]
               [(record ,rtd ,rtd-expr ,e* ...)
                ; here ivory? differs from pure?
-               (and (andmap (lambda (fld) (not (fld-mutable? fld))) (rtd-flds rtd))
+               (and (rtd-all-immutable? rtd)
                     (memoize (and (ivory1? rtd-expr) (andmap ivory1? e*))))]
               [(set! ,maybe-src ,x ,e) #f]
               [(record-cd ,rcd ,rtd-expr ,e) (memoize (ivory1? e))]
@@ -2998,6 +3032,13 @@
           (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?fields))
             [(quote ,d) (k d)]
             [else #f]))
+        (define (get-mutability-mask ?mutability-mask k)
+          (cond
+           [(not ?mutability-mask) (k #f)]
+           [else
+            (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?mutability-mask))
+              [(quote ,d) (k d)]
+              [else #f])]))
         (define (get-sealed x)
           (nanopass-case (Lsrc Expr) (if x (result-exp (value-visit-operand! x)) false-rec)
             [(quote ,d) (values (if d #t #f) ctrtd-sealed-known)]
@@ -3061,7 +3102,7 @@
              (mrt ?parent ?name ?fields ?sealed ?opaque ctxt level $make-record-type '$make-record-type
                (list* ?base-id ?parent ?name ?fields ?sealed ?opaque ?extras))]))
         (let ()
-          (define (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level prim primname opnd*)
+          (define (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level prim primname opnd*)
             (or (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?uid))
                   [(quote ,d)
                    (and d
@@ -3077,32 +3118,49 @@
                   (lambda (prtd)
                     (get-fields ?fields
                       (lambda (fields)
-                        (let-values ([(sealed? sealed-flag) (get-sealed ?sealed)]
-                                     [(opaque? opaque-flag) (get-opaque ?opaque prtd)])
-                          (cond
-                            [(guard (c [#t #f])
-                               ($make-record-type-descriptor base-ctrtd 'tmp prtd #f
-                                 sealed? opaque? fields 'cp0 (fxlogor sealed-flag opaque-flag))) =>
-                             (lambda (rtd)
-                               (residualize-seq opnd* '() ctxt)
-                               `(record-type ,rtd
-                                  ; can't use level 3 unconditionally because we're missing checks for
-                                  ; ?base-rtd, ?name, ?uid, ?who, and ?extras
-                                  ,(build-primcall (app-preinfo ctxt) level primname
-                                     (value-visit-operands! opnd*))))]
-                            [else #f]))))))))
+                        (get-mutability-mask ?mutability-mask
+                          (lambda (mutability-mask)
+                            (let-values ([(sealed? sealed-flag) (get-sealed ?sealed)]
+                                         [(opaque? opaque-flag) (get-opaque ?opaque prtd)])
+                              (cond
+                                [(guard (c [#t #f])
+                                   (if ?mutability-mask
+                                       ($make-record-type-descriptor* base-ctrtd 'tmp prtd #f
+                                         sealed? opaque? fields mutability-mask 'cp0 (fxlogor sealed-flag opaque-flag))
+                                       ($make-record-type-descriptor base-ctrtd 'tmp prtd #f
+                                         sealed? opaque? fields 'cp0 (fxlogor sealed-flag opaque-flag)))) =>
+                                 (lambda (rtd)
+                                   (residualize-seq opnd* '() ctxt)
+                                   `(record-type ,rtd
+                                      ; can't use level 3 unconditionally because we're missing checks for
+                                      ; ?base-rtd, ?name, ?uid, ?who, and ?extras
+                                      ,(build-primcall (app-preinfo ctxt) level primname
+                                         (value-visit-operands! opnd*))))]
+                                [else #f]))))))))))
 
           (define-inline 2 make-record-type-descriptor
             [(?name ?parent ?uid ?sealed ?opaque ?fields)
-             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
+             (mrtd ?parent ?uid ?fields #f ?sealed ?opaque ctxt level
                make-record-type-descriptor 'make-record-type-descriptor
                (list ?name ?parent ?uid ?sealed ?opaque ?fields))])
 
+          (define-inline 2 make-record-type-descriptor*
+            [(?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask)
+             (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level
+               make-record-type-descriptor* 'make-record-type-descriptor*
+               (list ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask))])
+
           (define-inline 2 $make-record-type-descriptor
             [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who . ?extras)
-             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
+             (mrtd ?parent ?uid ?fields #f ?sealed ?opaque ctxt level
                $make-record-type-descriptor '$make-record-type-descriptor
-               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])))
+               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])
+
+          (define-inline 2 $make-record-type-descriptor*
+            [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask ?who . ?extras)
+             (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level
+               $make-record-type-descriptor* '$make-record-type-descriptor*
+               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask ?who ?extras))])))
       (let ()
         ; if you update this, also update duplicate in record.ss
         (define-record-type rcd
@@ -3282,7 +3340,14 @@
 
           (let ()
             (define (go safe? rtd rtd-e ctxt)
-              (let* ([fld* (rtd-flds rtd)]
+              (let* ([fld* (let ([flds (rtd-flds rtd)])
+                             (cond
+                              [(fixnum? flds)
+                               (let loop ([i flds])
+                                 (if (fx= i 0)
+                                     '()
+                                     (cons (rtd-make-fld rtd i) (loop (fx- i 1)))))]
+                              [else flds]))]
                      [t* (map (lambda (x) (cp0-make-temp #t)) fld*)]
                      [check* (if safe?
                                  (fold-right
@@ -3370,7 +3435,7 @@
                                        (let f ([ctprcd (ctrcd-ctprcd ctrcd)] [crtd rtd] [prtd prtd] [vars '()])
                                          (let ([pp-args (cp0-make-temp #f)]
                                                [new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                           (vector->list (record-type-field-names crtd)))])
+                                                           (vector->list (record-type-field-indices crtd)))])
                                            (set-prelex-immutable-value! pp-args #t)
                                            `(case-lambda ,(make-preinfo-lambda)
                                               (clause (,pp-args) -1
@@ -3393,14 +3458,14 @@
                                                                        (f (ctrcd-ctprcd ctprcd) prtd pprtd vars))]
                                                                     [else
                                                                      (let ([new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                                                       (csv7:record-type-field-names prtd))])
+                                                                                       (csv7:record-type-field-indices prtd))])
                                                                        (build-lambda new-vars
                                                                          `(call ,(app-preinfo ctxt) ,(go (< level 3) rtd rtd-e ctxt)
                                                                             ,(map build-ref (append new-vars vars))
                                                                             ...)))])))]
                                                            [else
                                                             (let ([new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                                              (csv7:record-type-field-names prtd))])
+                                                                              (csv7:record-type-field-indices prtd))])
                                                               (build-lambda new-vars
                                                                 `(call ,(app-preinfo ctxt) ,(go (< level 3) rtd rtd-e ctxt)
                                                                    ,(map build-ref (append new-vars vars)) ...)))])
@@ -3440,7 +3505,7 @@
               (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?field))
                 [(quote ,d)
                  (cond
-                   [(symbol? d)
+                   [(and (symbol? d) (not (fixnum? (rtd-flds rtd))))
                     ; reverse order to check child's fields first
                     (let loop ([flds (reverse (rtd-flds rtd))] [index (length (rtd-flds rtd))])
                       (let ([index (fx- index 1)])
@@ -3451,8 +3516,13 @@
                                    (loop (cdr flds) index))))))]
                    [(fixnum? d)
                     (let ((flds (rtd-flds rtd)))
-                      (and ($fxu< d (length flds))
-                           (k rtd-e rtd (list-ref flds d) d)))]
+                      (cond
+                       [(fixnum? flds)
+                        (and ($fxu< d flds)
+                             (k rtd-e rtd (rtd-make-fld rtd d) d))]
+                       [else
+                        (and ($fxu< d (length flds))
+                             (k rtd-e rtd (list-ref flds d) d))]))]
                    [else #f])]
                 [else #f]))
 
@@ -3460,9 +3530,15 @@
               (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?field))
                 [(quote ,d)
                  (let ([flds (rtd-flds rtd)] [prtd (rtd-parent rtd)])
-                   (let ([index (if prtd (+ d (length (rtd-flds prtd))) d)])
-                     (and ($fxu< index (length flds))
-                          (k rtd-e rtd (list-ref flds index) index))))]
+                   (let ([p-flds (and prtd (rtd-flds prtd))])
+                     (let ([index (if prtd (+ d (if (fixnum? p-flds) p-flds (length p-flds))) d)])
+                       (cond
+                        [(fixnum? flds)
+                         (and ($fxu< index flds)
+                              (k rtd-e rtd (rtd-make-fld rtd index) index))]
+                        [else
+                         (and ($fxu< index (length flds))
+                              (k rtd-e rtd (list-ref flds index) index))]))))]
                 [else #f]))
 
             (define (find-rtd-and-field ?rtd ?field find-fld k)
@@ -3746,21 +3822,32 @@
                               (list xval rtdval)))))))
              (define obviously-incompatible?
                (lambda (instance-rtd rtd)
-                 (let f ([ls1 (rtd-flds instance-rtd)] [ls2 (rtd-flds rtd)])
-                   (if (null? ls2)
-                       (if (record-type-parent instance-rtd)
-                           ; could work harder here, though it gets trickier (so not obvious)...
-                           #f
-                           ; instance has no parent, so rtds are compatible only if they are the same modulo incomplete info if one or both are ctrtds
-                           (or (not (null? ls1))
-                               (and (record-type-parent rtd) #t)
-                               (and (and (record-type-sealed-known? rtd) (record-type-sealed-known? instance-rtd))
-                                    (not (eq? (record-type-sealed? instance-rtd) (record-type-sealed? rtd))))
-                               (and (and (record-type-opaque-known? rtd) (record-type-opaque-known? instance-rtd))
-                                    (not (eq? (record-type-opaque? instance-rtd) (record-type-opaque? rtd))))))
-                       (or (null? ls1)
-                           (not (equal? (car ls1) (car ls2)))
-                           (f (cdr ls1) (cdr ls2)))))))
+                 (let ([flds1 (rtd-flds instance-rtd)]
+                       [flds2 (rtd-flds rtd)])
+                   (cond
+                    [(or (fixnum? flds1) (fixnum? flds2))
+                     (or (not (fixnum? flds1))
+                         (not (fixnum? flds2))
+                         (fx< flds1 flds2)
+                         (not (= (rtd-mpm instance-rtd)
+                                 (bitwise-and (rtd-mpm rtd)
+                                              (sub1 (bitwise-arithmetic-shift-left 1 (fx+ flds1 1)))))))]
+                    [else
+                     (let f ([ls1 flds1] [ls2 flds2])
+                       (if (null? ls2)
+                           (if (record-type-parent instance-rtd)
+                               ; could work harder here, though it gets trickier (so not obvious)...
+                               #f
+                               ; instance has no parent, so rtds are compatible only if they are the same modulo incomplete info if one or both are ctrtds
+                               (or (not (null? ls1))
+                                   (and (record-type-parent rtd) #t)
+                                   (and (and (record-type-sealed-known? rtd) (record-type-sealed-known? instance-rtd))
+                                        (not (eq? (record-type-sealed? instance-rtd) (record-type-sealed? rtd))))
+                                   (and (and (record-type-opaque-known? rtd) (record-type-opaque-known? instance-rtd))
+                                        (not (eq? (record-type-opaque? instance-rtd) (record-type-opaque? rtd))))))
+                           (or (null? ls1)
+                               (not (equal? (car ls1) (car ls2)))
+                               (f (cdr ls1) (cdr ls2)))))]))))
              (nanopass-case (Lsrc Expr) (result-exp rtdval)
                [(quote ,d0)
                 (and (record-type-descriptor? d0)
@@ -3898,7 +3985,7 @@
            (nanopass-case (Lsrc Expr) (result-exp rtd-expr)
              [(quote ,d)
               (and (record-type-descriptor? d)
-                   (if (andmap (lambda (fld) (not (fld-mutable? fld))) (rtd-flds d))
+                   (if (rtd-all-immutable? d)
                        (let ([e* (objs-if-constant (value-visit-operands! ?e*))])
                          (and e*
                               (begin
@@ -5063,10 +5150,7 @@
             (or (nanopass-case (Lsrc Expr) (result-exp rtd-expr)
                   [(quote ,d)
                    (and (record-type-descriptor? d)
-                        (andmap (lambda (fld)
-                                  (and (not (fld-mutable? fld))
-                                       (eq? (filter-foreign-type (fld-type fld)) 'scheme-object)))
-                          (rtd-flds d))
+                        (rtd-all-immutable-scheme-objects? d)
                         (let ([d* (objs-if-constant e*)])
                           (and d*
                                (make-1seq ctxt
@@ -5110,7 +5194,7 @@
                 (nanopass-case (Lsrc Expr) (result-exp/indirect-ref e0)
                   [(record ,rtd1 ,rtd-expr ,e* ...)
                    (and (> (length e*) index)
-                        (not (fld-mutable? (list-ref (rtd-flds rtd) index)))
+                        (rtd-immutable-field? rtd index)
                         (let ([e (list-ref e* index)])
                           (and (nanopass-case (Lsrc Expr) e
                                  [(quote ,d) #t]

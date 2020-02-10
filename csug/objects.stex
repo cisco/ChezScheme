@@ -4107,6 +4107,17 @@ The field names are symbols.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{record-type-field-names}{\categoryprocedure}{(record-type-field-indices \var{rtd})}
+\returns a list of field indicies of the type represented by \var{rtd}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
+The field indices are fixnums.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{record-type-field-decls}{\categoryprocedure}{(record-type-field-decls \var{rtd})}
 \returns a list of field declarations of the type represented by \var{rtd}
 \listlibraries
@@ -4186,6 +4197,38 @@ rtd ;=> #<record type frob>
 (record-type-descriptor x) ;=> #<record type frob>
 (eq? (record-type-descriptor x) rtd) ;=> \var{unspecified}
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-record-type-descriptor*}{\categoryprocedure}{(make-record-type-descriptor* \var{name} \var{parent} \var{uid} \var{s?} \var{o?} \var{fields} \var{mutability})}
+\returns a record-type descriptor for a new record type
+\listlibraries
+\endentryheader
+
+\noindent
+This variant of \scheme{make-record-type-descriptor} accepts a field
+count and mutability mask in place of a vector of field descriptions,
+which results in a record type with anonymous fields. The \var{fields}
+argument must be a non-negative fixnum for the field count, and it is
+added to any fields present in \var{parent} to determine the record
+type's total numnber of fields. The \var{mutability} argument must be
+an exact non-negative integer that is treated as a bit array; a
+\scheme{1} bit indicates the the corresponding field among
+\var{fields} is mutable.
+
+If \var{parent} is a record type descriptor, it must also have
+anonymous fields. The resulting anonynmous-field record type can only
+be the parent of a record type with anonymous fields.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{record-type-named-fields?}{\categoryprocedure}{(record-type-named-fields? \var{rtd})}
+\returns a boolean indicating whether \var{rts} has named fields
+\listlibraries
+\endentryheader
+
+\noindent
+\var{rtd} must be a record-type descriptor.
 
 
 \section{Procedures}

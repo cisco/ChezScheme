@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050313)
+(define-constant scheme-version #x09050314)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1461,11 +1461,11 @@
 (define-primitive-structure-disps record-type type-typed-object
   ([ptr type]
    [ptr parent]
-   [ptr size]
-   [ptr pm]
-   [ptr mpm]
+   [ptr size]  ; total record size in bytes, including type tag
+   [ptr pm]    ; pointer mask, where low bit corresponds to type tag
+   [ptr mpm]   ; mutable-pointer mask, where low bit for type is always 0
    [ptr name]
-   [ptr flds]
+   [ptr flds]  ; either a list of `fld` vectors or a fixnum count
    [ptr flags]
    [ptr uid]
    [ptr counts]))

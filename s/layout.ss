@@ -16,7 +16,11 @@
 (define compute-field-offsets
  ; type-disp is the offset from the ptr to the object's true address
  ; ls is a list of field descriptors
-  (lambda (who type-disp ls)
+  (case-lambda
+   [(who type-disp n mpm)
+    ;; Simple case: all pointers, mutability mask given
+    (values -1 mpm n (fx* n (constant ptr-bytes)))]
+   [(who type-disp ls)
     (define parse-field
       (lambda (f)
         (define supported-type
@@ -107,5 +111,4 @@
             (if (= (- (ash 1 (quotient (+ size -1 (constant ptr-bytes)) (constant ptr-bytes))) 1) m)
                 -1
                 m)))
-        (values (sanitize-mask pm size) mpm flds size)))))
-
+        (values (sanitize-mask pm size) mpm flds size)))]))

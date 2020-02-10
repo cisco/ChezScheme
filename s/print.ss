@@ -49,7 +49,7 @@
                ; we use write instead of wr here so that the field doesn't get
                ; a reference (#n#) when print-graph is true.
                 (write (or (record-reader rtd) (record-type-uid rtd)) p)
-                (do ([flds (csv7:record-type-field-names rtd) (cdr flds)]
+                (do ([flds (csv7:record-type-field-indices rtd) (cdr flds)]
                      [i 0 (+ i 1)])
                     ((null? flds))
                   (write-char #\space p)

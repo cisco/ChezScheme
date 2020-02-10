@@ -44,8 +44,11 @@
 
   (define record-field-offset
     (lambda (rtd index)
-      (let ([rtd (maybe-remake-rtd rtd)])
-        (fld-byte (list-ref (rtd-flds rtd) index)))))
+      (let* ([rtd (maybe-remake-rtd rtd)]
+             [flds (rtd-flds rtd)])
+        (if (fixnum? flds)
+            (fx+ (constant record-data-disp) (fxsll index (constant log2-ptr-bytes)))
+            (fld-byte (list-ref flds index))))))
 
   (define-pass cpcheck : Lsrc (ir) -> Lsrc ()
     (definitions
@@ -185,17 +188,19 @@
       [(record ,rtd ,[rtd-expr #f -> rtd-expr] ,[e* #f -> e*] ...)
        (let ([rtd (maybe-remake-rtd rtd)])
          (let ([fld* (rtd-flds rtd)] [rec-t (make-prelex*)])
-           (safe-assert (fx= (length e*) (length fld*)))
-           (let ([filler* (fold-right
-                            (lambda (fld e filler*)
-                              (let ([type (fld-type fld)])
-                                (if (eq? (filter-foreign-type type) 'scheme-object)
-                                    filler*
-                                    (cons
-                                      `(call ,(make-preinfo-call) ,(lookup-primref 3 '$object-set!)
-                                         (quote ,type) (ref #f ,rec-t) (quote ,(fld-byte fld)) ,e)
-                                      filler*))))
-                            '() fld* e*)])
+           (safe-assert (fx= (length e*) (if (fixnum? fld*) fld* (length fld*))))
+           (let ([filler* (if (fixnum? fld*)
+                              '()
+                              (fold-right
+                               (lambda (fld e filler*)
+                                 (let ([type (fld-type fld)])
+                                   (if (eq? (filter-foreign-type type) 'scheme-object)
+                                       filler*
+                                       (cons
+                                        `(call ,(make-preinfo-call) ,(lookup-primref 3 '$object-set!)
+                                               (quote ,type) (ref #f ,rec-t) (quote ,(fld-byte fld)) ,e)
+                                        filler*))))
+                               '() fld* e*))])
              (if (null? filler*)
                  `(call ,(make-preinfo-call) ,(lookup-primref 3 '$record) ,rtd-expr ,e* ...)
                  (begin

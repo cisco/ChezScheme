@@ -2061,7 +2061,9 @@
     (define make-record-object
       (lambda (x)
         (let* ((rtd ($record-type-descriptor x))
-               (fields (csv7:record-type-field-names rtd)))
+               (fields (if (record-type-named-fields? rtd)
+                           (csv7:record-type-field-names rtd)
+                           (csv7:record-type-field-indices rtd))))
           (define check-field
             (lambda (f)
               (unless (or (and (symbol? f) (memq f fields))
@@ -2644,12 +2646,21 @@
                     ((fx= i n) size)))]
                [($record? x)
                 (let ([rtd ($record-type-descriptor x)])
-                  (fold-left (lambda (size fld)
-                               (if (eq? (fld-type fld) 'scheme-object)
-                                   (fx+ size (compute-size ($object-ref 'scheme-object x (fld-byte fld))))
-                                   size))
-                    (fx+ (align (rtd-size rtd)) (compute-size rtd))
-                    (rtd-flds rtd)))]
+                  (let ([flds (rtd-flds rtd)])
+                    (cond
+                     [(fixnum? flds)
+                      (let loop ([i 0] [size 0])
+                        (cond
+                         [(fx= i flds) size]
+                         [else (loop (fx+ i 1)
+                                     (fx+ size (compute-size ($record-ref x i))))]))]
+                     [else
+                      (fold-left (lambda (size fld)
+                                   (if (eq? (fld-type fld) 'scheme-object)
+                                       (fx+ size (compute-size ($object-ref 'scheme-object x (fld-byte fld))))
+                                       size))
+                        (fx+ (align (rtd-size rtd)) (compute-size rtd))
+                        flds)])))]
                [(string? x) (align (fx+ (constant header-size-string) (fx* (string-length x) (constant string-char-bytes))))]
                [(box? x) (fx+ (constant size-box) (compute-size (unbox x)))]
                [(flonum? x) (constant size-flonum)]
@@ -2838,10 +2849,18 @@
                        (set-cdr! p (fx+ (cdr p) size)))
                      (eq-hashtable-set! rtd-ht rtd (cons 1 size))))
                (compute-composition! rtd)
-               (for-each (lambda (fld)
-                           (when (eq? (fld-type fld) 'scheme-object)
-                             (compute-composition! ($object-ref 'scheme-object x (fld-byte fld)))))
-                 (rtd-flds rtd)))]
+               (let ([flds (rtd-flds rtd)])
+                 (cond
+                  [(fixnum? flds)
+                   (let loop ([i 0])
+                     (unless (fx= i flds)
+                       (compute-composition! ($record-ref x i))
+                       (loop (fx+ i 1))))]
+                  [else
+                   (for-each (lambda (fld)
+                               (when (eq? (fld-type fld) 'scheme-object)
+                                 (compute-composition! ($object-ref 'scheme-object x (fld-byte fld)))))
+                     (rtd-flds rtd))])))]
             [(string? x) (incr! string (align (fx+ (constant header-size-string) (fx* (string-length x) (constant string-char-bytes)))))]
             [(box? x)
              (incr! box (constant size-box))
@@ -2990,13 +3009,21 @@
                       [($record? x)
                        (let ([rtd ($record-type-descriptor x)])
                          (construct-proc rtd
-                           (let f ([flds (rtd-flds rtd)])
-                             (if (null? flds)
-                                 next-proc
-                                 (let ([fld (car flds)])
-                                   (if (eq? (fld-type fld) 'scheme-object)
-                                       (construct-proc ($object-ref 'scheme-object x (fld-byte fld)) (f (cdr flds)))
-                                       (f (cdr flds))))))))]
+                           (let ([flds (rtd-flds rtd)])
+                             (cond
+                              [(fixnum? flds)
+                               (let loop ([i 0])
+                                 (if (fx= i flds)
+                                     next-proc
+                                     (construct-proc ($record-ref x i) (loop (fx+ i 1)))))]
+                              [else
+                               (let f ([flds (rtd-flds rtd)])
+                                 (if (null? flds)
+                                     next-proc
+                                     (let ([fld (car flds)])
+                                       (if (eq? (fld-type fld) 'scheme-object)
+                                           (construct-proc ($object-ref 'scheme-object x (fld-byte fld)) (f (cdr flds)))
+                                           (f (cdr flds))))))]))))]
                       [(or (fxvector? x) (bytevector? x) (string? x) (flonum? x) (bignum? x)
                            ($inexactnum? x) ($rtd-counts? x) (phantom-bytevector? x))
                        next-proc]
