@@ -460,11 +460,22 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
     SetLastError(0);
     m = read_console(&BVIT(bv,start), (IO_SIZE_T)count);
     error_code = GetLastError();
-    SetConsoleCtrlHandler(NULL, FALSE);
     if (m == 0 && error_code == 0x3e3) {
+      /* Guard against Windows calling the ConsoleCtrlHandler after we
+       * turn it back on by waiting a bit. */
+      Sleep(1);
+#ifdef PTHREADS
+      /* threaded io.ss doesn't handle interrupts because
+       * with-tc-mutex disables them, so bail out. */
+      SetConsoleCtrlHandler(NULL, FALSE);
+      REACTIVATEandUNLOCK(tc, bv)
+      S_noncontinuable_interrupt();
+#else
       KEYBOARDINTERRUPTPENDING(tc) = Strue;
       SOMETHINGPENDING(tc) = Strue;
+#endif
     }
+    SetConsoleCtrlHandler(NULL, FALSE);
   } else
 #endif /* WIN32 */
   {
