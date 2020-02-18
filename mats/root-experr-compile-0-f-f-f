@@ -7185,6 +7185,10 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat verify-loadability: "verify-loadability: loading "testfile-clK0.so" did not define library (testfile-clK0)".
 7.mo:Expected error in mat verify-loadability: "verify-loadability: visiting "testfile-clK0.so" does not define compile-time information for (testfile-clK0)".
 7.mo:Expected error in mat verify-loadability: "separate-eval: Exception: loading testfile-clK0.so did not define library (testfile-clK0)
+7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception: library (testfile-catlibA) not found
+7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception: library (testfile-catlibA) not found
+7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1A)
+7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1B)
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
 7.mo:Expected error in mat top-level-value-functions: "incorrect argument count in call (top-level-bound?)".
 7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: 45 is not a symbol".
