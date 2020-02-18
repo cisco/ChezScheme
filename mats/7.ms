@@ -4876,6 +4876,160 @@ evaluating module init
     "invoking K0\ninvoking K1\nrunning K2, x1 = \"chocolate chip\"\n")
 )
 
+(mat concatenate-object-files
+  (begin
+    (define install
+      (lambda (dir . fn*)
+        (for-each
+          (lambda (fn)
+            (call-with-port (open-file-input-port fn)
+              (lambda (ip)
+                (call-with-port (open-file-output-port (format "~a/~a" dir (path-last fn)))
+                  (lambda (op)
+                    (put-bytevector op (get-bytevector-all ip)))))))
+          fn*)))
+    (define test-isolated-load
+      (lambda (fn lib val)
+        (rm-rf "testdir-isolated")
+        (mkdir "testdir-isolated")
+        (install "testdir-isolated" fn)
+        (separate-eval
+          `(cd "testdir-isolated")
+          `(load ,fn)
+          `(let ()
+             (import ,lib)
+             ,val))))
+    #t)
+  (begin
+    (mkfile "testfile-catlibA.ss"
+      '(library (testfile-catlibA)
+         (export a)
+         (import (chezscheme))
+         (define a 1)))
+    (mkfile "testfile-catlibB.ss"
+      '(library (testfile-catlibB)
+         (export a b)
+         (import (chezscheme) (testfile-catlibA))
+         (define b 2)))
+    (mkfile "testfile-catlibC.ss"
+      '(library (testfile-catlibC)
+         (export c)
+         (import (chezscheme) (testfile-catlibB))
+         (define c (+ a b))))
+    (separate-eval
+      '(compile-library "testfile-catlibA.ss" "testfile-catlibA.so"))
+    (separate-eval
+      '(compile-library "testfile-catlibB.ss" "testfile-catlibB.so"))
+    (separate-eval
+      '(compile-library "testfile-catlibC.ss" "testfile-catlibC.so"))
+    #t)
+  (eqv?
+    (separate-eval
+      '(begin
+         (concatenate-object-files "testfile-catlibAB.so" "testfile-catlibA.so" "testfile-catlibB.so")
+         (concatenate-object-files "testfile-catlibBC.so" "testfile-catlibB.so" "testfile-catlibC.so")
+         (concatenate-object-files "testfile-catlibABC.so" "testfile-catlibA.so" "testfile-catlibB.so" "testfile-catlibC.so")))
+    "")
+  (equal?
+    (test-isolated-load "testfile-catlibA.so" '(testfile-catlibA) 'a)
+    "1\n")
+  (error? ; can't find (testfile-catlibA)
+    (test-isolated-load "testfile-catlibB.so" '(testfile-catlibB) 'b))
+  (error? ; can't find (testfile-catlibA)
+    (test-isolated-load "testfile-catlibBC.so" '(testfile-catlibC) 'c))
+  (equal?
+    (test-isolated-load "testfile-catlibABC.so" '(testfile-catlibA) 'a)
+    "1\n")
+  (equal?
+    (test-isolated-load "testfile-catlibABC.so" '(testfile-catlibB) 'b)
+    "2\n")
+  (equal?
+    (test-isolated-load "testfile-catlibABC.so" '(testfile-catlibC) 'c)
+    "3\n")
+  (equal?
+    (test-isolated-load "testfile-catlibAB.so" '(testfile-catlibB) 'b)
+    "2\n")
+  (begin
+    (mkfile "testfile-cof1A.ss"
+      '(library (testfile-cof1A) (export a) (import (chezscheme))
+         (define-syntax a (identifier-syntax 45))))
+    (mkfile "testfile-cof1B.ss"
+      '(library (testfile-cof1B) (export b) (import (chezscheme) (testfile-cof1A))
+         (define b (lambda () (* a 2)))))
+    (mkfile "testfile-cof1P.ss"
+      '(import (chezscheme) (testfile-cof1A) (testfile-cof1B))
+      '(printf "a = ~s, (b) = ~s\n" a (b)))
+    (mkfile "testfile-cof1foo.ss"
+      '(printf "hello from foo!\n"))
+    (mkfile "testfile-cof1bar.ss"
+      '(printf "hello from bar!\n"))
+    (parameterize ([compile-imported-libraries #t]) (compile-program "testfile-cof1P"))
+    (compile-file "testfile-cof1foo")
+    (compile-file "testfile-cof1bar")
+    (let ()
+      (define fake-concatenate-object-files
+        (lambda (outfn infn . infn*)
+          (call-with-port (open-file-output-port outfn (file-options compressed replace))
+            (lambda (op)
+              (for-each
+                (lambda (infn)
+                  (put-bytevector op
+                    (call-with-port (open-file-input-port infn (file-options compressed)) get-bytevector-all)))
+                (cons infn infn*))))))
+      (fake-concatenate-object-files "testfile-cof1fooP.so" "testfile-cof1foo.so" "testfile-cof1P.so")
+      (fake-concatenate-object-files "testfile-cof1barB.so" "testfile-cof1bar.so" "testfile-cof1B.so"))
+    #t)
+  ; using separate-eval since A and B already loaded in the compiling process:
+  (equal?
+    (separate-eval '(load "testfile-cof1fooP.so"))
+    "hello from foo!\na = 45, (b) = 90\n")
+  (equal?
+    (separate-eval
+      '(load "testfile-cof1barB.so")
+      '(printf "~s\n" (and (member '(testfile-cof1B) (library-list)) 'yes)))
+    "hello from bar!\nyes\n")
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1barB.so")) "")
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1barB.so")) "")
+  (delete-file "testfile-cof1A.so")
+  ; NB: this should be an error, but isn't because we're using the fake concatenate-object-files
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1barB.so")) "") ; requires testfile-cof1A.so
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1barB.so")) "") ; doesn't require testfile-cof1A.so
+  
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so
+  (delete-file "testfile-cof1B.so")
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so or testfile-cof1B.so
+  ; NB: this should be an error, but isn't because we're using the fake concatenate-object-files
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1fooP.so")) "") ; requires testfile-cof1B.so
+
+  ; now with the real concatenate-object-files
+  (begin
+    (separate-eval '(parameterize ([compile-imported-libraries #t]) (compile-program "testfile-cof1P")))
+    (concatenate-object-files "testfile-cof1fooP.so" "testfile-cof1foo.so" "testfile-cof1P.so")
+    (concatenate-object-files "testfile-cof1barB.so" "testfile-cof1bar.so" "testfile-cof1B.so")
+    #t)
+  ; using separate-eval since A and B already loaded in the compiling process:
+  (equal?
+    (separate-eval '(load "testfile-cof1fooP.so"))
+    "hello from foo!\na = 45, (b) = 90\n")
+  (equal?
+    (separate-eval
+      '(load "testfile-cof1barB.so")
+      '(printf "~s\n" (and (member '(testfile-cof1B) (library-list)) 'yes)))
+    "hello from bar!\nyes\n")
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1barB.so")) "")
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1barB.so")) "")
+  (delete-file "testfile-cof1A.so")
+  (error? (separate-eval '(verify-loadability 'visit "testfile-cof1barB.so"))) ; requires testfile-cof1A.so
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1barB.so")) "") ; doesn't require testfile-cof1A.so
+  
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so
+  (equal? (separate-eval '(verify-loadability 'revisit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so
+  (delete-file "testfile-cof1B.so")
+  (equal? (separate-eval '(verify-loadability 'visit "testfile-cof1fooP.so")) "") ; doesn't require testfile-cof1A.so or testfile-cof1B.so
+  (error? (separate-eval '(verify-loadability 'revisit "testfile-cof1fooP.so"))) ; requires testfile-cof1B.so
+)
+
 ;;; section 7.2:
 
 (mat top-level-value-functions

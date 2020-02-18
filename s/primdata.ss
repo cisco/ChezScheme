@@ -1221,6 +1221,7 @@
   (compile-whole-library [sig [(string string) -> (void)]] [flags])
   (compute-composition [sig [(ptr) -> (list)] [(ptr sub-ufixnum) -> (list)]] [flags alloc])
   (compute-size [sig [(ptr) -> (uint)] [(ptr sub-ufixnum) -> (uint)]] [flags alloc])
+  (concatenate-object-files [sig [(pathname pathname pathname ...) -> (void)]] [flags true])
   (condition-broadcast [feature pthreads] [sig [(condition-object) -> (void)]] [flags true])
   (condition-continuation [sig [(continuation-condition) -> (ptr)]] [flags pure mifoldable discard])
   (condition-name [feature pthreads] [sig [(condition-object) -> (maybe-symbol)]] [flags pure])
