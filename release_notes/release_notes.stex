@@ -57,6 +57,17 @@ Online versions of both books can be found at
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
+  
+\subsection{Combining object files (9.5.3)}
+
+In previous versions of Chez Scheme, multiple object files could
+be combined by concatinating them into a single file.  To support faster
+object file loading and loadability verification (described later in this
+document), recompile information and information about libraries and
+top-level programs within an object file is now placed at the top of the
+file.  The new \scheme{concatenate-object-files} procedure can be used to
+combine multiple object files while moving this information to the
+top of the combined file.
 
 \subsection{Verifying loadability of libraries and programs (9.5.3)}
 
@@ -131,7 +142,9 @@ file where it can be read without the need to scan through the
 remainder of the file.
 Because the library manager expects to find recompile information
 at the front of an object file, it will not find all recompile
-information if object files are concatenated together.
+information if object files are concatenated together via some
+mechanism other than then new \scheme{concatenate-object-files}
+procedure.
 
 Also, the compiler has to hold in memory the object code for all
 expressions in a file so that it can emit the unified recompile
