@@ -1538,9 +1538,8 @@ libraries have been built and Scheme source files have been compiled
 to object code.
 
 Although not strictly necessary, we suggest that you concatenate your
-object files, if you have more than one, into a single object file.
-This may be done on Unix systems simply via the \scheme{cat}
-program or on Windows via \scheme{copy}.
+object files, if you have more than one, into a single object file
+via the \scheme{concatenate-object-files} procedure.
 Placing all of the object code into a single file
 simplifies both building and distribution of applications.
 

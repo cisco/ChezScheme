@@ -1858,3 +1858,7 @@
   'visiting' or 'revisiting' in a couple of places.
     syntax.ss,
     7.ms, 8.ms
+- added concatenate-object-files
+    compile.ss, primdata.ss
+    7.ms, root-experr*
+    system.stex, use.stex, release_notes.stex

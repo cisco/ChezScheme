@@ -1757,6 +1757,71 @@
     (lambda (out machine . bootfiles)
       (do-make-boot-header who out machine bootfiles))))
 
+(let ()
+  (define (libreq-hash x) (symbol-hash (libreq-uid x)))
+  (define (libreq=? x y) (eq? (libreq-uid x) (libreq-uid y)))
+  (define do-concatenate-object-files
+    (lambda (who outfn infn*)
+      (unless (string? outfn) ($oops who "~s is not a string" outfn))
+      (for-each (lambda (infn) (unless (string? infn) ($oops who "~s is not a string" infn))) infn*)
+      (let ([import-ht (make-hashtable libreq-hash libreq=?)]
+            [include-ht (make-hashtable string-hash string=?)])
+        (let in-loop ([infn* infn*] [rip* '()])
+          (if (null? infn*)
+              (let ([ip* (reverse rip*)])
+                (with-object-file who outfn
+                  (lambda (op)
+                    (emit-header op (constant machine-type))
+                    (c-print-fasl `(object ,(make-recompile-info
+                                              (vector->list (hashtable-keys import-ht))
+                                              (vector->list (hashtable-keys include-ht))))
+                      op (constant fasl-type-visit-revisit))
+                    (for-each (lambda (ip)
+                                (let loop () ;; NB: This loop consumes one entry past the last library/program info record,
+                                             ;; which we presume is the #t end-of-header marker.
+                                  (let ([ty (lookahead-u8 ip)])
+                                    (unless (eof-object? ty)
+                                      ;; perhaps should verify ty here.
+                                      (let ([x (fasl-read ip)])
+                                        (when (or (library-info? x) (program-info? x))
+                                          (c-print-fasl `(object ,x) op ty)
+                                          (loop)))))))
+                      ip*)
+                    ;; inserting #t after lpinfo as an end-of-header marker
+                    (c-print-fasl `(object #t) op (constant fasl-type-visit-revisit))
+                    (let* ([bufsiz (file-buffer-size)] [buf (make-bytevector bufsiz)])
+                      (for-each (lambda (ip)
+                                  (let loop ()
+                                    (let ([n (get-bytevector-n! ip buf 0 bufsiz)])
+                                      (unless (eof-object? n)
+                                        (put-bytevector op buf 0 n)
+                                        (loop))))
+                                  (close-port ip))
+                        ip*)))))
+              (let* ([fn (car infn*)]
+                     [ip ($open-file-input-port who fn)])
+                (on-reset (close-port ip)
+                  ;; NB: Does not currently support files beginning with a #! line.  Add that here if desired.
+                  (port-file-compressed! ip)
+                  (unless ($compiled-file-header? ip) ($oops who "missing header for compiled file ~s" fn))
+                  (let ([rcinfo (fasl-read ip)])
+                    (unless (recompile-info? rcinfo) ($oops who "expected recompile info at start of ~s, found ~a" fn rcinfo))
+                    (for-each
+                      (lambda (x)
+                        ;; NB: this could be enhanced to perform additional checks for compatible versions
+                        (hashtable-set! import-ht x x))
+                      (recompile-info-import-req* rcinfo))
+                    (for-each
+                      (lambda (x) (hashtable-set! include-ht x #t))
+                      (recompile-info-include-req* rcinfo))
+                    (in-loop (cdr infn*) (cons ip rip*))
+                    ))))))))
+
+  (set-who! concatenate-object-files
+    (lambda (outfn infn0 . infn*)
+      (do-concatenate-object-files who outfn (cons infn0 infn*))))
+  )
+
 (set-who! compile-port
   (rec compile-port
     (case-lambda

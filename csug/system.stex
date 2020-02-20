@@ -1571,6 +1571,21 @@ Otherwise, the return value is unspecified.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{concatenate-object-files}{\categoryprocedure}{(concatenate-object-files \var{out-file} \var{in-file_1} \var{in-file_2} \dots)}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\var{out-file} and each \var{in-file} must be strings.
+
+\scheme{concatenate-object-files} combines the header information
+contained in the object files named by each \var{in-file}.  It then
+writes the combined header information to the file named by
+\var{out-file}, followed by the remaining object code from each
+input file in turn.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{make-boot-file}{\categoryprocedure}{(make-boot-file \var{output-filename} \var{base-boot-list} \var{input-filename} \dots)}
 \returns unspecified
 \listlibraries
