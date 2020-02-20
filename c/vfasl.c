@@ -1410,7 +1410,8 @@ static uptr sweep_code_object(vfasl_info *vfi, ptr co) {
         } else if (IMMEDIATE(obj)) {
           /* as-is */
           if (Sfixnump(obj))
-            S_error("vfasl", "unexpected fixnum in relocation");
+            if (obj != FIX(0)) /* allow 0 for fcallable cookie */
+              S_error("vfasl", "unexpected fixnum in relocation");
         } else {
           obj = vfasl_relocate_help(vfi, obj);
           obj = (ptr)ptr_diff(obj, vfi->base_addr);
@@ -1432,7 +1433,8 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
     t = CODERELOC(co);
     t = ptr_add(vspaces[vspace_reloc], (uptr)t - vspace_offsets[vspace_reloc]);
 
-    if (to_static && !S_G.retain_static_relocation)
+    if (to_static && !S_G.retain_static_relocation
+        && ((CODETYPE(co) & (code_flag_template << code_flags_offset)) == 0))
       CODERELOC(co) = (ptr)0;
     else {
       CODERELOC(co) = t;
@@ -1474,6 +1476,8 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
               obj = TYPE(ptr_add(sym_base, symbol_pos_to_offset(pos)), type_symbol);
               if ((val = SYMVAL(obj)) != sunbound)
                 obj = val;
+            } else if (obj == FIX(0)) {
+              /* leave as-is */
             } else {
               S_error_abort("vfasl: bad relocation tag");
             }
