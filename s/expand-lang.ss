@@ -29,11 +29,12 @@
   (sealed #t))
 
 (define-record-type library-info
-  (nongenerative #{library-info e10vy7tci6bqz6pmnxgvlq-2})
+  (nongenerative #{library-info e10vy7tci6bqz6pmnxgvlq-3})
   (fields
     (immutable path)
     (immutable version)
-    (immutable uid)))
+    (immutable uid)
+    (immutable visible?)))
 
 (define-record-type library/ct-info
   (parent library-info)
@@ -41,14 +42,14 @@
     (immutable import-req*)
     (immutable visit-visit-req*)
     (immutable visit-req*))
-  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-3})
+  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-4})
   (sealed #t))
 
 (define-record-type library/rt-info
   (parent library-info)
   (fields
     (immutable invoke-req*))
-  (nongenerative #{library/rt-info ff86rtm7efmvxcvrmh7t0b-2})
+  (nongenerative #{library/rt-info ff86rtm7efmvxcvrmh7t0b-3})
   (sealed #t))
 
 (define-record-type program-info

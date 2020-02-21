@@ -180,6 +180,7 @@
     [()
      (let ([x ($tc-field 'compress-level ($tc))])
        (cond
+         [(eqv? x (constant COMPRESS-MIN)) 'minimum]
          [(eqv? x (constant COMPRESS-LOW)) 'low]
          [(eqv? x (constant COMPRESS-MEDIUM)) 'medium]
          [(eqv? x (constant COMPRESS-HIGH)) 'high]
@@ -188,6 +189,7 @@
     [(x)
      ($tc-field 'compress-level ($tc)
        (case x
+         [(minimum) (constant COMPRESS-MIN)]
          [(low) (constant COMPRESS-LOW)]
          [(medium) (constant COMPRESS-MEDIUM)]
          [(high) (constant COMPRESS-HIGH)]

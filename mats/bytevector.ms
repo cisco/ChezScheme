@@ -11275,9 +11275,8 @@
     (number? (bytevector-ieee-double-native-ref immutable-100-bytevector 0))
 )
 
-
 (mat bytevector-compress
-    (parameters [compress-format 'gzip 'lz4])
+    (parameters [compress-format 'gzip 'lz4] [compress-level 'minimum 'low 'medium 'high 'maximum])
     (error? (bytevector-compress 7))
     (error? (bytevector-compress "hello"))
     (error? (bytevector-uncompress 7))

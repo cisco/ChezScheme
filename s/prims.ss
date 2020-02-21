@@ -88,6 +88,11 @@
     ()
     scheme-object))
 
+(define $dequeue-scheme-signals
+  (foreign-procedure "(cs)dequeue_scheme_signals"
+    (ptr)
+    ptr))
+
 (define-who $show-allocation
   (let ([fp (foreign-procedure "(cs)s_showalloc" (boolean string) void)])
     (case-lambda

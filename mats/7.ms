@@ -2314,6 +2314,228 @@ evaluating module init
   (error? ; invoke cycle
     (separate-eval
       '(load-program "testfile-wpo-b9-all.so")))
+
+  (begin
+    (mkfile "testfile-wpo-a10.ss"
+      '(library (testfile-wpo-a10)
+         (export ax)
+         (import (chezscheme))
+         (define ax (cons 'a '()))))
+    (mkfile "testfile-wpo-b10.ss"
+      '(library (testfile-wpo-b10)
+         (export bx)
+         (import (chezscheme) (testfile-wpo-a10))
+         (define bx (cons 'b ax))))
+    (mkfile "testfile-wpo-c10.ss"
+      '(library (testfile-wpo-c10)
+         (export cx)
+         (import (chezscheme) (testfile-wpo-b10))
+         (define cx (cons 'c bx))))
+    (mkfile "testfile-wpo-d10.ss"
+      '(import (chezscheme) (testfile-wpo-c10))
+      '(printf "d: cx = ~s\n" cx))
+    (mkfile "testfile-wpo-e10.ss"
+      '(import (chezscheme) (testfile-wpo-a10))
+      '(printf "e: ax = ~s\n" ax))
+    (mkfile "testfile-wpo-f10.ss"
+      '(import (chezscheme) (testfile-wpo-c10))
+      '(printf "f: cx = ~s\n" cx))
+    (separate-compile
+      '(lambda (x)
+         (parameterize ([generate-wpo-files #t]
+                        [compile-imported-libraries #t])
+           (compile-program x)))
+      'wpo-d10)
+    (separate-compile 'compile-program 'wpo-e10)
+    (separate-compile 'compile-program 'wpo-f10)
+    #t)
+  
+  ; cause b10 to be excluded from the whole program
+  (delete-file "testfile-wpo-b10.wpo")
+  
+  (equal?
+    (separate-eval
+      '(compile-whole-program "testfile-wpo-d10.wpo"
+         "testfile-wpo-d10-all.so" #f))
+    "((testfile-wpo-b10))\n")
+  
+  (equal?
+    (separate-eval '(verify-loadability 'visit "testfile-wpo-d10-all.so"))
+    "")
+
+  (equal?
+    (separate-eval '(verify-loadability 'revisit "testfile-wpo-d10-all.so"))
+    "")
+
+  (equal?
+    (separate-eval '(verify-loadability 'load "testfile-wpo-d10-all.so"))
+    "")
+  
+  (equal?
+    (separate-eval '(load-program "testfile-wpo-d10-all.so"))
+    "d: cx = (c b a)\n")
+  
+  ; library a10 must be visible for (excluded library)
+  ; b10's benefit, so e10 can reference its export
+  (equal?
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(load-program "testfile-wpo-e10.so"))
+    "d: cx = (c b a)\ne: ax = (a)\n")
+  
+  ; library c10 need not and should not be visible, so f10
+  ; shouldn't be able to reference its export.
+  (error?
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(load-program "testfile-wpo-f10.so")))
+
+  (error? ; testfile-wpo-c10 is not visible
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(import (testfile-wpo-c10))))
+
+  (equal?
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(verify-loadability 'visit "testfile-wpo-f10.so"))
+    "d: cx = (c b a)\n")
+
+  ; verify-loadability should error out trying to invoke
+  ; c10 because c10 is not visible
+  (error? ; not visible
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(verify-loadability 'revisit "testfile-wpo-f10.so")))
+
+  (error? ; not visible
+    (separate-eval
+      '(load-program "testfile-wpo-d10-all.so")
+      '(verify-loadability 'load "testfile-wpo-f10.so")))
+
+  (begin
+    (mkfile "testfile-wpo-a11.ss"
+      '(library (testfile-wpo-a11)
+         (export ax)
+         (import (chezscheme))
+         (define ax (cons 'a '()))
+         (printf "invoking a\n")))
+    (parameterize ([generate-wpo-files #t])
+      (compile-library "testfile-wpo-a11"))
+    #t)
+
+  (equal?
+    (compile-whole-library "testfile-wpo-a11.wpo" "testfile-wpo-a11-all.so")
+    '())
+
+  (equal?
+    (separate-eval
+      '(load-library "testfile-wpo-a11.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(load-library "testfile-wpo-a11.so")
+      '(let () (import (testfile-wpo-a11)) ax))
+    "invoking a\n(a)\n")
+
+  (equal?
+    (separate-eval
+      '(load-library "testfile-wpo-a11-all.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(load-library "testfile-wpo-a11-all.so")
+      '(let () (import (testfile-wpo-a11)) ax))
+    "invoking a\n(a)\n")
+
+  (begin
+    (mkfile "testfile-wpo-a12.ss"
+      '(library (testfile-wpo-a12)
+         (export ax)
+         (import (chezscheme))
+         (define ax (cons 'a '()))))
+    (mkfile "testfile-wpo-b12.ss"
+      '(library (testfile-wpo-b12)
+         (export bx)
+         (import (chezscheme) (testfile-wpo-a12))
+         (define bx (eval 'cx (environment '(testfile-wpo-c12))))))
+    (mkfile "testfile-wpo-c12.ss"
+      '(library (testfile-wpo-c12)
+         (export cx)
+         (import (chezscheme) (testfile-wpo-b12))
+         (define cx (cons 'c bx))))
+    (mkfile "testfile-wpo-d12.ss"
+      '(import (chezscheme) (testfile-wpo-c12))
+      '(printf "d: cx = ~s\n" cx))
+    (parameterize ([generate-wpo-files #t]
+                   [compile-imported-libraries #t])
+      (compile-program "testfile-wpo-d12"))
+    #t)
+  
+  (error? ; cyclc
+    (separate-eval '(load-program "testfile-wpo-d12.so")))
+
+  ; cause b12 to be excluded from the whole library and program
+  (delete-file "testfile-wpo-b12.wpo")
+
+  (equal?
+    (separate-eval
+      '(compile-whole-library "testfile-wpo-c12.wpo"
+         "testfile-wpo-c12-all.so"))
+    "((testfile-wpo-b12))\n")
+  
+  (equal?
+    (separate-eval
+      '(compile-whole-program "testfile-wpo-d12.wpo"
+         "testfile-wpo-d12-all.so" #t))
+    "((testfile-wpo-b12))\n")
+  
+  (equal?
+    (separate-eval
+      '(load-library "testfile-wpo-c12-all.so"))
+    "")
+
+  (error? ; cycle
+    (separate-eval
+      '(load-library "testfile-wpo-c12-all.so")
+      '(let () (import (testfile-wpo-c12)) cx)))
+  
+  (error? ; cycle
+    (separate-eval '(load-program "testfile-wpo-d12-all.so")))
+  
+  ; verify-loadability doesn't catch (dynamic) cycles
+  (equal?
+    (separate-eval
+      '(verify-loadability 'visit "testfile-wpo-c12.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(verify-loadability 'revisit "testfile-wpo-c12.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(verify-loadability 'load "testfile-wpo-c12.so"))
+    "")
+  
+  ; verify-loadability doesn't catch (dynamic) cycles
+  (equal?
+    (separate-eval
+      '(verify-loadability 'visit "testfile-wpo-d12.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(verify-loadability 'revisit "testfile-wpo-d12.so"))
+    "")
+
+  (equal?
+    (separate-eval
+      '(verify-loadability 'load "testfile-wpo-d12.so"))
+    "")
 )
 
 (mat compile-whole-library

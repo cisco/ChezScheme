@@ -1020,7 +1020,7 @@ be significantly smaller.
 \noindent
 \scheme{compress-level} determines the amount of effort spent on
 compression and is thus relevant only for output.
-It can be set to one of the symbols \scheme{low},
+It can be set to one of the symbols \scheme{minimum}, \scheme{low},
 \scheme{medium}, \scheme{high}, or \scheme{maximum}, which are
 listed in order from shortest to longest expected compression time
 and least to greatest expected effectiveness.

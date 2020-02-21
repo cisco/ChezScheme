@@ -1494,6 +1494,7 @@ static void sweep_thread(p) ptr p; {
     /* immediate TIMERTICKS */
     /* immediate DISABLE_COUNT */
     /* immediate SIGNALINTERRUPTPENDING */
+    /* void* SIGNALINTERRUPTQUEUE(tc) */
     /* immediate KEYBOARDINTERRUPTPENDING */
     relocate(&THREADNO(tc))
     relocate(&CURRENTINPUT(tc))

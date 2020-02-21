@@ -91,6 +91,23 @@ static INT glzread_lz4(lz4File_in *lz4, void *buffer, UINT count);
 static INT glzemit_lz4(lz4File_out *lz4, void *buffer, UINT count);
 static INT glzwrite_lz4(lz4File_out *lz4, void *buffer, UINT count);
 
+INT S_zlib_compress_level(INT compress_level) {
+  switch (compress_level) {
+    case COMPRESS_MIN:
+    case COMPRESS_LOW:
+      return Z_BEST_SPEED;
+    case COMPRESS_MEDIUM:
+      return (Z_BEST_SPEED + Z_BEST_COMPRESSION) / 2;
+    case COMPRESS_HIGH:
+      return (Z_BEST_SPEED + (3 * Z_BEST_COMPRESSION)) / 4;
+    case COMPRESS_MAX:
+      return Z_BEST_COMPRESSION;
+    default:
+      S_error1("S_zlib_compress_level", "unexpected compress level ~s", Sinteger(compress_level));
+      return 0;
+  }
+}
+
 static glzFile glzdopen_output_gz(INT fd, INT compress_level) {
   gzFile gz;
   glzFile glz;
@@ -105,24 +122,7 @@ static glzFile glzdopen_output_gz(INT fd, INT compress_level) {
 
   if ((gz = gzdopen(fd, as_append ? "ab" : "wb")) == Z_NULL) return Z_NULL;
 
-  switch (compress_level) {
-    case COMPRESS_LOW:
-      level = Z_BEST_SPEED;
-      break;
-    case COMPRESS_MEDIUM:
-      level = (Z_BEST_SPEED + Z_BEST_COMPRESSION) / 2;
-      break;
-    case COMPRESS_HIGH:
-      level = (Z_BEST_SPEED + (3 * Z_BEST_COMPRESSION)) / 4;
-      break;
-    case COMPRESS_MAX:
-      level = Z_BEST_COMPRESSION;
-      break;
-    default:
-      S_error1("glzdopen_output_gz", "unexpected compress level ~s", Sinteger(compress_level));
-      level = 0;
-      break;
-  }
+  level = S_zlib_compress_level(compress_level);
 
   gzsetparams(gz, level, Z_DEFAULT_STRATEGY);
 
@@ -137,29 +137,29 @@ static glzFile glzdopen_output_gz(INT fd, INT compress_level) {
   return glz;
 }
 
+INT S_lz4_compress_level(INT compress_level) {
+  switch (compress_level) {
+    case COMPRESS_MIN:
+    case COMPRESS_LOW:
+      return 1;
+    case COMPRESS_MEDIUM:
+      return LZ4HC_CLEVEL_MIN;
+    case COMPRESS_HIGH:
+      return (LZ4HC_CLEVEL_MIN + LZ4HC_CLEVEL_MAX) / 2;
+    case COMPRESS_MAX:
+      return LZ4HC_CLEVEL_MAX;
+    default:
+      S_error1("S_lz4_compress_level", "unexpected compress level ~s", Sinteger(compress_level));
+      return 0;
+  }
+}
+
 static glzFile glzdopen_output_lz4(INT fd, INT compress_level) {
   glzFile glz;
   lz4File_out *lz4;
   INT level;
 
-  switch (compress_level) {
-    case COMPRESS_LOW:
-      level = 1;
-      break;
-    case COMPRESS_MEDIUM:
-      level = LZ4HC_CLEVEL_MIN;
-      break;
-    case COMPRESS_HIGH:
-      level = (LZ4HC_CLEVEL_MIN + LZ4HC_CLEVEL_MAX) / 2;
-      break;
-    case COMPRESS_MAX:
-      level = LZ4HC_CLEVEL_MAX;
-      break;
-    default:
-      S_error1("glzdopen_output_lz4", "unexpected compress level ~s", Sinteger(compress_level));
-      level = 0;
-      break;
-  }
+  level = S_lz4_compress_level(compress_level);
 
   if ((lz4 = malloc(sizeof(lz4File_out))) == NULL) return Z_NULL;
   memset(&lz4->preferences, 0, sizeof(LZ4F_preferences_t));

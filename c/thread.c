@@ -95,6 +95,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   TIMERTICKS(tc) = Sfalse;
   DISABLECOUNT(tc) = Sfixnum(0);
   SIGNALINTERRUPTPENDING(tc) = Sfalse;
+  SIGNALINTERRUPTQUEUE(tc) = S_allocate_scheme_signal_queue();
   KEYBOARDINTERRUPTPENDING(tc) = Sfalse;
 
   TARGETMACHINE(tc) = S_intern((const unsigned char *)MACHINE_TYPE);
@@ -227,6 +228,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       }
 
       if (LZ4OUTBUFFER(tc) != NULL) free(LZ4OUTBUFFER(tc));
+      if (SIGNALINTERRUPTQUEUE(tc) != NULL) free(SIGNALINTERRUPTQUEUE(tc));
 
       free((void *)tc);
       THREADTC(thread) = 0; /* mark it dead */

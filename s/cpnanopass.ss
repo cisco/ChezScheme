@@ -5064,8 +5064,17 @@
           (def-len fxvector-length mask-fxvector type-fxvector fxvector-type-disp fxvector-length-offset)
           (def-len string-length mask-string type-string string-type-disp string-length-offset)
           (def-len bytevector-length mask-bytevector type-bytevector bytevector-type-disp bytevector-length-offset))
-        ; TODO: consider adding integer?, integer-valued?, rational?, rational-valued?,
+        ; TODO: consider adding integer-valued?, rational?, rational-valued?,
         ; real?, and real-valued?
+        (define-inline 2 integer?
+          [(e) (bind #t (e)
+                 (build-simple-or
+                   (%type-check mask-fixnum type-fixnum ,e)
+                   (build-simple-or
+                     (%typed-object-check mask-bignum type-bignum ,e)
+                     (build-and
+                       (%type-check mask-flonum type-flonum ,e)
+                       `(call ,(make-info-call src sexpr #f #f #f) #f ,(lookup-primref 3 'flinteger?) ,e)))))])
         (let ()
           (define build-number?
             (lambda (e)

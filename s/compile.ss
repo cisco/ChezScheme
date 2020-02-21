@@ -1151,17 +1151,7 @@
           [(library/ct ,uid (,export-id* ...) ,import-code ,visit-code)
            (if (library-node-visible? node)
                ($build-install-library/ct-code uid export-id* import-code visit-code)
-               (let ([fail (gen-var 'fail)])
-                 (set-prelex-referenced! fail #t)
-                 (set-prelex-multiply-referenced! fail #t)
-                 (build-let
-                  (list fail)
-                  (list (build-lambda '()
-                          (build-primcall '$oops `(quote ,'visit)
-                            `(quote ,"library ~s is not visible")
-                            `(quote ,(library-node-path node)))))
-                  ($build-install-library/ct-code uid export-id* `(ref #f ,fail) `(ref #f ,fail)))))])))
-
+               void-pr)])))
 
     (define build-void (let ([void-rec `(quote ,(void))]) (lambda () void-rec)))
 
@@ -1183,6 +1173,10 @@
       ; written as a macro to give lookup-primref a chance to lookup the primref at expansion time
       (syntax-rules ()
         [(_ ?name ?arg ...) (build-call (lookup-primref 3 ?name) ?arg ...)]))
+
+    (define-syntax build-primref
+      (syntax-rules ()
+        [(_ ?level ?name) (lookup-primref ?level ?name)]))
 
     (define build-install-library/rt-code
       (lambda (node thunk)
@@ -1277,30 +1271,34 @@
 
     (define build-combined-program-ir
       (lambda (program node*)
-        (patch
-          (fold-right
-            (lambda (node combined-body)
-              (if (library-node-binary? node)
-                  `(seq
-                     ,(build-primcall '$invoke-library
-                        `(quote ,(library-node-path node))
-                        `(quote ,(library-node-version node))
-                        `(quote ,(library-node-uid node)))
-                     ,combined-body)
-                  (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
-                    [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
-                     `(letrec* ([,dv* ,de*] ...)
-                        (seq ,body
-                          (seq
-                            ,(build-install-library/rt-code node
-                               (if (library-node-visible? node)
-                                   (build-lambda '() (build-top-level-set!* node))
-                                   void-pr))
-                            ,combined-body)))])))
-            (nanopass-case (Lexpand Program) (program-node-ir program)
-              [(program ,uid ,body) body])
-            node*)
-          (make-patch-env (list node*)))))
+        `(seq
+           ,(build-primcall 'for-each 
+              (build-primref 3 '$mark-pending!)
+              `(quote ,(map library-node-uid (remp library-node-binary? node*))))
+           ,(patch
+              (fold-right
+                (lambda (node combined-body)
+                  (if (library-node-binary? node)
+                      `(seq
+                         ,(build-primcall '$invoke-library
+                            `(quote ,(library-node-path node))
+                            `(quote ,(library-node-version node))
+                            `(quote ,(library-node-uid node)))
+                         ,combined-body)
+                      (nanopass-case (Lexpand rtLibrary) (library-node-rtir node)
+                        [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
+                         `(letrec* ([,dv* ,de*] ...)
+                            (seq ,body
+                              (seq
+                                ,(build-install-library/rt-code node
+                                   (if (library-node-visible? node)
+                                       (build-lambda '() (build-top-level-set!* node))
+                                       void-pr))
+                                ,combined-body)))])))
+                (nanopass-case (Lexpand Program) (program-node-ir program)
+                  [(program ,uid ,body) body])
+                node*)
+              (make-patch-env (list node*))))))
 
     (define build-combined-library-ir
       (lambda (cluster*)
@@ -1417,6 +1415,7 @@
                                  (library-info-path info)
                                  (library-info-version info)
                                  uid
+                                 (library-node-visible? node)
                                  (requirements-join
                                    (library/rt-info-invoke-req* info)
                                    (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f))))))
@@ -1437,6 +1436,7 @@
                                  (library-info-path info)
                                  (library-info-version info)
                                  uid
+                                 (library-node-visible? visit-lib)
                                  (requirements-join
                                    (library/ct-info-import-req* info)
                                    (and maybe-ht (symbol-hashtable-ref maybe-ht uid #f)))
@@ -1453,7 +1453,7 @@
                        (program-node-uid node)
                        ; NB: possibly list direct or indirect binary library reqs here
                        (program-node-invoke-req* node))))
-             ,body)))
+           ,body)))
 
     (define add-visit-lib-install*
       (lambda (visit-lib* body)
