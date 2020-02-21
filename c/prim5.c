@@ -166,7 +166,7 @@ static iptr s_fxdiv(x, y) iptr x, y; {
 
 static ptr s_trunc_rem(x, y) ptr x, y; {
   ptr q, r;
-  S_trunc_rem(x, y, &q, &r);
+  S_trunc_rem(get_thread_context(), x, y, &q, &r);
   return Scons(q, r);
 }
 
@@ -1596,6 +1596,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)lognot", (void *)S_lognot);
     Sforeign_symbol("(cs)fxmul", (void *)s_fxmul);
     Sforeign_symbol("(cs)fxdiv", (void *)s_fxdiv);
+    Sforeign_symbol("(cs)s_big_negate", (void *)S_big_negate);
     Sforeign_symbol("(cs)add", (void *)S_add);
     Sforeign_symbol("(cs)gcd", (void *)S_gcd);
     Sforeign_symbol("(cs)mul", (void *)S_mul);
@@ -1627,6 +1628,7 @@ void S_prim5_init() {
 #else
     Sforeign_symbol("(cs)directory_list", (void *)S_directory_list);
 #endif
+    Sforeign_symbol("(cs)dequeue_scheme_signals", (void *)S_dequeue_scheme_signals);
     Sforeign_symbol("(cs)register_scheme_signal", (void *)S_register_scheme_signal);
 
     Sforeign_symbol("(cs)exp", (void *)s_exp);

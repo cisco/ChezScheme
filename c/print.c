@@ -282,7 +282,7 @@ static void pbignum(x) ptr x; {
 static void wrint(x) ptr x; {
   ptr q, r;
 
-  S_trunc_rem(x, FIX(10), &q, &r);
+  S_trunc_rem(get_thread_context(), x, FIX(10), &q, &r);
   if (q != 0) wrint(q);
   putchar((INT)UNFIX(r) + '0');
 }

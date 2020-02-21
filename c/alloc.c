@@ -816,8 +816,7 @@ ptr Sstring_utf8(s, n) const char *s; iptr n; {
   return p;
 }
 
-ptr S_bignum(n, sign) iptr n; IBOOL sign; {
-    ptr tc = get_thread_context();
+ptr S_bignum(tc, n, sign) ptr tc; iptr n; IBOOL sign; {
     ptr p; iptr d;
 
     if ((uptr)n > (uptr)maximum_bignum_length)

@@ -1862,3 +1862,86 @@
     compile.ss, primdata.ss
     7.ms, root-experr*
     system.stex, use.stex, release_notes.stex
+- added invoke-library
+    syntax.ss, primdata.ss,
+    8.ms, root-experr*,
+    libraries.stex, release_notes.stex
+- updated the date
+    release_notes.stex
+- libraries contained within a whole program or library are now
+  marked pending before their invoke code is run so that invoke
+  cycles are reported as such rather than as attempts to invoke
+  while still loading.
+    compile.ss, syntax.ss, primdata.ss,
+    7.ms, root-experr*
+- the library manager now protects against unbound references 
+  from separately compiled libraries or programs to identifiers
+  ostensibly but not actually exported by (invisible) libraries
+  that exist only locally within a whole program.  this is done by
+  marking the invisibility of the library in the library-info and
+  propagating it to libdesc records; the latter is checked upon
+  library import, visit, and invoke as well as by verify-loadability.
+  the import and visit code of each invisible no longer complains
+  about invisibility since it shouldn't be reachable.
+    syntax.ss, compile.ss, expand-lang.ss,
+    7.ms, 8.ms, root-experr*, patch*
+- documented that compile-whole-xxx's linearization of the
+  library initialization code based on static dependencies might
+  not work for dynamic dependencies.
+    system.stex
+- optimized bignum right shifts so the code (1) doesn't look at
+  shifted-off bigits if the bignum is positive, since it doesn't
+  need to know in that case if any bits are set; (2) doesn't look
+  at shifted-off bigits if the bignum is negative if it determines
+  that at least one bit is set in the bits shifted off the low-order
+  partially retained bigit; (3) quits looking, if it must look, for
+  one bits as soon as it finds one; (4) looks from both ends under
+  the assumption that set bits, if any, are most likely to be found
+  toward the high or low end of the bignum rather than just in the
+  middle; and (5) doesn't copy the retained bigits and then shift;
+  rather shifts as it copies.  This leads to dramatic improvements
+  when the shift count is large and often significant improvements
+  otherwise.
+    number.c,
+    5_3.ms,
+    release_notes.stex
+- threaded tc argument through to all calls to S_bignum and
+  S_trunc_rem so they don't have to call get_thread_context()
+  when it might already have been called.
+    alloc.c, number.c, fasl.c, print.c, prim5.c, externs.h
+- added an expand-primitive handler to partially inline integer?.
+    cpnanopass.ss
+- added some special cases for basic arithmetic operations (+, -, *,
+  /, quotient, remainder, and the div/div0/mod/mod0 operations) to
+  avoid doing unnecessary work for large bignums when the result
+  will be zero (e.g,. multiplying by 0), the same as one of the
+  inputs (e.g., adding 0 or multiplying by 1), or the additive
+  inverse of one of the inputs (e.g., subtracting from 0, dividing
+  by -1).  This can have a major beneficial affect when operating
+  on large bignums in the cases handled.  also converted some uses
+  of / into integer/ where going through the former would just add
+  overhead without the possibility of optimization.
+    5_3.ss,
+    number.c, externs.h, prim5.c,
+    5_3.ms, root-experr, patch*,
+    release_notes.stex
+- added a queue to hold pending signals for which handlers have
+  been registered via register-signal-handler so up to 63 (configurable
+  in the source code) unhandled signals are buffered before the
+  handler has to start dropping them.
+    cmacros.ss, library.ss, prims.ss, primdata.ss,
+    schsig.c, externs.h, prim5.c, thread.c, gc.c,
+    unix.ms,
+    system.stex, release_notes.stex
+- bytevector-compress now selects the level of compression based
+  on the compress-level parameter.  Prior to this it always used a
+  default setting for compression.  the compress-level parameter
+  can now take on the new minimum in addition to low, medium, high,
+  and maximum.  minimum is presently treated the same as low
+  except in the case of lz4 bytevector compression, where it
+  results in the use of LZ4_compress_default rather than the
+  slower but more effective LZ4_compress_HC.
+    cmacros,ss, back.ss,
+    compress_io.c, new_io.c, externs.h,
+    bytevector.ms, mats/Mf-base, root-experr*
+    io.stex, objects.stex, release_notes.stex

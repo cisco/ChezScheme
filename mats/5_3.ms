@@ -2877,6 +2877,107 @@
    (eqv? (ash #x-8000000000000000 -31) #x-100000000)
    (eqv? (ash #x-8000000000000000 -32) #x-80000000)
    (eqv? (ash #x-8000000000000000 -33) #x-40000000)
+   (begin
+     (define ($test-right-shift srl)
+       (define ($go q x n expected)
+         (let ([got (srl x n)])
+           (unless (eqv? got expected)
+             (syntax-error q (format "expected ~x, got ~x" expected got)))))
+       (define-syntax go
+         (lambda (q)
+           (syntax-case q ()
+             [(_ x n expected) #`($go #'#,q x n expected)])))
+       (let* ([$x (expt 2 1024)]
+              [$-x (- $x)]
+              [$x+1 (+ $x 1)]
+              [$-x-1 (- $x+1)]
+              [$x-1 (- $x 1)]
+              [$-x+1 (- $x-1)]
+              [$x+8 (+ $x 8)]
+              [$-x-8 (- $x+8)]
+              [$x+2^31 (+ $x (expt 2 32))]
+              [$-x-2^31 (- $x+2^31)]
+              [$x+2^32 (+ $x (expt 2 32))]
+              [$-x-2^32 (- $x+2^32)]
+              [$x+2^40 (+ $x (expt 2 40))]
+              [$-x-2^40 (- $x+2^40)]
+              [$x+2^63 (+ $x (expt 2 63))]
+              [$-x-2^63 (- $x+2^63)]
+              [$x+2^65 (+ $x (expt 2 65))]
+              [$-x-2^65 (- $x+2^65)]
+              [$x*3/2 (ash 3 1023)]
+              [$-x*3/2 (- $x*3/2)]
+              ; answers
+              [$2^64 (expt 2 64)]
+              [$-2^64 (- $2^64)]
+              [$-2^64-1 (- -1 $2^64)]
+              [$x>>64 (expt 2 (- 1024 64))]
+              [$-x>>64 (- $x>>64)]
+              [$-x>>64-1 (- -1 $x>>64)]
+              [$x>>64+2 (+ $x>>64 2)]
+              [$-x>>64-2 (- $x>>64+2 )]
+              [$x>>80 (expt 2 (- 1024 80))]
+              [$-x>>80 (- $x>>80)]
+              [$-x>>80-1 (- -1 $x>>80)]
+              )
+         (go $x 1024 1)
+         (go $-x 1024 -1)
+         (go $x 1025 0)
+         (go $-x 1025 -1)
+         (go $x+1 1024 1)
+         (go $-x-1 1024 -2)
+         (go $x+1 1025 0)
+         (go $-x-1 1025 -1)
+         (go $x (- 1024 64) $2^64)
+         (go $-x (- 1024 64) $-2^64)
+         (go $x+1 (- 1024 64) $2^64)
+         (go $-x-1 (- 1024 64) $-2^64-1)
+         (go $x+8 (- 1024 64) $2^64)
+         (go $-x-8 (- 1024 64) $-2^64-1)
+         (go $x+2^32 (- 1024 64) $2^64)
+         (go $-x-2^32 (- 1024 64) $-2^64-1)
+         (go $x+2^65 (- 1024 64) $2^64)
+         (go $-x-2^65 (- 1024 64) $-2^64-1)
+         (go $x 64 $x>>64)
+         (go $-x 64 $-x>>64)
+         (go $x+1 64 $x>>64)
+         (go $-x-1 64 $-x>>64-1)
+         (go $x+8 64 $x>>64)
+         (go $-x-8 64 $-x>>64-1)
+         (go $x+2^31 64 $x>>64)
+         (go $-x-2^31 64 $-x>>64-1)
+         (go $x+2^40 64 $x>>64)
+         (go $-x-2^40 64 $-x>>64-1)
+         (go $x+2^63 64 $x>>64)
+         (go $-x-2^63 64 $-x>>64-1)
+         (go $x+2^65 64 $x>>64+2)
+         (go $-x-2^65 64 $-x>>64-2)
+         (go $x 80 $x>>80)
+         (go $-x 80 $-x>>80)
+         (go $x+1 80 $x>>80)
+         (go $-x-1 80 $-x>>80-1)
+         (go $x+8 80 $x>>80)
+         (go $-x-8 80 $-x>>80-1)
+         (go $x+2^31 80 $x>>80)
+         (go $-x-2^31 80 $-x>>80-1)
+         (go $x+2^32 80 $x>>80)
+         (go $-x-2^32 80 $-x>>80-1)
+         (go $x+2^40 80 $x>>80)
+         (go $-x-2^40 80 $-x>>80-1)
+         (go $x+2^63 80 $x>>80)
+         (go $-x-2^63 80 $-x>>80-1)
+         (go $x+2^65 80 $x>>80)
+         (go $-x-2^65 80 $-x>>80-1)
+         (go $x*3/2 1023 3)
+         (go $-x*3/2 1023 -3)
+         (go $x*3/2 1024 1)
+         (go $-x*3/2 1024 -2)
+         (go $x*3/2 1025 0)
+         (go $-x*3/2 1025 -1)
+         )
+       #t)
+     #t)
+   ($test-right-shift (lambda (x n) (ash x (- n))))
 )
 
 (mat bitwise-arithmetic-shift
@@ -2922,6 +3023,7 @@
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -31) #x-100000000)
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -32) #x-80000000)
    (eqv? (bitwise-arithmetic-shift #x-8000000000000000 -33) #x-40000000)
+   ($test-right-shift (lambda (x n) (bitwise-arithmetic-shift x (- n))))
 )
 
 (mat bitwise-arithmetic-shift-left/right
@@ -2967,6 +3069,7 @@
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 31) #x-100000000)
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 32) #x-80000000)
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 33) #x-40000000)
+   ($test-right-shift (lambda (x n) (bitwise-arithmetic-shift-right x n)))
 )
 
 (mat bitwise-bit-field
@@ -6276,4 +6379,565 @@
     ($dmpairs 3/5 23/7)
     '((0 . 3/5) (0 . -3/5) (0 . 3/5) (0 . -3/5)
       (5 . 2/7) (-5 . -2/7) (-5 . 2/7) (5 . -2/7)))
+)
+
+(mat special-cases ; test special cases added Feb 2020
+  (begin
+    (define $n 40910371311673474504209841881478505181983799806634563)
+    (define $-n (- $n))
+    (define $q 40910371311673474504209841881478505181983799806634563/7312893582423593745243587)
+    (define $-q (- $q))
+    (define $x 1.499423325079378e100)
+    (define $-x (- $x))
+    (define $ez 3+4i)
+    (define $-ez (- $ez))
+    (define $iz 3.0-4.0i)
+    (define $-iz (- $iz))
+    #t)
+  (error? ; not a number
+    (div-and-mod 'bogus 1))
+  (error? ; not a number
+    (div-and-mod 'bogus -1))
+  (error? ; domain error
+    (div-and-mod $n 4+3i))
+  (error? ; domain error
+    (div-and-mod 4+3i $n))
+  (error? ; domain error
+    (div-and-mod 0 0))
+  (error? ; domain error
+    (div-and-mod $n 0))
+  (error? ; domain error
+    (div-and-mod $q 0))
+  (error? ; not a number
+    (div 'bogus 1))
+  (error? ; not a number
+    (div 'bogus -1))
+  (error? ; domain error
+    (div $n 4+3i))
+  (error? ; domain error
+    (div 4+3i $n))
+  (error? ; domain error
+    (div 0 0))
+  (error? ; domain error
+    (div $n 0))
+  (error? ; domain error
+    (div $q 0))
+  (error? ; not a number
+    (mod 'bogus 1))
+  (error? ; not a number
+    (mod 'bogus -1))
+  (error? ; domain error
+    (mod $n 4+3i))
+  (error? ; domain error
+    (mod 4+3i $n))
+  (error? ; domain error
+    (mod 0 0))
+  (error? ; domain error
+    (mod $n 0))
+  (error? ; domain error
+    (mod $q 0))
+  (error? ; not a number
+    (div0-and-mod0 'bogus 1))
+  (error? ; not a number
+    (div0-and-mod0 'bogus -1))
+  (error? ; domain error
+    (div0-and-mod0 $n 4+3i))
+  (error? ; domain error
+    (div0-and-mod0 4+3i $n))
+  (error? ; domain error
+    (div0-and-mod0 0 0))
+  (error? ; domain error
+    (div0-and-mod0 $n 0))
+  (error? ; domain error
+    (div0-and-mod0 $q 0))
+  (error? ; not a number
+    (div0 'bogus 1))
+  (error? ; not a number
+    (div0 'bogus -1))
+  (error? ; domain error
+    (div0 $n 4+3i))
+  (error? ; domain error
+    (div0 4+3i $n))
+  (error? ; domain error
+    (div0 0 0))
+  (error? ; domain error
+    (div0 $n 0))
+  (error? ; domain error
+    (div0 $q 0))
+  (error? ; not a number
+    (mod0 'bogus 1))
+  (error? ; not a number
+    (mod0 'bogus -1))
+  (error? ; domain error
+    (mod0 $n 4+3i))
+  (error? ; domain error
+    (mod0 4+3i $n))
+  (error? ; domain error
+    (mod0 0 0))
+  (error? ; domain error
+    (mod0 $n 0))
+  (error? ; domain error
+    (mod0 $q 0))
+  (error? ; not a number
+    (quotient 'bogus 1))
+  (error? ; not a number
+    (quotient 'bogus -1))
+  (error? ; domain error
+    (quotient $n 4+3i))
+  (error? ; domain error
+    (quotient 4.5 $n))
+  (error? ; domain error
+    (quotient 0 0))
+  (error? ; domain error
+    (quotient $n 0))
+  (error? ; domain error
+    (quotient 4.0 0))
+  (error? ; not a number
+    (remainder 'bogus 1))
+  (error? ; not a number
+    (remainder 'bogus -1))
+  (error? ; domain error
+    (remainder $n 4+3i))
+  (error? ; domain error
+    (remainder 4.5 $n))
+  (error? ; domain error
+    (remainder 0 0))
+  (error? ; domain error
+    (remainder $n 0))
+  (error? ; domain error
+    (remainder 4.0 0))
+  (error? ; not a number
+    (modulo 'bogus 1))
+  (error? ; not a number
+    (modulo 'bogus -1))
+  (error? ; domain error
+    (modulo $n 4+3i))
+  (error? ; domain error
+    (modulo 4.5 $n))
+  (error? ; domain error
+    (modulo 0 0))
+  (error? ; domain error
+    (modulo $n 0))
+  (error? ; domain error
+    (modulo 4.0 0))
+  (error? ; not a number
+    (/ 'bogus 1))
+  (error? ; not a number
+    (/ 'bogus -1))
+  (error? ; domain error
+    (/ 0 0))
+  (error? ; domain error
+    (/ $n 0))
+  (error? ; domain error
+    (/ $q 0))
+  (error? ; domain error
+    (/ $ez 0))
+  (error? ; not a number
+    (* 'bogus 0))
+  (error? ; not a number
+    (* 'bogus 1))
+  (error? ; not a number
+    (* 'bogus -1))
+  (error? ; not a number
+    (* 0 'bogus))
+  (error? ; not a number
+    (* 1 'bogus))
+  (error? ; not a number
+    (* -1 'bogus))
+  (error? ; not a number
+    (+ 'bogus 0))
+  (error? ; not a number
+    (+ 0 'bogus))
+  (error? ; not a number
+    (- 'bogus 0))
+  (error? ; not a number
+    (- 0 'bogus))
+  (equal? (call-with-values (lambda () (div-and-mod $n 1)) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (div-and-mod $n -1)) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (div-and-mod $-n 1)) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (div-and-mod $-n -1)) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (div $n 1) (mod $n 1))) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (div $n -1) (mod $n -1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (div $-n 1) (mod $n 1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (div $-n -1) (mod $n -1))) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (div0-and-mod0 $n 1)) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (div0-and-mod0 $n -1)) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (div0-and-mod0 $-n 1)) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (div0-and-mod0 $-n -1)) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (div0 $n 1) (mod0 $n 1))) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (div0 $n -1) (mod0 $n -1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (div0 $-n 1) (mod0 $n 1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (div0 $-n -1) (mod0 $n -1))) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (quotient $n 1) (remainder $n 1))) cons) `(,$n . 0))
+  (equal? (call-with-values (lambda () (values (quotient $n -1) (remainder $n -1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (quotient $-n 1) (remainder $n 1))) cons) `(,$-n . 0))
+  (equal? (call-with-values (lambda () (values (quotient $-n -1) (remainder $n -1))) cons) `(,$n . 0))
+  (equal? (modulo $n 1) 0)
+  (equal? (modulo $n -1) 0)
+  (equal? (modulo $-n 1) 0)
+  (equal? (modulo $-n -1) 0)
+  (equal? (/ $n 1) $n)
+  (equal? (/ $n -1) $-n)
+  (equal? (/ $-n 1) $-n)
+  (equal? (/ $-n -1) $n)
+  (equal? (/ 0 $n) 0)
+  (equal? (/ 0 $-n) 0)
+  (equal? (/ $q 1) $q)
+  (equal? (/ $q -1) $-q)
+  (equal? (/ $-q 1) $-q)
+  (equal? (/ $-q -1) $q)
+  (equal? (/ $x 1) $x)
+  (equal? (/ $x -1) $-x)
+  (equal? (/ $-x 1) $-x)
+  (equal? (/ $-x -1) $x)
+  (equal? (/ $ez 1) $ez)
+  (equal? (/ $ez -1) $-ez)
+  (equal? (/ $-ez 1) $-ez)
+  (equal? (/ $-ez -1) $ez)
+  (equal? (/ $iz 1) $iz)
+  (equal? (/ $iz -1) $-iz)
+  (equal? (/ $-iz 1) $-iz)
+  (equal? (/ $-iz -1) $iz)
+  (equal? (* $n 1) $n)
+  (equal? (* $n -1) $-n)
+  (equal? (* $-n 1) $-n)
+  (equal? (* $-n -1) $n)
+  (equal? (* $n 0) 0)
+  (equal? (* $-n 0) 0)
+  (equal? (* $q 1) $q)
+  (equal? (* $q -1) $-q)
+  (equal? (* $-q 1) $-q)
+  (equal? (* $-q -1) $q)
+  (equal? (* $q 0) 0)
+  (equal? (* $-q 0) 0)
+  (equal? (* $x 1) $x)
+  (equal? (* $x -1) $-x)
+  (equal? (* $-x 1) $-x)
+  (equal? (* $-x -1) $x)
+  (equal? (* $x 0) 0)
+  (equal? (* $-x 0) 0)
+  (equal? (* $ez 1) $ez)
+  (equal? (* $ez -1) $-ez)
+  (equal? (* $-ez 1) $-ez)
+  (equal? (* $-ez -1) $ez)
+  (equal? (* $ez 0) 0)
+  (equal? (* $-ez 0) 0)
+  (equal? (* $iz 1) $iz)
+  (equal? (* $iz -1) $-iz)
+  (equal? (* $-iz 1) $-iz)
+  (equal? (* $-iz -1) $iz)
+  (equal? (* $iz 0) 0)
+  (equal? (* $-iz 0) 0)
+  (equal? (* 1 $n) $n)
+  (equal? (* -1 $n) $-n)
+  (equal? (* 1 $-n) $-n)
+  (equal? (* -1 $-n) $n)
+  (equal? (* 0 $n) 0)
+  (equal? (* 0 $-n) 0)
+  (equal? (* 1 $q) $q)
+  (equal? (* -1 $q) $-q)
+  (equal? (* 1 $-q) $-q)
+  (equal? (* -1 $-q) $q)
+  (equal? (* 0 $q) 0)
+  (equal? (* 0 $-q) 0)
+  (equal? (* 1 $x) $x)
+  (equal? (* -1 $x) $-x)
+  (equal? (* 1 $-x) $-x)
+  (equal? (* -1 $-x) $x)
+  (equal? (* 0 $x) 0)
+  (equal? (* 0 $-x) 0)
+  (equal? (* 1 $ez) $ez)
+  (equal? (* -1 $ez) $-ez)
+  (equal? (* 1 $-ez) $-ez)
+  (equal? (* -1 $-ez) $ez)
+  (equal? (* 0 $ez) 0)
+  (equal? (* 0 $-ez) 0)
+  (equal? (* 1 $iz) $iz)
+  (equal? (* -1 $iz) $-iz)
+  (equal? (* 1 $-iz) $-iz)
+  (equal? (* -1 $-iz) $iz)
+  (equal? (* 0 $iz) 0)
+  (equal? (* 0 $-iz) 0)
+  (equal? (+ $n 0) $n)
+  (equal? (+ $-n 0) $-n)
+  (equal? (+ 0 $n) $n)
+  (equal? (+ 0 $-n) $-n)
+  (equal? (+ $q 0) $q)
+  (equal? (+ $-q 0) $-q)
+  (equal? (+ 0 $q) $q)
+  (equal? (+ 0 $-q) $-q)
+  (equal? (+ $x 0) $x)
+  (equal? (+ $-x 0) $-x)
+  (equal? (+ 0 $x) $x)
+  (equal? (+ 0 $-x) $-x)
+  (equal? (+ $ez 0) $ez)
+  (equal? (+ $-ez 0) $-ez)
+  (equal? (+ 0 $ez) $ez)
+  (equal? (+ 0 $-ez) $-ez)
+  (equal? (+ $iz 0) $iz)
+  (equal? (+ $-iz 0) $-iz)
+  (equal? (+ 0 $iz) $iz)
+  (equal? (+ 0 $-iz) $-iz)
+  (equal? (- $n 0) $n)
+  (equal? (- $-n 0) $-n)
+  (equal? (- 0 $n) $-n)
+  (equal? (- 0 $-n) $n)
+  (equal? (- $q 0) $q)
+  (equal? (- $-q 0) $-q)
+  (equal? (- 0 $q) $-q)
+  (equal? (- 0 $-q) $q)
+  (equal? (- $x 0) $x)
+  (equal? (- $-x 0) $-x)
+  (equal? (- 0 $x) $-x)
+  (equal? (- 0 $-x) $x)
+  (equal? (- $ez 0) $ez)
+  (equal? (- $-ez 0) $-ez)
+  (equal? (- 0 $ez) $-ez)
+  (equal? (- 0 $-ez) $ez)
+  (equal? (- $iz 0) $iz)
+  (equal? (- $-iz 0) $-iz)
+  (equal? (- 0 $iz) $-iz)
+  (equal? (- 0 $-iz) $iz)
+  (equal? (- 0 (most-negative-fixnum)) (+ (most-positive-fixnum) 1))
+)
+
+(mat benchmarks
+  (let ()
+    ; revert to the original values for benchmarking
+    (define runs 1 #;10)
+    (define iter 1 #;100000)
+    (define min-ns 0 #;#e25e7)
+
+    (define time->ns
+      (lambda (t)
+        (+ (* (time-second t) 1000000000) (time-nanosecond t))))
+
+    (define mean
+      (lambda (ls)
+        (assert (not (null? ls)))
+        (/ (apply + ls) (length ls))))
+
+    (define stddev
+      (lambda (m ls)
+        (define (square x) (* x x))
+        (sqrt (mean (map (lambda (x) (square (- x m))) ls)))))
+
+    (define ($run-one expr th expected)
+      (define (do-big-iter)
+        (collect 0 0)
+        (let ([t0 (current-time 'time-monotonic)])
+          (do ([iter iter (#3%fx- iter 1)] [ans #f (th)])
+            ((#3%fx= iter 0)
+             (let ([t (time-difference t0 (current-time 'time-monotonic))])
+               (unless (equal? ans expected) (errorf #f "oops ~s != ~s for ~s" ans expected expr))
+               t)))))
+      (parameterize ([collect-request-handler void])
+        (collect (collect-maximum-generation))
+        ; warm up and calibrate number of ITERATIONS to at least meet min-ns
+        (let ([ITER (let loop ([ITER 1] [t (make-time 'time-duration 0 0)])
+                      (let ([t (time-difference t (do-big-iter))])
+                        (if (>= (time->ns t) min-ns)
+                            ITER
+                            (loop (fx+ ITER 1) t))))])
+          (do ([run runs (#3%fx- run 1)]
+               [t* '() (cons
+                         (let loop ([ITER ITER] [t (make-time 'time-duration 0 0)])
+                           (do ([ITER ITER (#3%fx- ITER 1)]
+                                [t (make-time 'time-duration 0 0) (time-difference t (do-big-iter))])
+                             ((#3%fx= ITER 0) t)))
+                         t*)])
+            ((#3%fx= run 0)
+             (let ([ns* (map time->ns (reverse t*))])
+               (let ([m (mean ns*)])
+                 (printf "~s\n" (vector expr (/ m ITER) (if (= m 0) 0 (/ (stddev m ns*) m)) ITER))
+                 (flush-output-port))))))))
+
+    (let ()
+      (define (run sra)
+        (define-syntax run-one
+          (lambda (x)
+            (define prettify
+              (lambda (x)
+                (let-values ([(neg? x) (if (< x 0) (values #t (- x)) (values #f x))])
+                  (let ([s (format "~{~a~^+~}"
+                             (let loop ([x x] [k 0] [ls '()])
+                               (let ([b (bitwise-first-bit-set x)])
+                                 (if (= b -1)
+                                     ls
+                                     (let ([k (+ k b)])
+                                       (loop (bitwise-arithmetic-shift-right x (fx+ b 1)) (fx+ k 1)
+                                         (cons (if (= k 0) "1" (format "2^~a" k)) ls)))))))])
+                    (if neg? (format "-(~a)" s) s)))))
+            (syntax-case x ()
+              [(_ sra x k expected)
+               (with-syntax ([n (eval (datum x))])
+                 (with-syntax ([expr (format "(sra ~a ~s)" (prettify (datum n)) (datum k))])
+                   #'($run-one expr (lambda () (sra n k)) expected)))])))
+        (printf "((iter . ~s) (min-ns . ~s))\n" iter min-ns)
+        (printf "(\n")
+        (run-one sra 1 1 0)
+        (run-one sra (ash 1 1024) 1024 1)
+        (run-one sra (ash 1 1024) 512 (ash 1 512))
+        (run-one sra (- (ash 1 1024)) 1024 -1)
+        (run-one sra (- (ash 1 1024)) 512 (- (ash 1 512)))
+        (run-one sra (+ (ash 1 1024) 1) 1024 1)
+        (run-one sra (+ (ash 1 1024) 1) 512 (ash 1 512))
+        (run-one sra (- (+ (ash 1 1024) 1)) 1024 -2)
+        (run-one sra (- (+ (ash 1 1024) 1)) 512 (- -1 (ash 1 512)))
+        (run-one sra (- (ash 1 1024)) 1024 -1)
+        (run-one sra (- (ash 1 1024)) 512 (- (ash 1 512)))
+        (run-one sra (ash 1 1024) 1025 0)
+        (run-one sra (- (ash 1 1024)) 1025 -1)
+        (run-one sra (ash 3 1023) 1024 1)
+        (run-one sra (- (ash 3 1023)) 1024 -2)
+        (run-one sra (ash 3 1023) 1025 0)
+        (run-one sra (- (ash 3 1023)) 1025 -1)
+        (run-one sra (ash 1 1000000) 1000000 1)
+        (run-one sra (- (ash 1 1000000)) 1000000 -1)
+        (run-one sra (ash 1 1000000) 1000001 0)
+        (run-one sra (- (ash 1 1000000)) 1000001 -1)
+        (run-one sra (ash 3 1000000) 1000001 1)
+        (run-one sra (- (ash 3 1000000)) 1000001 -2)
+        (run-one sra (ash 3 1000000) 1000002 0)
+        (run-one sra (- (ash 3 1000000)) 1000002 -1)
+        ; worst-case---only shifted-off one bit is in the middle
+        (run-one sra (- (+ (ash 1 1024) (ash 1 512))) 1024 -2)
+        ; shift by one bit
+        (run-one sra (ash 3 1000000) 1 (ash 3 999999))
+        (run-one sra (- (ash 3 1000000)) 1 (- (ash 3 999999)))
+        (printf ")\n"))
+
+      (run bitwise-arithmetic-shift-right)
+      (run (lambda (x k) (bitwise-arithmetic-shift x (- k))))
+      (run (lambda (x k) (ash x (- k)))))
+
+    (let ()
+      (define (run)
+        (define $x 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)
+        (define $y (* (most-positive-fixnum) 2))
+        (define-syntax run-one
+          (syntax-rules ()
+            [(_ expr expected)
+             ($run-one 'expr (lambda () expr) expected)]
+            [(_ expr expected ...)
+             ($run-one 'expr (lambda () (call-with-values (lambda () expr) list)) (list expected ...))]))
+        (define $2x (* 2 $x))
+        (define $x+2 (+ $x 2))
+        (define $-x (- $x))
+        (define $x^4 (* $x $x $x $x))
+        (define $-x^4 (- $x^4))
+        (define $2y (* $y 2))
+        (define $y+2 (+ $y 2))
+        (printf "((iter . ~s) (min-ns . ~s) ($x . ~s) ($y . ~s))\n" iter min-ns $x $y)
+        (printf "(\n")
+        (run-one 0 0)
+        (run-one (* $x 0) 0)
+        (run-one (* $x^4 0) 0)
+        (run-one (* $x 1) $x)
+        (run-one (* $x^4 1) $x^4)
+        (run-one (* $x -1) $-x)
+        (run-one (* $x^4 -1) $-x^4)
+        (run-one (* 1 $x) $x)
+        (run-one (* 1 $x^4) $x^4)
+        (run-one (* -1 $x) $-x)
+        (run-one (* -1 $x^4) $-x^4)
+        (run-one (/ $x 1) $x)
+        (run-one (/ $x^4 1) $x^4)
+        (run-one (/ $x -1) $-x)
+        (run-one (/ $x^4 -1) $-x^4)
+        (run-one (+ $x 0) $x)
+        (run-one (+ $x^4 0) $x^4)
+        (run-one (- $x 0) $x)
+        (run-one (- $x^4 0) $x^4)
+        (run-one (+ 0 $x) $x)
+        (run-one (+ 0 $x^4) $x^4)
+        (run-one (- 0 $x) $-x)
+        (run-one (- 0 $x^4) $-x^4)
+        (run-one (quotient $x 1) $x)
+        (run-one (quotient $x^4 1) $x^4)
+        (run-one (quotient $x -1) $-x)
+        (run-one (remainder $x 1) 0)
+        (run-one (remainder $x^4 1) 0)
+        (run-one (remainder $x -1) 0)
+        (run-one (div-and-mod $x 1) $x 0)
+        (run-one (div-and-mod $x^4 1) $x^4 0)
+        (run-one (div-and-mod $x -1) $-x 0)
+        (run-one (div0-and-mod0 $x 1) $x 0)
+        (run-one (div0-and-mod0 $x^4 1) $x^4 0)
+        (run-one (div0-and-mod0 $x -1) $-x 0)
+        (run-one (div $x 1) $x)
+        (run-one (div $x^4 1) $x^4)
+        (run-one (div $x -1) $-x)
+        (run-one (div0 $x 1) $x)
+        (run-one (div0 $x^4 1) $x^4)
+        (run-one (div0 $x -1) $-x)
+        (run-one (mod $x 1) 0)
+        (run-one (mod $x^4 1) 0)
+        (run-one (mod $x -1) 0)
+        (run-one (mod0 $x 1) 0)
+        (run-one (mod0 $x^4 1) 0)
+        (run-one (mod0 $x -1) 0)
+        ; these should not improve and we hope not slow down measurably
+        (run-one (* $y 2) $2y)
+        (run-one (/ $2y 2) $y)
+        (run-one (+ $y 2) $y+2)
+        (run-one (- $y -2) $y+2)
+        (run-one (quotient $y 2) (ash $y -1))
+        (run-one (remainder $y 2) (logand $y 1))
+        (run-one (div-and-mod $2y 2) $y 0)
+        (run-one (div0-and-mod0 $2y 2) $y 0)
+        (run-one (div $2y 2) $y)
+        (run-one (div0 $2y 2) $y)
+        (run-one (mod $2y 2) 0)
+        (run-one (mod0 $2y 2) 0)
+        (printf ")\n"))
+
+      (run))
+
+    ; use with --program to compare results
+    #;(top-level-program
+      (import (chezscheme))
+
+      (unless (= (length (command-line-arguments)) 3)
+        (fprintf (current-error-port) "usage: ~a: <output-file> <before-input-file> <after-input-file>\n" (car (command-line)))
+        (exit 1))
+
+      (let ([reportfn (car (command-line-arguments))]
+            [beforefn (cadr (command-line-arguments))]
+            [afterfn (caddr (command-line-arguments))])
+        (let-values ([(before-info before) (with-input-from-file beforefn (lambda () (let ([info (read)]) (values info (read)))))]
+                     [(after-info after) (with-input-from-file afterfn (lambda () (let ([info (read)]) (values info (read)))))])
+          (with-output-to-file reportfn
+            (lambda ()
+              (unless (equal? before-info after-info) (errorf #f "before info ~s and after info ~s differ" before-info after-info))
+              (let ([iter (cond [(assq 'iter before-info) => cdr] [else (errorf #f "expected to find binding for iter in info\n")])])
+                (printf "<html><head><title>Results ~a</title></head><body><table cellspacing=\"10em\">\n" (machine-type))
+                (printf "<p>~{~a~^<br>~}</p>" (map (lambda (a) (format "~s = ~s" (car a) (cdr a))) before-info))
+                (printf "<tr><th align=left>expression</th><th align=right>speedup</th><th align=right>before stddev</th><th align=right>after stddev</th><th align=right>before time (x~s)</th><th align=right>after time (x~s)</th><th align=right>before iterations</th><th align=right>after iterations</th></tr>\n" iter iter)
+                (for-each
+                  (lambda (before after)
+                    (define EXPR 0)
+                    (define MEAN-NS 1)
+                    (define STDDEV 2)
+                    (define ITER 3)
+                    (for-each
+                      (lambda (i)
+                        (unless (equal? (vector-ref before i) (vector-ref after i))
+                          (errorf #f "comparing apples to oranges: ~s, ~s" before after)))
+                      (list EXPR))
+                    (printf "<tr><td align=left>~a</td><td align=right>~5,2f%</td><td align=right>~7,4f%</td><td align=right>~7,4f%</td><td align=right>~10,8f</td><td align=right>~10,8f</td><td align=right>~s</td><td align=right>~s</td></tr>\n"
+                      (vector-ref before EXPR)
+                      (* (/ (- (vector-ref before MEAN-NS) (vector-ref after MEAN-NS)) (vector-ref before MEAN-NS)) 100)
+                      (vector-ref before STDDEV)
+                      (vector-ref after STDDEV)
+                      (/ (vector-ref before MEAN-NS) (expt 10 9))
+                      (/ (vector-ref after MEAN-NS) (expt 10 9))
+                      (vector-ref before ITER)
+                      (vector-ref after ITER)
+                      ))
+                  before
+                  after)
+                (printf "</table></body></html>\n")))
+            'replace))))
+    #t)
 )

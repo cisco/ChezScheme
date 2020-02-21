@@ -1075,7 +1075,7 @@
           (let ([handler $signal-interrupt-handler])
             ($tc-field 'signal-interrupt-pending ($tc) #f)
             (keyboard)
-            (handler x))
+            (for-each handler ($dequeue-scheme-signals ($tc))))
           (keyboard))))
   (define (keyboard)
     (if ($tc-field 'keyboard-interrupt-pending ($tc))

@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{January}
+\pubmonth{February}
 \pubyear{2020}
 
 \begin{document}
@@ -57,7 +57,17 @@ Online versions of both books can be found at
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
-  
+
+\subsection{Bytevector compression and compression level (9.5.3)}
+
+The procedure \scheme{bytevector-compress} now selects the level of
+compression based on the \scheme{compress-level} parameter.
+Prior to this it always used a default setting for compression.
+
+The \scheme{compress-level} parameter can now take on the new value
+\scheme{minimum} in addition to \scheme{low}, \scheme{medium},
+\scheme{high}, and \scheme{maximum}.
+
 \subsection{Combining object files (9.5.3)}
 
 In previous versions of Chez Scheme, multiple object files could
@@ -68,6 +78,15 @@ top-level programs within an object file is now placed at the top of the
 file.  The new \scheme{concatenate-object-files} procedure can be used to
 combine multiple object files while moving this information to the
 top of the combined file.
+
+\subsection{Explicitly invoking libraries (9.5.3)}
+
+The new procedure \scheme{invoke-library} can be used to force
+the evaluation of a library's body expressions (variable definition
+right-hand sides and initialization expresisons) before they might
+otherwise be needed.
+It is generally useful only for libraries whose body expressions
+have side effects.
 
 \subsection{Verifying loadability of libraries and programs (9.5.3)}
 
@@ -1818,6 +1837,16 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Buffering signals (9.5.3)}
+
+Prior to this release, only one unhandled signal was buffered for
+any signal for which a handler has been registered via
+\scheme{register-signal-handler}, so two signals delivered in
+quick succession could be see as only one.
+The system now buffers a much larger number (63 in this release) of
+signals, and the fact that signals can be dropped has now been
+documented.
+
 \subsection{Clear-output bug (9.5.3)}
 
 A bug has been fixed in which a call to \scheme{clear-output-port}
@@ -2240,6 +2269,19 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Special-cased basic arithmetic operations (9.5.3)}
+
+The basic arithmetic operations (addition, subtraction, multiplication,
+division) are now much faster when presented with certain special
+cases, e.g., multiplication of a large integer by 1 or -1 or addition
+of large integer and 0.
+
+\subsection{Faster right-shift of large integers (9.5.3)}
+
+Right shifting a large integer is now much faster in most cases
+where the shift count is a significant fraction of the number of
+bits in the large integer.
 
 \subsection{Faster object-file loading (9.5.3)}\label{sec:faster-object-file-loading}
 

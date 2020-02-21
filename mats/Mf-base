@@ -406,6 +406,7 @@ foreign.mo ${objdir}/foreign.mo: ${fobj}
 thread.mo ${objdir}/thread.mo: ${fobj}
 examples.mo ${objdir}/examples.mo: m4test.in m4test.out freq.in freq.out build-examples
 6.mo ${objdir}/6.mo: prettytest.ss
+bytevector.mo ${objdir}/bytevector.mo: prettytest.ss
 io.mo ${objdir}/io.mo: prettytest.ss
 unix.mo ${objdir}/unix.mo io.mo ${objdir}/io.mo 6.mo ${objdir}/6.mo: cat_flush
 oop.mo ${objdir}/oop.mo: oop.ss

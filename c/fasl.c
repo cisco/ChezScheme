@@ -904,7 +904,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             IBOOL sign; iptr n; ptr t; bigit *p;
             sign = bytein(f);
             n = uptrin(f);
-            t = S_bignum(n, sign);
+            t = S_bignum(tc, n, sign);
             p = &BIGIT(t, 0);
             while (n--) *p++ = (bigit)uptrin(f);
             *x = S_normalize_bignum(t);

@@ -536,10 +536,11 @@
 (define-constant COMPRESS-LZ4 1)
 (define-constant COMPRESS-FORMAT-BITS 3)
 
-(define-constant COMPRESS-LOW 0)
-(define-constant COMPRESS-MEDIUM 1)
-(define-constant COMPRESS-HIGH 2)
-(define-constant COMPRESS-MAX 3)
+(define-constant COMPRESS-MIN 0)
+(define-constant COMPRESS-LOW 1)
+(define-constant COMPRESS-MEDIUM 2)
+(define-constant COMPRESS-HIGH 3)
+(define-constant COMPRESS-MAX 4)
 
 (define-constant SICONV-DUNNO 0)
 (define-constant SICONV-INVALID 1)
@@ -1360,6 +1361,7 @@
    [ptr timer-ticks]
    [ptr disable-count]
    [ptr signal-interrupt-pending]
+   [ptr signal-interrupt-queue]
    [ptr keyboard-interrupt-pending]
    [ptr threadno]
    [ptr current-input]

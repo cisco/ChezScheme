@@ -9132,8 +9132,82 @@
      (string-append
       "123\n"
       "123\n"
-      "Exception in visit: library (testfile-lr-l4) is not visible\n"
-      "Exception in visit: library (testfile-lr-l4) is not visible\n"))))
+      "Exception in environment: attempt to import invisible library (testfile-lr-l4)\n"
+      "Exception in environment: attempt to import invisible library (testfile-lr-l4)\n"))))
+
+(mat invoke-library
+  (error? ; invalid library reference
+     (invoke-library '(testfile-il1 (<= 3))))
+  (error? ; invalid library reference
+     (invoke-library '(testfile-il1 (what?))))
+  (error? ; invalid library reference
+     (invoke-library '()))
+  (error? ; invalid library reference
+     (invoke-library 'hello))
+  (error? ; invalid library reference
+     (invoke-library '(3 2 1)))
+  (begin
+    (mkfile "testfile-il1.ss"
+      '(library (testfile-il1 (2)) (export a) (import (chezscheme)) (define a 3) (printf "invoked (testfile-il1)\n")))
+    #t)
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\n3\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1))
+      '(printf "hello\n")
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\nhello\n3\n")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a)
+      '(printf "hello\n")
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n3\nhello\n")
+  (begin
+    (separate-eval '(compile-library "testfile-il1"))
+    #t)
+  (delete-file "testfile-il1.ss")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\n3\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1))
+      '(printf "hello\n")
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\nhello\n3\n")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a)
+      '(printf "hello\n")
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n3\nhello\n")
+  (error? ; version mismatch
+    (separate-eval '(invoke-library '(testfile-il1 (3)))))
+  (error? ; version mismatch
+    (separate-eval
+      '(invoke-library '(testfile-il1 ((>= 3))))))
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1 ((>= 2)))))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1 (2))))
+    "invoked (testfile-il1)\n")
+)
 
 (mat cross-library-optimization
   (begin

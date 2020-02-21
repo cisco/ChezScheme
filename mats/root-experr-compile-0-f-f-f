@@ -1724,6 +1724,85 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for 0".
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for a".
 5_3.mo:Expected error in mat div0-and-mod0: "mod0: undefined for (a)".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div-and-mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0-and-mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "div0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for bogus".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for 4+3i".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "mod0: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "quotient: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "quotient: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "quotient: 4+3i is not an integer".
+5_3.mo:Expected error in mat special-cases: "quotient: 4.5 is not an integer".
+5_3.mo:Expected error in mat special-cases: "quotient: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "quotient: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "quotient: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "remainder: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "remainder: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "remainder: 4+3i is not an integer".
+5_3.mo:Expected error in mat special-cases: "remainder: 4.5 is not an integer".
+5_3.mo:Expected error in mat special-cases: "remainder: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "remainder: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "remainder: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "modulo: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "modulo: bogus is not an integer".
+5_3.mo:Expected error in mat special-cases: "modulo: 4+3i is not an integer".
+5_3.mo:Expected error in mat special-cases: "modulo: 4.5 is not an integer".
+5_3.mo:Expected error in mat special-cases: "modulo: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "modulo: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "modulo: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "/: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "/: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "/: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "/: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "/: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "/: undefined for 0".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "*: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "+: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "+: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "-: bogus is not a number".
+5_3.mo:Expected error in mat special-cases: "-: bogus is not a number".
 5_4.mo:Expected error in mat char=?/char-ci=?: "incorrect argument count in call (char=?)".
 5_4.mo:Expected error in mat char=?/char-ci=?: "char=?: a is not a character".
 5_4.mo:Expected error in mat char=?/char-ci=?: "char=?: a is not a character".
@@ -3673,6 +3752,62 @@ bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevecto
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-fill!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-copy!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
 bytevector.mo:Expected error in mat bytevector->immutable-bytevector: "bytevector-truncate!: #vu8(42 42 42 42 42 42 ...) is not a mutable bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: "hello" is not a bytevector".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: 7 is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-compress: "hello" is not a bytevector".
 bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: 7 is not a bytevector".
@@ -7132,14 +7267,21 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
 7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
 7.mo:Expected error in mat compile-whole-program: "incorrect argument count in call (compile-whole-program "testfile-wpo-ab.wpo")".
-7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in visit: library (testfile-wpo-lib) is not visible
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in environment: attempt to import invisible library (testfile-wpo-lib)
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
-7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-c5) while it is still being loaded
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-c5)
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
 7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
-7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke library (testfile-wpo-a9) while it is still being loaded
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-a9)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to invoke invisible library (testfile-wpo-c10)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: attempt to import invisible library (testfile-wpo-c10)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in verify-loadability: attempting to invoke invisible library (testfile-wpo-c10)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in verify-loadability: attempting to invoke invisible library (testfile-wpo-c10)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-c12)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-c12)
+7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: cyclic dependency involving invocation of library (testfile-wpo-c12)
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: library (testfile-cwl-a1) not found
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception: attempting to re-install compile-time part of library (testfile-cwl-a5)
 7.mo:Expected error in mat compile-whole-library: "separate-eval: Exception in environment: attempting to re-install compile-time part of library (testfile-cwl-a5)
@@ -8499,6 +8641,13 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-d1) requires a different compilation instance of (testfile-l7-a1) from the one previously loaded from testfile-l7-a1.so
 8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-c1) requires a different compilation instance of (testfile-l7-a1) from the one previously loaded from testfile-l7-a1.so
 8.mo:Expected error in mat library7: "separate-eval: Exception: compiled (testfile-l7-d1) requires a different compilation instance of (testfile-l7-a1) from the one previously compiled
+8.mo:Expected error in mat invoke-library: "invoke-library: invalid library reference (testfile-il1 (<= 3))".
+8.mo:Expected error in mat invoke-library: "invoke-library: invalid library reference (testfile-il1 (what?))".
+8.mo:Expected error in mat invoke-library: "invoke-library: invalid library reference ()".
+8.mo:Expected error in mat invoke-library: "invoke-library: invalid library reference hello".
+8.mo:Expected error in mat invoke-library: "invoke-library: invalid library reference (3 2 1)".
+8.mo:Expected error in mat invoke-library: "separate-eval: Exception in invoke-library: library (testfile-il1) version mismatch: want (3) but found (2) at testfile-il1.so
+8.mo:Expected error in mat invoke-library: "separate-eval: Exception in invoke-library: library (testfile-il1) version mismatch: want ((>= 3)) but found (2) at testfile-il1.so
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl1.ss did not define library (testfile-ewl1)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl3.ss did not define library (testfile-ewl3)".
 8.mo:Expected error in mat eval-when-library: "loading testfile-ewl4.ss did not define library (testfile-ewl4)".

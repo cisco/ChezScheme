@@ -25,9 +25,10 @@
 #include "system.h"
 
 /* locally defined functions */
-static ptr copy_normalize PROTO((bigit *p, iptr len, IBOOL sign));
+static ptr copy_normalize PROTO((ptr tc, const bigit *p, iptr len, IBOOL sign));
 static IBOOL abs_big_lt PROTO((ptr x, ptr y, iptr xl, iptr yl));
 static IBOOL abs_big_eq PROTO((ptr x, ptr y, iptr xl, iptr yl));
+static ptr big_negate PROTO((ptr tc, ptr x));
 static ptr big_add_pos PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
 static ptr big_add_neg PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
 static ptr big_add PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
@@ -37,7 +38,7 @@ static void big_trunc PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL qs, I
 static INT normalize PROTO((bigit *xp, bigit *yp, iptr xl, iptr yl));
 static bigit quotient_digit PROTO((bigit *xp, bigit *yp, iptr yl));
 static bigit qhat PROTO((bigit *xp, bigit *yp));
-static ptr big_short_gcd PROTO((ptr x, bigit y, iptr xl));
+static ptr big_short_gcd PROTO((ptr tc, ptr x, bigit y, iptr xl));
 static ptr big_gcd PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl));
 static ptr s_big_ash PROTO((ptr tc, bigit *xp, iptr xl, IBOOL sign, iptr cnt));
 static double big_short_floatify PROTO((ptr tc, ptr x, bigit s, iptr xl, IBOOL sign));
@@ -53,27 +54,27 @@ static ptr big_logor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IB
 static ptr big_logxor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
 
 /* use w/o trailing semicolon */
-#define PREPARE_BIGNUM(x,l)\
- {if (x == FIX(0) || BIGLEN(x) < (l)) x = S_bignum((l)*2, 0);}
+#define PREPARE_BIGNUM(tc,x,l)\
+ {if (x == FIX(0) || BIGLEN(x) < (l)) x = S_bignum(tc, (l)*2, 0);}
 
 #define bigit_mask (~(bigit)0)
 
-#define IBIGIT_TO_BIGNUM(B,x,cnt,sign) {\
+#define IBIGIT_TO_BIGNUM(tc,B,x,cnt,sign) {\
   ibigit _i_ = x;\
-  PREPARE_BIGNUM(B, 1)\
+  PREPARE_BIGNUM(tc, B, 1)\
   *cnt = 1;\
   BIGIT(B,0) = (*sign = (_i_ < 0)) ? -_i_ : _i_;\
 }
 
-#define UBIGIT_TO_BIGNUM(B,u,cnt) {\
-  PREPARE_BIGNUM(B, 1)\
+#define UBIGIT_TO_BIGNUM(tc,B,u,cnt) {\
+  PREPARE_BIGNUM(tc, B, 1)\
   *cnt = 1;\
   BIGIT(B,0) = u;\
 }
 
-#define IBIGITBIGIT_TO_BIGNUM(B,x,cnt,sign) {\
+#define IBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt,sign) {\
   ibigitbigit _i_ = x; bigitbigit _u_; bigit _b_;\
-  PREPARE_BIGNUM(B, 2)\
+  PREPARE_BIGNUM(tc, B, 2)\
   _u_ = (*sign = (_i_ < 0)) ? -_i_ : _i_;\
   if ((_b_ = (_u_ & (bigitbigit)bigit_mask)) == _u_) {\
     *cnt = 1;\
@@ -85,9 +86,9 @@ static ptr big_logxor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, I
   }\
 }
 
-#define UBIGITBIGIT_TO_BIGNUM(B,x,cnt) {\
+#define UBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt) {\
   bigitbigit _u_ = x; bigit _b_;\
-  PREPARE_BIGNUM(B, 2)\
+  PREPARE_BIGNUM(tc, B, 2)\
   if ((_b_ = (_u_ & (bigitbigit)bigit_mask)) == _u_) {\
     *cnt = 1;\
     BIGIT(B,0) = (bigit)_u_;\
@@ -101,20 +102,20 @@ static ptr big_logxor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, I
 #define U32_bigits (32 / bigit_bits)
 
 #if (U32_bigits == 1)
-#define I32_TO_BIGNUM(B,x,cnt,sign) IBIGIT_TO_BIGNUM(B,x,cnt,sign)
-#define U32_TO_BIGNUM(B,x,cnt) UBIGIT_TO_BIGNUM(B,x,cnt)
+#define I32_TO_BIGNUM(tc,B,x,cnt,sign) IBIGIT_TO_BIGNUM(tc,B,x,cnt,sign)
+#define U32_TO_BIGNUM(tc,B,x,cnt) UBIGIT_TO_BIGNUM(tc,B,x,cnt)
 #endif
 
 #if (U32_bigits == 2)
-#define I32_TO_BIGNUM(B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(B,x,cnt,sign)
-#define U32_TO_BIGNUM(B,x,cnt) UBIGITBIGIT_TO_BIGNUM(B,x,cnt)
+#define I32_TO_BIGNUM(tc,B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt,sign)
+#define U32_TO_BIGNUM(tc,B,x,cnt) UBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt)
 #endif
 
 #define U64_bigits (64 / bigit_bits)
 
 #if (U64_bigits == 2)
-#define I64_TO_BIGNUM(B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(B,x,cnt,sign)
-#define U64_TO_BIGNUM(B,x,cnt) UBIGITBIGIT_TO_BIGNUM(B,x,cnt)
+#define I64_TO_BIGNUM(tc,B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt,sign)
+#define U64_TO_BIGNUM(tc,B,x,cnt) UBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt)
 #endif
 
 #if (U64_bigits == 4)
@@ -124,16 +125,16 @@ see v7.4 number.c for U64_TO_BIGNUM w/U64_bigits == 4
 #define ptr_bigits (ptr_bits / bigit_bits)
 
 #if (ptr_bigits == 1)
-#define IPTR_TO_BIGNUM(B,x,cnt,sign) IBIGIT_TO_BIGNUM(B,x,cnt,sign)
-#define UPTR_TO_BIGNUM(B,x,cnt) UBIGIT_TO_BIGNUM(B,x,cnt)
+#define IPTR_TO_BIGNUM(tc,B,x,cnt,sign) IBIGIT_TO_BIGNUM(tc,B,x,cnt,sign)
+#define UPTR_TO_BIGNUM(tc,B,x,cnt) UBIGIT_TO_BIGNUM(tc,B,x,cnt)
 #endif
 
 #if (ptr_bigits == 2)
-#define IPTR_TO_BIGNUM(B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(B,x,cnt,sign)
-#define UPTR_TO_BIGNUM(B,x,cnt) UBIGITBIGIT_TO_BIGNUM(B,x,cnt)
+#define IPTR_TO_BIGNUM(tc,B,x,cnt,sign) IBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt,sign)
+#define UPTR_TO_BIGNUM(tc,B,x,cnt) UBIGITBIGIT_TO_BIGNUM(tc,B,x,cnt)
 #endif
 
-#define FIXNUM_TO_BIGNUM(B,p,cnt,sign) IPTR_TO_BIGNUM(B,UNFIX(p),cnt,sign)
+#define FIXNUM_TO_BIGNUM(tc,B,p,cnt,sign) IPTR_TO_BIGNUM(tc,B,UNFIX(p),cnt,sign)
 
 ptr S_normalize_bignum(ptr x) {
   uptr n = BIGIT(x, 0); iptr len = BIGLEN(x); IBOOL sign = BIGSIGN(x);
@@ -163,7 +164,7 @@ ptr S_normalize_bignum(ptr x) {
   return x;
 }
 
-static ptr copy_normalize(p,len,sign) bigit *p; iptr len; IBOOL sign; {
+static ptr copy_normalize(tc, p, len, sign) ptr tc; const bigit *p; iptr len; IBOOL sign; {
   bigit *p1; uptr n; ptr b;
 
   for (;;) {
@@ -196,7 +197,7 @@ static ptr copy_normalize(p,len,sign) bigit *p; iptr len; IBOOL sign; {
   }
 #endif
 
-  b = S_bignum(len, sign);
+  b = S_bignum(tc, len, sign);
   for (p1 = &BIGIT(b, 0); len--;) *p1++ = *p++;
   return b;
 }
@@ -337,7 +338,7 @@ ptr Sunsigned(u) uptr u; { /* convert arg to Scheme integer */
     return FIX(u);
   else {
     ptr x = FIX(0); iptr xl;
-    UPTR_TO_BIGNUM(x, u, &xl)
+    UPTR_TO_BIGNUM(get_thread_context(), x, u, &xl)
     SETBIGLENANDSIGN(x, xl, 0);
     return x;
   }
@@ -348,7 +349,7 @@ ptr Sinteger(i) iptr i; { /* convert arg to Scheme integer */
     return FIX(i);
   else {
     ptr x = FIX(0); iptr xl; IBOOL xs;
-    IPTR_TO_BIGNUM(x, i, &xl, &xs)
+    IPTR_TO_BIGNUM(get_thread_context(), x, i, &xl, &xs)
     SETBIGLENANDSIGN(x, xl, xs);
     return x;
   }
@@ -362,7 +363,7 @@ ptr Sunsigned32(u) U32 u; { /* convert arg to Scheme integer */
     return FIX((uptr)u);
   else {
     ptr x = FIX(0); iptr xl;
-    U32_TO_BIGNUM(x, u, &xl)
+    U32_TO_BIGNUM(get_thread_context(), x, u, &xl)
     SETBIGLENANDSIGN(x, xl, 0);
     return x;
   }
@@ -377,7 +378,7 @@ ptr Sinteger32(i) I32 i; { /* convert arg to Scheme integer */
     return FIX((iptr)i);
   else {
     ptr x = FIX(0); iptr xl; IBOOL xs;
-    I32_TO_BIGNUM(x, i, &xl, &xs)
+    I32_TO_BIGNUM(get_thread_context(), x, i, &xl, &xs)
     SETBIGLENANDSIGN(x, xl, xs);
     return x;
   }
@@ -389,7 +390,7 @@ ptr Sunsigned64(u) U64 u; { /* convert arg to Scheme integer */
     return FIX((uptr)u);
   else {
     ptr x = FIX(0); iptr xl;
-    U64_TO_BIGNUM(x, u, &xl)
+    U64_TO_BIGNUM(get_thread_context(), x, u, &xl)
     SETBIGLENANDSIGN(x, xl, 0);
     return x;
   }
@@ -400,7 +401,7 @@ ptr Sinteger64(i) I64 i; { /* convert arg to Scheme integer */
     return FIX((iptr)i);
   else {
     ptr x = FIX(0); iptr xl; IBOOL xs;
-    I64_TO_BIGNUM(x, i, &xl, &xs)
+    I64_TO_BIGNUM(get_thread_context(), x, i, &xl, &xs)
     SETBIGLENANDSIGN(x, xl, xs);
     return x;
   }
@@ -415,6 +416,11 @@ ptr Sinteger64(i) I64 i; { /* convert arg to Scheme integer */
 #define ERSH(n,x,k) { /* undefined when n == 0 */\
   INT _n_ = (INT)(n); bigit _b_ = *(x), _newk_ = _b_<<(bigit_bits-_n_);\
   *(x) = _b_>>_n_ | *(k);\
+  *(k) = _newk_;}
+
+#define ERSH2(n,x,y,k) { /* undefined when n == 0 */\
+  INT _n_ = (INT)(n); bigit _b_ = (x), _newk_ = _b_<<(bigit_bits-_n_);\
+  *(y) = _b_>>_n_ | *(k);\
   *(k) = _newk_;}
 
 #define EADDC(a1, a2, sum, k) {\
@@ -505,13 +511,21 @@ addition/subtraction
 ***
 */
 
+static ptr big_negate(tc, x) ptr tc, x; {
+  return copy_normalize(tc, &BIGIT(x,0),BIGLEN(x),!BIGSIGN(x));
+}
+
+ptr S_big_negate(x) ptr x; {
+  return big_negate(get_thread_context(), x);
+}
+
 /* assumptions: BIGLEN(x) >= BIGLEN(y) */
 static ptr big_add_pos(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign; {
   iptr i;
   bigit *xp, *yp, *zp;
   bigit k = 0;
 
-  PREPARE_BIGNUM(W(tc),xl+1)
+  PREPARE_BIGNUM(tc, W(tc),xl+1)
 
   xp = &BIGIT(x,xl-1); yp = &BIGIT(y,yl-1); zp = &BIGIT(W(tc),xl);
 
@@ -524,7 +538,7 @@ static ptr big_add_pos(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL 
 
   *zp = k;
 
-  return copy_normalize(zp,xl+1,sign);
+  return copy_normalize(tc, zp,xl+1,sign);
 }
 
 /* assumptions: x >= y */
@@ -533,7 +547,7 @@ static ptr big_add_neg(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL 
   bigit *xp, *yp, *zp;
   bigit b = 0;
 
-  PREPARE_BIGNUM(W(tc),xl)
+  PREPARE_BIGNUM(tc, W(tc),xl)
 
   xp = &BIGIT(x,xl-1); yp = &BIGIT(y,yl-1); zp = &BIGIT(W(tc),xl-1);
 
@@ -544,7 +558,7 @@ static ptr big_add_neg(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL 
   for (; i-- > 0; )
     *zp-- = *xp--;
 
-  return copy_normalize(zp+1,xl,sign);
+  return copy_normalize(tc, zp+1,xl,sign);
 }
 
 static ptr big_add(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL xs, ys; {
@@ -570,13 +584,13 @@ ptr S_add(x, y) ptr x, y; {
       return FIXRANGE(n) ? FIX(n) : Sinteger(n);
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_add(tc, X(tc), y, xl, BIGLEN(y), xs, BIGSIGN(y));
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_add(tc, x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), ys);
     } else {
       return big_add(tc, x, y, BIGLEN(x), BIGLEN(y), BIGSIGN(x), BIGSIGN(y));
@@ -594,13 +608,13 @@ ptr S_sub(x, y) ptr x, y; {
       return FIXRANGE(n) ? FIX(n) : Sinteger(n);
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_add(tc, X(tc), y, xl, BIGLEN(y), xs, !BIGSIGN(y));
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_add(tc, x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), !ys);
     } else {
       return big_add(tc, x, y, BIGLEN(x), BIGLEN(y), BIGSIGN(x), !BIGSIGN(y));
@@ -619,7 +633,7 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
   bigit *xp, *yp, *zp, *zpa;
   bigit k, k1, prod;
 
-  PREPARE_BIGNUM(W(tc),xl+yl)
+  PREPARE_BIGNUM(tc, W(tc),xl+yl)
   for (xi = xl, zp = &BIGIT(W(tc),xl+yl-1); xi-- > 0; ) *zp-- = 0;
 
   for (yi=yl,yp= &BIGIT(y,yl-1),zp= &BIGIT(W(tc),xl+yl-1); yi-- > 0; yp--, zp--)
@@ -634,7 +648,7 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
       *zpa = k;
     }
 
-  return copy_normalize(&BIGIT(W(tc),0),xl+yl,sign);
+  return copy_normalize(tc, &BIGIT(W(tc),0),xl+yl,sign);
 }
 
 /* SHORTRANGE is -floor(sqrt(most_positive_fixnum))..floor(sqrt(most_positive_fixnum)).
@@ -657,17 +671,17 @@ ptr S_mul(x, y) ptr x, y; {
       if (SHORTRANGE(xn) && SHORTRANGE(yn))
         return FIX(xn * yn);
       else {
-        FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs) x = X(tc);
-        FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys) y = Y(tc);
+        FIXNUM_TO_BIGNUM(tc, X(tc),x,&xl,&xs) x = X(tc);
+        FIXNUM_TO_BIGNUM(tc, Y(tc),y,&yl,&ys) y = Y(tc);
       }
     } else {
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs) x = X(tc);
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs) x = X(tc);
       yl = BIGLEN(y); ys = BIGSIGN(y);
     }
   } else {
     if (Sfixnump(y)) {
       xl = BIGLEN(x); xs = BIGSIGN(x);
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys) y = Y(tc);
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys) y = Y(tc);
     } else {
       xl = BIGLEN(x); xs = BIGSIGN(x);
       yl = BIGLEN(y); ys = BIGSIGN(y);
@@ -684,29 +698,34 @@ division
 
 /* arguments must be integers (fixnums or bignums), y must be nonzero */
 ptr S_div(x, y) ptr x, y; {
-  ptr g;
+  ptr g, n, d;
+  ptr tc = get_thread_context();
 
   g = S_gcd(x,y);
-  if (Sfixnump(y) ? UNFIX(y) < 0 : BIGSIGN(y)) g = S_sub(FIX(0),g);
-  return S_rational(S_trunc(x,g), S_trunc(y,g));
+  if (Sfixnump(y) ? UNFIX(y) < 0 : BIGSIGN(y)) {
+    g = Sfixnump(g) ? Sinteger(-UNFIX(g)) : big_negate(tc, g);
+  }
+
+  S_trunc_rem(tc, x, g, &n, (ptr *)NULL);
+  S_trunc_rem(tc, y, g, &d, (ptr *)NULL);
+
+  return S_rational(n, d);
 }
 
 ptr S_trunc(x, y) ptr x, y; {
   ptr q;
-  S_trunc_rem(x, y, &q, (ptr *)NULL);
+  S_trunc_rem(get_thread_context(), x, y, &q, (ptr *)NULL);
   return q;
 }
 
 ptr S_rem(x, y) ptr x, y; {
   ptr r;
-  S_trunc_rem(x, y, (ptr *)NULL, &r);
+  S_trunc_rem(get_thread_context(), x, y, (ptr *)NULL, &r);
   return r;
 }
 
 /* arguments must be integers (fixnums or bignums), y must be nonzero */
-void S_trunc_rem(origx, y, q, r) ptr origx, y, *q, *r; {
-  ptr tc = get_thread_context();
-
+void S_trunc_rem(tc, origx, y, q, r) ptr tc, origx, y, *q, *r; {
   iptr xl, yl; IBOOL xs, ys; ptr x = origx;
 
   if (Sfixnump(x)) {
@@ -722,13 +741,13 @@ void S_trunc_rem(origx, y, q, r) ptr origx, y, *q, *r; {
         return;
       }
     } else {
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs) x = X(tc);
+      FIXNUM_TO_BIGNUM(tc, X(tc),x,&xl,&xs) x = X(tc);
       yl = BIGLEN(y); ys = BIGSIGN(y);
     }
   } else {
     if (Sfixnump(y)) {
       xl = BIGLEN(x); xs = BIGSIGN(x);
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys) y = Y(tc);
+      FIXNUM_TO_BIGNUM(tc, Y(tc),y,&yl,&ys) y = Y(tc);
     } else {
       xl = BIGLEN(x); xs = BIGSIGN(x);
       yl = BIGLEN(y); ys = BIGSIGN(y);
@@ -750,13 +769,13 @@ static void big_short_trunc(ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs,
   bigit *xp, *zp;
   bigit k;
 
-  PREPARE_BIGNUM(W(tc),xl)
+  PREPARE_BIGNUM(tc, W(tc),xl)
 
   for (i = xl, k = 0, xp = &BIGIT(x,0), zp = &BIGIT(W(tc),0); i-- > 0; )
     EDIV(k, *xp++, s, zp++, &k)
 
-  if (q != (ptr *)NULL) *q = copy_normalize(&BIGIT(W(tc),0),xl,qs);
-  if (r != (ptr *)NULL) *r = copy_normalize(&k,1,rs);
+  if (q != (ptr *)NULL) *q = copy_normalize(tc, &BIGIT(W(tc),0),xl,qs);
+  if (r != (ptr *)NULL) *r = copy_normalize(tc, &k,1,rs);
 }
 
 static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
@@ -767,11 +786,11 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
   INT d;
   bigit k;
 
-  PREPARE_BIGNUM(U(tc), xl+1)
+  PREPARE_BIGNUM(tc, U(tc), xl+1)
   for (i = xl, xp = &BIGIT(U(tc),xl+1), p = &BIGIT(x,xl); i-- > 0;) *--xp = *--p;
   *--xp = 0;
 
-  PREPARE_BIGNUM(V(tc), yl)
+  PREPARE_BIGNUM(tc, V(tc), yl)
   for (i = yl, yp = &BIGIT(V(tc),yl), p = &BIGIT(y,yl); i-- > 0;) *--yp = *--p;
 
   d = normalize(xp, yp, xl, yl);
@@ -779,10 +798,10 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
   if (q == (ptr *)NULL) {
     for (i = m; i-- > 0 ; xp++) (void) quotient_digit(xp, yp, yl);
   } else {
-    PREPARE_BIGNUM(W(tc),m)
+    PREPARE_BIGNUM(tc, W(tc),m)
     p = &BIGIT(W(tc),0);
     for (i = m; i-- > 0 ; xp++) *p++ = quotient_digit(xp, yp, yl);
-    *q = copy_normalize(&BIGIT(W(tc),0),m,qs);
+    *q = copy_normalize(tc, &BIGIT(W(tc),0),m,qs);
   }
 
   if (r != (ptr *)NULL) {
@@ -790,7 +809,7 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
     if (d != 0) {
       for (i = yl, p = xp, k = 0; i-- > 0; p++) ERSH(d,p,&k)
     }
-    *r = copy_normalize(xp, yl, rs);
+    *r = copy_normalize(tc, xp, yl, rs);
   }
 }
 
@@ -874,12 +893,12 @@ static ptr uptr_gcd(x, y) uptr x, y; {
 }
 
 /* sparc C compiler barfs w/o full declaration */
-static ptr big_short_gcd(ptr x, bigit y, iptr xl) {
+static ptr big_short_gcd(ptr tc, ptr x, bigit y, iptr xl) {
   bigit *xp;
   iptr i;
   bigit r, q;
 
-  if (y == 0) return BIGSIGN(x) ? S_sub(FIX(0),x) : x;
+  if (y == 0) return BIGSIGN(x) ? big_negate(tc, x) : x;
 
   for (i = xl, r = 0, xp = &BIGIT(x,0); i-- > 0; )
     EDIV(r, *xp++, y, &q, &r)
@@ -893,13 +912,13 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
   bigit *p, *xp, *yp, k, b;
 
  /* Copy x to scratch bignum, with a leading zero */
-  PREPARE_BIGNUM(U(tc),xl+1)
+  PREPARE_BIGNUM(tc, U(tc),xl+1)
   xp = &BIGIT(U(tc),xl+1);
   for (i = xl, p = &BIGIT(x,xl); i-- > 0; ) *--xp = *--p;
   *--xp = 0;                /* leave xp pointing at leading 0-bigit */
 
  /* Copy y to scratch bignum, with a leading zero */
-  PREPARE_BIGNUM(V(tc),yl+1)
+  PREPARE_BIGNUM(tc, V(tc),yl+1)
   yp = &BIGIT(V(tc),yl+1);
   for (i = yl, p = &BIGIT(y,yl); i-- > 0; ) *--yp = *--p;
   *(yp-1) = 0;        /* leave yp pointing just after leading 0-bigit */
@@ -953,7 +972,7 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
     if (asc != 0) {
       for (i = xl, p = xp, k = 0; i-- > 0; p++) ERSH(asc,p,&k)
     }
-    return copy_normalize(xp,xl,0);
+    return copy_normalize(tc, xp,xl,0);
   } else {
     bigit d, r;
 
@@ -976,13 +995,13 @@ ptr S_gcd(x, y) ptr x, y; {
                uptr_gcd((uptr)xi, (uptr)yi) :
                uptr_gcd((uptr)yi, (uptr)xi);
     } else {
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs) x = X(tc);
+      FIXNUM_TO_BIGNUM(tc, X(tc),x,&xl,&xs) x = X(tc);
       yl = BIGLEN(y); ys = BIGSIGN(y);
     }
   else
     if (Sfixnump(y)) {
       xl = BIGLEN(x); xs = BIGSIGN(x);
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys) y = Y(tc);
+      FIXNUM_TO_BIGNUM(tc, Y(tc),y,&yl,&ys) y = Y(tc);
     } else {
       xl = BIGLEN(x); xs = BIGSIGN(x);
       yl = BIGLEN(y); ys = BIGSIGN(y);
@@ -993,10 +1012,10 @@ ptr S_gcd(x, y) ptr x, y; {
       uptr xu = BIGIT(x,0), yu = BIGIT(y,0);
       return xu >= yu ? uptr_gcd(xu, yu) : uptr_gcd(yu, xu);
     } else
-      return big_short_gcd(y, BIGIT(x,0), yl);
+      return big_short_gcd(tc, y, BIGIT(x,0), yl);
   else
     if (yl == 1)
-      return big_short_gcd(x, BIGIT(y,0), xl);
+      return big_short_gcd(tc, x, BIGIT(y,0), xl);
     else
       if (abs_big_lt(x, y, xl, yl))
         return big_gcd(tc, y, x, yl, xl);
@@ -1066,7 +1085,7 @@ static double big_short_floatify(ptr tc, ptr x, bigit s, iptr xl, IBOOL sign) {
   iptr i;
   bigit *xp, *zp, k;
 
-  PREPARE_BIGNUM(W(tc),enough+1)
+  PREPARE_BIGNUM(tc, W(tc),enough+1)
 
  /* compute only as much of quotient as we need */
   for (i = 0, k = 0, xp = &BIGIT(x,0), zp = &BIGIT(W(tc),0); i < enough; i++)
@@ -1087,18 +1106,18 @@ static double big_floatify(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IB
 
  /* copy x to U(tc), scaling with added zero bigits as necessary */
   ul = xl < yl + enough-1 ? yl + enough-1 : xl;
-  PREPARE_BIGNUM(U(tc), ul+1)
+  PREPARE_BIGNUM(tc, U(tc), ul+1)
   for (i = ul - xl, xp = &BIGIT(U(tc),ul+1); i-- > 0;) *--xp = 0;
   for (i = xl, p = &BIGIT(x,xl); i-- > 0;) *--xp = *--p;
   *--xp = 0;
 
  /* copy y to V(tc) */
-  PREPARE_BIGNUM(V(tc), yl)
+  PREPARE_BIGNUM(tc, V(tc), yl)
   for (i = yl, yp = &BIGIT(V(tc),yl), p = &BIGIT(y,yl); i-- > 0;) *--yp = *--p;
 
   (void) normalize(xp, yp, ul, yl);
 
-  PREPARE_BIGNUM(W(tc),4)
+  PREPARE_BIGNUM(tc, W(tc),4)
   p = &BIGIT(W(tc),0);
 
  /* compute 'enough' bigits of the quotient */
@@ -1202,7 +1221,7 @@ static double floatify_ratnum(tc, p) ptr tc, p; {
 
  /* make sure we are dealing with bignums */
   if (Sfixnump(x)) {
-    FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+    FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
     x = X(tc);
   } else {
     xl = BIGLEN(x);
@@ -1211,7 +1230,7 @@ static double floatify_ratnum(tc, p) ptr tc, p; {
 
   if (Sfixnump(y)) {
     IBOOL ys;
-    FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+    FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
     y = Y(tc);
   } else {
     yl = BIGLEN(y);
@@ -1264,7 +1283,7 @@ ptr S_decode_float(d) double d; {
   else {
     iptr xl;
     x = FIX(0);
-    U64_TO_BIGNUM(x, m, &xl)
+    U64_TO_BIGNUM(get_thread_context(), x, m, &xl)
     SETBIGLENANDSIGN(x, xl, 0);
   }
 
@@ -1288,39 +1307,47 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
   bigit *p1, *p2, k;
 
   if (cnt < 0) { /* shift to the right */
-    INT bit_bucket = 0;
+    iptr whole_bigits;
+   
+    /* decrement length to shift by whole bigits */
+    if ((xl -= (whole_bigits = (cnt = -cnt) / bigit_bits)) <= 0) return sign ? FIX(-1) : FIX(0);
+    cnt -= whole_bigits * bigit_bits;
 
-    cnt = -cnt;
-
-   /* shift by whole bigits by decrementing length */
-    while (cnt >= bigit_bits) {
-      xl -= 1;
-      if (xl == 0) return sign ? FIX(-1) : FIX(0);
-      cnt -= bigit_bits;
-      bit_bucket |= *(xp + xl);
-    }
-
-   /* copy to scratch bignum */
-    PREPARE_BIGNUM(W(tc),xl)
-    p1 = &BIGIT(W(tc), xl);
-    for (i = xl, p2 = xp + xl; i-- > 0; ) *--p1 = *--p2;
-
-   /* shift by remaining count */
+    /* shift by remaining count to scratch bignum, tracking bits shifted off to the right */
+    PREPARE_BIGNUM(tc, W(tc),xl)
+    p1 = &BIGIT(W(tc), 0);
+    p2 = xp;
     k = 0;
-    if (cnt != 0) {
-      for (i = xl; i-- > 0; p1++) ERSH(cnt,p1,&k)
-    }
-    bit_bucket |= k;
-
-   /* round down negative numbers by incrementing the magnitude if any
-      one bits dropped into the bit bucket */
-    if (sign && bit_bucket) {
-      p1 = &BIGIT(W(tc), xl - 1);
-      for (i = xl, k = 1; k != 0 && i-- > 0; p1 -= 1)
-        EADDC(0, *p1, p1, &k)
+    i = xl;
+    if (cnt == 0) {
+      do { *p1++ = *p2++; } while (--i > 0);
+    } else {
+      do { ERSH2(cnt,*p2,p1,&k); p1++; p2++; } while (--i > 0);
     }
 
-    return copy_normalize(&BIGIT(W(tc), 0), xl, sign);
+    if (sign) {
+      if (k == 0) {
+        /* check for one bits in the shifted-off bigits, looking */
+        /* from both ends in an attempt to get out more quickly for what */
+        /* seem like the most likely patterns.  of course, there might */
+        /* be no one bits (in which case this won't help) or they might be */
+        /* only in the middle (in which case this will be slower) */
+        p2 = (p1 = xp + xl) + whole_bigits;
+        while (p1 != p2) {
+          if ((k = *p1++) || p1 == p2 || (k = *--p2)) break;
+        }
+      }
+
+      /* round down negative numbers by incrementing the magnitude if any
+         one bits were shifted off to the right */
+      if (k) {
+        p1 = &BIGIT(W(tc), xl - 1);
+        for (i = xl, k = 1; k != 0 && i-- > 0; p1 -= 1)
+          EADDC(0, *p1, p1, &k)
+      }
+    }
+
+    return copy_normalize(tc, &BIGIT(W(tc), 0), xl, sign);
   } else { /* shift to the left */
     iptr xlplus, newxl;
 
@@ -1334,7 +1361,7 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
    /* maximum total length includes +1 for shift out of top bigit */
     newxl = xl + xlplus + 1;
 
-    PREPARE_BIGNUM(W(tc),newxl)
+    PREPARE_BIGNUM(tc, W(tc),newxl)
 
    /* fill bigits to right with zero */
     for (i = xlplus, p1 = &BIGIT(W(tc), newxl); i-- > 0; ) *--p1 = 0;
@@ -1346,7 +1373,7 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
     }
     *--p1 = k;
 
-    return copy_normalize(p1, newxl, sign);
+    return copy_normalize(tc, p1, newxl, sign);
   }
 }
 
@@ -1361,7 +1388,7 @@ ptr S_ash(x, n) ptr x, n; {
       do much here anyway since semantics of signed >> are undefined in C */
     iptr xl; IBOOL xs;
 
-    FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs);
+    FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs);
     return s_big_ash(tc, &BIGIT(X(tc),0), xl, xs, cnt);
   } else
     return s_big_ash(tc, &BIGIT(x,0), BIGLEN(x), BIGSIGN(x), cnt);
@@ -1429,7 +1456,7 @@ ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend) {
   }
 
  /* copy to scratch bignum */
-  PREPARE_BIGNUM(W(tc),wl)
+  PREPARE_BIGNUM(tc, W(tc),wl)
   p1 = &BIGIT(W(tc), wl);
   for (i = wl, p2 = xp + xl; i-- > 0; ) *--p1 = *--p2;
 
@@ -1442,7 +1469,7 @@ ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend) {
     for (i = wl; i > 0; i -= 1, p1 += 1) ERSH(start,p1,&k)
   }
 
-  return copy_normalize(&BIGIT(W(tc), 0), wl, 0);
+  return copy_normalize(tc, &BIGIT(W(tc), 0), wl, 0);
 }
 
 /* logical operations simulate two's complement operations using the
@@ -1470,13 +1497,13 @@ ptr S_logand(x, y) ptr x, y; {
       return (ptr)((iptr)x & (iptr)y);
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_logand(tc, y, X(tc), BIGLEN(y), xl, BIGSIGN(y), xs);
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_logand(tc, x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), ys);
     } else {
       if (BIGLEN(x) >= BIGLEN(y))
@@ -1505,14 +1532,14 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
 
   if (xs == 0) {
     if (ys == 0) {
-      PREPARE_BIGNUM(W(tc),yl);
+      PREPARE_BIGNUM(tc, W(tc),yl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),yl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp & *--yp;
-      return copy_normalize(zp, yl, 0);
+      return copy_normalize(tc, zp, yl, 0);
     } else {
       bigit yb;
 
-      PREPARE_BIGNUM(W(tc),xl);
+      PREPARE_BIGNUM(tc, W(tc),xl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       yb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1523,13 +1550,13 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
      /* yb must be 0, since high-order bigit >= 1.  effectively, this
         means ~t2 would be all 1's from here on out. */
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(zp, xl, 0);
+      return copy_normalize(tc, zp, xl, 0);
     }
   } else {
     if (ys == 0) {
       bigit xb;
 
-      PREPARE_BIGNUM(W(tc),yl);
+      PREPARE_BIGNUM(tc, W(tc),yl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),yl);
       xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1537,11 +1564,11 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         xb = t2 > t1;
         *--zp = *--yp & ~t2;
       }
-      return copy_normalize(zp, yl, 0);
+      return copy_normalize(tc, zp, yl, 0);
     } else {
       bigit xb, yb, k;
 
-      PREPARE_BIGNUM(W(tc),xl+1);
+      PREPARE_BIGNUM(tc, W(tc),xl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl+1);
       k = yb = xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1560,7 +1587,7 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, xl+1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     }
   }
 }
@@ -1575,13 +1602,13 @@ ptr S_logtest(x, y) ptr x, y; {
       return Sboolean((iptr)x & (iptr)y);
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_logtest(y, X(tc), BIGLEN(y), xl, BIGSIGN(y), xs);
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_logtest(x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), ys);
     } else {
       if (BIGLEN(x) >= BIGLEN(y))
@@ -1690,7 +1717,7 @@ ptr S_logbit0(k, x) ptr k, x; {
     } else {
       iptr xl; IBOOL xs;
 
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs);
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs);
       return big_logbit0(tc, x, n, X(tc), xl, xs);
     }
   } else {
@@ -1717,7 +1744,7 @@ static ptr big_logbit0(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
      /* we'd just be clearing a bit that's already (virtually) cleared */
       return origx;
     } else {
-      PREPARE_BIGNUM(W(tc),xl);
+      PREPARE_BIGNUM(tc, W(tc),xl);
       xp = &BIGIT(x,xl); zp = &BIGIT(W(tc),xl);
       for (;;) {
         if (n < bigit_bits) break;
@@ -1726,13 +1753,13 @@ static ptr big_logbit0(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       }
       *--zp = *--xp & ~(1 << n);
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(zp,xl,0);
+      return copy_normalize(tc, zp,xl,0);
     }
   } else {
     bigit xb, k, x1, x2, z1, z2;
     iptr zl = (yl > xl ? yl : xl) + 1;
 
-    PREPARE_BIGNUM(W(tc),zl);
+    PREPARE_BIGNUM(tc, W(tc),zl);
     xp = &BIGIT(x,xl); zp = &BIGIT(W(tc),zl);
     k = xb = 1;
     i = xl;
@@ -1752,7 +1779,7 @@ static ptr big_logbit0(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = z2;
     }
     *--zp = k;
-    return copy_normalize(zp, zl, 1);
+    return copy_normalize(tc, zp, zl, 1);
   }
 }
 
@@ -1767,7 +1794,7 @@ ptr S_logbit1(k, x) ptr k, x; {
     } else {
       iptr xl; IBOOL xs;
 
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs);
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs);
       return big_logbit1(tc, x, n, X(tc), xl, xs);
     }
   } else {
@@ -1785,7 +1812,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
     bigit x1;
     iptr zl = yl > xl ? yl : xl;
 
-    PREPARE_BIGNUM(W(tc),zl);
+    PREPARE_BIGNUM(tc, W(tc),zl);
     xp = &BIGIT(x,xl); zp = &BIGIT(W(tc),zl);
 
     i = xl;
@@ -1797,7 +1824,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
     }
     *--zp = x1 | (1 << n);
     for (; i > 0; i -= 1) *--zp = *--xp;
-    return copy_normalize(zp, zl, 0);
+    return copy_normalize(tc, zp, zl, 0);
   } else if (yl > xl) {
    /* we'd just be setting a bit that's already (virtually) set */
     return origx;
@@ -1805,7 +1832,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
     bigit xb, k, x1, x2, z1, z2;
     iptr zl = xl + 1;
 
-    PREPARE_BIGNUM(W(tc),zl);
+    PREPARE_BIGNUM(tc, W(tc),zl);
     xp = &BIGIT(x,xl); zp = &BIGIT(W(tc),zl);
     k = xb = 1;
     for (;;) {
@@ -1826,7 +1853,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = z2;
     }
     *--zp = k;
-    return copy_normalize(zp, zl, 1);
+    return copy_normalize(tc, zp, zl, 1);
   }
 }
 
@@ -1838,13 +1865,13 @@ ptr S_logor(x, y) ptr x, y; {
       return (ptr)((iptr)x | (iptr)(y));
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_logor(tc, y, X(tc), BIGLEN(y), xl, BIGSIGN(y), xs);
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_logor(tc, x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), ys);
     } else {
       if (BIGLEN(x) >= BIGLEN(y))
@@ -1873,15 +1900,15 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
 
   if (xs == 0) {
     if (ys == 0) {
-      PREPARE_BIGNUM(W(tc),xl);
+      PREPARE_BIGNUM(tc, W(tc),xl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp | *--yp;
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(zp, xl, 0);
+      return copy_normalize(tc, zp, xl, 0);
     } else {
       bigit yb, k;
 
-      PREPARE_BIGNUM(W(tc),yl+1);
+      PREPARE_BIGNUM(tc, W(tc),yl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),yl+1);
       k = yb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1892,13 +1919,13 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, yl+1, 1);
+      return copy_normalize(tc, zp, yl+1, 1);
     }
   } else {
     if (ys == 0) {
       bigit xb, k;
 
-      PREPARE_BIGNUM(W(tc),xl+1);
+      PREPARE_BIGNUM(tc, W(tc),xl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl+1);
       k = xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1916,11 +1943,11 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, xl+1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     } else {
       bigit xb, yb, k;
 
-      PREPARE_BIGNUM(W(tc),yl+1);
+      PREPARE_BIGNUM(tc, W(tc),yl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),yl+1);
       k = yb = xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -1932,7 +1959,7 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, yl+1, 1);
+      return copy_normalize(tc, zp, yl+1, 1);
     }
   }
 }
@@ -1945,13 +1972,13 @@ ptr S_logxor(x, y) ptr x, y; {
       return (ptr)((iptr)x ^ (iptr)(y));
     } else {
       iptr xl; IBOOL xs;
-      FIXNUM_TO_BIGNUM(X(tc),x,&xl,&xs)
+      FIXNUM_TO_BIGNUM(tc,X(tc),x,&xl,&xs)
       return big_logxor(tc, y, X(tc), BIGLEN(y), xl, BIGSIGN(y), xs);
     }
   } else {
     if (Sfixnump(y)) {
       iptr yl; IBOOL ys;
-      FIXNUM_TO_BIGNUM(Y(tc),y,&yl,&ys)
+      FIXNUM_TO_BIGNUM(tc,Y(tc),y,&yl,&ys)
       return big_logxor(tc, x, Y(tc), BIGLEN(x), yl, BIGSIGN(x), ys);
     } else {
       if (BIGLEN(x) >= BIGLEN(y))
@@ -1980,15 +2007,15 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
 
   if (xs == 0) {
     if (ys == 0) {
-      PREPARE_BIGNUM(W(tc),xl);
+      PREPARE_BIGNUM(tc, W(tc),xl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp ^ *--yp;
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(zp, xl, 0);
+      return copy_normalize(tc, zp, xl, 0);
     } else {
       bigit yb, k;
 
-      PREPARE_BIGNUM(W(tc),xl+1);
+      PREPARE_BIGNUM(tc, W(tc),xl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl+1);
       k = yb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -2005,13 +2032,13 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, xl+1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     }
   } else {
     if (ys == 0) {
       bigit xb, k;
 
-      PREPARE_BIGNUM(W(tc),xl+1);
+      PREPARE_BIGNUM(tc, W(tc),xl+1);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl+1);
       k = xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -2029,11 +2056,11 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(zp, xl+1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     } else {
       bigit xb, yb;
 
-      PREPARE_BIGNUM(W(tc),xl);
+      PREPARE_BIGNUM(tc, W(tc),xl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       yb = xb = 1;
       for (i = yl; i > 0; i -= 1) {
@@ -2047,7 +2074,7 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         x1 = *--xp; x2 = x1 - xb; xb = x2 > x1;
         *--zp = x2;
       }
-      return copy_normalize(zp, xl, 0);
+      return copy_normalize(tc, zp, xl, 0);
     }
   }
 }

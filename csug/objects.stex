@@ -1180,9 +1180,7 @@ the uncompressed size and the compression mode. The result does not include
 the header that is written by port-based compression using the
 \scheme{compressed} option. The compression format is determined by the
 \index{\scheme{compress-format}}\scheme{compress-format}
-parameter.
-The compression level is fixed to some default determined by the
-format; it is not affected by the
+parameter, and the compression level is determined by the
 \index{\scheme{compress-level}}\scheme{compress-level}
 parameter.
 

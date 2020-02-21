@@ -521,6 +521,8 @@ It is generally not a good idea, therefore, to establish handlers for
 memory faults, illegal instructions, and the like, since the code that
 causes the fault or illegal instruction will continue to execute
 (presumably erroneously) for some time before the handler is invoked.
+A finite amount of storage is used to buffer as-yet unhandled
+signals, after which additional signals are dropped.
 
 \scheme{register-signal-handler} is supported only on Unix-based
 systems.
@@ -1422,7 +1424,23 @@ The libraries incorporated into the resulting object file are visible (for
 use by \scheme{environment} and \scheme{eval}) if the \var{libs-visible?}
 argument is supplied and non-false.
 Any library incorporated into the resulting object file and required by
-an object file left to be loaded at run time is also visible.
+an object file left to be loaded at run time is also visible, as are any
+libraries the object file depends upon, regardless of the value of
+\var{libs-visible?}.
+
+\scheme{compile-whole-program} linearizes the initialization code for the
+set of incorporated libraries in a way that respects static
+dependencies among the libraries but not necessary dynamic dependencies
+deriving from initialization-time uses of \scheme{environment}
+or \scheme{eval}.
+Additional static dependencies can be added in most cases to force
+an ordering that allows the dynamic imports to succeed,
+though not in general since a different order might be required each
+time the program is run.
+Adding a static dependency of one library on a second requires
+adding an import of the second in the first as well as a run-time
+reference to one of the variables exported by the second in the
+body of the first.
 
 \var{input-filename} and \var{output-filename} must be strings.
 \var{input-filename} must identify a wpo file, and a wpo or object
@@ -1459,6 +1477,10 @@ except \var{input-filename} must specify a wpo file for a library,
 all libraries are automatically made visible, and a new wpo file is
 produced (when \scheme{generate-wpo-files} is \scheme{#t}) as well
 as an object file for the resulting combination of libraries.
+
+The comment in the description of \scheme{compile-whole-program}
+about the effect of initialization-code linearization on dynamic
+dependencies applies to \scheme{compile-whole-library} as well.
 
 %----------------------------------------------------------------------------
 \entryheader
