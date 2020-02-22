@@ -17,6 +17,7 @@
 
 (let ()
   (import (nanopass))
+  (include "types.ss")
   (include "base-lang.ss")
   (include "expand-lang.ss")
 
@@ -30,11 +31,12 @@
            (go ($build-install-library/ct-code uid export-id* import-code visit-code))]
           [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
            (go ($build-install-library/rt-code uid dl* db* dv* de* body))]
-          [,linfo/ct `(library/ct-info ,(library-info-uid linfo/ct) ,(library/ct-info-import-req* linfo/ct)
-                            ,(library/ct-info-include-req* linfo/ct) ,(library/ct-info-visit-visit-req* linfo/ct)
-                            ,(library/ct-info-visit-req* linfo/ct))]
-          [,linfo/rt `(library/rt-info ,(library-info-uid linfo/rt) ,(library/rt-info-invoke-req* linfo/rt))]
-          [,pinfo `(program-info ,(program-info-invoke-req* pinfo))])
+          [(library/ct-info ,linfo/ct)
+           `(library/ct-info ,(library-info-uid linfo/ct) ,(library/ct-info-import-req* linfo/ct)
+              ,(library/ct-info-visit-visit-req* linfo/ct)
+              ,(library/ct-info-visit-req* linfo/ct))]
+          [(library/rt-info ,linfo/rt) `(library/rt-info ,(library-info-uid linfo/rt) ,(library/rt-info-invoke-req* linfo/rt))]
+          [(program-info ,pinfo) `(program-info ,(program-info-invoke-req* pinfo))])
         (Inner ir))
       (let ([x* (let f ([x x] [x* '()])
                   (nanopass-case (Lexpand Outer) x
@@ -42,7 +44,7 @@
                     [(visit-only ,inner) (cons `(eval-when (visit) ,(go-Inner inner)) x*)]
                     [(revisit-only ,inner) (cons `(eval-when (revisit) ,(go-Inner inner)) x*)]
                     [,inner (cons (go-Inner inner) x*)]
-                    [,rcinfo (cons `(recompile-requirements ,(recompile-info-import-req* x) ,(recompile-info-include-req* x)) x*)]
+                    [(recompile-info ,rcinfo) (cons `(recompile-requirements ,(recompile-info-import-req* rcinfo) ,(recompile-info-include-req* rcinfo)) x*)]
                     [else (sorry! who "unexpected language form ~s" x)]))])
         (safe-assert (not (null? x*)))
         (cond
@@ -310,4 +312,13 @@
           [(clause (,x* ...) ,interface ,body)
            (for-each initialize-id! x*)
            `(clause (,x* ...) ,interface ,(Expr body))]))
-      (Lexpand-to-go x cpcheck-prelex-flags))))
+      (Lexpand-to-go x cpcheck-prelex-flags)))
+
+  (set-who! $insert-profile-src! ; called from compiler only
+    (lambda (st x)
+      ; NB: the output should be *, but nanopass won't autogenerate the pass
+      (define-pass record-coverage-info! : Lsrc (ir) -> Lsrc ()
+        (Expr : Expr (ir) -> Expr ()
+          [(profile ,src) (source-table-set! st src 0) `(profile ,src)]))
+      (Lexpand-to-go x record-coverage-info!)))
+  )

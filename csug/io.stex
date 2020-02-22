@@ -1020,7 +1020,7 @@ be significantly smaller.
 \noindent
 \scheme{compress-level} determines the amount of effort spent on
 compression and is thus relevant only for output.
-It can be set to one of the symbols \scheme{low},
+It can be set to one of the symbols \scheme{minimum}, \scheme{low},
 \scheme{medium}, \scheme{high}, or \scheme{maximum}, which are
 listed in order from shortest to longest expected compression time
 and least to greatest expected effectiveness.
@@ -1642,11 +1642,17 @@ the buffered input or a portion thereof is returned; otherwise
 \entryheader
 \formdef{read-token}{\categoryprocedure}{(read-token)}
 \formdef{read-token}{\categoryprocedure}{(read-token \var{textual-input-port})}
+\formdef{read-token}{\categoryprocedure}{(read-token \var{textual-input-port} \var{sfd} \var{bfp})}
 \returns see below
 \listlibraries
 \endentryheader
 
 \noindent
+\var{sfd} must be a source-file descriptor.
+\var{bfp} must be an exact nonnegative integer and should be the
+character position of the next character to be read from
+\var{textual-input-port}.
+
 Parsing of a Scheme datum is conceptually performed in two steps.
 First, the sequence of characters that form the datum are grouped into
 \scheme{tokens}, such as symbols, numbers, left parentheses, and
@@ -1671,13 +1677,18 @@ One token is read from the input port and returned as four values:
 \item[\var{value}:] the token value,
 
 \item[\var{start}:] the position of the first character of the token,
-relative to the starting position of the input port, and
+relative to the starting position of the input port (or \scheme{#f},
+if the position cannot be determined), and
 
 \item[\var{end}:] the first position beyond the token,
-relative to the starting position of the input port.
+relative to the starting position of the input port (or \scheme{#f},
+if the position cannot be determined).
 \end{description}
 
 \noindent
+The input port is left pointing to the first character position beyond
+the token.
+
 When the token type fully specifies the token,
 \scheme{read-token} returns \scheme{#f} for the value.
 The token types are listed below with the corresponding \var{value}
@@ -1715,8 +1726,18 @@ in parentheses.
 The set of token types is likely to change in future releases of the
 system; check the release notes for details on such changes.
 
-The input port is left pointing to the first character position beyond
-the token, i.e., \var{end} characters from the starting position.
+Specifying \var{sfd} and \var{bfp} improves the quality of error messages,
+guarantees \var{start} and \var{end} can be determined,
+and eliminates the overhead of asking for a file position on each call
+to \scheme{read-token}.
+In most cases, \var{bfp} should be 0 for the first call
+to \scheme{read-token} at the start of a file,
+and it should be the fourth return value (\var{end}) of the preceding
+call to \scheme{read-token} for each subsequent
+call.
+This protocol is necessary to handle files containing multiple-byte
+characters, since file positions do not necessarily correspond
+to character positions.
 
 \schemedisplay
 (define s (open-input-string "(a b c)"))
@@ -3358,7 +3379,6 @@ input port, must be used instead.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port})}
-\formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port})}
 \returns unspecified
 \listlibraries
 \endentryheader
@@ -3370,11 +3390,45 @@ An exception is raised with condition-type \scheme{&assertion} if
 \var{obj} or any portion of \var{obj} has no external fasl representation,
 e.g., if \var{obj} is or contains a procedure.
 
+\schemedisplay
+(define bop (open-file-output-port "tmp.fsl"))
+(fasl-write '(a b c) bop)
+(close-port bop)
+
+(define bip (open-file-input-port "tmp.fsl"))
+(fasl-read bip) ;=> (a b c)
+(fasl-read bip) ;=> #!eof
+(close-port bip)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port})}
+\formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port \var{situation}})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+If present, \var{situation} must be one of the symbols \scheme{load},
+\scheme{visit}, or \scheme{revisit}.
+It defaults to \scheme{load}.
+
 \scheme{fasl-read} reads one object from
 \var{binary-input-port}, which must be positioned at the
 front of an object written in fasl format.
 \scheme{fasl-read} returns the eof object if the file is positioned
 at the end of file.
+If the situation is \scheme{visit}, \scheme{fasl-read} skips over 
+any revisit (run-time-only) objects, and
+if the situation is \scheme{revisit}, \scheme{fasl-read} skips over 
+any visit (compile-time-only) objects.
+It doesn't skip any if the situation is \scheme{load}.
+Similarly, objects marked as both visit and revisit (e.g., object code
+corresponding to source code within an \scheme{eval-when} form with
+situation \scheme{load} or situations \scheme{visit} and \scheme{revisit})
+are never skipped.
 
 \schemedisplay
 (define bop (open-file-output-port "tmp.fsl"))

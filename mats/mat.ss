@@ -40,8 +40,6 @@
 
 (define enable-cp0 (make-parameter #f))
 
-(define mat-run)
-(define mat-file)
 (define-syntax mat/cf
   (syntax-rules (testfile)
     [(_ (testfile ?path) expr ...)
@@ -55,9 +53,9 @@
        #t)]
     [(_ expr ...) (mat/cf (testfile "testfile") expr ...)]))
 
-(let ()
+(define mat-output (make-parameter (current-output-port)))
 
-(define *mat-output* (current-output-port))
+(let ()
 
 (define mat-load
   (lambda (in)
@@ -74,8 +72,8 @@
               (if (warning? c)
                   (raise-continuable c)
                   (begin
-                    (fprintf *mat-output* "Error reading mat input: ")
-                    (display-condition c *mat-output*)
+                    (fprintf (mat-output) "Error reading mat input: ")
+                    (display-condition c (mat-output))
                     (reset))))
             (lambda () (load in))))))))
 
@@ -174,10 +172,10 @@
               (call-with-values
                 (lambda () (#%$locate-source sfd fp #t))
                 (case-lambda
-                  [() (fprintf *mat-output* "~a at char ~a of ~a~%" msg fp (source-file-descriptor-path sfd))]
-                  [(path line char) (fprintf *mat-output* "~a at line ~a, char ~a of ~a~%" msg line char path)]))))
-          (fprintf *mat-output* "~a~%" msg))
-      (flush-output-port *mat-output*))))
+                  [() (fprintf (mat-output) "~a at char ~a of ~a~%" msg fp (source-file-descriptor-path sfd))]
+                  [(path line char) (fprintf (mat-output) "~a at line ~a, char ~a of ~a~%" msg line char path)]))))
+          (fprintf (mat-output) "~a~%" msg))
+      (flush-output-port (mat-output)))))
 
 (define ununicode
  ; sanitizer for expected exception messages to make sure we don't end up
@@ -192,6 +190,38 @@
             [(fx> (char->integer c) 127) (fprintf op "U+~x" (char->integer c)) (f)]
             [else (write-char c op) (f)]))))))
 
+(define store-coverage
+  (lambda (universe-ct ct path)
+    (call-with-port
+      (open-file-output-port path
+        (file-options replace compressed)
+        (buffer-mode block)
+        (current-transcoder))
+      (lambda (op)
+        (put-source-table op
+          (if (eq? universe-ct ct)
+              ct
+              (let ([new-ct (make-source-table)])
+                (for-each
+                  (lambda (p)
+                    (let ([src (car p)] [count (cdr p)])
+                      (when (source-table-contains? universe-ct src)
+                        (source-table-set! new-ct src count))))
+                  (source-table-dump ct))
+                new-ct)))))))
+
+(define load-coverage
+  (lambda (ct)
+    (lambda (path)
+      (call-with-port
+        (open-file-input-port path
+          (file-options compressed)
+          (buffer-mode block)
+          (current-transcoder))
+        (lambda (ip) (get-source-table! ip ct +))))))
+
+(set! coverage-table (make-parameter #f))
+
 (set! mat-file
   (lambda (dir)
     (unless (string? dir)
@@ -199,71 +229,105 @@
     (unless (file-exists? dir) (mkdir dir))
     (lambda (mat)
       (unless (string? mat)
-        (errorf 'mat-file "~s is not a string" fn))
+        (errorf 'mat-file "~s is not a string" mat))
       (let ([ifn (format "~a.ms" mat)] [ofn (format "~a/~a.mo" dir mat)])
         (printf "matting ~a with output to ~a~%" ifn ofn)
         (delete-file ofn #f)
-        (fluid-let ([*mat-output* (open-output-file ofn)])
+        (parameterize ([mat-output (open-output-file ofn)])
           (dynamic-wind
             (lambda () #f)
-            (lambda () (mat-load ifn))
-            (lambda () (close-output-port *mat-output*))))))))
+            (lambda ()
+              (let ([go (lambda () (mat-load ifn))] [universe-ct (coverage-table)])
+                (if universe-ct
+                    (let-values ([(ct . ignore) (with-profile-tracker go)])
+                      (store-coverage universe-ct ct (format "~a/~a.covout" dir mat)))
+                    (go))))
+            (lambda () (close-output-port (mat-output)))))))))
+
+(set! record-run-coverage
+  (lambda (covout th)
+    (let ([universe-ct (coverage-table)])
+      (if universe-ct
+          (let-values ([(ct . ignore) (with-profile-tracker #t th)])
+            (store-coverage universe-ct ct covout))
+          (th)))))
+
+(set! load-coverage-files
+  (lambda path*
+    (let ([ct (make-source-table)])
+      (for-each (load-coverage ct) path*)
+      ct)))
+
+(set! combine-coverage-files
+  (lambda (covout covout*)
+    (let ([ct (make-source-table)])
+      (for-each (load-coverage ct) covout*)
+      (store-coverage ct ct covout))))
+
+(set! coverage-percent
+  (lambda (covout . covin*)
+    (let ([n (source-table-size (load-coverage-files covout))]
+          [d (source-table-size (apply load-coverage-files covin*))])
+      (printf "~a: covered ~s of ~s source expressions (~s%)\n"
+        covout n d (round (/ (* n 100) d))))))
 
 (set! mat-run
-   (case-lambda
-      [(name)
-       (fprintf *mat-output* "Warning: empty mat for ~s.~%" name)]
-      [(name . clauses)
-       (fprintf *mat-output* "~%Starting mat ~s.~%" name)
-       (do ([clauses clauses (cdr clauses)]
-            [count 1 (+ count 1)])
-           ((null? clauses) 'done)
-           (let ([clause (caar clauses)] [source (cadar clauses)])
-             (with-exception-handler
-               (lambda (c)
-                 (if (warning? c)
-                     (raise-continuable c)
-                     (begin
-                       (fprintf *mat-output* "Error printing mat clause: ")
-                       (display-condition c *mat-output*)
-                       (reset))))
-               (lambda ()
-                 (pretty-print clause *mat-output*)
-                 (flush-output-port *mat-output*)))
-              (if (and (list? clause)
-                       (= (length clause) 2)
-                       (memq (car clause) '(sanitized-error? error? warning?)))
-                  (let ([expect (case (car clause) [(sanitized-error? error?) 'error] [(warning?) 'warning])])
-                    (if (and (= (optimize-level) 3) (eq? expect 'error))
-                        (fprintf *mat-output* "Ignoring error check at optimization level 3.~%")
-                        (let ([ans (mat-one-exp expect (lambda () (eval (cadr clause))) (eq? (car clause) 'sanitized-error?))])
-                          (cond
-                            [(and (pair? ans) (eq? (car ans) expect))
-                             (fprintf *mat-output*
-                               "Expected ~s in mat ~s: \"~a\".~%"
-                               expect name (ununicode (cdr ans)))]
-                            [else
-                             (mat-error source "Bug in mat ~s clause ~s" name count)]))))
-                  (let ([ans (mat-one-exp #f (lambda () (eval clause)) #f)])
+  (case-lambda
+    [(name)
+     (fprintf (mat-output) "Warning: empty mat for ~s.~%" name)]
+    [(name . clauses)
+     (fprintf (mat-output) "~%Starting mat ~s.~%" name)
+     ; release counters for reclaimed code objects between mat groups to reduce gc time
+     (when (compile-profile) (profile-release-counters))
+     (do ([clauses clauses (cdr clauses)]
+          [count 1 (+ count 1)])
+       ((null? clauses) 'done)
+       (let ([clause (caar clauses)] [source (cadar clauses)])
+         (with-exception-handler
+           (lambda (c)
+             (if (warning? c)
+                 (raise-continuable c)
+                 (begin
+                   (fprintf (mat-output) "Error printing mat clause: ")
+                   (display-condition c (mat-output))
+                   (reset))))
+           (lambda ()
+             (pretty-print clause (mat-output))
+             (flush-output-port (mat-output))))
+         (if (and (list? clause)
+                  (= (length clause) 2)
+                  (memq (car clause) '(sanitized-error? error? warning?)))
+             (let ([expect (case (car clause) [(sanitized-error? error?) 'error] [(warning?) 'warning])])
+               (if (and (= (optimize-level) 3) (eq? expect 'error))
+                   (fprintf (mat-output) "Ignoring error check at optimization level 3.~%")
+                   (let ([ans (mat-one-exp expect (lambda () (eval (cadr clause))) (eq? (car clause) 'sanitized-error?))])
                      (cond
-                        [(pair? ans)
-                         (mat-error source
-                            "Error in mat ~s clause ~s: \"~a\""
-                            name
-                            count
-                            (cdr ans))]
-                        [(eq? ans 'false)
-                         (mat-error source
-                            "Bug in mat ~s clause ~s"
-                            name
-                            count)]
-                        [(eq? ans 'true) (void)]
-                        [else
-                         (mat-error source
-                            "Bug (nonboolean, nonstring return value) in mat ~s clause ~s"
-                            name
-                            count)])))))]))
- 
+                       [(and (pair? ans) (eq? (car ans) expect))
+                        (fprintf (mat-output)
+                          "Expected ~s in mat ~s: \"~a\".~%"
+                          expect name (ununicode (cdr ans)))]
+                       [else
+                         (mat-error source "Bug in mat ~s clause ~s" name count)]))))
+             (let ([ans (mat-one-exp #f (lambda () (eval clause)) #f)])
+               (cond
+                 [(pair? ans)
+                  (mat-error source
+                    "Error in mat ~s clause ~s: \"~a\""
+                    name
+                    count
+                    (cdr ans))]
+                 [(eq? ans 'false)
+                  (mat-error source
+                    "Bug in mat ~s clause ~s"
+                    name
+                    count)]
+                 [(eq? ans 'true) (void)]
+                 [else
+                  (mat-error source
+                    "Bug (nonboolean, nonstring return value) in mat ~s clause ~s"
+                    name
+                    count)])))))]))
+
  );let
 
 (define equivalent-expansion?
@@ -296,8 +360,7 @@
                    (and (fxvector? y)
                         (fx= (fxvector-length x) (fxvector-length y))
                         (let f ([i (fx- (fxvector-length x) 1)])
-                          (if (fx< i 0)
-                              k
+                          (or (fx< i 0)
                               (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                                    (f (fx1- i))))))]
                   [(box? x) (and (box? y) (e? (unbox x) (unbox y)))]
@@ -364,7 +427,7 @@
         (list->string (subst #\\ #\/ (string->list p)))
         p)))
 
-(module (separate-eval run-script separate-compile)
+(module separate-eval-tools (separate-eval run-script separate-compile)
   (define (slurp ip)
     (with-output-to-string
       (lambda ()
@@ -383,7 +446,11 @@
       (close-port to-stdin)
       (let* ([stdout-stuff (slurp from-stdout)]
              [stderr-stuff (slurp from-stderr)])
-        (unless (string=? stderr-stuff "") (errorf who "~a" stderr-stuff))
+        (when (string=? stderr-stuff "")
+          (printf "$separate-eval command succeeeded with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff))
+        (unless (string=? stderr-stuff "")
+          (printf "$separate-eval command failed with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff)
+          (errorf who "~a" stderr-stuff))
         (close-port from-stdout)
         (close-port from-stderr)
         stdout-stuff)))
@@ -409,6 +476,7 @@
       [(x) (separate-compile 'compile-file x)]
       [(cf x) ($separate-eval 'separate-compile `((,cf ,(if (symbol? x) (format "testfile-~a" x) x))))])))
 
+(import separate-eval-tools)
 
 #;(collect-request-handler
   (begin
@@ -440,12 +508,13 @@
 (define test-cp0-expansion
   (rec test-cp0-expansion
     (case-lambda
-      [(expr result) (test-cp0-expansion equivalent-expansion? expr result)]
-      [(equiv? expr result)
-       (equiv?
-         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-           (expand/optimize `(let () (import scheme) ,expr)))
-         result)])))
+      [(expr expected) (test-cp0-expansion equivalent-expansion? expr expected)]
+      [(equiv? expr expected)
+       (let ([actual (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+                       (expand/optimize `(let () (import scheme) ,expr)))])
+         (unless (equiv? actual expected)
+           (errorf 'test-cp0-expansion "expected ~s for ~s, got ~s\n" expected expr actual))
+         #t)])))
 
 (define rm-rf
   (lambda (path)
@@ -474,3 +543,21 @@
           (sleep (make-time 'time-duration 1000000 1))
           (loop))))
     #t))
+
+(define preexisting-profile-dump-entry?
+  (let ([ht (make-eq-hashtable)])
+    (for-each (lambda (x) (eq-hashtable-set! ht (car x) #t)) (profile-dump))
+    (lambda (x) (eq-hashtable-contains? ht (car x)))))
+
+(define heap-check-interval (make-parameter 0))
+
+(collect-request-handler
+  (let ([counter 0])
+    (lambda ()
+      (parameterize ([#%$enable-check-heap
+                       (let ([interval (heap-check-interval)])
+                         (and (not (fx= interval 0))
+                              (let ([n (fxmod (fx+ counter 1) interval)])
+                                (set! counter n)
+                                (fx= n 0))))])
+        (collect)))))

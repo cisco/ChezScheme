@@ -58,16 +58,168 @@
 
 (let ()
   (include "types.ss")
+  (module (make-tracker tracker-profile-ct)
+    (define-record-type tracker
+      (nongenerative)
+      (fields profile-ct)))
+  (define-record-type cc
+    (nongenerative)
+    (fields (mutable cookie) (mutable total) (mutable current) (mutable preceding)))
+  (define-record-type (source-table $make-source-table $source-table?)
+    (nongenerative)
+    (sealed #t)
+    (opaque #t)
+    (fields ht)
+    (protocol
+      (lambda (new)
+        (lambda ()
+          (define sfd-hash
+            (lambda (sfd)
+              (source-file-descriptor-crc sfd)))
+          (define sfd=?
+            (lambda (sfd1 sfd2)
+              (and (fx= (source-file-descriptor-crc sfd1) (source-file-descriptor-crc sfd2))
+                   (= (source-file-descriptor-length sfd1) (source-file-descriptor-length sfd2))
+                   (string=? (source-file-descriptor-name sfd1) (source-file-descriptor-name sfd2)))))
+          (new (make-hashtable sfd-hash sfd=?))))))
+  (define *local-profile-trackers* '())
   (define op+ car)
   (define op- cdr)
+  (define count+ (constant-case ptr-bits [(32) +] [(64) fx+]))
+  (define count- (constant-case ptr-bits [(32) -] [(64) fx-]))
+  (define count< (constant-case ptr-bits [(32) <] [(64) fx<]))
   (define get-counter-list (foreign-procedure "(cs)s_profile_counters" () ptr))
-  (define set-counter-list! (foreign-procedure "(cs)s_set_profile_counters" (ptr) void))
-  (set-who! profile-release-counters
-    (lambda ()
-      (set-counter-list!
-        (remp
-          (lambda (x) (bwp-object? (car x)))
-          (get-counter-list)))))
+  (define release-counters (foreign-procedure "(cs)s_profile_release_counters" () ptr))
+
+  (define rblock-count
+    (lambda (rblock)
+      (let sum ((op (rblock-op rblock)))
+        (if (profile-counter? op)
+            (profile-counter-count op)
+            ; using #3%fold-left in case the #2% versions are profiled
+            (#3%fold-left
+              (lambda (a op) (count- a (sum op)))
+              (#3%fold-left (lambda (a op) (count+ a (sum op))) 0 (op+ op))
+              (op- op))))))
+
+  (define profile-counts
+    ; like profile-dump but returns ((count . (src ...)) ...)
+    (case-lambda
+      [() (profile-counts (get-counter-list))]
+      [(counter*)
+       ; disabiling interrupts so we don't sum part of the counters for a block before
+       ; an interrupt and the remaining counters after the interrupt, which can lead
+       ; to inaccurate (and possibly negative) counts.  we could disable interrupts just
+       ; around the body of rblock-count to shorten the windows during which interrupts
+       ; are disabled, but doing it here incurs less overhead
+       (with-interrupts-disabled
+         (fold-left
+           (lambda (r x)
+             (fold-left
+               (lambda (r rblock)
+                 (cons (cons (rblock-count rblock) (rblock-srecs rblock)) r))
+               r (cdr x)))
+           '() counter*))]))
+
+  (define (snapshot who uncleared-count* cleared-count*)
+    (lambda (tracker)
+      (define cookie (cons 'vanilla 'wafer))
+      ; set current corresponding to each src to a total of its counts
+      (let ([incr-current
+              (lambda (count.src*)
+                (let ([count (car count.src*)])
+                  (for-each
+                    (lambda (src)
+                      (let ([a ($source-table-cell (tracker-profile-ct tracker) src #f)])
+                        (when (count< count 0) (errorf who "negative profile count ~s for ~s" count src))
+                        (let ([cc (cdr a)])
+                          (if cc
+                              (if (eq? (cc-cookie cc) cookie)
+                                  (cc-current-set! cc (count+ (cc-current cc) count))
+                                  (begin
+                                    (cc-cookie-set! cc cookie)
+                                    (cc-current-set! cc count)))
+                              (set-cdr! a (make-cc cookie 0 count 0))))))
+                    (cdr count.src*))))])
+        (for-each incr-current uncleared-count*)
+        (for-each incr-current cleared-count*))
+      ; then increment total of each affected cc by the delta between current and preceding
+      (source-table-for-each
+        (lambda (src cc)
+          (when (eq? (cc-cookie cc) cookie)
+            (let ([current (cc-current cc)])
+              (let ([delta (count- current (cc-preceding cc))])
+                (unless (eqv? delta 0)
+                  (when (count< delta 0) (errorf who "total profile count for ~s dropped from ~s to ~s" src (cc-preceding cc) current))
+                  (cc-total-set! cc (count+ (cc-total cc) delta))
+                  (cc-preceding-set! cc current))))))
+        (tracker-profile-ct tracker))
+      ; then reduce preceding by cleared counts
+      (for-each
+        (lambda (count.src*)
+          (let ([count (car count.src*)])
+            (for-each
+              (lambda (src)
+                (let ([a ($source-table-cell (tracker-profile-ct tracker) src #f)])
+                  (let ([cc (cdr a)])
+                    (if cc
+                        (cc-preceding-set! cc (count- (cc-preceding cc) count))
+                        (set-cdr! a (make-cc cookie 0 0 0))))))
+              (cdr count.src*))))
+        cleared-count*)))
+
+  (define adjust-trackers!
+    (lambda (who uncleared-counter* cleared-counter*)
+      (let ([local-tracker* *local-profile-trackers*])
+        (unless (null? local-tracker*)
+          (let ([uncleared-count* (profile-counts uncleared-counter*)]
+                [cleared-count* (profile-counts cleared-counter*)])
+            (let ([snapshot (snapshot who uncleared-count* cleared-count*)])
+              (for-each snapshot local-tracker*)))))))
+
+  (define $source-table-contains?
+    (lambda (st src)
+      (let ([src-ht (hashtable-ref (source-table-ht st) (source-sfd src) #f)])
+        (and src-ht (hashtable-contains? src-ht src)))))
+
+  (define $source-table-ref
+    (lambda (st src default)
+      (let ([src-ht (hashtable-ref (source-table-ht st) (source-sfd src) #f)])
+        (if src-ht (hashtable-ref src-ht src default) default))))
+
+  (define $source-table-cell
+    (lambda (st src default)
+      (define same-sfd-src-hash
+        (lambda (src)
+          (source-bfp src)))
+      (define same-sfd-src=?
+        (lambda (src1 src2)
+          (and (= (source-bfp src1) (source-bfp src2))
+               (= (source-efp src1) (source-efp src2)))))
+      (let ([src-ht (let ([a (hashtable-cell (source-table-ht st) (source-sfd src) #f)])
+                      (or (cdr a)
+                          (let ([src-ht (make-hashtable same-sfd-src-hash same-sfd-src=?)])
+                            (set-cdr! a src-ht)
+                            src-ht)))])
+        (hashtable-cell src-ht src default))))
+
+  (define $source-table-delete!
+    (lambda (st src)
+      (let ([ht (source-table-ht st)] [sfd (source-sfd src)])
+        (let ([src-ht (hashtable-ref ht sfd #f)])
+          (when src-ht
+            (hashtable-delete! src-ht src)
+            (when (fx= (hashtable-size src-ht) 0)
+              (hashtable-delete! ht sfd)))))))
+
+  (define source-table-for-each
+    (lambda (p st)
+      (vector-for-each
+        (lambda (src-ht)
+          (let-values ([(vsrc vcount) (hashtable-entries src-ht)])
+            (vector-for-each p vsrc vcount)))
+        (hashtable-values (source-table-ht st)))))
+
   (set-who! profile-clear
     (lambda ()
       (define clear-links
@@ -77,33 +229,209 @@
               (begin
                 (for-each clear-links (op+ op))
                 (for-each clear-links (op- op))))))
-      (for-each
-        (lambda (x)
-          (for-each (lambda (node) (clear-links (rblock-op node)))
-            (cdr x)))
-        (get-counter-list))))
-  (set-who! profile-dump
+      (let ([counter* (get-counter-list)])
+        (adjust-trackers! who '() counter*)
+        (for-each
+          (lambda (x)
+            (for-each
+              (lambda (node) (clear-links (rblock-op node)))
+              (cdr x)))
+          counter*))))
+
+  (set-who! profile-release-counters
     (lambda ()
-      (define rblock-count
-        (lambda (rblock)
-          (let sum ((op (rblock-op rblock)))
-            ; using #3%apply and #3%map in case the #2% versions are profiled,
-            ; to avoid possible negative counts
-            (if (profile-counter? op)
-                (profile-counter-count op)
-                (- (#3%apply + (#3%map sum (op+ op)))
-                   (#3%apply + (#3%map sum (op- op))))))))
-      (fold-left
-        (lambda (r x)
-          (fold-left
-            (lambda (r rblock)
-              (fold-left
+      ; release-counters prunes out (and hands back) the released counters
+      (let* ([dropped-counter* (release-counters)]
+             [kept-counter* (get-counter-list)])
+        (adjust-trackers! who kept-counter* dropped-counter*))))
+
+  (set-who! profile-dump
+    ; like profile-counts but returns ((src . count) ...), which requires more allocation
+    ; profile-dump could use profile-counts but that would require even more allocation
+    (lambda ()
+      ; could disable interrupts just around each call to rblock-count, but doing it here incurs less overhead
+      (with-interrupts-disabled
+        (fold-left
+          (lambda (r x)
+            (fold-left
+              (lambda (r rblock)
                 (let ([count (rblock-count rblock)])
-                  (lambda (r inst)
-                    (cons (cons inst count) r)))
-                r (rblock-srecs rblock)))
-            r (cdr x)))
-        '() (get-counter-list)))))
+                  (fold-left
+                    (lambda (r src)
+                      (cons (cons src count) r))
+                    r (rblock-srecs rblock))))
+              r (cdr x)))
+          '() (get-counter-list)))))
+
+  (set-who! make-source-table
+    (lambda ()
+      ($make-source-table)))
+
+  (set-who! source-table?
+    (lambda (x)
+      ($source-table? x)))
+
+  (set-who! source-table-size
+    (lambda (st)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (let ([vsrc-ht (hashtable-values (source-table-ht st))])
+        (let ([n (vector-length vsrc-ht)])
+          (do ([i 0 (fx+ i 1)] [size 0 (fx+ size (hashtable-size (vector-ref vsrc-ht i)))])
+            ((fx= i n) size))))))
+
+  (set-who! source-table-contains?
+    (lambda (st src)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (unless (source? src) ($oops who "~s is not a source object" src))
+      ($source-table-contains? st src)))
+
+  (set-who! source-table-ref
+    (lambda (st src default)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (unless (source? src) ($oops who "~s is not a source object" src))
+      ($source-table-ref st src default)))
+
+  (set-who! source-table-set!
+    (lambda (st src val)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (unless (source? src) ($oops who "~s is not a source object" src))
+      (set-cdr! ($source-table-cell st src #f) val)))
+
+  (set-who! source-table-delete!
+    (lambda (st src)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (unless (source? src) ($oops who "~s is not a source object" src))
+      ($source-table-delete! st src)))
+
+  (set-who! source-table-cell
+    (lambda (st src default)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (unless (source? src) ($oops who "~s is not a source object" src))
+      ($source-table-cell st src default)))
+
+  (set-who! source-table-dump
+    (lambda (st)
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (let* ([vsrc-ht (hashtable-values (source-table-ht st))]
+             [n (vector-length vsrc-ht)])
+        (do ([i 0 (fx+ i 1)]
+             [dumpit* '()
+               (let-values ([(vsrc vcount) (hashtable-entries (vector-ref vsrc-ht i))])
+                 (let ([n (vector-length vsrc)])
+                   (do ([i 0 (fx+ i 1)]
+                        [dumpit* dumpit*
+                          (cons (cons (vector-ref vsrc i) (vector-ref vcount i)) dumpit*)])
+                     ((fx= i n) dumpit*))))])
+          ((fx= i n) dumpit*)))))
+
+  (set-who! put-source-table
+    (lambda (op st)
+      (unless (and (output-port? op) (textual-port? op)) ($oops who "~s is not a textual output port" op))
+      (unless ($source-table? st) ($oops who "~s is not a source table" st))
+      (fprintf op "(source-table")
+      (let-values ([(vsfd vsrc-ht) (hashtable-entries (source-table-ht st))])
+        (vector-for-each
+          (lambda (sfd src-ht)
+            (let-values ([(vsrc vval) (hashtable-entries src-ht)])
+              (let ([n (vector-length vsrc)])
+                (unless (fx= n 0)
+                  (fprintf op "\n (file ~s ~s"
+                    (source-file-descriptor-name sfd)
+                    (source-file-descriptor-checksum sfd))
+                  (let ([v (vector-sort (lambda (x1 x2) (< (vector-ref x1 0) (vector-ref x2 0)))
+                              (vector-map (lambda (src val) (vector (source-bfp src) (source-efp src) val)) vsrc vval))])
+                    (let loop ([i 0] [last-bfp 0])
+                      (unless (fx= i n)
+                        (let ([x (vector-ref v i)])
+                          (let ([bfp (vector-ref x 0)] [efp (vector-ref x 1)] [val (vector-ref x 2)])
+                            (let ([offset (- bfp last-bfp)] [len (- efp bfp)])
+                              (fprintf op " (~s ~s ~s)" offset len val))
+                            (loop (fx+ i 1) bfp))))))
+                  (fprintf op ")")))))
+          vsfd vsrc-ht))
+      (fprintf op ")\n")))
+
+  (set-who! get-source-table!
+    (rec get-source-table!
+      (case-lambda
+        [(ip st) (get-source-table! ip st #f)]
+        [(ip st combine)
+         (define (nnint? x) (and (integer? x) (exact? x) (nonnegative? x)))
+         (define (token-oops what bfp)
+           (if bfp
+               ($oops who "expected ~a at file position ~s of ~s" what bfp ip)
+               ($oops who "malformed source table reading from ~a" ip)))
+         (define (next-token expected-type expected-value? what)
+           (let-values ([(type val bfp efp) (read-token ip)])
+             (unless (and (eq? type expected-type) (expected-value? val)) (token-oops what bfp))
+             val))
+         (unless (and (input-port? ip) (textual-port? ip)) ($oops who "~s is not a textual input port" ip))
+         (unless ($source-table? st) ($oops who "~s is not a source table" st))
+         (unless (or (not combine) (procedure? combine)) ($oops who "~s is not a procedure" combine))
+         (next-token 'lparen not "open parenthesis")
+         (next-token 'atomic (lambda (x) (eq? x 'source-table)) "identifier 'source-table'")
+         (let file-loop ()
+           (let-values ([(type val bfp efp) (read-token ip)])
+             (unless (eq? type 'rparen)
+               (unless (eq? type 'lparen) (token-oops "open parenthesis" bfp))
+               (next-token 'atomic (lambda (x) (eq? x 'file)) "identifier 'file'")
+               (let* ([path (next-token 'atomic string? "string")]
+                      [checksum (next-token 'atomic nnint? "checksum")])
+                 (let ([sfd (#%source-file-descriptor path checksum)])
+                   (let entry-loop ([last-bfp 0])
+                     (let-values ([(type val bfp efp) (read-token ip)])
+                       (unless (eq? type 'rparen)
+                         (unless (eq? type 'lparen) (token-oops "open parenthesis" bfp))
+                         (let* ([bfp (+ last-bfp (next-token 'atomic nnint? "file position"))]
+                                [efp (+ bfp (next-token 'atomic nnint? "file position"))]
+                                [val (get-datum ip)])
+                           (next-token 'rparen not "close parenthesis")
+                           (let ([a ($source-table-cell st (make-source-object sfd bfp efp) #f)])
+                             (set-cdr! a
+                               (if (and (cdr a) combine)
+                                   (combine (cdr a) val)
+                                   val)))
+                           (entry-loop bfp)))))))
+               (file-loop))))])))
+
+  (set-who! with-profile-tracker
+    (rec with-profile-tracker
+      (case-lambda
+        [(thunk) (with-profile-tracker #f thunk)]
+        [(include-existing-counts? thunk)
+         (define extract-covered-entries
+           (lambda (profile-ct) 
+             (let ([covered-ct ($make-source-table)])
+               (source-table-for-each
+                 (lambda (src cc)
+                   (let ([count (cc-total cc)])
+                     (unless (eqv? count 0)
+                       ($source-table-cell covered-ct src count))))
+                 profile-ct)
+               covered-ct)))
+         (unless (procedure? thunk) ($oops who "~s is not a procedure" thunk))
+         (let* ([profile-ct ($make-source-table)]
+                [tracker (make-tracker profile-ct)])
+           (unless include-existing-counts?
+             ; set preceding corresponding to each src to a total of its dumpit counts
+             ; set total to zero, since we don't want to count anything from before
+             (for-each
+               (lambda (count.src*)
+                 (let ([count (car count.src*)])
+                   (for-each
+                     (lambda (src)
+                       (let ([a ($source-table-cell profile-ct src #f)])
+                         (let ([cc (cdr a)])
+                           (if cc
+                               (cc-preceding-set! cc (count+ (cc-preceding cc) count))
+                               (set-cdr! a (make-cc #f 0 0 count))))))
+                     (cdr count.src*))))
+               (profile-counts)))
+           ; register for possible adjustment by profile-clear and profile-release-counters
+           (let-values ([v* (fluid-let ([*local-profile-trackers* (cons tracker *local-profile-trackers*)]) (thunk))])
+             ; increment the recorded counts by the now current counts.
+             ((snapshot who (profile-counts) '()) tracker)
+             (apply values (extract-covered-entries profile-ct) v*)))]))))
 
 (let ()
   (include "types.ss")
@@ -371,6 +699,10 @@
                     (with-tc-mutex (populate! x))
                     (f)))))
             (close-port ip)))
+        (for-each
+          (lambda (ifn)
+            (unless (string? ifn) ($oops who "~s is not a string" ifn)))
+          ifn*)
         (for-each load-file ifn*)))
     (set! $profile-show-database
       (lambda ()

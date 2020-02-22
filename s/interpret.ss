@@ -666,7 +666,7 @@
       ($cptypes x))
       x)
 
-(define-pass interpret-Lexpand : Lexpand (ir situation for-import? ofn eoo) -> * (val)
+(define-pass interpret-Lexpand : Lexpand (ir situation for-import? importer ofn eoo) -> * (val)
   (definitions
     (define (ibeval x1)
       ($rt (parameterize ([$target-machine (machine-type)] [$sfd #f])
@@ -694,16 +694,16 @@
      (ibeval ($build-install-library/ct-code uid export-id* import-code visit-code))]
     [(library/rt ,uid (,dl* ...) (,db* ...) (,dv* ...) (,de* ...) ,body)
      (ibeval ($build-install-library/rt-code uid dl* db* dv* de* body))]
-    [,linfo/rt ($install-library/rt-desc linfo/rt for-import? ofn)]
-    [,linfo/ct ($install-library/ct-desc linfo/ct for-import? ofn)]
-    [,pinfo ($install-program-desc pinfo)]
+    [(library/rt-info ,linfo/rt) ($install-library/rt-desc linfo/rt for-import? importer ofn)]
+    [(library/ct-info ,linfo/ct) ($install-library/ct-desc linfo/ct for-import? importer ofn)]
+    [(program-info ,pinfo) ($install-program-desc pinfo)]
     [else (sorry! who "unexpected language form ~s" ir)])
   (Outer : Outer (ir) -> * (val)
     ; can't use cata since (Outer outer1) might return 0 or more than one value
     [(group ,outer1 ,outer2) (Outer outer1) (Outer outer2)]
     [(visit-only ,inner) (unless (eq? situation 'revisit) (Inner inner))]
     [(revisit-only ,inner) (unless (eq? situation 'visit) (Inner inner))]
-    [,rcinfo (void)]
+    [(recompile-info ,rcinfo) (void)]
     [,inner (Inner inner)]
     [else (sorry! who "unexpected language form ~s" ir)])
   (Outer ir))
@@ -725,11 +725,11 @@
          ($uncprep x1 #t) ; populate preinfo sexpr fields
          (when (and (expand-output) (not ($noexpand? x0)))
            (pretty-print ($uncprep x1) (expand-output)))
-         (interpret-Lexpand x1 'load #f #f (and (not ($noexpand? x0)) (expand/optimize-output))))])))
+         (interpret-Lexpand x1 'load #f #f #f (and (not ($noexpand? x0)) (expand/optimize-output))))])))
 
 (set! $interpret-backend
-  (lambda (x situation for-import? ofn)
-    (interpret-Lexpand x situation for-import? ofn (expand/optimize-output))))
+  (lambda (x situation for-import? importer ofn)
+    (interpret-Lexpand x situation for-import? importer ofn (expand/optimize-output))))
 )
 
 (current-eval interpret)

@@ -116,7 +116,7 @@ static ptr s_multibytetowidechar PROTO((unsigned cp, ptr inbv));
 static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
 #endif
 static ptr s_profile_counters PROTO((void));
-static void s_set_profile_counters PROTO((ptr counters));
+static ptr s_profile_release_counters PROTO((void));
 
 #define require(test,who,msg,arg) if (!(test)) S_error1(who, msg, arg)
 
@@ -166,7 +166,7 @@ static iptr s_fxdiv(x, y) iptr x, y; {
 
 static ptr s_trunc_rem(x, y) ptr x, y; {
   ptr q, r;
-  S_trunc_rem(x, y, &q, &r);
+  S_trunc_rem(get_thread_context(), x, y, &q, &r);
   return Scons(q, r);
 }
 
@@ -1467,8 +1467,25 @@ static ptr s_profile_counters(void) {
   return S_G.profile_counters;
 }
 
-static void s_set_profile_counters(ptr counters) {
-  S_G.profile_counters = counters;
+/* s_profile_release_counters assumes and maintains the property that each pair's
+   tail is not younger than the pair and thereby avoids dirty sets. */
+static ptr s_profile_release_counters(void) {
+  ptr tossed, *p_keep, *p_toss, ls;
+  p_keep = &S_G.profile_counters;
+  p_toss = &tossed;
+  for (ls = *p_keep; ls != Snil && (MaybeSegInfo(ptr_get_segment(ls)))->generation <= S_G.prcgeneration; ls = Scdr(ls)) {
+    if (Sbwp_objectp(CAAR(ls))) {
+      *p_toss = ls;
+      p_toss = &Scdr(ls);
+    } else {
+      *p_keep = ls;
+      p_keep = &Scdr(ls);
+    }
+  }
+  *p_keep = ls;
+  *p_toss = Snil;
+  S_G.prcgeneration = 0;
+  return tossed;
 }
 
 void S_dump_tc(ptr tc) {
@@ -1606,6 +1623,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)lognot", (void *)S_lognot);
     Sforeign_symbol("(cs)fxmul", (void *)s_fxmul);
     Sforeign_symbol("(cs)fxdiv", (void *)s_fxdiv);
+    Sforeign_symbol("(cs)s_big_negate", (void *)S_big_negate);
     Sforeign_symbol("(cs)add", (void *)S_add);
     Sforeign_symbol("(cs)gcd", (void *)S_gcd);
     Sforeign_symbol("(cs)mul", (void *)S_mul);
@@ -1641,6 +1659,7 @@ void S_prim5_init() {
 #else
     Sforeign_symbol("(cs)directory_list", (void *)S_directory_list);
 #endif
+    Sforeign_symbol("(cs)dequeue_scheme_signals", (void *)S_dequeue_scheme_signals);
     Sforeign_symbol("(cs)register_scheme_signal", (void *)S_register_scheme_signal);
 
     Sforeign_symbol("(cs)exp", (void *)s_exp);
@@ -1701,7 +1720,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_widechartomultibyte", (void *)s_widechartomultibyte);
 #endif
     Sforeign_symbol("(cs)s_profile_counters", (void *)s_profile_counters);
-    Sforeign_symbol("(cs)s_set_profile_counters", (void *)s_set_profile_counters);
+    Sforeign_symbol("(cs)s_profile_release_counters", (void *)s_profile_release_counters);
 }
 
 static ptr s_get_reloc(co, with_offsets) ptr co; IBOOL with_offsets; {

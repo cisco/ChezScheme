@@ -14,19 +14,66 @@
 ;;; limitations under the License.
 
 (mat primvars
-  (let loop ([ls (oblist)] [bad '()])
-    (if (null? ls)
-        (or (null? bad)
-            (begin
-              (pretty-print bad)
-              (errorf #f "incorrect library-entry bindings for symbols ~s" bad)))
-        (let ([x (car ls)])
-          (if (let ([i (#%$sgetprop x '*library-entry* #f)])
-                (or (not i) (#%$lookup-library-entry i)))
-              (loop (cdr ls) bad)
-              (loop (cdr ls) (cons x bad))))))
+  (let ([ls (oblist)])
+    (define (mat-id? x)
+      (memq x
+        '(equivalent-expansion? mat-run mat mat/cf
+           mat-file mat-output enable-cp0 windows? embedded?
+           *examples-directory* *scheme*
+           *fuzz* ~= fl~= cfl~= == nan pi +pi +pi/2 +pi/4 -pi -pi/2 -pi/4 +e -e
+           separate-eval-tools separate-compile separate-eval run-script patch-exec-path $record->vector
+           $cat_flush
+           test-cp0-expansion
+           mkfile rm-rf touch
+           heap-check-interval
+           preexisting-profile-dump-entry?
+           coverage-table record-run-coverage load-coverage-files combine-coverage-files coverage-percent
+           parameters)))
+    (define (canonical-label x)
+      (let ([s (symbol->string x)])
+        (#%$intern3 (format "~a*top*:~a" s s) (string-length s) (+ 6 (* 2 (string-length s))))))
+    (unless (find (lambda (x) (#%$sgetprop x '*top* #f)) ls)
+      (errorf #f "no symbols found with property ~s" '*top*))
+    (let loop ([ls ls] [bad '()])
+      (if (null? ls)
+          (or (null? bad)
+              (begin
+                (pretty-print bad)
+                (errorf #f "incorrect top-level bindings for symbols ~s" bad)))
+          (loop (cdr ls)
+            (let ([x (car ls)])
+              (if (gensym? x)
+                  (let ([name (#%$symbol-name x)])
+                    (if name
+                        (let ([pname (cdr name)] [uname (car name)])
+                          (if (and pname uname (string=? uname (format "*top*:~a" pname)))
+                              (if (mat-id? (string->symbol pname)) bad (cons x bad))
+                              bad))
+                        bad))
+                  (if (let ([loc (#%$sgetprop x '*top* #f)])
+                        (case (#%$symbol-type x)
+                          [(keyword library-uid) (eq? loc x)]
+                          [(primitive)
+                           (and
+                             (top-level-bound? x)
+                             (eq? (top-level-value x) (top-level-value x (scheme-environment)))
+                             (eq? loc x))]
+                          [else
+                            (if (mat-id? x)
+                                (or loc (guard (c [else #f]) (#2%$top-level-value (canonical-label x)) #t))
+                                (and
+                                  (not loc)
+                                  (not (top-level-bound? x))
+                                  (guard (c [else #t])
+                                    (#2%top-level-value x)
+                                    #f)
+                                  (guard (c [else #t])
+                                    (#2%$top-level-value (canonical-label x))
+                                    #f)))]))
+                      bad
+                      (cons x bad))))))))
 
-  (let ()
+  (let ([ls (remp gensym? (oblist))])
     (define (get-cte x) (#%$sgetprop x '*cte* #f))
     (define (keyword? x)
       (cond
@@ -37,7 +84,11 @@
         [(get-cte x) => (lambda (b) (eq? (car b) 'primitive))]
         [else #t]))
     (define (scheme? x) (eq? (#%$sgetprop x '*scheme* #f) x))
-    (let loop ([ls (remp gensym? (oblist))] [bad '()])
+    (unless (find (lambda (x) (#%$sgetprop x '*cte* #f)) ls)
+      (errorf #f "no symbols found with property ~s" '*cte*))
+    (unless (find (lambda (x) (#%$sgetprop x '*scheme* #f)) ls)
+      (errorf #f "no symbols found with property ~s" '*scheme*))
+    (let loop ([ls ls] [bad '()])
       (if (null? ls)
           (or (null? bad)
               (begin
@@ -96,137 +147,93 @@
                 (loop (cdr ls) bad)
                 (loop (cdr ls) (cons x bad))))))
      #t)
-
-  (let ()
-    (define (get-cte x) (#%$sgetprop x '*cte* #f))
-    (define (scheme? x) (eq? (#%$sgetprop x '*scheme* #f) x))
-    (define (mat-id? x)
-      (memq x
-        '(equivalent-expansion? pretty-equal? mat-run
-           show-mat-source-info mat-file enable-cp0 windows? embedded?
-           *examples-directory* *scheme*
-           *fuzz* ~= fl~= cfl~= == nan pi +pi +pi/2 +pi/4 -pi -pi/2 -pi/4 +e -e
-           separate-compile separate-eval run-script patch-exec-path $record->vector
-           $cat_flush
-           test-cp0-expansion
-           mkfile rm-rf touch)))
-    (let loop ([ls (remp gensym? (oblist))] [bad '()])
-      (if (null? ls)
-          (or (null? bad)
-              (begin
-                (pretty-print bad)
-                (errorf #f "incorrect top-level bindings for symbols ~s" bad)))
-          (loop (cdr ls)
-            (let ([x (car ls)])
-              (if (let ([loc (#%$sgetprop x '*top* #f)])
-                    (case (#%$symbol-type x)
-                      [(keyword) (eq? loc x)]
-                      [(primitive)
-                       (and
-                         (top-level-bound? x)
-                         (eq? (top-level-value x) (top-level-value x (scheme-environment)))
-                         (eq? loc x))]
-                      [else
-                        (or (mat-id? x)
-                            (not loc)
-                            (not (top-level-bound? x))
-                            (guard (c [else #t])
-                              (#2%top-level-value x)
-                              #f))]))
-                  bad
-                  (cons x bad)))))))
  )
 
 (mat arity
   (or (= (optimize-level) 3)
-      (let ()
+      (let ([ls (oblist)])
         (define oops #f)
+        (define (arity->mask a*)
+          (fold-left (lambda (mask a)
+                       (logor mask
+                         (if (< a 0)
+                             (ash -1 (- -1 a))
+                             (ash 1 a))))
+            0 a*))
+        (define prim-arity
+          (lambda (x)
+            (module (primref-arity) (include "../s/primref.ss"))
+            (let ([primref2 (#%$sgetprop x '*prim2* #f)] [primref3 (#%$sgetprop x '*prim3* #f)])
+              (if primref2
+                  (if primref3
+                      (let ([arity2 (primref-arity primref2)]
+                            [arity3 (primref-arity primref3)])
+                        (unless (equal? arity2 arity3)
+                          (errorf #f "unequal *prim2* and *prim3* arity for ~s" x))
+                        (and arity2 (arity->mask arity2)))
+                      (errorf #f "found *prim2* but not *prim3* for ~s" x))
+                  (if primref3
+                      (errorf #f "found *prim2* but not *prim3* for ~s" x)
+                      #f)))))
         (define (prefix=? prefix str)
           (let ([n (string-length prefix)])
             (and (>= (string-length str) n)
                  (string=? (substring str 0 n) prefix))))
+        (define (okay-condition? prim c)
+          (and (violation? c)
+               (message-condition? c)
+               (irritants-condition? c)
+               (let ([msg (condition-message c)] [args (condition-irritants c)])
+                 (or (and (prefix=? "incorrect number of arguments" msg)
+                          (and (list? args) (= (length args) 1))
+                          (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
+                            (or (and (procedure? (car args))
+                                     (let ([name (#%$procedure-name (car args))])
+                                       (or (not name) (equal? name (symbol->string unprefixed)))))
+                                (and (pair? (car args)) (eq? (caar args) unprefixed)))))
+                     (and (prefix=? "incorrect argument count" msg)
+                          (and (list? args) (= (length args) 1) (string? (car args)))
+                          (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
+                            (prefix=? (format "(~s" unprefixed) (car args))))))))
         (define (check prim n)
-          (define (okay-condition? c)
-            (and (violation? c)
-                 (message-condition? c)
-                 (irritants-condition? c)
-                 (let ([msg (condition-message c)] [args (condition-irritants c)])
-                   (or (and (prefix=? "incorrect number of arguments" msg)
-                            (and (list? args) (= (length args) 1))
-                            (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
-                              (or (and (procedure? (car args))
-                                       (let ([name (#%$procedure-name (car args))])
-                                         (or (not name) (equal? name (symbol->string unprefixed)))))
-                                  (and (pair? (car args)) (eq? (caar args) unprefixed)))))
-                       (and (prefix=? "incorrect argument count" msg)
-                            (and (list? args) (= (length args) 1) (string? (car args)))
-                            (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
-                              (prefix=? (format "(~s" unprefixed) (car args))))))))
-          (let ([call `(,prim ,@(make-list n `',(void)))])
-            (unless (guard (c [else (okay-condition? c)])
+        (void)
+          (let ([call `(($primitive ,prim) ,@(make-list n `',(void)))])
+            (unless (guard (c [else (okay-condition? prim c)])
                       (eval `(begin ,call #f)))
               (set! oops #t)
-              (printf "no argcount error for ~s\n" call))))
-        (for-each
-          (lambda (prim)
-            (let ([a* (#%$sgetprop prim '*arity* #f)])
-              (when a*
-                (let loop ([n 0] [a* a*])
-                  (cond
-                    [(null? a*) (check prim n)]
-                    [(= (- -1 (car a*)) n) (void)]
-                    [(= (car a*) n) (loop (+ n 1) (cdr a*))]
-                    [else (check prim n) (loop (+ n 1) a*)])))))
-          (oblist))
-        (not oops)))
-  (or (= (optimize-level) 3)
-      (let ()
-        (define oops #f)
-        (define (prefix=? prefix str)
-          (let ([n (string-length prefix)])
-            (and (>= (string-length str) n)
-                 (string=? (substring str 0 n) prefix))))
-        (define (write-and-load x)
-          (with-output-to-file "testfile.ss"
-            (lambda () (pretty-print x))
-            'replace)
-          (load "testfile.ss"))
-        (define (check prim n)
-          (define (okay-condition? c)
-            (and (violation? c)
-                 (message-condition? c)
-                 (irritants-condition? c)
-                 (let ([msg (condition-message c)] [args (condition-irritants c)])
-                   (or (and (prefix=? "incorrect number of arguments" msg)
-                            (and (list? args) (= (length args) 1))
-                            (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
-                              (or (and (procedure? (car args))
-                                       (let ([name (#%$procedure-name (car args))])
-                                         (or (not name) (equal? name (symbol->string unprefixed)))))
-                                  (and (pair? (car args)) (eq? (caar args) unprefixed)))))
-                       (and (prefix=? "incorrect argument count" msg)
-                            (and (list? args) (= (length args) 1) (string? (car args)))
-                            (let ([unprefixed (#%$sgetprop prim '*unprefixed* prim)])
-                              (prefix=? (format "(~s" unprefixed) (car args))))))))
-          (let ([call `(,prim ,@(make-list n '(void)))])
+              (printf "no argcount error for ~s\n" call)))
+          (let ([call `(($primitive ,prim) ,@(make-list n '(void)))])
+            (define (write-and-load x)
+              (with-output-to-file "testfile.ss"
+                (lambda () (pretty-print x))
+                'replace)
+              (load "testfile.ss"))
             (let ([warn? #f] [error? #f])
-              (guard (c [(okay-condition? c) (set! error? #t)])
+              (guard (c [(okay-condition? prim c) (set! error? #t)])
                 (with-exception-handler
                   (lambda (x) (if (warning? x) (begin (set! warn? #t) (values)) (raise-continuable x)))
                   (lambda () (write-and-load `(begin ,call #f)) #f)))
-              (unless warn? (printf "no argcount warning for ~s\n" call) (set! oops #t))
+              (unless (or warn? (#%$suppress-primitive-inlining)) (printf "no argcount warning for ~s\n" call) (set! oops #t))
               (unless error? (printf "no argcount error for ~s\n" call) (set! oops #t)))))
+        (unless (find (lambda (x) (#%$sgetprop x '*prim3* #f)) ls)
+          (printf "no symbols found with property ~s" '*prim3*))
         (for-each
           (lambda (prim)
-            (let ([a* (#%$sgetprop prim '*arity* #f)])
-              (when a*
-                (let loop ([n 0] [a* a*])
+            (let ([mask (prim-arity prim)])
+              (when mask
+                (let ([pam (procedure-arity-mask (eval `($primitive ,prim)))])
+                  (unless (= mask pam)
+                    (printf "primref arity mask ~s differs from procedure-arity-mask return value ~s for ~s\n"
+                      mask pam prim)
+                    (set! oops #t)))
+                (let loop ([n 0] [mask mask])
                   (cond
-                    [(null? a*) (check prim n)]
-                    [(= (- -1 (car a*)) n) (void)]
-                    [(= (car a*) n) (loop (+ n 1) (cdr a*))]
-                    [else (check prim n) (loop (+ n 1) a*)])))))
-          (oblist))
+                    [(eqv? mask 0) (check prim n)]
+                    [(eqv? mask -1) (void)]
+                    [else
+                      (unless (bitwise-bit-set? mask 0) (check prim n))
+                      (loop (fx+ n 1) (ash mask -1))])))))
+          ls)
         (not oops)))
 )
 
@@ -310,14 +317,19 @@
                    [binary-input-port (open-bytevector-input-port bv)]
                    [sfd (make-source-file-descriptor "foo" binary-input-port #t)]
                    [source-object (make-source-object sfd 2 3)]
-                   [annotation (make-annotation '(if #f #f) source-object '(source expr))])
+                   [annotation (make-annotation '(if #f #f) source-object '(source expr))]
+                   [textual-input-port (transcoded-port binary-input-port (native-transcoder))])
               (def *binary-input-port binary-input-port)
               (def *sfd sfd)
               (def *source-object source-object)
-              (def *annotation annotation))
-            (let-values ([(binary-output-port getter) (open-bytevector-output-port)])
+              (def *annotation annotation)
+              (def *textual-input-port textual-input-port))
+            (let*-values ([(binary-output-port getter) (open-bytevector-output-port)]
+                          [(textual-output-port) (transcoded-port binary-output-port (native-transcoder))])
               (def *binary-output-port binary-output-port)
-              (def *binary-port binary-output-port))
+              (def *binary-port binary-output-port)
+              (def *textual-output-port textual-output-port)
+              (def *textual-port textual-output-port))
             (def *cost-center (make-cost-center))
             (def *date (current-date))
             (def *phantom-bytevector (make-phantom-bytevector 10))
@@ -334,6 +346,7 @@
               (def *record ((record-constructor rcd) 3)))
             (def *sstats (statistics))
             (def *time (make-time 'time-duration 0 5))
+            (def *time-utc (make-time 'time-utc 0 5))
             (cond
               [(fx< (fixnum-width) 32)
                (def *max-iptr (- (expt 2 31) 1))
@@ -369,31 +382,34 @@
               [(bytevector) '#vu8(0) "a" #f]
               [(cflonum) 0.0+1.0i 0 'a #f]
               [(char) #\a 0 #f]
-              [(codec) latin-1-codec 0 #f]
+              [(codec) (latin-1-codec) 0 #f]
               [(code) (closure-code 'values) 0 #f]
-              [(compile-time-value) (make-compile-time-value 17)]
-              [(condition) (make-who-condition 'me) 'the-who]
+              [(compile-time-value) (make-compile-time-value 17) #f]
+              [(condition) (make-who-condition 'me) 'the-who #f]
               [(continuation-condition) (call/cc make-continuation-condition) (make-who-condition 'who) #f]
               [(cost-center) *cost-center '(a) #f]
+              [(source-table) (make-source-table) *time #f]
               [(date) *date *time #f]
+              [(endianness) 'big 'giant #f]
               [(enum-set) (file-options compressed) 0 #f]
               [(environment) *env '((a . b)) #f]
               [(eq-hashtable) *eq-hashtable *symbol-hashtable #f]
-              [(exact-integer) (- (most-negative-fixnum) 1) 1/2 #f]
+              [(exact-integer) (- (most-negative-fixnum) 1) 2.0 1/2 #f]
               [(exception-state) (current-exception-state) 0 #f]
               [(eof/char) #\a 0 #f]
               [(eof/u8) 0 -1 (expt 2 8) "a" #f]
               [(fasl-strip-options) (fasl-strip-options inspector-source) (file-options compressed) #f]
               [(file-options) (file-options compressed) 1/2 #f]
-              [(fixnum) -1 'q (+ (most-positive-fixnum) 1) (- (most-negative-fixnum) 1)]
+              [(fixnum) -1 'q (+ (most-positive-fixnum) 1) (- (most-negative-fixnum) 1) #f]
               [(flonum) 0.0 0 0.0+1.0i 'a #f]
               [(ftype-pointer) *ftype-pointer 0 *time #f]
               [(fxvector) '#vfx(0) "a" #f]
-              [(gensym) *genny sym #f]
+              [(gensym) *genny 'sym #f]
+              [(guardian) (make-guardian) values "oops" #f]
               [(hashtable) *eq-hashtable '((a . b)) #f]
-              [(identifier) #'x x 17 #f]
-              [(import-spec) (chezscheme) 0 '(a . b) #f]
-              [(input-port) (current-input-port) 0 *binary-output-port (transcoded-port *binary-output-port (native-transcoder)) #f]
+              [(identifier) #'x 'x 17 #f]
+              [(import-spec) '(chezscheme) 0 '(a . b) #f]
+              [(input-port) (current-input-port) 0 *binary-output-port *textual-output-port #f]
               [(integer) 0.0 1/2 1.0+0.0i 'a #f]
               [(i/o-encoding-error) (make-i/o-encoding-error 17 23) (make-who-condition 'who) 1/2 #f]
               [(i/o-filename-error) (make-i/o-filename-error 17) (make-who-condition 'who) 3 #f]
@@ -401,25 +417,31 @@
               [(i/o-port-error) (make-i/o-port-error 17) (make-who-condition 'who) '(a) #f]
               [(irritants-condition) (make-irritants-condition 17) (make-who-condition 'who) 'a #f]
               [(length) 0 -1 (+ (most-positive-fixnum) 1) 'a #f]
+              [(library-path) '(a) "hereiam" #f]
               [(library-requirements-options) (library-requirements-options import invoke) 1/2 #f]
               [(list) '(a) '#1=(a . #1#) 17 '#() #f]
+              [(list-of-string-pairs) '(("a" . "b")) '("a") #f]
+              [(list-of-symbols) '(a b c) '("a") #f]
               [(maybe-binary-output-port) *binary-output-port *binary-input-port (current-output-port)]
               [(maybe-char) #\a 0]
               [(maybe-pathname) "a" 'a]
               [(maybe-procedure) values 0]
               [(maybe-rtd) *rtd *record ""]
               [(maybe-sfd) *sfd '(q)]
+              [(maybe-source-table) (make-source-table) *time]
               [(maybe-string) "a" 'a]
               [(maybe-symbol) 'a 0 "a"]
-              [(maybe-textual-output-port) (current-output-port) 0 *binary-output-port (transcoded-port *binary-input-port (native-transcoder))]
+              [(maybe-textual-output-port) (current-output-port) 0 *binary-output-port *textual-input-port]
               [(maybe-transcoder) (native-transcoder) 0]
               [(maybe-ufixnum) 0 -1 (+ (most-positive-fixnum) 1) 'a]
               [(maybe-uint) 0 -1 'a]
               [(maybe-who) 'who 17]
+              [(maybe-timeout) *time 371]
               [(message-condition) (make-message-condition 17) (make-who-condition 'who) 'q #f]
               [(number) 1+2i 'oops #f]
+              [(nzuint) 1 0 'a #f]
               [(old-hash-table) *old-hash-table '((a . b)) #f]
-              [(output-port) (current-output-port) 0 *binary-input-port (transcoded-port *binary-input-port (native-transcoder)) #f]
+              [(output-port) (current-output-port) 0 *binary-input-port *textual-input-port #f]
               [(pair) '(a . b) 'a #f]
               [(pathname) "a" 'a #f]
               [(pfixnum) 1 0 #f]
@@ -441,22 +463,24 @@
               [(s56) -1 'q (expt 2 55) (- -1 (expt 2 55)) #f]
               [(s64) -1 'q (expt 2 63) (- -1 (expt 2 63)) #f]
               [(s8) -1 'q (expt 2 7) (- -1 (expt 2 7)) #f]
-              [(sfd) *sfd '(q)]
-              [(sint) -1 'q]
+              [(sfd) *sfd '(q) #f]
+              [(sint) -1 'q #f]
               [(source-condition) (make-source-condition 17) (make-who-condition 'who) #f]
               [(source-object) *source-object '#&a #f]
               [(sstats) *sstats '#(0 2 7 3) #f]
               [(string) "a" 'a #f]
               [(string/bytevector) no-good]
               [(sub-ptr) no-good]
-              [(sub-uint sub-ufixnum sub-index sub-length sub-list sub-fixnum sub-flonum sub-integer sub-number sub-port sub-rtd sub-sint sub-string sub-symbol sub-textual-output-port sub-vector maybe-sub-rcd maybe-sub-symbol) no-good #!eof]
+              [(sub-uint sub-ufixnum sub-index sub-length sub-list sub-fixnum sub-flonum sub-integer sub-number sub-port sub-rtd sub-sint sub-string sub-symbol sub-textual-output-port sub-vector) no-good #!eof #f]
+              [(maybe-sub-rcd maybe-sub-symbol) no-good #!eof]
               [(symbol) 'a 0 "a" #f]
               [(symbol-hashtable) *symbol-hashtable *eq-hashtable '() #f]
               [(syntax-violation) (make-syntax-violation '(if) #f) 'oops #f]
-              [(textual-input-port) (current-input-port) 0 *binary-input-port (transcoded-port *binary-output-port (native-transcoder)) #f]
-              [(textual-output-port) (current-output-port) 0 *binary-output-port (transcoded-port *binary-input-port (native-transcoder)) #f]
+              [(textual-input-port) (current-input-port) 0 *binary-input-port *textual-output-port #f]
+              [(textual-output-port) (current-output-port) 0 *binary-output-port *textual-input-port #f]
               [(time) *time "no-time" #f]
-              [(timeout) *time "no-time"]
+              [(time-utc) *time-utc "no-time" #f]
+              [(timeout) *time "no-time" #f]
               [(transcoder) (native-transcoder) 0 #f]
               [(u16) 0 -1 (expt 2 16) "a" #f]
               [(u24) 0 -1 (expt 2 24) "a" #f]
@@ -474,7 +498,8 @@
               [(uptr/iptr) -1 'q (+ *max-uptr 1) (- *min-iptr 1) #f]
               [(vector) '#(a) "a" #f]
               [(stencil-vector) (stencil-vector 7 1 2 3) "a" #f]
-              [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who])
+              [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who #f]
+              [(who) 'who 17])
             (meta-cond
               [(memq 'pthreads feature*)
                (declare-types
@@ -482,6 +507,13 @@
                  [(mutex) (make-mutex) "not a mutex" #f])])
             ht))
         (define (fuzz-prim-args name unprefixed-name lib* flag* in*/out**)
+          (define (prefix=? prefix str)
+            (let ([n (string-length prefix)])
+              (and (>= (string-length str) n)
+                   (string=? (substring str 0 n) prefix))))
+          (define (who=? x y)
+            (define ->string (lambda (x) (if (symbol? x) (symbol->string x) x)))
+            (equal? (->string x) (->string y)))
           (define-syntax flags-set?  (syntax-rules () [(_ x ...) (and (memq 'x flag*) ...)]))
           (define good/bad
             (lambda (in* k)
@@ -522,28 +554,107 @@
                         (unless (or (memq 'no-good rgood*) (memq 'no-good (cdr good*)))
                           (for-each
                             (lambda (bad)
-                              (let ([call `(,name ,@(reverse rgood*) ,bad ,@(cdr good*))])
-                                (printf "testing ~s..." call)
-                                (flush-output-port)
-                                (let ([c (call/cc
-                                           (lambda (k)
-                                             (with-exception-handler
-                                               (lambda (c) (unless (warning? c) (k c)))
-                                               (lambda () (eval call env) #f))))])
-                                  (if c 
-                                      (if (and (violation? c)
-                                               (not (and (syntax-violation? c)
-                                                         (message-condition? c)
-                                                         (equal? (condition-message c) "invalid syntax")))
-                                               (not (and (irritants-condition? c)
-                                                         ; split up so we can grep for "invalid memory reference" in mat output and not see this
-                                                         (member (string-append "invalid" " " "memory reference") (condition-irritants c)))))
-                                          (begin
-                                            (display-condition c)
-                                            (newline))
-                                          (errorf 'fuzz-prim-args "unexpected exception occurred evaluating ~s: ~a" call
-                                            (with-output-to-string (lambda () (display-condition c)))))
-                                      (errorf 'fuzz-prim-args "no exception occurred evaluating ~s" call)))))
+                              (let ([bad (eval bad env)])
+                                (let ([call `(,name ,@(reverse rgood*) ',bad ,@(cdr good*))])
+                                  (printf "testing ~s\n" call)
+                                  (flush-output-port)
+                                  (let ([c (call/cc
+                                             (lambda (k)
+                                               (with-exception-handler
+                                                 (lambda (c) (unless (warning? c) (k c)))
+                                                 (lambda () (eval call env) #f))))])
+                                    (if c 
+                                        (if (and (violation? c)
+                                                 (not (and (syntax-violation? c)
+                                                           (message-condition? c)
+                                                           (equal? (condition-message c) "invalid syntax")))
+                                                 (not (and (irritants-condition? c)
+                                                           ; split up so we can grep for "invalid memory reference" in mat output and not see this
+                                                           (member (string-append "invalid" " " "memory reference") (condition-irritants c)))))
+                                            (begin
+                                              ; try to weed out common error messages
+                                              (if (or (and (message-condition? c)
+                                                           (format-condition? c)
+                                                           (irritants-condition? c)
+                                                           (string=? (condition-message c) "attempt to apply non-procedure ~s")
+                                                           (equal? (condition-irritants c) (list bad)))
+                                                      (and (who-condition? c)
+                                                           (message-condition? c)
+                                                           (format-condition? c)
+                                                           (irritants-condition? c)
+                                                           (or (who=? (condition-who c) name)
+                                                               (who=? (condition-who c) (#%$sgetprop name '*unprefixed* #f)))
+                                                           (or (and (or (prefix=? "~s is not a" (condition-message c))
+                                                                        (prefix=? "~s is not #f or a" (condition-message c))
+                                                                        (prefix=? "index ~s is not a" (condition-message c))
+                                                                        (member (condition-message c)
+                                                                          '("~s is circular"
+                                                                             "incorrect list structure ~s"
+                                                                             "improper list structure ~s"
+                                                                             "attempt to apply non-procedure ~s"
+                                                                             "undefined for ~s"
+                                                                             "invalid endianness ~s"
+                                                                             "invalid start value ~s"
+                                                                             "invalid count value ~s"
+                                                                             "invalid count ~s"
+                                                                             "invalid size ~s"
+                                                                             "invalid index ~s"
+                                                                             "invalid report specifier ~s"
+                                                                             "invalid record name ~s"
+                                                                             "invalid parent ~s"
+                                                                             "invalid uid ~s"
+                                                                             "invalid field vector ~s"
+                                                                             "invalid field specifier ~s"
+                                                                             "invalid record constructor descriptor ~s"
+                                                                             "invalid size argument ~s"
+                                                                             "invalid count argument ~s"
+                                                                             "cyclic list structure ~s"
+                                                                             "invalid time-zone offset ~s"
+                                                                             "unrecognized time type ~s"
+                                                                             "invalid number of seconds ~s"
+                                                                             "invalid nanosecond ~s"
+                                                                             "invalid generation ~s"
+                                                                             "invalid limit ~s"
+                                                                             "invalid level ~s"
+                                                                             "invalid buffer argument ~s"
+                                                                             "invalid space ~s"
+                                                                             "invalid value ~s"
+                                                                             "invalid library name ~s"
+                                                                             "invalid extension list ~s"
+                                                                             "invalid eval-when list ~s"
+                                                                             "invalid dump ~s"
+                                                                             "invalid argument ~s"
+                                                                             "invalid bit index ~s"
+                                                                             "invalid situation ~s"
+                                                                             "invalid foreign address ~s"
+                                                                             "invalid foreign type specifier ~s"
+                                                                             "invalid foreign address ~s"
+                                                                             "invalid path ~s"
+                                                                             "invalid path list ~s"
+                                                                             "~s is not between 2 and 36"
+                                                                             "invalid palette ~s"
+                                                                             "bit argument ~s is not 0 or 1"
+                                                                             "unrecognized type ~s"
+                                                                             "invalid code page ~s")))
+                                                                    (equal? (condition-irritants c) (list bad)))
+                                                               (and (or (member (condition-message c)
+                                                                          '("~s is not a valid index for ~s"
+                                                                             "~s is not a valid size for ~s"
+                                                                             "invalid index ~s for bytevector ~s"
+                                                                             "invalid new length ~s for ~s"))
+                                                                        (prefix=? "invalid message argument ~s" (condition-message c))
+                                                                        (prefix=? "invalid who argument ~s" (condition-message c)))
+                                                                    (let ([ls (condition-irritants c)])
+                                                                      (and (not (null? ls)) (equal? (car ls) bad)))))))
+                                                  ; if it looks good, print to stdout
+                                                  (fprintf (mat-output) "seemingly appropriate argument-type error testing ~s: " call)
+                                                  ; otherwise, mark it as an expected error for user audit
+                                                  (fprintf (mat-output) "Expected error testing ~s: " call))
+                                              (display-condition c (mat-output))
+                                              (newline (mat-output)))
+                                            (errorf 'fuzz-prim-args "unexpected exception occurred evaluating ~s: ~a" call
+                                              (with-output-to-string (lambda () (display-condition c)))))
+                                        (errorf 'fuzz-prim-args "no exception occurred evaluating ~s" call))))))
                             (car bad**)))
                         (loop (cdr good*) (cdr bad**) (cons (car good*) rgood*)))))))
               (map car in*/out**))))

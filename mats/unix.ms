@@ -160,15 +160,18 @@
       (error? (register-signal-handler list 14))
       (error? (register-signal-handler 14 14))
       (error? (register-signal-handler list list))
-      (let ((x #f))
-        (register-signal-handler 14 (lambda (sig) (set! x sig)))
+      (let ((x '()))
+        (register-signal-handler 14 (lambda (sig) (set! x (cons sig x))))
         ; guard the call to system, since openbsd gets an EINTR error,
         ; probably in system's call to waitpid, causing s_system to
         ; raise an exception
         (guard (c [#t (display-condition c) (printf "\nexception ignored\n")])
+          (system "exec kill -14 $PPID")
+          (system "exec kill -14 $PPID")
+          (system "exec kill -14 $PPID")
           (system "exec kill -14 $PPID"))
         (let f ((n 1000000))
-          (or (eqv? x 14)
+          (or (equal? x '(14 14 14 14))
               (and (not (= n 0))
                    (f (- n 1))))))
     )

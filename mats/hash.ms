@@ -3942,19 +3942,20 @@
     (with-output-to-file "testfile.ss"
       (lambda ()
         (pretty-print
-          '(begin
-             (define-syntax $feh-ls
+          '(module ($feh-ls $feh-ht)
+             (define-syntax ls
                (let ([ls '(1 2 3)])
                  (lambda (x)
                    #`(quote #,(datum->syntax #'* ls)))))
+             (define $feh-ls ls)
              (define $feh-ht
                (let ()
                  (define-syntax a
                    (let ([ht (make-eq-hashtable)])
                      (eq-hashtable-set! ht 'q 'p)
-                     (eq-hashtable-set! ht $feh-ls (cdr $feh-ls))
-                     (eq-hashtable-set! ht (cdr $feh-ls) (cddr $feh-ls))
-                     (eq-hashtable-set! ht (cddr $feh-ls) $feh-ls)
+                     (eq-hashtable-set! ht ls (cdr ls))
+                     (eq-hashtable-set! ht (cdr ls) (cddr ls))
+                     (eq-hashtable-set! ht (cddr ls) ls)
                      (lambda (x) #`(quote #,(datum->syntax #'* ht)))))
                  a)))))
       'replace)

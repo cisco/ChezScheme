@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include "zlib.h"
 #include "lz4.h"
+#include "lz4hc.h"
 
 /* !!! UNLESS you enjoy spending endless days tracking down race conditions
    !!! involving the garbage collector, please note: DEACTIVATE and
@@ -814,6 +815,9 @@ uptr S_bytevector_compress_size(iptr s_count, INT compress_format) {
 ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
                           ptr src_bv, iptr s_start, iptr s_count,
                           INT compress_format) {
+  ptr tc = get_thread_context();
+  int compress_level = (INT)UNFIX(COMPRESSLEVEL(tc));
+
   /* On error, an message-template string with ~s for the bytevector */
   switch (compress_format) {
     case COMPRESS_GZIP:
@@ -826,7 +830,7 @@ ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
 
         destLen = (uLong)d_count;
 
-        r = compress(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), (uLong)s_count);
+        r = compress2(&BVIT(dest_bv, d_start), &destLen, &BVIT(src_bv, s_start), (uLong)s_count, S_zlib_compress_level(compress_level));
 
         if (r == Z_OK)
           return FIX(destLen);
@@ -842,7 +846,11 @@ ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
         if (!is_valid_lz4_length(s_count))
           return Sstring("source bytevector ~s is too large");
 
-        destLen = LZ4_compress_default((char *)&BVIT(src_bv, s_start), (char *)&BVIT(dest_bv, d_start), (int)s_count, (int)d_count);
+        if (compress_level == COMPRESS_MIN) {
+          destLen = LZ4_compress_default((char *)&BVIT(src_bv, s_start), (char *)&BVIT(dest_bv, d_start), (int)s_count, (int)d_count);
+        } else {
+          destLen = LZ4_compress_HC((char *)&BVIT(src_bv, s_start), (char *)&BVIT(dest_bv, d_start), (int)s_count, (int)d_count, S_lz4_compress_level(compress_level));
+        }
 
         if (destLen > 0)
           return Sfixnum(destLen);

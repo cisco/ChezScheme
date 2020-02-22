@@ -2,8 +2,8 @@
 
 \thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{March}
-\pubyear{2019}
+\pubmonth{February}
+\pubyear{2020}
 
 \begin{document}
 
@@ -111,6 +111,148 @@ indicate whether the guardian is ordered or unordered. A guardian is
 unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
+
+\subsection{Bytevector compression and compression level (9.5.3)}
+
+The procedure \scheme{bytevector-compress} now selects the level of
+compression based on the \scheme{compress-level} parameter.
+Prior to this it always used a default setting for compression.
+
+The \scheme{compress-level} parameter can now take on the new value
+\scheme{minimum} in addition to \scheme{low}, \scheme{medium},
+\scheme{high}, and \scheme{maximum}.
+
+\subsection{Combining object files (9.5.3)}
+
+In previous versions of Chez Scheme, multiple object files could
+be combined by concatinating them into a single file.  To support faster
+object file loading and loadability verification (described later in this
+document), recompile information and information about libraries and
+top-level programs within an object file is now placed at the top of the
+file.  The new \scheme{concatenate-object-files} procedure can be used to
+combine multiple object files while moving this information to the
+top of the combined file.
+
+\subsection{Explicitly invoking libraries (9.5.3)}
+
+The new procedure \scheme{invoke-library} can be used to force
+the evaluation of a library's body expressions (variable definition
+right-hand sides and initialization expresisons) before they might
+otherwise be needed.
+It is generally useful only for libraries whose body expressions
+have side effects.
+
+\subsection{Verifying loadability of libraries and programs (9.5.3)}
+
+The new procedure \scheme{verify-loadability} can be used to
+determine, without actually loading any object code or defining any
+libraries, whether a set of object files and the object files
+satisfying their library dependencies, direct or indirect, are
+present, readable, and mutually compatible.
+
+To support loadability verification, information about libraries
+and top-level programs within an object file is now placed at the
+top of the file, just after recompile information.  This change can
+be detected by unusual setups, e.g., a source file that interleaves
+library definitions and top-level forms that call library-list, but
+is backward compatible for standard use cases in which each file
+contains one or more libraries possibly followed by a top-level
+program.
+
+\subsection{Unregistering objects from guardians (9.5.3)}
+
+The set of as-yet unresurrected objects registered with a guardian
+can be unregistered and retrieved by means of the new primitive
+\scheme{unregister-guardian}.
+Consult the user's guide for usage and caveats.
+Guardians can now be distinguished from other procedures (and other
+objects) via the new primitive \scheme{guardian?}.
+
+\subsection{Coverage support and source tables (9.5.3)}
+
+When the new parameter \scheme{generate-covin-files} is set to \scheme{#t}
+rather than the default \scheme{#f}, file compilation routines such as
+\scheme{compile-file} and \scheme{compile-library} produce coverage
+information (\scheme{.covin}) files that can be used in conjunction with
+profile information to measure coverage of a source-code base.
+Coverage information is also written out when the optional \var{covop}
+argument is supplied to \scheme{compile-port} and \scheme{compile-to-port}.
+
+A covin file contains a printed representation of a \emph{source
+table} mapping each profiled source object in the code base to a
+count of zero.
+Source tables generally associate source objects with arbitrary values
+and are allocated and manipulated with hashtable-like operations specific
+to source tables.
+
+Profile information can be tracked even through releasing and clearing
+of profile counters via the new procedure \scheme{with-profile-tracker},
+which produces a source table.
+
+Coverage of a source-code base can thus be achieved by comparing
+the set of source objects in the covin-file source tables for one
+or more source files with the set of source objects in the source
+tables produced by one or more runs of tests run with profile
+information tracked by \scheme{with-profile-tracker}.
+
+\subsection{Importing a library from an object file now visits the file (9.5.3)}
+
+As described in Section~\ref{sec:faster-object-file-loading},
+importing a library from an object file now causes the object file
+to be visited rather than fully loaded.
+If the run-time information is needed, i.e., if the library is
+invoked, the file will be revisited.
+This is typically transparent to the program, but problems can arise
+if the program changes its current directory (via
+\scheme{current-directory}) prior to invoking a library, and the
+object file cannot be found.
+
+\subsection{Recompile information (9.5.3)}
+
+As described in Section~\ref{sec:faster-object-file-loading}, all
+recompile information is now placed at the front of each object
+file where it can be read without the need to scan through the
+remainder of the file.
+Because the library manager expects to find recompile information
+at the front of an object file, it will not find all recompile
+information if object files are concatenated together via some
+mechanism other than then new \scheme{concatenate-object-files}
+procedure.
+
+Also, the compiler has to hold in memory the object code for all
+expressions in a file so that it can emit the unified recompile
+information, rather than writing to the object file incrementally,
+which can significantly increase the memory required to compile a
+large file full of individual top-level forms.
+This does not affect top-level programs, which were already handled
+as a whole, or a typical library file that contains just a single
+library form.
+
+\subsection{Optional new \protect\scheme{fasl-read} situation argument (9.5.3)}
+
+It is now possible to direct \scheme{fasl-read} to read only visit
+(compile-time) or revisit (run-time) objects via the optional new
+situation argument.
+Situation \scheme{visit} causes the fasl reader to skip over
+revisit (run-time-only) objects, while
+\scheme{revisit} causes the fasl reader to skip over
+visit (compile-time-only) objects.
+Situation \scheme{load} doesn't skip over any objects.
+
+\subsection{Optional \protect\scheme{read-token} \protect\var{sfd} and \protect\var{bfp} arguments (9.5.3)}
+
+In addition to the optional input-port argument, \scheme{read-token} now takes
+optional \var{sfd} (source-file-descriptor) and \var{bfp} (beginning-file-position)
+arguments.
+If either is provided, both must be provided.
+Specifying \var{sfd} and \var{bfp} improves the quality of error messages,
+guarantees the \scheme{read-token} \var{start} and \var{end} return values can be determined,
+and eliminates the overhead of asking for a file position on each call
+to \scheme{read-token}.
+\var{bfp} is normally 0 for the first call
+to \scheme{read-token} at the start of a file,
+and the \var{end} return value of the preceding
+call for each subsequent call.
 
 \subsection{Compression format and level (9.5.3)}
 
@@ -1749,7 +1891,37 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{\protect\code{putenv} memory leak (9.5.3)}
+\subsection{Buffering signals (9.5.3)}
+
+Prior to this release, only one unhandled signal was buffered for
+any signal for which a handler has been registered via
+\scheme{register-signal-handler}, so two signals delivered in
+quick succession could be see as only one.
+The system now buffers a much larger number (63 in this release) of
+signals, and the fact that signals can be dropped has now been
+documented.
+
+\subsection{Clear-output bug (9.5.3)}
+
+A bug has been fixed in which a call to \scheme{clear-output-port}
+on a port could lead to unexpected behavior involving the port,
+including loss of buffering or suppression of future output to the
+port.
+
+\subsection{Various argument type-error issues (9.5.3)}
+
+A variety of primitive argument type-checking issues have been
+fixed, including missing checks, misleading error messages,
+and checks made later than appropriate, i.e., after the primitive
+has already had side effects.
+
+\subsection{\protect\scheme{__collect_safe}, x86\_64, and floating-point arguments or results (9.5.3)}
+
+The \scheme{__collect_safe} mode for a foreign call or callable now
+correctly preserves floating-point registers used for arguments or
+results while activating or deactivating a thread on x86\_64.
+
+\subsection{\protect\scheme{putenv} memory leak (9.5.3)}
 
 \scheme{putenv} now calls the host system's \scheme{setenv} instead of
 \scheme{putenv} on non-Windows hosts and avoids allocating memory that
@@ -2151,6 +2323,62 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Special-cased basic arithmetic operations (9.5.3)}
+
+The basic arithmetic operations (addition, subtraction, multiplication,
+division) are now much faster when presented with certain special
+cases, e.g., multiplication of a large integer by 1 or -1 or addition
+of large integer and 0.
+
+\subsection{Faster right-shift of large integers (9.5.3)}
+
+Right shifting a large integer is now much faster in most cases
+where the shift count is a significant fraction of the number of
+bits in the large integer.
+
+\subsection{Faster object-file loading (9.5.3)}\label{sec:faster-object-file-loading}
+
+Visiting an object file (to obtain only compile-time information and
+code) and revisiting an object file (to obtain only run-time information
+and code) is now faster, because revisions to the fasl format, fasl
+writer, and fasl reader allow run-time code to be seeked past when
+visiting and compile-time code to be seeked past when revisiting.
+For compressed object files (the default), seeking still requires
+reading all of the data, but the cost of parsing the fasl format and
+building objects in the skipped portions is avoided, as are certain
+side effects, such as associating record type descriptors with their
+uids.
+
+Similarly, recompile information is now placed at the front of each
+object file where it can be loaded separately from
+the remainder of an object file without even seeking past the other
+portions of the file.
+Recompile information is used by \scheme{import} (when
+\scheme{compile-imported-libraries} is \scheme{#t}) and by maybe-compile
+routines such as \scheme{maybe-compile-program} to help determine
+whether recompilation is necessary.
+
+Importing a library from an object file now causes the object file
+to be visited rather than fully loaded.  (Libraries were already
+just revisited when required for their run-time code, e.g., when
+used from a top-level program.)
+
+Together these changes can significantly reduce compile-time and
+run-time overhead, particularly in applications that make use of
+a large number of libraries.
+
+\subsection{Faster \protect\scheme{profile-release-counters} (9.5.3)}
+
+\scheme{profile-release-counters} is now generation-friendly, meaning
+it does not incur any overhead for code objects in generations that
+have not been collected since the last call to\scheme{profile-release-counters}. 
+Also, it no longer allocates memory when counters are released.
+
+\subsection{Reduced cost for obtaining profile counts (9.5.3)}
+
+The cost of obtaining profile counts via \scheme{profile-dump} and
+other mechanisms has been reduced significantly.
 
 \subsection{Better code for \protect\scheme{bytevector} (9.5.1)}
 

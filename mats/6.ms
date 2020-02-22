@@ -727,6 +727,11 @@
            (eqv? (read-char x) #\a)
            (char-ready? x)
            (eof-object? (read-char x))))
+   (parameterize ([current-input-port (open-input-string "a")])
+      (and (char-ready?)
+           (eqv? (read-char) #\a)
+           (char-ready?)
+           (eof-object? (read-char))))
  )
 
 (mat clear-input-port ; test interactively
@@ -1654,25 +1659,24 @@
     #t)
   (error?
     (let* ([ip (open-file-input-port "testfile.ss")]
-           [sfd (#%$source-file-descriptor "testfile.ss" ip)]
+           [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
            [ip (transcoded-port ip (native-transcoder))])
       (dynamic-wind
         void
-        (lambda () (read-token ip sfd))
+        (lambda () (read-token ip sfd 0))
         (lambda () (close-input-port ip)))))
   (let ()
     (with-output-to-file "testfile.ss"
       (lambda () (display "\neat\n"))
       'replace)
     #t)
-  ; $transcoded-source-port is no more
-  #;(equal?
+  (equal?
     (let-values ([vals (let* ([ip (open-file-input-port "testfile.ss")]
-                              [sfd (#%$source-file-descriptor "testfile.ss" ip)]
-                              [ip (#%$transcoded-source-port ip (native-transcoder))])
+                              [sfd (make-source-file-descriptor "testfile.ss" ip #t)]
+                              [ip (transcoded-port ip (native-transcoder))])
                          (dynamic-wind
                            void
-                           (lambda () (read-token ip sfd))
+                           (lambda () (read-token ip sfd 0))
                            (lambda () (close-input-port ip))))])
       vals)
     '(atomic eat 1 4))

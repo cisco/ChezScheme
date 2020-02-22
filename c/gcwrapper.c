@@ -33,6 +33,7 @@ void S_gc_init() {
   S_checkheap = 0; /* 0 for disabled, 1 for enabled */
   S_checkheap_errors = 0; /* count of errors detected by checkheap */
   checkheap_noisy = 0; /* 0 for error output only; 1 for more noisy output */
+  S_G.prcgeneration = static_generation;
 
   if (S_checkheap) {
     printf(checkheap_noisy ? "NB: check_heap is enabled and noisy\n" : "NB: check_heap_is_enabled\n");
@@ -272,6 +273,33 @@ void Sunlock_object(x) ptr x; {
   }
 
   tc_mutex_release()
+}
+
+ptr s_help_unregister_guardian(ptr *pls, ptr tconc, ptr result) {
+  ptr rep, ls;
+  while ((ls = *pls) != Snil) {
+    if (GUARDIANTCONC(ls) == tconc) {
+      result = Scons(((rep = GUARDIANREP(ls)) == ftype_guardian_rep ? GUARDIANOBJ(ls) : rep), result);
+      *pls = ls = GUARDIANNEXT(ls);
+    } else {
+      ls = *(pls = &GUARDIANNEXT(ls));
+    }
+  }
+  return result;
+}
+
+ptr S_unregister_guardian(ptr tconc) {
+  ptr result, tc; IGEN g;
+  tc_mutex_acquire()
+  tc = get_thread_context();
+  /* in the interest of thread safety, gather entries only in the current thread, ignoring any others */
+  result = s_help_unregister_guardian(&GUARDIANENTRIES(tc), tconc, Snil);
+  /* plus, of course, any already known to the storage-management system */
+  for (g = 0; g <= static_generation; INCRGEN(g)) {
+    result = s_help_unregister_guardian(&S_G.guardians[g], tconc, result);
+  }
+  tc_mutex_release()
+  return result;
 }
 
 #ifndef WIN32
@@ -823,6 +851,9 @@ void S_do_gc(IGEN mcg, IGEN tg) {
         }
       }
     }
+
+   /* tell profile_release_counters to scan only through new_g */
+    if (S_G.prcgeneration == old_g) S_G.prcgeneration = new_g;
 
    /* finally reset max_nonstatic_generation */
     S_G.min_free_gen = S_G.new_min_free_gen;

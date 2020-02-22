@@ -106,10 +106,10 @@ cis = $(defaultcis)
 defaultspi = f
 spi = $(defaultspi)
 
-# ehc defines the value to which $enable-check-heap is set:
-# f for #f, t for #t
-defaultehc = f
-ehc = $(defaultehc)
+# hci defines the value to which heap-check-interval (mat.ss) is set:
+# 0 to disable, > 0 to enable
+defaulthci = 0
+hci = $(defaulthci)
 
 # eoc determines whether object counts are enabled
 defaulteoc = t
@@ -123,8 +123,15 @@ cl = $(defaultcl)
 defaultecpf = t
 ecpf = $(defaultecpf)
 
+# c determines whether mat coverage (.covout) files are created
+defaultc = f
+c = $(defaultc)
+
+# set of coverage files to load
+coverage-files = ../boot/$m/petite.covin ../boot/$m/scheme.covin
+
 # set of mats to run
-mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread\
+mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread profile\
  misc cp0 cptypes 5_6 5_7 5_8 6 io format 7 record hash enum 8 fx fl cfl foreign\
  ftype unix windows examples ieee date exceptions oop
 
@@ -140,15 +147,15 @@ src = $(mats:%=%.ms)
 
 # prettysrc is src to use for pretty-print test; we leave out mat files
 # with cycles, e.g., primvars.ms, misc.ms, 4.ms, 5_1.ms, hash.ms
-prettysrc = 3.ms 5_3.ms 5_4.ms 5_5.ms bytevector.ms\
- thread.ms 5_6.ms 5_7.ms 5_8.ms 6.ms io.ms format.ms 7.ms record.ms enum.ms 8.ms\
+prettysrc = 3.ms 5_3.ms 5_4.ms 5_5.ms bytevector.ms thread.ms profile.ms\
+ 5_6.ms 5_7.ms 5_8.ms 6.ms io.ms format.ms 7.ms record.ms enum.ms 8.ms\
  fx.ms fl.ms cfl.ms foreign.ms unix.ms windows.ms examples.ms ieee.ms date.ms\
  exceptions.ms
 
 $(objdir)/%.mo : %.ms mat.so
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
-             '(#%$$enable-check-heap #${ehc})'\
+             '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
@@ -161,6 +168,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(enable-cp0 #${cp0})'\
              '(set! *scheme* "${Scheme}")'\
              '(current-eval ${eval})'\
+             '(when #$c (coverage-table (load-coverage-files ${coverage-files:%="%"})))'\
              '(time ((mat-file "$(objdir)") "$*"))'\
              '(unless (= (#%$$check-heap-errors) 0)'\
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
@@ -171,7 +179,7 @@ $(objdir)/%.mo : %.ms mat.so
 %.mo : %.ms mat.so
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
-             '(#%$$enable-check-heap #${ehc})'\
+             '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
@@ -184,6 +192,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(enable-cp0 #${cp0})'\
              '(set! *scheme* "${Scheme}")'\
              '(current-eval ${eval})'\
+             '(when #$c (coverage-table (load-coverage-files ${coverage-files:%="%"})))'\
              '(time ((mat-file ".") "$*"))'\
              '(parameterize ([source-directories (quote ("." "../s"))]) (when #${pdhtml} (profile-dump-html)))'\
              '(unless (= (#%$$check-heap-errors) 0)'\
@@ -225,6 +234,21 @@ fastreport:
 	$(MAKE) doerrors
 	$(MAKE) doreport
 
+docoverage: mat.so
+	if [ "$c" = "t" ] ; then\
+          echo '(reset-handler abort) (combine-coverage-files "$(objdir)/all.covout" (quote ($(mats:%="$(objdir)/%.covout"))))' | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "$(objdir)/all.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "$(objdir)/run.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+        fi
+
+doallcoverage: mat.so
+	if [ "$c" = "t" ] ; then\
+          echo '(reset-handler abort) (combine-coverage-files "all.covout" (map symbol->string (quote ($(shell echo */all.covout)))))' | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "all.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (combine-coverage-files "run.covout" (map symbol->string (quote ($(shell echo */run.covout)))))' | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "run.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+        fi
+
 partialx:
 	$(MAKE) allxhelp o=0
 	$(MAKE) allxhelp o=3
@@ -242,8 +266,9 @@ allx: prettyclean
 	$(MAKE) allxhelp o=3 eval=interpret cl=6
 	$(MAKE) allxhelp o=0 eval=interpret cp0=t rmg=2
 	$(MAKE) allxhelp o=3 eval=interpret cp0=t rmg=2
-	$(MAKE) allxhelp o=0 eoc=f ehc=t cl=9
-	$(MAKE) allxhelp o=3 eval=interpret ehc=t rmg=2
+	$(MAKE) allxhelp o=0 eoc=f hci=101 cl=9
+	$(MAKE) allxhelp o=3 eval=interpret hci=101 rmg=2
+	$(MAKE) doallcoverage
 
 just-reports:
 	for EVAL in compile interpret ; do\
@@ -264,16 +289,17 @@ bullyx:
 
 bully:
 	-$(MAKE) allxhelpnotall spi=t cp0=f
-	-$(MAKE) allxhelp spi=f cp0=f cl=9 ctb='(/ (collect-trip-bytes) 64)' ehc=t
+	-$(MAKE) allxhelp spi=f cp0=f cl=9 ctb='(/ (collect-trip-bytes) 64)' hci=503
 	-$(MAKE) allxhelp spi=t cp0=f cis=t cmg=1
-	-$(MAKE) allxhelp spi=f cp0=f cis=t cmg=6 ehc=t
+	-$(MAKE) allxhelp spi=f cp0=f cis=t cmg=6 hci=101
 	-$(MAKE) allxhelp spi=t cp0=t ctb='(/ (collect-trip-bytes) 64)' cgr=6
-	-$(MAKE) allxhelp spi=t cp0=f p=t eoc=f ehc=t
-	-$(MAKE) allxhelp spi=f cp0=t cl=9 p=t ehc=t
+	-$(MAKE) allxhelp spi=t cp0=f p=t eoc=f hci=101
+	-$(MAKE) allxhelp spi=f cp0=t cl=9 p=t hci=101
 	-$(MAKE) allxhelp eval=interpret spi=f cp0=f
 	-$(MAKE) allxhelp eval=interpret spi=f cp0=t
-	-$(MAKE) allxhelp eval=interpret spi=t cp0=f ctb='(/ (collect-trip-bytes) 64)' ehc=t
-	-$(MAKE) allxhelp eval=interpret spi=t cp0=t cgr=2 ehc=t p=t
+	-$(MAKE) allxhelp eval=interpret spi=t cp0=f ctb='(/ (collect-trip-bytes) 64)' hci=503
+	-$(MAKE) allxhelp eval=interpret spi=t cp0=t cgr=2 hci=101 p=t
+	$(MAKE) doallcoverage
 
 allxhelp:
 	$(MAKE) doheader
@@ -283,7 +309,7 @@ allxhelp:
 doheader:
 	printf "%s" "-------- o=$o" >> summary
 	if [ "$(spi)" != "$(defaultspi)" ] ; then printf " spi=$(spi)" >> summary ; fi
-	if [ "$(ehc)" != "$(defaultehc)" ] ; then printf " ehc=$(ehc)" >> summary ; fi
+	if [ "$(hci)" != "$(defaulthci)" ] ; then printf " hci=$(hci)" >> summary ; fi
 	if [ "$(ecpf)" != "$(defaultecpf)" ] ; then printf " ecpf(ecpf)" >> summary ; fi
 	if [ "$(cp0)" != "$(defaultcp0)" ] ; then printf " cp0=$(cp0)" >> summary ; fi
 	if [ "$(cis)" != "$(defaultcis)" ] ; then printf " cis=$(cis)" >> summary ; fi
@@ -309,23 +335,25 @@ allxhelpnotall:
 	$(MAKE) doheader hdrmsg="not all"
 	-$(MAKE)
 	$(MAKE) dosummary
+	$(MAKE) docoverage
 
 all0: ; $(MAKE) all o=0
 all1: ; $(MAKE) all o=1
 all2: ; $(MAKE) all o=2
 all3: ; $(MAKE) all o=3
 
-all: makescript$o $(src) oop.ss ht.ss mat.so cat_flush ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} examples
+all: makescript$o $(src) oop.ss ht.ss mat.so cat_flush ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
 	${Scheme} --verbose -q mat.so ${patchfile} < script.all$o
 	$(MAKE) doerrors
 	$(MAKE) doreport
+	$(MAKE) docoverage
 
 script.all$o: Mf-base
 
 script.all$o makescript$o:
 	echo '(optimize-level $o)'\
              '(#%$$suppress-primitive-inlining #${spi})'\
-             '(#%$$enable-check-heap #${ehc})'\
+             '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
              '(collect-trip-bytes ${ctb})'\
@@ -338,12 +366,15 @@ script.all$o makescript$o:
              '(enable-cp0 #${cp0})'\
              '(set! *scheme* "${Scheme}")'\
              '(current-eval ${eval})'\
-             '(time (for-each (mat-file "$(objdir)")'\
-             '        (quote ($(mats:%="%")))))'\
-             '(parameterize ([source-directories (quote ("." "../s"))]) (when #${pdhtml} (profile-dump-html)))'\
-             '(unless (= (#%$$check-heap-errors) 0)'\
-             '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
-             '  (abort))'\
+             '(when #$c (coverage-table (load-coverage-files ${coverage-files:%="%"})))'\
+             '(record-run-coverage "$(objdir)/run.covout"'\
+             '  (lambda ()'\
+             '    (time (for-each (lambda (x) (time ((mat-file "$(objdir)") x)))'\
+             '            (quote ($(mats:%="%")))))'\
+             '    (parameterize ([source-directories (quote ("." "../s"))]) (when #${pdhtml} (profile-dump-html)))'\
+             '    (unless (= (#%$$check-heap-errors) 0)'\
+             '      (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
+             '      (abort))))'\
           > script.all$o
 
 source:
@@ -373,23 +404,26 @@ bullyprettytest.ss: ${src}
 mat.so: ${patchfile}
 foreign.mo ${objdir}/foreign.mo: ${fobj}
 thread.mo ${objdir}/thread.mo: ${fobj}
-examples.mo ${objdir}/examples.mo: m4test.in m4test.out freq.in freq.out examples
+examples.mo ${objdir}/examples.mo: m4test.in m4test.out freq.in freq.out build-examples
 6.mo ${objdir}/6.mo: prettytest.ss
+bytevector.mo ${objdir}/bytevector.mo: prettytest.ss
 io.mo ${objdir}/io.mo: prettytest.ss
 unix.mo ${objdir}/unix.mo io.mo ${objdir}/io.mo 6.mo ${objdir}/6.mo: cat_flush
 oop.mo ${objdir}/oop.mo: oop.ss
 ftype.mo ${objdir}/ftype.mo: ftype.h
 hash.mo ${objdir}/hash.mo: ht.ss
 
-examples:
+build-examples:
 	( cd ../examples && ${MAKE} Scheme=${Scheme} )
+	touch build-examples
 
 prettyclean:
-	rm -f *.o ${mdclean} *.so *.mo experr* errors* report* summary testfile* testscript\
+	rm -f *.o ${mdclean} *.so *.mo *.covout experr* errors* report* summary testfile* testscript\
  ${fobj} prettytest.ss cat_flush so_locations\
- script.all? *.html experr*.rej experr*.orig
+ build-examples script.all? *.html experr*.rej experr*.orig
 	rm -rf testdir*
 	rm -rf output-*
+	( cd ../examples && ${MAKE} Scheme=${Scheme} clean )
 
 clean: prettyclean
 	rm -f Make.out

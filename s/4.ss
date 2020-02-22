@@ -14,7 +14,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(define apply
+(define-who apply
   (let ()
     (define-syntax build-apply
       (lambda (x)
@@ -24,7 +24,7 @@
                [(p r)
                 (unless (procedure? p)
                   ($oops #f "attempt to apply non-procedure ~s" p))
-                (let ([n ($list-length r 'apply)])
+                (let ([n ($list-length r who)])
                   (case n
                     [(0) (p)]
                     [(1) (p (car r))]
@@ -35,8 +35,8 @@
                [(p x . r)
                 (unless (procedure? p)
                    ($oops #f "attempt to apply non-procedure ~s" p))
-                (let ([r (cons x ($apply list* ($list-length r 'apply) r))])
-                   ($apply p ($list-length r 'apply) r))])]
+                (let ([r (cons x ($apply list* ($list-length r who) r))])
+                   ($apply p ($list-length r who) r))])]
           [(_ (s1 s2 ...) cl ...)
            (with-syntax ((m (length #'(s1 s2 ...))))
              #'(build-apply
@@ -44,7 +44,7 @@
                  [(p s1 s2 ... r)
                   (unless (procedure? p)
                     ($oops #f "attempt to apply non-procedure ~s" p))
-                  (let ([n ($list-length r 'apply)])
+                  (let ([n ($list-length r who)])
                     (case n
                       [(0) (p s1 s2 ...)]
                       [(1) (p s1 s2 ... (car r))]
@@ -153,22 +153,22 @@
     (set-who! andmap (do-andmap who))
     (set-who! for-all (do-andmap who)))
 
-  (set! map
+  (set-who! map
     (case-lambda
       [(f ls)
-       (unless (procedure? f) (nonprocedure-error 'map f))
-       ($list-length ls 'map)
+       (unless (procedure? f) (nonprocedure-error who f))
+       ($list-length ls who)
       ; library map cdrs first to avoid getting sick if f mutates input
        (#3%map f ls)]
       [(f ls1 ls2)
-       (unless (procedure? f) (nonprocedure-error 'map f))
-       (unless (fx= ($list-length ls1 'map) ($list-length ls2 'map))
-         (length-error 'map ls1 ls2))
+       (unless (procedure? f) (nonprocedure-error who f))
+       (unless (fx= ($list-length ls1 who) ($list-length ls2 who))
+         (length-error who ls1 ls2))
       ; library map cdrs first to avoid getting sick if f mutates input
        (#3%map f ls1 ls2)]
       [(f ls . more)
-       (unless (procedure? f) (nonprocedure-error 'map f))
-       (length-check 'map ls more)
+       (unless (procedure? f) (nonprocedure-error who f))
+       (length-check who ls more)
        (let map ([f f] [ls ls] [more more])
          (if (null? ls)
              '()
@@ -200,22 +200,22 @@
              (let ([tail (map f (cdr ls) (#3%map cdr more))])
                (cons (apply f (car ls) (#3%map car more)) tail))))]))
 
-  (set! for-each
+  (set-who! for-each
     (case-lambda
       [(f ls)
-       (unless (procedure? f) (nonprocedure-error 'for-each f))
+       (unless (procedure? f) (nonprocedure-error who f))
        (unless (null? ls)
-         (let for-each ([n ($list-length ls 'for-each)] [ls ls])
+         (let for-each ([n ($list-length ls who)] [ls ls])
            (if (fx= n 1)
                (f (car ls))
                (begin
                  (f (car ls))
                  (let ([ls (cdr ls)])
-                   (unless (pair? ls) (mutation-error 'for-each))
+                   (unless (pair? ls) (mutation-error who))
                    (for-each (fx- n 1) ls))))))]
       [(f ls . more)
-       (unless (procedure? f) (nonprocedure-error 'for-each f))
-       (let ([n (length-check 'for-each ls more)])
+       (unless (procedure? f) (nonprocedure-error who f))
+       (let ([n (length-check who ls more)])
          (unless (fx= n 0)
            (let for-each ([n n] [ls ls] [more more] [cars (map car more)])
              (if (fx= n 1)
@@ -223,28 +223,28 @@
                  (begin
                    (apply f (car ls) cars)
                    (let ([ls (cdr ls)])
-                     (unless (pair? ls) (mutation-error 'for-each))
-                     (let-values ([(cdrs cars) (getcxrs more 'for-each)])
+                     (unless (pair? ls) (mutation-error who))
+                     (let-values ([(cdrs cars) (getcxrs more who)])
                        (for-each (fx- n 1) ls cdrs cars))))))))]))
 
-  (set! fold-left 
+  (set-who! fold-left 
     (case-lambda
       [(combine nil ls)
-       (unless (procedure? combine) (nonprocedure-error 'fold-left combine))
+       (unless (procedure? combine) (nonprocedure-error who combine))
        (cond
          [(null? ls) nil]
          [else
-          ($list-length ls 'fold-left)
+          ($list-length ls who)
           (let fold-left ([ls ls] [acc nil])
             (let ([cdrls (cdr ls)])
               (if (pair? cdrls)
                   (fold-left cdrls (combine acc (car ls)))
                   (if (null? cdrls)
                       (combine acc (car ls))
-                      (mutation-error 'fold-left)))))])]
+                      (mutation-error who)))))])]
       [(combine nil ls . more)
-       (unless (procedure? combine) (nonprocedure-error 'fold-left combine))
-       (length-check 'fold-left ls more)
+       (unless (procedure? combine) (nonprocedure-error who combine))
+       (length-check who ls more)
        (if (null? ls)
            nil
            (let fold-left ([ls ls] [more more] [cars (map car more)] [acc nil])
@@ -252,26 +252,26 @@
                (if (null? cdrls)
                    (apply combine acc (car ls) cars)
                    (let ([acc (apply combine acc (car ls) cars)])
-                     (unless (pair? cdrls) (mutation-error 'fold-left))
-                     (let-values ([(cdrs cars) (getcxrs more 'fold-left)])
+                     (unless (pair? cdrls) (mutation-error who))
+                     (let-values ([(cdrs cars) (getcxrs more who)])
                        (fold-left cdrls cdrs cars acc)))))))]))
 
-  (set! fold-right 
+  (set-who! fold-right 
     (case-lambda
       [(combine nil ls)
-       (unless (procedure? combine) (nonprocedure-error 'fold-right combine))
-       ($list-length ls 'fold-right)
+       (unless (procedure? combine) (nonprocedure-error who combine))
+       ($list-length ls who)
       ; #3%fold-right naturally does cdrs first to avoid mutation sickness
        (#3%fold-right combine nil ls)]
       [(combine nil ls1 ls2)
-       (unless (procedure? combine) (nonprocedure-error 'fold-right combine))
-       (unless (fx= ($list-length ls1 'map) ($list-length ls2 'map))
-         (length-error 'fold-right ls1 ls2))
+       (unless (procedure? combine) (nonprocedure-error who combine))
+       (unless (fx= ($list-length ls1 who) ($list-length ls2 who))
+         (length-error who ls1 ls2))
       ; #3%fold-right naturally does cdrs first to avoid mutation sickness
        (#3%fold-right combine nil ls1 ls2)]
       [(combine nil ls . more)
-       (unless (procedure? combine) (nonprocedure-error 'fold-right combine))
-       (length-check 'fold-right ls more)
+       (unless (procedure? combine) (nonprocedure-error who combine))
+       (length-check who ls more)
        (let fold-right ([combine combine] [nil nil] [ls ls] [more more])
          (if (null? ls)
              nil
@@ -407,10 +407,10 @@
 
 ;;; make-promise and force
 
-(define $make-promise
+(define-who $make-promise
   (lambda (thunk)
     (unless (procedure? thunk)
-      ($oops '$make-promise "~s is not a procedure" thunk))
+      ($oops who "~s is not a procedure" thunk))
     (let ([value (void)] [set? #f])
       (lambda ()
         (case set?
@@ -435,8 +435,8 @@
                         (set! set? 'multiple)
                         (apply values x)])]))])))))
 
-(define force
+(define-who force
    (lambda (promise)
       (unless (procedure? promise)
-         ($oops 'force "~s is not a procedure" promise))
+         ($oops who "~s is not a procedure" promise))
       (promise)))

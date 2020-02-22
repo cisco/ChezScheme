@@ -1,9 +1,9 @@
 3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
 3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x at line 1, char 19 of testfile.ss".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
-misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
 misc.mo:Expected warning in mat (argcnt load-warning): "compile: possible incorrect argument count in call (car) at line 3, char 38 of testfile.ss".
 misc.mo:Expected warning in mat (argcnt load-warning): "compile: possible incorrect argument count in call (car (quote (a b)) (quote (c d))) at line 3, char 38 of testfile.ss".
 misc.mo:Expected warning in mat (argcnt load-warning): "compile: possible incorrect argument count in call (g 7) at line 3, char 47 of testfile.ss".

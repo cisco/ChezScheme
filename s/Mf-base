@@ -50,6 +50,9 @@ xp = f
 bp = f
 xbp = f
 
+# c determines whether covin files are generated: f for false, t for true.
+c = f
+
 # loadspd determines whether source-profile data is loaded: f for false, t for true
 loadspd = f
 
@@ -232,12 +235,14 @@ clean: profileclean
              '(generate-inspector-information #$i)'\
              '(generate-allocation-counts #${gac})'\
              '(generate-instruction-counts #${gic})'\
+             '(generate-covin-files #$c)'\
              '(run-cp0 (lambda (cp0 x)'\
              '           (do ([i ${cp0} (fx- i 1)] [x x (cp0 x)])'\
              '               ((fx= i 0) x))))'\
              '(collect-trip-bytes (expt 2 24))'\
              '(collect-request-handler (lambda () (collect 0 1)))'\
              '(collect 1 2)'\
+             '(delete-file "$*.covin")'\
              '(time (${compile} "$*.ss" "$*.$m" (quote $m)))'\
              '(when #${pdhtml} (profile-dump-html))'\
              '(when #${dumpspd} (profile-dump-data "${ProfileDumpSource}"))'\
@@ -259,6 +264,7 @@ clean: profileclean
              '(generate-inspector-information #$i)'\
              '(generate-allocation-counts #${gac})'\
              '(generate-instruction-counts #${gic})'\
+             '(generate-covin-files #$c)'\
              '(run-cp0 (lambda (cp0 x)'\
              '           (do ([i ${cp0} (fx- i 1)] [x x (cp0 x)])'\
              '               ((fx= i 0) x))))'\
@@ -266,6 +272,7 @@ clean: profileclean
              '(collect-request-handler (lambda () (collect 0 1)))'\
              '(collect 1 2)'\
              '(print-gensym (quote pretty/suffix))'\
+             '(delete-file "$*.covin")'\
              '(compile-with-asm "$*.ss" "$*.$m" (quote $m))'\
              '(when #${pdhtml} (profile-dump-html))'\
              '(when #${dumpspd} (profile-dump-data "${ProfileDumpSource}"))'\
@@ -347,12 +354,16 @@ resetbootlinks:
 
 ${PetiteBoot}: ${macroobj} ${patchfile} ${baseobj}
 	echo '(reset-handler abort)'\
+             '(generate-covin-files #$c)'\
+             '(delete-file (string-append (path-root "${PetiteBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${PetiteBoot}" (quote $m) (quote ())'\
              '  (map symbol->string (quote (${baseobj}))))'\
              | ${Scheme} -q ${macroobj} ${patchfile}
 
 ${SchemeBoot}: ${macroobj} ${patchfile} ${compilerobj}
 	echo '(reset-handler abort)'\
+             '(generate-covin-files #$c)'\
+             '(delete-file (string-append (path-root "${SchemeBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${SchemeBoot}" (quote $m) (quote ("petite"))'\
              '  (map symbol->string (quote (${compilerobj}))))'\
              | ${Scheme} -q ${macroobj} ${patchfile}
@@ -447,11 +458,13 @@ script.all makescript:
              '(generate-allocation-counts #${gac})'\
              '(generate-instruction-counts #${gic})'\
              '(#%$$enable-pass-timing #${pps})'\
+             '(generate-covin-files #$c)'\
              '(run-cp0 (lambda (cp0 x)'\
              '           (do ([i ${cp0} (fx- i 1)] [x x (cp0 x)])'\
              '               ((fx= i 0) x))))'\
              '(collect-trip-bytes (expt 2 24))'\
              '(collect-request-handler (lambda () (collect 0 1)))'\
+             '(for-each (lambda (x) (delete-file (string-append (path-root (symbol->string x)) ".covin"))) (quote (${obj})))'\
              '(time (for-each (lambda (x y)'\
              '                   (collect 1 2)'\
              '                   (${compile} (symbol->string x)'\
@@ -460,8 +473,10 @@ script.all makescript:
              '                (quote (${src}))'\
              '                (quote (${obj}))))'\
              '(when #${pps} (#%$$print-pass-stats))'\
+             '(delete-file (string-append (path-root "${PetiteBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${PetiteBoot}" (quote $m) (quote ())'\
              '  (map symbol->string (quote (${baseobj}))))'\
+             '(delete-file (string-append (path-root "${SchemeBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${SchemeBoot}" (quote $m) (quote ("petite"))'\
              '  (map symbol->string (quote (${compilerobj}))))'\
              '(when #${pdhtml} (profile-dump-html))'\
@@ -483,12 +498,16 @@ script-static.all:
              '(generate-inspector-information #$i)'\
              '(generate-allocation-counts #${gac})'\
              '(generate-instruction-counts #${gic})'\
+             '(generate-covin-files #$c)'\
              '(run-cp0 (lambda (cp0 x)'\
              '           (do ([i ${cp0} (fx- i 1)] [x x (cp0 x)])'\
              '               ((fx= i 0) x))))'\
+             '(for-each (lambda (x) (delete-file (string-append (path-root (symbol->string x)) ".covin"))) (quote (${obj})))'\
              '(compile-with-setup-closure-counts (quote (${closure-opt})) (quote (${src})) (quote (${obj})) (quote $m) #$r)'\
+             '(delete-file (string-append (path-root "${PetiteBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${PetiteBoot}" (quote $m) (quote ())'\
              '  (map symbol->string (quote (${baseobj}))))'\
+             '(delete-file (string-append (path-root "${SchemeBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${SchemeBoot}" (quote $m) (quote ("petite"))'\
              '  (map symbol->string (quote (${compilerobj}))))'\
              '(when #${pdhtml} (profile-dump-html))'\
@@ -508,12 +527,16 @@ script-dynamic.all:
              '(generate-inspector-information #$i)'\
              '(generate-allocation-counts #${gac})'\
              '(generate-instruction-counts #${gic})'\
+             '(generate-covin-files #$c)'\
              '(run-cp0 (lambda (cp0 x)'\
              '           (do ([i ${cp0} (fx- i 1)] [x x (cp0 x)])'\
              '               ((fx= i 0) x))))'\
+             '(for-each (lambda (x) (delete-file (string-append (path-root (symbol->string x)) ".covin"))) (quote (${obj})))'\
              '(compile-with-closure-counts (quote (${closure-opt})) (quote (${src})) (quote (${obj})) (quote $m) #$r)'\
+             '(delete-file (string-append (path-root "${PetiteBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${PetiteBoot}" (quote $m) (quote ())'\
              '  (map symbol->string (quote (${baseobj}))))'\
+             '(delete-file (string-append (path-root "${SchemeBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${SchemeBoot}" (quote $m) (quote ("petite"))'\
              '  (map symbol->string (quote (${compilerobj}))))'\
              '(when #${pdhtml} (profile-dump-html))'\
@@ -567,7 +590,7 @@ examples:
 	( cd ../examples && ${MAKE} all Scheme="${Scheme} ../s/${patchfile}" )
 
 prettyclean:
-	rm -f *.$m xpatch ${patch} *.patch *.so *.asm script.all header.tmp *.html
+	rm -f *.$m xpatch ${patch} *.patch *.so *.covin *.asm script.all header.tmp *.html
 	rm -rf nanopass
 
 profileclean: prettyclean

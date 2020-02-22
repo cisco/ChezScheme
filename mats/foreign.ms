@@ -2970,8 +2970,8 @@
   (check-union [x float 58.0] [y int 0])
   (check-union [x double 68.0] [y int 0])
 
-  ;; Check that `__collect_safe` saves a argument and result floating-point registers
-  ;; while activating and deacttiving a thread
+  ;; Check that `__collect_safe` saves argument and result floating-point registers
+  ;; while activating and deactivating a thread
   (let ()
     (define-ftype T (struct [d double] [i integer-8] [n int]))
     (define sum_pre_double_double_double_double_double_double_double_double

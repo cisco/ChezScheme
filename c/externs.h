@@ -91,14 +91,8 @@ extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,
 extern ptr S_inexactnum PROTO((double rp, double ip));
 extern ptr S_exactnum PROTO((ptr a, ptr b));
 extern ptr S_thread PROTO((ptr tc));
-extern ptr S_ifile PROTO((iptr icount, ptr name, iptr fd, ptr info, iptr flags, char *ilast,
-                  ptr ibuf));
-extern ptr S_ofile PROTO((iptr ocount, ptr name, iptr fd, ptr info, iptr flags, char *olast,
-            ptr obuf));
-extern ptr S_iofile PROTO((iptr icount, iptr ocount, ptr name, iptr fd, ptr info, iptr flags,
-            char *ilast, ptr ibuf, char *olast, ptr obuf));
 extern ptr S_string PROTO((const char *s, iptr n));
-extern ptr S_bignum PROTO((iptr n, IBOOL sign));
+extern ptr S_bignum PROTO((ptr tc, iptr n, IBOOL sign));
 extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
 extern ptr S_relocation_table PROTO((iptr n));
 extern ptr S_weak_cons PROTO((ptr car, ptr cdr));
@@ -107,7 +101,7 @@ extern void S_phantom_bytevector_adjust PROTO((ptr ph, uptr new_sz));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
-ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, ptr path));
+ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, IFASLCODE situation, ptr path));
 ptr S_bv_fasl_read PROTO((ptr bv, int ty, uptr offset, uptr len, ptr path));
 /* S_boot_read's f argument is really gzFile, but zlib.h is not included everywhere */
 ptr S_boot_read PROTO((glzFile file, const char *path));
@@ -163,6 +157,7 @@ extern void S_set_enable_object_backreferences PROTO((IBOOL eoc));
 extern ptr S_object_backreferences PROTO((void));
 extern void S_do_gc PROTO((IGEN g, IGEN gtarget));
 extern ptr S_locked_objects PROTO((void));
+extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
 extern void S_check_heap PROTO((IBOOL aftergc));
 
@@ -200,6 +195,8 @@ extern wchar_t *S_malloc_wide_pathname PROTO((const char *inpath));
 extern IBOOL S_fixedpathp PROTO((const char *inpath));
 
 /* compress-io.c */
+extern INT S_zlib_compress_level PROTO((INT compress_level));
+extern INT S_lz4_compress_level PROTO((INT compress_level));
 extern glzFile S_glzdopen_output PROTO((INT fd, INT compress_format, INT compress_level));
 extern glzFile S_glzdopen_input PROTO((INT fd));
 extern glzFile S_glzopen_input PROTO((const char *path));
@@ -285,13 +282,14 @@ extern iptr S_integer_value PROTO((const char *who, ptr x));
 extern I64 S_int64_value PROTO((char *who, ptr x));
 extern IBOOL S_big_eq PROTO((ptr x, ptr y));
 extern IBOOL S_big_lt PROTO((ptr x, ptr y));
+extern ptr S_big_negate PROTO((ptr x));
 extern ptr S_add PROTO((ptr x, ptr y));
 extern ptr S_sub PROTO((ptr x, ptr y));
 extern ptr S_mul PROTO((ptr x, ptr y));
 extern ptr S_div PROTO((ptr x, ptr y));
 extern ptr S_rem PROTO((ptr x, ptr y));
 extern ptr S_trunc PROTO((ptr x, ptr y));
-extern void S_trunc_rem PROTO((ptr x, ptr y, ptr *q, ptr *r));
+extern void S_trunc_rem PROTO((ptr tc, ptr x, ptr y, ptr *q, ptr *r));
 extern ptr S_gcd PROTO((ptr x, ptr y));
 extern ptr S_ash PROTO((ptr x, ptr n));
 extern ptr S_big_positive_bit_field PROTO((ptr x, ptr fxstart, ptr fxend));
@@ -351,6 +349,8 @@ extern void S_handle_nonprocedure_symbol PROTO((void));
 extern void S_handle_values_error PROTO((void));
 extern void S_handle_mvlet_error PROTO((void));
 extern void S_handle_event_detour PROTO((void));
+extern ptr S_allocate_scheme_signal_queue PROTO((void));
+extern ptr S_dequeue_scheme_signals PROTO((ptr tc));
 extern void S_register_scheme_signal PROTO((iptr sig));
 extern void S_fire_collector PROTO((void));
 extern NORETURN void S_noncontinuable_interrupt PROTO((void));

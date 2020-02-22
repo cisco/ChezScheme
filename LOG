@@ -1423,7 +1423,7 @@
     prim5.c, system.stex
 - restore {Free,Open,Net}BSD build, support Windows cross-compile
   via MinGW, add configuration options, and add helper makefile targets
-    expenditor.c, thread.c, stats.c, statics.c, scheme.c, main.c, types.h,
+    expeditor.c, thread.c, stats.c, statics.c, scheme.c, main.c, types.h,
     externs.h, globals.h, nocurses.h, version.h, system.h, segment.h,
     a6ob.def, ta6ob.def, a6nb.def, ta6nb.def, i3nt.def, ti3nt.def,
     c/Mf-*, build.bat, makefiles/Makefile.in, makefiles/Mf-install.in,
@@ -1436,3 +1436,557 @@
     scheme.c
 - remove dead stores in files
     compress-io.c, new-io.c
+- fixed tab character in makefiles
+    c/Mf-*nt
+- use case-insensitive search for ".exe" on Windows
+    c/scheme.c
+- fix __collect_safe for x86_64 and floating-point arguments or results
+    x86_64.ss, foreign.ms, release_notes.stex
+- annotations are now preserved in object files for debug
+  only, for profiling only, for both, or not at all, depending
+  on the settings of generate-inspector-information and
+  compile-profile.  in particular, when inspector information
+  is not enabled but profiling is, source information does
+  not leak into error messages and inspector output, though it is
+  still available via the profile tools.  The mechanics of this
+  involved repurposing the fasl a? parameter to hold an annotation
+  flags value when it is not #f and remaking annotations with
+  new flags if necessary before emitting them.
+    compile.ss, fasl.ss, misc.ms
+- altered a number of mats to produce correct results even
+  when the 's' directory is profiled.
+    misc.ms, cp0.ms, record.ms
+- profile-release-counters is now generation-friendly; that is,
+  it doesn't look for dropped code objects in generations that have
+  not been collected since the last call to profile-release-counters.
+  also, it no longer allocates memory when it releases counters.
+    pdhtml.ss,
+    gc.c, gcwrapper.c, globals.h, prim5.c
+- removed unused entry points S_ifile, S_ofile, and S_iofile
+    alloc.c, externs.h
+- mats that test loading profile info into the compiler's database
+  to guide optimization now weed out preexisting entries, in case
+  the 's' directory is profiled.
+    4.ms, mat.ss, misc.ms, primvars.ms
+- counters for dropped code objects are now released at the start
+  of each mat group.
+    mat.ss
+- replaced ehc (enable-heap-check) option with hci (heap-check-interval)
+  option that allows heap checks to be performed periodically rather
+  than on each collection.  hci=0 is equivalent to ehc=f (disabling
+  heap checks) and hci=1 is equivalent to ehc=t (enabling heap
+  checks every collection), while hci=100 enables heap checks only
+  every 100th collection.  allx and bullyx mats use this feature
+  to reduce heap-checking overhead to a more reasonable level.  this
+  is particularly important when the 's' directory is profiled,
+  since the amount of static memory to be checked is greatly increased
+  due to the counters.
+    mats/Mf-base, mat.ss, primvars.ms
+- added a mat that calls #%show-allocation, which was otherwise not
+  being tested.
+    misc.ms
+- removed a broken primvars mat and updated two others.  in each case,
+  the mat was looking for information about primitives in the wrong
+  (i.e., old) place and silently succeeding when it didn't find any
+  primitives to test.  the revised mats (along with a few others) now
+  check to make sure at least one identifier has the information they
+  look for.  the removed mat was checking for library information that
+  is now compiled in, so the mat is now unnecessary.  the others were
+  (not) doing argument-error checks.  fixing these turned up a handful of
+  problems that have also been fixed: a couple of unbound variables in the
+  mat driver, two broken primdata declarations, a tardy argument check
+  by profile-load-data, and a bug in char-ready?, which was requiring
+  an argument rather than defaulting it to the current input port.
+    primdata.ss, pdhtml.ss, io.ms,
+    primdvars.ms, 4.ms, 6.ms, misc.ms, patch*
+- added initial support for recording coverage information.  when the
+  new parameter generate-covin-files is set, the compiler generates
+  .covin files containing the universe of all source objects for which
+  profile forms are present in the expander output.  when profiling
+  and generation of covin files are enabled in the 's' directory, the
+  mats optionally generate .covout files for each mat file giving
+  the subset of the universe covered by the mat file, along with an
+  all.covout in each mat output directory aggregating the coverage
+  for the directory and another all.covout in the top-level mat
+  directory aggregating the coverage for all directories.
+    back.ss, compile.ss, cprep.ss, primdata.ss, s/Mf-base,
+    mat.ss, mats/Mf-base, mats/primvars.ms
+- support for generating covout files is now built in.  with-coverage-output
+  gathers and dumps coverage information, and aggregate-coverage-output
+  combines (aggregates) covout files.
+    pdhtml.ss, primdata.ss, compile.ss,
+    mat.ss, mats/Mf-base, primvars.ms
+- profile-clear now adjusts active coverage trackers to avoid losing
+  coverage information.
+    pdhtml.ss,
+    prim5.c
+- nested with-coverage calls are now supported.
+    pdhtml.ss
+- switched to a more compact representation for covin and covout files;
+  reduces disk space (compressed or not) by about a factor of four
+  and read time by about a factor of two with no increase in write time.
+    primdata.ss, pdhtml.ss, cprep.ss, compile.ss,
+    mat.ss, mats/Mf-base
+- added support for determining coverage for an entire run, including
+  coverage for expressions hit during boot time.  'all' mats now produce
+  run.covout files in each output directory, and 'allx' mats produce
+  an aggregate run.covout file in the mat directory.
+    pdhtml.ss,
+    mat.ss, mats/Mf-base
+- profile-release-counters now adjusts active coverage trackers to
+  account for the counters that have been released.
+    pdhtml.ss,
+    prim5.c
+- replaced the artificial "examples" target with a real "build-examples"
+  target so make won't think it always has to mats that depend upon
+  the examples directory having been compiled.  mats make clean now
+  runs make clean in the examples directory.
+    mats/Mf-base
+- importing a library from an object file now just visits the object
+  file rather than doing a full load so that the run-time code for
+  the library is not retained.  The run-time code is still read
+  because the current fasl format forces the entire file to be read,
+  but not retaining the code can lower heap size and garbage-collection
+  cost, particularly when many object-code libraries are imported.
+  The downside is that the file must be revisited if the run-time
+  code turns out to be required.   This change exposed several
+  places where the code was failing to check if a revisit is needed.
+    syntax.ss,
+    7.ms, 8.ms, misc.ms, root-experr*
+- fixed typos: was passing unquoted load rather than quoted load
+  to $load-library along one path (where it is loading source code
+  and therefore irrelevant), and was reporting src-path rather than
+  obj-path in a message about failing to define a library.
+    syntax.ss
+- compile-file and friends now put all recompile information in
+  the first fasl object after the header so the library manager can
+  find it without loading the entire fasl file.  The library manager
+  now does so.  It also now checks to see if library object files
+  need to be recreated before loading them rather than loading them and
+  possibly recompiling them after discovering they are out of date, since
+  the latter requires loading the full object file even if it's out of
+  date, while the former takes advantage of the ability to extract just
+  recompile information.  as well as reducing overhead, this eliminates
+  possibly undesirable side effects, such as creation and registration
+  of out-of-date nongenerative record-type descriptors.  because the
+  library manager expects to find recompile information at the front of
+  an object file, it will not find all recompile information if object
+  files are "catted" together.  also, compile-file has to hold in memory
+  the object code for all expressions in the file so that it can emit the
+  unified recompile information, rather than writing to the object file
+  incrementally, which can significantly increase the memory required
+  to compile a large file full of individual top-level forms.  This does
+  not affect top-level programs, which were already handled as a whole,
+  or a typical library file that contains just a single library form.
+    compile.ss, syntax.ss
+- the library manager now checks include files before library dependencies
+  when compile-imported-libraries is false (as it already did when
+  compile-imported-libraries is true) in case a source change affects
+  the set of imported libraries.  (A library change can affect the set
+  of include files as well, but checking dependencies before include
+  files can cause unneeded libraries to be loaded.)  The include-file
+  check is based on recompile-info rather than dependencies, but the
+  library checks are still based on dependencies.
+    syntax.ss
+- fixed check for binding of scheme-version. (the check prevents
+  premature treatment of recompile-info records as Lexpand forms
+  to be passed to $interpret-backend.)
+    scheme.c
+- strip-fasl-file now preserves recompile-info when compile-time info
+  is stripped.
+    strip.ss
+- removed include-req* from library/ct-info and ctdesc records; it
+  is no longer needed now that all recompile information is maintained
+  separately.
+    expand-lang.ss, syntax.ss, compile.ss, cprep.ss, syntax.ss
+- changed the fasl format and reworked a lot of code in the expander,
+  compiler, fasl writer, and fasl reader to allow the fasl reader
+  to skip past run-time information when it isn't needed and
+  compile-time information when it isn't needed.  Skipping past
+  still involves reading and decoding when encrypted, but the fasl
+  reader no longer parses or allocates code and data in the portions
+  to be skipped.  Side effects of associating record uids with rtds
+  are also avoided, as are the side effects of interning symbols
+  present only in the skipped data.  Skipping past code objects
+  also reduces or eliminates the need to synchronize data and
+  instruction caches.  Since the fasl reader no longer returns
+  compile-time (visit) or run-time (revisit) code and data when not
+  needed, the fasl reader no longer wraps these objects in a pair
+  with a 0 or 1 visit or revisit marker.  To support this change,
+  the fasl writer generates separate top-level fasl entries (and
+  graphs) for separate forms in the same top-level source form
+  (e.g., begin or library).  This reliably breaks eq-ness of shared
+  structure across these forms, which was previously broken only
+  when visit or revisit code was loaded at different times (this
+  is an incompatible change).  Because of the change, fasl "groups"
+  are no longer needed, so they are no longer handled.
+    7.ss, cmacros.ss, compile.ss, expand-lang.ss, strip.ss,
+    externs.h, fasl.c, scheme.c,
+    hash.ms
+- the change above is surfaced in an optional fasl-read "situation"
+  argument (visit, revisit, or load).  The default is load.  visit
+  causes it to skip past revisit code and data; revisit causes it
+  to skip past visit code and data; and load causes it not to skip
+  past either.  visit-revisit data produced by (eval-when (visit
+  revisit) ---) is never skipped.
+    7.ss, primdata.ss,
+    io.stex
+- to improve compile-time and run-time error checking, the
+  Lexpand recompile-info, library/rt-info, library-ct-info, and
+  program-info forms have been replaced with list-structured forms,
+  e.g., (recompile-info ,rcinfo).
+    expand-lang.ss, compile.ss, cprep.ss, interpret.ss, syntax.ss
+- added visit-compiled-from-port and revisit-compiled-from-port
+  to complement the existing load-compiled-from-port.
+    7.ss, primdata.ss,
+    7.ms,
+    system.stex
+- increased amount read when seeking an lz4-compressed input
+  file from 32 to 1024 bytes at a time
+    compress-io.c
+- replaced the fasl a? parameter value #t with an "all" flag value
+  so it's value is consistently a mask.
+    cmacros.ss, fasl.ss, compile.ss
+- split off profile mats into a separate file
+    misc.ms, profile.ms (new), root-experr*, mats/Mf-base
+- added coverage percent computations to mat allx/bullyx output
+    mat.ss, mats/Mf-base, primvars.ms
+- replaced coverage tables with more generic and generally useful
+  source tables, which map source objects to arbitrary values.
+    pdhtml.ss, compile.ss, cprep.ss, primdata.ss,
+    mat.ss, mats/Mf-base, primvars.ms, profile.ms,
+    syntax.stex
+- reduced profile counting overhead by using calls to fold-left
+  instead of calls to apply and map and by using fixnum operations
+  for profile counts on 64-bit machines.
+    pdhtml.ss
+- used a critical section to fix a race condition in the calculations
+  of profile counts that sometimes resulted in bogus (including
+  negative) counts, especially when the 's' directory is profiled.
+    pdhtml.ss
+- added discard flag to declaration for hashtable-size
+    primdata.ss
+- redesigned the printed representation of source tables and rewrote
+  get-source-table! to read and store incrementally to reduce memory
+  overhead.
+    compile.ss
+- added generate-covin-files to the set of parameters preserved
+  by compile-file, etc.
+    compile.ss,
+    system.stex
+- moved covop argument before the undocumented machine and hostop
+  arguments to compile-port and compile-to-port.  removed the
+  undocumented ofn argument from compile-to-port; using
+  (port-name ip) instead.
+    compile.ss, primdata.ss,
+    7.ms,
+    system.stex
+- compile-port now tries to come up with a file position to supply
+  to make-read, which it can do if the port's positions are character
+  positions (presently string ports) or if the port is positioned
+  at zero.
+    compile.ss
+- audited the argument-type-error fuzz mat exceptions and fixed a
+  host of problems this turned up (entries follow).  added #f as
+  an invalid argument for every type for which #f is indeed invalid
+  to catch places where the maybe- prefix was missing on the argument
+  type.  the mat tries hard to determine if the condition raised
+  (if any) as the result of an invalid argument is appropriate and
+  redirects the remainder to the mat-output (.mo) file prefixed
+  with 'Expected error', causing them to show up in the expected
+  error output so developers will be encouraged to audit them in
+  the future.
+    primvars.ms, mat.ss
+- added an initial symbol? test on machine type names so we produce
+  an invalid machine type error message rather than something
+  confusing like "machine type #f is not supported".
+    compile.ss
+- fixed declarations for many primitives that were specified as
+  accepting arguments of more general types than they actually
+  accept, such as number -> real for various numeric operations,
+  symbol -> endianness for various bytevector operations,
+  time -> time-utc for time-utc->date, and list -> list-of-string-pairs
+  for default-library-search-handler.   also replaced some of the
+  sub-xxxx types with specific types such as sub-symbol -> endianness
+  in utf16->string, but only where they were causing issues with
+  the primvars argument-type-error fuzz mat.  (this should be done
+  more generally.)
+    primdata.ss
+- fixed incorrect who arguments (was map instead of fold-right,
+  current-date instead of time-utc->date); switched to using
+  define-who/set-who! generally.
+    4.ss, date.ss
+- append! now checks all arguments before any mutation
+    5_2.ss
+- with-source-path now properly supplies itself as who for the
+  string? argument check; callers like load now do their own checks.
+    7.ss
+- added missing integer? check to $fold-bytevector-native-ref whose
+  lack could have resulted in a compile-time error.
+    cp0.ss
+- fixed typo in output-port-buffer-mode error message
+    io.ss
+- fixed who argument (was fx< rather than fx<?)
+    library.ss
+- fixed declaration of first source-file-descriptor argument (was
+  sfd, now string)
+    primdata.ss
+- added missing article 'a' in a few error messages
+    prims.ss
+- fixed the copy-environment argument-type error message for the list
+  of symbols argument.
+    syntax.ss
+- the environment procedure now catches exceptions that occur and
+  reraises the exception with itself as who if the condition isn't
+  already a who condition.
+    syntax.ss
+- updated experr and allx patch files for changes to argument-count
+  fuzz mat and fixes for problems turned up by them.
+    root-experr*, patch*
+- fixed a couple of issues setting port sizes: string and bytevector
+  output port put handlers don't need room to store the character
+  or byte, so they now set the size to the buffer length rather
+  than one less.  binary-file-port-clear-output now sets the index
+  rather than size to zero; setting the size to zero is inappropriate
+  for some types of ports and could result in loss of buffering and
+  even suppression of future output.  removed a couple of redundant
+  sets of the size that occur immediately after setting the buffer.
+    io.ss
+- it is now possible to return from a call to with-profile-tracker
+  multiple times and not double-count (or worse) any counts.
+    pdhtml.ss, profile.ms
+- read-token now requires a file position when it is handed a
+  source-file descriptor (since the source-file descriptor isn't
+  otherwise useful), and the source-file descriptor argument can
+  no longer be #f.  the input file position plays the same role as
+  the input file position in get-datum/annotations.  these extra
+  read-token arguments are now documented.
+    read.ss,
+    6.ms,
+    io.stex
+- the source-file descriptor argument to get-datum/annotations can
+  no longer be #f.  it was already documented that way.
+    read.ss
+- read-token and do-read now look for the character-positions port
+  flag before asking if the port has port-position, since the latter
+  is slightly more expensive.
+    read.ss
+- rd-error now reports the current port position if it can be determined
+  when fp isn't already set, i.e., when reading from a port without
+  character positions (presently any non string port) and fp has not
+  been passed in explicitly (to read-token or get-datum/annotations).
+  the port position might not be a character position, but it should be
+  better than nothing.
+    read.ss
+- added comment noting an invariant for s_profile_release_counters.
+    prim5.c
+- restored accidentally dropped fasl-write formdef and dropped
+  duplicate fasl-read formdef
+    io.stex
+- added a 'coverage' target that tests the coverage of the Scheme-code
+  portions of Chez Scheme by the mats.
+    Makefile.in, Makefile-workarea.in
+- added .PHONY declarations for all of the targets in the top-level
+  and workarea make files, and renamed the create-bintar, create-rpm,
+  and create-pkg targets bintar, rpm, and pkg.
+    Makefile.in, Makefile-workarea.in
+- added missing --retain-static-relocation command-line argument and
+  updated the date
+    scheme.1.in
+- removed a few redundant conditional variable settings
+    configure
+- fixed declaration of condition wait (timeout -> maybe-timeout)
+    primdata.ms
+- added "invalid code page ~s" to set of messages considered valid
+  argument-type-check error messages, for Windows multibyte->string
+  and string->multibyte.
+    primvars.ms
+- used with-object-file to restore accidentally dropped close-port in
+  compile-whole-program and compile-whole-library
+    compile.ss
+- initialized variable to enable compilation with gcc 9.1.0 at -O3
+    c/scheme.c
+- added missing Inner wrappers around the library/ct-info and
+  library-rt-info records in the code for compile-whole-xxx.
+    compile.ss,
+    7.ms
+- local-eval-hook now calls eval rather than interpret when profiling
+  is enabled, so local transformer code can be profiled.
+    syntax.ss,
+    profile.ms
+- fix compiler bug related to call-with-values and a first argument
+  whose body result is compiled to an allocation, inline form, or
+  foreign call
+    cpnanopass.ss, 3.ms
+- improved error reporting for library compilation-instance errors:
+  now including the name of the object file from which the "wrong"
+  compilation instance was loaded, if it was loaded from (or compiled
+  to) an object file and the original importing library, if it was
+  previously loaded from an object file due to a library import.
+    syntax.ss, 7.ss, interpret.ss,
+    8.ms, root-experr*
+- removed situation and for-input? arguments from $make-load-binary,
+  since the only consumer always passes 'load and #f.
+    7.ss,
+    scheme.c
+- $separate-eval now prints the stderr and stdout of the subprocess
+  to help in diagnosing separate-eval and separate-compile issues.
+    mat.ss
+- added unregister-guardian, which can be used to unregister
+  the unressurected objects registered with any guardian.  guardian?
+  can be used to distinguish guardian procedures from other objects.
+    cp0.ss, cmacros.ss, cpnanopass.ss, ftype.ss, primdata.ss,
+    prims.ss,
+    gcwrapper.c, prim.c, externs.h,
+    4.ms, primvars.ms
+    release_notes.stex
+    smgmt.stex, threads.stex
+- added verify-loadability.  given a situation (visit, revisit,
+  or load) and zero or more pathnames (each of which may be optionally
+  paired with a library search path), verity-loadability checks
+  whether the set of object files named by those pathnames and any
+  additional object files required by library requirements in the
+  given situation can be loaded together.  it raises an exception
+  in each case where actually attempting to load the files would
+  raise an exception and additionally in cases where loading files
+  would result in the compilation or loading of source files in
+  place of the object files.  if the check is successful,
+  verity-loadability returns an unspecified value.  in either case,
+  although portions of the object files are read, none of the
+  information read from the object files is retained, and none of
+  the object code is read, so there are no side effects other than
+  the file operations and possibly the raising of an exception.
+  library and program info records are now moved to the top of each
+  object file produced by one of the file compilation routines,
+  just after recompile info, with a marker to allow verity-loadability
+  to stop reading once it reads all such records.  this change is
+  not entirely backward compatible; the repositioning of the records
+  can be detected by a call to list-library made from a loaded file
+  before the definition of one or more libraries.  it is fully
+  backward compatible for typical library files that contain a
+  single library definition and nothing else.  adding this feature
+  required changes to the object-file format and corresponding
+  changes in the compiler and library manager.  it also required
+  moving cross-library optimization information from library/ct-info
+  records (which verity-loadability must read) to the invoke-code
+  for each library (which verity-loadability  does not read) to
+  avoid reading and permanently associating record-type descriptors
+  in the code with their uids.
+    compile.ss, syntax.ss, expand-lang.ss, primdata.ss, 7.ss,
+    7.ms, misc.ms, root-experr*, patch*,
+    system.stex, release_notes.stex
+- fixed a bug that bit only with the compiler compiled at
+  optimize-level 2: add-library/rt-records was building a library/ct-info
+  wrapper rather than a library/rt-info wrapper.
+    compile.ss
+- fixed a bug in visit-library that could result in an indefinite
+  recursion: it was not checking to make sure the call to $visit
+  actually added compile-time info to the libdesc record.  it's not
+  clear, however, whether the libdesc record can be missing
+  compile-time information on entry to visit-library, so the code
+  that calls $visit (and now checks for compile-time information
+  having been added) might not be reachable.  ditto for
+  revisit-library.
+    syntax.ss
+    syntax.ss, primdata.ss,
+    7.ms, root-experr*, patch*,
+    system.stex, release_notes.stex
+- added some argument-error checks for library-directories and
+  library-extensions, and fixed up the error messages a bit.
+    syntax.ss,
+    7.ms, root-experr*
+- compile-whole-program now inserts the program record into the
+  object file for the benefit of verify-loadability.
+    syntax.ss,
+    7.ms, root-experr*
+- changed 'loading' import-notify messages to the more precise
+  'visiting' or 'revisiting' in a couple of places.
+    syntax.ss,
+    7.ms, 8.ms
+- added concatenate-object-files
+    compile.ss, primdata.ss
+    7.ms, root-experr*
+    system.stex, use.stex, release_notes.stex
+- added invoke-library
+    syntax.ss, primdata.ss,
+    8.ms, root-experr*,
+    libraries.stex, release_notes.stex
+- updated the date
+    release_notes.stex
+- libraries contained within a whole program or library are now
+  marked pending before their invoke code is run so that invoke
+  cycles are reported as such rather than as attempts to invoke
+  while still loading.
+    compile.ss, syntax.ss, primdata.ss,
+    7.ms, root-experr*
+- the library manager now protects against unbound references 
+  from separately compiled libraries or programs to identifiers
+  ostensibly but not actually exported by (invisible) libraries
+  that exist only locally within a whole program.  this is done by
+  marking the invisibility of the library in the library-info and
+  propagating it to libdesc records; the latter is checked upon
+  library import, visit, and invoke as well as by verify-loadability.
+  the import and visit code of each invisible no longer complains
+  about invisibility since it shouldn't be reachable.
+    syntax.ss, compile.ss, expand-lang.ss,
+    7.ms, 8.ms, root-experr*, patch*
+- documented that compile-whole-xxx's linearization of the
+  library initialization code based on static dependencies might
+  not work for dynamic dependencies.
+    system.stex
+- optimized bignum right shifts so the code (1) doesn't look at
+  shifted-off bigits if the bignum is positive, since it doesn't
+  need to know in that case if any bits are set; (2) doesn't look
+  at shifted-off bigits if the bignum is negative if it determines
+  that at least one bit is set in the bits shifted off the low-order
+  partially retained bigit; (3) quits looking, if it must look, for
+  one bits as soon as it finds one; (4) looks from both ends under
+  the assumption that set bits, if any, are most likely to be found
+  toward the high or low end of the bignum rather than just in the
+  middle; and (5) doesn't copy the retained bigits and then shift;
+  rather shifts as it copies.  This leads to dramatic improvements
+  when the shift count is large and often significant improvements
+  otherwise.
+    number.c,
+    5_3.ms,
+    release_notes.stex
+- threaded tc argument through to all calls to S_bignum and
+  S_trunc_rem so they don't have to call get_thread_context()
+  when it might already have been called.
+    alloc.c, number.c, fasl.c, print.c, prim5.c, externs.h
+- added an expand-primitive handler to partially inline integer?.
+    cpnanopass.ss
+- added some special cases for basic arithmetic operations (+, -, *,
+  /, quotient, remainder, and the div/div0/mod/mod0 operations) to
+  avoid doing unnecessary work for large bignums when the result
+  will be zero (e.g,. multiplying by 0), the same as one of the
+  inputs (e.g., adding 0 or multiplying by 1), or the additive
+  inverse of one of the inputs (e.g., subtracting from 0, dividing
+  by -1).  This can have a major beneficial affect when operating
+  on large bignums in the cases handled.  also converted some uses
+  of / into integer/ where going through the former would just add
+  overhead without the possibility of optimization.
+    5_3.ss,
+    number.c, externs.h, prim5.c,
+    5_3.ms, root-experr, patch*,
+    release_notes.stex
+- added a queue to hold pending signals for which handlers have
+  been registered via register-signal-handler so up to 63 (configurable
+  in the source code) unhandled signals are buffered before the
+  handler has to start dropping them.
+    cmacros.ss, library.ss, prims.ss, primdata.ss,
+    schsig.c, externs.h, prim5.c, thread.c, gc.c,
+    unix.ms,
+    system.stex, release_notes.stex
+- bytevector-compress now selects the level of compression based
+  on the compress-level parameter.  Prior to this it always used a
+  default setting for compression.  the compress-level parameter
+  can now take on the new minimum in addition to low, medium, high,
+  and maximum.  minimum is presently treated the same as low
+  except in the case of lz4 bytevector compression, where it
+  results in the use of LZ4_compress_default rather than the
+  slower but more effective LZ4_compress_HC.
+    cmacros,ss, back.ss,
+    compress_io.c, new_io.c, externs.h,
+    bytevector.ms, mats/Mf-base, root-experr*
+    io.stex, objects.stex, release_notes.stex

@@ -77,6 +77,7 @@
 (define big<
   (foreign-procedure "(cs)s_big_lt" (scheme-object scheme-object)
     boolean))
+(define big-negate (schemeop1 "(cs)s_big_negate"))
 (define integer-ash (schemeop2 "(cs)s_ash"))
 (define integer+ (schemeop2 "(cs)add"))
 (define integer* (schemeop2 "(cs)mul"))
@@ -900,6 +901,19 @@
          [else (nonexact-integer-error who x)])]
       [else (nonexact-integer-error who n)])))
 
+(define $negate
+  (lambda (who x)
+    (type-case x
+      [(fixnum?)
+       (if (fx= x (most-negative-fixnum))
+           (let-syntax ([a (lambda (x) (- (constant most-negative-fixnum)))]) a)
+           (fx- x))]
+      [(bignum?) (big-negate x)]
+      [(flonum?) (fl- x)]
+      [(ratnum?) (integer/ (- ($ratio-numerator x)) ($ratio-denominator x))]
+      [($exactnum? $inexactnum?) (make-rectangular (- (real-part x)) (- (imag-part x)))]
+      [else (nonnumber-error who x)])))
+
 (set! integer?
   (lambda (x)
     (type-case x
@@ -1606,31 +1620,35 @@
        [(ratnum?) (quotient ($ratio-numerator x) ($ratio-denominator x))]
        [else (nonreal-error who x)])))
 
-(set! quotient
-   (let ([f (lambda (x y) (truncate (/ x y)))])
-      (lambda (x y)
-         (type-case y
-            [(fixnum?)
-             (when (fx= y 0) (domain-error 'quotient y))
+(set-who! quotient
+  (let ([f (lambda (x y) (truncate (/ x y)))])
+    (lambda (x y)
+      (type-case y
+        [(fixnum?)
+         (when (fx= y 0) (domain-error who y))
+         (cond
+           [(fx= y 1) (unless (integer? x) (noninteger-error who x)) x]
+           [(fx= y -1) (unless (integer? x) (noninteger-error who x)) ($negate who x)]
+           [else
              (type-case x
-                [(fixnum?) (if (and (fx= y -1) (fx= x (most-negative-fixnum)))
-                               (- (most-negative-fixnum))
-                               (fxquotient x y))]
-                [(bignum?) (intquotient x y)]
-                [else
-                 (unless (integer? x) (noninteger-error 'quotient x))
-                 (f x y)])]
-            [(bignum?)
-             (type-case x
-                [(fixnum? bignum?) (intquotient x y)]
-                [else
-                 (unless (integer? x) (noninteger-error 'quotient x))
-                 (f x y)])]
-            [else
-             (unless (integer? y) (noninteger-error 'quotient y))
-             (unless (integer? x) (noninteger-error 'quotient x))
-             (when (= y 0) (domain-error 'quotient y))
-             (f x y)]))))
+               [(fixnum?) (if (and (fx= y -1) (fx= x (most-negative-fixnum)))
+                              (- (most-negative-fixnum))
+                              (fxquotient x y))]
+               [(bignum?) (intquotient x y)]
+               [else
+                 (unless (integer? x) (noninteger-error who x))
+                 (f x y)])])]
+        [(bignum?)
+         (type-case x
+           [(fixnum? bignum?) (intquotient x y)]
+           [else
+             (unless (integer? x) (noninteger-error who x))
+             (f x y)])]
+        [else
+          (unless (integer? y) (noninteger-error who y))
+          (unless (integer? x) (noninteger-error who x))
+          (when (= y 0) (domain-error who y))
+          (f x y)]))))
 
 (set-who! div-and-mod
   (lambda (x y)
@@ -1642,15 +1660,19 @@
           ($fxdiv-and-mod x y #f)]
          [(flonum?) ($fldiv-and-mod x (fixnum->flonum y))]
          [(bignum?)
-          (when (fx= y 0) (domain-error who y))
-          (let ([q.r (intquotient-remainder x y)])
-            (if ($bigpositive? x)
-                (values (car q.r) (cdr q.r))
-                (if (eq? (cdr q.r) 0)
-                    (values (car q.r) 0)
-                    (if (fx< y 0)
-                        (values (+ (car q.r) 1) (fx- (cdr q.r) y))
-                        (values (- (car q.r) 1) (fx+ (cdr q.r) y))))))]
+          (cond
+            [(fx= y 1) (values x 0)]
+            [(fx= y -1) (values (big-negate x) 0)]
+            [else
+              (when (fx= y 0) (domain-error who y))
+              (let ([q.r (intquotient-remainder x y)])
+                (if ($bigpositive? x)
+                    (values (car q.r) (cdr q.r))
+                    (if (eq? (cdr q.r) 0)
+                        (values (car q.r) 0)
+                        (if (fx< y 0)
+                            (values (+ (car q.r) 1) (fx- (cdr q.r) y))
+                            (values (- (car q.r) 1) (fx+ (cdr q.r) y))))))])]
          [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           ($exdiv-and-mod x y)]
@@ -1697,14 +1719,18 @@
          [(flonum?) ($fldiv x (fixnum->flonum y))]
          [(bignum?)
           (when (fx= y 0) (domain-error who y))
-          (if ($bigpositive? x)
-              (intquotient x y)
-              (let ([q.r (intquotient-remainder x y)])
-                (if (eq? (cdr q.r) 0)
-                    (car q.r)
-                    (if (fx< y 0)
-                        (+ (car q.r) 1)
-                        (- (car q.r) 1)))))]
+          (cond
+            [(fx= y 1) x]
+            [(fx= y -1) (big-negate x)]
+            [else
+             (if ($bigpositive? x)
+                 (intquotient x y)
+                 (let ([q.r (intquotient-remainder x y)])
+                   (if (eq? (cdr q.r) 0)
+                       (car q.r)
+                       (if (fx< y 0)
+                           (+ (car q.r) 1)
+                           (- (car q.r) 1)))))])]
          [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           ($exdiv x y)]
@@ -1749,14 +1775,17 @@
          [(flonum?) ($flmod x (fixnum->flonum y))]
          [(bignum?)
           (when (fx= y 0) (domain-error who y))
-          (if ($bigpositive? x)
-              (intremainder x y)
-              (let ([q.r (intquotient-remainder x y)])
-                (if (eq? (cdr q.r) 0)
-                    0
-                    (if (fx< y 0)
-                        (fx- (cdr q.r) y)
-                        (fx+ (cdr q.r) y)))))]
+          (cond
+            [(or (fx= y 1) (fx= y -1)) 0]
+            [else
+             (if ($bigpositive? x)
+                 (intremainder x y)
+                 (let ([q.r (intquotient-remainder x y)])
+                   (if (eq? (cdr q.r) 0)
+                       0
+                       (if (fx< y 0)
+                           (fx- (cdr q.r) y)
+                           (fx+ (cdr q.r) y)))))])]
          [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           ($exmod x y)]
@@ -1799,7 +1828,14 @@
           (when (fx= y 0) (domain-error who y))
           ($fxdiv0-and-mod0 x y #f)]
          [(flonum?) ($fldiv0-and-mod0 x (fixnum->flonum y))]
-         [(bignum? ratnum?)
+         [(bignum?)
+          (cond
+            [(fx= y 1) (values x 0)]
+            [(fx= y -1) (values (big-negate x) 0)]
+            [else
+             (when (fx= y 0) (domain-error who y))
+             ($exdiv0-and-mod0 x y)])]
+         [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           ($exdiv0-and-mod0 x y)]
          [else (domain-error who x)])]
@@ -1835,7 +1871,14 @@
           (when (fx= y 0) (domain-error who y))
           ($fxdiv0 x y #f)]
          [(flonum?) ($fldiv0 x (fixnum->flonum y))]
-         [(bignum? ratnum?)
+         [(bignum?)
+          (cond
+            [(fx= y 1) x]
+            [(fx= y -1) (big-negate x)]
+            [else
+             (when (fx= y 0) (domain-error who y))
+             (exdiv0 x y)])]
+         [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           (exdiv0 x y)]
          [else (domain-error who x)])]
@@ -1871,7 +1914,13 @@
           (when (fx= y 0) (domain-error who y))
           ($fxmod0 x y)]
          [(flonum?) ($flmod0 x (fixnum->flonum y))]
-         [(bignum? ratnum?)
+         [(bignum?)
+          (cond
+            [(or (fx= y 1) (fx= y -1)) 0]
+            [else
+             (when (fx= y 0) (domain-error who y))
+             (exmod0 x y)])]
+         [(ratnum?)
           (when (fx= y 0) (domain-error who y))
           (exmod0 x y)]
          [else (domain-error who x)])]
@@ -1893,35 +1942,38 @@
          [else (domain-error who x)])]
       [else (domain-error who y)])))
 
-(set! remainder
-   (let ([f (lambda (x y)
-               (let ([r (- x (* (quotient x y) y))])
-                  ;;; filter out outrageous results
-                  ;;; try (remainder 1e194 10.0) without this hack...
-                  (if (if (negative? y) (> r y) (< r y))
-                      r
-                      0.0)))])
-      (lambda (x y)
-         (type-case y
-            [(fixnum?)
-             (when (fx= y 0) (domain-error 'remainder y))
+(set-who! remainder
+  (let ([f (lambda (x y)
+             (let ([r (- x (* (quotient x y) y))])
+               ;;; filter out outrageous results
+               ;;; try (remainder 1e194 10.0) without this hack...
+               (if (if (negative? y) (> r y) (< r y))
+                   r
+                   0.0)))])
+    (lambda (x y)
+      (type-case y
+        [(fixnum?)
+         (when (fx= y 0) (domain-error who y))
+         (cond
+           [(or (fx= y 1) (fx= y -1)) (unless (integer? x) (noninteger-error who x)) 0]
+           [else
              (type-case x
-                [(fixnum?) (fxremainder x y)]
-                [(bignum?) (intremainder x y)]
-                [else
-                 (unless (integer? x) (noninteger-error 'remainder x))
-                 (f x y)])]
-            [(bignum?)
-             (type-case x
-                [(fixnum? bignum?) (intremainder x y)]
-                [else
-                 (unless (integer? x) (noninteger-error 'remainder x))
-                 (f x y)])]
-            [else
-             (unless (integer? y) (noninteger-error 'remainder y))
-             (unless (integer? x) (noninteger-error 'remainder x))
-             (when (= y 0) (domain-error 'remainder y))
-             (f x y)]))))
+               [(fixnum?) (fxremainder x y)]
+               [(bignum?) (intremainder x y)]
+               [else
+                 (unless (integer? x) (noninteger-error who x))
+                 (f x y)])])]
+        [(bignum?)
+         (type-case x
+           [(fixnum? bignum?) (intremainder x y)]
+           [else
+             (unless (integer? x) (noninteger-error who x))
+             (f x y)])]
+        [else
+          (unless (integer? y) (noninteger-error who y))
+          (unless (integer? x) (noninteger-error who x))
+          (when (= y 0) (domain-error who y))
+          (f x y)]))))
 
 (set-who! even?
    (lambda (x)
@@ -2081,57 +2133,78 @@
          [else (nonreal-error who x)])))
 
 (set! $+
-   (lambda (who x y)
-      (type-case x
-         [(fixnum? bignum?)
-          (type-case y
-             [(fixnum? bignum?) (integer+ x y)]
-             [(ratnum?)
-              (let ([d ($ratio-denominator y)])
-                 (/ (+ (* x d) ($ratio-numerator y)) d))]
-             [(flonum?) (exact-inexact+ x y)]
-             [($exactnum? $inexactnum?)
-              (make-rectangular (+ x (real-part y)) (imag-part y))]
-             [else (nonnumber-error who y)])]
-         [(ratnum?)
-          (type-case y
+  (lambda (who x y)
+    (define (exint-unknown+ who x y)
+      (type-case y
+        [(fixnum? bignum?) (integer+ x y)]
+        [(ratnum?)
+         (let ([d ($ratio-denominator y)])
+           (integer/ (+ (* x d) ($ratio-numerator y)) d))]
+        [(flonum?) (exact-inexact+ x y)]
+        [($exactnum? $inexactnum?)
+         (make-rectangular (+ x (real-part y)) (imag-part y))]
+        [else (nonnumber-error who y)]))
+    (cond
+      [(eqv? y 0) (unless (number? x) (nonnumber-error who x)) x]
+      [else
+        (type-case x
+          [(fixnum?)
+           (cond
+             [(fx= x 0) (unless (number? y) (nonnumber-error who y)) y]
+             [else (exint-unknown+ who x y)])]
+          [(bignum?) (exint-unknown+ who x y)]
+          [(ratnum?)
+           (type-case y
              [(fixnum? bignum?)
               (let ([d ($ratio-denominator x)])
-                 (/ (+ (* y d) ($ratio-numerator x)) d))]
+                (integer/ (+ (* y d) ($ratio-numerator x)) d))]
              [(ratnum?)
               (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
-                 (/ (+ (* ($ratio-numerator x) yd)
-                       (* ($ratio-numerator y) xd))
-                    (* xd yd)))]
+                (integer/
+                  (+ (* ($ratio-numerator x) yd) (* ($ratio-numerator y) xd))
+                  (* xd yd)))]
              [($exactnum? $inexactnum?)
               (make-rectangular (+ x (real-part y)) (imag-part y))]
              [(flonum?) (exact-inexact+ x y)]
              [else (nonnumber-error who y)])]
-         [(flonum?)
-          (type-case y
+          [(flonum?)
+           (type-case y
              [(cflonum?) (cfl+ x y)]
              [(fixnum? bignum? ratnum?) (exact-inexact+ y x)]
              [($exactnum?)
               (make-rectangular (+ x (real-part y)) (imag-part y))]
              [else (nonnumber-error who y)])]
-         [($exactnum? $inexactnum?)
-          (type-case y
+          [($exactnum? $inexactnum?)
+           (type-case y
              [(fixnum? bignum? ratnum? flonum?)
               (make-rectangular (+ (real-part x) y) (imag-part x))]
              [($exactnum? $inexactnum?)
               (make-rectangular (+ (real-part x) (real-part y))
-                                (+ (imag-part x) (imag-part y)))]
+                (+ (imag-part x) (imag-part y)))]
              [else (nonnumber-error who y)])]
-         [else (nonnumber-error who x)])))
+          [else (nonnumber-error who x)])])))
 
 (set! $*
    (lambda (who x y)
-      (type-case x
+    (cond
+      [(and (fixnum? y) ($fxu< (#3%fx+ y 1) 3))
+       (cond
+         [(fx= y 0) (unless (number? x) (nonnumber-error who x)) 0]
+         [(fx= y 1) (unless (number? x) (nonnumber-error who x)) x]
+         [else ($negate who x)])]
+      [else
+       (type-case x
          [(fixnum? bignum?)
           (type-case y
              [(fixnum?) (integer* x y)]
-             [(bignum?) (if (fixnum? x)
-                            (integer* x y)
+            [(bignum?) (if (fixnum? x)
+                           (cond
+                            [($fxu< (#3%fx+ x 1) 3)
+                             (cond
+                              [(fx= x 0) (unless (number? y) (nonnumber-error who y)) 0]
+                              [(fx= x 1) (unless (number? y) (nonnumber-error who y)) y]
+                              [else ($negate who y)])]
+                            [else (integer* x y)])
                             (let ()
                               ;; _Modern Computer Arithmetic_, Brent and Zimmermann
                               (define (karatsuba x y)
@@ -2171,92 +2244,103 @@
          [(ratnum?)
           (type-case y
              [(fixnum? bignum?)
-              (/ (* y ($ratio-numerator x)) ($ratio-denominator x))]
+              (integer/ (* y ($ratio-numerator x)) ($ratio-denominator x))]
              [(ratnum?)
-              (/ (* ($ratio-numerator x) ($ratio-numerator y))
-                 (* ($ratio-denominator x) ($ratio-denominator y)))]
+              (integer/
+                (* ($ratio-numerator x) ($ratio-numerator y))
+                (* ($ratio-denominator x) ($ratio-denominator y)))]
              [($exactnum? $inexactnum?)
               (make-rectangular (* x (real-part y)) (* x (imag-part y)))]
              [(flonum?) (exact-inexact* x y)]
              [else (nonnumber-error who y)])]
-         [(flonum?)
-          (type-case y
+          [(flonum?)
+           (type-case y
              [(cflonum?) (cfl* x y)]
              [(fixnum? bignum? ratnum?) (exact-inexact* y x)]
              [($exactnum?)
               (make-rectangular (* x (real-part y)) (* x (imag-part y)))]
              [else (nonnumber-error who y)])]
-         [($exactnum? $inexactnum?)
-          (type-case y
+          [($exactnum? $inexactnum?)
+           (type-case y
              [(fixnum? bignum? ratnum? flonum?)
               (make-rectangular (* (real-part x) y) (* (imag-part x) y))]
              [($exactnum? $inexactnum?)
               (let ([a (real-part x)] [b (imag-part x)]
                     [c (real-part y)] [d (imag-part y)])
-                 (make-rectangular (- (* a c) (* b d)) (+ (* a d) (* b c))))]
+                (make-rectangular (- (* a c) (* b d)) (+ (* a d) (* b c))))]
              [else (nonnumber-error who y)])]
-         [else (nonnumber-error who x)])))
+          [else (nonnumber-error who x)])])))
 
 (set! $-
-   (lambda (who x y)
-      (type-case x
-         [(fixnum? bignum?)
-          (type-case y
-             [(fixnum? bignum?) (integer- x y)]
-             [(ratnum?)
-              (let ([d ($ratio-denominator y)])
-                 (/ (- (* x d) ($ratio-numerator y)) d))]
-             [($exactnum? $inexactnum?)
-              (make-rectangular (- x (real-part y)) (- (imag-part y)))]
-             [(flonum?) (exact-inexact- x y)]
-             [else (nonnumber-error who y)])]
-         [(ratnum?)
-          (type-case y
+  (lambda (who x y)
+    (define (exint-unknown- who x y)
+      (type-case y
+        [(fixnum? bignum?) (integer- x y)]
+        [(ratnum?)
+         (let ([d ($ratio-denominator y)])
+           (integer/ (- (* x d) ($ratio-numerator y)) d))]
+        [($exactnum? $inexactnum?)
+         (make-rectangular (- x (real-part y)) (- (imag-part y)))]
+        [(flonum?) (exact-inexact- x y)]
+        [else (nonnumber-error who y)]))
+    (cond
+      [(eqv? y 0) (unless (number? x) (nonnumber-error who x)) x]
+      [else
+        (type-case x
+          [(fixnum?)
+           (cond
+             [(eqv? x 0) ($negate who y)]
+             [else (exint-unknown- who x y)])]
+          [(bignum?) (exint-unknown- who x y)]
+          [(ratnum?)
+           (type-case y
              [(fixnum? bignum?)
               (let ([d ($ratio-denominator x)])
-                 (/ (- ($ratio-numerator x) (* y d)) d))]
+                (integer/ (- ($ratio-numerator x) (* y d)) d))]
              [(ratnum?)
               (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
-                 (/ (- (* ($ratio-numerator x) yd)
-                       (* ($ratio-numerator y) xd))
-                    (* xd yd)))]
+                (integer/
+                  (- (* ($ratio-numerator x) yd) (* ($ratio-numerator y) xd))
+                  (* xd yd)))]
              [($exactnum? $inexactnum?)
               (make-rectangular (- x (real-part y)) (- (imag-part y)))]
              [(flonum?) (exact-inexact- x y)]
              [else (nonnumber-error who y)])]
-         [(flonum?)
-          (type-case y
+          [(flonum?)
+           (type-case y
              [(cflonum?) (cfl- x y)]
              [(fixnum? bignum? ratnum?) (inexact-exact- x y)]
              [($exactnum?)
               (make-rectangular (- x (real-part y)) (- (imag-part y)))]
              [else (nonnumber-error who y)])]
-         [($exactnum? $inexactnum?)
-          (type-case y
+          [($exactnum? $inexactnum?)
+           (type-case y
              [(fixnum? bignum? ratnum? flonum?)
               (make-rectangular (- (real-part x) y) (imag-part x))]
              [($exactnum? $inexactnum?)
               (make-rectangular (- (real-part x) (real-part y))
-                                (- (imag-part x) (imag-part y)))]
+                (- (imag-part x) (imag-part y)))]
              [else (nonnumber-error who y)])]
-         [else (nonnumber-error who x)])))
+          [else (nonnumber-error who x)])])))
 
 (set! $/
    (lambda (who x y)
       (type-case y
          [(fixnum?)
-          (type-case x
+          (cond
+           [(fx= y 1) (unless (number? x) (nonnumber-error who x)) x]
+           [(fx= y -1) (unless (number? x) (nonnumber-error who x)) ($negate who x)]
+           [else
+            (type-case x
              [(fixnum?)
               ;; Trying `fxquotient` followed by a `fx*` check
               ;; is so much faster (in the case that it works)
               ;; that it's worth a try
               (when (eq? y 0) (domain-error who y))
-              (if (fx= x (constant most-negative-fixnum))
-                  (integer/ x y) ; in case `y` is -1
-                  (let ([q (fxquotient x y)])
-                    (if (fx= x (fx* y q))
-                        q
-                        (integer/ x y))))]
+              (let ([q (fxquotient x y)])
+                (if (fx= x (fx* y q))
+                    q
+                    (integer/ x y)))]
              [(bignum?)
               (when (eq? y 0) (domain-error who y))
               (integer/ x y)]
@@ -2269,7 +2353,7 @@
              [($inexactnum?)
               (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
              [(flonum?) (inexact-exact/ x y)]
-             [else (nonnumber-error who x)])]
+             [else (nonnumber-error who x)])])]
          [(bignum?)
           (type-case x
              [(fixnum? bignum?)
@@ -2635,15 +2719,15 @@
       [(and (bignum? n) (#%$bigpositive? n)) (big-integer-sqrt n)]
       [else ($oops who "~s is not a nonnegative exact integer" n)])))
 
-(set! $quotient-remainder
-   (lambda (x y)
-      (type-case y
-         [(bignum? fixnum?)
-          (when (eq? y 0) (domain-error '$quotient-remainder y))
-          (type-case x
-             [(fixnum? bignum?) (intquotient-remainder x y)]
-             [else (nonexact-integer-error '$quotient-remainder x)])]
-         [else (nonexact-integer-error '$quotient-remainder y)])))
+(set-who! $quotient-remainder
+  (lambda (x y)
+    (type-case y
+      [(fixnum? bignum?)
+       (when (eq? y 0) (domain-error who y))
+       (type-case x
+         [(fixnum? bignum?) (intquotient-remainder x y)]
+         [else (nonexact-integer-error who x)])]
+      [else (nonexact-integer-error who y)])))
 
 (let ()
   (define-record pseudo-random-generator

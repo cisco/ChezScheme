@@ -1,17 +1,5 @@
-*** errors-compile-3-f-f-f	2019-07-26 13:35:23.000000000 -0400
---- errors-interpret-3-f-f-f	2019-07-26 14:10:17.000000000 -0400
-***************
-*** 1,3 ****
---- 1,9 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1045, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1047, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1054, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1056, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1063, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1065, char 4 of 6.ms
-  3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
-  3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x at line 1, char 19 of testfile.ss".
-  misc.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
+*** errors-compile-3-f-f-f	2020-02-22 11:39:11.000000000 -0700
+--- errors-interpret-3-f-f-f	2020-02-22 12:56:30.000000000 -0700
 ***************
 *** 12,26 ****
   misc.mo:Expected warning in mat (argcnt compile-warning): "compile: possible incorrect argument count in call (car (quote (a b)) (quote (c d))) at line 3, char 38 of testfile.ss".
@@ -29,4 +17,4 @@
 - 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
---- 18,26 ----
+--- 12,20 ----

@@ -896,6 +896,57 @@ cannot be proven immutable, which inhibits important optimizations such
 as procedure inlining.
 This can result in significantly lower run-time performance.
 
+\section{Explicitly invoking libraries\label{SECTLIBRARYINVOCATION}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{invoke-library}{\categoryprocedure}{(invoke-library \var{libref})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\var{libref} must be an s-expression in the form of a library reference.
+The syntax for library references is given in
+Chapter~\ref{TSPL:CHPTLIBRARIES} of {\TSPLFOUR} and in the Revised$^6$
+Report.
+
+A library is implicitly invoked when or before some expression
+outside the library (e.g., in another library or in a top-level
+program) evaluates a reference to one of the library's exported
+variables.
+When the library is invoked, its body expressions (the right-hand-sides
+of the library's variable definitions and its initialization
+expressions) are evaluated.
+Once invoked, the library is not invoked again within the same process,
+unless it is first explicitly redefined or reloaded.
+
+\scheme{invoke-library} explicitly invokes the library specified
+by \var{libref} if it has not already been invoked or has since
+been redefined or reloaded.
+If the library has not yet been loaded, \scheme{invoke-library}
+first loads the library via the process described in
+Section~\ref{SECTUSELIBRARIES}.
+
+\scheme{invoke-library} is typically only useful for libraries whose
+body expressions have side effects.
+It is useful to control when the side effects occur and to force
+invocation of a library that has no exported variables.
+Invoking a library does not force the compile-time code (macro
+transformer expressions and meta definitions) to be loaded or
+evaluated, nor does it cause the library's bindings to become
+visible.
+
+It is good practice to avoid externally visible side effects in
+library bodies so the library can be used equally well at compile
+time and run time.
+When feasible, consider moving the side effects of a library body
+to an initialization routine and adding a top-level program that
+imports the library and calls the initialization routine.
+With this structure, calls to \scheme{invoke-library} on the
+library can be replaced by calls to 
+\index{\scheme{load-program}}\scheme{load-program} on the
+top-level program.
+
 \section{Library Parameters\label{SECTLIBRARYPARAMETERS}}
 
 \index{\scheme{import}}%
@@ -915,7 +966,7 @@ The parameter \scheme{library-directories} determines where the files
 containing library source and object code are located in the file system,
 and the parameter \scheme{library-extensions} determines the filename
 extensions for the files holding the code, as described in
-section~\ref{SECTUSESCRIPTING}.
+section~\ref{SECTUSELIBRARIES}.
 The values of both parameters are lists of pairs of strings.
 The first string in each \scheme{library-directories} pair identifies a
 source-file root directory, and the second identifies the corresponding
@@ -974,7 +1025,7 @@ to a procedure that simply calls \scheme{compile-library}) on any imported libra
 the object file is missing, older than the corresponding source file,
 older than any source files included (via \index{\scheme{include}}\scheme{include}) when the
 object file was created, or itself requires a library that has or must
-be recompiled, as described in Section~\ref{SECTUSESCRIPTING}.
+be recompiled, as described in Section~\ref{SECTUSELIBRARIES}.
 The default initial value of this parameter is \scheme{#f}.
 It can be set to \scheme{#t} via the command-line option
 \index{\scheme{--compile-imported-libraries} command-line option}\scheme{--compile-imported-libraries}.
@@ -1056,7 +1107,7 @@ The set of libraries initially defined includes those listed in
 Section~\ref{SECTBUILTINLIBRARIES} above.
 
 %----------------------------------------------------------------------------
-\noskipentryheader
+\entryheader
 \formdef{library-version}{\categoryprocedure}{(library-version \var{libref})}
 \returns the version of the specified library
 \formdef{library-exports}{\categoryprocedure}{(library-exports \var{libref})}
@@ -1068,7 +1119,7 @@ Section~\ref{SECTBUILTINLIBRARIES} above.
 \formdef{library-object-filename}{\categoryprocedure}{(library-object-filename \var{libref})}
 \returns the name of the object file holding the specified library, if any
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 Information can be obtained only for built-in libraries or libraries
 previously loaded into the system.

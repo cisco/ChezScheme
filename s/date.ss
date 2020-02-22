@@ -211,87 +211,87 @@
       (fprintf p "#<date~@[ ~a~]>"
         ($asctime (dt-vec x)))))
 
-  (set! make-time
+  (set-who! make-time
     (lambda (type nsec sec)
-      (let ([typeno (ts-type->typeno 'make-time type)])
-        (check-nsec 'make-time nsec)
-        (check-ts-sec 'make-time sec)
+      (let ([typeno (ts-type->typeno who type)])
+        (check-nsec who nsec)
+        (check-ts-sec who sec)
         (make-ts typeno (cons sec nsec)))))
 
   (set! time? (lambda (x) (ts? x)))
 
-  (set! time-type
+  (set-who! time-type
     (lambda (ts)
-      (check-ts 'time-type ts)
+      (check-ts who ts)
       (ts-typeno->type (ts-typeno ts))))
 
-  (set! time-second
+  (set-who! time-second
     (lambda (ts)
-      (check-ts 'time-second ts)
+      (check-ts who ts)
       (ts-sec ts)))
 
-  (set! time-nanosecond
+  (set-who! time-nanosecond
     (lambda (ts)
-      (check-ts 'time-nanosecond ts)
+      (check-ts who ts)
       (ts-nsec ts)))
 
-  (set! set-time-type!
+  (set-who! set-time-type!
     (lambda (ts type)
-      (check-ts 'set-time-type! ts)
-      (ts-typeno-set! ts (ts-type->typeno 'set-time-type! type))))
+      (check-ts who ts)
+      (ts-typeno-set! ts (ts-type->typeno who type))))
 
-  (set! set-time-second!
+  (set-who! set-time-second!
     (lambda (ts sec)
-      (check-ts 'set-time-second! ts)
-      (check-ts-sec 'set-time-second! sec)
+      (check-ts who ts)
+      (check-ts-sec who sec)
       (set-ts-sec! ts sec)))
 
-  (set! set-time-nanosecond!
+  (set-who! set-time-nanosecond!
     (lambda (ts nsec)
-      (check-ts 'set-time-nanosecond! ts)
-      (check-nsec 'set-time-nanosecond! nsec)
+      (check-ts who ts)
+      (check-nsec who nsec)
       (set-ts-nsec! ts nsec)))
 
-  (set! time=?
+  (set-who! time=?
     (lambda (t1 t2)
-      (check-ts 'time=? t1)
-      (check-ts 'time=? t2)
-      (check-same-type 'time=? t1 t2)
+      (check-ts who t1)
+      (check-ts who t2)
+      (check-same-type who t1 t2)
       (and (= (ts-sec t1) (ts-sec t2))
            (= (ts-nsec t1) (ts-nsec t2)))))
 
-  (set! time<?
+  (set-who! time<?
     (lambda (t1 t2)
-      (check-ts 'time<? t1)
-      (check-ts 'time<? t2)
-      (check-same-type 'time<? t1 t2)
+      (check-ts who t1)
+      (check-ts who t2)
+      (check-same-type who t1 t2)
       (or (< (ts-sec t1) (ts-sec t2))
           (and (= (ts-sec t1) (ts-sec t2))
                (< (ts-nsec t1) (ts-nsec t2))))))
 
-  (set! time<=?
+  (set-who! time<=?
     (lambda (t1 t2)
-      (check-ts 'time<=? t1)
-      (check-ts 'time<=? t2)
-      (check-same-type 'time<=? t1 t2)
+      (check-ts who t1)
+      (check-ts who t2)
+      (check-same-type who t1 t2)
       (or (< (ts-sec t1) (ts-sec t2))
           (and (= (ts-sec t1) (ts-sec t2))
                (<= (ts-nsec t1) (ts-nsec t2))))))
 
-  (set! time>=?
+  (set-who! time>=?
     (lambda (t1 t2)
-      (check-ts 'time>=? t1)
-      (check-ts 'time>=? t2)
-      (check-same-type 'time>=? t1 t2)
+      (check-ts who t1)
+      (check-ts who t2)
+      (check-same-type who t1 t2)
       (or (> (ts-sec t1) (ts-sec t2))
           (and (= (ts-sec t1) (ts-sec t2))
                (>= (ts-nsec t1) (ts-nsec t2))))))
 
-  (set! time>?
+  (set-who! time>?
     (lambda (t1 t2)
-      (check-ts 'time>? t1)
-      (check-ts 'time>? t2)
-      (check-same-type 'time>? t1 t2)
+      (check-ts who t1)
+      (check-ts who t2)
+      (check-same-type who t1 t2)
       (or (> (ts-sec t1) (ts-sec t2))
           (and (= (ts-sec t1) (ts-sec t2))
                (> (ts-nsec t1) (ts-nsec t2))))))
@@ -348,45 +348,45 @@
          [else (let ([typeno (ts-type->typeno who type)])
                  (make-ts typeno ($clock-gettime typeno)))])]))
 
-  (set! current-date
+  (set-who! current-date
     (case-lambda
       [()
        (let ([dtvec ($gmtime #f #f)])
-         (unless dtvec ($oops 'current-date "failed"))
+         (unless dtvec ($oops who "failed"))
          (make-dt dtvec))]
       [(tz)
-       (check-tz 'current-date tz)
+       (check-tz who tz)
        (let ([dtvec ($gmtime tz #f)])
-         (unless dtvec ($oops 'current-date "failed"))
+         (unless dtvec ($oops who "failed"))
          (make-dt dtvec))]))
 
-  (set! date-and-time ; ptime|#f -> string
+  (set-who! date-and-time ; ptime|#f -> string
     (case-lambda
-      [() (or ($asctime #f) ($oops 'date-and-time "failed"))]
+      [() (or ($asctime #f) ($oops who "failed"))]
       [(dt)
-       (check-dt 'date-and-time dt)
+       (check-dt who dt)
        (or ($asctime (dt-vec dt))
-           ($oops 'date-and-time "failed for date record ~s" dt))]))
+           ($oops who "failed for date record ~s" dt))]))
 
-  (set! make-date
+  (set-who! make-date
     (let ([do-make-date
            (lambda (nsec sec min hour day mon year tz tz-provided?)
-             (check-nsec 'make-date nsec)
-             (check-sec 'make-date sec)
-             (check-min 'make-date min)
-             (check-hour 'make-date hour)
+             (check-nsec who nsec)
+             (check-sec who sec)
+             (check-min who min)
+             (check-hour who hour)
             ; need more accurate check for day based on year and month
-             (check-day 'make-date day)
-             (check-mon 'make-date mon)
-             (check-year 'make-date year)
+             (check-day who day)
+             (check-mon who mon)
+             (check-year who year)
              (when tz-provided?
-               (check-tz 'make-date tz))
+               (check-tz who tz))
             ; keep in sync with cmacros.ss declarations of dtvec-nsec, etc.
              (let ([dtvec (vector nsec sec min hour day mon (- year 1900) 0 #f 0 tz #f)])
                (unless ($mktime dtvec) ; for effect on dtvec
-                 ($oops 'make-date "invalid combination of arguments"))
+                 ($oops who "invalid combination of arguments"))
                (unless (fx= (vector-ref dtvec (constant dtvec-mday)) day)
-                 ($oops 'make-date "invalid day ~s for month ~s and year ~s" day mon year))
+                 ($oops who "invalid day ~s for month ~s and year ~s" day mon year))
                (make-dt dtvec)))])
       (case-lambda
         [(nsec sec min hour day mon year tz)
@@ -418,15 +418,15 @@
     (date-getter date-zone-offset (constant dtvec-tzoff))
     (date-getter date-zone-name (constant dtvec-tzname)))
 
-  (set! date-year
+  (set-who! date-year
     (lambda (dt)
-      (check-dt 'date-year dt)
+      (check-dt who dt)
       (+ (vector-ref (dt-vec dt) (constant dtvec-year)) 1900)))
 
-  #;(set! date-week-number
+  #;(set-who! date-week-number
     (lambda (dt dowsw)
       (unless (or (eq? dossw 0) (eq? dossw 1)) 
-        ($oops 'date-week-number "invalid week starting day" dossw))
+        ($oops who "invalid week starting day" dossw))
       ???))
 
   (set-who! time-utc->date
@@ -440,7 +440,7 @@
       [(t tz)
        (unless (and (ts? t) (eq? (ts-typeno t) (constant time-utc)))
          ($oops who "~s is not a utc time record" t))
-       (check-tz 'current-date tz)
+       (check-tz who tz)
        (let ([dtvec ($gmtime tz (ts-pair t))])
          (unless dtvec ($oops who "failed"))
          (make-dt dtvec))]))

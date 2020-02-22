@@ -229,9 +229,9 @@ trouble, try running configure with --libkernel so that the build
 avoids running ld directly.
 
 On OpenBSD, Chez Scheme must be built and installed on a filesystem
-that is mounted with wxneeded.
+that is mounted with wxallowed.
 
-On NetNSD, note that the makefiles run "paxctl +m" to enable WX pages
+On NetBSD, note that the makefiles run "paxctl +m" to enable WX pages
 (i.e., pages that have both write and execute enabled).
 
 WINDOWS

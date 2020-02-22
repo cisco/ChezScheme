@@ -5524,8 +5524,17 @@
           (def-len string-length mask-string type-string string-type-disp string-length-offset)
           (def-len bytevector-length mask-bytevector type-bytevector bytevector-type-disp bytevector-length-offset)
           (def-len stencil-vector-mask mask-stencil-vector type-stencil-vector stencil-vector-type-disp stencil-vector-mask-offset))
-        ; TODO: consider adding integer?, integer-valued?, rational?, rational-valued?,
+        ; TODO: consider adding integer-valued?, rational?, rational-valued?,
         ; real?, and real-valued?
+        (define-inline 2 integer?
+          [(e) (bind #t (e)
+                 (build-simple-or
+                   (%type-check mask-fixnum type-fixnum ,e)
+                   (build-simple-or
+                     (%typed-object-check mask-bignum type-bignum ,e)
+                     (build-and
+                       (%type-check mask-flonum type-flonum ,e)
+                       `(call ,(make-info-call src sexpr #f #f #f) #f ,(lookup-primref 3 'flinteger?) ,e)))))])
         (let ()
           (define build-number?
             (lambda (e)
@@ -5900,6 +5909,18 @@
                  (set! ,(%mref ,t ,(constant guardian-entry-pending-disp)) ,(%constant snil))
                  (set! ,(%tc-ref guardian-entries) ,t))))])
 
+        (define-inline 2 guardian?
+          [(e)
+           (bind #t (e)
+             (build-and
+               (%type-check mask-closure type-closure ,e)
+               (%type-check mask-guardian-code type-guardian-code
+                 ,(%mref
+                    ,(%inline -
+                      ,(%mref ,e ,(constant closure-code-disp))
+                      ,(%constant code-data-disp))
+                    ,(constant code-type-disp)))))])
+
         (define-inline 3 $make-phantom-bytevector
           [()
            (bind #f ()
@@ -5910,6 +5931,7 @@
                     (set! ,(%mref ,t ,(constant phantom-length-disp))
                           (immediate 0))
                     ,t)))])
+
         (define-inline 3 phantom-bytevector-length
           [(e-ph)
            (bind #f (e-ph)

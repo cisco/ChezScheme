@@ -535,15 +535,23 @@ void S_noncontinuable_interrupt() {
 }
 
 #ifdef WIN32
+ptr S_dequeue_scheme_signals(ptr tc) {
+  return Snil;
+}
+
+ptr S_allocate_scheme_signal_queue() {
+  return (ptr)0;
+}
+
+void S_register_scheme_signal(sig) iptr sig; {
+  S_error("register_scheme_signal", "unsupported in this version");
+}
+
 /* code courtesy Bob Burger, burgerrg@sagian.com
    We cannot call noncontinuable_interrupt, because we are not allowed
    to perform a longjmp inside a signal handler; instead, we don't
    handle the signal, which will cause the process to terminate.
 */
-
-void S_register_scheme_signal(sig) iptr sig; {
-    S_error("register_scheme_signal", "unsupported in this version");
-}
 
 static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
   switch (dwCtrlType) {
@@ -572,6 +580,8 @@ static void init_signal_handlers() {
 #include <signal.h>
 
 static void handle_signal PROTO((INT sig, siginfo_t *si, void *data));
+static IBOOL enqueue_scheme_signal PROTO((ptr tc, INT sig));
+static ptr allocate_scheme_signal_queue PROTO((void));
 static void forward_signal_to_scheme PROTO((INT sig));
 
 #define RESET_SIGNAL {\
@@ -581,18 +591,88 @@ static void forward_signal_to_scheme PROTO((INT sig));
     sigprocmask(SIG_UNBLOCK,&set,(sigset_t *)0);\
 }
 
+/* we buffer up to SIGNALQUEUESIZE - 1 unhandled signals, the start dropping them. */
+#define SIGNALQUEUESIZE 64
+static IBOOL scheme_signals_registered;
+
+/* we use a simple queue for pending signals.  signals are enqueued only by the
+   C signal handler and dequeued only by the Scheme event handler.  since the signal
+   handler and event handler run in the same thread, there's no need for locks
+   or write barriers. */
+
+struct signal_queue {
+  INT head;
+  INT tail;
+  INT data[SIGNALQUEUESIZE];
+};
+
+static IBOOL enqueue_scheme_signal(ptr tc, INT sig) {
+  struct signal_queue *queue = (struct signal_queue *)(SIGNALINTERRUPTQUEUE(tc));
+  /* ignore the signal if we failed to allocate the queue */
+  if (queue == NULL) return 0;
+  INT tail = queue->tail;
+  INT next_tail = tail + 1;
+  if (next_tail == SIGNALQUEUESIZE) next_tail = 0;
+  /* ignore the signal if the queue is full */
+  if (next_tail == queue->head) return 0;
+  queue->data[tail] = sig;
+  queue->tail = next_tail;
+  return 1;
+}
+
+ptr S_dequeue_scheme_signals(ptr tc) {
+  ptr ls = Snil;
+  struct signal_queue *queue = (struct signal_queue *)(SIGNALINTERRUPTQUEUE(tc));
+  if (queue == NULL) return ls;
+  INT head = queue->head;
+  INT tail = queue->tail;
+  INT i = tail;
+  while (i != head) {
+    if (i == 0) i = SIGNALQUEUESIZE;
+    i -= 1;
+    ls = Scons(Sfixnum(queue->data[i]), ls);
+  }
+  queue->head = tail;
+  return ls;
+}
+
 static void forward_signal_to_scheme(sig) INT sig; {
   ptr tc = get_thread_context();
 
-  SIGNALINTERRUPTPENDING(tc) = Sfixnum(sig);
-  SOMETHINGPENDING(tc) = Strue;
+  if (enqueue_scheme_signal(tc, sig)) {
+    SIGNALINTERRUPTPENDING(tc) = Strue;
+    SOMETHINGPENDING(tc) = Strue;
+  }
   RESET_SIGNAL
+}
+
+static ptr allocate_scheme_signal_queue() {
+  /* silently fail to allocate space for signals if malloc returns NULL */
+  struct signal_queue *queue = malloc(sizeof(struct signal_queue));
+  if (queue != (struct signal_queue *)0) {
+    queue->head = queue->tail = 0;
+  }
+  return (ptr)queue;
+}
+
+ptr S_allocate_scheme_signal_queue() {
+  return scheme_signals_registered ? allocate_scheme_signal_queue() : (ptr)0;
 }
 
 void S_register_scheme_signal(sig) iptr sig; {
     struct sigaction act;
 
-    sigemptyset(&act.sa_mask);
+    tc_mutex_acquire()
+    if (!scheme_signals_registered) {
+      ptr ls;
+      scheme_signals_registered = 1;
+      for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+        SIGNALINTERRUPTQUEUE(THREADTC(Scar(ls))) = S_allocate_scheme_signal_queue();
+      }
+    }
+    tc_mutex_release()
+
+    sigfillset(&act.sa_mask);
     act.sa_flags = 0;
     act.sa_handler = forward_signal_to_scheme;
     sigaction(sig, &act, (struct sigaction *)0);
@@ -731,6 +811,8 @@ void S_schsig_init() {
 
         S_protect(&S_G.event_and_resume_star_id);
         S_G.event_and_resume_star_id = S_intern((const unsigned char *)"$event-and-resume*");
+
+        scheme_signals_registered = 0;
     }
 
 

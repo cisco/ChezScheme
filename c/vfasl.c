@@ -747,6 +747,9 @@ IBOOL S_vfasl_can_combinep(ptr v)
   IBOOL installs;
   vfasl_info *vfi;
 
+  if (IMMEDIATE(v))
+    return 1;
+
   fasl_init_entry_tables();
 
   /* Run a "first pass" */

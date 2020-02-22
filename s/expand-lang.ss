@@ -29,41 +29,33 @@
   (sealed #t))
 
 (define-record-type library-info
-  (nongenerative #{library-info e10vy7tci6bqz6pmnxgvlq-2})
+  (nongenerative #{library-info e10vy7tci6bqz6pmnxgvlq-3})
   (fields
     (immutable path)
     (immutable version)
-    (immutable uid)))
+    (immutable uid)
+    (immutable visible?)))
 
 (define-record-type library/ct-info
   (parent library-info)
   (fields
-    ; NB: include-req* should go away with new recompile support that uses recompile-info
-    (immutable include-req*)
     (immutable import-req*)
     (immutable visit-visit-req*)
-    (immutable visit-req*)
-    (immutable clo*))
-  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-3})
+    (immutable visit-req*))
+  (nongenerative #{library/ct-info fgf0koeh2zn6ajlujfyoyf-4})
   (sealed #t))
 
 (define-record-type library/rt-info
   (parent library-info)
   (fields
     (immutable invoke-req*))
-  (nongenerative #{library/rt-info ff86rtm7efmvxcvrmh7t0b-2})
+  (nongenerative #{library/rt-info ff86rtm7efmvxcvrmh7t0b-3})
   (sealed #t))
 
 (define-record-type program-info
   (fields (immutable uid) (immutable invoke-req*))
   (nongenerative #{program-info fgc8ptwnu9i5gfqz3s85mr-0})
   (sealed #t))
-
-(define (revisit-stuff? x) (and (pair? x) (eqv? (car x) (constant revisit-tag))))
-(define (revisit-stuff-inner x) (cdr x))
-
-(define (visit-stuff? x) (and (pair? x) (eqv? (car x) (constant visit-tag))))
-(define (visit-stuff-inner x) (cdr x))
 
 (module (Lexpand Lexpand?)
   (define library-path?
@@ -80,7 +72,7 @@
   (define maybe-label? (lambda (x) (or (not x) (gensym? x))))
 
   (define-language Lexpand
-    (nongenerative-id #{Lexpand fgy7v2wrvj0so4ro8kvhqo-2})
+    (nongenerative-id #{Lexpand fgy7v2wrvj0so4ro8kvhqo-3})
     (terminals
       (maybe-label (dl))
       (gensym (uid export-id))
@@ -96,17 +88,17 @@
       (library/rt-info (linfo/rt))
       (program-info (pinfo)))
     (Outer (outer)
-      rcinfo
+      (recompile-info rcinfo)
       (group outer1 outer2)
       (visit-only inner)
       (revisit-only inner)
       inner)
     (Inner (inner)
-      linfo/ct
+      (library/ct-info linfo/ct)
       ctlib
-      linfo/rt
+      (library/rt-info linfo/rt)
       rtlib
-      pinfo
+      (program-info pinfo)
       prog
       lsrc)
     (ctLibrary (ctlib)

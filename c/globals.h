@@ -135,6 +135,7 @@ EXTERN struct S_G_struct {
     ptr countof_names;
     ptr gcbackreference[static_generation+1];
     uptr phantom_sizes[static_generation+1];
+    IGEN prcgeneration;
 
   /* intern.c */
     iptr oblist_length;

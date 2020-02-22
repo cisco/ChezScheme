@@ -8487,7 +8487,7 @@
     "inside testfile-a3-9\n")
   (equal?
     (with-output-to-string (lambda () (load "testfile-a3-10.so")))
-    "outside (testfile-a3-8)\ninside testfile-a3-10\n")
+    "inside testfile-a3-10\n")
 )
 
 (mat library4
@@ -8745,6 +8745,105 @@
   (equal?
     (separate-eval '(revisit "testfile-l6-prog1.so"))
     "revisiting testfile-l6-prog1\n#((10 . 12))\n")
+)
+
+(mat library7
+  (begin
+    (mkfile "testfile-l7-a1.ss"
+      '(library (testfile-l7-a1) (export a-macro a) (import (chezscheme)) (define-syntax a-macro (identifier-syntax 'aaa)) (define (a x) (+ x (* x x)))))
+    (mkfile "testfile-l7-b1.ss"
+      '(library (testfile-l7-b1) (export b) (import (chezscheme) (testfile-l7-a1)) (define (b x) (cons 'b a-macro))))
+    (mkfile "testfile-l7-c1.ss"
+      '(library (testfile-l7-c1) (export c) (import (chezscheme) (testfile-l7-a1)) (define (c x) (cons 'c (a x)))))
+    (mkfile "testfile-l7-d1.ss"
+      '(library (testfile-l7-d1) (export d) (import (chezscheme) (testfile-l7-a1)) (define (d x) (list 'd a-macro (a x)))))
+    (separate-compile
+      '(lambda (x) (for-each compile-library x))
+      '(list "testfile-l7-a1" "testfile-l7-b1" "testfile-l7-c1" "testfile-l7-d1"))
+    #t)
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-l7-b1)) (b 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(let () (import (testfile-l7-d1)) (d 7)))
+    "(b . aaa)\n(c . 56)\n(d aaa 56)\n")
+  (begin
+    (separate-compile
+      '(lambda (x) (for-each compile-library x))
+      '(list "testfile-l7-a1" "testfile-l7-b1" "testfile-l7-c1"))
+    #t)
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-l7-b1)) (b 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      ; this should reload from source, since dependency is out-of-date
+      '(let () (import (testfile-l7-d1)) (d 7)))
+    "(b . aaa)\n(c . 56)\n(d aaa 56)\n")
+  (equal?
+    (separate-eval
+      ; this should reload from source, since dependency is out-of-date
+      '(let () (import (testfile-l7-d1)) (d 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(let () (import (testfile-l7-b1)) (b 7)))
+    "(d aaa 56)\n(c . 56)\n(b . aaa)\n")
+  (error? ; expected different compilation instance
+    (separate-eval
+      '(let () (import (testfile-l7-b1)) (b 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(load-library "testfile-l7-d1.so")
+      '(let () (import (testfile-l7-d1)) (d 7))))
+  (error? ; expected different compilation instance
+    (separate-eval
+      '(load-library "testfile-l7-d1.so")
+      '(let () (import (testfile-l7-d1)) (d 7))))
+  (equal?
+    (separate-eval
+      '(load-library "testfile-l7-b1.ss")
+      '(let () (import (testfile-l7-b1)) (b 7))
+      ; this should reload from source, since dependency is out-of-date
+      '(let () (import (testfile-l7-c1)) (c 7))
+      ; this should reload from source, since dependency is out-of-date
+      '(let () (import (testfile-l7-d1)) (d 7)))
+    "(b . aaa)\n(c . 56)\n(d aaa 56)\n")
+  (error? ; expected different compilation instance
+    (separate-eval
+      '(load-library "testfile-l7-b1.ss")
+      '(load-library "testfile-l7-c1.ss")
+      '(load-library "testfile-l7-d1.so")
+      '(let () (import (testfile-l7-d1)) (d 7))))
+  (begin
+    (delete-file "testfile-l7-a1.so")
+    #t)
+  (equal?
+    (separate-eval
+      '(parameterize ([compile-imported-libraries #t]) (compile-library "testfile-l7-b1.ss"))
+      '(let () (import (testfile-l7-b1)) (b 7))
+      ; this should reload from source, since dependency is out-of-date
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(let () (import (testfile-l7-d1)) (d 7)))
+    "compiling testfile-l7-b1.ss with output to testfile-l7-b1.so\ncompiling testfile-l7-a1.ss with output to testfile-l7-a1.so\n(b . aaa)\n(c . 56)\n(d aaa 56)\n")
+  (begin
+    (delete-file "testfile-l7-a1.so")
+    #t)
+  (error? ; expected different compilation instance
+    (separate-eval
+      '(parameterize ([compile-imported-libraries #t]) (compile-library "testfile-l7-b1.ss"))
+      '(load-library "testfile-l7-c1.so")
+      '(let () (import (testfile-l7-c1)) (c 7))))
+  (equal?
+    (separate-eval
+      '(library (testfile-l7-a1) (export a-macro a) (import (chezscheme)) (define-syntax a-macro (identifier-syntax 'aaa2)) (define (a x) (* x 11)))
+      '(let () (import (testfile-l7-b1)) (b 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(let () (import (testfile-l7-d1)) (d 7)))
+    "(b . aaa2)\n(c . 77)\n(d aaa2 77)\n")
+  (error? ; expected different compilation instance
+    (separate-eval
+      '(library (testfile-l7-a1) (export a-macro a) (import (chezscheme)) (define-syntax a-macro (identifier-syntax 'aaa2)) (define (a x) (* x 11)))
+      '(let () (import (testfile-l7-b1)) (b 7))
+      '(let () (import (testfile-l7-c1)) (c 7))
+      '(load-library "testfile-l7-d1.so")
+      '(let () (import (testfile-l7-d1)) (d 7))))
 )
 
 (mat library-regression
@@ -9033,8 +9132,82 @@
      (string-append
       "123\n"
       "123\n"
-      "Exception in visit: library (testfile-lr-l4) is not visible\n"
-      "Exception in visit: library (testfile-lr-l4) is not visible\n"))))
+      "Exception in environment: attempt to import invisible library (testfile-lr-l4)\n"
+      "Exception in environment: attempt to import invisible library (testfile-lr-l4)\n"))))
+
+(mat invoke-library
+  (error? ; invalid library reference
+     (invoke-library '(testfile-il1 (<= 3))))
+  (error? ; invalid library reference
+     (invoke-library '(testfile-il1 (what?))))
+  (error? ; invalid library reference
+     (invoke-library '()))
+  (error? ; invalid library reference
+     (invoke-library 'hello))
+  (error? ; invalid library reference
+     (invoke-library '(3 2 1)))
+  (begin
+    (mkfile "testfile-il1.ss"
+      '(library (testfile-il1 (2)) (export a) (import (chezscheme)) (define a 3) (printf "invoked (testfile-il1)\n")))
+    #t)
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\n3\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1))
+      '(printf "hello\n")
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\nhello\n3\n")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a)
+      '(printf "hello\n")
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n3\nhello\n")
+  (begin
+    (separate-eval '(compile-library "testfile-il1"))
+    #t)
+  (delete-file "testfile-il1.ss")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\n3\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1))
+      '(printf "hello\n")
+      '(let () (import (testfile-il1)) a))
+    "invoked (testfile-il1)\nhello\n3\n")
+  (equal?
+    (separate-eval
+      '(let () (import (testfile-il1)) a)
+      '(printf "hello\n")
+      '(invoke-library '(testfile-il1)))
+    "invoked (testfile-il1)\n3\nhello\n")
+  (error? ; version mismatch
+    (separate-eval '(invoke-library '(testfile-il1 (3)))))
+  (error? ; version mismatch
+    (separate-eval
+      '(invoke-library '(testfile-il1 ((>= 3))))))
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1 ((>= 2)))))
+    "invoked (testfile-il1)\n")
+  (equal?
+    (separate-eval
+      '(invoke-library '(testfile-il1 (2))))
+    "invoked (testfile-il1)\n")
+)
 
 (mat cross-library-optimization
   (begin
@@ -9568,6 +9741,16 @@
 )
 
 (mat library-directories
+  (error? ; invalid argument
+    (library-directories '("a" . hello)))
+  (error? ; invalid argument
+    (library-directories '("a" . ("src" . "obj"))))
+  (error? ; invalid argument
+    (library-directories '("a" . (("src")))))
+  (error? ; invalid argument
+    (library-directories '("a" . (("src" "obj")))))
+  (error? ; invalid argument
+    (library-directories '("a" . ((("src" "obj"))))))
   (let ([x (library-directories)])
     (and (list? x)
          (andmap (lambda (x) (and (pair? x) (string? (car x)) (string? (cdr x)))) x)))
@@ -9607,6 +9790,14 @@
 )
 
 (mat library-extensions
+  (error? ; invalid argument
+    (library-extensions '.a1.sls))
+  (error? ; invalid argument
+    (library-extensions '((".foo"))))
+  (error? ; invalid argument
+    (library-extensions '((".foo" ".bar"))))
+  (error? ; invalid argument
+    (library-extensions '(((".junk")))))
   (let ([x (library-extensions)])
     (and (list? x)
          (andmap (lambda (x) (and (pair? x) (string? (car x)) (string? (cdr x)))) x)))
@@ -10381,7 +10572,7 @@
     (parameterize ([console-output-port (open-output-string)])
       (eval '(lambda () (import (testfile-imno2)) y))
       (get-output-string (console-output-port)))
-    "import: did not find source file \"testfile-imno2.chezscheme.sls\"\nimport: found source file \"testfile-imno2.ss\"\nimport: did not find corresponding object file \"testfile-imno2.so\"\nimport: loading source file \"testfile-imno2.ss\"\nimport: did not find source file \"testfile-imno1.chezscheme.sls\"\nimport: found source file \"testfile-imno1.ss\"\nimport: found corresponding object file \"testfile-imno1.so\"\nimport: object file is not older\nimport: loading object file \"testfile-imno1.so\"\n")
+    "import: did not find source file \"testfile-imno2.chezscheme.sls\"\nimport: found source file \"testfile-imno2.ss\"\nimport: did not find corresponding object file \"testfile-imno2.so\"\nimport: loading source file \"testfile-imno2.ss\"\nimport: did not find source file \"testfile-imno1.chezscheme.sls\"\nimport: found source file \"testfile-imno1.ss\"\nimport: found corresponding object file \"testfile-imno1.so\"\nimport: object file is not older\nimport: visiting object file \"testfile-imno1.so\"\nattempting to 'revisit' previously 'visited' \"testfile-imno1.so\" for library (testfile-imno1) run-time info\n")
   (eq? (import-notify #f) (void))
 )
 

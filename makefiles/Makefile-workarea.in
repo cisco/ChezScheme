@@ -16,32 +16,48 @@
 MAKEFLAGS += --no-print-directory
 PREFIX=
 
+.PHONY: build
 build:
 	(cd c && $(MAKE))
 	(cd s && $(MAKE) bootstrap)
 
+.PHONY: install
 install: build
 	$(MAKE) -f Mf-install
 
+.PHONY: uninstall
 uninstall:
 	$(MAKE) -f Mf-install uninstall
 
+.PHONY: test
 test: build
 	(cd mats && $(MAKE) allx)
 	@echo "test run complete.  check $(PREFIX)mats/summary for errors."
 
+.PHONY: coverage
+coverage:
+	rm -f s/bootstrap
+	(cd c && $(MAKE))
+	(cd s && $(MAKE) bootstrap p=t c=t)
+	(cd mats && $(MAKE) allx c=t)
+
+.PHONY: bootfiles
 bootfiles: build
 	$(MAKE) -f Mf-boot
 
-create-bintar: build
+.PHONY: bintar
+bintar: build
 	(cd bintar && $(MAKE))
 
-create-rpm: create-bintar
+.PHONY: rpm
+rpm: bintar
 	(cd rpm && $(MAKE))
 
-create-pkg: create-bintar
+.PHONY: pkg
+pkg: bintar
 	(cd pkg && $(MAKE))
 
+.PHONY: clean
 clean:
 	rm -f petite.1 scheme.1
 	(cd s && $(MAKE) clean)

@@ -576,7 +576,8 @@ static void check_boot_file_state PROTO((const char *who));
 
 static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IBOOL errorp; {
   char pathbuf[PATH_MAX], buf[PATH_MAX];
-  uptr n; INT c;
+  uptr n = 0;
+  INT c;
   const char *path;
 #ifdef WIN32
   wchar_t *expandedpath;
@@ -850,23 +851,11 @@ static INT zgetstr(file, s, max) glzFile file; char *s; iptr max; {
 static IBOOL loadecho = 0;
 #define LOADSKIP 0
 
-static void handle_visit_revisit(tc, p) ptr tc; ptr p; {
-  ptr a = Scar(p);
-
-  if (a == FIX(visit_tag) || a == FIX(revisit_tag)) {
-    ptr d = Scdr(p);
-    if (Sprocedurep(d)) {
-      S_initframe(tc, 0);
-      INITCDR(p) = boot_call(tc, d, 0);
-    }
-  }
-}
-
 static int set_load_binary(iptr n) {
-  if (SYMVAL(S_G.scheme_version_id) == sunbound) return 0; // set by back.ss
+  if (!Ssymbolp(SYMVAL(S_G.scheme_version_id))) return 0; // set by back.ss
   ptr make_load_binary = SYMVAL(S_G.make_load_binary_id);
   if (Sprocedurep(make_load_binary)) {
-    S_G.load_binary = Scall3(make_load_binary, Sstring_utf8(bd[n].path, -1), Sstring_to_symbol("load"), Sfalse);
+    S_G.load_binary = Scall1(make_load_binary, Sstring_utf8(bd[n].path, -1));
     return 1;
   }
   return 0;
@@ -916,12 +905,8 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
         if (Sprocedurep(y)) {
           S_initframe(tc, 0);
           INITVECTIT(x, j) = boot_call(tc, y, 0);
-        } else if (Spairp(y)) {
-          handle_visit_revisit(tc, y);
         }
       }
-    } else if (Spairp(x)) {
-      handle_visit_revisit(tc, x);
     }
     if (loadecho) {
       S_prin1(x);
@@ -1112,7 +1097,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
       iptr n;
 
       n = strlen(name) - 4;
-      if (n >= 0 && (strcmp(name + n, ".exe") == 0 || strcmp(name + n, ".EXE") == 0)) {
+      if (n >= 0 && (_stricmp(name + n, ".exe") == 0)) {
         strcpy(buf, name);
         buf[n] = 0;
         name = buf;

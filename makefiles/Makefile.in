@@ -15,50 +15,68 @@
 
 MAKEFLAGS += --no-print-directory
 
+.PHONY: build
 build:
 	(cd $(workarea) && $(MAKE) build)
 
+.PHONY: run
 run:
 	env SCHEMEHEAPDIRS=$(workarea)/boot/$(m) $(workarea)/bin/$(m)/scheme
 
+.PHONY: install
 install:
 	(cd $(workarea) && $(MAKE) install)
 
+.PHONY: uninstall
 uninstall:
 	(cd $(workarea) && $(MAKE) uninstall)
 
+.PHONY: test
 test:
 	(cd $(workarea) && $(MAKE) test PREFIX=$(workarea)/)
 
+.PHONY: coverage
+coverage:
+	(cd $(workarea) && $(MAKE) coverage)
+
+.PHONY: bootfiles
 bootfiles:
 	(cd $(workarea) && $(MAKE) bootfiles)
 
 # Supply XM=<machine> to build boot files for <machine>
+.PHONY: boot
 boot: build
 	mkdir -p boot/$(XM)
 	(cd $(workarea) && $(MAKE) -f Mf-boot $(XM).boot)
 
 # Supply ORIG=<dir> to build using existing at <dir>
+.PHONY: from-orig
 from-orig:
 	(cd $(m)/s && $(MAKE) -f Mf-cross m=$(m) xm=$(m) base=$(ORIG)/$(m))
 	$(MAKE) build
 
+.PHONY: docs
 docs: build
 	(cd csug && $(MAKE) m=$(m))
 	(cd release_notes && $(MAKE) m=$(m))
 
-create-bintar:
-	(cd $(workarea) && $(MAKE) create-bintar)
+.PHONY: bintar
+bintar:
+	(cd $(workarea) && $(MAKE) bintar)
 
-create-rpm:
-	(cd $(workarea) && $(MAKE) create-rpm)
+.PHONY: rpm
+rpm:
+	(cd $(workarea) && $(MAKE) rpm)
 
-create-pkg:
-	(cd $(workarea) && $(MAKE) create-pkg)
+.PHONY: pkg
+pkg:
+	(cd $(workarea) && $(MAKE) pkg)
 
+.PHONY: clean
 clean:
 	(cd $(workarea) && $(MAKE) clean)
 
+.PHONY: distclean
 distclean:
 	(cd csug && if [ -e Makefile ] ; then $(MAKE) reallyreallyclean ; fi)
 	rm -f csug/Makefile
