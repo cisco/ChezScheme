@@ -812,7 +812,9 @@ void S_schsig_init() {
         S_protect(&S_G.event_and_resume_star_id);
         S_G.event_and_resume_star_id = S_intern((const unsigned char *)"$event-and-resume*");
 
+#ifndef WIN32
         scheme_signals_registered = 0;
+#endif
     }
 
 
