@@ -1945,3 +1945,6 @@
     compress_io.c, new_io.c, externs.h,
     bytevector.ms, mats/Mf-base, root-experr*
     io.stex, objects.stex, release_notes.stex
+- fixed csug copyright year substititions and changed revisiondate
+  to not be generated, making the csug build reproducible
+    newrelease csug/csug.stex

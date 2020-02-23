@@ -138,10 +138,11 @@ set updatedfiles = ($updatedfiles release_notes/release_notes.stex)
 
 mkdir csug
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" \
-    -e "s/n\\copyright~ .* Cisco Systems, Inc./n\\copyright~`date +%Y` Cisco Systems, Inc./" \
+    -e "s/\\copyright~.* Cisco Systems, Inc./\\copyright~`date +%Y` Cisco Systems, Inc./" \
   ../csug/copyright.stex > csug/copyright.stex
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" \
-    -e "s/nCopyright &copy; .* Cisco Systems, Inc./nCopyright \&copy; `date +%Y` Cisco Systems, Inc./" \
+    -e "s/Copyright &copy; .* Cisco Systems, Inc./Copyright \&copy; `date +%Y` Cisco Systems, Inc./" \
+    -e "s/\\def\\revisiondate{.*}/\\def\\revisiondate{`date +'%B %Y'`}/" \
   ../csug/csug.stex > csug/csug.stex
 set updatedfiles = ($updatedfiles csug/copyright.stex csug/csug.stex)
 
