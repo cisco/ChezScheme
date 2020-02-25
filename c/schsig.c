@@ -770,7 +770,9 @@ void S_schsig_init() {
 
         S_protect(&S_G.error_id);
         S_G.error_id = S_intern((const unsigned char *)"$c-error");
+#ifndef WIN32
         scheme_signals_registered = 0;
+#endif
     }
 
 
