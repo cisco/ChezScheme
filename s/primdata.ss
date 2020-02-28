@@ -341,7 +341,7 @@
   (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs])
   (call/cc [sig [(procedure) -> (ptr ...)]] [flags])
   (values [sig [(ptr ...) -> (ptr ...)]] [flags unrestricted discard cp02 ieee r5rs])
-  (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 #;cptypes2x ieee r5rs])
+  (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
   ((r6rs: dynamic-wind) [sig [(procedure procedure procedure) -> (ptr ...)]] [flags cptypes2x ieee r5rs])      ; restricted to 3 arguments
 )
 
