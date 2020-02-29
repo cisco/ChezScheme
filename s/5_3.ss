@@ -1,4 +1,3 @@
-"5_3.ss"
 ;;; 5_3.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -24,6 +23,7 @@
 ;;; dangerous: -0.0, +inf.0, -inf.0, 1e100, 1e-100, 0.1
 ;;; safe: 0.0, +nan.0, 1.0, 2.0, 0.5
 
+(begin
 (eval-when (compile)
 
    (define-constant max-float-exponent
@@ -3072,3 +3072,4 @@
              [k (- end start) (- k w-1)])
             ((<= k w-1) (logor (sll m^ k) ($fxreverse m k))))))))
 )))))))
+)

@@ -1,4 +1,3 @@
-"primvars.ss"
 ;;; primvars.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 

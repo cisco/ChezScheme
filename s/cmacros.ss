@@ -434,7 +434,7 @@
 (define-constant fasl-type-gensym 19)
 (define-constant fasl-type-exactnum 20)
 ; 21
-(define-constant fasl-type-fasl-size 22)
+; 22
 (define-constant fasl-type-record 23)
 (define-constant fasl-type-rtd 24)
 (define-constant fasl-type-small-integer 25)
@@ -455,6 +455,10 @@
 (define-constant fasl-type-immutable-fxvector 39)
 (define-constant fasl-type-immutable-bytevector 40)
 (define-constant fasl-type-immutable-box 41)
+
+(define-constant fasl-type-uncompressed 42)
+(define-constant fasl-type-gzip 43)
+(define-constant fasl-type-lz4 44)
 
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
@@ -1392,7 +1396,9 @@
    [void* lz4-out-buffer]
    [U64 instr-counter]
    [U64 alloc-counter]
-   [ptr parameters]))
+   [ptr parameters]
+   [ptr DSTBV]
+   [ptr SRCBV]))
 
 (define tc-field-list
   (let f ([ls (oblist)] [params '()])

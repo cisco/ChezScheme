@@ -1,4 +1,3 @@
-"reloc.ss"
 ;;; reloc.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define $reloc
   (lambda (type item-offset code-offset)
     (make-reloc type item-offset code-offset
@@ -57,8 +57,6 @@
                         (bitwise-arithmetic-shift-left (reloc-item-offset r) (constant reloc-item-offset-offset))))
                     (mkc1 r* (fx+ n 1))))))))))
 
-(define $make-cinst)
-(define $make-vtable)
 (let ()
 (set! $make-cinst
   (lambda (build-sinst vtable)
@@ -99,4 +97,5 @@
                           offset)
                         r)
                   (constant ptr-bytes)))))))
+)
 )

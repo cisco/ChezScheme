@@ -97,7 +97,8 @@ Daniel, George Davidson, Matthew Flatt, Aziz Ghuloum, Bob Hieb, Andy Keep, and O
 contributed substantially to the development of {\ChezScheme}.
 {\ChezScheme}'s expression editor is based on a command-line editor for
 Scheme developed from 1989 through 1994 by C.~David Boyer.
-File compression is performed with the use of the zlib compression library
+File compression is performed with the use of the lz4 compression
+library developed by Yann Collet or the zlib compression library
 developed by Jean-loup Gailly and Mark Adler.
 Implementations of the list and vector sorting routines are based on
 Olin Shiver's opportunistic merge-sort algorithm and implementation.

@@ -1,4 +1,3 @@
-"cpcommonize.ss"
 ;;; cpcommonize.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define-who commonization-level
   ($make-thread-parameter
     0
@@ -576,3 +576,4 @@
             x
             (let ([worthwhile-size (expt 2 (fx- 10 level))])
               (cpcommonize2 (cpcommonize1 (cpcommonize0 x) worthwhile-size))))))))
+)

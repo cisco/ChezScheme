@@ -1,4 +1,3 @@
-"cafe.ss"
 ;;; cafe.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define default-prompt-and-read
   (lambda (n)
     (unless (and (integer? n) (>= n 0))
@@ -213,4 +213,5 @@ Type e to exit interrupt handler and continue
                      (lambda (c) ((base-exception-handler) c))
                      (lambda ()
                        (waiter ($cafe) eval))))))))]))))
+)
 )

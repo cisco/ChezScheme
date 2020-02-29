@@ -1,4 +1,3 @@
-"pretty.ss"
 ;;; pretty.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -24,6 +23,7 @@
 ;;;; EXPORTED VARIABLES
 
 ;;; pretty tries to fit things within line length
+(begin
 (define pretty-line-length
    ($make-thread-parameter
       75
@@ -796,4 +796,5 @@
     (write-char #\space p)
     (wr (prty-obj x) p)
     (write-char #\> p)))
+)
 )

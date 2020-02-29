@@ -1587,6 +1587,9 @@
         (pretty-print '(pretty-print (not (((inspect/object sff-1a-x) 'code) 'source))))
         (pretty-print '(pretty-print (= (length (profile-dump)) preexisting-entries))))
       'replace)
+    (delete-file "testfile-sff-1a.so")
+    (delete-file "testfile-sff-1b.so")
+    (delete-file "testfile-sff-1c.so")
     (separate-compile
       '(lambda (x)
          (parameterize ([generate-inspector-information #t]
