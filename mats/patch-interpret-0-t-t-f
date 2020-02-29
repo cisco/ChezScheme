@@ -1,5 +1,5 @@
-*** errors-compile-0-t-t-f	2020-02-28 00:55:03.513627852 -0500
---- errors-interpret-0-t-t-f	2020-02-28 01:30:26.126514942 -0500
+*** errors-compile-0-t-t-f	2020-02-29 01:54:02.453556198 -0500
+--- errors-interpret-0-t-t-f	2020-02-29 02:29:36.435853386 -0500
 ***************
 *** 1,3 ****
 --- 1,9 ----
@@ -196,8 +196,8 @@
 ***************
 *** 4274,4289 ****
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
-  6.mo:Expected error in mat fasl: "separate-eval: Warning in $compressed-warning: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
-  6.mo:Expected error in mat fasl: "separate-eval: Warning in $compressed-warning: fasl file content is compressed internally; compressing the file (#<binary input port testfile.ss>) is redundant and can slow fasl writing and reading significantly
+  6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-write: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
+  6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-read: fasl file content is compressed internally; compressing the file (#<binary input port testfile.ss>) is redundant and can slow fasl writing and reading significantly
 - 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
 - 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format".
   6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format at line 1, char 28 of testfile.ss".
