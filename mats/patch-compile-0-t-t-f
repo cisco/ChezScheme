@@ -1,7 +1,7 @@
-*** errors-compile-0-t-f-f	2019-08-29 13:23:28.054751053 -0400
---- errors-compile-0-t-t-f	2019-08-29 13:18:54.744598246 -0400
+*** errors-compile-0-t-f-f	2020-02-28 00:59:57.516641553 -0500
+--- errors-compile-0-t-t-f	2020-02-28 00:55:03.513627852 -0500
 ***************
-*** 144,150 ****
+*** 197,203 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
@@ -9,7 +9,7 @@
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
---- 144,150 ----
+--- 197,203 ----
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
@@ -18,7 +18,7 @@
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
 ***************
-*** 3741,3747 ****
+*** 3929,3935 ****
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable q".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable bar".
@@ -26,7 +26,7 @@
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable a".
---- 3741,3747 ----
+--- 3929,3935 ----
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable q".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable bar".
@@ -35,7 +35,7 @@
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable a".
 ***************
-*** 7192,7199 ****
+*** 7436,7443 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -44,7 +44,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 7192,7199 ----
+--- 7436,7443 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -54,7 +54,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 7201,7215 ****
+*** 7445,7459 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -70,7 +70,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 7201,7215 ----
+--- 7445,7459 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -87,7 +87,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 7222,7247 ****
+*** 7466,7491 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -114,7 +114,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 7222,7247 ----
+--- 7466,7491 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -142,7 +142,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7372,7410 ****
+*** 7616,7654 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -182,7 +182,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7372,7410 ----
+--- 7616,7654 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -223,7 +223,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7430,7465 ****
+*** 7674,7709 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
@@ -260,7 +260,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "record-rtd: #<ex3> is not a record".
   record.mo:Expected error in mat r6rs-records-syntactic: "parent record type is sealed ex3".
---- 7430,7465 ----
+--- 7674,7709 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".

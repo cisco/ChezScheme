@@ -1,4 +1,3 @@
-"5_6.ss"
 ;;; 5_6.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 

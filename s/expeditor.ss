@@ -1,4 +1,3 @@
-"expeditor.ss"
 ;;; expeditor.ss
 ;;; R. Kent Dybvig
 ;;; August 2007

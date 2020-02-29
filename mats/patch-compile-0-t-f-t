@@ -1,7 +1,7 @@
-*** errors-compile-0-t-f-f	2019-08-29 13:23:28.054751053 -0400
---- errors-compile-0-t-f-t	2019-08-29 13:09:33.915590545 -0400
+*** errors-compile-0-t-f-f	2020-02-28 00:59:57.516641553 -0500
+--- errors-compile-0-t-f-t	2020-02-28 00:44:53.297052688 -0500
 ***************
-*** 3699,3705 ****
+*** 3887,3893 ****
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation "static"".
   misc.mo:Expected error in mat make-object-finder: "make-object-finder: 17 is not a procedure".
@@ -9,7 +9,7 @@
   misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation oldgen".
   misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation -1".
   misc.mo:Expected error in mat make-object-finder: "incorrect number of arguments to #<procedure find-next>".
---- 3699,3705 ----
+--- 3887,3893 ----
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation "static"".
   misc.mo:Expected error in mat make-object-finder: "make-object-finder: 17 is not a procedure".
@@ -18,7 +18,7 @@
   misc.mo:Expected error in mat make-object-finder: "make-object-finder: invalid generation -1".
   misc.mo:Expected error in mat make-object-finder: "incorrect number of arguments to #<procedure find-next>".
 ***************
-*** 7182,7192 ****
+*** 7426,7436 ****
   7.mo:Expected error in mat sstats: "set-sstats-gc-bytes!: twelve is not an exact integer".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid generation yuk".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid generation -1".
@@ -30,7 +30,7 @@
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
---- 7182,7192 ----
+--- 7426,7436 ----
   7.mo:Expected error in mat sstats: "set-sstats-gc-bytes!: twelve is not an exact integer".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid generation yuk".
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid generation -1".

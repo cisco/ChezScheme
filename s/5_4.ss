@@ -1,4 +1,3 @@
-"5_4.ss"
 ;;; 5_4.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; character and string functions
 
+(begin
 (define substring
    (lambda (s1 m n)
       (unless (string? s1)
@@ -828,4 +828,5 @@
         (unless (string? s) (string-error who s))
         ($compose ($decompose s #f))))
   )
+)
 )

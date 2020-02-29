@@ -1,4 +1,3 @@
-"cp0"
 ;;; cp0.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 

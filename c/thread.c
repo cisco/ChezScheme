@@ -105,6 +105,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
     VIRTREG(tc, i) = FIX(0);
   }
 
+  DSTBV(tc) = SRCBV(tc) = Sfalse;
+
  /* S_thread had better not do thread-local allocation */
   thread = S_thread(tc);
 

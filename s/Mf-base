@@ -33,8 +33,8 @@ i = f
 # cp0 determines the number of cp0 (source optimizer) iterations run
 cp0 = 2
 
-# cc determines whether compiled files are compressed
-cc = t
+# fc determines whether fasl objects are compressed
+fc = t
 
 # xf determines the compression foramt
 xf = (compress-format)
@@ -225,7 +225,7 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
@@ -254,7 +254,7 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
@@ -286,7 +286,7 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
@@ -299,7 +299,7 @@ clean: profileclean
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$(xp) (compile-profile (quote source)))'\
@@ -375,7 +375,7 @@ cmacros.so: cmacros.ss machine.def layout.ss
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
@@ -390,7 +390,7 @@ priminfo.so: priminfo.ss primdata.ss cmacros.so
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
@@ -406,7 +406,7 @@ mkheader.so: mkheader.ss cmacros.so primvars.so env.so
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
@@ -421,7 +421,7 @@ nanopass.so: $(shell echo ../nanopass/nanopass/*) ../nanopass/nanopass.ss
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(generate-inspector-information #$i)'\
@@ -447,7 +447,7 @@ script.all makescript:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
@@ -490,7 +490,7 @@ script-static.all:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\
@@ -519,7 +519,7 @@ script-dynamic.all:
              '(optimize-level $o)'\
              '(debug-level $d)'\
              '(commonization-level $(cl))'\
-             '(compile-compressed #$(cc))'\
+             '(fasl-compressed #$(fc))'\
              '(compress-format $(xf))'\
              '(compress-level $(xl))'\
              '(when #$p (compile-profile (quote source)))'\

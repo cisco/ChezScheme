@@ -18,15 +18,19 @@
  *
  * <fasl-file> -> <fasl-group>*
  *
- * <fasl-group> -> <fasl header><fasl-object>*
+ * <fasl-group> -> <fasl-header><fasl-object>*
  *
  * <fasl-header> -> {header}\0\0\0chez<uptr version><uptr machine-type>(<bootfile-name> ...)
  *
  * <bootfile-name> -> <octet char>*
  *
- * <fasl-object> -> <situation>{fasl-size}<uptr size><fasl> # size is the size in bytes of the following <fasl>
+ * <fasl-object> -> <situation><uptr size><pcfasl> # size is the size in bytes of <pcfasl>
  *
- * <situation> -> {visit}{revisit}{visit-revisit}
+ * <situation> -> {visit} | {revisit} | {visit-revisit}
+ *
+ * <pcfasl> -> <compressed><uptr uncompressed-size><compressed fasl> | {uncompressed}<fasl>
+ * 
+ * <compressed> -> {gzip} | {lz4}
  *
  * <fasl> -> {pair}<uptr n><fasl elt1>...<fasl eltn><fasl last-cdr>
  *
@@ -190,16 +194,15 @@
 #include NAN_INCLUDE
 #endif
 
-#define UFFO_TYPE_GZ 1
 #define UFFO_TYPE_FD 2
 #define UFFO_TYPE_BV 3
 
-/* we do our own buffering size gzgetc is slow */
+#define PREPARE_BYTEVECTOR(bv,n) {if (bv == Sfalse || Sbytevector_length(bv) < (n)) bv = S_bytevector(n);}
+
 typedef struct unbufFaslFileObj {
   ptr path;
   INT type;
   INT fd;
-  glzFile file;
 } *unbufFaslFile;
 
 typedef struct faslFileObj {
@@ -213,7 +216,7 @@ typedef struct faslFileObj {
 /* locally defined functions */
 static INT uf_read PROTO((unbufFaslFile uf, octet *s, iptr n));
 static octet uf_bytein PROTO((unbufFaslFile uf));
-static uptr uf_uptrin PROTO((unbufFaslFile uf));
+static uptr uf_uptrin PROTO((unbufFaslFile uf, INT *bytes_consumed));
 static ptr fasl_entry PROTO((ptr tc, IFASLCODE situation, unbufFaslFile uf));
 static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, unbufFaslFile uf));
 static void fillFaslFile PROTO((faslFile f));
@@ -289,20 +292,15 @@ void S_fasl_init() {
 #endif
 }
 
-ptr S_fasl_read(ptr file, IBOOL gzflag, IFASLCODE situation, ptr path) {
+ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
  /* acquire mutex in case we modify code pages */
   tc_mutex_acquire()
   uffo.path = path;
-  if (gzflag) {
-    uffo.type = UFFO_TYPE_GZ;
-    uffo.file = S_gzxfile_gzfile(file);
-  } else {
-    uffo.type = UFFO_TYPE_FD;
-    uffo.fd = GET_FD(file);
-  }
+  uffo.type = UFFO_TYPE_FD;
+  uffo.fd = fd;
   x = fasl_entry(tc, situation, &uffo);
   tc_mutex_release()
   return x;
@@ -321,17 +319,15 @@ ptr S_bv_fasl_read(ptr bv, ptr path) {
   return x;
 }
 
-ptr S_boot_read(glzFile file, const char *path) {
+ptr S_boot_read(INT fd, const char *path) {
   ptr tc = get_thread_context();
   struct unbufFaslFileObj uffo;
 
   uffo.path = Sstring_utf8(path, -1);
-  uffo.type = UFFO_TYPE_GZ;
-  uffo.file = file;
+  uffo.type = UFFO_TYPE_FD;
+  uffo.fd = fd;
   return fasl_entry(tc, fasl_type_visit_revisit, &uffo);
 }
-
-#define GZ_IO_SIZE_T unsigned int
 
 #ifdef WIN32
 #define IO_SIZE_T unsigned int
@@ -340,28 +336,15 @@ ptr S_boot_read(glzFile file, const char *path) {
 #endif /* WIN32 */
 
 static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
-  iptr k; INT errnum;
+  iptr k;
   while (n > 0) {
     uptr nx = n;
 
 #if (iptr_bits > 32)
-  if ((WIN32 || gzflag) && (unsigned int)nx != nx) nx = 0xffffffff;
+  if (WIN32 && (unsigned int)nx != nx) nx = 0xffffffff;
 #endif
 
     switch (uf->type) {
-      case UFFO_TYPE_GZ:
-        k = S_glzread(uf->file, s, (GZ_IO_SIZE_T)nx);
-        if (k > 0)
-          n -= k;
-        else if (k == 0)
-          return -1;
-        else {
-          S_glzerror(uf->file, &errnum);
-          S_glzclearerr(uf->file);
-          if (errnum != Z_ERRNO || errno != EINTR)
-            S_error1("", "error reading from ~a", uf->path);
-        }
-        break;
       case UFFO_TYPE_FD:
         k = READ(uf->fd, s, (IO_SIZE_T)nx);
         if (k > 0)
@@ -382,11 +365,6 @@ static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
 
 static void uf_skipbytes(unbufFaslFile uf, iptr n) {
   switch (uf->type) {
-    case UFFO_TYPE_GZ:
-       if (S_glzseek(uf->file, (long)n, SEEK_CUR) == -1) {
-         S_error1("", "error seeking ~a", uf->path);
-       }
-       break;
     case UFFO_TYPE_FD:
        if (LSEEK(uf->fd, n, SEEK_CUR) == -1) {
          S_error1("", "error seeking ~a", uf->path);
@@ -402,12 +380,14 @@ static octet uf_bytein(unbufFaslFile uf) {
   return buf[0];
 }
 
-static uptr uf_uptrin(unbufFaslFile uf) {
+static uptr uf_uptrin(unbufFaslFile uf, INT *bytes_consumed) {
   uptr n, m; octet k;
 
+  if (bytes_consumed) *bytes_consumed = 1;
   k = uf_bytein(uf);
   n = k >> 1;
   while (k & 1) {
+    if (bytes_consumed) *bytes_consumed += 1;
     k = uf_bytein(uf);
     m = n << 7;
     if (m >> 7 != n) toolarge(uf->path);
@@ -439,6 +419,8 @@ char *S_lookup_machine_type(uptr n) {
 static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
   ptr x; ptr strbuf = S_G.null_string;
   octet tybuf[1]; IFASLCODE ty; iptr size;
+  /* gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-28) co-locates buf and x if we put the declaration of buf down where we use it */
+  octet buf[SBUFSIZ];
 
   for (;;) {
     if (uf_read(uf, tybuf, 1) < 0) return Seof_object; 
@@ -457,10 +439,10 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
           uf_bytein(uf) != 'z')
         S_error1("", "malformed fasl-object header (missing magic word) found in ~a", uf->path);
     
-      if ((n = uf_uptrin(uf)) != scheme_version)
+      if ((n = uf_uptrin(uf, (INT *)0)) != scheme_version)
         S_error2("", "incompatible fasl-object version ~a found in ~a", S_string(S_format_scheme_version(n), -1), uf->path);
     
-      if ((n = uf_uptrin(uf)) != machine_type_any && n != machine_type)
+      if ((n = uf_uptrin(uf, (INT *)0)) != machine_type_any && n != machine_type)
         S_error2("", "incompatible fasl-object machine-type ~a found in ~a", S_string(S_lookup_machine_type(n), -1), uf->path);
     
       if (uf_bytein(uf) != '(')
@@ -482,18 +464,45 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
         return (ptr)0;
     }
   
-    if (uf_bytein(uf) != fasl_type_fasl_size)
-      S_error1("", "malformed fasl-object header (missing fasl-size) found in ~a", uf->path);
-  
-    size = uf_uptrin(uf);
+    size = uf_uptrin(uf, (INT *)0);
   
     if (ty == situation || situation == fasl_type_visit_revisit || ty == fasl_type_visit_revisit) {
-      struct faslFileObj ffo; octet buf[SBUFSIZ];
+      struct faslFileObj ffo;
 
-      ffo.size = size;
-      ffo.buf = buf;
-      ffo.next = ffo.end = ffo.buf;
-      ffo.uf = uf;
+      ty = uf_bytein(uf);
+      switch (ty) {
+        case fasl_type_gzip:
+        case fasl_type_lz4: {
+          ptr result; INT bytes_consumed;
+          iptr dest_size = uf_uptrin(uf, &bytes_consumed);
+          iptr src_size = size - (1 + bytes_consumed); /* adjust for u8 compression type and uptr dest_size */
+
+          PREPARE_BYTEVECTOR(SRCBV(tc), src_size);
+          PREPARE_BYTEVECTOR(DSTBV(tc), dest_size);
+          if (uf_read(uf, &BVIT(SRCBV(tc),0), src_size) < 0)
+            S_error1("", "unexpected eof in fasl file ~a", uf->path);
+          result = S_bytevector_uncompress(DSTBV(tc), 0, dest_size, SRCBV(tc), 0, src_size,
+                      (ty == fasl_type_gzip ? COMPRESS_GZIP : COMPRESS_LZ4));
+          if (result != FIX(dest_size)) {
+            if (Sstringp(result)) S_error2("fasl-read", "~@?", result, SRCBV(tc));
+            S_error3("fasl-read", "uncompressed size ~s for ~s is smaller than expected size ~s", result, SRCBV(tc), FIX(dest_size));
+          }
+          ffo.size = dest_size;
+          ffo.next = ffo.buf = &BVIT(DSTBV(tc),0);
+          ffo.end = &BVIT(DSTBV(tc),dest_size);
+          ffo.uf = uf;
+          break;
+        }
+        case fasl_type_uncompressed: {
+          ffo.size = size - 1; /* adjust for u8 compression type */
+          ffo.next = ffo.end = ffo.buf = buf;
+          ffo.uf = uf;
+          break;
+        }
+        default:
+          S_error2("", "malformed fasl-object header (missing possibly-compressed, got ~s) found in ~a", FIX(ty), uf->path);
+          return (ptr)0;
+      }
       faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
       S_flush_instruction_cache(tc);
       return x;

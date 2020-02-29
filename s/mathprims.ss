@@ -1,4 +1,3 @@
-"mathprims.ss"
 ;;; mathprims.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (eval-when (compile)
 
   (define-syntax define-relop
@@ -765,4 +765,5 @@
          [(cflonum?) (#3%cfl-conjugate x)]
          [else (noncflonum-error 'cfl-conjugate x)])))
 
+)
 )

@@ -4272,6 +4272,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat pretty-print: "incorrect argument count in call (pretty-format (quote foo) (quote x) (quote x))".
 6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
 6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
+6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-write: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
+6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-read: fasl file content is compressed internally; compressing the file (#<binary input port testfile.ss>) is redundant and can slow fasl writing and reading significantly
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format at line 1, char 28 of testfile.ss".

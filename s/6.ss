@@ -1,4 +1,3 @@
-"6.ss"
 ;;; 6.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define with-output-to-string
   (lambda (th)
     (unless (procedure? th)
@@ -501,4 +501,5 @@
                  (substring s (skip-sep s (fx+ i 1) n) n)]
                 [else (loop (fx+ i 1))]))
             (substring s (skip-sep s base n) n)))))
+)
 )

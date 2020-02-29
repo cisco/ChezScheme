@@ -1,14 +1,14 @@
-*** errors-compile-3-t-t-f	2019-08-29 14:13:01.676337307 -0400
---- errors-interpret-3-t-t-f	2019-08-29 14:44:41.857727186 -0400
+*** errors-compile-3-t-t-f	2020-02-28 01:53:21.016941990 -0500
+--- errors-interpret-3-t-t-f	2020-02-28 02:27:17.889233777 -0500
 ***************
 *** 1,3 ****
 --- 1,9 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1010, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1012, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1019, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1021, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1028, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1030, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1030, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1032, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1039, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1041, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1048, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1050, char 4 of 6.ms
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x at line 1, char 19 of testfile.ss".
   profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".
