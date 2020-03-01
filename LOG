@@ -1945,3 +1945,5 @@
     compress_io.c, new_io.c, externs.h,
     bytevector.ms, mats/Mf-base, root-experr*
     io.stex, objects.stex, release_notes.stex
+- fix fasl-read signature
+    primdata.ss
