@@ -438,6 +438,15 @@ Notes:
                [(cflonum?) '(flonum . number)]
                [else '(#f . #f)]))])) ; this is used only to detect predicates.
 
+  (define (maybe-predicate? name)
+    (let ([name (symbol->string name)])
+      (and (>= (string-length name) 6)
+           (let loop ([n 0])
+             (or (fx= n 6)
+                 (and (eq? (string-ref name n) 
+                           (string-ref "maybe-" n))
+                      (loop (fx+ n 1))))))))
+
   ; nqm: no question mark
   ; this is almost duplicated code, but with more cases
   ; it's also useful to avoid the allocation
@@ -463,6 +472,7 @@ Notes:
       [bottom 'bottom] ;pseudo-predicate
       [ptr 'ptr] ;pseudo-predicate
       [boolean 'boolean]
+      [true 'true]
       [procedure 'procedure]
       [exact-integer 'exact-integer] ;fake-predicate
       [void void-rec] ;fake-predicate
@@ -479,7 +489,21 @@ Notes:
                [(uinteger) '(bottom . real)]
                [(integer rational) '(exact-integer . real)]
                [(cflonum) '(flonum . number)]
-               [else '(bottom . ptr)]))])) ; this is used only to analyze the signatures.
+               [(sub-ptr) '(bottom . ptr)]
+               [else
+                (cond
+                  [(not name) ; TODO: Move this case to the top?
+                   '(#f . #f)]
+                  [(pair? name) ; TODO: Move this case to the top?
+                   (cond
+                     [(equal? name '(ptr . ptr))
+                      '(pair . pair)]
+                     [else
+                      '(bottom . pair)])]
+                  [(maybe-predicate? name)
+                   '(bottom . ptr)]         ; for types like maybe-*
+                  [else
+                   '(bottom . true)])]))])) ; for all other types that exclude #f
 
   (define (primref->predicate pr extend?)
     (primref-name->predicate (primref-name pr) extend?))
@@ -586,50 +610,23 @@ Notes:
          (not (predicate-implies? x y))
          (not (predicate-implies? y x))))
 
-  (define (signature->result-predicate signature)
-    (let ([results (cdr signature)])
-      (and (fx= (length results) 1)
-           (let ([result (car results)])
-             (cond
-               [(symbol? result)
-                (primref-name/nqm->predicate result #t)]
-               [(equal? result '(ptr . ptr))
-                'pair]
-               [(pair? result)
-                'pair]
-               [else
-                'ptr])))))
-
-  (define-threaded primref->result-predicate/cache #f)
-
-  (define (primref->result-predicate pr)
-    (unless primref->result-predicate/cache
-      (set! primref->result-predicate/cache (make-hashtable equal-hash equal?)))
-    (let ([key (primref-name pr)])
-      (if (hashtable-contains? primref->result-predicate/cache key)
-          (hashtable-ref primref->result-predicate/cache key #f)
-          (let ([new (primref->result-predicate/no-cache pr)])
-            (hashtable-set! primref->result-predicate/cache key new)
-            new))))
-
-  (define (primref->result-predicate/no-cache pr)
-    (let ([pred/flags
-           (let ([flags (primref-flags pr)])
-             (cond
-               [(all-set? (prim-mask abort-op) flags)
-                'bottom]
-               [(all-set? (prim-mask true) flags)
-                'true]
-               [(all-set? (prim-mask boolean-valued) flags)
-                'boolean]
-               [else
-                #f]))]
-          [pred/signatures
-           (let ([signatures (primref-signatures pr)])
-             (and (not (null? signatures))
-                  (let ([results (map (lambda (s) (signature->result-predicate s)) signatures)])
-                    (fold-left pred-union 'bottom results))))])
-      (pred-intersect pred/flags pred/signatures)))
+  (define (primref->result-predicate pr arity)
+    (define parameterlike? box?)
+    (define parameterlike-type unbox)
+    (let ([type ($sgetprop (primref-name pr) '*result-type* #f)])
+      (and type
+           (cond
+             [(parameterlike? type)
+              (cond
+                [(not arity) ; unknown
+                 (pred-union void-rec 
+                             (primref-name/nqm->predicate (parameterlike-type type) #t))]
+                [(fx= arity 0)
+                 (primref-name/nqm->predicate (parameterlike-type type) #t)]
+                [else
+                 void-rec])]
+             [else
+              (primref-name/nqm->predicate type #t)]))))
 
   (define (signature->argument-predicate signature pos extend?)
     (let* ([arguments (car signature)]
@@ -1056,7 +1053,7 @@ Notes:
   (define (fold-primref/next preinfo pr e* ctxt oldtypes plxc)
     (let-values ([(t e* r* t* t-t* f-t*)
                   (map-Expr/delayed e* oldtypes plxc)])
-      (let ([ret (primref->result-predicate pr)])
+      (let ([ret (primref->result-predicate pr (length e*))])
         (let-values ([(ret t)
                       (let loop ([e* e*] [r* r*] [n 0] [ret ret] [t t])
                         (if (null? e*)
@@ -1229,9 +1226,9 @@ Notes:
                   pred-env-bottom
                   (or f-types types)))))
 
-  (define (Expr/call ir ctxt types outtypes plxc)
+  (define (Expr/call ir ctxt types outtypes plxc) ; TODO: Add arity
     (nanopass-case (Lsrc Expr) ir
-      [,pr (values pr (primref->result-predicate pr) types #f #f)]
+      [,pr (values pr (primref->result-predicate pr #f) types #f #f)]
       [(case-lambda ,preinfo ,cl* ...)
        (let loop ([cl* cl*]
                   [rev-rcl* '()]

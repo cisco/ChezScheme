@@ -1059,3 +1059,19 @@
          '(lambda (b)
             (dynamic-wind (lambda () #f) (lambda (x) (unbox b)) (lambda () #t)))))
 )
+
+(mat cptypes-result-type
+  ; test the special case for predicates
+  (cptypes-equivalent-expansion?
+    '(number? (optimize-level))
+    '(begin (optimize-level) #t))
+  ; this does't work for now, test a few weaker versions
+  #;(cptypes-equivalent-expansion?
+      '(eq? (optimize-level 0) (void))
+      '(begin (optimize-level 0) #t))
+  (cptypes-equivalent-expansion?
+    '(number? (optimize-level 0))
+    '(begin (optimize-level 0) #f))
+  (parameterize ([optimize-level 0])
+    (eq? (optimize-level 0) (void)))
+)
