@@ -1,6 +1,7 @@
 ---
 language: c
-matrix:
+os: linux
+jobs:
   include:
     # macOS
     - env: TARGET_MACHINE=i3osx
