@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050315)
+(define-constant scheme-version #x09050316)
 
 (define-syntax define-machine-types
   (lambda (x)

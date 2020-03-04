@@ -14,7 +14,7 @@
 ;;; limitations under the License.
 
 (module (Lsrc Lsrc? Ltype Ltype? unparse-Ltype unparse-Lsrc count-Lsrc
-         lookup-primref primref? primref-name primref-level primref-flags primref-arity primref-signatures
+         lookup-primref primref? primref-name primref-level primref-flags primref-arity
          sorry! make-preinfo preinfo? preinfo-lambda? preinfo-sexpr preinfo-sexpr-set! preinfo-src
          make-preinfo-lambda preinfo-lambda-name preinfo-lambda-name-set! preinfo-lambda-flags
          preinfo-lambda-flags-set! preinfo-lambda-libspec
@@ -23,7 +23,7 @@
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
          target-fixnum? target-bignum?)
 
-  (module (lookup-primref primref? primref-name primref-flags primref-arity primref-signatures primref-level)
+  (module (lookup-primref primref? primref-name primref-flags primref-arity primref-level)
     (include "primref.ss")
 
     (define $lookup-primref

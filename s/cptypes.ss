@@ -70,8 +70,6 @@ Notes:
   (include "base-lang.ss")
   (include "fxmap.ss")
 
-  (define-pass cptypes : Lsrc (ir) -> Lsrc ()
-    (definitions
   (define (prelex-counter x plxc)
     (or (prelex-operand x)
         (let ([c (unbox plxc)])
@@ -628,51 +626,25 @@ Notes:
              [else
               (primref-name/nqm->predicate type #t)]))))
 
-  (define (signature->argument-predicate signature pos extend?)
-    (let* ([arguments (car signature)]
-           [dots (memq '... arguments)])
-      (cond
-        [(and dots (null? (cdr dots)))
-         (cond
-           [(< pos (- (length arguments) 2))
-            (primref-name/nqm->predicate (list-ref arguments pos) extend?)]
-           [else
-            (primref-name/nqm->predicate (list-ref arguments (- (length arguments) 2)) extend?)])]
-         [dots #f] ; TODO: Extend to handle this case, perhaps knowing the argument count.
-         [else
-          (cond
-            [(< pos (length arguments))
-             (let ([argument (list-ref arguments pos)])
-               (cond
-                 [(equal? argument '(ptr . ptr))
-                  'pair]
-                 [(and extend? (pair? argument))
-                  'pair]
-                 [else
-                  (primref-name/nqm->predicate argument extend?)]))]
-            [else
-             'bottom])])))
-
-  (define-threaded primref->argument-predicate/cache #f)
-
-  (define (primref->argument-predicate pr pos extend?)
-    (unless primref->argument-predicate/cache
-      (set! primref->argument-predicate/cache (make-hashtable equal-hash equal?)))
-    (let ([key (list (primref-name pr) pos extend?)])
-      (if (hashtable-contains? primref->argument-predicate/cache key)
-          (hashtable-ref primref->argument-predicate/cache key #f)
-          (let ([new (primref->argument-predicate/no-cache pr pos extend?)])
-            (when (<= pos 10)
-              (hashtable-set! primref->argument-predicate/cache key new))
-            new))))
-
-  (define (primref->argument-predicate/no-cache pr pos extend?)
-    (let ([signatures (primref-signatures pr)])
-      (and (>= (length signatures) 1)
-           (let ([vals (map (lambda (signature)
-                              (signature->argument-predicate signature pos extend?))
-                            signatures)])
-             (fold-left (if extend? pred-union pred-intersect) (car vals) (cdr vals))))))
+  (define (primref->argument-predicate pr pos arity extend?)
+    (let ([arguments-type ($sgetprop (primref-name pr) '*arguments-type* #f)])
+      (and arguments-type
+           (cond
+             [(fx< pos (vector-length arguments-type))
+              (primref-name/nqm->predicate (vector-ref arguments-type pos) extend?)]
+             [(not arity)
+              #f]
+             [(fx< pos (fx- arity 1))
+              (let ([rest ($sgetprop (primref-name pr) '*rest-type* #f)])
+                (primref-name/nqm->predicate rest extend?))]
+             [else
+              (let ([last ($sgetprop (primref-name pr) '*last-type* #f)])
+                (cond
+                  [last
+                   (primref-name/nqm->predicate last extend?)]
+                  [else
+                   (let ([rest ($sgetprop (primref-name pr) '*rest-type* #f)])
+                     (primref-name/nqm->predicate rest extend?))]))]))))
 
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
@@ -953,12 +925,12 @@ Notes:
                                       (Expr n 'value oldtypes plxc)]
                                      [(args rargs targs t-targs f-targs)
                                       (Expr args 'value oldtypes plxc)])
-                         (let* ([predn (primref->argument-predicate pr 1 #t)]
+                         (let* ([predn (primref->argument-predicate pr 1 3 #t)]
                                 [tn (if (predicate-implies-not? rn predn)
                                         'bottom
                                         tn)]
                                 [tn (pred-env-add/ref tn n predn plxc)]
-                                [predargs (primref->argument-predicate pr 2 #t)]
+                                [predargs (primref->argument-predicate pr 2 3 #t)]
                                 [targs (if (predicate-implies-not? rargs predargs)
                                         'bottom
                                         targs)]
@@ -1058,7 +1030,7 @@ Notes:
                       (let loop ([e* e*] [r* r*] [n 0] [ret ret] [t t])
                         (if (null? e*)
                             (values ret t)
-                            (let ([pred (primref->argument-predicate pr n #t)])
+                            (let ([pred (primref->argument-predicate pr n (length e*) #t)])
                               (loop (cdr e*)
                                     (cdr r*)
                                     (fx+ n 1)
@@ -1075,7 +1047,7 @@ Notes:
                                     (all-set? (prim-mask safeongoodargs) (primref-flags pr))
                                     (andmap (lambda (r n)
                                               (predicate-implies? r
-                                                                  (primref->argument-predicate pr n #f)))
+                                                                  (primref->argument-predicate pr n (length e*) #f)))
                                             r* (enumerate r*)))]
                     [pr (if to-unsafe
                            (primref->unsafe-primref pr)
@@ -1300,7 +1272,8 @@ Notes:
                                   ir 'procedure plxc)
                 #f #f))]))
   )
-)
+
+  (define-pass cptypes : Lsrc (ir ctxt types plxc) -> Lsrc (ret types t-types f-types)
     (Expr : Expr (ir ctxt types plxc) -> Expr (ret types t-types f-types)
       [(quote ,d)
        (values ir (datum->predicate d ir) types #f #f)]
@@ -1485,11 +1458,22 @@ Notes:
       [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) (values ir #f types #f #f)]
       [else ($oops who "unrecognized record ~s" ir)])
+
+   ; body of cptypes
+   (Expr ir ctxt types plxc)
+
+    )
+
+  ; friendy name to use in other internal functions
+  ; so it is similar to Expr/call and Expr/fix-tf-types
+  (define Expr cptypes)
+
+  ; external version of cptypes: Lsrc -> Lsrc 
+  (define (Scptypes ir)
     (let-values ([(ir ret types t-types f-types)
                   (Expr ir 'value pred-env-empty (box 0))])
       ir))
-
-  (set! $cptypes cptypes)
+  (set! $cptypes Scptypes)
 
 )
 

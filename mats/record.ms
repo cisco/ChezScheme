@@ -6358,7 +6358,7 @@
                (let ([b (box 4)])
                  (set-box! b (* 3 (unbox b)))
                  (list (box? b) (unbox b))))))))
-    `(let ([gs (#2%gensym "record-box")])
+    `(let ([gs (#3%gensym "record-box")])
        (let ([g5 (#2%make-record-type-descriptor 'record-box #f gs #f #f '#((mutable x)))]
              [g6 (#2%make-record-type-descriptor 'record-box #f gs #f #f '#((mutable x)))]
              [g4 (#2%make-record-type-descriptor 'record-box #f gs #f #f '#((mutable x)))])
