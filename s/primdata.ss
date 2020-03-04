@@ -1284,7 +1284,7 @@
   (expand/optimize [sig [(ptr) (ptr environment) -> (ptr)]] [flags])
   (expt-mod [sig [(integer integer integer) -> (integer)]] [flags arith-op mifoldable discard])
   (fasl-file [sig [(pathname pathname) -> (void)]] [flags true])
-  (fasl-read [sig [(binary-input-port) (binary-input-port sub-symbol) -> (ptr)]] [flags true])
+  (fasl-read [sig [(binary-input-port) (binary-input-port sub-symbol) -> (ptr)]] [flags])
   (fasl-write [sig [(sub-ptr binary-output-port) -> (void)]] [flags true])
   (file-access-time [sig [(pathname) (pathname ptr) -> (time)]] [flags discard])
   (file-change-time [sig [(pathname) (pathname ptr) -> (time)]] [flags discard])
