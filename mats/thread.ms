@@ -126,7 +126,7 @@
       (lambda (start stop target)
         (let ([t (time-difference stop start)])
           (<= (abs (- (+ (time-second t) (* (time-nanosecond t) 1e-9)) target))
-              0.1))))
+              0.2))))
     (andmap procedure? (list $threads $fib $thread-check $time-in-range?)))
   ($thread-check)
   (not (= (let ([n #f])
@@ -1530,5 +1530,6 @@
        (= (container-ref container) (* M N))))
    (check (box 0) unbox box-cas!))
  (check (vector 1 0 2) (lambda (v) (vector-ref v 1)) (lambda (v o n) (vector-cas! v 1 o n))))
-
+ ; give the bump threads 0.2 s to finish
+ (sleep (make-time 'time-duration 200000000 0))
 )
