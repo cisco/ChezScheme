@@ -462,6 +462,8 @@
 (define-constant fasl-type-phantom 44)
 (define-constant fasl-type-uninterned-symbol 45)
 
+(define-constant fasl-type-terminator 127)
+
 (define-constant fasl-fld-ptr 0)
 (define-constant fasl-fld-u8 1)
 (define-constant fasl-fld-i16 2)

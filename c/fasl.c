@@ -489,6 +489,8 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
       case fasl_type_revisit:
       case fasl_type_visit_revisit:
         break;
+      case fasl_type_terminator:
+        return Seof_object;
       default:
         S_error2("", "malformed fasl-object header (missing situation, got ~s) found in ~a", FIX(ty), uf->path);
         return (ptr)0;
