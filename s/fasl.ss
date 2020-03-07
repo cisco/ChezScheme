@@ -655,7 +655,7 @@
                           (for-each (lambda (x)
                                       (if (eq? 'begin (cdr (eq-hashtable-ref (table-hash t) x #f)))
                                           (proc x p)
-                                          (wrf x p t #t)))
+                                          (wrf x p t (constant annotation-all))))
                                     begins)))
                       (proc p)
                       (extractor))])
