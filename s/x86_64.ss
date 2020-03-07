@@ -1629,7 +1629,7 @@
   (define popcount-op
     (let ([target `(x86_64-popcount ,(constant code-data-disp) (library ,(lookup-libspec popcount-slow)))])
       (lambda (op size dest-rax src-rcx inline? code*)
-        (safe-assert (and (ax-register? dest-rax) (ax-register? src-dir)))
+        (safe-assert (and (ax-register? dest-rax) (ax-register? src-rcx)))
         (record-case dest-rax
           [(reg) dest-rax
            (record-case src-rcx
