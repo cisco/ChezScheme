@@ -26,6 +26,23 @@
                      #;[optimize-level (max (optimize-level) 2)])
         (expand/optimize y)))]))
 
+(define-syntax cptypes/once-equivalent-expansion?
+  ; Replace the default value of run-cp0 with a version that calls
+  ; cp0 only once instead of twice.
+  ; This is useful to test some reductions that are shared with cp0
+  ; or that should be executed in a single pass.
+  (syntax-rules ()
+    [(_ x y)
+     (equivalent-expansion?
+      (parameterize ([run-cp0 (lambda (cp0 c) (cp0 c))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize x))
+      (parameterize ([run-cp0 (lambda (cp0 c) (#3%$cptypes c))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize y)))]))
+
 (define-syntax cptypes/nocp0-equivalent-expansion?
   ; When run-cp0 is call, use #3%$cptypes insted of the cp0 function provided.
   ; This disables the reductions in cp0.ss, so it's posible to see
@@ -245,8 +262,8 @@
     '(lambda (x y) (if (if (vector? x) (vector? y) #t) (void) (vector? x)))
     '(lambda (x y) (if (if (vector? x) (vector? y) #t) (void) #t)))
   (cptypes-equivalent-expansion?
-    '(lambda (t) (let ([x (if t (begin (newline) #f) #f)]) (number? x)))
-    '(lambda (t) (let ([x (if t (begin (newline) #f) #f)]) #f)))
+    '(lambda (t) (let ([x (if t (begin (newline) #f) #f)]) (display x) (number? x)))
+    '(lambda (t) (let ([x (if t (begin (newline) #f) #f)]) (display x) #f)))
   (cptypes-equivalent-expansion?
     '(lambda (t) (let ([x (if t 1 2)]) (fixnum? x)))
     '(lambda (t) (let ([x (if t 1 2)]) #t)))
@@ -1074,4 +1091,19 @@
     '(begin (optimize-level 0) #f))
   (parameterize ([optimize-level 0])
     (eq? (optimize-level 0) (void)))
+)
+
+(mat cptypes-drop
+  (cptypes/once-equivalent-expansion?
+    '(pair? (list 1 (display 2) 3))
+    '(begin (display 2) #t))
+  (cptypes/once-equivalent-expansion?
+    '(vector? (list 1 (display 2) 3))
+    '(begin (display 2) #f))
+  (cptypes/once-equivalent-expansion?
+    '(pair? (list 1 (vector 2 (display 3) 4)))
+    '(begin (display 3) #t))
+  (cptypes/once-equivalent-expansion?
+    '(vector? (list 1 (vector 2 (display 3) 4)))
+    '(begin (display 3) #f))
 )
