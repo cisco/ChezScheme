@@ -863,8 +863,11 @@ Notes:
                        [(predicate-implies-not? val-type (rtd->record-predicate rtd #t))
                         (cond
                           [(fx= level 3)
-                           (values (make-seq ctxt (make-seq 'effect val rtd) false-rec)
-                                   false-rec ntypes #f #f)]
+                           (let ([rtd (if (get-type rtd) ; ensure that rtd is a single valued expression
+                                          rtd
+                                          `(call ,(make-preinfo-call) ,(lookup-primref 3 '$value) ,rtd))])
+                             (values (make-seq ctxt (make-seq 'effect val rtd) false-rec)
+                                     false-rec ntypes #f #f))]
                           [else
                            (values (make-seq ctxt `(call ,preinfo ,pr ,val ,rtd) false-rec)
                                    false-rec ntypes #f #f)])]
@@ -1301,7 +1304,7 @@ Notes:
                  [else
                   (values ir t types #f #f)])]
                [else
-                (values ir t types #f #f)]))])]
+                (values ir (or t 'ptr) types #f #f)]))])] ; In case there is no saved type, use 'ptr to mark it as single valued 
       [(seq ,[e1 'effect types plxc -> e1 ret1 types t-types f-types] ,e2)
        (cond
          [(predicate-implies? ret1 'bottom)
