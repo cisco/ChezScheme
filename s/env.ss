@@ -1,4 +1,3 @@
-"env.ss"
 ;;; env.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,5 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 ($make-base-modules)
 ($make-rnrs-libraries)
+)

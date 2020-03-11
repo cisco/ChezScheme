@@ -1,4 +1,3 @@
-"7.ss"
 ;;; 7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; system operations
 
+(begin
 (define scheme-start
   (make-parameter
     (lambda fns (for-each load fns) (new-cafe))
@@ -118,9 +118,16 @@
                       (p path)
                       (loop (cdr ls))))))))))
 
+(set! $compressed-warning
+  (let ([warned? #f])
+    (lambda (who p)
+      (unless warned?
+        (set! warned? #t)
+        (warningf who "fasl file content is compressed internally; compressing the file (~s) is redundant and can slow fasl writing and reading significantly" p)))))
+
 (set-who! fasl-read
   (let ()
-    (define $fasl-read (foreign-procedure "(cs)fasl_read" (ptr boolean fixnum ptr) ptr))
+    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int fixnum ptr) ptr))
     (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])
@@ -129,12 +136,19 @@
               (let ([k (get-u8 p)])
                 (f k (logor (ash n 7) (fxsrl k 1))))
               n))))
-    (define (malformed p) ($oops who "malformed fasl-object header found in ~s" p))
+    (define (get-uptr/bytes p)
+      (let ([k (get-u8 p)])
+        (let f ([k k] [n (fxsrl k 1)] [bytes 1])
+          (if (fxlogbit? 0 k)
+              (let ([k (get-u8 p)])
+                (f k (logor (ash n 7) (fxsrl k 1)) (fx+ bytes 1)))
+              (values n bytes)))))
+    (define (malformed p what) ($oops who "malformed fasl-object found in ~s (~a)" p what))
     (define (check-header p)
       (let ([bv (make-bytevector 8 (constant fasl-type-header))])
         (unless (and (eqv? (get-bytevector-n! p bv 1 7) 7)
                      (bytevector=? bv (constant fasl-header)))
-          (malformed p)))
+          (malformed p "invalid header")))
       (let ([n (get-uptr p)])
         (unless (= n (constant scheme-version))
           ($oops who "incompatible fasl-object version ~a found in ~s"
@@ -146,21 +160,20 @@
              (lambda (a)
                ($oops who "incompatible fasl-object machine-type ~s found in ~s"
                  (cdr a) p))]
-            [else (malformed p)])))
+            [else (malformed p "unrecognized machine type")])))
       (unless (and (eqv? (get-u8 p) (char->integer #\()) ;)
                    (let f ()
                      (let ([n (get-u8 p)])
                        (and (not (eof-object? n)) ;(
                             (or (eqv? n (char->integer #\))) (f))))))
-        (malformed p)))
+        (malformed p "invalid list of base boot files")))
     (define (go p situation)
       (define (go1)
         (if (and ($port-flags-set? p (constant port-flag-file))
+                 (or (not ($port-flags-set? p (constant port-flag-compressed)))
+                     (begin ($compressed-warning who p) #f))
                  (eqv? (binary-port-input-count p) 0))
-            ($fasl-read ($port-info p)
-              ($port-flags-set? p (constant port-flag-compressed))
-              situation
-              (port-name p))
+            ($fasl-read ($port-info p) situation (port-name p))
             (let fasl-entry ()
               (let ([ty (get-u8 p)])
                 (cond
@@ -174,20 +187,29 @@
                    (go2 (eqv? situation (constant fasl-type-visit)))]
                   [(eqv? ty (constant fasl-type-visit-revisit))
                    (go2 #f)]
-                  [else (malformed p)])))))
+                  [else (malformed p "invalid situation")])))))
       (define (go2 skip?)
-        (let ([ty (get-u8 p)])
-          (cond
-            [(eqv? ty (constant fasl-type-fasl-size))
-             (let ([n (get-uptr p)])
-               (if skip?
-                   (begin
-                     (if (and (port-has-port-position? p) (port-has-set-port-position!? p))
-                         (set-port-position! p (+ (port-position p) n))
-                         (get-bytevector-n p n))
-                     (go1))
-                   ($bv-fasl-read (get-bytevector-n p n) (port-name p))))]
-            [else (malformed p)])))
+        (let ([n (get-uptr p)])
+          (if skip?
+              (begin
+                (if (and (port-has-port-position? p) (port-has-set-port-position!? p))
+                    (set-port-position! p (+ (port-position p) n))
+                    (get-bytevector-n p n))
+                (go1))
+              (let ([compressed-flag (get-u8 p)])
+                (cond
+                  [(or (eqv? compressed-flag (constant fasl-type-gzip)) (eqv? compressed-flag (constant fasl-type-lz4)))
+                   (let-values ([(dest-size dest-size-bytes) (get-uptr/bytes p)])
+                     (let* ([src-size (- n 1 dest-size-bytes)]
+                            [bv (get-bytevector-n p src-size)]
+                            [bv ($bytevector-uncompress bv dest-size
+                                  (if (eqv? compressed-flag (constant fasl-type-gzip))
+                                      (constant COMPRESS-GZIP)
+                                      (constant COMPRESS-LZ4)))])
+                       ($bv-fasl-read bv (port-name p))))]
+                  [(eqv? compressed-flag (constant fasl-type-uncompressed))
+                   ($bv-fasl-read (get-bytevector-n p (- n 1)) (port-name p))]
+                  [else (malformed p "invalid compression")])))))
       (unless (and (input-port? p) (binary-port? p))
         ($oops who "~s is not a binary input port" p))
       (go1))
@@ -256,15 +278,11 @@
                                       fp
                                       (loop fp))))))
                         (begin (set-port-position! ip start-pos) 0)))])
-          (port-file-compressed! ip)
           (if ($compiled-file-header? ip)
               (begin
                 (do-load-binary who fn ip situation for-import? importer)
                 (close-port ip))
               (begin
-                (when ($port-flags-set? ip (constant port-flag-compressed))
-                  (close-port ip)
-                  ($oops who "missing header for compiled file ~s" fn))
                 (unless ksrc
                   (close-port ip)
                   ($oops who "~a is not a compiled file" fn))
@@ -1490,3 +1508,4 @@
         [() (print-pass-stats #f ($pass-stats))]
         [(key) (print-pass-stats key ($pass-stats))]
         [(key psl*) (print-pass-stats key psl*)]))))
+)

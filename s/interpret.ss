@@ -1,4 +1,3 @@
-"interpret.ss"
 ;;; interpret.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -709,6 +708,6 @@
 (set! $interpret-backend
   (lambda (x situation for-import? importer ofn)
     (interpret-Lexpand x situation for-import? importer ofn (expand/optimize-output))))
+(current-eval interpret)
 )
 
-(current-eval interpret)
