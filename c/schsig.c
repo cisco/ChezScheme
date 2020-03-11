@@ -801,7 +801,7 @@ void S_schsig_init() {
                            FIX(0),
                            FIX(0),
                            Snil,
-                           Sfalse));
+                           Snil));
 
         S_protect(&S_G.error_id);
         S_G.error_id = S_intern((const unsigned char *)"$c-error");

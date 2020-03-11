@@ -1386,6 +1386,18 @@
 (define-library-entry (apply3 p x1 x2 x3 ls)
   (doapply p (x1 x2 x3) ls))
 
+(define-library-entry ($check-continuation c check-as? as)
+  (let ([who 'call-in-other-continuation])
+    (unless ($continuation? c)
+      ($oops who "~s is not a continuation" c))
+    (when check-as?
+      (unless (let ([c-as ($continuation-attachments c)])
+                (or (eq? as c-as)
+                    (and (pair? as)
+                         (eq? (cdr as) c-as))))
+        ($oops who "~s is not an extension of of the attachments of ~s" as c)))
+    ($do-wind ($current-winders) ($continuation-winders c))))
+
 (define-library-entry (eqv? x y)
   (if (eq? x y) 
       #t

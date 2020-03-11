@@ -456,6 +456,37 @@ that are extended by \var{continuation}.
 (continuation-next-attachments about-to-snack) ; => (milk)
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader\label{call-in-continuation}
+\formdef{call-in-continuation}{\categoryprocedure}{(call-in-continuation \var{continuation} \var{procedure})}
+\formdef{call-in-continuation}{\categoryprocedure}{(call-in-continuation \var{continuation} \var{attachments} \var{procedure})}
+\returns does not return
+\listlibraries
+\endentryheader
+
+\noindent \var{continuation} must be a continuation, and
+\var{procedure} must be a procedure that accepts zero arguments.
+
+Applies \var{procedure} to zero arguments with \var{continuation} as
+the continuation of the call, escaping from the current continuation.
+This operation is similar to applying \var{continuation} to values,
+except that the values delivered to the continuation are the ones
+produced by \var{procedure} as it runs within the applied
+continuation.
+
+If \var{attachments} is not provided, then \var{procedure} startrs
+with no immediate continuation attachment. If \var{attachments} is
+provided, then \var{procedure} is called with no immediate
+continuation attachment if that \var{attachments} matches the result
+of \scheme{continuation-next-attachments} on \var{continuation}.
+Otherwise, \var{attachments} must be a non-empty list whose first
+element is the immediate continuationattachment when calling
+\var{procedure}; in that case, to be consistent with
+\var{continuation}, the \scheme{cdr} of \var{attachments} must match
+the attachments of \var{continuation} as reported by
+\scheme{continuation-next-attachments}.
+
+
 \section{Engines\label{SECTENGINES}}
 
 \index{engines}Engines are a high-level process abstraction supporting

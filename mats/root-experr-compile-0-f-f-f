@@ -679,6 +679,11 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
+4.mo:Expected error in mat call-in-continuation: "incorrect argument count in call (call-in-continuation 1)".
+4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: 1 is not a continuation".
+4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: #<procedure> is not a continuation".
+4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: #f is not an extension of of the attachments of #<continuation>".
+4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: (1 2 3) is not an extension of of the attachments of #<continuation>".
 4.mo:Expected error in mat refcount-guardians: "unrecognized ftype name NO!".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".

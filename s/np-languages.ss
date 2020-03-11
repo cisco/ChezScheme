@@ -401,18 +401,25 @@
 
   (define attachment-op?
     (lambda (x)
-      (memq x '(push pop set reify-and-set))))
+      (memq x '(push pop set reify-and-set check-and-set))))
+
+  (define continuation-op?
+    (lambda (x)
+      (memq x '(set redirect-and-set))))
 
  ; exposes continuation-attachment operations
   (define-language L4.9375 (extends L4.875)
     (terminals
-     (+ (attachment-op (aop))))
+     (+ (attachment-op (aop)))
+     (+ (continuation-op (cop)))
+     (+ (boolean (reified))))
     (entry CaseLambdaExpr)
     (Expr (e body)
-      (+ (attachment-set aop e* ...)
-         (attachment-get e* ...)
-         (attachment-consume e* ...)
-         (continuation-get))))
+      (+ (attachment-set aop (maybe e))
+         (attachment-get reified (maybe e))
+         (attachment-consume reified (maybe e))
+         (continuation-get)
+         (continuation-set cop e1 e2))))
 
  ; moves all case lambda expressions into rhs of letrec
   (define-language L5 (extends L4.9375)
@@ -690,8 +697,8 @@
          (inline info prim t* ...)               => (inline info prim t* ...)
          (mvcall info e t)                       => (mvcall e t)
          (foreign-call info t t* ...)
-         (attachment-get t* ...)
-         (attachment-consume t* ...)
+         (attachment-get reified (maybe t))
+         (attachment-consume reified (maybe t))
          (continuation-get)))
     (Expr (e body)
       (- lvalue
@@ -706,8 +713,8 @@
          (set! lvalue e)
          (mvcall info e1 e2)
          (foreign-call info e e* ...)
-         (attachment-get e* ...)
-         (attachment-consume e* ...)
+         (attachment-get reified (maybe e))
+         (attachment-consume reified (maybe e))
          (continuation-get))
       (+ rhs
          (values info t* ...)
@@ -757,7 +764,8 @@
          (trap-check ioc e)
          (overflow-check e)
          (profile src)
-         (attachment-set aop e* ...)))
+         (attachment-set aop (maybe e))
+         (continuation-set cop e1 e2)))
     (Tail (tl tlbody)
       (+ rhs
          (if p0 tl1 tl2)
@@ -788,7 +796,8 @@
             (mvset (mdcl t0 t1 ...) (t* ...) ((x** ...) interface* l*) ...)
          (mvcall info mdcl (maybe t0) t1 ... (t* ...)) => (mvcall mdcl t0 t1 ... (t* ...))
          (foreign-call info t t* ...)
-         (attachment-set aop t* ...)
+         (attachment-set aop (maybe t))
+         (continuation-set cop t1 t2)
          (tail tl))))
 
   (define-language L12 (extends L11)

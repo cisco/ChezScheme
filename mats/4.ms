@@ -3660,7 +3660,156 @@
      (f (lambda (x) (values x x)) (list 1 2))))
 
  )
- 
+
+(mat call-in-continuation
+  (error? (call-in-continuation 1))
+  (error? (call-in-continuation 1 (lambda () 0)))
+  (error? (call-in-continuation (lambda args args) (lambda () 0)))
+  (error? (call/cc (lambda (k) (call-in-continuation k #f (lambda () 0)))))
+  (error? (call/cc (lambda (k) (call-in-continuation k (list 1 2 3) (lambda () 0)))))
+
+  (equal? 10 (+ 1 (call/cc (lambda (k) (call-in-continuation k (lambda () 9))))))
+  (equal? 10 (+ 1 (call/cc (lambda (k) (call-in-continuation k (continuation-next-attachments k) (lambda () 9))))))
+  (equal? 11 (+ 1 (call/cc (lambda (k) (* 0 (call-in-continuation k (lambda () 10)))))))
+  (equal? 'done (let ([maybe-k (call/cc (lambda (k) k))])
+                  (if (symbol? maybe-k)
+                      maybe-k
+                      (* 0 (call-in-continuation maybe-k (lambda () 'done))))))
+  (equal? 'second (let-values ([(maybe-k result) (call/cc (lambda (k) (values k #f)))])
+                    (if (symbol? maybe-k)
+                        result
+                        (* 0 (call-in-continuation maybe-k (lambda () (values 'done 'second)))))))
+
+  (begin
+    (define (attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (lambda ()
+         (current-continuation-attachments))))
+    (define (same-attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (current-continuation-attachments)
+       (lambda ()
+         (current-continuation-attachments))))
+    (define (sub-attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (current-continuation-attachments)
+       (lambda ()
+         (call-setting-continuation-attachment
+          'inside2
+          (lambda ()
+            (current-continuation-attachments))))))
+    #t)
+
+  (equal? '(outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (attachments-in-continuation k))))))))))))
+
+  (equal? '(inside outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (same-attachments-in-continuation k))))))))))))
+
+  (equal? '(inside2 outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (sub-attachments-in-continuation k))))))))))))
+
+  (equal? '(unknown)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-consuming-continuation-attachment
+               'unknown
+               (lambda (v)
+                 (call-in-continuation
+                  k
+                  (lambda () v))))))))
+
+  (equal? '(also-unknown)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-in-continuation
+               k
+               (lambda () 
+                 (call-consuming-continuation-attachment
+                  'also-unknown
+                  (lambda (v)
+                    v))))))))
+
+  (equal? '(known)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-in-continuation
+               k
+               (lambda ()
+                 (call-setting-continuation-attachment
+                  'known
+                  (lambda ()
+                    (call-getting-continuation-attachment
+                     'still-unknown
+                     (lambda (v)
+                       v))))))))))
+
+  (equal? '(here in out)
+          (let ([did '()])
+            (let ([k (dynamic-wind
+                         (lambda () (set! did (cons 'in did)))
+                         (lambda () (call/cc (lambda (k) k)))
+                         (lambda () (void)))])
+              (cond
+               [(procedure? k)
+                (set! did '())
+                (dynamic-wind
+                    (lambda () (void))
+                    (lambda () (call-in-continuation
+                                k
+                                (lambda ()
+                                  (set! did (cons 'here did))
+                                  'no)))
+                    (lambda () (set! did (cons 'out did))))]
+               [else did]))))
+
+)
+
 ;;; section 4-7:
 
 (mat engine

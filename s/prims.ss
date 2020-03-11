@@ -404,6 +404,27 @@
       ($oops who "~s is not a procedure" p))
     (#3%call/cc p)))
 
+;; calls `p` with the continuation `c` and either no immediate
+;; attachments or the given attachments `as` that must be either
+;; the same as the attachments saved by `c` or one immediate
+;; attachment extending those attachments
+(define-who call-in-continuation
+  (case-lambda
+   [(c p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#2%call-in-continuation c (lambda () (p)))]
+   [(c as p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#2%call-in-continuation c as (lambda () (p)))]))
+
+;; checks `c` and consistency of `as` with `c`, and also runs any needed winders
+(define $assert-continuation
+  (case-lambda
+   [(c) (#2%$assert-continuation c)]
+   [(c as) (#2%$assert-continuation c as)]))
+
 (define-who call-setting-continuation-attachment
   (lambda (v p)
     (unless (procedure? p)

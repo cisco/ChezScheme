@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050316)
+(define-constant scheme-version #x09050317)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2641,6 +2641,7 @@
      (apply1 #f 3 #f #t)
      (apply2 #f 4 #f #t)
      (apply3 #f 5 #f #t)
+     ($check-continuation #f 3 #f #t)
      (logand #f 2 #f #t)
      (logor #f 2 #f #t)
      (logxor #f 2 #f #t)

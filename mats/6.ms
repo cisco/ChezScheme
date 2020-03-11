@@ -1047,31 +1047,43 @@
  )
 
 (mat cp1in-verify-format-warnings
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda () (import scheme) (format "~a~~~s" 5)))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda () (import scheme) (format "~a~a~a~s" 1 2 3 4 5 6)))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda () (import scheme) (format "~a~~~s" 5))))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda () (import scheme) (format "~a~a~a~s" 1 2 3 4 5 6))))))
 
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda () (import scheme) (printf "abc~s")))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda () (import scheme) (printf "~%~abc~adef~ag~s~~~%" 1 2 3 4 5)))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda () (import scheme) (printf "abc~s"))))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda () (import scheme) (printf "~%~abc~adef~ag~s~~~%" 1 2 3 4 5))))))
 
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda (p) (import scheme) (fprintf p "abc~s")))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(lambda (p) (import scheme) (fprintf p "~%~abc~adef~ag~s~~~%" 1 2 3 4 5)))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda (p) (import scheme) (fprintf p "abc~s"))))))
-   (warning? (parameterize ([#%$suppress-primitive-inlining #f])
+   (warning? (parameterize ([#%$suppress-primitive-inlining #f]
+                            [current-eval compile])
                (eval '(mat/cf (lambda (p) (import scheme) (fprintf p "~%~abc~adef~ag~s~~~%" 1 2 3 4 5))))))
 )
 

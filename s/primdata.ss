@@ -1190,6 +1190,7 @@
   (call/1cc [sig [(procedure) -> (ptr ...)]] [flags])
   (call-consuming-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
   (call-getting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-in-continuation [sig [(ptr procedure) -> (ptr ...)] [(ptr ptr procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument
   (call-setting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
@@ -1811,6 +1812,7 @@
   ($app/no-inline [flags])
   ($apply [sig [(procedure exact-integer list) -> (ptr ...)]] [flags cptypes2x])
   ($assembly-output [flags single-valued])
+  ($assert-continuation [sig [(ptr) -> (void)] [(ptr ptr) -> (void)]] [flags])
   ($as-time-goes-by [flags])
   ($bignum-length [flags single-valued pure true])
   ($bigpositive? [sig [(ptr) -> (boolean)]] [flags pure unrestricted]) ; no mifoldable due to fixnum
