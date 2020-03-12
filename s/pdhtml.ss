@@ -1,4 +1,3 @@
-"pdhtml.ss"
 ;;; pdhtml.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;;
@@ -56,6 +55,7 @@
 ;;;  source annotation around the transformer output so that the source info for t>
 ;;;  when expression is transferred to the generated if expression.
 
+(begin
 (let ()
   (include "types.ss")
   (module (make-tracker tracker-profile-ct)
@@ -1534,4 +1534,5 @@
       (lambda (color)
         (unless (or (eq? color #f) (string? color)) ($oops who "~s is not a string or #f" color))
         color)))
+)
 )

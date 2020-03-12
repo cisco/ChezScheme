@@ -1,4 +1,3 @@
-"cpnanopass.ss"
 ;;; cpnanopass.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;;
@@ -16102,6 +16101,6 @@
   (set! $track-dynamic-closure-counts track-dynamic-closure-counts)
 
   (set! $track-static-closure-counts track-static-closure-counts)
-)
 
-(define $optimize-closures (make-parameter #t (lambda (x) (and x #t))))
+  (set! $optimize-closures (make-parameter #t (lambda (x) (and x #t))))
+)

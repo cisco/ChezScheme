@@ -1,4 +1,3 @@
-"print.ss"
 ;;; print.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;;
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (eval-when (compile)
 (define-constant cycle-node-max 1000)
 
@@ -587,7 +587,7 @@ floating point returns with (1 0 -1 ...).
 (define wrhelp
    (lambda (x r lev len d? env p)
      (define void? (lambda (x) (eq? x (void))))
-     (define black-hole? (lambda (x) (eq? x '#0=#0#)))
+     (define black-hole? (lambda (x) (eq? x '#3=#3#)))
      (define base-rtd? (lambda (x) (eq? x #!base-rtd)))
      (if-feature pthreads
        (begin
@@ -1339,3 +1339,4 @@ floating point returns with (1 0 -1 ...).
       (unless (or (not x) (and (fixnum? x) (fx> x 0)) (and (bignum? x) ($bigpositive? x)))
         ($oops 'print-precision "~s is not a positive exact integer or #f" x))
       x)))
+)

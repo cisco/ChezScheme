@@ -1,4 +1,3 @@
-"front.ss"
 ;;; front.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define-who make-parameter
   (case-lambda
     [(init guard) (#2%make-parameter init guard)]
@@ -249,3 +249,4 @@
     [(x env-spec records? compiling-a-file outfn) ((current-expand) x env-spec records? compiling-a-file outfn)]))
 
 (define $compiler-is-loaded? #f)
+)

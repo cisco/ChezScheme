@@ -47,7 +47,7 @@
      (set! aaaaa 0)
      (load "testfile.so")
      (eqv? aaaaa 7))
-   (parameterize ([compile-compressed #f])
+   (parameterize ([fasl-compressed #f])
      (printf "***** expect \"compile-file\" message:~%")
      (compile-file "testfile")
      (set! aaaaa 0)
@@ -62,7 +62,7 @@
      (load "testfile.so")
      (eqv? aaaaa -7))
    (let ((ip (open-input-string "(let ((x -3) (y -4)) (set! aaaaa (+ x y)))"))
-         (op (open-file-output-port "testfile.so" (file-options replace compressed))))
+         (op (open-file-output-port "testfile.so" (file-options replace #;compressed))))
      (compile-port ip op)
      (close-input-port ip)
      (close-port op)
@@ -98,7 +98,7 @@
       'replace)
     #t)
   (equal?
-    (call-with-port (open-file-output-port "testfile.so" (file-options replace compressed))
+    (call-with-port (open-file-output-port "testfile.so" (file-options replace #;compressed))
       (lambda (op)
         (parameterize ([compile-imported-libraries #t])
           (compile-to-port
@@ -861,19 +861,19 @@
       '(printf "qq => ~a\n" qq))
     (delete-file "testfile-mc-2a.so")
     (delete-file "testfile-mc-2.so")
-    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f]) (maybe-compile-program x))) 'mc-2))
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [fasl-compressed #f]) (maybe-compile-program x))) 'mc-2))
     #t)
   (begin
     (let ([p (open-file-input/output-port "testfile-mc-2a.so" (file-options no-create no-fail no-truncate))])
       (set-port-length! p 73)
       (close-port p))
-    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [fasl-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
     #t)
   (begin
     (let ([p (open-file-input/output-port "testfile-mc-2.so" (file-options no-create no-fail no-truncate))])
       (set-port-length! p 87)
       (close-port p))
-    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [compile-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
+    (display-string (separate-compile '(lambda (x) (parameterize ([compile-file-message #f] [compile-imported-libraries #t] [fasl-compressed #f] [import-notify #t]) (maybe-compile-program x))) 'mc-2))
     #t)
   ; make sure maybe-compile-file handles missing include files gracefully
   (begin
@@ -1174,10 +1174,10 @@
     (separate-compile
       `(lambda (x)
          (call-with-port
-           (open-file-output-port (format "~a.so" x) (file-options compressed replace))
+           (open-file-output-port (format "~a.so" x) (file-options #;compressed replace))
            (lambda (op)
              (call-with-port
-               (open-file-output-port (format "~a.host" x) (file-options compressed replace))
+               (open-file-output-port (format "~a.host" x) (file-options #;compressed replace))
                (lambda (hostop)
                  (compile-to-port
                    '((library (testfile-hop1)
@@ -5191,12 +5191,12 @@ evaluating module init
     (let ()
       (define fake-concatenate-object-files
         (lambda (outfn infn . infn*)
-          (call-with-port (open-file-output-port outfn (file-options compressed replace))
+          (call-with-port (open-file-output-port outfn (file-options #;compressed replace))
             (lambda (op)
               (for-each
                 (lambda (infn)
                   (put-bytevector op
-                    (call-with-port (open-file-input-port infn (file-options compressed)) get-bytevector-all)))
+                    (call-with-port (open-file-input-port infn (file-options #;compressed)) get-bytevector-all)))
                 (cons infn infn*))))))
       (fake-concatenate-object-files "testfile-cof1fooP.so" "testfile-cof1foo.so" "testfile-cof1P.so")
       (fake-concatenate-object-files "testfile-cof1barB.so" "testfile-cof1bar.so" "testfile-cof1B.so"))

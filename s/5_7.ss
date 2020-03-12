@@ -1,4 +1,3 @@
-"5_7.ss"
 ;;; 5_7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; symbol functions
 
+(begin
 (define property-list
    (lambda (s)
       (unless (symbol? s)
@@ -79,14 +79,10 @@
                 (set-cdr! prev (cdr (cdr pl)))
                 ($set-system-property-list! s (cdr (cdr pl))))
             (rp (cdr (cdr pl)) (cdr pl)))))))
+)
 
 (eval-when (compile) (optimize-level 3))
 
-(define $gensym->pretty-name)
-(define gensym-prefix)
-(define gensym-count)
-(define gensym->unique-string)
-(define gensym)
 (let ([prefix "g"] [count 0])
   (define generate-unique-name
    ; a-z must come first in alphabet.  separator must not be in alphabet.

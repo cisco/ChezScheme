@@ -1,4 +1,3 @@
-"5_2.ss"
 ;;; 5_2.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; list and pair functions
 
+(begin
 (define atom?
    (lambda (x)
       (not (pair? x))))
@@ -792,3 +792,4 @@
   (set! enumerate
     (lambda (ls)
       ($iota (fx- ($list-length ls 'enumerate) 1) '()))))
+)

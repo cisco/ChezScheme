@@ -1485,11 +1485,7 @@ static void sweep_thread(p) ptr p; {
     relocate(&WINDERS(tc))
     relocate_return_addr(&FRAME(tc,0))
     sweep_stack((uptr)SCHEMESTACK(tc), (uptr)SFP(tc), (uptr)FRAME(tc,0));
-    relocate(&U(tc))
-    relocate(&V(tc))
-    relocate(&W(tc))
-    relocate(&X(tc))
-    relocate(&Y(tc))
+    U(tc) = V(tc) = W(tc) = X(tc) = Y(tc) = 0;
     /* immediate SOMETHINGPENDING(tc) */
     /* immediate TIMERTICKS */
     /* immediate DISABLE_COUNT */
@@ -1528,6 +1524,7 @@ static void sweep_thread(p) ptr p; {
     for (i = 0 ; i < virtual_register_count ; i += 1) {
       relocate(&VIRTREG(tc, i));
     }
+    DSTBV(tc) = SRCBV(tc) = Sfalse;
   }
 }
 

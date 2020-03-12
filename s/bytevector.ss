@@ -1,4 +1,3 @@
-"bytevector.ss"
 ;;; bytevector.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;;
@@ -1459,62 +1458,59 @@
     ;; Always big-endian, so that compressed data is portable.
     (define uncompressed-length-endianness (endianness big))
 
-    (define $bytevector-compress-size
+    (define fp-bytevector-compress-size
       (foreign-procedure "(cs)bytevector_compress_size" (iptr int) uptr))
-    (define $bytevector-compress
+    (define fp-bytevector-compress
       (foreign-procedure "(cs)bytevector_compress" (scheme-object iptr iptr scheme-object iptr iptr int) scheme-object))
-    (define $bytevector-uncompress
+    (define fp-bytevector-uncompress
       (foreign-procedure "(cs)bytevector_uncompress" (scheme-object iptr iptr scheme-object iptr iptr int) scheme-object))
 
-    (set-who! bytevector-compress
-      (lambda (bv)
-        (unless (bytevector? bv) (not-a-bytevector who bv))
-        (let* ([fmt ($tc-field 'compress-format ($tc))]
-               [dest-max-len ($bytevector-compress-size (bytevector-length bv) fmt)]
-               [dest-alloc-len (min (+ dest-max-len uncompressed-length-length)
-                                    ;; In the unlikely event of a non-fixnum requested size...
-                                    (constant maximum-bytevector-length))]
+    (let ()
+      (define (compress who bv fmt offset)
+        (let* ([dest-max-len (fp-bytevector-compress-size (bytevector-length bv) fmt)]
+               [dest-alloc-len (min (+ dest-max-len offset) (constant maximum-bytevector-length))]
                [dest-bv (make-bytevector dest-alloc-len)])
-          (let ([r ($bytevector-compress dest-bv
-                                         uncompressed-length-length
-                                         (fx- dest-alloc-len uncompressed-length-length)
-                                         bv
-                                         0
-                                         (bytevector-length bv)
-                                         fmt)])
-            (cond
-             [(string? r)
-              ($oops who r bv)]
-             [else
-              (let ([tag (bitwise-ior
-                           (bitwise-arithmetic-shift-left (bytevector-length bv) (constant COMPRESS-FORMAT-BITS))
-                           fmt)])
-                ($bytevector-u64-set! dest-bv 0 tag uncompressed-length-endianness who)
-                (bytevector-truncate! dest-bv (fx+ r uncompressed-length-length)))])))))
+          (let ([r (fp-bytevector-compress dest-bv offset (fx- dest-alloc-len offset) bv 0 (bytevector-length bv) fmt)])
+            (if (string? r)
+                ($oops who r bv)
+                (bytevector-truncate! dest-bv (fx+ r offset))))))
 
-    (set-who! bytevector-uncompress
-      (lambda (bv)
-        (unless (bytevector? bv) (not-a-bytevector who bv))
-        (unless (>= (bytevector-length bv) uncompressed-length-length)
-          ($oops who "invalid data in source bytevector ~s" bv))
-        (let* ([tag ($bytevector-u64-ref bv 0 uncompressed-length-endianness who)]
-               [fmt (logand tag (fx- (fxsll 1 (constant COMPRESS-FORMAT-BITS)) 1))]
-               [dest-length (bitwise-arithmetic-shift-right tag (constant COMPRESS-FORMAT-BITS))])
-          (unless (and (fixnum? dest-length)
-                       ($fxu< dest-length (constant maximum-bytevector-length)))
-            ($oops who "bytevector ~s claims invalid uncompressed size ~s" bv dest-length))
-          (let* ([dest-bv (make-bytevector dest-length)]
-                 [r ($bytevector-uncompress dest-bv
-                                            0
-                                            dest-length
-                                            bv
-                                            uncompressed-length-length
-                                            (fx- (bytevector-length bv) uncompressed-length-length)
-                                            fmt)])
-            (cond
-             [(string? r) ($oops who r bv)]
-             [(fx= r dest-length) dest-bv]
-             [else
-              ($oops who "uncompressed size ~s for ~s is smaller than expected size ~a" r bv dest-length)]))))))
+      (set-who! $bytevector-compress
+        (lambda (bv fmt)
+          (compress who bv fmt 0)))
 
+      (set-who! bytevector-compress
+        (lambda (bv)
+          (unless (bytevector? bv) (not-a-bytevector who bv))
+          (let* ([fmt ($tc-field 'compress-format ($tc))]
+                 [dest-bv (compress who bv fmt uncompressed-length-length)])
+            (let ([tag (bitwise-ior
+                         (bitwise-arithmetic-shift-left (bytevector-length bv) (constant COMPRESS-FORMAT-BITS))
+                         fmt)])
+              ($bytevector-u64-set! dest-bv 0 tag uncompressed-length-endianness who)
+              dest-bv)))))
+
+    (let ()
+      (define (uncompress who bv dest-length fmt offset)
+        (unless (and (fixnum? dest-length) ($fxu< dest-length (constant maximum-bytevector-length)))
+          ($oops who "bytevector ~s claims invalid uncompressed size ~s" bv dest-length))
+        (let ([dest-bv (make-bytevector dest-length)])
+          (let ([r (fp-bytevector-uncompress dest-bv 0 dest-length bv offset (fx- (bytevector-length bv) offset) fmt)])
+            (cond
+              [(string? r) ($oops who r bv)]
+              [(fx= r dest-length) dest-bv]
+              [else ($oops who "uncompressed size ~s for ~s is smaller than expected size ~s" r bv dest-length)]))))
+
+      (set-who! $bytevector-uncompress
+        (lambda (bv dest-length fmt)
+          (uncompress who bv dest-length fmt 0)))
+
+      (set-who! bytevector-uncompress
+        (lambda (bv)
+          (unless (bytevector? bv) (not-a-bytevector who bv))
+          (unless (>= (bytevector-length bv) uncompressed-length-length) ($oops who "invalid data in source bytevector ~s" bv))
+          (let* ([tag ($bytevector-u64-ref bv 0 uncompressed-length-endianness who)]
+                 [fmt (logand tag (fx- (fxsll 1 (constant COMPRESS-FORMAT-BITS)) 1))]
+                 [dest-length (bitwise-arithmetic-shift-right tag (constant COMPRESS-FORMAT-BITS))])
+            (uncompress who bv dest-length fmt uncompressed-length-length))))))
 )

@@ -557,7 +557,7 @@ static void forward_signal_to_scheme PROTO((INT sig));
     sigprocmask(SIG_UNBLOCK,&set,(sigset_t *)0);\
 }
 
-/* we buffer up to SIGNALQUEUESIZE - 1 unhandled signals, the start dropping them. */
+/* we buffer up to SIGNALQUEUESIZE - 1 unhandled signals, then start dropping them. */
 #define SIGNALQUEUESIZE 64
 static IBOOL scheme_signals_registered;
 
@@ -770,7 +770,9 @@ void S_schsig_init() {
 
         S_protect(&S_G.error_id);
         S_G.error_id = S_intern((const unsigned char *)"$c-error");
+#ifndef WIN32
         scheme_signals_registered = 0;
+#endif
     }
 
 

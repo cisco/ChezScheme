@@ -1,4 +1,3 @@
-"foreign.ss"
 ;;; foreign.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,10 +13,6 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-"foreign.ss"
-(define remove-foreign-entry)
-(define load-shared-object)
-(define foreign-entry?)
 (let ()
    (define $foreign-address-name
       (foreign-procedure "(cs)foreign_address_name" (void*)
