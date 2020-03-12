@@ -1994,3 +1994,6 @@
     strnum.ss, syntax.ss, trace.ss
 - updated bullyx patches
     patch*
+- fixed csug copyright year substititions and changed revisiondate
+  to not be generated, making the csug build reproducible
+    newrelease csug/csug.stex
