@@ -1728,7 +1728,8 @@
         [(call ,info ,mdcl ,pr
                (case-lambda ,info2 (clause (,x) ,interface ,[body (->in-get-cont mode) -> body])))
          (guard (and (memq mode '(tail tail/none tail/some tail/reified))
-                     (eq? (primref-name pr) 'call/cc)
+                     (or (eq? (primref-name pr) 'call/cc)
+                         (eq? (primref-name pr) 'call-with-current-continuation))
                      (= interface 1)))
          ;; Since we're in tail position, we can just reify the continuation and
          ;; put the stack link in the argument variable.
