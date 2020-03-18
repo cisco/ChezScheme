@@ -2846,7 +2846,7 @@
                        (set! ,%eax ,(%mref ,%sp ,(+ 8 (push-registers-size result-regs result-num-fp-regs 1))))
                        ,(%inline push ,%eax)
                        ,(%inline unactivate-thread)
-                       ,(%inline pop ,%eax))])
+                       (set! ,%eax ,(%inline pop)))])
               (if (and (null? result-regs) (fx= 0 result-num-fp-regs))
                   e
                   (%seq
