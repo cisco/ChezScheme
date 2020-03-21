@@ -238,7 +238,7 @@
   (tan [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (asin [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (acos [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
-  (atan [sig [(number) (real real) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
+  (atan [sig [(number) (real real) -> (number)]] [flags arith-op mifoldable discard cptypes2 ieee r5rs])
   (sqrt [sig [(number) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (exact-integer-sqrt [sig [(exact-integer) -> (exact-integer exact-integer)]] [flags discard discard]) ; could be mifoldable if multiple values were handled
   (expt [sig [(number number) -> (number)]] [flags pure discard true cp02 ieee r5rs]) ; can take too long to fold
@@ -1215,7 +1215,7 @@
   (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])   ; not restricted to 2+ arguments
   (char-ci>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
   (char-ci>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
-  (char-name [sig [(sub-ptr) (sub-symbol maybe-char) -> (ptr)]] [flags])
+  (char-name [sig [(sub-ptr) (sub-symbol maybe-char) -> (ptr)]] [flags cptypes2])
   (char-ready? [sig [() (textual-input-port) -> (boolean)]] [flags ieee r5rs])
   (chmod [sig [(pathname sub-ufixnum) -> (void)]] [flags])
   (clear-input-port [sig [() (input-port) -> (void)]] [flags true])
