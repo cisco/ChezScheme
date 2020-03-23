@@ -89,38 +89,66 @@ Notes:
     (define eof-rec `(quote #!eof))
     (define bwp-rec `(quote #!bwp))
 
-    (define (simple? e) ; Simplified version copied from cp0. TODO: copy the rest.
-      (nanopass-case (Lsrc Expr) e
-        [(quote ,d) #t]
-        [(ref ,maybe-src ,x) #t]
-        [(case-lambda ,preinfo ,cl* ...) #t]
-        [,pr #t]
-        [(moi) #t]
-        [(record-type ,rtd ,e) (simple? e)]
-        [else #f]
-        #;[else ($oops who "unrecognized record ~s" e)]))
+    (module (simple?)  ; Simplified version copied from cp0. TODO: copy the rest.
+      (define default-fuel 5)
+      (define (simple? e)
+        (sp? e default-fuel))
+      (define (sp? e fuel)
+        (and (fx> fuel 0)
+             (let ([fuel (fx- fuel 1)])
+               (nanopass-case (Lsrc Expr) e
+                 [(quote ,d) #t]
+                 [(if ,e1 ,e2 ,e3)
+                   ; useful to recognize the expansion of `not`
+                   (and (sp? e1 fuel) (sp? e2 fuel) (sp? e3 fuel))]
+                 [(ref ,maybe-src ,x) #t]
+                 [(case-lambda ,preinfo ,cl* ...) #t]
+                 [,pr #t]
+                 [(moi) #t]
+                 [(record-type ,rtd ,e) (sp? e fuel)]
+                 [else #f]
+                 #;[else ($oops who "unrecognized record ~s" e)])))))
 
-    (define (single-valued? e)
-      (nanopass-case (Lsrc Expr) e
-        [(quote ,d) #t]
-        [(call ,preinfo ,pr ,e* ...)
-         (all-set? (prim-mask single-valued) (primref-flags pr))]
-        [(ref ,maybe-src ,x) #t]
-        [(case-lambda ,preinfo ,cl* ...) #t]
-        [(set! ,maybe-src ,x ,e) #t]
-        [(immutable-list (,e* ...) ,e) #t]
-        [,pr #t]
-        [(record-cd ,rcd ,rtd-expr ,e) #t]
-        [(record-ref ,rtd ,type ,index ,e) #t]
-        [(record-set! ,rtd ,type ,index ,e1 ,e2) #t]
-        [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #t]
-        [(record-type ,rtd ,e) #t]
-        [(record ,rtd ,rtd-expr ,e* ...) #t]
-        [(pariah) #t]
-        [(profile ,src) #t]
-        [(moi) #t]
-        [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
-        [else #f]))
+    (module (single-valued?)
+      (define default-fuel 5)
+      (define (single-valued? e)
+        (sv? e default-fuel))
+      (define (sv? e fuel)
+        (and (fx> fuel 0)
+             (let ([fuel (fx- fuel 1)])
+               (nanopass-case (Lsrc Expr) e
+                 [(quote ,d) #t]
+                 [(seq ,e1 ,e2)
+                  (sv? e fuel)]
+                 [(if ,e1 ,e2, e3)
+                  (and (sv? e2 fuel)
+                       (sv? e3 fuel))]
+                 [(call ,preinfo ,pr ,e* ...)
+                  (all-set? (prim-mask single-valued) (primref-flags pr))]
+                 [(call ,preinfo1 (case-lambda ,preinfo2 (clause (,x* ...) ,interface ,body)) ,e*  ...) ; let-like expressions
+                  (guard (fx= interface (length e*)))
+                  (sv? body fuel)]
+                 [(letrec ((,x* ,e*) ...) ,body)
+                  (sv? body fuel)]
+                 [(letrec* ((,x* ,e*) ...) ,body)
+                  (sv? body fuel)]
+                 [(ref ,maybe-src ,x) #t]
+                 [(case-lambda ,preinfo ,cl* ...) #t]
+                 [(set! ,maybe-src ,x ,e) #t]
+                 [(immutable-list (,e* ...) ,e) #t]
+                 [,pr #t]
+                 [(record-cd ,rcd ,rtd-expr ,e) #t]
+                 [(record-ref ,rtd ,type ,index ,e) #t]
+                 [(record-set! ,rtd ,type ,index ,e1 ,e2) #t]
+                 [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) #t]
+                 [(record-type ,rtd ,e) #t]
+                 [(record ,rtd ,rtd-expr ,e* ...) #t]
+                 [(pariah) #t]
+                 [(profile ,src) #t]
+                 [(moi) #t]
+                 [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
+                 [else #f]))))
+    )
 
     ; Reprocess expression when it is changed from a 'value or 'test context
     ; to a 'effect context, in a reduction like (pair? x) => (begin x #t)
