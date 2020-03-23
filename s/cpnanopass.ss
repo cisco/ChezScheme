@@ -6050,7 +6050,9 @@
           (define-inline 2 $raw-tc-mutex
             [() `(literal ,(make-info-literal #f 'entry (lookup-c-entry raw-tc-mutex) 0))])
           (define-inline 2 $raw-collect-cond
-            [() `(literal ,(make-info-literal #f 'entry (lookup-c-entry raw-collect-cond) 0))]))
+            [() `(literal ,(make-info-literal #f 'entry (lookup-c-entry raw-collect-cond) 0))])
+          (define-inline 2 $raw-collect-thread0-cond
+            [() `(literal ,(make-info-literal #f 'entry (lookup-c-entry raw-collect-thread0-cond) 0))]))
         (define-inline 2 not
           [(e) `(if ,e ,(%constant sfalse) ,(%constant strue))])
         (define-inline 2 most-negative-fixnum

@@ -38,6 +38,7 @@ EXTERN char *Sdefaultheapdirs;
 EXTERN s_thread_key_t S_tc_key;
 EXTERN scheme_mutex_t S_tc_mutex;
 EXTERN s_thread_cond_t S_collect_cond;
+EXTERN s_thread_cond_t S_collect_thread0_cond;
 EXTERN INT S_tc_mutex_depth;
 #endif
 

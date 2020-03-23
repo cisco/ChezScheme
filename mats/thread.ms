@@ -1534,4 +1534,40 @@
    (check (box 0) unbox box-cas!))
  (check (vector 1 0 2) (lambda (v) (vector-ref v 1)) (lambda (v o n) (vector-cas! v 1 o n))))
 
+(mat rendezvous-in-main
+  ;; make sure that every collect rendezvous triggers the handler in the
+  ;; main thread
+  (let ([done? #f]
+        [gc-ids (list (get-thread-id))]
+        [gc-count 0]
+        [m #%$tc-mutex] ; using tc-mutex means main thread is not deactivated
+        [c (make-condition)])
+    (parameterize ([collect-request-handler
+                    (let ([orig (collect-request-handler)])
+                      (lambda ()
+                        (set! gc-count (add1 gc-count))
+                        (unless (memv (get-thread-id) gc-ids)
+                          (set! gc-ids (cons (get-thread-id) gc-ids)))
+                        (orig)))])
+      (let loop ([i 4])
+        (unless (= i 0)
+          (fork-thread (lambda () (let loop ()
+                                    (unless (with-mutex m
+                                               (condition-wait c m)
+                                               done?)
+                                      (collect-rendezvous)
+                                      (loop)))))
+          (loop (sub1 i))))
+      (let loop ()
+        (unless (> gc-count 1000)
+          (with-mutex m (condition-broadcast c))
+          (collect-rendezvous)
+          (loop)))
+      (with-mutex m
+        (set! done? #t)
+        (condition-broadcast c))
+      (equal? gc-ids (list (get-thread-id)))))
+)
+  
+
 )

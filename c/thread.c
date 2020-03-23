@@ -33,6 +33,7 @@ void S_thread_init() {
     S_tc_mutex.owner = s_thread_self();
     S_tc_mutex.count = 0;
     s_thread_cond_init(&S_collect_cond);
+    s_thread_cond_init(&S_collect_thread0_cond);
     S_tc_mutex_depth = 0;
 #endif /* PTHREADS */
   }
@@ -226,6 +227,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
         if (Sboolean_value(SYMVAL(S_G.collect_request_pending_id))
             && SYMVAL(S_G.active_threads_id) == FIX(0)) {
           s_thread_cond_signal(&S_collect_cond);
+          s_thread_cond_signal(&S_collect_thread0_cond);
         }
       }
 
@@ -425,6 +427,7 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   long sec;
   long nsec;
   INT status;
+  IBOOL is_collect;
 
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
     S_error1("condition-wait", "thread does not own mutex ~s", m);
@@ -443,8 +446,10 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
     nsec = 0;
   }
 
-  if (c == &S_collect_cond || DISABLECOUNT(tc) == 0) {
-    deactivate_thread(tc)
+  is_collect = (c == &S_collect_cond || c == &S_collect_thread0_cond);
+
+  if (is_collect || DISABLECOUNT(tc) == 0) {
+    deactivate_thread_signal_collect(tc, !is_collect)
   }
 
   m->count = 0;
@@ -453,7 +458,7 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   m->owner = self;
   m->count = 1;
 
-  if (c == &S_collect_cond || DISABLECOUNT(tc) == 0) {
+  if (is_collect || DISABLECOUNT(tc) == 0) {
     reactivate_thread(tc)
   }
 

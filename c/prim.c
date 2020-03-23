@@ -127,6 +127,7 @@ static void create_c_entry_vector() {
     install_c_entry(CENTRY_split_and_resize, proc2ptr(S_split_and_resize));
 #ifdef PTHREADS
     install_c_entry(CENTRY_raw_collect_cond, (ptr)&S_collect_cond);
+    install_c_entry(CENTRY_raw_collect_thread0_cond, (ptr)&S_collect_thread0_cond);
     install_c_entry(CENTRY_raw_tc_mutex, (ptr)&S_tc_mutex);
     install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
     install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));

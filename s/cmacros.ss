@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x09050317)
+(define-constant scheme-version #x09050318)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2799,6 +2799,7 @@
      thread-list
      split-and-resize
      raw-collect-cond
+     raw-collect-thread0-cond
      raw-tc-mutex
      activate-thread
      deactivate-thread

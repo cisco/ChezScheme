@@ -1699,6 +1699,7 @@
 (when-feature pthreads
 
 (define $raw-collect-cond (lambda () ($raw-collect-cond)))
+(define $raw-collect-thread0-cond (lambda () ($raw-collect-thread0-cond)))
 (define $raw-tc-mutex (lambda () ($raw-tc-mutex)))
 (define fork-thread)
 (define make-mutex)
@@ -1715,6 +1716,7 @@
 (define $close-resurrected-mutexes&conditions)
 (define $tc-mutex)
 (define $collect-cond)
+(define $collect-thread0-cond)
 (define get-initial-thread)
 (let ()
 ; scheme-object's below are mutex and condition addresses, which are
@@ -1891,6 +1893,7 @@
 
 (set! $tc-mutex ($make-mutex ($raw-tc-mutex) '$tc-mutex))
 (set! $collect-cond ($make-condition ($raw-collect-cond) '$collect-cond))
+(set! $collect-thread0-cond ($make-condition ($raw-collect-thread0-cond) '$collect-thread0-cond))
 
 (set! get-initial-thread
   (let ([thread (car (ts))])

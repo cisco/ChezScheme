@@ -318,7 +318,7 @@ typedef struct {
    thread count is zero, in which case we don't signal.  collection
    is not permitted to happen when interrupts are disabled, so we
    don't let anything happen in that case. */
-#define deactivate_thread(tc) {\
+#define deactivate_thread_signal_collect(tc, check_collect) {  \
   if (ACTIVE(tc)) {\
     ptr code;\
     tc_mutex_acquire()\
@@ -327,14 +327,17 @@ typedef struct {
     Slock_object(code);\
     SETSYMVAL(S_G.active_threads_id,\
      FIX(UNFIX(SYMVAL(S_G.active_threads_id)) - 1));\
-    if (Sboolean_value(SYMVAL(S_G.collect_request_pending_id))\
+    if (check_collect \
+        && Sboolean_value(SYMVAL(S_G.collect_request_pending_id))  \
         && SYMVAL(S_G.active_threads_id) == FIX(0)) {\
       s_thread_cond_signal(&S_collect_cond);\
+      s_thread_cond_signal(&S_collect_thread0_cond);\
     }\
     ACTIVE(tc) = 0;\
     tc_mutex_release()\
   }\
 }
+#define deactivate_thread(tc) deactivate_thread_signal_collect(tc, 1) 
 #define reactivate_thread(tc) {\
   if (!ACTIVE(tc)) {\
     tc_mutex_acquire()\

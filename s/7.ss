@@ -1157,33 +1157,50 @@
 )
 
 (define $collect-rendezvous
-  (lambda ()
-    (define once
-      (let ([once #f])
-        (lambda ()
-          (when (eq? once #t)
-            ($oops '$collect-rendezvous
-              "cannot return to the collect-request-handler"))
-          (set! once #t))))
-    (if-feature pthreads
-      (with-tc-mutex
-        (let f ()
-          (when $collect-request-pending
-            (if (= $active-threads 1) ; last one standing
-                (dynamic-wind
-                  once
-                  (collect-request-handler)
-                  (lambda ()
-                    (set! $collect-request-pending #f)
-                    (condition-broadcast $collect-cond)))
-                (begin
-                  (condition-wait $collect-cond $tc-mutex)
-                  (f))))))
-      (critical-section
-        (dynamic-wind 
-          once
-          (collect-request-handler)
-          (lambda () (set! $collect-request-pending #f)))))))
+  (let ([thread0-waiting? #f])
+    (lambda ()
+      (define once
+        (let ([once #f])
+          (lambda ()
+            (when (eq? once #t)
+              ($oops '$collect-rendezvous
+                "cannot return to the collect-request-handler"))
+            (set! once #t))))
+      (if-feature pthreads
+        ;; If the main thread is active, perform the GC there
+        (with-tc-mutex
+          (let f ()
+            (when $collect-request-pending
+              (cond
+                [(= $active-threads 1) ; last one standing
+                 (cond
+                   [(or (eqv? 0 (get-thread-id))
+                        (not thread0-waiting?))
+                    (dynamic-wind
+                      once
+                      (collect-request-handler)
+                      (lambda ()
+                        (set! $collect-request-pending #f)
+                        (condition-broadcast $collect-cond)
+                        (condition-broadcast $collect-thread0-cond)))]
+                   [else
+                    ;; get main thread to perform the GC, instead
+                    (condition-broadcast $collect-thread0-cond)
+                    (condition-wait $collect-cond $tc-mutex)
+                    (f)])]
+                [(eqv? 0 (get-thread-id))
+                 (set! thread0-waiting? #t)
+                 (condition-wait $collect-thread0-cond $tc-mutex)
+                 (set! thread0-waiting? #f)
+                 (f)]
+                [else
+                 (condition-wait $collect-cond $tc-mutex)
+                 (f)]))))
+        (critical-section
+          (dynamic-wind 
+            once
+            (collect-request-handler)
+            (lambda () (set! $collect-request-pending #f))))))))
 
 (define collect-request-handler
    (make-parameter
