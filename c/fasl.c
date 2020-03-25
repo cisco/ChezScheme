@@ -508,7 +508,9 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
       ffo.size = size;
       
       if (fmt == fasl_type_vfasl_size) {
-        if (S_vfasl_boot_mode == -1) {
+        if (S_vfasl_boot_mode) {
+          /* compact every time, because running previously loaded
+             boot code may have interned symbols, for example */
           S_vfasl_boot_mode = 1;
           Scompact_heap();
         }

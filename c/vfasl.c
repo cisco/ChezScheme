@@ -168,6 +168,7 @@ static void sweep_ptrs(vfasl_info *vfi, ptr *pp, iptr n);
 static uptr sweep_code_object(vfasl_info *vfi, ptr co);
 static uptr sweep_record(vfasl_info *vfi, ptr co);
 static uptr sweep(vfasl_info *vfi, ptr p);
+static int is_rtd(ptr tf, vfasl_info *vfi);
 
 static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets, IBOOL to_static);
 static ptr find_pointer_from_offset(uptr p_off, ptr *vspaces, uptr *vspace_offsets);
@@ -412,6 +413,17 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         if (isym != sym) {
           /* The symbol was already interned, so point to the existing one */
           INITSYMVAL(sym) = isym;
+          if (S_vfasl_boot_mode > 0) {
+            IGEN gen = SegInfo(addr_get_segment(isym))->generation;
+            if (gen < static_generation) {
+              printf("new %d!\n", gen);
+              S_prin1(isym);
+              printf("\n");
+            }
+          }
+        } else {
+          if (INITSYMPLIST(sym) != Snil) printf("oops\n");
+          if (INITSYMSPLIST(sym) != Snil) printf("oops\n");
         }
 
         sym = ptr_add(sym, size_symbol);
@@ -451,14 +463,17 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     RECORDDESCUID(rtd) = S_G.base_rtd;
 
     while (1) {
-      ptr new_rtd, parent_rtd;
+      ptr new_rtd, meta_rtd, parent_rtd;
 
-      rtd = ptr_add(rtd, size_record_inst(UNFIX(RECORDDESCSIZE(S_G.base_rtd))));
+      rtd = ptr_add(rtd, size_record_inst(UNFIX(RECORDDESCSIZE(RECORDINSTTYPE(rtd)))));
       if (rtd == rtd_end)
         break;
 
-      RECORDINSTTYPE(rtd) = S_G.base_rtd;
-
+      /* fixup type of rtd (where the type is usually base_rtd) */
+      meta_rtd = RECORDINSTTYPE(rtd);
+      if (!Ssymbolp(RECORDDESCUID(meta_rtd)))
+        RECORDINSTTYPE(rtd) = RECORDDESCUID(meta_rtd);
+ 
       /* fixup parent before continuing, relying on parents being earlier in `rtd`s */
       parent_rtd = RECORDDESCPARENT(rtd);
       if (parent_rtd != Sfalse) {
@@ -994,10 +1009,10 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si) {
 
           rtd = tf;
 
-          if (tf == S_G.base_rtd) {
-            if ((pp != S_G.base_rtd) && (vfi->base_rtd == S_G.base_rtd)) {
-              /* make sure base_rtd is first one registered */
-              (void)vfasl_relocate_help(vfi, S_G.base_rtd);
+          if (is_rtd(tf, vfi)) {
+            if (pp != S_G.base_rtd) {
+              /* make sure rtd's type is registered first */
+              (void)vfasl_relocate_help(vfi, rtd);
             }
             /* need parent before child */
             vfasl_relocate_parents(vfi, RECORDDESCPARENT(pp));
@@ -1200,8 +1215,8 @@ static void vfasl_relocate(vfasl_info *vfi, ptr *ppp) {
           vfasl_register_symbol_reference(vfi, ppp, pp);
         else {
           if ((TYPEBITS(pp) == type_typed_object)
-              && (((tf = TYPEFIELD(pp)) == vfi->base_rtd)
-                  || (tf == S_G.base_rtd)))
+              && TYPEP((tf = TYPEFIELD(pp)), mask_record, type_record)
+              && is_rtd(tf, vfi))
             vfasl_register_rtd_reference(vfi, ppp);
           vfasl_register_pointer(vfi, ppp);
         }
@@ -1280,23 +1295,20 @@ static uptr sweep_record(vfasl_info *vfi, ptr x)
     ptr *pp; ptr num; ptr rtd;
 
     rtd = RECORDINSTTYPE(x);
-    if (rtd == S_G.base_rtd) {
-      /* base-rtd is reset directly in all rtds */
-      RECORDINSTTYPE(x) = vfi->base_rtd;
 
-      if (x == vfi->base_rtd) {
-        /* Don't need to save fields of base-rtd */
-        ptr *pp = &RECORDINSTIT(x,0);
-        ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1;
-        while (pp < ppend) {
-          *pp = Snil;
-          pp += 1;
-        }
-        return size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
+    if (x == vfi->base_rtd) {
+      /* Don't need to save fields of base-rtd */
+      ptr *pp = &RECORDINSTIT(x,0);
+      ptr *ppend = (ptr *)((uptr)pp + UNFIX(RECORDDESCSIZE(rtd))) - 1;
+      while (pp < ppend) {
+        *pp = Snil;
+        pp += 1;
       }
-    } else
-      vfasl_relocate(vfi, &RECORDINSTTYPE(x));
-    
+      return size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
+    }
+
+    vfasl_relocate(vfi, &RECORDINSTTYPE(x));
+
     num = RECORDDESCPM(rtd);
     pp = &RECORDINSTIT(x,0);
 
@@ -1342,6 +1354,19 @@ static uptr sweep_record(vfasl_info *vfi, ptr x)
     return size_record_inst(UNFIX(RECORDDESCSIZE(rtd)));
 }
 
+static int is_rtd(ptr tf, vfasl_info *vfi)
+{
+  while (1) {
+    if (tf == vfi->base_rtd)
+      return 1;
+    if (tf == S_G.base_rtd)
+      return 1;
+
+    tf = RECORDDESCPARENT(tf);
+    if (tf == Sfalse)
+      return 0;
+  }
+}
 
 /*************************************************************/
 /* Code and relocation handling for save and load            */
@@ -1491,13 +1516,23 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
           uptr offset = (uptr)obj;
 
           obj = find_pointer_from_offset(offset, vspaces, vspace_offsets);
-          if ((TYPEBITS(obj) == type_typed_object)
-              && (TYPEFIELD(obj) == S_G.base_rtd)) {
-            /* Similar to symbols: potentially replace with interned */
-            ptr uid = RECORDDESCUID(obj);
-            if (!Ssymbolp(uid)) {
-              /* "uid" is actually the interned rtd to use instead */
-              obj = uid;
+          if (TYPEBITS(obj) == type_typed_object) {
+            ptr tf = TYPEFIELD(obj);
+            if (TYPEP(tf, mask_record, type_record)) {
+              while (1) {
+                if (tf == S_G.base_rtd) {
+                  /* Similar to symbols: potentially replace with interned */
+                  ptr uid = RECORDDESCUID(obj);
+                  if (!Ssymbolp(uid)) {
+                    /* "uid" is actually the interned rtd to use instead */
+                    obj = uid;
+                  }
+                  break;
+                }
+                tf = RECORDDESCPARENT(tf);
+                if (tf == Sfalse)
+                  break;
+              }
             }
           }
         }
