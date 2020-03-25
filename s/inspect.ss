@@ -2655,12 +2655,15 @@
                          [else (loop (fx+ i 1)
                                      (fx+ size (compute-size ($record-ref x i))))]))]
                      [else
-                      (fold-left (lambda (size fld)
-                                   (if (eq? (fld-type fld) 'scheme-object)
+                      (let loop ([size (fx+ (align (rtd-size rtd)) (compute-size rtd))] [flds flds])
+                        (cond
+                          [(null? flds) size]
+                          [else
+                           (let ([fld (car flds)])
+                             (loop (if (eq? (fld-type fld) 'scheme-object)
                                        (fx+ size (compute-size ($object-ref 'scheme-object x (fld-byte fld))))
-                                       size))
-                        (fx+ (align (rtd-size rtd)) (compute-size rtd))
-                        flds)])))]
+                                       size)
+                                   (cdr flds)))]))])))]
                [(string? x) (align (fx+ (constant header-size-string) (fx* (string-length x) (constant string-char-bytes))))]
                [(box? x) (fx+ (constant size-box) (compute-size (unbox x)))]
                [(flonum? x) (constant size-flonum)]
