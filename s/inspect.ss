@@ -2627,7 +2627,7 @@
                [(symbol? x)
                 (fx+ (constant size-symbol)
                   (compute-size (#3%$top-level-value x))
-                  (compute-size (property-list x))
+                  (compute-size ($symbol-property-list x))
                   (compute-size ($system-property-list x))
                   (compute-size ($symbol-name x)))]
                [(vector? x)
@@ -2824,7 +2824,7 @@
             [(symbol? x)
              (incr! symbol (constant size-symbol))
              (compute-composition! (#3%$top-level-value x))
-             (compute-composition! (property-list x))
+             (compute-composition! ($symbol-property-list x))
              (compute-composition! ($system-property-list x))
              (compute-composition! ($symbol-name x))]
             [(vector? x)
@@ -2991,7 +2991,7 @@
                       [(symbol? x)
                        (construct-proc
                          (#3%$top-level-value x)
-                         (property-list x)
+                         ($symbol-property-list x)
                          ($system-property-list x)
                          ($symbol-name x) next-proc)]
                       [(vector? x)
