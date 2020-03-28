@@ -2649,7 +2649,7 @@
                   (let ([flds (rtd-flds rtd)])
                     (cond
                      [(fixnum? flds)
-                      (let loop ([i 0] [size 0])
+                      (let loop ([i 0] [size (fx+ (align (rtd-size rtd)) (compute-size rtd))])
                         (cond
                          [(fx= i flds) size]
                          [else (loop (fx+ i 1)
@@ -2707,7 +2707,8 @@
                       (if (fx= i n)
                           size
                           (let ([r ($get-reloc x i)])
-                            (and r
+                            (if (not r)
+                                 0
                                  (let ([type (logand (bitwise-arithmetic-shift-right r (constant reloc-type-offset)) (constant reloc-type-mask))])
                                    (if (logtest r (constant reloc-extended-format))
                                        (let ([addr (fx+ addr ($get-reloc x (fx+ i 2)))])
