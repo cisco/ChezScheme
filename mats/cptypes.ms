@@ -1106,4 +1106,9 @@
   (cptypes/once-equivalent-expansion?
     '(vector? (list 1 (vector 2 (display 3) 4)))
     '(begin (display 3) #f))
+  ; regression test: check that the compiler doesn't loop forever
+  ; when the return arity is unknown
+  (cptypes-equivalent-expansion?
+    '(lambda (f) (box? (box (f))))
+    '(lambda (f) (#3%$value (f)) #t))
 )

@@ -173,6 +173,12 @@ Notes:
               `(if ,e1 ,e2 ,e3)])]
           [(case-lambda ,preinfo ,cl* ...)
            void-rec]
+          [(call ,preinfo ,pr ,e)
+           (guard (eq? (primref-name pr) '$value))
+           (cond
+             [(single-valued? e)
+              (make-seq 'effect e void-rec)]
+             [else ir])]
           [(call ,preinfo ,pr ,e* ...)
            (let ([flags (primref-flags pr)])
              (cond
