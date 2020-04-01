@@ -183,8 +183,11 @@ static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
   ptr p;
 
   tc_mutex_acquire()
-  p = S_cons_in(space_ephemeron, 0, car, cdr);
+  find_room(space_ephemeron, 0, type_pair, size_ephemeron, p);
   tc_mutex_release()
+  INITCAR(p) = car;
+  INITCDR(p) = cdr;
+
   return p;
 }
 
