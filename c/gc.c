@@ -1524,6 +1524,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
         if (g == static_generation) S_G.number_of_nonstatic_segments -= 1;
         si->next = S_G.occupied_segments[s][g];
         S_G.occupied_segments[s][g] = si;
+        si->trigger_ephemerons = NULL;
 #ifdef PRESERVE_FLONUM_EQ
         /* any flonums forwarded won't be reference anymore */
         si->forwarded_flonums = NULL;

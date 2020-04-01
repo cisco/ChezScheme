@@ -230,7 +230,6 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
   si->generation = g;
   si->sorted = 0;
   si->min_dirty_byte = 0xff;
-  si->trigger_ephemerons = NULL;
   for (d = 0; d < cards_per_segment; d += sizeof(ptr)) {
     iptr *dp = (iptr *)(si->dirty_bytes + d);
     /* fill sizeof(iptr) bytes at a time with 0xff */
