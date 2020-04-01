@@ -139,8 +139,8 @@ extern void S_gc_init PROTO((void));
 extern void S_register_child_process PROTO((INT child));
 #endif /* WIN32 */
 extern void S_fixup_counts PROTO((ptr counts));
-extern void S_do_gc PROTO((IGEN g, IGEN gtarget));
-extern void S_gc PROTO((ptr tc, IGEN mcg, IGEN tg));
+extern ptr S_do_gc PROTO((IGEN g, IGEN gtarget, ptr count_roots));
+extern ptr S_gc PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
 extern void S_gc_init PROTO((void));
 extern void S_set_maxgen PROTO((IGEN g));
 extern IGEN S_maxgen PROTO((void));
@@ -155,17 +155,17 @@ extern ptr S_object_counts PROTO((void));
 extern IBOOL S_enable_object_backreferences PROTO((void));
 extern void S_set_enable_object_backreferences PROTO((IBOOL eoc));
 extern ptr S_object_backreferences PROTO((void));
-extern void S_do_gc PROTO((IGEN g, IGEN gtarget));
 extern ptr S_locked_objects PROTO((void));
 extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
 extern void S_check_heap PROTO((IBOOL aftergc));
 
 /* gc-ocd.c */
-extern void S_gc_ocd PROTO((ptr tc, IGEN mcg, IGEN tg));
+extern ptr S_gc_ocd PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
 
 /* gc-oce.c */
-extern void S_gc_oce PROTO((ptr tc, IGEN mcg, IGEN tg));
+extern ptr S_gc_oce PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
+extern ptr S_count_size_increments PROTO((ptr ls, IGEN generation));
 
 /* intern.c */
 extern void S_intern_init PROTO((void));

@@ -128,7 +128,8 @@ storage management for dynamically typed languages''~\cite{Dybvig:sm}.
 \formdef{collect}{\categoryprocedure}{(collect)}
 \formdef{collect}{\categoryprocedure}{(collect \var{g})}
 \formdef{collect}{\categoryprocedure}{(collect \var{g} \var{tg})}
-\returns unspecified
+\formdef{collect}{\categoryprocedure}{(collect \var{g} \var{tg} \var{objs})}
+\returns a list if \var{objs} is a list, unspecified otherwise
 \listlibraries
 \endentryheader
 
@@ -141,6 +142,7 @@ If \var{g} is the maximum nonstatic generation,
 \scheme{static}.
 Otherwise, \var{tg} must be a fixnum equal to or one
 greater than \var{g}.
+\var{objs} must be either \scheme{#f} or a list.
 
 This procedure causes the storage manager to perform a garbage collection.
 \scheme{collect} is invoked periodically via the collect-request
@@ -152,6 +154,18 @@ In the threaded versions of {\ChezScheme}, the thread that invokes
 The system determines which generations to collect, based on \var{g} and
 \var{tg} if provided, as described in the lead-in to this section.
 
+If \var{objs} is a list, the collection is combined with counting as
+in \scheme{compute-size-increments}. Counting looks through all
+generations, as when \scheme{'static} is the second argument to
+\scheme{compute-size-increments}, but the returned sizes from
+\scheme{collect} do not include any objects in a generation older than
+\var{g}. Another difference is that an object later in \var{objs} are
+treated as unreachable by earlier objects in \var{objs} only when the
+later object is a record, thread, or procedure (including
+continuations). Finally, if an object is included in \var{objs} using
+a weak pair, then the object's result size is 0 unless it is reachable
+from earlier objects; if the object is not reachable at all, it can be
+collected.
 
 %----------------------------------------------------------------------------
 \entryheader

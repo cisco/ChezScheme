@@ -114,6 +114,11 @@ typedef int IFASLCODE;      /* fasl type codes */
 #define addr_get_segment(p) ((uptr)(p) >> segment_offset_bits)
 #define ptr_get_segment(p) (((uptr)(p) + typemod - 1) >> segment_offset_bits)
 
+#define segment_bitmap_bytes    (bytes_per_segment >> (log2_ptr_bytes+3))
+#define segment_bitmap_index(p) ((((uptr)p + (typemod-1)) & (bytes_per_segment - 1)) >> log2_ptr_bytes)
+#define segment_bitmap_byte(p)  (segment_bitmap_index(p) >> 3)
+#define segment_bitmap_bit(p)   ((uptr)1 << (segment_bitmap_index(p) & 0x7))
+
 #define SPACE(p) SegmentSpace(ptr_get_segment(p))
 #define GENERATION(p) SegmentGeneration(ptr_get_segment(p))
 
@@ -136,9 +141,12 @@ typedef struct _seginfo {
   ptr trigger_guardians;                    /* guardians to re-check if object in segment is copied out */
   ptr locked_objects;                       /* list of objects (including duplicates) for locked in this segment */
   ptr unlocked_objects;                     /* list of objects (no duplicates) for formerly locked */
+  octet *locked_mask;                       /* bitmap of locked objects, used only during GC */
 #ifdef PRESERVE_FLONUM_EQ
   octet *forwarded_flonums;                 /* bitmap of flonums whose payload is a forwarding pointer */
 #endif
+  octet *counting_mask;                     /* bitmap of counting roots during a GC */
+  octet *measured_mask;                     /* bitmap of objects that have been measured */
   octet dirty_bytes[cards_per_segment];     /* one dirty byte per card */
 } seginfo;
 
@@ -403,3 +411,8 @@ typedef struct {
 
 #define INCRGEN(g) (g = g == S_G.max_nonstatic_generation ? static_generation : g+1)
 #define IMMEDIATE(x) (Sfixnump(x) || Simmediatep(x))
+
+/* For `memcpy_aligned, that the first two arguments are word-aligned
+   and it would be ok to round up the length to a word size. But
+   probably the compiler does a fine job with plain old `mempcy`. */
+#define memcpy_aligned memcpy

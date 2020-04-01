@@ -1220,7 +1220,7 @@
   (chmod [sig [(pathname sub-ufixnum) -> (void)]] [flags])
   (clear-input-port [sig [() (input-port) -> (void)]] [flags true])
   (clear-output-port [sig [() (output-port) -> (void)]] [flags true])
-  (collect [sig [() (sub-ufixnum) (sub-ufixnum ptr) -> (void)]] [flags true])
+  (collect [sig [() (sub-ufixnum) (sub-ufixnum ptr) (sub-ufixnum ptr ptr) -> (void/list)]] [flags true])
   (collect-rendezvous [sig [() -> (void)]] [flags])
   (collections [sig [() -> (uint)]] [flags unrestricted alloc])
   (compile [sig [(sub-ptr) (sub-ptr environment) -> (ptr ...)]] [flags])

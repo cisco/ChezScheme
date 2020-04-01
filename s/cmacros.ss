@@ -662,11 +662,13 @@
       (pure-typed-object "p-tobj" #\r 9) ;
       (impure-record "ip-rec" #\s 10)    ;
       (impure-typed-object "ip-tobj" #\t 11) ; as needed (instead of impure) for backtraces
-      (closure "closure" #\l 12))        ; as needed (instead of pure/impure) for backtraces
+      (closure "closure" #\l 12)         ; as needed (instead of pure/impure) for backtraces
+      (count-pure "count-pure" #\y 13)     ; like pure, but delayed for counting from roots
+      (count-impure "count-impure" #\z 14)); like impure-typed-object, but delayed for counting from roots
     (unswept
-      (data "data" #\d 13)))             ; unswept objects allocated here
+      (data "data" #\d 15)))             ; unswept objects allocated here
   (unreal
-    (empty "empty" #\e 14)))             ; available segments
+    (empty "empty" #\e 16)))             ; available segments
 
 ;;; enumeration of types for which gc tracks object counts
 ;;; also update gc.c
@@ -698,7 +700,8 @@
 (define-constant countof-oblist 24)
 (define-constant countof-ephemeron 25)
 (define-constant countof-stencil-vector 26)
-(define-constant countof-types 27)
+(define-constant countof-record 27)
+(define-constant countof-types 28)
 
 ;;; type-fixnum is assumed to be all zeros by at least by vector, fxvector,
 ;;; and bytevector index checks
@@ -1367,7 +1370,7 @@
    [ptr data 0]))
 
 (define-primitive-structure-disps thread type-typed-object
-  ([ptr type] [uptr tc]))
+  ([iptr type] [uptr tc]))
 
 (define-constant virtual-register-count 16)
 

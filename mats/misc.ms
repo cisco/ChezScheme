@@ -1057,6 +1057,7 @@
   (error? (compute-size-increments (list 0) '()))
   (begin
     (define pair-size (compute-size (cons 1 2)))
+    (define ephemeron-size (compute-size (ephemeron-cons 1 2)))
     #t)
   (equal? (list pair-size pair-size)
           (compute-size-increments (list (cons 1 2) (cons 3 4))))
@@ -1070,25 +1071,25 @@
     (equal? (compute-size-increments ls)
             (reverse (compute-size-increments (reverse ls)))))
   ;; Ephemeron(s) found before key:
-  (equal? (list pair-size (* 2 pair-size))
+  (equal? (list ephemeron-size (* 2 pair-size))
           (compute-size-increments (let* ([p (cons 0 0)]
                                           [e (ephemeron-cons p (cons 0 0))])
                                      (list e p))))
-  (equal? (list pair-size (* 3 pair-size))
+  (equal? (list ephemeron-size (* 3 pair-size))
           (let* ([v (cons 1 2)]
                  [e (ephemeron-cons v (cons 3 4))])
             (compute-size-increments (list e (cons v #f)))))
-  (equal? (list (* 4 pair-size) (* 4 pair-size))
+  (equal? (list (* 2 (+ ephemeron-size pair-size)) (* 4 pair-size))
           (let* ([v (cons 1 2)]
                  [e* (list (ephemeron-cons v (cons 3 4))
                            (ephemeron-cons v (cons 5 6)))])
             (compute-size-increments (list e* (cons v #f)))))
   ;; Key found before ephemeron(s):
-  (equal? (list (* 2 pair-size) (* 2 pair-size))
+  (equal? (list (* 2 pair-size) (+ ephemeron-size pair-size))
           (let* ([v (cons 1 2)]
                  [e (ephemeron-cons v (cons 3 4))])
             (compute-size-increments (list (cons v #f) e))))
-  (equal? (list (* 2 pair-size) (* 6 pair-size))
+  (equal? (list (* 2 pair-size) (+ (* 4 pair-size) (* 2 ephemeron-size)))
           (let* ([v (cons 1 2)]
                  [e* (list (ephemeron-cons v (cons 3 4))
                            (ephemeron-cons v (cons 5 6)))])
@@ -1150,6 +1151,79 @@
             (or (eq? (current-eval) interpret) ; interpreter continuaton is not precise enough
                 (and (> (car pre-sizes) N)
                      (< (car post-sizes) N)))))))
+  )
+
+(mat collect+compute-size-increments
+  (eq? (void) (collect 0 0 #f))
+  (eq? '() (collect 0 0 '()))
+
+  (error? (collect 0 0 'not-a-list))
+  (error? (collect 0 0 0))
+  (error? (collect 'not-a-generation 0 '()))
+  (error? (collect 0 'not-a-generation '()))
+  (error? (collect 1 0 '()))
+  
+  (begin
+    (define-record-type count-wrap (fields val))
+    (collect 0 0 (list (make-count-wrap 0))) ; take care of one-time initialization costs
+    (define wrap-size (car (collect 0 0 (list (make-count-wrap 0))))) ; includes rtd
+    (define just-wrap-size (cadr (collect 0 0 (list (make-count-wrap 0) (make-count-wrap 1)))))
+    (define pair-size (compute-size (cons 1 2)))
+    (define ephemeron-size (compute-size (ephemeron-cons 1 2)))
+    #t)
+  (equal? (list pair-size pair-size)
+          (collect 0 0 (list (cons 1 2) (cons 3 4))))
+  (equal? (list (* 3 pair-size) pair-size)
+          (let ([l (list 1 2)])
+            (collect 0 0 (list (cons 3 l) (cons 4 l)))))
+  (equal? (list pair-size)
+          (collect 0 0 (list (weak-cons (make-bytevector 100) #f))))
+  ;; Ephemeron(s) found before key:
+  (equal? (list ephemeron-size (+ (* 2 pair-size) wrap-size))
+          (collect 0 0 (let* ([p (make-count-wrap (cons 0 0))]
+                              [e (ephemeron-cons p (cons 0 0))])
+                         (list e p))))
+  (equal? (list ephemeron-size (+ (* 3 pair-size) wrap-size))
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [e (ephemeron-cons v (cons 3 4))])
+            (collect 0 0 (list e (cons v #f)))))
+  (equal? (list (* 2 (+ ephemeron-size pair-size)) (+ (* 4 pair-size) wrap-size))
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [e* (list (ephemeron-cons v (cons 3 4))
+                           (ephemeron-cons v (cons 5 6)))])
+            (collect 0 0 (list e* (cons v #f)))))
+  ;; Key found before ephemeron(s):
+  (equal? (list (+ (* 2 pair-size) wrap-size) (+ ephemeron-size pair-size))
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [e (ephemeron-cons v (cons 3 4))])
+            (collect 0 0 (list (cons v #f) e))))
+  (equal? (list (* 2 pair-size) (+ (* 4 pair-size) (* 2 ephemeron-size)))
+          (let* ([v (cons 1 2)]
+                 [e* (list (ephemeron-cons v (cons 3 4))
+                           (ephemeron-cons v (cons 5 6)))])
+            (collect 0 0 (list (cons v #f) e*))))
+  ;; Weakly held objects:
+  (equal? '(0)
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [ls (weak-cons v '())])
+            (collect 0 0 ls)))
+  (equal? (list wrap-size pair-size (+ just-wrap-size pair-size))
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [ls (cons* (make-count-wrap 0) (cons v 1) (weak-cons v '()))])
+            (collect 0 0 ls)))
+  (equal? (list 0 (+ wrap-size (* 2 pair-size)))
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [ls (weak-cons v (cons (cons v 1) '()))])
+            (collect 0 0 ls)))
+  (equal? #!bwp
+          (let* ([v (make-count-wrap (cons 1 2))]
+                 [ls (weak-cons v '())])
+            (collect 0 0 ls)
+            (car ls)))
+  ;; These calls will encounter many kinds of objects, just to make
+  ;; sure they don't fail:
+  (list? (collect 0 0 (list (call/cc values))))
+  (list? (collect (collect-maximum-generation) (collect-maximum-generation) (list (call/cc values))))
 )
 
 (mat compute-composition

@@ -177,6 +177,7 @@ void S_prim_init() {
     Sforeign_symbol("(cs)check_heap_enabledp", (void *)s_check_heap_enabledp);
     Sforeign_symbol("(cs)enable_check_heap", (void *)s_enable_check_heap);
     Sforeign_symbol("(cs)check_heap_errors", (void *)s_check_heap_errors);
+    Sforeign_symbol("(cs)count_size_increments", (void *)S_count_size_increments);
     Sforeign_symbol("(cs)lookup_library_entry", (void *)S_lookup_library_entry);
     Sforeign_symbol("(cs)link_code_object", (void *)s_link_code_object);
     Sforeign_symbol("(cs)lookup_c_entry", (void *)S_lookup_c_entry);

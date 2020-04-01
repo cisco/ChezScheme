@@ -2604,24 +2604,27 @@
                    [(and (eqv? space (constant space-weakpair))
                          (not single-inspect-mode?))
                     (fx+ (constant size-pair) (compute-size (cdr x)))]
-                   [(and (eqv? space (constant space-ephemeron))
-                         (not single-inspect-mode?)
-                         (let ([a (car x)])
-                           (not (or ($immediate? a)
-                                    (let ([g ($generation a)])
-                                      (or (not g) (fx> g maxgen)))
-                                    (and (eq-bitset-member? size-ht-or-bitset a)
-                                         (not (eq-hashtable-ref ephemeron-non-keys a #f)))))))
-                    (let ([d (cdr x)])
-                      (unless ($immediate? d)
-                        (unless ephemeron-triggers-bitset
-                          (set! ephemeron-triggers-bitset (make-eq-bitset))
-                          (set! ephemeron-triggers (make-eq-hashtable)))
-                        (let ([v (car x)])
-                          (eq-bitset-add! ephemeron-triggers-bitset v)
-                          (let ([a (eq-hashtable-cell ephemeron-triggers v '())])
-                            (set-cdr! a (cons d (cdr a)))))))
-                    (constant size-pair)]
+                   [(eqv? space (constant space-ephemeron))
+                    (cond
+                      [(and (not single-inspect-mode?)
+                            (let ([a (car x)])
+                              (not (or ($immediate? a)
+                                       (let ([g ($generation a)])
+                                         (or (not g) (fx> g maxgen)))
+                                       (and (eq-bitset-member? size-ht-or-bitset a)
+                                            (not (eq-hashtable-ref ephemeron-non-keys a #f)))))))
+                       (let ([d (cdr x)])
+                         (unless ($immediate? d)
+                           (unless ephemeron-triggers-bitset
+                             (set! ephemeron-triggers-bitset (make-eq-bitset))
+                             (set! ephemeron-triggers (make-eq-hashtable)))
+                           (let ([v (car x)])
+                             (eq-bitset-add! ephemeron-triggers-bitset v)
+                             (let ([a (eq-hashtable-cell ephemeron-triggers v '())])
+                               (set-cdr! a (cons d (cdr a)))))))
+                       (constant size-ephemeron)]
+                      [else
+                       (fx+ (constant size-ephemeron) (compute-size (car x)) (compute-size (cdr x)))])]
                    [else
                     (fx+ (constant size-pair) (compute-size (car x)) (compute-size (cdr x)))]))]
                [(symbol? x)

@@ -108,6 +108,9 @@ PetiteBoot = ../boot/$m/petite.boot
 SchemeBoot = ../boot/$m/scheme.boot
 Cheader = ../boot/$m/scheme.h
 Cequates = ../boot/$m/equates.h
+Cgcocd = ../boot/$m/gc-ocd.inc
+Cgcoce = ../boot/$m/gc-oce.inc
+Cvfasl = ../boot/$m/vfasl.inc
 Revision = ../boot/$m/revision
 
 # The following controls the patch files loaded before compiling, typically used only
@@ -164,11 +167,11 @@ allsrc =\
  np-languages.ss bitset.ss fxmap.ss
 
 # doit uses a different Scheme process to compile each target
-doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Revision}
+doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cvfasl} ${Revision}
 
 # all uses a single Scheme process to compile all targets.  this is typically
 # faster when most of the targets need to be recompiled.
-all: bootall ${Cheader} ${Cequates} ${Revision}
+all: bootall ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cvfasl} ${Revision}
 
 # allx runs all up to three times and checks to see if the new boot file is the
 # same as the last, i.e., the system is properly bootstrapped.
@@ -194,7 +197,7 @@ bootstrap: ${allsrc} | ${Revision}
 	touch bootstrap
 
 # source eagerly creates links to most of the files that might be needed
-source: ${allsrc} mkheader.ss script.all
+source: ${allsrc} mkheader.ss mkgc.ss script.all
 
 # profiled goes through the involved process of building a profile-optimized boot file
 profiled:
@@ -414,6 +417,21 @@ mkheader.so: mkheader.ss cmacros.so primvars.so env.so
              '(compile-file "$*.ss" "$*.so")'\
              | ${Scheme} -q cmacros.so priminfo.so primvars.so env.so
 
+mkgc.so: mkgc.ss mkheader.so cmacros.so primvars.so env.so
+	echo '(reset-handler abort)'\
+             '(base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))'\
+             '(keyboard-interrupt-handler (lambda () (display "interrupted---aborting\n") (reset)))'\
+             '(optimize-level 0)'\
+             '(debug-level $d)'\
+             '(commonization-level $(cl))'\
+             '(compile-compressed #$(cc))'\
+             '(compress-format $(xf))'\
+             '(compress-level $(xl))'\
+             '(generate-inspector-information #$i)'\
+             '(subset-mode (quote system))'\
+             '(compile-file "$*.ss" "$*.so")'\
+             | ${Scheme} -q cmacros.so priminfo.so primvars.so env.so mkheader.so
+
 nanopass.so: $(shell echo ../nanopass/nanopass/*) ../nanopass/nanopass.ss
 	echo '(reset-handler abort)'\
              '(base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))'\
@@ -581,6 +599,33 @@ ${Cequates}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss pri
 	(if `cmp -s ${Cequates} ${Cequates}.bak`;\
           then mv -f ${Cequates}.bak ${Cequates};\
           else rm -f ${Cequates}.bak; fi)
+
+${Cgcocd}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
+	(if [ -r ${Cgcocd} ]; then mv -f ${Cgcocd} ${Cgcocd}.bak; fi)
+	echo '(reset-handler abort)'\
+             '(mkgc-ocd.inc "${Cgcocd}")' |\
+         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
+	(if `cmp -s ${Cgcocd} ${Cgcocd}.bak`;\
+          then mv -f ${Cgcocd}.bak ${Cgcocd};\
+          else rm -f ${Cgcocd}.bak; fi)
+
+${Cgcoce}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
+	(if [ -r ${Cgcoce} ]; then mv -f ${Cgcoce} ${Cgcoce}.bak; fi)
+	echo '(reset-handler abort)'\
+             '(mkgc-oce.inc "${Cgcoce}")' |\
+         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
+	(if `cmp -s ${Cgcoce} ${Cgcoce}.bak`;\
+          then mv -f ${Cgcoce}.bak ${Cgcoce};\
+          else rm -f ${Cgcoce}.bak; fi)
+
+${Cvfasl}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
+	(if [ -r ${Cvfasl} ]; then mv -f ${Cvfasl} ${Cvfasl}.bak; fi)
+	echo '(reset-handler abort)'\
+             '(mkvfasl.inc "${Cvfasl}")' |\
+         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
+	(if `cmp -s ${Cvfasl} ${Cvfasl}.bak`;\
+          then mv -f ${Cvfasl}.bak ${Cvfasl};\
+          else rm -f ${Cvfasl}.bak; fi)
 
 .PHONY: ${Revision}
 ${Revision}: update-revision

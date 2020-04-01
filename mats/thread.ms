@@ -1553,7 +1553,8 @@
         (unless (= i 0)
           (fork-thread (lambda () (let loop ()
                                     (unless (with-mutex m
-                                               (condition-wait c m)
+                                               (unless done?
+                                                 (condition-wait c m))
                                                done?)
                                       (collect-rendezvous)
                                       (loop)))))

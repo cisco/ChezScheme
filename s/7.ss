@@ -754,12 +754,12 @@
   (define gc-count 0)
   (define start-bytes 0)
   (define docollect
-    (let ([do-gc (foreign-procedure "(cs)do_gc" (int int) void)])
+    (let ([do-gc (foreign-procedure "(cs)do_gc" (int int ptr) ptr)])
       (lambda (p)
         (with-tc-mutex
           (unless (= $active-threads 1)
             ($oops 'collect "cannot collect when multiple threads are active"))
-          (let-values ([(trip g gtarget) (p gc-trip)])
+          (let-values ([(trip g gtarget count-roots) (p gc-trip)])
             (set! gc-trip trip)
             (let ([cpu (current-time 'time-thread)] [real (current-time 'time-monotonic)])
               (set! gc-bytes (+ gc-bytes (bytes-allocated)))
@@ -770,17 +770,18 @@
                 (flush-output-port (console-output-port)))
               (when (eqv? g (collect-maximum-generation))
                 ($clear-source-lines-cache))
-              (do-gc g gtarget)
-              ($close-resurrected-files)
-              (when-feature pthreads
-                ($close-resurrected-mutexes&conditions))
-              (when (collect-notify)
-                (fprintf (console-output-port) "done]~%")
-                (flush-output-port (console-output-port)))
-              (set! gc-bytes (- gc-bytes (bytes-allocated)))
-              (set! gc-cpu (add-duration gc-cpu (time-difference (current-time 'time-thread) cpu)))
-              (set! gc-real (add-duration gc-real (time-difference (current-time 'time-monotonic) real)))
-              (set! gc-count (1+ gc-count))))))))
+              (let ([gc-result (do-gc g gtarget count-roots)])
+                ($close-resurrected-files)
+                (when-feature pthreads
+                  ($close-resurrected-mutexes&conditions))
+                (when (collect-notify)
+                  (fprintf (console-output-port) "done]~%")
+                  (flush-output-port (console-output-port)))
+                (set! gc-bytes (- gc-bytes (bytes-allocated)))
+                (set! gc-cpu (add-duration gc-cpu (time-difference (current-time 'time-thread) cpu)))
+                (set! gc-real (add-duration gc-real (time-difference (current-time 'time-monotonic) real)))
+                (set! gc-count (1+ gc-count))
+                gc-result)))))))
   (define collect-init
     (lambda ()
       (set! gc-trip 0)
@@ -815,11 +816,11 @@
               (let loop ([g (collect-maximum-generation)])
                 (if (= (modulo gct (expt (collect-generation-radix) g)) 0)
                     (if (fx= g (collect-maximum-generation))
-                        (values 0 g g)
-                        (values gct g (fx+ g 1)))
+                        (values 0 g g #f)
+                        (values gct g (fx+ g 1) #f))
                     (loop (fx- g 1)))))))))
     (define collect2
-      (lambda (g gtarget)
+      (lambda (g gtarget count-roots)
         (docollect
           (lambda (gct)
             (values 
@@ -833,21 +834,24 @@
                         (+ gct (modulo (- n gct) n))))
                     (let ([next (trip g)] [limit (trip (fx+ g 1))])
                       (if (< next limit) next (- limit 1)))))
-              g gtarget)))))
+              g gtarget count-roots)))))
     (case-lambda
       [() (collect0)]
       [(g)
        (unless (and (fixnum? g) (fx<= 0 g (collect-maximum-generation)))
          ($oops who "invalid generation ~s" g))
-       (collect2 g (if (fx= g (collect-maximum-generation)) g (fx+ g 1)))]
-      [(g gtarget)
+       (collect2 g (if (fx= g (collect-maximum-generation)) g (fx+ g 1)) #f)]
+      [(g gtarget) (collect g gtarget #f)]
+      [(g gtarget count-roots)
        (unless (and (fixnum? g) (fx<= 0 g (collect-maximum-generation)))
          ($oops who "invalid generation ~s" g))
        (unless (if (fx= g (collect-maximum-generation))
                    (or (eqv? gtarget g) (eq? gtarget 'static))
                    (or (eqv? gtarget g) (eqv? gtarget (fx+ g 1))))
          ($oops who "invalid target generation ~s for generation ~s" gtarget g))
-       (collect2 g (if (eq? gtarget 'static) (constant static-generation) gtarget))])))
+       (unless (or (not count-roots) (list? count-roots))
+         ($oops who "invalid counting-roots list ~s" count-roots))
+       (collect2 g (if (eq? gtarget 'static) (constant static-generation) gtarget) count-roots)])))
 
 (set! collect-rendezvous
   (let ([fire-collector (foreign-procedure "(cs)fire_collector" () void)])

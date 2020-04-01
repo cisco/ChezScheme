@@ -182,6 +182,8 @@ workdir $W/boot
 workdir $W/boot/$M
 (cd $W/boot/$M; workln ../../../boot/$M/scheme.h scheme.h)
 (cd $W/boot/$M; workln ../../../boot/$M/equates.h equates.h)
+(cd $W/boot/$M; workln ../../../boot/$M/gc-ocd.inc gc-ocd.inc)
+(cd $W/boot/$M; workln ../../../boot/$M/gc-oce.inc gc-oce.inc)
 (cd $W/boot/$M; workln ../../../boot/$M/petite.boot petite.boot)
 (cd $W/boot/$M; workln ../../../boot/$M/scheme.boot scheme.boot)
 (cd $W/boot/$M; workln ../../../boot/$M/def.so def.so)
