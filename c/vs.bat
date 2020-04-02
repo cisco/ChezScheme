@@ -7,6 +7,10 @@ set Applications=%ProgramFiles%
 :: Set up Visual Studio command line environment variables given a
 :: machine type, e.g., amd64 or x86.
 
+:: Visual Studio 2019 Preview
+set BATDIR=%Applications%\Microsoft Visual Studio\2019\Preview\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
 :: Visual Studio 2019 Enterprise
 set BATDIR=%Applications%\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build
 if exist "%BATDIR%\vcvarsall.bat" goto found
@@ -21,6 +25,10 @@ if exist "%BATDIR%\vcvarsall.bat" goto found
 
 :: Visual Studio 2019 BuildTools
 set BATDIR=%Applications%\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
+:: Visual Studio 2017 Preview
+set BATDIR=%Applications%\Microsoft Visual Studio\2017\Preview\VC\Auxiliary\Build
 if exist "%BATDIR%\vcvarsall.bat" goto found
 
 :: Visual Studio 2017 Enterprise
