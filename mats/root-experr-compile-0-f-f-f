@@ -4040,6 +4040,11 @@ misc.mo:Expected error in mat compute-size-increments: "compute-size-increments:
 misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation -1".
 misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation "static"".
 misc.mo:Expected error in mat compute-size-increments: "compute-size-increments: invalid generation ()".
+misc.mo:Expected error in mat collect+compute-size-increments: "collect: invalid counting-roots list not-a-list".
+misc.mo:Expected error in mat collect+compute-size-increments: "collect: invalid counting-roots list 0".
+misc.mo:Expected error in mat collect+compute-size-increments: "collect: invalid generation not-a-generation".
+misc.mo:Expected error in mat collect+compute-size-increments: "collect: invalid target generation not-a-generation for generation 0".
+misc.mo:Expected error in mat collect+compute-size-increments: "collect: invalid target generation 0 for generation 1".
 misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".
 misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation "static"".
 misc.mo:Expected error in mat make-object-finder: "make-object-finder: 17 is not a procedure".
