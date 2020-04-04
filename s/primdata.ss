@@ -1858,7 +1858,6 @@
   ($compound-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($compute-composition [flags single-valued])
   ($compute-size [flags single-valued])
-  ($compute-size-increments [flags single-valued])
   ($constituent?  [sig [(char) -> (boolean)]] [flags pure mifoldable safeongoodargs])
   ($constituent-ports [flags])
   ($continuation? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])

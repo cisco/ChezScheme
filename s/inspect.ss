@@ -2489,7 +2489,6 @@
   (define align
     (lambda (n)
       (fxlogand (fx+ n (fx- (constant byte-alignment) 1)) (fx- (constant byte-alignment)))))
-  (include "bitset.ss")
 
   (define (thread->stack-objects thread)
     (with-tc-mutex
@@ -2542,89 +2541,44 @@
          (map (lambda (disp) ($object-ref 'scheme-object tc disp))
               tc-ptr-offsets)]))))
 
-  ;; call with interrupts disabled if not `single-inspect-mode?`
-  (set-who! $compute-size-increments
-    (rec $compute-size-increments
+  (set-who! $compute-size
+    (rec $compute-size
       (case-lambda
-       [(x* maxgen) ($compute-size-increments x* maxgen #f (make-eq-bitset))]
-       [(x* maxgen single-inspect-mode? size-ht-or-bitset)
-         (define ephemeron-triggers #f)
-         (define ephemeron-triggers-bitset #f)
-         (define ephemeron-non-keys (and (not single-inspect-mode?) (make-eq-hashtable)))
-         (define cookie (and single-inspect-mode?
-                             (cons 'date 'nut))) ; recreate on each call to $compute-size-increments
+        [(x maxgen) ($compute-size x maxgen (make-eq-hashtable))]
+        [(x maxgen size-ht)
+         (define cookie (cons 'date 'nut)) ; recreate on each call to $compute-size
          (define compute-size
            (lambda (x)
-             (let ([si ($maybe-seginfo x)])
-               (cond
-                [(or (not si)
-                     (fx> ($seginfo-generation si) maxgen))
-                 0]
-                [single-inspect-mode?
-                 (let ([a (eq-hashtable-cell size-ht-or-bitset x #f)])
+             (if (or ($immediate? x)
+                     (let ([g ($generation x)])
+                       (or (not g) (fx> g maxgen))))
+                 0
+                 (let ([a (eq-hashtable-cell size-ht x #f)])
                    (cond
-                    [(cdr a) =>
-                     (lambda (p)
-                       ; if we find our cookie, return 0 to avoid counting shared structure twice.
-                       ; otherwise, (car p) must be a cookie from an earlier call to $compute-size,
-                       ; so return the recorded size
-                       (if (eq? (car p) cookie)
-                           0
-                           (begin
-                             (set-car! p cookie)
-                             (cdr p))))]
-                    [else
-                     (let ([p (cons cookie 0)])
-                       (set-cdr! a p)
-                       (let ([size (really-compute-size x si)])
-                         (set-cdr! p size)
-                         size))]))]
-                [else
-                 (cond
-                  [(eq-bitset-member? size-ht-or-bitset x) 0]
-                  [else
-                   (eq-bitset-add! size-ht-or-bitset x)
-                   (let ([size (really-compute-size x si)])
-                     (let ([ds (and ephemeron-triggers-bitset
-                                    (eq-bitset-member? ephemeron-triggers-bitset x)
-                                    (eq-hashtable-ref ephemeron-triggers x #f))])
-                       (cond
-                        [ds
-                         (eq-hashtable-delete! ephemeron-triggers x)
-                         (fold-left (lambda (size d) (fx+ size (compute-size d)))
-                                    size
-                                    ds)]
-                        [else size])))])]))))
+                     [(cdr a) =>
+                      (lambda (p)
+                        ; if we find our cookie, return 0 to avoid counting shared structure twice.
+                        ; otherwise, (car p) must be a cookie from an earlier call to $compute-size,
+                        ; so return the recorded size
+                        (if (eq? (car p) cookie)
+                            0
+                            (begin
+                              (set-car! p cookie)
+                              (cdr p))))]
+                     [else
+                      (let ([p (cons cookie 0)])
+                        (set-cdr! a p)
+                        (let ([size (really-compute-size x)])
+                          (set-cdr! p size)
+                          size))])))))
          (define really-compute-size
-           (lambda (x si)
+           (lambda (x)
              (cond
                [(pair? x)
-                (let ([space ($seginfo-space si)])
+                (let ([space ($seginfo-space ($maybe-seginfo x))])
                   (cond
-                   [(and (eqv? space (constant space-weakpair))
-                         (not single-inspect-mode?))
-                    (fx+ (constant size-pair) (compute-size (cdr x)))]
                    [(eqv? space (constant space-ephemeron))
-                    (cond
-                      [(and (not single-inspect-mode?)
-                            (let ([a (car x)])
-                              (not (or ($immediate? a)
-                                       (let ([g ($generation a)])
-                                         (or (not g) (fx> g maxgen)))
-                                       (and (eq-bitset-member? size-ht-or-bitset a)
-                                            (not (eq-hashtable-ref ephemeron-non-keys a #f)))))))
-                       (let ([d (cdr x)])
-                         (unless ($immediate? d)
-                           (unless ephemeron-triggers-bitset
-                             (set! ephemeron-triggers-bitset (make-eq-bitset))
-                             (set! ephemeron-triggers (make-eq-hashtable)))
-                           (let ([v (car x)])
-                             (eq-bitset-add! ephemeron-triggers-bitset v)
-                             (let ([a (eq-hashtable-cell ephemeron-triggers v '())])
-                               (set-cdr! a (cons d (cdr a)))))))
-                       (constant size-ephemeron)]
-                      [else
-                       (fx+ (constant size-ephemeron) (compute-size (car x)) (compute-size (cdr x)))])]
+                    (fx+ (constant size-ephemeron) (compute-size (car x)) (compute-size (cdr x)))]
                    [else
                     (fx+ (constant size-pair) (compute-size (car x)) (compute-size (cdr x)))]))]
                [(symbol? x)
@@ -2755,35 +2709,9 @@
                 (fx+ (constant size-tlc)
                   (phantom-bytevector-length x))]
                [else ($oops who "missing case for ~s" x)])))
-         (cond
-          [single-inspect-mode?
-            ; ensure size-ht isn't counted in the size of any object
-           (eq-hashtable-set! size-ht-or-bitset size-ht-or-bitset (cons cookie 0))
-           (map compute-size x*)]
-          [else
-           ; ensure bitset isn't counted in the size of any object
-           (eq-bitset-add! size-ht-or-bitset size-ht-or-bitset)
-           ;; Stop at each element of `x` when getting results for other elements,
-           ;; but don't treat later elements as already-reached ephemeron keys:
-           (for-each (lambda (x)
-                       (eq-bitset-add! size-ht-or-bitset x)
-                       (eq-hashtable-set! ephemeron-non-keys x #t))
-                     x*)
-           ;; Traverse `x*` in order:
-           (let loop ([x* x*])
-             (cond
-              [(null? x*) '()]
-              [else
-               (let ([x (car x*)])
-                 (eq-bitset-remove! size-ht-or-bitset x)
-                 (eq-hashtable-delete! ephemeron-non-keys x)
-                 (cons (compute-size x)
-                       (loop (cdr x*))))]))])])))
-
-  (set-who! $compute-size
-    (case-lambda
-     [(x maxgen) (car ($compute-size-increments (list x) maxgen #t (make-eq-hashtable)))]
-     [(x maxgen size-ht) (car ($compute-size-increments (list x) maxgen #t size-ht))]))
+         ; ensure size-ht isn't counted in the size of any object
+         (eq-hashtable-set! size-ht size-ht (cons cookie 0))
+         (compute-size x)])))
 
   (set-who! $compute-composition
     (lambda (x maxgen)
@@ -3120,14 +3048,14 @@
       [(x g) ($compute-size x (filter-generation who g))]))
 
   (set-who! compute-size-increments
-    (rec compute-size-increments
-      (case-lambda
-       [(x*) (compute-size-increments x* (collect-maximum-generation))]
-       [(x* g)
-        (unless (list? x*) ($oops who "~s is not a list" x*))
-        (let ([g (filter-generation who g)])
-          (with-interrupts-disabled
-           ($compute-size-increments x* g)))])))
+    (let ([count_size_increments (foreign-procedure "(cs)count_size_increments" (ptr int) ptr)])
+      (rec compute-size-increments
+        (case-lambda
+         [(x*) (compute-size-increments x* (collect-maximum-generation))]
+         [(x* g)
+          (unless (list? x*) ($oops who "~s is not a list" x*))
+          (let ([g (filter-generation who g)])
+            (count_size_increments x* g))]))))
 
   (set-who! compute-composition
     (case-lambda
