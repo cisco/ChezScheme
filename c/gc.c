@@ -492,7 +492,6 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
 
          ls = copy_list(si->locked_objects, tg);
          si->locked_objects = ls;
-         si->unlocked_objects = Snil;
          
          while (ls != Snil) {
            ptr p = Scar(ls);
@@ -505,7 +504,8 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
            ls = Scdr(ls);
          }
        }
-      }
+       si->unlocked_objects = Snil;
+     }
 
 #ifdef ENABLE_OBJECT_COUNTS
   /* sweep count_roots in order and accumulate counts */
@@ -939,7 +939,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
 #endif /* WIN32 */
 
    /* post-collection handling of locked objects.  This must come after
-      any use of relocate or any other use of sorted_locked_objects */
+      any use of relocate. */
     for (ls = younger_locked_objects; ls != Snil; ls = Scdr(ls)) {
         ptr x = Scar(ls);
         ptr a1, a2; uptr seg; uptr n;
@@ -962,9 +962,9 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
           if (!(si->space  & space_locked)) {
             si->generation = tg;
             si->space = (si->space & ~space_old) | space_locked;
-            si->locked_mask = NULL;
             sanitize_locked_segment(si);
           }
+          si->locked_mask = NULL; /* really only need to clear the first one */
         }
     }
 

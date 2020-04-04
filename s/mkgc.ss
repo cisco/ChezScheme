@@ -536,7 +536,7 @@
                (&& (!= (set! qsi (MaybeSegInfo (ptr_get_segment cdr_p))) NULL)
                    (&& (== (-> qsi space) (-> si space))
                        (&& (!= (FWDMARKER cdr_p) forward_marker)
-                           (! (locked si cdr_p)))))))
+                           (! (locked qsi cdr_p)))))))
        (check_triggers qsi)
        (size size-pair 2)
        (define new_cdr_p : ptr (cast ptr (+ (cast uptr _copy_) size_pair)))
