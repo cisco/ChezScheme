@@ -22,6 +22,7 @@ mdclean = cat_flush.exe cat_flush.obj foreign1.exp foreign1.lib foreign1.obj for
 include Mf-base
 
 export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL=*
 
 foreign1.so: $(fsrc)
 	cmd.exe /c "vs.bat x86 && cl /DWIN32 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv953.lib $(fsrc)"
