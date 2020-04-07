@@ -1997,3 +1997,6 @@
 - fixed csug copyright year substititions and changed revisiondate
   to not be generated, making the csug build reproducible
     newrelease csug/csug.stex
+- fixed Windows build using MSYS2
+    c/Mf-a6nt, c/Mf-i3nt, c/Mf-ta6nt, c/Mf-ti3nt, mats/Mf-a6nt,
+    mats/Mf-i3nt, mats/Mf-ta6nt, mats/Mf-ti3nt 
