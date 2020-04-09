@@ -2000,3 +2000,5 @@
 - fixed Windows build using MSYS2
     c/Mf-a6nt, c/Mf-i3nt, c/Mf-ta6nt, c/Mf-ti3nt, mats/Mf-a6nt,
     mats/Mf-i3nt, mats/Mf-ta6nt, mats/Mf-ti3nt 
+- fixed build on Linux with musl libc
+    expeditor.c
