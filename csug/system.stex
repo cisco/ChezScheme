@@ -4831,6 +4831,18 @@ and possibly subtracting \scheme{(initial-bytes-allocated)}.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{bytes-finalized}{\categoryprocedure}{(bytes-finalized)}
+\returns the number of bytes queued in guardians
+\listlibraries
+\endentryheader
+
+The number of bytes associated with objects that were registered in
+guardians as otherwise inaccessible (including the bytes for objects
+reachable only through registered objects) during the most recent
+garbage collection.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{current-memory-bytes}{\categoryprocedure}{(current-memory-bytes)}
 \returns the total number of bytes currently allocated, including overhead
 \listlibraries

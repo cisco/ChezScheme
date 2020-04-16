@@ -411,8 +411,11 @@ ptr S_object_backreferences(void) {
  */
 void Scompact_heap() {
   ptr tc = get_thread_context();
+  IBOOL eoc = S_G.enable_object_counts;
   S_pants_down += 1;
+  S_G.enable_object_counts = 1;
   S_gc_oce(tc, S_G.max_nonstatic_generation, static_generation, Sfalse);
+  S_G.enable_object_counts = eoc;
   S_pants_down -= 1;
 }
 

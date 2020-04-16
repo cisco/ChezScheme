@@ -1165,6 +1165,7 @@
   (bwp-object? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (bytes-allocated [sig [() -> (uint)] [(ptr) -> (uint)] [(ptr maybe-sub-symbol) -> (uint)]] [flags alloc])
   (bytes-deallocated [sig [() -> (uint)]] [flags unrestricted alloc])
+  (bytes-finalized [sig [() -> (uint)]] [flags unrestricted alloc])
   (bytevector [sig [(u8/s8 ...) -> (bytevector)]] [flags alloc cp02])
   (bytevector->s8-list [sig [(bytevector) -> (list)]] [flags alloc])
   (bytevector-truncate! [sig [(bytevector length) -> (bytevector)]] [flags true])

@@ -64,6 +64,7 @@ extern void S_protect PROTO((ptr *p));
 extern void S_reset_scheme_stack PROTO((ptr tc, iptr n));
 extern void S_reset_allocation_pointer PROTO((ptr tc));
 extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
+extern ptr S_bytes_finalized PROTO(());
 extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
 extern void S_dirty_set PROTO((ptr *loc, ptr x));
 extern void S_scan_dirty PROTO((ptr **p, ptr **endp));

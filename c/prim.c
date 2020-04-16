@@ -170,6 +170,7 @@ void S_prim_init() {
 
     Sforeign_symbol("(cs)fixedpathp", (void *)S_fixedpathp);
     Sforeign_symbol("(cs)bytes_allocated", (void *)S_compute_bytes_allocated);
+    Sforeign_symbol("(cs)bytes_finalized", (void *)S_bytes_finalized);
     Sforeign_symbol("(cs)curmembytes", (void *)S_curmembytes);
     Sforeign_symbol("(cs)maxmembytes", (void *)S_maxmembytes);
     Sforeign_symbol("(cs)resetmaxmembytes", (void *)S_resetmaxmembytes);

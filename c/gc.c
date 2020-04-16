@@ -21,8 +21,6 @@
 #endif /* WIN32 */
 #include "popcount.h"
 
-#define enable_object_counts do_not_use_enable_object_counts_in_this_file_use_ifdef_ENABLE_OBJECT_COUNTS_instead
-
 /* locally defined functions */
 static uptr list_length PROTO((ptr ls));
 static ptr copy_list PROTO((ptr ls, IGEN tg));
@@ -66,6 +64,7 @@ static void sanitize_locked_segment PROTO((seginfo *si));
 #ifdef ENABLE_OBJECT_COUNTS
 static uptr total_size_so_far();
 #endif
+static uptr target_generation_space_so_far();
 
 #ifdef ENABLE_MEASURE
 static void init_measure(IGEN min_gen, IGEN max_gen);
@@ -360,6 +359,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
     seginfo *oldspacesegments, *si, *nextsi;
     ptr ls, younger_locked_objects;
     bucket_pointer_list *buckets_to_rebuild;
+    uptr pre_finalization_size;
 #ifdef ENABLE_OBJECT_COUNTS
     ptr count_roots_counts = Snil;
     iptr count_roots_len;
@@ -633,6 +633,8 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
 
     sweep_generation(tc, tg);
 
+    pre_finalization_size = target_generation_space_so_far();
+
   /* handle guardians */
     {   ptr hold_ls, pend_hold_ls, final_ls, pend_final_ls, maybe_final_ordered_ls;
         ptr obj, rep, tconc, next;
@@ -843,6 +845,8 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
         S_G.guardians[tg] = hold_ls;
     }
 
+    S_G.bytes_finalized = target_generation_space_so_far() - pre_finalization_size;
+
   /* handle weak pairs */
     resweep_dirty_weak_pairs();
     resweep_weak_pairs(tg);
@@ -898,8 +902,10 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
 
   /* rebuild rtds_with_counts lists, dropping otherwise inaccessible rtds */
     { IGEN g; ptr ls, p, newls = tg == mcg ? Snil : S_G.rtds_with_counts[tg]; seginfo *si;
+      int count = 0;
       for (g = 0; g <= mcg; g += 1) {
         for (ls = S_G.rtds_with_counts[g], S_G.rtds_with_counts[g] = Snil; ls != Snil; ls = Scdr(ls)) {
+          count++;
           p = Scar(ls);
           si = SegInfo(ptr_get_segment(p));
           if (!(si->space & space_old) || locked(si, p)) {
@@ -1854,6 +1860,20 @@ static uptr total_size_so_far() {
   return total - count_root_bytes;
 }
 #endif
+
+static uptr target_generation_space_so_far() {
+  IGEN g = target_generation;
+  ISPC s;
+  uptr sz = S_G.phantom_sizes[g];
+
+  for (s = 0; s <= max_real_space; s++) {
+    sz += S_G.bytes_of_space[s][g];
+    if (S_G.next_loc[s][g] != FIX(0))
+      sz += (char *)S_G.next_loc[s][g] - (char *)S_G.base_loc[s][g];
+  }
+
+  return sz;
+}
 
 /* **************************************** */
 

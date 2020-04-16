@@ -746,37 +746,38 @@
    [copy
     (case-flag counts?
      [on
-      (let* ([c_rtd : ptr (cond
-                            [(== _tf_ _) _copy_]
-                            [else rtd])]
-             [counts : ptr (record-type-counts c_rtd)])
-        (cond
-          [(== counts Sfalse)
-           (let* ([grtd : IGEN (GENERATION c_rtd)])
-             (set! (array-ref (array-ref S_G.countof grtd) countof_rtd_counts) += 1)
-             ;; Allocate counts struct in same generation as rtd. Initialize timestamp & counts.
-             (find_room space_data grtd type_typed_object size_rtd_counts counts)
-             (set! (rtd-counts-type counts) type_rtd_counts)
-             (set! (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
-             (let* ([g : IGEN 0])
-               (while
-                :? (<= g static_generation)
-                (set! (rtd-counts-data counts g) 0)
-                (set! g += 1)))
+      (when S_G.enable_object_counts
+        (let* ([c_rtd : ptr (cond
+                              [(== _tf_ _) _copy_]
+                              [else rtd])]
+               [counts : ptr (record-type-counts c_rtd)])
+          (cond
+            [(== counts Sfalse)
+             (let* ([grtd : IGEN (GENERATION c_rtd)])
+               (set! (array-ref (array-ref S_G.countof grtd) countof_rtd_counts) += 1)
+               ;; Allocate counts struct in same generation as rtd. Initialize timestamp & counts.
+               (find_room space_data grtd type_typed_object size_rtd_counts counts)
+               (set! (rtd-counts-type counts) type_rtd_counts)
+               (set! (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
+               (let* ([g : IGEN 0])
+                 (while
+                  :? (<= g static_generation)
+                  (set! (rtd-counts-data counts g) 0)
+                  (set! g += 1)))
+               (set! (record-type-counts c_rtd) counts)
+               (set! (array-ref S_G.rtds_with_counts grtd)
+                     ;; this list will get copied again in `rtds_with_counts` fixup
+                     (S_cons_in space_new 0 c_rtd (array-ref S_G.rtds_with_counts grtd)))
+               (set! (array-ref (array-ref S_G.countof grtd) countof_pair) += 1))]
+            [else
+             (trace-early (just counts))
              (set! (record-type-counts c_rtd) counts)
-             (set! (array-ref S_G.rtds_with_counts grtd)
-                   (S_cons_in (cond [(== grtd 0) space_new] [else space_impure]) grtd c_rtd
-                              (array-ref S_G.rtds_with_counts grtd)))
-             (set! (array-ref (array-ref S_G.countof grtd) countof_pair) += 1))]
-          [else
-           (trace-early (just counts))
-           (set! (record-type-counts c_rtd) counts)
-           (when (!= (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
-             (S_fixup_counts counts))])
-        (set! (rtd-counts-data counts tg) (+ (rtd-counts-data counts tg) 1))
-        ;; Copies size that we've already gathered, but needed for counting from roots:
-        (when (== p_spc space-count-impure) (set! count_root_bytes += p_sz))
-        (count countof-record))]
+             (when (!= (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
+               (S_fixup_counts counts))])
+          (set! (rtd-counts-data counts tg) (+ (rtd-counts-data counts tg) 1))))
+      ;; Copies size that we may have already gathered, but needed for counting from roots:
+      (when (== p_spc space-count-impure) (set! count_root_bytes += p_sz))
+      (count countof-record)]
      [off])]
    [else]))
 

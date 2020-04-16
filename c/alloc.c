@@ -168,6 +168,10 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   return Sunsigned(n);
 }
 
+ptr S_bytes_finalized() {
+  return Sunsigned(S_G.bytes_finalized);
+}
+
 static void maybe_fire_collector() {
   ISPC s;
   uptr bytes, fudge;

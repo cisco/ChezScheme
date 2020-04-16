@@ -86,6 +86,13 @@
       [(g) (ba (filter-generation g) -1)]
       [(g s) (ba (if g (filter-generation g) -1) (if s (filter-space s) -1))])))
 
+(define-who bytes-finalized
+  (let ([bf (foreign-procedure "(cs)bytes_finalized"
+              ()
+              scheme-object)])
+    (lambda ()
+      (bf))))
+
 (define $spaces (lambda () (map car (constant real-space-alist))))
 
 (define current-memory-bytes (foreign-procedure "(cs)curmembytes" () uptr))
