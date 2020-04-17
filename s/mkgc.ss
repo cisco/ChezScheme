@@ -766,8 +766,13 @@
                   (set! g += 1)))
                (set! (record-type-counts c_rtd) counts)
                (set! (array-ref S_G.rtds_with_counts grtd)
-                     ;; this list will get copied again in `rtds_with_counts` fixup
-                     (S_cons_in space_new 0 c_rtd (array-ref S_G.rtds_with_counts grtd)))
+                     ;; For max_copied_generation, the list will get copied again in `rtds_with_counts` fixup;
+                     ;; meanwhile, allocating in `space_impure` would copy and sweep old list entries causing
+                     ;; otherwise inaccessible rtds to be retained
+                     (S_cons_in (cond [(<= grtd max_copied_generation) space_new] [else space_impure])
+                                (cond [(<= grtd max_copied_generation) 0] [else grtd])
+                                c_rtd
+                                (array-ref S_G.rtds_with_counts grtd)))
                (set! (array-ref (array-ref S_G.countof grtd) countof_pair) += 1))]
             [else
              (trace-early (just counts))
