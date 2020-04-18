@@ -48,7 +48,7 @@ static void sweep_code_object PROTO((ptr tc, ptr co));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void sweep_dirty PROTO((void));
 static IGEN sweep_dirty_intersecting PROTO((ptr lst, ptr *pp, ptr *ppend, IGEN tg, IGEN youngest));
-static IGEN sweep_dirty_bytes PROTO((ptr *pp, ptr *ppend, ptr *pu, ptr *puend, IGEN tg, IGEN youngest));
+static IGEN sweep_dirty_object PROTO((ptr p, IGEN tg, IGEN youngest));
 static void resweep_dirty_weak_pairs PROTO((void));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
@@ -1542,66 +1542,8 @@ IGEN sweep_dirty_intersecting(ptr lst, ptr *pp, ptr *ppend, IGEN tg, IGEN younge
 
     if (((pu >= pp) && (pu < ppend))
         || ((puend >= pp) && (puend < ppend))
-        || ((pu <= pp) && (puend >= ppend))) {
-      /* Overlaps, so sweep */
-      ITYPE t = TYPEBITS(p);
-
-      if (t == type_pair) {
-        youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
-      } else if (t == type_closure) {
-        ptr code;
-
-        code = CLOSCODE(p);
-        if (CODETYPE(code) & (code_flag_mutable_closure << code_flags_offset)) {
-          youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
-        }
-      } else if (t == type_symbol) {
-        youngest = sweep_dirty_symbol(p, tg, youngest);
-      } else if (t == type_flonum) {
-        /* nothing to sweep */
-      } else {
-        ptr tf = TYPEFIELD(p);
-        if (TYPEP(tf, mask_vector, type_vector)
-            || TYPEP(tf, mask_stencil_vector, type_stencil_vector)
-            || TYPEP(tf, mask_box, type_box)
-            || ((iptr)tf == type_tlc)) {
-          /* impure objects */
-          youngest = sweep_dirty_bytes(pp, ppend, pu, puend, tg, youngest);
-        } else if (TYPEP(tf, mask_string, type_string)
-                   || TYPEP(tf, mask_bytevector, type_bytevector)
-                   || TYPEP(tf, mask_fxvector, type_fxvector)) {
-          /* nothing to sweep */;
-        } else if (TYPEP(tf, mask_record, type_record)) {
-          youngest = sweep_dirty_record(p, tg, youngest);
-        } else if (((iptr)tf == type_ratnum)
-                   || ((iptr)tf == type_exactnum)
-                   || TYPEP(tf, mask_bignum, type_bignum)) {
-          /* immutable */
-        } else if (TYPEP(tf, mask_port, type_port)) {
-          youngest = sweep_dirty_port(p, tg, youngest);
-        } else if (TYPEP(tf, mask_code, type_code)) {
-          /* immutable */
-        } else if (((iptr)tf == type_rtd_counts)
-                   || ((iptr)tf == type_phantom)) {
-          /* nothing to sweep */;
-        } else {
-          S_error_abort("sweep_dirty_intersection(gc): unexpected type");
-        }
-      }
-    }
-  }
-
-  return youngest;
-}
-
-IGEN sweep_dirty_bytes(ptr *pp, ptr *ppend, ptr *pu, ptr *puend, IGEN tg, IGEN youngest)
-{
-  if (pu < pp) pu = pp;
-  if (puend > ppend) puend = ppend;
-
-  while (pu < puend) {
-    relocate_dirty(pu,tg,youngest)
-    pu += 1;
+        || ((pu <= pp) && (puend >= ppend)))
+      youngest = sweep_dirty_object(p, tg, youngest);
   }
 
   return youngest;

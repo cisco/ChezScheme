@@ -170,8 +170,9 @@
     (define code : ptr (CLOSCODE _))
     (trace-code-early code)
     (cond
-      [(or-assume-continuation
-        (& (code-type code) (<< code-flag-continuation code-flags-offset)))
+      [(and-not-as-dirty
+        (or-assume-continuation
+         (& (code-type code) (<< code-flag-continuation code-flags-offset))))
        ;; continuation
        (space (cond
                 [(and-counts (is_counting_root si _)) space-count-pure]
@@ -228,8 +229,10 @@
           (vfasl-fail "mutable closure")))
        (define len : uptr (code-closure-length code))
        (size (size_closure len))
-       (copy-clos-code code)
-       (trace-ptrs closure-data len)
+       (when (or-not-as-dirty
+              (& (code-type code) (<< code-flag-mutable-closure code-flags-offset)))
+         (copy-clos-code code)
+         (trace-ptrs closure-data len))
        (pad (when (== (& len 1) 0)
               (set! (closure-data _copy_ len) (FIX 0))))
        (count countof-closure)])]
@@ -414,8 +417,8 @@
       (vspace vspace_impure) ; would be better if we had pure, but these are rare
       (size size-ratnum)
       (copy-type ratnum-type)
-      (trace-now ratnum-numerator)
-      (trace-now ratnum-denominator)
+      (trace-immutable-now ratnum-numerator)
+      (trace-immutable-now ratnum-denominator)
       (vfasl-pad-word)
       (count countof-ratnum)]
 
@@ -424,8 +427,8 @@
       (vspace vspace_impure) ; same rationale as ratnum
       (size size-exactnum)
       (copy-type exactnum-type)
-      (trace-now exactnum-real)
-      (trace-now exactnum-imag)
+      (trace-immutable-now exactnum-real)
+      (trace-immutable-now exactnum-imag)
       (vfasl-pad-word)
       (count countof-exactnum)]
 
@@ -465,15 +468,16 @@
       (vspace vspace_code)
       (define len : uptr (code-length _)) ; in bytes
       (size (size_code len))
-      (copy-type code-type)
-      (copy code-length)
-      (copy code-reloc)
-      (trace-nonself code-name)
-      (trace-nonself code-arity-mask)
-      (copy code-closure-length)
-      (trace-nonself code-info)
-      (trace-nonself code-pinfo*)
-      (trace-code len)
+      (when (and-not-as-dirty 1)
+       (copy-type code-type)
+       (copy code-length)
+       (copy code-reloc)
+       (trace-nonself code-name)
+       (trace-nonself code-arity-mask)
+       (copy code-closure-length)
+       (trace-nonself code-info)
+       (trace-nonself code-pinfo*)
+       (trace-code len))
       (count countof-code)]
 
      [thread
@@ -486,7 +490,8 @@
        [self-test]
        [else
         (copy-type thread-type)
-        (trace-tc thread-tc)
+        (when (and-not-as-dirty 1)
+          (trace-tc thread-tc))
         (count countof-thread)])]
 
      [rtd-counts
@@ -568,6 +573,10 @@
    [measure
     (add_ephemeron_to_pending_measure _)]
    [else]))
+
+(define-trace-macro (trace-immutable-now ref)
+  (when (and-not-as-dirty 1)
+    (trace-now ref)))
 
 (define-trace-macro (trace-code-early code)
   (unless-code-relocated
@@ -1023,7 +1032,10 @@
 (define-trace-macro (unless-code-relocated stmt)
   (case-flag code-relocated?
    [on]
-   [off stmt]))
+   [off
+    (case-flag as-dirty?
+     [on]
+     [off stmt])]))
 
 (define-trace-macro (or-assume-continuation e)
   (case-flag assume-continuation?
@@ -1034,6 +1046,16 @@
   (case-flag counts?
    [on e]
    [off 0]))
+
+(define-trace-macro (and-not-as-dirty e)
+  (case-flag as-dirty?
+   [on 0]
+   [off e]))
+
+(define-trace-macro (or-not-as-dirty e)
+  (case-flag as-dirty?
+   [on e]
+   [off 1]))
 
 (define-trace-macro (or-vfasl e)
   (case-mode
@@ -1228,7 +1250,8 @@
              name
              (case (lookup 'mode config)
                [(sweep)
-                (if (type-included? 'code config)
+                (if (and (type-included? 'code config)
+                         (not (lookup 'as-dirty? config #f)))
                     "ptr tc_in, "
                     "")]
                [(vfasl-copy vfasl-sweep)
@@ -1405,7 +1428,7 @@
                             off)])
               (statements (append body (cdr l)) config))]
            [`(trace-early-rtd ,field)
-            (code (case (and (not (lookup 'only-dirty? config #f))
+            (code (case (and (not (lookup 'as-dirty? config #f))
                              (not (lookup 'rtd-relocated? config #f))
                              (lookup 'mode config))
                     [(copy sweep)
@@ -2127,6 +2150,11 @@
                              `((mode sweep)
                                (maybe-backreferences? ,count?)
                                (counts? ,count?))))
+       (print-code (generate "sweep_dirty_object"
+                             `((mode sweep)
+                               (maybe-backreferences? ,count?)
+                               (counts? ,count?)
+                               (as-dirty? #t))))
        (letrec ([sweep1
                  (case-lambda
                   [(type) (sweep1 type (format "sweep_~a" type) '())]
