@@ -189,6 +189,8 @@ void S_prim_init() {
     Sforeign_symbol("(cs)maxgen", (void *)S_maxgen);
     Sforeign_symbol("(cs)set_maxgen", (void *)S_set_maxgen);
     Sforeign_symbol("(cs)minfreegen", (void *)S_minfreegen);
+    Sforeign_symbol("(cs)set_minmarkgen", (void *)S_set_minmarkgen);
+    Sforeign_symbol("(cs)minmarkgen", (void *)S_minmarkgen);
     Sforeign_symbol("(cs)set_minfreegen", (void *)S_set_minfreegen);
     Sforeign_symbol("(cs)enable_object_counts", (void *)S_enable_object_counts);
     Sforeign_symbol("(cs)set_enable_object_counts", (void *)S_set_enable_object_counts);
@@ -215,6 +217,8 @@ static void s_instantiate_code_object() {
     tc_mutex_acquire()
     new = S_code(tc, CODETYPE(old), CODELEN(old));
     tc_mutex_release()
+
+    S_immobilize_object(new);
 
     oldreloc = CODERELOC(old);
     size = RELOCSIZE(oldreloc);

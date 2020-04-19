@@ -14,7 +14,7 @@
 ;;; limitations under the License.
 
 ;;; regression and other tests that don't fit somewhere more logical
-  
+
 (define-syntax biglet
   (lambda (x)
     (syntax-case x ()
@@ -2696,6 +2696,8 @@
   (time=? (cost-center-time $cc-3) (make-time 'time-duration 0 0))
 )
 
+
+
 (mat lock-object
   (begin
     (define $locked-objects (foreign-procedure "(cs)locked_objects" () ptr))
@@ -3042,7 +3044,7 @@
       (set-car! p 'yes)
       (unlock-object v)
       (equal? '(yes . 2) (vector-ref v (sub1 N)))))
-)
+  )
 
 (mat eval-order
   (eqv? (call/cc (lambda (k) (0 (k 1)))) 1)
@@ -4870,7 +4872,6 @@
       (and
        (equal? (wrapper-procedure-data a) g)
        (begin (unlock-object a) #t))))
-
   )
 
 (mat fasl-immutable
@@ -5093,10 +5094,12 @@
      (bytes-allocated)
      (* 2.25 $pre-allocated))
 
-  ;; No big change to `(current-memory-bytes)`
-  (< (* 0.75 $pre-memory)
+  ;; Big change to `(current-memory-bytes)`
+  (< (+ (* 0.75 $pre-allocated)
+        $pre-memory)
      (current-memory-bytes)
-     (* 1.25 $pre-memory))
+     (+ (* 1.25 $pre-memory)
+        $pre-memory))
 
   ;; Same change after GC
   (begin
@@ -5140,4 +5143,177 @@
     (< (* 0.75 $pre-allocated)
        (bytes-allocated)
        (* 1.25 $pre-allocated)))
-)
+  )
+
+(mat immobile
+  (error? (box-immobile))
+  (error? (box-immobile 1 2))
+
+  (error? (make-immobile-vector))
+  (error? (make-immobile-vector 'a))
+  (error? (make-immobile-vector -10))
+  (error? (make-immobile-vector (expt 2 100)))
+  (error? (make-immobile-vector 10 1 2))
+
+  (error? (make-immobile-bytevector))
+  (error? (make-immobile-bytevector 'a))
+  (error? (make-immobile-byte-vector -10))
+  (error? (make-immobile-bytevector (expt 2 100)))
+  (error? (make-immobile-bytevector 10 1024))
+  (error? (make-immobile-bytevector 10 1 2))
+
+  (box? (box-immobile 10))
+  (vector? (make-immobile-vector 10))
+  (eqv? 0 (vector-ref (make-immobile-vector 10) 9))
+  (bytevector? (make-immobile-bytevector 10))
+  (eqv? 0 (bytevector-u8-ref (make-immobile-bytevector 10 0) 9))
+
+  (begin
+    (define (make-objects)
+      (let loop ([i 16])
+        (cond
+          [(zero? i) '()]
+          [else
+           (let* ([b (box-immobile (format "box ~a" i))]
+                  [b-addr (#%$fxaddress b)]
+                  [v (make-immobile-vector (expt 2 i) b)]
+                  [v-addr (#%$fxaddress v)]
+                  [s (make-immobile-bytevector (expt 2 i) i)]
+                  [s-addr (#%$fxaddress s)])
+             (cons (list i
+                         b b-addr
+                         v v-addr
+                         s s-addr)
+                   (loop (sub1 i))))])))
+    (define (check-objects l)
+      (let loop ([l l])
+        (or (null? l)
+            (let-values ([(i b b-addr v v-addr s s-addr) (apply values (car l))])
+              (and (equal? (format "box ~a" i) (unbox b))
+                   (equal? (format "box ~a" i) (unbox (vector-ref v (sub1 (vector-length v)))))
+                   (eqv? i (bytevector-u8-ref s (sub1 (bytevector-length s))))
+                   (eqv? b-addr (#%$fxaddress b))
+                   (eqv? v-addr (#%$fxaddress v))
+                   (eqv? s-addr (#%$fxaddress s))
+                   (loop (cdr l)))))))
+    (define (mutate-objects l)
+      (let loop ([l l])
+        (or (null? l)
+            (let-values ([(i b b-addr v v-addr s s-addr) (apply values (car l))])
+              (set-box! b (format "box ~a" i))
+              (vector-set! v (sub1 (vector-length v)) (box (unbox b)))
+              (loop (cdr l))))))
+    #t)
+
+  (with-interrupts-disabled
+   (let ([objs (make-objects)])
+     (and (check-objects objs)
+          (begin
+            (collect 0 1)
+            (and
+             (check-objects objs)
+             (begin
+               (mutate-objects objs)
+               (collect 0 0)
+               (and
+                (check-objects objs)
+                (begin
+                  (collect (collect-maximum-generation))
+                  (check-objects objs)))))))))
+
+  (or
+   (not (threaded?))
+   (let ([m (make-mutex)]
+         [c (make-condition)]
+         [running 4])
+     (let thread-loop ([t running])
+       (unless (= t 0)
+         (fork-thread
+          (lambda ()
+            (let loop ([i 1000] [objs '()] [addrs '()])
+              (cond
+                [(= i 0)
+                 (mutex-acquire m)
+                 (set! running (sub1 running))
+                 (condition-signal c)
+                 (mutex-release m)]
+                [else
+                 (let ([v (case (modulo i 3)
+                            [(0) (box-immobile objs)]
+                            [(1) (make-immobile-vector i objs)]
+                            [(2) (make-immobile-bytevector i)])])
+                   (let ([objs (cons v objs)]
+                         [addrs (cons (#%$fxaddress v) addrs)])
+                     (collect-rendezvous)
+                     (let check ([objs objs] [addrs addrs])
+                       (unless (null? objs)
+                         (let ([v (car objs)])
+                           (unless (= (#%$fxaddress v) (car addrs))
+                             (error 'immobile "address changed: ~s" v))
+                           (cond
+                             [(box? v)
+                              (unless (eq? (unbox v) (cdr objs))
+                                (error 'immobile "bad box content"))]
+                             [(vector? v)
+                              (let loop ([j 0])
+                                (unless (= j (vector-length v))
+                                  (unless (eq? (cdr objs) (vector-ref v j))
+                                    (error 'immobile "bad vector content"))
+                                  (loop (add1 j))))]
+                             [(bytevector? v)
+                              (void)]
+                             [else
+                              (error 'immobile "bad object: ~s" v)]))
+                         (check (cdr objs) (cdr addrs))))
+                     (loop (sub1 i) objs addrs)))]))))
+         (thread-loop (sub1 t))))
+     (mutex-acquire m)
+     (let loop ()
+       (unless (= running 0)
+         (condition-wait c m)
+         (loop)))
+     (mutex-release m)
+     #t))
+
+  )
+
+(mat compacting
+  ;; try to provoke the GC into putting a record into marked
+  ;; (insteda of copied) space and check the write barrier there
+  (let loop ([N 2])
+    (or (= N 8192)
+        (let sel-loop ([sels (list car cadr)])
+          (cond
+            [(null? sels) (loop (* N 2))]
+            [else
+             (let ()
+               (define rtd (make-record-type
+                            "r"
+                            (let loop ([i N])
+                              (if (zero? i)
+                                  (list '[ptr y])
+                                  (cons `[uptr ,(string->symbol (format "x~a" i))]
+                                        (loop (sub1 i)))))))
+               
+               (define (make-r)
+                 (apply (record-constructor rtd)
+                        (let loop ([i N])
+                          (if (zero? i)
+                              '(the-y-value)
+                              (cons 0 (loop (sub1 i)))))))
+               
+               (define r-y (record-accessor rtd N))
+               (define set-r-y! (record-mutator rtd N))
+               
+               (define rs (list (make-r)
+                                (make-r)
+                                (make-r)))
+               (collect (collect-maximum-generation))
+               (set! rs (list (car rs) (caddr rs)))
+               (collect (collect-maximum-generation))
+               (set-r-y! ((car sels) rs) (string-copy "new-string-to-go"))
+               (collect)
+               (and (equal? (r-y ((car sels) rs))
+                            "new-string-to-go")
+                    (sel-loop (cdr sels))))]))))
+  )

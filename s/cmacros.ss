@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905031A)
+(define-constant scheme-version #x0905031B)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -409,6 +409,8 @@
 ; This is safe since we never forward flonums.
 (define-constant byte-alignment
   (max (constant typemod) (* 2 (constant ptr-bytes))))
+(define-constant ptr-alignment
+  (/ (constant byte-alignment) (constant ptr-bytes)))
 
 ;;; fasl codes---see fasl.c for documentation of representation
 
@@ -605,10 +607,6 @@
 (define-constant ERROR_VALUES 7)
 (define-constant ERROR_MVLET 8)
 
-;;; allocation spaces
-(define-constant space-locked #x20)         ; lock flag
-(define-constant space-old #x40)            ; oldspace flag
-
 (define-syntax define-alloc-spaces
   (lambda (x)
     (syntax-case x (real swept unswept unreal)
@@ -634,10 +632,6 @@
                        [(cchar ...) #'(real-cchar ... unreal-cchar ... last-unreal-cchar)]
                        [(value ...) #'(real-value ... unreal-value ... last-unreal-value)])
            (with-syntax ([(space-name ...) (map (lambda (n) (construct-name n "space-" n)) #'(name ...))])
-             (unless (< (syntax->datum #'last-unreal-value) (constant space-locked))
-               ($oops 'define-alloc-spaces "conflict with space-locked"))
-             (unless (< (syntax->datum #'last-unreal-value) (constant space-old))
-               ($oops 'define-alloc-spaces "conflict with space-old"))
              #'(begin
                  (define-constant space-name value) ...
                  (define-constant real-space-alist '((real-name . real-value) ...))
@@ -663,12 +657,14 @@
       (impure-record "ip-rec" #\s 10)    ;
       (impure-typed-object "ip-tobj" #\t 11) ; as needed (instead of impure) for backtraces
       (closure "closure" #\l 12)         ; as needed (instead of pure/impure) for backtraces
-      (count-pure "count-pure" #\y 13)     ; like pure, but delayed for counting from roots
-      (count-impure "count-impure" #\z 14)); like impure-typed-object, but delayed for counting from roots
+      (immobile-impure "im-impure" #\I 13) ; like impure, but for immobile objects
+      (count-pure "cnt-pure" #\y 14)     ; like pure, but delayed for counting from roots
+      (count-impure "cnt-impure" #\z 15)); like impure-typed-object, but delayed for counting from roots
     (unswept
-      (data "data" #\d 15)))             ; unswept objects allocated here
+      (data "data" #\d 16)               ; unswept objects allocated here
+      (immobile-data "im-data" #\D 17))) ; like data, but non-moving
   (unreal
-    (empty "empty" #\e 16)))             ; available segments
+    (empty "empty" #\e 18)))             ; available segments
 
 ;;; enumeration of types for which gc tracks object counts
 ;;; also update gc.c
@@ -701,7 +697,8 @@
 (define-constant countof-ephemeron 25)
 (define-constant countof-stencil-vector 26)
 (define-constant countof-record 27)
-(define-constant countof-types 28)
+(define-constant countof-phantom 28)
+(define-constant countof-types 29)
 
 ;;; type-fixnum is assumed to be all zeros by at least by vector, fxvector,
 ;;; and bytevector index checks

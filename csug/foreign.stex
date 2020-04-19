@@ -1069,13 +1069,13 @@ the address of the entry point within the code object.
 (The C-callable library function \scheme{Sforeign_callable_entry_point}, described in
 Section~\ref{SECTFOREIGNCLIB}, may be used to obtain the entry point
 as well.)  
-This is an implicit pointer into a Scheme object, and
-in many cases, it is necessary to lock the code object
-(using \index{\scheme{lock-object}}\scheme{lock-object})
-before converting it into an entry point
-to prevent Scheme's storage management system from
-relocating or destroying the code object, e.g., when the entry point is
+This is an implicit pointer into an immobile Scheme object, so
+it will not be relocated by the storage management system, but
+it may be reclaimed if the code object becomes unreachable on the Scheme
+side; lock the code object (using \index{\scheme{lock-object}}\scheme{lock-object})
+or otherwise retain it if the entry point is, for example,
 registered as a callback and retained in the ``C'' side indefinitely.
+
 
 The following code creates a foreign-callable code object, locks
 the code object, and returns the entry point.
@@ -1090,9 +1090,9 @@ the code object, and returns the entry point.
 \endschemedisplay
 
 \noindent
-Unless the entry point is intended to be permanent, a pointer to the
-code object returned by \scheme{foreign-callable} should be retained
-so that it can be unlocked when no longer needed.
+Unless the entry point is intended to be permanent, however, a pointer
+to the code object returned by \scheme{foreign-callable} should be retained,
+in which case locking is unnecessary.
 
 Mixed use of \scheme{foreign-callable} and \scheme{foreign-procedure}
 may result in nesting of foreign and Scheme calls, and this
@@ -1871,8 +1871,8 @@ Thus, \scheme{make-ftype-pointer} with a function ftype is an alternative
 to \scheme{foreign-callable} for creating C-callable wrappers for Scheme
 procedures.
 
-Since all Scheme objects, including code objects, can be relocated or
-even reclaimed by the garbage collector the foreign-callable code object
+Since the foreign-callable code object can be reclaimed by the garbage
+collector if it is not otherwise referenced, the implicit foreign-callable's code object
 is automatically locked, as if via \scheme{lock-object}, before it is
 embedded in the ftype pointer.
 The code object should be unlocked after its last use from C,
@@ -1890,7 +1890,10 @@ to \scheme{unlock-object}:
     (ftype-pointer-address fact-fptr)))
 \endschemedisplay
 
-Once unlocked, the ftype pointer should not be used again, unless
+Even after the code object is unlocked, the code code will remain
+immobile as long as a result of \scheme{foreign-callable-code-object}
+is retained. However, if only the ftype pointer object is retained,
+then the ftype pointer should not be used again unless
 it is relocked, e.g., via:
 
 \schemedisplay

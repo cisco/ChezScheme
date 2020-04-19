@@ -4215,6 +4215,19 @@ misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: #
 misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: -1 is not a valid phantom bytevector length".
 misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: 1267650600228229401496703205376 is not a valid phantom bytevector length".
 misc.mo:Expected error in mat phantom-bytevector: "make-phantom-bytevector: x is not a valid phantom bytevector length".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (box-immobile)".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (box-immobile 1 2)".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector)".
+misc.mo:Expected error in mat immobile: "make-immobile-vector: a is not a valid vector length".
+misc.mo:Expected error in mat immobile: "make-immobile-vector: -10 is not a valid vector length".
+misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 is not a valid vector length".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector 10 1 2)".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector)".
+misc.mo:Expected error in mat immobile: "make-immobile-bytevector: a is not a valid bytevector length".
+misc.mo:Expected error in mat immobile: "variable make-immobile-byte-vector is not bound".
+misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 is not a valid bytevector length".
+misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1024 is not a valid fill value".
+misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector 10 1 2)".
 cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (g)".
 cp0.mo:Expected error in mat cp0-regression: "incorrect argument count in call (cont0 (quote x))".

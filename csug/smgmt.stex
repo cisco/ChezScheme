@@ -332,6 +332,26 @@ if (a) the two parameters have the same value before the change, or (b)
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{in-place-minimum-generation}{\categoryglobalparameter}{in-place-minimum-generation}
+\listlibraries
+\endentryheader
+
+This parameter determines when the storage-management system attempts
+to trade long-term space usage for the benefit of collection time and
+short-term space usage. When performing a collection at the generation
+at least as large as this parameter's value, objects already residing
+at the generation are kept in place---unless the objects are in a
+memory region where previously keeping them in place resulted in too
+much fragmentation.
+
+Typically, the value of \scheme{release-minimum-generation} should
+match the value of the \scheme{collect-maximum-generation} parameter,
+but the value of this parameter can be lower to move objects even less
+frequently, or it can be higher to disable attempts to keep otherwise
+mobile objects in place.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{heap-reserve-ratio}{\categoryglobalparameter}{heap-reserve-ratio}
 \listlibraries
 \endentryheader
@@ -347,6 +367,19 @@ occupied nonstatic page.
 Setting it to a smaller value may result in a smaller average virtual
 memory footprint, while setting it to a larger value may result in fewer
 calls into the operating system to request and free memory space.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{keep-live}{\categoryprocedure}{(keep-live \var{v})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+Ensures that the value produced by \var{v} is retained by the store
+manager until the \scheme{keep-live} call is performed. This function
+can be particularly useful for ensuring that an immobile object
+remains in place.
 
 
 \section{Weak Pairs, Ephemeron Pairs, and Guardians\label{SECTGUARDWEAKPAIRS}}
@@ -984,6 +1017,53 @@ by the collector, including immediate values, such as fixnums,
 booleans, and characters, and objects that have been made static.
 
 
+\section{Immobile Objects\label{SECTSMGMTIMMOBILE}}
+
+Like a locked object, an \emph{immobile} object will not be relocated by
+the storage manager. Unlike a locked object, and immobile object will
+be reclaimed by the storage manager if it is unreachable.
+Foreign-callable code objects are immobile, as are objects allocated
+by functions that specifically create immobile objects.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{box-immobile}{\categoryprocedure}{(box-immobile \var{obj})}
+\returns a box
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{box}, but creates a box that will not be relocated in memory
+by the storage management system until it is reclaimed.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-immobile-vector}{\categoryprocedure}{(make-immobile-vector \var{n})}
+\formdef{make-immobile-vector}{\categoryprocedure}{(make-immobile-vector \var{n} \var{obj})}
+\returns a vector
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{make-vector}, but creates a vector that will not be relocated
+in memory by the storage management system until it is reclaimed.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-immobile-bytevector}{\categoryprocedure}{(make-immobile-bytevector \var{n})}
+\formdef{make-immobile-bytevector}{\categoryprocedure}{(make-immobile-bytevector \var{n} \var{byte})}
+\returns a vector
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{make-bytevector}, but creates a bytevector that will not be relocated
+in memory by the storage management system until it is reclaimed.
+
+
+
 \section{Phantom Bytevectors\label{SECTSMGMTPHANTOM}}
 
 \index{phamtom bytevectors}A \emph{phantom bytevector} represents
@@ -1016,7 +1096,7 @@ allocation.
 The value \var{n} must reflect actual allocation in the sense of
 consuming a portion of the process's address space. Claiming
 significantly more bytes than are actually allocated introduces the
-possibility of overflow within the store management system's
+possibility of overflow within the storage management system's
 calculations.
 
 %----------------------------------------------------------------------------

@@ -321,6 +321,18 @@
          ($oops who "~s is not a valid vector length" n))
        (make-vector n)]))
 
+(define-who make-immobile-vector
+  (let ([$make-immobile-vector (foreign-procedure "(cs)make_immobile_vector" (uptr ptr) ptr)])
+   (case-lambda
+      [(n x)
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
+       ($make-immobile-vector n x)]
+      [(n)
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
+       ($make-immobile-vector n 0)])))
+
 (define $make-eqhash-vector
   (case-lambda
     [(n)
@@ -1279,6 +1291,8 @@
 
 (define box-immutable (lambda (x) (box-immutable x)))
 
+(define box-immobile (foreign-procedure "(cs)box_immobile" (ptr) ptr))
+
 (define unbox
    (lambda (b)
       (if (box? b)
@@ -1804,7 +1818,7 @@
        (when (eq? addr 0)
          ($oops 'mutex-acquire "mutex is defunct"))
        (let ([r ((if block? ma ma-nb) addr)])
-         ($keep-live m)
+         (keep-live m)
          r))]))
 
 (set! mutex-release
@@ -1849,8 +1863,8 @@
       (when (eq? maddr 0)
         ($oops 'condition-wait "mutex is defunct"))
       (let ([r (cw caddr maddr t)])
-        ($keep-live c)
-        ($keep-live m)
+        (keep-live c)
+        (keep-live m)
         r))]))
 
 (set! condition-broadcast
@@ -2538,9 +2552,9 @@
   (lambda ()
     (#3%$read-time-stamp-counter)))
 
-(define $keep-live
+(define keep-live
   (lambda (x)
-    (#2%$keep-live x)))
+    (#2%keep-live x)))
 
 (when-feature windows
 (let ()

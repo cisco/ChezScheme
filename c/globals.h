@@ -123,10 +123,13 @@ EXTERN struct S_G_struct {
 
   /* gc.c */
     ptr guardians[static_generation+1];
+    ptr locked_objects[static_generation+1];
+    ptr unlocked_objects[static_generation+1];
     IGEN min_free_gen;
     IGEN new_min_free_gen;
     IGEN max_nonstatic_generation;
     IGEN new_max_nonstatic_generation;
+    IGEN min_mark_gen;
     uptr countof[static_generation+1][countof_types];
     uptr bytesof[static_generation+1][countof_types];
     uptr gctimestamp[static_generation+1];
@@ -135,7 +138,6 @@ EXTERN struct S_G_struct {
     ptr static_id;
     ptr countof_names;
     ptr gcbackreference[static_generation+1];
-    uptr phantom_sizes[static_generation+1];
     IGEN prcgeneration;
     uptr bytes_finalized;
 

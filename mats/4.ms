@@ -4126,7 +4126,7 @@
           (let* ([g (make-guardian)] [x (list 'a 'b)])
             (g x)
             (collect 0 0)
-            (#%$keep-live x)
+            (keep-live x)
             (g)))
         #f)
    ;; same for ordered:
@@ -4134,7 +4134,7 @@
           (let* ([g (make-guardian #t)] [x (list 'a 'b)])
             (g x)
             (collect 0 0)
-            (#%$keep-live x)
+            (keep-live x)
             (g)))
         #f)
 

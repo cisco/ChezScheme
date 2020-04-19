@@ -2002,6 +2002,19 @@
  )
 
 (mat foreign-callable
+  (begin
+    ;; We don't have to use `lock-object` on the result of a `foreign-callable`,
+    ;; because it is immobile. We have to keep it live, though.
+    (define-syntax with-object-kept-live
+      (lambda (x)
+        (syntax-case x ()
+          [(_ id expr)
+           (identifier? #'id)
+           #'(let ([v expr])
+               (keep-live id)
+               v)])))
+    #t)
+
   (error? ; spam is not a procedure
     (foreign-callable 'spam () void))
   (error? ; spam is not a procedure
@@ -2085,19 +2098,16 @@
     (define args3 (list #f #\newline -51293 3.1415 2.5 #f))
     (let ()
       (define addr
-        (begin
-          (lock-object Fargtest)
-          (foreign-callable-entry-point Fargtest)))
-      (dynamic-wind
-        void
-        (lambda ()
+        (foreign-callable-entry-point Fargtest))
+      (let ()
           (collect (collect-maximum-generation))
           (collect (collect-maximum-generation))
-          (and
+          (with-object-kept-live
+           Fargtest
+           (and
             (equal? (apply Sargtest addr args1) (reverse args1))
             (equal? (apply Sargtest addr args2) (reverse args2))
-            (equal? (apply Sargtest addr args3) (reverse args3))))
-        (lambda () (unlock-object Fargtest)))))
+            (equal? (apply Sargtest addr args3) (reverse args3)))))))
   (let ()
     (define Fargtest2
       (foreign-callable
@@ -2114,19 +2124,16 @@
     (define args3 (list -7500 #x987654 #\? +inf.0 3210 #\7))
     (let ()
       (define addr
-        (begin
-          (lock-object Fargtest2)
-          (foreign-callable-entry-point Fargtest2)))
-      (dynamic-wind
-        void
-        (lambda ()
+        (foreign-callable-entry-point Fargtest2))
+      (let ()
           (collect (collect-maximum-generation))
           (collect (collect-maximum-generation))
-          (and
+          (with-object-kept-live
+           Fargtest2
+           (and
             (equal? (apply Sargtest2 addr args1) (reverse args1))
             (equal? (apply Sargtest2 addr args2) (reverse args2))
-            (equal? (apply Sargtest2 addr args3) (reverse args3))))
-        (lambda () (unlock-object Fargtest2)))))
+            (equal? (apply Sargtest2 addr args3) (reverse args3)))))))
   (let ()
     (define Frvtest_int32
       (foreign-callable
@@ -2229,9 +2236,9 @@
     (let ([x 5])
       (define call-twice (foreign-procedure "call_twice" (void* int int) void))
       (let ([co (foreign-callable (lambda (y) (set! x (+ x y))) (int) void)])
-        (lock-object co)
-        (call-twice (foreign-callable-entry-point co) 7 31)
-        (unlock-object co))
+        (with-object-kept-live
+         co
+         (call-twice (foreign-callable-entry-point co) 7 31)))
       x)
     43)
   (equal?
@@ -2247,7 +2254,6 @@
       (define callback
         (lambda (p)
           (let ([code (foreign-callable p (char) void)])
-            (lock-object code)
             (foreign-callable-entry-point code))))
       (let ()
         (define ouch
@@ -2278,9 +2284,9 @@
    ; this form needs to be after the preceding form and not part of it, so that when
    ; we lock code we don't also lock the code object created by foreign-procedure
    (begin
-     (lock-object code)
-     ((foreign-procedure (foreign-callable-entry-point code) () scheme-object))
-     (unlock-object code)
+     (with-object-kept-live
+      code
+      ((foreign-procedure (foreign-callable-entry-point code) () scheme-object)))
      #t)
 
   (not (locked-object?
@@ -2408,11 +2414,11 @@
             (define fptr (make-ftype-pointer foo f))
             (define g (ftype-ref foo () fptr))
             (with-exception-handler
-              (lambda (c) (*k* *m*))
-              (lambda ()
-                (call/cc
-                  (lambda (k)
-                    (fluid-let ([*k* k]) (f $stack-depth $base-value))))))
+             (lambda (c) (*k* *m*))
+             (lambda ()
+               (call/cc
+                (lambda (k)
+                  (fluid-let ([*k* k]) (f $stack-depth $base-value))))))
             (unlock-object
               (foreign-callable-code-object
                 (ftype-pointer-address fptr)))
@@ -2491,8 +2497,7 @@
               (ftype-pointer-address fptr)))
           *m*)
         (+ $stack-depth $base-value)))
-  ;; Make sure that a callable is suitably locked, and that it's
-  ;; unlocked when the C stack is popped by an escape
+  ;; A callable isn't locked, but it's immobile
   (equal?
     (let ()
       (define Sinvoke2
@@ -2502,9 +2507,7 @@
       (define Fcons
         (foreign-callable
           (lambda (k y)
-            ;; Escape with locked, which should be #t
-            ;; because a callable is locked while it's
-            ;; called:
+            (collect) ; might crash if `Fcons` were mobile
             (k (locked-object? Fcons)))
           (scheme-object iptr)
           scheme-object))
@@ -2515,7 +2518,7 @@
        ;; Escape from callable:
        (let ([v ($with-exit-proc (lambda (k) (Sinvoke2 Fcons k 5)))])
          (list v (locked-object? Fcons)))))
-    '((#t #f) (#t #f)))
+    '((#f #f) (#f #f)))
 
   ;; Make sure the code pointer for a call into a
   ;; foreign procedure is correctly saved for locking
@@ -2534,8 +2537,9 @@
              (set! v (add1 v))
              (loop (bitwise-arithmetic-shift-right n 1))))))
      (define handler (foreign-callable work (long) void))
-     (lock-object handler)
-     (call_many_times (foreign-callable-entry-point handler))
+     (with-object-kept-live
+      handler
+      (call_many_times (foreign-callable-entry-point handler)))
      v)
    14995143)
 
@@ -2557,9 +2561,9 @@
                            (eqv? i3 2))))
               (int u8* u8* u8* u8* int u8* u8* int)
               void)])
-    (lock-object cb)
-    (call-with-many-args (foreign-callable-entry-point cb))
-    (unlock-object cb)
+    (with-object-kept-live
+     cb
+     (call-with-many-args (foreign-callable-entry-point cb)))
     result)
 
 )

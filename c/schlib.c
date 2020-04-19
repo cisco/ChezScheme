@@ -216,7 +216,7 @@ void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_t
      the C stack and we may end up in a garbage collection */
     code = CP(tc);
     if (Sprocedurep(code)) code = CLOSCODE(code);
-    Slock_object(code);
+    S_immobilize_object(code);
 
     CP(tc) = AC1(tc);
 
@@ -226,7 +226,7 @@ void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_t
     if (lock_ts) {
       /* Lock a code object passed in TS, which is a more immediate
          caller whose return address is on the C stack */
-      Slock_object(TS(tc));
+      S_immobilize_object(TS(tc));
       CCHAIN(tc) = Scons(Scons(jb, Scons(code,TS(tc))), CCHAIN(tc));
     } else {
       CCHAIN(tc) = Scons(Scons(jb, Scons(code,Sfalse)), CCHAIN(tc));
@@ -293,8 +293,8 @@ void S_return() {
   /* error checks are done; now unlock affected code objects */
     for (xp = CCHAIN(tc); ; xp = Scdr(xp)) {
         ptr p = CDAR(xp);
-        Sunlock_object(Scar(p));
-        if (Scdr(p) != Sfalse) Sunlock_object(Scdr(p));
+        S_mobilize_object(Scar(p));
+        if (Scdr(p) != Sfalse) S_mobilize_object(Scdr(p));
         if (xp == yp) break;
         FREEJMPBUF(CAAR(xp));
     }

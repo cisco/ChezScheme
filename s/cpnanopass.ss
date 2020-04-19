@@ -4123,7 +4123,7 @@
           [(e1 e2)
            (or (relop-length RELOP= e1 e2)
                (%inline eq? ,e1 ,e2))])
-        (define-inline 2 $keep-live
+        (define-inline 2 keep-live
           [(e) (%seq ,(%inline keep-live ,e) ,(%constant svoid))])
         (let ()
           (define (zgo src sexpr e e1 e2 r6rs?)
@@ -5505,8 +5505,7 @@
                            (if ,(%inline eq? ,si (immediate 0))
                                ,(%constant sfalse)
                                ,(let ([s `(inline ,(make-info-load 'unsigned-8 #f) ,%load ,si ,%zero (immediate 0))])
-                                  (%inline eq? (immediate ,space)
-                                           ,(%inline logand ,s (immediate ,(fxnot (constant space-locked))))))))))))
+                                  (%inline eq? (immediate ,space) ,s))))))))
 
           (define-inline 2 $maybe-seginfo
             [(e)
@@ -5529,8 +5528,7 @@
           (define-inline 2 $seginfo-space
             [(e)
              (bind #f (e)
-                   (%inline logand ,(build-object-ref #f 'unsigned-8 e %zero 0)
-                            (immediate ,(fxnot (fix (constant space-locked))))))])
+                   (build-object-ref #f 'unsigned-8 e %zero 0))])
 
           (define-inline 2 $generation
             [(e)

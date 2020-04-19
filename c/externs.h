@@ -79,6 +79,7 @@ extern ptr S_vector_in PROTO((ISPC s, IGEN g, iptr n));
 extern ptr S_vector PROTO((iptr n));
 extern ptr S_fxvector PROTO((iptr n));
 extern ptr S_bytevector PROTO((iptr n));
+extern ptr S_bytevector2 PROTO((iptr n, IBOOL immobile));
 extern ptr S_null_immutable_vector PROTO((void));
 extern ptr S_null_immutable_fxvector PROTO((void));
 extern ptr S_null_immutable_bytevector PROTO((void));
@@ -97,6 +98,7 @@ extern ptr S_bignum PROTO((ptr tc, iptr n, IBOOL sign));
 extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
 extern ptr S_relocation_table PROTO((iptr n));
 extern ptr S_weak_cons PROTO((ptr car, ptr cdr));
+extern ptr S_box2 PROTO((ptr ref, IBOOL immobile));
 extern ptr S_phantom_bytevector PROTO((uptr sz));
 extern void S_phantom_bytevector_adjust PROTO((ptr ph, uptr new_sz));
 
@@ -147,6 +149,9 @@ extern void S_set_maxgen PROTO((IGEN g));
 extern IGEN S_maxgen PROTO((void));
 extern void S_set_minfreegen PROTO((IGEN g));
 extern IGEN S_minfreegen PROTO((void));
+extern void S_set_minmarkgen PROTO((IGEN g));
+extern IGEN S_minmarkgen PROTO((void));
+extern ptr S_locked_objects PROTO((void));
 #ifndef WIN32
 extern void S_register_child_process PROTO((INT child));
 #endif /* WIN32 */
@@ -156,7 +161,8 @@ extern ptr S_object_counts PROTO((void));
 extern IBOOL S_enable_object_backreferences PROTO((void));
 extern void S_set_enable_object_backreferences PROTO((IBOOL eoc));
 extern ptr S_object_backreferences PROTO((void));
-extern ptr S_locked_objects PROTO((void));
+extern void S_immobilize_object PROTO((ptr v));
+extern void S_mobilize_object PROTO((ptr v));
 extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
 extern void S_check_heap PROTO((IBOOL aftergc));
@@ -371,6 +377,7 @@ extern void S_free_chunks PROTO((void));
 extern uptr S_curmembytes PROTO((void));
 extern uptr S_maxmembytes PROTO((void));
 extern void S_resetmaxmembytes PROTO((void));
+extern void S_adjustmembytes PROTO((iptr amt));
 extern void S_move_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
 
 /* stats.c */

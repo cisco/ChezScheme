@@ -92,6 +92,10 @@ cgr = $(defaultcgr)
 defaultcmg = (collect-maximum-generation)
 cmg = $(defaultcmg)
 
+# ipmg is the value to which in-place-minimum-generation is set.
+defaultipmg = (in-place-minimum-generation)
+ipmg = $(defaultipmg)
+
 # rmg is the value to which release-minimum-generation is set.
 defaultrmg = (release-minimum-generation)
 rmg = $(defaultrmg)
@@ -161,6 +165,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
+             '(in-place-minimum-generation ${ipmg})'\
              '(enable-object-counts #${eoc})'\
              '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\
@@ -185,6 +190,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
+             '(in-place-minimum-generation ${ipmg})'\
              '(enable-object-counts #${eoc})'\
              '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\
@@ -359,6 +365,7 @@ script.all$o makescript$o:
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
+             '(in-place-minimum-generation ${ipmg})'\
              '(enable-object-counts #${eoc})'\
              '(commonization-level ${cl})'\
              '(compile-interpret-simple #${cis})'\

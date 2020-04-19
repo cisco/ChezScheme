@@ -81,3 +81,4 @@ FORCEINLINE seginfo *MaybeSegInfo(uptr i) {
 
 #define SegmentSpace(i) (SegInfo(i)->space)
 #define SegmentGeneration(i) (SegInfo(i)->generation)
+#define SegmentOldSpace(i) (SegInfo(i)->old_space)

@@ -252,7 +252,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         if (sz > 0) {
           if ((s == vspace_reloc) && !S_G.retain_static_relocation) {
             thread_find_room(tc, typemod, sz, vspaces[s])
-          } else { 
+          } else {
             find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s])
           }
           if (S_fasl_stream_read(stream, vspaces[s], sz) < 0)

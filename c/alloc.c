@@ -147,7 +147,7 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
 
   g = gmin;
   while (g <= gmax) {
-    n += S_G.phantom_sizes[g];
+    n += S_G.bytesof[g][countof_phantom];
     for (s = smin; s <= smax; s++) {
      /* add in bytes previously recorded */
       n += S_G.bytes_of_space[s][g];
@@ -176,7 +176,7 @@ static void maybe_fire_collector() {
   ISPC s;
   uptr bytes, fudge;
 
-  bytes = S_G.phantom_sizes[0];
+  bytes = S_G.bytesof[0][countof_phantom];
 
   for (s = 0; s <= max_real_space; s += 1) {
    /* bytes already accounted for */
@@ -308,10 +308,19 @@ void S_dirty_set(ptr *loc, ptr x) {
   *loc = x;
   if (!Sfixnump(x)) {
     seginfo *si = SegInfo(addr_get_segment(loc));
-    IGEN from_g = si->generation;
-    if (from_g != 0) {
-      si->dirty_bytes[((uptr)loc >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
-      mark_segment_dirty(si, from_g);
+    if (si->use_marks) {
+      /* GC must be in progress */
+      if (!IMMEDIATE(x)) {
+        seginfo *t_si = SegInfo(ptr_get_segment(x));
+        if (t_si->generation < si->generation)
+          S_error_abort("wrong-way pointer installed during GC");
+      }
+    } else {
+      IGEN from_g = si->generation;
+      if (from_g != 0) {
+        si->dirty_bytes[((uptr)loc >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
+        mark_segment_dirty(si, from_g);
+      }
     }
   }
 }
@@ -455,14 +464,23 @@ ptr Scons(car, cdr) ptr car, cdr; {
     return p;
 }
 
-ptr Sbox(ref) ptr ref; {
+ptr S_box2(ref, immobile) ptr ref; IBOOL immobile; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, size_box, p);
+    if (immobile) {
+      tc_mutex_acquire()
+      find_room(space_immobile_impure, 0, type_typed_object, size_box, p);
+      tc_mutex_release()
+    } else
+      thread_find_room(tc, type_typed_object, size_box, p);
     BOXTYPE(p) = type_box;
     INITBOXREF(p) = ref;
     return p;
+}
+
+ptr Sbox(ref) ptr ref; {
+    return S_box2(ref, 0);
 }
 
 ptr S_symbol(name) ptr name; {
@@ -557,6 +575,10 @@ ptr S_fxvector(n) iptr n; {
 }
 
 ptr S_bytevector(n) iptr n; {
+  return S_bytevector2(n, 0);
+}
+
+ptr S_bytevector2(n, immobile) iptr n; IBOOL immobile; {
     ptr tc;
     ptr p; iptr d;
 
@@ -568,7 +590,12 @@ ptr S_bytevector(n) iptr n; {
     tc = get_thread_context();
 
     d = size_bytevector(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    if (immobile) {
+      tc_mutex_acquire()
+      find_room(space_immobile_data, 0, type_typed_object, d, p);
+      tc_mutex_release()
+    } else
+      thread_find_room(tc, type_typed_object, d, p);
     BYTEVECTOR_TYPE(p) = (n << bytevector_length_offset) | type_bytevector;
     return p;
 }
@@ -921,7 +948,8 @@ void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
   si = SegInfo(ptr_get_segment(ph));
   g = si->generation;
 
-  S_G.phantom_sizes[g] += (new_sz - old_sz);
+  S_G.bytesof[g][countof_phantom] += (new_sz - old_sz);
+  S_adjustmembytes(new_sz - old_sz);
   PHANTOMLEN(ph) = new_sz;
 
   tc_mutex_release()
