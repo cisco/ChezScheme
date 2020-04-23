@@ -246,6 +246,7 @@ static ptr sweep_from;
 #endif
 
 #define segment_sufficiently_compact_bytes ((bytes_per_segment * 3) / 4)
+#define chunk_sufficiently_compact(nsegs) ((nsegs) >> 2)
   
 /* Values for a guardian entry's `pending` field when it's added to a
    seginfo's pending list: */
@@ -578,8 +579,10 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
           oldspacesegments = si;
           si->old_space = 1;
           if (si->must_mark
-              || (maybe_mark && (!si->marked_mask
-                                 || (si->marked_count > segment_sufficiently_compact_bytes)))) {
+              || (maybe_mark
+                  && (!si->marked_mask
+                      || (si->marked_count >= segment_sufficiently_compact_bytes))
+                  && (si->chunk->nused_segs >= chunk_sufficiently_compact(si->chunk->segs)))) {
             if (s != space_new) /* only lock-based marking is allowed on space_new */
               si->use_marks = 1;
             /* update generation now, so that any updated dirty references 
