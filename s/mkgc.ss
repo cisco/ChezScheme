@@ -1312,12 +1312,13 @@
     (code
      (format "static ~a ~a(~aptr p~a)"
              (case (lookup 'mode config)
-               [(copy vfasl-copy mark) "ptr"]
+               [(copy vfasl-copy) "ptr"]
                [(size vfasl-sweep) "uptr"]
                [(self-test) "IBOOL"]
                [(sweep) (if (lookup 'as-dirty? config #f)
                             "IGEN"
                             "void")]
+               [(mark) "void"]
                [else "void"])
              name
              (case (lookup 'mode config)
@@ -1363,9 +1364,6 @@
        (case (lookup 'mode config)
          [(copy)
           (code-block
-           "if (si->use_marks) {"
-           "  return mark_object(p, si);"
-           "}"
            "change = 1;"
            "check_triggers(si);"
            (code-block
@@ -1383,8 +1381,7 @@
            "check_triggers(si);"
            (ensure-segment-mark-mask "si" "" '())
            (body)
-           "ADD_BACKREFERENCE(p)"
-           "return p;")]
+           "ADD_BACKREFERENCE(p)")]
          [(sweep)
           (code-block
            (and (lookup 'maybe-backreferences? config #f)

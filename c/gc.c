@@ -123,7 +123,7 @@
 
 /* locally defined functions */
 static ptr copy PROTO((ptr pp, seginfo *si));
-static ptr mark_object PROTO((ptr pp, seginfo *si));
+static void mark_object PROTO((ptr pp, seginfo *si));
 static void sweep PROTO((ptr tc, ptr p));
 static void sweep_in_old PROTO((ptr tc, ptr p));
 static IBOOL object_directly_refers_to_self PROTO((ptr p));
@@ -352,7 +352,7 @@ static int flonum_is_forwarded_p(ptr p, seginfo *si) {
   if (FORWARDEDP(pp, si))                     \
     *ppp = GET_FWDADDRESS(pp);                \
   else if (!marked(si, pp))                   \
-    *ppp = copy(pp, si);                      \
+    mark_or_copy(*ppp, pp, si);               \
 }
 
 #define relocate_code(pp, si) {               \
@@ -360,8 +360,15 @@ static int flonum_is_forwarded_p(ptr p, seginfo *si) {
     pp = GET_FWDADDRESS(pp);                  \
   else if (si->old_space) {                   \
     if (!marked(si, pp))                      \
-      pp = copy(pp, si);                      \
+      mark_or_copy(pp, pp, si);               \
   } ELSE_MEASURE_NONOLDSPACE(pp)              \
+}
+
+#define mark_or_copy(dest, p, si) {           \
+  if (si->use_marks)                          \
+    mark_object(p, si);                       \
+  else                                        \
+    dest = copy(p, si);                       \
 }
 
 #ifdef ENABLE_OBJECT_COUNTS
@@ -820,7 +827,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
             (SYMVAL(sym) != sunbound || SYMPLIST(sym) != Snil || SYMSPLIST(sym) != Snil)) {
           seginfo *sym_si = SegInfo(ptr_get_segment(sym));
           if (!marked(sym_si, sym))
-            (void)copy(sym, sym_si);
+            mark_or_copy(sym, sym, sym_si);
         }
       }
       S_G.buckets_of_generation[g] = NULL;
