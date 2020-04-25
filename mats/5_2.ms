@@ -1345,4 +1345,91 @@
   (not (list-assuming-immutable? #t))
   (not (list-assuming-immutable? 3))
   (list-assuming-immutable? '())
+
+  ;; Check concurrent use of thread bits
+  (or (not (threaded?))
+      (let ([m (make-mutex)]
+            [c (make-condition)]
+            [running 4])
+        (define (fail msg) (printf "~a\n" msg) (exit))
+        (let thread-loop ([n-thread running])
+          (unless (zero? n-thread)
+            (fork-thread
+             (lambda ()
+               (let repeat-loop ([n 30] [l '()] [nl 0] [locked '()])
+                 (cond
+                   [(zero? n)
+                    (for-each unlock-object locked)
+                    (mutex-acquire m)
+                    (set! running (sub1 running))
+                    (condition-signal c)
+                    (mutex-release m)]
+                   [else
+                    (mutex-acquire m)
+                    (printf "trying ~a\n" n)
+                    (mutex-release m)
+                    (let ([N 10000])
+                      (let loop ([i N] [l l] [nl nl] [locked locked] [bvs '()])
+                        (cond
+                          [(zero? i)
+                           (let ([locked (let ([p (cons 1 2)])
+                                           (lock-object p)
+                                           (cons p locked))])
+                             (collect-rendezvous)
+                             (let ([check
+                                    (lambda ()
+                                      (let loop ([l l])
+                                        (when (pair? l)
+                                          (unless (list-assuming-immutable? l)
+                                            (fail "not a list?!"))
+                                          (loop (cdr l))))
+                                      (let loop ([nl nl])
+                                        (when (pair? nl)
+                                          (when (list-assuming-immutable? nl)
+                                            (fail "a list?!"))
+                                          (loop (cdr nl)))))])
+                               (check)
+                               (let ([locked (repeat-loop (sub1 n)
+                                                          (if (odd? n) l '())
+                                                          (if (even? n) nl 0)
+                                                          locked)])
+                                 (check)
+                                 locked)))]
+                          [else
+                           (let ([l (if (= 0 (modulo i 17))
+                                        l
+                                        (cons i l))]
+                                 [nl (if (= 0 (modulo i 3))
+                                         nl
+                                         (cons i nl))]
+                                 [locked (if #f ; (= i (/ N 2))
+                                             (let ([p (cons 1 2)])
+                                               (lock-object p)
+                                               (when (list-assuming-immutable? p)
+                                                 (fail "locked object is a list!?"))
+                                               (cons p locked))
+                                             locked)])
+                             (when (zero? (bitwise-and i (sub1 i)))
+                               (let inner-repeat-loop ([j 4])
+                                 (unless (zero? j)
+                                   (unless (list-assuming-immutable? l)
+                                     (fail "not a list?!"))
+                                   (when (list-assuming-immutable? nl)
+                                     (fail "a list?!"))
+                                   (inner-repeat-loop (sub1 j)))))
+                             (when (zero? (modulo i 100))
+                               (collect-rendezvous))
+                             (let ([bv (make-bytevector 12)]) ;; maybe same segment as list bits
+                               (bytevector-u8-set! bv 0 255)
+                               (bytevector-u8-set! bv 1 255)
+                               (bytevector-u8-set! bv 4 255)
+                               (loop (sub1 i) l nl locked (cons bv bvs))))])))]))))
+            (thread-loop (sub1 n-thread))))
+        (mutex-acquire m)
+        (let wait ()
+          (unless (= 0 running)
+            (condition-wait c m)
+            (wait)))
+        (mutex-release m)
+        #t))
   )
