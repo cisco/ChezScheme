@@ -115,6 +115,24 @@ pair containing the last element and the terminating object.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{list-assuming-immutable?}{\categoryprocedure}{(list-assuming-immutable? \var{v})}
+\returns a boolean
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{list?}, but on the assumption that any pairs involved in the
+result are never mutated further, the result is produced in amoritized
+constant time.
+
+\schemedisplay
+(list-assuming-immutable? '(a b c d)) ;=> #t
+(list-assuming-immutable? '(a b c . d)) ;=> #f
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{list-copy}{\categoryprocedure}{(list-copy \var{list})}
 \returns a copy of \var{list}
 \listlibraries

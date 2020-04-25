@@ -158,6 +158,7 @@ static void check_pending_ephemerons PROTO(());
 static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
 static void clear_trigger_ephemerons PROTO(());
 static void init_fully_marked_mask();
+static void copy_and_clear_list_bits(seginfo *oldspacesegments, IGEN tg);
 
 #ifdef ENABLE_OBJECT_COUNTS
 static uptr total_size_so_far();
@@ -240,9 +241,11 @@ static ptr sweep_from;
 #if ptr_alignment == 2
 # define record_full_marked_mask 0x55
 # define record_high_marked_mask 0x40
+# define mask_bits_to_list_bits_mask(m) ((m) | ((m) << 1))
 #elif ptr_alignment == 1
 # define record_full_marked_mask 0xFF
 # define record_high_marked_mask 0x80
+# define mask_bits_to_list_bits_mask(m) (m)
 #endif
 
 #define segment_sufficiently_compact_bytes ((bytes_per_segment * 3) / 4)
@@ -263,27 +266,23 @@ uptr list_length(ptr ls) {
 }
 #endif
 
+#define init_mask(dest, tg, init) {                                     \
+    find_room(space_data, tg, typemod, ptr_align(segment_bitmap_bytes), dest); \
+    memset(dest, init, segment_bitmap_bytes);                           \
+  }
+
 #define marked(si, p) (si->marked_mask && (si->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))
 
 static void init_fully_marked_mask() {
-  find_room(space_data, 0, typemod, ptr_align(segment_bitmap_bytes), fully_marked_mask);
-  memset(fully_marked_mask, 0xFF, segment_bitmap_bytes);  
+  init_mask(fully_marked_mask, 0, 0xFF);
 }
 
 #ifdef PRESERVE_FLONUM_EQ
 
 static void flonum_set_forwarded(ptr p, seginfo *si) {
-  if (!si->forwarded_flonums) {
-    ptr ff;
-    find_room(space_data, 0, typemod, ptr_align(segment_bitmap_bytes), ff);
-    memset(ff, 0, segment_bitmap_bytes);
-    si->forwarded_flonums = ff;
-  }
-  {
-    uptr byte = segment_bitmap_byte(p);
-    uptr bit = segment_bitmap_bit(p);
-    si->forwarded_flonums[byte] |= bit;
-  }
+  if (!si->forwarded_flonums)
+    init_mask(si->forwarded_flonums, 0, 0);
+  si->forwarded_flonums[segment_bitmap_byte(p)] |= segment_bitmap_bit(p);
 }
 
 static int flonum_is_forwarded_p(ptr p, seginfo *si) {
@@ -640,10 +639,8 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
          ptr p = Scar(ls);
          seginfo *si = SegInfo(ptr_get_segment(p));
          if (si->space == space_new) {
-           if (!si->marked_mask) {
-             find_room(space_data, 0, typemod, ptr_align(segment_bitmap_bytes), si->marked_mask);
-             memset(si->marked_mask, 0, segment_bitmap_bytes);  
-           }
+           if (!si->marked_mask)
+             init_mask(si->marked_mask, 0, 0);
            si->marked_mask[segment_bitmap_byte(p)] |= segment_bitmap_bit(p);
          }
        }
@@ -1155,6 +1152,8 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
       S_child_processes[cpgen] = new_ls;
     }
 #endif /* WIN32 */
+
+    copy_and_clear_list_bits(oldspacesegments, tg);
 
   /* move copied old space segments to empty space, and promote
      marked old space segments to the target generation */
@@ -2077,6 +2076,72 @@ static uptr target_generation_space_so_far() {
   return sz;
 }
 
+void copy_and_clear_list_bits(seginfo *oldspacesegments, IGEN tg) {
+  seginfo *si;
+  int i;
+
+  /* Update bits that are used by `list-assuming-immutable?`. */
+
+  for (si = oldspacesegments; si != NULL; si = si->next) {
+    if (si->list_bits) {
+      if ((si->generation == 0) && !si->marked_mask) {
+        /* drop generation-0 bits, because probably the relevant pairs
+           were short-lived, and it's ok to recompute them if needed */
+      } else {
+        if (si->marked_mask) {
+          /* Besides marking or copying `si->list_bits`, clear bits
+             where there's no corresopnding mark bit, so we don't try to
+             check forwarding in a future GC */
+          seginfo *bits_si = SegInfo(ptr_get_segment((ptr)si->list_bits));
+        
+          if (bits_si->old_space) {
+            if (bits_si->use_marks) {
+              if (!bits_si->marked_mask)
+                init_mask(bits_si->marked_mask, 0, 0);
+              bits_si->marked_mask[segment_bitmap_byte((ptr)si->list_bits)] |= segment_bitmap_bit((ptr)si->list_bits);
+            } else {
+              octet *copied_bits;
+              find_room(space_data, tg, typemod, ptr_align(segment_bitmap_bytes), copied_bits);
+              memcpy_aligned(copied_bits, si->list_bits, segment_bitmap_bytes);
+              si->list_bits = copied_bits;
+            }
+          }
+
+          for (i = 0; i < segment_bitmap_bytes; i++) {
+            int m = si->marked_mask[i];
+            si->list_bits[i] &= mask_bits_to_list_bits_mask(m);
+          }
+        }
+
+        if (si->use_marks) {
+          /* No forwarding possible from this segment */
+        } else {
+          /* For forwarded pointers, copy over list bits */
+          for (i = 0; i < segment_bitmap_bytes; i++) {
+            if (si->list_bits[i]) {
+              int bitpos;
+              for (bitpos = 0; bitpos < 8; bitpos += ptr_alignment) {
+                int bits = si->list_bits[i] & (list_bits_mask << bitpos);
+                if (bits != 0) {
+                  ptr p = build_ptr(si->number, ((i << (log2_ptr_bytes+3)) + (bitpos << log2_ptr_bytes)));
+                  if (FWDMARKER(p) == forward_marker) {
+                    ptr new_p = FWDADDRESS(p);
+                    seginfo *new_si = SegInfo(ptr_get_segment(new_p));
+                    if (!new_si->list_bits)
+                      init_mask(new_si->list_bits, tg, 0);
+                    bits >>= bitpos;
+                    new_si->list_bits[segment_bitmap_byte(new_p)] |= segment_bitmap_bits(new_p, bits);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 /* **************************************** */
 
 #ifdef ENABLE_MEASURE
@@ -2109,14 +2174,11 @@ static void finish_measure() {
 }
 
 static void init_counting_mask(seginfo *si) {
-  find_room(space_data, 0, typemod, ptr_align(segment_bitmap_bytes), si->counting_mask);
-  memset(si->counting_mask, 0, segment_bitmap_bytes);
+  init_mask(si->counting_mask, 0, 0);
 }
 
 static void init_measure_mask(seginfo *si) {
-  find_room(space_data, 0, typemod, ptr_align(segment_bitmap_bytes), si->measured_mask);
-  memset(si->measured_mask, 0, segment_bitmap_bytes);
-  
+  init_mask(si->measured_mask, 0, 0);
   measured_seginfos = S_cons_in(space_new, 0, (ptr)si, measured_seginfos);
 }
 

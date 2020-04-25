@@ -114,10 +114,11 @@ typedef int IFASLCODE;      /* fasl type codes */
 #define addr_get_segment(p) ((uptr)(p) >> segment_offset_bits)
 #define ptr_get_segment(p) (((uptr)(p) + typemod - 1) >> segment_offset_bits)
 
-#define segment_bitmap_bytes    (bytes_per_segment >> (log2_ptr_bytes+3))
-#define segment_bitmap_index(p) ((((uptr)p + (typemod-1)) & (bytes_per_segment - 1)) >> log2_ptr_bytes)
-#define segment_bitmap_byte(p)  (segment_bitmap_index(p) >> 3)
-#define segment_bitmap_bit(p)   ((uptr)1 << (segment_bitmap_index(p) & 0x7))
+#define segment_bitmap_bytes      (bytes_per_segment >> (log2_ptr_bytes+3))
+#define segment_bitmap_index(p)   ((((uptr)(p) + (typemod-1)) & (bytes_per_segment - 1)) >> log2_ptr_bytes)
+#define segment_bitmap_byte(p)    (segment_bitmap_index(p) >> 3)
+#define segment_bitmap_bits(p, b) ((uptr)(b) << (segment_bitmap_index(p) & 0x7))
+#define segment_bitmap_bit(p)     segment_bitmap_bits(p,1)
 
 #define SPACE(p) SegmentSpace(ptr_get_segment(p))
 #define GENERATION(p) SegmentGeneration(ptr_get_segment(p))
@@ -138,6 +139,7 @@ typedef struct _seginfo {
   unsigned char has_triggers : 1;           /* set if trigger_ephemerons or trigger_guardians is set */
   unsigned char must_mark : 2;              /* a form of locking, where 3 counts as "infinite" */
   octet min_dirty_byte;                     /* dirty byte for full segment, effectively min(dirty_bytes) */
+  octet *list_bits;                         /* for `$list-bits-ref` and `$list-bits-set!` */
   uptr number;                              /* the segment number */
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
   struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs */

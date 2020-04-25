@@ -58,6 +58,13 @@ void S_segment_init() {
   }
   S_G.number_of_nonstatic_segments = 0;
   S_G.number_of_empty_segments = 0;
+
+  if (seginfo_space_disp != offsetof(seginfo, space))
+    S_error_abort("seginfo_space_disp is wrong");
+  if (seginfo_generation_disp != offsetof(seginfo, generation))
+    S_error_abort("seginfo_generation_disp is wrong");
+  if (seginfo_list_bits_disp != offsetof(seginfo, list_bits))
+    S_error_abort("seginfo_list_bits_disp is wrong");
 }
 
 static uptr membytes = 0;
@@ -232,6 +239,7 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
   si->old_space = 0;
   si->use_marks = 0;
   si->must_mark = 0;
+  si->list_bits = NULL;
   si->min_dirty_byte = 0xff;
   for (d = 0; d < cards_per_segment; d += sizeof(ptr)) {
     iptr *dp = (iptr *)(si->dirty_bytes + d);

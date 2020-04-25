@@ -1338,3 +1338,11 @@
       (eqv? (car ls) 0)
       (eqv? (apply + ls) 4950)))
 )
+
+(mat list-assuming-immutable?
+  (list-assuming-immutable? '(1 2 3))
+  (not (list-assuming-immutable? '(1 2 . 3)))
+  (not (list-assuming-immutable? #t))
+  (not (list-assuming-immutable? 3))
+  (list-assuming-immutable? '())
+  )

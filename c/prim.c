@@ -200,6 +200,8 @@ void S_prim_init() {
     Sforeign_symbol("(cs)enable_object_backreferences", (void *)S_enable_object_backreferences);
     Sforeign_symbol("(cs)set_enable_object_backreferences", (void *)S_set_enable_object_backreferences);
     Sforeign_symbol("(cs)object_backreferences", (void *)S_object_backreferences);
+    Sforeign_symbol("(cs)list_bits_ref", (void *)S_list_bits_ref);
+    Sforeign_symbol("(cs)list_bits_set", (void *)S_list_bits_set);
 }
 
 static void s_instantiate_code_object() {

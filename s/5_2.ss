@@ -792,3 +792,31 @@
   (set! enumerate
     (lambda (ls)
       ($iota (fx- ($list-length ls 'enumerate) 1) '()))))
+
+(define list-assuming-immutable?
+  ;; Use list bits to record discovered listness:
+  ;;   0 => unknown
+  ;;   1 => is a list
+  ;;   2 => not a list
+  ;; Record this information half-way to the point that the
+  ;; decision is made (i.e., a kind of path compression)
+  (lambda (v)
+    (or (null? v)
+        (and (pair? v)
+             (let loop ([fast (cdr v)] [slow v] [slow-step? #f])
+               (let ([return (lambda (bits)
+                               ($list-bits-set! slow bits)
+                               (fx= bits 1))])
+                 (cond
+                   [(null? fast) (return 1)]
+                   [(not (pair? fast)) (return 2)]
+                   [(eq? fast slow) (return 2)] ; cycle
+                   [else
+                    (let ([bits ($list-bits-ref fast)])
+                      (cond
+                        [(fx= bits 0)
+                         (if slow-step?
+                             (loop (cdr fast) (cdr slow) #f)
+                             (loop (cdr fast) slow #t))]
+                        [else
+                         (return bits)]))])))))))

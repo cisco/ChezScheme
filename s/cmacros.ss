@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905031B)
+(define-constant scheme-version #x0905031C)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -411,6 +411,13 @@
   (max (constant typemod) (* 2 (constant ptr-bytes))))
 (define-constant ptr-alignment
   (/ (constant byte-alignment) (constant ptr-bytes)))
+
+;; seginfo offsets, must be consistent with `seginfo` in "types.h"
+(define-constant seginfo-space-disp 0)
+(define-constant seginfo-generation-disp 1)
+(define-constant seginfo-list-bits-disp (constant ptr-bytes))
+
+(define-constant list-bits-mask (- (expt 2 (constant ptr-alignment)) 1))
 
 ;;; fasl codes---see fasl.c for documentation of representation
 

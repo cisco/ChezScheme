@@ -2009,12 +2009,21 @@
 (define $maybe-seginfo
   (lambda (x)
     ($maybe-seginfo x)))
+(define $seginfo
+  (lambda (x)
+    ($seginfo x)))
 (define $seginfo-generation
   (lambda (x)
     ($seginfo-generation x)))
 (define $seginfo-space
   (lambda (x)
     ($seginfo-space x)))
+(define-who $list-bits-ref
+  (lambda (x)
+    (unless (pair? x) ($oops who "~s is not a pair" x))
+    ($list-bits-ref x)))
+(define-who $list-bits-set!
+  (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))
 
 (let ()
   (define $phantom-bytevector-adjust!

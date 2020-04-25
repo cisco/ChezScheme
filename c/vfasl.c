@@ -523,6 +523,13 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     while (cl != end_closures) {
       ptr code = CLOSCODE(cl);
       code = ptr_add(code, code_delta);
+
+#if 0
+      printf("%p ", code);
+      S_prin1(CODENAME(code));
+      printf("\n");
+#endif
+
       SETCLOSCODE(cl,code);
       cl = ptr_add(cl, size_closure(CLOSLEN(cl)));
     }

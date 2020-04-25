@@ -71,6 +71,8 @@ extern void S_scan_dirty PROTO((ptr **p, ptr **endp));
 extern void S_scan_remembered_set PROTO((void));
 extern void S_get_more_room PROTO((void));
 extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
+extern ptr S_list_bits_ref PROTO((ptr p));
+extern void S_list_bits_set PROTO((ptr p, iptr bits));
 extern ptr S_cons_in PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
 extern ptr S_symbol PROTO((ptr name));
 extern ptr S_rational PROTO((ptr n, ptr d));

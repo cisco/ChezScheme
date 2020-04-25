@@ -444,6 +444,49 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
   return x;
 }
 
+ptr S_list_bits_ref(p) ptr p; {
+  seginfo *si = SegInfo(ptr_get_segment(p));
+
+  if (si->list_bits) {
+    int bit_pos = (segment_bitmap_index(p) & 0x7);
+    return FIX((si->list_bits[segment_bitmap_byte(p)] >> bit_pos) & list_bits_mask);
+  } else
+    return FIX(0);
+}
+
+void S_list_bits_set(p, bits) ptr p; iptr bits; {
+  seginfo *si = SegInfo(ptr_get_segment(p));
+
+  /* This function includes potential races when writing list bits.
+     If a race loses bits, that's ok, as long as it's unlikely. */
+
+  if (!si->list_bits) {
+    ptr list_bits;
+
+    if (si->generation == 0) {
+      ptr tc = get_thread_context();
+      thread_find_room(tc, typemod, ptr_align(segment_bitmap_bytes), list_bits);
+    } else {
+      tc_mutex_acquire()
+
+      find_room(space_data, si->generation, typemod, ptr_align(segment_bitmap_bytes), list_bits);
+      tc_mutex_release()
+    }
+
+    memset(list_bits, 0, segment_bitmap_bytes);
+
+    /* FIXME: A write fence is needed here to make sure `list_bits` is
+       zeroed for everyone who sees it. On x86, TSO takes care of that
+       ordering already. */
+
+    /* beware: racy write here */
+    si->list_bits = list_bits;
+  }
+
+  /* beware: racy read+write here */
+  si->list_bits[segment_bitmap_byte(p)] |= segment_bitmap_bits(p, bits);
+}
+
 /* S_cons_in is always called with mutex */
 ptr S_cons_in(s, g, car, cdr) ISPC s; IGEN g; ptr car, cdr; {
     ptr p;
