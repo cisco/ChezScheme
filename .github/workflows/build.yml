@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y curl
       - name: Build bootfiles
         run: .github/scripts/dobootfile.sh
       - name: Build Chez
