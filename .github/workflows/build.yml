@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mach: ['i3le', 'ti3le', 'a6le', 'ta6le'] 
+        mach: ['ta6le'] 
 
     env:
       TARGET_MACHINE: ${{ matrix.mach }}
