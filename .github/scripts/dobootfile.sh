@@ -14,5 +14,6 @@ $HOME/racket/bin/racket -v
 $HOME/racket/bin/raco pkg install -i --auto -D cs-bootstrap
 
 export MACH=$TARGET_MACHINE
+cd ChezScheme
 $HOME/racket/bin/racket -l cs-bootstrap
 
