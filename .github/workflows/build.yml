@@ -21,12 +21,17 @@ jobs:
           submodules: 'recursive'
       - name: Proceed with TARGET_MACHINE == ${{ matrix.mach }}
         run: echo $TARGET_MACHINE
-      - name: Install multilib for 32-bit
+      - name: Install libs for 32-bit
         if: matrix.mach == 'i3le' || matrix.mach == 'ti3le'
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y gcc-multilib lib32ncurses5-dev libx32ncurses5-dev uuid-dev:i386 libssl-dev:i386
+      - name: Install libs for 64-bit
+        if: matrix.mach == 'a6le' || matrix.mach == 'ta6le'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncurses5-dev libxncurses5-dev uuid-dev libssl-dev
       - name: Build bootfiles
         run: .github/scripts/dobootfile.sh
       - name: Build Chez
