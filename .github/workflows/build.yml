@@ -6,7 +6,6 @@ jobs:
   
   build-linux:
     runs-on: ubuntu-18.04
-    container: ubuntu:20.04
     
     strategy:
       fail-fast: false
