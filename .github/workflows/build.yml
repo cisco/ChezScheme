@@ -22,6 +22,7 @@ jobs:
       - name: Install multilib for 32-bit
         if: matrix.mach == 'i3le' || matrix.mach == 'ti3le'
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y gcc-multilib lib32ncurses5-dev libx32ncurses5-dev uuid-dev:i386 libssl-dev:i386
       - name: Build bootfiles
