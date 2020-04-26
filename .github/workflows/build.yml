@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - name: Proceed with TARGET_MACHINE == ${{ matrix.mach }}
+        run: echo $TARGET_MACHINE
       - name: Build bootfiles
         run: .github/scripts/dobootfile.sh
       - name: Build Chez
