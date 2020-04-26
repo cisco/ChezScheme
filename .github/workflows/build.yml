@@ -31,7 +31,7 @@ jobs:
         if: matrix.mach == 'a6le' || matrix.mach == 'ta6le'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses5-dev libxncurses5-dev uuid-dev libssl-dev
+          sudo apt-get install -y libncurses5-dev uuid-dev libssl-dev
       - name: Build bootfiles
         run: .github/scripts/dobootfile.sh
       - name: Build Chez
