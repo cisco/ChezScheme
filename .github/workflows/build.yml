@@ -26,23 +26,3 @@ jobs:
         run: .github/scripts/build.sh
       - name: Test Chez
         run: .github/scripts/test.sh
-
-  build-macos:
-    runs-on: macos-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        mach: [i3le, ti3le, i6le, ta6le] 
-
-    env:
-      TARGET_MACHINE: ${{ matrix.mach }}
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Build bootfiles
-        run: .github/scripts/dobootfile.sh
-      - name: Build Chez
-        run: .github/scripts/build.sh
-      - name: Test Chez
-        run: .github/scripts/test.sh

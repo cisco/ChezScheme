@@ -8,11 +8,11 @@ case $TARGET_MACHINE in
   *)
 esac
 curl -L -o installer.sh http://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-${INST}-linux-precise.sh
-sh installer.sh --in-place --dest ~/racket/
+sh installer.sh --in-place --dest $HOME/racket/
 
-~/racket/bin/racket -v
-~/racket/bin/raco pkg install -i --auto -D cs-bootstrap
+$HOME/racket/bin/racket -v
+$HOME/racket/bin/raco pkg install -i --auto -D cs-bootstrap
 
 export MACH=$TARGET_MACHINE
-~/racket/bin/racket -l cs-bootstrap
+$HOME/racket/bin/racket -l cs-bootstrap
 
