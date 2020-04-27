@@ -25,7 +25,7 @@
 #include "system.h"
 
 /* locally defined functions */
-         static ptr copy_normalize PROTO((ptr tc, const bigit *p, iptr len, IBOOL sign, IBOOL clear_w));
+static ptr copy_normalize PROTO((ptr tc, const bigit *p, iptr len, IBOOL sign));
 static IBOOL abs_big_lt PROTO((ptr x, ptr y, iptr xl, iptr yl));
 static IBOOL abs_big_eq PROTO((ptr x, ptr y, iptr xl, iptr yl));
 static ptr big_negate PROTO((ptr tc, ptr x));
@@ -164,7 +164,7 @@ ptr S_normalize_bignum(ptr x) {
   return x;
 }
 
-static ptr copy_normalize(tc, p, len, sign, clear_w) ptr tc; const bigit *p; iptr len; IBOOL sign, clear_w; {
+static ptr copy_normalize(tc, p, len, sign) ptr tc; const bigit *p; iptr len; IBOOL sign; {
   bigit *p1; uptr n; ptr b;
 
   for (;;) {
@@ -199,10 +199,6 @@ static ptr copy_normalize(tc, p, len, sign, clear_w) ptr tc; const bigit *p; ipt
 
   b = S_bignum(tc, len, sign);
   for (p1 = &BIGIT(b, 0); len--;) *p1++ = *p++;
-
-  if (clear_w)
-    W(tc) = FIX(0);
-
   return b;
 }
 
@@ -516,7 +512,7 @@ addition/subtraction
 */
 
 static ptr big_negate(tc, x) ptr tc, x; {
-  return copy_normalize(tc, &BIGIT(x,0),BIGLEN(x),!BIGSIGN(x),0);
+  return copy_normalize(tc, &BIGIT(x,0),BIGLEN(x),!BIGSIGN(x));
 }
 
 ptr S_big_negate(x) ptr x; {
@@ -542,7 +538,7 @@ static ptr big_add_pos(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL 
 
   *zp = k;
 
-  return copy_normalize(tc, zp,xl+1,sign, 1);
+  return copy_normalize(tc, zp,xl+1,sign);
 }
 
 /* assumptions: x >= y */
@@ -562,7 +558,7 @@ static ptr big_add_neg(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL 
   for (; i-- > 0; )
     *zp-- = *xp--;
 
-  return copy_normalize(tc, zp+1,xl,sign, 1);
+  return copy_normalize(tc, zp+1,xl,sign);
 }
 
 static ptr big_add(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL xs, ys; {
@@ -652,7 +648,7 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
       *zpa = k;
     }
 
-  return copy_normalize(tc, &BIGIT(W(tc),0),xl+yl,sign, 1);
+  return copy_normalize(tc, &BIGIT(W(tc),0),xl+yl,sign);
 }
 
 /* SHORTRANGE is -floor(sqrt(most_positive_fixnum))..floor(sqrt(most_positive_fixnum)).
@@ -778,10 +774,8 @@ static void big_short_trunc(ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs,
   for (i = xl, k = 0, xp = &BIGIT(x,0), zp = &BIGIT(W(tc),0); i-- > 0; )
     EDIV(k, *xp++, s, zp++, &k)
 
-  if (q != (ptr *)NULL) *q = copy_normalize(tc, &BIGIT(W(tc),0),xl,qs, 0);
-  if (r != (ptr *)NULL) *r = copy_normalize(tc, &k,1,rs, 0);
-
-  W(tc) = FIX(0);
+  if (q != (ptr *)NULL) *q = copy_normalize(tc, &BIGIT(W(tc),0),xl,qs);
+  if (r != (ptr *)NULL) *r = copy_normalize(tc, &k,1,rs);
 }
 
 static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
@@ -807,7 +801,7 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
     PREPARE_BIGNUM(tc, W(tc),m)
     p = &BIGIT(W(tc),0);
     for (i = m; i-- > 0 ; xp++) *p++ = quotient_digit(xp, yp, yl);
-    *q = copy_normalize(tc, &BIGIT(W(tc),0),m,qs, 1);
+    *q = copy_normalize(tc, &BIGIT(W(tc),0),m,qs);
   }
 
   if (r != (ptr *)NULL) {
@@ -815,11 +809,8 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
     if (d != 0) {
       for (i = yl, p = xp, k = 0; i-- > 0; p++) ERSH(d,p,&k)
     }
-    *r = copy_normalize(tc, xp, yl, rs, 0);
+    *r = copy_normalize(tc, xp, yl, rs);
   }
-
-  U(tc) = FIX(0);
-  V(tc) = FIX(0);
 }
 
 static INT normalize(xp, yp, xl, yl) bigit *xp, *yp; iptr xl, yl; {
@@ -919,7 +910,6 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
   iptr i;
   INT shft, asc;
   bigit *p, *xp, *yp, k, b;
-  ptr ret;
 
  /* Copy x to scratch bignum, with a leading zero */
   PREPARE_BIGNUM(tc, U(tc),xl+1)
@@ -982,19 +972,14 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
     if (asc != 0) {
       for (i = xl, p = xp, k = 0; i-- > 0; p++) ERSH(asc,p,&k)
     }
-    return copy_normalize(tc, xp,xl,0, 0);
+    return copy_normalize(tc, xp,xl,0);
   } else {
     bigit d, r;
 
     d = *yp;
     for (r = 0; xl-- > 0; xp++) EDIV(r, *xp, d, xp, &r)
-    ret = uptr_gcd((uptr)(d>>asc), (uptr)(r>>asc));
+    return uptr_gcd((uptr)(d>>asc), (uptr)(r>>asc));
   }
-
-  U(tc) = FIX(0);
-  V(tc) = FIX(0);
-
-  return ret;
 }
 
 ptr S_gcd(x, y) ptr x, y; {
@@ -1099,7 +1084,6 @@ double S_random_double(m1, m2, m3, m4, scale) U32 m1, m2, m3, m4; double scale; 
 static double big_short_floatify(ptr tc, ptr x, bigit s, iptr xl, IBOOL sign) {
   iptr i;
   bigit *xp, *zp, k;
-  double ret;
 
   PREPARE_BIGNUM(tc, W(tc),enough+1)
 
@@ -1113,17 +1097,12 @@ static double big_short_floatify(ptr tc, ptr x, bigit s, iptr xl, IBOOL sign) {
  /* then see if there's a bit set somewhere beyond */
   while (k == 0 && i++ < xl) k = *xp++;
 
-  ret = floatify_normalize(&BIGIT(W(tc),0), xl*bigit_bits, sign, k != 0);
-
-  W(tc) = FIX(0);
-
-  return ret;
+  return floatify_normalize(&BIGIT(W(tc),0), xl*bigit_bits, sign, k != 0);
 }
 
 static double big_floatify(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign; {
   iptr i, ul;
   bigit *p, *xp, *yp, k;
-  double ret;
 
  /* copy x to U(tc), scaling with added zero bigits as necessary */
   ul = xl < yl + enough-1 ? yl + enough-1 : xl;
@@ -1148,13 +1127,7 @@ static double big_floatify(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IB
   k = 0;
   for (i = ul + 1, xp = &BIGIT(U(tc),ul); k == 0 && i-- > 0; xp--) k = *xp;
 
-  ret = floatify_normalize(&BIGIT(W(tc),0), (xl-yl+1)*bigit_bits, sign, k != 0);
-
-  W(tc) = FIX(0);
-  U(tc) = FIX(0);
-  V(tc) = FIX(0);
-
-  return ret;
+  return floatify_normalize(&BIGIT(W(tc),0), (xl-yl+1)*bigit_bits, sign, k != 0);
 }
 
 /* come in with exactly 'enough' bigits */
@@ -1374,7 +1347,7 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
       }
     }
 
-    return copy_normalize(tc, &BIGIT(W(tc), 0), xl, sign, 1);
+    return copy_normalize(tc, &BIGIT(W(tc), 0), xl, sign);
   } else { /* shift to the left */
     iptr xlplus, newxl;
 
@@ -1400,7 +1373,7 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
     }
     *--p1 = k;
 
-    return copy_normalize(tc, p1, newxl, sign, 1);
+    return copy_normalize(tc, p1, newxl, sign);
   }
 }
 
@@ -1496,7 +1469,7 @@ ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend) {
     for (i = wl; i > 0; i -= 1, p1 += 1) ERSH(start,p1,&k)
   }
 
-  return copy_normalize(tc, &BIGIT(W(tc), 0), wl, 0, 1);
+  return copy_normalize(tc, &BIGIT(W(tc), 0), wl, 0);
 }
 
 /* logical operations simulate two's complement operations using the
@@ -1562,7 +1535,7 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
       PREPARE_BIGNUM(tc, W(tc),yl);
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),yl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp & *--yp;
-      return copy_normalize(tc, zp, yl, 0, 1);
+      return copy_normalize(tc, zp, yl, 0);
     } else {
       bigit yb;
 
@@ -1577,7 +1550,7 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
      /* yb must be 0, since high-order bigit >= 1.  effectively, this
         means ~t2 would be all 1's from here on out. */
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(tc, zp, xl, 0, 1);
+      return copy_normalize(tc, zp, xl, 0);
     }
   } else {
     if (ys == 0) {
@@ -1591,7 +1564,7 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         xb = t2 > t1;
         *--zp = *--yp & ~t2;
       }
-      return copy_normalize(tc, zp, yl, 0, 1);
+      return copy_normalize(tc, zp, yl, 0);
     } else {
       bigit xb, yb, k;
 
@@ -1614,8 +1587,7 @@ static ptr big_logand(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-
-      return copy_normalize(tc, zp, xl+1, 1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     }
   }
 }
@@ -1726,7 +1698,7 @@ static ptr big_logbitp(n, x, xl, xs) ptr x; iptr n, xl; IBOOL xs; {
     if (i < 0) return Sfalse;
 
     n = n % bigit_bits;
-    return Sboolean(BIGIT(x,i) & ((U32)1 << n));
+    return Sboolean(BIGIT(x,i) & (1 << n));
   } else {
     bigit xb;
 
@@ -1736,7 +1708,7 @@ static ptr big_logbitp(n, x, xl, xs) ptr x; iptr n, xl; IBOOL xs; {
     xp = &BIGIT(x,xl); xb = 1;
     for (i = xl; ; i -= 1) {
       bigit t1 = *--xp, t2 = t1 - xb;
-      if (n < bigit_bits) return Sboolean(~t2 & ((U32)1 << n));
+      if (n < bigit_bits) return Sboolean(~t2 & (1 << n));
       xb = t2 > t1;
       n -= bigit_bits;
     }
@@ -1790,7 +1762,7 @@ static ptr big_logbit0(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       }
       *--zp = *--xp & ~(1 << n);
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(tc, zp,xl,0, 1);
+      return copy_normalize(tc, zp,xl,0);
     }
   } else {
     bigit xb, k, x1, x2, z1, z2;
@@ -1816,7 +1788,7 @@ static ptr big_logbit0(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = z2;
     }
     *--zp = k;
-    return copy_normalize(tc, zp, zl, 1, 1);
+    return copy_normalize(tc, zp, zl, 1);
   }
 }
 
@@ -1859,9 +1831,9 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = x1;
       n -= bigit_bits;
     }
-    *--zp = x1 | ((U32)1 << n);
+    *--zp = x1 | (1 << n);
     for (; i > 0; i -= 1) *--zp = *--xp;
-    return copy_normalize(tc, zp, zl, 0, 1);
+    return copy_normalize(tc, zp, zl, 0);
   } else if (yl > xl) {
    /* we'd just be setting a bit that's already (virtually) set */
     return origx;
@@ -1890,7 +1862,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = z2;
     }
     *--zp = k;
-    return copy_normalize(tc, zp, zl, 1, 1);
+    return copy_normalize(tc, zp, zl, 1);
   }
 }
 
@@ -1941,7 +1913,7 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp | *--yp;
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(tc, zp, xl, 0, 1);
+      return copy_normalize(tc, zp, xl, 0);
     } else {
       bigit yb, k;
 
@@ -1956,7 +1928,7 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(tc, zp, yl+1, 1, 1);
+      return copy_normalize(tc, zp, yl+1, 1);
     }
   } else {
     if (ys == 0) {
@@ -1980,7 +1952,7 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(tc, zp, xl+1, 1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     } else {
       bigit xb, yb, k;
 
@@ -1996,7 +1968,7 @@ static ptr big_logor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL 
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(tc, zp, yl+1, 1, 1);
+      return copy_normalize(tc, zp, yl+1, 1);
     }
   }
 }
@@ -2048,7 +2020,7 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
       xp = &BIGIT(x,xl); yp = &BIGIT(y,yl); zp = &BIGIT(W(tc),xl);
       for (i = yl; i > 0; i -= 1) *--zp = *--xp ^ *--yp;
       for (i = xl - yl; i > 0; i -= 1) *--zp = *--xp;
-      return copy_normalize(tc, zp, xl, 0, 1);
+      return copy_normalize(tc, zp, xl, 0);
     } else {
       bigit yb, k;
 
@@ -2069,7 +2041,7 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(tc, zp, xl+1, 1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     }
   } else {
     if (ys == 0) {
@@ -2093,7 +2065,7 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         *--zp = z2;
       }
       *--zp = k;
-      return copy_normalize(tc, zp, xl+1, 1, 1);
+      return copy_normalize(tc, zp, xl+1, 1);
     } else {
       bigit xb, yb;
 
@@ -2111,7 +2083,7 @@ static ptr big_logxor(tc, x, y, xl, yl, xs, ys) ptr tc, x, y; iptr xl, yl; IBOOL
         x1 = *--xp; x2 = x1 - xb; xb = x2 > x1;
         *--zp = x2;
       }
-      return copy_normalize(tc, zp, xl, 0, 1);
+      return copy_normalize(tc, zp, xl, 0);
     }
   }
 }
