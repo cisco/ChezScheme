@@ -1,4 +1,3 @@
-"ftype.ss"
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
@@ -228,6 +227,7 @@ ftype operators:
    appropriate size for int and unsigned.
 |#
 
+(begin
 (let ()
   (include "types.ss")
   (define-syntax rtd/fptr
@@ -2051,3 +2051,4 @@ ftype operators:
 (define-syntax ftype-spin-lock! (lambda (x) ($trans-ftype-locked-op! #'ftype-spin-lock! x #'$fptr-spin-lock!)))
 (define-syntax ftype-unlock! (lambda (x) ($trans-ftype-locked-op! #'ftype-unlock! x #'$fptr-unlock!)))
 (define-syntax ftype-set! (lambda (x) ($trans-ftype-set! x)))
+)

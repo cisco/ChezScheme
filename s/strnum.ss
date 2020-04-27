@@ -1,4 +1,3 @@
-"strnum.ss"
 ;;; strnum.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -94,6 +93,7 @@ restriction, with string->number returning #f and the reader raising
 an exception.
 |#
 
+(begin
 (let ()
 ;;   (mknum-state <state name>
 ;;                <expression if end of string found>
@@ -529,3 +529,4 @@ an exception.
      (unless (inexact? x)
        ($oops who "a precision is specified and ~s is not inexact" x))
      (parameterize ([print-radix r] [print-precision m]) (format "~a" x))]))
+)

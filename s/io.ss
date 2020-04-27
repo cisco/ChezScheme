@@ -1,4 +1,3 @@
-"io.ss"
 ;;; io.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;;
@@ -80,6 +79,7 @@ implementation notes:
     so we instead use an input-mode flag in the port header.
 |#
 
+(begin
 (set-who! file-buffer-size
   ($make-thread-parameter $c-bufsiz
     (lambda (x)
@@ -6306,4 +6306,5 @@ implementation notes:
 
   ; utf8->string, etc., are in prims.ss, since they are used by
   ; foreign procedures argument and return values
+)
 )

@@ -1,4 +1,3 @@
-"engine.ss"
 ;;; engine.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -28,10 +27,6 @@
 ;;;   *keybd*   the saved keyboard interrupt handler
 ;;;   *timer*   the saved timer interrupt handler
 
-
-(define make-engine)
-(define engine-block)
-(define engine-return)
 
 (let ()
 

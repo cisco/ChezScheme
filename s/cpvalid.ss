@@ -1,4 +1,3 @@
-"cpvalid.ss"
 ;;; cpvalid.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -17,10 +16,10 @@
 ;;; see comments relating to both cpvalid and cpletrec at front of
 ;;; cpletrec.ss
 
+(begin
 (define undefined-variable-warnings
   ($make-thread-parameter #f (lambda (x) (and x #t))))
 
-(define $cpvalid)
 (let ()
   (import (nanopass))
   (include "base-lang.ss")
@@ -562,3 +561,4 @@
   (set! $cpvalid
     (lambda (x)
       (if (= (optimize-level) 3) x (cpvalid x)))))
+)

@@ -1,4 +1,3 @@
-"enum.ss"
 ;;; enum.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -26,24 +25,6 @@
 ;; The R6RS standard is unclear whether the function returned by enum-set-indexer
 ;;  should throw an error if its argument is not a symbol.  We have chosen to
 ;;  not include that check, but if the standard is updated, this may need to be changed.
-
-(define $enum-set-members)
-
-(define enum-set?)
-(define make-enumeration)
-(define enum-set-universe)
-(define enum-set-indexer)
-(define enum-set-constructor)
-(define enum-set->list)
-(define enum-set-member?)
-(define enum-set-subset?)
-(define enum-set=?)
-(define enum-set-union)
-(define enum-set-intersection)
-(define enum-set-difference)
-(define enum-set-complement)
-(define enum-set-projection)
-
 
 (let ()
 

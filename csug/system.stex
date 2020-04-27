@@ -1247,11 +1247,6 @@ to 3 just while the remainder of file is compiled.
 \scheme{compile-script} is like \scheme{compile-file} but differs in
 that it copies the leading \scheme{#!} line from the
 source-file script into the object file.
-When the \scheme{#!} line is present it is uncompressed in the output
-file even when the parameter
-\index{\scheme{compile-compressed}}\scheme{compile-compressed} is
-set to \scheme{#t}, causing the remainder of the file to be compressed.
-This allows it to be interpreted properly by the operating system.
 
 \scheme{compile-script} permits compiled script files to be created from
 source script to reduce script load time.
@@ -1514,9 +1509,6 @@ If \var{covop} is supplied, \scheme{compile-port} sends coverage information to
 The ports are closed automatically after compilation under the assumption
 the program that opens the ports and invokes \scheme{compile-port}
 will take care of closing the ports.
-Output will be compressed only if an output port is already set up to be
-compressed, e.g., if it was opened with the \scheme{compressed}
-file option.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1552,9 +1544,6 @@ If \var{covop} is present, \var{compile-to-port} sends coverage information to
 The ports are not closed automatically after compilation under the assumption
 the program that opens the port and invokes \scheme{compile-to-port}
 will take care of closing the port.
-Output will be compressed only if an output port is already set up to be
-compressed, e.g., if it was opened with the \scheme{compressed}
-file option.
 
 When \var{obj-list} contains a single list-structured element whose
 first-element is the symbol \scheme{top-level-program},
@@ -2592,25 +2581,6 @@ object filename has no extension or has the extension \scheme{.wpo}.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{compile-compressed}{\categorythreadparameter}{compile-compressed}
-\listlibraries
-\endentryheader
-
-\noindent
-When this parameter is \scheme{#t}, the default, \scheme{compile-file},
-\scheme{compile-library}, \scheme{compile-script},
-\scheme{compile-program}, \scheme{compile-to-file},
-\scheme{compile-whole-program}, and \scheme{strip-fasl-file} compress
-the object files they create.
-The compression format and level are determined by the
-\index{\scheme{compress-format}}\scheme{compress-format}
-and
-\index{\scheme{compress-level}}\scheme{compress-level}
-parameters.
-
-
-%----------------------------------------------------------------------------
-\entryheader
 \formdef{compile-file-message}{\categorythreadparameter}{compile-file-message}
 \listlibraries
 \endentryheader
@@ -3194,10 +3164,9 @@ set of tests.
 One covin file is created for each object file, with the object-file
 extension replaced by the extension \scheme{.covin}.
 Each covin file contains the printed representation of a source table
-(Section~\ref{SECTSYNTAXSOURCETABLES}), compressed when the parameter
-\scheme{compile-compressed} is true, mapping each profiled source
-expression found during the compilation of the corresponding source
-file to a count of zero.
+(Section~\ref{SECTSYNTAXSOURCETABLES}), compressed using the compression
+format and level specified by \scheme{compress-format} and
+\scheme{compress-level}.
 This information can be read via
 \index{\scheme{get-source-table!}}\scheme{get-source-table!} and used
 as a universe of source expressions to identify source expressions

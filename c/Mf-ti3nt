@@ -25,6 +25,9 @@ cross=f
 
 include Mf-base
 
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL=*
+
 ${Scheme}${cross:f=}: make.bat
 	cmd.exe /c make.bat
 	cp ../bin/$m/scheme.exe ../bin/$m/petite.exe

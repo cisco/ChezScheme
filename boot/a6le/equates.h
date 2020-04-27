@@ -204,13 +204,13 @@ typedef unsigned long U64;
 #define fasl_type_ephemeron 0x1C
 #define fasl_type_eq_hashtable 0x1F
 #define fasl_type_exactnum 0x14
-#define fasl_type_fasl_size 0x16
 #define fasl_type_flonum 0x8
 #define fasl_type_fxvector 0x1B
 #define fasl_type_gensym 0x13
 #define fasl_type_graph 0x10
 #define fasl_type_graph_def 0x11
 #define fasl_type_graph_ref 0x12
+#define fasl_type_gzip 0x2B
 #define fasl_type_header 0x0
 #define fasl_type_immediate 0xC
 #define fasl_type_immutable_box 0x29
@@ -222,6 +222,7 @@ typedef unsigned long U64;
 #define fasl_type_large_integer 0xA
 #define fasl_type_library 0xE
 #define fasl_type_library_code 0xF
+#define fasl_type_lz4 0x2C
 #define fasl_type_pair 0x7
 #define fasl_type_ratnum 0x3
 #define fasl_type_record 0x17
@@ -231,6 +232,7 @@ typedef unsigned long U64;
 #define fasl_type_string 0x9
 #define fasl_type_symbol 0x2
 #define fasl_type_symbol_hashtable 0x20
+#define fasl_type_uncompressed 0x2A
 #define fasl_type_vector 0x4
 #define fasl_type_visit 0x22
 #define fasl_type_visit_revisit 0x24
@@ -510,7 +512,7 @@ typedef unsigned long U64;
 #define size_rp_header 0x20
 #define size_rtd_counts 0x810
 #define size_symbol 0x30
-#define size_tc 0x2B0
+#define size_tc 0x2C0
 #define size_thread 0x10
 #define size_tlc 0x20
 #define size_typed_object 0x10
@@ -553,6 +555,8 @@ typedef unsigned long U64;
 #define symbol_pvalue_disp 0xD
 #define symbol_splist_disp 0x25
 #define symbol_value_disp 0x5
+#define tc_DSTBV_disp 0x2A8
+#define tc_SRCBV_disp 0x2B0
 #define tc_U_disp 0x160
 #define tc_V_disp 0x168
 #define tc_W_disp 0x170
@@ -912,6 +916,8 @@ typedef unsigned long U64;
 #define THREADTC(x) (*((uptr *)((uptr)(x)+9)))
 
 /* thread-context data */
+#define DSTBV(x) (*((ptr *)((uptr)(x)+680)))
+#define SRCBV(x) (*((ptr *)((uptr)(x)+688)))
 #define U(x) (*((ptr *)((uptr)(x)+352)))
 #define V(x) (*((ptr *)((uptr)(x)+360)))
 #define W(x) (*((ptr *)((uptr)(x)+368)))

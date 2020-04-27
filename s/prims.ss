@@ -1,4 +1,3 @@
-"prims.ss"
 ;;; prims.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -19,6 +18,7 @@
    (run-cp0 (default-run-cp0))
    (generate-interrupt-trap #f))
 
+(begin
 ;;; hand-coded primitives
 
 (define-who $hand-coded
@@ -2314,4 +2314,5 @@
       (let ([cp (cp->unsigned who cp)])
         (unless (string? str) ($oops who "~s is not a string" str))
         (wctmb cp (string->utf16 str 'little))))))
+)
 )

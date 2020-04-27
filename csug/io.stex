@@ -3390,6 +3390,15 @@ An exception is raised with condition-type \scheme{&assertion} if
 \var{obj} or any portion of \var{obj} has no external fasl representation,
 e.g., if \var{obj} is or contains a procedure.
 
+The fasl representation of \var{obj} is compressed if the parameter
+\scheme{fasl-compressed}, described below, is set to \scheme{#t},
+its default value.
+For this reason, \var{binary-output-port} generally should not be opened
+with the compressed option.
+A warning is issued (an exception with condition type \scheme{&warning}
+is raised) on the first attempt to write fasl objects to or read
+fasl objects from a compressed file.
+
 \schemedisplay
 (define bop (open-file-output-port "tmp.fsl"))
 (fasl-write '(a b c) bop)
@@ -3430,6 +3439,14 @@ corresponding to source code within an \scheme{eval-when} form with
 situation \scheme{load} or situations \scheme{visit} and \scheme{revisit})
 are never skipped.
 
+\scheme{fasl-read} automatically decompresses the representation
+of each fasl object written in compressed format by \scheme{fasl-write}.
+Thus, \var{binary-input-port} generally should not be opened with
+the compressed option.
+A warning is issued (an exception with condition type \scheme{&warning}
+is raised) on the first attempt to write fasl objects to or read
+fasl objects from a compressed file.
+
 \schemedisplay
 (define bop (open-file-output-port "tmp.fsl"))
 (fasl-write '(a b c) bop)
@@ -3440,6 +3457,23 @@ are never skipped.
 (fasl-read bip) ;=> #!eof
 (close-port bip)
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fasl-compressed}{\categorythreadparameter}{fasl-compressed}
+\listlibraries
+\endentryheader
+
+\noindent
+When this parameter is set to its default value, \scheme{#t},
+\scheme{fasl-write} compresses the representation of each object
+as it writes it, often resulting in substantially smaller output
+but possibly taking more time to write and read.
+The compression format and level are determined by the
+\index{\scheme{compress-format}}\scheme{compress-format}
+and
+\index{\scheme{compress-level}}\scheme{compress-level}
+parameters.
 
 
 %----------------------------------------------------------------------------

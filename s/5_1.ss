@@ -1,4 +1,3 @@
-"5_1.ss"
 ;;; 5_1.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; type and generic predicates
 
+(begin
 (define boolean?
    (lambda (x)
       (or (eq? x #t) (eq? x #f))))
@@ -332,3 +332,4 @@
             (or (null? s*)
                 (and (#3%symbol=? (car s*) s1)
                      (f (cdr s*))))))]))
+)

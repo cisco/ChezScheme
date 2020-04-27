@@ -1,4 +1,3 @@
-"4.ss"
 ;;; 4.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define-who apply
   (let ()
     (define-syntax build-apply
@@ -55,12 +55,6 @@
                  cl ...))])))
     (build-apply (x1 x2 x3 x4))))
 
-(define ormap)
-(define andmap)
-(define map)
-(define for-each)
-(define fold-left)
-(define fold-right)
 (let ()
   (define length-error
      (lambda (who l1 l2)
@@ -424,3 +418,4 @@
       (unless (procedure? promise)
          ($oops who "~s is not a procedure" promise))
       (promise)))
+)
