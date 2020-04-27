@@ -1949,3 +1949,9 @@
     primdata.ss
 - console I/O on Windows now supports Unicode characters in the BMP
     expeditor.c, new-io.c, release_notes.stex
+- fixed a bug in arm32 that caused an error when generating
+  instructions with immediate operands where the immediate was larger
+  than 8 bits.
+    arm32.ss
+- fixed formatting in arm32.ss
+    arm32.ss
