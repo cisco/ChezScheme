@@ -14,7 +14,7 @@ runmats o=3 cp0=t eval=interpret
 
 if [ -f ${TARGET_MACHINE}/mats/summary ]; then
   cat ${TARGET_MACHINE}/mats/summary
-  diff -q .travis/summary ${TARGET_MACHINE}/mats/summary
+  diff -q .github/scripts/summary ${TARGET_MACHINE}/mats/summary
   exit $?
 else
   exit 1
