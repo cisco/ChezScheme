@@ -1253,8 +1253,8 @@
 (define-primitive-structure-disps ephemeron type-pair
   ([ptr car]
    [ptr cdr]
-   [ptr next] ; `next` is needed by the GC to keep track of pending ephemerons
-   [ptr trigger-next])) ; `trigger-next` is similar, but for segment-specific lists
+   [ptr prev-ref] ; `prev-ref` and `next` are used by the GC
+   [ptr next]))
 
 (define-primitive-structure-disps tlc type-typed-object
   ([iptr type]

@@ -1224,6 +1224,26 @@
   ;; sure they don't fail:
   (list? (collect 0 0 (list (call/cc values))))
   (list? (collect (collect-maximum-generation) (collect-maximum-generation) (list (call/cc values))))
+
+  (let ()
+    (define e (ephemeron-cons #t (gensym)))
+    (collect 0 1)
+    (let ([g (gensym)])
+      (set-car! e g)
+      (set! g #f)
+      ;; For this collection, `e` is both on the dirty list
+      ;; and involved in measuring; make sure those roles
+      ;; don't conflict
+      (collect 1 1 (list e))
+      (equal? e (cons #!bwp #!bwp))))
+
+  (let ()
+    (define e (ephemeron-cons #t 'other))
+    (collect 0 1)
+    (let ([g (gensym)])
+      (set-car! e g)
+      (collect 1 1 (list e))
+      (equal? e (cons g 'other))))
 )
 
 (mat compute-composition

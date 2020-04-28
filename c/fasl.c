@@ -843,7 +843,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 break;
               case eq_hashtable_subtype_ephemeron:
               default:
-                keyval = S_cons_in(space_ephemeron, 0, FIX(0), FIX(0));
+                keyval = S_ephemeron_cons_in(0, FIX(0), FIX(0));
                 break;
               }
               faslin(tc, &INITCAR(keyval), t, pstrbuf, f);
@@ -966,7 +966,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             faslin(tc, &INITCDR(*x), t, pstrbuf, f);
             return;
         case fasl_type_ephemeron:
-            *x = S_cons_in(space_ephemeron, 0, FIX(0), FIX(0));
+            *x = S_ephemeron_cons_in(0, FIX(0), FIX(0));
             faslin(tc, &INITCAR(*x), t, pstrbuf, f);
             faslin(tc, &INITCDR(*x), t, pstrbuf, f);
             return;

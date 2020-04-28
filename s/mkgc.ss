@@ -164,6 +164,11 @@
       (size size-ephemeron)
       (copy pair-car)
       (copy pair-cdr)
+      (case-mode
+       [(copy)
+        (set! (ephemeron-prev-ref _copy_) NULL)
+        (set! (ephemeron-next _copy_) NULL)]
+       [else])
       (add-ephemeron-to-pending)
       (mark one-bit no-sweep)
       (assert-ephemeron-size-ok)
@@ -1978,6 +1983,8 @@
                  (comma-ize (map (lambda (r) (expression r config)) rands)))]
         [else
          (cond
+           [(eq? a #f) "Sfalse"]
+           [(eq? a #t) "Strue"]
            [(symbol? a)
             (cond
               [(getprop a '*c-name* #f)

@@ -74,6 +74,7 @@ extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
 extern ptr S_list_bits_ref PROTO((ptr p));
 extern void S_list_bits_set PROTO((ptr p, iptr bits));
 extern ptr S_cons_in PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
+extern ptr S_ephemeron_cons_in PROTO((IGEN g, ptr car, ptr cdr));
 extern ptr S_symbol PROTO((ptr name));
 extern ptr S_rational PROTO((ptr n, ptr d));
 extern ptr S_tlc PROTO((ptr keyval, ptr tconc, ptr next));

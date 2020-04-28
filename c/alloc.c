@@ -507,6 +507,19 @@ ptr Scons(car, cdr) ptr car, cdr; {
     return p;
 }
 
+/* S_ephemeron_cons_in is always called with mutex */
+ptr S_ephemeron_cons_in(gen, car, cdr) IGEN gen; ptr car, cdr; {
+  ptr p;
+
+  find_room(space_ephemeron, gen, type_pair, size_ephemeron, p);
+  INITCAR(p) = car;
+  INITCDR(p) = cdr;
+  EPHEMERONPREVREF(p) = NULL;
+  EPHEMERONNEXT(p) = NULL;
+
+  return p;
+}
+
 ptr S_box2(ref, immobile) ptr ref; IBOOL immobile; {
     ptr tc = get_thread_context();
     ptr p;

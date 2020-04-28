@@ -814,10 +814,10 @@
         (definit INITBOXREF box ref)
         (defset SETBOXREF box ref)
 
+        (defref EPHEMERONPREVREF ephemeron prev-ref)
+        (definit INITEPHEMERONPREVREF ephemeron prev-ref)
         (defref EPHEMERONNEXT ephemeron next)
         (definit INITEPHEMERONNEXT ephemeron next)
-        (defref EPHEMERONTRIGGERNEXT ephemeron trigger-next)
-        (definit INITEPHEMERONTRIGGERNEXT ephemeron trigger-next)
 
         (defref TLCTYPE tlc type)
         (defref TLCKEYVAL tlc keyval)

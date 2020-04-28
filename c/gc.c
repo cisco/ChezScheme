@@ -102,9 +102,8 @@
    are not relevant to dirty-object sweeping, since flonums don't have
    pointer fields).
 
-   It's mostly ok to sweep an object multiple times. An exception is
-   ephemerons, because an ephemeron is added to the pending set when
-   it is swept.
+   It's ok to sweep an object multiple times (but to be be avoided if
+   possible).
 
    Pending Ephemerons and Guardians
    --------------------------------
@@ -151,12 +150,12 @@ static void mark_typemod_data_object PROTO((ptr p, uptr len, seginfo *si));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
 static void add_ephemeron_to_pending PROTO((ptr p));
-static void add_trigger_ephemerons_to_repending PROTO((ptr p));
+static void add_trigger_ephemerons_to_pending PROTO((ptr p));
 static void check_triggers PROTO((seginfo *si));
-static void check_ephemeron PROTO((ptr pe, int add_to_trigger));
+static void check_ephemeron PROTO((ptr pe));
 static void check_pending_ephemerons PROTO(());
 static int check_dirty_ephemeron PROTO((ptr pe, int tg, int youngest));
-static void clear_trigger_ephemerons PROTO(());
+static void finish_pending_ephemerons PROTO((seginfo *si));
 static void init_fully_marked_mask();
 static void copy_and_clear_list_bits(seginfo *oldspacesegments, IGEN tg);
 
@@ -383,7 +382,7 @@ FORCEINLINE void check_triggers(seginfo *si) {
      ephemerons). */
   if (si->has_triggers) {
     if (si->trigger_ephemerons) {
-      add_trigger_ephemerons_to_repending(si->trigger_ephemerons);
+      add_trigger_ephemerons_to_pending(si->trigger_ephemerons);
       si->trigger_ephemerons = NULL;
     }
     if (si->trigger_guardians) {
@@ -703,8 +702,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
                || !count_roots[i].weak) {
              /* reached or older; sweep transitively */
              relocate(&p)
-             if (si->space != space_ephemeron) /* not ok to resweep ephemeron */
-               sweep(tc, p);
+             sweep(tc, p);
              ADD_BACKREFERENCE(p)
              sweep_generation(tc, tg);
 # ifdef ENABLE_MEASURE
@@ -1069,7 +1067,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
     resweep_weak_pairs(tg, oldweakspacesegments);
 
    /* still-pending ephemerons all go to bwp */
-    clear_trigger_ephemerons();
+    finish_pending_ephemerons(oldspacesegments);
 
    /* post-gc oblist handling.  rebuild old buckets in the target generation, pruning unforwarded symbols */
     { bucket_list *bl, *blnext; bucket *b, *bnext; bucket_pointer_list *bpl; bucket **pb;
@@ -1177,7 +1175,6 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
         si->next = S_G.occupied_segments[s][tg];
         S_G.occupied_segments[s][tg] = si;
         S_G.bytes_of_space[s][tg] += si->marked_count;
-        si->trigger_ephemerons = NULL;
         si->trigger_guardians = NULL;
 #ifdef PRESERVE_FLONUM_EQ
         si->forwarded_flonums = NULL;
@@ -1892,17 +1889,28 @@ static void add_trigger_guardians_to_recheck(ptr ls)
 static ptr pending_ephemerons = NULL;
 /* Ephemerons that we haven't looked at, chained through `next`. */
 
-static ptr trigger_ephemerons = NULL;
-/* Ephemerons that we've checked and added to segment triggers,
-   chained through `next`. Ephemerons attached to a segment are
-   chained through `trigger-next`. A #t in `trigger-next` means that
-   the ephemeron has been processed, so we don't need to remove it
-   from the trigger list in a segment. */
+static void ephemeron_remove(ptr pe) {
+  ptr next = EPHEMERONNEXT(pe);
+  *((ptr *)EPHEMERONPREVREF(pe)) = next;
+  if (next)
+    EPHEMERONPREVREF(next) = EPHEMERONPREVREF(pe);
+  EPHEMERONPREVREF(pe) = NULL;
+  EPHEMERONNEXT(pe) = NULL;
+}
 
-static ptr repending_ephemerons = NULL;
-/* Ephemerons in `trigger_ephemerons` that we need to inspect again,
-   removed from the triggering segment and chained here through
-   `trigger-next`. */
+static void ephemeron_add(ptr *first, ptr pe) {
+  ptr last_pe = pe, next_pe = EPHEMERONNEXT(pe), next;
+  while (next_pe != NULL) {
+    last_pe = next_pe;
+    next_pe = EPHEMERONNEXT(next_pe);
+  }
+  next = *first;
+  *first = pe;
+  EPHEMERONPREVREF(pe) = (ptr)first;
+  EPHEMERONNEXT(last_pe) = next;
+  if (next)
+    EPHEMERONPREVREF(next) = &EPHEMERONNEXT(last_pe);
+}
 
 static void add_ephemeron_to_pending(ptr pe) {
   /* We could call check_ephemeron directly here, but the indirection
@@ -1910,45 +1918,33 @@ static void add_ephemeron_to_pending(ptr pe) {
      of times that we have to trigger re-checking, especially since
      check_pending_pehemerons() is run only after all other sweep
      opportunities are exhausted. */
-  EPHEMERONNEXT(pe) = pending_ephemerons;
-  pending_ephemerons = pe;
+  if (EPHEMERONPREVREF(pe)) ephemeron_remove(pe);
+  ephemeron_add(&pending_ephemerons, pe);
 }
 
-static void add_trigger_ephemerons_to_repending(ptr pe) {
-  ptr last_pe = pe, next_pe = EPHEMERONTRIGGERNEXT(pe);
-  while (next_pe != NULL) {
-    last_pe = next_pe;
-    next_pe = EPHEMERONTRIGGERNEXT(next_pe);
-  }
-  EPHEMERONTRIGGERNEXT(last_pe) = repending_ephemerons;
-  repending_ephemerons = pe;
+static void add_trigger_ephemerons_to_pending(ptr pe) {
+  ephemeron_add(&pending_ephemerons, pe);
 }
 
-static void check_ephemeron(ptr pe, int add_to_trigger) {
+static void check_ephemeron(ptr pe) {
   ptr p;
   seginfo *si;
   PUSH_BACKREFERENCE(pe);
+
+  EPHEMERONNEXT(pe) = NULL;
+  EPHEMERONPREVREF(pe) = NULL;
 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space) {
     if (marked(si, p)) {
       relocate(&INITCDR(pe))
-      if (!add_to_trigger)
-        EPHEMERONTRIGGERNEXT(pe) = Strue; /* in trigger list, #t means "done" */
     } else if (FORWARDEDP(p, si)) {
       INITCAR(pe) = FWDADDRESS(p);
       relocate(&INITCDR(pe))
-      if (!add_to_trigger)
-        EPHEMERONTRIGGERNEXT(pe) = Strue; /* in trigger list, #t means "done" */
     } else {
       /* Not reached, so far; install as trigger */
-      EPHEMERONTRIGGERNEXT(pe) = si->trigger_ephemerons;
-      si->trigger_ephemerons = pe;
+      ephemeron_add(&si->trigger_ephemerons, pe);
       si->has_triggers = 1;
-      if (add_to_trigger) {
-        EPHEMERONNEXT(pe) = trigger_ephemerons;
-        trigger_ephemerons = pe;
-      }
     }
   } else {
     relocate(&INITCDR(pe))
@@ -1964,15 +1960,7 @@ static void check_pending_ephemerons() {
   pending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONNEXT(pe);
-    check_ephemeron(pe, 1);
-    pe = next_pe;
-  }
-
-  pe = repending_ephemerons;
-  repending_ephemerons = NULL;
-  while (pe != NULL) {
-    next_pe = EPHEMERONTRIGGERNEXT(pe);
-    check_ephemeron(pe, 0);
+    check_ephemeron(pe);
     pe = next_pe;
   }
 }
@@ -1999,6 +1987,7 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
       } else {
         /* Not reached, so far; add to pending list */
         add_ephemeron_to_pending(pe);
+
         /* Make the consistent (but pessimistic w.r.t. to wrong-way
            pointers) assumption that the key will stay live and move
            to the target generation. That assumption covers the value
@@ -2023,23 +2012,24 @@ static int check_dirty_ephemeron(ptr pe, int tg, int youngest) {
   return youngest;
 }
 
-static void clear_trigger_ephemerons() {
-  ptr pe;
-
+static void finish_pending_ephemerons(seginfo *si) {
+  /* Any ephemeron still in a trigger list is an ephemeron
+     whose key was not reached. */
   if (pending_ephemerons != NULL)
     S_error_abort("clear_trigger_ephemerons(gc): non-empty pending list");
 
-  pe = trigger_ephemerons;
-  trigger_ephemerons = NULL;
-  while (pe != NULL) {
-    if (EPHEMERONTRIGGERNEXT(pe) == Strue) {
-      /* The ephemeron was triggered and retains its key and value */
-    } else {
-      /* Key never became reachable, so clear key and value */
-      INITCAR(pe) = Sbwp_object;
-      INITCDR(pe) = Sbwp_object;
+  for (; si != NULL; si = si->next) {
+    if (si->trigger_ephemerons) {
+      ptr pe, next_pe;
+      for (pe = si->trigger_ephemerons; pe != NULL; pe = next_pe) {
+        INITCAR(pe) = Sbwp_object;
+        INITCDR(pe) = Sbwp_object;
+        next_pe = EPHEMERONNEXT(pe);
+        EPHEMERONPREVREF(pe) = NULL;
+        EPHEMERONNEXT(pe) = NULL;
+      }
+      si->trigger_ephemerons = NULL;
     }
-    pe = EPHEMERONNEXT(pe);
   }
 }
 
@@ -2165,8 +2155,14 @@ static void finish_measure() {
   ptr ls;
 
   for (ls = measured_seginfos; ls != Snil; ls = Scdr(ls)) {
+    ptr pe, next_pe;
     seginfo *si = (seginfo *)Scar(ls);
     si->measured_mask = NULL;
+    for (pe = si->trigger_ephemerons; pe != NULL; pe = next_pe) {
+      next_pe = EPHEMERONNEXT(pe);
+      EPHEMERONPREVREF(pe) = NULL;
+      EPHEMERONNEXT(pe) = NULL;
+    }
     si->trigger_ephemerons = NULL;
   }
 
@@ -2249,24 +2245,31 @@ static void measure_add_stack_size(ptr stack, uptr size) {
 }
 
 static void add_ephemeron_to_pending_measure(ptr pe) {
-  EPHEMERONNEXT(pe) = pending_measure_ephemerons;
-  pending_measure_ephemerons = pe;
+  /* If we're in hybrid mode and the key in `pe` is in the
+     old space, then we need to use the regular pending list
+     instead of the measure-specific one */
+  seginfo *si;
+  ptr p = Scar(pe);
+
+  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space)
+    add_ephemeron_to_pending(pe);
+  else {
+    if (EPHEMERONPREVREF(pe))
+      S_error_abort("add_ephemeron_to_pending_measure: ephemeron is in some list");
+    ephemeron_add(&pending_measure_ephemerons, pe);
+  }
 }
 
 static void add_trigger_ephemerons_to_pending_measure(ptr pe) {
-  ptr last_pe = pe, next_pe = EPHEMERONNEXT(pe);
-
-  while (next_pe != NULL) {
-    last_pe = next_pe;
-    next_pe = EPHEMERONNEXT(next_pe);
-  }
-  EPHEMERONNEXT(last_pe) = pending_measure_ephemerons;
-  pending_measure_ephemerons = pe;
+  ephemeron_add(&pending_measure_ephemerons, pe);
 }
 
 static void check_ephemeron_measure(ptr pe) {
   ptr p;
   seginfo *si;
+
+  EPHEMERONPREVREF(pe) = NULL;
+  EPHEMERONNEXT(pe) = NULL;
 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL
@@ -2277,8 +2280,7 @@ static void check_ephemeron_measure(ptr pe) {
           || (si->counting_mask
               && (si->counting_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p))))) {
     /* Not reached, so far; install as trigger */
-    EPHEMERONNEXT(pe) = si->trigger_ephemerons;
-    si->trigger_ephemerons = pe;
+    ephemeron_add(&si->trigger_ephemerons, pe);
     if (!si->measured_mask)
       init_measure_mask(si); /* so triggers are cleared at end */
     return;
