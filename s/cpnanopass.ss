@@ -13670,7 +13670,7 @@
                ,(constant-case architecture
                   [(x86_64)
                    `(seq
-                     (set! ,%rax (inline ,(make-info-inline) ,%popcount ,%rdi))
+                     (set! ,%rax (inline ,(make-info-inline) ,%popcount ,%rcx))
                      (asm-c-return ,null-info ,%rax))]
                   [else
                    ;; Generate anything, since this should not get called
