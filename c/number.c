@@ -1698,7 +1698,7 @@ static ptr big_logbitp(n, x, xl, xs) ptr x; iptr n, xl; IBOOL xs; {
     if (i < 0) return Sfalse;
 
     n = n % bigit_bits;
-    return Sboolean(BIGIT(x,i) & (1 << n));
+    return Sboolean(BIGIT(x,i) & ((bigit)1 << n));
   } else {
     bigit xb;
 
@@ -1831,7 +1831,7 @@ static ptr big_logbit1(tc, origx, n, x, xl, xs) ptr tc, origx, x; iptr n, xl; IB
       *--zp = x1;
       n -= bigit_bits;
     }
-    *--zp = x1 | (1 << n);
+    *--zp = x1 | ((bigit)1 << n);
     for (; i > 0; i -= 1) *--zp = *--xp;
     return copy_normalize(tc, zp, zl, 0);
   } else if (yl > xl) {
