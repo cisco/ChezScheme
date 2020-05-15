@@ -239,11 +239,11 @@ static ptr sweep_from;
 
 #if ptr_alignment == 2
 # define record_full_marked_mask 0x55
-# define record_high_marked_mask 0x40
+# define record_high_marked_bit  0x40
 # define mask_bits_to_list_bits_mask(m) ((m) | ((m) << 1))
 #elif ptr_alignment == 1
 # define record_full_marked_mask 0xFF
-# define record_high_marked_mask 0x80
+# define record_high_marked_bit  0x80
 # define mask_bits_to_list_bits_mask(m) (m)
 #endif
 
@@ -273,7 +273,7 @@ uptr list_length(ptr ls) {
 #define marked(si, p) (si->marked_mask && (si->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))
 
 static void init_fully_marked_mask() {
-  init_mask(fully_marked_mask, 0, 0xFF);
+  init_mask(fully_marked_mask, target_generation, 0xFF);
 }
 
 #ifdef PRESERVE_FLONUM_EQ
@@ -287,11 +287,8 @@ static void flonum_set_forwarded(ptr p, seginfo *si) {
 static int flonum_is_forwarded_p(ptr p, seginfo *si) {
   if (!si->forwarded_flonums)
     return 0;
-  else {
-    uptr delta = (uptr)UNTYPE(p, type_flonum) - (uptr)build_ptr(si->number, 0);
-    delta >>= log2_ptr_bytes;
-    return si->forwarded_flonums[delta >> 3] & (1 << (delta & 0x7));
-  }
+  else
+    return si->forwarded_flonums[segment_bitmap_byte(p)] & segment_bitmap_bit(p);
 }
 
 # define FLONUM_FWDADDRESS(p) *(ptr*)(UNTYPE(p, type_flonum))
@@ -539,7 +536,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
     }
 
    /* perform after ScanDirty */
-    if (S_checkheap) S_check_heap(0);
+    if (S_checkheap) S_check_heap(0, mcg);
 
 #ifdef DEBUG
 (void)printf("mcg = %x;  go? ", mcg); (void)fflush(stdout); (void)getc(stdin);
@@ -639,7 +636,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
          seginfo *si = SegInfo(ptr_get_segment(p));
          if (si->space == space_new) {
            if (!si->marked_mask)
-             init_mask(si->marked_mask, 0, 0);
+             init_mask(si->marked_mask, tg, 0);
            si->marked_mask[segment_bitmap_byte(p)] |= segment_bitmap_bit(p);
          }
        }
@@ -1207,7 +1204,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
 
     S_flush_instruction_cache(tc);
 
-    if (S_checkheap) S_check_heap(1);
+    if (S_checkheap) S_check_heap(1, mcg);
 
    /* post-collection rehashing of tlcs.
       must come after any use of relocate.
@@ -1659,7 +1656,7 @@ static void sweep_dirty(void) {
                           if (si->marked_mask[byte-1] == record_full_marked_mask) {
                             /* next byte is full, so keep looking */
                             byte--;
-                          } else if (si->marked_mask[byte-1] & record_high_marked_mask) {
+                          } else if (si->marked_mask[byte-1] & record_high_marked_bit) {
                             /* next byte continues, but is not full, so we can start
                                there */
                             if (at_seg != seg) {
@@ -1671,6 +1668,7 @@ static void sweep_dirty(void) {
                               si = SegInfo(at_seg);
                             } else {
                               byte--;
+                              bit = record_high_marked_bit;
                               /* find bit contiguous with highest bit */
                               while (si->marked_mask[byte] & (bit >> ptr_alignment))
                                 bit >>= ptr_alignment;
@@ -2080,14 +2078,14 @@ void copy_and_clear_list_bits(seginfo *oldspacesegments, IGEN tg) {
       } else {
         if (si->marked_mask) {
           /* Besides marking or copying `si->list_bits`, clear bits
-             where there's no corresopnding mark bit, so we don't try to
+             where there's no corresponding mark bit, so we don't try to
              check forwarding in a future GC */
           seginfo *bits_si = SegInfo(ptr_get_segment((ptr)si->list_bits));
         
           if (bits_si->old_space) {
             if (bits_si->use_marks) {
               if (!bits_si->marked_mask)
-                init_mask(bits_si->marked_mask, 0, 0);
+                init_mask(bits_si->marked_mask, tg, 0);
               bits_si->marked_mask[segment_bitmap_byte((ptr)si->list_bits)] |= segment_bitmap_bit((ptr)si->list_bits);
             } else {
               octet *copied_bits;

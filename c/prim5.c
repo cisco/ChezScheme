@@ -222,6 +222,11 @@ static ptr s_make_immobile_vector(uptr len, ptr fill) {
   for (i = 0; i < len; i++)
     INITVECTIT(v, i) = fill;
 
+  if (!(len & 0x1)) {
+    /* pad, since we're not going to copy on a GC */
+    INITVECTIT(v, len) = FIX(0);
+  }
+
   return v;
 }
 

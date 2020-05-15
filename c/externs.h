@@ -168,7 +168,7 @@ extern void S_immobilize_object PROTO((ptr v));
 extern void S_mobilize_object PROTO((ptr v));
 extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
-extern void S_check_heap PROTO((IBOOL aftergc));
+extern void S_check_heap PROTO((IBOOL aftergc, IGEN target_gen));
 
 /* gc-ocd.c */
 extern ptr S_gc_ocd PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));

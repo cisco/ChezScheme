@@ -5299,7 +5299,7 @@
 
 (mat compacting
   ;; try to provoke the GC into putting a record into marked
-  ;; (insteda of copied) space and check the write barrier there
+  ;; (instead of copied) space and check the write barrier there
   (let loop ([N 2])
     (or (= N 8192)
         (let sel-loop ([sels (list car cadr)])
