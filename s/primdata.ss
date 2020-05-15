@@ -1490,7 +1490,7 @@
   (make-phantom-bytevector [sig [(uptr) -> (phantom-bytevector)]] [flags true])
   (make-pseudo-random-generator [sig [() -> (pseudo-random-generator)]] [flags true])
   (make-record-type [sig [(sub-ptr sub-list) (maybe-rtd sub-ptr sub-list) -> (rtd)]] [flags pure alloc cp02])
-  (make-record-type-descriptor* [sig [(symbol maybe-rtd maybe-symbol ptr ptr fixnum exact-integer) -> (rtd)]] [flags pure alloc cp02])
+  (make-record-type-descriptor* [sig [(symbol maybe-rtd maybe-symbol ptr ptr ufixnum exact-integer) -> (rtd)]] [flags pure alloc cp02])
   (make-source-condition [sig [(ptr) -> (condition)]] [flags pure unrestricted mifoldable discard])
   (make-source-file-descriptor [sig [(string binary-input-port) (string binary-input-port ptr) -> (sfd)]] [flags true])
   (make-source-object [sig [(sfd uint uint) (sfd uint uint nzuint nzuint) -> (source-object)]] [flags pure true mifoldable discard])

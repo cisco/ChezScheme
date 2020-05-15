@@ -36,13 +36,9 @@ primvars.mo:Expected error testing (hashtable-cells (quote #f)): Exception in ha
 primvars.mo:Expected error testing (make-input-port (quote 0) "a"): Exception in make-input-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-input/output-port (quote 0) "a" "a"): Exception in make-input/output-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-output-port (quote 0) "a"): Exception in make-output-port: fixnum handler no longer supported; use open-fd-input-port
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i (quote q) (- (most-negative-fixnum) 1)): Exception in make-record-type-descriptor*: invalid field count q
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i (quote 1152921504606846976) (- (most-negative-fixnum) 1)): Exception in make-record-type-descriptor*: invalid field count 1152921504606846976
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i (quote -1152921504606846977) (- (most-negative-fixnum) 1)): Exception in make-record-type-descriptor*: invalid field count -1152921504606846977
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i (quote #f) (- (most-negative-fixnum) 1)): Exception in make-record-type-descriptor*: invalid field count #f
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i -1 (quote 2.0)): Exception in make-record-type-descriptor*: invalid field count -1
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i -1 (quote 1/2)): Exception in make-record-type-descriptor*: invalid field count -1
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i -1 (quote #f)): Exception in make-record-type-descriptor*: invalid field count -1
+primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote 2.0)): Exception in make-record-type-descriptor*: invalid mutability mask 2.0 for field count 0
+primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote 1/2)): Exception in make-record-type-descriptor*: invalid mutability mask 1/2 for field count 0
+primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote #f)): Exception in make-record-type-descriptor*: invalid mutability mask #f for field count 0
 primvars.mo:Expected error testing (make-sstats (quote "no-time") *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value "no-time" is not a time record
 primvars.mo:Expected error testing (make-sstats (quote #f) *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value #f is not a time record
 primvars.mo:Expected error testing (make-sstats *time (quote "no-time") (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: real value "no-time" is not a time record
@@ -68,58 +64,6 @@ primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #!eof) 
 primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f) *pseudo-random-generator): Exception: variable *pseudo-random-generator is not bound
 primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote 0)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
 primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote #f)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
-primvars.mo:Expected error testing (stencil-vector (quote -1)): Exception in stencil-vector: invalid mask -1
-primvars.mo:Expected error testing (stencil-vector (quote a)): Exception in stencil-vector: invalid mask a
-primvars.mo:Expected error testing (stencil-vector (quote 18446744073709551616)): Exception in stencil-vector: invalid mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector (quote #f)): Exception in stencil-vector: invalid mask #f
-primvars.mo:Expected error testing (stencil-vector (quote -1) 1.0+2.0i): Exception in stencil-vector: invalid mask -1
-primvars.mo:Expected error testing (stencil-vector (quote a) 1.0+2.0i): Exception in stencil-vector: invalid mask a
-primvars.mo:Expected error testing (stencil-vector (quote 18446744073709551616) 1.0+2.0i): Exception in stencil-vector: invalid mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector (quote #f) 1.0+2.0i): Exception in stencil-vector: invalid mask #f
-primvars.mo:Expected error testing (stencil-vector (quote -1) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask -1
-primvars.mo:Expected error testing (stencil-vector (quote a) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask a
-primvars.mo:Expected error testing (stencil-vector (quote 18446744073709551616) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector (quote #f) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask #f
-primvars.mo:Expected error testing (stencil-vector (quote -1) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask -1
-primvars.mo:Expected error testing (stencil-vector (quote a) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask a
-primvars.mo:Expected error testing (stencil-vector (quote 18446744073709551616) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector (quote #f) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector: invalid mask #f
-primvars.mo:Expected error testing (stencil-vector-truncate! (stencil-vector 7 1 2 3) (quote -1)): Exception in stencil-vector-truncate!: invalid mask -1
-primvars.mo:Expected error testing (stencil-vector-truncate! (stencil-vector 7 1 2 3) (quote a)): Exception in stencil-vector-truncate!: invalid mask a
-primvars.mo:Expected error testing (stencil-vector-truncate! (stencil-vector 7 1 2 3) (quote 18446744073709551616)): Exception in stencil-vector-truncate!: invalid mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-truncate! (stencil-vector 7 1 2 3) (quote #f)): Exception in stencil-vector-truncate!: invalid mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote -1) 0): Exception in stencil-vector-update: invalid removal mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote a) 0): Exception in stencil-vector-update: invalid removal mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote 18446744073709551616) 0): Exception in stencil-vector-update: invalid removal mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote #f) 0): Exception in stencil-vector-update: invalid removal mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote -1)): Exception in stencil-vector-update: invalid addition mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote a)): Exception in stencil-vector-update: invalid addition mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote 18446744073709551616)): Exception in stencil-vector-update: invalid addition mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote #f)): Exception in stencil-vector-update: invalid addition mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote -1) 0 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote a) 0 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote 18446744073709551616) 0 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote #f) 0 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote -1) 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote a) 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote 18446744073709551616) 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote #f) 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote -1) 0 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote a) 0 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote 18446744073709551616) 0 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote #f) 0 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote -1) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote a) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote 18446744073709551616) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote #f) 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote -1) 0 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote a) 0 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote 18446744073709551616) 0 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) (quote #f) 0 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid removal mask #f
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote -1) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask -1
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote a) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask a
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote 18446744073709551616) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask 18446744073709551616
-primvars.mo:Expected error testing (stencil-vector-update (stencil-vector 7 1 2 3) 0 (quote #f) 1.0+2.0i 1.0+2.0i 1.0+2.0i): Exception in stencil-vector-update: invalid addition mask #f
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector "a"
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote #f)): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector #f
 primvars.mo:Expected error testing (vector->pseudo-random-generator! (quote #f) (quote #(a))): Exception in vector->pseudo-random-generator!: not a pseudo-random generator #f
