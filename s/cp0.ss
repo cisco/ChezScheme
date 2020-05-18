@@ -662,7 +662,7 @@
                     (let ((opnd (car unused)))
                       (let ((e (operand-value opnd)))
                         (if e
-                            (if (simple? e)
+                            (if (simple1? e)
                                 (if (operand-singly-referenced-score opnd)
                                     ; singly-referenced integration attempt in copy2 succeeded
                                     (f (cdr unused) (fx+ (operand-singly-referenced-score opnd) n) todo)
@@ -2007,21 +2007,25 @@
     (define record-equal?
       ; not very ambitious
       (lambda (e1 e2 ctxt)
-        (if (unused-value-context? ctxt)
-            (and (simple? e1) (simple? e2))
-            (nanopass-case (Lsrc Expr) e1
-              [(ref ,maybe-src1 ,x1)
-               (nanopass-case (Lsrc Expr) e2
-                 [(ref ,maybe-src2 ,x2) (eq? x1 x2)]
-                 [else #f])]
-              [(quote ,d1)
-               (nanopass-case (Lsrc Expr) e2
-                 [(quote ,d2)
-                  (if (eq? ctxt 'test)
-                      (if d1 d2 (not d2))
-                      (eq? d1 d2))]
-                 [else #f])]
-              [else #f]))))
+        (cond
+          [(eq? ctxt 'effect)
+           (and (simple? e1) (simple? e2))]
+          [(eq? ctxt 'ignored)
+           (and (simple1? e1) (simple1? e2))]
+          [else
+           (nanopass-case (Lsrc Expr) e1
+             [(ref ,maybe-src1 ,x1)
+              (nanopass-case (Lsrc Expr) e2
+                [(ref ,maybe-src2 ,x2) (eq? x1 x2)]
+                [else #f])]
+             [(quote ,d1)
+              (nanopass-case (Lsrc Expr) e2
+                [(quote ,d2)
+                 (if (eq? ctxt 'test)
+                     (if d1 d2 (not d2))
+                     (eq? d1 d2))]
+                [else #f])]
+             [else #f])])))
 
     (module ()
       (define-syntax define-inline

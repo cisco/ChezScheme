@@ -369,6 +369,14 @@
             (y))))
   (error? (apply zero? 0))
   (error? (if (apply eof-object 1 2) 3 4))
+
+  (equivalent-expansion?
+   (expand/optimize '(lambda (t) (#3%$value (if t 1 (values 3 3 3))) #t))
+   (if (eqv? (optimize-level) 3)
+       '(lambda (x) #t)
+       '(lambda (x)
+          (#3%$value (if x 1 (#2%values 3 3 3)))
+          #t)))
 )
 
 (cp0-mat cp0-mrvs
