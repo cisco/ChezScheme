@@ -10,12 +10,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mach: ['ta6le'] 
+        mach: ['i3le', 'ti3le', 'a6le', 'ta6le'] 
 
     env:
-      TARGET_MACHINE: ${{ matrix.mach }}
+      MACH: ${{ matrix.mach }}
 
     steps:
+      - uses: Bogdanp/setup-racket@v0.8
+        with:
+          distribution: 'minimal'  # minimal is enough
+          variant: 'CS'            # lets dog-food CS
+          version: 'current'
+          packages: 'cs-bootstrap'
       - uses: actions/checkout@v2
         with:
           submodules: 'recursive'
@@ -33,7 +39,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev uuid-dev libssl-dev
       - name: Build bootfiles
-        run: .github/scripts/dobootfile.sh
+        run: racket -l cs-bootstrap
       - name: Build Chez
         run: .github/scripts/build.sh
       - name: Test Chez
