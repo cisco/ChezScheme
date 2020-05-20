@@ -1058,7 +1058,15 @@ floating point returns with (1 0 -1 ...).
                    (if (fx< s 0)
                        (write-char #\- p)
                        (when force-sign (write-char #\+ p)))
-                   (if (or (fx> r 10) (fx< -4 e 10))
+                   (if (or (fx> r 10) (cond
+                                        [(fx< e -4) #f]
+                                        [(fx< e 14) #t]
+                                        [else
+                                         (let ([digits (let loop ([ls ls] [digits 0])
+                                                         (if (fx< (car ls) 0)
+                                                             digits
+                                                             (loop (cdr ls) (fx+ digits 1))))])
+                                           (fx< (fx- e digits) 3))]))
                        (free-format e ls p)
                        (free-format-exponential e ls r p))))
               (cond
