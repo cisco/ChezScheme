@@ -222,6 +222,12 @@
     (unless (procedure? x) ($oops who "~s is not a procedure" x))
     ($code-arity-mask ($closure-code x))))
 
+(define-who procedure-known-single-valued?
+  (lambda (x)
+    (unless (procedure? x) ($oops who "~s is not a procedure" x))
+    (let ([c ($closure-code x)])
+      ($code-single-valued? c))))
+
 (let ()
   (define-syntax frob-proc
     (syntax-rules ()
@@ -345,6 +351,12 @@
 
 (define values ($hand-coded 'values-procedure))
 
+;; When applied, ensures the argument expression produces a single
+;; value. Unlike other primitives, an immediate application of
+;; `$value` won't be optimized away with optimization level 3 unless
+;; the argument expression definitely produces a single value.
+(define $value (lambda (x) x))
+
 (define call-with-values
   (lambda (producer consumer)
     (unless (procedure? producer)
@@ -370,6 +382,45 @@
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
     (#3%call/cc p)))
+
+;; calls `p` with the continuation `c` and either no immediate
+;; attachments or the given attachments `as` that must be either
+;; the same as the attachments saved by `c` or one immediate
+;; attachment extending those attachments
+(define-who call-in-continuation
+  (case-lambda
+   [(c p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#2%call-in-continuation c (lambda () (p)))]
+   [(c as p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#2%call-in-continuation c as (lambda () (p)))]))
+
+;; checks `c` and consistency of `as` with `c`, and also runs any needed winders
+(define $assert-continuation
+  (case-lambda
+   [(c) (#2%$assert-continuation c)]
+   [(c as) (#2%$assert-continuation c as)]))
+
+(define-who call-setting-continuation-attachment
+  (lambda (v p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-setting-continuation-attachment v (lambda () (p)))))
+
+(define-who call-getting-continuation-attachment
+  (lambda (default-val p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-getting-continuation-attachment default-val (lambda (x) (p x)))))
+
+(define-who call-consuming-continuation-attachment
+  (lambda (default-val p)
+    (unless (procedure? p)
+      ($oops who "~s is not a procedure" p))
+    (#3%call-consuming-continuation-attachment default-val (lambda (x) (p x)))))
 
 (define $code? (lambda (x) ($code? x)))
 
@@ -408,6 +459,11 @@
   (lambda (x)
     (unless ($code? x) ($oops who "~s is not code" x))
     ($code-pinfo* x)))
+
+(define-who $code-single-valued?
+  (lambda (x)
+    (unless ($code? x) ($oops who "~s is not code" x))
+    ($code-single-valued? x)))
 
 (define $object-address ; not safe and can't be
   (lambda (x offset)
@@ -483,6 +539,12 @@
       (unless ($continuation? x)
          ($oops '$continuation-winders "~s is not a continuation" x))
       ($continuation-winders x)))
+
+(define $continuation-attachments
+   (lambda (x)
+      (unless ($continuation? x)
+         ($oops '$continuation-attachments "~s is not a continuation" x))
+      ($continuation-attachments x)))
 
 (define $continuation-return-code
    (lambda (x)
@@ -1397,13 +1459,23 @@
        ($oops '$current-stack-link "invalid argument ~s" k))
      ($current-stack-link k)]))
 
-(define $current-winders
+(define-who $current-winders
+  (let ()
+    (include "types.ss")
+    (case-lambda
+      [() ($current-winders)]
+      [(w)
+       (unless (and (list? w) (andmap winder? w))
+         ($oops who "malformed winders ~s" w))
+       ($current-winders w)])))
+
+(define $current-attachments
   (case-lambda
-    [() ($current-winders)]
+    [() ($current-attachments)]
     [(w)
-     (unless (and (list? w) (andmap (lambda (x) (winder? x)) w))
-       ($oops '$current-winders "malformed winders ~s" w))
-     ($current-winders w)]))
+     (unless (list? w)
+       ($oops '$current-attachments "malformed attachments ~s" w))
+     ($current-attachments w)]))
 
 (define lock-object
   (foreign-procedure "(cs)lock_object" (scheme-object) void))

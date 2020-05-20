@@ -72,6 +72,7 @@ static ptr sweep_loc[max_real_space+1];
 static ptr orig_next_loc[max_real_space+1];
 static ptr sorted_locked_objects;
 static ptr tlcs_to_rehash;
+static ptr conts_to_promote;
 
 static ptr append_bang(ptr ls1, ptr ls2) { /* assumes ls2 pairs are older than ls1 pairs, or that we don't car */
   if (ls2 == Snil) {
@@ -498,10 +499,16 @@ static ptr copy(pp, si) ptr pp; seginfo *si; {
             find_room(space_continuation, tg,
                         type_closure, size_continuation, p);
             SETCLOSCODE(p,code);
-          /* don't promote one-shots */
-            CONTLENGTH(p) = CONTLENGTH(pp);
+          /* don't promote general one-shots, but promote opportunistic one-shots */
+            if (CONTLENGTH(pp) == opportunistic_1_shot_flag) {
+              CONTLENGTH(p) = CONTCLENGTH(pp);
+              /* may need to recur at end to promote link: */
+              conts_to_promote = S_cons_in(space_new, 0, p, conts_to_promote);
+            } else
+              CONTLENGTH(p) = CONTLENGTH(pp);
             CONTCLENGTH(p) = CONTCLENGTH(pp);
             CONTWINDERS(p) = CONTWINDERS(pp);
+            CONTATTACHMENTS(p) = CONTATTACHMENTS(pp);
             if (CONTLENGTH(p) != scaled_shot_1_shot_flag) {
                 CONTLINK(p) = CONTLINK(pp);
                 CONTRET(p) = CONTRET(pp);
@@ -705,6 +712,7 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
     }
 
     tlcs_to_rehash = Snil;
+    conts_to_promote = Snil;
 
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
       ptr tc = (ptr)THREADTC(Scar(ls));
@@ -1243,6 +1251,14 @@ void GCENTRY(ptr tc, IGEN mcg, IGEN tg) {
       tlcs_to_rehash = Scdr(tlcs_to_rehash);
     }
 
+    /* Promote opportunistic 1-shot continuations, because we can no
+       longer cached one and we can no longer reliably fuse the stack
+       back. */
+    while (conts_to_promote != Snil) {
+      S_promote_to_multishot(CONTLINK(Scar(conts_to_promote)));
+      conts_to_promote = Scdr(conts_to_promote);
+    }
+
     S_resize_oblist();
 
     /* tell profile_release_counters to look for bwp'd counters at least through tg */
@@ -1483,6 +1499,8 @@ static void sweep_thread(p) ptr p; {
     relocate(&STACKLINK(tc))
     /* iptr SCHEMESTACKSIZE */
     relocate(&WINDERS(tc))
+    relocate(&ATTACHMENTS(tc))
+    CACHEDFRAME(tc) = Sfalse;
     relocate_return_addr(&FRAME(tc,0))
     sweep_stack((uptr)SCHEMESTACK(tc), (uptr)SFP(tc), (uptr)FRAME(tc,0));
     U(tc) = V(tc) = W(tc) = X(tc) = Y(tc) = 0;
@@ -1530,6 +1548,7 @@ static void sweep_thread(p) ptr p; {
 
 static void sweep_continuation(p) ptr p; {
   relocate(&CONTWINDERS(p))
+  relocate(&CONTATTACHMENTS(p))
 
  /* bug out for shot 1-shot continuations */
   if (CONTLENGTH(p) == scaled_shot_1_shot_flag) return;

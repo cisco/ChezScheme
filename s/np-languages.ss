@@ -45,7 +45,7 @@
     block-pariah! block-seen! block-finished! block-return-point! block-repeater! block-loop-header!
     block-pariah? block-seen? block-finished? block-return-point? block-repeater? block-loop-header?
     L1 unparse-L1 L2 unparse-L2 L3 unparse-L3 L4 unparse-L4
-    L4.5 unparse-L4.5 L4.75 unparse-L4.75 L4.875 unparse-L4.875
+    L4.5 unparse-L4.5 L4.75 unparse-L4.75 L4.875 unparse-L4.875 L4.9375 unparse-L4.9375
     L5 unparse-L5 L6 unparse-L6 L7 unparse-L7
     L9 unparse-L9 L9.5 unparse-L9.5 L9.75 unparse-L9.75
     L10 unparse-L10 L10.5 unparse-L10.5 L11 unparse-L11
@@ -382,8 +382,30 @@
     (Expr (e body)
       (+ (loop x (x* ...) body) => (loop x body))))
 
+  (define attachment-op?
+    (lambda (x)
+      (memq x '(push pop set reify-and-set check-and-set))))
+
+  (define continuation-op?
+    (lambda (x)
+      (memq x '(set redirect-and-set))))
+
+ ; exposes continuation-attachment operations
+  (define-language L4.9375 (extends L4.875)
+    (terminals
+     (+ (attachment-op (aop)))
+     (+ (continuation-op (cop)))
+     (+ (boolean (reified))))
+    (entry CaseLambdaExpr)
+    (Expr (e body)
+      (+ (attachment-set aop (maybe e))
+         (attachment-get reified (maybe e))
+         (attachment-consume reified (maybe e))
+         (continuation-get)
+         (continuation-set cop e1 e2))))
+
  ; moves all case lambda expressions into rhs of letrec
-  (define-language L5 (extends L4.875)
+  (define-language L5 (extends L4.9375)
     (entry CaseLambdaExpr)
     (Expr (e body)
       (- le)))
@@ -655,7 +677,10 @@
          (alloc info t)                          => (alloc info t)
          (inline info prim t* ...)               => (inline info prim t* ...)
          (mvcall info e t)                       => (mvcall e t)
-         (foreign-call info t t* ...)))
+         (foreign-call info t t* ...)
+         (attachment-get reified (maybe t))
+         (attachment-consume reified (maybe t))
+         (continuation-get)))
     (Expr (e body)
       (- lvalue
          (values info e* ...)
@@ -668,7 +693,10 @@
          (let ([x e] ...) body)
          (set! lvalue e)
          (mvcall info e1 e2)
-         (foreign-call info e e* ...))
+         (foreign-call info e e* ...)
+         (attachment-get reified (maybe e))
+         (attachment-consume reified (maybe e))
+         (continuation-get))
       (+ rhs
          (values info t* ...)
          (set! lvalue rhs))))
@@ -716,7 +744,9 @@
          (pariah)
          (trap-check ioc e)
          (overflow-check e)
-         (profile src)))
+         (profile src)
+         (attachment-set aop (maybe e))
+         (continuation-set cop e1 e2)))
     (Tail (tl tlbody)
       (+ rhs
          (if p0 tl1 tl2)
@@ -747,6 +777,8 @@
             (mvset (mdcl t0 t1 ...) (t* ...) ((x** ...) interface* l*) ...)
          (mvcall info mdcl (maybe t0) t1 ... (t* ...)) => (mvcall mdcl t0 t1 ... (t* ...))
          (foreign-call info t t* ...)
+         (attachment-set aop (maybe t))
+         (continuation-set cop t1 t2)
          (tail tl))))
 
   (define-language L11.5 (extends L11)

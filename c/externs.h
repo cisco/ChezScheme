@@ -85,7 +85,8 @@ extern ptr S_null_immutable_string PROTO((void));
 extern ptr S_record PROTO((iptr n));
 extern ptr S_closure PROTO((ptr cod, iptr n));
 extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,
-                iptr length, iptr clength, ptr link, ptr ret, ptr winders));
+                iptr length, iptr clength, ptr link, ptr ret, ptr winders,
+                ptr attachments));
 extern ptr S_inexactnum PROTO((double rp, double ip));
 extern ptr S_exactnum PROTO((ptr a, ptr b));
 extern ptr S_thread PROTO((ptr tc));
@@ -306,6 +307,7 @@ extern ptr S_get_scheme_arg PROTO((ptr tc, iptr n));
 extern void S_put_scheme_arg PROTO((ptr tc, iptr n, ptr x));
 extern iptr S_continuation_depth PROTO((ptr k));
 extern ptr S_single_continuation PROTO((ptr k, iptr n));
+extern void S_promote_to_multishot PROTO((ptr k));
 extern void S_split_and_resize PROTO((void));
 extern void S_handle_overflow PROTO((void));
 extern void S_handle_overflood PROTO((void));

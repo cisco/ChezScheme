@@ -2002,3 +2002,15 @@
     mats/Mf-i3nt, mats/Mf-ta6nt, mats/Mf-ti3nt 
 - fixed build on Linux with musl libc
     expeditor.c
+- add support for continuation attachments, semi-inline some
+  continuation operations, and adjust the compiler (especially
+  cp0) to avoid turning errors like
+     (let ([x (values 1 2)]) x)
+  into programs that return multiple values
+    cpnanopass.ss, np-languages.ss, cp0.ss, cpletrec.ss,
+    base-lang.ss, cmacro.ss, primdata.ss, types.ss, mkheader.ss,
+    4.ss, prims.ss, library.ss, inspect.ss, syntax.ss, read.ss,
+    library.ss, primvars.ss, prims.ss,prmref.ss, priminfo.ss,
+    mkheader.ss, alloc.c, gc.c, schsig.c, thread.c, externs.h,
+    4.ms, 6.ms, cp0.ms, record.ms, root-experr*,
+    control.stex, release_notes.stex

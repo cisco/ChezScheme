@@ -18,7 +18,6 @@
 #include <setjmp.h>
 
 /* locally defined functions */
-static void S_promote_to_multishot PROTO((ptr k));
 static void split PROTO((ptr k, ptr *s));
 static void reset_scheme PROTO((void));
 static NORETURN void do_error PROTO((iptr type, const char *who, const char *s, ptr args));
@@ -38,7 +37,7 @@ void S_put_scheme_arg(tc, n, x) ptr tc; iptr n; ptr x; {
     else FRAME(tc, n - asm_arg_reg_cnt) = x;
 }
 
-static void S_promote_to_multishot(k) ptr k; {
+void S_promote_to_multishot(k) ptr k; {
     while (CONTLENGTH(k) != CONTCLENGTH(k)) {
         CONTLENGTH(k) = CONTCLENGTH(k);
         k = CONTLINK(k);
@@ -65,7 +64,8 @@ static void split(k, s) ptr k; ptr *s; {
                                  m, m,
                                  CONTLINK(k),
                                  *s,
-                                 Snil);
+                                 Snil,
+                                 Sfalse);
     CONTLENGTH(k) = CONTCLENGTH(k) = n;
     CONTSTACK(k) = (ptr)s;
     *s = (ptr)DOUNDERFLOW;
@@ -279,7 +279,8 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
                                         split_stack_clength,
                                         STACKLINK(tc),
                                         *split_point,
-                                        Snil);
+                                        Snil,
+                                        Sfalse);
             tc_mutex_release()
 
           /* overwrite old return address with dounderflow */
@@ -766,6 +767,7 @@ void S_schsig_init() {
                            scaled_shot_1_shot_flag, scaled_shot_1_shot_flag,
                            FIX(0),
                            FIX(0),
+                           Snil,
                            Snil));
 
         S_protect(&S_G.error_id);
