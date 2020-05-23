@@ -853,12 +853,17 @@
 
     (define make-nontail
       (lambda (ctxt e)
-        (if (context-case ctxt
-              [(tail) (single-valued-without-inspecting-continuation? e)]
-              [(ignored) (single-valued? e)]
-              [else #t])
-            e
-            (build-primcall 3 '$value (list e)))))
+        (context-case ctxt
+          [(tail)
+           (if (single-valued-without-inspecting-continuation? e)
+               e
+               (build-primcall 3 '$value (list e)))]
+          ;; An 'effect, 'ignored, 'value, or 'test position will not
+          ;; have any attachment on the immediate continuation.
+          ;; Also, an 'ignored, 'value, or 'test position will already
+          ;; enforce a single result value
+          [(effect) (safe-single-value e)]
+          [else e])))
 
     (define result-exp
       (lambda (e)

@@ -3042,6 +3042,13 @@
          (not (equivalent-expansion?
                (expand/optimize `(lambda (g) ,(mk `(g))))
                '(lambda (g) (g))))
+         ;; When moving into an ignored position, ensure single valued
+         ;; in safe mode:
+         (equivalent-expansion?
+          (expand/optimize `(lambda (g) ,(mk `(g)) 0))
+          (if (= 3 (optimize-level))
+              '(lambda (g) (g) 0)
+              '(lambda (g) (#3%$value (g)) 0)))
          ;; Ditto, but in a nested procedure:
          (not (equivalent-expansion?
                (expand/optimize `(lambda () (lambda (g) ,(mk `(g)))))
