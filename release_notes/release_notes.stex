@@ -99,7 +99,6 @@ The rationale for this change is to allow the fasl reader to seek
 past, without reading, portions of an object file that contain
 compile-time code at run time and run-time code at compile time.
 
-
 \subsection{Bytevector compression and compression level (9.5.3)}
 
 The procedure \scheme{bytevector-compress} now selects the level of
@@ -258,9 +257,8 @@ In particular, object files created by the compiler now tend to be
 larger but load more quickly.
 
 The new \scheme{compress-level} parameter can be used to control
-the amount of time spent on file compression (but not
-bytevector compression).
-It can be set to one of the symbols \scheme{low},
+the amount of time spent on file and bytevector compression.
+It can be set to one of the symbols \scheme{minimum}, \scheme{low},
 \scheme{medium}, \scheme{high}, and \scheme{maximum}, which are
 listed in order from shortest to longest compression time and least
 to greatest effectiveness.
@@ -1884,7 +1882,7 @@ in fasl files does not generally make sense.
 Prior to this release, only one unhandled signal was buffered for
 any signal for which a handler has been registered via
 \scheme{register-signal-handler}, so two signals delivered in
-quick succession could be see as only one.
+quick succession could be seen as only one.
 The system now buffers a much larger number (63 in this release) of
 signals, and the fact that signals can be dropped has now been
 documented.
