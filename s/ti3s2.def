@@ -29,6 +29,7 @@
 (define-constant max-integer-alignment 4)
 (define-constant asm-arg-reg-max 1)
 (define-constant asm-arg-reg-cnt 1)
+(define-constant asm-fpreg-max 2)
 (define-constant typedef-ptr "void *")
 (define-constant typedef-iptr "int")
 (define-constant typedef-uptr "unsigned int")

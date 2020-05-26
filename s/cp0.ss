@@ -550,7 +550,13 @@
             ; pure OR body to be pure, since we can't separate non-pure
             ; RHS and body expressions
             [(letrec ([,x* ,e*] ...) ,body)
-             (guard (or (ivory? body) (andmap ivory1? e*)))
+             (guard (and (or (ivory? body) (andmap ivory1? e*))
+                         ;; don't break apart (potential) loops
+                         (not (and (fx= (length x*) 1)
+                                   (nanopass-case (Lsrc Expr) body
+                                     [(call ,preinfo (ref ,maybe-src ,x) ,e* ...)
+                                      (eq? x (car x*))]
+                                     [else #f])))))
              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
              (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
              (values (make-lifted #f x* e*) body)]

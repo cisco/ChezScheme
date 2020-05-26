@@ -303,6 +303,11 @@
   (define index-oops
     (lambda (who x i)
       ($oops who "~s is not a valid index for ~s" i x)))
+  (define bytevector-index-oops
+    ;; for consistency with error before library entry was introduced:
+    (lambda (who x i)
+      ($oops who "invalid index ~s for bytevector ~s" i x)))
+
   (define stencil-vector-oops
     (lambda (who x)
       ($oops who "~s is not a vector" x)))
@@ -399,6 +404,16 @@
 
   (define-library-entry (stencil-vector-mask v)
     (stencil-vector-oops 'stencil-vector-mask v))
+
+  (define-library-entry (bytevector-ieee-double-native-ref v i)
+    (if (bytevector? v)
+        (bytevector-index-oops 'bytevector-ieee-double-native-ref v i)
+        (bytevector-oops 'bytevector-ieee-double-native-ref v)))
+
+  (define-library-entry (bytevector-ieee-double-native-set! v i)
+    (if (mutable-bytevector? v)
+        (bytevector-index-oops 'bytevector-ieee-double-native-set! v i)
+        (mutable-bytevector-oops 'bytevector-ieee-double-native-set! v)))
 
   (define-library-entry (char=? x y) (char-oops 'char=? (if (char? x) y x)))
   (define-library-entry (char<? x y) (char-oops 'char<? (if (char? x) y x)))
@@ -523,6 +538,7 @@
 (define-library-entry (fxxor x y) (fxnonfixnum2 'fxxor x y))
 (define-library-entry (fxand x y) (fxnonfixnum2 'fxand x y))
 (define-library-entry (fxnot x) (fxnonfixnum1 'fxnot x))
+(define-library-entry (fixnum->flonum x) (fxnonfixnum1 'fixnum->flonum x))
 (define-library-entry (fxpopcount x) ($oops 'fxpopcount32 "~s is not a non-negative fixnum" x))
 (define-library-entry (fxpopcount32 x) ($oops 'fxpopcount32 "~s is not a 32-bit fixnum" x))
 (define-library-entry (fxpopcount16 x) ($oops 'fxpopcount16 "~s is not a 16-bit fixnum" x))
@@ -658,6 +674,7 @@
   (define-library-entry (fl* x y) (flonum-oops 'fl* (if (flonum? x) y x)))
   (define-library-entry (fl/ x y) (flonum-oops 'fl/ (if (flonum? x) y x)))
   (define-library-entry (flnegate x) (flonum-oops 'fl- x))
+  (define-library-entry (flabs x) (flonum-oops 'flabs x))
 )
 
 (define-library-entry (flround x)

@@ -17,7 +17,7 @@
 (module np-languages ()
   (export sorry! var? var-index var-index-set! prelex->uvar make-tmp make-assigned-tmp
     make-unspillable make-cpvar make-restricted-unspillable
-    uvar? uvar-name uvar-type uvar-source
+    uvar? uvar-name uvar-type uvar-type-set! uvar-source
     uvar-referenced? uvar-referenced! uvar-assigned? uvar-assigned!
     uvar-was-closure-ref? uvar-was-closure-ref!
     uvar-unspillable? uvar-spilled? uvar-spilled! uvar-local-save? uvar-local-save!
@@ -29,13 +29,13 @@
     uvar-ref-weight uvar-ref-weight-set! uvar-save-weight uvar-save-weight-set!
     uvar-live-count uvar-live-count-set!
     uvar
-    fv-offset
+    fv-offset fv-type
     var-spillable-conflict* var-spillable-conflict*-set!
     var-unspillable-conflict* var-unspillable-conflict*-set!
     uvar-degree uvar-degree-set!
     uvar-info-lambda uvar-info-lambda-set!
     uvar-iii uvar-iii-set!
-    ur?
+    ur? fpur?
     block make-block block? block-label block-effect* block-src* block-pseudo-src block-in-link* block-flags
     block-label-set! block-effect*-set! block-src*-set! block-pseudo-src-set! block-in-link*-set! block-flags-set! 
     block-live-in block-live-in-set! block-fp-offset block-fp-offset-set!
@@ -57,7 +57,7 @@
     live-info make-live-info live-info-live live-info-live-set! live-info-useless live-info-useless-set!
     primitive-pure? primitive-type primitive-handler primitive-handler-set!
     %primitive value-primitive? pred-primitive? effect-primitive?
-    fv? $make-fv make-reg reg? reg-name reg-tc-disp reg-callee-save? reg-mdinfo
+    fv? $make-fv make-reg reg? reg-name reg-tc-disp reg-callee-save? reg-mdinfo reg-type
     reg-precolored reg-precolored-set!
     label? label-name
     libspec-label? make-libspec-label libspec-label-libspec libspec-label-live-reg*
@@ -92,13 +92,13 @@
 
   (define-record-type (fv $make-fv fv?)
     (parent var)
-    (fields offset)
+    (fields offset type)
     (nongenerative)
     (sealed #t)
     (protocol
       (lambda (pargs->new)
-        (lambda (offset)
-          ((pargs->new) offset)))))
+        (lambda (offset type)
+          ((pargs->new) offset type)))))
 
   (module ()
     (record-writer (record-type-descriptor fv)
@@ -107,13 +107,13 @@
 
   (define-record-type reg
     (parent var)
-    (fields name mdinfo tc-disp callee-save? (mutable precolored))
+    (fields name mdinfo tc-disp callee-save? type (mutable precolored))
     (nongenerative)
     (sealed #t)
     (protocol
       (lambda (pargs->new)
-        (lambda (name mdinfo tc-disp callee-save?)
-          ((pargs->new) name mdinfo tc-disp callee-save? #f)))))
+        (lambda (name mdinfo tc-disp callee-save? type)
+          ((pargs->new) name mdinfo tc-disp callee-save? type #f)))))
 
   (module ()
     (record-writer (record-type-descriptor reg)
@@ -169,7 +169,7 @@
     (fields 
       name
       source
-      type
+      (mutable type)
       conflict*
       (mutable flags)
       (mutable info-lambda)
@@ -206,8 +206,8 @@
       [(name) (make-assigned-tmp name 'ptr)]
       [(name type) ($make-uvar name #f type '() (uvar-flags-mask referenced assigned))]))
   (define make-unspillable
-    (lambda (name)
-      ($make-uvar name #f 'ptr '() (uvar-flags-mask referenced unspillable))))
+    (lambda (name type)
+      ($make-uvar name #f type '() (uvar-flags-mask referenced unspillable))))
   (define make-cpvar
     (lambda ()
       (include "types.ss")
@@ -220,7 +220,9 @@
   (module ()
     (record-writer (record-type-descriptor uvar)
       (lambda (x p wr)
-        (write (lookup-unique-uvar x) p))))
+        (write (lookup-unique-uvar x) p)
+        (when (eq? (uvar-type x) 'fp)
+          (write 'fp p)))))
 
   (define lookup-unique-uvar
     (let ([ht (make-eq-hashtable)])
@@ -439,6 +441,12 @@
       (- (clause (x* ...) interface body))
       (+ (clause (x* ...) mcp interface body))))
 
+  (define (mref-type? t)
+    ;; Currently, only 'fp vesus non-'fp matters
+    (or (eq? t 'ptr)
+        (eq? t 'uptr)
+        (eq? t 'fp)))
+
  ; move labels to top level and expands closures forms to more primitive operations
   (define-language L7 (extends L6)
     (terminals
@@ -446,7 +454,8 @@
          (fixnum (interface)))
       (+ (var (x))
          (primitive (prim)) ; moved up one language to support closure instrumentation
-         (fixnum (interface offset))))
+         (fixnum (interface offset))
+         (mref-type (type))))
     (entry Program)
     (Program (prog)
       (+ (labels ([l* le*] ...) l)                     => (labels ([l* le*] ...) (l))))
@@ -454,7 +463,7 @@
       (+ (fcallable info l)                            => (fcallable info l)))
     (Lvalue (lvalue)
       (+ x
-         (mref e1 e2 imm)))
+         (mref e1 e2 imm type)))
     (Expr (e body)
       (- x
          (fcallable info)
@@ -471,7 +480,9 @@
          (set! lvalue e)
          ; these two forms are added here so expand-inline handlers can expand into them
          (values info e* ...)
-         (goto l))))
+         (goto l)
+         ; for floating-point unboxing during expand-line:
+         (unboxed-fp e))))
 
   (define-record-type primitive
     (fields name type pure? (mutable handler))
@@ -525,14 +536,8 @@
   (declare-primitive c-simple-call effect #f)
   (declare-primitive c-simple-return effect #f)
   (declare-primitive deactivate-thread effect #f) ; threaded version only
-  (declare-primitive fl* effect #f)
-  (declare-primitive fl+ effect #f)
-  (declare-primitive fl- effect #f)
-  (declare-primitive fl/ effect #f)
   (declare-primitive fldl effect #f) ; x86
   (declare-primitive flds effect #f) ; x86
-  (declare-primitive flsqrt effect #f) ; not implemented for some ppc32 (so we don't use it)
-  (declare-primitive flt effect #f)
   (declare-primitive inc-cc-counter effect #f)
   (declare-primitive inc-profile-counter effect #f)
   (declare-primitive invoke-prelude effect #f)
@@ -567,9 +572,9 @@
   (declare-primitive >= pred #t)
   (declare-primitive condition-code pred #t)
   (declare-primitive eq? pred #t)
-  (declare-primitive fl< pred #t)
-  (declare-primitive fl<= pred #t)
-  (declare-primitive fl= pred #t)
+  (declare-primitive fp< pred #t)
+  (declare-primitive fp<= pred #t)
+  (declare-primitive fp= pred #t)
   (declare-primitive lock! pred #f)
   (declare-primitive logtest pred #t)
   (declare-primitive log!test pred #t)
@@ -615,6 +620,19 @@
   (declare-primitive zext16 value #t)
   (declare-primitive zext32 value #t) ; 64-bit only
 
+  (declare-primitive fpmove value #t)
+  (declare-primitive fp+ value #t)
+  (declare-primitive fp- value #t)
+  (declare-primitive fp* value #t)
+  (declare-primitive fp/ value #t)
+  (declare-primitive fpt value #t)
+  (declare-primitive fpsqrt value #t) ; not implemented for some ppc32 (so we don't use it)
+
+  (declare-primitive fpcastto value #t) ; 64-bit only
+  (declare-primitive fpcastto/hi value #t) ; 32-bit only
+  (declare-primitive fpcastto/lo value #t) ; 32-bit only
+  (declare-primitive fpcastfrom value #t) ; 64-bit: 1 argument; 32-bit: 2 arguments
+
   (define immediate?
     (let ([low (- (bitwise-arithmetic-shift-left 1 (fx- (constant ptr-bits) 1)))]
           [high (- (bitwise-arithmetic-shift-left 1 (constant ptr-bits)) 1)])
@@ -652,7 +670,8 @@
       (+ (hand-coded sym)))
     (Expr (e body)
       (- (quote d)
-         pr)))
+         pr
+         (unboxed-fp e))))
 
  ; determine where we should be placing interrupt and overflow
   (define-language L9.5 (extends L9)
@@ -683,8 +702,8 @@
       (- (clause (x* ...) mcp interface body))
       (+ (clause (x* ...) (local* ...) mcp interface body)))
     (Lvalue (lvalue)
-      (- (mref e1 e2 imm))
-      (+ (mref x1 x2 imm)))
+      (- (mref e1 e2 imm type))
+      (+ (mref x1 x2 imm type)))
     (Triv (t)
       (+ lvalue
          (literal info)                          => info
@@ -854,7 +873,8 @@
       (label (l rpl))
       (source-object (src))
       (symbol (sym))
-      (boolean (as-fallthrough)))
+      (boolean (as-fallthrough))
+      (mref-type (type)))
     (Program (prog)
       (labels ([l* le*] ...) l)                   => (letrec ([l* le*] ...) (l)))
     (CaseLambdaExpr (le)
@@ -862,7 +882,7 @@
       (hand-coded sym))
     (Lvalue (lvalue)
       x
-      (mref x1 x2 imm))
+      (mref x1 x2 imm type))
     (Triv (t)
       lvalue
       (literal info)                              => info
@@ -985,7 +1005,8 @@
       (return-label (mrvl))
       (boolean (error-on-values as-fallthrough))
       (fixnum (max-fv offset))
-      (block (block entry-block)))
+      (block (block entry-block))
+      (mref-type (type)))
     (Program (pgm)
       (labels ([l* le*] ...) l)                  => (letrec ([l* le*] ...) (l)))
     (CaseLambdaExpr (le)
@@ -993,7 +1014,7 @@
     (Dummy (dumdum) (dummy))
     (Lvalue (lvalue)
       x
-      (mref x1 x2 imm))
+      (mref x1 x2 imm type))
     (Triv (t)
       lvalue
       (literal info)                            => info
@@ -1049,14 +1070,21 @@
     (lambda (x)
       (or (reg? x) (uvar? x))))
 
+  (define fpur?
+    (lambda (x)
+      (or (and (reg? x)
+               (eq? (reg-type x) 'fp))
+          (and (uvar? x)
+               (eq? (uvar-type x) 'fp)))))
+
   (define-language L15c (extends L15b)
     (terminals
       (- (var (x var)))
       (+ (ur (x))))
     ; NB: base and index are really either regs or (mref %sfp %zero imm)
     (Lvalue (lvalue)
-      (- (mref x1 x2 imm))
-      (+ (mref lvalue1 lvalue2 imm)))
+      (- (mref x1 x2 imm type))
+      (+ (mref lvalue1 lvalue2 imm type)))
     (Effect (e)
       (- (fp-offset live-info imm))))
 
@@ -1068,8 +1096,8 @@
       (+ (procedure (proc)) => $procedure-name))
     (entry Program)
     (Lvalue (lvalue)
-      (- (mref lvalue1 lvalue2 imm))
-      (+ (mref x1 x2 imm)))
+      (- (mref lvalue1 lvalue2 imm type))
+      (+ (mref x1 x2 imm type)))
     (Rhs (rhs)
       (- (inline info value-prim t* ...))
       (+ (asm info proc t* ...) => (asm proc t* ...)))

@@ -159,7 +159,7 @@
 (mat fl=
    (let ((n (read (open-input-string "+nan.0"))))
      (not (fl= n n)))
-   (not (fl= (nan)))
+   (fl= (nan))
    (not (fl= (nan) +inf.0))
    (not (fl= (nan) -inf.0))
    (not (fl= (nan) (nan)))
@@ -171,7 +171,7 @@
  )
 
 (mat fl<
-   (not (fl< (nan)))
+   (fl< (nan))
    (not (fl< (nan) (nan)))
    (not (fl< (nan) 0.0))
    (not (fl< 0.0 (nan)))
@@ -179,7 +179,7 @@
  )
 
 (mat fl>
-   (not (fl> (nan)))
+   (fl> (nan))
    (not (fl> (nan) (nan)))
    (not (fl> (nan) 0.0))
    (not (fl> 0.0 (nan)))
@@ -189,14 +189,14 @@
  )
 
 (mat fl<=
-   (not (fl<= (nan)))
+   (fl<= (nan))
    (not (fl<= (nan) (nan)))
    (not (fl<= (nan) 0.0))
    (not (fl<= 0.0 (nan)))
  )
 
 (mat fl>=
-   (not (fl>= (nan)))
+   (fl>= (nan))
    (not (fl>= (nan) (nan)))
    (not (fl>= (nan) 0.0))
    (not (fl>= 0.0 (nan)))

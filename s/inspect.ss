@@ -2281,8 +2281,12 @@
                                (values (make-vector count) count cp))
                            (let ([obj (vector-ref vals i)] [var* (vector-ref vars i)])
                              (cond
-                               [(eq? obj cookie)
-                                (unless (null? var*) ($oops who "expected value for ~s but it was not in lpm" (car var*)))
+                               [(and (eq? obj cookie)
+                                     (or (null? var*)
+                                         ;; unboxed variable?
+                                         (not (and (pair? var*) (box? (car var*)) (null? (cdr var*))))))
+                                (unless (null? var*)
+                                  ($oops who "expected value for ~s but it was not in lpm" (car var*)))
                                 (f (fx1+ i) count cp cpvar*)]
                                [(null? var*)
                                 (let-values ([(v frame-count cp) (f (fx1+ i) (fx1+ count) cp cpvar*)])
@@ -2310,7 +2314,12 @@
                                                                           (vector->list var)))]
                                                [else
                                                  (let-values ([(v frame-count cp) (g (cdr var*) (fx1+ count) cp cpvar*)])
-                                                   (vector-set! v count (make-variable-object obj var))
+                                                   (vector-set! v count (cond
+                                                                          [(box? var)
+                                                                           ;; unboxed variable
+                                                                           (make-variable-object '<unboxed-flonum> (unbox var))]
+                                                                          [else
+                                                                           (make-variable-object obj var)]))
                                                    (values v frame-count cp))])))))]))))
                      (lambda (v frame-count cp)
                        (real-make-continuation-object x (rp-info-src rpi) (rp-info-sexpr rpi) cp v frame-count pos))))))]

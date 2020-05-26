@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905031C)
+(define-constant scheme-version #x0905031D)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -411,6 +411,11 @@
   (max (constant typemod) (* 2 (constant ptr-bytes))))
 (define-constant ptr-alignment
   (/ (constant byte-alignment) (constant ptr-bytes)))
+
+;; Stack alignment may be needed for unboxed floating-point values:
+(constant-case ptr-bits
+  [(32) (define-constant stack-word-alignment 2)]
+  [(64) (define-constant stack-word-alignment 1)])
 
 ;; seginfo offsets, must be consistent with `seginfo` in "types.h"
 (define-constant seginfo-space-disp 0)
@@ -1448,7 +1453,8 @@
    [void* lz4-out-buffer]
    [U64 instr-counter]
    [U64 alloc-counter]
-   [ptr parameters]))
+   [ptr parameters]
+   [double fpregs (constant asm-fpreg-max)]))
 
 (define tc-field-list
   (let f ([ls (oblist)] [params '()])
@@ -1686,6 +1692,7 @@
   (unsafe                   #b00001000000000000000000)
   (unrestricted             #b00010000000000000000000)
   (safeongoodargs           #b00100000000000000000000)
+  (unboxed-arguments        #b10000000000000000000000) ; always accepts unboxed 'flonum arguments, up to inline-args-limit
   (cptypes2                 #b01000000000000000000000)
   (cptypes3                 cptypes2)
   (cptypes2x                cptypes2)
@@ -1694,7 +1701,9 @@
   (alloc                    (or proc discard true))
   ; would be nice to check that these and only these actually have cp0 partial folders
   (partial-folder           (or cp02 cp03))
-)
+  )
+
+(define-constant inline-args-limit 10)
 
 (define-flags cp0-info-mask
   (pure-known                    #b0000000001)
@@ -1804,7 +1813,10 @@
   (syntax-rules ()
     ((_ x)
      (float-type-case
-       [(ieee) (fx= ($flonum-exponent x) #x7ff)]))))
+      [(ieee) (fx= ($flonum-exponent x) #x7ff)]))))
+
+;; #t => incompatibility with older Chez Scheme:
+(define-constant nan-single-comparison-true? #t)
 
 (define-syntax on-reset
   (syntax-rules ()
@@ -2503,6 +2515,7 @@
      (cfl/ #f 2 #f #t)
      (negate #f 1 #f #t)
      (flnegate #f 1 #t #t)
+     (flabs #f 1 #t #t)
      (call-error #f 0 #f #f)
      (unsafe-unread-char #f 2 #f #t)
      (map-car #f 1 #f #t)
@@ -2523,6 +2536,7 @@
      (fxsll #f 2 #f #t)
      (fxsrl #f 2 #t #t)
      (fxsra #f 2 #t #t)
+     (fixnum->flonum #f 1 #t #t)
      (append #f 2 #f #t)
      (values-error #f 0 #f #f)
      (dooverflow #f 0 #f #f)
@@ -2640,6 +2654,8 @@
      (bytevector-s8-set! #f 3 #f #t)
      (bytevector-u8-set! #f 3 #f #t)
      (bytevector=? #f 2 #f #f)
+     (bytevector-ieee-double-native-ref #f 2 #t #t)
+     (bytevector-ieee-double-native-set! #f 2 #t #t)
      (real->flonum #f 2 #f #t)
      (unsafe-port-eof? #f 1 #f #t)
      (unsafe-lookahead-u8 #f 1 #f #t)

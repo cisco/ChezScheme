@@ -272,8 +272,7 @@
 
    (set! flabs
       (lambda (x)
-         (unless (flonum? x) (flargerr 'flabs x))
-         (#3%flabs x)))
+         (#2%flabs x)))
 
    (set! flround
       (lambda (x)
@@ -682,8 +681,7 @@
 
    (set! fixnum->flonum
       (lambda (x)
-         (unless (fixnum? x) (fxargerr 'fixnum->flonum x))
-         (#3%fixnum->flonum x)))
+         (#2%fixnum->flonum x)))
 
    (set-who! fxlength
      (lambda (x)
