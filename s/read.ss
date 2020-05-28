@@ -1504,15 +1504,15 @@
                  (let ([ins (cadr a)] [stripped-ins (cddr a)])
                    (if (eq? stripped-obj stripped-ins)
                        (begin
-                         (insert-obj-set! ins '#1#)
-                         (insert-obj-set! stripped-ins '#1#))
+                         (insert-obj-set! ins '#1=#1#)
+                         (insert-obj-set! stripped-ins '#2=#2#))
                        (begin
                         ; remove annotation below mark to avoid redundant annotation
                          (insert-obj-set! ins (annotation-expression obj))
                          (insert-obj-set! stripped-ins stripped-obj)))
                    (xvalues ins stripped-ins))
                  (let ([ins (cadr a)])
-                   (insert-obj-set! ins (if (eq? obj ins) '#1=#1# obj))
+                   (insert-obj-set! ins (if (eq? obj ins) '#3=#3# obj))
                    (xvalues ins #f))))])))))
 
 (xdefine (rd-insert n)

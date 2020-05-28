@@ -109,3 +109,13 @@
                            (define profile-counter-count (record-accessor '#,rtd 0))
                            (define profile-counter-count-set! (record-mutator '#,rtd 0))))]))])
   (a profile-counter? make-profile-counter profile-counter-count profile-counter-count-set!))
+
+
+(define-record-type winder
+  (fields (immutable in) (immutable out) (immutable attachments))
+  (nongenerative #{winder qnbz1n5f3x1ldovscan3nu-0}))
+
+(define-record-type critical-winder
+  (parent winder)
+  (sealed #t)
+  (nongenerative #{critical-winder qnbz1n5f3x1ldovscan3nu-2}))

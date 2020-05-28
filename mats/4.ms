@@ -3187,7 +3187,702 @@
        (get-output-string p))
      "EIEIO")
  )
- 
+
+(mat continuation-attachments
+  (error? (current-continuation-attachments '()))
+
+  (error? (call-setting-continuation-attachment 'any))
+  (error? (call-setting-continuation-attachment 'any 10))
+  (error? (call-setting-continuation-attachment 'any void 'bad-more))
+  (error? (call-setting-continuation-attachment 'any (lambda (x) x)))
+
+  (error? (call-getting-continuation-attachment 'none))
+  (error? (call-getting-continuation-attachment 'none 10))
+  (error? (call-getting-continuation-attachment 'none (lambda (a) a) 'bad-more))
+  (error? (call-getting-continuation-attachment 'none void))
+
+  (error? (call-consuming-continuation-attachment 'none))
+  (error? (call-consuming-continuation-attachment 'none 10))
+  (error? (call-consuming-continuation-attachment 'none (lambda (a) a) 'bad-more))
+  (error? (call-consuming-continuation-attachment 'none void))
+
+  (error? (continuation-next-attachments))
+  (error? (continuation-next-attachments 10))
+  (error? (continuation-next-attachments (lambda (x) x)))
+  (error? (continuation-next-attachments (call/cc (lambda (x) x)) 'bad-more))
+
+  (equal? (void) (call-setting-continuation-attachment 'any void))
+  (equal? 'none (call-getting-continuation-attachment 'none (lambda (a) a)))
+  (equal? 'none (call-consuming-continuation-attachment 'none (lambda (a) a)))
+  (equal? '() (continuation-next-attachments (call/cc (lambda (x) x))))
+
+  (equal? '() (current-continuation-attachments))
+  (equal? '(#&(1 2 3))
+          (call-setting-continuation-attachment
+           3
+           (lambda ()
+            (list
+             (call-setting-continuation-attachment
+              2
+              (lambda ()
+               (box
+                (call-setting-continuation-attachment
+                 1
+                 (lambda ()
+                   (current-continuation-attachments))))))))))
+  (equal? '() (current-continuation-attachments))
+  (equal? '#((left) (right))
+          (vector (call-setting-continuation-attachment
+                   'left
+                   (lambda () (current-continuation-attachments)))
+                  (call-setting-continuation-attachment
+                   'right
+                   (lambda () (current-continuation-attachments)))))
+  (equal? '#((left2) (right2))
+          (vector (call-setting-continuation-attachment
+                   'left2
+                   current-continuation-attachments)
+                  (call-setting-continuation-attachment
+                   'right2
+                   current-continuation-attachments)))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-getting-continuation-attachment
+             'no
+             (lambda (v) v)))))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-consuming-continuation-attachment
+             'no
+             (lambda (v) v)))))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-getting-continuation-attachment
+             'no
+             values))))
+  (equal? 'yes
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (call-consuming-continuation-attachment
+             'no
+             values))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-getting-continuation-attachment
+              'no
+              (lambda (v) v))))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v) v))))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-getting-continuation-attachment
+              'no
+              values)))))
+  (equal? '(no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+            (list
+             (call-consuming-continuation-attachment
+              'no
+              values)))))
+  (equal? '(yes yes)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-getting-continuation-attachment
+              'no
+              (lambda (a)
+                (call-getting-continuation-attachment
+                'no
+                 (lambda (b)
+                   (list a b))))))))
+  (equal? '(yes no)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (a)
+                (call-consuming-continuation-attachment
+                'no
+                 (lambda (b)
+                   (list a b))))))))
+  (equal? '(yes again)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-getting-continuation-attachment
+              'no
+              (lambda (a)
+                (call-setting-continuation-attachment
+                 'again
+                 (lambda ()
+                   (call-getting-continuation-attachment
+                    'no
+                    (lambda (b)
+                      (list a b))))))))))
+  (equal? '(yes again)
+          (call-setting-continuation-attachment
+           'yes
+           (lambda ()
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (a)
+                (call-setting-continuation-attachment
+                 'again
+                 (lambda ()
+                   (call-consuming-continuation-attachment
+                    'no
+                    (lambda (b)
+                      (list a b))))))))))
+  (equal? '(no again)
+          (call-consuming-continuation-attachment
+           'no
+           (lambda (a)
+             (call-setting-continuation-attachment
+              'again
+              (lambda ()
+                (call-consuming-continuation-attachment
+                 'no
+                 (lambda (b)
+                   (list a b))))))))
+  (begin
+   (define (call-with-yep f)
+     (call-setting-continuation-attachment
+      'yep
+       (lambda () (f))))
+   (define (call-with-yeah f)
+     (call-setting-continuation-attachment
+      'yeah
+       f))
+   (define one-value values)
+   (define (call-with-nothing f)
+     (one-value
+      (f)))
+   (define (call-with-nothing-in-split f)
+     ((call/cc
+       (lambda (k)
+         (#%$split-continuation k 0)
+         f))))
+   (define-syntax call-with-yeah*
+     (syntax-rules ()
+       [(_ f)
+        (call-setting-continuation-attachment
+         'yeah
+         f)]))
+   (define (get-or-nope)
+     (call-getting-continuation-attachment
+      'nope
+      (lambda (x) x)))
+   (define (consume-or-nope)
+     (call-consuming-continuation-attachment
+      'nope
+      (lambda (x) x)))
+   (define (vector-with-attachments . args)
+     (call-getting-continuation-attachment
+      'nothing
+      (lambda (v)
+        (apply vector v (current-continuation-attachments) args))))
+   (define (consume-or-nope-cps k)
+     (lambda ()
+       (call-consuming-continuation-attachment
+        'nope
+        (lambda (x) (k x)))))
+   (define (return-one) 1)
+   (define (act-like-list . l) l)
+   (define not-a-procedure 'something-else)
+   (define (returns-not-a-procedure) 'also-something-else)
+   (define (return-three-values) (values 1 2 3))
+   (define (return-the-same-value v) v)
+   (define (check-attachments-start v r)
+     (let ([ats (current-continuation-attachments)])
+       (and (pair? ats)
+            (equal? (car ats) v)
+            r)))
+    #t)
+  (equal? 'yep (call-with-yep get-or-nope))
+  (equal? 'yep (call-with-yep consume-or-nope))
+  (equal? 'yeah (call-with-yep (lambda () (call-with-yeah get-or-nope))))
+  (equal? '(yeah) (call-with-yep (lambda () (call-with-yeah current-continuation-attachments))))
+  (equal? '((yeah yep)) (call-with-yep (lambda () (list (call-with-yeah current-continuation-attachments)))))
+  (equal? '((yeah yep)) (call-with-yep (lambda () (act-like-list (call-with-yeah current-continuation-attachments)))))
+  (equal? '(yeah yep) (call-with-yep (lambda () (let ([v #f])
+                                                  (set! v (call-with-yeah current-continuation-attachments))
+                                                  v))))
+  (equal? '(nope) (call-with-yep (lambda () (list (get-or-nope)))))
+  (equal? '(nope) (call-with-yep (lambda () (act-like-list (get-or-nope)))))
+  (equal? '(nope) (call-with-yep (lambda () (call-with-yeah (lambda () (list (get-or-nope)))))))
+  (equal? '(nope) (call-with-yep (lambda () (call-with-yeah (lambda () (act-like-list (get-or-nope)))))))
+  (equal? '(yeah) (call-with-yep (lambda () (list (call-with-yeah (lambda () (get-or-nope)))))))
+  (equal? '(yeah) (call-with-yep (lambda () (act-like-list (call-with-yeah (lambda () (get-or-nope)))))))
+  (equal? '(nope) (call-with-yep (lambda () (call-with-yeah* (lambda () (list (get-or-nope)))))))
+  (equal? '(nope) (call-with-yep (lambda () (call-with-yeah* (lambda () (act-like-list (get-or-nope)))))))
+  (equal? '(yeah) (call-with-yep (lambda () (list (call-with-yeah* (lambda () (get-or-nope)))))))
+  (equal? '(yeah) (call-with-yep (lambda () (act-like-list (call-with-yeah* (lambda () (get-or-nope)))))))
+
+  (equal? 'nope (call-with-yep (consume-or-nope-cps
+                                (lambda (v)
+                                  (get-or-nope)))))
+
+  (error? (call-with-yep (lambda () (call-with-yeah* (lambda () (not-a-procedure))))))
+  (error? (call-with-yep (lambda () (list (call-with-yeah* (lambda () (not-a-procedure)))))))
+  (error? (call-with-yep (lambda () (act-like-list (call-with-yeah* (lambda () (not-a-procedure)))))))
+  (error? (call-with-yep (lambda () (call-with-yeah* (lambda () ((returns-not-a-procedure)))))))
+  (error? (call-with-yep (lambda () (list (call-with-yeah* (lambda () ((returns-not-a-procedure))))))))
+  (error? (call-with-yep (lambda () (act-like-list (call-with-yeah* (lambda () ((returns-not-a-procedure))))))))
+  
+  (equal? '() (if (call-with-yep list)
+                  (current-continuation-attachments)
+                  #f))
+  (equal? '() (if (call-setting-continuation-attachment 'here (lambda () #t))
+                  (current-continuation-attachments)
+                  #f))
+  (equal? 1 (let loop ([i 10000])
+              (if (zero? i)
+                  (length (current-continuation-attachments))
+                  (call-setting-continuation-attachment
+                   'here
+                   (lambda ()
+                     (loop (sub1 i)))))))
+  (equal? 10000 (let loop ([i 10000])
+                  (if (zero? i)
+                      (length (current-continuation-attachments))
+                      (call-setting-continuation-attachment
+                       'here
+                       (lambda ()
+                         (return-the-same-value (loop (sub1 i))))))))
+  (equal? '#((forget-me yeah yep) (yeah yep))
+          (call/cc
+           (lambda (esc)
+             (call-with-yep
+              (lambda ()
+                (list (call-with-yeah
+                       (lambda ()
+                         (list (call-setting-continuation-attachment
+                                'forget-me
+                                (lambda ()
+                                  (call/cc
+                                   (lambda (k)
+                                     (esc (vector
+                                           (current-continuation-attachments)
+                                           (continuation-next-attachments k))))))))))))))))
+  (equal? '#(((yep) (yep))
+             ((yeah yep))
+             ((yep) (yep)))
+          (let ([pre '()]
+                [body '()]
+                [post '()])
+            ((call/cc
+              (lambda (esc)
+                (call-with-yep
+                 (lambda ()
+                   (dynamic-wind
+                       (lambda ()
+                         (set! pre (cons (current-continuation-attachments) pre)))
+                       (lambda ()
+                         (call-with-yeah
+                          (lambda ()
+                            ((call/cc
+                              (lambda (retry)
+                                (set! body (cons (current-continuation-attachments) body))
+                                (esc retry)))))))
+                       (lambda ()
+                         (set! post (cons (current-continuation-attachments) post))))))))
+             (lambda () (lambda (self) void)))
+            (vector pre body post)))
+
+  (equal? 'ok
+          (call-setting-continuation-attachment
+           'ok
+           (lambda ()
+             (call-with-values (lambda () (return-three-values))
+               (case-lambda
+                [(x y z)
+                 (get-or-nope)])))))
+  (equal? '(ok 1 2 3)
+          (call-setting-continuation-attachment
+           'ok
+           (lambda ()
+             (call-with-values (lambda () (return-three-values))
+               (case-lambda
+                [(x y z)
+                 (call-getting-continuation-attachment
+                  'nope
+                  (lambda (a) (list a x y z)))])))))
+
+  ;; intended to trigger `mvcall` in the `np-recognize-attachment` pass:
+  (equal? '(1)
+          (call-setting-continuation-attachment
+           'ok
+           (lambda ()
+             (call-with-values (lambda () (return-one)) act-like-list))))
+  (equal? '(#(nothing (here) (there here)) (here))
+          (call-setting-continuation-attachment
+           'here
+           (lambda ()
+             (list
+              ;; becomes an mvcall with attachment-shifting producer call
+              ;; and non-shifting consumer call
+              (call-with-values
+                  (lambda ()
+                    (call-setting-continuation-attachment
+                     'there
+                     (lambda ()
+                       ;; In tail position with respect to 'there attachment
+                       (current-continuation-attachments))))
+                ;; Not in tail position with respect to an attachment
+                vector-with-attachments)
+              (current-continuation-attachments)))))
+  (equal? '#(here (here) (there here))
+          (call-setting-continuation-attachment
+           'here
+           (lambda ()
+             ;; becomes an mvcall with attachment-shifting producer call
+             ;; and attachment-shifting consumer call
+             (call-with-values
+                 (lambda ()
+                   (call-setting-continuation-attachment
+                    'there
+                    (lambda ()
+                      (current-continuation-attachments))))
+               ;; in tail position with respect to 'here attachment
+               vector-with-attachments))))
+  (equal? '#(here (here) (here))
+          (call-setting-continuation-attachment
+           'here
+           (lambda ()
+             ;; becomes an mvcall with non-shifting producer call
+             ;; and attachment-shifting consumer call
+             (call-with-values
+                 (lambda ()
+                   (current-continuation-attachments))
+               vector-with-attachments))))
+  (equal? '(#(nothing (here) #(there (there here) (there here)))
+            (here))
+          (call-setting-continuation-attachment
+           'here
+           (lambda ()
+             (list
+              ;; becomes an mvcall with a non-shifting producer call,
+              ;; a shifting consumer call, and a non-shifting consumer call
+              (call-with-values
+                  (lambda ()
+                    (call-setting-continuation-attachment
+                     'there
+                     (lambda ()
+                       (call-with-values
+                           (lambda ()
+                             (current-continuation-attachments))
+                         vector-with-attachments))))
+                vector-with-attachments)
+              (current-continuation-attachments)))))
+  (equal? '(#(nothing (here) #(there (there here) (more there here)))
+            (here))
+          (call-setting-continuation-attachment
+           'here
+           (lambda ()
+             (list
+              ;; becomes an mvcall with a shifting producer call,
+              ;; a shifting consumer call, and a non-shifting consumer call
+              (call-with-values
+                  (lambda ()
+                    (call-setting-continuation-attachment
+                     'there
+                     (lambda ()
+                       (call-with-values
+                           (lambda ()
+                             (call-setting-continuation-attachment
+                              'more
+                              (lambda ()
+                                (current-continuation-attachments))))
+                         vector-with-attachments))))
+                vector-with-attachments)
+              (current-continuation-attachments)))))
+  (equal? '(1)
+          (letrec ([act-like-list (lambda l
+                                    (if (equal? l '(never))
+                                        (act-like-list (cdr l))
+                                        l))])
+            (call-setting-continuation-attachment
+             'ok
+             (lambda ()
+               ;; `call-with-values` can see that `act-like-list` has
+               ;; a rest argument, and it generates a direct call
+               (call-with-values (lambda () (return-one)) act-like-list)))))
+  (equal? '(1)
+          ;; Like the previous example, but in tail position
+          (call-with-yep ; just to ensure the argument `lambda` isn't inlined
+           (lambda ()
+             (letrec ([act-like-list (lambda l
+                                       (if (equal? l '(never))
+                                           (act-like-list (cdr l))
+                                           l))])
+               (call-setting-continuation-attachment
+                'ok
+                (lambda ()
+                  (call-with-values (lambda () (return-one)) act-like-list)))))))
+  (equal? '(1)
+          (call-with-yep ; just to ensure the argument `lambda` isn't inlined
+           (lambda ()
+             (call-setting-continuation-attachment
+              'ok
+              (lambda ()
+                (call-with-values (lambda () (return-one)) act-like-list))))))
+  (equal? '(ok)
+          (call-with-yep ; just to ensure the argument `lambda` isn't inlined
+           (lambda ()
+             (call-setting-continuation-attachment
+              'ok
+              (lambda ()
+                ;; Should be detected as a loop form
+                (let loop ([i 1000])
+                  (if (fx= i 0)
+                      (current-continuation-attachments)
+                      (loop (sub1 i)))))))))
+  (equal? 'ok
+          (call-setting-continuation-attachment
+           -1
+           (lambda ()
+             (let loop ([i 0])
+               (cond
+                [(= i 1000) 'ok]
+                [else (check-attachments-start
+                       (sub1 i)
+                       (call-setting-continuation-attachment
+                        i
+                        (lambda ()
+                          ;; Not detected as a loop, but as a direct call
+                          (loop (add1 i)))))])))))
+  (equal? 'yes
+          (call-with-nothing
+           (lambda ()
+             ;; This "consuming" will need to reify the continuation
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v)
+                (call-setting-continuation-attachment
+                 'yes
+                 (lambda ()
+                   (get-or-nope))))))))
+  (equal? 'yes
+          (call-with-nothing-in-split
+           (lambda ()
+             ;; This "consuming" will need to reify the continuation
+             (call-consuming-continuation-attachment
+              'no
+              (lambda (v)
+                (call-setting-continuation-attachment
+                 'yes
+                 (lambda ()
+                   (get-or-nope))))))))
+  (begin
+   (define (gc-and-capture-continuation)
+     (collect 0)
+     (call/cc
+      (lambda (k)
+        (lambda ()
+          (k (lambda () 8))))))
+   (equal? 8
+           (let ([v (call/1cc
+                     (lambda (ek)
+                       (let ([v (call-setting-continuation-attachment
+                                 'v
+                                 (lambda ()
+                                   (gc-and-capture-continuation)))])
+                         (if (number? v)
+                             (add1 v)
+                             v))))])
+             (if (procedure? v)
+                 (v)
+                 'no))))
+
+  (equal?
+   '(2 2)
+   (let ([f (parameterize ([run-cp0
+                            ;; Disable cp0 inlining of `for-each`:
+                            (lambda (cp0 e) e)])
+              (eval '(lambda (g l)
+                       (let-values ([(x y)
+                                     (call-setting-continuation-attachment
+                                      'hi
+                                      (lambda ()
+                                        ;; Could be specialized by `cpnanopoass`, but
+                                        ;; make sure it's constrained by the fact that
+                                        ;; `for-each` can tail-call `g`:
+                                        (#3%for-each g l)))])
+                         (list x y)))))])
+     (f (lambda (x) (values x x)) (list 1 2))))
+ )
+
+(mat call-in-continuation
+  (error? (call-in-continuation 1))
+  (error? (call-in-continuation 1 (lambda () 0)))
+  (error? (call-in-continuation (lambda args args) (lambda () 0)))
+  (error? (call/cc (lambda (k) (call-in-continuation k #f (lambda () 0)))))
+  (error? (call/cc (lambda (k) (call-in-continuation k (list 1 2 3) (lambda () 0)))))
+
+  (equal? 10 (+ 1 (call/cc (lambda (k) (call-in-continuation k (lambda () 9))))))
+  (equal? 10 (+ 1 (call/cc (lambda (k) (call-in-continuation k (continuation-next-attachments k) (lambda () 9))))))
+  (equal? 11 (+ 1 (call/cc (lambda (k) (* 0 (call-in-continuation k (lambda () 10)))))))
+  (equal? 'done (let ([maybe-k (call/cc (lambda (k) k))])
+                  (if (symbol? maybe-k)
+                      maybe-k
+                      (* 0 (call-in-continuation maybe-k (lambda () 'done))))))
+  (equal? 'second (let-values ([(maybe-k result) (call/cc (lambda (k) (values k #f)))])
+                    (if (symbol? maybe-k)
+                        result
+                        (* 0 (call-in-continuation maybe-k (lambda () (values 'done 'second)))))))
+
+  (begin
+    (define (attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (lambda ()
+         (current-continuation-attachments))))
+    (define (same-attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (current-continuation-attachments)
+       (lambda ()
+         (current-continuation-attachments))))
+    (define (sub-attachments-in-continuation k)
+      (call-in-continuation
+       k
+       (current-continuation-attachments)
+       (lambda ()
+         (call-setting-continuation-attachment
+          'inside2
+          (lambda ()
+            (current-continuation-attachments))))))
+    #t)
+
+  (equal? '(outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (attachments-in-continuation k))))))))))))
+
+  (equal? '(inside outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (same-attachments-in-continuation k))))))))))))
+
+  (equal? '(inside2 outside)
+          (call-setting-continuation-attachment
+           'outside
+           (lambda ()
+             (#%$value
+              (call-setting-continuation-attachment
+               'tail
+               (lambda ()
+                 (call/cc
+                  (lambda (k)
+                    (call-setting-continuation-attachment
+                     'inside
+                     (lambda ()
+                       (+ 1
+                          (sub-attachments-in-continuation k))))))))))))
+
+  (equal? '(unknown)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-consuming-continuation-attachment
+               'unknown
+               (lambda (v)
+                 (call-in-continuation
+                  k
+                  (lambda () v))))))))
+
+  (equal? '(also-unknown)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-in-continuation
+               k
+               (lambda () 
+                 (call-consuming-continuation-attachment
+                  'also-unknown
+                  (lambda (v)
+                    v))))))))
+
+  (equal? '(known)
+          (list
+           (call/cc
+            (lambda (k)
+              (call-in-continuation
+               k
+               (lambda ()
+                 (call-setting-continuation-attachment
+                  'known
+                  (lambda ()
+                    (call-getting-continuation-attachment
+                     'still-unknown
+                     (lambda (v)
+                       v))))))))))
+
+  (equal? '(here in out)
+          (let ([did '()])
+            (let ([k (dynamic-wind
+                         (lambda () (set! did (cons 'in did)))
+                         (lambda () (call/cc (lambda (k) k)))
+                         (lambda () (void)))])
+              (cond
+               [(procedure? k)
+                (set! did '())
+                (dynamic-wind
+                    (lambda () (void))
+                    (lambda () (call-in-continuation
+                                k
+                                (lambda ()
+                                  (set! did (cons 'here did))
+                                  'no)))
+                    (lambda () (set! did (cons 'out did))))]
+               [else did]))))
+
+)
+
 ;;; section 4-7:
 
 (mat engine
