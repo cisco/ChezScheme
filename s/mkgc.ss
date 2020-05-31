@@ -78,9 +78,9 @@
 ;;                    inferred for `space-data`
 ;;       * counting-root : check a counting root before pushing to sweep stack
 ;;  - (trace <field>) : relocate for sweep, copy for copy, recur otherwise
-;;  - (trace-early <field>) : relocate for sweep or copy, recur otherwise
+;;  - (trace-early <field>) : relocate for sweep, copy, and mark; recur otherwise
 ;;  - (trace-now <field>) : direct recur
-;;  - (trace-early-rtd <field>) : for record types, avoid recur on #!base-rtd
+;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd
 ;;  - (trace-ptrs <field> <count>) : trace an array of pointerrs
 ;;  - (copy <field>) : copy for copy, ignore otherwise
 ;;  - (copy-bytes <field> <count>) : copy an array of bytes
@@ -1508,7 +1508,7 @@
             (code (case (and (not (lookup 'as-dirty? config #f))
                              (not (lookup 'rtd-relocated? config #f))
                              (lookup 'mode config))
-                    [(copy sweep)
+                    [(copy sweep mark)
                      (code
                       "/* Relocate to make sure we aren't using an oldspace descriptor"
                       "   that has been overwritten by a forwarding marker, but don't loop"
