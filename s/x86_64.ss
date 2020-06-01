@@ -43,7 +43,7 @@
       [%Cfparg2            #f  1 fp]
       [%fptmp1             #f  4 fp]  ; xmm 0-5 are caller-save
       [%fptmp2             #f  5 fp]  ; xmm 6-15 are callee-save
-      [%sp                 #t  4 fp])
+      [%sp                 #t  4 uptr])
     (reify-support %ts))
   (define-registers
     (reserved
