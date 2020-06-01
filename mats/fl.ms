@@ -1105,4 +1105,16 @@
                                          (bytevector-ieee-double-native-set! bv 0 (fl+ v 0.1))
                                          (fl* v 0.99)))))
 
+  (begin
+    (define many-compare
+      (lambda (a b c d e f g h i j k)
+        (fl<= a b c d e f g h i j k)))
+    (many-compare 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0))
+
+  (begin
+    (define many-add
+      (lambda (a b c d e f g h i j k)
+        (fl+ a b c d e f g h i j k)))
+    (fl= 66.0 (many-add 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0)))
+
   )

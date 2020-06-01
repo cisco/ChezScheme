@@ -7667,14 +7667,18 @@
                                               ,(build-fl= e1)
                                               ,(build-libcall #t src sexpr op e1 e1))))]
                              [(e1 e2) (build-bind-and-check src sexpr op e1 e2 (builder args ...))]
-                             [(e1 e2 . e*) (build-check-fp-arguments (cons* e1 e2 e*)
-                                            (lambda (e1 e2) (build-libcall #t src sexpr op e1 e2))
-                                            (lambda (e1 e2 . e*) (reducer src sexpr moi e1 e2 e*)))])
+                             [(e1 e2 . e*) (and
+                                            (fx<= (length e*) (fx- inline-args-limit 2))
+                                            (build-check-fp-arguments (cons* e1 e2 e*)
+                                              (lambda (e1 e2) (build-libcall #t src sexpr op e1 e2))
+                                              (lambda (e1 e2 . e*) (reducer src sexpr moi e1 e2 e*))))])
                            (define-inline 2 r6rs:op
                              [(e1 e2) (build-bind-and-check src sexpr r6rs:op e1 e2 (builder args ...))]
-                             [(e1 e2 . e*) (build-check-fp-arguments (cons* e1 e2 e*)
-                                            (lambda (e1 e2) (build-libcall #t src sexpr r6rs:op e1 e2))
-                                            (lambda (e1 e2 . e*) (reducer src sexpr moi e1 e2 e*)))])))])))
+                             [(e1 e2 . e*) (and
+                                            (fx<= (length e*) (fx- inline-args-limit 2))
+                                            (build-check-fp-arguments (cons* e1 e2 e*)
+                                              (lambda (e1 e2) (build-libcall #t src sexpr r6rs:op e1 e2))
+                                              (lambda (e1 e2 . e*) (reducer src sexpr moi e1 e2 e*))))])))])))
 
               (define-fl-cmp-inline fl= fl=? build-fl= #f #f)
               (define-fl-cmp-inline fl< fl<? build-fl< #t #f)
