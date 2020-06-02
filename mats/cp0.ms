@@ -3126,4 +3126,17 @@
      (equivalent-expansion?
       (expand/optimize '(let ([g1 (begin (unknown) (void))]) 10))
       '(begin (unknown) 10)))
+
+   (or (not (enable-cp0))
+       (equal? (let ([mk (lambda (g)
+                           (letrec ([f (lambda (x)
+                                         (if (= x 100)
+                                             (g)
+                                             (f (add1 x))))])
+                             (lambda () (f 101))))])
+                 (map procedure-known-single-valued?
+                      (list (mk (lambda () 1))
+                            (mk (lambda () (values 1 2))))))
+               '(#t #f)))
+
 )

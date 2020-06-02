@@ -327,8 +327,8 @@
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure n>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure n>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure pcons>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure pcons>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (ccons 1 2 3)".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (n (+ z 7) w "what?")".

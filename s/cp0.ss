@@ -211,20 +211,20 @@
                                  (cdr old-ids) 
                                  (and opnds (cdr opnds))
                                  (cons
-                                   (let ([old-id (car old-ids)])
-                                     (make-prelex
-                                       (prelex-name old-id)
-                                       (let ([flags (prelex-flags old-id)])
-                                         (fxlogor
-                                           (fxlogand flags (constant prelex-sticky-mask))
-                                           (fxsll (fxlogand flags (constant prelex-is-mask))
-                                             (constant prelex-was-flags-offset))))
-                                       (prelex-source old-id)
-                                       (and opnds
-                                            (let ([opnd (car opnds)])
-                                              (when (operand? opnd)
-                                                (operand-name-set! opnd (prelex-name old-id)))
-                                              opnd))))
+                                   (let ([old-id (car old-ids)]
+                                         [opnd (and opnds (car opnds))])
+                                     (let ([id (make-prelex
+                                                 (prelex-name old-id)
+                                                 (let ([flags (prelex-flags old-id)])
+                                                   (fxlogor
+                                                     (fxlogand flags (constant prelex-sticky-mask))
+                                                     (fxsll (fxlogand flags (constant prelex-is-mask))
+                                                       (constant prelex-was-flags-offset))))
+                                                 (prelex-source old-id)
+                                                 opnd)])
+                                       (when (operand? opnd)
+                                         (operand-name-set! opnd id))
+                                       id))
                                    rnew-ids))))])
             (values (make-env (list->vector old-ids) (list->vector new-ids) old-env) new-ids))))
       
@@ -261,6 +261,12 @@
           (when multiply-referenced? (set-prelex-multiply-referenced! t #t))
           (set-prelex-referenced! t #t)
           t)))
+
+    (define (name->symbol name)
+      (safe-assert (or (prelex? name) (symbol? name)))
+      (if (prelex? name)
+          (prelex-name name)
+          name))
 
     ;;; contexts
 
@@ -513,7 +519,7 @@
                [(if (ivory? body) (andmap simple/profile1? e*) (andmap ivory1? e*))
                 ; assocate each lhs with cooked operand for corresponding rhs.  make-record-constructor-descriptor,
                 ; at least, counts on this to allow protocols to be inlined.
-                (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+                (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                 (values (make-lifted #f x* e*) body)]
                ; okay, so we don't pass that test.  if body and e* are simple, we can
                ; still lift by making a binding for body and requesting letrec* semantics.
@@ -526,7 +532,7 @@
                #;[(and (simple? body) (andmap simple? e*))
                 (let ([t (cp0-make-temp #f)]) ; mark was-referenced?
                       (let ([x* (append x* (list t))] [e* (append e* (list body))])
-                        (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+                        (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                         (values (make-lifted #t x* e*) (build-ref t))))]
                ; otherwise lift out only bindings with unasigned lhs and ivory rhs
                ; we don't presently have any justification (benchmark results or expand/optimize
@@ -542,7 +548,6 @@
                             (begin
                               ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
                               (prelex-operand-set! x (build-cooked-opnd e))
-                              (operand-name-set! opnd (prelex-name x))
                               (loop (cdr x*) (cdr e*) rx* re* (cons x rlx*) (cons e rle*)))
                             (loop (cdr x*) (cdr e*) (cons x rx*) (cons e re*) rlx* rle*)))))]
                [else (values #f e)])]
@@ -558,7 +563,7 @@
                                       (eq? x (car x*))]
                                      [else #f])))))
              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
-             (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+             (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
              (values (make-lifted #f x* e*) body)]
             ; force the issue by creating an extra tmp for body
             ; we don't presently have any justification (benchmark results or expand/optimize
@@ -567,12 +572,12 @@
             #;[(letrec ([,x* ,e*] ...) ,body)
              (let ([x (cp0-make-temp #f)])
                (let ([x* (append x* (list x))] [e* (append e* (list body))])
-                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                  (values (make-lifted #t x* e*) (build-ref x))))]
             [(letrec* ([,x* ,e*] ...) ,body)
              (guard (or (ivory? body) (andmap ivory1? e*)))
              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
-             (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+             (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
              (values (make-lifted #t x* e*) body)]
             ; force the issue by creating an extra tmp for body.
             ; we don't presently have any justification (benchmark results or expand/optimize
@@ -581,7 +586,7 @@
             #;[(letrec* ([,x* ,e*] ...) ,body)
              (let ([x (cp0-make-temp #f)])
                (let ([x* (append x* (list x))] [e* (append e* (list body))])
-                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                  (values (make-lifted #t x* e*) (build-ref x))))]
             ; we can lift arbitrary subforms of record forms if we also lift
             ; a binding for the record form itself.  there's no worry about
@@ -613,7 +618,7 @@
                      (values #f e)
                      (let ([x (cp0-make-temp #f)])
                        (let ([x* (append liftmt* (list x))] [e* (append liftme* (list e))])
-                         (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
+                         (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                          (values (make-lifted #t x* e*) (build-ref x)))))))]
             [else (values #f e)]))
         (or (operand-value opnd)
@@ -701,19 +706,26 @@
           [(quote ,d) d]
           [else (sorry! who "~s is not a constant" x)])))
 
-    (define (name-preinfo-lambda! preinfo name)
-      (when (and (symbol? name)
-                 ;; Avoid replacing a name from an optimized-away `let` pattern:
-                 (not (preinfo-lambda-name preinfo)))
-        (preinfo-lambda-name-set! preinfo
-           (let ([x ($symbol-name name)])
-             (if (pair? x) (or (cdr x) (car x)) x)))))
-    
+    (define (symbol->lambda-name sym)
+      (let ([x ($symbol-name sym)])
+        (if (pair? x) (or (cdr x) (car x)) x)))
+
+    (define (preinfo-lambda-set-name-and-flags preinfo name flags)
+      (let ([new-name (and
+                       name
+                       ;; Avoid replacing a name from an optimized-away `let` pattern:
+                       (not (preinfo-lambda-name preinfo))
+                       (symbol->lambda-name (name->symbol name)))])
+        (if (or new-name
+                (not (fx= flags (preinfo-lambda-flags preinfo))))
+            (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo)
+              (preinfo-lambda-libspec preinfo) new-name flags)
+            preinfo)))
+
     (define preinfo-call->preinfo-lambda
       (lambda (preinfo name)
-        (let ([new-preinfo (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo))])
-          (name-preinfo-lambda! new-preinfo name)
-          new-preinfo)))
+        (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo)
+           #f (and name (symbol->lambda-name (name->symbol name))))))
 
     (define build-quote
       (lambda (d)
@@ -1348,9 +1360,9 @@
               [(pariah) #f]
               [else ($oops who "unrecognized record ~s" e)]))))
 
-      ;; Returns #t, #f, or a prelex for lambda that needs to be
+      ;; Returns #t, #f, or a prelex for a lambda that needs to be
       ;; single-valued to imply #t. The prelex case is useful to
-      ;; detect a loop.
+      ;; detect a single-valued loop.
       (define-who single-valued
         (lambda (e)
           (with-memoize () e
@@ -1367,13 +1379,16 @@
                                (and proc-e
                                     (memoize (procedure-single-valued proc-e #f))))))]
                    [(case-lambda ,preinfo ,cl* ...)
-                    (memoize (fold-left (lambda (r cl)
-                                          (and r
-                                               (nanopass-case (Lsrc CaseLambdaClause) cl
-                                                 [(clause (,x* ...) ,interface ,body)
-                                                  (single-valued-join r (single-valued body))])))
-                                        #t
-                                        cl*))]
+                    (memoize (or
+                              (all-set? (constant code-flag-single-valued)
+                                        (preinfo-lambda-flags preinfo))
+                              (fold-left (lambda (r cl)
+                                           (and r
+                                                (nanopass-case (Lsrc CaseLambdaClause) cl
+                                                  [(clause (,x* ...) ,interface ,body)
+                                                   (single-valued-join r (single-valued body))])))
+                                         #t
+                                         cl*)))]
                    [(ref ,maybe-src ,x)
                     (let ([v (and (not (prelex-was-assigned x))
                                   (let ([opnd (prelex-operand x)])
@@ -1384,14 +1399,14 @@
                              [(case-lambda ,preinfo ,cl* ...)
                               ;; Don't recur into the clauses, since that
                               ;; could send us into a loop for a `letrec`
-                              ;; binding. But use the preinfo as a summary
+                              ;; binding. But use the prelex as a summary
                               ;; or a way to tie a loop:
-                              (preinfo->single-valued preinfo)]
+                              (preinfo->single-valued preinfo x)]
                              [else #f])))]
-                   ;; Recognize call to a loop, and use the loop's preinfo in that case:
+                   ;; Recognize call to a loop, and use the loop's prelex in that case:
                    [(letrec ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
                     (and (eq? x1 x2)
-                         (preinfo->single-valued preinfo))]
+                         (preinfo->single-valued preinfo x1))]
                    [else #f]))]
               [(ref ,maybe-src ,x) #t]
               [(case-lambda ,preinfo ,cl* ...) #t]
@@ -1415,13 +1430,13 @@
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
               [else ($oops who "unrecognized record ~s" e)]))))
 
-      (define (preinfo->single-valued preinfo)
+      (define (preinfo->single-valued preinfo x)
         ;; If the single-valued flag is set, simplify to #t,
-        ;; otherwise return the preinfo to mean "single-valued
-        ;; of this lambda is "single-valued".
+        ;; otherwise return the prelex x to mean "single-valued
+        ;; if the lambda for x is single-valued".
         (or (all-set? (constant code-flag-single-valued)
                       (preinfo-lambda-flags preinfo))
-            preinfo))
+            x))
 
       (define single-valued-join
         (lambda (a b)
@@ -1429,8 +1444,8 @@
            [(eq? a b) a]
            [(eq? a #t) b]
            [(eq? b #t) a]
-           ;; If `a` and `b` are different preinfos, we currently give
-           ;; up, because a preinfo is used only to find a
+           ;; If `a` and `b` are different prelexes, we currently give
+           ;; up, because a prelex is used only to find a
            ;; single-function fixpoint.
            [else #f])))
 
@@ -1443,8 +1458,8 @@
           (cond
            [(eq? r #t) #t]
            [(eq? r #f) #f]
-           [else (all-set? (constant code-flag-single-valued)
-                           (preinfo-lambda-flags r))])))
+           ;; conservative assumption for a prelex:
+           [else #f])))
 
       (define-who single-valued-without-inspecting-continuation?
         (lambda (e)
@@ -1729,7 +1744,7 @@
             ; these operands will be cleared by with-extended-env
             (for-each (lambda (id opnd)
                         (prelex-operand-set! id opnd)
-                        (operand-name-set! opnd (prelex-name id)))
+                        (operand-name-set! opnd id))
               ids opnds)
             ; for r5rs letrec semantics: prevent copy propagation of references
             ; to lhs id if rhs might invoke call/cc
@@ -3590,7 +3605,7 @@
                                          ,void-rec
                                          ,(build-primcall 3 '$record-oops
                                             (list (let ([name (app-name ctxt)])
-                                                    (if name `(quote ,name) `(moi)))
+                                                    (if name `(quote ,(name->symbol name)) `(moi)))
                                               (build-ref rec-t)
                                               rtd-e)))
                                      ,expr))]
@@ -3605,7 +3620,7 @@
                                              ,void-rec
                                              ,(build-primcall 3 '$record-oops
                                                 (list (let ([name (app-name ctxt)])
-                                                        (if name `(quote ,name) `(moi)))
+                                                        (if name `(quote ,(name->symbol name)) `(moi)))
                                                   (build-ref rec-t)
                                                   (build-ref rtd-t))))
                                          ,expr))))])))))))
@@ -3646,7 +3661,7 @@
                                               ,void-rec
                                               ,(build-primcall 3 '$record-oops
                                                  (list (let ([name (app-name ctxt)])
-                                                         (if name `(quote ,name) `(moi)))
+                                                         (if name `(quote ,(name->symbol name)) `(moi)))
                                                    (build-ref rec-t)
                                                    rtd-e)))
                                          (if pred
@@ -3654,7 +3669,7 @@
                                                `(if ,pred ,void-rec
                                                     ,(build-primcall 3 'assertion-violationf
                                                        (list (let ([name (app-name ctxt)])
-                                                               (if name `(quote ,name) `(moi)))
+                                                               (if name `(quote ,(name->symbol name)) `(moi)))
                                                          `(quote ,(format "invalid value ~~s for foreign type ~s" type))
                                                          (build-ref val-t))))
                                                expr)
@@ -3671,7 +3686,7 @@
                                                    ,void-rec
                                                    ,(build-primcall 3 '$record-oops
                                                       (list (let ([name (app-name ctxt)])
-                                                              (if name `(quote ,name) `(moi)))
+                                                              (if name `(quote ,(name->symbol name)) `(moi)))
                                                         (build-ref rec-t)
                                                         (build-ref rtd-t))))
                                               (if pred
@@ -3679,7 +3694,7 @@
                                                     `(if ,pred ,void-rec
                                                          ,(build-primcall 3 'assertion-violationf
                                                             (list (let ([name (app-name ctxt)])
-                                                                    (if name `(quote ,name) `(moi)))
+                                                                    (if name `(quote ,(name->symbol name)) `(moi)))
                                                               `(quote ,(format "invalid value ~~s for foreign type ~s" type))
                                                               (build-ref val-t))))
                                                     expr)
@@ -5014,7 +5029,7 @@
                (let ((e (cp0 e 'value env sc wd (prelex-name x) moi)))
                  (set-prelex-assigned! new-id #t)
                  `(set! ,maybe-src ,new-id ,e)))
-             (make-1seq ctxt (cp0 e 'ignored env sc wd (prelex-name x) moi) void-rec)))]
+             (make-1seq ctxt (cp0 e 'ignored env sc wd x moi) void-rec)))]
       [(call ,preinfo ,pr (seq ,e1 ,e2))
        (guard (eq? (primref-name pr) '$value))
        ;; This simplication probably doesn't enable optimizations, but
@@ -5073,33 +5088,34 @@
          (let-values ([(e args) (lift-let e e*)])
            (cp0-call preinfo e (build-operands args env wd moi) ctxt env sc wd name moi)))]
       [(case-lambda ,preinfo ,cl* ...)
-       (name-preinfo-lambda! preinfo name)
        (context-case ctxt
          [(value tail)
           (bump sc 1)
-          `(case-lambda ,preinfo
-             ,(let f ([cl* cl*] [mask 0] [known-single-valued #t])
-                (if (null? cl*)
-                    (begin
-                      (when (or (single-valued-reduce? known-single-valued)
-                                ;; Detect simple loop:
-                                (eq? known-single-valued preinfo))
-                        (preinfo-lambda-flags-set! preinfo (fxior (preinfo-lambda-flags preinfo)
-                                                                  (constant code-flag-single-valued))))
-                      '())
-                    (nanopass-case (Lsrc CaseLambdaClause) (car cl*)
-                      [(clause (,x* ...) ,interface ,body)
-                       (let ([new-mask (logor mask (if (fx< interface 0) (ash -1 (fx- -1 interface)) (ash 1 interface)))])
-                         (if (= new-mask mask)
-                             (f (cdr cl*) new-mask known-single-valued)
-                             (with-extended-env ((env x*) (env x* #f))
-                               (let ([body (cp0 body 'tail env sc wd #f name)])
-                                 (cons `(clause (,x* ...) ,interface ,body)
-                                       (f (cdr cl*) new-mask
-                                          (and known-single-valued
-                                               (single-valued-join known-single-valued
-                                                                   (single-valued body)))))))))])))
-             ...)]
+          (let f ([cl* cl*] [mask 0] [rcl* '()] [known-single-valued #t])
+            (if (null? cl*)
+                (let ([flags (fxior (preinfo-lambda-flags preinfo)
+                               (if (or (single-valued-reduce? known-single-valued)
+                                       ;; Detect a simple loop:
+                                       (and (prelex? name)
+                                            (eq? known-single-valued name)))
+                                   (constant code-flag-single-valued)
+                                   0))])
+                  `(case-lambda ,(preinfo-lambda-set-name-and-flags preinfo name flags)
+                     ,(reverse rcl*) ...))
+                (nanopass-case (Lsrc CaseLambdaClause) (car cl*)
+                  [(clause (,x* ...) ,interface ,body)
+                   (let ([new-mask (logor mask (if (fx< interface 0) (ash -1 (fx- -1 interface)) (ash 1 interface)))])
+                     (if (= new-mask mask)
+                         (f (cdr cl*) new-mask rcl* known-single-valued)
+                         (with-extended-env ((env x*) (env x* #f))
+                           (let ([body (cp0 body 'tail env sc wd #f name)])
+                             (f (cdr cl*) new-mask
+                                (cons (with-output-language (Lsrc CaseLambdaClause)
+                                        `(clause (,x* ...) ,interface ,body))
+                                      rcl*)
+                                (and known-single-valued
+                                     (single-valued-join known-single-valued
+                                                         (single-valued body))))))))])))]
          [(effect ignored) void-rec]
          [(test) true-rec]
          [(app)

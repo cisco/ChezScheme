@@ -16,8 +16,7 @@
 (module (Lsrc Lsrc? Ltype Ltype? unparse-Ltype unparse-Lsrc count-Lsrc
          lookup-primref primref? primref-name primref-level primref-flags primref-arity
          sorry! make-preinfo preinfo? preinfo-lambda? preinfo-sexpr preinfo-sexpr-set! preinfo-src
-         make-preinfo-lambda preinfo-lambda-name preinfo-lambda-name-set! preinfo-lambda-flags
-         preinfo-lambda-flags-set! preinfo-lambda-libspec
+         make-preinfo-lambda preinfo-lambda-name preinfo-lambda-flags preinfo-lambda-libspec
          make-preinfo-call preinfo-call? preinfo-call-flags preinfo-call-check? preinfo-call-can-inline?
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
@@ -170,10 +169,10 @@
           [(src sexpr) (new src sexpr)]))))
 
   (define-record-type preinfo-lambda
-    (nongenerative #{preinfo-lambda e23pkvo5btgapnzomqgegm-5})
+    (nongenerative #{preinfo-lambda hhv0qzgdqfvjgms8nm7y4bf9w-0})
     (parent preinfo)
     (sealed #t)
-    (fields libspec (mutable name) (mutable flags))
+    (fields libspec name flags)
     (protocol
       (lambda (pargs->new)
         (case-lambda
