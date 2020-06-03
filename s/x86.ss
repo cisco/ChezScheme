@@ -824,7 +824,7 @@
      `(asm ,info ,(asm-fl-load op (info-loadfl-flreg info)) ,x ,y ,z)])
 
   (define-instruction value (fpt)
-    [(op (x fpur) (y ur)) `(asm ,info ,asm-fpt ,x ,y)])
+    [(op (x fpur) (y ur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpt ,y))])
 
   (define-instruction value (fpmove)
     [(op (x fpmem) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))]

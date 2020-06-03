@@ -668,12 +668,26 @@
                       (loop n))))
                 (set! frame-vars new-vec))))
           (or (vector-ref frame-vars x)
-              (let ([fv ($make-fv x (constant-case stack-word-alignment
-                                      [(2) (if (and (eq? type 'fp)
-                                                    (fxodd? x))
-                                               'ptr
-                                               type)]
-                                      [(1) type]))])
+              (let ([fv ($make-fv x (let* ([type
+                                            ;; Don't allocate misaligned 'fp
+                                            (constant-case stack-word-alignment
+                                              [(2) (if (and (eq? type 'fp)
+                                                            (fxodd? x))
+                                                       'ptr
+                                                       type)]
+                                              [(1) type])]
+                                           [type
+                                            ;; Don't allocate 'fp that overlaps
+                                            ;; an allocated slot
+                                            (constant-case ptr-bits
+                                              [(32) (let ([next-fv (and (fx< (fx+ x 1) (vector-length frame-vars))
+                                                                        (vector-ref frame-vars (add1 x)))])
+                                                      (if (and next-fv
+                                                               (not (eq? (fv-type next-fv) 'reserved)))
+                                                          'ptr
+                                                          type))]
+                                              [(64) type])])
+                                      type))])
                 (vector-set! frame-vars x fv)
                 fv))]))
       (define get-ptr-fv
