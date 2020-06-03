@@ -1045,6 +1045,7 @@
       (syntax-rules ()
         [(_ proc) ; proc should allocate only its result flonum
          (or (eq? (current-eval) interpret)
+             (#%$suppress-primitive-inlining)
              (let ([before (+ (bytes-allocated) (bytes-deallocated))]
                    [N 100000])
                (box?

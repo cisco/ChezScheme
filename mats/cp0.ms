@@ -3128,6 +3128,7 @@
       '(begin (unknown) 10)))
 
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (equal? (let ([mk (lambda (g)
                            (letrec ([f (lambda (x)
                                          (if (= x 100)
