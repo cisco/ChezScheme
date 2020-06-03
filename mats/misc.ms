@@ -4778,6 +4778,11 @@
     (define should-be-named-h (let ([f (let ([h (lambda (x) x)]) h)]) f))
     (define should-be-named-i (letrec ([f (let ([i (lambda (x) x)]) i)]) f))
     (define should-be-named-j (let ([f (letrec ([j (lambda (x) x)]) j)]) f))
+    (define (result-should-be-named-mk-CP)
+      (let ([struct:CP (make-record-type-descriptor* 'CP #f #f #f #f 1 1)])
+        (let ([mk-CP (record-constructor (make-record-constructor-descriptor
+                                          struct:CP #f #f))])
+          mk-CP)))
     #t)
   (ok-name? (procedure-name procedure-name) "procedure-name")
   (ok-name? (procedure-name should-be-named-f) "f")
@@ -4785,6 +4790,12 @@
   (ok-name? (procedure-name should-be-named-h) "h")
   (ok-name? (procedure-name should-be-named-i) "i")
   (ok-name? (procedure-name should-be-named-j) "j")
+
+  (or (not (enable-cp0))
+      (let ([gx (make-guardian)])
+        (ok-name? (procedure-name gx) "gx")))
+  (or (not (enable-cp0))
+      (ok-name? (procedure-name (result-should-be-named-mk-CP)) "mk-CP"))
 
   (or (not (enable-cp0))
       (andmap ok-name?

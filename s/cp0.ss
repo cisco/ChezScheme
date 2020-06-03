@@ -719,7 +719,7 @@
         (if (or new-name
                 (not (fx= flags (preinfo-lambda-flags preinfo))))
             (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo)
-              (preinfo-lambda-libspec preinfo) new-name flags)
+              (preinfo-lambda-libspec preinfo) (or new-name (preinfo-lambda-name preinfo)) flags)
             preinfo)))
 
     (define preinfo-call->preinfo-lambda
@@ -4878,8 +4878,8 @@
                                    (build-let (list x) (list (build-primcall 3 'cons (list zero zero)))
                                      (build-primcall 3 'cons (list ref-x ref-x))))))
                          (build-case-lambda (let ([preinfo (preinfo-call->preinfo-lambda (app-preinfo ctxt) (app-name ctxt))])
-                                              (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo) #f #f
-                                                (constant code-flag-guardian)))
+                                              (make-preinfo-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo)
+                                                #f (preinfo-lambda-name preinfo) (constant code-flag-guardian)))
                            (cons
                              (list '()
                                (let* ([x (cp0-make-temp #t)] [ref-x (build-ref x)])
