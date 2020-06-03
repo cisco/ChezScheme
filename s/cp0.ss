@@ -1667,7 +1667,14 @@
                 (cond
                   [(and (all-set? (prim-mask mifoldable) pflags)
                         (let ([objs (objs-if-constant args)])
-                          (and objs (guard (c [#t #f]) `(quote ,(apply ($top-level-value sym) objs)))))) =>
+                          (and objs (guard (c [#t #f])
+                                      (call-with-values
+                                        (lambda () (apply ($top-level-value sym) objs))
+                                        (case-lambda
+                                          [(v) `(quote ,v)]
+                                          [v* `(call ,(app-preinfo ctxt) ,(lookup-primref 3 'values)
+                                                 ,(map (lambda (x) `(quote ,x)) v*)
+                                                 ...)])))))) =>
                    (lambda (e)
                      (residualize-seq '() opnds ctxt)
                      e)]

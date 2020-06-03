@@ -2002,3 +2002,7 @@
     mats/Mf-i3nt, mats/Mf-ta6nt, mats/Mf-ti3nt 
 - fixed build on Linux with musl libc
     expeditor.c
+- extended primitive folding to primitives that return multiple
+  values.
+    cp0.ss, primdata.ss,
+    cp0.ms
