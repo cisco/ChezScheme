@@ -1885,7 +1885,7 @@
   (discard                  #b00000000000000001000000)
   (single-valued            #b00000000000000010000000)
   (true                 (or #b00000000000000100000000 single-valued))
-  (mifoldable           (or #b00000000000001000000000 single-valued))
+  (mifoldable+              #b00000000000001000000000)
   (cp02                     #b00000000000010000000000)
   (cp03                     #b00000000000100000000000)
   (system-keyword           #b00000000001000000000000)
@@ -1904,6 +1904,7 @@
   (cptypes3x                cptypes2)
   (arith-op                 (or proc pure true))
   (alloc                    (or proc discard true))
+  (mifoldable               (or mifoldable+ single-valued))
   ; would be nice to check that these and only these actually have cp0 partial folders
   (partial-folder           (or cp02 cp03))
   )
