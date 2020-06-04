@@ -43,8 +43,7 @@
       [%Cfparg2            #f  1 fp]
       [%fptmp1             #f  4 fp]  ; xmm 0-5 are caller-save
       [%fptmp2             #f  5 fp]  ; xmm 6-15 are callee-save
-      [%sp                 #t  4 uptr])
-    (reify-support %ts))
+      [%sp                 #t  4 uptr]))
   (define-registers
     (reserved
       [%tc  %r14           #t 14 uptr]
@@ -77,8 +76,7 @@
       [%Cfparg8            #f  7 fp]
       [%fptmp1             #f  8 fp]
       [%fptmp2             #f  9 fp]
-      [%sp                 #t  4 uptr])
-    (reify-support %ts)))
+      [%sp                 #t  4 uptr])))
 
 ;;; SECTION 2: instructions
 (module (md-handle-jump) ; also sets primitive handlers
@@ -2523,7 +2521,8 @@
 
   (define asm-direct-jump
     (lambda (l offset)
-      (asm-helper-jump '() (make-funcrel 'x86_64-jump l offset))))
+      (let ([offset (adjust-return-point-offset offset l)])
+        (asm-helper-jump '() (make-funcrel 'x86_64-jump l offset)))))
 
   (define asm-literal-jump
     (lambda (info)
@@ -2543,10 +2542,11 @@
         (or (cond
               [(local-label-offset l) =>
                (lambda (offset)
-                 (let ([disp (fx- next-addr (fx- offset incr-offset))])
-                   (and (signed-32? disp)
-                        (Trivit (dest)
-                          (emit lea `(riprel ,disp) dest '())))))]
+                 (let ([incr-offset (adjust-return-point-offset incr-offset l)])
+                   (let ([disp (fx- next-addr (fx- offset incr-offset))])
+                     (and (signed-32? disp)
+                          (Trivit (dest)
+                            (emit lea `(riprel ,disp) dest '()))))))]
                [else #f])
             (asm-move '() dest (with-output-language (L16 Triv) `(label-ref ,l ,incr-offset)))))))
 

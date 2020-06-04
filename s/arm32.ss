@@ -77,8 +77,8 @@
     #;[%yp]
     [     %r0  %Carg1 %Cretval  #f  0 uptr]
     [     %r1  %Carg2           #f  1 uptr]
-    [     %r2  %Carg3           #f  2 uptr]
-    [     %r3  %Carg4           #f  3 uptr]
+    [     %r2  %Carg3 %reify1   #f  2 uptr]
+    [     %r3  %Carg4 %reify2   #f  3 uptr]
     [     %lr                   #f 14 uptr] ; %lr is trashed by 'c' calls including calls to hand-coded routines like get-room
     [%fp1 %Cfparg5   %d4  %s8   #f  8 fp]
     [%fp2 %Cfparg6   %d5  %s10  #f 10 fp]
@@ -104,8 +104,7 @@
     #;[                  %d16       #t 32 fp] ; >= 32: high bit goes in D, N, or M bit, low bits go in Vd, Vn, Vm
     #;[                  %d17       #t 33 fp]
     ; etc.
-    )
-  (reify-support %ts %lr %r3 %r2))
+    ))
 
 ;;; SECTION 2: instructions
 (module (md-handle-jump) ; also sets primitive handlers
@@ -230,20 +229,18 @@
                  (cond
                    [(and (eq? x1 %zero) (or (unsigned12? imm) (unsigned12? (- imm))))
                     (return x0 %zero imm type)]
-                   [(funky12 imm) =>
+                   [(funky12 imm)
                     ; NB: dubious value?  check to see if it's exercised
-                    (lambda (imm)
-                      (let ([u (make-tmp 'u)])
-                        (seq
-                          (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 (immediate ,imm)))
-                          (return u x1 0 type))))]
-                   [(funky12 (- imm)) =>
+                    (let ([u (make-tmp 'u)])
+                      (seq
+                        (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 (immediate ,imm)))
+                        (return u x1 0 type)))]
+                   [(funky12 (- imm))
                     ; NB: dubious value?  check to see if it's exercised
-                    (lambda (imm)
-                      (let ([u (make-tmp 'u)])
-                        (seq
-                          (build-set! ,u (asm ,null-info ,(asm-sub #f) ,x0 (immediate ,imm)))
-                          (return u x1 0 type))))]
+                    (let ([u (make-tmp 'u)])
+                      (seq
+                        (build-set! ,u (asm ,null-info ,(asm-sub #f) ,x0 (immediate ,(- imm))))
+                        (return u x1 0 type)))]
                    [else
                     (let ([u (make-tmp 'u)])
                       (seq
@@ -1485,7 +1482,7 @@
   (define vmov.gpr-op
     (lambda (op dir flreg flreg-delta gpreg code*)
       (let-values ([(n vn) (ax-flreg->bits flreg flreg-delta)])
-        (emit-code (op flreg gpreg code*)
+        (emit-code (op flreg gpreg flreg-delta code*)
           [28 (ax-cond 'al)]
           [21 #b1110000]
           [20 dir]
@@ -2071,7 +2068,7 @@
     (lambda (code* dest src)
       (Trivit (src)
         (emit vmov.gpr->s32 %fptmp1 0 src
-          (emit vcvt.s32->dbl %fptmp1 dest code*))))) 
+          (emit vcvt.s32->dbl dest %fptmp1 code*))))) 
 
   (define-who asm-fpmove
     ;; fpmove pseudo instruction is used by set! case in
@@ -2099,8 +2096,8 @@
       (lambda (code* dest src)
         (Trivit (dest)
           (if (eq? part 'lo)
-              (emit vmov.gpr->s32 src 0 dest code*)
-              (emit vmov.gpr->s32 src 1 dest code*))))))
+              (emit vmov.s32->gpr src 0 dest code*)
+              (emit vmov.s32->gpr src 1 dest code*))))))
 
   (define asm-fpcastfrom
     (lambda (code* dest lo-src hi-src)
@@ -2271,7 +2268,8 @@
 
   (define asm-direct-jump
     (lambda (l offset)
-      (asm-helper-jump '() (make-funcrel 'arm32-jump l offset))))
+      (let ([offset (adjust-return-point-offset offset l)])
+        (asm-helper-jump '() (make-funcrel 'arm32-jump l offset)))))
 
   (define asm-literal-jump
     (lambda (info)
@@ -2313,17 +2311,18 @@
         (or (cond
               [(local-label-offset l) =>
                (lambda (offset)
-                 (let ([disp (fx- next-addr (fx- offset incr-offset) 4)])
-                   (cond
-                     [(funky12 disp)
-                      (Trivit (dest)
-                        ; aka adr, encoding A1
-                        (emit addi #f dest `(reg . ,%pc) disp '()))]
-                     [(funky12 (- disp))
-                      (Trivit (dest)
-                        ; aka adr, encoding A2
-                        (emit subi #f dest `(reg . ,%pc) (- disp) '()))]
-                     [else #f])))]
+                 (let ([incr-offset (adjust-return-point-offset incr-offset l)])
+                   (let ([disp (fx- next-addr (fx- offset incr-offset) 4)])
+                     (cond
+                       [(funky12 disp)
+                        (Trivit (dest)
+                          ; aka adr, encoding A1
+                          (emit addi #f dest `(reg . ,%pc) disp '()))]
+                       [(funky12 (- disp))
+                        (Trivit (dest)
+                          ; aka adr, encoding A2
+                          (emit subi #f dest `(reg . ,%pc) (- disp) '()))]
+                      [else #f]))))]
               [else #f])
             (asm-move '() dest (with-output-language (L16 Triv) `(label-ref ,l ,incr-offset)))))))
 
@@ -3179,8 +3178,11 @@
 				8)]
 		       [else
 			(values (lambda ()
-				  `(set! ,%Cretval ,(%mref ,%sp ,return-stack-offset)))
-				(list %Cretval %r1)
+                                  (case ($ftd-size ftd)
+                                    [(1) `(set! ,%Cretval (inline ,(make-info-load 'integer-8 #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset)))]
+                                    [(2) `(set! ,%Cretval (inline ,(make-info-load 'integer-16 #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset)))]
+                                    [else `(set! ,%Cretval ,(%mref ,%sp ,return-stack-offset))]))
+				(list %Cretval)
 				4)])]))]
 		[(fp-double-float)
 		 (values (lambda (rhs)
@@ -3213,7 +3215,7 @@
 		  [else
 		   (values (lambda (x)
 			     `(set! ,%Cretval ,x))
-			   (list %Cretval %r1)
+			   (list %Cretval)
 			   0)])])))
           (lambda (info)
             (define callee-save-regs+lr (list %r4 %r5 %r6 %r7 %r8 %r9 %r10 %r11 %lr))

@@ -38,8 +38,7 @@
     [%fptmp1   #f 0 fp]
     [%fptmp2   #f 1 fp]
     [%sp       #t 4 uptr]
-    #;[%esi      #f 6])
-  (reify-support %ts))
+    #;[%esi      #f 6]))
 
 ;;; SECTION 2: instructions
 (module (md-handle-jump) ; also sets primitive handlers
@@ -812,7 +811,7 @@
     [(op (z mem)) `(asm ,info ,asm-flds ,z)])
 
   (define-instruction effect (load-single->double load-double->single)
-    [(op (x ur) (y ur) (z imm32))
+    [(op (x ur) (y ur) (z imm32))<
      `(asm ,info ,(asm-fl-cvt op (info-loadfl-flreg info)) ,x ,y ,z)])
 
   (define-instruction effect (store-single store-double)
@@ -2323,7 +2322,8 @@
 
   (define asm-direct-jump
     (lambda (l offset)
-      (emit bra (make-funcrel 'literal l offset) '())))
+      (let ([offset (adjust-return-point-offset offset l)])
+        (emit bra (make-funcrel 'literal l offset) '()))))
 
   (define asm-literal-jump
     (lambda (info)
