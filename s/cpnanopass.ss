@@ -2934,36 +2934,69 @@
         
     (define-pass np-unbox-fp-vars! : L7 (ir) -> L7 ()
       (definitions
+        (define unify-boxed!
+          ;; union find, where representative box has a list of all variables
+          ;; that refer to the box
+          (lambda (x1 x2)
+            (let ([b1 (or (uvar-location x1)
+                          (let ([b1 (box (list x1))])
+                            (uvar-location-set! x1 b1)
+                            b1))]
+                  [b2 (or (uvar-location x2)
+                          (let ([b2 (box (list x2))])
+                            (uvar-location-set! x2 b2)
+                            b2))])
+              (let ([last-b1 (last-box b1)]
+                    [last-b2 (last-box b2)])
+                (unless (eq? last-b1 last-b2)
+                  (set-box! last-b1 (append (unbox last-b1) (unbox last-b2)))
+                  (set-box! last-b2 last-b1))
+                (compress! b1 last-b1)
+                (compress! b2 last-b1)))))
+        (define last-box
+          (lambda (b)
+            (let ([p (unbox b)])
+              (if (box? p)
+                  (last-box p)
+                  b))))
+        (define compress!
+          (lambda (b last-b)
+            (unless (eq? b last-b)
+              (let ([p (unbox b)])
+                (set-box! b last-b)
+                (compress! p last-b)))))
         (define ensure-not-unboxed!
           (lambda (x)
             (when (and (uvar? x) (eq? (uvar-type x) 'fp))
               (uvar-type-set! x 'ptr)
-              (let ([l (uvar-location x)])
-                (when l
-                  (uvar-location-set! x #f)
-                  (for-each ensure-not-unboxed! l)))))))
+              ;; Propagate to all unified variables:
+              (let ([b (uvar-location x)])
+                (when b
+                  (let* ([b (last-box b)]
+                         [l (unbox b)])
+                    (set-box! b '())
+                    (for-each ensure-not-unboxed! l))))))))
       (Expr : Expr (ir) -> Expr ()
         [(let ([,x* ,e*] ...) ,body)
          (for-each (lambda (x e)
                      (nanopass-case (L7 Expr) e
                        [,x1
                         (guard (and (uvar? x1) (eq? (uvar-type x1) 'fp)))
-                        ;; propagate fp-ness
-                        (uvar-location-set! x (cons x1 (or (uvar-location x) '())))]
+                        (unify-boxed! x x1)]
                        [else
                         (Expr e)])
                      (when (known-flonum-result? e)
                        (uvar-type-set! x 'fp)))
                    x* e*)
          (Expr body)
-         (for-each (lambda (x)
-                     (when (eq? (uvar-type x) 'fp)
-                       (uvar-location-set! x #f)))
-                   x*)
+         (for-each (lambda (x) (uvar-location-set! x #f)) x*)
          ir]
         [(call ,info ,mdcl ,pr ,e* ...)
          (guard (and (all-set? (prim-mask unboxed-arguments) (primref-flags pr))
-                     (fx<= (length e*) (constant inline-args-limit))))
+                     (let ([n (length e*)]
+                           [i* (primref-arity pr)])
+                       (and (ormap (lambda (i) (if (fx< i 0) (fx>= n (fx- -1 i)) (fx= n i))) i*)
+                            (fx<= n (constant inline-args-limit))))))
          (for-each (lambda (e)
                      (nanopass-case (L7 Expr) e
                        [,x (void)] ; allow x to keep 'fp type
@@ -2985,8 +3018,7 @@
                           (nanopass-case (L7 Expr) e
                             [,x1
                              (guard (and (uvar? x1) (eq? (uvar-type x1) 'fp)))
-                             (uvar-location-set! x (cons x1 (or (uvar-location x) '())))
-                             (uvar-location-set! x1 (cons x (or (uvar-location x1) '())))]
+                             (unify-boxed! x x1)]
                             [else
                              (Expr e)
                              (unless (known-flonum-result? e)
@@ -3201,7 +3233,7 @@
              [else
               (let ([e* (Expr* e*)])
                 (values `(inline ,info ,prim ,e* ...) #f))])]
-          [(set! ,[lvalue #f -> lvalue unboxed-fp?l] ,e)
+          [(set! ,[lvalue #t -> lvalue fp-unboxed?l] ,e)
            (let ([fp? (fp-lvalue? lvalue)])
              (let-values ([(e unboxed?) (Expr e fp?)])
                (let ([e (if (and fp? (not unboxed?))
