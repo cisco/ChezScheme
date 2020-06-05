@@ -1038,6 +1038,12 @@
     (define call-u64 (foreign-procedure "call_u64" (ptr unsigned-64 int int) unsigned-64))
     (define call-sf (foreign-procedure "call_sf" (ptr single-float int int) single-float))
     (define call-df (foreign-procedure "call_df" (ptr double-float int int) double-float))
+    (define call-varargs-df (foreign-procedure "call_varargs_df" (ptr double-float int int) double-float))
+    (define call-varargs-i7df (foreign-procedure "call_varargs_i7df" (ptr int
+                                                                          double-float double-float double-float
+                                                                          double-float double-float double-float
+                                                                          double-float)
+                                                 double-float))
     (define ($test-call-int signed? size call-int make-fc)
       (define n10000 (expt 256 size))
       (define nffff (- n10000 1))
@@ -1151,6 +1157,22 @@
         (double-float) double-float)
       73.25 7 23)
     108.25)
+  (equal?
+    (call-varargs-df
+      (foreign-callable
+        __varargs
+        (lambda (x y) (+ x y 5))
+        (double-float double-float) double-float)
+      10.25 20 300)
+    325.5)
+  (equal?
+    (call-varargs-i7df
+      (foreign-callable
+        __varargs
+        (lambda (i a b c d e f g) (+ i a b c d e f g 7))
+        (int double-float double-float double-float double-float double-float double-float double-float) double-float)
+      1 2.2 3.2 4.5 6.7 8.9 10.1 11.5)
+    55.1)
 
   (error?
     (call-i8
@@ -1211,6 +1233,13 @@
       (foreign-callable
         (lambda (x) '(- x 7))
         (double-float) double-float)
+      73.25 0 0))
+  (error?
+    (call-varargs-df
+      (foreign-callable
+        __varargs
+        (lambda (x y) '(- x 7))
+        (double-float double-float) double-float)
       73.25 0 0))
 
   (begin
@@ -2687,7 +2716,7 @@
       (separate-eval
         `(begin
            ,load-libc
-           (define f (foreign-procedure "printf" (string double) int))
+           (define f (foreign-procedure __varargs "printf" (string double) int))
            (f "(%g)" 3.5)
            (void)))
       read)
@@ -2697,7 +2726,7 @@
       (separate-eval
         `(begin
            ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double) int))
+           (define f (foreign-procedure __varargs "printf" (string double double double double double double) int))
            (f "(%g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5)
            (void)))
       read)
@@ -2707,7 +2736,7 @@
       (separate-eval
         `(begin
            ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double double double) int))
+           (define f (foreign-procedure __varargs "printf" (string double double double double double double double double) int))
            (f "(%g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5)
            (void)))
       read)
@@ -2717,11 +2746,30 @@
       (separate-eval
         `(begin
            ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double double double double double) int))
+           (define f (foreign-procedure __varargs "printf" (string double double double double double double double double double double) int))
            (f "(%g %g %g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5)
            (void)))
       read)
     '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5))
+
+  (equal? (let ([cb (foreign-callable __varargs
+                                      (lambda (x y) (+ x y 5))
+                                      (double-float double-float) double-float)])
+            (with-object-kept-live
+             cb
+             ((foreign-procedure __varargs (foreign-callable-entry-point cb)
+                                 (double-float double-float) double-float)
+              3.4 5.5)))
+          13.9)
+  (equal? (let ([cb (foreign-callable __varargs
+                                      (lambda (x y) (+ x y 5))
+                                      (double-float double-float) single-float)])
+            (with-object-kept-live
+             cb
+             ((foreign-procedure __varargs (foreign-callable-entry-point cb)
+                                 (double-float double-float) single-float)
+              3.5 -5.25)))
+          3.25)
 )
 
 (mat structs

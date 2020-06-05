@@ -220,7 +220,10 @@ Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com} (32-bit only).
 Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
 Finally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
-collection is allowed concurrent to a call of the foreign procedure.
+collection is allowed concurrent to a call of the foreign procedure, or it
+can be \var{conv} can be \scheme{__varargs} to indicate that the procedure
+uses a convention that works with a variable number of arguments (which
+differs from the fixed-argument variant for some platforms and conventions).
 
 Use \scheme{__stdcall} to access most Windows API procedures.
 Use \scheme{__cdecl} for Windows API varargs procedures,

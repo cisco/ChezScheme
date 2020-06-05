@@ -244,6 +244,17 @@ EXPORT double_float call_df(ptr code, double_float x, int m, int k) {
   return (*((double_float (*) (double_float))Sforeign_callable_entry_point(code)))(x + m) + k;
 }
 
+EXPORT double_float call_varargs_df(ptr code, double_float x, int m, int k) {
+  return (*((double_float (*) (double, ...))Sforeign_callable_entry_point(code)))(x - m, x + m) + k;
+}
+
+EXPORT double_float call_varargs_i7df(ptr code, int i,
+                                      double_float a, double_float b, double_float c,
+                                      double_float d, double_float e, double_float f,
+                                      double_float g) {
+  return (*((double_float (*) (int, ...))Sforeign_callable_entry_point(code)))(i, a, b, c, d, e, f, g);
+}
+
 EXPORT u8 *u8_star_to_u8_star(u8 *s) {
   return s == (u8 *)0 ? (u8 *)0 : s + 1;
 }

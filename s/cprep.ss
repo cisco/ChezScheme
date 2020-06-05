@@ -93,6 +93,7 @@
                       [(i3nt-stdcall) '__stdcall]
                       [(i3nt-com) '__com]
                       [(adjust-active) '__collect_safe]
+                      [(varargs) '__varargs]
                       [else #f]))
                   x*)))
          (define-who uncprep-fp-specifier

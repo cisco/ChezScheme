@@ -9950,6 +9950,7 @@ foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid
 foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 foreign.mo:Expected error in mat foreign-C-types: "int-to-int: invalid foreign-procedure argument qqq".
 foreign.mo:Expected error in mat foreign-C-types: "unsigned-to-unsigned: invalid foreign-procedure argument qqq".
 foreign.mo:Expected error in mat foreign-C-types: "unsigned-int-to-unsigned-int: invalid foreign-procedure argument qqq".
