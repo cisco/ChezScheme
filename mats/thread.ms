@@ -1569,6 +1569,18 @@
         (condition-broadcast c))
       (equal? gc-ids (list (get-thread-id)))))
 )
-  
+
+(mat wait-for-threads
+  (begin
+    ;; To avoid breaking later tests that use `(collect)`,
+    ;; wait for any threads created here to exit
+    (let ()
+      (define $threads (foreign-procedure "(cs)threads" () scheme-object))
+      (let loop ()
+        (unless (= 1 (length ($threads)))
+          (sleep (make-time 'time-duration 10000 0))
+          (loop))))
+    #t)
+)  
 
 )
