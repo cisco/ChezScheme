@@ -4694,34 +4694,35 @@
              (#2%display 1))))
 )
 
-(mat $read-time-stamp-counter
+(unless (memq (machine-type) '(arm32le tarm32le)) ; timestamp counter tends to be priviledged on arm32le
+  (mat $read-time-stamp-counter
 
-  (let ([t (#%$read-time-stamp-counter)])
-    (and (integer? t) (exact? t)))
+    (let ([t (#%$read-time-stamp-counter)])
+      (and (integer? t) (exact? t)))
 
-  (let ()
-    ;; NB: pulled from thread.ms, to use as a delay
-    (define fat+
-      (lambda (x y)
-        (if (zero? y)
-            x
-            (fat+ (1+ x) (1- y)))))
-    (define fatfib
-      (lambda (x)
-        (if (< x 2)
-            1
-            (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
-    (let loop ([count 10] [success 0])
-      (if (fx= count 0)
-          (>= success 9)
-          (let ([t0 (#%$read-time-stamp-counter)])
-            (fatfib 26)
-            (let ([t1 (#%$read-time-stamp-counter)])
-              (loop (fx- count 1)
-                    (if (< t0 t1)
-                        (fx+ success 1)
-                        success)))))))
-)
+    (let ()
+      ;; NB: pulled from thread.ms, to use as a delay
+      (define fat+
+        (lambda (x y)
+          (if (zero? y)
+              x
+              (fat+ (1+ x) (1- y)))))
+      (define fatfib
+        (lambda (x)
+          (if (< x 2)
+              1
+              (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
+      (let loop ([count 10] [success 0])
+        (if (fx= count 0)
+            (>= success 9)
+            (let ([t0 (#%$read-time-stamp-counter)])
+              (fatfib 26)
+              (let ([t1 (#%$read-time-stamp-counter)])
+                (loop (fx- count 1)
+                      (if (< t0 t1)
+                          (fx+ success 1)
+                          success)))))))
+    ))
 
 (mat procedure-arity-mask
   (equal? (procedure-arity-mask (lambda () #f)) 1)
