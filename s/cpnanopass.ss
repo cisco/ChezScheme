@@ -12066,6 +12066,17 @@
                     (literal ,(make-info-literal #f 'object ftd 0)))
                    (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
                    (set! ,lvalue ,%xp)))
+                (define (keep-cp e)
+                  (meta-cond
+                   [(real-register? '%cp)
+                    ;; For intrinsics that kill %cp, we need to wrap them to preserve %cp.
+                    ;; Overall, this is really about keeping `(%tc-ref cp)` intact.
+                    ;; See also [**] below.
+                    (%seq
+                     (set! ,(%tc-ref cp) ,%cp)
+                     ,e
+                     (set! ,%cp ,(%tc-ref cp)))]
+                   [else e]))
                 (nanopass-case (Ltype Type) type
                   [(fp-void) `(set! ,lvalue ,(%constant svoid))]
                   [(fp-scheme-object) (fromC lvalue)]
@@ -12077,17 +12088,20 @@
                   [(fp-u8*)
                    (%seq
                      ,(fromC %ac0)
-                     (set! ,%xp (inline ,(intrinsic-info-asmlib dofretu8* #f) ,%asmlibcall))
+                     ,(keep-cp
+                       `(set! ,%xp (inline ,(intrinsic-info-asmlib dofretu8* #f) ,%asmlibcall)))
                      (set! ,lvalue ,%xp))]
                   [(fp-u16*)
                    (%seq
                      ,(fromC %ac0)
-                     (set! ,%xp (inline ,(intrinsic-info-asmlib dofretu16* #f) ,%asmlibcall))
+                     ,(keep-cp
+                       `(set! ,%xp (inline ,(intrinsic-info-asmlib dofretu16* #f) ,%asmlibcall)))
                      (set! ,lvalue ,%xp))]
                   [(fp-u32*)
                    (%seq
                      ,(fromC %ac0)
-                     (set! ,%xp (inline ,(intrinsic-info-asmlib dofretu32* #f) ,%asmlibcall))
+                     ,(keep-cp
+                       `(set! ,%xp (inline ,(intrinsic-info-asmlib dofretu32* #f) ,%asmlibcall)))
                      (set! ,lvalue ,%xp))]
                   [(fp-integer ,bits)
                    `(seq
@@ -12181,7 +12195,7 @@
                           ; c-return restores callee-save registers and returns to C
                           (%seq
                             ,(c-init)
-                            ; although we don't actually need %cp in a register, we need
+                            ; [**] although we don't actually need %cp in a register, we need
                             ; to make sure that `(%tc-ref cp)` doesn't change before S_call_help
                             ; is called, and claiming that %cp is live is the easiest way
                             ,(restore-scheme-state
