@@ -3239,8 +3239,12 @@
 		       [else
 			(values (lambda ()
                                   (case ($ftd-size ftd)
-                                    [(1) `(set! ,%Cretval (inline ,(make-info-load 'integer-8 #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset)))]
-                                    [(2) `(set! ,%Cretval (inline ,(make-info-load 'integer-16 #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset)))]
+                                    [(1)
+                                     (let ([rep (if ($ftd-unsigned? ftd) 'unsigned-8 'integer-8)])
+                                       `(set! ,%Cretval (inline ,(make-info-load rep #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset))))]
+                                    [(2)
+                                     (let ([rep (if ($ftd-unsigned? ftd) 'unsigned-16 'integer-16)])
+                                       `(set! ,%Cretval (inline ,(make-info-load rep #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset))))]
                                     [else `(set! ,%Cretval ,(%mref ,%sp ,return-stack-offset))]))
 				(list %Cretval)
 				4)])]))]

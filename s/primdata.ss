@@ -2098,6 +2098,7 @@
   ($ftd-atomic-category [flags single-valued])
   ($ftd-compound? [sig [(sub-ptr) -> (boolean)]] [flags discard])
   ($ftd-size [flags single-valued])
+  ($ftd-unsigned? [flags single-valued])
   ($ftd->members [flags single-valued])
   ($ftype-guardian-oops [flags])
   ($ftype-pointer? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])

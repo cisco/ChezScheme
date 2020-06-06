@@ -122,7 +122,7 @@ notes:
     big-endian machines, the first field occupies the high-order bits,
     with each subsequent field just below the preceding field.
 
-  - ftype pointers are records encapsulating an ftype descriptor
+  - ftyp<e pointers are records encapsulating an ftype descriptor
     (ftd) along with the address of the foreign object, except that
     pointers of type void* are just addresses.  the encapsulated
     ftd is used to verify the applicability of an ftype-&ref,
@@ -957,6 +957,12 @@ ftype operators:
       (or (ftd-struct? x)
           (ftd-union? x)
           (ftd-array? x))))
+  (set! $ftd-unsigned?
+    (lambda (x)
+      (and (ftd-base? x)
+           (case (ftd-base-type x)
+             [(unsigned-8 unsigned-16 unsigned-32 unsigned-64) #t]
+             [else #f]))))
   (set! $ftd->members
     (lambda (x)
       ;; Currently used for x86_64 and arm32 ABI: Returns a list of
