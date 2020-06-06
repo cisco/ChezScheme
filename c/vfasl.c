@@ -167,6 +167,7 @@ static ptr copy(vfasl_info *vfi, ptr pp, seginfo *si);
 static uptr sweep(vfasl_info *vfi, ptr p);
 static int is_rtd(ptr tf, vfasl_info *vfi);
 
+static IFASLCODE abs_reloc_variant(IFASLCODE type);
 static ptr vfasl_encode_relocation(vfasl_info *vfi, ptr obj);
 static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets, IBOOL to_static);
 static ptr find_pointer_from_offset(uptr p_off, ptr *vspaces, uptr *vspace_offsets);
@@ -1083,6 +1084,20 @@ static int is_rtd(ptr tf, vfasl_info *vfi)
 #define VFASL_RELOC_TAG(p) (UNFIX(p) & ((1 << VFASL_RELOC_TAG_BITS) - 1))
 #define VFASL_RELOC_POS(p) (UNFIX(p) >> VFASL_RELOC_TAG_BITS)
 
+/* Picks a relocation variant that fits into the actual relocation's
+   shape, but holds an absolue value */
+static IFASLCODE abs_reloc_variant(IFASLCODE type) {
+  if (type == reloc_abs)
+    return reloc_abs;
+#if defined(I386) || defined(X86_64)
+  return reloc_abs;
+#elif defined(ARMV6)
+  return reloc_arm32_abs;
+#else
+  >> need to fill in for this platform <<
+#endif
+}
+
 static ptr vfasl_encode_relocation(vfasl_info *vfi, ptr obj) {
   ptr pos;
   int which_singleton;
@@ -1142,7 +1157,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
             code_off = RELOC_CODE_OFFSET(entry);
         }
         a += code_off;
-        obj = S_get_code_obj(reloc_abs, co, a, item_off);
+        obj = S_get_code_obj(abs_reloc_variant(RELOC_TYPE(entry)), co, a, item_off);
 
         if (IMMEDIATE(obj)) {
           if (Sfixnump(obj)) {

@@ -1072,7 +1072,7 @@
           [sweep
            (S_set_code_obj "gc" (RELOC_TYPE entry) _ a obj item_off)]
           [vfasl-sweep
-           (S_set_code_obj "vfasl" (abs-for-vfasl (RELOC_TYPE entry)) _ a obj item_off)]
+           (S_set_code_obj "vfasl" (abs_reloc_variant (RELOC_TYPE entry)) _ a obj item_off)]
           [else]))))
 
     (case-mode
@@ -1141,11 +1141,6 @@
   (case-mode
    [(vfasl-copy vfasl-sweep) e]
    [else]))
-
-(define-trace-macro (abs-for-vfasl e)
-  (case-mode
-   [vfasl-sweep reloc_abs]
-   [else e]))
 
 (define-trace-macro (when-mark e)
   (case-mode
