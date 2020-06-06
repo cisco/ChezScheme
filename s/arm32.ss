@@ -943,14 +943,16 @@
     ; NB: compiler ipmlements init-lock! and unlock! as 32-bit store of zero 
     (define-instruction pred (lock!)
       [(op (x ur) (y ur) (w funky12))
-       (let ([u (make-tmp 'u)])
+       (let ([u (make-tmp 'u)]
+             [u2 (make-tmp 'u2)])
          (values
            (lea->reg x y w
              (lambda (r)
                (with-output-language (L15d Effect)
                  (seq
                    `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-                   `(asm ,null-info ,asm-lock ,r ,u)))))
+                   `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+                   `(asm ,null-info ,asm-lock ,r ,u ,u2)))))
            `(asm ,info-cc-eq ,asm-eq ,u (immediate 0))))])
     (define-instruction effect (locked-incr! locked-decr!)
       [(op (x ur) (y ur) (w funky12))
@@ -2117,19 +2119,19 @@
               [else (sorry! who "unexpected asm-swap type argument ~s" type)]))))))
 
   (define asm-lock
-    ;  tmp = ldrex src
-    ;  cmp tmp, 0
+    ;  tmp2 = ldrex src
+    ;  cmp tmp2, 0
     ;  bne L1 (+2)
-    ;  tmp = 1
-    ;  tmp = strex tmp, src
+    ;  tmp2 = 1
+    ;  tmp = strex tmp2, src
     ;L1:
-    (lambda (code* src tmp)
-      (Trivit (src tmp)
-        (emit ldrex tmp src
-          (emit cmpi tmp 0
+    (lambda (code* src tmp tmp2)
+      (Trivit (src tmp tmp2)
+        (emit ldrex tmp2 src
+          (emit cmpi tmp2 0
             (emit bnei 1
-              (emit movi1 tmp 1
-                (emit strex tmp tmp src code*))))))))
+              (emit movi1 tmp2 1
+                (emit strex tmp tmp2 src code*))))))))
 
   (define-who asm-lock+/-
     ; L:
