@@ -2006,3 +2006,8 @@
   values.
     cp0.ss, primdata.ss,
     cp0.ms
+- fix handling of calling code's address for locking around a callable
+  that has a u8*, u16*, or u32* argument, which could cause the
+  cp register copy in the thread context to be changed before
+  S_call_help gets it
+    cpnanopass.ss, schlib.c, foreign2.c, foreign.ms

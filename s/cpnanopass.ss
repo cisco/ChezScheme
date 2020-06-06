@@ -10816,7 +10816,10 @@
                                    (if (null? frame-x*)
                                        (begin (set! max-fv (fxmax max-fv i)) '())
                                        (let ([i (fx+ i 1)])
-                                         (cons (get-fv i) (f (cdr frame-x*) i)))))])
+                                         (cons (get-fv i) (f (cdr frame-x*) i)))))]
+                            [cp-save (meta-cond
+                                      [(real-register? '%cp) (make-tmp 'cp)]
+                                      [else #f])])
                         ; add 2 for the old RA and cchain
                         (set! max-fv (fx+ max-fv 2))
                         (let-values ([(c-init c-args c-result c-return) (asm-foreign-callable info)])
@@ -10826,17 +10829,20 @@
                           ; c-return restores callee-save registers and returns to C
                           (%seq
                             ,(c-init)
-                            ; although we don't actually need %cp in a register, we need
-                            ; to make sure that `(%tc-ref cp)` doesn't change before S_call_help
-                            ; is called, and claiming that %cp is live is the easiest way
                             ,(restore-scheme-state
-                               (in %cp)
+                               (in %cp) ; to save and then restore just before S_call_help
                                (out %ac0 %ac1 %xp %yp %ts %td scheme-args extra-regs))
                             ; need overflow check since we're effectively retroactively turning
                             ; what was a foreign call into a Scheme non-tail call
                             (fcallable-overflow-check)
                             ; leave room for the RA & c-chain
                             (set! ,%sfp ,(%inline + ,%sfp (immediate ,(fx* (constant ptr-bytes) 2))))
+                            ; stash %cp and restore later to make sure it's intact by the time
+                            ; that we get to S_call_help
+                            ,(meta-cond
+                              [(real-register? '%cp) `(set! ,cp-save ,%cp)]
+                              [else `(nop)])
+                            ; convert arguments
                             ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x) ,e))
                                (set-locs fv* frame-x*
                                  (set-locs (map (lambda (reg) (in-context Lvalue (%mref ,%tc ,(reg-tc-disp reg)))) reg*) reg-x*
@@ -10846,6 +10852,9 @@
                             ; needs to be a quote, not an immediate
                             (set! ,(ref-reg %ac1) (literal ,(make-info-literal #f 'object 0 0)))
                             (set! ,(ref-reg %ts) (label-ref ,self-label 0)) ; for locking
+                            ,(meta-cond
+                              [(real-register? '%cp) `(set! ,%cp ,cp-save)]
+                              [else `(nop)])
                             ,(save-scheme-state
                                (in %ac0 %ac1 %ts %cp)
                                (out %xp %yp %td scheme-args extra-regs))
