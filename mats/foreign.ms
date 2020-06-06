@@ -2536,8 +2536,32 @@
      (define handler (foreign-callable work (long) void))
      (lock-object handler)
      (call_many_times (foreign-callable-entry-point handler))
+     (unlock-object handler)
      v)
    14995143)
+
+  (equal?
+   (let ()
+     (define v 0)
+     (define call_many_times_bv (foreign-procedure "call_many_times_bv" (void*) void))
+     (define work
+       (lambda (bv)
+         (set! v (+ v (bytevector-u8-ref bv 0)))
+         ;; Varying work, as above:
+         (let loop ([n (bitwise-and (bytevector-u8-ref bv 1) #xFFFF)])
+           (unless (zero? n)
+             (set! v (add1 v))
+             (loop (bitwise-arithmetic-shift-right n 1))))))
+     (define handlers (list (foreign-callable work (u8*) void)
+                            (foreign-callable work (u16*) void)
+                            (foreign-callable work (u32*) void)))
+     (map lock-object handlers)
+     (for-each (lambda (handler)
+                 (call_many_times_bv (foreign-callable-entry-point handler)))
+               handlers)
+     (map unlock-object handlers)
+     v)
+   103500000)
 
   ;; regression test related to saving registers that hold allocated
   ;; callable argument

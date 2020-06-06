@@ -444,6 +444,18 @@ EXPORT void call_many_times(void (*f)(iptr))
   }
 }
 
+EXPORT void call_many_times_bv(void (*f)(char *s))
+{
+  /* make this sensible as u8*, u16*, and u32* */
+  char buf[8] = { 1, 2, 3, 4, 0, 0, 0, 0 };
+  int x;
+
+  for (x = 0; x < 1000000; x++) {
+    buf[0] = (x & 63) + 1;
+    f(buf);
+  }
+}
+
 typedef void (*many_arg_callback_t)(int i, const char* s1, const char* s2, const char* s3,
                                     const char* s4, int i2, const char* s6, const char* s7, int i3);
 EXPORT void call_with_many_args(many_arg_callback_t callback)

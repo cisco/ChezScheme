@@ -216,6 +216,8 @@ void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_t
      the C stack and we may end up in a garbage collection */
     code = CP(tc);
     if (Sprocedurep(code)) code = CLOSCODE(code);
+    if (!IMMEDIATE(code) && !Scodep(code))
+      S_error_abort("S_call_help: invalid code pointer");
     Slock_object(code);
 
     CP(tc) = AC1(tc);
