@@ -22,12 +22,14 @@
 
 /* Representation is arecord with 6 `double` fields: */
 
-#define RANDSTATEX10(x) (((double*)&RECORDINSTIT(x, 0))[0])
-#define RANDSTATEX11(x) (((double*)&RECORDINSTIT(x, 0))[1])
-#define RANDSTATEX12(x) (((double*)&RECORDINSTIT(x, 0))[2])
-#define RANDSTATEX20(x) (((double*)&RECORDINSTIT(x, 0))[3])
-#define RANDSTATEX21(x) (((double*)&RECORDINSTIT(x, 0))[4])
-#define RANDSTATEX22(x) (((double*)&RECORDINSTIT(x, 0))[5])
+#define RECORDINSTDBLA(x) ((double *)((uptr)&RECORDINSTIT(x, 0) + (max_float_alignment - ptr_bytes)))
+
+#define RANDSTATEX10(x) (RECORDINSTDBLA(x)[0])
+#define RANDSTATEX11(x) (RECORDINSTDBLA(x)[1])
+#define RANDSTATEX12(x) (RECORDINSTDBLA(x)[2])
+#define RANDSTATEX20(x) (RECORDINSTDBLA(x)[3])
+#define RANDSTATEX21(x) (RECORDINSTDBLA(x)[4])
+#define RANDSTATEX22(x) (RECORDINSTDBLA(x)[5])
 
 /* The Generator
    =============
