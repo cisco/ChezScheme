@@ -810,17 +810,16 @@
   (define-instruction effect (flds)
     [(op (z mem)) `(asm ,info ,asm-flds ,z)])
 
-  (define-instruction effect (load-single->double load-double->single)
-    [(op (x ur) (y ur) (z imm32))<
-     `(asm ,info ,(asm-fl-cvt op (info-loadfl-flreg info)) ,x ,y ,z)])
+  (define-instruction value (load-single->double)
+    [(op (x fpur) (y fpmem))
+     `(set! ,(make-live-info) ,x (asm ,info ,(asm-fl-cvt 'single->double) ,y))])
 
-  (define-instruction effect (store-single store-double)
-    [(op (x ur) (y ur) (z imm32))
-     `(asm ,info ,(asm-fl-store op (info-loadfl-flreg info)) ,x ,y ,z)])
-
-  (define-instruction effect (load-double load-single)
-    [(op (x ur) (y ur) (z imm32))
-     `(asm ,info ,(asm-fl-load op (info-loadfl-flreg info)) ,x ,y ,z)])
+  (define-instruction effect (store-double->single)
+    [(op (x fpmem) (y fpmem fpur))
+     (let ([u (make-tmp 'u 'fp)])
+       (seq
+        `(set! ,(make-live-info) ,u (asm ,null-info ,(asm-fl-cvt 'double->single) ,y))
+        `(asm ,info ,asm-store-single ,x ,u)))])
 
   (define-instruction value (fpt)
     [(op (x fpur) (y ur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpt ,y))])
@@ -854,8 +853,8 @@
   (define-instruction effect inc-profile-counter 
     [(op (x ur mem) (y imm32 ur)) `(asm ,info ,asm-inc-profile-counter ,x ,y)])
 
-  (define-instruction value (trunc)
-    [(op (z ur) (x ur)) `(set! ,(make-live-info) ,z (asm ,info ,asm-trunc ,x))])
+  (define-instruction value (fptrunc)
+    [(op (z ur) (x fpmem fpur)) `(set! ,(make-live-info) ,z (asm ,info ,asm-fptrunc ,x))])
 
   ;; no kills since we expect to be called when all necessary state has already been saved
   (define-instruction value get-tc
@@ -1028,7 +1027,7 @@
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label
                      asm-rp-header asm-rp-compact-header
                      asm-lea1 asm-lea2 asm-indirect-call asm-fstpl asm-fstps asm-fldl asm-flds asm-condition-code
-                     asm-fl-cvt asm-fl-store asm-fl-load asm-fpt asm-trunc asm-div
+                     asm-fl-cvt asm-store-single asm-fpt asm-fptrunc asm-div
                      asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpop-2 asm-fpmove asm-fpmovefrom asm-fpcastfrom asm-fpcastto asm-fpsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
@@ -1819,28 +1818,17 @@
         (emit flds src code*))))
 
   (define asm-fl-cvt
-    (lambda (op flreg)
-      (lambda (code* base index offset)
-        (let ([src (build-mem-opnd base index offset)])
+    (lambda (op)
+      (lambda (code* dest-reg src)
+        (Trivit (src)
           (case op
-            [(load-single->double) (emit sse.cvtss2sd src (cons 'reg flreg) code*)]
-            [(load-double->single) (emit sse.cvtsd2ss src (cons 'reg flreg) code*)])))))
+            [(single->double) (emit sse.cvtss2sd src (cons 'reg dest-reg) code*)]
+            [(double->single) (emit sse.cvtsd2ss src (cons 'reg dest-reg) code*)])))))
 
-  (define asm-fl-store
-    (lambda (op flreg)
-      (lambda (code* base index offset)
-        (let ([dest (build-mem-opnd base index offset)])
-          (case op
-            [(store-single) (emit sse.movss (cons 'reg flreg) dest code*)]
-            [(store-double) (emit sse.movsd (cons 'reg flreg) dest code*)])))))
-
-  (define asm-fl-load
-    (lambda (op flreg)
-      (lambda (code* base index offset)
-        (let ([src (build-mem-opnd base index offset)])
-          (case op
-            [(load-single) (emit sse.movss src (cons 'reg flreg) code*)]
-            [(load-double) (emit sse.movsd src (cons 'reg flreg) code*)])))))
+  (define asm-store-single
+    (lambda (code* dest flreg)
+      (Trivit (dest)
+        (emit sse.movss (cons 'reg flreg) dest code*))))
 
   (define asm-fpt
     (lambda (code* dest src)
@@ -1906,11 +1894,10 @@
                (emit sse.psrlq (cons 'reg %fptmp1) shift
                  (emit sse.movd (cons 'reg %fptmp1) dest code*)))])))))
 
-  (define asm-trunc
-    (lambda (code* dest flonumreg)
-      (Trivit (dest)
-        (let ([src `(disp ,(constant flonum-data-disp) ,flonumreg)])
-          (emit sse.cvttsd2si src dest code*)))))
+  (define asm-fptrunc
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        (emit sse.cvttsd2si src dest code*))))
 
   (define asm-load
     (lambda (type)
@@ -2552,15 +2539,13 @@
       (letrec ([load-double-stack
                 (lambda (offset)
                   (lambda (x) ; requires var
-                    (%seq
-                      (inline ,(make-info-loadfl %fptmp1) ,%load-double ,x ,%zero ,(%constant flonum-data-disp))
-                      (inline ,(make-info-loadfl %fptmp1) ,%store-double ,%sp ,%zero (immediate ,offset)))))]
+                    `(set! ,(%mref ,%sp ,%zero ,offset fp)
+                           ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
                [load-single-stack
                 (lambda (offset)
                   (lambda (x) ; requires var
-                    (%seq
-                      (inline ,(make-info-loadfl %fptmp1) ,%load-double->single ,x ,%zero ,(%constant flonum-data-disp))
-                      (inline ,(make-info-loadfl %fptmp1) ,%store-single ,%sp ,%zero (immediate ,offset)))))]
+                    (%inline store-double->single ,(%mref ,%sp ,%zero ,offset fp)
+                             ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
                [load-stack
                  (lambda (offset)
                    (lambda (rhs) ; requires rhs
@@ -2852,15 +2837,13 @@
         (define load-double-stack
           (lambda (offset)
             (lambda (x) ; requires var
-              (%seq
-                (inline ,(make-info-loadfl %fptmp1) ,%load-double ,%sp ,%zero (immediate ,offset))
-                (inline ,(make-info-loadfl %fptmp1) ,%store-double ,x ,%zero ,(%constant flonum-data-disp))))))
+              `(set! ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)
+                     ,(%mref ,%sp ,%zero ,offset fp)))))
         (define load-single-stack
           (lambda (offset)
             (lambda (x) ; requires var
-              (%seq
-                (inline ,(make-info-loadfl %fptmp1) ,%load-single->double ,%sp ,%zero (immediate ,offset))
-                (inline ,(make-info-loadfl %fptmp1) ,%store-double ,x ,%zero ,(%constant flonum-data-disp))))))
+              `(set! ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)
+                     ,(%inline load-single->double ,(%mref ,%sp ,%zero ,offset fp))))))
         (define load-stack
           (lambda (type offset)
             (lambda (lvalue) ; requires lvalue

@@ -542,10 +542,6 @@
   (declare-primitive inc-profile-counter effect #f)
   (declare-primitive invoke-prelude effect #f)
   (declare-primitive keep-live effect #f)
-  (declare-primitive load-double effect #f)
-  (declare-primitive load-double->single effect #f)
-  (declare-primitive load-single effect #f)
-  (declare-primitive load-single->double effect #f)
   (declare-primitive locked-decr! effect #f)
   (declare-primitive locked-incr! effect #f)
   (declare-primitive pause effect #f)
@@ -558,12 +554,12 @@
   (declare-primitive save-flrv effect #f)
   (declare-primitive save-lr effect #f) ; ppc
   (declare-primitive store effect #f)
-  (declare-primitive store-double effect #f)
-  (declare-primitive store-single effect #f)
-  (declare-primitive store-single->double effect #f)
+  (declare-primitive store-single effect #f); not required by cpnanopass
+  (declare-primitive store-double->single effect #f)
   (declare-primitive store-with-update effect #f) ; ppc
   (declare-primitive unactivate-thread effect #f) ; threaded version only
   (declare-primitive vpush-multiple effect #f) ; arm
+  (declare-primitive vpop-multiple effect #f) ; arm
   (declare-primitive cas effect #f)
 
   (declare-primitive < pred #t)
@@ -615,7 +611,6 @@
   (declare-primitive sll value #t)
   (declare-primitive srl value #t)
   (declare-primitive sra value #t)
-  (declare-primitive trunc value #t)
   (declare-primitive zext8 value #t)
   (declare-primitive zext16 value #t)
   (declare-primitive zext32 value #t) ; 64-bit only
@@ -627,6 +622,12 @@
   (declare-primitive fp/ value #t)
   (declare-primitive fpt value #t)
   (declare-primitive fpsqrt value #t) ; not implemented for some ppc32 (so we don't use it)
+  (declare-primitive fptrunc value #t)
+  (declare-primitive double->single value #t) ; not required by cpnanopass
+  (declare-primitive single->double value #t) ; not required by cpnanopass
+
+  (declare-primitive load-single value #t) ; not required by cpnanopass
+  (declare-primitive load-single->double value #t)
 
   (declare-primitive fpcastto value #t) ; 64-bit only
   (declare-primitive fpcastto/hi value #t) ; 32-bit only

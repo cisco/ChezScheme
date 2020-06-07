@@ -1029,11 +1029,6 @@
       (sealed #t)
       (fields type swapped?))
 
-    (define-record-type info-loadfl (nongenerative)
-      (parent info)
-      (sealed #t)
-      (fields flreg))
-
     (define-record-type info-condition-code (nongenerative)
       (parent info)
       (sealed #t)
@@ -3998,10 +3993,8 @@
                         [else
                          (bind #t ([t (%constant-alloc type-flonum (constant size-flonum))])
                            (%seq
-                             (inline ,(make-info-loadfl %fptmp1) ,%load-double
-                               ,base ,index (immediate ,offset))
-                             (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                               ,t ,%zero ,(%constant flonum-data-disp))
+                             (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp)
+                                   (unboxed-fp ,(%mref ,base ,index ,offset fp)))
                              ,t))])))]
                [(single-float)
                 (if swapped?
@@ -4011,18 +4004,22 @@
                           (set! ,(%mref ,t ,(constant flonum-data-disp))
                             (inline ,(make-info-load 'unsigned-32 #t) ,%load ,base ,index
                               (immediate ,offset)))
-                          (inline ,(make-info-loadfl %fptmp1) ,%load-single->double
-                            ,t ,%zero ,(%constant flonum-data-disp))
-                          (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                            ,t ,%zero ,(%constant flonum-data-disp))
+                          (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp)
+                                (unboxed-fp (inline ,(make-info-unboxed-args '(#t))
+                                                    ,%load-single->double
+                                                    ;; slight abuse to call this "unboxed", but `load-single->double`
+                                                    ;; wants an FP-flavored address
+                                                    (unboxed-fp ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp)))))
                           ,t)))
                     (bind #f (base index)
                       (bind #t ([t (%constant-alloc type-flonum (constant size-flonum))])
                         (%seq
-                          (inline ,(make-info-loadfl %fptmp1) ,%load-single->double
-                            ,base ,index (immediate ,offset))
-                          (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                            ,t ,%zero ,(%constant flonum-data-disp))
+                          (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp)
+                                (unboxed-fp (inline ,(make-info-unboxed-args '(#t))
+                                                    ,%load-single->double
+                                                    ;; slight abuse to call this "unboxed", but `load-single->double`
+                                                    ;; wants an FP-flavored address
+                                                    (unboxed-fp ,(%mref ,base ,index ,offset fp)))))
                           ,t))))]
                [(integer-8 integer-16 integer-24 integer-32 integer-40 integer-48 integer-56 integer-64)
                 (build-int-load swapped? type base index offset
@@ -4101,21 +4098,14 @@
                [(double-float)
                 (bind #f (base index)
                   (bind #f fp (value)
-                   `(set! ,(%mref ,base ,index ,offset fp) ,value)))
-                #;
-                (bind #f (base index)
-                  (%seq
-                    (inline ,(make-info-loadfl %fptmp1) ,%load-double
-                      ,value ,%zero ,(%constant flonum-data-disp))
-                    (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                      ,base ,index (immediate ,offset))))]
+                   `(set! ,(%mref ,base ,index ,offset fp) ,value)))]
                [(single-float)
                 (bind #f (base index)
-                  (%seq
-                    (inline ,(make-info-loadfl %fptmp1) ,%load-double->single
-                      ,value ,%zero ,(%constant flonum-data-disp))
-                    (inline ,(make-info-loadfl %fptmp1) ,%store-single
-                      ,base ,index (immediate ,offset))))]
+                  `(inline ,(make-info-unboxed-args '(#t #t)) ,%store-double->single
+                           ;; slight abuse to call this "unboxed", but `store-double->single`
+                           ;; wants an FP-flavored address
+                           (unboxed-fp ,(%mref ,base ,index ,offset fp))
+                           (unboxed-fp ,(%mref ,value ,%zero ,(constant flonum-data-disp) fp))))]
                ; 40-bit+ only on 64-bit machines
                [(integer-8 integer-16 integer-24 integer-32 integer-40 integer-48 integer-56 integer-64
                  unsigned-8 unsigned-16 unsigned-24 unsigned-32 unsigned-40 unsigned-48 unsigned-56 unsigned-64)
@@ -7536,19 +7526,14 @@
               (lambda (e1 e2)
                 (bind #f (e1 e2)
                   (bind #t ([t (%constant-alloc type-typed-object (constant size-inexactnum))])
-                    `(seq
+                    (%seq
                        (set! ,(%mref ,t ,(constant inexactnum-type-disp))
                          ,(%constant type-inexactnum))
-                       ,(%seq
-                          (inline ,(make-info-loadfl %fptmp1) ,%load-double
-                            ,e1 ,%zero ,(%constant flonum-data-disp))
-                          (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                            ,t ,%zero ,(%constant inexactnum-real-disp))
-                          (inline ,(make-info-loadfl %fptmp1) ,%load-double
-                            ,e2 ,%zero ,(%constant flonum-data-disp))
-                          (inline ,(make-info-loadfl %fptmp1) ,%store-double
-                            ,t ,%zero ,(%constant inexactnum-imag-disp))
-                          ,t))))))
+                       (set! ,(%mref ,t ,%zero ,(constant inexactnum-real-disp) fp)
+                             (unboxed-fp ,(%mref ,e1 ,%zero ,(constant flonum-data-disp) fp)))
+                       (set! ,(%mref ,t ,%zero ,(constant inexactnum-imag-disp) fp)
+                             (unboxed-fp ,(%mref ,e2 ,%zero ,(constant flonum-data-disp) fp)))
+                       ,t)))))
 
             (define-inline 3 fl-make-rectangular
               [(e1 e2) (build-fl-make-rectangular e1 e2)])
@@ -7849,7 +7834,7 @@
         (define-inline 3 flonum->fixnum
           [(e-x) (bind #f (e-x)
                    (build-fix
-                     (%inline trunc ,e-x)))])
+                     `(inline ,(make-info-unboxed-args '(#t)) ,%fptrunc ,e-x)))])
         (let ()
           (define build-fixnum->flonum
            ; NB: x must already be bound in order to ensure it is done before the flonum is allocated
