@@ -1674,7 +1674,10 @@
           [wht (make-weak-eq-hashtable)]
           [eht (make-ephemeron-eq-hashtable)])
       (let ([ls2 (map (lambda (a1) (eq-hashtable-cell ht (car a1) (cdr a1))) ls1)]
-            [ls2-2 (map (lambda (a1) (eq-hashtable-try-atomic-cell ht (car a1) (cdr a1))) ls1)]
+            [ls2-2 (map (lambda (a1) (let loop ()
+                                       (define c (eq-hashtable-try-atomic-cell ht (car a1) (cdr a1)))
+                                       (or c (loop))))
+                        ls1)]
             [ls3 (map (lambda (a1) (hashtable-cell wht (car a1) (cdr a1))) ls1)]
             [ls4 (map (lambda (a1) (hashtable-cell eht (car a1) (cdr a1))) ls1)])
         (let ([ls2* (map (lambda (a1) (eq-hashtable-ref-cell ht (car a1))) ls1)]
