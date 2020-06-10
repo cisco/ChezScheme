@@ -7411,7 +7411,7 @@
                            (%inline sll ,body (immediate ,(fx- 0 cnt)))
                            body)))
                   (immediate ,mask)))))
-<
+
           (define-inline 3 fllp
             [(e) (build-flonum-extractor 19 12 e)])
 
