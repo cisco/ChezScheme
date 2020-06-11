@@ -1105,12 +1105,15 @@ static ptr vfasl_encode_relocation(vfasl_info *vfi, ptr obj) {
   if ((which_singleton = detect_singleton(obj))) {
     obj = FIX(VFASL_RELOC_SINGLETON(which_singleton));
   } else if ((pos = vfasl_hash_table_ref(S_G.c_entries, obj))) {
+    pos = (ptr)((uptr)pos - 1);
     if ((uptr)pos == CENTRY_install_library_entry)
       vfi->installs_library_entry = 1;
     obj = FIX(VFASL_RELOC_C_ENTRY(pos));
   } else if ((pos = vfasl_hash_table_ref(S_G.library_entries, obj))) {
+    pos = (ptr)((uptr)pos - 1);
     obj = FIX(VFASL_RELOC_LIBRARY_ENTRY(pos));
   } else if ((pos = vfasl_hash_table_ref(S_G.library_entry_codes, obj))) {
+    pos = (ptr)((uptr)pos - 1);
     obj = FIX(VFASL_RELOC_LIBRARY_ENTRY_CODE(pos));
   } else if (Ssymbolp(obj)) {
     obj = vfasl_relocate_help(vfi, obj);
@@ -1256,14 +1259,14 @@ static void fasl_init_entry_tables()
 
     for (i = Svector_length(S_G.c_entry_vector); i--; ) {
       ptr entry = Svector_ref(S_G.c_entry_vector, i);
-      vfasl_hash_table_set(S_G.c_entries, entry, (ptr)i);
+      vfasl_hash_table_set(S_G.c_entries, entry, (ptr)(i+1));
     }
 
     for (i = Svector_length(S_G.library_entry_vector); i--; ) {
       ptr entry = Svector_ref(S_G.library_entry_vector, i);
       if (entry != Sfalse) {
-        vfasl_hash_table_set(S_G.library_entries, entry, (ptr)i);
-        vfasl_hash_table_set(S_G.library_entry_codes, CLOSCODE(entry), (ptr)i);
+        vfasl_hash_table_set(S_G.library_entries, entry, (ptr)(i+1));
+        vfasl_hash_table_set(S_G.library_entry_codes, CLOSCODE(entry), (ptr)(i+1));
       }
     }
   }
