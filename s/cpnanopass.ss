@@ -3111,6 +3111,7 @@
                        (single-valued? e2 (fx- fuel 1)))]
                  [(seq ,e0 ,e1)
                   (single-valued? e1 (fx- fuel 1))]
+                 [(unboxed-fp ,e) #t]
                  [else #f]))]))
       (define ensure-single-valued
         (case-lambda
@@ -3267,10 +3268,12 @@
           [(mvlet ,e ((,x** ...) ,interface* ,body*) ...)
            (values `(mvlet ,(Expr1 e) ((,x** ...) ,interface* ,(map Expr1 body*)) ...) #f)])
         (Lvalue : Lvalue (ir [unboxed-fp? #f]) -> Lvalue (#f)
-           [(mref ,e1 ,e2 ,imm ,type) (values `(mref ,(Expr1 e1) ,(Expr1 e2) ,imm ,type) #f)]
-           [,x
-            (safe-assert (or unboxed-fp? (not (and (uvar? x) (eq? (uvar-type x) 'fp)))))
-            (values x (and (uvar? x) (eq? (uvar-type x) 'fp)))]))
+          [(mref ,e1 ,e2 ,imm ,type)
+           (safe-assert (or unboxed-fp? (not (eq? type 'fp))))
+           (values `(mref ,(Expr1 e1) ,(Expr1 e2) ,imm ,type) (eq? type 'fp))]
+          [,x
+           (safe-assert (or unboxed-fp? (not (and (uvar? x) (eq? (uvar-type x) 'fp)))))
+           (values x (and (uvar? x) (eq? (uvar-type x) 'fp)))]))
       (define-who unhandled-arity
         (lambda (name args)
           (sorry! who "unhandled argument count ~s for ~s" (length args) 'name)))
@@ -7485,16 +7488,25 @@
           (define build-flneg
             (lambda (e can-unbox-fp?)
               (build-fl-adjust-sign e can-unbox-fp? %logxor (%inline sll (immediate -1) (immediate ,(fx- (constant ptr-bits) 1))))))
+          (define maybe-build-fp-boxed
+            ;; Used for an `e` that may be implicitly unboxed because it appears
+            ;; as an argument to a primitive that accepts unboxed arguments
+            (lambda (can-unbox-fp? e)
+              (nanopass-case (L7 Expr) e
+                [,x (if (and (uvar? x) (eq? (uvar-type x) 'fp))
+                        (build-fp-boxed can-unbox-fp? e)
+                        e)]
+                [else e])))
           
           (define-inline 3 fl+
             [() `(quote 0.0)]
-            [(e) (ensure-single-valued e)]
+            [(e) (maybe-build-fp-boxed can-unbox-fp? (ensure-single-valued e))]
             [(e1 e2) (build-fp-op-2 can-unbox-fp? %fp+ e1 e2)]
             [(e1 . e*) (reduce-fp src sexpr 3 'fl+ e1 e*)])
              
           (define-inline 3 fl*
             [() `(quote 1.0)]
-            [(e) (ensure-single-valued e)]
+            [(e) (maybe-build-fp-boxed can-unbox-fp? (ensure-single-valued e))]
             [(e1 e2) (build-fp-op-2 can-unbox-fp? %fp* e1 e2)]
             [(e1 . e*) (reduce-fp src sexpr 3 'fl* e1 e*)])
 
@@ -7741,13 +7753,15 @@
           (let ()
             (define build-checked-fp-op
               (case-lambda
-                [(e k)
-                 (if (known-flonum-result? e)
-                     e
-                     (bind #t (e)
-                       `(if ,(build-flonums? (list e))
-                            ,e
-                            ,(k e))))]
+                [(e can-unbox-fp? k)
+                 (maybe-build-fp-boxed
+                  can-unbox-fp?
+                  (if (known-flonum-result? e)
+                      e
+                      (bind #t (e)
+                        `(if ,(build-flonums? (list e))
+                             ,e
+                             ,(k e)))))]
                 [(e1 op can-unbox-fp? k) ; `op` can be a procedure that produces an implicitly unboxed value
                  (if (known-flonum-result? e1)
                      (build-fp-op-1 can-unbox-fp? op e1)
@@ -7789,7 +7803,7 @@
 
             (define-inline 2 fl+
               [() `(quote 0.0)]
-              [(e) (build-checked-fp-op e
+              [(e) (build-checked-fp-op e can-unbox-fp?
                      (lambda (e)
                        (build-libcall #t src sexpr fl+ e `(quote 0.0))))]
               [(e1 e2) (build-checked-fp-op e1 e2 %fp+ can-unbox-fp?
@@ -7799,7 +7813,7 @@
 
             (define-inline 2 fl*
               [() `(quote 1.0)]
-              [(e) (build-checked-fp-op e
+              [(e) (build-checked-fp-op e can-unbox-fp?
                      (lambda (e)
                        (build-libcall #t src sexpr fl* e `(quote 1.0))))]
               [(e1 e2) (build-checked-fp-op e1 e2 %fp* can-unbox-fp?
