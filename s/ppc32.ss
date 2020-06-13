@@ -2528,13 +2528,13 @@
 			;; stash extra argument on the stack to be retrieved after call and filled with the result:
 			(cons (load-int-stack fill-stash-offset) locs)]
 		       [else locs]))
-                    (lambda (t0)
+                    (lambda (t0 not-varargs?)
 		      (define (make-call result-live* result-fp-live-count)
 			(cond
 			 [adjust-active?
 			  (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
 					  `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,%deact))]
-			 [else `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,t0)]))
+			 [else `(inline ,(make-info-kill*-live* (add-caller-save-registers result-live*) live*) ,%c-call ,t0)]))
 		      (if (constant software-floating-point)
                           (let ()
                             (define handle-64-bit

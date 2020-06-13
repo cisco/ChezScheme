@@ -323,6 +323,8 @@ extern void S_bignum_mask_test PROTO((void));
 extern ptr S_lookup_library_entry PROTO((iptr n, IBOOL errorp));
 extern ptr S_lookup_c_entry PROTO((iptr i));
 extern void S_prim_init PROTO((void));
+extern void S_install_c_entry PROTO((iptr i, ptr x));
+extern void S_check_c_entry_vector PROTO((void));
 
 /* prim5.c */
 extern ptr S_strerror PROTO((INT errnum));

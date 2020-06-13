@@ -36,13 +36,13 @@
       [     %r8  %Carg3    #f  8 uptr]
       [     %r9  %Carg4    #f  9 uptr]
       [     %rcx %Carg1    #f  1 uptr] ; last to avoid use as a Scheme argument
-      [%fp1 %Cfparg3       #f  2 fp]
-      [%fp2 %Cfparg4       #f  3 fp])
+      [%fp1                #f  4 fp]
+      [%fp2                #f  5 fp])
     (machine-dependent
-      [%Cfparg1 %Cfpretval #f  0 fp]
-      [%Cfparg2            #f  1 fp]
-      [%fptmp1             #f  4 fp]  ; xmm 0-5 are caller-save
-      [%fptmp2             #f  5 fp]  ; xmm 6-15 are callee-save
+      [%Cfparg1 %Cfpretval #f  0 fp]  ; xmm 0-5 are caller-save
+      [%Cfparg2            #f  1 fp]  ; xmm 6-15 are callee-save
+      [%Cfparg3            #f  2 fp]
+      [%Cfparg4            #f  3 fp]
       [%sp                 #t  4 uptr]))
   (define-registers
     (reserved
@@ -65,17 +65,17 @@
       [     %rsi %Carg2    #f  6 uptr]
       [     %rdx %Carg3    #f  2 uptr]
       [     %rcx %Carg4    #f  1 uptr]
-      [%fp1 %Cfparg3       #f  2 fp]
-      [%fp2 %Cfparg4       #f  3 fp])
+      [%fp1                #f  8 fp]
+      [%fp2                #f  9 fp])
     (machine-dependent
       [%Cfparg1 %Cfpretval #f  0 fp]
       [%Cfparg2            #f  1 fp]
+      [%Cfparg3            #f  2 fp]
+      [%Cfparg4            #f  3 fp]
       [%Cfparg5            #f  4 fp]
       [%Cfparg6            #f  5 fp]
       [%Cfparg7            #f  6 fp]
       [%Cfparg8            #f  7 fp]
-      [%fptmp1             #f  8 fp]
-      [%fptmp2             #f  9 fp]
       [%sp                 #t  4 uptr])))
 
 ;;; SECTION 2: instructions
@@ -129,6 +129,7 @@
 
   (define lvalue->ur
     (lambda (x k)
+      (safe-assert (not (fpmem? x)))
       (if (mref? x)
           (let ([u (make-tmp 'u)])
             (seq
@@ -967,7 +968,7 @@
        (seq
          `(set! ,(make-live-info) ,urax (asm ,null-info ,asm-kill))
          `(asm ,info ,(asm-c-simple-call (info-c-simple-call-entry info)) ,urax)))])
-
+  
   (define-instruction value pop
     [(op (z ur)) `(set! ,(make-live-info) ,z (asm ,info ,asm-pop))])
 
@@ -2054,15 +2055,20 @@
           [(eq? dest-reg src1)
            (Trivit (dest-reg src2)
              (emit-it src2 dest-reg code*))]
-          [(and (eq? dest-reg src2)
-                (memq op '(fp+ fp*)))
-           (Trivit (dest-reg src1)
-             (emit-it src1 dest-reg code*))]
+          [(eq? dest-reg src2)
+           (if (memq op '(fp+ fp*))
+               (Trivit (dest-reg src1)
+                 (emit-it src1 dest-reg code*))
+               ;; Assuming that any subtraction or division will be
+               ;; done before we try to fill C arguments...
+               (Trivit (dest-reg src1 src2)
+                 (emit sse.movsd src2 (cons 'reg %Cfparg1)
+                   (emit sse.movsd src1 dest-reg
+                         (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
           [else
            (Trivit (dest-reg src1 src2)
-             (emit sse.movsd src2 (cons 'reg %fptmp1)
-                   (emit sse.movsd src1 dest-reg
-                         (emit-it (cons 'reg %fptmp1) dest-reg code*))))]))))
+             (emit sse.movsd src1 dest-reg
+                   (emit-it src2 dest-reg code*)))]))))
 
   (define asm-fpsqrt
     (lambda (code* dest-reg src)
@@ -2856,33 +2862,31 @@
       (with-output-language (L13 Effect)
         (letrec ([load-double-stack
                   (lambda (offset)
-                    (lambda (x) ; requires var
-                      `(set! ,(%mref ,%sp ,%zero ,offset fp)
-                             ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
+                    (lambda (x) ; unboxed
+                      `(set! ,(%mref ,%sp ,%zero ,offset fp) ,x)))]
                  [load-single-stack
                   (lambda (offset)
-                    (lambda (x) ; requires var
-                      (%inline store-double->single ,(%mref ,%sp ,%zero ,offset fp)
-                               ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
+                    (lambda (x) ; unboxed
+                      (%inline store-double->single ,(%mref ,%sp ,%zero ,offset fp) ,x)))]
                  [load-int-stack
                   (lambda (offset)
                     (lambda (rhs) ; requires rhs
                       `(set! ,(%mref ,%sp ,offset) ,rhs)))]
                  [load-double-reg
                   (lambda (fpreg)
-                    (lambda (x) ; requires var
-                      `(set! ,fpreg ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
+                    (lambda (x) ; unboxed
+                      `(set! ,fpreg ,x)))]
                  [load-double-reg2
                   (lambda (fpreg ireg)
-                    (lambda (x) ; requires var
+                    (lambda (x) ; unboxed
                       (%seq
-                        (set! ,fpreg ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))
+                        (set! ,fpreg ,x)
                         ;; To support the varargs convention, copy the value into a GP register
                         (set! ,ireg ,(%inline get-double ,fpreg)))))]
                  [load-single-reg
                   (lambda (fpreg)
-                    (lambda (x) ; requires var
-                      `(set! ,fpreg ,(%inline double->single ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)))))]
+                    (lambda (x) ; unboxed
+                      `(set! ,fpreg ,(%inline double->single ,x))))]
                  [load-int-reg
                   (lambda (type ireg)
                     (lambda (x)
@@ -3217,32 +3221,36 @@
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
                       (returnem frame-size locs
-                        (lambda (t0)
+                        (lambda (t0 not-varargs?)
                           (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
+                                 [kill* (add-caller-save-registers result-reg*)]                                 
                                  [c-call
                                   (add-deactivate adjust-active? t0 (append fp-live* live*)
                                    result-reg*
                                    (if-feature windows
                                      (%seq
                                        (set! ,%sp ,(%inline - ,%sp (immediate 32)))
-                                       (inline ,(make-info-kill*-live* result-reg* (append fp-live* live*)) ,%c-call ,t)
+                                       (inline ,(make-info-kill*-live* kill* (append fp-live* live*)) ,%c-call ,t)
                                        (set! ,%sp ,(%inline + ,%sp (immediate 32))))
                                      (%seq
-                                       ;; System V ABI varargs functions require count of fp regs used in %al register.
-                                       ;; since we don't know if the callee is a varargs function, we always set it.
-                                       (set! ,%rax (immediate ,nfp))
-                                       (inline ,(make-info-kill*-live* result-reg* (cons %rax (append fp-live* live*))) ,%c-call ,t))))])
+                                      ,(if not-varargs?
+                                           `(nop)
+                                           ;; System V ABI varargs functions require count of fp regs used in %al register.
+                                           ;; since we don't know if the callee is a varargs function, we always set it.
+                                           `(set! ,%rax (immediate ,nfp)))
+                                      ,(let ([live* (append fp-live* live*)])
+                                         `(inline ,(make-info-kill*-live* kill* (if not-varargs? live* (cons %rax live*))) ,%c-call ,t)))))])
                             (cond
                              [fill-result-here?
                               (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes result-size)]
                              [else c-call])))
                         (nanopass-case (Ltype Type) result-type
                           [(fp-double-float)
-                           (lambda (lvalue)
-                             `(set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp) ,%Cfpretval))]
+                           (lambda (lvalue) ; unboxed
+                             `(set! ,lvalue ,%Cfpretval))]
                           [(fp-single-float)
-                           (lambda (lvalue)
-                             `(set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp) ,(%inline single->double ,%Cfpretval)))]
+                           (lambda (lvalue) ; unboxed
+                             `(set! ,lvalue ,(%inline single->double ,%Cfpretval)))]
                           [(fp-integer ,bits)
                            (case bits
                              [(8) (lambda (lvalue) `(set! ,lvalue ,(%inline sext8 ,%rax)))]
@@ -3315,12 +3323,12 @@
         (let ()
           (define load-double-stack
             (lambda (offset)
-              (lambda (x) ; requires var
+              (lambda (x) ; boxed (always a var)
                 `(set! ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)
                        ,(%mref ,%sp ,%zero ,offset fp)))))
           (define load-single-stack
             (lambda (offset)
-              (lambda (x) ; requires var
+              (lambda (x) ; boxed (always a var)
                 `(set! ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)
                        ,(%inline load-single->double ,(%mref ,%sp ,%zero ,offset fp))))))
           (define load-int-stack
@@ -3574,13 +3582,13 @@
                          '())])]
               [(fp-double-float)
                (values
-                (lambda (x)
+                (lambda (x) ; boxed (always a var)
                   `(set! ,%Cfpretval ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp)))
                 '()
                 (list %Cfpretval))]
               [(fp-single-float)
                (values
-                (lambda (x)
+                (lambda (x) ; boxed (always a var)
                   `(set! ,%Cfpretval ,(%inline double->single ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))
                 '()
                 (list %Cfpretval))]

@@ -20,7 +20,6 @@
 static void install_library_entry PROTO((ptr n, ptr x));
 static void scheme_install_library_entry PROTO((void));
 static void create_library_entry_vector PROTO((void));
-static void install_c_entry PROTO((iptr i, ptr x));
 static void create_c_entry_vector PROTO((void));
 static void s_instantiate_code_object PROTO((void));
 static void s_link_code_object PROTO((ptr co, ptr objs));
@@ -85,7 +84,7 @@ ptr int2ptr(iptr f)
 #define proc2ptr(x) (ptr)(iptr)(x)
 #endif /* HPUX */
 
-static void install_c_entry(i, x) iptr i; ptr x; {
+void S_install_c_entry(i, x) iptr i; ptr x; {
     if (i < 0 || i >= c_entry_vector_size)
         S_error1("install_c_entry", "invalid index ~s", FIX(i));
     if (Svector_ref(S_G.c_entry_vector, i) != Sfalse)
@@ -116,37 +115,41 @@ static void create_c_entry_vector() {
     for (i = 0; i < c_entry_vector_size; i++)
         INITVECTIT(S_G.c_entry_vector, i) = Sfalse;
 
-    install_c_entry(CENTRY_thread_context, proc2ptr(S_G.thread_context));
-    install_c_entry(CENTRY_get_thread_context, proc2ptr(s_get_thread_context));
-    install_c_entry(CENTRY_handle_apply_overflood, proc2ptr(S_handle_apply_overflood));
-    install_c_entry(CENTRY_handle_docall_error, proc2ptr(S_handle_docall_error));
-    install_c_entry(CENTRY_handle_overflow, proc2ptr(S_handle_overflow));
-    install_c_entry(CENTRY_handle_overflood, proc2ptr(S_handle_overflood));
-    install_c_entry(CENTRY_handle_nonprocedure_symbol, proc2ptr(S_handle_nonprocedure_symbol));
-    install_c_entry(CENTRY_thread_list, (ptr)&S_threads);
-    install_c_entry(CENTRY_split_and_resize, proc2ptr(S_split_and_resize));
+    S_install_c_entry(CENTRY_thread_context, proc2ptr(S_G.thread_context));
+    S_install_c_entry(CENTRY_get_thread_context, proc2ptr(s_get_thread_context));
+    S_install_c_entry(CENTRY_handle_apply_overflood, proc2ptr(S_handle_apply_overflood));
+    S_install_c_entry(CENTRY_handle_docall_error, proc2ptr(S_handle_docall_error));
+    S_install_c_entry(CENTRY_handle_overflow, proc2ptr(S_handle_overflow));
+    S_install_c_entry(CENTRY_handle_overflood, proc2ptr(S_handle_overflood));
+    S_install_c_entry(CENTRY_handle_nonprocedure_symbol, proc2ptr(S_handle_nonprocedure_symbol));
+    S_install_c_entry(CENTRY_thread_list, (ptr)&S_threads);
+    S_install_c_entry(CENTRY_split_and_resize, proc2ptr(S_split_and_resize));
 #ifdef PTHREADS
-    install_c_entry(CENTRY_raw_collect_cond, (ptr)&S_collect_cond);
-    install_c_entry(CENTRY_raw_collect_thread0_cond, (ptr)&S_collect_thread0_cond);
-    install_c_entry(CENTRY_raw_tc_mutex, (ptr)&S_tc_mutex);
-    install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
-    install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
-    install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));
+    S_install_c_entry(CENTRY_raw_collect_cond, (ptr)&S_collect_cond);
+    S_install_c_entry(CENTRY_raw_collect_thread0_cond, (ptr)&S_collect_thread0_cond);
+    S_install_c_entry(CENTRY_raw_tc_mutex, (ptr)&S_tc_mutex);
+    S_install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
+    S_install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
+    S_install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));
 #endif /* PTHREADS */
-    install_c_entry(CENTRY_handle_values_error, proc2ptr(S_handle_values_error));
-    install_c_entry(CENTRY_handle_mvlet_error, proc2ptr(S_handle_mvlet_error));
-    install_c_entry(CENTRY_handle_arg_error, proc2ptr(S_handle_arg_error));
-    install_c_entry(CENTRY_handle_event_detour, proc2ptr(S_handle_event_detour));
-    install_c_entry(CENTRY_foreign_entry, proc2ptr(S_foreign_entry));
-    install_c_entry(CENTRY_install_library_entry, proc2ptr(scheme_install_library_entry));
-    install_c_entry(CENTRY_get_more_room, proc2ptr(S_get_more_room));
-    install_c_entry(CENTRY_scan_remembered_set, proc2ptr(S_scan_remembered_set));
-    install_c_entry(CENTRY_instantiate_code_object, proc2ptr(s_instantiate_code_object));
-    install_c_entry(CENTRY_Sreturn, proc2ptr(S_return));
-    install_c_entry(CENTRY_Scall_one_result, proc2ptr(S_call_one_result));
-    install_c_entry(CENTRY_Scall_any_results, proc2ptr(S_call_any_results));
-    install_c_entry(CENTRY_segment_info, proc2ptr(S_segment_info));
-    install_c_entry(CENTRY_bignum_mask_test, proc2ptr(S_bignum_mask_test));
+    S_install_c_entry(CENTRY_handle_values_error, proc2ptr(S_handle_values_error));
+    S_install_c_entry(CENTRY_handle_mvlet_error, proc2ptr(S_handle_mvlet_error));
+    S_install_c_entry(CENTRY_handle_arg_error, proc2ptr(S_handle_arg_error));
+    S_install_c_entry(CENTRY_handle_event_detour, proc2ptr(S_handle_event_detour));
+    S_install_c_entry(CENTRY_foreign_entry, proc2ptr(S_foreign_entry));
+    S_install_c_entry(CENTRY_install_library_entry, proc2ptr(scheme_install_library_entry));
+    S_install_c_entry(CENTRY_get_more_room, proc2ptr(S_get_more_room));
+    S_install_c_entry(CENTRY_scan_remembered_set, proc2ptr(S_scan_remembered_set));
+    S_install_c_entry(CENTRY_instantiate_code_object, proc2ptr(s_instantiate_code_object));
+    S_install_c_entry(CENTRY_Sreturn, proc2ptr(S_return));
+    S_install_c_entry(CENTRY_Scall_one_result, proc2ptr(S_call_one_result));
+    S_install_c_entry(CENTRY_Scall_any_results, proc2ptr(S_call_any_results));
+    S_install_c_entry(CENTRY_segment_info, proc2ptr(S_segment_info));
+    S_install_c_entry(CENTRY_bignum_mask_test, proc2ptr(S_bignum_mask_test));
+}
+
+void S_check_c_entry_vector() {
+    INT i;
 
     for (i = 0; i < c_entry_vector_size; i++) {
 #ifndef PTHREADS

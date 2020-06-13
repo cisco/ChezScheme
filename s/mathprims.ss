@@ -317,27 +317,8 @@
          ($flonum-sign x)))
 
    (set-who! flonum->fixnum
-      (let ([flmnf (meta-cond
-                    ;; 64-bit fixnums: -1.0 is the same flonum
-                    [(fl= (fixnum->flonum (most-negative-fixnum))
-                          (fl- (fixnum->flonum (most-negative-fixnum)) 1.0))
-                     ;; Find the next lower flonum:
-                     (let loop ([amt 2.0])
-                       (let ([v (fl- (fixnum->flonum (most-negative-fixnum)) amt)])
-                         (if (fl= v (fixnum->flonum (most-negative-fixnum)))
-                             (loop (fl* 2.0 amt))
-                             v)))]
-                    [else
-                     (fl- (fixnum->flonum (most-negative-fixnum)) 1.0)])]
-            ;; Although adding 1.0 doesn't change the flonum for
-            ;; 64-bit fixnums, the flonum doesn't fit in a fixnum, so
-            ;; this is the upper bbound we want either way:
-            [flmpf (fl+ (fixnum->flonum (most-positive-fixnum)) 1.0)])
-         (lambda (x)
-            (unless (flonum? x) (flargerr who x))
-            (unless (fl< flmnf x flmpf)
-               ($oops who "result for ~s would be outside of fixnum range" x))
-            (#3%flonum->fixnum x))))
+     (lambda (x)
+       (#2%flonum->fixnum x)))
 )
 
 (let ()

@@ -675,8 +675,31 @@
   (define-library-entry (fl/ x y) (flonum-oops 'fl/ (if (flonum? x) y x)))
   (define-library-entry (flnegate x) (flonum-oops 'fl- x))
   (define-library-entry (flabs x) (flonum-oops 'flabs x))
+
+  (define-library-entry (flsqrt x) (flonum-oops 'flsqrt x))
+  (define-library-entry (flround x) (flonum-oops 'flround x))
+  (define-library-entry (flfloor x) (flonum-oops 'flfloor x))
+  (define-library-entry (flceiling x) (flonum-oops 'flceiling x))
+  (define-library-entry (fltruncate x) (flonum-oops 'fltruncate x))
+  (define-library-entry (flsin x) (flonum-oops 'flsin x))
+  (define-library-entry (flcos x) (flonum-oops 'flcos x))
+  (define-library-entry (fltan x) (flonum-oops 'fltan x))
+  (define-library-entry (flasin x) (flonum-oops 'flasin x))
+  (define-library-entry (flacos x) (flonum-oops 'flacos x))
+  (define-library-entry (flatan x) (flonum-oops 'flatan x))
+  (define-library-entry (flatan2 x y) (flonum-oops 'flatan (if (flonum? x) y x)))
+  (define-library-entry (flexp x) (flonum-oops 'flexp x))
+  (define-library-entry (fllog x) (flonum-oops 'fllog x))
+  (define-library-entry (fllog2 x y) (flonum-oops 'fllog (if (flonum? x) y x)))
+  (define-library-entry (flexpt x y) (flonum-oops 'flexpt (if (flonum? x) y x)))
+
+  (define-library-entry (flonum->fixnum x) (if (flonum? x)
+                                               ($oops 'flonum->fixnum "result for ~s would be outside of fixnum range" x)
+                                               (flonum-oops 'flonum->fixnum x)))
 )
 
+;; Now using `rint` via a C entry
+#;
 (define-library-entry (flround x)
  ; assumes round-to-nearest-or-even
   (float-type-case

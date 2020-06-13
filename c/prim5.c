@@ -1297,7 +1297,7 @@ static void c_exit(UNUSED I32 status) {
 #else /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
 extern double sin(), cos(), tan(), asin(), acos(), atan(), atan2();
 extern double sinh(), cosh(), tanh(), exp(), log(), pow(), sqrt();
-extern double floor(), ceil(), HYPOT();
+extern double floor(), ceil(), round(), trunc(), HYPOT();
 #ifdef ARCHYPERBOLIC
 extern double asinh(), acosh(), atanh();
 #endif /* ARCHHYPERBOLIC */
@@ -1311,6 +1311,9 @@ static double s_exp(x) double x; { return exp(x); }
 
 static double s_log PROTO((double x));
 static double s_log(x) double x; { return log(x); }
+
+static double s_log2 PROTO((double x, double y));
+static double s_log2(x, y) double x, y; { return log(x) / log(y); }
 
 static double s_pow PROTO((double x, double y));
 #if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb)
@@ -1375,6 +1378,12 @@ static double s_floor(x) double x; { return floor(x); }
 
 static double s_ceil PROTO((double x));
 static double s_ceil(x) double x; { return ceil(x); }
+
+static double s_round PROTO((double x));
+static double s_round(x) double x; { return rint(x); }
+
+static double s_trunc PROTO((double x));
+static double s_trunc(x) double x; { return trunc(x); }
 
 static double s_hypot PROTO((double x, double y));
 static double s_hypot(x, y) double x, y; { return HYPOT(x, y); }
@@ -1540,6 +1549,8 @@ void S_dump_tc(ptr tc) {
   }
   fflush(stdout);
 }
+
+#define proc2ptr(x) (ptr)(iptr)(x)
 
 void S_prim5_init() {
     if (!S_boot_time) return;
@@ -1759,6 +1770,25 @@ void S_prim5_init() {
 #endif
     Sforeign_symbol("(cs)s_profile_counters", (void *)s_profile_counters);
     Sforeign_symbol("(cs)s_profile_release_counters", (void *)s_profile_release_counters);
+
+    S_install_c_entry(CENTRY_flfloor, proc2ptr(s_floor));
+    S_install_c_entry(CENTRY_flceiling, proc2ptr(s_ceil));
+    S_install_c_entry(CENTRY_flround, proc2ptr(s_round));
+    S_install_c_entry(CENTRY_fltruncate, proc2ptr(s_trunc));
+    S_install_c_entry(CENTRY_flsin, proc2ptr(s_sin));
+    S_install_c_entry(CENTRY_flcos, proc2ptr(s_cos));
+    S_install_c_entry(CENTRY_fltan, proc2ptr(s_tan));
+    S_install_c_entry(CENTRY_flasin, proc2ptr(s_asin));
+    S_install_c_entry(CENTRY_flacos, proc2ptr(s_acos));
+    S_install_c_entry(CENTRY_flatan, proc2ptr(s_atan));
+    S_install_c_entry(CENTRY_flatan2, proc2ptr(s_atan2));
+    S_install_c_entry(CENTRY_flexp, proc2ptr(s_exp));
+    S_install_c_entry(CENTRY_fllog, proc2ptr(s_log));
+    S_install_c_entry(CENTRY_fllog2, proc2ptr(s_log2));
+    S_install_c_entry(CENTRY_flexpt, proc2ptr(s_pow));
+    S_install_c_entry(CENTRY_flsqrt, proc2ptr(s_sqrt));
+
+    S_check_c_entry_vector();
 }
 
 static ptr s_get_reloc(co, with_offsets) ptr co; IBOOL with_offsets; {

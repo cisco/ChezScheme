@@ -772,7 +772,7 @@
       (define-syntax $save-scheme-state
         (lambda (x)
           (syntax-case x ()
-            [(_ k orig-x in out)
+            [(_ k orig-x save? in out)
              (with-implicit (k quasiquote)
                ; although eap might be changed by dirty writes, and esp might be changed by
                ; one-shot continuation handling, we always write through to the tc so that
@@ -782,34 +782,52 @@
                ; out of the save list (but not the restore list below).
                #'(let ([regs-to-save (build-reg-list orig-x (base-in %sfp %ap %trap) in out)])
                    (fold-left (lambda (body reg)
-                                `(seq (set! ,(get-tcslot k reg) ,reg) ,body))
+                                (if (save? reg)
+                                    `(seq (set! ,(get-tcslot k reg) ,reg) ,body)
+                                    body))
                      `(nop) regs-to-save)))])))
       (define-syntax $restore-scheme-state
         (lambda (x)
           (syntax-case x ()
-            [(_ k orig-x in out)
+            [(_ k orig-x save? in out)
              (with-implicit (k quasiquote)
                #'(let ([regs-to-restore (build-reg-list orig-x (base-in %sfp %ap %trap %eap %esp) in out)])
                    (fold-left (lambda (body reg)
-                                `(seq (set! ,reg ,(get-tcslot k reg)) ,body))
+                                (if (save? reg)
+                                    `(seq (set! ,reg ,(get-tcslot k reg)) ,body)
+                                    body))
                      `(nop) regs-to-restore)))])))
       (define-syntax save-scheme-state
         (lambda (x)
           (syntax-case x ()
-            [(k in out) #`($save-scheme-state k #,x in out)])))
+            [(k in out) #`($save-scheme-state k #,x (lambda (x) #t) in out)])))
       (define-syntax restore-scheme-state
         (lambda (x)
           (syntax-case x ()
-            [(k in out) #`($restore-scheme-state k #,x in out)])))
+            [(k in out) #`($restore-scheme-state k #,x (lambda (x) #t) in out)])))
       (define-syntax with-saved-scheme-state
         (lambda (x)
           (syntax-case x ()
-            [(k in out ?body)
+            [(k in out ?body) #`(k (lambda (x) #t) in out ?body)]
+            [(k save? in out ?body)
              (with-implicit (k quasiquote %seq)
                #`(%seq
-                   ,($save-scheme-state k #,x in out)
+                   ,($save-scheme-state k #,x save? in out)
                    ,?body
-                   ,($restore-scheme-state k #,x in out)))]))))
+                   ,($restore-scheme-state k #,x save? in out)))]))))
+
+    (define add-caller-save-registers
+      ;; Adds alloctable caller-saved registers, since those may be
+      ;; mangled on a call to a C function
+      (lambda (reg*)
+        (let loop ([i 0])
+          (cond
+            [(fx= i (vector-length regvec)) reg*]
+            [else (let ([reg (vector-ref regvec i)])
+                    (if (or (reg-callee-save? reg)
+                            (memq reg reg*))
+                        (loop (fx+ i 1))
+                        (cons reg (loop (fx+ i 1)))))]))))
 
     (define-record-type ctci ; compile-time version of code-info
       (nongenerative)
@@ -1008,11 +1026,11 @@
     (define-record-type info-foreign (nongenerative)
       (parent info)
       (sealed #t)
-      (fields conv* arg-type* result-type (mutable name))
+      (fields conv* arg-type* result-type unboxed? (mutable name))
       (protocol
         (lambda (pargs->new)
-          (lambda (conv* arg-type* result-type)
-            ((pargs->new) conv* arg-type* result-type #f)))))
+          (lambda (conv* arg-type* result-type unboxed?)
+            ((pargs->new) conv* arg-type* result-type unboxed? #f)))))
 
     (define-record-type info-literal (nongenerative)
       (parent info)
@@ -1076,6 +1094,12 @@
           (fprintf p "#<literal ~s>" (info-literal-addr x))))
     )
 
+    (define (fp-type? type)
+      (nanopass-case (Ltype Type) type
+        [(fp-double-float) #t]
+        [(fp-single-float) #t]
+        [else #f]))
+
     (define-pass cpnanopass : Lsrc (ir) -> L1 ()
       (definitions
         (define-syntax with-uvars
@@ -1119,11 +1143,11 @@
          `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (preinfo-call-check? preinfo) #f #f)
             ,(Expr e) ,e* ...)]
         [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
-         (let ([info (make-info-foreign conv* arg-type* result-type)])
+         (let ([info (make-info-foreign conv* arg-type* result-type #f)])
            (info-foreign-name-set! info name)
            `(foreign ,info ,e))]
         [(fcallable (,conv* ...) ,[e] (,arg-type* ...) ,result-type)
-         `(fcallable ,(make-info-foreign conv* arg-type* result-type) ,e)])
+         `(fcallable ,(make-info-foreign conv* arg-type* result-type #f) ,e)])
       (CaseLambdaExpr ir #f))
 
     (define find-matching-clause
@@ -3276,7 +3300,24 @@
           [(attachment-consume ,reified ,e) (values `(attachment-consume ,reified ,(and e (Expr1 e))) #f)]
           [(continuation-set ,cop ,e1 ,e2) (values `(continuation-set ,cop ,(Expr1 e1) ,(Expr1 e2)) #f)]
           [(label ,l ,[body can-unbox-fp? -> body unboxed-fp?]) (values `(label ,l ,body) unboxed-fp?)]
-          [(foreign-call ,info ,e ,e* ...) (values `(foreign-call ,info ,(Expr1 e) ,(Expr* e*) ...) #f)]
+          [(foreign-call ,info ,e ,e* ...)
+           (let ([e (Expr1 e)]
+                 [e* (if (info-foreign-unboxed? info)
+                         (map (lambda (e type)
+                                (let ([unbox-arg? (fp-type? type)])
+                                  (let-values ([(e unboxed-fp?) (Expr  e unbox-arg?)])
+                                    (if (and unbox-arg? (not unboxed-fp?))
+                                        (%mref ,e ,%zero ,(constant flonum-data-disp) fp)
+                                        e))))
+                              e*
+                              (info-foreign-arg-type* info))
+                         (map Expr1 e*))])
+             (let ([new-e `(foreign-call ,info ,e ,e* ...)]
+                   [unboxed? (and (info-foreign-unboxed? info)
+                                  (fp-type? (info-foreign-result-type info)))])
+               (if (and unboxed? (not can-unbox-fp?))
+                   (values (unboxed-fp->boxed new-e) #f)
+                   (values new-e unboxed?))))]
           [(mvcall ,info ,e1 ,e2) (values `(mvcall ,info ,(Expr1 e1) ,(Expr1 e2)) #f)]
           [(mvlet ,e ((,x** ...) ,interface* ,body*) ...)
            (values `(mvlet ,(Expr1 e) ((,x** ...) ,interface* ,(map Expr1 body*)) ...) #f)])
@@ -7475,7 +7516,7 @@
           (define build-fp-op-2
             (lambda (op e1 e2)
               (bind #f fp (e1 e2)
-                `(unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,op ,e1 ,e2)))))
+                (if (procedure? op) (op e1 e2) `(unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,op ,e1 ,e2))))))
           (define build-fl-adjust-sign
             (lambda (e combine base)
               `(unboxed-fp
@@ -7497,6 +7538,12 @@
           (define build-flneg
             (lambda (e)
               (build-fl-adjust-sign e %logxor (%inline sll (immediate -1) (immediate ,(fx- (constant ptr-bits) 1))))))
+          (define build-fl-call
+            (lambda (entry . e*)
+              `(foreign-call ,(with-output-language (Ltype Type)
+                                (make-info-foreign '(atomic) (map (lambda (e) `(fp-double-float)) e*) `(fp-double-float) #t))
+                             (literal ,(make-info-literal #f 'entry entry 0))
+                             ,e* ...)))
           
           (define-inline 3 fl+
             [() `(quote 0.0)]
@@ -7524,15 +7571,39 @@
             [(e)
              (constant-case architecture
                [(x86 x86_64 arm32) (build-fp-op-1 %fpsqrt e)]
-               [(ppc32) #f])])
-
-          (define-inline 3 flround
-            ; NB: there is no support in SSE2 for flround, though this was added in SSE4.1
-            [(e) (build-libcall #f src sexpr flround e)])
+               [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)])])
 
           (define-inline 3 flabs
             [(e) (build-flabs e)])
 
+          (let ()
+            (define-syntax define-fl-call
+              (syntax-rules ()
+                [(_ id extra ...)
+                 (define-inline 3 id
+                   [(e) (build-fl-call (lookup-c-entry id) e)]
+                   extra ...)]))
+            (define-syntax define-fl2-call
+              (syntax-rules ()
+                [(_ id id2)
+                 (define-fl-call id
+                   [(e1 e2) (build-fl-call (lookup-c-entry id2) e1 e2)])]))
+            (define-fl-call flround) ; no support in SSE2 for flround, though this was added in SSE4.1
+            (define-fl-call flfloor)
+            (define-fl-call flceiling)
+            (define-fl-call fltruncate)
+            (define-fl-call flsin)
+            (define-fl-call flcos)
+            (define-fl-call fltan)
+            (define-fl-call flasin)
+            (define-fl-call flacos)
+            (define-fl2-call flatan flatan2)
+            (define-fl-call flexp)
+            (define-fl2-call fllog fllog2))
+
+          (define-inline 3 flexpt
+            [(e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2)])
+          
           (let ()
             (define build-fl-make-rectangular
               (lambda (e1 e2)
@@ -7760,7 +7831,7 @@
                        `(if ,(build-flonums? (list e))
                             ,e
                             ,(k e))))]
-                [(e1 op k) ; `op` can be a procedure that produces an implicitly unboxed value
+                [(e1 op k) ; `op` can be a procedure that produces an unboxed value
                  (if (known-flonum-result? e1)
                      (build-fp-op-1 op e1)
                      (bind #t (e1)
@@ -7770,7 +7841,7 @@
                                        ,e
                                        ,(k e1)))])
                          ((lift-fp-unboxed k) e))))]
-                [(e1 e2 op k)
+                [(e1 e2 op k) ; `op` can be a procedure that produces an unboxed value
                  ;; uses result of `e1` or `e2` twice for error if other is always a flonum
                  (let ([build (lambda (e1 e2)
                                 (build-fp-op-2 op e1 e2))])
@@ -7836,13 +7907,79 @@
           (define-inline 2 flabs
             [(e) (build-checked-fp-op e build-flabs
                    (lambda (e)
-                     (build-libcall #t src sexpr flabs e)))])))
+                     (build-libcall #t src sexpr flabs e)))])
 
-        ; NB: assuming that we have a trunc instruction for now, will need to change to support Sparc
-        (define-inline 3 flonum->fixnum
-          [(e-x) (bind #f (e-x)
-                   (build-fix
-                     `(inline ,(make-info-unboxed-args '(#t)) ,%fptrunc ,e-x)))])
+          (define-inline 2 flsqrt
+            [(e)
+             (build-checked-fp-op e
+               (lambda (e)
+                 (constant-case architecture
+                   [(x86 x86_64 arm32) (build-fp-op-1 %fpsqrt e)]
+                   [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)]))
+               (lambda (e)
+                 (build-libcall #t src sexpr flsqrt e)))])
+
+          (let ()
+            (define-syntax define-fl-call
+              (syntax-rules ()
+                [(_ id)
+                 (define-inline 2 id
+                   [(e) (build-checked-fp-op e (lambda (e) (build-fl-call (lookup-c-entry id) e))
+                          (lambda (e)
+                            (build-libcall #t src sexpr id e)))])]))
+            (define-syntax define-fl2-call
+              (syntax-rules ()
+                [(_ id id2)
+                 (define-inline 2 id
+                   [(e) (build-checked-fp-op e (lambda (e) (build-fl-call (lookup-c-entry id) e))
+                          (lambda (e)
+                            (build-libcall #t src sexpr id e)))]
+                   [(e1 e2) (build-checked-fp-op e1 e2 (lambda (e1 e2) (build-fl-call (lookup-c-entry id2) e1 e2))
+                              (lambda (e1 e2)
+                                (build-libcall #t src sexpr id2 e1 e2)))])]))
+            (define-fl-call flround)
+            (define-fl-call flfloor)
+            (define-fl-call flceiling)
+            (define-fl-call fltruncate)
+            (define-fl-call flsin)
+            (define-fl-call flcos)
+            (define-fl-call fltan)
+            (define-fl-call flasin)
+            (define-fl-call flacos)
+            (define-fl2-call flatan flatan2)
+            (define-fl-call flexp)
+            (define-fl2-call fllog fllog2))
+          
+          (define-inline 2 flexpt
+            [(e1 e2) (build-checked-fp-op e1 e2
+                       (lambda (e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2))
+                       (lambda (e1 e2)
+                         (build-libcall #t src sexpr flexpt e1 e2)))])
+
+          ;; NB: assuming that we have a trunc instruction for now, will need to change to support Sparc
+          (define-inline 3 flonum->fixnum
+            [(e-x) (bind #f fp (e-x)
+                     (build-fix
+                      `(inline ,(make-info-unboxed-args '(#t)) ,%fptrunc ,e-x)))])
+          (define-inline 2 flonum->fixnum
+            [(e-x) (build-checked-fp-op e-x
+                     (lambda (e-x)
+                       (define (build-fl< e1 e2) `(inline ,(make-info-unboxed-args '(#t #t)) ,%fp< ,e1 ,e2))
+                       (bind #t (e-x)
+                         `(if ,(build-and
+                                (build-fl< e-x `(quote ,(constant too-positive-flonum-for-fixnum)))
+                                (build-fl< `(quote ,(constant too-negative-flonum-for-fixnum)) e-x))
+                              ,(build-fix
+                                `(inline ,(make-info-unboxed-args '(#t)) ,%fptrunc ,e-x))
+                              ;; We have to box the flonum to report an error:
+                              ,(let ([t (make-tmp 't)])
+                                 `(let ([,t ,(%constant-alloc type-flonum (constant size-flonum))])
+                                    (seq
+                                     (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp) ,e-x)
+                                     ,(build-libcall #t src sexpr flonum->fixnum t)))))))
+                     (lambda (e-x)
+                       (build-libcall #t src sexpr flonum->fixnum e-x)))])))
+
         (let ()
           (define build-fixnum->flonum
            ; NB: x must already be bound in order to ensure it is done before the flonum is allocated
@@ -10878,7 +11015,8 @@
            (lambda (t*)
              (k `(continuation-set ,cop ,(car t*) ,(cadr t*)))))]
         [(foreign-call ,info ,e0 ,e1* ...)
-         (Triv* (cons e0 e1*)
+         (Triv* (cons e0 e1*) (and (info-foreign-unboxed? info)
+                                   (cons #f (map fp-type? (info-foreign-arg-type* info))))
            (lambda (t*)
              (k `(foreign-call ,info ,(car t*) ,(cdr t*) ...))))]
         [(values ,info ,e* ...)
@@ -10957,17 +11095,27 @@
       (definitions
         (define local*)
         (define make-tmp
-          (lambda (x)
+          (case-lambda
+           [(x) (make-tmp x 'ptr)]
+           [(x type)
             (import (only np-languages make-tmp))
-            (let ([x (make-tmp x)])
+            (let ([x (make-tmp x type)])
               (set! local* (cons x local*))
-              x)))
+              x)]))
         (define make-info-call-like
           (lambda (info shift-consumer-attachment?*)
             (make-info-call (info-call-src info) (info-call-sexpr info)
                             (info-call-check? info) (info-call-pariah? info) (info-call-error? info)
                             (info-call-shift-attachment? info)
                             shift-consumer-attachment?*)))
+        (define (rhs->type rhs)
+          (if (nanopass-case (L10.5 Rhs) rhs
+                [(foreign-call ,info ,t0 ,t1* ...)
+                 (and (info-foreign-unboxed? info)
+                      (fp-type? (info-foreign-result-type info)))]
+                [else #f])
+              'fp
+              'ptr))
         (define Mvcall
           (lambda (info e consumer k)
             (let ([info (make-info-call (info-call-src info) (info-call-sexpr info) #f #f #f
@@ -10994,7 +11142,7 @@
                   [(profile ,src) `(profile ,src)]
                   [(goto ,l) `(goto ,l)]
                   [,rhs ; alloc, inline, foreign-call
-                   (let ([tmp (make-tmp 't)])
+                   (let ([tmp (make-tmp 't (rhs->type rhs))])
                      `(seq
                         (set! ,tmp ,rhs)
                         ,(k `(mvcall ,(make-info-call-like info '()) #f ,consumer ,tmp ()))))]
@@ -11096,7 +11244,7 @@
                       [(mlabel ,[e] (,l* ,[e*]) ...) `(mlabel ,e (,l* ,e*) ...)]
                       [(goto ,l) `(goto ,l)]
                       [,rhs ; alloc, inline, foreign-call
-                        (let ([tmp (make-tmp 't)])
+                        (let ([tmp (make-tmp 't (rhs->type rhs))])
                           `(seq
                              (set! ,tmp ,rhs)
                              ,(Pvalues #f (list tmp))))]
@@ -11180,7 +11328,10 @@
          (if (and (info-call-error? info) (fx< (debug-level) 2))
              `(seq (tail (mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...))) (true))
              (predicafy-rhs (mvcall ,info ,mdcl ,t0? ,t1 ... (,t* ...))))]
-        [(foreign-call ,info ,[t0] ,[t1] ...) (predicafy-rhs (foreign-call ,info ,t0 ,t1 ...))]
+        [(foreign-call ,info ,[t0] ,[t1] ...)
+         (safe-assert (not (and (info-foreign-unboxed? info)
+                                (fp-type? (info-foreign-result-type info)))))
+         (predicafy-rhs (foreign-call ,info ,t0 ,t1 ...))]
         [(label ,l ,[pbody]) `(seq (label ,l) ,pbody)]
         [(trap-check ,ioc ,[pbody]) `(seq (trap-check ,ioc) ,pbody)]
         [(overflow-check ,[pbody]) `(seq (overflow-check) ,pbody)]
@@ -11463,11 +11614,13 @@
         (define le-label)
         (define-$type-check (L13 Pred))
         (define make-tmp
-          (lambda (x)
+          (case-lambda
+           [(x) (make-tmp x 'ptr)]
+           [(x type)
             (import (only np-languages make-tmp))
-            (let ([x (make-tmp x)])
+            (let ([x (make-tmp x type)])
               (set! local* (cons x local*))
-              x)))
+              x)]))
         (define set-formal-registers!
           (lambda (x*)
             (let do-reg ([x* x*] [reg* arg-registers])
@@ -11905,7 +12058,7 @@
                   (%inline sll ,t ,(%constant fixnum-offset)))))
             (define Scheme->C
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
-              (lambda (type toC t)
+              (lambda (type toC t expects-unboxed? is-unboxed?)
                 (define ptr->integer
                   (lambda (width t k)
                     (if (fx>= (constant fixnum-bits) width)
@@ -11941,10 +12094,14 @@
                              ,(toC (in-context Rhs (%lea ,x (constant bytevector-data-disp)))))))))
                 (define build-float
                   (lambda ()
-                    (let ([x (make-tmp 't)])
+                    (let ([x (make-tmp 't (if is-unboxed? 'fp 'ptr))])
                       `(seq
                          (set! ,x ,t)
-                         ,(toC x)))))
+                         ,(toC (if (and expects-unboxed?
+                                        (not is-unboxed?))
+                                   (with-output-language (L13 Rhs)
+                                     (%mref ,x ,%zero ,(constant flonum-data-disp) fp))
+                                   x))))))
                 (nanopass-case (Ltype Type) type
                   [(fp-scheme-object) (toC t)]
                   [(fp-fixnum) (toC (build-unfix t))]
@@ -11977,10 +12134,10 @@
                    ;; to the function as its first argument (or simulated as such)
                    (toC)]
                   [else
-                   (Scheme->C type toC t)])))
+                   (Scheme->C type toC t #f #f)])))
             (define C->Scheme
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
-              (lambda (type fromC lvalue)
+              (lambda (type fromC lvalue expects-unboxed? is-unboxed?)
                 (define integer->ptr
                  ; ac0 holds low 32-bits, ac1 holds high 32 bits, if needed
                   (lambda (width lvalue)
@@ -12054,6 +12211,16 @@
                     (literal ,(make-info-literal #f 'object ftd 0)))
                    (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
                    (set! ,lvalue ,%xp)))
+                (define (receive-fp)
+                  (if is-unboxed?
+                      (fromC lvalue)
+                      (%seq
+                       (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                       ,(fromC (if expects-unboxed?
+                                   (with-output-language (L13 Lvalue)
+                                     (%mref ,%xp ,%zero ,(constant flonum-data-disp) fp))
+                                   %xp))
+                       (set! ,lvalue ,%xp))))
                 (nanopass-case (Ltype Type) type
                   [(fp-void) `(set! ,lvalue ,(%constant svoid))]
                   [(fp-scheme-object) (fromC lvalue)]
@@ -12089,16 +12256,8 @@
                            (fromC %ac0 (in-context Lvalue (ref-reg %ac1)))
                            (fromC %ac0))
                       ,(unsigned->ptr bits lvalue))]
-                  [(fp-double-float)
-                   (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
-                     ,(fromC %xp)
-                     (set! ,lvalue ,%xp))]
-                  [(fp-single-float)
-                   (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
-                     ,(fromC %xp)
-                     (set! ,lvalue ,%xp))]
+                  [(fp-double-float) (receive-fp)]
+                  [(fp-single-float) (receive-fp)]
                   [(fp-ftd ,ftd)
                    (%seq
                     ,(fromC %ac0) ; C integer return might be wiped out by alloc
@@ -12115,20 +12274,28 @@
           (define build-foreign-call
             (with-output-language (L13 Effect)
               (lambda (info t0 t1* maybe-lvalue new-frame?)
-                (let ([arg-type* (info-foreign-arg-type* info)]
-                      [result-type (info-foreign-result-type info)])
-                  (let ([e (let-values ([(allocate c-args ccall c-res deallocate) (asm-foreign-call info)])
-                             ; NB. allocate must save tc if not callee-save, and ccall
-                             ;     (not deallocate) must restore tc if not callee-save
-                             (%seq
+                (let ([atomic? (memq 'atomic (info-foreign-conv* info))]) ;; 'atomic => no callables, not varargs
+                  (let ([arg-type* (info-foreign-arg-type* info)]
+                        [result-type (info-foreign-result-type info)]
+                        [unboxed? (info-foreign-unboxed? info)]
+                        [save-reg? (if atomic?
+                                       (lambda (reg) (not (reg-callee-save? reg)))
+                                       (lambda (reg) #t))])
+                    (let ([e (let-values ([(allocate c-args ccall c-res deallocate) (asm-foreign-call info)])
+                              ; NB. allocate must save tc if not callee-save, and ccall
+                              ;     (not deallocate) must restore tc if not callee-save
+                              (%seq
                                ,(allocate)
-                               ; cp must hold our closure or our code object.  we choose code object
-                               (set! ,(%tc-ref cp) (label-ref ,le-label 0))
+                               ,(if atomic?
+                                    `(nop)
+                                    ;; cp must hold our closure or our code object.  we choose code object
+                                    `(set! ,(%tc-ref cp) (label-ref ,le-label 0)))
                                ,(with-saved-scheme-state
+                                 save-reg?
                                   (in) ; save just the required registers, e.g., %sfp
                                   (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs)
-                                  (fold-left (lambda (e t1 arg-type c-arg) `(seq ,(Scheme->C arg-type c-arg t1) ,e))
-                                    (ccall t0) t1* arg-type* c-args))
+                                  (fold-left (lambda (e t1 arg-type c-arg) `(seq ,(Scheme->C arg-type c-arg t1 #t unboxed?) ,e))
+                                    (ccall t0 atomic?) t1* arg-type* c-args))
                                ,(let ([e (deallocate)])
                                   (if maybe-lvalue
                                       (nanopass-case (Ltype Type) result-type
@@ -12137,11 +12304,13 @@
                                          ;; was instead installed in the first argument.
                                          `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]
                                         [else
-                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue) ,e)])
+                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue #t unboxed?) ,e)])
                                       e))))])
+                    e
+                    #;
                     (if new-frame?
                         (sorry! who "can't handle nontail foreign calls")
-                        e))))))
+                        e)))))))
           (define build-fcallable
             (with-output-language (L13 Tail)
               (lambda (info self-label)
@@ -12186,7 +12355,7 @@
                               [(real-register? '%cp) `(set! ,cp-save ,%cp)]
                               [else `(nop)])
                             ; convert arguments
-                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x) ,e))
+                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x #f #f) ,e))
                                (set-locs fv* frame-x*
                                  (set-locs (map (lambda (reg) (in-context Lvalue (%mref ,%tc ,(reg-tc-disp reg)))) reg*) reg-x*
                                    `(set! ,%ac0 (immediate ,(length arg-type*)))))
@@ -12384,7 +12553,7 @@
                                         (set! ,%ts ,(%inline + ,%ts ,%td))
                                         ,(%inline < ,(ref-reg %esp) ,%ts)))
                                  ,(%seq
-                                    ,(with-saved-scheme-state
+                                   ,(with-saved-scheme-state
                                        (in %ac0 %cp %xp %yp scheme-args)
                                        (out %ac1 %ts %td extra-regs)
                                        `(inline ,(make-info-c-simple-call #f (lookup-c-entry split-and-resize)) ,%c-simple-call))

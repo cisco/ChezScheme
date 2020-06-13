@@ -328,7 +328,7 @@
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
 
-(define-constant scheme-version #x0905031D)
+(define-constant scheme-version #x0905031E)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -796,6 +796,26 @@
                  (- (expt 2 (- (constant fixnum-bits) 1)) 1))
 (define-constant iptr most-negative-fixnum
                  (- (expt 2 (- (constant fixnum-bits) 1))))
+
+(define-constant double too-negative-flonum-for-fixnum
+  (cond
+    ;; 64-bit fixnums: -1.0 is the same flonum
+    [(fl= (exact->inexact (constant most-negative-fixnum))
+          (fl- (exact->inexact (constant most-negative-fixnum)) 1.0))
+     ;; Find the next lower flonum:
+     (let loop ([amt 2.0])
+       (let ([v (fl- (exact->inexact (constant most-negative-fixnum)) amt)])
+         (if (fl= v (exact->inexact (constant most-negative-fixnum)))
+             (loop (fl* 2.0 amt))
+             v)))]
+    [else
+     (fl- (exact->inexact (constant most-negative-fixnum)) 1.0)]))
+
+(define-constant double too-positive-flonum-for-fixnum
+  ;; Although adding 1.0 doesn't change the flonum for
+  ;; 64-bit fixnums, the flonum doesn't fit in a fixnum, so
+  ;; this is the upper bbound we want either way:
+  (fl+ (exact->inexact (constant most-positive-fixnum)) 1.0))
 
 (define-constant fixnum-offset (- (constant ptr-bits) (constant fixnum-bits)))
 
@@ -2680,6 +2700,23 @@
      (fl>? #f 2 #t #t)
      (fl<=? #f 2 #t #t)
      (fl>=? #f 2 #t #t)
+     (flsqrt #f 1 #t #t)
+     (flround #f 1 #t #t)
+     (flfloor #f 1 #t #t)
+     (flceiling #f 1 #t #t)
+     (fltruncate #f 1 #t #t)
+     (flsin #f 1 #t #t)
+     (flcos #f 1 #t #t)
+     (fltan #f 1 #t #t)
+     (flasin #f 1 #t #t)
+     (flacos #f 1 #t #t)
+     (flatan #f 1 #t #t)
+     (flatan2 #f 2 #t #t)
+     (flexp #f 1 #t #t)
+     (fllog #f 1 #t #t)
+     (fllog2 #f 2 #t #t)
+     (flexpt #f 2 #t #t)
+     (flonum->fixnum #f 1 #t #t)
      (bitwise-and #f 2 #f #t)
      (bitwise-ior #f 2 #f #t)
      (bitwise-xor #f 2 #f #t)
@@ -2797,5 +2834,20 @@
      Scall-any-results
      segment-info
      bignum-mask-test
-     ))
+     flfloor
+     flceiling
+     flround
+     fltruncate
+     flsin
+     flcos
+     fltan
+     flasin
+     flacos
+     flatan
+     flatan2
+     flexp
+     fllog
+     fllog2
+     flexpt
+     flsqrt))
 )

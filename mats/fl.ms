@@ -1085,10 +1085,32 @@
   (check-loop-allocation (lambda (v) (flabs (fl+ v v))))
   (check-loop-allocation (lambda (v) (fl- (fl+ v v))))
 
+  (check-loop-allocation (lambda (v) (flround v)))
+  (check-loop-allocation (lambda (v) (fltruncate v)))
+  (check-loop-allocation (lambda (v) (flfloor v)))
+  (check-loop-allocation (lambda (v) (flceiling v)))
+  
+  (check-loop-allocation (lambda (v) (flsqrt v)))
+  (check-loop-allocation (lambda (v) (flsin v)))
+  (check-loop-allocation (lambda (v) (flcos v)))
+  (check-loop-allocation (lambda (v) (fltan v)))
+  (check-loop-allocation (lambda (v) (flasin v)))
+  (check-loop-allocation (lambda (v) (flacos v)))
+  (check-loop-allocation (lambda (v) (flatan v)))
+  (check-loop-allocation (lambda (v) (flatan v v)))
+  (check-loop-allocation (lambda (v) (flexp v)))
+  (check-loop-allocation (lambda (v) (fllog v)))
+  (check-loop-allocation (lambda (v) (fllog v v)))
+  (check-loop-allocation (lambda (v) (flexpt v v)))
+
   (let ([i 0])
     (check-loop-allocation (lambda (v) (begin
                                          (set! i (add1 i))
                                          (fl+ v (fixnum->flonum i))))))
+  (let ([i 0])
+    (check-loop-allocation (lambda (v) (begin
+                                         (set! i (flonum->fixnum v))
+                                         (fl+ v 1.0)))))
 
   (check-loop-allocation (lambda (v) (if (fl= (fl+ v (fl* 2.0 v)) 7.0)
                                          (fl+ v 1.0)

@@ -742,7 +742,7 @@
      `(asm ,info ,asm-fpmove-single ,x ,y)])
 
   (define-instruction value (load-single)
-    [(op (x fpur) (y fpmem))
+    [(op (x fpur) (y fpmem fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove-single ,y))])
 
   (define-instruction value (single->double double->single)
@@ -2557,14 +2557,12 @@
         (define int-regs (lambda () (list %Carg1 %Carg2 %Carg3 %Carg4)))
         (letrec ([load-double-stack
                    (lambda (offset)
-                     (lambda (x) ; requires var
-                      `(set! ,(%mref ,%sp ,%zero ,offset fp)
-                             ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
+                     (lambda (x) ; unboxed
+                      `(set! ,(%mref ,%sp ,%zero ,offset fp) ,x)))]
                  [load-single-stack
                    (lambda (offset)
-                     (lambda (x) ; requires var
-                      (%inline store-double->single ,(%mref ,%sp ,%zero ,offset fp)
-                               ,(%mref ,x ,%zero ,(constant flonum-data-disp) fp))))]
+                     (lambda (x) ; unboxed
+                      (%inline store-double->single ,(%mref ,%sp ,%zero ,offset fp) ,x)))]
                  [load-int-stack
                    (lambda (offset)
                      (lambda (rhs) ; requires rhs
@@ -2595,23 +2593,29 @@
 			(set! ,(%mref ,%sp ,offset) ,(%mref ,x ,from-offset))
 			(set! ,(%mref ,%sp ,(fx+ offset 4)) ,(%mref ,x ,(fx+ from-offset 4))))))]
                  [load-double-reg
-                   (lambda (fpreg fp-disp)
-                     (lambda (x) ; requires var
-                       `(set! ,fpreg ,(%mref ,x ,%zero ,fp-disp fp))))]
+                   (lambda (fpreg)
+                     (lambda (x) ; unboxed
+                       `(set! ,fpreg ,x)))]
                  [load-single-reg
-                   (lambda (fpreg fp-disp single?)
-                     (lambda (x) ; requires var
+                   (lambda (fpreg single?)
+                     (lambda (x) ; unboxed
                        (let ([%op (if single? %load-single %double->single)])
-                         `(set! ,fpreg (inline ,null-info ,%op ,(%mref ,x ,%zero ,fp-disp fp))))))]
+                         `(set! ,fpreg (inline ,null-info ,%op ,x)))))]
                  [load-double-int-reg
                    (lambda (loreg hireg)
-                     (lambda (x) ; requires var
-                       (let-values ([(endreg otherreg) (constant-case native-endianness
-                                                         [(little) (values loreg hireg)]
-                                                         [(big) (values hireg loreg)])])
-                         (%seq
-                          (set! ,endreg ,(%mref ,x ,(constant flonum-data-disp)))
-                          (set! ,otherreg ,(%mref ,x ,(fx+ 4 (constant flonum-data-disp))))))))]
+                     (lambda (x) ; unboxed
+                       (%seq
+                        (set! ,loreg ,(%inline fpcastto/lo ,x))
+                        (set! ,hireg ,(%inline fpcastto/hi ,x)))))]
+                 [load-boxed-double-reg
+                   (lambda (fpreg fp-disp)
+                     (lambda (x) ; address (always a var) of a flonum
+                       `(set! ,fpreg ,(%mref ,x ,%zero ,fp-disp fp))))]
+                 [load-boxed-single-reg
+                   (lambda (fpreg fp-disp single?)
+                     (lambda (x) ; address (always a var) of a flonum
+                       (let ([%op (if single? %load-single %double->single)])
+                         `(set! ,fpreg (inline ,null-info ,%op ,(%mref ,x ,%zero ,fp-disp fp))))))]
                  [load-int-reg
                    (lambda (ireg)
                      (lambda (x)
@@ -2670,20 +2674,20 @@
                                      live* int* '() #f (fx+ isp 8)))]
                                [else
                                 (loop (cdr types)
-                                  (cons (load-double-reg (car sgl*) (constant flonum-data-disp)) locs)
+                                  (cons (load-double-reg (car sgl*)) locs)
                                   (cons (car sgl*) live*) int* (cddr sgl*) bsgl isp)])]
                             [(fp-single-float)
                              (safe-assert (not varargs?))
                              (if bsgl
                                  (loop (cdr types)
-                                   (cons (load-single-reg bsgl (constant flonum-data-disp) #f) locs)
+                                   (cons (load-single-reg bsgl #f) locs)
                                    (cons bsgl live*) int* sgl* #f isp)
                                  (if (null? sgl*)
                                      (loop (cdr types)
                                        (cons (load-single-stack isp) locs)
                                        live* int* '() #f (fx+ isp 4))
                                      (loop (cdr types)
-                                       (cons (load-single-reg (car sgl*) (constant flonum-data-disp) #f) locs)
+                                       (cons (load-single-reg (car sgl*) #f) locs)
                                        (cons (car sgl*) live*) int* (cddr sgl*) (cadr sgl*) isp)))]
 			    [(fp-ftd& ,ftd)
 			     (let ([size ($ftd-size ftd)]
@@ -2710,7 +2714,7 @@
 					  (loop (cdr types) (cons loc locs) live* int* sgl* #f isp)]
 					 [else
 					  (dbl-loop (fx- size 8) (fx+ offset 8) (cddr sgl*)
-						    (combine-loc loc (load-double-reg (car sgl*) offset)))]))]
+						    (combine-loc loc (load-boxed-double-reg (car sgl*) offset)))]))]
 				     [else
 				      ;; General case; for non-doubles, use integer registers while available,
 				      ;;  possibly splitting between registers and stack
@@ -2746,7 +2750,7 @@
 					    (flt-loop (fx- size 4) (fx+ offset 4)
 						      (if bsgl sgl* (cddr sgl*))
 						      (if bsgl #f (cadr sgl*))
-						      (combine-loc loc (load-single-reg (or bsgl (car sgl*)) offset #t))
+						      (combine-loc loc (load-boxed-single-reg (or bsgl (car sgl*)) offset #t))
                                                       (cons (or bsgl (car sgl*)) live*))]))]
 				       [else
 					;; General case; use integer registers while available,
@@ -2877,27 +2881,25 @@
 			  ;; stash extra argument on the stack to be retrieved after call and filled with the result:
 			  (cons (load-int-stack args-frame-size) locs)]
 			 [else locs]))
-                      (lambda (t0)
+                      (lambda (t0 not-varargs?)
 			(add-fill-result fill-result-here? result-type args-frame-size
-			  `(inline ,(make-info-kill*-live* result-reg* live*) ,%c-call ,t0)))
+			  `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))
                       (nanopass-case (Ltype Type) result-type
                         [(fp-double-float)
                          (if varargs?
-                             (lambda (lvalue)
-                               `(set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp)
-                                      ,(%inline fpcastfrom ,%r1 ,%Cretval)))
-                             (lambda (lvalue)
-                               `(set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp)
-                                      ,%Cfpretval)))]
+                             (lambda (lvalue) ; unboxed
+                               `(set! ,lvalue ,(%inline fpcastfrom ,%r1 ,%Cretval)))
+                             (lambda (lvalue) ; unboxed
+                               `(set! ,lvalue ,%Cfpretval)))]
                         [(fp-single-float)
                          (if varargs?
-                             (lambda (lvalue)
+                             (lambda (lvalue) ; unboxed
                                (let ([t %Cfpretval]) ; should be ok as a temporary register
                                  `(seq
                                    (set! ,t ,(%inline fpcastfrom ,%r1 ,%Cretval)) ; we don't actually care about the hi/%r1 part
-                                   (set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp) ,(%inline single->double ,t)))))
-                             (lambda (lvalue)
-                               `(set! ,(%mref ,lvalue ,%zero ,(constant flonum-data-disp) fp) ,(%inline single->double ,%Cfpretval))))]
+                                   (set! ,lvalue ,(%inline single->double ,t)))))
+                             (lambda (lvalue) ; unboxed
+                               `(set! ,lvalue ,(%inline single->double ,%Cfpretval))))]
                         [(fp-integer ,bits)
                          (case bits
                            [(8) (lambda (lvalue) `(set! ,lvalue ,(%inline sext8 ,%r0)))]
