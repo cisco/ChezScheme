@@ -897,7 +897,8 @@
 
   (define-instruction value (fpmove)
     [(op (x fpmem) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))]
-    [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))])
+    [(op (x fpur) (y fpmem)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))]
+    [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x ,y)])
 
   (define-instruction value (fpcastto)
     [(op (x mem) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))]
@@ -2067,8 +2068,12 @@
                          (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
           [else
            (Trivit (dest-reg src1 src2)
-             (emit sse.movsd src1 dest-reg
-                   (emit-it src2 dest-reg code*)))]))))
+             (if (equal? src1 src2)
+                 ;; avoid redundant load
+                 (emit sse.movsd src1 dest-reg
+                       (emit-it dest-reg dest-reg code*))
+                 (emit sse.movsd src1 dest-reg
+                       (emit-it src2 dest-reg code*))))]))))
 
   (define asm-fpsqrt
     (lambda (code* dest-reg src)
