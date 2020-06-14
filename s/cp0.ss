@@ -503,6 +503,12 @@
                      (loop e2 (if eprof `(seq ,eprof ,e1) e1))]
                     [else (values e eprof)]))
                 (values e #f))))
+        (define (possible-loop? x* body)
+          (and (fx= (length x*) 1)
+               (nanopass-case (Lsrc Expr) body
+                 [(call ,preinfo (ref ,maybe-src ,x) ,e* ...)
+                  (eq? x (car x*))]
+                 [else #f])))
         ; set up to assimilate nested let/letrec/letrec* bindings.
         ; lifting job is completed by cp0-call or letrec/letrec*
         (define (split-value e)
@@ -557,11 +563,7 @@
             [(letrec ([,x* ,e*] ...) ,body)
              (guard (and (or (ivory? body) (andmap ivory1? e*))
                          ;; don't break apart (potential) loops
-                         (not (and (fx= (length x*) 1)
-                                   (nanopass-case (Lsrc Expr) body
-                                     [(call ,preinfo (ref ,maybe-src ,x) ,e* ...)
-                                      (eq? x (car x*))]
-                                     [else #f])))))
+                         (not (possible-loop? x* body))))
              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
              (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
              (values (make-lifted #f x* e*) body)]
@@ -575,7 +577,9 @@
                  (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
                  (values (make-lifted #t x* e*) (build-ref x))))]
             [(letrec* ([,x* ,e*] ...) ,body)
-             (guard (or (ivory? body) (andmap ivory1? e*)))
+             (guard (and (or (ivory? body) (andmap ivory1? e*))
+                         ;; don't break apart (potential) loops
+                         (not (possible-loop? x* body))))
              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
              (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
              (values (make-lifted #t x* e*) body)]
@@ -1405,6 +1409,9 @@
                              [else #f])))]
                    ;; Recognize call to a loop, and use the loop's prelex in that case:
                    [(letrec ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
+                    (and (eq? x1 x2)
+                         (preinfo->single-valued preinfo x1))]
+                   [(letrec* ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
                     (and (eq? x1 x2)
                          (preinfo->single-valued preinfo x1))]
                    [else #f]))]
