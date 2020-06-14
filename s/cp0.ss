@@ -2562,7 +2562,7 @@
                             (let ([folded (generic-op a d)])
                               (and (target-fixnum? folded) folded)))))]
                 [else #f]))))
-        (define (partial-fold-plus level orig-arg* ctxt prim op generic-op ident bottom? assoc-at-level)
+        (define (partial-fold-plus level orig-arg* ctxt prim op generic-op ident bottom? assoc-at-level direct-result?)
           (define fold? (make-fold? op generic-op))
           (let loop ([arg* orig-arg*] [a ident] [val* '()] [used '()] [unused '()])
             (if (null? arg*)
@@ -2587,7 +2587,7 @@
                       (cond
                         [(null? val*) `(quote ,a)]
                         [(eqv? a ident)
-                         (if (and (fx= level 3) (null? (cdr val*)))
+                         (if (and (fx= level 3) (null? (cdr val*)) (direct-result? (car val*)))
                              (car val*)
                              (build-primcall (app-preinfo ctxt) level prim val*))]
                         [else
@@ -2649,15 +2649,17 @@
             [(_ plus prim generic-op ident bottom?)
              (partial-folder plus prim generic-op ident bottom? #f)]
             [(_ plus prim generic-op ident bottom? assoc-at-level)
+             (partial-folder plus prim generic-op ident bottom? assoc-at-level (lambda (e) #t))]
+            [(_ plus prim generic-op ident bottom? assoc-at-level direct-result?)
              (begin
                (define-inline 2 prim
                  ; (fl+) might should return -0.0, but we force it to return +0.0 per TSPL4
                  [() (residualize-seq '() '() ctxt) `(quote ,(if (eqv? ident -0.0) +0.0 ident))]
-                 [arg* (partial-fold-plus 2 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level)])
+                 [arg* (partial-fold-plus 2 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level direct-result?)])
                (define-inline 3 prim
                  ; (fl+) might should return -0.0, but we force it to return +0.0 per TSPL4
                  [() (residualize-seq '() '() ctxt) `(quote ,(if (eqv? ident -0.0) +0.0 ident))]
-                 [arg* (partial-fold-plus 3 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level)]))]
+                 [arg* (partial-fold-plus 3 arg* ctxt 'prim prim generic-op ident bottom? assoc-at-level direct-result?)]))]
             [(_ minus prim generic-op ident)
              (begin
                (define-inline 2 prim
@@ -2677,9 +2679,9 @@
             [(_ plus r6rs:prim prim generic-op ident bottom? assoc-at-level)
              (begin
                (define-inline 2 r6rs:prim
-                 [(arg1 arg2) (partial-fold-plus 2 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level)])
+                 [(arg1 arg2) (partial-fold-plus 2 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level (lambda (x) #t))])
                (define-inline 3 r6rs:prim
-                 [(arg1 arg2) (partial-fold-plus 3 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level)]))]
+                 [(arg1 arg2) (partial-fold-plus 3 (list arg1 arg2) ctxt 'prim prim generic-op ident bottom? assoc-at-level (lambda (x) #t))]))]
             [(_ minus r6rs:prim prim generic-op ident)
              (begin
                (define-inline 2 r6rs:prim
@@ -2691,18 +2693,28 @@
                  [(arg1 arg2)
                   (partial-fold-minus 3 arg1 (list arg2) ctxt 'prim prim generic-op ident)]))]))
 
+        (define obviously-fl?
+          ;; We keep single-argument `fl+` and `fl*` as an unboxing hint to the back end,
+          ;; but the hint is not necessary if the argument is the result of a primitive that
+          ;; produces fonums
+          (lambda (e)
+            (nanopass-case (Lsrc Expr) e
+              [(quote ,d) (flonum? d)]
+              [(call ,preinfo ,pr ,e* ...) (eq? 'flonum ($sgetprop (primref-name pr) '*result-type* #f))]
+              [else #f])))
+
         ; handling nans here using the support for handling exact zero in
         ; the multiply case.  maybe shouldn't bother with nans anyway.
         (partial-folder plus + + 0 generic-nan?)
         (partial-folder plus fx+ + 0 (lambda (x) #f) 3)
         (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0 (lambda (x) #f) 3)
-        (partial-folder plus fl+ fl+ -0.0 fl-nan?)
+        (partial-folder plus fl+ fl+ -0.0 fl-nan? #f obviously-fl?)
         (partial-folder plus cfl+ cfl+ -0.0 cfl-nan?)
 
         (partial-folder plus * * 1 exact-zero?)   ; exact zero trumps nan
         (partial-folder plus fx* * 1 exact-zero? 3)
         (r6rs-fixnum-partial-folder plus r6rs:fx* fx* * 1 exact-zero? 3)
-        (partial-folder plus fl* fl* 1.0 fl-nan?)
+        (partial-folder plus fl* fl* 1.0 fl-nan? #f obviously-fl?)
         (partial-folder plus cfl* cfl* 1.0 cfl-nan?)
 
         ; not handling nans here since we don't have support for the exact

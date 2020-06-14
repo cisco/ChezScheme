@@ -1055,17 +1055,18 @@
              (#%$suppress-primitive-inlining)
              (let ([before (+ (bytes-allocated) (bytes-deallocated))]
                    [N 100000])
-               (box?
-                (let loop ([i N] [bx (box 0.0)])
-                  (if (zero? i)
-                      bx
-                      (loop (sub1 i) (let ([v (unbox bx)])
-                                       (box (proc v)))))))
-               (let ([allocated (- (+ (bytes-allocated) (bytes-deallocated)) before)]
-                     [expected (* N (+ (compute-size 1.0)
-                                       (compute-size (box #f))))])
-                 (printf "~s ~s\n" allocated expected)
-                 (<= expected allocated (* 1.2 expected)))))]))
+               (and
+                (box?
+                 (let loop ([i N] [bx (box 0.0)])
+                   (if (zero? i)
+                       bx
+                       (loop (sub1 i) (let ([v (unbox bx)])
+                                        (box (proc v)))))))
+                (let ([allocated (- (+ (bytes-allocated) (bytes-deallocated)) before)]
+                      [expected (* N (+ (compute-size 1.0)
+                                        (compute-size (box #f))))])
+                  (printf "~s ~s\n" allocated expected)
+                  (<= expected allocated (* 1.2 expected))))))]))
     #t)
 
   (check-loop-allocation (lambda (v) (fl+ v v)))
@@ -1127,6 +1128,14 @@
   (check-loop-allocation (lambda (v) (if (fl>= (fl+ v v) v)
                                          (fl+ v 1.0)
                                          (fl- v 1.0))))
+
+  (check-loop-allocation (lambda (v)
+                           ;; The two single-argument `fl+`s here should work as
+                           ;; a hint for unboxing in the loop
+                           (let loop ([n 100] [v (fl+ v)])
+                             (if (fx= n 0)
+                                 (fl+ v)
+                                 (loop (fx- n 1) (fl+ v 1.0))))))
 
   (let ([bv (make-bytevector 8 0)])
     (check-loop-allocation (lambda (v) (fl+ v (bytevector-ieee-double-native-ref bv 0)))))

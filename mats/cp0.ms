@@ -1240,8 +1240,8 @@
            (fl+) (fl+ 3.0) (fl+ 3.0 4.0) (fl+ x) (fl+ x 0.0) (fl+ x -0.0) (fl+ 0.0 x) (fl+ -0.0 x) (fl+ x 3.0)
            (fl+ x 3.0 4.0) (fl+ 3.0 x 4.0) (fl+ 3.0 x -3.0) (fl+ (truncate -.5) x (/ -inf.0)) (fl+ 3.0 x 4.0 y 5.0)
            (fl+ 3.0 x +nan.0 y 5.0))))
-    '(#3%list 0.0 3.0 7.0 x (#3%fl+ 0.0 x) x (#3%fl+ 0.0 x) x (#3%fl+ 3.0 x)
-       (#3%fl+ 7.0 x) (#3%fl+ 7.0 x) (#3%fl+ 0.0 x) x (#3%fl+ 12.0 x y)
+    '(#3%list 0.0 3.0 7.0 (#3%fl+ x) (#3%fl+ 0.0 x) (#3%fl+ x) (#3%fl+ 0.0 x) (#3%fl+ x) (#3%fl+ 3.0 x)
+       (#3%fl+ 7.0 x) (#3%fl+ 7.0 x) (#3%fl+ 0.0 x) (#3%fl+ x) (#3%fl+ 12.0 x y)
        +nan.0))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
@@ -1338,8 +1338,8 @@
            (fl*) (fl* 3.0) (fl* 3.0 4.0) (fl* x) (fl* x 1.0) (fl* 1.0 x) (fl* x 3.0)
            (fl* x 3.0 4.0) (fl* 3.0 x 4.0) (fl* 3.0 x #i1/3) (fl* 3.0 x 4.0 y 5.0)
            (fl* 3.0 x 4.0 y +nan.0))))
-    '(#3%list 1.0 3.0 12.0 x x x (#3%fl* 3.0 x)
-       (#3%fl* 12.0 x) (#3%fl* 12.0 x) x (#3%fl* 60.0 x y)
+    '(#3%list 1.0 3.0 12.0 (#3%fl* x) (#3%fl* x) (#3%fl* x) (#3%fl* 3.0 x)
+       (#3%fl* 12.0 x) (#3%fl* 12.0 x) (#3%fl* x) (#3%fl* 60.0 x y)
        +nan.0))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
@@ -1836,7 +1836,7 @@
            (fl+) (fl+ 3.0) (fl+ 3.0 4.0) (fl+ x) (fl+ x 0.0) (fl+ x -0.0) (fl+ 0.0 x) (fl+ -0.0 x) (fl+ x 3.0)
            (fl+ x 3.0 4.0) (fl+ 3.0 x 4.0) (fl+ 3.0 x -3.0) (fl+ (truncate -.5) x (/ -inf.0)) (fl+ 3.0 x 4.0 y 5.0)
            (fl+ +nan.0 x 3.0 y 5.0) (fl+ 3.0 x +nan.0 y 5.0))))
-    '(#3%list 0.0 3.0 7.0 x (#3%fl+ x 0.0) (#3%fl+ x -0.0) (#3%fl+ 0.0 x) x (#3%fl+ x 3.0)
+    '(#3%list 0.0 3.0 7.0 (#3%fl+ x) (#3%fl+ x 0.0) (#3%fl+ x -0.0) (#3%fl+ 0.0 x) (#3%fl+ x) (#3%fl+ x 3.0)
        (#3%fl+ x 3.0 4.0) (#3%fl+ 3.0 x 4.0) (#3%fl+ 3.0 x -3.0) (#3%fl+ x -0.0) (#3%fl+ 3.0 x 4.0 y 5.0)
        +nan.0 (#3%fl+ 3.0 x +nan.0 y 5.0)))
   (equivalent-expansion?
@@ -1942,7 +1942,7 @@
            (fl*) (fl* 3.0) (fl* 3.0 4.0) (fl* x) (fl* x 1.0) (fl* 1.0 x) (fl* x 3.0)
            (fl* x 3.0 4.0) (fl* 3.0 x 4.0) (fl* 3.0 x #i1/3) (fl* 3.0 x 4.0 y 5.0)
            (fl* +nan.0 x 3.0 y 4.0) (fl* 3.0 x 4.0 y +nan.0))))
-    '(#3%list 1.0 3.0 12.0 x (#3%fl* x 1.0) x (#3%fl* x 3.0)
+    '(#3%list 1.0 3.0 12.0 (#3%fl* x) (#3%fl* x 1.0) (#3%fl* x) (#3%fl* x 3.0)
        (#3%fl* x 3.0 4.0) (#3%fl* 3.0 x 4.0) (#3%fl* 3.0 x #i1/3) (#3%fl* 3.0 x 4.0 y 5.0)
        +nan.0 (#3%fl* +3.0 x 4.0 y +nan.0)))
   (equivalent-expansion?
