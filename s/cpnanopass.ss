@@ -17396,14 +17396,18 @@
       (define-who assign-registers!
         (lambda (lambda-info varvec unvarvec)
           (define total-k (vector-length regvec))
-          (define ptr-k (let loop ([ptr-k total-k])
-                          (if (eq? (reg-type (vector-ref regvec (fx- ptr-k 1))) 'fp)
-                              (loop (fx- ptr-k 1))
-                              ptr-k)))
-          (define fp-k (fx- total-k ptr-k))
+          (define fp-k (length extra-fpregisters))
+          (define ptr-k (- total-k fp-k))
           (define uvar-weight
             (lambda (x)
-              (fx- (uvar-ref-weight x) (uvar-save-weight x))))
+              (cond
+                [(eq? (uvar-type x) 'fp)
+                 ;; Prioritize FP registers by degree only, which makes
+                 ;; sense with a few registers where we want to prioritize
+                 ;; local calculations
+                 0]
+                [else
+                 (fx- (uvar-ref-weight x) (uvar-save-weight x))])))
           ; could also be calculated when the conflict set is built, which would be more
           ; efficient for low-degree variables
           (define compute-degrees!
