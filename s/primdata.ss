@@ -1331,7 +1331,7 @@
   (fl< [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])   ; not restricted to 2+ arguments
   (fl<= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; not restricted to 2+ arguments
   (fl> [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])   ; not restricted to 2+ arguments
-  (fl>= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
+  (fl>= [sig [(flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; not restricted to 2+ arguments
   (flush-output-port [sig [() (output-port) -> (void)]] [flags true])   ; not restricted to 1 argument
   (foreign-entry? [sig [(string) -> (boolean)]] [flags discard])
   (foreign-entry [sig [(string) -> (uptr)]] [flags discard true])

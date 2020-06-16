@@ -1113,6 +1113,9 @@
                                          (set! i (flonum->fixnum v))
                                          (fl+ v 1.0)))))
 
+  (check-loop-allocation (lambda (v) (let ([u (fl+ v v)])
+                                       (fl* u u))))
+
   (check-loop-allocation (lambda (v) (if (fl= (fl+ v (fl* 2.0 v)) 7.0)
                                          (fl+ v 1.0)
                                          (fl- v 1.0))))
@@ -1143,6 +1146,21 @@
     (check-loop-allocation (lambda (v) (begin
                                          (bytevector-ieee-double-native-set! bv 0 (fl+ v 0.1))
                                          (fl* v 0.99)))))
+  (let ([bv (make-bytevector 8 0)])
+    (check-loop-allocation (lambda (v) (let ([v (fl+ v 1.0)])
+                                         (bytevector-ieee-double-native-set! bv 0 v)
+                                         (fl* v 0.99)))))
+  (or (not (enable-cp0))
+      (let ()
+        (define-record pseudo-random-generator
+          ((mutable double x10) (mutable double x11) (mutable double x12)
+           (mutable double x20) (mutable double x21) (mutable double x22))
+          ())
+        (let ([s (make-pseudo-random-generator 1.0 2.0 3.0 4.0 5.0 6.0)])
+          (check-loop-allocation (lambda (v) (let ([v (fl+ (pseudo-random-generator-x10 s) 1.0)])
+                                               (set-pseudo-random-generator-x11! s v)
+                                               (set-pseudo-random-generator-x12! s v)
+                                               (pseudo-random-generator-x20 s)))))))
 
   (begin
     (define many-compare
