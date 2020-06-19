@@ -616,7 +616,15 @@
     ; pseudo register used for mref's with no actual index
     (define %zero (make-reg 'zero #f #f #f #f))
 
-    ; define %ref-ret to be sfp[0] on machines w/no ret register
+    ;; define %ref-ret to be sfp[0] on machines w/no ret register
+    ;;
+    ;; The ret register, if any, is used to pass a return address to a
+    ;; function. All functions currently stash the ret register in
+    ;; sfp[0] and return to sfp[0] instead of the ret register, so the
+    ;; register doesn't have to be saved and restored for non-tail
+    ;; calls --- so use sfp[0] instead of the ret registerr to refer
+    ;; to the current call's return address. (A leaf procedure could
+    ;; do better, but doesn't currently.)
     (define-syntax %ref-ret
       (lambda (x)
         (meta-cond
@@ -11732,7 +11740,7 @@
                 (with-output-language (L13 Effect)
                   (let loop ([save-reg* save-reg*] [i 0])
                     (cond
-                      [(null? save-reg*) e]
+                      [(null? save-reg*) (with-saved-ret-reg e)]
                       [else
                        (%seq
                         ,(case i
@@ -12763,7 +12771,7 @@
                                              (set! ,fv0 ,%xp)
                                              ,(%mv-jump ,%xp (,%ac0 ,arg-registers ... ,fv0))))]))))))))))))
         (define reify-cc-help
-          (lambda (1-shot? always? save-ra? finish)
+          (lambda (1-shot? always? save-ra? ref-ret finish)
             (with-output-language (L13 Tail)
                 (%seq
                   (set! ,%td ,(%tc-ref stack-link))
@@ -12782,10 +12790,10 @@
                                            ,alloc
                                            (set! ,(%tc-ref cached-frame) ,(%constant sfalse))))
                                       alloc))
-                               (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
+                               (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,ref-ret)
                                (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
                                (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
-                               (set! ,%ref-ret ,%ac0)
+                               (set! ,ref-ret ,%ac0)
                                (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
                                (set! ,(%tc-ref stack-link) ,%xp)
                                (set! ,%ac0 ,(%tc-ref scheme-stack))
@@ -12814,7 +12822,7 @@
                                                 ,(%mref ,%td ,(constant continuation-attachments-disp))
                                                 ,(%constant sfalse))
                                             (false)
-                                            ,(%inline eq? ,%ref-ret ,%ac0))
+                                            ,(%inline eq? ,ref-ret ,%ac0))
                                         ,(finish %td)
                                         ,(build-reify)))))])
                      (if 1-shot?
@@ -12860,7 +12868,7 @@
                  (set! ,uf (literal ,(make-info-literal #f 'library-code
                                                         (lookup-libspec dounderflow)
                                                         (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                 (if ,(%inline eq? ,%ref-ret ,uf)
+                 (if ,(%inline eq? ,(get-ret-fv) ,uf)
                      ;; Maybe reified, so maybe an attachment
                      ,(%seq
                        (set! ,sl ,(%tc-ref stack-link))
@@ -12921,7 +12929,10 @@
                      ;; make sure the reify-1cc intrinsic declares kill for registers used by `reify-cc-help`,
                      ;; plus (say) %ts to have one to allocate, plus more as needed to allocate per machine
                      (check-live ,(intrinsic-entry-live* reify-1cc) ...)
-                     ,(reify-cc-help 1cc? 1cc? #t
+                     ,(reify-cc-help 1cc? 1cc? #t (with-output-language (L13 Lvalue)
+                                                    ;; Use sfp[0] instead of the ret register,
+                                                    ;; because we want to refer to this call's return
+                                                    (%mref ,%sfp 0))
                        (lambda (reg)
                          (if (eq? reg %td)
                              `(asm-return ,%td ,(intrinsic-return-live* reify-1cc) ...)
@@ -12932,7 +12943,10 @@
             `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
                ,(%seq
                   (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
-                  ,(reify-cc-help #f #f #f
+                  ,(reify-cc-help #f #f #f (with-output-language (L13 Lvalue)
+                                             ;; Use the ret registerr (if any), because reify
+                                             ;; adjusts the return address for a tail call
+                                             %ref-ret)
                     (lambda (reg)
                       (%seq
                         (set! ,(make-arg-opnd 1) ,reg)
@@ -13204,7 +13218,7 @@
                                      ,(%mref ,%td ,(constant continuation-attachments-disp))
                                      ,(%constant sfalse))
                            (false)
-                           ,(%inline eq? ,%ref-ret ,tmp))
+                           ,(%inline eq? ,(get-ret-fv) ,tmp))
                        (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
                            (nop)
                            (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
@@ -13233,7 +13247,7 @@
                         (set! ,tmp (literal ,(make-info-literal #f 'library-code
                                                                 (lookup-libspec dounderflow)
                                                                 (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                        (set! ,%ref-ret ,tmp)
+                        (set! ,(get-ret-fv) ,tmp)
                         (set! ,delta ,(%inline - ,%sfp ,(%tc-ref scheme-stack)))
                         (set! ,(%tc-ref scheme-stack) ,%sfp)
                         (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,delta))

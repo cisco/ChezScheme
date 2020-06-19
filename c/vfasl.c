@@ -1094,6 +1094,11 @@ static IFASLCODE abs_reloc_variant(IFASLCODE type) {
   return reloc_abs;
 #elif defined(ARMV6)
   return reloc_arm32_abs;
+#elif defined(PPC32)
+  if (type == reloc_ppc32_abs)
+    return reloc_ppc32_abs;
+  else
+    return reloc_abs;
 #else
   >> need to fill in for this platform <<
 #endif
