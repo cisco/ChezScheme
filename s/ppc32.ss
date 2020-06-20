@@ -1788,12 +1788,14 @@
   (define asm-store-double->single
     (lambda (code* dest-mem src-reg)
       (Trivit (dest-mem src-reg)
-        (select-addressing-mode
-         dest-mem
-         (lambda (dest-reg dest-offset)
-           (emit stfs src-reg dest-reg dest-offset code*))
-         (lambda (dest-reg index-reg)
-           (emit stfsx src-reg dest-reg index-reg code*))))))
+        (let ([tmp `(reg . ,%fptmp1)])
+          (emit frsp tmp src-reg
+            (select-addressing-mode
+             dest-mem
+             (lambda (dest-reg dest-offset)
+               (emit stfs tmp dest-reg dest-offset code*))
+             (lambda (dest-reg index-reg)
+               (emit stfsx tmp dest-reg index-reg code*))))))))
 
   (define-who asm-fpop-2
     (lambda (op)
