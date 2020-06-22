@@ -86,6 +86,10 @@ eval = $(defaulteval)
 defaultctb = (collect-trip-bytes)
 ctb = $(defaultctb)
 
+# cn defines the value to which collect-notify is set: f for #f, t for #t
+defaultcn = f
+cn = $(defaultcn)
+
 # cgr is the value to which collect-generation-radix is set.
 defaultcgr = (collect-generation-radix)
 cgr = $(defaultcgr)
@@ -164,6 +168,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
+             '(collect-notify #${cn})'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
@@ -189,6 +194,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
+             '(collect-notify #${cn})'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\
@@ -364,6 +370,7 @@ script.all$o makescript$o:
              '(heap-check-interval ${hci})'\
              '(#%$$enable-check-prelex-flags #${ecpf})'\
              '(compile-profile #$p)'\
+             '(collect-notify #${cn})'\
              '(collect-trip-bytes ${ctb})'\
              '(collect-generation-radix ${cgr})'\
              '(collect-maximum-generation ${cmg})'\

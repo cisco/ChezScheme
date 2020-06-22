@@ -1,5 +1,5 @@
-/* gc-ocd.c
- * Copyright 1984-2017 Cisco Systems, Inc.
+/* gc-011.c
+ * Copyright 1984-2020 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#define GCENTRY S_gc_ocd_entry
+#define GCENTRY S_gc_011_entry
+#define MAX_CG 0
+#define MIN_TG 1
+#define MAX_TG 1
+#define NO_LOCKED_OLDSPACE_OBJECTS
 #include "gc.c"
 
-ptr S_gc_ocd(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
-  MAX_CG = max_cg;
-  MIN_TG = min_tg;
-  MAX_TG = max_tg;
-
-  return S_gc_ocd_entry(tc, count_roots); 
+void S_gc_011(ptr tc) {
+  (void)S_gc_011_entry(tc, Sfalse);
 }

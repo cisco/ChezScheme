@@ -7170,6 +7170,18 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat collect: "collect: invalid generation -1".
 7.mo:Expected error in mat collect: "collect: invalid target generation 0 for generation 1".
 7.mo:Expected error in mat collect: "collect: invalid generation static".
+7.mo:Expected error in mat collect: "collect: invalid generation static".
+7.mo:Expected error in mat collect: "collect: invalid generation static".
+7.mo:Expected error in mat collect: "collect: invalid generation 17".
+7.mo:Expected error in mat collect: "collect: invalid generation -1".
+7.mo:Expected error in mat collect: "collect: invalid maximum target generation 2 for generation 3".
+7.mo:Expected error in mat collect: "collect: invalid maximum target generation dynamic for generation 3".
+7.mo:Expected error in mat collect: "collect: invalid maximum target generation 3 for generation 0".
+7.mo:Expected error in mat collect: "collect: invalid maximum target generation 3 for generation 0".
+7.mo:Expected error in mat collect: "collect: invalid minimum target generation 2 for generation 0 and maximum target generation 1".
+7.mo:Expected error in mat collect: "collect: invalid minimum target generation 2 for generation 0 and maximum target generation 0".
+7.mo:Expected error in mat collect: "collect: invalid minimum target generation 0 for generation 4 and maximum target generation static".
+7.mo:Expected error in mat collect: "collect: invalid minimum target generation -1 for generation 4 and maximum target generation static".
 7.mo:Expected error in mat sstats: "make-sstats: cpu value 0 is not a time record".
 7.mo:Expected error in mat sstats: "make-sstats: real value 0 is not a time record".
 7.mo:Expected error in mat sstats: "make-sstats: bytes value 0.0 is not an exact integer".

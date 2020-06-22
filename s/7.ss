@@ -795,23 +795,23 @@
   (define gc-count 0)
   (define start-bytes 0)
   (define docollect
-    (let ([do-gc (foreign-procedure "(cs)do_gc" (int int ptr) ptr)])
+    (let ([do-gc (foreign-procedure "(cs)do_gc" (int int int ptr) ptr)])
       (lambda (p)
         (with-tc-mutex
           (unless (= $active-threads 1)
             ($oops 'collect "cannot collect when multiple threads are active"))
-          (let-values ([(trip g gtarget count-roots) (p gc-trip)])
+          (let-values ([(trip g gmintarget gmaxtarget count-roots) (p gc-trip)])
             (set! gc-trip trip)
             (let ([cpu (current-time 'time-thread)] [real (current-time 'time-monotonic)])
               (set! gc-bytes (+ gc-bytes (bytes-allocated)))
               (when (collect-notify)
                 (fprintf (console-output-port)
                   "~%[collecting generation ~s into generation ~s..."
-                  g gtarget)
+                  g gmaxtarget)
                 (flush-output-port (console-output-port)))
               (when (eqv? g (collect-maximum-generation))
                 ($clear-source-lines-cache))
-              (let ([gc-result (do-gc g gtarget count-roots)])
+              (let ([gc-result (do-gc g gmintarget gmaxtarget count-roots)])
                 ($close-resurrected-files)
                 (when-feature pthreads
                   ($close-resurrected-mutexes&conditions))
@@ -854,14 +854,15 @@
         (docollect
           (lambda (gct)
             (let ([gct (+ gct 1)])
-              (let loop ([g (collect-maximum-generation)])
-                (if (= (modulo gct (expt (collect-generation-radix) g)) 0)
-                    (if (fx= g (collect-maximum-generation))
-                        (values 0 g g #f)
-                        (values gct g (fx+ g 1) #f))
-                    (loop (fx- g 1)))))))))
+              (let ([cmg (collect-maximum-generation)])
+                (let loop ([g cmg])
+                  (if (= (modulo gct (expt (collect-generation-radix) g)) 0)
+                      (if (fx= g cmg)
+                          (values 0 g (fxmin g 1) g #f)
+                          (values gct g 1 (fx+ g 1) #f))
+                      (loop (fx- g 1))))))))))
     (define collect2
-      (lambda (g gtarget count-roots)
+      (lambda (g gmintarget gmaxtarget count-roots)
         (docollect
           (lambda (gct)
             (values 
@@ -875,24 +876,44 @@
                         (+ gct (modulo (- n gct) n))))
                     (let ([next (trip g)] [limit (trip (fx+ g 1))])
                       (if (< next limit) next (- limit 1)))))
-              g gtarget count-roots)))))
+              g gmintarget gmaxtarget count-roots)))))
     (case-lambda
       [() (collect0)]
       [(g)
-       (unless (and (fixnum? g) (fx<= 0 g (collect-maximum-generation)))
-         ($oops who "invalid generation ~s" g))
-       (collect2 g (if (fx= g (collect-maximum-generation)) g (fx+ g 1)) #f)]
-      [(g gtarget) (collect g gtarget #f)]
-      [(g gtarget count-roots)
-       (unless (and (fixnum? g) (fx<= 0 g (collect-maximum-generation)))
-         ($oops who "invalid generation ~s" g))
-       (unless (if (fx= g (collect-maximum-generation))
-                   (or (eqv? gtarget g) (eq? gtarget 'static))
-                   (or (eqv? gtarget g) (eqv? gtarget (fx+ g 1))))
-         ($oops who "invalid target generation ~s for generation ~s" gtarget g))
+       (let ([cmg (collect-maximum-generation)])
+         (unless (and (fixnum? g) (fx<= 0 g cmg))
+           ($oops who "invalid generation ~s" g))
+         (let ([gtarget (if (fx= g cmg) g (fx+ g 1))])
+           (collect2 g gtarget gtarget #f)))]
+      [(g gtarget)
+       (let ([cmg (collect-maximum-generation)])
+         (unless (and (fixnum? g) (fx<= 0 g cmg))
+           ($oops who "invalid generation ~s" g))
+         (unless (if (fx= g cmg)
+                     (or (eqv? gtarget g) (eq? gtarget 'static))
+                     (or (eqv? gtarget g) (eqv? gtarget (fx+ g 1))))
+           ($oops who "invalid target generation ~s for generation ~s" gtarget g)))
+       (let ([gtarget (if (eq? gtarget 'static) (constant static-generation) gtarget)])
+         (collect2 g gtarget gtarget #f))]
+      [(g gmintarget gmaxtarget) (collect g gmintarget gmaxtarget #f)]
+      [(g gmintarget gmaxtarget count-roots)
+       (let ([cmg (collect-maximum-generation)])
+         (unless (and (fixnum? g) (fx<= 0 g cmg))
+           ($oops who "invalid generation ~s" g))
+         (unless (if (fx= g cmg)
+                     (or (eqv? gmaxtarget g) (eq? gmaxtarget 'static))
+                     (or (eqv? gmaxtarget g) (eqv? gmaxtarget (fx+ g 1))))
+           ($oops who "invalid maximum target generation ~s for generation ~s" gmaxtarget g))
+         (unless (or (eqv? gmintarget gmaxtarget)
+                     (and (fixnum? gmintarget)
+                          (fx<= 1 gmintarget (if (fixnum? gmaxtarget) gmaxtarget cmg))))
+           ($oops who "invalid minimum target generation ~s for generation ~s and maximum target generation ~s" gmintarget g gmaxtarget)))
        (unless (or (not count-roots) (list? count-roots))
          ($oops who "invalid counting-roots list ~s" count-roots))
-       (collect2 g (if (eq? gtarget 'static) (constant static-generation) gtarget) count-roots)])))
+       (collect2 g
+         (if (eq? gmintarget 'static) (constant static-generation) gmintarget)
+         (if (eq? gmaxtarget 'static) (constant static-generation) gmaxtarget)
+         count-roots)])))
 
 (set! collect-rendezvous
   (let ([fire-collector (foreign-procedure "(cs)fire_collector" () void)])

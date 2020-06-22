@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{February}
+\pubmonth{June}
 \pubyear{2020}
 
 \begin{document}
@@ -111,6 +111,35 @@ indicate whether the guardian is ordered or unordered. A guardian is
 unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
+
+\subsection{Incremental promotion of collected objects (9.5.3)}
+
+In previous versions of {\ChezScheme}, the collector always promoted
+surviving objects from every collected generation into a single
+target generation.
+For example, when the target generation was 3, it promoted not only
+surviving objects from generation 2 to generation 3 but also surviving
+objects from generations 0 and 1 directly to generation 3.
+This caused some prematurely promoted objects to be subjected to
+collection less frequently than their ages justified, potentially
+resulting in substantial inappropriate storage retention.
+This is particularly problematic when side effects result in pointers
+from the inappropriately retained objects to younger objects, as
+can happen with nonfunctional queues and lazy streams.
+
+Unless directed to do otherwise, the collector now promotes objects
+up only one generation at a time.
+That is, generation 0 objects that survive collection are promoted
+to generation 1, generation 1 objects are promoted to generation
+2, and so on.
+(Objects that survive a maximum nonstatic collection are promoted
+back into the maximum nonstatic collection.)
+Most applications should exhibit lower peak memory usage and possibly
+lower run times with this change.
+Applications that are adversely affected, if any, might benefit
+from a custom collect-request handler or custom values for the
+collection parameters that affect the behavior of the default
+handler.
 
 \subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.3)}
 

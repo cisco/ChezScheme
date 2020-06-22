@@ -78,10 +78,12 @@
 ;;                    inferred for `space-data`
 ;;       * counting-root : check a counting root before pushing to sweep stack
 ;;  - (trace <field>) : relocate for sweep, copy for copy, recur otherwise
-;;  - (trace-early <field>) : relocate for sweep, copy, and mark; recur otherwise
-;;  - (trace-now <field>) : direct recur
-;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd
+;;  - (trace-pure <field>) : like `trace`, but no need for generation tracking
+;;  - (trace-early <field>) : relocate for sweep, copy, and mark; recur otherwise; implies pure
+;;  - (trace-now <field>) : direct recur; implies pure
+;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd; implies pure
 ;;  - (trace-ptrs <field> <count>) : trace an array of pointerrs
+;;  - (trace-pure-ptrs <field> <count>) : pure analog of `trace-ptrs`
 ;;  - (copy <field>) : copy for copy, ignore otherwise
 ;;  - (copy-bytes <field> <count>) : copy an array of bytes
 ;;  - (copy-flonum <field>) : copy flonum and forward
@@ -206,7 +208,7 @@
          (copy-clos-code code)
          (copy-stack-length continuation-stack-length continuation-stack-clength)
          (copy continuation-stack-clength)
-         (trace-nonself continuation-winders)
+         (trace-pure-nonself continuation-winders)
          (trace-nonself continuation-attachments)
          (cond
            [(== (continuation-stack-length _) scaled-shot-1-shot-flag)]
@@ -220,7 +222,7 @@
                                   (continuation-stack-clength _))))]
              [else])
             (count countof-stack (continuation-stack-length _) 1 [sweep measure])
-            (trace continuation-link)
+            (trace-pure continuation-link)
             (trace-return continuation-return-address (continuation-return-address _))
             (case-mode
              [copy (copy continuation-stack)]
@@ -258,10 +260,15 @@
          [else
           (mark counting-root)
           (count countof-closure)]))
-       (when (or-not-as-dirty
-              (& (code-type code) (<< code-flag-mutable-closure code-flags-offset)))
-         (copy-clos-code code)
-         (trace-ptrs closure-data len))
+       (cond
+         [(and-purity-sensitive-mode
+           (& (code-type code) (<< code-flag-mutable-closure code-flags-offset)))
+          (copy-clos-code code)
+          (trace-ptrs closure-data len)]
+         [(and-not-as-dirty 1)
+          (copy-clos-code code)
+          (trace-pure-ptrs closure-data len)]
+         [else])
        (pad (when (== (& len 1) 0)
               (set! (closure-data _copy_ len) (FIX 0))))
        (count countof-closure)])]
@@ -458,8 +465,8 @@
       (vspace vspace_impure) ; would be better if we had pure, but these are rare
       (size size-ratnum)
       (copy-type ratnum-type)
-      (trace-immutable-now ratnum-numerator)
-      (trace-immutable-now ratnum-denominator)
+      (trace-now ratnum-numerator)
+      (trace-now ratnum-denominator)
       (mark)
       (vfasl-pad-word)
       (count countof-ratnum)]
@@ -469,8 +476,8 @@
       (vspace vspace_impure) ; same rationale as ratnum
       (size size-exactnum)
       (copy-type exactnum-type)
-      (trace-immutable-now exactnum-real)
-      (trace-immutable-now exactnum-imag)
+      (trace-now exactnum-real)
+      (trace-now exactnum-imag)
       (mark)
       (vfasl-pad-word)
       (count countof-exactnum)]
@@ -519,11 +526,11 @@
        (copy-type code-type)
        (copy code-length)
        (copy code-reloc)
-       (trace-nonself code-name)
-       (trace-nonself code-arity-mask)
+       (trace-pure-nonself code-name)
+       (trace-pure-nonself code-arity-mask)
        (copy code-closure-length)
-       (trace-nonself code-info)
-       (trace-nonself code-pinfo*)
+       (trace-pure-nonself code-info)
+       (trace-pure-nonself code-pinfo*)
        (trace-code len))
       (count countof-code)]
 
@@ -575,6 +582,12 @@
    [else
     (trace field)]))
 
+(define-trace-macro (trace-pure-nonself field)
+  (case-mode
+   [self-test]
+   [else
+    (trace-pure field)]))
+
 (define-trace-macro (trace-nonself/vfasl-as-nil field)
   (case-mode
    [vfasl-copy
@@ -611,7 +624,7 @@
        (set! (FWDMARKER cdr_p) forward_marker)
        (set! (FWDADDRESS cdr_p) new_cdr_p)
        (case-flag maybe-backreferences?
-        [on (ADD_BACKREFERENCE_FROM new_cdr_p new_p)]
+        [on (ADD_BACKREFERENCE_FROM new_cdr_p new_p _tg_)]
         [off])
        (count count-pair size-pair 2)]
       [else
@@ -645,10 +658,6 @@
                 (constant header-size-stencil-vector)
                 (constant byte-alignment))
              (constant bytes-per-segment))))
-
-(define-trace-macro (trace-immutable-now ref)
-  (when (and-not-as-dirty 1)
-    (trace-now ref)))
 
 (define-trace-macro (trace-code-early code)
   (unless-code-relocated
@@ -692,9 +701,8 @@
    [(copy measure)
     (trace ref)]
    [sweep
-    (define val : ptr (ref _))
-    (trace (just val))  
-    (set! (ref _) val)]
+    (trace ref) ; can't trace `val` directly, because we need an impure relocate
+    (define val : ptr (ref _))]
    [vfasl-copy
     (set! (ref _copy_) vfasl-val)]
    [else]))
@@ -705,7 +713,9 @@
     (define code : ptr (cond
                          [(Sprocedurep val) (CLOSCODE val)]
                          [else (SYMCODE _)]))
-    (trace (just code))
+    (case-flag as-dirty?
+       [on (trace (just code))]
+       [off (trace-pure (just code))])
     (INITSYMCODE _ code)]
    [measure]
    [vfasl-copy
@@ -772,7 +782,7 @@
            (case-mode
             [(sweep self-test)
              ;; Bignum pointer mask may need forwarding
-             (trace (record-type-pm rtd))
+             (trace-pure (record-type-pm rtd))
              (set! num (record-type-pm rtd))]
             [else])])
          (let* ([index : iptr (- (BIGLEN num) 1)]
@@ -854,8 +864,8 @@
                       ;; For max_copied_generation, the list will get copied again in `rtds_with_counts` fixup;
                       ;; meanwhile, allocating in `space_impure` would copy and sweep old list entries causing
                       ;; otherwise inaccessible rtds to be retained
-                      (S_cons_in (cond [(<= grtd max_copied_generation) space_new] [else space_impure])
-                                 (cond [(<= grtd max_copied_generation) 0] [else grtd])
+                      (S_cons_in (cond [(<= grtd MAX_CG) space_new] [else space_impure])
+                                 (cond [(<= grtd MAX_CG) 0] [else grtd])
                                  c_rtd
                                  (array-ref S_G.rtds_with_counts grtd)))
                 (set! (array-ref (array-ref S_G.countof grtd) countof_pair) += 1))]
@@ -913,10 +923,10 @@
         (measure_add_stack_size (tc-scheme-stack tc) (tc-scheme-stack-size tc))]
        [else])
       (set! (tc-stack-cache tc) Snil)
-      (trace (tc-cchain tc))
-      (trace (tc-stack-link tc))
-      (trace (tc-winders tc))
-      (trace (tc-attachments tc))
+      (trace-pure (tc-cchain tc))
+      (trace-pure (tc-stack-link tc))
+      (trace-pure (tc-winders tc))
+      (trace-pure (tc-attachments tc))
       (case-mode
        [sweep
         (set! (tc-cached-frame tc) Sfalse)]
@@ -933,26 +943,26 @@
         (set! (tc-X tc) 0)
         (set! (tc-Y tc) 0)]
        [else])
-      (trace (tc-threadno tc))
-      (trace (tc-current-input tc))
-      (trace (tc-current-output tc))
-      (trace (tc-current-error tc))
-      (trace (tc-sfd tc))
-      (trace (tc-current-mso tc))
-      (trace (tc-target-machine tc))
-      (trace (tc-fxlength-bv tc))
-      (trace (tc-fxfirst-bit-set-bv tc))
-      (trace (tc-null-immutable-vector tc))
-      (trace (tc-null-immutable-fxvector tc))
-      (trace (tc-null-immutable-bytevector tc))
-      (trace (tc-null-immutable-string tc))
-      (trace (tc-compile-profile tc))
-      (trace (tc-subset-mode tc))
-      (trace (tc-default-record-equal-procedure tc))
-      (trace (tc-default-record-hash-procedure tc))
-      (trace (tc-compress-format tc))
-      (trace (tc-compress-level tc))
-      (trace (tc-parameters tc))
+      (trace-pure (tc-threadno tc))
+      (trace-pure (tc-current-input tc))
+      (trace-pure (tc-current-output tc))
+      (trace-pure (tc-current-error tc))
+      (trace-pure (tc-sfd tc))
+      (trace-pure (tc-current-mso tc))
+      (trace-pure (tc-target-machine tc))
+      (trace-pure (tc-fxlength-bv tc))
+      (trace-pure (tc-fxfirst-bit-set-bv tc))
+      (trace-pure (tc-null-immutable-vector tc))
+      (trace-pure (tc-null-immutable-fxvector tc))
+      (trace-pure (tc-null-immutable-bytevector tc))
+      (trace-pure (tc-null-immutable-string tc))
+      (trace-pure (tc-compile-profile tc))
+      (trace-pure (tc-subset-mode tc))
+      (trace-pure (tc-default-record-equal-procedure tc))
+      (trace-pure (tc-default-record-hash-procedure tc))
+      (trace-pure (tc-compress-format tc))
+      (trace-pure (tc-compress-level tc))
+      (trace-pure (tc-parameters tc))
       (case-mode
        [(sweep)
         (set! (tc-DSTBV tc) Sfalse)
@@ -961,7 +971,7 @@
       (let* ([i : INT 0])
         (while
          :? (< i virtual_register_count)
-         (trace (tc-virtual-registers tc i))
+         (trace-pure (tc-virtual-registers tc i))
          (set! i += 1))))]))
 
 (define-trace-macro (trace-stack base-expr fp-expr ret-expr)
@@ -986,10 +996,10 @@
              :? (!= mask 0)
              (set! pp += 1)
              (when (& mask #x0001)
-               (trace (* pp)))
+               (trace-pure (* pp)))
              (set! mask >>= 1)))]
          [else
-          (trace (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
+          (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
 
           (let* ([num : ptr (ENTRYLIVEMASK oldret)]
                  [index : iptr (BIGLEN num)])
@@ -1002,7 +1012,7 @@
                 :? (> bits 0)
                 (set! bits -= 1)
                 (set! pp += 1)
-                (when (& mask 1) (trace (* pp)))
+                (when (& mask 1) (trace-pure (* pp)))
                 (set! mask >>= 1)))))])))))
 
 (define-trace-macro (trace-return copy-field field)
@@ -1023,7 +1033,7 @@
       (relocate_code c_p x_si)
       (set! field (cast ptr (+ (cast uptr c_p) co))))]
    [else
-    (trace (just c_p))]))
+    (trace-pure (just c_p))]))
 
 (define-trace-macro (trace-code len)
   (case-mode
@@ -1072,7 +1082,7 @@
           [vfasl-sweep
            (set! obj (vfasl_encode_relocation vfi obj))]
           [else
-           (trace (just obj))])
+           (trace-pure (just obj))])
          (case-mode
           [sweep
            (S_set_code_obj "gc" (RELOC_TYPE entry) _ a obj item_off)]
@@ -1083,7 +1093,7 @@
     (case-mode
      [sweep
       (cond
-        [(&& (== target_generation static_generation)
+        [(&& (== from_g static_generation)
              (&& (! S_G.retain_static_relocation)
                  (== 0 (& (code-type _) (<< code_flag_template code_flags_offset)))))
          (set! (code-reloc _) (cast ptr 0))]
@@ -1098,7 +1108,7 @@
                 (mark_typemod_data_object t n t_si)]
                [else
                 (let* ([oldt : ptr t])
-                  (find_room space_data target_generation typemod n t)
+                  (find_room space_data from_g typemod n t)
                   (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
@@ -1141,6 +1151,11 @@
   (case-mode
    [vfasl-copy 1]
    [else e]))
+
+(define-trace-macro (and-purity-sensitive-mode e)
+  (case-mode
+   [sweep e]
+   [else 0]))
 
 (define-trace-macro (when-vfasl e)
   (case-mode
@@ -1320,13 +1335,13 @@
     (code
      (format "static ~a ~a(~aptr p~a)"
              (case (lookup 'mode config)
-               [(copy vfasl-copy) "ptr"]
+               [(copy mark) "IGEN"]
+               [(vfasl-copy) "ptr"]
                [(size vfasl-sweep) "uptr"]
                [(self-test) "IBOOL"]
                [(sweep) (if (lookup 'as-dirty? config #f)
                             "IGEN"
                             "void")]
-               [(mark) "void"]
                [else "void"])
              name
              (case (lookup 'mode config)
@@ -1339,11 +1354,15 @@
                 "vfasl_info *vfi, "]
                [else ""])
              (case (lookup 'mode config)
-               [(copy mark vfasl-copy) ", seginfo *si"]
+               [(copy) ", seginfo *si, ptr *dest"]
+               [(mark vfasl-copy) ", seginfo *si"]
                [(sweep)
-                (if (lookup 'as-dirty? config #f)
-                    ", IGEN tg, IGEN youngest"
-                    "")]
+                (cond
+                  [(lookup 'as-dirty? config #f) ", IGEN youngest"]
+                  [(and (lookup 'from-g-only-counting? config #f)
+                        (not (lookup 'counts? config #f)))
+                   ", IGEN UNUSED(from_g)"]
+                  [else ", IGEN from_g"])]
                [else ""]))
      (let ([body
             (lambda ()
@@ -1376,20 +1395,22 @@
            "check_triggers(si);"
            (code-block
             "ptr new_p;"
-            "IGEN tg = target_generation;"
+            "IGEN tg = TARGET_GENERATION(si);"
             (body)
             "FWDMARKER(p) = forward_marker;"
             "FWDADDRESS(p) = new_p;"
             (and (lookup 'maybe-backreferences? config #f)
-                 "ADD_BACKREFERENCE(p)")
-            "return new_p;"))]
+                 "ADD_BACKREFERENCE(p, tg);")
+            "*dest = new_p;"
+            "return tg;"))]
          [(mark)
           (code-block
            "change = 1;"
            "check_triggers(si);"
            (ensure-segment-mark-mask "si" "" '())
            (body)
-           "ADD_BACKREFERENCE(p)")]
+           "ADD_BACKREFERENCE(p, si->generation);"
+           "return si->generation;")]
          [(sweep)
           (code-block
            (and (lookup 'maybe-backreferences? config #f)
@@ -1522,10 +1543,14 @@
                     [else #f])
                   (statements (cdr l) (cons `(copy-extra-rtd ,field) config)))]
            [`(trace ,field)
-            (code (trace-statement field config #f)
+            (code (trace-statement field config #f 'impure)
+                  (statements (cdr l) config))]
+           [`(trace-pure ,field)
+            (code (and (not (lookup 'as-dirty? config #f))
+                       (trace-statement field config #f 'pure))
                   (statements (cdr l) config))]
            [`(trace-early ,field)
-            (code (trace-statement field config #t)
+            (code (trace-statement field config #t 'pure)
                   (statements (cdr l) (if (symbol? field)
                                           (cons `(copy-extra ,field) config)
                                           config)))]
@@ -1535,15 +1560,16 @@
                [(copy)
                 (code-block
                  (format "ptr tmp_p = ~a;" (field-expression field config "p" #f))
-                 (relocate-statement "tmp_p" config)
+                 (relocate-statement 'pure "tmp_p" config)
                  (format "~a = tmp_p;" (field-expression field config "new_p" #f)))]
                [(self-test) #f]
                [(measure vfasl-copy vfasl-sweep)
                 (statements (list `(trace ,field)) config)]
                [(mark)
-                (relocate-statement (field-expression field config "p" #t) config)]
+                (relocate-statement 'pure (field-expression field config "p" #t) config)]
                [else
-                (trace-statement field config #f)])
+                (and (not (lookup 'as-dirty? config #f))
+                     (trace-statement field config #f 'pure))])
              (statements (cdr l) config))]
            [`(copy ,field)
             (code (copy-statement field config)
@@ -1599,6 +1625,14 @@
               [else
                (statements (cons `(copy ,field) (cdr l)) config)])]
            [`(trace-ptrs ,offset ,len)
+            (statements (cons `(trace-ptrs ,offset ,len impure)
+                              (cdr l))
+                        config)]
+           [`(trace-pure-ptrs ,offset ,len)
+            (statements (cons `(trace-ptrs ,offset ,len pure)
+                              (cdr l))
+                        config)]
+           [`(trace-ptrs ,offset ,len ,purity)
             (case (lookup 'mode config)
               [(copy vfasl-copy)
                (statements (cons `(copy-bytes ,offset (* ptr_bytes ,len))
@@ -1609,8 +1643,9 @@
                 (loop-over-pointers
                  (field-expression offset config "p" #t)
                  len
-                 (trace-statement `(array-ref p_p idx) config #f)
-                 config))]
+                 (trace-statement `(array-ref p_p idx) config #f purity)
+                 config)
+                (statements (cdr l) config))]
               [(self-test)
                (code
                 (loop-over-pointers (field-expression offset config "p" #t)
@@ -1743,7 +1778,8 @@
               [(copy)
                (unless (null? (cdr l))
                  (error 'skip-forwarding "not at end"))
-               (code "return new_p;")]
+               (code "*dest = new_p;"
+                     "return tg;")]
               [else
                (statements (cdr l) config)])]
            [`(mark . ,flags)
@@ -1813,7 +1849,7 @@
                          (cond
                            [(equal? tst "1")
                             (if else?
-                                (code-block "else" rhs)
+                                (code "else" (code-block rhs))
                                 rhs)]
                            [else
                             (code (format "~aif (~a)" (if else? "else " "") tst)
@@ -1902,6 +1938,7 @@
         [`_tg_
          (case (lookup 'mode config)
            [(copy) "tg"]
+           [(mark) "TARGET_GENERATION(si)"]
            [else "target_generation"])]
         [`_backreferences?_
          (if (lookup 'maybe-backreferences? config #f)
@@ -2016,14 +2053,14 @@
      "for (idx = 0; idx < p_len; idx++)"
      (code-block body)))
 
-  (define (trace-statement field config early?)
+  (define (trace-statement field config early? purity)
     (define mode (lookup 'mode config))
     (cond
       [(or (eq? mode 'sweep)
            (eq? mode 'vfasl-sweep)
            (and early? (or (eq? mode 'copy)
                            (eq? mode 'mark))))
-       (relocate-statement (field-expression field config "p" #t) config)]
+       (relocate-statement purity (field-expression field config "p" #t) config)]
       [(or (eq? mode 'copy)
            (eq? mode 'vfasl-copy))
        (copy-statement field config)]
@@ -2033,15 +2070,17 @@
        (format "if (p == ~a) return 1;" (field-expression field config "p" #f))]
       [else #f]))
 
-  (define (relocate-statement e config)
+  (define (relocate-statement purity e config)
     (define mode (lookup 'mode config))
     (case mode
       [(vfasl-sweep)
        (format "vfasl_relocate(vfi, &~a);" e)]
       [else
        (if (lookup 'as-dirty? config #f)
-           (format "relocate_dirty(&~a, tg, youngest);" e)
-           (format "relocate(&~a);" e))]))
+           (begin
+             (when (eq? purity 'pure) (error 'relocate-statement "pure as dirty?"))
+             (format "relocate_dirty(&~a, youngest);" e))
+           (format "relocate_~a(&~a~a);" purity e (if (eq? purity 'impure) ", from_g" "")))]))
 
   (define (measure-statement e)
     (code
@@ -2075,9 +2114,11 @@
         [(or (eq? mode modes) (and (pair? modes) (memq mode modes)))
          (cond
            [(lookup 'counts? config #f)
-            (let ([tg (if (eq? real-mode 'copy)
-                          "tg"
-                          "target_generation")])
+            (let ([tg (case real-mode
+                        [(copy) "tg"]
+                        [(sweep) "from_g"]
+                        [(mark) "TARGET_GENERATION(si)"]
+                        [else "target_generation"])])
               (code
                (format "S_G.countof[~a][~a] += ~a;" tg (as-c counter) scale)
                (if (lookup 'constant-size? config #f)
@@ -2144,13 +2185,14 @@
                "if (seg == end_seg) {"
                "  si->marked_count += p_sz;"
                "} else {"
-               "  seginfo *mark_si;"
+               "  seginfo *mark_si; IGEN g;"
                "  si->marked_count += ((uptr)build_ptr(seg+1,0)) - addr;"
                "  seg++;"
                "  while (seg < end_seg) {"
                "    mark_si = SegInfo(seg);"
-               "    if (!fully_marked_mask) init_fully_marked_mask();"
-               "    mark_si->marked_mask = fully_marked_mask;"
+               "    g = mark_si->generation;"
+               "    if (!fully_marked_mask[g]) init_fully_marked_mask(g);"
+               "    mark_si->marked_mask = fully_marked_mask[g];"
                "    mark_si->marked_count = segment_bitmap_bytes;"
                "    seg++;"
                "  }"
@@ -2239,8 +2281,8 @@
   (define (ensure-segment-mark-mask si inset flags)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  find_room_voidp(space_data, target_generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
-             inset si)
+     (format "~a  find_room_voidp(space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
+             inset si si)
      (if (memq 'no-clear flags)
          (format "~a  /* no clearing needed */" inset)
          (format "~a  memset(~a->marked_mask, 0, segment_bitmap_bytes);" inset si))
@@ -2444,7 +2486,7 @@
                                                 (as-dirty? #t)))
          (sweep1 'symbol)
          (sweep1 'symbol "sweep_dirty_symbol" '((as-dirty? #t)))
-         (sweep1 'thread)
+         (sweep1 'thread "sweep_thread" '((from-g-only-counting? #t)))
          (sweep1 'port)
          (sweep1 'port "sweep_dirty_port" '((as-dirty? #t)))
          (sweep1 'closure "sweep_continuation" '((code-relocated? #t)

@@ -67,6 +67,7 @@ extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
 extern ptr S_bytes_finalized PROTO(());
 extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
 extern void S_dirty_set PROTO((ptr *loc, ptr x));
+extern void S_mark_card_dirty PROTO((uptr card, IGEN to_g));
 extern void S_scan_dirty PROTO((ptr *p, ptr *endp));
 extern void S_scan_remembered_set PROTO((void));
 extern void S_get_more_room PROTO((void));
@@ -147,8 +148,8 @@ extern void S_gc_init PROTO((void));
 extern void S_register_child_process PROTO((INT child));
 #endif /* WIN32 */
 extern void S_fixup_counts PROTO((ptr counts));
-extern ptr S_do_gc PROTO((IGEN g, IGEN gtarget, ptr count_roots));
-extern ptr S_gc PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
+extern ptr S_do_gc PROTO((IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
+extern ptr S_gc PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
 extern void S_gc_init PROTO((void));
 extern void S_set_maxgen PROTO((IGEN g));
 extern IGEN S_maxgen PROTO((void));
@@ -156,7 +157,6 @@ extern void S_set_minfreegen PROTO((IGEN g));
 extern IGEN S_minfreegen PROTO((void));
 extern void S_set_minmarkgen PROTO((IGEN g));
 extern IGEN S_minmarkgen PROTO((void));
-extern ptr S_locked_objects PROTO((void));
 #ifndef WIN32
 extern void S_register_child_process PROTO((INT child));
 #endif /* WIN32 */
@@ -168,15 +168,19 @@ extern void S_set_enable_object_backreferences PROTO((IBOOL eoc));
 extern ptr S_object_backreferences PROTO((void));
 extern void S_immobilize_object PROTO((ptr v));
 extern void S_mobilize_object PROTO((ptr v));
+extern ptr S_locked_objects PROTO((void));
 extern ptr S_unregister_guardian PROTO((ptr tconc));
 extern void S_compact_heap PROTO((void));
 extern void S_check_heap PROTO((IBOOL aftergc, IGEN target_gen));
 
+/* gc-011.c */
+extern void S_gc_011 PROTO((ptr tc));
+
 /* gc-ocd.c */
-extern ptr S_gc_ocd PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
+extern ptr S_gc_ocd PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
 
 /* gc-oce.c */
-extern ptr S_gc_oce PROTO((ptr tc, IGEN mcg, IGEN tg, ptr count_roots));
+extern ptr S_gc_oce PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
 extern ptr S_count_size_increments PROTO((ptr ls, IGEN generation));
 
 /* intern.c */

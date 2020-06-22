@@ -395,8 +395,8 @@ static void s_show_chunks(FILE *out, ptr sorted_chunks) {
 #define INCRGEN(g) (g = g == S_G.max_nonstatic_generation ? static_generation : g+1)
 static void s_showalloc(IBOOL show_dump, const char *outfn) {
   FILE *out;
-  iptr count[space_total+1][generation_total+1];
-  uptr bytes[space_total+1][generation_total+1];
+  iptr count[generation_total+1][space_total+1];
+  uptr bytes[generation_total+1][space_total+1];
   int i, column_size[generation_total+1];
   char fmtbuf[FMTBUFSIZE];
   static char *spacename[space_total+1] = { alloc_space_names, "bogus", "total" };
@@ -427,42 +427,42 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
       }
     }
   }
-  for (s = 0; s <= space_total; s++)
-    for (g = 0; g <= generation_total; INCRGEN(g))
-      count[s][g] = bytes[s][g] = 0;
+  for (g = 0; g <= generation_total; INCRGEN(g))
+    for (s = 0; s <= space_total; s++)
+      count[g][s] = bytes[g][s] = 0;
 
-  for (s = 0; s <= max_real_space; s++) {
-    for (g = 0; g <= static_generation; INCRGEN(g)) {
+  for (g = 0; g <= static_generation; INCRGEN(g)) {
+    for (s = 0; s <= max_real_space; s++) {
       /* add in bytes previously recorded */
-      bytes[s][g] += S_G.bytes_of_space[s][g];
+      bytes[g][s] += S_G.bytes_of_space[g][s];
       /* add in bytes in active segments */
-      if (S_G.next_loc[s][g] != FIX(0))
-        bytes[s][g] += (uptr)S_G.next_loc[s][g] - (uptr)S_G.base_loc[s][g];
+      if (S_G.next_loc[g][s] != FIX(0))
+        bytes[g][s] += (uptr)S_G.next_loc[g][s] - (uptr)S_G.base_loc[g][s];
     }
   }
 
-  for (s = 0; s <= max_real_space; s++) {
-    for (g = 0; g <= static_generation; INCRGEN(g)) {
-      for (si = S_G.occupied_segments[s][g]; si != NULL; si = si->next) {
-        count[s][g] += 1;
+  for (g = 0; g <= static_generation; INCRGEN(g)) {
+    for (s = 0; s <= max_real_space; s++) {
+      for (si = S_G.occupied_segments[g][s]; si != NULL; si = si->next) {
+        count[g][s] += 1;
       }
     }
   }
 
-  for (s = 0; s < space_total; s++) {
-    for (g = 0; g < generation_total; INCRGEN(g)) {
-      count[space_total][g] += count[s][g];
-      count[s][generation_total] += count[s][g];
-      count[space_total][generation_total] += count[s][g];
-      bytes[space_total][g] += bytes[s][g];
-      bytes[s][generation_total] += bytes[s][g];
-      bytes[space_total][generation_total] += bytes[s][g];
+  for (g = 0; g < generation_total; INCRGEN(g)) {
+    for (s = 0; s < space_total; s++) {
+      count[g][space_total] += count[g][s];
+      count[generation_total][s] += count[g][s];
+      count[generation_total][space_total] += count[g][s];
+      bytes[g][space_total] += bytes[g][s];
+      bytes[generation_total][s] += bytes[g][s];
+      bytes[generation_total][space_total] += bytes[g][s];
     }
   }
 
   for (g = 0; g <= generation_total; INCRGEN(g)) {
-    if (count[space_total][g] != 0) {
-      int n = 1 + snprintf(fmtbuf, FMTBUFSIZE, ""Ptd"", (ptrdiff_t)count[space_total][g]);
+    if (count[g][space_total] != 0) {
+      int n = 1 + snprintf(fmtbuf, FMTBUFSIZE, ""Ptd"", (ptrdiff_t)count[g][space_total]);
       column_size[g] = n < 8 ? 8 : n;
     }
   }
@@ -470,7 +470,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
   fprintf(out, "Segments per space & generation:\n\n");
   fprintf(out, "%8s", "");
   for (g = 0; g <= generation_total; INCRGEN(g)) {
-    if (count[space_total][g] != 0) {
+    if (count[g][space_total] != 0) {
       if (g == generation_total) {
         /* coverity[uninit_use] */
         snprintf(fmtbuf, FMTBUFSIZE, "%%%ds", column_size[g]);
@@ -489,25 +489,25 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
   fprintf(out, "\n");
   for (s = 0; s <= space_total; s++) {
     if (s != space_empty) {
-      if (count[s][generation_total] != 0) {
+      if (count[generation_total][s] != 0) {
         fprintf(out, "%7s:", spacename[s]);
         for (g = 0; g <= generation_total; INCRGEN(g)) {
-          if (count[space_total][g] != 0) {
+          if (count[g][space_total] != 0) {
             /* coverity[uninit_use] */
             snprintf(fmtbuf, FMTBUFSIZE, "%%%dtd", column_size[g]);
-            fprintf(out, fmtbuf, (ptrdiff_t)(count[s][g]));
+            fprintf(out, fmtbuf, (ptrdiff_t)(count[g][s]));
           }
         }
         fprintf(out, "\n");
         fprintf(out, "%8s", "");
         for (g = 0; g <= generation_total; INCRGEN(g)) {
-          if (count[space_total][g] != 0) {
-            if (count[s][g] != 0 && s <= max_real_space) {
+          if (count[g][space_total] != 0) {
+            if (count[g][s] != 0 && s <= max_real_space) {
               /* coverity[uninit_use] */
               snprintf(fmtbuf, FMTBUFSIZE, "%%%dd%%%%", column_size[g] - 1);
               fprintf(out, fmtbuf,
-                  (int)(((double)bytes[s][g] /
-                      ((double)count[s][g] * bytes_per_segment)) * 100.0));
+                  (int)(((double)bytes[g][s] /
+                      ((double)count[g][s] * bytes_per_segment)) * 100.0));
             } else {
               /* coverity[uninit_use] */
               snprintf(fmtbuf, FMTBUFSIZE, "%%%ds", column_size[g]);
