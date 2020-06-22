@@ -924,11 +924,11 @@
   (define-instruction effect invoke-prelude
     [(op)
      (constant-case machine-type-name
-       [(i3osx ti3osx)
+       [(i3nt ti3nt) `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4))]
+       [else
         (seq
           `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4))
-          `(set! ,(make-live-info) ,%sp (asm ,info ,asm-sub ,%sp (immediate 12))))]
-       [else `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4))])])
+          `(set! ,(make-live-info) ,%sp (asm ,info ,asm-sub ,%sp (immediate 12))))])])
   )
 
 ;;; SECTION 3: assembler
@@ -1918,8 +1918,8 @@
     (lambda ()
       (constant-case machine-type-name
         ; remove padding added by asm-enter
-        [(i3osx ti3osx) (emit addi '(imm 12) (cons 'reg %sp) (emit ret '()))]
-        [else (emit ret '())])))
+        [(i3nt ti3nt) (emit ret '())]
+        [else (emit addi '(imm 12) (cons 'reg %sp) (emit ret '()))])))
 
   (define asm-c-return
     (lambda (info)
@@ -2112,17 +2112,17 @@
   (define asm-save-flrv
     (lambda (code*)
       ; we normally need 8 to store the floating point return variable, but
-      ; on the x86 mac we need 16 in order to get the required 16-byte alignment
-      (emit subi `(imm ,(constant-case machine-type-name [(i3osx ti3osx) 16] [else 8]))
+      ; on some OS's we need 16 in order to get the required 16-byte alignment
+      (emit subi `(imm ,(constant-case machine-type-name [(i3nt ti3nt) 8] [else 16]))
         (cons 'reg %sp)
         (emit fstpl `(disp 0 ,%sp) code*))))
 
   (define asm-restore-flrv
     (lambda (code*)
       ; we normally need 8 to store the floating point return variable, but
-      ; on the x86 mac we need 16 in order to get the required 16-byte alignment
+      ; on some OS's we need 16 in order to get the required 16-byte alignment
       (emit fldl `(disp 0 ,%sp)
-        (emit addi `(imm ,(constant-case machine-type-name [(i3osx ti3osx) 16] [else 8]))
+        (emit addi `(imm ,(constant-case machine-type-name [(i3nt ti3nt) 8] [else 16]))
           (cons 'reg %sp) code*))))
 
   (define asm-library-jump
@@ -2308,7 +2308,8 @@
                         code*))))))))))
 
   (constant-case machine-type-name
-    [(i3osx ti3osx)
+    [(i3nt ti3nt) (define asm-enter values)]
+    [else
      (define-syntax asm-enter
        (lambda (x)
          (syntax-case x ()
@@ -2317,8 +2318,7 @@
               #'(%seq
                  ; adjust to 16-byte boundary, accounting for 4-byte return address pushed by call
                  (set! ,%sp ,(%inline - ,%sp (immediate 12)))
-                 ,e))])))]
-    [else (define asm-enter values)])
+                 ,e))])))])
 
   (define callee-expects-result-pointer?
     (lambda (result-type)
@@ -2361,10 +2361,10 @@
       ;; will be pushed later, before a function call
       (let ([offset (fx+ (fx* 4 (length regs)) (fx* 8 fp-reg-count))])
         (constant-case machine-type-name
-          [(i3osx ti3osx)
+          [(i3nt ti3nt) offset]
+          [else
            (fx- (fxlogand (fx+ offset (fx* 4 arg-count) 15) -16)
-                 (fx* 4 arg-count))]
-          [else offset])))
+                 (fx* 4 arg-count))])))
     (define (push-registers regs fp-reg-count arg-count)
       (let ([offset (push-registers-size regs fp-reg-count arg-count)])
         (move-registers regs fp-reg-count #f offset
@@ -2538,8 +2538,8 @@
             (let ([frame-size (constant-case machine-type-name
                                 ; maintain 16-byte alignment not including the return address pushed
                                 ; by the call instruction, which counts as part of callee's frame
-                                [(i3osx ti3osx) (fxlogand (fx+ orig-frame-size 15) -16)]
-                                [else orig-frame-size])])
+                                [(i3nt ti3nt) orig-frame-size]
+                                [else (fxlogand (fx+ orig-frame-size 15) -16)])])
               (values (lambda ()
                         (if (fx= frame-size 0)
                             `(nop)
@@ -2661,7 +2661,7 @@
                    |                           |
                    |    incoming stack args    |
          sp+X+Y+Z: |                           |
-                   +---------------------------+ <- i3osx: 16-byte boundary
+                   +---------------------------+ <- i3nt/ti3nt: 4-byte boundary. other: 16-byte boundary
                    |   incoming return address | one word
                    +---------------------------+
                    |                           | 
@@ -2670,9 +2670,9 @@
                    +---------------------------+
              sp+X: |      unactivate mode      | 0 words or 1 word
                    +---------------------------+
-                   |   indirect result space   | i3osx: 3 words
-                   |  (for & results via regs) | other: 2 words
-             sp+0: +---------------------------+<- i3osx: 16-byte boundary
+                   |   indirect result space   | i3nt/ti3nt: 2 words
+                   |  (for & results via regs) | other: 3 words
+             sp+0: +---------------------------+<- i3nt/ti3nt: 4-byte boundary. other: 16-byte boundary
       |#
 
 
@@ -2838,13 +2838,13 @@
                  [arg-type* (info-foreign-arg-type* info)]
                  [result-type (info-foreign-result-type info)]
                  [indirect-result-space (constant-case machine-type-name
-                                          [(i3osx ti3osx)
-                                           ;; maintain 16-bit alignment for i3osx, taking into account
+                                          [(i3nt ti3nt) (if adjust-active? 12 8)]
+                                          [else
+                                           ;; maintain 16-bit alignment, taking into account
                                            ;; 16 bytes pushed above + 4 for RA pushed by asmCcall;
                                            ;; 8 of these bytes are used for &-return space, if needed;
                                            ;; the extra 4 bytes may be used for the unactivate mode
-                                           12]
-                                          [else (if adjust-active? 12 8)])]
+                                           12])]
                  [init-stack-offset (fx+ 20 indirect-result-space)]
 		 [indirect-result-to-registers? (fill-result-pointer-from-registers? result-type)])
               (let-values ([(get-result result-regs result-num-fp-regs)
