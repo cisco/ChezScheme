@@ -40,7 +40,7 @@ void S_doflush(uptr start, uptr end) {
 #endif
 
   start &= ~(l1_max_cache_line_size - 1);
-  end = (end + l1_max_cache_line_size) & ~(l1_max_cache_line_size - 1);
+  end = (end + l1_max_cache_line_size - 1) & ~(l1_max_cache_line_size - 1);
 
   for(i = start; i < end; i += l1_dcache_line_size) {
     __asm__ __volatile__ ("dcbst 0, %0" :: "r" (i));
