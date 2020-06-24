@@ -2044,7 +2044,7 @@
     gc.c, gc-011.c (new), gcwrapper.c, externs.h, c/Mf-base
 - maybe-fire-collector no longer tries to be so precise and instead
   just counts the number of generation-bytes allocated since the
-  last gc.  suprisingly, rebuilding the s directory requires about
+  last gc.  surprisingly, rebuilding the s directory requires about
   the same number of collections with this coarser (and less
   expensive) measurement.  this change also fixes a problem with
   too-frequent collections when the maximum-generation is set to
@@ -2075,3 +2075,5 @@
     gcwrapper.c
 - added initialization of __to_g to make gcc 7.5.0 happy
     gc.c
+- updated Windows makefiles
+    c/Makefile.*nt
