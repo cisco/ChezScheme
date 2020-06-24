@@ -162,9 +162,10 @@ FORCEINLINE IGEN compute_target_generation(IGEN g FORMAL_CTGS) {
 #define relocate_impure_help(PPP, PP, FROM_G) do {(void)FROM_G; relocate_pure_help(PPP, PP);} while (0)
 #define relocate_impure(PPP, FROM_G) do {(void)FROM_G; relocate_pure(PPP);} while (0)
 #else /* !NO_DIRTY_NEWSPACE_POINTERS */
+/* the initialization of __to_g to 0 below shouldn't be necessary, but gcc 7.5.0 complains without it */
 #define relocate_impure_help(PPP, PP, FROM_G) do {\
   ptr *__ppp = PPP, __pp = PP; IGEN __from_g = FROM_G;\
-  seginfo *__si; IGEN __to_g;\
+  seginfo *__si; IGEN __to_g = 0;\
   if (!IMMEDIATE(__pp) && (__si = MaybeSegInfo(ptr_get_segment(__pp))) != NULL && (__si->space & space_old)) {\
     if (FWDMARKER(__pp) == forward_marker && TYPEBITS(__pp) != type_flonum ?\
          (*__ppp = FWDADDRESS(__pp), (__from_g > 1 && (__to_g = compute_target_generation(__si->generation ACTUAL_CTGS)) < __from_g)) :\

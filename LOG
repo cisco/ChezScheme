@@ -2071,3 +2071,7 @@
   i3nt/ti3nt.  more recent versions of gcc sometimes generate sse
   instructions that require 16-byte stack alignment.
     x86.ss
+- added missing #ifndef WIN32
+    gcwrapper.c
+- added initialization of __to_g to make gcc 7.5.0 happy
+    gc.c

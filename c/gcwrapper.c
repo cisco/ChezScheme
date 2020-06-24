@@ -786,7 +786,9 @@ void S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg) {
         RTDCOUNTSIT(counts, new_g) = RTDCOUNTSIT(counts, old_g); RTDCOUNTSIT(counts, old_g) = 0;
       }
     }
+#ifndef WIN32
     S_child_processes[new_g] = S_child_processes[old_g];
+#endif
 
     /* change old_g dirty bytes in static generation to new_g; splice list of old_g
        seginfos onto front of new_g seginfos */
