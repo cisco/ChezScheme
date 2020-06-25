@@ -4523,7 +4523,23 @@
   (ok-name? (procedure-name should-be-named-g) "g")
   (ok-name? (procedure-name should-be-named-h) "h")
   (ok-name? (procedure-name should-be-named-i) "i")
-  (ok-name? (procedure-name should-be-named-j) "j"))
+  (ok-name? (procedure-name should-be-named-j) "j")
+
+  (or (not (enable-cp0))
+      (let ([gx (make-guardian)])
+        (ok-name? (procedure-name gx) "gx")))
+
+  (or (not (enable-cp0))
+      (andmap ok-name?
+              (map
+               procedure-name
+               (let ([f (lambda (g)
+                          (g (lambda (x) x)))])
+                 (list (f (lambda (a) a))
+                       (f (lambda (b) b)))))
+              '("a" "b")))
+  )
+
 
 (mat fasl-immutable
   (begin
