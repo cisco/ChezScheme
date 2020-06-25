@@ -60,7 +60,7 @@ albeit scoped where the bindings of the <tt>let-syntax</tt> or
 in a library or RNRS top-level program unless the
 <tt>scheme</tt> library is included in the library or
 top-level programs imports.
-These forms are described in Chapter&nbsp;<a href="./syntax.html#g97">11</a>.
+These forms are described in Chapter&nbsp;<a href="./syntax.html#g98">11</a>.
 
 <p>
 In Revised<sup>6</sup> Report Scheme, definitions can appear at the front of
@@ -70,7 +70,7 @@ within an RNRS top-level program body.
 In <i>Chez&nbsp;Scheme</i>, definitions may also be used in the
 interactive top-level, i.e., they can be intermixed with expressions in
 the REPL or in program text to be loaded from a file
-via <a name="./binding:s14"></a><tt>load</tt> (Section&nbsp;<a href="./system.html#g114">12.4</a>).
+via <a name="./binding:s14"></a><tt>load</tt> (Section&nbsp;<a href="./system.html#g115">12.4</a>).
 The Revised<sup>6</sup> Report does not mandate the existence nor specify the
 semantics of an interactive top-level, nor of a <tt>load</tt>
 procedure.
@@ -306,7 +306,7 @@ variables.
 
 <p>
 <a name="./binding:s22"></a>Fluid bindings are similar to
-<i>special</i> bindings in Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g180">30</a>], except that
+<i>special</i> bindings in Common Lisp&nbsp;[<a class=citation href="./bibliography.html#g181">30</a>], except that
 (1) there is a single namespace for both lexical and fluid bindings, and
 (2) the scope of a fluidly bound variable is not necessarily global.
 
@@ -397,7 +397,7 @@ in the environment <tt><i>env</i></tt>.
 If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 An exception is raised with condition type <tt>&amp;assertion</tt> if
@@ -437,7 +437,7 @@ in the environment <tt><i>env</i></tt>.
 If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 An exception is raised with condition type <tt>&amp;assertion</tt> if the
@@ -469,7 +469,7 @@ can be determined at run time, as can the environment.
 <p>If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 An exception is raised with condition type <tt>&amp;assertion</tt> if the
@@ -508,7 +508,7 @@ as can the environment.
 <p>If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 This predicate is useful in an interpreter to check for the existence of
@@ -544,7 +544,7 @@ a top-level binding before requesting the value with
 <p>If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 This predicate is useful in an interpreter to check whether a variable
@@ -583,7 +583,7 @@ The value must be a procedure, the result of a call to
 If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 An exception is raised with condition type <tt>&amp;assertion</tt> if
@@ -623,7 +623,7 @@ the identifier named by <tt><i>symbol</i></tt> is bound in the environment <tt><
 If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 All identifiers bound in an environment have compile-time bindings, including
 variables.
 
@@ -674,7 +674,7 @@ foo&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;23</tt>
 <p>If <tt><i>env</i></tt> is not provided, it defaults to the
 value of <tt>interaction-environment</tt>, i.e., the
 top-level evaluation environment
-(Section&nbsp;<a href="./system.html#g113">12.3</a>).
+(Section&nbsp;<a href="./system.html#g114">12.3</a>).
 
 <p>
 All identifiers bound in an environment have compile-time bindings, including
@@ -707,7 +707,7 @@ than <tt>top-level-bound?</tt>, which returns true only for bound variables.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2020 for Chez Scheme Version 9.5.3<br>
+Revised February 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

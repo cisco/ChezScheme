@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g127"></a>
+<a name="g128"></a>
 <a name="./smgmt:h0"></a>
 
 <h1>Chapter 13. Storage Management<a name="CHPTSMGMT"></a></h1>
@@ -23,13 +23,13 @@ procedures that may be used to control its operation.
 
 <p>
 
-<h3><a name="g128"></a><a name="./smgmt:h1"></a>Section 13.1. Garbage Collection<a name="SECTSMGMTGC"></a></h3>
+<h3><a name="g129"></a><a name="./smgmt:h1"></a>Section 13.1. Garbage Collection<a name="SECTSMGMTGC"></a></h3>
 
 
 
 <p>
-Scheme objects such as pairs, strings, and procedures are
-never explicitly deallocated by a Scheme program.
+Scheme objects such as pairs, strings, procedures, and user-defined
+records are never explicitly deallocated by a Scheme program.
 Instead, the <a name="./smgmt:s0"></a>storage management system
 automatically reclaims the
 storage associated with an object once it proves the object is no longer
@@ -55,7 +55,8 @@ The collect-request handler can be redefined by changing the value of the
 parameter
 <a name="./smgmt:s4"></a><tt>collect-request-handler</tt>.
 A program can also cause a collection to occur between collect-request
-interrupts by calling <tt>collect</tt> directly.
+interrupts by calling <tt>collect</tt> directly either without or with
+arguments.
 
 <p>
 <i>Chez&nbsp;Scheme</i>'s collector is a <i>generation-based</i> collector.
@@ -71,106 +72,127 @@ which storage is never reclaimed.
 Objects are placed into the static generation only
 when a heap is compacted (see
 <a name="./smgmt:s6"></a><tt>Scompact_heap</tt> in
-Section&nbsp;<a href="./foreign.html#g34">4.8</a>) or when the target-generation argument to
-<a name="./smgmt:s7"></a><tt>collect</tt> is the symbol <tt>static</tt>.
+Section&nbsp;<a href="./foreign.html#g34">4.8</a>) or when an explicitly specified
+target-generation is the symbol <tt>static</tt>.
+This is primarily useful after an application's permanent code and data
+structures have been loaded and initialized, to reduce the overhead of
+subsequent collections.
 
 <p>
 Nonstatic generations are numbered starting at zero for the youngest
 generation up through the current value of
-<a name="./smgmt:s8"></a><tt>collect-maximum-generation</tt>.
+<a name="./smgmt:s7"></a><tt>collect-maximum-generation</tt>.
 The storage manager places newly allocated objects into generation 0.
-During a generation 0 collection, objects in generation 0 that survive the
-collection move, by default, to generation 1.
-Similarly, during a generation 1 collection, objects in generations 0 and
-1 that survive move to generation 2, and so on.
-During the collection of the maximum nonstatic collection, all surviving
-nonstatic objects move (possibly back) into the maximum nonstatic
-generation.
-With this mechanism, it is possible for an object to skip one or more
-generations, but this is not likely to happen to many objects, and if the
-objects become inaccessible, their storage is reclaimed eventually.
 
 <p>
+When <tt>collect</tt> is invoked without arguments, generation 0
+objects that survive collection move to generation 1, generation 1
+objects that survive move to generation 2, and so on, except that
+objects are never moved past the maximum nonstatic generation.
+Objects in the maximum nonstatic generation are collected back into
+the maximum nonstatic generation.
+While generation 0 is collected during each collection, older
+generations are collected less frequently.
 An internal counter, gc-trip, is maintained to control when each
 generation is collected.
 Each time <tt>collect</tt> is called without arguments (as from the default
-collect-request handler), gc-trip is incremented by one.
-With a collect-generation radix of <i>r</i>, the collected generation
+collect-request handler), gc-trip is incremented by one, and the set of
+generations to be collected is determined from the current value of
+gc-trip and the value of
+<a name="./smgmt:s8"></a><tt>collect-generation-radix</tt>:
+with a collect-generation radix of <i>r</i>, the maximum collected generation
 is the highest numbered generation <i>g</i> for which gc-trip is a
 multiple of <i>r</i><sup>g</sup>.
 If <tt>collect-generation-radix</tt> is set to 4, the system thus
-collects generation 0 every time, generation 1 every 4 times, generation 2
-every 16 times, and so on.
+collects generation 0 every time, generation 1 every 4 times,
+generation 2 every 16 times, and so on.
 
 <p>
-Each time <tt>collect</tt> is called with a single generation argument <i>g</i>,
-generation <i>g</i> is collected and 
-gc-trip is advanced to the next <i>r</i><sup>g</sup> boundary, but not past the next
-<i>r</i><sup><i>g</i>+1</sup> boundary, where <i>r</i> is again the
+When <tt>collect</tt> is invoked with arguments, the generations to be
+collected and their target generations are determined by the arguments.
+In addition, the first argument <tt><i>cg</i></tt> affects the value of gc-trip;
+that is, gc-trip is advanced to the next <i>r</i><sup><i>cg</i></sup> boundary, but
+not past the next <i>r</i><sup><i>cg</i>+1</sup> boundary, where <i>r</i> is the
 value of <tt>collect-generation-radix</tt>.
-
-<p>
-If <tt>collect</tt> is called with a second generation argument,
-<i>tg</i>, <i>tg</i> determines the target generation.
-When <i>g</i> is the maximum nonstatic generation, <i>tg</i> must be 
-<i>g</i> or the symbol <tt>static</tt>.
-Otherwise, <i>tg</i> must be <i>g</i> or <i>g</i> + 1.
-When the target generation is the symbol <tt>static</tt>, all data in
-the nonstatic generations are moved to the static generation.
-Objects in the static generation are never collected.
-This is primarily useful after an application's permanent code and data
-structures have been loaded and initialized, to reduce the overhead of
-subsequent collections.
 
 <p>
 It is possible to make substantial adjustments in the collector's behavior
 by setting the parameters described in this section.
 It is even possible to completely override the collector's default strategy for
 determining when each generation is collected by redefining the
-collect-request handler to call <tt>collect</tt> with explicit <i>g</i> and
-<i>tg</i> arguments.
-For example, the programmer can redefine the handler to treat the maximum
-nonstatic generation as a static generation over a long period of time
-by calling <tt>collect</tt> with explicit <i>g</i> and <i>tg</i> arguments
-that are never equal to the maximum nonstatic generation during that
-period of time.
+collect-request handler to call <tt>collect</tt> with arguments.
+For example, the programmer can redefine the handler to treat the
+maximum nonstatic generation as a static generation over a long
+period of time by calling <tt>collect</tt> with arguments that
+prevent the maximum nonstatic generation from being collected during
+that period of time.
 
 <p>
 Additional information on <i>Chez&nbsp;Scheme</i>'s collector can be found in the
 report "Don't stop the BiBOP:  Flexible and efficient
-storage management for dynamically typed languages"&nbsp;[<a class=citation href="./bibliography.html#g163">13</a>].
+storage management for dynamically typed languages"&nbsp;[<a class=citation href="./bibliography.html#g164">13</a>].
 
 
 <p>
 <a name="./smgmt:s9"></a><span class=formdef><b>procedure</b>: <tt>(collect)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(collect&nbsp;<i>g</i>)</tt></span>
-<br><span class=formdef><b>procedure</b>: <tt>(collect&nbsp;<i>g</i>&nbsp;<i>tg</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(collect&nbsp;<i>cg</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(collect&nbsp;<i>cg</i>&nbsp;<i>max-tg</i>)</tt></span>
+<br><span class=formdef><b>procedure</b>: <tt>(collect&nbsp;<i>cg</i>&nbsp;<i>min-tg</i>&nbsp;<i>max-tg</i>)</tt></span>
 <br>
 <b>returns: </b>unspecified
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p><tt><i>g</i></tt> must be a nonnegative fixnum no greater than the
-maximum nonstatic generation, i.e., the
-value returned by <tt>collect-maximum-generation</tt>.
-If <tt><i>g</i></tt> is the maximum nonstatic generation,
-<tt><i>tg</i></tt> must be a fixnum equal to <tt><i>g</i></tt> or the symbol
-<tt>static</tt>.
-Otherwise, <tt><i>tg</i></tt> must be a fixnum equal to or one
-greater than <tt><i>g</i></tt>.
-
-<p>
-This procedure causes the storage manager to perform a garbage collection.
-<tt>collect</tt> is invoked periodically via the collect-request
-handler, but it may also be called explicitly to force collection at a
-particular time, e.g., before timing a computation.
+<p>This procedure causes the storage manager to perform a garbage
+collection.
+<tt>collect</tt> is invoked periodically without arguments by the
+default collect-request handler, but it may also be called explicitly,
+e.g., from a custom collect-request handler, between phases of a
+computation when collection is most likely to be successful, or
+before timing a computation.
 In the threaded versions of <i>Chez&nbsp;Scheme</i>, the thread that invokes
 <tt>collect</tt> must be the only active thread.
 
 <p>
-The system determines which generations to collect, based on <tt><i>g</i></tt> and
-<tt><i>tg</i></tt> if provided, as described in the lead-in to this section.
+When called without arguments, the system determines automatically
+which generations to collect and the target generation for each
+collected generation as described in the lead-in to this section.
 
+<p>
+When called with arguments, the system collects all and only objects
+in generations less than or equal to <tt><i>cg</i></tt> (the maximum collected
+generation) into the target generation or generations determined
+by <tt><i>min-tg</i></tt> (the minimum target generation) and <tt><i>max-tg</i></tt>
+(the maximum target generation).
+Specifically, the target generation for any object in a collected
+generation <tt><i>g</i></tt> is
+<img src="math/csug/5.gif" alt="<graphic>">, where
+<tt>static</tt> is taken to have the value one greater
+than the maximum nonstatic generation.
+
+<p>
+If present, <tt><i>cg</i></tt> must be a nonnegative fixnum no greater than
+the maximum nonstatic generation, i.e., the current value of the
+parameter <tt>collect-maximum-generation</tt>.
+
+<p>
+If present, <tt><i>max-tg</i></tt> must be a nonnegative fixnum or the symbol
+<tt>static</tt> and either equal to <tt><i>cg</i></tt> or one greater than
+<tt><i>cg</i></tt>, again treating <tt>static</tt> as having the value one
+greater than the maximum nonstatic generation.
+If <tt><i>max-tg</i></tt> is not present (but <tt><i>cg</i></tt> is), it defaults to
+<tt><i>cg</i></tt> if <tt><i>cg</i></tt> is equal to the maximum target generation and
+to one more than <tt><i>cg</i></tt> otherwise.
+
+<p>
+If present, <tt><i>min-tg</i></tt> must be a nonnegative fixnum or the symbol
+<tt>static</tt> and no greater than <tt><i>max-tg</i></tt>, again treating
+<tt>static</tt> as having the value one greater than the maximum
+nonstatic generation.
+Unless <tt><i>max-cg</i></tt> is the same as <tt><i>cg</i></tt>, <tt><i>min-tg</i></tt> must also
+be greater than <tt><i>cg</i></tt>.
+If <tt><i>min-tg</i></tt> is not present (but <tt><i>cg</i></tt> is), it defaults to
+the same value as <tt><i>max-tg</i></tt>.
 
 <p>
 <a name="./smgmt:s10"></a><span class=formdef><b>procedure</b>: <tt>(collect-rendezvous)</tt></span>
@@ -187,7 +209,7 @@ the other threads pause until the handler returns.
 <p>
 Note that if the collect-request handler (see
 <tt>collect-request-handler</tt>) does not call <tt>collect</tt>, then
-<tt>collect-rendezvous</tt> does not actualy perform a garbage
+<tt>collect-rendezvous</tt> does not actually perform a garbage
 collection.
 
 
@@ -349,7 +371,7 @@ calls into the operating system to request and free memory space.
 
 <p>
 
-<h3><a name="g129"></a><a name="./smgmt:h2"></a>Section 13.2. Weak Pairs, Ephemeron Pairs, and Guardians<a name="SECTGUARDWEAKPAIRS"></a></h3>
+<h3><a name="g130"></a><a name="./smgmt:h2"></a>Section 13.2. Weak Pairs, Ephemeron Pairs, and Guardians<a name="SECTGUARDWEAKPAIRS"></a></h3>
 
 
 
@@ -385,8 +407,8 @@ actions can be performed using the data stored within the objects.
 
 <p>
 The implementation of guardians and weak pairs used by <i>Chez&nbsp;Scheme</i>
-is described in&nbsp;[<a class=citation href="./bibliography.html#g162">12</a>]. Ephemerons are described
-in&nbsp;[<a class=citation href="./bibliography.html#g173">23</a>], but the implementation in <i>Chez&nbsp;Scheme</i>
+is described in&nbsp;[<a class=citation href="./bibliography.html#g163">12</a>]. Ephemerons are described
+in&nbsp;[<a class=citation href="./bibliography.html#g174">23</a>], but the implementation in <i>Chez&nbsp;Scheme</i>
 avoids quadratic-time worst-case behavior.
 
 <p>
@@ -996,12 +1018,12 @@ explicit calls to <tt>collect</tt>.
 <p><tt>unregister-guardian</tt> can also be used to unregister ftype
 pointers registered with guardians created by
 <a name="./smgmt:s34"></a><tt>ftype-guardian</tt>
-(Section&nbsp;<a href="./threads.html#g142">15.6</a>).
+(Section&nbsp;<a href="./threads.html#g143">15.6</a>).
 
 
 <p>
 
-<h3><a name="g130"></a><a name="./smgmt:h3"></a>Section 13.3. Locking Objects<a name="SECTSMGMTLOCKING"></a></h3>
+<h3><a name="g131"></a><a name="./smgmt:h3"></a>Section 13.3. Locking Objects<a name="SECTSMGMTLOCKING"></a></h3>
 
 
 
@@ -1083,7 +1105,7 @@ booleans, and characters, and objects that have been made static.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2020 for Chez Scheme Version 9.5.3<br>
+Revised February 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

@@ -8,7 +8,7 @@
 <link href="csug.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<a name="g136"></a>
+<a name="g137"></a>
 <a name="./threads:h0"></a>
 
 <h1>Chapter 15. Thread System<a name="CHPTTHREADS"></a></h1>
@@ -55,7 +55,7 @@ whose property lists are being modified or accessed differ.
 <p>
 In this context, most I/O operations should be considered destructive,
 since they might modify a port's internal structure; see also
-Section&nbsp;<a href="./threads.html#g144">15.8</a> for information on buffered ports.
+Section&nbsp;<a href="./threads.html#g145">15.8</a> for information on buffered ports.
 
 <p>
 Use of operators that are not thread-safe without proper synchronization
@@ -88,7 +88,7 @@ synchronized across processors.
 
 <p>
 
-<h3><a name="g137"></a><a name="./threads:h1"></a>Section 15.1. Thread Creation</h3>
+<h3><a name="g138"></a><a name="./threads:h1"></a>Section 15.1. Thread Creation</h3>
 
 
 
@@ -136,7 +136,7 @@ in all threads.
 
 <p>
 
-<h3><a name="g138"></a><a name="./threads:h2"></a>Section 15.2. Mutexes</h3>
+<h3><a name="g139"></a><a name="./threads:h2"></a>Section 15.2. Mutexes</h3>
 
 
 
@@ -239,7 +239,7 @@ Using <tt>with-mutex</tt> is generally more convenient and safer than using
 
 <p>
 
-<h3><a name="g139"></a><a name="./threads:h3"></a>Section 15.3. Conditions</h3>
+<h3><a name="g140"></a><a name="./threads:h3"></a>Section 15.3. Conditions</h3>
 
 
 
@@ -326,7 +326,7 @@ condition identified by <tt><i>cond</i></tt>.
 
 <p>
 
-<h3><a name="g140"></a><a name="./threads:h4"></a>Section 15.4. Locks<a name="SECTTHREADLOCKS"></a></h3>
+<h3><a name="g141"></a><a name="./threads:h4"></a>Section 15.4. Locks<a name="SECTTHREADLOCKS"></a></h3>
 
 
 
@@ -449,7 +449,7 @@ Otherwise, it returns without changing the lock.
 
 <p>
 
-<h3><a name="g141"></a><a name="./threads:h5"></a>Section 15.5. Locked increment and decrement<a name="SECTTHREADLOCKEDINCRDECR"></a></h3>
+<h3><a name="g142"></a><a name="./threads:h5"></a>Section 15.5. Locked increment and decrement<a name="SECTTHREADLOCKEDINCRDECR"></a></h3>
 
 
 
@@ -490,7 +490,7 @@ Both return <tt>#t</tt> if the new value is 0, otherwise <tt>#f</tt>.
 
 <p>
 
-<h3><a name="g142"></a><a name="./threads:h6"></a>Section 15.6. Reference counting with ftype guardians<a name="SECTTHREADFTYPEGUARDIANS"></a></h3>
+<h3><a name="g143"></a><a name="./threads:h6"></a>Section 15.6. Reference counting with ftype guardians<a name="SECTTHREADFTYPEGUARDIANS"></a></h3>
 
 
 
@@ -509,7 +509,7 @@ purpose.
 <p>
 Ftype guardians are similar to guardians created by
 <a name="./threads:s22"></a><tt>make-guardian</tt>
-(Section&nbsp;<a href="./smgmt.html#g129">13.2</a>).
+(Section&nbsp;<a href="./smgmt.html#g130">13.2</a>).
 The <a name="./threads:s23"></a><tt>guardian?</tt> procedure returns
 true for both, and the
 <a name="./threads:s24"></a><tt>unregister-guardian</tt>
@@ -654,7 +654,7 @@ of the containing object.
 
 <p>
 
-<h3><a name="g143"></a><a name="./threads:h7"></a>Section 15.7. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
+<h3><a name="g144"></a><a name="./threads:h7"></a>Section 15.7. Thread Parameters<a name="SECTTHREADPARAMETERS"></a></h3>
 
 
 
@@ -666,7 +666,7 @@ of the containing object.
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
-<p>See Section&nbsp;<a href="./system.html#g123">12.13</a> for a general
+<p>See Section&nbsp;<a href="./system.html#g124">12.13</a> for a general
 discussion of parameters and the use of the optional second argument.
 
 <p>
@@ -697,7 +697,7 @@ in the nonthreaded versions of the system.
 
 <p>
 
-<h3><a name="g144"></a><a name="./threads:h8"></a>Section 15.8. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
+<h3><a name="g145"></a><a name="./threads:h8"></a>Section 15.8. Buffered I/O<a name="SECTTHREADSBUFFEREDIO"></a></h3>
 
 
 
@@ -737,13 +737,13 @@ acquiring a mutex for each I/O operation.
 
 <p>
 
-<h3><a name="g145"></a><a name="./threads:h9"></a>Section 15.9. Example: Bounded Queues</h3>
+<h3><a name="g146"></a><a name="./threads:h9"></a>Section 15.9. Example: Bounded Queues</h3>
 
 
 
 <p>
 The following code, taken from the article
-"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g160">10</a>],"
+"A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g161">10</a>],"
 implements a bounded queue using many of the
 thread-system features.
 A bounded queue has a fixed number of available slots.  
@@ -997,7 +997,7 @@ Adding&nbsp;job&nbsp;#9&nbsp;=&nbsp;(lambda&nbsp;()&nbsp;(fib&nbsp;26))<br>
 ...</tt>
 <p>Additional examples, including definitions of suspendable threads and
 threads that automatically terminate when they become inaccessible, are
-given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g160">10</a>]."
+given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliography.html#g161">10</a>]."
 
 
 <p>
@@ -1011,7 +1011,7 @@ given in "A Scheme for native threads&nbsp;[<a class=citation href="./bibliograp
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2020 for Chez Scheme Version 9.5.3<br>
+Revised February 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

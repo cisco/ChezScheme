@@ -19,13 +19,13 @@
 
 <p>
 This book describes <i>Chez&nbsp;Scheme</i> extensions to the Revised<sup>6</sup>
-Report on Scheme&nbsp;[<a class=citation href="./bibliography.html#g178">28</a>] (R6RS).
+Report on Scheme&nbsp;[<a class=citation href="./bibliography.html#g179">28</a>] (R6RS).
 It contains as well a concise summary of standard and <i>Chez&nbsp;Scheme</i> forms 
 and procedures, which gives the syntax of each form and the number and
 types of arguments accepted by each procedure.
 Details on standard R6RS features can be found in
 <a name="./intro:s0"></a><a  href=http://www.scheme.com/tspl4/><i>The
-Scheme Programming Language, 4th Edition</i></a> (TSPL4)&nbsp;[<a class=citation href="./bibliography.html#g161">11</a>] or
+Scheme Programming Language, 4th Edition</i></a> (TSPL4)&nbsp;[<a class=citation href="./bibliography.html#g162">11</a>] or
 the Revised<sup>6</sup> Report on Scheme.
 <i>The Scheme Programming Language, 4th Edition</i> also contains an
 extensive introduction to the Scheme language and numerous short and
@@ -72,17 +72,17 @@ input/output semantics.
 Chapter&nbsp;<a href="./libraries.html#g90">10</a> discusses how R6RS libraries and top-level
 programs are loaded into <i>Chez&nbsp;Scheme</i> along with various features for
 controlling and tracking the loading process.
-Chapter&nbsp;<a href="./syntax.html#g97">11</a> describes syntactic extension and modules.
-Chapter&nbsp;<a href="./system.html#g110">12</a> describes system operations, such as operations
+Chapter&nbsp;<a href="./syntax.html#g98">11</a> describes syntactic extension and modules.
+Chapter&nbsp;<a href="./system.html#g111">12</a> describes system operations, such as operations
 for interacting with the operating system and customizing
 <i>Chez&nbsp;Scheme</i>'s user interface.
-Chapter&nbsp;<a href="./smgmt.html#g127">13</a> describes how to invoke and control the storage
+Chapter&nbsp;<a href="./smgmt.html#g128">13</a> describes how to invoke and control the storage
 management system and documents guardians and weak pairs.
-Chapter&nbsp;<a href="./expeditor.html#g131">14</a> describes <i>Chez&nbsp;Scheme</i>'s expression
+Chapter&nbsp;<a href="./expeditor.html#g132">14</a> describes <i>Chez&nbsp;Scheme</i>'s expression
 editor and how it can be customized.
-Chapter&nbsp;<a href="./threads.html#g136">15</a> documents the procedures and syntactic forms
+Chapter&nbsp;<a href="./threads.html#g137">15</a> documents the procedures and syntactic forms
 that comprise the interface to <i>Chez&nbsp;Scheme</i>'s native thread system.
-Finally, Chapter&nbsp;<a href="./compat.html#g146">16</a> describes various compatibility features.
+Finally, Chapter&nbsp;<a href="./compat.html#g147">16</a> describes various compatibility features.
 
 <p>
 The back of this book contains a bibliography, 
@@ -105,7 +105,8 @@ Daniel, George Davidson, Matthew Flatt, Aziz Ghuloum, Bob Hieb, Andy Keep, and O
 contributed substantially to the development of <i>Chez&nbsp;Scheme</i>.
 <i>Chez&nbsp;Scheme</i>'s expression editor is based on a command-line editor for
 Scheme developed from 1989 through 1994 by C.&nbsp;David Boyer.
-File compression is performed with the use of the zlib compression library
+File compression is performed with the use of the lz4 compression
+library developed by Yann Collet or the zlib compression library
 developed by Jean-loup Gailly and Mark Adler.
 Implementations of the list and vector sorting routines are based on
 Olin Shiver's opportunistic merge-sort algorithm and implementation.
@@ -246,7 +247,7 @@ contain the same list, and <tt>#0=(a&nbsp;.&nbsp;#0#)</tt> is a cyclic
 list, i.e., its cdr is itself.
 
 <p>
-A <tt>$primitive</tt> form (see page&nbsp;<a href="./system.html#desc:hash-primitive">355</a>) may
+A <tt>$primitive</tt> form (see page&nbsp;<a href="./system.html#desc:hash-primitive">358</a>) may
 be abbreviated in the same manner as a <tt>quote</tt> form, using the 
 <a name="./intro:s27"></a><tt>#%</tt> prefix.
 For example,
@@ -263,7 +264,7 @@ Inserting <tt>#!eof</tt> into the middle of a file can thus be handy
 when tracking down a load-time error.
 
 <p>
-Broken pointers in weak pairs (see page&nbsp;<a href="./smgmt.html#desc:weak-cons">404</a>) are
+Broken pointers in weak pairs (see page&nbsp;<a href="./smgmt.html#desc:weak-cons">406</a>) are
 represented by the <i>broken weak pointer</i> object, which is
 printed <tt>#!bwp</tt>.
 
@@ -430,7 +431,7 @@ versions of <i>Chez&nbsp;Scheme</i>, while the values of parameters marked "glob
 parameters" are shared by all threads.
 Nonthreaded versions of <i>Chez&nbsp;Scheme</i> do not distinguish between
 thread and global parameters.
-See Sections&nbsp;<a href="./system.html#g123">12.13</a> and&nbsp;<a href="./threads.html#g143">15.7</a> for
+See Sections&nbsp;<a href="./system.html#g124">12.13</a> and&nbsp;<a href="./threads.html#g144">15.7</a> for
 more information on creating and manipulating parameters.
 
 
@@ -446,25 +447,25 @@ features of <i>Chez&nbsp;Scheme</i> and its implementation:
 
 <p>
 <ul>
-<li>syntactic abstraction&nbsp;[<a class=citation href="./bibliography.html#g164">14</a>,<a class=citation href="./bibliography.html#g158">8</a>,<a class=citation href="./bibliography.html#g167">17</a>],
-<li>modules&nbsp;[<a class=citation href="./bibliography.html#g182">32</a>],
-<li>libraries&nbsp;[<a class=citation href="./bibliography.html#g171">21</a>],
-<li>storage management&nbsp;[<a class=citation href="./bibliography.html#g162">12</a>,<a class=citation href="./bibliography.html#g163">13</a>],
-<li>threads&nbsp;[<a class=citation href="./bibliography.html#g160">10</a>],
-<li>multiple return values&nbsp;[<a class=citation href="./bibliography.html#g152">2</a>],
-<li>optional arguments&nbsp;[<a class=citation href="./bibliography.html#g166">16</a>],
-<li>continuations&nbsp;[<a class=citation href="./bibliography.html#g157">7</a>,<a class=citation href="./bibliography.html#g175">25</a>,<a class=citation href="./bibliography.html#g153">3</a>],
-<li>eq? hashtables&nbsp;[<a class=citation href="./bibliography.html#g170">20</a>],
-<li>internal definitions, <tt>letrec</tt>, and <tt>letrec*</tt>&nbsp;[<a class=citation href="./bibliography.html#g183">33</a>,<a class=citation href="./bibliography.html#g172">22</a>],
-<li><tt>equal?</tt>&nbsp;[<a class=citation href="./bibliography.html#g151">1</a>],
-<li>engines&nbsp;[<a class=citation href="./bibliography.html#g165">15</a>],
-<li>floating-point printing&nbsp;[<a class=citation href="./bibliography.html#g154">4</a>],
-<li>code generation&nbsp;[<a class=citation href="./bibliography.html#g168">18</a>],
-<li>register allocation&nbsp;[<a class=citation href="./bibliography.html#g156">6</a>],
-<li>procedure inlining&nbsp;[<a class=citation href="./bibliography.html#g181">31</a>],
-<li>profiling&nbsp;[<a class=citation href="./bibliography.html#g155">5</a>],
+<li>syntactic abstraction&nbsp;[<a class=citation href="./bibliography.html#g165">14</a>,<a class=citation href="./bibliography.html#g159">8</a>,<a class=citation href="./bibliography.html#g168">17</a>],
+<li>modules&nbsp;[<a class=citation href="./bibliography.html#g183">32</a>],
+<li>libraries&nbsp;[<a class=citation href="./bibliography.html#g172">21</a>],
+<li>storage management&nbsp;[<a class=citation href="./bibliography.html#g163">12</a>,<a class=citation href="./bibliography.html#g164">13</a>],
+<li>threads&nbsp;[<a class=citation href="./bibliography.html#g161">10</a>],
+<li>multiple return values&nbsp;[<a class=citation href="./bibliography.html#g153">2</a>],
+<li>optional arguments&nbsp;[<a class=citation href="./bibliography.html#g167">16</a>],
+<li>continuations&nbsp;[<a class=citation href="./bibliography.html#g158">7</a>,<a class=citation href="./bibliography.html#g176">25</a>,<a class=citation href="./bibliography.html#g154">3</a>],
+<li>eq? hashtables&nbsp;[<a class=citation href="./bibliography.html#g171">20</a>],
+<li>internal definitions, <tt>letrec</tt>, and <tt>letrec*</tt>&nbsp;[<a class=citation href="./bibliography.html#g184">33</a>,<a class=citation href="./bibliography.html#g173">22</a>],
+<li><tt>equal?</tt>&nbsp;[<a class=citation href="./bibliography.html#g152">1</a>],
+<li>engines&nbsp;[<a class=citation href="./bibliography.html#g166">15</a>],
+<li>floating-point printing&nbsp;[<a class=citation href="./bibliography.html#g155">4</a>],
+<li>code generation&nbsp;[<a class=citation href="./bibliography.html#g169">18</a>],
+<li>register allocation&nbsp;[<a class=citation href="./bibliography.html#g157">6</a>],
+<li>procedure inlining&nbsp;[<a class=citation href="./bibliography.html#g182">31</a>],
+<li>profiling&nbsp;[<a class=citation href="./bibliography.html#g156">5</a>],
 and
-<li>history of the implementation&nbsp;[<a class=citation href="./bibliography.html#g159">9</a>].
+<li>history of the implementation&nbsp;[<a class=citation href="./bibliography.html#g160">9</a>].
 </ul>
 <p>
 
@@ -482,7 +483,7 @@ available at the url
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2020 for Chez Scheme Version 9.5.3<br>
+Revised February 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

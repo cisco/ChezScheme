@@ -127,7 +127,7 @@ one of the RNRS libraries, the bindings are identical.
 In some cases, however, the <tt>(chezscheme)</tt> bindings extend the
 <tt>rnrs</tt> bindings in some way.
 For example, the <tt>(chezscheme)</tt> <tt>syntax-rules</tt> form allows
-its clauses to have fenders (Section&nbsp;<a href="./syntax.html#g99">11.2</a>), while the
+its clauses to have fenders (Section&nbsp;<a href="./syntax.html#g100">11.2</a>), while the
 <tt>(rnrs)</tt> <tt>syntax-rules</tt> form does not.
 Similarly, the <tt>(chezscheme)</tt> <tt>current-input-port</tt> procedure
 accepts an optional <tt><i>port</i></tt> argument that, when specified, sets the
@@ -210,7 +210,7 @@ This line may be replaced with
 <p>with <tt>/usr/bin</tt> replaced by the absolute path to the directory
 containing <tt>scheme-script</tt> if it is not in <tt>/usr/bin</tt>.
 The first form is recommended in the nonnormative appendices to the
-Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g179">29</a>], and works wherever
+Revised<sup>6</sup> Report&nbsp;[<a class=citation href="./bibliography.html#g180">29</a>], and works wherever
 <tt>scheme-script</tt> appears in the path.
 
 <p>
@@ -240,7 +240,7 @@ resides, if not <tt>/usr/bin</tt>.
 
 <p>
 The <tt>load-program</tt> procedure, described in
-Section&nbsp;<a href="./system.html#g114">12.4</a>, is used like <tt>load</tt>:
+Section&nbsp;<a href="./system.html#g115">12.4</a>, is used like <tt>load</tt>:
 
 <p>
 
@@ -256,14 +256,14 @@ system starts up and begins to run the program.
 Thus, the line may be present even in a file loaded by <tt>load-program</tt>.
 In fact, <tt>load-program</tt> is ultimately used by the other two
 mechanisms described above, via the value of the <tt>scheme-program</tt>
-parameter described in Section&nbsp;<a href="./system.html#g118">12.8</a>, and it is
+parameter described in Section&nbsp;<a href="./system.html#g119">12.8</a>, and it is
 <tt>load-program</tt> that scans past the <tt>#!</tt> line, if present,
 before evaluating the program.
 
 <p>
 A top-level program may be compiled with the
 <a name="./libraries:s10"></a><tt>compile-program</tt>
-procedure described in Section&nbsp;<a href="./system.html#g114">12.4</a>.
+procedure described in Section&nbsp;<a href="./system.html#g115">12.4</a>.
 <tt>compile-program</tt> copies the <tt>#!</tt> line from the source
 file to the object file, followed by a compiled version of the source
 code.
@@ -357,7 +357,7 @@ accesses the bindings of the new instance of the library.
 (define&nbsp;f&nbsp;(lambda&nbsp;()&nbsp;x))<br>
 
 (f)&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;5</tt>
-<p>As with module imports (Section&nbsp;<a href="./syntax.html#g102">11.5</a>), a library
+<p>As with module imports (Section&nbsp;<a href="./syntax.html#g103">11.5</a>), a library
 <tt>import</tt> may appear anywhere a definition may appear, including at
 top level in the REPL, in a file to be loaded by <tt>load</tt>, or within
 a <tt>lambda</tt>, <tt>let</tt>, <tt>letrec</tt>, <tt>letrec*</tt>,
@@ -411,7 +411,7 @@ Although not required by the Revised<sup>6</sup> Report,
 export forms.
 The import forms can appear anywhere other definitions
 can appear, including within a <tt>library</tt> body,
-<tt>module</tt> (Section&nbsp;<a href="./syntax.html#g102">11.5</a>) body,
+<tt>module</tt> (Section&nbsp;<a href="./syntax.html#g103">11.5</a>) body,
 <tt>lambda</tt> or other local body, and at top level.
 The export forms can appear within the definitions of a
 <tt>library</tt> or <tt>module</tt> body to specify additional
@@ -453,7 +453,7 @@ be imported, as permitted by the Revised<sup>6</sup> Report.
 This frees the programmer from the obligation
 to do so and results in more generality as well as more
 precision in the set of libraries actually imported
-at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g171">21</a>,<a class=citation href="./bibliography.html#g169">19</a>].
+at compile and run time&nbsp;[<a class=citation href="./bibliography.html#g172">21</a>,<a class=citation href="./bibliography.html#g170">19</a>].
 
 <p>
 An <tt><i>import-set</i></tt> must take one of the following forms:
@@ -743,7 +743,7 @@ selective import of specific bindings---without the use of the built-in
 imports all exports of <tt>m</tt> then re-exports only the selected
 identifier.
 To rename on import the macro expands into an anonymous module that
-instead exports an alias (Section&nbsp;<a href="./syntax.html#g107">11.10</a>) bound to the new name.
+instead exports an alias (Section&nbsp;<a href="./syntax.html#g108">11.10</a>) bound to the new name.
 
 <p>
 If the output placed the definition of <tt>new</tt> in the same
@@ -1022,18 +1022,77 @@ This can result in significantly lower run-time performance.
 
 <p>
 
-<h3><a name="g95"></a><a name="./libraries:h5"></a>Section 10.5. Library Parameters<a name="SECTLIBRARYPARAMETERS"></a></h3>
+<h3><a name="g95"></a><a name="./libraries:h5"></a>Section 10.5. Explicitly invoking libraries<a name="SECTLIBRARYINVOCATION"></a></h3>
 
 
 
 <p>
-<a name="./libraries:s20"></a>The parameters described below control where <tt>import</tt> looks
+<a name="./libraries:s20"></a><span class=formdef><b>procedure</b>: <tt>(invoke-library&nbsp;<i>libref</i>)</tt></span>
+<br>
+<b>returns: </b>unspecified
+<br>
+<b>libraries: </b><tt>(chezscheme)</tt>
+
+<p><tt><i>libref</i></tt> must be an s-expression in the form of a library reference.
+The syntax for library references is given in
+Chapter&nbsp;<a href="http://scheme.com/tspl4/./libraries.html#g142">10</a> of <i>The Scheme Programming Language, 4th Edition</i> and in the Revised<sup>6</sup>
+Report.
+
+<p>
+A library is implicitly invoked when or before some expression
+outside the library (e.g., in another library or in a top-level
+program) evaluates a reference to one of the library's exported
+variables.
+When the library is invoked, its body expressions (the right-hand-sides
+of the library's variable definitions and its initialization
+expressions) are evaluated.
+Once invoked, the library is not invoked again within the same process,
+unless it is first explicitly redefined or reloaded.
+
+<p>
+<tt>invoke-library</tt> explicitly invokes the library specified
+by <tt><i>libref</i></tt> if it has not already been invoked or has since
+been redefined or reloaded.
+If the library has not yet been loaded, <tt>invoke-library</tt>
+first loads the library via the process described in
+Section&nbsp;<a href="./use.html#g9">2.4</a>.
+
+<p>
+<tt>invoke-library</tt> is typically only useful for libraries whose
+body expressions have side effects.
+It is useful to control when the side effects occur and to force
+invocation of a library that has no exported variables.
+Invoking a library does not force the compile-time code (macro
+transformer expressions and meta definitions) to be loaded or
+evaluated, nor does it cause the library's bindings to become
+visible.
+
+<p>
+It is good practice to avoid externally visible side effects in
+library bodies so the library can be used equally well at compile
+time and run time.
+When feasible, consider moving the side effects of a library body
+to an initialization routine and adding a top-level program that
+imports the library and calls the initialization routine.
+With this structure, calls to <tt>invoke-library</tt> on the
+library can be replaced by calls to 
+<a name="./libraries:s21"></a><tt>load-program</tt> on the
+top-level program.
+
+<p>
+
+<h3><a name="g96"></a><a name="./libraries:h6"></a>Section 10.6. Library Parameters<a name="SECTLIBRARYPARAMETERS"></a></h3>
+
+
+
+<p>
+<a name="./libraries:s22"></a>The parameters described below control where <tt>import</tt> looks
 when attempting to load a library, whether it compiles the libraries
 it loads, and whether it displays tracking messages as it performs its
 search.
 
 <p>
-<a name="./libraries:s21"></a><span class=formdef><b>thread parameter</b>: <tt>library-directories</tt></span>
+<a name="./libraries:s23"></a><span class=formdef><b>thread parameter</b>: <tt>library-directories</tt></span>
 <br><span class=formdef><b>thread parameter</b>: <tt>library-extensions</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
@@ -1042,7 +1101,7 @@ search.
 containing library source and object code are located in the file system,
 and the parameter <tt>library-extensions</tt> determines the filename
 extensions for the files holding the code, as described in
-section&nbsp;<a href="./use.html#g10">2.5</a>.
+section&nbsp;<a href="./use.html#g9">2.4</a>.
 The values of both parameters are lists of pairs of strings.
 The first string in each <tt>library-directories</tt> pair identifies a
 source-file root directory, and the second identifies the corresponding
@@ -1090,12 +1149,12 @@ The <tt>library-directories</tt> and <tt>library-extensions</tt>
 parameters also accept as input strings in the format described
 in Section&nbsp;<a href="./use.html#g10">2.5</a>
 for the
-<a name="./libraries:s22"></a><tt>--libdirs</tt> and
-<a name="./libraries:s23"></a><tt>--libexts</tt> command-line
+<a name="./libraries:s24"></a><tt>--libdirs</tt> and
+<a name="./libraries:s25"></a><tt>--libexts</tt> command-line
 options.
 
 <p>
-<a name="./libraries:s24"></a><span class=formdef><b>thread parameter</b>: <tt>compile-imported-libraries</tt></span>
+<a name="./libraries:s26"></a><span class=formdef><b>thread parameter</b>: <tt>compile-imported-libraries</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1103,12 +1162,12 @@ options.
 automatically calls the value of the <tt>compile-library-handler</tt> parameter (which defaults
 to a procedure that simply calls <tt>compile-library</tt>) on any imported library if
 the object file is missing, older than the corresponding source file,
-older than any source files included (via <a name="./libraries:s25"></a><tt>include</tt>) when the
+older than any source files included (via <a name="./libraries:s27"></a><tt>include</tt>) when the
 object file was created, or itself requires a library that has or must
-be recompiled, as described in Section&nbsp;<a href="./use.html#g10">2.5</a>.
+be recompiled, as described in Section&nbsp;<a href="./use.html#g9">2.4</a>.
 The default initial value of this parameter is <tt>#f</tt>.
 It can be set to <tt>#t</tt> via the command-line option
-<a name="./libraries:s26"></a><tt>--compile-imported-libraries</tt>.
+<a name="./libraries:s28"></a><tt>--compile-imported-libraries</tt>.
 
 <p>
 When <tt>import</tt> compiles a library via this mechanism, it does not
@@ -1120,7 +1179,7 @@ If such expressions are present and should be evaluated, the library
 should be loaded explicitly.
 
 <p>
-<a name="./libraries:s27"></a><span class=formdef><b>thread parameter</b>: <tt>import-notify</tt></span>
+<a name="./libraries:s29"></a><span class=formdef><b>thread parameter</b>: <tt>import-notify</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1130,7 +1189,7 @@ searches for the file containing each library it needs to load.
 The default value of this parameter is <tt>#f</tt>.
 
 <p>
-<a name="./libraries:s28"></a><span class=formdef><b>thread parameter</b>: <tt>library-search-handler</tt></span>
+<a name="./libraries:s30"></a><span class=formdef><b>thread parameter</b>: <tt>library-search-handler</tt></span>
 <br>
 <b>libraries: </b><tt>(chezscheme)</tt>
 
@@ -1144,7 +1203,7 @@ a library during <tt>import</tt>, <tt>compile-whole-program</tt>, or
 <tt>compile-whole-library</tt>.
 
 <p>
-<a name="./libraries:s29"></a><span class=formdef><b>procedure</b>: <tt>(default-library-search-handler&nbsp;<i>who</i>&nbsp;<i>library</i>&nbsp;<i>directories</i>&nbsp;<i>extensions</i>)</tt></span>
+<a name="./libraries:s31"></a><span class=formdef><b>procedure</b>: <tt>(default-library-search-handler&nbsp;<i>who</i>&nbsp;<i>library</i>&nbsp;<i>directories</i>&nbsp;<i>extensions</i>)</tt></span>
 <br>
 <b>returns: </b>see below
 <br>
@@ -1177,12 +1236,12 @@ and a boolean that is true if the object file exists.
 
 <p>
 
-<h3><a name="g96"></a><a name="./libraries:h6"></a>Section 10.6. Library Inspection<a name="SECTLIBRARYINSPECTION"></a></h3>
+<h3><a name="g97"></a><a name="./libraries:h7"></a>Section 10.7. Library Inspection<a name="SECTLIBRARYINSPECTION"></a></h3>
 
 
 
 <p>
-<a name="./libraries:s30"></a><span class=formdef><b>procedure</b>: <tt>(library-list)</tt></span>
+<a name="./libraries:s32"></a><span class=formdef><b>procedure</b>: <tt>(library-list)</tt></span>
 <br>
 <b>returns: </b>a list of the libraries currently defined
 <br>
@@ -1192,7 +1251,7 @@ and a boolean that is true if the object file exists.
 Section&nbsp;<a href="./libraries.html#g91">10.1</a> above.
 
 <p>
-<a name="./libraries:s31"></a><span class=formdef><b>procedure</b>: <tt>(library-version&nbsp;<i>libref</i>)</tt></span>
+<a name="./libraries:s33"></a><span class=formdef><b>procedure</b>: <tt>(library-version&nbsp;<i>libref</i>)</tt></span>
 <br>
 <b>returns: </b>the version of the specified library
 <br><span class=formdef><b>procedure</b>: <tt>(library-exports&nbsp;<i>libref</i>)</tt></span>
@@ -1307,7 +1366,7 @@ Otherwise, it returns <tt>#f</tt>.
 (library-object-filename&nbsp;'(A))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"A.so"<br>
 
 (library-object-filename&nbsp;'(B))&nbsp;<img src="math/csug/0.gif" alt="<graphic>">&nbsp;"B.so"</tt>
-<p><a name="./libraries:s32"></a><span class=formdef><b>syntax</b>: <tt>(library-requirements-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
+<p><a name="./libraries:s34"></a><span class=formdef><b>syntax</b>: <tt>(library-requirements-options&nbsp;<i>symbol</i>&nbsp;...)</tt></span>
 <br>
 <b>returns: </b>a library-requirements-options enumeration set
 <br>
@@ -1350,7 +1409,7 @@ is invoked.
 Copyright &copy; 2019 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised January 2020 for Chez Scheme Version 9.5.3<br>
+Revised February 2020 for Chez Scheme Version 9.5.3<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
