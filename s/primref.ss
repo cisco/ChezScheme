@@ -14,9 +14,9 @@
 ;;; limitations under the License.
 
 (define-record-type primref
-  (nongenerative #{primref a0xltlrcpeygsahopkplcn-3})
+  (nongenerative #{primref a0xltlrcpeygsahopkplcn-2})
   (sealed #t)
-  (fields name flags arity signatures))
+  (fields name flags arity))
 
 (define primref-level
   (lambda (pr)

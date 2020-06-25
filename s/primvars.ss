@@ -26,8 +26,8 @@
           ($oops 'prims "inconsistent single-value information for ~s" prim))
         ($sputprop prim '*flags* flags)
         (when (any-set? (prim-mask (or primitive system)) flags)
-          ($sputprop prim '*prim2* (make-primref prim flags arity '()))
-          ($sputprop prim '*prim3* (make-primref prim (fxlogor flags (prim-mask unsafe)) arity '()))))))
+          ($sputprop prim '*prim2* (make-primref prim flags arity))
+          ($sputprop prim '*prim3* (make-primref prim (fxlogor flags (prim-mask unsafe)) arity))))))
 
   (define-syntax setup
     (lambda (x)
