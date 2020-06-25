@@ -909,8 +909,8 @@
       (declare-intrinsic dofretu32* dofretu32* (%ac0 %ts %td %cp %ac1) (%ac0) (%xp))
       (declare-intrinsic get-room get-room () (%xp) (%xp))
       (declare-intrinsic scan-remembered-set scan-remembered-set () () ())
-      (declare-intrinsic reify-1cc reify-1cc (%xp %ac0 %ts) () (%td))
-      (declare-intrinsic maybe-reify-cc maybe-reify-cc (%xp %ac0 %ts) () (%td))
+      (declare-intrinsic reify-1cc reify-1cc (%xp %ac0 %ts %reify1 %reify2) () (%td)) ; %reify1 & %reify2 are defined as needed per machine...
+      (declare-intrinsic maybe-reify-cc maybe-reify-cc (%xp %ac0 %ts %reify1 %reify2) () (%td)) ; ... to have enough registers to allocate
       (declare-intrinsic dooverflow dooverflow () () ())
       (declare-intrinsic dooverflood dooverflood () (%xp) ())
       ; a dorest routine takes all of the register and frame arguments from the rest
@@ -11578,7 +11578,7 @@
                                              (jump ,(%mref ,%xp ,(constant return-address-mv-return-address-disp))
                                                (,%ac0 ,arg-registers ... ,fv0))))]))))))))))))
         (define reify-cc-help
-          (lambda (1-shot? always? finish)
+          (lambda (1-shot? always? save-ra? ref-ret finish)
             (with-output-language (L13 Tail)
                 (%seq
                   (set! ,%td ,(%tc-ref stack-link))
@@ -11587,7 +11587,7 @@
                              (%seq
                                ,(let ([alloc
                                        (%seq
-                                        (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation)))
+                                        (set! ,%xp ,(%constant-alloc type-closure (constant size-continuation) #f save-ra?))
                                         (set! ,(%mref ,%xp ,(constant continuation-code-disp))
                                               (literal ,(make-info-literal #f 'library (lookup-libspec nuate) (constant code-data-disp)))))])
                                   (if 1-shot?
@@ -11597,10 +11597,10 @@
                                            ,alloc
                                            (set! ,(%tc-ref cached-frame) ,(%constant sfalse))))
                                       alloc))
-                               (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,%ref-ret)
+                               (set! ,(%mref ,%xp ,(constant continuation-return-address-disp)) ,ref-ret)
                                (set! ,(%mref ,%xp ,(constant continuation-winders-disp)) ,(%tc-ref winders))
                                (set! ,(%mref ,%xp ,(constant continuation-attachments-disp)) ,(%tc-ref attachments))
-                               (set! ,%ref-ret ,%ac0)
+                               (set! ,ref-ret ,%ac0)
                                (set! ,(%mref ,%xp ,(constant continuation-link-disp)) ,%td)
                                (set! ,(%tc-ref stack-link) ,%xp)
                                (set! ,%ac0 ,(%tc-ref scheme-stack))
@@ -11629,7 +11629,7 @@
                                                 ,(%mref ,%td ,(constant continuation-attachments-disp))
                                                 ,(%constant sfalse))
                                             (false)
-                                            ,(%inline eq? ,%ref-ret ,%ac0))
+                                            ,(%inline eq? ,ref-ret ,%ac0))
                                         ,(finish %td)
                                         ,(build-reify)))))])
                      (if 1-shot?
@@ -11675,7 +11675,7 @@
                  (set! ,uf (literal ,(make-info-literal #f 'library-code
                                                         (lookup-libspec dounderflow)
                                                         (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                 (if ,(%inline eq? ,%ref-ret ,uf)
+                 (if ,(%inline eq? ,(get-fv 0) ,uf)
                      ;; Maybe reified, so maybe an attachment
                      ,(%seq
                        (set! ,sl ,(%tc-ref stack-link))
@@ -11729,28 +11729,31 @@
            [(dorest4) (make-do-rest 4 frame-args-offset)]
            [(dorest5) (make-do-rest 5 frame-args-offset)]
            [(reify-1cc maybe-reify-cc)
-            (let ([other-reg* (fold-left (lambda (live* kill) (remq kill live*))
-                                         (vector->list regvec)
-                                         ;; Registers used by `reify-cc-help` output,
-                                         ;; plus `%ts` so that we have one to allocate
-                                         (reg-list %xp %td %ac0 %ts))]
-                  [1cc? (eq? sym 'reify-1cc)])
+            (let ([1cc? (eq? sym 'reify-1cc)])
               `(lambda ,(make-named-info-lambda (if 1cc? "reify-1cc" "maybe-reify-cc") '(0)) 0 ()
                 ,(asm-enter
                    (%seq
-                     (check-live ,other-reg* ...)
-                     ,(reify-cc-help 1cc? 1cc?
+                     ;; make sure the reify-1cc intrinsic declares kill for registers used by `reify-cc-help`,
+                     ;; plus (say) %ts to have one to allocate, plus more as needed to allocate per machine
+                     (check-live ,(intrinsic-entry-live* reify-1cc) ...)
+                     ,(reify-cc-help 1cc? 1cc? #t (with-output-language (L13 Lvalue)
+                                                    ;; Use sfp[0] instead of the ret register,
+                                                    ;; because we want to refer to this call's return
+                                                    (%mref ,%sfp 0))
                        (lambda (reg)
                          (if (eq? reg %td)
-                             `(asm-return ,%td ,other-reg* ...)
+                             `(asm-return ,%td ,(intrinsic-return-live* reify-1cc) ...)
                              `(seq
                                 (set! ,%td ,reg)
-                                (asm-return ,%td ,other-reg* ...)))))))))]
+                                (asm-return ,%td ,(intrinsic-return-live* reify-1cc) ...)))))))))]
            [(callcc)
             `(lambda ,(make-named-info-lambda 'callcc '(1)) 0 ()
                ,(%seq
                   (set! ,(ref-reg %cp) ,(make-arg-opnd 1))
-                  ,(reify-cc-help #f #f
+                  ,(reify-cc-help #f #f #f (with-output-language (L13 Lvalue)
+                                             ;; Use the ret register (if any), because reify
+                                             ;; adjusts the return address for a tail call
+                                             %ref-ret)
                     (lambda (reg)
                       (%seq
                         (set! ,(make-arg-opnd 1) ,reg)
@@ -12022,7 +12025,7 @@
                                      ,(%mref ,%td ,(constant continuation-attachments-disp))
                                      ,(%constant sfalse))
                            (false)
-                           ,(%inline eq? ,%ref-ret ,tmp))
+                           ,(%inline eq? ,(get-fv 0) ,tmp))
                        (if ,(%inline eq? ,(%mref ,%td ,(constant continuation-attachments-disp)) ,ats)
                            (nop)
                            (set! ,ats ,(%mref ,ats ,(constant pair-cdr-disp))))
@@ -12051,7 +12054,7 @@
                         (set! ,tmp (literal ,(make-info-literal #f 'library-code
                                                                 (lookup-libspec dounderflow)
                                                                 (fx+ (constant code-data-disp) (constant size-rp-header)))))
-                        (set! ,%ref-ret ,tmp)
+                        (set! ,(get-fv 0) ,tmp)
                         (set! ,delta ,(%inline - ,%sfp ,(%tc-ref scheme-stack)))
                         (set! ,(%tc-ref scheme-stack) ,%sfp)
                         (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,delta))

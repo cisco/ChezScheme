@@ -77,8 +77,8 @@
     #;[%yp]
     [     %r0  %Carg1 %Cretval  #f  0]
     [     %r1  %Carg2           #f  1]
-    [     %r2  %Carg3           #f  2]
-    [     %r3  %Carg4           #f  3]
+    [     %r2  %Carg3 %reify1   #f  2]
+    [     %r3  %Carg4 %reify2   #f  3]
     [     %lr                   #f 14] ; %lr is trashed by 'c' calls including calls to hand-coded routines like get-room
   )
   (machine-dependent
