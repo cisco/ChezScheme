@@ -18,8 +18,8 @@ procedures that may be used to control its operation.
 
 \section{Garbage Collection\label{SECTSMGMTGC}}
 
-Scheme objects such as pairs, strings, and procedures are
-never explicitly deallocated by a Scheme program.
+Scheme objects such as pairs, strings, procedures, and user-defined
+records are never explicitly deallocated by a Scheme program.
 Instead, the \index{storage management}storage management system
 automatically reclaims the
 storage associated with an object once it proves the object is no longer
@@ -44,7 +44,8 @@ The collect-request handler can be redefined by changing the value of the
 parameter
 \index{\scheme{collect-request-handler}}\scheme{collect-request-handler}.
 A program can also cause a collection to occur between collect-request
-interrupts by calling \scheme{collect} directly.
+interrupts by calling \scheme{collect} directly either without or with
+arguments.
 
 {\ChezScheme}'s collector is a \emph{generation-based} collector.
 It segregates objects based on their age (roughly speaking, the
@@ -59,64 +60,56 @@ which storage is never reclaimed.
 Objects are placed into the static generation only
 when a heap is compacted (see
 \index{\scheme{Scompact_heap}}\scheme{Scompact_heap} in
-Section~\ref{SECTFOREIGNCLIB}) or when the target-generation argument to
-\index{\scheme{collect}}\scheme{collect} is the symbol \scheme{static}.
+Section~\ref{SECTFOREIGNCLIB}) or when an explicitly specified
+target-generation is the symbol \scheme{static}.
+This is primarily useful after an application's permanent code and data
+structures have been loaded and initialized, to reduce the overhead of
+subsequent collections.
 
 Nonstatic generations are numbered starting at zero for the youngest
 generation up through the current value of
 \index{\scheme{collect-maximum-generation}}\scheme{collect-maximum-generation}.
 The storage manager places newly allocated objects into generation 0.
-During a generation 0 collection, objects in generation 0 that survive the
-collection move, by default, to generation 1.
-Similarly, during a generation 1 collection, objects in generations 0 and
-1 that survive move to generation 2, and so on.
-During the collection of the maximum nonstatic collection, all surviving
-nonstatic objects move (possibly back) into the maximum nonstatic
-generation.
-With this mechanism, it is possible for an object to skip one or more
-generations, but this is not likely to happen to many objects, and if the
-objects become inaccessible, their storage is reclaimed eventually.
 
+When \scheme{collect} is invoked without arguments, generation 0
+objects that survive collection move to generation 1, generation 1
+objects that survive move to generation 2, and so on, except that
+objects are never moved past the maximum nonstatic generation.
+Objects in the maximum nonstatic generation are collected back into
+the maximum nonstatic generation.
+While generation 0 is collected during each collection, older
+generations are collected less frequently.
 An internal counter, gc-trip, is maintained to control when each
 generation is collected.
 Each time \scheme{collect} is called without arguments (as from the default
-collect-request handler), gc-trip is incremented by one.
-With a collect-generation radix of $r$, the collected generation
+collect-request handler), gc-trip is incremented by one, and the set of
+generations to be collected is determined from the current value of
+gc-trip and the value of
+\index{\scheme{collect-generation-radix}}\scheme{collect-generation-radix}:
+with a collect-generation radix of $r$, the maximum collected generation
 is the highest numbered generation $g$ for which gc-trip is a
 multiple of $r^g$.
 If \scheme{collect-generation-radix} is set to 4, the system thus
-collects generation 0 every time, generation 1 every 4 times, generation 2
-every 16 times, and so on.
+collects generation 0 every time, generation 1 every 4 times,
+generation 2 every 16 times, and so on.
 
-Each time \scheme{collect} is called with a single generation argument $g$,
-generation $g$ is collected and 
-gc-trip is advanced to the next $r^g$ boundary, but not past the next
-$r^{g+1}$ boundary, where $r$ is again the
+When \scheme{collect} is invoked with arguments, the generations to be
+collected and their target generations are determined by the arguments.
+In addition, the first argument \var{cg} affects the value of gc-trip;
+that is, gc-trip is advanced to the next $r^{cg}$ boundary, but
+not past the next $r^{cg+1}$ boundary, where $r$ is the
 value of \scheme{collect-generation-radix}.
-
-If \scheme{collect} is called with a second generation argument,
-$tg$, $tg$ determines the target generation.
-When $g$ is the maximum nonstatic generation, $tg$ must be 
-$g$ or the symbol \scheme{static}.
-Otherwise, $tg$ must be $g$ or $g+1$.
-When the target generation is the symbol \scheme{static}, all data in
-the nonstatic generations are moved to the static generation.
-Objects in the static generation are never collected.
-This is primarily useful after an application's permanent code and data
-structures have been loaded and initialized, to reduce the overhead of
-subsequent collections.
 
 It is possible to make substantial adjustments in the collector's behavior
 by setting the parameters described in this section.
 It is even possible to completely override the collector's default strategy for
 determining when each generation is collected by redefining the
-collect-request handler to call \scheme{collect} with explicit $g$ and
-$tg$ arguments.
-For example, the programmer can redefine the handler to treat the maximum
-nonstatic generation as a static generation over a long period of time
-by calling \scheme{collect} with explicit $g$ and $tg$ arguments
-that are never equal to the maximum nonstatic generation during that
-period of time.
+collect-request handler to call \scheme{collect} with arguments.
+For example, the programmer can redefine the handler to treat the
+maximum nonstatic generation as a static generation over a long
+period of time by calling \scheme{collect} with arguments that
+prevent the maximum nonstatic generation from being collected during
+that period of time.
 
 Additional information on {\ChezScheme}'s collector can be found in the
 report ``Don't stop the {BiBOP}:  Flexible and efficient
@@ -126,32 +119,59 @@ storage management for dynamically typed languages''~\cite{Dybvig:sm}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{collect}{\categoryprocedure}{(collect)}
-\formdef{collect}{\categoryprocedure}{(collect \var{g})}
-\formdef{collect}{\categoryprocedure}{(collect \var{g} \var{tg})}
+\formdef{collect}{\categoryprocedure}{(collect \var{cg})}
+\formdef{collect}{\categoryprocedure}{(collect \var{cg} \var{max-tg})}
+\formdef{collect}{\categoryprocedure}{(collect \var{cg} \var{min-tg} \var{max-tg})}
 \returns unspecified
 \listlibraries
 \endentryheader
 
 \noindent
-\var{g} must be a nonnegative fixnum no greater than the
-maximum nonstatic generation, i.e., the
-value returned by \scheme{collect-maximum-generation}.
-If \var{g} is the maximum nonstatic generation,
-\var{tg} must be a fixnum equal to \var{g} or the symbol
-\scheme{static}.
-Otherwise, \var{tg} must be a fixnum equal to or one
-greater than \var{g}.
-
-This procedure causes the storage manager to perform a garbage collection.
-\scheme{collect} is invoked periodically via the collect-request
-handler, but it may also be called explicitly to force collection at a
-particular time, e.g., before timing a computation.
+This procedure causes the storage manager to perform a garbage
+collection.
+\scheme{collect} is invoked periodically without arguments by the
+default collect-request handler, but it may also be called explicitly,
+e.g., from a custom collect-request handler, between phases of a
+computation when collection is most likely to be successful, or
+before timing a computation.
 In the threaded versions of {\ChezScheme}, the thread that invokes
 \scheme{collect} must be the only active thread.
 
-The system determines which generations to collect, based on \var{g} and
-\var{tg} if provided, as described in the lead-in to this section.
+When called without arguments, the system determines automatically
+which generations to collect and the target generation for each
+collected generation as described in the lead-in to this section.
 
+When called with arguments, the system collects all and only objects
+in generations less than or equal to \var{cg} (the maximum collected
+generation) into the target generation or generations determined
+by \var{min-tg} (the minimum target generation) and \var{max-tg}
+(the maximum target generation).
+Specifically, the target generation for any object in a collected
+generation \var{g} is
+$\mbox{min}(\mbox{max}(\mbox{\emph{g}}+1,\mbox{\emph{min-tg}}),\mbox{\emph{max-tg}})$, where
+\scheme{static} is taken to have the value one greater
+than the maximum nonstatic generation.
+
+If present, \var{cg} must be a nonnegative fixnum no greater than
+the maximum nonstatic generation, i.e., the current value of the
+parameter \scheme{collect-maximum-generation}.
+
+If present, \var{max-tg} must be a nonnegative fixnum or the symbol
+\scheme{static} and either equal to \var{cg} or one greater than
+\var{cg}, again treating \scheme{static} as having the value one
+greater than the maximum nonstatic generation.
+If \var{max-tg} is not present (but \var{cg} is), it defaults to
+\var{cg} if \var{cg} is equal to the maximum target generation and
+to one more than \var{cg} otherwise.
+
+If present, \var{min-tg} must be a nonnegative fixnum or the symbol
+\scheme{static} and no greater than \var{max-tg}, again treating
+\scheme{static} as having the value one greater than the maximum
+nonstatic generation.
+Unless \var{max-cg} is the same as \var{cg}, \var{min-tg} must also
+be greater than \var{cg}.
+If \var{min-tg} is not present (but \var{cg} is), it defaults to
+the same value as \var{max-tg}.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -168,7 +188,7 @@ the other threads pause until the handler returns.
 
 Note that if the collect-request handler (see
 \scheme{collect-request-handler}) does not call \scheme{collect}, then
-\scheme{collect-rendezvous} does not actualy perform a garbage
+\scheme{collect-rendezvous} does not actually perform a garbage
 collection.
 
 

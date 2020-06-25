@@ -383,7 +383,7 @@ ptr S_object_counts(void) {
 void Scompact_heap() {
   ptr tc = get_thread_context();
   S_pants_down += 1;
-  S_gc_oce(tc, S_G.max_nonstatic_generation, static_generation);
+  S_gc_oce(tc, S_G.max_nonstatic_generation, static_generation, static_generation);
   S_pants_down -= 1;
 }
 
@@ -483,11 +483,11 @@ void S_check_heap(aftergc) IBOOL aftergc; {
   for (s = 0; s <= max_real_space; s += 1) {
     seginfo *si;
     for (g = 0; g <= S_G.max_nonstatic_generation; INCRGEN(g)) {
-      for (si = S_G.occupied_segments[s][g]; si != NULL; si = si->next) {
+      for (si = S_G.occupied_segments[g][s]; si != NULL; si = si->next) {
         nonstatic_segments += 1;
       }
     }
-    for (si = S_G.occupied_segments[s][static_generation]; si != NULL; si = si->next) {
+    for (si = S_G.occupied_segments[static_generation][s]; si != NULL; si = si->next) {
       static_segments += 1;
     }
   }
@@ -537,7 +537,7 @@ void S_check_heap(aftergc) IBOOL aftergc; {
           }
         } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair /* || s == space_ephemeron */) {
           /* out of date: doesn't handle space_port, space_continuation, space_code, space_pure_typed_object, space_impure_record */
-          nl = (ptr *)S_G.next_loc[s][g];
+          nl = (ptr *)S_G.next_loc[g][s];
 
           /* check for dangling references */
           pp1 = (ptr *)build_ptr(seg, 0);
@@ -647,7 +647,7 @@ static void check_dirty_space(ISPC s) {
   IGEN from_g, to_g, min_to_g; INT d; seginfo *si;
 
   for (from_g = 0; from_g <= static_generation; from_g += 1) {
-    for (si = S_G.occupied_segments[s][from_g]; si != NULL; si = si->next) {
+    for (si = S_G.occupied_segments[from_g][s]; si != NULL; si = si->next) {
       if (si->space & space_locked) continue;
       min_to_g = 0xff;
       for (d = 0; d < cards_per_segment; d += 1) {
@@ -730,7 +730,7 @@ void S_fixup_counts(ptr counts) {
   RTDCOUNTSTIMESTAMP(counts) = S_G.gctimestamp[0];
 }
 
-void S_do_gc(IGEN mcg, IGEN tg) {
+void S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg) {
   ptr tc = get_thread_context();
   ptr code;
 
@@ -746,22 +746,23 @@ void S_do_gc(IGEN mcg, IGEN tg) {
     S_G.max_nonstatic_generation = S_G.new_max_nonstatic_generation;
   }
 
-  if (tg == mcg && mcg == S_G.new_max_nonstatic_generation && mcg < S_G.max_nonstatic_generation) {
+  if (max_tg == max_cg && max_cg == S_G.new_max_nonstatic_generation && max_cg < S_G.max_nonstatic_generation) {
     IGEN new_g, old_g, from_g, to_g; ISPC s; seginfo *si, *nextsi, *tail;
    /* reducing max_nonstatic_generation */
     new_g = S_G.new_max_nonstatic_generation;
     old_g = S_G.max_nonstatic_generation;
-   /* first, collect everything to old_g */
-    S_gc(tc, old_g, old_g);
+   /* first, collect everything to old_g, ignoring min_tg */
+    S_gc(tc, old_g, old_g, old_g);
    /* now transfer old_g info to new_g, and clear old_g info */
+    S_G.bytes_of_generation[new_g] = S_G.bytes_of_generation[old_g]; S_G.bytes_of_generation[old_g] = 0;
     for (s = 0; s <= max_real_space; s += 1) {
-      S_G.first_loc[s][new_g] = S_G.first_loc[s][old_g]; S_G.first_loc[s][old_g] = FIX(0);
-      S_G.base_loc[s][new_g] = S_G.base_loc[s][old_g]; S_G.base_loc[s][old_g] = FIX(0);
-      S_G.next_loc[s][new_g] = S_G.next_loc[s][old_g]; S_G.next_loc[s][old_g] = FIX(0);
-      S_G.bytes_left[s][new_g] = S_G.bytes_left[s][old_g]; S_G.bytes_left[s][old_g] = 0;
-      S_G.bytes_of_space[s][new_g] = S_G.bytes_of_space[s][old_g]; S_G.bytes_of_space[s][old_g] = 0;
-      S_G.occupied_segments[s][new_g] = S_G.occupied_segments[s][old_g]; S_G.occupied_segments[s][old_g] = NULL;
-      for (si = S_G.occupied_segments[s][new_g]; si != NULL; si = si->next) {
+      S_G.first_loc[new_g][s] = S_G.first_loc[old_g][s]; S_G.first_loc[old_g][s] = FIX(0);
+      S_G.base_loc[new_g][s] = S_G.base_loc[old_g][s]; S_G.base_loc[old_g][s] = FIX(0);
+      S_G.next_loc[new_g][s] = S_G.next_loc[old_g][s]; S_G.next_loc[old_g][s] = FIX(0);
+      S_G.bytes_left[new_g][s] = S_G.bytes_left[old_g][s]; S_G.bytes_left[old_g][s] = 0;
+      S_G.bytes_of_space[new_g][s] = S_G.bytes_of_space[old_g][s]; S_G.bytes_of_space[old_g][s] = 0;
+      S_G.occupied_segments[new_g][s] = S_G.occupied_segments[old_g][s]; S_G.occupied_segments[old_g][s] = NULL;
+      for (si = S_G.occupied_segments[new_g][s]; si != NULL; si = si->next) {
         si->generation = new_g;
       }
     }
@@ -785,6 +786,9 @@ void S_do_gc(IGEN mcg, IGEN tg) {
         RTDCOUNTSIT(counts, new_g) = RTDCOUNTSIT(counts, old_g); RTDCOUNTSIT(counts, old_g) = 0;
       }
     }
+#ifndef WIN32
+    S_child_processes[new_g] = S_child_processes[old_g];
+#endif
 
     /* change old_g dirty bytes in static generation to new_g; splice list of old_g
        seginfos onto front of new_g seginfos */
@@ -836,22 +840,25 @@ void S_do_gc(IGEN mcg, IGEN tg) {
     S_G.min_free_gen = S_G.new_min_free_gen;
     S_G.max_nonstatic_generation = new_g;
   } else {
-    S_gc(tc, mcg, tg);
+    S_gc(tc, max_cg, min_tg, max_tg);
   }
-  S_pants_down -= 1;
 
  /* eagerly give collecting thread, the only one guaranteed to be
     active, a fresh allocation area.  the other threads have to trap
     to get_more_room if and when they awake and try to allocate */
   S_reset_allocation_pointer(tc);
 
+  S_pants_down -= 1;
+
   Sunlock_object(code);
 }
 
 
-void S_gc(ptr tc, IGEN mcg, IGEN tg) {
-  if (tg == static_generation || S_G.enable_object_counts)
-    S_gc_oce(tc, mcg, tg);
+void S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
+  if (max_cg == 0 && min_tg == 1 && max_tg == 1 && S_G.locked_objects[0] == Snil)
+    S_gc_011(tc);
+  else if (max_tg == static_generation || S_G.enable_object_counts)
+    S_gc_oce(tc, max_cg, min_tg, max_tg);
   else
-    S_gc_ocd(tc, mcg, tg);
+    S_gc_ocd(tc, max_cg, min_tg, max_tg);
 }

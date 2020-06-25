@@ -24,13 +24,14 @@ void S_alloc_init() {
 
     if (S_boot_time) {
       /* reset the allocation tables */
-        for (s = 0; s <= max_real_space; s++) {
-            for (g = 0; g <= static_generation; g++) {
-                S_G.base_loc[s][g] = FIX(0);
-                S_G.first_loc[s][g] = FIX(0);
-                S_G.next_loc[s][g] = FIX(0);
-                S_G.bytes_left[s][g] = 0;
-                S_G.bytes_of_space[s][g] = 0;
+        for (g = 0; g <= static_generation; g++) {
+            S_G.bytes_of_generation[g] = 0;
+            for (s = 0; s <= max_real_space; s++) {
+                S_G.base_loc[g][s] = FIX(0);
+                S_G.first_loc[g][s] = FIX(0);
+                S_G.next_loc[g][s] = FIX(0);
+                S_G.bytes_left[g][s] = 0;
+                S_G.bytes_of_space[g][s] = 0;
             }
         }
 
@@ -40,6 +41,7 @@ void S_alloc_init() {
         }
 
         S_G.collect_trip_bytes = default_collect_trip_bytes;
+        S_G.g0_bytes_after_last_gc = 0;
 
        /* set to final value in prim.c when known */
         S_protect(&S_G.nonprocedure_code);
@@ -131,11 +133,12 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   g = gmin;
   while (g <= gmax) {
     for (s = smin; s <= smax; s++) {
+      ptr next_loc = S_G.next_loc[g][s];
      /* add in bytes previously recorded */
-      n += S_G.bytes_of_space[s][g];
+      n += S_G.bytes_of_space[g][s];
      /* add in bytes in active segments */
-      if (S_G.next_loc[s][g] != FIX(0))
-        n += (char *)S_G.next_loc[s][g] - (char *)S_G.base_loc[s][g];
+      if (next_loc != FIX(0))
+        n += (char *)next_loc - (char *)S_G.base_loc[g][s];
     }
     if (g == S_G.max_nonstatic_generation)
       g = static_generation;
@@ -151,29 +154,7 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
 }
 
 static void maybe_fire_collector() {
-  ISPC s;
-  uptr bytes, fudge;
-
-  bytes = 0;
-
-  for (s = 0; s <= max_real_space; s += 1) {
-   /* bytes already accounted for */
-    bytes += S_G.bytes_of_space[s][0];
-   /* bytes in current block of segments */
-    if (S_G.next_loc[s][0] != FIX(0))
-      bytes += (char *)S_G.next_loc[s][0] - (char *)S_G.base_loc[s][0];
-  }
-
- /* arbitrary fudge factor to account for space we may not be using yet
-    arbitrary because:
-      - we assume each thread has not yet used half it's allocation area
-      - we assume each thread has not yet used half its stack
-      - some threads' stacks may not be as much as the default size
- */
-  fudge = (default_stack_size / 2) + S_nthreads * (bytes_per_segment / 2);
-  bytes = bytes > fudge ? bytes - fudge : 0;
-
-  if (bytes >= S_G.collect_trip_bytes)
+  if (S_G.bytes_of_generation[0] - S_G.g0_bytes_after_last_gc >= S_G.collect_trip_bytes)
     S_fire_collector();
 }
 
@@ -206,22 +187,24 @@ ptr S_find_more_room(s, g, n, old) ISPC s; IGEN g; iptr n; ptr old; {
 
   if (old == FIX(0)) {
    /* first object of this space */
-    S_G.first_loc[s][g] = new;
+    S_G.first_loc[g][s] = new;
   } else {
+    uptr bytes = (char *)old - (char *)S_G.base_loc[g][s];
    /* increment bytes_allocated by the closed-off partial segment */
-    S_G.bytes_of_space[s][g] += (char *)old - (char *)S_G.base_loc[s][g];
+    S_G.bytes_of_space[g][s] += bytes;
+    S_G.bytes_of_generation[g] += bytes;
    /* lay down an end-of-segment marker */
     *(ptr*)old = forward_marker;
     *((ptr*)old + 1) = new;
   }
 
  /* base address of current block of segments to track amount of allocation */
-  S_G.base_loc[s][g] = new;
+  S_G.base_loc[g][s] = new;
 
-  S_G.next_loc[s][g] = (ptr)((uptr)new + n);
-  S_G.bytes_left[s][g] = (nsegs * bytes_per_segment - n) - 2 * ptr_bytes;
+  S_G.next_loc[g][s] = (ptr)((uptr)new + n);
+  S_G.bytes_left[g][s] = (nsegs * bytes_per_segment - n) - 2 * ptr_bytes;
 
-  if (g == 0) maybe_fire_collector();
+  if (g == 0 && S_pants_down == 1) maybe_fire_collector();
 
   S_pants_down -= 1;
   return new;
@@ -252,9 +235,10 @@ void S_reset_allocation_pointer(tc) ptr tc; {
        seg = S_find_segments(space_new, 0, 1);
   */
 
-  S_G.bytes_of_space[space_new][0] += bytes_per_segment;
+  S_G.bytes_of_space[0][space_new] += bytes_per_segment;
+  S_G.bytes_of_generation[0] += bytes_per_segment;
 
-  maybe_fire_collector();
+  if (S_pants_down == 1) maybe_fire_collector();
 
   AP(tc) = build_ptr(seg, 0);
   REAL_EAP(tc) = EAP(tc) = (ptr)((uptr)AP(tc) + bytes_per_segment);
@@ -263,22 +247,22 @@ void S_reset_allocation_pointer(tc) ptr tc; {
 }
 
 
-FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g) {
-  IGEN to_g = si->min_dirty_byte;
-  if (to_g != 0) {
+FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g, IGEN to_g) {
+  IGEN old_to_g = si->min_dirty_byte;
+  if (to_g < old_to_g) {
     seginfo **pointer_to_first, *oldfirst;
-    if (to_g != 0xff) {
+    if (old_to_g != 0xff) {
       seginfo *next = si->dirty_next, **prev = si->dirty_prev;
       /* presently on some other list, so remove */
       *prev = next;
       if (next != NULL) next->dirty_prev = prev;
     }
-    oldfirst = *(pointer_to_first = &DirtySegments(from_g, 0));
+    oldfirst = *(pointer_to_first = &DirtySegments(from_g, to_g));
     *pointer_to_first = si;
     si->dirty_prev = pointer_to_first;
     si->dirty_next = oldfirst;
     if (oldfirst != NULL) oldfirst->dirty_prev = &si->dirty_next;
-    si->min_dirty_byte = 0;
+    si->min_dirty_byte = to_g;
   }
 }
 
@@ -289,8 +273,19 @@ void S_dirty_set(ptr *loc, ptr x) {
     IGEN from_g = si->generation;
     if (from_g != 0) {
       si->dirty_bytes[((uptr)loc >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
-      mark_segment_dirty(si, from_g);
+      mark_segment_dirty(si, from_g, 0);
     }
+  }
+}
+
+void S_mark_card_dirty(uptr card, IGEN to_g) {
+  uptr loc = card << card_offset_bits;
+  uptr seg = addr_get_segment(loc);
+  seginfo *si = SegInfo(seg);
+  uptr cardno = card & ((1 << segment_card_offset_bits) - 1);
+  if (to_g < si->dirty_bytes[cardno]) {
+    si->dirty_bytes[cardno] = to_g;
+    mark_segment_dirty(si, si->generation, to_g);
   }
 }
 
@@ -316,7 +311,7 @@ void S_scan_dirty(ptr **p, ptr **endp) {
       IGEN from_g = si->generation;
       if (from_g != 0) {
         si->dirty_bytes[((uptr)loc >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
-        if (this >> segment_card_offset_bits != last >> segment_card_offset_bits) mark_segment_dirty(si, from_g);
+        if (this >> segment_card_offset_bits != last >> segment_card_offset_bits) mark_segment_dirty(si, from_g, 0);
       }
       last = this;
     }
@@ -345,7 +340,9 @@ void S_scan_remembered_set() {
     AP(tc) = (ptr)ap;
     EAP(tc) = (ptr)eap;
   } else {
-    S_G.bytes_of_space[space_new][0] -= eap - ap;
+    uptr bytes = eap - ap;
+    S_G.bytes_of_space[0][space_new] -= bytes;
+    S_G.bytes_of_generation[0] -= bytes;
     S_reset_allocation_pointer(tc);
   }
 
@@ -389,7 +386,9 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
       AP(tc) = (ptr)ap;
       EAP(tc) = (ptr)eap;
     } else {
-      S_G.bytes_of_space[space_new][0] -= eap - ap;
+      uptr bytes = eap - ap;
+      S_G.bytes_of_space[0][space_new] -= bytes;
+      S_G.bytes_of_generation[0] -= bytes;
       S_reset_allocation_pointer(tc);
     }
   } else if (eap - ap > alloc_waste_maximum) {
@@ -397,7 +396,9 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
     EAP(tc) = (ptr)eap;
     find_room(space_new, 0, type, size, x);
   } else {
-    S_G.bytes_of_space[space_new][0] -= eap - ap;
+    uptr bytes = eap - ap;
+    S_G.bytes_of_space[0][space_new] -= bytes;
+    S_G.bytes_of_generation[0] -= bytes;
     S_reset_allocation_pointer(tc);
     ap = (uptr)AP(tc);
     if (size + alloc_waste_maximum <= (uptr)EAP(tc) - ap) {

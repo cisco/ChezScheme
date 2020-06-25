@@ -80,9 +80,9 @@ typedef int IFASLCODE;      /* fasl type codes */
  * no space is left in the current segment.  n is assumed to be
  * an integral multiple of the object alignment. */
 #define find_room(s, g, t, n, x) {\
-    ptr X = S_G.next_loc[s][g];\
-    S_G.next_loc[s][g] = (ptr)((uptr)X + (n));\
-    if ((S_G.bytes_left[s][g] -= (n)) < 0) X = S_find_more_room(s, g, n, X);\
+    ptr X = S_G.next_loc[g][s];\
+    S_G.next_loc[g][s] = (ptr)((uptr)X + (n));\
+    if ((S_G.bytes_left[g][s] -= (n)) < 0) X = S_find_more_room(s, g, n, X);\
     (x) = TYPE(X, t);\
 }
 
