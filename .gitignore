@@ -16,6 +16,10 @@
 /ti3le/
 /ti3nt/
 /ti3osx/
+/arm32le/
+/tarm32le/
+/ppc32le/
+/tppc32le/
 /xc-*/
 *.*run
 /csug/math/csug/

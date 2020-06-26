@@ -842,6 +842,32 @@
          `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
          `(set! ,(make-live-info) ,z (asm ,info ,asm-get-tc ,u ,ulr))))])
 
+  (define-instruction value activate-thread
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([u (make-tmp 'u)] [ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-activate-thread ,u ,ulr))))])
+
+  (define-instruction effect deactivate-thread
+    [(op)
+     (let ([u (make-tmp 'u)] [ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(asm ,info ,asm-deactivate-thread ,u ,ulr)))])
+
+  (define-instruction effect unactivate-thread
+    [(op (x ur))
+     (safe-assert (eq? x %r2))
+     (let ([u (make-tmp 'u)] [ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(asm ,info ,asm-unactivate-thread ,x ,u ,ulr)))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur)) 
      (let ([u (make-tmp 'u)])
@@ -959,6 +985,10 @@
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
 	       `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
 
+  (define-instruction effect (write-write-fence)
+    [(op)
+     `(asm ,info ,asm-write-write-fence)])
+
   (define-instruction effect (pause)
     ; NB: user sqrt or something like that?
     [(op) '()])
@@ -1003,7 +1033,7 @@
                      asm-rp-header asm-rp-compact-header
                      asm-indirect-call asm-condition-code
                      asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom asm-fptrunc 
-                     asm-lock asm-lock+/- asm-cas
+                     asm-lock asm-lock+/- asm-cas asm-write-write-fence
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1013,6 +1043,7 @@
                      shift-count? unsigned8? unsigned12?
                      ; threaded version specific
                      asm-get-tc
+                     asm-activate-thread asm-deactivate-thread asm-unactivate-thread
                      ; machine dependent exports
                      asm-kill
                      info-vpush-reg info-vpush-n)
@@ -1154,6 +1185,8 @@
 
   (define-op ldrex ldrex-op      #b00011001)
   (define-op strex strex-op      #b00011000)
+
+  (define-op dmbishst dmb-op #b1010)
 
   (define-op bnei  branch-imm-op       (ax-cond 'ne))
   (define-op brai  branch-imm-op       (ax-cond 'al))
@@ -1396,6 +1429,12 @@
         [8  #b1111]
         [4  #b1001]
         [0  (ax-ea-reg-code opnd0-ea)])))
+
+  (define dmb-op
+    (lambda (op opcode code*)
+      (emit-code (op code*)
+	[4 #b1111010101111111111100000101]
+	[0 opcode])))
 
   (define branch-imm-op
     (lambda (op cond-bits disp code*)
@@ -2098,6 +2137,7 @@
               [else (sorry! who "unexpected asm-swap type argument ~s" type)]))))))
 
   (define asm-lock
+    ;  tmp = 1 # in case load result is not 0
     ;  tmp2 = ldrex src
     ;  cmp tmp2, 0
     ;  bne L1 (+2)
@@ -2106,11 +2146,12 @@
     ;L1:
     (lambda (code* src tmp tmp2)
       (Trivit (src tmp tmp2)
-        (emit ldrex tmp2 src
-          (emit cmpi tmp2 0
-            (emit bnei 1
-              (emit movi1 tmp2 1
-                (emit strex tmp tmp2 src code*))))))))
+        (emit movi1 tmp 1
+          (emit ldrex tmp2 src
+            (emit cmpi tmp2 0
+              (emit bnei 1
+                (emit movi1 tmp2 1
+                  (emit strex tmp tmp2 src code*)))))))))
 
   (define-who asm-lock+/-
     ; L:
@@ -2148,6 +2189,10 @@
               (emit strex tmp2 new src
                 (emit cmpi tmp2 0
                    code*))))))))
+
+  (define asm-write-write-fence
+    (lambda (code*)
+      (emit dmbishst code*)))
 
   (define asm-fp-relop
     (lambda (info)
@@ -2290,6 +2335,21 @@
   (define asm-get-tc
     (let ([target `(arm32-call 0 (entry ,(lookup-c-entry get-thread-context)))])
       (lambda (code* dest jmp-tmp . ignore) ; dest is ignored, since it is always Cretval
+        (asm-helper-call code* target #f jmp-tmp))))
+
+  (define asm-activate-thread
+    (let ([target `(arm32-call 0 (entry ,(lookup-c-entry activate-thread)))])
+      (lambda (code* dest jmp-tmp . ignore)
+        (asm-helper-call code* target #t jmp-tmp))))
+
+  (define asm-deactivate-thread
+    (let ([target `(arm32-call 0 (entry ,(lookup-c-entry deactivate-thread)))])
+      (lambda (code* jmp-tmp . ignore)
+        (asm-helper-call code* target #f jmp-tmp))))
+
+  (define asm-unactivate-thread
+    (let ([target `(arm32-call 0 (entry ,(lookup-c-entry unactivate-thread)))])
+      (lambda (code* arg-reg jmp-tmp . ignore)
         (asm-helper-call code* target #f jmp-tmp))))
 
   (define-who asm-return-address
@@ -2552,6 +2612,35 @@
     (define num-dbl-regs 8) ; number of `double` registers normally usd by the ABI
     (define sgl-regs (lambda () (list %Cfparg1 %Cfparg1b %Cfparg2 %Cfparg2b %Cfparg3 %Cfparg3b %Cfparg4 %Cfparg4b
 				      %Cfparg5 %Cfparg5b %Cfparg6 %Cfparg6b %Cfparg7 %Cfparg7b %Cfparg8 %Cfparg8b)))
+    (define save-and-restore
+      (lambda (regs e)
+        (safe-assert (andmap reg? regs))
+	(with-output-language (L13 Effect)
+          (let ([save-and-restore-gp
+		 (lambda (regs e)
+                   (let* ([regs (filter (lambda (r) (not (eq? (reg-type r) 'fp))) regs)]
+                          [regs (if (fxodd? (length regs))
+                                    (cons %tc regs) ; keep doubleword aligned
+                                    regs)])
+                     (cond
+                      [(null? regs) e]
+                      [else
+                       (%seq
+			(inline ,(make-info-kill*-live* '() regs) ,%push-multiple)
+			,e
+			(inline ,(make-info-kill*-live* regs '()) ,%pop-multiple))])))]
+		[save-and-restore-fp
+		 (lambda (regs e)
+                   (let ([fp-regs (filter (lambda (r) (eq? (reg-type r) 'fp)) regs)])
+                     (cond
+                      [(null? fp-regs) e]
+                      [else
+                       (let ([info (make-info-vpush (car fp-regs) (length fp-regs))])
+                         (%seq
+			  (inline ,info ,%vpush-multiple)
+			  ,e
+			  (inline ,info ,%vpop-multiple)))])))])
+            (save-and-restore-gp regs (save-and-restore-fp regs e))))))
     (define-who asm-foreign-call
       (with-output-language (L13 Effect)
         (define int-regs (lambda () (list %Carg1 %Carg2 %Carg3 %Carg4)))
@@ -2708,12 +2797,12 @@
 				     [(and doubles?
 					   (fx>= (length sgl*) (fx* 2 num-members)))
 				      ;; Allocate each double to a register
-				      (let dbl-loop ([size size] [offset 0] [sgl* sgl*] [loc #f])
+				      (let dbl-loop ([size size] [offset 0] [live* live*] [sgl* sgl*] [loc #f])
 					(cond
 					 [(fx= size 0)
 					  (loop (cdr types) (cons loc locs) live* int* sgl* #f isp)]
 					 [else
-					  (dbl-loop (fx- size 8) (fx+ offset 8) (cddr sgl*)
+					  (dbl-loop (fx- size 8) (fx+ offset 8) (cons (car sgl*) live*) (cddr sgl*)
 						    (combine-loc loc (load-boxed-double-reg (car sgl*) offset)))]))]
 				     [else
 				      ;; General case; for non-doubles, use integer registers while available,
@@ -2853,14 +2942,49 @@
                        (case bits
                          [(64) (list %r1 %Cretval)]
                          [else (list %Cretval)])]
-                      [else (list %r0)]))])
+		      [(fp-ftd& ,ftd)
+		       (let* ([members ($ftd->members ftd)]
+			      [num-members (length members)])
+			 (cond
+			  [(and (fx<= num-members 4)
+				(or (andmap double-member? members)
+				    (andmap float-member? members)))
+			   ;; double/float results are in floating-point registers
+			   (let ([double? (and (pair? members) (double-member? (car members)))])
+			     (let loop ([members members] [sgl* (sgl-regs)])
+			       (cond
+				[(null? members) '()]
+				[double?
+				 (cons (car sgl*) (loop (cdr members) (cddr sgl*)))]
+				[else
+				 (cons (car sgl*) (if (null? (cdr members))
+						      '()
+						      (loop (cddr members) (cddr sgl*))))])))]
+			    [else
+			     ;; result is in %Cretval and maybe %r1
+			     (case ($ftd-size ftd)
+			       [(8) (list %Cretval %r1)]
+			       [else (list %Cretval)])]))]
+                      [else (list %r0)]))]
+                 [add-deactivate
+                  (lambda (adjust-active? t0 live* result-live* k)
+                    (cond
+                      [adjust-active?
+                       (%seq
+			(set! ,%ac0 ,t0)
+                        ,(save-and-restore live* (%inline deactivate-thread))
+                        ,(k %ac0)
+                        ,(save-and-restore result-live* `(set! ,%Cretval ,(%inline activate-thread))))]
+                      [else (k t0)]))])
           (lambda (info)
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
             (let* ([arg-type* (info-foreign-arg-type* info)]
-                   [varargs? (memq 'varargs (info-foreign-conv* info))]
+                   [conv* (info-foreign-conv* info)]
+                   [varargs? (memq 'varargs conv*)]
 		   [result-type (info-foreign-result-type info)]
                    [result-reg* (get-result-regs result-type varargs?)]
-		   [fill-result-here? (indirect-result-that-fits-in-registers? result-type)])
+		   [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*)
                                     varargs?)
                 (lambda (args-frame-size locs live*)
@@ -2883,7 +3007,9 @@
 			 [else locs]))
                       (lambda (t0 not-varargs?)
 			(add-fill-result fill-result-here? result-type args-frame-size
-			  `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))
+                         (add-deactivate adjust-active? t0 live* result-reg*
+			  (lambda (t0)
+ 			    `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
                       (nanopass-case (Ltype Type) result-type
                         [(fp-double-float)
                          (if varargs?
@@ -2948,9 +3074,9 @@
                    |      &-return space       | up to 8 words
           sp+52+R: |                           |
                    +---------------------------+<- 8-byte boundary
-                   |                           | 
-                   |   pad word if necessary   | 0-1 words
-            sp+52: |                           |
+                   |     activatation state    | 
+                   |          and/or           | 0-2 words
+            sp+52: |   pad word if necessary   |
                    +---------------------------+
                    |                           |
                    |   callee-save regs + lr   | 13 words
@@ -3233,7 +3359,14 @@
                                                `(set! ,(car sgl*) ,(%mref ,%sp ,%zero ,offset fp))
                                                `(set! ,(car sgl*) ,(%inline load-single ,(%mref ,%sp ,%zero ,offset fp))))])
 				      (if e `(seq ,e ,new-e) new-e)))]))))
-		      '()
+		      (let ([double? (and (pair? members) (double-member? (car members)))])
+			(let loop ([members members] [sgl* (sgl-regs)] [aligned? #t])
+			  (cond
+			   [(null? members) '()]
+			   [else (let ([regs (loop (cdr members)
+						   (if double? (cddr sgl*) (cdr sgl*))
+						   (or double? (not aligned?)))])
+				   (if aligned? (cons (car sgl*) regs) regs))])))
 		      ($ftd-size ftd))]
 		    [else
 		     (case ($ftd-size ftd)
@@ -3316,12 +3449,16 @@
                                            (memq r callee-save-regs+lr))))
                                  (vector->list regvec)))
             (let* ([arg-type* (info-foreign-arg-type* info)]
-		   [varargs? (memq 'varargs (info-foreign-conv* info))]
+                   [conv* (info-foreign-conv* info)]
+		   [varargs? (memq 'varargs conv*)]
 		   [result-type (info-foreign-result-type info)]
-                   [synthesize-first? (indirect-result-that-fits-in-registers? result-type)])
+                   [synthesize-first? (indirect-result-that-fits-in-registers? result-type)]
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
               (let-values ([(iint idbl) (count-reg-args arg-type* synthesize-first? varargs?)])
                 (let ([saved-reg-bytes (fx+ (fx* isaved 4) (fx* fpsaved 8))]
-                      [pre-pad-bytes (if (fxeven? isaved) 0 4)]
+                      [pre-pad-bytes (if (fxeven? isaved) 
+                                         (if adjust-active? 8 0)
+                                         4)]
                       [int-reg-bytes (fx* iint 4)]
                       [post-pad-bytes (if (fxeven? iint) 0 4)]
                       [float-reg-bytes (fx* idbl 8)])
@@ -3343,6 +3480,12 @@
                             ; save the callee save registers & return address
                             (inline ,(make-info-kill*-live* '() callee-save-regs+lr) ,%push-multiple)
                             (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpush-multiple)
+                            ; maybe activate
+                            ,(if adjust-active?
+                                 `(seq
+                                   (set! ,%Cretval ,(%inline activate-thread))
+                                   (set! ,(%mref ,%sp ,saved-reg-bytes) ,%Cretval))
+                                 `(nop))
                             ; set up tc for benefit of argument-conversion code, which might allocate
                             ,(if-feature pthreads
                                (%seq 
@@ -3357,6 +3500,11 @@
                         (lambda ()
                           (in-context Tail
                             (%seq
+                              ,(if adjust-active?
+                                   `(seq
+                                     (set! ,%r2 ,(%mref ,%sp ,saved-reg-bytes))
+                                     ,(save-and-restore result-regs (%inline unactivate-thread ,%r2)))
+                                   `(nop))
                               ; restore the callee save registers
                               (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpop-multiple)
                               (inline ,(make-info-kill* callee-save-regs+lr) ,%pop-multiple)

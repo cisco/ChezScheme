@@ -541,7 +541,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     ptr sym_base = vspaces[vspace_symbol];
     ptr code = TYPE(vspaces[vspace_code], type_typed_object);
     ptr code_end = TYPE(VSPACE_END(vspace_code), type_typed_object);
-    S_record_code_mod(tc, (uptr)code, (uptr)code_end - (uptr)code);
+    S_record_code_mod(tc, (uptr)vspaces[vspace_code], (uptr)code_end - (uptr)code);
     while (code != code_end) {
       relink_code(code, sym_base, vspaces, vspace_offsets, to_static);
       code = ptr_add(code, size_code(CODELEN(code)));

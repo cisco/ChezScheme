@@ -561,7 +561,8 @@
   (declare-primitive vpush-multiple effect #f) ; arm
   (declare-primitive vpop-multiple effect #f) ; arm
   (declare-primitive cas effect #f)
-
+  (declare-primitive write-write-fence effect #f)
+  
   (declare-primitive < pred #t)
   (declare-primitive <= pred #t)
   (declare-primitive > pred #t)
