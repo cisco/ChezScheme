@@ -21,6 +21,7 @@
 #include <io.h>
 #include <sys/stat.h>
 
+static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault);
 static ptr s_ErrorString(DWORD dwMessageId);
 static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid);
 static ptr s_GetRegistry(wchar_t *s);
@@ -52,16 +53,20 @@ void *S_ntdlsym(void *h, const char *s) {
     return (void *)GetProcAddress(h, s);
 }
 
-/* S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com */
+/* Initial version of S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com
+ * Modifications by James-Adam Renquinha Henri, jarhmander@gmail.com */
 char *S_ntdlerror(void) {
-    static char s[80];
-    INT n;
-
-    n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
-                      0, (LPTSTR)s, 80, NULL);
-    if (n == 0) return "unable to load library";
-  /* Strip trailing period, newline & return when present */
-    if (n >= 3 && s[n-3] == '.') s[n-3] = 0;
+    static char *s = NULL;
+    /*
+     * The caller does not expect to have to free the memory returned by this
+     * function (because normally, you shouldn't free the result of dlerror).
+     * But to properly support Unicode on Windows, we have to allocate memory to
+     * hold a utf-8 string. Hence, we have this semi-leak situation, where we
+     * always hold the last error string, and free the previous one, each time
+     * we call this function.
+     */
+    free(s);
+    s = s_ErrorStringImp(GetLastError(), "unable to load library");
     return s;
 }
 
@@ -242,33 +247,46 @@ static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid) {
 }
 
 static ptr s_ErrorString(DWORD dwMessageId) {
-    char *lpMsgBuf;
-    DWORD len;
-    ptr result;
+    char *str = s_ErrorStringImp(dwMessageId, NULL);
+    ptr result = Sstring(str);
+    free(str);
+    return result;
+}
 
-    len = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                        NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
-    /* If FormatMessage fails, use the error code in hexadecimal. */
+static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
+    wchar_t *lpMsgBuf;
+    DWORD len;
+    char *result;
+    char *endstr;
+
+    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                        NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+    /* If FormatMessage fails... */
     if (len == 0) {
+        if (lpcDefault) {
+            /* ... use the default string if provided... */
+            return _strdup(lpcDefault);
+        } else {
+            /* ...otherwise, use the error code in hexadecimal. */
 #define HEXERRBUFSIZ ((sizeof(dwMessageId) * 2) + 3)
-        char hexerrbuf[HEXERRBUFSIZ];
-        snprintf(hexerrbuf, HEXERRBUFSIZ, "0x%x", dwMessageId);
-        return Sstring(hexerrbuf);
+            result = malloc(HEXERRBUFSIZ);
+            snprintf(result, HEXERRBUFSIZ, "0x%x", dwMessageId);
+            return result;
 #undef HEXERRBUFSIZ
+        }
     }
+    result = Swide_to_utf8(lpMsgBuf);
+    endstr = result + len;
+    LocalFree(lpMsgBuf);
     /* Otherwise remove trailing newlines & returns and strip trailing period. */
-    while (len > 0) {
-        char c = lpMsgBuf[len - 1];
-        if (c == '\n' || c == '\r')
-            len--;
-        else if (c == '.') {
-            len--;
+    while (result != endstr) {
+        char c = *--endstr;
+        if (c == '.') {
+            *endstr = 0;
             break;
         }
-        else break;
+        else if (c != '\n' && c != '\r') break;
     }
-    result = Sstring_of_length(lpMsgBuf, len);
-    LocalFree(lpMsgBuf);
     return result;
 }
 
