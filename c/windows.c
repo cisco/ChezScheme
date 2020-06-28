@@ -307,7 +307,7 @@ int S_windows_open_exclusive(char *who, char *path, int flags) {
 }
 #endif
 
-#include <Winbase.h>
+#include <winbase.h>
 
 /* primitive version of flock compatible with Windows 95/98/ME.  A better
    version could be implemented for Windows NT/2000/XP using LockFileEx. */
