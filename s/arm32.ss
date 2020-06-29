@@ -1186,7 +1186,7 @@
   (define-op ldrex ldrex-op      #b00011001)
   (define-op strex strex-op      #b00011000)
 
-  (define-op dmbishst dmb-op #b1010)
+  (define-op dmbst dmb-op #b1110)
 
   (define-op bnei  branch-imm-op       (ax-cond 'ne))
   (define-op brai  branch-imm-op       (ax-cond 'al))
@@ -2192,7 +2192,7 @@
 
   (define asm-write-write-fence
     (lambda (code*)
-      (emit dmbishst code*)))
+      (emit dmbst code*)))
 
   (define asm-fp-relop
     (lambda (info)
