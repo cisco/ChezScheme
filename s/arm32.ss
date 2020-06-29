@@ -861,7 +861,7 @@
 
   (define-instruction effect unactivate-thread
     [(op (x ur))
-     (safe-assert (eq? x %r2))
+     (safe-assert (eq? x %Carg1))
      (let ([u (make-tmp 'u)] [ulr (make-precolored-unspillable 'ulr %lr)])
        (seq
          `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
@@ -3476,7 +3476,7 @@
                                (if (fx= len 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate ,len)))))
                             ,(if (fx= idbl 0) `(nop) `(inline ,(make-info-vpush %Cfparg1 idbl) ,%vpush-multiple))
                             ; pad if necessary to force 8-byte boundardy after saving callee-save-regs+lr
-                            ,(if (fx= pre-pad-bytes 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate 4))))
+                            ,(if (fx= pre-pad-bytes 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate ,pre-pad-bytes))))
                             ; save the callee save registers & return address
                             (inline ,(make-info-kill*-live* '() callee-save-regs+lr) ,%push-multiple)
                             (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpush-multiple)
@@ -3501,15 +3501,23 @@
                           (in-context Tail
                             (%seq
                               ,(if adjust-active?
-                                   `(seq
-                                     (set! ,%r2 ,(%mref ,%sp ,saved-reg-bytes))
-                                     ,(save-and-restore result-regs (%inline unactivate-thread ,%r2)))
+                                   (%seq
+                                    ;; We need *(sp+saved-reg-bytes) in %Carg1,
+                                    ;; but that can also be a return register.
+                                    ;; Meanwhle, sp may change before we call unactivate.
+                                    ;; So, move to %r2 for now, then %Carg1 later:
+                                    (set! ,%r2 ,(%mref ,%sp ,saved-reg-bytes))
+                                    ,(save-and-restore
+                                      result-regs
+                                      `(seq
+                                        (set! ,%Carg1 ,%r2)
+                                        ,(%inline unactivate-thread ,%Carg1))))
                                    `(nop))
                               ; restore the callee save registers
                               (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpop-multiple)
                               (inline ,(make-info-kill* callee-save-regs+lr) ,%pop-multiple)
                               ; deallocate space for pad & arg reg values
-                              (set! ,%sp ,(%inline + ,%sp (immediate ,(fx+ pre-pad-bytes int-reg-bytes post-pad-bytes float-reg-bytes))))
+                              (set! ,%sp ,(%inline + ,%sp (immediate ,(fx+ pre-pad-bytes int-reg-bytes return-bytes post-pad-bytes float-reg-bytes))))
                               ; done
                               (asm-c-return ,null-info ,callee-save-regs+lr ... ,result-regs ...)))))))))))))))
 )
