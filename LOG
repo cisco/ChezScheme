@@ -2118,3 +2118,11 @@
     x86.ss
 - add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
     cpnanopass.ss
+- added missing #ifndef WIN32
+    gcwrapper.c
+- added initialization of __to_g to make gcc 7.5.0 happy
+    gc.c
+- updated Windows makefiles
+    c/Makefile.*nt
+- use lowercase for Windows include files
+    segment.c, windows.c
