@@ -2077,3 +2077,5 @@
     gc.c
 - updated Windows makefiles
     c/Makefile.*nt
+- use lowercase for Windows include files
+    segment.c, windows.c
