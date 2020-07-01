@@ -616,6 +616,36 @@
          ($oops '$continuation-return-offset "~s is not a continuation" x))
       ($continuation-return-offset x)))
 
+(define-who $continuation-return-frame-words
+   (lambda (x)
+      (unless ($continuation? x)
+         ($oops who "~s is not a continuation" x))
+      ($continuation-return-frame-words x)))
+
+(define-who $continuation-stack-return-code
+   (lambda (x i)
+      (unless ($continuation? x)
+         ($oops who "~s is not a continuation" x))
+      (unless (and (fixnum? i) (fx< 0 i ($continuation-stack-clength x)))
+         ($oops who "invalid index ~s" i))
+      ($continuation-stack-return-code x i)))
+
+(define-who $continuation-stack-return-offset
+   (lambda (x i)
+      (unless ($continuation? x)
+         ($oops who "~s is not a continuation" x))
+      (unless (and (fixnum? i) (fx< 0 i ($continuation-stack-clength x)))
+         ($oops who "invalid index ~s" i))
+      ($continuation-stack-return-offset x i)))
+
+(define-who $continuation-stack-return-frame-words
+   (lambda (x i)
+      (unless ($continuation? x)
+         ($oops who "~s is not a continuation" x))
+      (unless (and (fixnum? i) (fx< 0 i ($continuation-stack-clength x)))
+         ($oops who "invalid index ~s" i))
+      ($continuation-stack-return-frame-words x i)))
+
 (define void
    (lambda ()
       (void)))

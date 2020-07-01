@@ -10173,38 +10173,71 @@
            (translate (%mref ,e ,(constant continuation-stack-clength-disp))
              (constant fixnum-offset)
              (constant log2-ptr-bytes))])
-        (define-inline 3 $continuation-return-code
-          [(e)
-           (bind #t ([ra (%mref ,e ,(constant continuation-return-address-disp))])
-             (bind #t ([t `(if ,(%inline logtest ,(%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))
-                                         ,(%constant compact-header-mask))
-                               ,(%inline + ,ra ,(%constant compact-return-address-toplink-disp))
-                               ,(%inline + ,ra ,(%constant return-address-toplink-disp)))])
-               (%inline - ,t ,(%mref ,t 0))))])
-        (define-inline 3 $continuation-return-offset
-          [(e)
-           (bind #t ([ra (%mref ,e ,(constant continuation-return-address-disp))])
-             (build-fix
-              `(if ,(%inline logtest ,(%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))
-                             ,(%constant compact-header-mask))
-                   ,(%inline - ,(%mref ,ra ,(constant compact-return-address-toplink-disp))
-                             ,(%constant compact-return-address-toplink-disp))
-                   ,(%inline - ,(%mref ,ra ,(constant return-address-toplink-disp))
-                             ,(%constant return-address-toplink-disp)))))])
-        (define-inline 3 $continuation-return-livemask
-          [(e)
-           (bind #t ([ra (%mref ,e ,(constant continuation-return-address-disp))])
-             (bind #t ([mask+size+mode (%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))])
-               `(if ,(%inline logtest ,mask+size+mode ,(%constant compact-header-mask))
-                    ,(%inline sll ,(%inline srl ,mask+size+mode ,(%constant compact-frame-mask-offset)),
-                              (%constant fixnum-offset))
-                    ,(%mref ,ra ,(constant return-address-livemask-disp)))))])
-        (define-inline 3 $continuation-stack-ref
-          [(e-k e-i)
-           (%mref
+        (let ()
+          (define (build-ra e)
+            (%mref ,e ,(constant continuation-return-address-disp)))
+          (define (build-stack-ra e-k e-i)
+            (%mref ,(%mref ,e-k ,(constant continuation-stack-disp))
+                   ,(translate e-i (constant fixnum-offset) (constant log2-ptr-bytes))
+                   0))
+          
+          (define build-return-code
+            (lambda (e-ra)
+              (bind #t ([ra e-ra])
+                (bind #t ([t `(if ,(%inline logtest ,(%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))
+                                            ,(%constant compact-header-mask))
+                                  ,(%inline + ,ra ,(%constant compact-return-address-toplink-disp))
+                                  ,(%inline + ,ra ,(%constant return-address-toplink-disp)))])
+                  (%inline - ,t ,(%mref ,t 0))))))
+          (define build-return-offset
+            (lambda (e-ra)
+              (bind #t ([ra e-ra])
+                (build-fix
+                 `(if ,(%inline logtest ,(%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))
+                                ,(%constant compact-header-mask))
+                      ,(%inline - ,(%mref ,ra ,(constant compact-return-address-toplink-disp))
+                                ,(%constant compact-return-address-toplink-disp))
+                      ,(%inline - ,(%mref ,ra ,(constant return-address-toplink-disp))
+                                ,(%constant return-address-toplink-disp)))))))
+          (define build-return-livemask
+            (lambda (e-ra)
+              (bind #t ([ra e-ra])
+                (bind #t ([mask+size+mode (%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))])
+                  `(if ,(%inline logtest ,mask+size+mode ,(%constant compact-header-mask))
+                       ,(%inline sll ,(%inline srl ,mask+size+mode ,(%constant compact-frame-mask-offset))
+                                 ,(%constant fixnum-offset))
+                       ,(%mref ,ra ,(constant return-address-livemask-disp)))))))
+          (define build-return-frame-words
+            (lambda (e-ra)
+              (bind #t ([ra e-ra])
+                (bind #t ([mask+size+mode (%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))])
+                  `(if ,(%inline logtest ,mask+size+mode ,(%constant compact-header-mask))
+                       ,(%inline sll ,(%inline logand ,(%inline srl ,mask+size+mode ,(%constant compact-frame-words-offset))
+                                               ,(%constant compact-frame-words-mask))
+                                 ,(%constant fixnum-offset))
+                       ,(%mref ,ra ,(constant return-address-frame-size-disp)))))))
+          
+          (define-inline 3 $continuation-return-code
+            [(e) (build-return-code (build-ra e))])
+          (define-inline 3 $continuation-return-offset
+            [(e) (build-return-offset (build-ra e))])
+          (define-inline 3 $continuation-return-livemask
+            [(e) (build-return-livemask (build-ra e))])
+          (define-inline 3 $continuation-return-frame-words
+            [(e) (build-return-frame-words (build-ra e))])
+          (define-inline 3 $continuation-stack-ref
+            [(e-k e-i)
+             (%mref
               ,(%mref ,e-k ,(constant continuation-stack-disp))
               ,(translate e-i (constant fixnum-offset) (constant log2-ptr-bytes))
               0)])
+          (define-inline 3 $continuation-stack-return-code
+            [(e-k e-i) (build-return-code (build-stack-ra e-k e-i))])
+          (define-inline 3 $continuation-stack-return-offset
+            [(e-k e-i) (build-return-offset (build-stack-ra e-k e-i))])
+          (define-inline 3 $continuation-stack-return-frame-words
+            [(e-k e-i) (build-return-frame-words (build-stack-ra e-k e-i))]))
+
         (define-inline 2 $foreign-char?
           [(e)
            (bind #t (e)
