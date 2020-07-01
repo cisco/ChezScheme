@@ -55,18 +55,11 @@ void *S_ntdlsym(void *h, const char *s) {
 
 /* Initial version of S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com
  * Modifications by James-Adam Renquinha Henri, jarhmander@gmail.com */
-char *S_ntdlerror(void) {
-    static char *s = NULL;
-    /*
-     * The caller does not expect to have to free the memory returned by this
-     * function (because normally, you shouldn't free the result of dlerror).
-     * But to properly support Unicode on Windows, we have to allocate memory to
-     * hold a utf-8 string. Hence, we have this semi-leak situation, where we
-     * always hold the last error string, and free the previous one, each time
-     * we call this function.
-     */
+ptr S_ntdlerror(void) {
+    ptr ret;
+    char *s = s_ErrorStringImp(GetLastError(), "unable to load library");
+    ret = Sstring_utf8(s, -1);
     free(s);
-    s = s_ErrorStringImp(GetLastError(), "unable to load library");
     return s;
 }
 
