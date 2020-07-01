@@ -60,7 +60,7 @@ ptr S_ntdlerror(void) {
     char *s = s_ErrorStringImp(GetLastError(), "unable to load library");
     ret = Sstring_utf8(s, -1);
     free(s);
-    return s;
+    return ret;
 }
 
 #ifdef FLUSHCACHE
@@ -248,12 +248,12 @@ static ptr s_ErrorString(DWORD dwMessageId) {
 
 static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
     wchar_t *lpMsgBuf;
+    wchar_t *endstr;
     DWORD len;
     char *result;
-    char *endstr;
 
     len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                        NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+                         NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
     /* If FormatMessage fails... */
     if (len == 0) {
         if (lpcDefault) {
@@ -268,18 +268,18 @@ static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
 #undef HEXERRBUFSIZ
         }
     }
-    result = Swide_to_utf8(lpMsgBuf);
-    endstr = result + len;
-    LocalFree(lpMsgBuf);
+    endstr = lpMsgBuf + len;
     /* Otherwise remove trailing newlines & returns and strip trailing period. */
-    while (result != endstr) {
-        char c = *--endstr;
-        if (c == '.') {
+    while (lpMsgBuf != endstr) {
+        wchar_t c = *--endstr;
+        if (c == L'.') {
             *endstr = 0;
             break;
         }
-        else if (c != '\n' && c != '\r') break;
+        else if (c != L'\n' && c != L'\r') break;
     }
+    result = Swide_to_utf8(lpMsgBuf);
+    LocalFree(lpMsgBuf);
     return result;
 }
 
