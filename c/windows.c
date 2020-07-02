@@ -265,7 +265,7 @@ static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
 
         do {
             c = *--endstr;
-        } while (--wlen  && (c == L'\n' || c == L'\r'));
+        } while (endstr != str && (c == L'\n' || c == L'\r'));
 
         endstr[c != L'.'] = 0;
 
@@ -274,6 +274,18 @@ static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
         result = Sstring_utf8(u8str, -1);
         free(u8str);
     }
+    endstr = lpMsgBuf + len;
+    /* Otherwise remove trailing newlines & returns and strip trailing period. */
+    while (lpMsgBuf != endstr) {
+        wchar_t c = *--endstr;
+        if (c == L'.') {
+            *endstr = 0;
+            break;
+        }
+        else if (c != L'\n' && c != L'\r') break;
+    }
+    result = Swide_to_utf8(lpMsgBuf);
+    LocalFree(lpMsgBuf);
     return result;
 }
 
