@@ -53,7 +53,7 @@ void *S_ntdlsym(void *h, const char *s) {
     return (void *)GetProcAddress(h, s);
 }
 
-/* Initial version of S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com
+/* Initial version of S_ntdlerror courtesy of Bob Burger
  * Modifications by James-Adam Renquinha Henri, jarhmander@gmail.com */
 ptr S_ntdlerror(void) {
     return s_ErrorStringImp(GetLastError(), "unable to load library");
@@ -240,52 +240,44 @@ static ptr s_ErrorString(DWORD dwMessageId) {
 }
 
 static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
-    ptr result;
     wchar_t *lpMsgBuf;
-    DWORD wlen;
+    DWORD len;
+    char *u8str;
+    ptr result;
 
-    wlen = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                          NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                         NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
     /* If FormatMessage fails... */
-    if (wlen == 0) {
+    if (len == 0) {
         if (lpcDefault) {
             /* ... use the default string if provided... */
             return Sstring_utf8(lpcDefault, -1);
         } else {
             /* ...otherwise, use the error code in hexadecimal. */
-            char buf[(sizeof(dwMessageId) * 2) + 3] = {0};
-            snprintf(buf, sizeof buf, "0x%x", dwMessageId);
-            return Sstring_utf8(buf, sizeof buf - 1);
+            char buf[(sizeof(dwMessageId) * 2) + 3];
+            int n = snprintf(buf, sizeof(buf), "0x%x", dwMessageId);
+            if (n < sizeof(buf))
+                return Sstring_utf8(buf, n);
+            else
+                return Sstring("??");
         }
-    } else {
-        /* Otherwise remove trailing newlines & returns and strip trailing period, if present. */
-        wchar_t *endstr = lpMsgBuf + wlen;
-        char *u8str;
-        wchar_t c;
-
-        do {
-            c = *--endstr;
-        } while (endstr != str && (c == L'\n' || c == L'\r'));
-
-        endstr[c != L'.'] = 0;
-
-        u8str = Swide_to_utf8(lpMsgBuf);
-        LocalFree(lpMsgBuf);
-        result = Sstring_utf8(u8str, -1);
-        free(u8str);
     }
-    endstr = lpMsgBuf + len;
-    /* Otherwise remove trailing newlines & returns and strip trailing period. */
-    while (lpMsgBuf != endstr) {
-        wchar_t c = *--endstr;
-        if (c == L'.') {
-            *endstr = 0;
+    /* Otherwise remove trailing newlines & returns and strip trailing period, if present. */
+    while (len > 0) {
+        wchar_t c = lpMsgBuf[len - 1];
+        if (c == L'\n' || c == '\r')
+            len--;
+        else if (c == L'.') {
+            len--;
             break;
         }
-        else if (c != L'\n' && c != L'\r') break;
+        else break;
     }
-    result = Swide_to_utf8(lpMsgBuf);
+    lpMsgBuf[len] = 0;
+    u8str = Swide_to_utf8(lpMsgBuf);
     LocalFree(lpMsgBuf);
+    result = Sstring_utf8(u8str, -1);
+    free(u8str);
     return result;
 }
 
