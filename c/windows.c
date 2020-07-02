@@ -21,7 +21,7 @@
 #include <io.h>
 #include <sys/stat.h>
 
-static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault);
+static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault);
 static ptr s_ErrorString(DWORD dwMessageId);
 static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid);
 static ptr s_GetRegistry(wchar_t *s);
@@ -56,11 +56,7 @@ void *S_ntdlsym(void *h, const char *s) {
 /* Initial version of S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com
  * Modifications by James-Adam Renquinha Henri, jarhmander@gmail.com */
 ptr S_ntdlerror(void) {
-    ptr ret;
-    char *s = s_ErrorStringImp(GetLastError(), "unable to load library");
-    ret = Sstring_utf8(s, -1);
-    free(s);
-    return ret;
+    return s_ErrorStringImp(GetLastError(), "unable to load library");
 }
 
 #ifdef FLUSHCACHE
@@ -240,46 +236,44 @@ static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid) {
 }
 
 static ptr s_ErrorString(DWORD dwMessageId) {
-    char *str = s_ErrorStringImp(dwMessageId, NULL);
-    ptr result = Sstring(str);
-    free(str);
-    return result;
+    return s_ErrorStringImp(dwMessageId, NULL);
 }
 
-static char *s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
+static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
+    ptr result;
     wchar_t *lpMsgBuf;
-    wchar_t *endstr;
-    DWORD len;
-    char *result;
+    DWORD wlen;
 
-    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                         NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+    wlen = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                          NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
     /* If FormatMessage fails... */
-    if (len == 0) {
+    if (wlen == 0) {
         if (lpcDefault) {
             /* ... use the default string if provided... */
-            return _strdup(lpcDefault);
+            return Sstring_utf8(lpcDefault, -1);
         } else {
             /* ...otherwise, use the error code in hexadecimal. */
-#define HEXERRBUFSIZ ((sizeof(dwMessageId) * 2) + 3)
-            result = malloc(HEXERRBUFSIZ);
-            snprintf(result, HEXERRBUFSIZ, "0x%x", dwMessageId);
-            return result;
-#undef HEXERRBUFSIZ
+            char buf[(sizeof(dwMessageId) * 2) + 3] = {0};
+            snprintf(buf, sizeof buf, "0x%x", dwMessageId);
+            return Sstring_utf8(buf, sizeof buf - 1);
         }
+    } else {
+        /* Otherwise remove trailing newlines & returns and strip trailing period, if present. */
+        wchar_t *endstr = lpMsgBuf + wlen;
+        char *u8str;
+        wchar_t c;
+
+        do {
+            c = *--endstr;
+        } while (--wlen  && (c == L'\n' || c == L'\r'));
+
+        endstr[c != L'.'] = 0;
+
+        u8str = Swide_to_utf8(lpMsgBuf);
+        LocalFree(lpMsgBuf);
+        result = Sstring_utf8(u8str, -1);
+        free(u8str);
     }
-    endstr = lpMsgBuf + len;
-    /* Otherwise remove trailing newlines & returns and strip trailing period. */
-    while (lpMsgBuf != endstr) {
-        wchar_t c = *--endstr;
-        if (c == L'.') {
-            *endstr = 0;
-            break;
-        }
-        else if (c != L'\n' && c != L'\r') break;
-    }
-    result = Swide_to_utf8(lpMsgBuf);
-    LocalFree(lpMsgBuf);
     return result;
 }
 
