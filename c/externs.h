@@ -438,7 +438,7 @@ extern INT S_getpagesize(void);
 extern ptr S_LastErrorString(void);
 extern void *S_ntdlopen(const char *path);
 extern void *S_ntdlsym(void *h, const char *s);
-extern char *S_ntdlerror(void);
+extern ptr S_ntdlerror(void);
 extern int S_windows_flock(int fd, int operation);
 extern int S_windows_chdir(const char *pathname);
 extern int S_windows_chmod(const char *pathname, int mode);

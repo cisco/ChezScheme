@@ -2126,3 +2126,6 @@
     c/Makefile.*nt
 - use lowercase for Windows include files
     segment.c, windows.c
+- proper unicode handling when retrieving error messages from the OS
+  on Windows
+    windows.c
