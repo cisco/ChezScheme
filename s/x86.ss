@@ -1031,7 +1031,7 @@
   (define-instruction effect invoke-prelude
     [(op)
      (constant-case machine-type-name
-       [(i3nt ti3nt) `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4))]
+       [(i3nt ti3nt) `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4 uptr))]
        [else
         (seq
           `(set! ,(make-live-info) ,%tc (mref ,%sp ,%zero 4 uptr))
