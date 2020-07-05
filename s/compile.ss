@@ -177,6 +177,24 @@
                                   (let ([r ($reloc (constant reloc-arm32-jump) n (fx- a1 ra))])
                                     (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
                              [else (c-assembler-output-error c)])]
+                          [(arm64)
+                           (record-case c
+                             [(arm64-abs) (n x)
+                              (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-arm64-abs) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(arm64-call) (n x)
+                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, bl
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-arm64-call) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(arm64-jump) (n x)
+                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-arm64-jump) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [else (c-assembler-output-error c)])]
                           [(ppc32)
                            (record-case c
                              [(ppc32-abs) (n x)
@@ -268,6 +286,10 @@
                          [(arm32)
                           (record-case x
                             [(arm32-abs arm32-call arm32-jump) (n x) (build x d)]
+                            [else (void)])]
+                         [(arm64)
+                          (record-case x
+                            [(arm64-abs arm64-call arm64-jump) (n x) (build x d)]
                             [else (void)])]
                          [(ppc32)
                           (record-case x
@@ -394,6 +416,21 @@
                              ; on ARMV7 would be 12: 4-byte movi, 4-byte movt, 4-byte bx
                              (let ([a1 (fx- a 16)]) ; 4-byte ldr, 4-byte bra, 4-byte value, 4-byte bx
                                (let ([r ($reloc (constant reloc-arm32-jump) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [else (c-assembler-output-error c)])]
+                         [(arm64)
+                          (record-case c
+                            [(arm64-abs) (n x)
+                             (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                               (let ([r ($reloc (constant reloc-arm64-abs) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(arm64-call) (n x)
+                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, bl
+                               (let ([r ($reloc (constant reloc-arm64-call) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(arm64-jump) (n x)
+                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b
+                               (let ([r ($reloc (constant reloc-arm64-jump) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]
                          [(ppc32)

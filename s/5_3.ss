@@ -2624,9 +2624,7 @@
   (set-who! fxbit-count
     (lambda (n)
       (unless (fixnum? n) ($oops who "~s is not a fixnum" n))
-      (if (fx< n 0)
-          (fxnot ($fxbit-count (fxnot n)))
-          ($fxbit-count n))))
+      ($fxbit-count n)))
   (set-who! bitwise-bit-count
     (lambda (n)
       (cond

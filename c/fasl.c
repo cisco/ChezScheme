@@ -235,6 +235,10 @@ static uptr arm32_get_abs PROTO((void *address));
 static void arm32_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr arm32_get_jump PROTO((void *address));
 #endif /* ARMV6 */
+#ifdef AARCH64
+static void arm64_set_abs PROTO((void *address, uptr item));
+static uptr arm64_get_abs PROTO((void *address));
+#endif /* AARCH64 */
 #ifdef PPC32
 static void ppc32_set_abs PROTO((void *address, uptr item));
 static uptr ppc32_get_abs PROTO((void *address));
@@ -1297,6 +1301,13 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
             arm32_set_jump(address, item, 1);
             break;
 #endif /* ARMV6 */
+#ifdef AARCH64
+        case reloc_arm64_abs:
+        case reloc_arm64_jump:
+        case reloc_arm64_call:
+            arm64_set_abs(address, item);
+            break;
+#endif /* AARCH64 */
 #ifdef PPC32
         case reloc_ppc32_abs:
             ppc32_set_abs(address, item);
@@ -1375,6 +1386,13 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
             item = arm32_get_jump(address);
             break;
 #endif /* ARMV6 */
+#ifdef AARCH64
+        case reloc_arm64_abs:
+        case reloc_arm64_jump:
+        case reloc_arm64_call:
+            item = arm64_get_abs(address);
+            break;
+#endif /* AARCH64 */
 #ifdef PPC32
         case reloc_ppc32_abs:
             item = ppc32_get_abs(address);
@@ -1481,6 +1499,28 @@ static uptr arm32_get_jump(void *address) {
   }
 }
 #endif /* ARMV6 */
+
+#ifdef AARCH64
+
+/* Address pieces in a movz,movk,movk,movk sequence are at its 5-20 */
+#define ADDRESS_BITS_SHIFT 5
+#define ADDRESS_BITS_MASK  ((U32)0x1fffe0)
+
+static void arm64_set_abs(void *address, uptr item) {
+  ((U32 *)address)[0] = ((((U32 *)address)[0] & ~ADDRESS_BITS_MASK) | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[1] = ((((U32 *)address)[1] & ~ADDRESS_BITS_MASK) | (((item >> 16) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[2] = ((((U32 *)address)[2] & ~ADDRESS_BITS_MASK) | (((item >> 32) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[3] = ((((U32 *)address)[3] & ~ADDRESS_BITS_MASK) | (((item >> 48) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+}
+
+static uptr arm64_get_abs(void *address) {
+  return ((uptr)((((U32 *)address)[0] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT)
+          | ((uptr)((((U32 *)address)[1] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 16)
+          | ((uptr)((((U32 *)address)[2] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 32)
+          | ((uptr)((((U32 *)address)[3] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 48));
+}
+
+#endif /* AARCH64 */
 
 #ifdef PPC32
 

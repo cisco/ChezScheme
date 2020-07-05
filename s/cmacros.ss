@@ -363,6 +363,7 @@
   i3qnx     ti3qnx
   arm32le   tarm32le
   ppc32le   tppc32le
+  arm64le   tarm64le
 )
 
 (include "machine.def")
@@ -519,6 +520,7 @@
   (ppc reloc-ppccall reloc-ppcload)
   (x86_64 reloc-x86_64-call reloc-x86_64-jump reloc-x86_64-popcount)
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
+  (arm64 reloc-arm64-abs reloc-arm64-call reloc-arm64-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump))
 
 (constant-case ptr-bits

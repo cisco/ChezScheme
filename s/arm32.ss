@@ -622,7 +622,7 @@
   (define-instruction value (move)
     [(op (z mem) (x ur))
      `(set! ,(make-live-info) ,z ,x)]
-    [(op (z ur) (x ur mem imm))
+    [(op (z ur) (x ur mem imm-constant))
      `(set! ,(make-live-info) ,z ,x)])
 
   (define-instruction value lea1
@@ -1805,14 +1805,6 @@
         [(_ (op opnd ... ?code*) chunk ...)
          (fold-right cons #'(aop-cons* `(asm ,op ,opnd ...) ?code*)
            #'((build long (byte-fields chunk ...))))])))
-
-  (define-who ax-size-code
-    (lambda (x)
-      (case x
-        [(byte) 0]
-        [(word) 1]
-        [(long) 1]
-        [else (sorry! who "invalid size ~s" x)])))
 
   (define-syntax build
     (syntax-rules ()

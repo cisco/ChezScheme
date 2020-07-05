@@ -56,6 +56,7 @@ case "$M" in
   ta6osx) ;;
   ta6s2) ;;
   tarm32le) ;;
+  tarm64le) ;;
   ti3fb) ;;
   ti3le) ;;
   ti3nb) ;;

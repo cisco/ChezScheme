@@ -20,7 +20,10 @@
   (and (memq (native-endianness) '(big little)) #t)
   (eq? (native-endianness)
        (case (machine-type)
-         [(i3le ti3le i3nt ti3nt a6nt ta6nt i3ob ti3ob i3fb ti3fb i3nb ti3nb i3osx ti3osx a6le ta6le a6nb ta6nb a6osx ta6osx a6fb ta6fb a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx arm32le tarm32le) 'little]
+         [(i3le ti3le i3nt ti3nt a6nt ta6nt i3ob ti3ob i3fb ti3fb i3nb ti3nb i3osx ti3osx a6le ta6le a6nb ta6nb
+                a6osx ta6osx a6fb ta6fb a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx
+                arm32le tarm32le arm64le tarm64le)
+          'little]
          [(ppc32le tppc32le) 'big]
          [else (errorf #f "unrecognized machine type")]))
 )

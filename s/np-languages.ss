@@ -558,8 +558,10 @@
   (declare-primitive store-double->single effect #f)
   (declare-primitive store-with-update effect #f) ; ppc
   (declare-primitive unactivate-thread effect #f) ; threaded version only
-  (declare-primitive vpush-multiple effect #f) ; arm
-  (declare-primitive vpop-multiple effect #f) ; arm
+  (declare-primitive vpush-multiple effect #f) ; arm32
+  (declare-primitive vpop-multiple effect #f) ; arm32
+  (declare-primitive push-fpmultiple effect #f) ; arm64
+  (declare-primitive pop-fpmultiple effect #f) ; arm64
   (declare-primitive cas effect #f)
   (declare-primitive write-write-fence effect #f)
   

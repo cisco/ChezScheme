@@ -18,6 +18,7 @@
 /ti3osx/
 /arm32le/
 /tarm32le/
+/tarm64le/
 /ppc32le/
 /tppc32le/
 /xc-*/

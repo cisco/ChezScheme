@@ -560,7 +560,7 @@
                         (system (format "set cl= && ..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
                        [(i3nt ti3nt)
                         (system (format "set cl= && ..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
-                       [(arm32le tarm32le)
+                       [(arm32le tarm32le arm64le tarm64le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...
                         (if (> (fixnum-width) 32)

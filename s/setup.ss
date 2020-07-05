@@ -15,6 +15,7 @@
 
 (include "debug.ss")
 
+(unless (getenv "DEBUGNOW")
 (base-exception-handler
   (lambda (c)
     (fresh-line)
@@ -26,3 +27,5 @@
   (lambda ()
     (display "interrupted---aborting\n")
     (reset)))
+)
+

@@ -82,6 +82,11 @@ case "${CONFIG_UNAME}" in
       m64=""
       tm32=tppc32le
       tm64=""
+    elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
+      m32=arm32le
+      m64=arm64le
+      tm32=tarm32le
+      tm64=tarm64le
     fi
     installprefix=/usr
     installmansuffix=share/man
@@ -303,7 +308,7 @@ while [ $# != 0 ] ; do
 done
 
 if [ "$bits" = "" ] ; then
-  if uname -a | egrep 'amd64|x86_64' > /dev/null 2>&1 ; then
+  if uname -a | egrep 'amd64|x86_64|aarch64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32

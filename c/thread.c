@@ -349,9 +349,11 @@ void S_mutex_release(m) scheme_mutex_t *m; {
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
     S_error1("mutex-release", "thread does not own mutex ~s", m);
 
-  if ((m->count = count - 1) == 0)
+  if ((m->count = count - 1) == 0) {
+    m->owner = 0; /* needed for a memory model like ARM, for example */
     if ((status = s_thread_mutex_unlock(&m->pmutex)) != 0)
       S_error1("mutex-release", "failed: ~a", S_strerror(status));
+  }
 }
 
 s_thread_cond_t *S_make_condition() {

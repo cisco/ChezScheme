@@ -3706,7 +3706,7 @@
 	  (lambda (e)
             (if-feature pthreads
 	      (constant-case architecture
-	        [(arm32) `(seq ,(%inline write-write-fence) ,e)]
+	        [(arm32 arm64) `(seq ,(%inline write-write-fence) ,e)]
                 [else e])
               e)))
         (define build-dirty-store
@@ -7644,7 +7644,7 @@
           (define-inline 3 flsqrt
             [(e)
              (constant-case architecture
-               [(x86 x86_64 arm32) (build-fp-op-1 %fpsqrt e)]
+               [(x86 x86_64 arm32 arm64) (build-fp-op-1 %fpsqrt e)]
                [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)])])
 
           (define-inline 3 flabs
@@ -7988,7 +7988,7 @@
              (build-checked-fp-op e
                (lambda (e)
                  (constant-case architecture
-                   [(x86 x86_64 arm32) (build-fp-op-1 %fpsqrt e)]
+                   [(x86 x86_64 arm32 arm64) (build-fp-op-1 %fpsqrt e)]
                    [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)]))
                (lambda (e)
                  (build-libcall #t src sexpr flsqrt e)))])
@@ -10646,6 +10646,7 @@
                    (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                    64))]
              [(arm32) (unsigned->ptr (%inline read-time-stamp-counter) 32)]
+             [(arm64) (unsigned->ptr (%inline read-time-stamp-counter) 64)]
              [(ppc32)
               (let ([t-hi (make-tmp 't-hi)])
                 `(let ([,t-hi (inline ,(make-info-kill* (reg-list %real-zero))
@@ -10665,7 +10666,8 @@
                 ,(unsigned->ptr
                    (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                    64))]
-             [(arm32 ppc32) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)])])
+             [(arm32 ppc32) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)]
+             [(arm64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
 
     )) ; expand-primitives module
 
@@ -17461,6 +17463,7 @@
                        (let ([spillable-live (live-info-live live-info)])
                          (if (unspillable? x)
                              (let ([unspillable* (remq x unspillable*)])
+                               (unless (uvar-seen? x) (#%printf ">> ~s\n" x))
                                (safe-assert (uvar-seen? x))
                                (uvar-seen! x #f)
                                (if (and (var? rhs) (var-index rhs))
