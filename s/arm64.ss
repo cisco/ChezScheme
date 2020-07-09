@@ -747,12 +747,12 @@
     [(op (y neg-unsigned12) (x ur))
      (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #t #t))])
        (values '() `(asm ,info ,(asm-relop info #t) ,x ,y)))]
-    [(op (x ur) (y neg-unsigned12))
-     (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
-       (values '() `(asm ,info ,(asm-relop info #t) ,x ,y)))]
     [(op (x ur) (y ur unsigned12))
      (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
-       (values '() `(asm ,info ,(asm-relop info #f) ,x ,y)))])
+       (values '() `(asm ,info ,(asm-relop info #f) ,x ,y)))]
+    [(op (x ur) (y neg-unsigned12))
+     (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
+       (values '() `(asm ,info ,(asm-relop info #t) ,x ,y)))])
 
   (define-instruction pred (condition-code)
     [(op) (values '() `(asm ,info ,(asm-condition-code info)))])
@@ -2499,11 +2499,16 @@
              ;; When `n` fits in a fixnum, the compiler may generate
              ;; a bad shift that is under a guard, so force it to 63 bits
              (let ([n (fxand n 63)])
-               (case op
-                 [(sll) (emit lsli dest src0 n code*)]
-                 [(srl) (emit lsri dest src0 n code*)]
-                 [(sra) (emit asri dest src0 n code*)]
-                 [else (sorry! 'shiftop "unrecognized ~s" op)]))]
+	       (cond
+		[(fx= n 0)
+		 ;; shift by 0 is just a move
+		 (emit mov dest src0 code*)]
+		[else
+		 (case op
+		   [(sll) (emit lsli dest src0 n code*)]
+		   [(srl) (emit lsri dest src0 n code*)]
+		   [(sra) (emit asri dest src0 n code*)]
+		   [else (sorry! 'shiftop "unrecognized ~s" op)])]))]
             [else
              (case op
                [(sll) (emit lsl dest src0 src1 code*)]
