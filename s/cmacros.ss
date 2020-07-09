@@ -12,6 +12,9 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; ---------------------------------------------------------------------
+;; Initial helper macros and functions:
+
 (define-syntax disable-unbound-warning
   (syntax-rules ()
     ((_ name ...)
@@ -190,6 +193,13 @@
   (lambda (x)
     (syntax-error x "misplaced aux keyword")))
 
+;; ---------------------------------------------------------------------
+;; Libspec representation:
+
+;; A libspec is a description of a runtime function to be represenced
+;; by machine code, where the linker will find the library funtion and
+;; update code to reference it as code is loaded/linked
+
 ;; layout of our flags field:
 ;; bit 0: needs head space?
 ;; bit 1 - 9: upper 9 bits of index (lower bit is the needs head space index
@@ -290,6 +300,9 @@
          (fxlogand (libspec-flags libspec)
            (fxlognot (fxsll 1 (constant libspec-does-not-expect-headroom-index))))))]))
 
+;; ---------------------------------------------------------------------
+;; More helpers:
+
 (define-syntax return-values
   (syntax-rules ()
     ((_ args ...) (values args ...))))
@@ -327,6 +340,13 @@
                (syntax-rules (foo ...)
                  [(_ foo e1 e2) e1] ...
                  [(_ bar e1 e2) e2]))))])))
+
+(define-syntax log2
+  (syntax-rules ()
+    [(_ n) (integer-length (- n 1))]))
+
+;; ---------------------------------------------------------------------
+;; Version and machine types:
 
 (define-constant scheme-version #x0905031F)
 
@@ -370,9 +390,8 @@
 
 (define-constant machine-type-name (cdr (assv (constant machine-type) (constant machine-type-alist))))
 
-(define-syntax log2
-  (syntax-rules ()
-    [(_ n) (integer-length (- n 1))]))
+;; ---------------------------------------------------------------------
+;; Some object-layout constants:
 
 ; a string-char is a 32-bit equivalent of a ptr char: identical to a
 ; ptr char on 32-bit machines and the low-order half of a ptr char on
@@ -424,6 +443,9 @@
 (define-constant seginfo-list-bits-disp (constant ptr-bytes))
 
 (define-constant list-bits-mask (- (expt 2 (constant ptr-alignment)) 1))
+
+;; ---------------------------------------------------------------------
+;; Fasl encoding tags:
 
 ;;; fasl codes---see fasl.c for documentation of representation
 
@@ -495,6 +517,12 @@
   (bytevector (constant fasl-type-header) 0 0 0
     (char->integer #\c) (char->integer #\h) (char->integer #\e) (char->integer #\z)))
 
+;; ---------------------------------------------------------------------
+;; Relocation repersentation
+
+;; A recolcation tells the linker where to update machine code to link
+;; in library functions, literal Scheme objects, etc.
+
 (define-syntax define-enumerated-constants
   (lambda (x)
     (syntax-case x ()
@@ -542,6 +570,9 @@
    (define-constant reloc-item-offset-mask #x3ffff)])
 
 (macro-define-structure (reloc type item-offset code-offset long?))
+
+;; ---------------------------------------------------------------------
+;; Some flags to cooperate with the C-implemented kernel:
 
 (define-constant SERROR    #x0000)
 (define-constant STRVNCATE #x0001) ; V for U to avoid msvc errno.h conflict
@@ -620,6 +651,9 @@
 (define-constant ERROR_NONCONTINUABLE_INTERRUPT 6)
 (define-constant ERROR_VALUES 7)
 (define-constant ERROR_MVLET 8)
+
+;; ---------------------------------------------------------------------
+;; GC constants
 
 (define-syntax define-alloc-spaces
   (lambda (x)
@@ -714,7 +748,10 @@
 (define-constant countof-phantom 28)
 (define-constant countof-types 29)
 
-;;; type-fixnum is assumed to be all zeros by at least by vector, fxvector,
+;; ---------------------------------------------------------------------
+;; Tags that are part of the pointer represeting an object:
+
+;;; type-fixnum is assumed to be all zeros by at least vector, fxvector,
 ;;; and bytevector index checks
 (define-constant type-fixnum           0) ; #b100/#b000 32-bit, #b000 64-bit
 (define-constant type-pair         #b001)
@@ -724,6 +761,9 @@
 (define-constant type-closure      #b101)
 (define-constant type-immediate    #b110)
 (define-constant type-typed-object #b111)
+
+;; ---------------------------------------------------------------------
+;; Immediate values; note that these all end with `type-immediate`:
 
 ;;; note: for type-char, leave at least fixnum-offset zeros at top of
 ;;; type byte to simplify char->integer conversion
@@ -739,6 +779,10 @@
 (define-constant ptr black-hole         #b01000110)
 (define-constant ptr sbwp               #b01001110)
 (define-constant ptr ftype-guardian-rep #b01010110)
+
+;; ---------------------------------------------------------------------
+;; Initial type word in an object that is represented by a
+;; `type-typed-object` pointer:
 
 ;;; on 32-bit machines, vectors get two primary tag bits, including
 ;;; one for the immutable flag, and so do bytevectors, so their maximum
@@ -780,6 +824,9 @@
 (define-constant type-rtd-counts       #b01101110)
 (define-constant type-phantom          #b01111110)
 (define-constant type-record                #b111)
+
+;; ---------------------------------------------------------------------
+;; Bit and byte offsets for different types of objects:
 
 (define-constant code-flag-system           #b0000001)
 (define-constant code-flag-continuation     #b0000010)
@@ -911,6 +958,9 @@
            (fxsll (constant code-flag-single-valued)
                   (constant code-flags-offset))))
 
+;; ---------------------------------------------------------------------
+;; Masks and offsets for checking types:
+
 ;; type checks are generally performed by applying the mask to the object
 ;; then comparing against the type code.  a mask equal to
 ;; (constant byte-constant-mask) implies that the object being
@@ -1040,6 +1090,9 @@
 (define-constant stencil-vector-mask-offset  (integer-length (constant mask-stencil-vector)))
 (define-constant stencil-vector-mask-bits    (fx- (constant ptr-bits)
                                                   (constant stencil-vector-mask-offset)))
+
+;; ---------------------------------------------------------------------
+;; Helpers to define object layouts:
 
 ;;; record-datatype must be defined before we include layout.ss
 ;;; (maybe should move into that file??)
@@ -1263,6 +1316,9 @@
                      (define-constant size-name size)
                      (define-constant name-field-disp field-disp)
                      ...))))))])))
+
+;; ---------------------------------------------------------------------
+;; Object layouts:
 
 (define-primitive-structure-disps typed-object type-typed-object
   ([iptr type]))
@@ -1615,6 +1671,9 @@
     (with-syntax ([type (datum->syntax #'* (filter-scheme-type 'string-char))])
       #''type)))
 
+;; ---------------------------------------------------------------------
+;; Flags and structures for the compiler's internal communcation:
+
 (define-constant annotation-debug   #b0001)
 (define-constant annotation-profile #b0010)
 (define-constant annotation-all     #b0011)
@@ -1907,7 +1966,8 @@
   (syntax-rules ()
     ((_ x) (let ((t x)) (and (pair? t) (symbol? (car t)))))))
 
-;;; heap/stack mangement constants
+;; ---------------------------------------------------------------------
+;; Heap/stack mangement constants:
 
 (define-constant collect-interrupt-index 1)
 (define-constant timer-interrupt-index 2)
@@ -2017,6 +2077,9 @@
          (lambda () (mutex-release $tc-mutex) (enable-interrupts)))])
     (identifier-syntax critical-section)))
 
+;; ---------------------------------------------------------------------
+;; More object-representation flags and offsets:
+
 (define-constant hashtable-default-size 8)
 
 (define-constant eq-hashtable-subtype-normal 0)
@@ -2045,6 +2108,9 @@
 (define-constant time-utc 4)
 (define-constant time-collector-cpu 5)
 (define-constant time-collector-real 6)
+
+;; ---------------------------------------------------------------------
+;; General helpers for the compiler and runtime implementation:
 
 (define-syntax default-run-cp0
   (lambda (x)
@@ -2417,7 +2483,20 @@
        #`(let ([x arg])
            (unless (pred x)
              ($oops who #,(format "~~s is not a ~a" (datum type)) x)))])))
- 
+
+;; ---------------------------------------------------------------------
+;; Library entries and C entries
+
+;; A library entry connects with a libspec to describe a library
+;; function that can be referenced directly by machine code and that
+;; will need to be updated by the linker. The C-implemented kernel may
+;; also refer to these values.
+
+;; A C entry is a pointer communicated from the C-implemented kernel
+;; to the compiler and runtime system. The linker deals with them in a
+;; similar way --- it's just that the refer to C functions and globals
+;; instead of Scheme-implemented functions.
+
 (eval-when (load eval)
 (define-syntax lookup-libspec
   (lambda (x)

@@ -1,0 +1,812 @@
+Getting Started
+---------------
+
+Most of the Chez Scheme implementation is in the "s" directory. The
+C-implemented kernel is in the "c" directory.
+
+Some key files in "s":
+
+ * "cmacro.ss": object layouts and other global constants
+
+ * "syntax.ss": the macro expander
+
+ * "cpnanopass.ss": the main compiler
+
+ * "cp0.ss", "cptypes.ss", "cpletrec.ss", etc.: source-to-source
+   passes that apply before the main compiler
+
+ * "x86_64.ss", "arm64.ss", etc.: backends that are used by
+   "cpnanopass.ss"
+
+ * "ta6os.def", "tarm64le", etc.: one per OS-architecture combination,
+   provides platform-specific constants that feed into "cmacro.ss" and
+   selects the backend used by "cpnanopass.ss"
+
+Scheme Objects
+--------------
+
+A Scheme object is represented at run time by a pointer. The low bits
+of the pointer indicate the general type of the object, such as "pair"
+or "closure". The memory referenced by the pointer may have an
+additional tag word to further refine the pointer-tag type.
+
+See also:
+
+  Don't Stop the BiBOP: Flexible and Efficient Storage Management for
+  Dynamically Typed Languages.
+  R. Kent Dybvig, David Eby, and Carl Bruggeman.
+  Indiana University TR #400, 1994.
+
+For example, if "cmacro.ss" says
+
+  (define-constant type-pair         #b001)
+
+then that means an address with only the lowest bit set among the low
+three bits refers to a pair. To get the address where the pair content
+is stored, round *up* to the nearest word. So, on a 64-bit machine,
+add 7 to get to the `car` and add 15 to get to the `cdr`. Since
+allocation on a 64-byte machine is 16-byte aligned, the hexadecimal
+form of every pair pointer will end in "9".
+
+The `type-typed-object` type,
+
+ (define-constant type-typed-object #b111)
+
+refers to an object whose first word indicates its type. In the case
+of a Scheme record, that first word will be a record-type descriptor
+--- that is, a pointer to a record type, which is itself represented
+as a record. The based record type, `#!base-rtd` has itself as its
+record type. Since the type bits are all ones, on a 64-bit machine,
+every object tagged with an additional type workd will end in "F" in
+hexadecimal, and adding 1 to the pointer produces the address
+containing the record content (which starts with the rrecord type, so
+add 9 instead to get to the first field in the record).
+
+As another example, a vector is represented as `type-typed-object`
+pointer where the first word is a fixnum. That is, a fixnum used a
+type word indicates a vector. The fixnum value is the vector's length
+in wordobjects, but shifted up by 1 bit, and then the low bit is set
+to 1 for an immutable vector.
+
+Most kinds of Scheme values are represented records, so the layout is
+defined by `define-record-type` and similar. For the primitive object
+types that are not records (and even a few that are), the layouts are
+defined in "camcros.ss". For example, an `exactnum` (i.e., a complex
+number with exact real and imaginary components) is defined as
+
+ (define-primitive-structure-disps exactnum type-typed-object
+   ([iptr type]
+    [ptr real]
+    [ptr imag]))
+
+The `type-typed-object` in the first line indicates that an exactnum
+is represented by a pointer that is tagged with `type-typed-object`,
+and so we should expect the first first to be a type word. That's why
+the first field above is `type`, and it turns out that it will always
+contain the value `type-inexactnum`. The `iptr` type for `type` means
+"a pointer-sized signed integer". The `ptr` type for `real` and `imag`
+means "pointer" or "Scheme object".
+
+Functions and Calls
+-------------------
+
+Scheme code does not use the C stack, except to the degree that it
+interacts with C functions. Instead, the Scheme continuation is a
+separate, heap-allocated, linked list of stack segments. Locally, you
+can just view the continuatiton as a stack and assume that overflow
+and continuation operations are handled as needed at the boundaries.
+
+See also:
+ 
+ Representing Control in the Presence of First-Class Continuations.
+ Robert Hieb, R. Kent Dybvig, and Carl Bruggeman.
+ Programming Language Design and Implementation, 1990.
+
+ Compiler and Runtime Support for Continuation Marks.
+ Matthew Flatt and R. Kent Dybvig.
+ Programming Language Design and Implementation, 2020.
+
+To the degree that the runtime system needs global state, that state
+is in the thread context (so, it's thread-local), which we'll
+abbreviate as "TC". Some machine register is desgined as the `%tc`
+register, and it's initialized on entry to Scheme code. For the
+defintion of TC, see `(define-primitive-structure-disps tc ...)` in
+"cmacro.ss".
+
+The first several fields of TC are virtual registers that may be
+assigned to machine registers, in which case the TC and registers are
+synced on entry and exit from Scheme code, including when calling
+kernel functionality from Scheme code. In particular, the SFP (Scheme
+frame pointer) virtual register must be assigned to a real register,
+because it's the Scheme stack pointer. The TC and SFP registers are
+the only two that absolutely must be registers, but AP (allocation
+pointer) and TRAP registers are also good candidates on architectures
+where plenty of registers are available.
+
+The Scheme stack grows up, and SFP points to the beginning (i.e., the
+low address) of the current stack frame. The first word of a stack
+frame is the return address, so a frame looks like this:
+
+                ^
+                |          (higher addresses)
+              future
+              frames
+          |------------|
+          |   var N    |
+          |------------|
+          |     ...    | ....
+          |------------|
+          |   var 1    | SFP[1]
+          |------------|
+          |  ret addr  | SFP[0]
+ SFP ->   |------------|
+             previous
+              frames 
+                |          (lower addresses)
+                v
+
+On entry to a Scheme function, a check ensures that the difference
+between SFP and the end of the current stack segment is big enough to
+accomodate the (spilled) variables of the called function, plus enough
+slop to deal with some primitive operations.
+
+A non-tail call moves SFP past all the live variables of the current
+function, installs the return address as as pointer within the current
+function, and then jumps to the called function. Function calls and
+returns do not use machine "call" and "return" instructions;
+everything is just a "jump". ("Call" and "return" instructions are
+used for for C interactions.) It's the caller's responsibity to reset
+SFP back on return, since the caller knows how much it moved SFP
+before calling.
+
+The compiler can use a register for the return address instead of
+immediately installing it in SFP[0] on a call. That mode is triggered
+by giving one of the regisers the name `%ret` (as described in
+"Machine Registers" below). Currently, however, the called Scheme
+function will immediatelly copy the register into SFP[0], and it will
+always return by jumping to SFP[0]. So, until the compiler improves to
+deal with leaf functions differently, using a return register can help
+only with hand-coded leaf functions that don't immediately move the
+return register into SFP[0].
+
+There are two ways that control transitions from C to Scheme: an
+initial call through `S_generic_invoke` (see "scheme.c") or via a
+foreign callable. Both of those go through `S_call_help` (see
+"schlib.c"). The `S_generic_invoke` function calls `S_call_help`
+directly. A foreign callable is represented by generated code that
+converts arguments and then calls `S_call_help` to run the Scheme
+procedure that is wrapped by the callable.
+
+The `S_call_help` function calls the hand-coded `invoke` code (see
+"cpnanopass.ss"). The `invoke` code sets things up for the Scheme
+world and jumps to the target Scheme function. When control returns
+from the called Scheme function back to `invoke`, `invoke` finishes
+not with a C return, but by calling `S_return` (see "schlib.c"), which
+gets back to `S_call_help` through a longjmp. The indirect return
+through longjmp helps the Scheme stack and C stack be independent,
+which is part of how Scheme continuations interact with foreign
+functions.
+
+For a non-tail call in Scheme, the return address is not right after
+the jump instruction for the call. Instead, the return address is a
+little later, and there's some data just before that return address
+that describes the calling function's stack frame. The GC needs that
+information, for example, to know which part of the current Scheme
+stack is populated by live variables. The data is represented by
+either the `rp-header` or `rp-compact-header` (see "cmacro.ss") shape.
+So, when you disassemble code generated by the Chez Scheme compiler,
+you may see garbage instructions mingled with the well-formed
+instructions, but the garbage will always be jumped over.
+
+Compilation Pipeline
+--------------------
+
+Compilation
+
+ * starts with an S-expression (possibly with annotations for source
+   locations),
+
+ * converts it to a syntax object (see "syntax.ss"),
+
+ * expands macros (see "syntax.ss") and produces an `Lsrc`
+   representation in terms of core forms (see `Lsrc` in
+   "base-lang.ss"),
+
+ * performs front-end optimizations on that representation (see
+   "cp0.ss", "cptypes.ss", etc.),
+
+ * and then compiles to machine code (see "cpnanopass.ss"), which
+   involves many individual passes that convert through many different
+   intermediate forms (see "np-language.ss").
+
+See also:
+
+   Nanopass compiler infrastructure.
+   Dipanwita Sarkar.
+   Indiana University PhD dissertation, 2008
+
+   A Nanopass Framework for Commercial Compiler Development.
+   Andrew W. Keep.
+   Indiana University PhD dissertation, 2013
+
+Note that the core macro expander always converts its input to the
+`Lsrc` intermediate form. That intermediate form can be converted back
+to an S-expression (see "uncprep.ss", whose name you should parse as
+"undo-compilerpass-representation").
+
+In the initial intermediate form, `Lsrc`, all primitive operations are
+represented as calls to functions. In later passes in "cpnanopass.ss",
+some primitive operations get inlined into a combination of core
+forms, some of which are `inline` forms. The `inline` forms eventually
+get delivered to a backend for instruction selection. For example, a
+use of safe `fx+` is inlines as argument checks that guard an `(inline
++ ...)`, and the `(inline + ...)` eventually becomes a machine-level
+addition instruction.
+
+Machine Registers
+-----------------
+
+Each backend file, such as "x86_64.ss" or "arm64.ss", starts with a
+description of the machine's registers. It has three parts in
+`define-registers`:
+
+(define-registers
+  (reserved
+    <reg>
+    ...)
+  (allocable
+    <reg>
+    ...)
+  (machine-dependent
+    <reg>
+    ...))
+
+Each <reg> has the form
+
+    [<name> ... <preserved? / callee-saved?> <num> <type>]
+
+ * The <name>s in one <reg> will all refer to the same register, and
+   the first <name> is used as the canonical name. By convention, each
+   <name> starts with `%`. The compiler gives specific meaning to a
+   few names listed below, and a backend can use any names otherwise.
+
+ * The information on preserved (i.e, callee-saved) registers helps
+   the compiler save registers as needed before some C interactons.
+
+ * The <num> value is for the private use of the backend. Typically,
+   it corresponds to the register's representation within machine
+   instructions.
+
+ * The <type> is either 'uptr or 'fp, indicating whether the register
+   holds a pointer/integer value (i.e., an unsigned integer that is
+   the same size as a pointer) or a floating-point value. For
+   `allocatable` registers, the different types of registers represent
+   different allocation pools.
+
+The `reserved` section describes registers that the compiler needs and
+that will be used only for a designated purpose. The registers will
+never be allocated to Scheme variables in a compiled function. The
+`reserved` section must start with `%tc` and `%sfp`, and it must list
+only registers with a recognized name as the canonical name.
+
+The `machine-dependent` section describes additional registers that
+also will not be allocated. They are also not saved automatically for
+C interactions.
+
+The `allocable` section describes registers that may be mapped to
+specific purposes by using a recognized canonical name, but generally
+these registers are allocated as needed to hold Scheme variables and
+temporaries (including registers with recognized names in situations
+where the recognized purpose is not needed). Registers in this
+category are automatically saved as needed for C interactions.
+
+The main recognized register names, roughly in order of usefulness as
+real machine registers:
+
+ %tc - the first reserved register, must be mapped as reserved
+ %sfp - the second reserved register, must be mapped as reserved
+ %ap - allocation pointer (for fast bump allocation)
+ %trap - counter for when to check signals, including GC signal
+
+ %eap - end of bump-allocatable region
+ %esp - end of current stack segment
+
+ %cp - used for a procedure about to be called
+ %ac0 - used for argument count and call results
+ 
+ %ac1 - various scratch and communication purposes
+ %xp  - ditto
+ %yp  - ditto
+
+Each of the registers maps to a slot in the TC, so they are sometimes
+used to communicate between compiled code and the C-implemented
+kernel. For example, `S_call_help` expects the function to be called
+in AC1 with the argument count in AC0 (as usual).
+
+A few more names are recognized to direct the compiler in different
+ways:
+
+ %ret - use a return register insteda of just SFP[0]
+
+ %reify1, %reify2 - a kind of manual allocation of registers for
+                    certain hand-coded routines, which otherwise could
+                    run out of registers to use
+
+Variables and Register Allocation
+---------------------------------
+
+A variables in Scheme code can be allocated either to a register or to
+a location in the stack frame, and the same goes for temporaries that
+are needed to evaluate subexpressions. Naturally, variables and
+temporaries with non-overlapping extents can be mapped to the same
+register or frame location. Currently, only variables with the same
+type, integer/pointer versus floating-point, can be allocated to the
+same frame location.
+
+An early pass in the compiler converts mutable variables to
+pair-valued immutable variables, but assignment to variables is still
+allowed within the compiler's representation. (The early conversion of
+mutables variables ensures that mutation is properly shared for, say,
+variables in captured continuations.) That is, even though variables
+and temporaries are typically assigned only once, the compiler's
+intermediate representation is not a single-asssignment form like
+SSA.
+
+Each variable or temporary will be allocated to one spot for it's
+whole lifetime. So, from the register-allocation perspective, it's
+better to use
+
+   (set! var1 ...)
+   ... var1 ...
+   ... code that doesn't use var1 ...
+   (set! var2 ...)
+   ... var2 ...
+
+than to reuse var1 like
+
+   (set! var1 ...)
+   ... var1 ...
+   ... code that doesn't use var1 ...
+   (set! var1 ...)
+   ... var1 ...
+
+Intermediate code in later passes of the compiler can also refer to
+registers directly, and those uses are taken into account by the
+register allocator.
+
+Overall, the allocator see several kinds of "variables":
+
+ * real registers;
+
+ * Scheme variables and temporaries as represented by `uvar`s, each of
+   which is eventually allocated to a real register or to a frame
+   location;
+
+ * unspillable varriables, each of which must be allocated to a real
+   register; these are introduced by a backend during the
+   instruction-selection pass, where an instruction may require a
+   register argument; and
+
+ * pre-colored unspillable variables, each which must be allocated to
+   a specific real register; these are introduced by a backend where
+   an instruction may require an argument in a specific registers.
+
+The difference between a pre-colored unspillable and just using the
+real register is that you declare intent to the register allocator,
+and it can sometimes tell you if things go wrong. For example,
+
+        (set! %r1 v1)
+        (set! must-be-r1 v2)
+        ... use %r1 and must-be-r1 ...
+
+has clearly gone wrong. In contrast, the register allocator thinks
+that
+
+        (set! %r1 v1)
+        (set! %r1 v2)
+        ... use %r1, sometimesexpecting v1 and sometimess v2 ...
+
+looks fine, and it may optimize away the first assignment. [Note:
+Optimized-away assignments are one of the most confusing potential
+results of register-use mistakes.]
+
+At the point where the register allocator runs, a Scheme program has
+been simplified to a sequence of assignment forms and expression
+forms, where the latter are either value-producing and sit on the
+right-hand side of an assignment or they are effectful and sit by
+themselves. The register allocator sees the first assignment to a
+variable/register as the beginning of its live range and the last
+reference as the end of its live range. In some cases, an instruction
+is written with "dummy" arguments just to expose the fact that it
+needs those arguments to stay live; for example, a jump instruction
+that implements a function-call return conceptually needs to consume
+the result-value registers (because those values need to stay live
+throgh the jump), even though the machine-level jump instruction
+doens't refer to the result values. The `kill` dummy instruction can
+be used with `set!` to indicate that a variable is trashed, but the
+`kill` is discarded after register allocation. It's also possible for
+an insstruction to produce results in multiple registers. So, besides
+using dummy arguments and `kill`, an instruction form can have a
+`info-kill*-live*` record attached to it, which lists the `kill*`
+variables that the expression effectively assigns and the `live*`
+variables that the expression effectively references. (Note: a `set!`
+form cannot itself have a `info-kill*-live*` record attached to it,
+because the info slot for `set!` be an `info-live` record that records
+computed live-variable information.)
+
+As a first pass, the register allocator can look at an intermediate
+instruction sequence and determine that there are too many live
+variables, so some of them need to be spilled. The register allocator
+does that before consulting the backend. So, some of the variables in
+the intermediate form will stay as `uvar`s, and some will get
+converted to a frame reference of them form SFP[pos]. When the backend
+is then asked to select an instruction for an operation that cosumes
+some variables and delivers a result to some destination variable, it
+may not be able to work with one or more of the arguments or
+destination in SFP[pos] form; in that case, it will create an
+unspillable and assign the SFP[pos] value to the unspillable, then use
+the unspillable in a generated instruction sequence. Of course,
+introducing unspillables may mean that some of the remaining `uvar`s`
+to no longer fit in registers after all; when that happens, the
+register allocator will discard the tentative instruction selection
+and try again after spilling for `uvar`s (which will then create even
+more unspillables locally, but those will have short lifetimes, so
+register allocation will eventually succeed). Long story short, the
+backend can assume that a `uvar` wil be replaced later by a register.
+
+When reading the compiler's implementation, `make-tmp` in most passes
+creates a `uvar` (that may eventually be spilled to a stack-frame
+slot). A `make-tmp` in the instruction-selection pass, however, makes
+an unspillable. In earlies passes of the compiler, new temporaries
+must be bound with a `let` form (i.e., a `let` in the intermediate
+repressentation) before they can be used; in later passes, a `set!`
+initializes a temporary.
+
+In all but the very earliest passes, an `mref` form represents a
+memory reference. Typically, a memory reference consistents of a
+variable and an offset. The general form is two variables and an
+offset, all of which are added to obtain an address, because many
+machine support indexed memory references of that form. The `%zero`
+pseudo-register is used as the second variable in an general `mref`
+when only one variable is needed. A variable or memory reference also
+has a type, 'uptr or 'fp, in the same way as a register. So, a
+variable of a given type may be allocated to a register of that type,
+or it may be spilled to a frame location and then referenced through
+an `%sfp`-based `mref` using that type. In early passes of the
+compiler, `mref`s can be nested and have computed pieces (such as
+calulating the offset), but a later pass will introduce temporaries to
+flatten `mref`s into just variable/register and immediate-integer
+components.
+
+A backend may introduce an unspillable to hold an `mref` value for
+various reasons: because the relevant instruction suports only one
+register plus an offset instead of two registers, because the offset
+is too big, because the offset does not have a required alignment, and
+so on.
+
+Instruction Selection: Compiler <-> Backend
+-------------------------------------------
+
+For each primitive that the compiler will reference via `inline`,
+there must be a `declare-primitive` in "np-language.ss". Each
+primitive is either an `effect`, a `value` that must be used on the
+right-hand side of a `set!` or a `pred` that must be used immediately
+in the test position of an `if` --- where `set!` and `if` here refer
+to forms in the input intermediate language of the
+instruction-selection compiler pass (see `L15c` in "np-languages.ss").
+Most primitives potentially correspond to a single machine
+instruction, but any of them can expand to any number of instructions.
+
+The `declare-primitive` form binds the name formed by adding a `%`
+prefix. So, for example,
+
+  (declare-primitive logand value #t)
+
+binds `%logand`. The `(%inline name ,arg ...)` macro expands to
+`(inline ,null-info ,%name ,arg ...)` macro, so that's why you don't
+usually see the `%` written out.
+
+The backend implementation of a prrimitive is a function that takes as
+many arguments as the `inline` form, plus an additional initial
+argument for the destination in the case of a `value` primitive on the
+right-hand side of a `set!`. The result of the primitive function is a
+list of instructions, where an instruction is either a `set!` or `asm`
+form in the output intermediate representation of the
+instruction-selection pass (see `L15d` in "np-languages.ss"). The
+`asm` form in the output language has a function that represents the
+instruction; that function again takes the arguments of the `asm`
+form, plus an extra leading argument for the destiination if it's on
+the right-hand side of a `set!` (plus an argument before that for the
+machine-code sequence following the instruction, and it returns an
+extended machine-code sequence; that is, a machine-code sequence is
+built end-to-start).
+
+An instruction procedure typically has a name prefixed with `asm-`.
+So, for example, the `%logand` primitive's implementation in the
+backend may produces a result that includes a reference to an
+`asm-logand` instruction procedure. Or maybe the machine instruction
+for logical "and" has a variant that sets condition codes and one that
+doesn't, and they're both useful, so `asm-logand` actually takes a
+curried bboolean to pick; in thatt case, `%logand` returns an
+instruction with `(asm-logand #f)`, which produces a function that
+takes the destination and `asm` arguments. Whether an argument to
+`asm-logand` is suitable for currying or inclusion as an `asm`
+argument depends on whether it makes sense in the `asm` grammar and
+whether it needs to be exposed for register allocation.
+
+The compiler may refer to some instructions directly. Of particular
+importance are `asm-move` and `asm-fpmove`, which are eventually used
+for `set!` forms after the instruction-selection pass. That is, the
+output of instruction selection still uses `set!`, and then those are
+converted to memory and register-moving instructions later. The
+instruction-selecton pass must ensure that any surving `set!`s are
+simple enough, though, to map to instructions without further register
+allocation. In other words, the backend instruction selector should
+only return `set!`s as instructions when they are simple enough, and
+it should generate code to simplify the ones that don't start out
+simple enough. To give the backend control over `set!`s in the *input*
+of instruction selection, those are send to the backend as `%move` and
+`%fpmove` primitives (which may simply turn back into `set!s` using
+the output language, or they may get simplified). When the compiler
+generates additional `set!`s after instruction selection, it generates
+only cnstrainted forms, where target or source `mref`s have a single
+register and a small, aligned offset.
+
+To organize all of this work, a backend implementation like
+"x86_64.ss" or "arm64.ss" must be organized into three parts, which
+are implemented by three S-expressions:
+
+ * `define-registers`
+
+ * a module that implements primitives (that convert to instructions),
+   installing them with `primitive-handler-set!`
+
+ * a module that implements instructions (that convert to machine
+   code), a.k.a. the "assembler", defining the instructions as
+   functions
+
+That last module must also implement a few things that apply earlier
+than assembling (or even instruction selection), notably including
+`asm-foreign-call` and `asm-foreign-callable`. For more on those two,
+see "Foreign Function ABI" below.
+
+To summarize the interface between the compiler and backend is:
+
+ primitive : L15c.Triv ... -> (listof L15d.Effect)
+
+ instruction : (listof code) L16.Triv ... -> (listof code)
+
+A `code` is mostly bytes to be emitted, but it also contains
+relocation entries and human-readable forms that are printed when
+assembly printing is enabled. The `aop-cons*` helper macro (in
+"cpnanopass.ss") is like `cons*`, but it skips its first argument if
+human-readable forms aren't being kept.
+
+Instruction Selection: Backend Structure
+----------------------------------------
+
+To further organize the work of instruction selection and assembly,
+all of the current backends use a particular internal structure:
+
+ * primitives are defined through a `define-instruction` form that
+   helps with pattern matching and automatic conversion/simplification
+   of arguments; and
+
+ * instructions are defined as functions that use an `emit` form,
+   which in turn dispatches to function that represent actual
+   machine-level operations, where the functions for machine-level
+   operations typically have names ending in `-op`.
+
+Consider the "arm64.ss" definition fo `%logand`, which should accept a
+destination (here called "z") and two arguments:
+
+  (define-instruction value (logand)
+    [(op (z ur) (x ur) (y funkymask))
+     `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,x ,y))]
+    [(op (z ur) (x funkymask) (y ur))
+     `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,y ,x))]
+    [(op (z ur) (x ur) (y ur))
+     `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,x ,y))])
+
+The A64 instruction set supports a logical "and" on either two
+registers or a register and an immediate, but the immediate value has
+to be representable with a funky encoding. The pattern forms above
+require that the destination is always a register/variable, and either
+of the arguments can be a literal that fits into the funky encoding or
+a register/variable. The `define-instruction` macro is itself
+implemented in "arm64.ss", so it can support specialized patterns like
+`funkymask`.
+
+If a call to this `%logand` function is triggered by a form
+
+  `(set! ,info (mref ,var1 ,%zero 8) ,var2 ,7)
+
+then the code generated by `define-instruction` will notice that the
+first argument is not a register/variable, while 7 does encode as a
+mask, so it will arrange to produce the same value as
+
+   (let ([u (make-tmp 'u)])
+      (list
+        (%logand u var2 7)
+        `(set! ,(make-live-info) (mref ,var1 ,%zero 8) ,u)))
+
+Then, the first case of `%logand` will match, and the result will be
+the same as
+
+   (let ([u (make-tmp 'u)])
+      (list
+        `(set! ,(make-live-info) ,u (asm,(asm-logand #f) ,var2 ,7)
+        `(set! ,(make-live-info) (mref ,var1 ,%zero 8) ,u))))
+
+If the offset 8 were instead a very large number, then auto-conversion
+would have to generate an `add` into a second temporary variable.
+Otherwise, `asm-move` would not be able to deal with the generated
+`set!` to move `u` into the destination. The implementation of
+`define-instruction` uses a `mem->mem` helper function to simplify
+`mref`s. In the "arm32.ss" backend, there's an additional `fpmem`
+pattern and `fpmem->fpmem` helper, because the constraints on memory
+references for floating-point operations are different than than the
+constraints on memory references to load an integer/pointer.
+
+Note that `%logand` generates a use of the same `(asm-logand #f)`
+instruction for the register--register and the register--immediate
+cases. A more explicit distinction could be made in the output of
+instruction selection, but delaying the choice is anologous to how
+assembly languages often use the same mnemonic for related
+instructions. The `asm-move` and `asm-fpmove` must accomodate
+register--memory, memory--register, and register--register cases,
+because `set!` forms after instruction selection can have those
+variants.
+
+The `asm-logand` instruction for "arm64.ss" is implemented as
+
+   (lambda (set-cc?)
+     (lambda (code* dest src0 src1)
+       (Trivit (dest src0 src1)
+          (record-case src1
+            [(imm) (n) (emit andi set-cc? dest src0 n code*)]
+            [else (emit and set-cc? and src0 src1 code*)]))))
+
+The `set-cc?` argument coresponds to the `#f` in `(asm-logand #f)`.
+The inner lambda reprsents the instruction --- that is, it's the
+function in an `asm` form. The function takes `code*` first, which is
+a list of machine codes for all instructions after the `asm-logand`.
+The `dest` argument corresponds to the result register, and `src0` and
+`src1` are the two arguments.
+
+The `Trivit` form is a bridge between intermediate languages. It takes
+variables that are boudn already and it rebinds them for the body of
+the `Trivit` form. Each rebinding translate the argument from an `L16`
+`Triv` record to a list that starts 'reg, 'disp, 'index, 'literal, or
+'literal@. (Beware of missing this step, and beware of backends that
+sometimes intentionally skip this step because the original is known
+to be, say, a register.)
+
+The `emit` form is defined in the "arm64.ss" backend and others, and
+it's just a kind of function call that cooperates with `define-op`
+declarations. For example, `(define-op andi logical-op arg1 ...)`
+binds `andi-op`, and `(emit andi arg2 ...)` turns into `(logical-op
+'and arg1 ... arg2 ...)`; that is, `andi-op` first receives the symbol
+'andi, then arguments listed at `define-op`, then arguments listed at
+`emit`. The last argument is conventionally `code*`, which is the code
+list to be extended with new code at its beginning (because the
+machine-code list is built end to start). The bounce from `andi-op` to
+`logicial-op` is because many instructions follow a similar encoding,
+such as different bitwise-logicial operations like `and` and `or`.
+Meanwhile, `logical-op` uses an `emit-code` form, which is also in
+"arm64.ss" and other backends, that calls `aop-cons` with a suitable
+human-readable addition.
+
+All of that could be done with just plain functions, but the macros
+help with boilerplate and arrange some helpful compile-time checking.
+
+Foreign Function ABI
+--------------------
+
+Support for foreign procedures and callables in Chez Scheme boils down
+to foriegn calls and callable stubs for the backend. A backend's
+`asm-foreign-call` and `asm-forieng-callbable` function receives an
+`info-foreign` record, which describes the argument and result types
+in relatively primitive forms:
+
+ * double
+ * float
+ * [signed] integer of {8,16,32,64} bits
+ * generic pointer or scheme-object (to treat as a generic pointer)
+ * a "&" form, which is a pointer on the Scheme side and by-value on
+   the C side, and can be a struct/union; layout info is reported
+   by `$ftd-...` helpers
+
+If the result type is a "&" type, then the function expects an extra
+first argument on the Scheme side. That extra argument is reflected by
+an extra pointer type at the statr of the argument list, but the "&"
+type is also left for the result type as an indication about that
+first argument. In other words, the result type is effectively
+duplicated in the result (matching the C view) and an argument
+(mathing the Scheme view) --- so, overall, the given type matches
+neither the C nor Scheme view, but either view can be reconstructed.
+
+The compiler creates wrappers to take care of further conversion
+to/from these primitive shapes.
+
+The `asm-foreign-call` function returns 5 values:
+
+ * allocate : -> L13.Effect
+
+   Any needed setup, such as allocating C stack space for arguments.
+
+ * c-args : (listof (uvar/reg -> L13.Effect))
+
+   Generate code to convert each argument. The generated code will be
+   in reverse order, with the first argument last, because that tends
+   to improve register allocation.
+
+   If the result type is "&", then `c-arg`s must include a function to
+   accept the pointer that receives the function result (i.e., the
+   length of `c-args` should match the length of the agument-type list
+   in the given `info-foreign`). The pointer may need to be stashed
+   somewhere by the generated code for use after the function returns.
+
+   The use of the src variable for an argument depends on its type:
+
+     - double or float: an 'fp-typed variable
+     - integer or pointer: a 'uptr-typed variable that has the integer
+     - "&": a 'uptr-typed variable that has a pointer to the argument
+
+ * c-call : uvar/reg boolean -> L13.Effect
+
+   Generate code to call the C function whose address is in the given
+   register. The boolean if #t if the call can assume that the C
+   function is not a varargs function on platformss where varargs
+   support is the default.
+
+ * c-result : uvar/reg -> L13.Effect
+
+   Similar to the conversions in `c-args`, but for the result, so the
+   given argument is a destination variable. This function will not be
+   used if the foreign call's result type is void. If the result if a
+   floating-point value, the provided destination variable has type
+   'fp.
+
+ * allocate : -> L13.Effect
+
+   Any needd teardown, such as deallocating C stack space.
+
+The `asm-foreign-callable` function returns 4 values:
+
+ * c-init : -> L13.Effect
+
+   Anything that needs to be done just before transitioning into
+   Scheme, such as saving preserved registers that call be used within
+   the callable stub.
+
+ * c-args : (listof (uvar/reg -> L13.Effect))
+
+   Similar to the `asm-foreign-call` result case, but each function
+   should fill a destination variable form platform-specific argument
+   registers and stack locations.
+
+   If the result type is "&", then `c-arg`s must include a function to
+   produce a pointer that receives the function result. Space for this
+   pointer may needed to be allocated (probably on the C stack),
+   possibly in a way that can be found on return.
+
+   The use of the destination variable is different than for the
+   `asm-foreign-call` in the case of floating-point arguments:
+
+     - double or float: pointer to a flonum to be filled with the value
+     - integer or pointer: a 'uptr-typed variable to receive the value
+     - "&": a 'uptr-typed variable to receive the pointer
+
+ * c-result : (uvar/reg -> L13.Effect) or (-> L13.Effect)
+
+   Similar to the `asm-foreign-call` arrgument cases, but for a
+   floating-point result, the given result register holds pointer to a
+   flonum. Also, if the function result is a "&" or void type, then
+   `c-result` takes no argument (because the destination pointer was
+   already produced or there's no result).
+
+ * c-return : (-> L13.Effect)
+
+   Generate the code for a C return, including any teardown needed to
+   balance `c-init`.
