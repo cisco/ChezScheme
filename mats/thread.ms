@@ -1568,6 +1568,51 @@
         (set! done? #t)
         (condition-broadcast c))
       (equal? gc-ids (list (get-thread-id)))))
+  )
+
+(mat memory-consistency
+  (equal? (memory-order-acquire) (void))
+  (equal? (memory-order-release) (void))
+  ;; Try to make a thread see a partially constructed box
+  (let ([ids '(one two three four)])
+    (let ([m (make-mutex)]
+          [c (make-condition)]
+          [ok? #t]
+          [running (length ids)]
+          [v (make-vector 1000 (box (car ids)))])
+      (let loop ([i running])
+        (unless (= i 0)
+          (fork-thread (lambda ()
+                         (let ([id (list-ref ids (sub1 i))]
+                               [failed? #f])
+                           (let loop ([j 10000])
+                             (cond
+                               [(fx= j 0)
+                                (mutex-acquire m)
+                                (set! running (sub1 running))
+                                (condition-signal c)
+                                (set! ok? (and ok? (not failed?)))
+                                (mutex-release m)]
+                               [else
+                                (let loop ([i 0])
+                                  (unless (fx= i (vector-length v))
+                                    (let ([b (vector-ref v i)])
+                                      (unless (and (box? b)
+                                                   (memq (unbox b) ids))
+                                        (set! failed? #t)))
+                                    (vector-set! v i (box id))
+                                    (loop (fx+ i 1))))
+                                (loop (fx- j 1))])))))
+          (loop (sub1 i))))
+      (mutex-acquire m)
+      (let loop ()
+        (cond
+          [(not (zero? running))
+           (condition-wait c m)
+           (loop)]
+          [else
+           (mutex-release m)]))
+      ok?))
 )
 
 (mat wait-for-threads
@@ -1581,6 +1626,6 @@
           (sleep (make-time 'time-duration 10000 0))
           (loop))))
     #t)
-)  
+)
 
 )

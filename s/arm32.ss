@@ -985,9 +985,17 @@
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
 	       `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
 
-  (define-instruction effect (write-write-fence)
+  (define-instruction effect (store-store-fence)
     [(op)
-     `(asm ,info ,asm-write-write-fence)])
+     `(asm ,info ,(asm-fence 'store-store))])
+
+  (define-instruction effect (acquire-fence)
+    [(op)
+     `(asm ,info ,(asm-fence 'acquire))])
+  
+  (define-instruction effect (release-fence)
+    [(op)
+     `(asm ,info ,(asm-fence 'release))])
 
   (define-instruction effect (pause)
     ; NB: user sqrt or something like that?
@@ -1033,7 +1041,7 @@
                      asm-rp-header asm-rp-compact-header
                      asm-indirect-call asm-condition-code
                      asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom asm-fptrunc 
-                     asm-lock asm-lock+/- asm-cas asm-write-write-fence
+                     asm-lock asm-lock+/- asm-cas asm-fence
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1186,7 +1194,9 @@
   (define-op ldrex ldrex-op      #b00011001)
   (define-op strex strex-op      #b00011000)
 
-  (define-op dmbst dmb-op #b1110)
+  (define-op dmbst    dmb-op #b1110)
+  (define-op dmbish   dmb-op #b1011)
+  (define-op dmbishst dmb-op #b1010)
 
   (define-op bnei  branch-imm-op       (ax-cond 'ne))
   (define-op brai  branch-imm-op       (ax-cond 'al))
@@ -2182,9 +2192,15 @@
                 (emit cmpi tmp2 0
                    code*))))))))
 
-  (define asm-write-write-fence
-    (lambda (code*)
-      (emit dmbst code*)))
+  ;; Based in part on https://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
+  (define-who asm-fence
+    (lambda (kind)
+      (lambda (code*)
+        (case kind
+          [(store-store) (emit dmbishst code*)]
+          [(acquire) (emit dmbish code*)]
+          [(release) (emit dmbish code*)]
+          [else (sorry! who "unexpected kind ~s" kind)]))))
 
   (define asm-fp-relop
     (lambda (info)

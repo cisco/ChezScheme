@@ -3702,11 +3702,13 @@
               ,(%inline sll ,e
                  (immediate ,(fx- (constant char-data-offset) (constant fixnum-offset))))
               ,(%constant type-char))))
-	(define add-write-fence
+	(define add-store-fence
+          ;; A store--store fence should be good enough for safety on a platform that
+          ;; orders load dependencies (which is anything except Alpha)
 	  (lambda (e)
             (if-feature pthreads
 	      (constant-case architecture
-	        [(arm32 arm64) `(seq ,(%inline write-write-fence) ,e)]
+	        [(arm32 arm64) `(seq ,(%inline store-store-fence) ,e)]
                 [else e])
               e)))
         (define build-dirty-store
@@ -3714,8 +3716,8 @@
             [(base offset e) (build-dirty-store base %zero offset e)]
             [(base index offset e) (build-dirty-store base index offset e
                                      (lambda (base index offset e) `(set! ,(%mref ,base ,index ,offset) ,e))
-                                     (lambda (s r) (add-write-fence `(seq ,s ,r))))]
-            [(base index offset e build-assign build-seq)
+                                     (lambda (s r) (add-store-fence `(seq ,s ,r))))]
+            [(base index offset e build-assign build-barrier-seq)
              (if (nanopass-case (L7 Expr) e
                    [(quote ,d) (ptr->imm d)]
                    [else #f])
@@ -3731,13 +3733,13 @@
                        (bind #f ([e e])
                          ; eval a second so the address is not live across any calls
                          (bind #t ([a a])
-                           (build-seq
+                           (build-barrier-seq
                              (build-assign a %zero 0 e)
                              (%inline remember ,a))))
                        (bind #t ([e e])
                          ; eval a second so the address is not live across any calls
                          (bind #t ([a a])
-			   (build-seq
+			   (build-barrier-seq
                              (build-assign a %zero 0 e)
                              `(if ,(%type-check mask-fixnum type-fixnum ,e)
                                   ,(%constant svoid)
@@ -3750,7 +3752,7 @@
                 (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)))))
         (define build-cas-seq
           (lambda (cas remember)
-	    (add-write-fence
+	    (add-store-fence
              `(if ,cas
                   (seq ,remember ,(%constant strue))
                   ,(%constant sfalse)))))
@@ -6121,6 +6123,18 @@
         (define-inline 3 $set-symbol-hash!
           ; no need for dirty store---e2 should be a fixnum
           [(e1 e2) `(set! ,(%mref ,e1 ,(constant symbol-hash-disp)) ,e2)])
+        (define-inline 2 memory-order-acquire
+          [() (if-feature pthreads
+                (constant-case architecture
+	          [(arm32 arm64) (%seq ,(%inline acquire-fence) (quote ,(void)))]
+                  [else `(quote ,(void))])
+                `(quote ,(void)))])
+        (define-inline 2 memory-order-release
+          [() (if-feature pthreads
+                (constant-case architecture
+	          [(arm32 arm64) (%seq ,(%inline release-fence) (quote ,(void)))]
+                  [else `(quote ,(void))])
+                `(quote ,(void)))])
         (let ()
           (define-syntax define-tlc-parameter
             (syntax-rules ()

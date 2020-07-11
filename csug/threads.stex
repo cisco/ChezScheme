@@ -568,6 +568,36 @@ allocation of the containing object and decremented upon freeing
 of the containing object.
 
 
+
+\section{Memory Consistency\label{SECTSMGMTMEMMODEL}}
+
+Scheme threads can expose the memory-consistency model of the
+underlying processor, except to the degree that it would interefere
+with the memory safety of Scheme programs. For example, if two threads
+share a vector, then a \scheme{vector-set!} in one thread will not
+allow the other thread to read the vector and see a partially
+constructed primitive object installed into the vector; the Scheme
+system includes a memory fence around operations and on platforms as
+needed to preserve safety. There's no guarantee, for example, that
+assigning to multiple slots in an fxvector will become visible in the
+same order to other threads that share the vector, because no such
+ordering is required to preserve memory safety.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{memory-order-acquire}{\categoryprocedure}{(memory-order-acquire)}
+\formdef{memory-order-release}{\categoryprocedure}{(memory-order-release)}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+These procedures fence memory operations in a way that is consistent
+with acquire--release patterns. Specifically,
+\scheme{memory-order-acquire} ensures at least a load--load and
+load--store fence, and \scheme{memory-order-release} ensures at least
+a store--store and store--load fence.
+
+
 \section{Thread Parameters\label{SECTTHREADPARAMETERS}}
 
 %----------------------------------------------------------------------------

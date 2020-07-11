@@ -563,7 +563,9 @@
   (declare-primitive push-fpmultiple effect #f) ; arm64
   (declare-primitive pop-fpmultiple effect #f) ; arm64
   (declare-primitive cas effect #f)
-  (declare-primitive write-write-fence effect #f)
+  (declare-primitive store-store-fence effect #f)
+  (declare-primitive acquire-fence effect #f)
+  (declare-primitive release-fence effect #f)
   
   (declare-primitive < pred #t)
   (declare-primitive <= pred #t)

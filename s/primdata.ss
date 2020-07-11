@@ -1504,6 +1504,8 @@
   (maybe-compile-file [sig [(pathname) (pathname pathname) -> (void)]] [flags true])
   (maybe-compile-library [sig [(pathname) (pathname pathname) -> (void)]] [flags true])
   (maybe-compile-program [sig [(pathname) (pathname pathname) -> (void)]] [flags true])
+  (memory-order-acquire [sig [() -> (void)]] [flags true])
+  (memory-order-release [sig [() -> (void)]] [flags true])
   (merge [sig [(procedure list list) -> (list)]] [flags true])
   (merge! [sig [(procedure list list) -> (list)]] [flags true])
   (mkdir [sig [(pathname) (pathname sub-uint) -> (void)]] [flags])

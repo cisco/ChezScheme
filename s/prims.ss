@@ -1167,6 +1167,14 @@
         ($top-level-bound? s)
         ($oops '$top-level-bound? "~s is not a symbol" s))))
 
+(define memory-order-acquire
+  (lambda ()
+    (memory-order-acquire)))
+
+(define memory-order-release
+  (lambda ()
+    (memory-order-release)))
+
 (define-who $bignum-length
   (lambda (n)
     (unless (bignum? n) ($oops who "~s is not a bignum" n))
