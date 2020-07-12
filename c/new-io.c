@@ -413,6 +413,26 @@ ptr S_close_fd(ptr file, IBOOL gzflag) {
 
 #ifdef WIN32
 #define IO_SIZE_T unsigned int
+static HANDLE hStdin = NULL;
+static iptr read_console(char* buf, unsigned size) {
+  static char u8buf[1024];
+  static int u8i = 0;
+  static int u8n = 0;
+  iptr n = 0;
+  do {
+    for (; size > 0 && u8n > 0; size--, u8n--, n++)
+      *buf++ = u8buf[u8i++];
+    if (n == 0 && size > 0) {
+      wchar_t wbuf[256];
+      DWORD wn;
+      if (!ReadConsoleW(hStdin, wbuf, 256, &wn, NULL) || wn == 0)
+        return 0;
+      u8n = WideCharToMultiByte(CP_UTF8, 0, wbuf, wn, u8buf, 1024, NULL, NULL);
+      u8i = 0;
+    }
+  } while (n == 0);
+  return n;
+}
 #else /* WIN32 */
 #define IO_SIZE_T size_t
 #endif /* WIN32 */
@@ -434,17 +454,28 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
 
   LOCKandDEACTIVATE(tc, bv)
 #ifdef WIN32
-  if (!gzflag && fd == 0) {
+  if (!gzflag && fd == 0 && hStdin != NULL) {
     DWORD error_code;
     SetConsoleCtrlHandler(NULL, TRUE);
     SetLastError(0);
-    m = _read(0, &BVIT(bv,start), (IO_SIZE_T)count);
+    m = read_console(&BVIT(bv,start), (IO_SIZE_T)count);
     error_code = GetLastError();
-    SetConsoleCtrlHandler(NULL, FALSE);
     if (m == 0 && error_code == 0x3e3) {
+      /* Guard against Windows calling the ConsoleCtrlHandler after we
+       * turn it back on by waiting a bit. */
+      Sleep(1);
+#ifdef PTHREADS
+      /* threaded io.ss doesn't handle interrupts because
+       * with-tc-mutex disables them, so bail out. */
+      SetConsoleCtrlHandler(NULL, FALSE);
+      REACTIVATEandUNLOCK(tc, bv)
+      S_noncontinuable_interrupt();
+#else
       KEYBOARDINTERRUPTPENDING(tc) = Strue;
       SOMETHINGPENDING(tc) = Strue;
+#endif
     }
+    SetConsoleCtrlHandler(NULL, FALSE);
   } else
 #endif /* WIN32 */
   {
@@ -770,10 +801,19 @@ void S_new_io_init() {
     S_set_symbol_value(S_intern((const unsigned char *)"$c-bufsiz"), Sinteger(SBUFSIZ));
   }
 #ifdef WIN32
+  { /* Get the console input handle for reading Unicode characters */
+    HANDLE h;
+    DWORD mode;
+    if ((h = GetStdHandle(STD_INPUT_HANDLE)) != INVALID_HANDLE_VALUE
+        && GetConsoleMode(h, &mode))
+      hStdin = h;
+  }
  /* transcoder, if any, does its own cr, lf translations */
   _setmode(_fileno(stdin), O_BINARY);
   _setmode(_fileno(stdout), O_BINARY);
   _setmode(_fileno(stderr), O_BINARY);
+  /* Set the console output to handle UTF-8 */
+  SetConsoleOutputCP(CP_UTF8);
 #endif /* WIN32 */
 }
 

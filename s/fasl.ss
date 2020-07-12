@@ -1,4 +1,3 @@
-"fasl.ss"
 ;;; fasl.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -659,10 +658,7 @@
                                     begins)))
                       (proc p)
                       (extractor))])
-        (put-u8 p situation)
-        (put-u8 p (constant fasl-type-fasl-size))
-        (put-uptr p size)
-        (for-each (lambda (bv) (put-bytevector p bv)) bv*))))
+        ($write-fasl-bytevectors p bv* size situation (constant fasl-type-fasl)))))
 
   (define (extract-begins t)
     (let ([ht (table-hash t)])
@@ -700,7 +696,8 @@
     (lambda (x p)
       (unless (and (output-port? p) (binary-port? p))
         ($oops who "~s is not a binary output port" p))
-      (emit-header p (constant machine-type-any))
+      (when ($port-flags-set? p (constant port-flag-compressed)) ($compressed-warning who p))
+      (emit-header p (constant scheme-version) (constant machine-type-any))
       (fasl-one x p)))
 
   (define-who fasl-file
@@ -716,7 +713,7 @@
             (delete-file out #f))
           (on-reset
             (close-port op)
-            (emit-header op (constant machine-type-any))
+            (emit-header op (constant scheme-version) (constant machine-type-any))
             (let fasl-loop ()
               (let ([x (read ip)])
                 (unless (eof-object? x)
@@ -727,7 +724,7 @@
 
 (define fasl-base-rtd
   (lambda (x p)
-    (emit-header p (constant machine-type-any))
+    (emit-header p (constant scheme-version) (constant machine-type-any))
     (let ([t (make-table)])
       (bld-graph x t #f 0 #t really-bld-record)
       (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf-graph x p t #f really-wrf-record))))))
@@ -750,7 +747,6 @@
   (set! $fasl-base-rtd (lambda (x p) ((target-fasl-base-rtd (fasl-target)) x p)))
   (set! fasl-write (lambda (x p) ((target-fasl-write (fasl-target)) x p)))
   (set! fasl-file (lambda (in out) ((target-fasl-file (fasl-target)) in out))))
-)
 
 (when ($unbound-object? (#%$top-level-value '$capture-fasl-target))
   (let ([ht (make-hashtable values =)])
@@ -767,3 +763,4 @@
           [else ($oops who "unrecognized machine type ~s" mt)])))))
   
 ($capture-fasl-target (constant machine-type))
+)

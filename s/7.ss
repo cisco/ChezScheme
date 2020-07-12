@@ -1,4 +1,3 @@
-"7.ss"
 ;;; 7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -16,6 +15,7 @@
 
 ;;; system operations
 
+(begin
 (define scheme-start
   (make-parameter
     (lambda fns (for-each load fns) (new-cafe))
@@ -125,9 +125,16 @@
                       (p path)
                       (loop (cdr ls))))))))))
 
+(set! $compressed-warning
+  (let ([warned? #f])
+    (lambda (who p)
+      (unless warned?
+        (set! warned? #t)
+        (warningf who "fasl file content is compressed internally; compressing the file (~s) is redundant and can slow fasl writing and reading significantly" p)))))
+
 (set-who! fasl-read
   (let ()
-    (define $fasl-read (foreign-procedure "(cs)fasl_read" (ptr boolean fixnum ptr) ptr))
+    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int fixnum ptr) ptr))
     (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int uptr uptr ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])
@@ -136,12 +143,19 @@
               (let ([k (get-u8 p)])
                 (f k (logor (ash n 7) (fxand k #x7F))))
               n))))
-    (define (malformed p) ($oops who "malformed fasl-object header found in ~s" p))
+    (define (get-uptr/bytes p)
+      (let ([k (get-u8 p)])
+        (let f ([k k] [n (fxand k #x7F)] [bytes 1])
+          (if (fxlogbit? 7 k)
+              (let ([k (get-u8 p)])
+                (f k (logor (ash n 7) (fxand k #x7F)) (fx+ bytes 1)))
+              (values n bytes)))))
+    (define (malformed p what) ($oops who "malformed fasl-object found in ~s (~a)" p what))
     (define (check-header p)
       (let ([bv (make-bytevector 8 (constant fasl-type-header))])
         (unless (and (eqv? (get-bytevector-n! p bv 1 7) 7)
                      (bytevector=? bv (constant fasl-header)))
-          (malformed p)))
+          (malformed p "invalid header")))
       (let ([n (get-uptr p)])
         (unless (= n (constant scheme-version))
           ($oops who "incompatible fasl-object version ~a found in ~s"
@@ -153,21 +167,36 @@
              (lambda (a)
                ($oops who "incompatible fasl-object machine-type ~s found in ~s"
                  (cdr a) p))]
-            [else (malformed p)])))
+            [else (malformed p "unrecognized machine type")])))
       (unless (and (eqv? (get-u8 p) (char->integer #\()) ;)
                    (let f ()
                      (let ([n (get-u8 p)])
                        (and (not (eof-object? n)) ;(
                             (or (eqv? n (char->integer #\))) (f))))))
-        (malformed p)))
+        (malformed p "invalid list of base boot files")))
+    (define (call-with-bytevector-and-offset p len proc)
+      ;; fasl-read directly from the port buffer if it has `len`
+      ;; bytes ready, which works for a bytevector port; disable
+      ;; interrupt to make sure the bytes stay available (and
+      ;; `$bv-fasl-read` take tc-mutex, anyway)
+      ((with-interrupts-disabled
+        (let ([idx (binary-port-input-index p)])
+          (cond
+            [(<= len (fx- (binary-port-input-size p) idx))
+             (let ([result (proc (binary-port-input-buffer p) idx)])
+               (set-binary-port-input-index! p (fx+ idx len))
+               (lambda () result))]
+            [else
+             ;; Call `get-bytevector-n`, etc. with interrupts reenabled
+             (lambda ()
+               (proc (get-bytevector-n p len) 0))])))))
     (define (go p situation)
       (define (go1)
         (if (and ($port-flags-set? p (constant port-flag-file))
+                 (or (not ($port-flags-set? p (constant port-flag-compressed)))
+                     (begin ($compressed-warning who p) #f))
                  (eqv? (binary-port-input-count p) 0))
-            ($fasl-read ($port-info p)
-              ($port-flags-set? p (constant port-flag-compressed))
-              situation
-              (port-name p))
+            ($fasl-read ($port-info p) situation (port-name p))
             (let fasl-entry ()
               (let ([ty (get-u8 p)])
                 (cond
@@ -181,37 +210,36 @@
                    (go2 (eqv? situation (constant fasl-type-visit)))]
                   [(eqv? ty (constant fasl-type-visit-revisit))
                    (go2 #f)]
-                  [else (malformed p)])))))
+                  [else (malformed p "invalid situation")])))))
       (define (go2 skip?)
-        (let ([ty (get-u8 p)])
-          (cond
-            [(or (eqv? ty (constant fasl-type-fasl-size))
-                 (eqv? ty (constant fasl-type-vfasl-size)))
-             (let ([len (get-uptr p)])
-               (if skip?
-                   (begin
-                     (if (and (port-has-port-position? p) (port-has-set-port-position!? p))
-                         (set-port-position! p (+ (port-position p) len))
-                         (get-bytevector-n p len))
-                     (go1))
-                   (let ([name (port-name p)])
-                     ;; fasl-read directly from the port buffer if it has `len`
-                     ;; bytes ready, which works for a bytevector port; disable
-                     ;; interrupt to make sure the bytes stay available (and
-                     ;; `$bv-fasl-read` takes tc-mutex, anyway)
-                     ((with-interrupts-disabled
-                       (let ([idx (binary-port-input-index p)])
-                         (cond
-                          [(<= len (fx- (binary-port-input-size p) idx))
-                           (let ([result ($bv-fasl-read (binary-port-input-buffer p) ty
-                                                        idx len name)])
-                             (set-binary-port-input-index! p (+ idx len))
-                             (lambda () result))]
-                          [else
-                           ;; Call `get-bytevector-n`, etc. with interrupts reenabled
-                           (lambda ()
-                             ($bv-fasl-read (get-bytevector-n p len) ty 0 len name))])))))))]
-            [else (malformed p)])))
+        (let ([n (get-uptr p)])
+          (if skip?
+              (begin
+                (if (and (port-has-port-position? p) (port-has-set-port-position!? p))
+                    (set-port-position! p (+ (port-position p) n))
+                    (get-bytevector-n p n))
+                (go1))
+              (let* ([compressed-flag (get-u8 p)]
+                     [kind (get-u8 p)])
+                (cond
+                  [(or (eqv? compressed-flag (constant fasl-type-gzip)) (eqv? compressed-flag (constant fasl-type-lz4)))
+                   (let-values ([(dest-size dest-size-bytes) (get-uptr/bytes p)])
+                     (let* ([src-size (- n 2 dest-size-bytes)]
+                            [bv (call-with-bytevector-and-offset
+                                 p src-size
+                                 (lambda (bv offset)
+                                   ($bytevector-uncompress bv offset src-size dest-size
+                                      (if (eqv? compressed-flag (constant fasl-type-gzip))
+                                          (constant COMPRESS-GZIP)
+                                          (constant COMPRESS-LZ4)))))])
+                       ($bv-fasl-read bv kind 0 dest-size (port-name p))))]
+                  [(eqv? compressed-flag (constant fasl-type-uncompressed))
+                   (let ([len (- n 2)])
+                     (call-with-bytevector-and-offset
+                      p len
+                      (lambda (bv offset)
+                        ($bv-fasl-read bv kind offset len (port-name p)))))]
+                  [else (malformed p "invalid compression")])))))
       (unless (and (input-port? p) (binary-port? p))
         ($oops who "~s is not a binary input port" p))
       (go1))
@@ -270,7 +298,7 @@
          [(program-info? x) ($install-program-desc x)]
          [(recompile-info? x) (void)]
          [(Lexpand? x) ($interpret-backend x situation for-import? importer fn)]
-                                        ; NB: this is here to support the #t inserted by compile-file-help2 after header information
+         ; NB: this is here to support the #t inserted by compile-file-help2 after header information
          [(eq? x #t) (void)]
          ;; for vfasl combinations:
          [(vector? x) (run-vector x)]
@@ -293,15 +321,11 @@
                                       fp
                                       (loop fp))))))
                         (begin (set-port-position! ip start-pos) 0)))])
-          (port-file-compressed! ip)
           (if ($compiled-file-header? ip)
               (begin
                 (do-load-binary who fn ip situation for-import? importer)
                 (close-port ip))
               (begin
-                (when ($port-flags-set? ip (constant port-flag-compressed))
-                  (close-port ip)
-                  ($oops who "missing header for compiled file ~s" fn))
                 (unless ksrc
                   (close-port ip)
                   ($oops who "~a is not a compiled file" fn))
@@ -1563,3 +1587,4 @@
         [() (print-pass-stats #f ($pass-stats))]
         [(key) (print-pass-stats key ($pass-stats))]
         [(key psl*) (print-pass-stats key psl*)]))))
+)

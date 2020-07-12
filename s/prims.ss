@@ -1,4 +1,3 @@
-"prims.ss"
 ;;; prims.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -19,6 +18,7 @@
    (run-cp0 (default-run-cp0))
    (generate-interrupt-trap #f))
 
+(begin
 ;;; hand-coded primitives
 
 (define-who $hand-coded
@@ -2679,3 +2679,5 @@
   (lambda (x v)
     (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
     ($closure-set! x 2 v)))
+
+)

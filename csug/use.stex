@@ -1011,11 +1011,9 @@ command.
 \endschemedisplay
 
 Scripts may be compiled using \index{\scheme{compile-script}}\scheme{compile-script}, which is like
-\scheme{compile-file} but differs in two ways:
-(1) it copies the leading \scheme{#!} line from the source-file script
-into the object file, and (2) when the \scheme{#!} line is present,
-it disables the default compression of the resulting file, which would
-otherwise prevent it from being recognized as a script file.
+\scheme{compile-file} but differs in that it
+copies the leading \scheme{#!} line from the source-file script
+into the object file.
 
 If {\PetiteChezScheme} is installed, but not {\ChezScheme},
 \scheme{/usr/bin/scheme} may be

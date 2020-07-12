@@ -77,7 +77,7 @@ static ptr s_ee_read_char(IBOOL blockp) {
   ptr tc;
 #endif /* PTHREADS */
   BOOL succ;
-  static char buf[10];
+  static wchar_t buf[10];
   static int bufidx = 0;
   static int buflen = 0;
   static int rptcnt = 0;
@@ -95,7 +95,7 @@ static ptr s_ee_read_char(IBOOL blockp) {
     if (!blockp) {
        DWORD NumberOfEvents;
        if (!GetNumberOfConsoleInputEvents(hStdin, &NumberOfEvents))
-         S_error1("expeditor", "error getting console info: ~a",
+         S_error1("expeditor", "error getting console input: ~a",
                     S_LastErrorString());
        if (NumberOfEvents == 0) return Sfalse;
     }
@@ -104,13 +104,13 @@ static ptr s_ee_read_char(IBOOL blockp) {
     tc = get_thread_context();
     if (DISABLECOUNT(tc) == FIX(0)) {
         deactivate_thread(tc);
-        succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+        succ = ReadConsoleInputW(hStdin, irInBuf, 1, &cNumRead);
         reactivate_thread(tc);
     } else {
-        succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+        succ = ReadConsoleInputW(hStdin, irInBuf, 1, &cNumRead);
     }
 #else /* PTHREADS */
-    succ = ReadConsoleInput(hStdin, irInBuf, 1, &cNumRead);
+    succ = ReadConsoleInputW(hStdin, irInBuf, 1, &cNumRead);
 #endif /* PTHREADS */
 
 
@@ -125,10 +125,10 @@ static ptr s_ee_read_char(IBOOL blockp) {
         KEY_EVENT_RECORD ker = irInBuf[0].Event.KeyEvent; 
         rptcnt = ker.wRepeatCount;
         if (ker.bKeyDown) {
-          char c;
+          wchar_t c;
 
-          if (c = ker.uChar.AsciiChar) {
-           /* translate ^@ 2) and ^<space> to nul */
+          if (c = ker.uChar.UnicodeChar) {
+            /* translate ^<space> to nul */
             if (c == 0x20 && (ker.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)))
               buf[0] = 0;
             else
@@ -508,12 +508,15 @@ static ptr s_ee_get_clipboard(void) {
   ptr x = S_G.null_string;
 
   if (OpenClipboard((HWND)0)) {
-    HANDLE h = GetClipboardData(CF_TEXT);
-     
-    if (h != (HANDLE *)0) {
-      char *s = (char *)GlobalLock(h);
-      if (s != (char *)0) x = Sstring(s);
-      GlobalUnlock(h);
+    HANDLE h = GetClipboardData(CF_UNICODETEXT);
+    if (h != NULL) {
+      wchar_t *w = (wchar_t*)GlobalLock(h);
+      if (w != NULL) {
+        char *s = Swide_to_utf8(w);
+        x = Sstring_utf8(s, -1);
+        free(s);
+        GlobalUnlock(h);
+      }
     }
     CloseClipboard();
   }
@@ -522,8 +525,8 @@ static ptr s_ee_get_clipboard(void) {
 }
 
 static void s_ee_write_char(wchar_t c) {
-  if (c > 255) c = '?';
-  putchar(c);
+  DWORD n;
+  WriteConsoleW(hStdout, &c, 1, &n, NULL);
 }
 
 #else /* WIN32 */

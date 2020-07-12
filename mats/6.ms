@@ -887,6 +887,26 @@
  )
 
 (mat fasl
+  (error?
+    (separate-eval '(let ([op (open-file-output-port "testfile.ss" (file-options compressed replace))])
+                      (fasl-write 3 op))))
+  (error?
+    (separate-eval '(let ([ip (open-file-input-port "testfile.ss" (file-options compressed))])
+                      (fasl-read ip))))
+  (equal?
+    (separate-eval '(with-exception-handler
+                      (lambda (c) (unless (warning? c) (raise-continuable c)))
+                      (lambda ()
+                        (let ([op (open-file-output-port "testfile.ss" (file-options compressed replace))])
+                          (fasl-write 3 op)))))
+    "")
+  (equal?
+    (separate-eval `(with-exception-handler
+                      (lambda (c) (unless (warning? c) (raise-continuable c)))
+                      (lambda ()
+                        (let ([ip (open-file-input-port "testfile.ss" (file-options compressed))])
+                          (fasl-read ip)))))
+    "3\n")
   (pretty-equal?
     (begin
       (call-with-port
@@ -926,10 +946,10 @@
           (open-file-input-port "testfile.ss")
           (get-stuff fasl-read))
         (call-with-port
-          (open-file-input-port "testfile.ss" (file-options compressed))
+          (open-file-input-port "testfile.ss" (file-options #;compressed))
           (get-stuff fasl-read))
         (call-with-port
-          (open-file-input-port "testfile.ss" (file-options compressed))
+          (open-file-input-port "testfile.ss" (file-options #;compressed))
           (get-stuff (lambda (p)
                        (when (eof-object? (lookahead-u8 p)) (printf "done\n"))
                        (fasl-read p))))

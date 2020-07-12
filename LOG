@@ -1990,3 +1990,52 @@
     compress_io.c, new_io.c, externs.h,
     bytevector.ms, mats/Mf-base, root-experr*
     io.stex, objects.stex, release_notes.stex
+- fix fasl-read signature
+    primdata.ss
+- console I/O on Windows now supports Unicode characters in the BMP
+    expeditor.c, new-io.c, release_notes.stex
+- the collector now releases bignum temporaries in the collector
+  rather than relocating them so we don't keep around huge bignum
+  temporaries forever.
+     gc.c
+- removed the presumably useless vector-handling code from load()
+  which used to be required to handle fasl groups.
+     scheme.c
+- object files are no longer compressed as a whole, and the parameter
+  compile-compressed is no longer defined.  instead, the individual
+  fasl objects within an object file are compressed whenever the
+  new parameter fasl-compressed is set to its default value, #t.
+  this allows the fasl reader to seek past portions of an object
+  file that are not of interest, i.e., visit-only code and data
+  when "revisiting" an object file and revisit-only code and data
+  when "visiting" an object file.  the compressed portions are
+  compressed using the format and level specified by the compress-format
+  and compress-level parameters.  the C-coded fasl reader and
+  boot-file loader no longer handle compressed files; these are
+  handled, less efficiently, by the Scheme entry point (fasl-read).
+  a warning exception is raised the first time a program attempts
+  to create or read a compressed fasl file.
+    7.ss, s/Mf-base, back.ss, bytevector.ss, cmacros.ss, compile.ss,
+    fasl-helpers.ss, fasl.ss, primdata.ss, strip.ss, syntax.ss,
+    externs.h, fasl.c, gc.c, scheme.c, thread.c,
+    mats/6.ms, mats/7.ms, mats/bytevector.ms, mats/misc.ms, patch*,
+    root-experr*,
+    intro.stex, use.stex, io.stex, system.stex,
+    release_notes.stex
+- added begin wrappers around many of the Scheme source files that
+  contained multiple expressions to cut down the number of top-level
+  fasl objects and increase compressibility.  also removed the
+  string filenames for debugging at the start of each file that had
+  one---these are best inserted universally by a modified compile-file
+  during a debugging session when desired.  also removed unnecessary
+  top-level placeholder definitions for the assignments that follow.
+    4.ss, 5_1.ss, 5_2.ss, 5_3.ss, 5_7.ss, 6.ss, 7.ss, bytevector.ss,
+    cafe.ss, cback.ss, compile.ss, cp0.ss, cpcommonize.ss, cpletrec.ss,
+    cpnanopass.ss, cprep.ss, cpvalid.ss, date.ss, engine.ss, enum.ss,
+    env.ss, event.ss, exceptions.ss, expeditor.ss, fasl.ss, foreign.ss,
+    format.ss, front.ss, ftype.ss, inspect.ss, interpret.ss, io.ss,
+    library.ss, mathprims.ss, newhash.ss, pdhtml.ss, pretty.ss,
+    prims.ss, primvars.ss, print.ss, read.ss, record.ss, reloc.ss,
+    strnum.ss, syntax.ss, trace.ss
+- updated bullyx patches
+    patch*

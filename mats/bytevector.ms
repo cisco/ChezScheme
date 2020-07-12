@@ -11286,8 +11286,11 @@
     (error? (bytevector-uncompress "hello"))
     (begin
       (define (round-trip-bytevector-compress bv)
-        (equal? (bytevector-uncompress (bytevector-compress bv))
-                bv))
+        (and
+          (equal? (let ([c-bv (#%$bytevector-compress bv 0)])
+                    (#%$bytevector-uncompress c-bv 0 (bytevector-length c-bv) (bytevector-length bv) 0))
+                  bv)
+          (equal? (bytevector-uncompress (bytevector-compress bv)) bv)))
       (round-trip-bytevector-compress (string->utf8 "hello")))
     (round-trip-bytevector-compress '#vu8())
     (round-trip-bytevector-compress (apply bytevector
@@ -11296,6 +11299,8 @@
                                                  '()
                                                  (cons (bitwise-and i 255)
                                                        (loop (+ i 1)))))))
+    (round-trip-bytevector-compress 
+      (call-with-port (open-file-input-port "prettytest.ss") get-bytevector-all))
     (error?
      ;; Need at least 8 bytes for result size
      (bytevector-uncompress '#vu8()))

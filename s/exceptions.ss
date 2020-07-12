@@ -1,4 +1,3 @@
-"exceptions.ss"
 ;;; exceptions.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -29,6 +28,7 @@ TODO:
  - deal with error? and warning? mats
 |#
 
+(begin
 (let ()
   (define (warning-only? c)
     (and (warning? c) (not (serious-condition? c))))
@@ -738,4 +738,5 @@ TODO:
         (if src
             (condition fwcond ($make-src-condition src start?))
             fwcond))))
+)
 )

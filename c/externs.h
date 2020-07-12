@@ -107,10 +107,9 @@ extern void S_phantom_bytevector_adjust PROTO((ptr ph, uptr new_sz));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
-ptr S_fasl_read PROTO((ptr file, IBOOL gzflag, IFASLCODE situation, ptr path));
+ptr S_fasl_read PROTO((INT fd, IFASLCODE situation, ptr path));
 ptr S_bv_fasl_read PROTO((ptr bv, int ty, uptr offset, uptr len, ptr path));
-/* S_boot_read's f argument is really gzFile, but zlib.h is not included everywhere */
-ptr S_boot_read PROTO((glzFile file, const char *path));
+ptr S_boot_read PROTO((INT fd, const char *path));
 char *S_format_scheme_version PROTO((uptr n));
 char *S_lookup_machine_type PROTO((uptr n));
 extern void S_set_code_obj PROTO((char *who, IFASLCODE typ, ptr p, iptr n,

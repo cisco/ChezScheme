@@ -1,4 +1,3 @@
-"syntax.ss"
 ;;; syntax.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -4867,7 +4866,6 @@
                                           fp
                                           (loop fp))))))
                             (begin (set-port-position! ip start-pos) 0)))])
-              (port-file-compressed! ip)
               (if ($compiled-file-header? ip)
                   (let ([x (fasl-read ip)])
                     (close-port ip)
@@ -5210,7 +5208,6 @@
                                             fp
                                             (loop fp))))))
                               (begin (set-port-position! ip start-pos) 0)))])
-                (port-file-compressed! ip)
                 (unless ($compiled-file-header? ip) ($oops who "missing header for compiled file ~s" fn))
                 (let ([x (fasl-read ip)])
                   (unless (recompile-info? x) ($oops who "expected recompile info at start of ~s, found ~a" fn x)))
@@ -7510,6 +7507,7 @@
 
 (current-expand sc-expand)
 
+(begin
 ;;; syntax-rules/syntax-case aux keywords
 (define-syntax ...
   (lambda (x)
@@ -10344,3 +10342,4 @@
 
 (set-who! $annotation-options (make-enumeration '(debug profile)))
 (set-who! $make-annotation-options (enum-set-constructor $annotation-options))
+)

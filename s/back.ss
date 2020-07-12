@@ -1,4 +1,3 @@
-"back.ss"
 ;;; back.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -14,6 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(begin
 (define-who trace-output-port
    ($make-thread-parameter
       (console-output-port)
@@ -155,7 +155,7 @@
         ($oops who "~s is not a procedure" x))
       x)))
 
-(define compile-compressed
+(define fasl-compressed
   ($make-thread-parameter #t (lambda (x) (and x #t))))
 
 (define compile-file-message
@@ -226,3 +226,4 @@
   ($make-thread-parameter #t (lambda (x) (and x #t))))
 
 (set! $scheme-version (string->symbol ($format-scheme-version (constant scheme-version))))
+)

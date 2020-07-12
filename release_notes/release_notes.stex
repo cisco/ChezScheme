@@ -112,6 +112,47 @@ unordered by default. An ordered guardian's objects are classified as
 inaccessible only when they are not reachable from the represetative
 of any inaccessible object in any other guardian.
 
+\subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.3)}
+
+Console I/O now supports characters from the Unicode Basic
+Multilingual Plane in Windows. Windows consoles do not yet support the
+supplementary planes.
+
+\subsection{Incompatible fasl-format and compiled-file compression changes (9.5.3)}
+
+The fasl (fast-load) format now supports per-object compression.
+Whether the fasl writer actually performs compression is determined
+by the new \scheme{fasl-compressed} parameter, whose value defaults
+to \scheme{#t}.
+The compression format and level are determined by the
+\scheme{compress-format} and \scheme{compress-level}
+parameters.
+
+The \scheme{compile-compressed} parameter has been eliminated.
+Since compiled files are written in fasl format, the
+\scheme{fasl-compressed} parameter also now controls whether compiled
+files are compressed.
+
+Because individual portions of a fasl file are already compressed
+by default, attempting to compress a fasl file as a whole is often
+ineffective as well as inefficient both when writing and reading
+fasl objects.
+Thus, in particular, the \var{output-port} and \scheme{wpo-port}
+supplied to \scheme{compile-port} and \scheme{compile-to-port}
+should not be opened for compression.
+Similarly, external tools should not expect compiled files to be
+compressed as a whole, nor should they compress compiled files.
+
+Because compression of fasl files was previously encouraged and is
+now discouraged, the first attempt to write fasl data to or read
+fasl data from a compressed port will cause a warning to be issued,
+i.e., an exception with condition type \scheme{&warning} to be
+raised.
+
+The rationale for this change is to allow the fasl reader to seek
+past, without reading, portions of an object file that contain
+compile-time code at run time and run-time code at compile time.
+
 \subsection{Bytevector compression and compression level (9.5.3)}
 
 The procedure \scheme{bytevector-compress} now selects the level of

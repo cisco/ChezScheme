@@ -1,4 +1,3 @@
-"read.ss"
 ;;; read.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -18,6 +17,7 @@
 ;(define read)
 ;(define $read)
 
+(begin
 (let ()
 (include "types.ss")
 
@@ -1872,3 +1872,4 @@
   (char-name 'alarm #\bel)
   (char-name 'nel #\nel)
   (char-name 'ls #\ls))
+)

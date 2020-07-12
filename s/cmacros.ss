@@ -348,7 +348,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050320)
+(define-constant scheme-version #x09050321)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -470,8 +470,8 @@
 (define-constant fasl-type-graph-ref 18)
 (define-constant fasl-type-gensym 19)
 (define-constant fasl-type-exactnum 20)
-(define-constant fasl-type-vfasl-size 21)
-(define-constant fasl-type-fasl-size 22)
+(define-constant fasl-type-uninterned-symbol 21)
+(define-constant fasl-type-stencil-vector 22)
 (define-constant fasl-type-record 23)
 (define-constant fasl-type-rtd 24)
 (define-constant fasl-type-small-integer 25)
@@ -482,7 +482,7 @@
 (define-constant fasl-type-weak-pair 30)
 (define-constant fasl-type-eq-hashtable 31)
 (define-constant fasl-type-symbol-hashtable 32)
-; 33
+(define-constant fasl-type-phantom 33)
 (define-constant fasl-type-visit 34)
 (define-constant fasl-type-revisit 35)
 (define-constant fasl-type-visit-revisit 36)
@@ -493,11 +493,14 @@
 (define-constant fasl-type-immutable-bytevector 40)
 (define-constant fasl-type-immutable-box 41)
 
-(define-constant fasl-type-stencil-vector 42)
+(define-constant fasl-type-begin 42)
 
-(define-constant fasl-type-begin 43)
-(define-constant fasl-type-phantom 44)
-(define-constant fasl-type-uninterned-symbol 45)
+(define-constant fasl-type-uncompressed 43)
+(define-constant fasl-type-gzip 44)
+(define-constant fasl-type-lz4 45)
+
+(define-constant fasl-type-fasl 100)
+(define-constant fasl-type-vfasl 101)
 
 (define-constant fasl-type-terminator 127)
 
@@ -1532,6 +1535,8 @@
    [U64 instr-counter]
    [U64 alloc-counter]
    [ptr parameters]
+   [ptr DSTBV]
+   [ptr SRCBV]
    [double fpregs (constant asm-fpreg-max)]))
 
 (define tc-field-list

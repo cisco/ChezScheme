@@ -1,4 +1,3 @@
-"inspect.ss"
 ;;; inspect.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
@@ -29,8 +28,7 @@
 ; ---port info should include file descriptor, perhaps provide access
 ;    location in file
 
-(define inspect)
-
+(begin
 (let ()
 
 (define-syntax make-dispatch-table
@@ -3074,3 +3072,5 @@
 (define object-counts (foreign-procedure "(cs)object_counts" () ptr))
 
 (define object-backreferences (foreign-procedure "(cs)object_backreferences" () ptr))
+
+)

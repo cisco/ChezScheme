@@ -416,9 +416,9 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
           /* The symbol was already interned, so point to the existing one */
           INITSYMVAL(sym) = isym;
           if (S_vfasl_boot_mode > 0) {
-            IGEN gen = SegInfo(addr_get_segment(isym))->generation;
+            IGEN gen = SegInfo(ptr_get_segment(isym))->generation;
             if (gen < static_generation) {
-              printf("new %d!\n", gen);
+              printf("WARNING: vfasl symbol already interned, but at generation %d: %p ", gen, isym);
               S_prin1(isym);
               printf("\n");
             }

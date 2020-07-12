@@ -129,7 +129,7 @@
       (lambda (start stop target)
         (let ([t (time-difference stop start)])
           (<= (abs (- (+ (time-second t) (* (time-nanosecond t) 1e-9)) target))
-              0.1))))
+              0.2))))
     (andmap procedure? (list $threads $fib $thread-check $time-in-range?)))
   ($thread-check)
   (not (= (let ([n #f])

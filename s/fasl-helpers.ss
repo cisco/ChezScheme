@@ -135,8 +135,8 @@
 
 (define emit-header
   (case-lambda
-    [(p mtype) (emit-header p mtype '())]
-    [(p mtype bootfiles)
+    [(p version mtype) (emit-header p version mtype '())]
+    [(p version mtype bootfiles)
      (define (put-str p s)
        (let ([n (string-length s)])
          (do ([i 0 (fx+ i 1)])
@@ -146,7 +146,7 @@
                ($oops #f "cannot handle bootfile name character ~s whose integer code exceeds 255" c))
              (put-u8 p k)))))
      (put-bytevector p (constant fasl-header))
-     (put-uptr p (constant scheme-version))
+     (put-uptr p version)
      (put-uptr p mtype)
      (put-u8 p (char->integer #\())           ; )
      (let f ([bootfiles bootfiles] [sep? #f])

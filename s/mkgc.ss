@@ -953,6 +953,11 @@
       (trace (tc-compress-format tc))
       (trace (tc-compress-level tc))
       (trace (tc-parameters tc))
+      (case-mode
+       [(sweep)
+        (set! (tc-DSTBV tc) Sfalse)
+        (set! (tc-SRCBV tc) Sfalse)]
+       [else])
       (let* ([i : INT 0])
         (while
          :? (< i virtual_register_count)
