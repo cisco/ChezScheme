@@ -2404,6 +2404,18 @@ referenced libraries are known to be present and already invoked, and
 only when it's worth saving the small overhead of representing and
 running the check.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{compile-omit-concatenate-support}{\categorythreadparameter}{compile-omit-concatenate-support}
+\listlibraries
+\endentryheader
+
+\noindent
+This boolean-valued parameter determines whether code compiled to a
+file or port includes information needed to support
+\scheme{concatenate-object-files}. Omitting the information can
+provide minor space and load-time savings for small compiled objects.
+
 
 \section{Source Directories and Files\label{SECTSYSTEMSOURCE}}
 

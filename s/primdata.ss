@@ -1230,6 +1230,7 @@
   (compile [sig [(sub-ptr) (sub-ptr environment) -> (ptr ...)]] [flags])
   (compile-file [sig [(pathname) (pathname pathname) (pathname pathname sub-symbol) -> (void)]] [flags true])
   (compile-library [sig [(pathname) (pathname pathname) (pathname pathname sub-symbol) -> (void)]] [flags true])
+  (compile-omit-concatenate-support [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (compile-port [sig [(textual-input-port binary-output-port) (textual-input-port binary-output-port maybe-sfd) (textual-input-port binary-output-port maybe-sfd maybe-binary-output-port) (textual-input-port binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port) (textual-input-port binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol) (textual-input-port binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port) -> (void)]] [flags true])
   (compile-program [sig [(pathname) (pathname pathname) (pathname pathname sub-symbol) -> (list)]] [flags true])
   (compile-script [sig [(pathname) (pathname pathname) (pathname pathname sub-symbol) -> (void)]] [flags true])

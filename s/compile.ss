@@ -780,8 +780,11 @@
                       [(revisit-stuff) x (c-print-fasl x op (constant fasl-type-revisit))]
                       [else (c-print-fasl x op (constant fasl-type-visit-revisit))]))
                   final*))
-              ; inserting #t after lpinfo as an end-of-header marker
-              (append lpinfo** (cons (list `(object #t)) final**)))))))))
+              (append lpinfo**
+                      (if (compile-omit-concatenate-support)
+                          final**
+                          ;; inserting #t after lpinfo as an end-of-header marker
+                          (cons (list `(object #t)) final**))))))))))
 
 (define (new-extension new-ext fn)
   (let ([old-ext (path-extension fn)])

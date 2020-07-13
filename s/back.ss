@@ -214,6 +214,9 @@
          [(maximum) (constant COMPRESS-MAX)]
          [else ($oops who "~s is not a supported level" x)]))]))
 
+(define-who compile-omit-concatenate-support
+  ($make-thread-parameter #f (lambda (x) (and x #t))))
+
 (define-who debug-level
   ($make-thread-parameter
     1
