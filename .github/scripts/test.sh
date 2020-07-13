@@ -6,6 +6,7 @@ runmats() {
 
 # Split these out so that we get output every 10 minutes on Windows builds.
 runmats o=0
+runmats o=0 cp0=t
 runmats o=3
 runmats o=3 cp0=t
 runmats o=3 cp0=t eval=interpret
