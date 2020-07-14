@@ -457,8 +457,8 @@
                          [else (c-assembler-output-error c)])]))))))]
       [else (c-assembler-output-error x)])))
 
-(define (c-print-fasl x p situation)
-  (let ([t ($fasl-table)]
+(define (c-print-fasl x p situation external?-pred)
+  (let ([t ($fasl-table external?-pred)]
         [a? (let ([flags (fxlogor
                            (if (generate-inspector-information) (constant annotation-debug) 0)
                            (if (eq? ($compile-profile) 'source) (constant annotation-profile) 0))])
@@ -520,7 +520,7 @@
         x)))
 
 (define compile-file-help
-  (lambda (op hostop wpoop source-table machine sfd do-read outfn)
+  (lambda (op hostop wpoop source-table machine sfd do-read outfn external?-pred)
     (parameterize ([$target-machine machine]
                    [$sfd sfd]
                    [$current-mso ($current-mso)]
@@ -548,7 +548,7 @@
       (let cfh0 ([n 1] [rrcinfo** '()] [rlpinfo** '()] [rfinal** '()])
         (let ([x0 ($pass-time 'read do-read)])
           (if (eof-object? x0)
-              (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**))
+              (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**) external?-pred)
               (let ()
                 (define source-info-string
                   (and (or ($assembly-output) (expand-output) (expand/optimize-output))
@@ -748,7 +748,7 @@
               [else (finish-compile x1 values)]))))))
 
 (define compile-file-help2
-  (lambda (op rcinfo** lpinfo** final**)
+  (lambda (op rcinfo** lpinfo** final** external?-pred)
     (define (libreq-hash x) (symbol-hash (libreq-uid x)))
     (define (libreq=? x y) (eq? (libreq-uid x) (libreq-uid y)))
     (let ([import-ht (make-hashtable libreq-hash libreq=?)]
@@ -767,18 +767,19 @@
         rcinfo**)
       (let ([import-req* (vector->list (hashtable-keys import-ht))]
             [include-req* (vector->list (hashtable-keys include-ht))])
-        ; the first entry is always a recompile-info record with recompile information for the entire object file
+        ; the first entry is always, if needed, a recompile-info record with recompile information for the entire object file
         ($pass-time 'pfasl
           (lambda ()
-            (c-print-fasl `(object ,(make-recompile-info import-req* include-req*)) op (constant fasl-type-visit-revisit))
+            (unless (and (compile-omit-concatenate-support) (null? import-req*) (null? include-req*))
+              (c-print-fasl `(object ,(make-recompile-info import-req* include-req*)) op (constant fasl-type-visit-revisit) #f))
             (for-each
               (lambda (final*)
                 (for-each
                   (lambda (x)
                     (record-case x
-                      [(visit-stuff) x (c-print-fasl x op (constant fasl-type-visit))]
-                      [(revisit-stuff) x (c-print-fasl x op (constant fasl-type-revisit))]
-                      [else (c-print-fasl x op (constant fasl-type-visit-revisit))]))
+                      [(visit-stuff) x (c-print-fasl x op (constant fasl-type-visit) external?-pred)]
+                      [(revisit-stuff) x (c-print-fasl x op (constant fasl-type-revisit) external?-pred)]
+                      [else (c-print-fasl x op (constant fasl-type-visit-revisit) external?-pred)]))
                   final*))
               (append lpinfo**
                       (if (compile-omit-concatenate-support)
@@ -857,7 +858,7 @@
                      (emit-header op (constant scheme-version) (constant machine-type))
                        (let loop ([x1* (reverse rx1*)] [rrcinfo** (list rcinfo*)] [rlpinfo** '()] [rfinal** '()])
                          (if (null? x1*)
-                             (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**))
+                             (compile-file-help2 op (reverse rrcinfo**) (reverse rlpinfo**) (reverse rfinal**) #f)
                              (let-values ([(rcinfo* lpinfo* final*)
                                            (let ([x1 (car x1*)])
                                              (if (recompile-info? x1)
@@ -1565,7 +1566,7 @@
                 (when source-table ($insert-profile-src! source-table x1))
                 (emit-header op (constant scheme-version) (constant machine-type))
                 (let-values ([(rcinfo* lpinfo* final*) (compile-file-help1 x1 msg)])
-                  (compile-file-help2 op (list rcinfo*) (list lpinfo*) (list final*))))))))))
+                  (compile-file-help2 op (list rcinfo*) (list lpinfo*) (list final*) #f)))))))))
 
   (define write-wpo-file
     (lambda (who ofn ir*)
@@ -1717,8 +1718,8 @@
       (emit-header op (constant scheme-version) (constant machine-type) (map path-root (map path-last bootfiles)))
       (when (null? bootfiles)
         (parameterize ([$target-machine machine] [$sfd #f])
-          (c-print-fasl ($np-boot-code 'error-invoke) op (constant fasl-type-visit-revisit))
-          (c-print-fasl ($np-boot-code 'invoke) op (constant fasl-type-visit-revisit))
+          (c-print-fasl ($np-boot-code 'error-invoke) op (constant fasl-type-visit-revisit) #f)
+          (c-print-fasl ($np-boot-code 'invoke) op (constant fasl-type-visit-revisit) #f)
           ($fasl-base-rtd #!base-rtd op)))))
 
   (define do-make-boot-file
@@ -1762,7 +1763,7 @@
                           (let ([sfd ($source-file-descriptor infn ip)])
                             ; whack ip so close-port calls close the text port
                             (set! ip (transcoded-port ip (current-transcoder)))
-                            (compile-file-help op #f #f source-table machine sfd ($make-read ip sfd 0) outfn))))
+                            (compile-file-help op #f #f source-table machine sfd ($make-read ip sfd 0) outfn #f))))
                     (close-port ip)))
                 infn*)))))))
 
@@ -1893,7 +1894,7 @@
                     (c-print-fasl `(object ,(make-recompile-info
                                               (vector->list (hashtable-keys import-ht))
                                               (vector->list (hashtable-keys include-ht))))
-                      op (constant fasl-type-visit-revisit))
+                      op (constant fasl-type-visit-revisit) #f)
                     (for-each (lambda (ip)
                                 (let loop () ;; NB: This loop consumes one entry past the last library/program info record,
                                              ;; which we presume is the #t end-of-header marker.
@@ -1902,11 +1903,11 @@
                                       ;; perhaps should verify ty here.
                                       (let ([x (fasl-read ip)])
                                         (when (or (library-info? x) (program-info? x))
-                                          (c-print-fasl `(object ,x) op ty)
+                                          (c-print-fasl `(object ,x) op ty #f)
                                           (loop)))))))
                       ip*)
                     ;; inserting #t after lpinfo as an end-of-header marker
-                    (c-print-fasl `(object #t) op (constant fasl-type-visit-revisit))
+                    (c-print-fasl `(object #t) op (constant fasl-type-visit-revisit) #f)
                     (let* ([bufsiz (file-buffer-size)] [buf (make-bytevector bufsiz)])
                       (for-each (lambda (ip)
                                   (let loop ()
@@ -1976,7 +1977,7 @@
                           (if ($port-flags-set? ip (constant port-flag-char-positions))
                               fp
                               (and (eqv? fp 0) fp))))])
-           (compile-file-help op hostop wpoop source-table machine sfd ($make-read ip sfd fp) #f)
+           (compile-file-help op hostop wpoop source-table machine sfd ($make-read ip sfd fp) #f #f)
            (when covop (put-source-table covop source-table))))])))
 
 (set-who! compile-to-port
@@ -1987,7 +1988,8 @@
       [(sexpr* op sfd wpoop) (compile-to-port sexpr* op sfd wpoop #f)]
       [(sexpr* op sfd wpoop covop) (compile-to-port sexpr* op sfd wpoop covop (constant machine-type-name))]
       [(sexpr* op sfd wpoop covop machine) (compile-to-port sexpr* op sfd wpoop covop machine #f)]
-      [(sexpr* op sfd wpoop covop machine hostop)
+      [(sexpr* op sfd wpoop covop machine hostop) (compile-to-port sexpr* op sfd wpoop covop machine hostop #f)]
+      [(sexpr* op sfd wpoop covop machine hostop external?-pred)
        (define do-compile-to-port
          (lambda ()
            (let ([source-table (and covop (make-source-table))])
@@ -1998,7 +2000,8 @@
                      (let ([x (car sexpr*)])
                        (set! sexpr* (cdr sexpr*))
                        x)))
-               (port-name op))
+               (port-name op)
+               external?-pred)
              (when covop (put-source-table covop source-table)))))
        (unless (list? sexpr*)
          ($oops who "~s is not a proper list" sexpr*))
@@ -2022,6 +2025,11 @@
          (unless (and (output-port? hostop) (binary-port? hostop))
            ($oops who "~s is not a binary output port or #f" hostop))
          (when ($port-flags-set? hostop (constant port-flag-compressed)) ($compressed-warning who hostop)))
+       (when external?-pred
+         (unless (procedure? external?-pred)
+           ($oops who "~s is not a procedure or #f" external?-pred))
+         (unless (= (length sexpr*) 1)
+           ($oops who "external predicate allowed only with a single expression")))
        (if (and (= (length sexpr*) 1) (pair? (car sexpr*)) (eq? (caar sexpr*) 'top-level-program))
            (let ([library-collector (make-parameter '())])
              (parameterize ([$require-libraries library-collector])
@@ -2046,7 +2054,7 @@
               (lambda (wpoop)
                 (with-coverage-file who out
                   (lambda (source-table)
-                    (compile-file-help op hostop wpoop source-table machine sfd do-read out))))))))))
+                    (compile-file-help op hostop wpoop source-table machine sfd do-read out #f))))))))))
 
   (define (do-compile-file who in out hostout machine r6rs?)
     (unless (string? in) ($oops who "~s is not a string" in))
@@ -2126,7 +2134,7 @@
                                             (when wpoop (put-u8 wpoop n)))
                                           (let ([fp (+ fp 1)])
                                             (if (char=? c #\newline) fp (loop fp)))))])
-                              (compile-file-help op #f wpoop source-table machine sfd ((if r6rs? $make-read-program $make-read) ip sfd fp) out))))))))
+                              (compile-file-help op #f wpoop source-table machine sfd ((if r6rs? $make-read-program $make-read) ip sfd fp) out #f))))))))
                 ; no #! line
                 (with-object-file who out
                   (lambda (op)
@@ -2135,7 +2143,7 @@
                       (lambda (wpoop)
                         (with-coverage-file who out
                           (lambda (source-table)
-                            (compile-file-help op #f wpoop source-table machine sfd ((if r6rs? $make-read-program $make-read) ip sfd 0) out)))))))))))
+                            (compile-file-help op #f wpoop source-table machine sfd ((if r6rs? $make-read-program $make-read) ip sfd 0) out #f)))))))))))
       (close-port ip))
     (unless-feature windows (chmod out #o755)))
 

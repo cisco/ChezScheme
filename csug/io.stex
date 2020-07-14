@@ -3379,16 +3379,31 @@ input port, must be used instead.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port})}
+\formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port} \var{external-pred})}
 \returns unspecified
 \listlibraries
 \endentryheader
 
 \noindent
+If \var{externals-pred} is provided, it must be a procedure or \scheme{#f}.
+
 \scheme{fasl-write} writes the fasl representation of \var{obj} to
 \var{binary-output-port}.
 An exception is raised with condition-type \scheme{&assertion} if
 \var{obj} or any portion of \var{obj} has no external fasl representation,
 e.g., if \var{obj} is or contains a procedure.
+
+If \var{externals-pred} is provided and not \scheme{#f}, then it is
+applied to each distinct object encountered in \var{obj}. If
+\var{externals-pred} returns true for an object, that object is not
+written to the fasl representation. Instead, a placeholder is written
+containing as position as the number of preceding calls to
+\var{externals-pred} that had returned true. Typically, for each
+object where it returns true, \var{externals-pred} saves the object
+through its closure. When the fasl representation is read with
+\scheme{fasl-read}, a vector with as many items as generated positions
+must be provided, and each placeholder is replaced with the
+corresponding vector element.
 
 The fasl representation of \var{obj} is compressed if the parameter
 \scheme{fasl-compressed}, described below, is set to \scheme{#t},
@@ -3415,14 +3430,16 @@ fasl objects from a compressed file.
 \entryheader
 \formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port})}
 \formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port \var{situation}})}
+\formdef{fasl-read}{\categoryprocedure}{(fasl-read \var{binary-input-port \var{situation} \var{externals}})}
 \returns unspecified
 \listlibraries
 \endentryheader
 
 \noindent
 If present, \var{situation} must be one of the symbols \scheme{load},
-\scheme{visit}, or \scheme{revisit}.
-It defaults to \scheme{load}.
+\scheme{visit}, or \scheme{revisit}, and it defaults to \scheme{load}.
+If present, \var{exterrnals} must be a vector, and it defaults to
+\scheme{'#()}.
 
 \scheme{fasl-read} reads one object from
 \var{binary-input-port}, which must be positioned at the
@@ -3438,6 +3455,11 @@ Similarly, objects marked as both visit and revisit (e.g., object code
 corresponding to source code within an \scheme{eval-when} form with
 situation \scheme{load} or situations \scheme{visit} and \scheme{revisit})
 are never skipped.
+
+The \var{externals} vector should have the same length as the number
+of true-returning calls to \var{external-pred} during the
+\scheme{fasl-write} call that produced the fasl rrepresentation. See
+\scheme{fasl-write} for more information.
 
 \scheme{fasl-read} automatically decompresses the representation
 of each fasl object written in compressed format by \scheme{fasl-write}.

@@ -469,25 +469,21 @@
 
     (define write-entry
       (lambda (p x)
-        (define (append-bvs bv*)
-          (let f ([bv* bv*] [n 0])
-            (if (null? bv*)
-                (if (fixnum? n)
-                    (make-bytevector n)
-                    ($oops 'fasl-write "fasl output is too large to compress"))
-                (let ([bv1 (car bv*)])
-                  (let ([m (bytevector-length bv1)])
-                    (let ([bv2 (f (cdr bv*) (+ n m))])
-                      (bytevector-copy! bv1 0 bv2 n m)
-                      bv2))))))
         (fasl-case x
           [header (version machine dependencies)
            (emit-header p version machine dependencies)]
           [entry (situation fasl)
            (let ([t (make-table)])
              (build! fasl t)
-             ($fasl-start p t situation
-               (lambda (p) (write-fasl p t fasl))))]
+             (let-values ([(bv* size)
+                           (let-values ([(p extractor) ($open-bytevector-list-output-port)])
+                             (let ([n (table-count t)])
+                               (unless (fx= n 0)
+                                 (put-u8 p (constant fasl-type-graph))
+                                 (put-uptr p n)))
+                             (write-fasl p t fasl)
+                             (extractor))])
+               ($write-fasl-bytevectors p bv* size situation (constant fasl-type-fasl))))]
           [else (sorry! "unrecognized top-level fasl-record-type ~s" x)])))
 
     (define write-graph

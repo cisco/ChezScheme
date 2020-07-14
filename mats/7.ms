@@ -113,7 +113,7 @@
  )
 
 (mat load-compiled-from-port
-  (begin
+  (let ()
     (define-values (o get) (open-bytevector-output-port))
     (compile-to-port '((define lcfp1 'worked) 'loaded) o)
     (eq? 'loaded (load-compiled-from-port (open-bytevector-input-port (get)))))
@@ -138,6 +138,12 @@
   (equal?
     (with-output-to-string (lambda () (printf "result = ~s\n" (revisit-compiled-from-port (open-bytevector-input-port lcfp-bv)))))
     "revisit\nvisit-revisit\nresult = revisit-return\n")
+
+  
+  (let ()
+    (define-values (o get) (open-bytevector-output-port))
+    (compile-to-port '((lambda () 'banana)) o #f #f #f (machine-type) #f (lambda (v) (eq? v 'banana)))
+    (eq? 'apple ((load-compiled-from-port (open-bytevector-input-port (get)) '#(apple)))))
 )
 
 (mat compile-to-file

@@ -33,6 +33,8 @@ primvars.mo:Expected error testing (fxpopcount (quote #!eof)): Exception in fxpo
 primvars.mo:Expected error testing (fxpopcount (quote #f)): Exception in fxpopcount32: #f is not a non-negative fixnum
 primvars.mo:Expected error testing (hashtable-cells (quote ((a . b)))): Exception in hashtable-size: ((a . b)) is not a hashtable
 primvars.mo:Expected error testing (hashtable-cells (quote #f)): Exception in hashtable-size: #f is not a hashtable
+primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote "a")): Exception in load-compiled-from-port: 1.0+2.0i is not a binary input port
+primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote #f)): Exception in load-compiled-from-port: 1.0+2.0i is not a binary input port
 primvars.mo:Expected error testing (make-input-port (quote 0) "a"): Exception in make-input-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-input/output-port (quote 0) "a" "a"): Exception in make-input/output-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-output-port (quote 0) "a"): Exception in make-output-port: fixnum handler no longer supported; use open-fd-input-port
@@ -4452,6 +4454,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
 6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-write: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
 6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-read: fasl file content is compressed internally; compressing the file (#<binary input port testfile.ss>) is redundant and can slow fasl writing and reading significantly
+6.mo:Expected error in mat fasl: "fasl-write: #() is not #f or a procedure".
+6.mo:Expected error in mat fasl: "fasl-write: 10 is not #f or a procedure".
+6.mo:Expected error in mat fasl: "fasl-read: not a vector #f".
+6.mo:Expected error in mat fasl: "fasl-read: not a vector 10".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format at line 1, char 28 of testfile.ss".
@@ -8951,7 +8957,6 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: cannot modify immutable environment #<environment>".
 8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: p is not defined".
 8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: cond is not defined".
-8.mo:Expected error in mat annotations: "make-source-file-descriptor: #f is not a string".
 8.mo:Expected error in mat annotations: "make-source-file-descriptor: 17 is not a binary input port".
 8.mo:Expected error in mat annotations: "make-source-file-descriptor: #<input port string> is not a binary input port".
 8.mo:Expected error in mat annotations: "make-source-file-descriptor: #<binary input port foo> does not support port-position and set-port-position!".
@@ -9005,7 +9010,6 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat annotations: "get-datum/annotations: #<sfd foo> is not a valid file position".
 8.mo:Expected error in mat annotations: "get-datum/annotations: -5 is not a valid file position".
 8.mo:Expected error in mat annotations: "get-datum/annotations: 5.0 is not a valid file position".
-8.mo:Expected error in mat annotations: "source-file-descriptor: spam is not a string".
 8.mo:Expected error in mat annotations: "source-file-descriptor: -1 is not an exact nonnegative integer".
 8.mo:Expected error in mat annotations: "source-file-descriptor: 1.0 is not an exact nonnegative integer".
 8.mo:Expected error in mat annotations: "locate-source: "spam" is not a source-file descriptor".

@@ -1031,6 +1031,7 @@ will occur when the files are actually loaded.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{load-compiled-from-port}{\categoryprocedure}{(load-compiled-from-port \var{input-port})}
+\formdef{load-compiled-from-port}{\categoryprocedure}{(load-compiled-from-port \var{input-port} \var{externals})}
 \returns result of the last compiled expression
 \listlibraries
 \endentryheader
@@ -1040,6 +1041,11 @@ will occur when the files are actually loaded.
 of \var{input-port} as previously created by functions like \scheme{compile-file},
 \scheme{compile-script}, \scheme{compile-library}, and
 \scheme{compile-to-port}.
+
+The \var{externals} argument, if supplied, must be a vector. It should
+cooperate with an \var{external-pred} procedure passed to
+\scheme{compile-to-port}, analogous to the way a procedure and vector
+cooperate with \scheme{fasl-write} and \scheme{fasl-read}.
 
 The return value is the value of the last expression whose compiled
 form is in \var{input-port}. If \var{input-port} is empty, then the
@@ -1520,6 +1526,7 @@ will take care of closing the ports.
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd})}
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port})}
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop} \var{external-pred})}
 \returns see below
 \listlibraries
 \endentryheader
@@ -1533,6 +1540,8 @@ expression, \scheme{compile-to-port} raises an exception with
 condition type \scheme{&syntax}.
 \var{output-port} and, if present, \var{wpo-port} must be binary output ports.
 If present, \var{sfd} must be a source-file descriptor.
+If present, \var{external-pred} must be \scheme{#f} or a procedure,
+and it must be \scheme{#f} if \var{obj-list} does not have exactlty one element.
 
 \scheme{compile-to-port} is like \scheme{compile-file} except that it takes
 input from a list of objects and sends output to an arbitrary binary
@@ -1548,6 +1557,12 @@ If \var{covop} is present, \var{compile-to-port} sends coverage information to
 The ports are not closed automatically after compilation under the assumption
 the program that opens the port and invokes \scheme{compile-to-port}
 will take care of closing the port.
+
+If \var{external-pred} is present and not \scheme{#f}, it is used like
+the predicate supplied to \scheme{fasl-write}. In that case, a
+corresponding vector must be provided to
+\scheme{load-compiled-from-port} to load the compiled code, analogous
+to the vector supplied to \scheme{fasl-read}.
 
 When \var{obj-list} contains a single list-structured element whose
 first-element is the symbol \scheme{top-level-program},

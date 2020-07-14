@@ -41,13 +41,15 @@
 (define rtd-flags (csv7:record-field-accessor #!base-rtd 'flags))
 
 (define-record-type table
-  (fields (mutable count) (immutable hash))
+  (fields (mutable count) (immutable hash)
+          (immutable external?-pred) (mutable external-count) (mutable externals))
   (nongenerative)
   (sealed #t)
   (protocol
-    (lambda (new)
-      (lambda ()
-        (new 0 (make-eq-hashtable))))))
+   (lambda (new)
+     (case-lambda
+      [() (new 0 (make-eq-hashtable) #f 0 '())]
+      [(external?-pred) (new 0 (make-eq-hashtable) external?-pred 0 '())]))))
 
 (include "fasl-helpers.ss")
 
@@ -112,7 +114,7 @@
    (lambda (x t a? d)
       (void)))
 
-(module (bld-graph dump-graph reset-dump-graph)
+(module (bld-graph dump-graph reset-dump-graph shift-externals!)
   (define enable-dump-graph? #f)
   (define vcat (if enable-dump-graph?
                    `#((code . ,(lambda (x) (and (pair? x) (eq? (car x) 'code))))
@@ -153,22 +155,40 @@
              #;(let ([n (hashtable-size (table-hash t))])
                  (when (fx= (modulo n 10000) 0)
                    (printf "entries = ~s, ba = ~s, count = ~s\n" n (bytes-allocated) (table-count t))))
-             (record! ventry x)
              (cond
-              [(fx>= d 500)
-               ;; Limit depth of recursion by lifting to a `fasl-begin` graph:
-               (let ([n (table-count t)])
-                 (set-cdr! a (cons n (if inner? 'inner-begin 'begin)))
-                 (table-count-set! t (fx+ n 1)))
-               (handler x t a? 0)]
-              [else
-               (set-cdr! a #f)
-               (handler x t a? (fx+ d 1))])]
+               [(let ([pred (table-external?-pred t)])
+                  (and pred (pred x)))
+                ;; Don't traverse; just record as external. We'll
+                ;; assign positions to externals after the graph
+                ;; has been fully traversed.
+                (let ([p (cons (table-external-count t) #f)])
+                  (set-cdr! a p)
+                  (table-external-count-set! t (fx+ (table-external-count t) 1))
+                  (table-externals-set! t (cons p (table-externals t))))]
+               [else
+                (record! ventry x)
+                (cond
+                  [(fx>= d 500)
+                   ;; Limit depth of recursion by lifting to a `fasl-begin` graph:
+                   (let ([n (table-count t)])
+                     (set-cdr! a (cons n (if inner? 'inner-begin 'begin)))
+                     (table-count-set! t (fx+ n 1)))
+                   (handler x t a? 0)]
+                  [else
+                   (set-cdr! a #f)
+                   (handler x t a? (fx+ d 1))])])]
             [(not p)
              (record! vdup x)
              (let ([n (table-count t)])
                (set-cdr! a (cons n #t))
                (table-count-set! t (fx+ n 1)))])))))
+  (define (shift-externals! t)
+    (unless (null? (table-externals t))
+      (let ([c (table-count t)])
+        (table-count-set! t (fx+ c (table-external-count t)))
+        (for-each (lambda (p)
+                    (set-car! p (fx+ (car p) c)))
+                  (table-externals t)))))
   (reset-dump-graph))
 
 (define bld
@@ -640,6 +660,7 @@
 (module (start)
   (define start
     (lambda (p t situation proc)
+      (shift-externals! t)
       (dump-graph)
       (let-values ([(bv* size)
                     (let-values ([(p extractor) ($open-bytevector-list-output-port)])
@@ -687,18 +708,22 @@
   ; when called from fasl-write or fasl-file, always preserve annotations;
   ; otherwise use value passed in by the compiler
   (define fasl-one
-    (lambda (x p)
-      (let ([t (make-table)])
+    (lambda (x p external?-pred)
+      (let ([t (make-table external?-pred)])
          (bld x t (constant annotation-all) 0)
          (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf x p t (constant annotation-all)))))))
 
   (define-who fasl-write
-    (lambda (x p)
+    (case-lambda
+     [(x p) (fasl-write x p #f)]
+     [(x p external?-pred)
       (unless (and (output-port? p) (binary-port? p))
         ($oops who "~s is not a binary output port" p))
+      (unless (or (not external?-pred) (procedure? external?-pred))
+        ($oops who "~s is not #f or a procedure" external?-pred))
       (when ($port-flags-set? p (constant port-flag-compressed)) ($compressed-warning who p))
       (emit-header p (constant scheme-version) (constant machine-type-any))
-      (fasl-one x p)))
+      (fasl-one x p external?-pred)]))
 
   (define-who fasl-file
     (lambda (in out)
@@ -717,7 +742,7 @@
             (let fasl-loop ()
               (let ([x (read ip)])
                 (unless (eof-object? x)
-                  (fasl-one x op)
+                  (fasl-one x op #f)
                   (fasl-loop)))))
           (close-port op))
         (close-port ip)))))
@@ -742,10 +767,14 @@
   (set! $fasl-enter (lambda (x t a? d) ((target-fasl-enter (fasl-target)) x t a? d)))
   (set! $fasl-out (lambda (x p t a?) ((target-fasl-out (fasl-target)) x p t a?)))
   (set! $fasl-start (lambda (p t situation proc) ((target-fasl-start (fasl-target)) p t situation proc)))
-  (set! $fasl-table (lambda () ((target-fasl-table (fasl-target)))))
+  (set! $fasl-table (case-lambda
+                     [() ((target-fasl-table (fasl-target)))]
+                     [(external?-pred) ((target-fasl-table (fasl-target)) external?-pred)]))
   (set! $fasl-wrf-graph (lambda (x p t a? handler) ((target-fasl-wrf-graph (fasl-target)) x p t a? handler)))
   (set! $fasl-base-rtd (lambda (x p) ((target-fasl-base-rtd (fasl-target)) x p)))
-  (set! fasl-write (lambda (x p) ((target-fasl-write (fasl-target)) x p)))
+  (set! fasl-write (case-lambda
+                    [(x p) ((target-fasl-write (fasl-target)) x p)]
+                    [(x p externals) ((target-fasl-write (fasl-target)) x p externals)]))
   (set! fasl-file (lambda (in out) ((target-fasl-file (fasl-target)) in out))))
 
 (when ($unbound-object? (#%$top-level-value '$capture-fasl-target))

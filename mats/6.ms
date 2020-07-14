@@ -993,6 +993,18 @@
           (weak-pair? (cddr ls))
           (weak-pair? (cdddr ls)))))
     '(#t #f #t #t #f #t))
+
+  (error? (fasl-write 'any (let-values ([(o get) (open-bytevector-output-port)]) o) '#()))
+  (error? (fasl-write 'any (let-values ([(o get) (open-bytevector-output-port)]) o) 10))
+  (error? (fasl-read (open-bytevector-input-port #vu8()) 'load #f))
+  (error? (fasl-read (open-bytevector-input-port #vu8()) 'load 10))
+  
+  (let-values ([(o get) (open-bytevector-output-port)])
+    (fasl-write '(apple (banana cream pie) (vector coconut banana cream)) o (lambda (v)
+                                                                              (or (eq? v 'banana)
+                                                                                  (eq? v 'coconut))))
+    (equal? '(apple (B cream pie) (vector C B cream))
+            (fasl-read (open-bytevector-input-port (get)) 'load '#(B C))))
 )
 
 (mat fasl-depth

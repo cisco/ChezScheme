@@ -218,8 +218,8 @@ typedef struct faslFileObj {
 static INT uf_read PROTO((unbufFaslFile uf, octet *s, iptr n));
 static octet uf_bytein PROTO((unbufFaslFile uf));
 static uptr uf_uptrin PROTO((unbufFaslFile uf, INT *bytes_consumed));
-static ptr fasl_entry PROTO((ptr tc, IFASLCODE situation, unbufFaslFile uf));
-static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, IFASLCODE ty, uptr offset, uptr len, unbufFaslFile uf));
+static ptr fasl_entry PROTO((ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externals));
+static ptr bv_fasl_entry PROTO((ptr tc, ptr bv, IFASLCODE ty, uptr offset, uptr len, unbufFaslFile uf, ptr externals));
 static void fillFaslFile PROTO((faslFile f));
 static void bytesin PROTO((octet *s, iptr n, faslFile f));
 static void toolarge PROTO((ptr path));
@@ -298,7 +298,7 @@ void S_fasl_init() {
 #endif
 }
 
-ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path) {
+ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path, ptr externals) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
@@ -307,12 +307,12 @@ ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path) {
   uffo.path = path;
   uffo.type = UFFO_TYPE_FD;
   uffo.fd = fd;
-  x = fasl_entry(tc, situation, &uffo);
+  x = fasl_entry(tc, situation, &uffo, externals);
   tc_mutex_release()
   return x;
 }
 
-ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path) {
+ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path, ptr externals) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
@@ -320,7 +320,7 @@ ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path) {
   tc_mutex_acquire()
   uffo.path = path;
   uffo.type = UFFO_TYPE_BV;
-  x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo);
+  x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo, externals);
   tc_mutex_release()
   return x;
 }
@@ -332,7 +332,7 @@ ptr S_boot_read(INT fd, const char *path) {
   uffo.path = Sstring_utf8(path, -1);
   uffo.type = UFFO_TYPE_FD;
   uffo.fd = fd;
-  return fasl_entry(tc, fasl_type_visit_revisit, &uffo);
+  return fasl_entry(tc, fasl_type_visit_revisit, &uffo, S_G.null_vector);
 }
 
 #ifdef WIN32
@@ -432,7 +432,7 @@ char *S_lookup_machine_type(uptr n) {
     return "unknown";
 }
 
-static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
+static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externals) {
   ptr x; ptr strbuf = S_G.null_string;
   octet tybuf[1]; IFASLCODE ty; iptr size;
   /* gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-28) co-locates buf and x if we put the declaration of buf down where we use it */
@@ -534,7 +534,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
       }
       switch (kind) {
         case fasl_type_fasl:
-          faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);          
+          faslin(tc, &x, externals, &strbuf, &ffo);
           break;
         case fasl_type_vfasl:
           x = S_vfasl(bv, uf, 0, ffo.size);
@@ -551,7 +551,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf) {
   }
 }
 
-static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFaslFile uf) {
+static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFaslFile uf, ptr externals) {
   ptr x; ptr strbuf = S_G.null_string;
   struct faslFileObj ffo;
 
@@ -563,7 +563,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
     ffo.end = &BVIT(bv, offset + len);
     ffo.uf = uf;
     
-    faslin(tc, &x, S_G.null_vector, &strbuf, &ffo);
+    faslin(tc, &x, externals, &strbuf, &ffo);
   } else {
     S_error1("", "bad entry type (got ~s)", FIX(ty));
   }
@@ -1053,9 +1053,16 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_phantom:
             *x = S_phantom_bytevector(uptrin(f));
             return;
-        case fasl_type_graph:
-            faslin(tc, x, S_vector(uptrin(f)), pstrbuf, f);
+        case fasl_type_graph: {
+            uptr len = uptrin(f), len2, i;
+            ptr new_t = S_vector(len);
+            len2 = Svector_length(t);
+            if (len2 > len) len2 = len;
+            for (i = 0; i < len2; i++)
+              INITVECTIT(new_t, i+(len-len2)) = Svector_ref(t, i);
+            faslin(tc, x, new_t, pstrbuf, f);
             return;
+        }
         case fasl_type_graph_def: {
             ptr *p;
             p = &INITVECTIT(t, uptrin(f));

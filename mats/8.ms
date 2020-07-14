@@ -11356,8 +11356,8 @@
  )
 
 (mat annotations
-  (error? ; #f is not a string
-    (make-source-file-descriptor #f
+  (source-file-descriptor?
+    (make-source-file-descriptor #f ; anything is allowed as a path
       (open-bytevector-input-port (string->utf8 "hello"))))
   (error? ; 17 is not a binary-input port
     (make-source-file-descriptor "foo" 17))
@@ -11584,7 +11584,7 @@
   (eq? (source-object-sfd source) sfd)
   (eqv? (source-object-bfp source) 0)
   (eqv? (source-object-efp source) (string-length str))
-  (error? ; not a string
+  (source-file-descriptor?
     (source-file-descriptor 'spam 0))
   (error? ; not an exact nonnegative integer
     (source-file-descriptor "spam" -1))
@@ -11605,6 +11605,7 @@
   (error? ; not an exact nonnegative integer
     (locate-source sfd 'a))
   (let-values ([() (locate-source sfd 7)]) #t)
+  (let-values ([() (locate-source (source-file-descriptor 'something-else 0) 7)]) #t)
   (begin
     (with-output-to-file "testfile.ss"
       (lambda ()

@@ -1613,7 +1613,7 @@ source file to make sure that the proper file has been found and
 has not been modified.
 Source-file descriptors can be created with
 \index{\scheme{make-source-file-descriptor}}\scheme{make-source-file-descriptor},
-which accepts two arguments: a string naming the path and a binary
+which accepts two arguments: an object (usually a string) naming the path and a binary
 input port, along with an optional third boolean argument, \var{reset?},
 which defaults to false.
 \scheme{make-source-file-descriptor} computes a checksum based on
@@ -1642,8 +1642,8 @@ and described in more detail later in this section.
 (source-object-line \var{source-object}) ;-> \var{uint} or #f
 (source-object-column \var{source-object}) ;-> \var{uint} or #f
 
-(make-source-file-descriptor \var{string} \var{binary-input-port}) ;-> \var{sfd}
-(make-source-file-descriptor \var{string} \var{binary-input-port} \var{reset?}) ;-> \var{sfd}
+(make-source-file-descriptor \var{obj} \var{binary-input-port}) ;-> \var{sfd}
+(make-source-file-descriptor \var{obj} \var{binary-input-port} \var{reset?}) ;-> \var{sfd}
 (source-file-descriptor? \var{obj}) ;-> \var{boolean}
 (source-file-descriptor-checksum \var{sfd}) ;-> \var{obj}
 (source-file-descriptor-path \var{sfd}) ;-> \var{obj}
@@ -1836,8 +1836,8 @@ to a file-position object, instead of delaying the conversion to
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{string} \var{binary-input-port})}
-\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{string} \var{binary-input-port} \var{reset?})}
+\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{obj} \var{binary-input-port})}
+\formdef{make-source-file-descriptor}{\categoryprocedure}{(make-source-file-descriptor \var{obj} \var{binary-input-port} \var{reset?})}
 \returns a source-file descriptor
 \listlibraries
 \endentryheader
@@ -1870,16 +1870,17 @@ Otherwise, it is left pointing at end-of-file.
 \listlibraries
 \endentryheader
 
-\var{sfd} must be a source-file descriptor.
+\var{sfd} must be a source-file descriptor. The result is typically a string, but a
+source file descriptor can have any value representing a path.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{source-file-descriptor}{\categoryprocedure}{(source-file-descriptor \var{path} \var{checksum})}
+\formdef{source-file-descriptor}{\categoryprocedure}{(source-file-descriptor \var{obj} \var{checksum})}
 \returns a new source-file-descriptor
 \listlibraries
 \endentryheader
 
-\var{path} must be a string, and \var{checksum} must be an exact nonnegative integer.
+\var{checksum} must be an exact nonnegative integer.
 This procedure can be used to construct custom source-file descriptors or to reconstitute
 source-file descriptors from the \var{path} and \var{checksum} components.
 
@@ -1958,7 +1959,7 @@ exact nonnegative integer.
 This procedure either uses cached information from a previous
 request for \var{sfd} (only when \var{use-cache?} is provided as true)
 or attempts to locate and open the source file identified
-by \var{sfd}.
+by \var{sfd} (which can only work when its path is a string).
 If successful, it returns three values: a string \var{path}, an exact
 nonnegative integer \var{line}, and an exact nonnegative integer \var{char}
 representing the absolute pathname, line, and character position within

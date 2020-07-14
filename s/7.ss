@@ -134,8 +134,8 @@
 
 (set-who! fasl-read
   (let ()
-    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int fixnum ptr) ptr))
-    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int uptr uptr ptr) ptr))
+    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int fixnum ptr ptr) ptr))
+    (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int uptr uptr ptr ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])
         (let f ([k k] [n (fxand k #x7F)])
@@ -190,13 +190,13 @@
              ;; Call `get-bytevector-n`, etc. with interrupts reenabled
              (lambda ()
                (proc (get-bytevector-n p len) 0))])))))
-    (define (go p situation)
+    (define (go p situation externals)
       (define (go1)
         (if (and ($port-flags-set? p (constant port-flag-file))
                  (or (not ($port-flags-set? p (constant port-flag-compressed)))
                      (begin ($compressed-warning who p) #f))
                  (eqv? (binary-port-input-count p) 0))
-            ($fasl-read ($port-info p) situation (port-name p))
+            ($fasl-read ($port-info p) situation (port-name p) externals)
             (let fasl-entry ()
               (let ([ty (get-u8 p)])
                 (cond
@@ -232,26 +232,31 @@
                                       (if (eqv? compressed-flag (constant fasl-type-gzip))
                                           (constant COMPRESS-GZIP)
                                           (constant COMPRESS-LZ4)))))])
-                       ($bv-fasl-read bv kind 0 dest-size (port-name p))))]
+                       ($bv-fasl-read bv kind 0 dest-size (port-name p) externals)))]
                   [(eqv? compressed-flag (constant fasl-type-uncompressed))
                    (let ([len (- n 2)])
                      (call-with-bytevector-and-offset
                       p len
                       (lambda (bv offset)
-                        ($bv-fasl-read bv kind offset len (port-name p)))))]
+                        ($bv-fasl-read bv kind offset len (port-name p) externals))))]
                   [else (malformed p "invalid compression")])))))
       (unless (and (input-port? p) (binary-port? p))
         ($oops who "~s is not a binary input port" p))
       (go1))
+    (define (parse-situation situation)
+      (case situation
+        [(visit) (constant fasl-type-visit)]
+        [(revisit) (constant fasl-type-revisit)]
+        [(load) (constant fasl-type-visit-revisit)]
+        [else ($oops who "invalid situation ~s" situation)]))
     (case-lambda
-      [(p) (go p (constant fasl-type-visit-revisit))]
-      [(p situation)
-       (go p
-         (case situation
-           [(visit) (constant fasl-type-visit)]
-           [(revisit) (constant fasl-type-revisit)]
-           [(load) (constant fasl-type-visit-revisit)]
-           [else ($oops who "invalid situation ~s" situation)]))])))
+      [(p) (go p (constant fasl-type-visit-revisit) '#())]
+      [(p situation) (go p (parse-situation situation) '#())]
+      [(p situation externals)
+       (let ([situation (parse-situation situation)])
+         (unless (vector? externals)
+           ($oops who "not a vector ~s" externals))
+         (go p situation externals))])))
 
 (define ($compiled-file-header? ip)
   (let ([pos (port-position ip)])
@@ -265,12 +270,12 @@
 
 (let ()
   (define do-load-binary
-    (lambda (who fn ip situation for-import? importer)
+    (lambda (who fn ip situation for-import? importer externals)
       (let ([load-binary (make-load-binary who fn situation for-import? importer)])
-        (let ([x (fasl-read ip situation)])
+        (let ([x (fasl-read ip situation externals)])
           (unless (eof-object? x)
             (let loop ([x x])
-              (let ([next-x (fasl-read ip situation)])
+              (let ([next-x (fasl-read ip situation externals)])
                 (if (eof-object? next-x)
                     (load-binary x)
                     (begin (load-binary x) (loop next-x))))))))))
@@ -323,7 +328,7 @@
                         (begin (set-port-position! ip start-pos) 0)))])
           (if ($compiled-file-header? ip)
               (begin
-                (do-load-binary who fn ip situation for-import? importer)
+                (do-load-binary who fn ip situation for-import? importer '#())
                 (close-port ip))
               (begin
                 (unless ksrc
@@ -341,22 +346,27 @@
       (make-load-binary '$make-load-binary fn 'load #f #f)))
 
   (set-who! load-compiled-from-port
-    (lambda (ip)
-      (unless (and (input-port? ip) (binary-port? ip))
-        ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'load #f #f)))
+    (rec load-compiled-from-port
+      (case-lambda
+       [(ip) (load-compiled-from-port ip '#())]
+       [(ip externals)
+        (unless (and (input-port? ip) (binary-port? ip))
+          ($oops who "~s is not a binary input port" ip))
+        (unless (vector? externals)
+          ($oops who "~s is not a vector" ip))
+        (do-load-binary who (port-name ip) ip 'load #f #f externals)])))
 
   (set-who! visit-compiled-from-port
     (lambda (ip)
       (unless (and (input-port? ip) (binary-port? ip))
         ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'visit #f #f)))
+      (do-load-binary who (port-name ip) ip 'visit #f #f '#())))
 
   (set-who! revisit-compiled-from-port
     (lambda (ip)
       (unless (and (input-port? ip) (binary-port? ip))
         ($oops who "~s is not a binary input port" ip))
-      (do-load-binary who (port-name ip) ip 'revisit #f #f)))
+      (do-load-binary who (port-name ip) ip 'revisit #f #f '#())))
 
   (set-who! load-program
     (rec load-program
