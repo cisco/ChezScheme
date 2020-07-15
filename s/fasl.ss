@@ -491,7 +491,9 @@
         [(record-type-descriptor? x)
          (put-u8 p (constant fasl-type-rtd))
          (wrf (record-type-uid x) p t a?)
-         (wrf-fields (maybe-remake-rtd x) p t a?)]
+         (if (and a? (fxlogtest a? (constant fasl-omit-rtds)))
+             (put-uptr p 0) ; => must be registered already at load time
+             (wrf-fields (maybe-remake-rtd x) p t a?))]
         [else
          (put-u8 p (constant fasl-type-record))
          (wrf-fields x p t a?)])))
@@ -500,9 +502,10 @@
     (lambda (x p t a?)
       (define maybe-remake-annotation
         (lambda (x a?)
-          (if (fx= (annotation-flags x) a?)
-              x
-              (make-annotation (annotation-expression x) (annotation-source x) (annotation-stripped x) a?))))
+          (let ([a? (fxand a? (constant annotation-all))])
+            (if (fx= (annotation-flags x) a?)
+                x
+                (make-annotation (annotation-expression x) (annotation-source x) (annotation-stripped x) a?)))))
       (put-u8 p (constant fasl-type-record))
       (wrf-fields (maybe-remake-annotation x a?) p t a?)))
 )
@@ -629,7 +632,7 @@
          [(bytevector? x) (wrf-graph x p t a? wrf-bytevector)]
          ; this check must go before $record? check
          [(annotation? x)
-          (if a?
+          (if (and a? (fxlogtest a? (constant annotation-all)))
               (wrf-graph x p t a? wrf-annotation)
               (wrf (annotation-stripped x) p t a?))]
          ; this check must go before $record? check
@@ -708,22 +711,27 @@
   ; when called from fasl-write or fasl-file, always preserve annotations;
   ; otherwise use value passed in by the compiler
   (define fasl-one
-    (lambda (x p external?-pred)
-      (let ([t (make-table external?-pred)])
-         (bld x t (constant annotation-all) 0)
-         (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf x p t (constant annotation-all)))))))
+    (lambda (x p external?-pred omit-rtds?)
+      (let ([t (make-table external?-pred)]
+            [a? (fxior (constant annotation-all)
+                       (if omit-rtds?
+                           (constant fasl-omit-rtds)
+                           0))])
+         (bld x t a? 0)
+         (start p t (constant fasl-type-visit-revisit) (lambda (p) (wrf x p t a?))))))
 
   (define-who fasl-write
     (case-lambda
-     [(x p) (fasl-write x p #f)]
-     [(x p external?-pred)
+     [(x p) (fasl-write x p #f #f)]
+     [(x p external?-pred) (fasl-write x p external?-pred #f)]
+     [(x p external?-pred omit-rtds?)
       (unless (and (output-port? p) (binary-port? p))
         ($oops who "~s is not a binary output port" p))
       (unless (or (not external?-pred) (procedure? external?-pred))
         ($oops who "~s is not #f or a procedure" external?-pred))
       (when ($port-flags-set? p (constant port-flag-compressed)) ($compressed-warning who p))
       (emit-header p (constant scheme-version) (constant machine-type-any))
-      (fasl-one x p external?-pred)]))
+      (fasl-one x p external?-pred omit-rtds?)]))
 
   (define-who fasl-file
     (lambda (in out)
@@ -742,7 +750,7 @@
             (let fasl-loop ()
               (let ([x (read ip)])
                 (unless (eof-object? x)
-                  (fasl-one x op #f)
+                  (fasl-one x op #f #f)
                   (fasl-loop)))))
           (close-port op))
         (close-port ip)))))
@@ -774,7 +782,8 @@
   (set! $fasl-base-rtd (lambda (x p) ((target-fasl-base-rtd (fasl-target)) x p)))
   (set! fasl-write (case-lambda
                     [(x p) ((target-fasl-write (fasl-target)) x p)]
-                    [(x p externals) ((target-fasl-write (fasl-target)) x p externals)]))
+                    [(x p externals) ((target-fasl-write (fasl-target)) x p externals)]
+                    [(x p externals omit-rtds?) ((target-fasl-write (fasl-target)) x p externals omit-rtds?)]))
   (set! fasl-file (lambda (in out) ((target-fasl-file (fasl-target)) in out))))
 
 (when ($unbound-object? (#%$top-level-value '$capture-fasl-target))

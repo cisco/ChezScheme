@@ -1683,6 +1683,8 @@
 (define-constant annotation-profile #b0010)
 (define-constant annotation-all     #b0011)
 
+(define-constant fasl-omit-rtds     #b0100)
+
 (eval-when (compile load eval)
 (define flag->mask
   (lambda (m e)

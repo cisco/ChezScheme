@@ -1527,6 +1527,7 @@ will take care of closing the ports.
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port})}
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop})}
 \formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop} \var{external-pred})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop} \var{external-pred} \var{omit-rtds?})}
 \returns see below
 \listlibraries
 \endentryheader
@@ -1563,6 +1564,11 @@ the predicate supplied to \scheme{fasl-write}. In that case, a
 corresponding vector must be provided to
 \scheme{load-compiled-from-port} to load the compiled code, analogous
 to the vector supplied to \scheme{fasl-read}.
+
+If \var{omit-rtds?} is present and true, then any record types
+relevant to the compiled code must be declared in the loading context,
+and the loading context is assumed to have compatible registrations
+using the same unique ID.
 
 When \var{obj-list} contains a single list-structured element whose
 first-element is the symbol \scheme{top-level-program},

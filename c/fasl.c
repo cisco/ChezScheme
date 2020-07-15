@@ -229,7 +229,7 @@ static float singlein PROTO((faslFile f));
 static double doublein PROTO((faslFile f));
 static iptr stringin PROTO((ptr *pstrbuf, iptr start, faslFile f));
 static void faslin PROTO((ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f));
-static void fasl_record PROTO((ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f));
+static void fasl_record PROTO((ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size));
 static IBOOL rtd_equiv PROTO((ptr x, ptr y));
 static IBOOL equalp PROTO((ptr x, ptr y));
 #ifdef ARMV6
@@ -803,7 +803,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = rtd;
             return;
         } case fasl_type_rtd: {
-            ptr rtd, rtd_uid, plist, ls;
+            ptr rtd, rtd_uid, plist, ls; uptr size;
 
             faslin(tc, &rtd_uid, t, pstrbuf, f);
 
@@ -813,14 +813,21 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (Scar(ls) == S_G.rtd_key) {
                 ptr tmp;
                 *x = rtd = Scar(Scdr(ls));
-                fasl_record(tc, &tmp, t, pstrbuf, f);
-                if (!rtd_equiv(tmp, rtd))
-                  S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf->path);
+
+                size = uptrin(f);
+                if (size != 0) {
+                  fasl_record(tc, &tmp, t, pstrbuf, f, size);
+                  if (!rtd_equiv(tmp, rtd))
+                    S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf->path);
+                }
                 return;
               }
             }
 
-            fasl_record(tc, x, t, pstrbuf, f);
+            size = uptrin(f);
+            if (size == 0)
+              S_error2("", "unregistered record type ~s in ~a", rtd_uid, f->uf->path);
+            fasl_record(tc, x, t, pstrbuf, f, size);
             rtd = *x;
 
            /* register rtd on uid's property list */
@@ -828,7 +835,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_record: {
-            fasl_record(tc, x, t, pstrbuf, f);
+            uptr size = uptrin(f);
+            fasl_record(tc, x, t, pstrbuf, f, size);
             return;
         }
         case fasl_type_eq_hashtable: {
@@ -1087,10 +1095,9 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 
 #define big 0
 #define little 1
-static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
-  uptr size, n, addr; ptr p; UINT padty;
+static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size) {
+  uptr n, addr; ptr p; UINT padty;
 
-  size = uptrin(f);
   n = uptrin(f);
   *x = p = S_record(size_record_inst(size));
   faslin(tc, &RECORDINSTTYPE(p), t, pstrbuf, f);

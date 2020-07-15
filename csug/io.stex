@@ -3379,7 +3379,7 @@ input port, must be used instead.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port})}
-\formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port} \var{external-pred})}
+\formdef{fasl-write}{\categoryprocedure}{(fasl-write \var{obj} \var{binary-output-port} \var{external-pred} \var{omit-rtds?})}
 \returns unspecified
 \listlibraries
 \endentryheader
@@ -3404,6 +3404,11 @@ through its closure. When the fasl representation is read with
 \scheme{fasl-read}, a vector with as many items as generated positions
 must be provided, and each placeholder is replaced with the
 corresponding vector element.
+
+If \var{omit-rtds?} is present and true, then any record types
+relevant to \var{obj} must be declared in the loading context, and the
+loading context is assumed to have compatible record-type
+registrations using the same unique ID.
 
 The fasl representation of \var{obj} is compressed if the parameter
 \scheme{fasl-compressed}, described below, is set to \scheme{#t},
