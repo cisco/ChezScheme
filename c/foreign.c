@@ -38,6 +38,7 @@
 #define dlopen(path,flags) (void *)shl_load(path, BIND_IMMEDIATE, 0L)
 #define s_dlerror() Sstring_utf8(strerror(errno), -1)
 #elif defined(WIN32)
+#include <psapi.h>
 #define dlopen(path,flags) S_ntdlopen(path)
 #define dlsym(h,s) S_ntdlsym(h,s)
 #define s_dlerror() S_ntdlerror()
@@ -228,9 +229,63 @@ static void load_shared_object(path) const char *path; {
 
     tc_mutex_acquire()
 
-    handle = dlopen(path, RTLD_NOW);
-    if (handle == (void *)NULL)
-        S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
+#if defined(HPUX)
+    /*
+     * With NULL path, use RTLD_SELF to act like dlopen(NULL, ...)
+     * See: https://docstore.mik.ua/manuals/hp-ux/en/B2355-60130/dlsym.3C.html
+     */
+    if (!path) {
+        handle = (void *)RTLD_SELF;
+    }
+    else
+#elif defined(WIN32)
+    /*
+     * With NULL path, manually add loaded modules to the list of shared objects.
+     */
+    if (!path) {
+        size_t i, N;
+        DWORD ret;
+        HMODULE modules_stack[1024];
+        DWORD cur_num_bytes = sizeof modules_stack;
+        DWORD req_num_bytes;
+        HMODULE *modules = modules_stack;
+        HMODULE *dynamic_storage = NULL;
+
+        /* Always try to use the stack, allocate memory only if necessary */
+        ret = EnumProcessModules(GetCurrentProcess(), modules, cur_num_bytes, &req_num_bytes);
+        while (ret && req_num_bytes > cur_num_bytes) {
+            // To try to avoid looping more than necessary, add some arbitrary
+            // "fudge factor" to the allocated size.
+            cur_num_bytes = req_num_bytes + 4 * sizeof(HMODULE);
+            free(dynamic_storage);
+            modules = dynamic_storage = malloc(cur_num_bytes);
+            ret = EnumProcessModules(GetCurrentProcess(), modules, cur_num_bytes, &req_num_bytes);
+        }
+
+        if (!ret) {
+            free(dynamic_storage);
+            S_error1("", "(while loading libraries) ~a", s_dlerror());
+        }
+
+        N = req_num_bytes/sizeof(HMODULE);
+
+        for (i = 0u; i < N; ++i) {
+            S_foreign_dynamic = Scons(addr_to_ptr(modules[i]), S_foreign_dynamic);
+        }
+
+        free(dynamic_storage);
+        tc_mutex_release()
+
+        return;
+    }
+    else
+#endif /* HPUX */
+    {
+        handle = dlopen(path, RTLD_NOW);
+        if (handle == (void *)NULL)
+            S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
+    }
+
     S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
 
     tc_mutex_release()

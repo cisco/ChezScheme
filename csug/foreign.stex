@@ -2412,20 +2412,38 @@ via one of the other methods described in this section.
 \endentryheader
 
 \noindent
-\var{path} must be a string.
-\scheme{load-shared-object} loads the shared object named by \var{path}.
+\var{path} must be a string or \scheme{#f}.
+If \var{path} is a string, \scheme{load-shared-object} loads the shared object
+named by \var{path}.
 Shared objects may be system libraries or files created from ordinary
 C programs.
 All external symbols in the shared object, along with external symbols
-available in other shared objects linked with the shared object,
-are made available as foreign entries. 
-
+available in other shared objects linked with the shared object, are made
+available as foreign entries.
+If \var{path} is \scheme{#f}, external symbols in the executable itself (if
+any), as well as those found in dependent shared objects, are also made
+available as foreign entries.
 This procedure is supported for most platforms upon which {\ChezScheme}
 runs.
 
 If \var{path} does not begin with a ``.'' or ``/'', the shared
 object is searched for in a default set of directories determined
 by the system.
+
+Usually, executables do not export symbols, but can be instructed to do so with
+proper compilation flags.
+One may thus create an executable based on {\ChezScheme}, and have Scheme code
+access expressely exported symbols from it.
+
+Because {\ChezScheme} is (usually!) dynamically linked to the operating system's
+C library, all C functions are also accessible after evaluation of
+\scheme{(load-shared-object #f)}.
+This provides a simple way to gain access to standard C functions (such as
+\var{memcpy} or \var{strlen}), which may be very convenient for Scheme programs
+intended to be portable across different systems.
+One downside of not directly naming the shared object file is that the set of
+accessible foreign entries as well as their resolution among them is
+unspecified.
 
 On most Unix systems, \scheme{load-shared-object} is based on the
 system routine \scheme{dlopen}.
