@@ -975,6 +975,44 @@ Although the second definition is more constraining on the load order
 of foreign files, it is more efficient since the entry resolution need
 be done only once.
 
+With the following macro, procedures can be defined to lazily resolve foreign
+entries upon application:
+
+\schemedisplay
+(define-syntax lazy-foreign-procedure
+  (lambda (x)
+    (syntax-case x ()
+      [(_ conv ... entry (p-type ...) ret)
+       (with-syntax ([(f-args ...) (generate-temporaries #'(p-type ...))])
+         #'(letrec ([proc
+                      (lambda (f-args ...)
+                        (let ([ff (foreign-procedure conv ...
+                                    entry (p-type ...) ret)])
+                          (set! proc ff)
+                          (ff f-args ...)))])
+             (lambda (f-args ...)
+               (proc f-args ...))))])))
+\endschemedisplay
+
+\noindent
+If \scheme{doit} is modified to use the previous macro, as in
+
+\schemedisplay
+(define doit
+  (lazy-foreign-procedure "doit" () void))
+\endschemedisplay
+
+\noindent
+then \scheme{doit} will be bound to a procedure that invokes another one,
+initially bound to a \emph{resolution procedure}; the resolution procedure
+first perform the lookup for the foreign entry, then caches the result before
+invoking it.
+Future applications of \scheme{doit} will simply directly call the cached
+procedure.
+This definition is almost as efficient as the previous one, yet does not require
+to have a foreign entry for \scheme{"doit"} immediately upon definition, but
+simply before its first execution.
+
 It is often useful to define a template to be used
 in the creation of several foreign procedures with similar argument
 types and return values.
@@ -2489,7 +2527,7 @@ On MacOS X systems:
 On Windows:
 
 \schemedisplay
-(load-shared-object "crtdll.dll")
+(load-shared-object "msvcrt.dll")
 \endschemedisplay
 
 Once the C library has been loaded, \scheme{getenv} should be available
@@ -2677,6 +2715,10 @@ The filename is given as \scheme{"./evenodd.so"} rather than simply
 in a standard set of system directories that does not include the
 current directory.
 
+Currently, {\ChezScheme} never unload shared object files nor checks if they
+were already loaded, and never collects the ``handles'' to them.
+Repeated use of this function in a loop may exhaust all the available memory and
+cause {\ChezScheme} to abort.
 
 %----------------------------------------------------------------------------
 \entryheader
