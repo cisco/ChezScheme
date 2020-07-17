@@ -11727,6 +11727,12 @@
 
     (define-pass np-impose-calling-conventions : L12.5 (ir) -> L13 ()
       (definitions
+        ;; define-op sets up assembly op macros--
+        ;; suffixes are a sub-list of (b w l 1)--
+        ;; the opcode, the size (byte word, long, quad), and all other expressions
+        ;; are passed to the specified handler--
+        ;; for prefix 'p' and each suffix 's' a macro of the form 'ps' is set up--
+        ;; if no suffix is specified the prefix is defined as a macro
         (import (only asm-module asm-foreign-call asm-foreign-callable asm-enter))
         (define newframe-info-for-mventry-point)
         (define Lcall-error (make-Lcall-error))
@@ -13377,6 +13383,7 @@
     (define-pass np-expand-hand-coded : L13 (ir) -> L13.5 ()
       (definitions
         (import (only asm-module asm-enter))
+        ;; ----------------------------------------
         (define Ldoargerr (make-Ldoargerr))
         (define-$type-check (L13.5 Pred))
         (define make-info
@@ -16153,6 +16160,53 @@
               (fx- offset (fx- (constant size-rp-header)
                                (constant size-rp-compact-header)))
               offset)))
+      
+      (define asm-data-label
+        (lambda (code* l offset func code-size)
+          (let ([rel (make-funcrel 'abs l offset)])
+            (cons* rel (aop-cons* `(asm "mrv point:" ,rel) code*)))))
+
+      (define asm-rp-header
+        (let ([mrv-error `(abs ,(constant code-data-disp)
+                               (library-code ,(lookup-libspec values-error)))])
+          (lambda (code* mrvl fs lpm func code-size)
+            (let ([size (constant-case ptr-bits [(32) 'long] [(64) 'quad])])
+              (let* ([code* (cons* `(,size . ,fs)
+                                   (aop-cons* `(asm "frame size:" ,fs)
+                                              code*))]
+                     [code* (cons* (if (target-fixnum? lpm)
+                                       `(,size . ,(fix lpm))
+                                       `(abs 0 (object ,lpm)))
+                                   (aop-cons* `(asm livemask: ,(format "~b" lpm))
+                                              code*))]
+                     [code* (if mrvl
+                                (asm-data-label code* mrvl 0 func code-size)
+                                (cons*
+                                 mrv-error
+                                 (aop-cons* `(asm "mrv point:" ,mrv-error)
+                                            code*)))]
+                     [code* (cons*
+                             '(code-top-link)
+                             (aop-cons* `(asm code-top-link)
+                                        code*))])
+                code*)))))
+
+      (define asm-rp-compact-header
+        (lambda (code* err? fs lpm func code-size)
+          (let ([size (constant-case ptr-bits [(32) 'long] [(64) 'quad])])
+            (let* ([code* (cons* `(,size . ,(fxior (constant compact-header-mask)
+                                                   (if err?
+                                                       (constant compact-header-values-error-mask)
+                                                       0)
+                                                   (fxsll fs (constant compact-frame-words-offset))
+                                                   (fxsll lpm (constant compact-frame-mask-offset))))
+                                 (aop-cons* `(asm "mrv pt:" (,lpm ,fs ,(if err? 'error 'continue)))
+                                            code*))]
+                   [code* (cons*
+                           '(code-top-link)
+                           (aop-cons* `(asm code-top-link)
+                                      code*))])
+              code*))))
 
       (architecture assembler)
 
@@ -17162,11 +17216,30 @@
             (nanopass-case (L15c Triv) x
               [(literal ,info) (info-literal-indirect? info)]
               [else #f])))
-        (define mref?
+        (define lmem?
           (lambda (x)
             (nanopass-case (L15c Triv) x
-              [(mref ,lvalue1 ,lvalue2 ,imm ,type) #t]
+              [(mref ,lvalue1 ,lvalue2 ,imm ,type) (not (eq? type 'fp))]
               [else #f])))
+        (define mem?
+          (lambda (x)
+            (or (lmem? x) (literal@? x))))
+        (define fpmem?
+          (lambda (x)
+            (nanopass-case (L15c Triv) x
+              [(mref ,lvalue1 ,lvalue2 ,imm ,type) (eq? type 'fp)]
+              [else #f])))
+        (define lvalue->ur
+          (lambda (x k)
+            (safe-assert (not (fpmem? x)))
+            (if (mem? x)
+                (let ([u (make-tmp 'u)])
+                  (seq
+                   (mem->mem x
+                             (lambda (x)
+                               (build-set! ,u ,x)))
+                   (k u)))
+                (k x))))
         (define same?
           (lambda (a b)
             (or (eq? a b)
@@ -17193,6 +17266,221 @@
                 ,(make-info-literal #f (info-literal-type info)
                    (info-literal-addr info) (info-literal-offset info)))]
             [else (sorry! who "unexpected literal ~s" ir)]))
+
+        (define-syntax seq
+          (lambda (x)
+            (syntax-case x ()
+              [(_ e ... ex)
+               (with-syntax ([(t ...) (generate-temporaries #'(e ...))])
+                 #'(let ([t e] ...)
+                     (with-values ex
+                       (case-lambda
+                        [(x*) (cons* t ... x*)]
+                        [(x* p) (values (cons* t ... x*) p)]))))])))
+
+        (define-syntax coercible?*
+          (lambda (stx)
+            (syntax-case stx (quote)
+              [(_ x '(ty ...))
+               (memq 'ur (datum (ty ...)))
+               #`(let () (safe-assert (not (or (fpur? x) (fpmem? x)))) #t)]
+              [(_ x '(ty ...))
+               (memq 'fpur (datum (ty ...)))
+               #`(let () (safe-assert (or (fpur? x) (fpmem? x))) #t)]
+              [(_ x '(ty ...))
+               #`(coercible? x '(ty ...))])))
+
+        ;; If any value clause includes a constant that a register matches the target register.
+        ;; then `acsame-mem` and/or `acsame-ur` must be defined
+        (define-syntax define-instruction
+          (lambda (x)
+            (define (type->lpred t)
+              (case t
+                [(mem) #'lmem?]
+                [(fpmem) #'fpmem?]
+                [(ur) #'(lambda (x) (safe-assert (not (or (fpur? x) (fpmem? x)))) #t)]
+                [(fpur) #'(lambda (x) (safe-assert (or (fpur? x) (fpmem? x))) #t)]
+                [else ($oops 'type->red "unrecognized ~s" t)]))
+
+            (define make-value-clause
+              (lambda (fmt)
+                (syntax-case fmt (mem ur fpmem fpur)
+                  [(op (c cty) (a ?c) (b bty* ...) ...)
+                   (and (bound-identifier=? #'?c #'c)
+                        (memq (datum cty) '(mem fpmem ur xur)))
+                   #`(lambda (c a b ...)
+                       (if (and (#,(type->lpred (datum cty)) c)
+                                (same? a c)
+                                (coercible?* b '(bty* ...)) ...)
+                           #,(let f ([b* #'(b ...)] [bty** #'((bty* ...) ...)])
+                               (if (null? b*)
+                                   #`(#,(if (memq (datum cty) '(ur fpur)) #'acsame-ur #'acsame-mem)
+                                      #,fmt
+                                      c cty (b bty* ...) ...
+                                      (lambda (c b ...) (rhs c c b ...)))
+                                   #`(coerce-opnd #,(car b*) '#,(car bty**)
+                                                  (lambda (#,(car b*)) #,(f (cdr b*) (cdr bty**))))))
+                           (next c a b ...)))]
+                  [(op (c cty) (a aty* ...) ... (b ?c))
+                   (and (bound-identifier=? #'?c #'c)
+                        (memq (datum cty) '(mem fpmem ur xur)))
+                   #`(lambda (c a ... b)
+                       (if (and (#,(type->lpred (datum cty)) c)
+                                (same? b c)
+                                (coercible?* a '(aty* ...)) ...)
+                           #,(let f ([a* #'(a ...)] [aty** #'((aty* ...) ...)])
+                               (if (null? a*)
+                                   #`(#,(if (memq (datum cty) '(ur fpur)) #'acsame-ur #'acsame-mem)
+                                      #,fmt
+                                      c cty (a aty* ...) ...
+                                      (lambda (c a ...) (rhs c a ... c)))
+                                   #`(coerce-opnd #,(car a*) '#,(car aty**)
+                                                  (lambda (#,(car a*)) #,(f (cdr a*) (cdr aty**))))))
+                           (next c a ... b)))]
+                  [(op (c xur) (a aty ...) ...)
+                   (memq (datum xur) '(ur fpur))
+                   #`(lambda (c a ...)
+                       (if (and (#,(type->lpred (datum xur)) c)
+                                (coercible?* a '(aty ...)) ...)
+                           #,(let f ([a* #'(a ...)] [aty** #'((aty ...) ...)])
+                               (if (null? a*)
+                                   #`(if (ur? c)
+                                         (rhs c a ...)
+                                         (let ([u (make-tmp 'u '#,(if (eq? (datum xur) 'ur) #'uptr #'fp))])
+                                           (seq
+                                            (rhs u a ...)
+                                            (#,(if (eq? (datum xur) 'ur) #'mem->mem #'fpmem->fpmem)
+                                             c
+                                             (lambda (c)
+                                               (build-set! ,c ,u))))))
+                                   #`(coerce-opnd #,(car a*) '#,(car aty**)
+                                                  (lambda (#,(car a*)) #,(f (cdr a*) (cdr aty**))))))
+                           (next c a ...)))]
+                  [(op (c xmem) (a aty ...) ...)
+                   (memq (datum xmem) '(mem fpmem))
+                   #`(lambda (c a ...)
+                       (if (and (#,(type->lpred (datum xmem)) c)
+                                (coercible?* a '(aty ...)) ...)
+                           #,(let f ([a* #'(a ...)] [aty** #'((aty ...) ...)])
+                               (if (null? a*)
+                                   #`(#,(if (eq? (datum xmem) 'mem) #'mem->mem #'fpmem->fpmem)
+                                      c
+                                      (lambda (c)
+                                        (rhs c a ...)))
+                                   #`(coerce-opnd #,(car a*) '#,(car aty**)
+                                                  (lambda (#,(car a*)) #,(f (cdr a*) (cdr aty**))))))
+                           (next c a ...)))])))
+
+            (define-who make-pred-clause
+              (lambda (fmt)
+                (syntax-case fmt ()
+                  [(op (a aty ...) ...)
+                   #`(lambda (a ...)
+                       (if (and (coercible?* a '(aty ...)) ...)
+                           #,(let f ([a* #'(a ...)] [aty** #'((aty ...) ...)])
+                               (if (null? a*)
+                                   #'(rhs a ...)
+                                   #`(coerce-opnd #,(car a*) '#,(car aty**)
+                                                  (lambda (#,(car a*)) #,(f (cdr a*) (cdr aty**))))))
+                           (next a ...)))])))
+
+            (define-who make-effect-clause
+              (lambda (fmt)
+                (syntax-case fmt ()
+                  [(op (a aty ...) ...)
+                   #`(lambda (a ...)
+                       (if (and (coercible?* a '(aty ...)) ...)
+                           #,(let f ([a* #'(a ...)] [aty** #'((aty ...) ...)])
+                               (if (null? a*)
+                                   #'(rhs a ...)
+                                   #`(coerce-opnd #,(car a*) '#,(car aty**)
+                                                  (lambda (#,(car a*)) #,(f (cdr a*) (cdr aty**))))))
+                           (next a ...)))])))
+
+            (syntax-case x (definitions)
+              [(k context (sym ...) (definitions defn ...) [(op (a aty ...) ...) ?rhs0 ?rhs1 ...] ...)
+               (and (not (null? #'(op ...)))
+                    (andmap identifier? #'(sym ...))
+                    (andmap identifier? #'(op ...))
+                    (andmap identifier? #'(a ... ...))
+                    (andmap identifier? #'(aty ... ... ...)))
+               (with-implicit (k info return with-output-language)
+                  (with-syntax ([((opnd* ...) . ignore) #'((a ...) ...)])
+                    (define make-proc
+                      (lambda (make-clause)
+                        (let f ([op* #'(op ...)]
+                                [fmt* #'((op (a aty ...) ...) ...)]
+                                [arg* #'((a ...) ...)]
+                                [rhs* #'((?rhs0 ?rhs1 ...) ...)])
+                          (if (null? op*)
+                              #'(lambda (opnd* ...)
+                                  (sorry! name "no match found for ~s" (list opnd* ...)))
+                              #`(let ([next #,(f (cdr op*) (cdr fmt*) (cdr arg*) (cdr rhs*))]
+                                      [rhs (lambda #,(car arg*)
+                                             (let ([#,(car op*) name])
+                                               #,@(car rhs*)))])
+                                  #,(make-clause (car fmt*)))))))
+                    (unless (let ([a** #'((a ...) ...)])
+                              (let* ([a* (car a**)] [len (length a*)])
+                                (andmap (lambda (a*) (fx= (length a*) len)) (cdr a**))))
+                      (syntax-error x "mismatched instruction arities"))
+                    ;; Sanity check on consistent fp and non-fp types
+                    (let ([aty*** (datum (((aty ...) ...) ...))])
+                      (let loop ([aty*** aty***]
+                                 [int* (map (lambda (aty**) #f) (car aty***))]
+                                 [fp* (map (lambda (aty**) #f) (car aty***))])
+                        (unless (null? aty***)
+                          (let ([aty** (car aty***)])
+                            (let ([next-int* (map (lambda (aty*)
+                                                    (or (memq 'ur aty*)
+                                                        (memq 'mem aty*)))
+                                                  aty**)]
+                                  [next-fp* (map (lambda (aty*)
+                                                   (or (memq 'fpur aty*)
+                                                       (memq 'fpmem aty*)))
+                                                 aty**)])
+                              (when (ormap (lambda (int fp next-int next-fp)
+                                             (or (and int next-fp)
+                                                 (and fp next-int)
+                                                 (and next-int next-fp)))
+                                           int* fp* next-int* next-fp*)
+                                (syntax-error x "mismatched instruction argument types"))
+                              (loop (cdr aty***) next-int* next-fp*))))))
+                  (with-syntax ([((opnd* ...) . ignore) #'((a ...) ...)])
+                    (cond
+                      [(free-identifier=? #'context #'value)
+                       #`(let ([fvalue (lambda (name)
+                                         (lambda (info opnd* ...)
+                                           defn ...
+                                           (with-output-language (L15d Effect)
+                                             (#,(make-proc make-value-clause) opnd* ...))))])
+                           (begin
+                             (safe-assert (eq? (primitive-type (%primitive sym)) 'value))
+                             (primitive-handler-set! (%primitive sym) (fvalue 'sym)))
+                           ...)]
+                      [(free-identifier=? #'context #'pred)
+                       #`(let ([fpred (lambda (name)
+                                        (lambda (info opnd* ...)
+                                          defn ...
+                                          (with-output-language (L15d Pred)
+                                            (#,(make-proc make-pred-clause) opnd* ...))))])
+                           (begin
+                             (safe-assert (eq? (primitive-type (%primitive sym)) 'pred))
+                             (primitive-handler-set! (%primitive sym) (fpred 'sym)))
+                           ...)]
+                      [(free-identifier=? #'context #'effect)
+                       #`(let ([feffect (lambda (name)
+                                          (lambda (info opnd* ...)
+                                            defn ...
+                                            (with-output-language (L15d Effect)
+                                              (#,(make-proc make-effect-clause) opnd* ...))))])
+                           (begin
+                             (safe-assert (eq? (primitive-type (%primitive sym)) 'effect))
+                             (primitive-handler-set! (%primitive sym) (feffect 'sym)))
+                           ...)]
+                      [else (syntax-error #'context "unrecognized context")]))))]
+              [(k context (sym ...) cl ...) #'(k context (sym ...) (definitions) cl ...)]
+              [(k context sym cl ...) (identifier? #'sym) #'(k context (sym) (definitions) cl ...)])))
 
         (define-pass select-instructions! : (L15c Dummy) (ir block* live-size force-overflow?) -> (L15d Dummy) ()
           (definitions
