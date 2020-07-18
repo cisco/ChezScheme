@@ -43,11 +43,19 @@ coverage:
 bootfiles:
 	(cd $(workarea) && $(MAKE) bootfiles)
 
-# Supply XM=<machine> to build boot files for <machine>
-.PHONY: boot
-boot: build
-	mkdir -p boot/$(XM)
-	(cd $(workarea) && $(MAKE) -f Mf-boot $(XM).boot)
+.PHONY: reset
+reset:
+	(cd $(workarea) && $(MAKE) reset)
+
+# <machine>.boot to build boot files for <machine>
+%.boot:
+	(cd $(workarea) && $(MAKE) $*.boot)
+
+# <machine>.bootquick to build boot files for <machine>
+# with o=3 d=0 for the cross compiler, and only after
+# building the kernel for the configured machine
+%.bootquick:
+	(cd $(workarea) && $(MAKE) $*.bootquick)
 
 # Supply ORIG=<dir> to build using existing at <dir>
 .PHONY: from-orig

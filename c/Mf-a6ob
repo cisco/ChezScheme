@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = a6ob
-Cpu = X86_64
+m ?= a6ob
+Cpu ?= X86_64
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
-mdclib = -L/usr/local/lib -liconv -lm ${ncursesLib} -lossp-uuid
-C = ${CC} ${CPPFLAGS} -Wpointer-arith -Werror -O ${CFLAGS}
+mdclib = -L/usr/local/lib -liconv -lm ${ncursesLib} ${threadLibs} -lossp-uuid
+C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
-mdsrc = i3le.c
-mdobj = i3le.o
+mdsrc ?= i3le.c
+mdobj ?= i3le.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -41,7 +41,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -rdynamic -Wl,--export-dynamic -Wl,-zwxneeded -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m64" ./configure --64)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ./configure --64)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m64" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ${MAKE} liblz4.a)

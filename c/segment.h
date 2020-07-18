@@ -25,14 +25,14 @@
 
 /* segment_info */
 
-#define SEGMENT_T1_SIZE (1<<segment_t1_bits)
+#define SEGMENT_T1_SIZE ((uptr)1<<segment_t1_bits)
 #define SEGMENT_T1_IDX(i) ((i)&(SEGMENT_T1_SIZE-1))
 
 #ifdef segment_t3_bits
 
-#define SEGMENT_T2_SIZE (1<<segment_t2_bits)
+#define SEGMENT_T2_SIZE ((uptr)1<<segment_t2_bits)
 #define SEGMENT_T2_IDX(i) (((i)>>segment_t1_bits)&(SEGMENT_T2_SIZE-1))
-#define SEGMENT_T3_SIZE (1<<segment_t3_bits)
+#define SEGMENT_T3_SIZE ((uptr)1<<segment_t3_bits)
 #define SEGMENT_T3_IDX(i) ((i)>>(segment_t2_bits+segment_t1_bits))
 
 FORCEINLINE seginfo *SegInfo(uptr i) {
@@ -49,7 +49,7 @@ FORCEINLINE seginfo *MaybeSegInfo(uptr i) {
 #else /* segment_t3_bits */
 #ifdef segment_t2_bits
 
-#define SEGMENT_T2_SIZE (1<<segment_t2_bits)
+#define SEGMENT_T2_SIZE ((uptr)1<<segment_t2_bits)
 #define SEGMENT_T2_IDX(i) ((i)>>segment_t1_bits)
 #define SEGMENT_T3_SIZE 0
 

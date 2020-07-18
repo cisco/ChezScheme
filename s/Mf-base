@@ -579,6 +579,7 @@ setup.so: debug.ss
 
 ${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss env.ss
 cpnanopass.$m cpnanopass.patch: nanopass.so np-languages.ss fxmap.ss ${archincludes}
+cptypes.$m: fxmap.ss
 5_4.$m: ../unicode/unicode-char-cases.ss ../unicode/unicode-charinfo.ss
 
 ${Cheader}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
@@ -639,3 +640,18 @@ prettyclean:
 
 profileclean: prettyclean
 	rm -f ${ProfileDumpSource} ${ProfileDumpBlock}
+
+.PHONY: reset
+reset:
+	$(MAKE) reset-one FILE=petite.boot
+	$(MAKE) reset-one FILE=scheme.boot
+	$(MAKE) reset-one FILE=equates.h
+	$(MAKE) reset-one FILE=scheme.h
+	$(MAKE) reset-one FILE=gc-oce.inc
+	$(MAKE) reset-one FILE=gc-ocd.inc
+	$(MAKE) reset-one FILE=vfasl.inc
+
+.PHONY: reset-one
+reset-one:
+	if [ -f ../boot/${m}/${FILE} ] ; then rm ../boot/${m}/${FILE} ; fi
+	if [ ! -h ../boot/${m}/${FILE} ] ; then ln -s ../../../boot/${m}/${FILE} ../boot/${m}/${FILE} ; fi

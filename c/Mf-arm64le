@@ -1,4 +1,4 @@
-# Mf-a6nb
+# Mf-arm64le
 # Copyright 1984-2017 Cisco Systems, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m ?= a6nb
-Cpu ?= X86_64
+m ?= tarm64le
+Cpu ?= AARCH64
 
-mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/local/include -I/usr/X11R6/include
-mdclib = /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a ${threadLibs}
-C = ${CC} ${CPPFLAGS} -m64 ${warningFlags} ${optFlags} -O ${threadFlags} ${CFLAGS}
+mdclib = -lm -ldl ${ncursesLib} -lrt -luuid ${threadLibs}
+C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS}
 o = o
-mdsrc ?= i3le.c
-mdobj ?= i3le.o
+mdsrc ?= arm32le.c
+mdobj ?= arm32le.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
 
 .c.o:
-	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} ${mdinclude} $*.c
+	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
 
 include Mf-base
 
@@ -39,10 +38,9 @@ ${KernelLib}: ${kernelobj}
 
 ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
-	paxctl +m ${Scheme}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ./configure --64)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags}" ${MAKE} liblz4.a)

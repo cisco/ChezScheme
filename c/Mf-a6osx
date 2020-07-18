@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = a6osx
-Cpu = X86_64
+m ?= a6osx
+Cpu ?= X86_64
 
 mdclib = -liconv -lm ${ncursesLib}
-C = ${CC} ${CPPFLAGS} -m64 -Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough -Werror -O2 -I/opt/X11/include/ ${CFLAGS}
+C = ${CC} ${CPPFLAGS} -m64 ${warningFlags} ${optFlags} -I/opt/X11/include/ ${CFLAGS}
 o = o
-mdsrc = i3le.c
-mdobj = i3le.o
+mdsrc ?= i3le.c
+mdobj ?= i3le.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -40,7 +40,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m64" ./configure --64)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ./configure --64)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m64" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m64" ${MAKE} liblz4.a)

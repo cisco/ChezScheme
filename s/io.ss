@@ -262,15 +262,11 @@ implementation notes:
       (string boolean) scheme-object))
   (define $open-output-fd
     (foreign-procedure "(cs)new_open_output_fd"
-      (string int
-       boolean boolean boolean
-       boolean boolean boolean boolean)
+      (string int int)
       scheme-object))
   (define $open-input/output-fd
     (foreign-procedure "(cs)new_open_input_output_fd"
-      (string int
-       boolean boolean boolean
-       boolean boolean boolean boolean)
+      (string int int)
       scheme-object))
   (define $close-fd
     (foreign-procedure "(cs)close_fd"
@@ -2478,7 +2474,8 @@ implementation notes:
                  (define UTF-32B/LE
                    (constant-case native-endianness
                      [(little) "UTF-32LE"]
-                     [(big) "UTF-32BE"]))
+                     [(big) "UTF-32BE"]
+                     [(unknown) "UTF-32"]))
                  (define (iconv-open to from)
                    (let ([desc ($iconv-open to from)])
                      (when (string? desc) ($oops who "~a" desc))
@@ -4092,9 +4089,14 @@ implementation notes:
                 (when (file-exists? filename)
                   (collect (collect-maximum-generation))))))
           (let ([fd (critical-section
-                      ($open-output-fd filename perms
-                        no-create no-fail no-truncate
-                        append lock replace compressed))])
+                     ($open-output-fd filename perms
+                        (fxior (if no-create (constant open-fd-no-create) 0)
+                               (if no-fail (constant open-fd-no-fail) 0)
+                               (if no-truncate (constant open-fd-no-truncate) 0)
+                               (if append (constant open-fd-append) 0)
+                               (if lock (constant open-fd-lock) 0)
+                               (if replace (constant open-fd-replace) 0)
+                               (if compressed (constant open-fd-compressed) 0))))])
             (when (pair? fd) (open-oops who filename options fd))
             (open-binary-fd-output-port who filename fd #t b-mode lock compressed)))))
 
@@ -5074,8 +5076,13 @@ implementation notes:
                   (collect (collect-maximum-generation))))))
           (let ([fd (critical-section
                       ($open-input/output-fd filename perms
-                        no-create no-fail no-truncate
-                        append lock replace compressed))])
+                        (fxior (if no-create (constant open-fd-no-create) 0)
+                               (if no-fail (constant open-fd-no-fail) 0)
+                               (if no-truncate (constant open-fd-no-truncate) 0)
+                               (if append (constant open-fd-append) 0)
+                               (if lock (constant open-fd-lock) 0)
+                               (if replace (constant open-fd-replace) 0)
+                               (if compressed (constant open-fd-compressed) 0))))])
             (when (pair? fd) (open-oops who filename options fd))
             (open-binary-fd-input/output-port who filename fd #t b-mode lock compressed)))))
 

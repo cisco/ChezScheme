@@ -55,17 +55,17 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   tc_mutex_acquire()
 
   if (S_threads == Snil) {
-    tc = (ptr)S_G.thread_context;
+    tc = TO_PTR(S_G.thread_context);
   } else { /* clone parent */
     ptr p_v = PARAMETERS(p_tc);
     iptr i, n = Svector_length(p_v);
    /* use S_vector_in to avoid thread-local allocation */
     ptr v = S_vector_in(space_new, 0, n);
 
-    tc = (ptr)malloc(size_tc);
+    tc = TO_PTR(malloc(size_tc));
     if (tc == (ptr)0)
       S_error(who, "unable to malloc thread data structure");
-    memcpy((void *)tc, (void *)p_tc, size_tc);
+    memcpy(TO_VOIDP(tc), TO_VOIDP(p_tc), size_tc);
 
     for (i = 0; i < n; i += 1)
       INITVECTIT(v, i) = Svector_ref(p_v, i);
@@ -88,7 +88,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
  /* S_reset_scheme_stack initializes stack, size, esp, and sfp */
   S_reset_scheme_stack(tc, stack_slop);
-  FRAME(tc,0) = (ptr)&CODEIT(S_G.dummy_code_object,size_rp_header);
+  FRAME(tc,0) = TO_PTR(&CODEIT(S_G.dummy_code_object,size_rp_header));
 
  /* S_reset_allocation_pointer initializes ap and eap */
   S_reset_allocation_pointer(tc);
@@ -127,7 +127,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   GUARDIANENTRIES(tc) = Snil;
 
-  LZ4OUTBUFFER(tc) = NULL;
+  LZ4OUTBUFFER(tc) = 0;
 
   tc_mutex_release()
 
@@ -205,7 +205,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       S_nthreads -= 1;
 
      /* process remembered set before dropping allocation area */
-      S_scan_dirty((ptr **)EAP(tc), (ptr **)REAL_EAP(tc));
+      S_scan_dirty((ptr *)EAP(tc), (ptr *)REAL_EAP(tc));
 
      /* process guardian entries */
       {

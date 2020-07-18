@@ -2261,7 +2261,11 @@
                         (begin
                           (residualize-seq '() '() ctxt)
                           `(quote ,k)))])]))
-        (define-inline-constant-parameter (native-endianness) (constant native-endianness))
+        (constant-case native-endianness
+          [(unknown)
+           (define-inline 2 (native-endianness))]
+          [else
+           (define-inline-constant-parameter (native-endianness) (constant native-endianness))])
         (define-inline-constant-parameter (directory-separator) (if-feature windows #\\ #\/))
         (define-inline-constant-parameter (threaded?) (if-feature pthreads #t #f))
         (define-inline-constant-parameter (most-negative-fixnum least-fixnum) (constant most-negative-fixnum))
@@ -2912,6 +2916,7 @@
         (define $fold-bytevector-native-ref
           (lambda (native-ref generic-ref align x y ctxt)
             (and (okay-to-handle?)
+                 (not (eq? (constant native-endianness) 'unknown))
                  (visit-and-maybe-extract* bytevector? ([dx x])
                    (visit-and-maybe-extract* (lambda (y)
                                                (and (integer? y)

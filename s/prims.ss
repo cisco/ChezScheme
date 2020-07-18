@@ -59,7 +59,10 @@
     scheme-object))
 
 (define weak-pair?
-  (lambda (p) (weak-pair? p)))
+  (constant-case architecture
+    [(pb)
+     (foreign-procedure "(cs)s_weak_pairp" (scheme-object) scheme-object)]
+    [else (lambda (p) (weak-pair? p))]))
 
 (define ephemeron-cons
   (foreign-procedure "(cs)s_ephemeron_cons"
@@ -67,7 +70,11 @@
     scheme-object))
 
 (define ephemeron-pair?
-  (lambda (p) (ephemeron-pair? p)))
+  (constant-case architecture
+    [(pb)
+     (foreign-procedure "(cs)s_ephemeron_pairp" (scheme-object) scheme-object)]
+    [else
+     (lambda (p) (ephemeron-pair? p))]))
 
 (define $split-continuation
   (foreign-procedure "(cs)single_continuation"
@@ -2040,28 +2047,48 @@
   (define-tlc-parameter $tlc-next $set-tlc-next!)
 )
 
-
-(define $generation
-  (lambda (x)
-    ($generation x)))
-(define $maybe-seginfo
-  (lambda (x)
-    ($maybe-seginfo x)))
-(define $seginfo
-  (lambda (x)
-    ($seginfo x)))
-(define $seginfo-generation
-  (lambda (x)
-    ($seginfo-generation x)))
-(define $seginfo-space
-  (lambda (x)
-    ($seginfo-space x)))
-(define-who $list-bits-ref
-  (lambda (x)
-    (unless (pair? x) ($oops who "~s is not a pair" x))
-    ($list-bits-ref x)))
-(define-who $list-bits-set!
-  (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))
+(constant-case architecture
+  [(pb)
+   ;; can't inline seginfo access
+   (define-who $maybe-seginfo
+     (lambda (x) ($oops who "unsupported for pb")))
+   (define-who $seginfo
+     (lambda (x) ($oops who "unsupported for pb")))
+   (define-who $seginfo-generation
+     (lambda (x) ($oops who "unsupported for pb")))
+   (define-who $seginfo-space
+     (lambda (x) ($oops who "unsupported for pb")))
+   (define-who $generation
+     (foreign-procedure "(cs)generation" (scheme-object) scheme-object))
+   (define-who $list-bits-ref
+     (let ([list_bits_ref (foreign-procedure "(cs)list_bits_ref" (ptr) ptr)])
+       (lambda (x)
+         (unless (pair? x) ($oops who "~s is not a pair" x))
+         (list_bits_ref x))))
+   (define-who $list-bits-set!
+     (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))]
+  [else
+   (define $generation
+     (lambda (x)
+       ($generation x)))
+   (define $maybe-seginfo
+     (lambda (x)
+       ($maybe-seginfo x)))
+   (define $seginfo
+     (lambda (x)
+       ($seginfo x)))
+   (define $seginfo-generation
+     (lambda (x)
+       ($seginfo-generation x)))
+   (define $seginfo-space
+     (lambda (x)
+       ($seginfo-space x)))
+   (define-who $list-bits-ref
+     (lambda (x)
+       (unless (pair? x) ($oops who "~s is not a pair" x))
+       ($list-bits-ref x)))
+   (define-who $list-bits-set!
+     (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))])
 
 (let ()
   (define $phantom-bytevector-adjust!
@@ -2153,7 +2180,7 @@
     (lambda (s)
       (unless (string? s) ($oops 'get-registry "~s is not a string" s))
       (let ([x (fp s)])
-        (and x (utf16->string x (constant native-endianness)))))))
+        (and x (utf16->string x (native-endianness)))))))
 
 (define put-registry!
   (let ([fp (foreign-procedure "(windows)PutRegistry"
@@ -2440,7 +2467,7 @@
                           [else
                            (string-set! s j (integer->char w1))
                            (loop (fx+ i 2) (fx+ j 1))]))]))]))
-            (if (eq? eness (constant native-endianness))
+            (if (eq? eness (native-endianness))
                 (go bytevector-u16-native-ref)
                 (go (lambda (bv i) (bytevector-u16-ref bv i eness))))))))
     (rec utf16->string
@@ -2453,9 +2480,9 @@
              (slurp bv eness 0)
              (let ([BOM (bytevector-u16-native-ref bv 0)])
                (if (fx= BOM #xfeff)
-                   (slurp bv (constant native-endianness) 2)
+                   (slurp bv (native-endianness) 2)
                    (if (fx= BOM #xfffe)
-                       (slurp bv (constant-case native-endianness [(big) 'little] [(little) 'big]) 2)
+                       (slurp bv (case (native-endianness) [(big) 'little] [(little) 'big]) 2)
                        (slurp bv eness 0)))))]))))
 
 (let ()
@@ -2489,7 +2516,7 @@
                          (bv-u16-set! bv bvi (fxior #xD800 (fxsrl x 10)))
                          (bv-u16-set! bv (fx+ bvi 2) (fxior #xDC00 (fxand x #x3ff)))
                          (f (fx+ si 1) (fx+ bvi 4)))))))]))
-        (if (eq? eness (constant native-endianness))
+        (if (eq? eness (native-endianness))
             (go bytevector-u16-native-set!)
             (go (lambda (bv i n) (bytevector-u16-set! bv i n eness))))
         bv)))
@@ -2529,7 +2556,7 @@
                               (integer->char x)
                               #\xfffd))
                         (loop (fx+ i 4) (fx+ j 1)))]))]))
-            (if (eq? eness (constant native-endianness))
+            (if (eq? eness (native-endianness))
                 (go bytevector-u32-native-ref)
                 (go (lambda (bv i) (bytevector-u32-ref bv i eness))))))))
     (rec utf32->string
@@ -2542,9 +2569,9 @@
              (slurp bv eness 0)
              (let ([BOM (bytevector-u32-native-ref bv 0)])
                (if (and (fixnum? BOM) (fx= BOM #xfeff))
-                   (slurp bv (constant native-endianness) 4)
+                   (slurp bv (native-endianness) 4)
                    (if (= BOM #xfffe0000)
-                       (slurp bv (constant-case native-endianness [(big) 'little] [(little) 'big]) 4)
+                       (slurp bv (case (native-endianness) [(big) 'little] [(little) 'big]) 4)
                        (slurp bv eness 0)))))]))))
 
 (let ()
@@ -2563,7 +2590,7 @@
              (do ([si 0 (fx+ si 1)])
                  ((fx= si sn))
                (bv-u32-set! bv (fxsll si 2) (char->integer (string-ref s si))))]))
-        (if (eq? eness (constant native-endianness))
+        (if (eq? eness (native-endianness))
             (go bytevector-u32-native-set!)
             (go (lambda (bv i n) (bytevector-u32-set! bv i n eness))))
         bv)))

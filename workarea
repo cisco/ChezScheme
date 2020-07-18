@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ $# != 1 -a $# != 2 ]
+if [ $# != 1 -a $# != 2  -a $# != 3 ]
 then
-    echo "Usage: workarea <machine-type> { <workarea name> }"
+    echo "Usage: workarea <machine-type> { <workarea name> <pb host machine-type> }"
     exit 1
 fi
 
@@ -29,6 +29,14 @@ then
 else
     W=$2
 fi
+if [ "$3" != "" ]
+then
+   Mpbhost=$3
+else
+   Mpbhost=""
+fi
+
+Muni=""
 
 case "$M" in
   a6fb) ;;
@@ -39,6 +47,7 @@ case "$M" in
   a6osx) ;;
   a6s2) ;;
   arm32le) ;;
+  arm64le) ;;
   i3fb) ;;
   i3le) ;;
   i3nb) ;;
@@ -48,24 +57,25 @@ case "$M" in
   i3qnx) ;;
   i3s2) ;;
   ppc32le) ;;
-  ta6fb) ;;
-  ta6le) ;;
-  ta6nb) ;;
-  ta6nt) ;;
-  ta6ob) ;;
-  ta6osx) ;;
-  ta6s2) ;;
-  tarm32le) ;;
-  tarm64le) ;;
-  ti3fb) ;;
-  ti3le) ;;
-  ti3nb) ;;
-  ti3nt) ;;
-  ti3ob) ;;
-  ti3osx) ;;
-  ti3qnx) ;;
-  ti3s2) ;;
-  tppc32le) ;;
+  ta6fb) Muni=a6fb ;;
+  ta6le) Muni=a6le ;;
+  ta6nb) Muni=a6nb ;;
+  ta6nt) Muni=a6nt ;;
+  ta6ob) Muni=a6ob ;;
+  ta6osx) Muni=a6osx ;;
+  ta6s2) Muni=a6s2 ;;
+  tarm32le) Muni=arm32le ;;
+  tarm64le) Muni=arm64le ;;
+  ti3fb) Muni=i3fb ;;
+  ti3le) Muni=i3le ;;
+  ti3nb) Muni=i3nb ;;
+  ti3nt) Muni=i3nt ;;
+  ti3ob) Muni=i3ob ;;
+  ti3osx) Muni=i3osx ;;
+  ti3qnx) Muni=i3qnx ;;
+  ti3s2) Muni=i3s2 ;;
+  tppc32le) Muni=ppc32le ;;
+  pb) ;;
   *) echo "Unrecognized machine name $M"; exit 1 ;;
 esac
 
@@ -127,6 +137,13 @@ workdir $W
 workdir $W/c
 (cd $W/c; workln ../../c/Mf-$M Mf-$M)
 (cd $W/c; forceworkln Mf-$M Makefile)
+if [ "$Muni" != "" ] ; then
+  (cd $W/c; workln ../../c/Mf-$Muni Mf-$Muni)
+fi
+if [ "$Mpbhost" != "" ] ; then
+  (cd $W/c; workln ../../c/Mf-$Mpbhost Mf-$Mpbhost)
+  (cd $W/c; forceworkln Mf-$Mpbhost Mf-pbhost)
+fi
 (cd $W/c; workln ../../c/Mf-base Mf-base)
 if [ ! -e $W/c/config.h ] ; then
   touch $W/c/config.h
@@ -151,6 +168,13 @@ workdir $W/s
 workdir $W/mats
 (cd $W/mats; workln ../../mats/Mf-$M Mf-$M)
 (cd $W/mats; forceworkln Mf-$M Makefile)
+if [ "$Muni" != "" ] ; then
+  (cd $W/mats; workln ../../mats/Mf-$Muni Mf-$Muni)
+fi
+if [ "$Mpbhost" != "" ] ; then
+  (cd $W/mats; workln ../../mats/Mf-$Mpbhost Mf-$Mpbhost)
+  (cd $W/mats; forceworkln Mf-$Mpbhost Mf-pbhost)
+fi
 (cd $W/mats; workln ../../mats/Mf-base Mf-base)
 (cd $W/mats; workln ../../mats/Mf-exobj Mf-exobj)
 case $M in

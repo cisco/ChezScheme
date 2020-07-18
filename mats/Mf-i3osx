@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3osx
+m ?= i3osx
 
 fsrc = foreign1.c foreign2.c foreign3.c foreign4.c
 fobj = foreign1.so

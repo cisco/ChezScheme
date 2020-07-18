@@ -59,12 +59,14 @@ void S_segment_init() {
   S_G.number_of_nonstatic_segments = 0;
   S_G.number_of_empty_segments = 0;
 
+#ifndef PORTABLE_BYTECODE
   if (seginfo_space_disp != offsetof(seginfo, space))
     S_error_abort("seginfo_space_disp is wrong");
   if (seginfo_generation_disp != offsetof(seginfo, generation))
     S_error_abort("seginfo_generation_disp is wrong");
   if (seginfo_list_bits_disp != offsetof(seginfo, list_bits))
     S_error_abort("seginfo_list_bits_disp is wrong");
+#endif
 }
 
 static uptr membytes = 0;
@@ -362,11 +364,11 @@ static seginfo *allocate_segments(nreq) uptr nreq; {
   addr = S_getmem(bytes, 0);
   debug(printf("allocate_segments addr = %p\n", addr))
 
-  base = addr_get_segment((uptr)addr + bytes_per_segment - 1);
+    base = addr_get_segment((uptr)TO_PTR(addr) + bytes_per_segment - 1);
   /* if the base of the first segment is the same as the base of the chunk, and
      the last segment isn't the last segment in memory (which could cause 'next' and 'end'
      pointers to wrap), we've actually got nact + 1 usable segments in this chunk */
-  if (build_ptr(base, 0) == addr && base + nact != ((uptr)1 << (ptr_bits - segment_offset_bits)) - 1)
+  if (build_ptr(base, 0) == TO_PTR(addr) && base + nact != ((uptr)1 << (ptr_bits - segment_offset_bits)) - 1)
     nact += 1;
 
   chunk = S_getmem(sizeof(chunkinfo) + sizeof(seginfo) * nact, 0);

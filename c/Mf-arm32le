@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = arm32le
-Cpu = ARMV6
+m ?= arm32le
+Cpu ?= ARMV6
 
-mdclib = -lm -ldl ${ncursesLib} -lrt -luuid
-C = ${CC} ${CPPFLAGS} -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 ${CFLAGS}
+mdclib = -lm -ldl ${ncursesLib} {$threadLibs} -lrt -luuid
+C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS}
 o = o
-mdsrc = arm32le.c
-mdobj = arm32le.o
+mdsrc ?= arm32le.c
+mdobj ?= arm32le.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -40,7 +40,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags}" ${MAKE} liblz4.a)

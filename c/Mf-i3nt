@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3nt
-Cpu = I386
+m ?= i3nt
+Cpu ?= I386
 
 clib=
 o = obj
@@ -39,7 +39,7 @@ make.bat: vs.bat
 # -------------------------------------------------------
 # For cross-compilation, triggered by setting cross=t o=o
 
-C = ${CC} ${CPPFLAGS} -O2 ${CFLAGS}
+C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS} -D__MINGW_USE_VC2005_COMPAT
 
 ${Scheme}${cross:t=}: ${Main} ${Kernel} ${KernelLinkDeps}
 	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid

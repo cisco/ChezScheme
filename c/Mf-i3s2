@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3s2
-Cpu = I386
+m ?= i3s2
+Cpu ?= I386
 
-mdclib = -lnsl -ldl -lm ${cursesLib} -lrt
-C = ${CC} ${CFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O ${CPPFLAGS}
+mdclib = -lnsl -ldl -lm ${cursesLib} ${threadLibs} -lrt
+C = ${CC} ${CFLAGS} -m32 ${warningFlags} ${optFlags} ${threadFlags} ${CPPFLAGS}
 o = o
-mdsrc = i3le.c
-mdobj = i3le.o
+mdsrc ?= i3le.c
+mdobj ?= i3le.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o

@@ -23,6 +23,10 @@
       [(_ [else e ...]) #'(begin (void) e ...)]
       [(_) #'(void)])))
 
+(machine-case
+ [(pb)]
+ [else
+
 #;(define-syntax foreign-struct-mat
  (syntax-rules ()
    [(_ name n)
@@ -3238,3 +3242,5 @@
          ((foreign-procedure __collect_safe __com 0 (iptr int) int) com-instance 3)
          ((foreign-procedure __collect_safe __com 4 (iptr int) int) com-instance 17))
        37))])
+
+])

@@ -22,7 +22,7 @@
 
 /* Representation is arecord with 6 `double` fields: */
 
-#define RECORDINSTDBLA(x) ((double *)((uptr)&RECORDINSTIT(x, 0) + (max_float_alignment - ptr_bytes)))
+#define RECORDINSTDBLA(x) ((double *)TO_VOIDP((uptr)TO_PTR(&RECORDINSTIT(x, 0)) + (max_float_alignment - ptr_bytes)))
 
 #define RANDSTATEX10(x) (RECORDINSTDBLA(x)[0])
 #define RANDSTATEX11(x) (RECORDINSTDBLA(x)[1])

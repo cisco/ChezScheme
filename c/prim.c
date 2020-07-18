@@ -45,6 +45,10 @@ static void install_library_entry(n, x) ptr n, x; {
     if (n == FIX(library_cpu_features))
       x86_64_set_popcount_present(x);
 #endif
+#ifdef PORTABLE_BYTECODE_BIGENDIAN
+    if (n == FIX(library_dounderflow))
+      S_swap_dounderflow_header_endian(CLOSCODE(x));
+#endif
 }
 
 ptr S_lookup_library_entry(n, errorp) iptr n; IBOOL errorp; {
@@ -81,7 +85,7 @@ ptr int2ptr(iptr f)
    return (ptr)(f & ~0x3);
 }
 #else /* HPUX */
-#define proc2ptr(x) (ptr)(iptr)(x)
+#define proc2ptr(x) TO_PTR(x)
 #endif /* HPUX */
 
 void S_install_c_entry(i, x) iptr i; ptr x; {
@@ -122,12 +126,12 @@ static void create_c_entry_vector() {
     S_install_c_entry(CENTRY_handle_overflow, proc2ptr(S_handle_overflow));
     S_install_c_entry(CENTRY_handle_overflood, proc2ptr(S_handle_overflood));
     S_install_c_entry(CENTRY_handle_nonprocedure_symbol, proc2ptr(S_handle_nonprocedure_symbol));
-    S_install_c_entry(CENTRY_thread_list, (ptr)&S_threads);
+    S_install_c_entry(CENTRY_thread_list, TO_PTR(&S_threads));
     S_install_c_entry(CENTRY_split_and_resize, proc2ptr(S_split_and_resize));
 #ifdef PTHREADS
-    S_install_c_entry(CENTRY_raw_collect_cond, (ptr)&S_collect_cond);
-    S_install_c_entry(CENTRY_raw_collect_thread0_cond, (ptr)&S_collect_thread0_cond);
-    S_install_c_entry(CENTRY_raw_tc_mutex, (ptr)&S_tc_mutex);
+    S_install_c_entry(CENTRY_raw_collect_cond, TO_PTR(&S_collect_cond));
+    S_install_c_entry(CENTRY_raw_collect_thread0_cond, TO_PTR(&S_collect_thread0_cond));
+    S_install_c_entry(CENTRY_raw_tc_mutex, TO_PTR(&S_tc_mutex));
     S_install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
     S_install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
     S_install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));

@@ -65,7 +65,7 @@
       (pr "EXPORT ~a ~a PROTO(~a);~%" tresult name targs)))
   (define &ref
     (lambda (cast x disp)
-      (format "(~a((uptr)(~a)~:[+~;-~]~d))" cast x (fx< disp 0) (abs disp))))
+      (format "(~aTO_VOIDP((uptr)(~a)~:[+~;-~]~d))" cast x (fx< disp 0) (abs disp))))
   (define ref
     (lambda (cast x disp)
       (format "(*~a)" (&ref cast x disp))))
@@ -187,6 +187,13 @@
         (nl)
         (comment "Warning: Some macros may evaluate arguments more than once.")
        
+        (constant-case architecture
+          [(pb)
+           (nl)
+           (pr "#define _LARGEFILE64_SOURCE\n") ; needed on some 32-bit platforms before <stdint.h>
+           (pr "#include <stdint.h>\n")]
+          [else (void)])
+
         (nl) (comment "Enable function prototypes by default.")
         (pr "#ifndef PROTO~%#define PROTO(x) x~%#endif~%")
   
@@ -228,6 +235,21 @@
         (pr "typedef ~a ptr;~%" (constant typedef-ptr))
         (pr "typedef ~a iptr;~%" (constant typedef-iptr))
         (pr "typedef ~a uptr;~%" (constant typedef-uptr))
+        (pr "typedef ptr xptr;~%")
+
+        (nl)
+        (comment "The `uptr` and `ptr` types are the same width, but `ptr`")
+        (comment "can be either an integer type or a pointer type; it may")
+        (comment "be larger than a pointer type.")
+        (comment "Use `TO_VOIDP` to get from the `uptr`/`ptr` world to the")
+        (comment "C pointer worlds, and use `TO_PTR` to go the other way.")
+        (pr "#ifdef PORTABLE_BYTECODE~%")
+        (pr "# define TO_VOIDP(p) ((void *)(intptr_t)(p))~%")
+        (pr "# define TO_PTR(p) ((ptr)(intptr_t)(p))~%")
+        (pr "#else~%")
+        (pr "# define TO_VOIDP(p) ((void *)(p))~%")
+        (pr "# define TO_PTR(p) ((ptr)(p))~%")
+        (pr "#endif~%")
 
         (nl)
         (comment "String elements are 32-bit tagged char objects")
@@ -421,6 +443,41 @@
         (for-each
           (lambda (x) (pr "#define FEATURE_~@:(~a~)~%" (sanitize x)))
           (feature-list))
+
+        (constant-case architecture
+          [(pb)
+           (nl) (comment "C call prototypes.")
+           (pr "#include <stdint.h>\n")
+           (for-each
+            (lambda (proto+id)
+              (let ([proto (car proto+id)])
+                (define (sym->type s)
+                  (case s
+                    [(int8) 'int8_t]
+                    [(int16) 'int16_t]
+                    [(int32) 'int32_t]
+                    [(uint32) 'uint32_t]
+                    [(int64) 'int64_t]
+                    [(uint64) 'uint64_t]
+                    [else s]))
+                (define (clean-type s)
+                  (case s
+                    [(void*) 'voids]
+                    [else s]))
+                (pr "typedef ~a (*pb_~a_t)(~a);~%"
+                    (sym->type (car proto))
+                    (apply string-append
+                           (symbol->string (clean-type (car proto)))
+                           (map (lambda (s) (format "_~a" (clean-type s)))
+                                (cdr proto)))
+                    (if (null? (cdr proto))
+                        ""
+                        (apply string-append
+                               (symbol->string (sym->type (cadr proto)))
+                               (map (lambda (s) (format ", ~a" (sym->type s)))
+                                    (cddr proto)))))))
+            (reverse (constant pb-prototype-table)))]
+          [else (void)])
 
         (nl) (comment "Locking macros.")
         (constant-case architecture
@@ -775,6 +832,12 @@
             (pr "                        : \"=&r\" (ret)\\~%")
             (pr "                        : \"r\" (addr)\\~%")
             (pr "                        : \"cc\", \"memory\", \"x12\", \"x7\")~%")]
+          [(pb)
+           (pr "#define INITLOCK(addr) (*((long *) addr) = 0)~%")
+           (pr "#define SPINLOCK(addr) (*((long *) addr) = 1)~%")
+           (pr "#define UNLOCK(addr) (*((long *) addr) = 0)~%")
+           (pr "#define LOCKED_INCR(addr, res) (res = ((*(uptr*)addr)-- == 1))~%")
+           (pr "#define LOCKED_DECR(addr, res) (res = ((*(uptr*)addr)-- == 1))~%")]
           [else
             ($oops who "asm locking code is not yet defined for ~s" (constant architecture))]))))
 

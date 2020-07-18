@@ -17,86 +17,95 @@
 #include "config.h"
 
 #if (machine_type == machine_type_arm32le || machine_type == machine_type_tarm32le || machine_type == machine_type_arm64le || machine_type == machine_type_tarm64le)
-#if (machine_type == machine_type_tarm32le || machine_type == machine_type_tarm64le)
-#define PTHREADS
-#endif
-#define NOBLOCK O_NONBLOCK
-#define LOAD_SHARED_OBJECT
-#define USE_MMAP
-#define MMAP_HEAP
-#define IEEE_DOUBLE
-#define LITTLE_ENDIAN_IEEE_DOUBLE
-#define LDEXP
-#define ARCHYPERBOLIC
-#define GETPAGESIZE() getpagesize()
-typedef char *memcpy_t;
-#define MAKE_NAN(x) { x = 0.0; x = x / x; }
-#define GETWD(x) getcwd((x),PATH_MAX)
-typedef int tputsputcchar;
-#define LOCKF
-#define DIRMARKERP(c) ((c) == '/')
-#define FLUSHCACHE
-#ifndef DISABLE_X11
-#define LIBX11 "libX11.so"
-#endif
-#define LSEEK lseek64
-#define OFF_T off64_t
-#define _LARGEFILE64_SOURCE
-#define SECATIME(sb) (sb).st_atim.tv_sec
-#define SECCTIME(sb) (sb).st_ctim.tv_sec
-#define SECMTIME(sb) (sb).st_mtim.tv_sec
-#define NSECATIME(sb) (sb).st_atim.tv_nsec
-#define NSECCTIME(sb) (sb).st_ctim.tv_nsec
-#define NSECMTIME(sb) (sb).st_mtim.tv_nsec
-#define ICONV_INBUF_TYPE char **
-#define UNUSED __attribute__((__unused__))
+# define OS_ANY_LINUX
+# if (machine_type == machine_type_tarm32le || machine_type == machine_type_tarm64le)
+#  define PTHREADS
+# endif
+# define OS_ANY_LINUX
+# define LITTLE_ENDIAN_IEEE_DOUBLE
+# define FLUSHCACHE
 #endif
 
 #if (machine_type == machine_type_ppc32le || machine_type == machine_type_tppc32le || machine_type == machine_type_ppc64le || machine_type == machine_type_tppc64le)
-#if (machine_type == machine_type_tppc32le || machine_type == machine_type_tppc64le)
-#define PTHREADS
-#endif
-#define NOBLOCK O_NONBLOCK
-#define LOAD_SHARED_OBJECT
-#define USE_MMAP
-#define MMAP_HEAP
-#define IEEE_DOUBLE
-#define LDEXP
-#define ARCHYPERBOLIC
-#define GETPAGESIZE() getpagesize()
-typedef char *memcpy_t;
-#define MAKE_NAN(x) { x = 0.0; x = x / x; }
-#define GETWD(x) getcwd((x),PATH_MAX)
-typedef int tputsputcchar;
-#define LOCKF
-#define DIRMARKERP(c) ((c) == '/')
-#define FLUSHCACHE
-#ifndef DISABLE_X11
-#define LIBX11 "libX11.so"
-#endif
-#define LSEEK lseek64
-#define OFF_T off64_t
-#define _LARGEFILE64_SOURCE
-#define SECATIME(sb) (sb).st_atim.tv_sec
-#define SECCTIME(sb) (sb).st_ctim.tv_sec
-#define SECMTIME(sb) (sb).st_mtim.tv_sec
-#define NSECATIME(sb) (sb).st_atim.tv_nsec
-#define NSECCTIME(sb) (sb).st_ctim.tv_nsec
-#define NSECMTIME(sb) (sb).st_mtim.tv_nsec
-#define ICONV_INBUF_TYPE char **
-#define UNUSED __attribute__((__unused__))
+# define OS_ANY_LINUX
+# if (machine_type == machine_type_tppc32le || machine_type == machine_type_tppc64le)
+#  define PTHREADS
+# endif
+# define FLUSHCACHE
 #endif
 
 #if (machine_type == machine_type_i3le || machine_type == machine_type_ti3le || machine_type == machine_type_a6le || machine_type == machine_type_ta6le)
-#if (machine_type == machine_type_ti3le || machine_type == machine_type_ta6le)
-#define PTHREADS
+# define OS_ANY_LINUX
+# if (machine_type == machine_type_ti3le || machine_type == machine_type_ta6le)
+#  define PTHREADS
+# endif
+# define LITTLE_ENDIAN_IEEE_DOUBLE
 #endif
+
+#if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb || machine_type == machine_type_a6fb || machine_type == machine_type_ta6fb)
+# define OS_ANY_FREEBSD
+# if (machine_type == machine_type_ti3fb || machine_type == machine_type_ta6fb)
+#  define PTHREADS
+# endif
+# define LITTLE_ENDIAN_IEEE_DOUBLE
+#endif
+
+#if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb)
+# define OS_ANY_NETBSD
+# if (machine_type == machine_type_ti3nb || machine_type == machine_type_ta6nb)
+#  define PTHREADS
+# endif
+#endif
+
+#if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
+# define OS_ANY_WINDOWS
+# if (machine_type == machine_type_ti3nt || machine_type == machine_type_ta6nt)
+#  define PTHREADS
+# endif
+#endif
+
+#if (machine_type == machine_type_i3ob || machine_type == machine_type_ti3ob || machine_type == machine_type_a6ob || machine_type == machine_type_ta6ob)
+# define OS_ANY_OPENBSD
+# if (machine_type == machine_type_ti3ob || machine_type == machine_type_ta6ob)
+#  define PTHREADS
+# endif
+#endif
+
+#if (machine_type == machine_type_i3osx || machine_type == machine_type_ti3osx || machine_type == machine_type_a6osx || machine_type == machine_type_ta6osx)
+# define OS_ANY_MACOSX
+# if (machine_type == machine_type_ti3osx || machine_type == machine_type_ta6osx)
+#  define PTHREADS
+# endif
+#endif
+
+#if (machine_type == machine_type_pb)
+# if defined(__powerpc__) && !defined(__powerpc64__)
+#  define PORTABLE_BYTECODE_BIGENDIAN
+# endif
+# if defined(__linux__)
+#  define OS_ANY_LINUX
+#  ifndef PORTABLE_BYTECODE_BIGENDIAN
+#   define LITTLE_ENDIAN_IEEE_DOUBLE
+#  endif
+# elif defined(__NetBSD__)
+#  define OS_ANY_NETBSD
+# elif defined(__OpenBSD__) && !defined(__Bitrig__)
+#  define OS_ANY_OPENBSD
+# elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#  define OS_ANY_FREEBSD
+# elif defined(_MSC_VER) || defined(__MINGW32__)
+#   define OS_ANY_WINDOWS
+# elif __APPLE__
+#   define OS_ANY_MACOSX
+# endif
+#endif
+
+#ifdef OS_ANY_LINUX
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP
 #define MMAP_HEAP
 #define IEEE_DOUBLE
-#define LITTLE_ENDIAN_IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
@@ -107,7 +116,7 @@ typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
 #ifndef DISABLE_X11
-#define LIBX11 "libX11.so"
+# define LIBX11 "libX11.so"
 #endif
 #define LSEEK lseek64
 #define OFF_T off64_t
@@ -122,16 +131,12 @@ typedef int tputsputcchar;
 #define UNUSED __attribute__((__unused__))
 #endif
 
-#if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb || machine_type == machine_type_a6fb || machine_type == machine_type_ta6fb)
-#if (machine_type == machine_type_ti3fb || machine_type == machine_type_ta6fb)
-#define PTHREADS
-#endif
+#ifdef OS_ANY_FREEBSD
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP
 #define MMAP_HEAP
 #define IEEE_DOUBLE
-#define LITTLE_ENDIAN_IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
@@ -155,10 +160,9 @@ typedef int tputsputcchar;
 #define USE_OSSP_UUID
 #endif
 
-#if (machine_type == machine_type_i3nb || machine_type == machine_type_ti3nb || machine_type == machine_type_a6nb || machine_type == machine_type_ta6nb)
-#if (machine_type == machine_type_ti3nb || machine_type == machine_type_ta6nb)
-#define NETBSD
-#define PTHREADS
+#ifdef OS_ANY_NETBSD
+#ifdef PTHREADS
+# define NETBSD
 #endif
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
@@ -191,10 +195,7 @@ typedef int tputsputcchar;
 #define USE_MBRTOWC_L
 #endif
 
-#if (machine_type == machine_type_i3nt || machine_type == machine_type_ti3nt || machine_type == machine_type_a6nt || machine_type == machine_type_ta6nt)
-#if (machine_type == machine_type_ti3nt || machine_type == machine_type_ta6nt)
-#define PTHREADS
-#endif
+#ifdef OS_ANY_WINDOWS
 #define GETPAGESIZE() S_getpagesize()
 #define GETWD(x) GETCWD(x, _MAX_PATH)
 #define IEEE_DOUBLE
@@ -257,10 +258,7 @@ struct timespec;
 #endif
 #endif
 
-#if (machine_type == machine_type_i3ob || machine_type == machine_type_ti3ob || machine_type == machine_type_a6ob || machine_type == machine_type_ta6ob)
-#if (machine_type == machine_type_ti3ob || machine_type == machine_type_ta6ob)
-#define PTHREADS
-#endif
+#ifdef OS_ANY_OPENBSD
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP
@@ -291,10 +289,7 @@ typedef int tputsputcchar;
 #define USE_OSSP_UUID
 #endif
 
-#if (machine_type == machine_type_i3osx || machine_type == machine_type_ti3osx || machine_type == machine_type_a6osx || machine_type == machine_type_ta6osx)
-#if (machine_type == machine_type_ti3osx || machine_type == machine_type_ta6osx)
-#define PTHREADS
-#endif
+#ifdef OS_ANY_MACOSX
 #define MACOSX
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
@@ -326,9 +321,13 @@ typedef int tputsputcchar;
 #endif
 
 #if (machine_type == machine_type_i3qnx || machine_type == machine_type_ti3qnx)
-#if (machine_type == machine_type_ti3qnx)
-#define PTHREADS
+# define OS_ANY_QNX
+# if (machine_type == machine_type_ti3qnx)
+#  define PTHREADS
+# endif
 #endif
+
+#ifdef OS_ANY_QNX
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP
@@ -359,9 +358,13 @@ typedef int tputsputcchar;
 #endif
 
 #if (machine_type == machine_type_i3s2 || machine_type == machine_type_ti3s2 || machine_type == machine_type_a6s2 || machine_type == machine_type_ta6s2)
-#if (machine_type == machine_type_ti3s2 || machine_type == machine_type_ta6s2)
-#define PTHREADS
+# define OS_ANY_SOLARIS2
+# if (machine_type == machine_type_ti3s2 || machine_type == machine_type_ta6s2)
+#  define PTHREADS
+# endif
 #endif
+
+#ifdef OS_ANY_SOLARIS2
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP

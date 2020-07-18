@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = ppc32le
-Cpu = PPC32
+m ?= ppc32le
+Cpu ?= PPC32
 
-mdclib = -lm -ldl ${ncursesLib} -lrt -luuid
-C = ${CC} ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -Wno-implicit-fallthrough -O2 ${CFLAGS}
+mdclib = -lm -ldl ${ncursesLib} -lrt -luuid ${threadLibs}
+C = ${CC} ${CPPFLAGS} -m32 ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
-mdsrc = ppc32.c
-mdobj = ppc32.o
+mdsrc ?= ppc32.c
+mdobj ?= ppc32.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -40,7 +40,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m32" ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m32" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m32" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} ${optFlags} -m32" ${MAKE} liblz4.a)

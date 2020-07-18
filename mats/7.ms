@@ -1149,7 +1149,9 @@
   ; regression test to verify that we can evaluate a foreign-callable form inside the procedure to
   ; which scheme-start is set, which was failing because its relocation information was discarded
   ; by the static-generation collection.
-  (equal?
+  (or
+   (case (machine-type) [(pb) #t] [else #f]) ; no callables in pb
+   (equal?
     (begin
       (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
@@ -1172,7 +1174,7 @@
           (close-input-port from-stderr)
           (unless (eof-object? err) (error 'bootfile-test2 err))
           out)))
-    "#<code>\n")
+    "#<code>\n"))
 )
 
 (mat hostop

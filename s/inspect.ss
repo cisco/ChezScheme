@@ -2582,12 +2582,11 @@
            (lambda (x)
              (cond
                [(pair? x)
-                (let ([space ($seginfo-space ($maybe-seginfo x))])
-                  (cond
-                   [(eqv? space (constant space-ephemeron))
-                    (fx+ (constant size-ephemeron) (compute-size (car x)) (compute-size (cdr x)))]
-                   [else
-                    (fx+ (constant size-pair) (compute-size (car x)) (compute-size (cdr x)))]))]
+                (cond
+                  [(ephemeron-pair? x)
+                   (fx+ (constant size-ephemeron) (compute-size (car x)) (compute-size (cdr x)))]
+                  [else
+                   (fx+ (constant size-pair) (compute-size (car x)) (compute-size (cdr x)))])]
                [(symbol? x)
                 (fx+ (constant size-symbol)
                   (compute-size (#3%$top-level-value x))

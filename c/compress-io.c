@@ -472,9 +472,9 @@ static INT glzemit_lz4(lz4File_out *lz4, void *buffer, UINT count) {
 
   /* allocate one out_buffer (per thread) since we don't need one for each file.
      the buffer is freed by destroy_thread. */
-  if ((cached_out_buffer = LZ4OUTBUFFER(tc)) == NULL || cached_out_buffer->size < lz4->out_buffer_size) {
+  if ((cached_out_buffer = TO_VOIDP(LZ4OUTBUFFER(tc))) == NULL || cached_out_buffer->size < lz4->out_buffer_size) {
     if (cached_out_buffer != NULL) free(cached_out_buffer);
-    if ((LZ4OUTBUFFER(tc) = cached_out_buffer = malloc(sizeof(sized_buffer) + lz4->out_buffer_size)) == NULL) return -1;
+    if ((LZ4OUTBUFFER(tc) = TO_PTR(cached_out_buffer = malloc(sizeof(sized_buffer) + lz4->out_buffer_size))) == 0) return -1;
     cached_out_buffer->size = lz4->out_buffer_size;
   }
   out_buffer = cached_out_buffer->buffer;

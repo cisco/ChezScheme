@@ -34,7 +34,7 @@
       [else ($oops 'put16-be "unsupported fixnum size")]))
   (define put16
     (lambda (p n)
-      (constant-case native-endianness
+      (constant-case fasl-endianness
         [(little) (put16-le p n)]
         [(big) (put16-be p n)])))
   (define put32-le
@@ -87,7 +87,7 @@
       [else ($oops 'put32-be "unsupported fixnum size")]))
   (define put32
     (lambda (p n)
-      (constant-case native-endianness
+      (constant-case fasl-endianness
         [(little) (put32-le p n)]
         [(big) (put32-be p n)])))
   (define put64-le
@@ -110,7 +110,7 @@
          (put32-be p (logand n (bit-mask 32)))])))
   (define put64
     (lambda (p n)
-      (constant-case native-endianness
+      (constant-case fasl-endianness
         [(little) (put64-le p n)]
         [(big) (put64-be p n)])))
   (define put-iptr

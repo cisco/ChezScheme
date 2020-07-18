@@ -67,7 +67,7 @@ extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
 extern ptr S_bytes_finalized PROTO(());
 extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
 extern void S_dirty_set PROTO((ptr *loc, ptr x));
-extern void S_scan_dirty PROTO((ptr **p, ptr **endp));
+extern void S_scan_dirty PROTO((ptr *p, ptr *endp));
 extern void S_scan_remembered_set PROTO((void));
 extern void S_get_more_room PROTO((void));
 extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
@@ -119,6 +119,9 @@ extern int S_fasl_stream_read PROTO((void *stream, octet *dest, iptr n));
 extern int S_fasl_intern_rtd(ptr *x);
 #ifdef X86_64
 extern void x86_64_set_popcount_present PROTO((ptr code));
+#endif
+#ifdef PORTABLE_BYTECODE_BIGENDIAN
+extern void S_swap_dounderflow_header_endian PROTO((ptr code));
 #endif
 
 /* vfasl.c */
@@ -230,14 +233,8 @@ extern void S_glzclearerr PROTO((glzFile fdfile));
 extern INT S_gzxfile_fd PROTO((ptr x));
 extern glzFile S_gzxfile_gzfile PROTO((ptr x));
 extern ptr S_new_open_input_fd PROTO((const char *filename, IBOOL compressed));
-extern ptr S_new_open_output_fd PROTO((
-  const char *filename, INT mode,
-  IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
-extern ptr S_new_open_input_output_fd PROTO((
-  const char *filename, INT mode,
-  IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
+extern ptr S_new_open_output_fd PROTO((const char *filename, INT mode, INT options));
+extern ptr S_new_open_input_output_fd PROTO((const char *filename, INT mode, INT options));
 extern ptr S_close_fd PROTO((ptr file, IBOOL gzflag));
 extern ptr S_compress_input_fd PROTO((INT fd, I64 fp));
 extern ptr S_compress_output_fd PROTO((INT fd));
@@ -413,6 +410,11 @@ extern void S_return PROTO((void));
 extern void S_call_help PROTO((ptr tc, IBOOL singlep, IBOOL lock_ts));
 extern void S_call_one_result PROTO((void));
 extern void S_call_any_results PROTO((void));
+
+#ifdef PORTABLE_BYTECODE
+/* pb.c */
+extern void S_pb_interp(ptr tc, void *bytecode);
+#endif
 
 #ifdef WIN32
 /* windows.c */

@@ -1955,6 +1955,8 @@
   ($foreign-entries [flags single-valued])
   ($foreign-entry [flags single-valued discard])
   ($foreign-wchar? [sig [(ptr) -> (boolean)]] [flags pure unrestricted cp02])
+  ($foreign-swap-ref [sig [(sub-symbol uptr/iptr uptr/iptr) -> (ptr)]] [flags])
+  ($foreign-swap-set! [sig [(sub-symbol uptr/iptr uptr/iptr sub-ptr) -> (void)]] [flags true])
   ($format-scheme-version [flags single-valued alloc])
   ($fp-filter-type [flags single-valued])
   ($fp-string->utf16 [flags single-valued])

@@ -10014,8 +10014,8 @@ foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure resul
 foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure result type specifier hag".
 foreign.mo:Expected error in mat foreign-ftype: "invalid (non-base) foreign-procedure argument ftype A".
 foreign.mo:Expected error in mat foreign-ftype: "invalid (non-base) foreign-procedure result ftype A".
-foreign.mo:Expected error in mat foreign-ftype: "invalid (swapped) foreign-procedure argument ftype swap-fixnum".
-foreign.mo:Expected error in mat foreign-ftype: "invalid (swapped) foreign-procedure result ftype swap-fixnum".
+foreign.mo:Expected error in mat foreign-ftype: "invalid (not native) foreign-procedure argument ftype swap-fixnum".
+foreign.mo:Expected error in mat foreign-ftype: "invalid (not native) foreign-procedure result ftype swap-fixnum".
 foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (define-ftype foo (function "wtf" () void) +)".
 foreign.mo:Expected error in mat foreign-ftype: "invalid function-ftype convention "wtf"".
 foreign.mo:Expected error in mat foreign-ftype: "invalid function-ftype argument type specifier void".
@@ -10268,7 +10268,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-locked-incr! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-locked-incr! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-locked-incr! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-locked-incr! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-locked-incr! A (h) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-locked-decr!)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-locked-decr! A)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-locked-decr! A x)".
@@ -10284,7 +10284,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-locked-decr! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-locked-decr! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-locked-decr! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-locked-decr! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-locked-decr! A (h) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-init-lock!)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-init-lock! A)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-init-lock! A x)".
@@ -10300,7 +10300,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-init-lock! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-init-lock! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-init-lock! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-init-lock! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-init-lock! A (h) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-lock!)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-lock! A)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-lock! A x)".
@@ -10316,7 +10316,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-lock! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-lock! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-lock! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-lock! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-lock! A (h) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-spin-lock!)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-spin-lock! A)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-spin-lock! A x)".
@@ -10332,7 +10332,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-spin-lock! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-spin-lock! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-spin-lock! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-spin-lock! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-spin-lock! A (h) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-unlock!)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-unlock! A)".
 ftype.mo:Expected error in mat ftype-lock-operations: "invalid syntax (ftype-unlock! A x)".
@@ -10348,7 +10348,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-unlock! A (f f2 0) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-unlock! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-unlock! A (g) x)".
-ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on swapped field unsupported (ftype-unlock! A (h) x)".
+ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-unlock! A (h) x)".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value 113886 for bit field of size 1".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value #\a for bit field of size 3".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value oops for bit field of size 14".

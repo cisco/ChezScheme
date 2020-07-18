@@ -1026,7 +1026,11 @@
 
  ; ----------------
   (begin
-    (define-ftype A (bits [x unsigned 3] [y unsigned 5]))
+    (meta-cond
+     [(eq? (machine-type) 'pb)
+      (define-ftype A (endian little (bits [x unsigned 3] [y unsigned 5])))]
+     [else
+      (define-ftype A (bits [x unsigned 3] [y unsigned 5]))])
     (define-ftype B (* A))
     (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
     (define b (make-ftype-pointer B (foreign-alloc (ftype-sizeof B))))
@@ -1465,6 +1469,15 @@
                            (f (fx- n 1)))))
                    (let ([s1 (statistics)])
                      (<= (- (sstats-bytes s1) (sstats-bytes s0)) 1000)))))))
+    (define-syntax pick-endianness-if-necessary
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ (define-ftype id t))
+           (cond
+             [(eq? (machine-type) 'pb)
+              #'(define-ftype id (endian little t))]
+             [else
+              #'(define-ftype id t)])])))
     #t)
 
   ; might should also check ftype-&ref, ftype-locked-decr!, ftype-init-lock,
@@ -1514,7 +1527,8 @@
 
   ($not-much-alloc? #t
     (let ()
-      (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])]))
+      (pick-endianness-if-necessary
+       (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])])))
       (define-ftype B (* A))
       (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
       (define b (make-ftype-pointer B (foreign-alloc (ftype-sizeof B))))
@@ -1540,7 +1554,8 @@
 
   ($not-much-alloc? #t
     (let ()
-      (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])]))
+      (pick-endianness-if-necessary
+       (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])])))
       (define-ftype B (* A))
       (define-ftype BB (struct [b1 char] [b2 B]))
       (define-ftype BBB (* BB))
@@ -1570,7 +1585,8 @@
 
   ($not-much-alloc? #t
     (let ()
-      (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])]))
+      (pick-endianness-if-necessary
+       (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])])))
       (define-ftype C (struct [c1 int] [c2 A]))
       (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
       (define c (make-ftype-pointer C (foreign-alloc (ftype-sizeof C))))
@@ -1583,7 +1599,8 @@
 
   ($not-much-alloc? #t
     (let ()
-      (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])]))
+      (pick-endianness-if-necessary
+       (define-ftype A (struct [x (array 10 int)] [y (bits [y1 unsigned 3] [y2 unsigned 12] [y3 signed 17])])))
       (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
       (define a-addr (ftype-pointer-address a))
       (lambda (n)
@@ -2403,18 +2420,22 @@
 
   (eqv? (ftype-ref Bl (a) bl) -3.14)
   (or (not (eq? (native-endianness) 'little))
+      (eq? (machine-type) 'pb)
       (eqv? (ftype-ref D () bl) -3.14))
   (eqv? (ftype-ref Dl () bl) -3.14)
   (or (not (eq? (native-endianness) 'little))
+      (eq? (machine-type) 'pb)
       (eqv? (ftype-ref double () bl) -3.14))
   (error? ; invalid syntax
     (ftype-ref (endian little double) () bl))
 
   (eqv? (ftype-ref Bb (a) bb) -3.14)
   (or (not (eq? (native-endianness) 'big))
+      (eq? (machine-type) 'pb)
       (eqv? (ftype-ref D () bb) -3.14))
   (eqv? (ftype-ref Db () bb) -3.14)
   (or (not (eq? (native-endianness) 'big))
+      (eq? (machine-type) 'pb)
       (eqv? (ftype-ref double () bb) -3.14))
   (error? ; invalid syntax
     (ftype-ref (endian big double) () bb))
@@ -3125,7 +3146,8 @@
  ; ----------------
 
   (begin
-    (define-ftype Ebits (bits [x signed 32]))
+    (pick-endianness-if-necessary
+     (define-ftype Ebits (bits [x signed 32])))
     (define ebits (make-ftype-pointer Ebits 0))
     #t)
 
@@ -5554,17 +5576,23 @@
 
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer A 0))
-    (case (native-endianness)
-      [(big) '(endian little double)]
-      [(little) 'double]
-      [else (errorf #f "unexpected native endianness")]))
+    (cond
+      [(eq? (machine-type) 'pb) '(endian little double)]
+      [else
+       (case (native-endianness)
+         [(big) '(endian little double)]
+         [(little) 'double]
+         [else (errorf #f "unexpected native endianness")])]))
 
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer B 0))
-    (case (native-endianness)
-      [(big) 'double]
-      [(little) '(endian big double)]
-      [else (errorf #f "unexpected native endianness")]))
+    (cond
+      [(eq? (machine-type) 'pb) '(endian big double)]
+      [else
+       (case (native-endianness)
+         [(big) 'double]
+         [(little) '(endian swapped double)]
+         [else (errorf #f "unexpected native endianness")])]))
 
   (begin
     (define-ftype A (endian little char))

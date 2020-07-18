@@ -1512,7 +1512,7 @@ where \var{length} is an exact nonnegative integer,
 \var{conv} is \scheme{#f} or a string naming a valid convention
 as described on page~\ref{page:conv-description},
 signedness is either \scheme{signed} or \scheme{unsigned}, and
-endianness is one of \scheme{native}, \scheme{big}, or \scheme{little}.
+endianness is one of \scheme{native}, \scheme{swapped}, \scheme{big}, or \scheme{little}.
 
 A restriction not reflected above is that 
 \scheme{function} ftypes cannot be used as the types of
@@ -1695,17 +1695,23 @@ the \scheme{endian} ftype with a \scheme{big} or \scheme{little}
 \var{endianness} specifier.
 The \scheme{native} specifier can be used to force a return
 back to \scheme{native} representation.
+The \scheme{swapped} specifier can be used to swap the
+representation relative to the default or enclosing representation.
 Each \scheme{endian} form affects only ftypes nested syntactically
 within it and not nested within a closer \scheme{endian} form.
 
 The total size $n$ of the fields within an ftype bits form must
-be 8, 16, 24, 32, 40, 48, 56, or 64.  padding must be added manually if needed.
+be 8, 16, 24, 32, 40, 48, 56, or 64.  Padding must be added manually, if needed.
 In little-endian representation, the first field occupies
 the low-order bits of the containing 8, 16, 24, 32, 40, 48, 56, or 64-bit word,
 with each subsequent field just above the preceding field.
 In big-endian representation, the first field occupies the
 high-order bits, with each subsequent field just below the
-preceding field.
+preceding field. For a machine type where endianness is not
+known at compile time (such as the porrtable bytecode
+virtual machine), a bit field must be specified explicitly
+as \scheme{big} or \scheme{little} endian by an enclosing
+declaration.
 
 Two ftypes are considered equivalent only if defined by the
 same \scheme{ftype} binding.

@@ -23,8 +23,8 @@
 /* we can now return arbitrary values (aligned or not)
  * since the garbage collector ignores addresses outside of the heap
  * or within foreign segments */
-#define ptr_to_addr(p) ((void *)p)
-#define addr_to_ptr(a) ((ptr)a)
+#define ptr_to_addr(p) TO_VOIDP(p)
+#define addr_to_ptr(a) TO_PTR(a)
 
 /* buckets should be prime */
 #define buckets 457
@@ -52,7 +52,9 @@
 /* locally defined functions */
 static iptr symhash PROTO((const char *s));
 static ptr lookup_static PROTO((const char *s));
+#ifdef LOAD_SHARED_OBJECT
 static ptr lookup_dynamic PROTO((const char *s, ptr tbl));
+#endif
 static ptr lookup PROTO((const char *s));
 static ptr remove_foreign_entry PROTO((const char *s));
 static void *lookup_foreign_entry PROTO((const char *s));
@@ -129,10 +131,9 @@ static ptr lookup_dynamic(s, tbl) const char *s; ptr tbl; {
 
 static ptr lookup(s) const char *s; {
     iptr b; ptr p;
-
-#ifdef LOOKUP_DYNAMIC
     ptr x;
 
+#ifdef LOOKUP_DYNAMIC
     x = lookup_dynamic(s, S_foreign_dynamic);
     if (x == addr_to_ptr(0))
 #endif /* LOOKUP_DYNAMIC */

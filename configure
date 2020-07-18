@@ -25,6 +25,7 @@ machs=$machs$sep2$last
 
 m=""
 w=""
+pb=no
 threads=yes
 nothreads=no
 temproot=""
@@ -186,6 +187,9 @@ while [ $# != 0 ] ; do
     --32)
       bits=32
       ;;
+    --pb)
+      pb=yes
+      ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
       ;;
@@ -307,6 +311,13 @@ while [ $# != 0 ] ; do
   shift
 done
 
+if [ "$m" = "pb" ] ; then
+    echo "Don't select pb using -m or --machine, because pb needs the"
+    echo " machine as the kernel host machine. Instead, use --pb to select"
+    echo " a pb (portable bytecode) build."
+    exit 1
+fi
+
 if [ "$bits" = "" ] ; then
   if uname -a | egrep 'amd64|x86_64|aarch64' > /dev/null 2>&1 ; then
     bits=64
@@ -320,10 +331,16 @@ if [ "$threads" = "" ] ; then
 fi
 
 if [ "$m" = "" ] ; then
-  if [ $bits = 64 ] ; then
-    if [ $threads = yes ] ; then m=$tm64 ; else m=$m64 ; fi
-  else
-    if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
+  machine_supplied=no
+  if [ $pb = yes ] ; then
+     m=pb
+     if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
+  else      
+    if [ $bits = 64 ] ; then
+      if [ $threads = yes ] ; then m=$tm64 ; else m=$m64 ; fi
+    else
+      if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
+    fi
   fi
 fi
 
@@ -413,9 +430,17 @@ if [ "$help" = "yes" ]; then
 fi
 
 if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
-  echo "no suitable machine type found"
-  echo "try rerunning as $0 -m=<machine type>"
-  echo "available machine types: $machs"
+  echo "No suitable machine type found."
+  if [ "$machine_supplied" = "no" ] ; then
+      echo "Try rerunning as $0 -m=<machine type>"
+  fi
+  echo "Available machine types: $machs"
+  if [ -f boot/pb/scheme.boot ] ; then
+      echo "A pb machine type is available, so you might also try"
+      echo "  $0 --pb"
+      echo "  make <machine type>.bootquick"
+      echo "and then try $0 again."
+  fi
   exit 1
 fi
 
@@ -447,7 +472,7 @@ else
   fi
 fi
 
-./workarea $m $w
+./workarea $m $w $mpbhost
 
 sed -e 's/$(m)/'$m'/g'\
     -e 's/$(workarea)/'$w'/g'\
@@ -501,6 +526,9 @@ if [ "$disablecurses" = "yes" ]; then
   ncursesLib=
 fi
 
+warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
+optFlags=-O2
+
 cat > $w/c/Mf-config << END
 CC=$CC
 CPPFLAGS=$CPPFLAGS
@@ -521,6 +549,9 @@ zlibLib=$zlibLib
 LZ4Lib=$LZ4Lib
 zlibHeaderDep=$zlibHeaderDep
 LZ4HeaderDep=$LZ4HeaderDep
+warningFlags=$warningFlags
+optFlags=$optFlags
+KernelCFlags=$KernelCFlags
 Kernel=\${${Kernel}}
 KernelLinkDeps=\${${Kernel}LinkDeps}
 KernelLinkLibs=\${${Kernel}LinkLibs}

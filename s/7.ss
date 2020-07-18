@@ -134,7 +134,7 @@
 
 (set-who! fasl-read
   (let ()
-    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int fixnum ptr ptr) ptr))
+    (define $fasl-read (foreign-procedure "(cs)fasl_read" (int int ptr ptr) ptr))
     (define $bv-fasl-read (foreign-procedure "(cs)bv_fasl_read" (ptr int uptr uptr ptr ptr) ptr))
     (define (get-uptr p)
       (let ([k (get-u8 p)])

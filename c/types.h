@@ -74,17 +74,22 @@ typedef int IFASLCODE;      /* fasl type codes */
 #define SBUFSIZ BUFSIZ
 #endif
 
+#define ALREADY_PTR(p) (p)
+
 /* inline allocation --- mutex required */
 /* find room allocates n bytes in space s and generation g into
  * destination x, tagged with ty, punting to find_more_room if
  * no space is left in the current segment.  n is assumed to be
  * an integral multiple of the object alignment. */
-#define find_room(s, g, t, n, x) {\
+#define find_room_T(s, g, t, n, T, x) {          \
     ptr X = S_G.next_loc[s][g];\
     S_G.next_loc[s][g] = (ptr)((uptr)X + (n));\
     if ((S_G.bytes_left[s][g] -= (n)) < 0) X = S_find_more_room(s, g, n, X);\
-    (x) = TYPE(X, t);\
+    (x) = T(TYPE(X, t));                                                \
 }
+
+#define find_room(s, g, t, n, x) find_room_T(s, g, t, n, ALREADY_PTR, x)
+#define find_room_voidp(s, g, n, x) find_room_T(s, g, typemod, n, TO_VOIDP, x)
 
 /* thread-local inline allocation --- no mutex required */
 /* thread_find_room allocates n bytes in the local allocation area of
@@ -92,16 +97,20 @@ typedef int IFASLCODE;      /* fasl type codes */
  * with type t, punting to find_more_room if no space is left in the current
  * allocation area.  n is assumed to be an integral multiple of the object
  * alignment. */
-#define thread_find_room(tc, t, n, x) {\
+#define thread_find_room_T(tc, t, n, T, x) {     \
   ptr _tc = tc;\
   uptr _ap = (uptr)AP(_tc);\
   if ((uptr)n > ((uptr)EAP(_tc) - _ap)) {\
-    (x) = S_get_more_room_help(_tc, _ap, t, n);\
+    ptr _hp = S_get_more_room_help(_tc, _ap, t, n); \
+    (x) = T(_hp);                       \
   } else {\
-    (x) = TYPE(_ap,t);\
+    (x) = T(TYPE(_ap,t));                       \
     AP(_tc) = (ptr)(_ap + n);\
   }\
 }
+
+#define thread_find_room(tc, t, n, x) thread_find_room_T(tc, t, n, ALREADY_PTR, x)
+#define thread_find_room_voidp(tc, n, x) thread_find_room_T(tc, typemod, n, TO_VOIDP, x)
 
 #ifndef NO_PRESERVE_FLONUM_EQ
 # define PRESERVE_FLONUM_EQ
@@ -154,7 +163,13 @@ typedef struct _seginfo {
 #endif
   octet *counting_mask;                     /* bitmap of counting roots during a GC */
   octet *measured_mask;                     /* bitmap of objects that have been measured */
+#ifdef PORTABLE_BYTECODE
+  union { ptr force_alignment;    
+#endif
   octet dirty_bytes[cards_per_segment];     /* one dirty byte per card */
+#ifdef PORTABLE_BYTECODE
+  };
+#endif
 } seginfo;
 
 typedef struct _chunkinfo {
@@ -259,7 +274,7 @@ typedef struct _bucket_pointer_list {
 #define UNTYPE(x,type) ((ptr)((iptr)(x) + typemod - (type)))
 #define UNTYPE_ANY(x) ((ptr)(((iptr)(x) + (typemod - 1)) & ~(typemod - 1)))
 #define TYPEBITS(x) ((iptr)(x) & (typemod - 1))
-#define TYPEFIELD(x) (*(ptr *)UNTYPE(x, type_typed_object))
+#define TYPEFIELD(x) (*(ptr *)TO_VOIDP(UNTYPE(x, type_typed_object)))
 
 #define FIX(x) Sfixnum(x)
 #define UNFIX(x) Sfixnum_value(x)
@@ -316,7 +331,7 @@ typedef struct _bucket_pointer_list {
 #define LIST4(x,y,z,w) Scons(x, LIST3(y, z, w))
 
 #define REGARG(tc,i) ARGREG(tc,(i)-1)
-#define FRAME(tc,i) (((ptr *)SFP(tc))[i])
+#define FRAME(tc,i) (((ptr *)TO_VOIDP(SFP(tc)))[i])
 
 #ifdef PTHREADS
 typedef struct {
@@ -376,7 +391,7 @@ typedef struct {
   S_mutex_release(&S_tc_mutex);\
 }
 #else
-#define get_thread_context() (ptr)S_G.thread_context
+#define get_thread_context() TO_PTR(S_G.thread_context)
 #define deactivate_thread(tc) {}
 #define reactivate_thread(tc) {}
 #define tc_mutex_acquire() {}
@@ -412,9 +427,9 @@ typedef struct {
 #define MAKE_FD(fd) Sinteger(fd)
 #define GET_FD(file) ((INT)Sinteger_value(file))
 
-#define PTRFIELD(x,disp) (*(ptr *)((uptr)(x)+disp))
-#define INITPTRFIELD(x,disp) (*(ptr *)((uptr)(x)+disp))
-#define SETPTRFIELD(x,disp,y) DIRTYSET(((ptr *)((uptr)(x)+disp)),(y))
+#define PTRFIELD(x,disp) (*(ptr *)TO_VOIDP(((uptr)(x)+disp)))
+#define INITPTRFIELD(x,disp) (*(ptr *)TO_VOIDP(((uptr)(x)+disp)))
+#define SETPTRFIELD(x,disp,y) DIRTYSET(((ptr *)TO_VOIDP((uptr)(x)+disp)),(y))
 
 #define INCRGEN(g) (g = g == S_G.max_nonstatic_generation ? static_generation : g+1)
 #define IMMEDIATE(x) (Sfixnump(x) || Simmediatep(x))

@@ -19,7 +19,8 @@ doit: $(bootfiles)
 
 %.boot:
 	( cd .. ; ./workarea $* xc-$* )
-	( cd ../xc-$*/s ; make -f Mf-cross base=../../$(workarea) --jobs=2 m=$(m) xm=$* )
+	( cd ../xc-$*/s ; make -f Mf-cross base=../../$(workarea) m=$(m) xm=$* )
+	mkdir -p ../boot/$*
 	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc vfasl.inc` ; do\
           if [ ! -h ../xc-$*/boot/$*/$$x ] ; then \
             mv -f ../xc-$*/boot/$*/$$x ../boot/$*/$$x ;\

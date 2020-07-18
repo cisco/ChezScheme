@@ -166,8 +166,8 @@
       (copy pair-cdr)
       (case-mode
        [(copy)
-        (set! (ephemeron-prev-ref _copy_) NULL)
-        (set! (ephemeron-next _copy_) NULL)]
+        (set! (ephemeron-prev-ref _copy_) 0)
+        (set! (ephemeron-next _copy_) 0)]
        [else])
       (add-ephemeron-to-pending)
       (mark one-bit no-sweep)
@@ -349,7 +349,7 @@
                                                (and-counts (== p_spc space-count-impure)))))
              (let* ([ua_size : uptr (unaligned_size_record_inst len)])
                (when (!= p_sz ua_size)
-                 (set! (* (cast ptr* (+ (cast uptr (UNTYPE _copy_ type_typed_object)) ua_size)))
+                 (set! (* (cast ptr* (TO_VOIDP (+ (cast uptr (UNTYPE _copy_ type_typed_object)) ua_size))))
                        (FIX 0))))))
       (count-record rtd)]
 
@@ -753,7 +753,7 @@
              [(case-flag as-dirty?
                [on 0]
                [off (== mask (>> (cast uptr -1) 1))])
-              (let* ([ppend : ptr* (- (cast ptr* (+ (cast uptr pp) len)) 1)])
+              (let* ([ppend : ptr* (- (cast ptr* (TO_VOIDP (+ (cast uptr (TO_PTR pp)) len))) 1)])
                 (while
                  :? (< pp ppend)
                  (trace (* pp))
@@ -808,7 +808,7 @@
     ;; Don't need to save fields of base-rtd
     (when (== _ (-> vfi base_rtd))
       (let* ([pp : ptr* (& (record-data _ 0))]
-             [ppend : ptr* (- (cast ptr* (+ (cast uptr pp) (UNFIX (record-type-size rtd)))) 1)])
+             [ppend : ptr* (- (cast ptr* (TO_VOIDP (+ (cast uptr (TO_PTR pp)) (UNFIX (record-type-size rtd))))) 1)])
         (while
          :? (< pp ppend)
          (set! (* pp) Snil)
@@ -974,7 +974,7 @@
    (when (< fp base)
      (S_error_abort "sweep_stack(gc): malformed stack"))
    (set! fp (- fp (ENTRYFRAMESIZE ret)))
-   (let* ([pp : ptr* (cast ptr* fp)]
+   (let* ([pp : ptr* (cast ptr* (TO_VOIDP fp))]
           [oldret : iptr ret])
      (set! ret (cast iptr (* pp)))
      (trace-return NO-COPY-MODE (* pp))
@@ -1014,7 +1014,7 @@
     (trace-return-code field xcp)]))
 
 (define-trace-macro (trace-return-code field xcp)
-  (define co : iptr (+ (ENTRYOFFSET xcp) (- (cast uptr xcp) (cast uptr (ENTRYOFFSETADDR xcp)))))
+  (define co : iptr (+ (ENTRYOFFSET xcp) (- (cast uptr xcp) (cast uptr (TO_PTR (ENTRYOFFSETADDR xcp))))))
   (define c_p : ptr (cast ptr (- (cast uptr xcp) co)))
   (case-mode
    [sweep
@@ -1046,7 +1046,7 @@
      [vfasl-sweep
       (let* ([r_sz : uptr (size_reloc_table m)]
              [new_t : ptr (vfasl_find_room vfi vspace_reloc typemod r_sz)])
-        (memcpy_aligned new_t t r_sz)
+        (memcpy_aligned (TO_VOIDP new_t) (TO_VOIDP t) r_sz)
         (set! t new_t))]
      [else])
     (define a : iptr 0)
@@ -1099,10 +1099,10 @@
                [else
                 (let* ([oldt : ptr t])
                   (find_room space_data target_generation typemod n t)
-                  (memcpy_aligned t oldt n))])))
+                  (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
-      (S_record_code_mod tc_in (cast uptr (& (code-data _ 0))) (cast uptr (code-length _)))]
+      (S_record_code_mod tc_in (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
      [vfasl-sweep
       ;; no vfasl_register_pointer, since relink_code can handle it
       (set! (reloc-table-code t) (cast ptr (ptr_diff _ (-> vfi base_addr))))
@@ -1160,8 +1160,8 @@
 (define-trace-macro (vfasl-pad-word)
   (case-mode
    [(vfasl-copy)
-    (set! (array-ref (cast void** (UNTYPE _copy_ type_typed_object)) 3)
-          (cast ptr 0))]
+    (set! (array-ref (cast ptr* (TO_VOIDP (UNTYPE _copy_ type_typed_object))) 3)
+          0)]
    [else]))
 
 (define-trace-macro (vfasl-fail what)
@@ -1564,7 +1564,7 @@
                (case (lookup 'mode config)
                  [(copy)
                   (code (code-block
-                         (format "ptr tmp_p = TYPE(&~a, type_flonum);" (field-expression field config "p" #t))
+                         (format "ptr tmp_p = TYPE(TO_PTR(&~a), type_flonum);" (field-expression field config "p" #t))
                          "if (flonum_is_forwarded_p(tmp_p, si))"
                          (format "  ~a = FLODAT(FLONUM_FWDADDRESS(tmp_p));"
                                  (field-expression field config "new_p" #f))
@@ -2239,7 +2239,7 @@
   (define (ensure-segment-mark-mask si inset flags)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  find_room(space_data, target_generation, typemod, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
+     (format "~a  find_room_voidp(space_data, target_generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
              inset si)
      (if (memq 'no-clear flags)
          (format "~a  /* no clearing needed */" inset)

@@ -153,7 +153,7 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
       n += S_G.bytes_of_space[s][g];
      /* add in bytes in active segments */
       if (S_G.next_loc[s][g] != FIX(0))
-        n += (char *)S_G.next_loc[s][g] - (char *)S_G.base_loc[s][g];
+        n += (uptr)S_G.next_loc[s][g] - (uptr)S_G.base_loc[s][g];
     }
     if (g == S_G.max_nonstatic_generation)
       g = static_generation;
@@ -183,7 +183,7 @@ static void maybe_fire_collector() {
     bytes += S_G.bytes_of_space[s][0];
    /* bytes in current block of segments */
     if (S_G.next_loc[s][0] != FIX(0))
-      bytes += (char *)S_G.next_loc[s][0] - (char *)S_G.base_loc[s][0];
+      bytes += (uptr)S_G.next_loc[s][0] - (uptr)S_G.base_loc[s][0];
   }
 
  /* arbitrary fudge factor to account for space we may not be using yet
@@ -231,10 +231,10 @@ ptr S_find_more_room(s, g, n, old) ISPC s; IGEN g; iptr n; ptr old; {
     S_G.first_loc[s][g] = new;
   } else {
    /* increment bytes_allocated by the closed-off partial segment */
-    S_G.bytes_of_space[s][g] += (char *)old - (char *)S_G.base_loc[s][g];
+    S_G.bytes_of_space[s][g] += (uptr)old - (uptr)S_G.base_loc[s][g];
    /* lay down an end-of-segment marker */
-    *(ptr*)old = forward_marker;
-    *((ptr*)old + 1) = new;
+    *(ptr*)TO_VOIDP(old) = forward_marker;
+    *((ptr*)TO_VOIDP(old) + 1) = new;
   }
 
  /* base address of current block of segments to track amount of allocation */
@@ -307,7 +307,7 @@ FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g) {
 void S_dirty_set(ptr *loc, ptr x) {
   *loc = x;
   if (!Sfixnump(x)) {
-    seginfo *si = SegInfo(addr_get_segment(loc));
+    seginfo *si = SegInfo(addr_get_segment(TO_PTR(loc)));
     if (si->use_marks) {
       /* GC must be in progress */
       if (!IMMEDIATE(x)) {
@@ -318,7 +318,7 @@ void S_dirty_set(ptr *loc, ptr x) {
     } else {
       IGEN from_g = si->generation;
       if (from_g != 0) {
-        si->dirty_bytes[((uptr)loc >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
+        si->dirty_bytes[((uptr)TO_PTR(loc) >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
         mark_segment_dirty(si, from_g);
       }
     }
@@ -326,13 +326,13 @@ void S_dirty_set(ptr *loc, ptr x) {
 }
 
 /* scan remembered set from P to ENDP, transfering to dirty vector */
-void S_scan_dirty(ptr **p, ptr **endp) {
+void S_scan_dirty(ptr *p, ptr *endp) {
   uptr this, last;
  
   last = 0;
 
   while (p < endp) {
-    ptr *loc = *p;
+    ptr loc = *p;
    /* whether building s directory or running UXLB code, the most
       common situations are that *loc is a fixnum, this == last, or loc
       is in generation 0. the generated code no longer adds elements
@@ -369,7 +369,7 @@ void S_scan_remembered_set() {
   eap = (uptr)EAP(tc);
   real_eap = (uptr)REAL_EAP(tc);
 
-  S_scan_dirty((ptr **)eap, (ptr **)real_eap);
+  S_scan_dirty(TO_VOIDP(eap), TO_VOIDP(real_eap));
   eap = real_eap;
 
   if (eap - ap > alloc_waste_maximum) {
@@ -410,7 +410,7 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
 
   tc_mutex_acquire()
 
-  S_scan_dirty((ptr **)eap, (ptr **)real_eap);
+  S_scan_dirty(TO_VOIDP(eap), TO_VOIDP(real_eap));
   eap = real_eap;
 
   if (eap - ap >= size) {
@@ -461,15 +461,15 @@ void S_list_bits_set(p, bits) ptr p; iptr bits; {
      If a race loses bits, that's ok, as long as it's unlikely. */
 
   if (!si->list_bits) {
-    ptr list_bits;
+    void *list_bits;
 
     if (si->generation == 0) {
       ptr tc = get_thread_context();
-      thread_find_room(tc, typemod, ptr_align(segment_bitmap_bytes), list_bits);
+      thread_find_room_voidp(tc, ptr_align(segment_bitmap_bytes), list_bits);
     } else {
       tc_mutex_acquire()
 
-      find_room(space_data, si->generation, typemod, ptr_align(segment_bitmap_bytes), list_bits);
+      find_room_voidp(space_data, si->generation, ptr_align(segment_bitmap_bytes), list_bits);
       tc_mutex_release()
     }
 
@@ -514,8 +514,8 @@ ptr S_ephemeron_cons_in(gen, car, cdr) IGEN gen; ptr car, cdr; {
   find_room(space_ephemeron, gen, type_pair, size_ephemeron, p);
   INITCAR(p) = car;
   INITCDR(p) = cdr;
-  EPHEMERONPREVREF(p) = NULL;
-  EPHEMERONNEXT(p) = NULL;
+  EPHEMERONPREVREF(p) = 0;
+  EPHEMERONNEXT(p) = 0;
 
   return p;
 }
@@ -958,7 +958,7 @@ ptr S_code(tc, type, n) ptr tc; iptr type, n; {
   /* we record the code modification here, even though we haven't
      even started modifying the code yet, since we always create
      and fill the code object within a critical section. */
-    S_record_code_mod(tc, (uptr)&CODEIT(p,0), (uptr)n);
+    S_record_code_mod(tc, (uptr)TO_PTR(&CODEIT(p,0)), (uptr)n);
     return p;
 }
 

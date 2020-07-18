@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3qnx
-Cpu = I386
+m ?= i3qnx
+Cpu ?= I386
 
 mdclib = -lm /usr/local/lib/libiconv.so -lsocket ${ncursesLib}
-C = qcc ${CPPFLAGS} -m32 -Wpointer-arith -Wextra -Werror -O2 -N2048K ${CFLAGS}
+C = qcc ${CPPFLAGS} -m32 -N2048K ${warningFlags} ${optFlags} ${CFLAGS}
 o = o
-mdsrc = i3le.c
-mdobj = i3le.o
+mdsrc ?= i3le.c
+mdobj ?= i3le.o
 LocalInclude = /usr/local/include
 
 .SUFFIXES:

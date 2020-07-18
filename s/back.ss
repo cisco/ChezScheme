@@ -44,8 +44,8 @@
          x)))
 
 (define-who collect-maximum-generation
-  (let ([$get-maximum-generation (foreign-procedure "(cs)maxgen" () fixnum)]
-        [$set-maximum-generation! (foreign-procedure "(cs)set_maxgen" (fixnum) void)])
+  (let ([$get-maximum-generation (foreign-procedure "(cs)maxgen" () int)]
+        [$set-maximum-generation! (foreign-procedure "(cs)set_maxgen" (int) void)])
     (case-lambda
       [() ($get-maximum-generation)]
       [(g)
@@ -56,8 +56,8 @@
        ($set-maximum-generation! g)])))
 
 (define-who release-minimum-generation
-  (let ([$get-release-minimum-generation (foreign-procedure "(cs)minfreegen" () fixnum)]
-        [$set-release-minimum-generation! (foreign-procedure "(cs)set_minfreegen" (fixnum) void)])
+  (let ([$get-release-minimum-generation (foreign-procedure "(cs)minfreegen" () int)]
+        [$set-release-minimum-generation! (foreign-procedure "(cs)set_minfreegen" (int) void)])
     (case-lambda
       [() ($get-release-minimum-generation)]
       [(g)
@@ -67,8 +67,8 @@
        ($set-release-minimum-generation! g)])))
 
 (define-who in-place-minimum-generation
-  (let ([$get-mark-minimum-generation (foreign-procedure "(cs)minmarkgen" () fixnum)]
-        [$set-mark-minimum-generation! (foreign-procedure "(cs)set_minmarkgen" (fixnum) void)])
+  (let ([$get-mark-minimum-generation (foreign-procedure "(cs)minmarkgen" () int)]
+        [$set-mark-minimum-generation! (foreign-procedure "(cs)set_minmarkgen" (int) void)])
     (case-lambda
       [() ($get-mark-minimum-generation)]
       [(g)

@@ -296,8 +296,8 @@
           [(kwd s/u bits)
            (with-syntax ([prim-name (construct-name #'kwd "bytevector-" #'s/u #'bits "-ref")]
                          [native-name (construct-name #'kwd "bytevector-" #'s/u #'bits "-native-ref")]
-                         [little-set! (construct-name #'kwd "little-ref-" #'s/u #'bits)]
-                         [big-set! (construct-name #'kwd "big-ref-" #'s/u #'bits)])
+                         [little-ref (construct-name #'kwd "little-ref-" #'s/u #'bits)]
+                         [big-ref (construct-name #'kwd "big-ref-" #'s/u #'bits)])
              #`(lambda (v i eness who)
                  (unless (bytevector? v) (not-a-bytevector who v))
                  (unaligned-ref-check who (fxquotient bits 8) v i)
@@ -495,8 +495,16 @@
   )
 
   (set! native-endianness
-    (lambda ()
-      (#2%native-endianness)))
+    (constant-case native-endianness
+      [(unknown)
+       (let ([endianness (if ((foreign-procedure "(cs)native_little_endian" () boolean))
+                             'little
+                             'big)])
+         (lambda ()
+           endianness))]
+      [else
+       (lambda ()
+         (#2%native-endianness))]))
 
   (set-who! make-bytevector
     (case-lambda
@@ -954,14 +962,16 @@
               (#3%bytevector-ieee-single-native-ref v i)
               (if (constant-case native-endianness
                     [(little) (eq? eness 'big)]
-                    [(big) (eq? eness 'little)])
+                    [(big) (eq? eness 'little)]
+                    [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                   (swap-ref v i)
                   (unrecognized-endianness who eness)))
           (if (eq? eness (native-endianness))
               (noswap-ref v i)
               (if (constant-case native-endianness
                     [(little) (eq? eness 'big)]
-                    [(big) (eq? eness 'little)])
+                    [(big) (eq? eness 'little)]
+                    [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                   (swap-ref v i)
                   (unrecognized-endianness who eness))))))
 
@@ -998,14 +1008,16 @@
               (#3%bytevector-ieee-double-native-ref v i)
               (if (constant-case native-endianness
                     [(little) (eq? eness 'big)]
-                    [(big) (eq? eness 'little)])
+                    [(big) (eq? eness 'little)]
+                    [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                   (swap-ref v i)
                   (unrecognized-endianness who eness)))
           (if (eq? eness (native-endianness))
               (noswap-ref v i)
               (if (constant-case native-endianness
                     [(little) (eq? eness 'big)]
-                    [(big) (eq? eness 'little)])
+                    [(big) (eq? eness 'little)]
+                    [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                   (swap-ref v i)
                   (unrecognized-endianness who eness))))))
 
@@ -1033,14 +1045,16 @@
                 (#3%bytevector-ieee-single-native-set! v i x)
                 (if (constant-case native-endianness
                       [(little) (eq? eness 'big)]
-                      [(big) (eq? eness 'little)])
+                      [(big) (eq? eness 'little)]
+                      [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                     (swap-set! v i x)
                     (unrecognized-endianness who eness)))
             (if (eq? eness (native-endianness))
                 (noswap-set! v i x)
                 (if (constant-case native-endianness
                       [(little) (eq? eness 'big)]
-                      [(big) (eq? eness 'little)])
+                      [(big) (eq? eness 'little)]
+                      [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                     (swap-set! v i x)
                     (unrecognized-endianness who eness)))))))
 
@@ -1076,14 +1090,16 @@
                 (#3%bytevector-ieee-double-native-set! v i x)
                 (if (constant-case native-endianness
                       [(little) (eq? eness 'big)]
-                      [(big) (eq? eness 'little)])
+                      [(big) (eq? eness 'little)]
+                      [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                     (swap-set! v i x)
                     (unrecognized-endianness who eness)))
             (if (eq? eness (native-endianness))
                 (noswap-set! v i x)
                 (if (constant-case native-endianness
                       [(little) (eq? eness 'big)]
-                      [(big) (eq? eness 'little)])
+                      [(big) (eq? eness 'little)]
+                      [(unknown) (or (eq? eness 'big) (eq? eness 'little))])
                     (swap-set! v i x)
                     (unrecognized-endianness who eness)))))))
 
@@ -1266,7 +1282,10 @@
               [else
                (constant-case native-endianness
                  [(little) (little->list v size)]
-                 [(big) (big->list v size)])])
+                 [(big) (big->list v size)]
+                 [(unknown) (if (eq? eness 'little)
+                                (little->list v size)
+                                (big->list v size))])])
             (constant-case native-endianness
               [(little)
                (if (eq? eness 'big)
@@ -1275,7 +1294,13 @@
               [(big)
                (if (eq? eness 'little)
                    (little->list v size)
-                   (unrecognized-endianness who eness))]))))
+                   (unrecognized-endianness who eness))]
+              [(unknown)
+               (if (eq? eness 'big)
+                   (big->list v size)
+                   (if (eq? eness 'little)
+                       (little->list v size)
+                       (unrecognized-endianness who eness)))]))))
 
     (set-who! bytevector->uint-list
       (lambda (v eness size)
@@ -1308,7 +1333,10 @@
               [else
                (constant-case native-endianness
                  [(little) (little->list v size)]
-                 [(big) (big->list v size)])])
+                 [(big) (big->list v size)]
+                 [(unknown) (if (eq? eness 'little)
+                                (little->list v size)
+                                (big->list v size))])])
             (constant-case native-endianness
               [(little)
                (if (eq? eness 'big)
@@ -1317,7 +1345,13 @@
               [(big)
                (if (eq? eness 'little)
                    (little->list v size)
-                   (unrecognized-endianness who eness))]))))
+                   (unrecognized-endianness who eness))]
+              [(unknown)
+               (if (eq? eness 'big)
+                   (big->list v size)
+                   (if (eq? eness 'little)
+                       (little->list v size)
+                       (unrecognized-endianness who eness)))]))))
   )
 
   (let ()
@@ -1397,7 +1431,10 @@
               [else
                (constant-case native-endianness
                  [(little) (list->little ls size)]
-                 [(big) (list->big ls size)])])
+                 [(big) (list->big ls size)]
+                 [(unknown) (if (eq? eness 'little)
+                                (list->little ls size)
+                                (list->big ls size))])])
             (constant-case native-endianness
               [(little)
                (if (eq? eness 'big)
@@ -1406,7 +1443,13 @@
               [(big)
                (if (eq? eness 'little)
                    (list->little ls size)
-                   (unrecognized-endianness who eness))]))))
+                   (unrecognized-endianness who eness))]
+              [(unknown)
+               (if (eq? eness 'big)
+                   (list->big ls size)
+                   (if (eq? eness 'little)
+                       (list->little ls size)
+                       (unrecognized-endianness who eness)))]))))
 
     (set-who! uint-list->bytevector
       (lambda (ls eness size)
@@ -1445,7 +1488,10 @@
               [else
                (constant-case native-endianness
                  [(little) (list->little ls size)]
-                 [(big) (list->big ls size)])])
+                 [(big) (list->big ls size)]
+                 [(unknown) (if (eq? eness 'little)
+                                (list->little ls size)
+                                (list->big ls size))])])
             (constant-case native-endianness
               [(little)
                (if (eq? eness 'big)
@@ -1454,7 +1500,13 @@
               [(big)
                (if (eq? eness 'little)
                    (list->little ls size)
-                   (unrecognized-endianness who eness))]))))
+                   (unrecognized-endianness who eness))]
+              [(unknown)
+               (if (eq? eness 'big)
+                   (list->big ls size)
+                   (if (eq? eness 'little)
+                       (list->little ls size)
+                       (unrecognized-endianness who eness)))]))))
   )
 
   (let ()

@@ -51,9 +51,7 @@
 #endif /* PTHREADS */
 
 /* locally defined functions */
-static ptr new_open_output_fd_helper PROTO((const char *filename, INT mode,
-             INT flags, INT no_create, INT no_fail, INT no_truncate,
-             INT append, INT lock, INT replace, INT compressed));
+static ptr new_open_output_fd_helper PROTO((const char *filename, INT mode, INT flags, INT options));
 static INT lockfile PROTO((INT fd));
 static int is_valid_zlib_length(iptr count);
 static int is_valid_lz4_length(iptr count);
@@ -144,9 +142,12 @@ static INT lockfile(INT fd) { return FLOCK(fd, LOCK_EX); }
 #ifdef LOCKF
 static INT lockfile(INT fd) { return lockf(fd, F_LOCK, (off_t)0); }
 #endif
+#if !defined(FLOCK) && !defined(LOCKF)
+static INT lockfile(INT fd) { return fd >= 0; }
+#endif
 
-#define MAKE_GZXFILE(x) Sinteger((iptr)x)
-#define GZXFILE_GZFILE(x) ((glzFile)Sinteger_value(x))
+#define MAKE_GZXFILE(x) Sinteger((iptr)TO_PTR(x))
+#define GZXFILE_GZFILE(x) ((glzFile)TO_VOIDP(Sinteger_value(x)))
 
 INT S_gzxfile_fd(ptr x) {
   return GZXFILE_GZFILE(x)->fd;
@@ -273,10 +274,7 @@ ptr S_compress_output_fd(INT fd) {
   return Sbox(MAKE_GZXFILE(file));
 }
 
-static ptr new_open_output_fd_helper(
-  const char *infilename, INT mode, INT flags,
-  IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed) {
+static ptr new_open_output_fd_helper( const char *infilename, INT mode, INT flags, INT options) {
   char *filename;
   INT saved_errno = 0;
   iptr error;
@@ -284,14 +282,14 @@ static ptr new_open_output_fd_helper(
   ptr tc = get_thread_context();
 
   flags |=
-    (no_create ? 0 : O_CREAT) |
-    ((no_fail || no_create) ? 0 : O_EXCL) |
-    (no_truncate ? 0 : O_TRUNC) |
-    ((!append) ? 0 : O_APPEND);
+    ((options & open_fd_no_create) ? 0 : O_CREAT) |
+    ((options & (open_fd_no_fail | open_fd_no_create)) ? 0 : O_EXCL) |
+    ((options & open_fd_no_truncate) ? 0 : O_TRUNC) |
+    ((!(options & open_fd_append)) ? 0 : O_APPEND);
 
   filename = S_malloc_pathname(infilename);
   
-  if (replace && UNLINK(filename) != 0 && errno != ENOENT) {
+  if ((options & open_fd_replace) && UNLINK(filename) != 0 && errno != ENOENT) {
     ptr str = S_strerror(errno);
     switch (errno) {
       case EACCES:
@@ -324,7 +322,7 @@ static ptr new_open_output_fd_helper(
     }
   }
   
-  if (lock) {
+  if (options & open_fd_lock) {
     DEACTIVATE(tc)
     error = lockfile(fd);
     saved_errno = errno;
@@ -335,7 +333,7 @@ static ptr new_open_output_fd_helper(
     }
   }
   
-  if (!compressed) {
+  if (!(options & open_fd_compressed)) {
     return MAKE_FD(fd);
   }
 
@@ -349,27 +347,19 @@ static ptr new_open_output_fd_helper(
   return MAKE_GZXFILE(file);
 }
 
-ptr S_new_open_output_fd(
-  const char *filename, INT mode,
-  IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed) {
+ptr S_new_open_output_fd(const char *filename, INT mode, INT options) {
   return new_open_output_fd_helper(
     filename, mode, O_BINARY | O_WRONLY,
-    no_create, no_fail, no_truncate,
-    append, lock, replace, compressed);
+    options);
 }
 
-ptr S_new_open_input_output_fd(
-  const char *filename, INT mode,
-  IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed) {
-  if (compressed)
+ptr S_new_open_input_output_fd(const char *filename, INT mode, INT options) {
+  if (options & open_fd_compressed)
     return Sstring("compressed input/output files not supported");
   else
     return new_open_output_fd_helper(
       filename, mode, O_BINARY | O_RDWR,
-      no_create, no_fail, no_truncate,
-      append, lock, replace, 0);
+      options);
 }
 
 ptr S_close_fd(ptr file, IBOOL gzflag) {

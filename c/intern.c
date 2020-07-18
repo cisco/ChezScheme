@@ -40,20 +40,20 @@ void S_intern_init() {
 static void oblist_insert(ptr sym, iptr idx, IGEN g) {
   bucket *b, *oldb, **pb;
 
-  find_room(g == 0 ? space_new : space_data, g, typemod, sizeof(bucket), b);
+  find_room_voidp(g == 0 ? space_new : space_data, g, ptr_align(sizeof(bucket)), b);
   b->sym = sym;
   if (g == 0) {
     b->next = S_G.oblist[idx];
     S_G.oblist[idx] = b;
   } else {
-    for (pb = &S_G.oblist[idx]; (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(oldb)) < g; pb = &oldb->next);
+    for (pb = &S_G.oblist[idx]; (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(TO_PTR(oldb))) < g; pb = &oldb->next);
     b->next = oldb;
     *pb = b;
   }
 
   if (g != static_generation) {
     bucket_list *bl;
-    find_room(g == 0 ? space_new : space_data, g, typemod, sizeof(bucket_list), bl);
+    find_room_voidp(g == 0 ? space_new : space_data, g, ptr_align(sizeof(bucket_list)), bl);
     bl->car = b;
     bl->cdr = S_G.buckets_of_generation[g];
     S_G.buckets_of_generation[g] = bl;
@@ -85,7 +85,7 @@ void S_resize_oblist(void) {
       idx = OBINDEX(UNFIX(SYMHASH(sym)), new_oblist_length);
       g = GENERATION(sym);
 
-      for (pb = &new_oblist[idx]; (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(oldb)) < g; pb = &oldb->next) {
+      for (pb = &new_oblist[idx]; (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(TO_PTR(oldb))) < g; pb = &oldb->next) {
         inc++;
         if (done)
           dinc++;

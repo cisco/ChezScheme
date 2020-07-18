@@ -13,6 +13,18 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(define dynamic-native-endianness?
+  (case (machine-type)
+    [(pb) #t]
+    [else #f]))
+
+(define test-endian-sensitive-cp0-expansion
+  (if dynamic-native-endianness?
+      (case-lambda
+       [(expr expected) #t]
+       [(equiv? expr expected) #t])
+      test-cp0-expansion))
+
 (mat native-endianness
  ; wrong argument count
   (error? (native-endianness 'big))
@@ -25,6 +37,7 @@
                 arm32le tarm32le arm64le tarm64le)
           'little]
          [(ppc32le tppc32le) 'big]
+         [(pb) (native-endianness)]
          [else (errorf #f "unrecognized machine type")]))
 )
 
@@ -743,10 +756,12 @@
       (native->signed 250 89)
       (native->signed 200 201)))
 
-  (test-cp0-expansion eqv?
+  (test-endian-sensitive-cp0-expansion eqv?
     '(bytevector-s16-native-ref #vu8(3 252 5) 0)
     (native->signed 3 252))
-  (equal?
+  (or
+   dynamic-native-endianness?
+   (equal?
     ;; list doesn't get inlined, so take if off the front of the list
     (cdr (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
            (expand/optimize '(let ([v #vu8(3 252 5 17 23 55 250 89 200 201 128)] [i 4])
@@ -763,7 +778,7 @@
          (native->signed 23 55)
          (native->signed 23 55)
          (native->signed 250 89)
-         (native->signed 200 201)))
+         (native->signed 200 201))))
 
   (do ([i 0 (fx+ i 1)])
       ((fx= i (expt 2 8)) #t)
@@ -811,10 +826,12 @@
       (native->unsigned 250 89)
       (native->unsigned 200 201)))
 
-  (test-cp0-expansion eqv?
+  (test-endian-sensitive-cp0-expansion eqv?
     '(bytevector-u16-native-ref #vu8(3 252 5) 0)
     (native->unsigned 3 252))
-  (equal?
+  (or
+   dynamic-native-endianness?
+   (equal?
     ;; list doesn't get inlined, so take if off the front of the list
     (cdr (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
            (expand/optimize '(let ([v #vu8(3 252 5 17 23 55 250 89 200 201 128)] [i 4])
@@ -831,7 +848,7 @@
          (native->unsigned 23 55)
          (native->unsigned 23 55)
          (native->unsigned 250 89)
-         (native->unsigned 200 201)))
+         (native->unsigned 200 201))))
 
   (do ([i 0 (fx+ i 1)])
       ((fx= i (expt 2 8)) #t)
@@ -3227,10 +3244,12 @@
       (native->signed 248 189 190 207)
       (native->signed 24 25 26 27)))
 
-  (test-cp0-expansion eqv?
+  (test-endian-sensitive-cp0-expansion eqv?
     '(bytevector-s32-native-ref #vu8(3 252 5 32 65 87 20) 0)
     (native->signed 3 252 5 32))
-  (equal?
+  (or
+   dynamic-native-endianness?
+   (equal?
     (cdr (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
            (expand/optimize '(let ([v '#vu8(30 100 200 250
                                              249 199 99 29
@@ -3246,7 +3265,7 @@
       (native->signed 30 100 200 250)
       (native->signed 249 199 99 29)
       (native->signed 248 189 190 207)
-      (native->signed 24 25 26 27)))
+      (native->signed 24 25 26 27))))
 
   (do ([i 10000 (fx- i 1)])
       ((fx= i 0) #t)
@@ -3297,10 +3316,12 @@
       (native->unsigned 248 189 190 207)
       (native->unsigned 24 25 26 27)))
 
-  (test-cp0-expansion eqv?
+  (test-endian-sensitive-cp0-expansion eqv?
     '(bytevector-u32-native-ref #vu8(3 252 5 32 65 87 20) 0)
     (native->unsigned 3 252 5 32))
-  (equal?
+  (or
+   dynamic-native-endianness?
+   (equal?
     (cdr (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
            (expand/optimize '(let ([v '#vu8(30 100 200 250
                                              249 199 99 29
@@ -3316,7 +3337,7 @@
       (native->unsigned 30 100 200 250)
       (native->unsigned 249 199 99 29)
       (native->unsigned 248 189 190 207)
-      (native->unsigned 24 25 26 27)))
+      (native->unsigned 24 25 26 27))))
 
   (do ([i 10000 (fx- i 1)])
       ((fx= i 0) #t)
@@ -5549,36 +5570,36 @@
   (eqv? (bytevector-s64-native-ref $v1 88)
         (native->signed #xef #xde #xcd #xbc #xab #x9a #x89 #x78))
 
-  (test-cp0-expansion eqv? `(bytevector-s64-native-ref ,$v1 0) 0)
-  (test-cp0-expansion eqv? `(bytevector-s64-native-ref ,$v1 8) -1)
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? `(bytevector-s64-native-ref ,$v1 0) 0)
+  (test-endian-sensitive-cp0-expansion eqv? `(bytevector-s64-native-ref ,$v1 8) -1)
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 16)
     (native->signed #x7f #xff #xff #xff #xff #xff #xff #xff))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 24)
     (native->signed #xff #xff #xff #xff #xff #xff #xff #x7f))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 32)
     (native->signed #x80 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 40)
     (native->signed #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x80))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 48)
     (native->signed #x80 #x00 #x00 #x00 #xff #xff #xff #xff))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 56)
     (native->signed #xff #xff #xff #xff #x00 #x00 #x00 #x80))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 64)
     (native->signed #x12 #x23 #x34 #x45 #x56 #x67 #x78 #x89))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 72)
     (native->signed #x89 #x78 #x67 #x56 #x45 #x34 #x23 #x12))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 80)
     (native->signed #x78 #x89 #x9a #xab #xbc #xcd #xde #xef))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-s64-native-ref ,$v1 88)
     (native->signed #xef #xde #xcd #xbc #xab #x9a #x89 #x78))
 
@@ -5669,38 +5690,38 @@
   (eqv? (bytevector-u64-native-ref $v1 88)
         (native->unsigned #xef #xde #xcd #xbc #xab #x9a #x89 #x78))
 
-  (test-cp0-expansion eqv? `(bytevector-u64-native-ref ,$v1 0) 0)
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? `(bytevector-u64-native-ref ,$v1 0) 0)
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 8) 
     (- (expt 2 64) 1))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 16)
     (native->unsigned #x7f #xff #xff #xff #xff #xff #xff #xff))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 24)
     (native->unsigned #xff #xff #xff #xff #xff #xff #xff #x7f))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 32)
     (native->unsigned #x80 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 40)
     (native->unsigned #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x80))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 48)
     (native->unsigned #x80 #x00 #x00 #x00 #xff #xff #xff #xff))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 56)
     (native->unsigned #xff #xff #xff #xff #x00 #x00 #x00 #x80))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 64)
     (native->unsigned #x12 #x23 #x34 #x45 #x56 #x67 #x78 #x89))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 72)
     (native->unsigned #x89 #x78 #x67 #x56 #x45 #x34 #x23 #x12))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 80)
     (native->unsigned #x78 #x89 #x9a #xab #xbc #xcd #xde #xef))
-  (test-cp0-expansion eqv? 
+  (test-endian-sensitive-cp0-expansion eqv? 
     `(bytevector-u64-native-ref ,$v1 88)
     (native->unsigned #xef #xde #xcd #xbc #xab #x9a #x89 #x78))
 

@@ -219,6 +219,19 @@
                                 (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
                                   (mkc0 (cdr c*) a (cons r r*) a1 x*)))]
                              [else (c-assembler-output-error c)])]
+                          [(pb)
+                           (record-case c
+                             [(pb-abs) (n x)
+                              (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-pb-abs) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(pb-proc) (n x)
+                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b/call
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-pb-proc) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [else (c-assembler-output-error c)])]
                           [else (c-assembler-output-error c)])]))))
              p))]
       [else (c-assembler-output-error x)]))
@@ -285,6 +298,10 @@
                          [(ppc32)
                           (record-case x
                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x d)]
+                            [else (void)])]
+                         [(pb)
+                          (record-case x
+                            [(pb-abs pb-proc) (n x) (build x d)]
                             [else (void)])])]))
                   code-list)])))]))))
 
@@ -452,6 +469,17 @@
                             [(x86_64-popcount) (n x)
                              (let ([a1 (fx- a 12)]) ; like a call, for worst case
                                (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [else (c-assembler-output-error c)])]
+                         [(pb)
+                          (record-case c
+                            [(pb-abs) (n x)
+                             (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                               (let ([r ($reloc (constant reloc-pb-abs) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(pb-proc) (n x)
+                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b/call
+                               (let ([r ($reloc (constant reloc-pb-proc) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]
                          [else (c-assembler-output-error c)])]))))))]

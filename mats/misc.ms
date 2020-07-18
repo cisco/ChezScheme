@@ -4697,7 +4697,8 @@
              (#2%display 1))))
 )
 
-(unless (memq (machine-type) '(arm32le tarm32le arm64le tarm64le)) ; timestamp counter tends to be priviledged on Arm
+(unless (memq (machine-type) '(arm32le tarm32le arm64le tarm64le ; timestamp counter tends to be priviledged on Arm
+                                       pb)) ; doesn't increment for pb
   (mat $read-time-stamp-counter
 
     (let ([t (#%$read-time-stamp-counter)])

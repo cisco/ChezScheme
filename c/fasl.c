@@ -232,6 +232,10 @@ static void faslin PROTO((ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f));
 static void fasl_record PROTO((ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size));
 static IBOOL rtd_equiv PROTO((ptr x, ptr y));
 static IBOOL equalp PROTO((ptr x, ptr y));
+#ifdef PORTABLE_BYTECODE
+static void pb_set_abs PROTO((void *address, uptr item));
+static uptr pb_get_abs PROTO((void *address));
+#endif /* AARCH64 */
 #ifdef ARMV6
 static void arm32_set_abs PROTO((void *address, uptr item));
 static uptr arm32_get_abs PROTO((void *address));
@@ -262,6 +266,9 @@ static U32 adjust_delay_inst PROTO((U32 delay_inst, U32 *old_call_addr, U32 *new
 static INT sparc64_set_lit_only PROTO((void *address, uptr item, I32 destreg));
 static void sparc64_set_literal PROTO((void *address, uptr item));
 #endif /* SPARC64 */
+#ifdef PORTABLE_BYTECODE_BIGENDIAN
+static void swap_code_endian(octet *code, uptr len);
+#endif
 
 static double s_nan;
 
@@ -556,7 +563,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   struct faslFileObj ffo;
 
   if (ty == fasl_type_vfasl) {
-    x = S_vfasl(bv, (ptr)0, offset, len);
+    x = S_vfasl(bv, NULL, offset, len);
   } else if (ty == fasl_type_fasl) {
     ffo.size = len;
     ffo.next = ffo.buf = &BVIT(bv, offset);
@@ -1021,6 +1028,9 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
             }
             bytesin((octet *)&CODEIT(co, 0), n, f);
+#ifdef PORTABLE_BYTECODE_BIGENDIAN
+            swap_code_endian((octet *)&CODEIT(co, 0), n);
+#endif
             m = uptrin(f);
             CODERELOC(co) = reloc = S_relocation_table(m);
             RELOCCODE(reloc) = co;
@@ -1095,37 +1105,46 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 
 #define big 0
 #define little 1
+#ifdef PORTABLE_BYTECODE
+# ifdef PORTABLE_BYTECODE_BIGENDIAN
+#  define unknown big
+# else
+#  define unknown little
+# endif
+#else
+# define unknown 3
+#endif
 static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size) {
   uptr n, addr; ptr p; UINT padty;
 
   n = uptrin(f);
   *x = p = S_record(size_record_inst(size));
   faslin(tc, &RECORDINSTTYPE(p), t, pstrbuf, f);
-  addr = (uptr)&RECORDINSTIT(p, 0);
+  addr = (uptr)TO_PTR(&RECORDINSTIT(p, 0));
   for (; n != 0; n -= 1) {
     padty = bytein(f);
     addr += padty >> 4;
     switch (padty & 0xf) {
       case fasl_fld_ptr:
-        faslin(tc, (ptr *)addr, t, pstrbuf, f);
+        faslin(tc, TO_VOIDP(addr), t, pstrbuf, f);
         addr += sizeof(ptr);
         break;
       case fasl_fld_u8:
-        *(U8 *)addr = (U8)bytein(f);
+        *(U8 *)TO_VOIDP(addr) = (U8)bytein(f);
         addr += 1;
         break;
       case fasl_fld_i16:
-        *(I16 *)addr = (I16)iptrin(f);
+        *(I16 *)TO_VOIDP(addr) = (I16)iptrin(f);
         addr += 2;
         break;
       case fasl_fld_i24: {
         iptr q = iptrin(f);
 #if (native_endianness == little)
-        *(U16 *)addr = (U16)q;
-        *(U8 *)(addr + 2) = (U8)(q >> 16);
+        *(U16 *)TO_VOIDP(addr) = (U16)q;
+        *(U8 *)TO_VOIDP(addr + 2) = (U8)(q >> 16);
 #elif (native_endianness == big)
-        *(U16 *)addr = (U16)(q >> 8);
-        *(U8 *)(addr + 2) = (U8)q;
+        *(U16 *)TO_VOIDP(addr) = (U16)(q >> 8);
+        *(U8 *)TO_VOIDP(addr + 2) = (U8)q;
 #else
         unexpected_endianness();
 #endif
@@ -1133,7 +1152,7 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
         break;
       }
       case fasl_fld_i32:
-        *(I32 *)addr = (I32)iptrin(f);
+        *(I32 *)TO_VOIDP(addr) = (I32)iptrin(f);
         addr += 4;
         break;
       case fasl_fld_i40: {
@@ -1147,11 +1166,11 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
         unexpected_ptr_bits();
 #endif
 #if (native_endianness == little)
-        *(U32 *)addr = (U32)q;
-        *(U8 *)(addr + 4) = (U8)(q >> 32);
+        *(U32 *)TO_VOIDP(addr) = (U32)q;
+        *(U8 *)TO_VOIDP(addr + 4) = (U8)(q >> 32);
 #elif (native_endianness == big)
-        *(U32 *)addr = (U32)(q >> 8);
-        *(U8 *)(addr + 4) = (U8)q;
+        *(U32 *)TO_VOIDP(addr) = (U32)(q >> 8);
+        *(U8 *)TO_VOIDP(addr + 4) = (U8)q;
 #else
         unexpected_endianness();
 #endif
@@ -1169,11 +1188,11 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
         unexpected_ptr_bits();
 #endif
 #if (native_endianness == little)
-        *(U32 *)addr = (U32)q;
-        *(U16 *)(addr + 4) = (U16)(q >> 32);
+        *(U32 *)TO_VOIDP(addr) = (U32)q;
+        *(U16 *)TO_VOIDP(addr + 4) = (U16)(q >> 32);
 #elif (native_endianness == big)
-        *(U32 *)addr = (U32)(q >> 16);
-        *(U16 *)(addr + 4) = (U16)q;
+        *(U32 *)TO_VOIDP(addr) = (U32)(q >> 16);
+        *(U16 *)TO_VOIDP(addr + 4) = (U16)q;
 #else
         unexpected_endianness();
 #endif
@@ -1191,12 +1210,12 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
         unexpected_ptr_bits();
 #endif
 #if (native_endianness == little)
-        *(U32 *)addr = (U32)q;
-        *(U16 *)(addr + 4) = (U16)(q >> 32);
-        *(U8 *)(addr + 6) = (U8)(q >> 48);
+        *(U32 *)TO_VOIDP(addr) = (U32)q;
+        *(U16 *)TO_VOIDP(addr + 4) = (U16)(q >> 32);
+        *(U8 *)TO_VOIDP(addr + 6) = (U8)(q >> 48);
 #elif (native_endianness == big)
-        *(U32 *)addr = (U32)(q >> 24);
-        *(U32 *)(addr + 3) = (U32)q;
+        *(U32 *)TO_VOIDP(addr) = (U32)(q >> 24);
+        *(U32 *)TO_VOIDP(addr + 3) = (U32)q;
 #else
         unexpected_endianness();
 #endif
@@ -1213,16 +1232,16 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
 #else
         unexpected_ptr_bits();
 #endif
-        *(I64 *)addr = q;
+        *(I64 *)TO_VOIDP(addr) = q;
         addr += 8;
         break;
       }
       case fasl_fld_single:
-        *(float *)addr = (float)singlein(f);
+        *(float *)TO_VOIDP(addr) = (float)singlein(f);
         addr += sizeof(float);
         break;
       case fasl_fld_double:
-        *(double *)addr = (double)doublein(f);
+        *(double *)TO_VOIDP(addr) = (double)doublein(f);
         addr += sizeof(double);
         break;
       default:
@@ -1318,12 +1337,18 @@ INT pax_encode21(INT n)
 void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; ptr p, x; {
     void *address; uptr item;
 
-    address = (void *)((uptr)p + n);
+    address = TO_VOIDP((uptr)p + n);
     item = (uptr)x + o;
     switch (typ) {
         case reloc_abs:
             *(uptr *)address = item;
             break;
+#ifdef PORTABLE_BYTECODE
+        case reloc_pb_abs:
+        case reloc_pb_proc:
+            pb_set_abs(address, item);
+            break;
+#endif /* AARCH64 */
 #ifdef ARMV6
         case reloc_arm32_abs:
             arm32_set_abs(address, item);
@@ -1406,11 +1431,17 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
     void *address; uptr item;
 
-    address = (void *)((uptr)p + n);
+    address = TO_VOIDP((uptr)p + n);
     switch (typ) {
         case reloc_abs:
             item = *(uptr *)address;
             break;
+#ifdef PORTABLE_BYTECODE
+        case reloc_pb_abs:
+        case reloc_pb_proc:
+            item = pb_get_abs(address);
+            break;
+#endif /* AARCH64 */
 #ifdef ARMV6
         case reloc_arm32_abs:
             item = arm32_get_abs(address);
@@ -1478,6 +1509,33 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
     return (ptr)(item - o);
 }
 
+
+#ifdef PORTABLE_BYTECODE
+
+/* Address pieces in a movz,movk,movk,movk sequence are upper 16 bits */
+#define ADDRESS_BITS_SHIFT 16
+#define ADDRESS_BITS_MASK  ((U32)0xffff0000)
+
+static void pb_set_abs(void *address, uptr item) {
+  ((U32 *)address)[0] = ((((U32 *)address)[0] & ~ADDRESS_BITS_MASK) | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[1] = ((((U32 *)address)[1] & ~ADDRESS_BITS_MASK) | (((item >> 16) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+#if ptr_bytes == 8  
+  ((U32 *)address)[2] = ((((U32 *)address)[2] & ~ADDRESS_BITS_MASK) | (((item >> 32) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[3] = ((((U32 *)address)[3] & ~ADDRESS_BITS_MASK) | (((item >> 48) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+#endif
+}
+
+static uptr pb_get_abs(void *address) {
+  return ((uptr)((((U32 *)address)[0] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT)
+          | ((uptr)((((U32 *)address)[1] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 16)
+#if ptr_bytes == 8          
+          | ((uptr)((((U32 *)address)[2] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 32)
+          | ((uptr)((((U32 *)address)[3] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 48)
+#endif
+          );
+}
+
+#endif /* AARCH64 */
 
 #ifdef ARMV6
 static void arm32_set_abs(void *address, uptr item) {
@@ -1852,3 +1910,81 @@ static void sparc64_set_literal(address, item) void *address; uptr item; {
   sparc64_set_lit_only(address, item, destreg);
 }
 #endif /* SPARC64 */
+
+#ifdef PORTABLE_BYTECODE_BIGENDIAN
+static void swap_code_endian(octet *code, uptr len)
+{
+  octet *next_rpheader = NULL;
+  uptr header_size = 0;
+
+  while (len > 0) {
+    if (code == next_rpheader) {
+      /* swap 8-byte segments while we're in the header */
+      while (header_size > 0) {
+        octet a = code[0];
+        octet b = code[1];
+        octet c = code[2];
+        octet d = code[3];
+        octet e = code[4];
+        octet f = code[5];
+        octet g = code[6];
+        octet h = code[7];
+        code[0] = h;
+        code[1] = g;
+        code[2] = f;
+        code[3] = e;
+        code[4] = d;
+        code[5] = c;
+        code[6] = b;
+        code[7] = a;
+
+        code += 8;
+        len -= 8;
+        header_size -= 8;
+      }
+    } else {
+      /* swap a 4-byte instruction */
+      octet a = code[0];
+      octet b = code[1];
+      octet c = code[2];
+      octet d = code[3];
+      code[0] = d;
+      code[1] = c;
+      code[2] = b;
+      code[3] = a;
+
+      if (a == pb_adr) {
+        /* after a few more instructions, we'll hit
+           a header where 64-bit values needs to be
+           swapped, instead of 32-bit values */
+        uptr delta = ((uptr)d << 16) + c;
+        octet *after_rpheader = code + 4 + delta;
+
+        if (after_rpheader[-8] & 0x1)
+          header_size = size_rp_compact_header;
+        else
+          header_size = size_rp_header;
+
+        next_rpheader = after_rpheader - header_size;
+      }
+
+      code += 4;
+      len -= 4;
+    }
+  }
+}
+
+void S_swap_dounderflow_header_endian(ptr co)
+{
+  /* The `dounderflow` library entry starts with a header, so
+     it does not have a `pb_adr` instruction before. We need
+     to finish swapping the header's `ptr`-sized values, but
+     the mv-return address is already linked, so the only
+     thing to fix turns out to be the first `ptr`. */
+  uint32_t *code = (uint32_t *)&CODEIT(co, 0);
+  uint32_t a = code[0];
+  uint32_t b = code[1];
+  code[0] = b;
+  code[1] = a;
+}
+#endif

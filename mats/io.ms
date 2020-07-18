@@ -532,7 +532,9 @@
      1)
  )
 
-(if (embedded?)
+(if (case (machine-type)
+     [(pb) #t]
+     [else (embedded?)])
     (mat iconv-codec
       (error? (errorf 'iconv-codec "-73 is not a string"))
       (error? (errorf 'transcoded-port "unsupported encoding almost certainly bogus"))

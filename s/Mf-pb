@@ -1,0 +1,6 @@
+# Mf-pb
+
+m = pb
+archincludes = pb.ss
+
+include Mf-base

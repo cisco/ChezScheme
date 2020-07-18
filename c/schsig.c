@@ -52,7 +52,7 @@ static void split(k, s) ptr k; ptr *s; {
 
     tc_mutex_acquire()
   /* set m to size of lower piece, n to size of upper piece */
-    m = (uptr)s - (uptr)CONTSTACK(k);
+    m = (uptr)TO_PTR(s) - (uptr)CONTSTACK(k);
     n = CONTCLENGTH(k) - m;
 
     si = SegInfo(ptr_get_segment(k));
@@ -67,8 +67,8 @@ static void split(k, s) ptr k; ptr *s; {
                                  Snil,
                                  Sfalse);
     CONTLENGTH(k) = CONTCLENGTH(k) = n;
-    CONTSTACK(k) = (ptr)s;
-    *s = (ptr)DOUNDERFLOW;
+    CONTSTACK(k) = TO_PTR(s);
+    *s = TO_PTR(DOUNDERFLOW);
     tc_mutex_release()
 }
 
@@ -91,14 +91,14 @@ void S_split_and_resize() {
         iptr frame_size;
         ptr *front_stack_ptr, *end_stack_ptr, *split_point, *guard;
 
-        front_stack_ptr = (ptr *)CONTSTACK(k);
-        end_stack_ptr = (ptr *)((uptr)front_stack_ptr + CONTCLENGTH(k));
+        front_stack_ptr = TO_VOIDP(CONTSTACK(k));
+        end_stack_ptr = TO_VOIDP((uptr)TO_PTR(front_stack_ptr) + CONTCLENGTH(k));
 
-        guard = (ptr *)((uptr)end_stack_ptr - underflow_limit);
+        guard = TO_VOIDP((uptr)TO_PTR(end_stack_ptr) - underflow_limit);
 
       /* set split point to base of top frame */
         frame_size = ENTRYFRAMESIZE(CONTRET(k));
-        split_point = (ptr *)((uptr)end_stack_ptr - frame_size);
+        split_point = TO_VOIDP((uptr)TO_PTR(end_stack_ptr) - frame_size);
 
       /* split only if we have more than one frame */
         if (split_point != front_stack_ptr) {
@@ -107,7 +107,7 @@ void S_split_and_resize() {
             for (;;) {
                 ptr *p;
                 frame_size = ENTRYFRAMESIZE(*split_point);
-                p = (ptr *)((uptr)split_point - frame_size);
+                p = TO_VOIDP((uptr)TO_PTR(split_point) - frame_size);
                 if (p < guard) break;
                 split_point = p;
             }
@@ -138,11 +138,11 @@ iptr S_continuation_depth(k) ptr k; {
     n = 0;
   /* terminate on shot 1-shot, which could be null_continuation */
     while (CONTLENGTH(k) != scaled_shot_1_shot_flag) {
-        stack_base = (ptr *)CONTSTACK(k);
+        stack_base = TO_VOIDP(CONTSTACK(k));
         frame_size = ENTRYFRAMESIZE(CONTRET(k));
-        stack_ptr = (ptr *)((uptr)stack_base + CONTCLENGTH(k));
+        stack_ptr = TO_VOIDP((uptr)TO_PTR(stack_base) + CONTCLENGTH(k));
         for (;;) {
-            stack_ptr = (ptr *)((uptr)stack_ptr - frame_size);
+            stack_ptr = TO_VOIDP((uptr)TO_PTR(stack_ptr) - frame_size);
             n += 1;
             if (stack_ptr == stack_base) break;
             frame_size = ENTRYFRAMESIZE(*stack_ptr);
@@ -157,8 +157,8 @@ ptr S_single_continuation(k, n) ptr k; iptr n; {
 
   /* bug out on shot 1-shots, which could be null_continuation */
     while (CONTLENGTH(k) != scaled_shot_1_shot_flag) {
-        stack_base = (ptr *)CONTSTACK(k);
-        stack_top = (ptr *)((uptr)stack_base + CONTCLENGTH(k));
+        stack_base = TO_VOIDP(CONTSTACK(k));
+        stack_top = TO_VOIDP((uptr)TO_PTR(stack_base) + CONTCLENGTH(k));
         stack_ptr = stack_top;
         frame_size = ENTRYFRAMESIZE(CONTRET(k));
         for (;;) {
@@ -172,14 +172,14 @@ ptr S_single_continuation(k, n) ptr k; iptr n; {
                     k = CONTLINK(k);
                 }
 
-                stack_ptr = (ptr *)((uptr)stack_ptr - frame_size);
+                stack_ptr = TO_VOIDP((uptr)TO_PTR(stack_ptr) - frame_size);
                 if (stack_ptr != stack_base)
                     split(k, stack_ptr);
 
                 return k;
             } else {
                 n -= 1;
-                stack_ptr = (ptr *)((uptr)stack_ptr - frame_size);
+                stack_ptr = TO_VOIDP((uptr)TO_PTR(stack_ptr) - frame_size);
                 if (stack_ptr == stack_base) break;
                 frame_size = ENTRYFRAMESIZE(*stack_ptr);
             }
@@ -201,7 +201,7 @@ void S_handle_overflood() {
     ptr tc = get_thread_context();
 
  /* xp points to where esp needs to be */
-    S_overflow(tc, ((ptr *)XP(tc) - (ptr *)SFP(tc))*sizeof(ptr));
+    S_overflow(tc, ((ptr *)TO_VOIDP(XP(tc)) - (ptr *)TO_VOIDP(SFP(tc)))*sizeof(ptr));
 }
 
 void S_handle_apply_overflood() {
@@ -227,39 +227,39 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
     iptr split_stack_length, split_stack_clength;
     ptr nuate;
 
-    sfp = (ptr *)SFP(tc);
+    sfp = TO_VOIDP(SFP(tc));
     nuate = SYMVAL(S_G.nuate_id);
     if (!Scodep(nuate)) {
         S_error_abort("overflow: nuate not yet defined");
     }
 
-    guard = (ptr *)((uptr)sfp - underflow_limit);
+    guard = TO_VOIDP((uptr)TO_PTR(sfp) - underflow_limit);
   /* leave at least stack_slop headroom in the old stack to reduce the need for return-point overflow checks */
-    other_guard = (ptr *)((uptr)SCHEMESTACK(tc) + (uptr)SCHEMESTACKSIZE(tc) - (uptr)stack_slop);
-    if ((uptr)other_guard < (uptr)guard) guard = other_guard;
+    other_guard = TO_VOIDP((uptr)SCHEMESTACK(tc) + (uptr)SCHEMESTACKSIZE(tc) - (uptr)TO_PTR(stack_slop));
+    if ((uptr)TO_PTR(other_guard) < (uptr)TO_PTR(guard)) guard = other_guard;
 
   /* split only if old stack contains more than underflow_limit bytes */
-    if (guard > (ptr *)SCHEMESTACK(tc)) {
+    if (guard > (ptr *)TO_VOIDP(SCHEMESTACK(tc))) {
         iptr frame_size;
 
       /* set split point to base of the frame below the current one */
         frame_size = ENTRYFRAMESIZE(*sfp);
-        split_point = (ptr *)((uptr)sfp - frame_size);
+        split_point = TO_VOIDP((uptr)TO_PTR(sfp) - frame_size);
 
       /* split only if we have more than one frame */
-        if (split_point != (ptr *)SCHEMESTACK(tc)) {
+        if (split_point != TO_VOIDP(SCHEMESTACK(tc))) {
           /* walk the stack to set split_point at first frame above guard */
           /* note that first frame may have put us below the guard already */
             for (;;) {
                 ptr *p;
 
                 frame_size = ENTRYFRAMESIZE(*split_point);
-                p = (ptr *)((uptr)split_point - frame_size);
+                p = TO_VOIDP((uptr)TO_PTR(split_point) - frame_size);
                 if (p < guard) break;
                 split_point = p;
             }
 
-            split_stack_clength = (uptr)split_point - (uptr)SCHEMESTACK(tc);
+            split_stack_clength = (uptr)TO_PTR(split_point) - (uptr)SCHEMESTACK(tc);
 
           /* promote to multi-shot if current stack is shrimpy */
             if (SCHEMESTACKSIZE(tc) < default_stack_size / 4) {
@@ -284,16 +284,16 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
             tc_mutex_release()
 
           /* overwrite old return address with dounderflow */
-            *split_point = (ptr)DOUNDERFLOW;
+              *split_point = TO_PTR(DOUNDERFLOW);
         }
     } else {
-        split_point = (ptr *)SCHEMESTACK(tc);
+        split_point = TO_VOIDP(SCHEMESTACK(tc));
     }
 
-    above_split_size = SCHEMESTACKSIZE(tc) - ((uptr)split_point - (uptr)SCHEMESTACK(tc));
+    above_split_size = SCHEMESTACKSIZE(tc) - ((uptr)TO_PTR(split_point) - (uptr)SCHEMESTACK(tc));
 
   /* allocate a new stack, retaining same relative sfp */
-    sfp_offset = (uptr)sfp - (uptr)split_point;
+    sfp_offset = (uptr)TO_PTR(sfp) - (uptr)TO_PTR(split_point);
     tc_mutex_acquire()
     S_reset_scheme_stack(tc, above_split_size + frame_request);
     tc_mutex_release()
@@ -302,7 +302,7 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
   /* copy up everything above the split point.  we don't know where the
      current frame ends, so we copy through the end of the old stack */
     {ptr *p, *q; iptr n;
-     p = (ptr *)SCHEMESTACK(tc);
+     p = TO_VOIDP(SCHEMESTACK(tc));
      q = split_point;
      for (n = above_split_size; n != 0; n -= sizeof(ptr)) *p++ = *q++;
     }
@@ -325,10 +325,10 @@ static void reset_scheme() {
     tc_mutex_acquire()
    /* eap should always be up-to-date now that we write-through to the tc
       when making any changes to eap when eap is a real register */
-    S_scan_dirty((ptr **)EAP(tc), (ptr **)REAL_EAP(tc));
+    S_scan_dirty(TO_VOIDP(EAP(tc)), TO_VOIDP(REAL_EAP(tc)));
     S_reset_allocation_pointer(tc);
     S_reset_scheme_stack(tc, stack_slop);
-    FRAME(tc,0) = (ptr)DOUNDERFLOW;
+    FRAME(tc,0) = TO_PTR(DOUNDERFLOW);
     tc_mutex_release()
 }
 
@@ -399,7 +399,7 @@ static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr arg
     AC0(tc) = (ptr)1;
     CP(tc) = S_symbol_value(S_G.error_id);
     S_put_scheme_arg(tc, 1, args);
-    LONGJMP(CAAR(CCHAIN(tc)), -1);
+    LONGJMP(TO_VOIDP(CAAR(CCHAIN(tc))), -1);
 }
 
 static void handle_call_error(tc, type, x) ptr tc; iptr type; ptr x; {
@@ -607,7 +607,7 @@ struct signal_queue {
 };
 
 static IBOOL enqueue_scheme_signal(ptr tc, INT sig) {
-  struct signal_queue *queue = (struct signal_queue *)(SIGNALINTERRUPTQUEUE(tc));
+  struct signal_queue *queue = TO_VOIDP(SIGNALINTERRUPTQUEUE(tc));
   /* ignore the signal if we failed to allocate the queue */
   if (queue == NULL) return 0;
   INT tail = queue->tail;
@@ -622,7 +622,7 @@ static IBOOL enqueue_scheme_signal(ptr tc, INT sig) {
 
 ptr S_dequeue_scheme_signals(ptr tc) {
   ptr ls = Snil;
-  struct signal_queue *queue = (struct signal_queue *)(SIGNALINTERRUPTQUEUE(tc));
+  struct signal_queue *queue = TO_VOIDP(SIGNALINTERRUPTQUEUE(tc));
   if (queue == NULL) return ls;
   INT head = queue->head;
   INT tail = queue->tail;
@@ -652,7 +652,7 @@ static ptr allocate_scheme_signal_queue() {
   if (queue != (struct signal_queue *)0) {
     queue->head = queue->tail = 0;
   }
-  return (ptr)queue;
+  return TO_PTR(queue);
 }
 
 ptr S_allocate_scheme_signal_queue() {
@@ -686,7 +686,7 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
             ptr tc = get_thread_context();
            /* disable keyboard interrupts in subordinate threads until we think
              of something more clever to do with them */
-            if (tc == S_G.thread_context) {
+            if (tc == TO_PTR(&S_G.thread_context)) {
               if (!S_pants_down && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc))) {
                /* this is a no-no, but the only other options are to ignore
                   the signal or to kill the process */
