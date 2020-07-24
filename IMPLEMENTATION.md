@@ -1,5 +1,4 @@
-Getting Started
----------------
+# Getting Started
 
 Most of the Chez Scheme implementation is in the "s" directory. The
 C-implemented kernel is in the "c" directory.
@@ -22,8 +21,7 @@ Some key files in "s":
    provides platform-specific constants that feed into "cmacro.ss" and
    selects the backend used by "cpnanopass.ss"
 
-Scheme Objects
---------------
+# Scheme Objects
 
 A Scheme object is represented at run time by a pointer. The low bits
 of the pointer indicate the general type of the object, such as "pair"
@@ -32,14 +30,13 @@ additional tag word to further refine the pointer-tag type.
 
 See also:
 
-  Don't Stop the BiBOP: Flexible and Efficient Storage Management for
-  Dynamically Typed Languages.
-  R. Kent Dybvig, David Eby, and Carl Bruggeman.
-  Indiana University TR #400, 1994.
+> *Don't Stop the BiBOP: Flexible and Efficient Storage Management for Dynamically Typed Languages.* by R. Kent Dybvig, David Eby, and Carl Bruggeman, Indiana University TR #400, 1994.
 
 For example, if "cmacro.ss" says
 
+```scheme
   (define-constant type-pair         #b001)
+```
 
 then that means an address with only the lowest bit set among the low
 three bits refers to a pair. To get the address where the pair content
@@ -50,7 +47,9 @@ form of every pair pointer will end in "9".
 
 The `type-typed-object` type,
 
+```scheme
  (define-constant type-typed-object #b111)
+```
 
 refers to an object whose first word indicates its type. In the case
 of a Scheme record, that first word will be a record-type descriptor
@@ -74,12 +73,14 @@ types that are not records (and even a few that are), the layouts are
 defined in "camcros.ss". For example, an `exactnum` (i.e., a complex
 number with exact real and imaginary components) is defined as
 
+```scheme
  (define-primitive-structure-disps exactnum type-typed-object
    ([iptr type]
     [ptr real]
     [ptr imag]))
+```
 
-The `type-typed-object` in the first line indicates that an exactnum
+The `type-typed-object` in the first line indicates that an `exactnum`
 is represented by a pointer that is tagged with `type-typed-object`,
 and so we should expect the first first to be a type word. That's why
 the first field above is `type`, and it turns out that it will always
@@ -87,8 +88,7 @@ contain the value `type-inexactnum`. The `iptr` type for `type` means
 "a pointer-sized signed integer". The `ptr` type for `real` and `imag`
 means "pointer" or "Scheme object".
 
-Functions and Calls
--------------------
+# Functions and Calls
 
 Scheme code does not use the C stack, except to the degree that it
 interacts with C functions. Instead, the Scheme continuation is a
@@ -98,17 +98,12 @@ and continuation operations are handled as needed at the boundaries.
 
 See also:
  
- Representing Control in the Presence of First-Class Continuations.
- Robert Hieb, R. Kent Dybvig, and Carl Bruggeman.
- Programming Language Design and Implementation, 1990.
-
- Compiler and Runtime Support for Continuation Marks.
- Matthew Flatt and R. Kent Dybvig.
- Programming Language Design and Implementation, 2020.
+> *Representing Control in the Presence of First-Class Continuations* by Robert Hieb, R. Kent Dybvig, and Carl Bruggeman, Programming Language Design and Implementation, 1990.
+> *Compiler and Runtime Support for Continuation Marks* by Matthew Flatt and R. Kent Dybvig, Programming Language Design and Implementation, 2020.
 
 To the degree that the runtime system needs global state, that state
 is in the thread context (so, it's thread-local), which we'll
-abbreviate as "TC". Some machine register is desgined as the `%tc`
+abbreviate as "TC". Some machine register is designated as the `%tc`
 register, and it's initialized on entry to Scheme code. For the
 defintion of TC, see `(define-primitive-structure-disps tc ...)` in
 "cmacro.ss".
@@ -127,6 +122,7 @@ The Scheme stack grows up, and SFP points to the beginning (i.e., the
 low address) of the current stack frame. The first word of a stack
 frame is the return address, so a frame looks like this:
 
+```scheme
                 ^
                 |          (higher addresses)
               future
@@ -144,6 +140,7 @@ frame is the return address, so a frame looks like this:
               frames 
                 |          (lower addresses)
                 v
+```
 
 On entry to a Scheme function, a check ensures that the difference
 between SFP and the end of the current stack segment is big enough to
@@ -151,11 +148,11 @@ accomodate the (spilled) variables of the called function, plus enough
 slop to deal with some primitive operations.
 
 A non-tail call moves SFP past all the live variables of the current
-function, installs the return address as as pointer within the current
+function, installs the return address as a pointer within the current
 function, and then jumps to the called function. Function calls and
 returns do not use machine "call" and "return" instructions;
 everything is just a "jump". ("Call" and "return" instructions are
-used for for C interactions.) It's the caller's responsibity to reset
+used for C interactions.) It's the caller's responsibity to reset
 SFP back on return, since the caller knows how much it moved SFP
 before calling.
 
@@ -198,8 +195,7 @@ So, when you disassemble code generated by the Chez Scheme compiler,
 you may see garbage instructions mingled with the well-formed
 instructions, but the garbage will always be jumped over.
 
-Compilation Pipeline
---------------------
+# Compilation Pipeline
 
 Compilation
 
@@ -221,13 +217,8 @@ Compilation
 
 See also:
 
-   Nanopass compiler infrastructure.
-   Dipanwita Sarkar.
-   Indiana University PhD dissertation, 2008
-
-   A Nanopass Framework for Commercial Compiler Development.
-   Andrew W. Keep.
-   Indiana University PhD dissertation, 2013
+> *Nanopass compiler infrastructure* by Dipanwita Sarkar, Indiana University PhD dissertation, 2008
+> *A Nanopass Framework for Commercial Compiler Development* by Andrew W. Keep, Indiana University PhD dissertation, 2013
 
 Note that the core macro expander always converts its input to the
 `Lsrc` intermediate form. That intermediate form can be converted back
@@ -243,13 +234,13 @@ use of safe `fx+` is inlines as argument checks that guard an `(inline
 + ...)`, and the `(inline + ...)` eventually becomes a machine-level
 addition instruction.
 
-Machine Registers
------------------
+# Machine Registers
 
 Each backend file, such as "x86_64.ss" or "arm64.ss", starts with a
 description of the machine's registers. It has three parts in
 `define-registers`:
 
+```scheme
 (define-registers
   (reserved
     <reg>
@@ -260,10 +251,13 @@ description of the machine's registers. It has three parts in
   (machine-dependent
     <reg>
     ...))
+```
 
-Each <reg> has the form
+Each `<reg>` has the form
 
+```
     [<name> ... <preserved? / callee-saved?> <num> <type>]
+```
 
  * The <name>s in one <reg> will all refer to the same register, and
    the first <name> is used as the canonical name. By convention, each
@@ -271,7 +265,7 @@ Each <reg> has the form
    few names listed below, and a backend can use any names otherwise.
 
  * The information on preserved (i.e, callee-saved) registers helps
-   the compiler save registers as needed before some C interactons.
+   the compiler save registers as needed before some C interactions.
 
  * The <num> value is for the private use of the backend. Typically,
    it corresponds to the register's representation within machine
@@ -356,19 +350,23 @@ Each variable or temporary will be allocated to one spot for it's
 whole lifetime. So, from the register-allocation perspective, it's
 better to use
 
+```scheme
    (set! var1 ...)
    ... var1 ...
    ... code that doesn't use var1 ...
    (set! var2 ...)
    ... var2 ...
+```
 
 than to reuse var1 like
 
+```scheme
    (set! var1 ...)
    ... var1 ...
    ... code that doesn't use var1 ...
    (set! var1 ...)
    ... var1 ...
+```
 
 Intermediate code in later passes of the compiler can also refer to
 registers directly, and those uses are taken into account by the
@@ -395,16 +393,20 @@ The difference between a pre-colored unspillable and just using the
 real register is that you declare intent to the register allocator,
 and it can sometimes tell you if things go wrong. For example,
 
+```scheme
         (set! %r1 v1)
         (set! must-be-r1 v2)
         ... use %r1 and must-be-r1 ...
+```
 
 has clearly gone wrong. In contrast, the register allocator thinks
 that
 
+```scheme
         (set! %r1 v1)
         (set! %r1 v2)
-        ... use %r1, sometimesexpecting v1 and sometimess v2 ...
+        ... use %r1, sometimes expecting v1 and sometimess v2 ...
+```
 
 looks fine, and it may optimize away the first assignment. [Note:
 Optimized-away assignments are one of the most confusing potential
@@ -421,8 +423,8 @@ is written with "dummy" arguments just to expose the fact that it
 needs those arguments to stay live; for example, a jump instruction
 that implements a function-call return conceptually needs to consume
 the result-value registers (because those values need to stay live
-throgh the jump), even though the machine-level jump instruction
-doens't refer to the result values. The `kill` dummy instruction can
+through the jump), even though the machine-level jump instruction
+doesn't refer to the result values. The `kill` dummy instruction can
 be used with `set!` to indicate that a variable is trashed, but the
 `kill` is discarded after register allocation. It's also possible for
 an insstruction to produce results in multiple registers. So, besides
@@ -446,7 +448,7 @@ may not be able to work with one or more of the arguments or
 destination in SFP[pos] form; in that case, it will create an
 unspillable and assign the SFP[pos] value to the unspillable, then use
 the unspillable in a generated instruction sequence. Of course,
-introducing unspillables may mean that some of the remaining `uvar`s`
+introducing unspillables may mean that some of the remaining `uvar`s
 to no longer fit in registers after all; when that happens, the
 register allocator will discard the tentative instruction selection
 and try again after spilling for `uvar`s (which will then create even
@@ -484,8 +486,7 @@ register plus an offset instead of two registers, because the offset
 is too big, because the offset does not have a required alignment, and
 so on.
 
-Instruction Selection: Compiler <-> Backend
--------------------------------------------
+# Instruction Selection: Compiler <-> Backend
 
 For each primitive that the compiler will reference via `inline`,
 there must be a `declare-primitive` in "np-language.ss". Each
@@ -500,7 +501,9 @@ instruction, but any of them can expand to any number of instructions.
 The `declare-primitive` form binds the name formed by adding a `%`
 prefix. So, for example,
 
+```scheme
   (declare-primitive logand value #t)
+```
 
 binds `%logand`. The `(%inline name ,arg ...)` macro expands to
 `(inline ,null-info ,%name ,arg ...)` macro, so that's why you don't
@@ -582,8 +585,7 @@ assembly printing is enabled. The `aop-cons*` helper macro (in
 "cpnanopass.ss") is like `cons*`, but it skips its first argument if
 human-readable forms aren't being kept.
 
-Instruction Selection: Backend Structure
-----------------------------------------
+# Instruction Selection: Backend Structure
 
 To further organize the work of instruction selection and assembly,
 all of the current backends use a particular internal structure:
@@ -600,6 +602,7 @@ all of the current backends use a particular internal structure:
 Consider the "arm64.ss" definition fo `%logand`, which should accept a
 destination (here called "z") and two arguments:
 
+```scheme
   (define-instruction value (logand)
     [(op (z ur) (x ur) (y funkymask))
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,x ,y))]
@@ -607,6 +610,7 @@ destination (here called "z") and two arguments:
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,y ,x))]
     [(op (z ur) (x ur) (y ur))
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-logand #f) ,x ,y))])
+```
 
 The A64 instruction set supports a logical "and" on either two
 registers or a register and an immediate, but the immediate value has
@@ -625,18 +629,22 @@ then the code generated by `define-instruction` will notice that the
 first argument is not a register/variable, while 7 does encode as a
 mask, so it will arrange to produce the same value as
 
+```
    (let ([u (make-tmp 'u)])
       (list
         (%logand u var2 7)
         `(set! ,(make-live-info) (mref ,var1 ,%zero 8) ,u)))
+```
 
 Then, the first case of `%logand` will match, and the result will be
 the same as
 
+```
    (let ([u (make-tmp 'u)])
       (list
         `(set! ,(make-live-info) ,u (asm,(asm-logand #f) ,var2 ,7)
         `(set! ,(make-live-info) (mref ,var1 ,%zero 8) ,u))))
+```
 
 If the offset 8 were instead a very large number, then auto-conversion
 would have to generate an `add` into a second temporary variable.
@@ -660,12 +668,14 @@ variants.
 
 The `asm-logand` instruction for "arm64.ss" is implemented as
 
+```
    (lambda (set-cc?)
      (lambda (code* dest src0 src1)
        (Trivit (dest src0 src1)
           (record-case src1
             [(imm) (n) (emit andi set-cc? dest src0 n code*)]
             [else (emit and set-cc? and src0 src1 code*)]))))
+```
 
 The `set-cc?` argument coresponds to the `#f` in `(asm-logand #f)`.
 The inner lambda reprsents the instruction --- that is, it's the
@@ -700,8 +710,7 @@ human-readable addition.
 All of that could be done with just plain functions, but the macros
 help with boilerplate and arrange some helpful compile-time checking.
 
-Foreign Function ABI
---------------------
+# Foreign Function ABI
 
 Support for foreign procedures and callables in Chez Scheme boils down
 to foriegn calls and callable stubs for the backend. A backend's
@@ -770,7 +779,7 @@ The `asm-foreign-call` function returns 5 values:
 
  * allocate : -> L13.Effect
 
-   Any needd teardown, such as deallocating C stack space.
+   Any needed teardown, such as deallocating C stack space.
 
 The `asm-foreign-callable` function returns 4 values:
 
@@ -800,7 +809,7 @@ The `asm-foreign-callable` function returns 4 values:
 
  * c-result : (uvar/reg -> L13.Effect) or (-> L13.Effect)
 
-   Similar to the `asm-foreign-call` arrgument cases, but for a
+   Similar to the `asm-foreign-call` argument cases, but for a
    floating-point result, the given result register holds pointer to a
    flonum. Also, if the function result is a "&" or void type, then
    `c-result` takes no argument (because the destination pointer was
