@@ -121,6 +121,12 @@ static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
 static ptr s_profile_counters PROTO((void));
 static ptr s_profile_release_counters PROTO((void));
 
+#ifdef WIN32
+# define WIN32_UNUSED UNUSED
+#else
+# define WIN32_UNUSED
+#endif
+
 #define require(test,who,msg,arg) if (!(test)) S_error1(who, msg, arg)
 
 ptr S_strerror(INT errnum) {
@@ -274,6 +280,15 @@ static ptr sorted_chunk_list(void) {
   return sort_chunks(ls, n);
 }
 
+#ifdef __MINGW32__
+# include <inttypes.h>
+# define PHtx "%" PRIxPTR
+# define Ptd "%" PRIdPTR
+#else
+# define PHtx "%#tx"
+# define Ptd "%td"
+#endif
+
 #ifdef segment_t2_bits
 static void s_show_info(FILE *out) {
   void *max_addr = 0;
@@ -296,9 +311,9 @@ static void s_show_info(FILE *out) {
       }
     }
   }
-  addrwidth = snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)max_addr);
+  addrwidth = snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)max_addr);
   if (addrwidth < (INT)strlen(addrtitle)) addrwidth = (INT)strlen(addrtitle);
-  byteswidth = snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)(sizeof(t1table) > sizeof(t2table) ? sizeof(t1table) : sizeof(t2table)));
+  byteswidth = snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)(sizeof(t1table) > sizeof(t2table) ? sizeof(t1table) : sizeof(t2table)));
   snprintf(fmtbuf, FMTBUFSIZE, "%%s  %%-%ds  %%-%ds\n\n", addrwidth, byteswidth);
   fprintf(out, fmtbuf, "level", addrtitle, "bytes");
   snprintf(fmtbuf, FMTBUFSIZE, "%%-5d  %%#0%dtx  %%#0%dtx\n", addrwidth, byteswidth);
@@ -321,11 +336,11 @@ static void s_show_info(FILE *out) {
       if ((void *)t1t > max_addr) max_addr = (void *)t1t;
     }
   }
-  addrwidth = 1 + snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)max_addr);
+  addrwidth = 1 + snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)max_addr);
   if (addrwidth < (INT)strlen(addrtitle) + 1) addrwidth = (INT)strlen(addrtitle) + 1;
   snprintf(fmtbuf, FMTBUFSIZE, "%%s %%-%ds %%s\n\n", addrwidth);
   fprintf(out, fmtbuf, "level", addrtitle, "bytes");
-  snprintf(fmtbuf, FMTBUFSIZE, "%%-5d %%#0%dtx %%#tx\n", (ptrdiff_t)addrwidth);
+  snprintf(fmtbuf, FMTBUFSIZE, "%%-5d %%#0%dtx %"PHtx"\n", (ptrdiff_t)addrwidth);
   for (i2 = 0; i2 < SEGMENT_T2_SIZE; i2 += 1) {
     t1table *t1t = S_segment_info[i2];
     if (t1t != NULL) {
@@ -353,13 +368,13 @@ static void s_show_chunks(FILE *out, ptr sorted_chunks) {
     if ((void *)chunk > max_header_addr) max_header_addr = (void *)chunk;
   }
 
-  addrwidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)max_addr);
+  addrwidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)max_addr);
   if (addrwidth < (INT)strlen(addrtitle)) addrwidth = (INT)strlen(addrtitle);
-  byteswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)(max_segs * bytes_per_segment));
+  byteswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)(max_segs * bytes_per_segment));
   if (byteswidth < (INT)strlen(bytestitle)) byteswidth = (INT)strlen(bytestitle);
-  headerbyteswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)(sizeof(chunkinfo) + sizeof(seginfo) * max_segs));
-  headeraddrwidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, "%#tx", (ptrdiff_t)max_header_addr);
-  segswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, "%td", (ptrdiff_t)max_segs);
+  headerbyteswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)(sizeof(chunkinfo) + sizeof(seginfo) * max_segs));
+  headeraddrwidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, ""PHtx"", (ptrdiff_t)max_header_addr);
+  segswidth = (INT)snprintf(fmtbuf, FMTBUFSIZE, ""Ptd"", (ptrdiff_t)max_segs);
   headerwidth = headerbyteswidth + headeraddrwidth + 13;
 
   snprintf(fmtbuf, FMTBUFSIZE, "%%-%ds %%-%ds %%-%ds %%s\n\n", addrwidth, byteswidth, headerwidth);
@@ -447,7 +462,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
 
   for (g = 0; g <= generation_total; INCRGEN(g)) {
     if (count[space_total][g] != 0) {
-      int n = 1 + snprintf(fmtbuf, FMTBUFSIZE, "%td", (ptrdiff_t)count[space_total][g]);
+      int n = 1 + snprintf(fmtbuf, FMTBUFSIZE, ""Ptd"", (ptrdiff_t)count[space_total][g]);
       column_size[g] = n < 8 ? 8 : n;
     }
   }
@@ -505,8 +520,8 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
     }
   }
 
-  fprintf(out, "segment size = %#tx bytes.  percentages show the portion actually occupied.\n", (ptrdiff_t)bytes_per_segment);
-  fprintf(out, "%td segments are presently reserved for future allocation or collection.\n", (ptrdiff_t)S_G.number_of_empty_segments);
+  fprintf(out, "segment size = "PHtx" bytes.  percentages show the portion actually occupied.\n", (ptrdiff_t)bytes_per_segment);
+  fprintf(out, ""Ptd" segments are presently reserved for future allocation or collection.\n", (ptrdiff_t)S_G.number_of_empty_segments);
 
   fprintf(out, "\nMemory chunks obtained and not returned to the O/S:\n\n");
   sorted_chunks = sorted_chunk_list();
@@ -534,7 +549,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
       if (last_seg > max_seg) max_seg = last_seg;
     }
 
-    segwidth = snprintf(fmtbuf, FMTBUFSIZE, "%#tx ", (ptrdiff_t)max_seg);
+    segwidth = snprintf(fmtbuf, FMTBUFSIZE, ""PHtx" ", (ptrdiff_t)max_seg);
     segsperline = (99 - segwidth) & ~0xf;
     
     snprintf(fmtbuf, FMTBUFSIZE, "  %%-%ds", segwidth);
@@ -562,7 +577,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
       }
 
       if (chunk->base > next_base && next_base != 0) {
-        fprintf(out, "\n-------- skipping %td segments --------", (ptrdiff_t)(chunk->base - next_base));
+        fprintf(out, "\n-------- skipping "Ptd" segments --------", (ptrdiff_t)(chunk->base - next_base));
       }
 
       for (i = 0; i < chunk->segs; i += 1) {
@@ -1018,7 +1033,7 @@ ptr S_uninterned(x) ptr x; {
   return sym;
 }
 
-static ptr s_mkdir(const char *inpath, INT mode) {
+static ptr s_mkdir(const char *inpath, WIN32_UNUSED INT mode) {
   INT status; ptr res; char *path;
 
   path = S_malloc_pathname(inpath);
@@ -1098,7 +1113,7 @@ static ptr s_getmod(const char *inpath, IBOOL followp) {
   return res;
 }
 
-static ptr s_path_atime(const char *inpath, IBOOL followp) {
+static ptr s_path_atime(const char *inpath, WIN32_UNUSED IBOOL followp) {
 #ifdef WIN32
   ptr res;
   wchar_t *wpath;
@@ -1138,7 +1153,7 @@ static ptr s_path_atime(const char *inpath, IBOOL followp) {
 #endif /* WIN32 */
 }
 
-static ptr s_path_ctime(const char *inpath, IBOOL followp) {
+static ptr s_path_ctime(const char *inpath, WIN32_UNUSED IBOOL followp) {
 #ifdef WIN32
   ptr res;
   wchar_t *wpath;
@@ -1178,7 +1193,7 @@ static ptr s_path_ctime(const char *inpath, IBOOL followp) {
 #endif /* WIN32 */
 }
 
-static ptr s_path_mtime(const char *inpath, IBOOL followp) {
+static ptr s_path_mtime(const char *inpath, WIN32_UNUSED IBOOL followp) {
 #ifdef WIN32
   ptr res;
   wchar_t *wpath;
@@ -2021,9 +2036,9 @@ static void s_free(uptr addr) {
 #ifdef FEATURE_ICONV
 #ifdef WIN32
 typedef void *iconv_t;
-typedef __declspec(dllimport) iconv_t (*iconv_open_ft)(const char *tocode, const char *fromcode);
-typedef __declspec(dllimport) size_t (*iconv_ft)(iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
-typedef __declspec(dllimport) int (*iconv_close_ft)(iconv_t cd);
+typedef iconv_t (*iconv_open_ft)(const char *tocode, const char *fromcode);
+typedef size_t (*iconv_ft)(iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
+typedef int (*iconv_close_ft)(iconv_t cd);
 
 static iconv_open_ft iconv_open_f = (iconv_open_ft)0;
 static iconv_ft iconv_f = (iconv_ft)0;
@@ -2052,7 +2067,7 @@ static ptr s_iconv_trouble(HMODULE h, const char *what) {
   FreeLibrary(h);
   n = strlen(what) + strlen(dll) + 17;
   msg = (char *)malloc(n);
-  sprintf_s(msg, n, "cannot find %s in %s", what, dll);
+  sprintf(msg, "cannot find %s in %s", what, dll);
   free(dll);
   r = Sstring_utf8(msg, -1);
   free(msg);
@@ -2072,14 +2087,14 @@ static ptr s_iconv_open(const char *tocode, const char *fromcode) {
     if (h == NULL) h = LoadLibraryW(L".\\libiconv.dll");
     if (h == NULL) h = LoadLibraryW(L".\\libiconv-2.dll");
     if (h == NULL) return Sstring("cannot load iconv.dll, libiconv.dll, or libiconv-2.dll");
-    if ((iconv_open_f = (iconv_open_ft)GetProcAddress(h, "iconv_open")) == NULL &&
-        (iconv_open_f = (iconv_open_ft)GetProcAddress(h, "libiconv_open")) == NULL)
+    if ((iconv_open_f = (void *)GetProcAddress(h, "iconv_open")) == NULL &&
+        (iconv_open_f = (void *)GetProcAddress(h, "libiconv_open")) == NULL)
       return s_iconv_trouble(h, "iconv_open or libiconv_open");
-    if ((iconv_f = (iconv_ft)GetProcAddress(h, "iconv")) == NULL &&
-        (iconv_f = (iconv_ft)GetProcAddress(h, "libiconv")) == NULL)
+    if ((iconv_f = (void *)GetProcAddress(h, "iconv")) == NULL &&
+        (iconv_f = (void *)GetProcAddress(h, "libiconv")) == NULL)
       return s_iconv_trouble(h, "iconv or libiconv");
-    if ((iconv_close_f = (iconv_close_ft)GetProcAddress(h, "iconv_close")) == NULL &&
-        (iconv_close_f = (iconv_close_ft)GetProcAddress(h, "libiconv_close")) == NULL)
+    if ((iconv_close_f = (void *)GetProcAddress(h, "iconv_close")) == NULL &&
+        (iconv_close_f = (void *)GetProcAddress(h, "libiconv_close")) == NULL)
       return s_iconv_trouble(h, "iconv_close or libiconv_close");
     iconv_is_loaded = 1;
   }
@@ -2175,15 +2190,15 @@ static ptr s_multibytetowidechar(unsigned cp, ptr inbv) {
   inbytes = Sbytevector_length(inbv);
 
 #if (ptr_bits > int_bits)
-  if ((int)inbytes != inbytes) S_error1("multibyte->string", "input size ~s is beyond MultiByteToWideChar's limit", Sinteger(inbytes));
+  if ((uptr)(int)inbytes != inbytes) S_error1("multibyte->string", "input size ~s is beyond MultiByteToWideChar's limit", Sinteger(inbytes));
 #endif
 
-  if ((outwords = MultiByteToWideChar(cp, 0, &BVIT(inbv,0), (int)inbytes, NULL, 0)) == 0)
+  if ((outwords = MultiByteToWideChar(cp, 0, (char *)&BVIT(inbv,0), (int)inbytes, NULL, 0)) == 0)
     S_error1("multibyte->string", "conversion failed: ~a", S_LastErrorString());
 
   outbv = S_bytevector(outwords * 2);
 
-  if (MultiByteToWideChar(cp, 0, &BVIT(inbv,0), (int)inbytes, (wchar_t *)&BVIT(outbv, 0), outwords) == 0)
+  if (MultiByteToWideChar(cp, 0, (char *)&BVIT(inbv,0), (int)inbytes, (wchar_t *)&BVIT(outbv, 0), outwords) == 0)
     S_error1("multibyte->string", "conversion failed: ~a", S_LastErrorString());
   
   return outbv;
@@ -2195,7 +2210,7 @@ static ptr s_widechartomultibyte(unsigned cp, ptr inbv) {
   inwords = Sbytevector_length(inbv) / 2;
 
 #if (ptr_bits > int_bits)
-  if ((int)inwords != inwords) S_error1("multibyte->string", "input size ~s is beyond WideCharToMultiByte's limit", Sinteger(inwords));
+  if ((uptr)(int)inwords != inwords) S_error1("multibyte->string", "input size ~s is beyond WideCharToMultiByte's limit", Sinteger(inwords));
 #endif
 
   if ((outbytes = WideCharToMultiByte(cp, 0, (wchar_t *)&BVIT(inbv,0), (int)inwords, NULL, 0, NULL, NULL)) == 0)
@@ -2203,7 +2218,7 @@ static ptr s_widechartomultibyte(unsigned cp, ptr inbv) {
 
   outbv = S_bytevector(outbytes);
 
-  if (WideCharToMultiByte(cp, 0, (wchar_t *)&BVIT(inbv,0), (int)inwords, &BVIT(outbv, 0), outbytes, NULL, NULL) == 0)
+  if (WideCharToMultiByte(cp, 0, (wchar_t *)&BVIT(inbv,0), (int)inwords, (char *)&BVIT(outbv, 0), outbytes, NULL, NULL) == 0)
     S_error1("string->multibyte", "conversion failed: ~a", S_LastErrorString());
   
   return outbv;  

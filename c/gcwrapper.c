@@ -494,12 +494,21 @@ void Scompact_heap() {
    If noisy is nonzero, additional comments may be included in the output
 */
 
+#ifdef __MINGW32__
+# include <inttypes.h>
+# define PHtx "%" PRIxPTR
+# define Ptd "%" PRIdPTR
+#else
+# define PHtx "%#tx"
+# define Ptd "%td"
+#endif
+
 static void segment_tell(seg) uptr seg; {
   seginfo *si;
   ISPC s, s1;
   static char *spacename[max_space+1] = { alloc_space_names };
 
-  printf("segment %#tx", (ptrdiff_t)seg);
+  printf("segment "PHtx"", (ptrdiff_t)seg);
   if ((si = MaybeSegInfo(seg)) == NULL) {
     printf(" out of heap bounds\n");
   } else {
@@ -532,7 +541,7 @@ static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
 
     si = SegInfo(addr_get_segment(TO_PTR(x)));
     d = (INT)(((uptr)TO_PTR(x) >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1));
-    printf("%s dirty byte %d found in segment %#tx, card %d at %#tx\n", msg, si->dirty_bytes[d], (ptrdiff_t)(si->number), d, (ptrdiff_t)x);
+    printf("%s dirty byte %d found in segment "PHtx", card %d at "PHtx"\n", msg, si->dirty_bytes[d], (ptrdiff_t)(si->number), d, (ptrdiff_t)x);
     printf("from "); segment_tell(addr_get_segment(TO_PTR(x)));
     printf("to   "); segment_tell(addr_get_segment(*x));
 }
@@ -563,7 +572,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
       }
       if ((chunk->segs - count) != chunk->nused_segs) {
         S_checkheap_errors += 1;
-        printf("!!! unexpected used segs count %td with %td total segs and %td segs on the unused list\n",
+        printf("!!! unexpected used segs count "Ptd" with "Ptd" total segs and "Ptd" segs on the unused list\n",
             (ptrdiff_t)chunk->nused_segs, (ptrdiff_t)chunk->segs, (ptrdiff_t)count);
       }
       used_segments += chunk->nused_segs;
@@ -590,21 +599,21 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
 
   if (used_segments != nonstatic_segments + static_segments) {
     S_checkheap_errors += 1;
-    printf("!!! found %#tx used segments and %#tx occupied segments\n",
+    printf("!!! found "PHtx" used segments and "PHtx" occupied segments\n",
         (ptrdiff_t)used_segments,
         (ptrdiff_t)(nonstatic_segments + static_segments));
   }
 
   if (S_G.number_of_nonstatic_segments != nonstatic_segments) {
     S_checkheap_errors += 1;
-    printf("!!! S_G.number_of_nonstatic_segments %#tx is different from occupied number %#tx\n",
+    printf("!!! S_G.number_of_nonstatic_segments "PHtx" is different from occupied number "PHtx"\n",
         (ptrdiff_t)S_G.number_of_nonstatic_segments,
         (ptrdiff_t)nonstatic_segments);
   }
 
   if (S_G.number_of_empty_segments != empty_segments) {
     S_checkheap_errors += 1;
-    printf("!!! S_G.number_of_empty_segments %#tx is different from unused number %#tx\n",
+    printf("!!! S_G.number_of_empty_segments "PHtx" is different from unused number "PHtx"\n",
         (ptrdiff_t)S_G.number_of_empty_segments,
         (ptrdiff_t)empty_segments);
   }
@@ -617,22 +626,22 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
         seginfo *recorded_si; uptr recorded_seg;
         if ((seg = si->number) != (recorded_seg = (chunk->base + chunk->segs - nsegs))) {
           S_checkheap_errors += 1;
-          printf("!!! recorded segment number %#tx differs from actual segment number %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_seg);
+          printf("!!! recorded segment number "PHtx" differs from actual segment number "PHtx"", (ptrdiff_t)seg, (ptrdiff_t)recorded_seg);
         }
         if ((recorded_si = SegInfo(seg)) != si) {
           S_checkheap_errors += 1;
-          printf("!!! recorded segment %#tx seginfo %#tx differs from actual seginfo %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_si, (ptrdiff_t)si);
+          printf("!!! recorded segment "PHtx" seginfo "PHtx" differs from actual seginfo "PHtx"", (ptrdiff_t)seg, (ptrdiff_t)recorded_si, (ptrdiff_t)si);
         }
         s = si->space;
         g = si->generation;
 
         if (si->use_marks)
-          printf("!!! use_marks set on generation %d segment %#tx\n", g, (ptrdiff_t)seg);
+          printf("!!! use_marks set on generation %d segment "PHtx"\n", g, (ptrdiff_t)seg);
 
         if (s == space_new) {
           if (g != 0 && !si->marked_mask) {
             S_checkheap_errors += 1;
-            printf("!!! unexpected generation %d segment %#tx in space_new\n", g, (ptrdiff_t)seg);
+            printf("!!! unexpected generation %d segment "PHtx" in space_new\n", g, (ptrdiff_t)seg);
           }
         } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair || s == space_ephemeron
                    || s == space_immobile_impure || s == space_count_pure || s == space_count_impure || s == space_closure) {
@@ -664,7 +673,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                           || psi->old_space
                           || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))) {
                         S_checkheap_errors += 1;
-                        printf("!!! dangling reference at %#tx to %#tx%s\n", (ptrdiff_t)pp1, (ptrdiff_t)p, (aftergc ? " after gc" : ""));
+                        printf("!!! dangling reference at "PHtx" to "PHtx"%s\n", (ptrdiff_t)pp1, (ptrdiff_t)p, (aftergc ? " after gc" : ""));
                         printf("from: "); segment_tell(seg);
                         printf("to:   "); segment_tell(ptr_get_segment(p));
                         {
@@ -697,7 +706,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
               if (found_eos) {
                 if (si->dirty_bytes[d] != 0xff) {
                   S_checkheap_errors += 1;
-                  printf("!!! Dirty byte set past end-of-segment for segment %#tx, card %d\n", (ptrdiff_t)seg, d);
+                  printf("!!! Dirty byte set past end-of-segment for segment "PHtx", card %d\n", (ptrdiff_t)seg, d);
                   segment_tell(seg);
                 }
                 continue;
@@ -710,7 +719,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
               }
 
 #ifdef DEBUG
-              printf("pp1 = %#tx, pp2 = %#tx, nl = %#tx\n", (ptrdiff_t)pp1, (ptrdiff_t)pp2, (ptrdiff_t)nl);
+              printf("pp1 = "PHtx", pp2 = "PHtx", nl = "PHtx"\n", (ptrdiff_t)pp1, (ptrdiff_t)pp2, (ptrdiff_t)nl);
               fflush(stdout);
 #endif
 
@@ -752,7 +761,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                    cards with dirty pointers to segments older than the
                    maximum copyied generation, so we can get legitimate
                    conservative dirty bytes even after gc */
-                printf("... Conservative dirty byte %x (%x) %sfor segment %#tx card %d ",
+                printf("... Conservative dirty byte %x (%x) %sfor segment "PHtx" card %d ",
                        si->dirty_bytes[d], dirty,
                        (aftergc ? "after gc " : ""),
                        (ptrdiff_t)seg, d);
@@ -770,7 +779,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
           for (d = 0; d < cards_per_segment; d += 1) {
             if (si->dirty_bytes[d] != 0xff) {
               S_checkheap_errors += 1;
-              printf("!!! Unnecessary dirty byte %x (%x) after gc for segment %#tx card %d ",
+              printf("!!! Unnecessary dirty byte %x (%x) after gc for segment "PHtx" card %d ",
                   si->dirty_bytes[d], 0xff, (ptrdiff_t)(si->number), d);
               segment_tell(seg);
             }
@@ -818,18 +827,18 @@ static void check_dirty_space(ISPC s) {
           if (to_g < min_to_g) min_to_g = to_g;
           if (from_g == 0) {
             S_checkheap_errors += 1;
-            printf("!!! (check_dirty): space %d, generation %d segment %#tx card %d is marked dirty\n", s, from_g, (ptrdiff_t)(si->number), d);
+            printf("!!! (check_dirty): space %d, generation %d segment "PHtx" card %d is marked dirty\n", s, from_g, (ptrdiff_t)(si->number), d);
           }
         }
       }
       if (min_to_g != si->min_dirty_byte) {
         S_checkheap_errors += 1;
-        printf("!!! (check_dirty): space %d, generation %d segment %#tx min_dirty_byte is %d while actual min is %d\n",  s, from_g, (ptrdiff_t)(si->number), si->min_dirty_byte, min_to_g);
+        printf("!!! (check_dirty): space %d, generation %d segment "PHtx" min_dirty_byte is %d while actual min is %d\n",  s, from_g, (ptrdiff_t)(si->number), si->min_dirty_byte, min_to_g);
         segment_tell(si->number);
       } else if (min_to_g != 0xff) {
         if (!dirty_listedp(si, from_g, min_to_g)) {
           S_checkheap_errors += 1;
-          printf("!!! (check_dirty): space %d, generation %d segment %#tx is marked dirty but not in dirty-segment list\n", s, from_g, (ptrdiff_t)(si->number));
+          printf("!!! (check_dirty): space %d, generation %d segment "PHtx" is marked dirty but not in dirty-segment list\n", s, from_g, (ptrdiff_t)(si->number));
           segment_tell(si->number);
         }
       }
@@ -855,17 +864,17 @@ static void check_dirty() {
           IGEN mingval = si->min_dirty_byte;
           if (g != from_g) {
             S_checkheap_errors += 1;
-            printf("!!! (check_dirty): generation %d segment %#tx in %d -> %d dirty list\n", g, (ptrdiff_t)(si->number), from_g, to_g);
+            printf("!!! (check_dirty): generation %d segment "PHtx" in %d -> %d dirty list\n", g, (ptrdiff_t)(si->number), from_g, to_g);
           }
           if (mingval != to_g) {
             S_checkheap_errors += 1;
-            printf("!!! (check_dirty): dirty byte = %d for segment %#tx in %d -> %d dirty list\n", mingval, (ptrdiff_t)(si->number), from_g, to_g);
+            printf("!!! (check_dirty): dirty byte = %d for segment "PHtx" in %d -> %d dirty list\n", mingval, (ptrdiff_t)(si->number), from_g, to_g);
           }
           if (s != space_new && s != space_impure && s != space_symbol && s != space_port
               && s != space_impure_record && s != space_impure_typed_object && s != space_immobile_impure 
               && s != space_weakpair && s != space_ephemeron) {
             S_checkheap_errors += 1;
-            printf("!!! (check_dirty): unexpected space %d for dirty segment %#tx\n", s, (ptrdiff_t)(si->number));
+            printf("!!! (check_dirty): unexpected space %d for dirty segment "PHtx"\n", s, (ptrdiff_t)(si->number));
           }
           si = si->dirty_next;
         }

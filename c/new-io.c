@@ -20,6 +20,9 @@
 #include <limits.h>
 #ifdef WIN32
 #include <io.h>
+#ifdef __MINGW32__
+# include <unistd.h>
+#endif
 #else /* WIN32 */
 #include <sys/file.h>
 #include <dirent.h>
@@ -132,6 +135,11 @@ static int is_valid_lz4_length(iptr count);
 #define O_BINARY 0
 #endif /* O_BINARY */
 
+#ifdef WIN32
+# define WIN32_UNUSED UNUSED
+#else
+# define WIN32_UNUSED
+#endif
 
 /* These functions are intended for use immediately upon opening
  * (lockfile) fd.  They need to be redesigned for general-purpose 
@@ -448,7 +456,7 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
     DWORD error_code;
     SetConsoleCtrlHandler(NULL, TRUE);
     SetLastError(0);
-    m = read_console(&BVIT(bv,start), (IO_SIZE_T)count);
+    m = read_console((char *)&BVIT(bv,start), (IO_SIZE_T)count);
     error_code = GetLastError();
     if (m == 0 && error_code == 0x3e3) {
       /* Guard against Windows calling the ConsoleCtrlHandler after we
@@ -695,7 +703,7 @@ ptr S_set_fd_pos(ptr file, ptr pos, IBOOL gzflag) {
   }
 }
 
-ptr S_get_fd_non_blocking(ptr file, IBOOL gzflag) {
+ptr S_get_fd_non_blocking(WIN32_UNUSED ptr file, WIN32_UNUSED IBOOL gzflag) {
 #ifdef WIN32
   return Sfalse;
 #else /* WIN32 */
@@ -713,7 +721,7 @@ ptr S_get_fd_non_blocking(ptr file, IBOOL gzflag) {
 #endif /* WIN32 */
 }
 
-ptr S_set_fd_non_blocking(ptr file, IBOOL x, IBOOL gzflag) {
+ptr S_set_fd_non_blocking(WIN32_UNUSED ptr file, WIN32_UNUSED IBOOL x, WIN32_UNUSED IBOOL gzflag) {
 #ifdef WIN32
   return Sstring("unsupported");
 #else /* WIN32 */

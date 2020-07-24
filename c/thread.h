@@ -35,7 +35,7 @@ typedef void s_thread_rv_t;
 #define s_thread_self() GetCurrentThreadId()
 #define s_thread_equal(t1, t2) ((t1) == (t2))
 /* CreateThread description says to use _beginthread if thread uses the C library */
-#define s_thread_create(start_routine, arg) (_beginthread(start_routine, 0, arg) == -1 ? EAGAIN : 0)
+#define s_thread_create(start_routine, arg) (_beginthread(start_routine, 0, arg) == (uintptr_t)-1 ? EAGAIN : 0)
 #define s_thread_key_create(key) ((*key = TlsAlloc()) == TLS_OUT_OF_INDEXES ? EAGAIN : 0)
 #define s_thread_key_delete(key) (TlsFree(key) == 0 ? EINVAL : 0)
 #define s_thread_getspecific(key) TlsGetValue(key)
@@ -44,12 +44,12 @@ typedef void s_thread_rv_t;
 #define s_thread_mutex_lock(mutex) (EnterCriticalSection(mutex), 0)
 #define s_thread_mutex_unlock(mutex) (LeaveCriticalSection(mutex), 0)
 #define s_thread_mutex_trylock(mutex) (TryEnterCriticalSection(mutex) ? 0 : EBUSY)
-#define s_thread_mutex_destroy(mutex) (DeleteCriticalSection(mutex), 0)
+#define s_thread_mutex_destroy(mutex) DeleteCriticalSection(mutex)
 #define s_thread_cond_init(cond) InitializeConditionVariable(cond)
-#define s_thread_cond_signal(cond) (WakeConditionVariable(cond), 0)
-#define s_thread_cond_broadcast(cond) (WakeAllConditionVariable(cond), 0)
+#define s_thread_cond_signal(cond) WakeConditionVariable(cond)
+#define s_thread_cond_broadcast(cond) WakeAllConditionVariable(cond)
 #define s_thread_cond_wait(cond, mutex) (SleepConditionVariableCS(cond, mutex, INFINITE) == 0 ? EINVAL : 0)
-#define s_thread_cond_destroy(cond) (0)
+#define s_thread_cond_destroy(cond) /* empty */
 
 #else /* FEATURE_WINDOWS */
 

@@ -252,7 +252,7 @@ static ptr s_ErrorString(DWORD dwMessageId) {
     if (len == 0) {
 #define HEXERRBUFSIZ ((sizeof(dwMessageId) * 2) + 3)
         char hexerrbuf[HEXERRBUFSIZ];
-        snprintf(hexerrbuf, HEXERRBUFSIZ, "0x%x", dwMessageId);
+        snprintf(hexerrbuf, HEXERRBUFSIZ, "0x%x", (unsigned int)dwMessageId);
         return Sstring(hexerrbuf);
 #undef HEXERRBUFSIZ
     }
@@ -429,7 +429,7 @@ int S_windows_unlink(const char *pathname) {
   }
 }
 
-char *S_windows_getcwd(char *buffer, int maxlen) {
+char *S_windows_getcwd(char *buffer, UNUSED int maxlen) {
   wchar_t wbuffer[PATH_MAX];
   if (_wgetcwd(wbuffer, PATH_MAX) == NULL) return NULL;
   if (WideCharToMultiByte(CP_UTF8,0,wbuffer,-1,buffer,PATH_MAX,NULL,NULL) == 0) {

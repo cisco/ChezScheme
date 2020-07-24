@@ -519,7 +519,7 @@ void S_stats_init() {
   /* Use GetSystemTimePreciseAsFileTime when available (Windows 8 and later). */
   HMODULE h = LoadLibraryW(L"kernel32.dll");
   if (h != NULL) {
-    GetSystemTimeAsFileTime_t proc = (GetSystemTimeAsFileTime_t)GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
+    GetSystemTimeAsFileTime_t proc = (void *)GetProcAddress(h, "GetSystemTimePreciseAsFileTime");
     if (proc != NULL)
       s_GetSystemTimeAsFileTime = proc;
     else

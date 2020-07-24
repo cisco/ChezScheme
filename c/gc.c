@@ -895,7 +895,7 @@ ptr GCENTRY(ptr tc, IGEN mcg, IGEN tg, ptr count_roots_ls) {
                 rep = GUARDIANREP(ls);
               /* ftype_guardian_rep is a marker for reference-counted ftype pointer */
                 if (rep == ftype_guardian_rep) {
-                  int b; uptr *addr;
+                  int b; iptr *addr;
                   rep = GUARDIANOBJ(ls);
                   if (FWDMARKER(rep) == forward_marker) rep = FWDADDRESS(rep);
                 /* Caution: Building in assumption about shape of an ftype pointer */

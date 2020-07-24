@@ -433,7 +433,7 @@ static const char *path_last(p) const char *p; {
 #ifdef WIN32
   char c;
 
-  if ((c = *p) >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z')
+  if (((c = *p) >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
     if (*(p + 1) == ':')
       p += 2;
 #endif

@@ -127,7 +127,7 @@ static ptr s_ee_read_char(IBOOL blockp) {
         if (ker.bKeyDown) {
           wchar_t c;
 
-          if (c = ker.uChar.UnicodeChar) {
+          if ((c = ker.uChar.UnicodeChar)) {
             /* translate ^<space> to nul */
             if (c == 0x20 && (ker.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)))
               buf[0] = 0;

@@ -535,7 +535,7 @@ void S_noncontinuable_interrupt() {
 }
 
 #ifdef WIN32
-ptr S_dequeue_scheme_signals(ptr tc) {
+ptr S_dequeue_scheme_signals(UNUSED ptr tc) {
   return Snil;
 }
 
@@ -543,7 +543,7 @@ ptr S_allocate_scheme_signal_queue() {
   return (ptr)0;
 }
 
-void S_register_scheme_signal(sig) iptr sig; {
+void S_register_scheme_signal(UNUSED iptr sig) {
   S_error("register_scheme_signal", "unsupported in this version");
 }
 

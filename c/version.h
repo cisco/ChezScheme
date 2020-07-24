@@ -251,7 +251,11 @@ struct timespec;
 #define NSECMTIME(sb) 0
 #define ICONV_INBUF_TYPE char **
 struct timespec;
-#define UNUSED
+#if defined(__MINGW32__)
+# define UNUSED __attribute__((__unused__))
+#else
+# define UNUSED
+#endif
 #if defined(__MINGW32__) && (machine_type == machine_type_ti3nt || machine_type == machine_type_i3nt)
 #define time_t __time64_t
 #define time _time64
