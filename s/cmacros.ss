@@ -41,6 +41,15 @@
        #'(eval-when (compile load eval)
            (putprop 'x '*constant* y))))))
 
+(define-syntax define-constant-default
+  (lambda (x)
+    (syntax-case x ()
+      ((_ x y)
+       (identifier? #'x)
+       #'(eval-when (compile load eval)
+           (unless (getprop 'x '*constant* #f)
+             (putprop 'x '*constant* y)))))))
+
 (eval-when (compile load eval)
 (define lookup-constant
    (let ([flag (box #f)])

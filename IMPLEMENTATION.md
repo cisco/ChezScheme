@@ -84,12 +84,14 @@ Scheme compiler the C kernel needs to do its job.
 
 Most of the work of porting to a new platform is producing a new
 "*machine-type*.def" file, which (except in simple ports to a new
-operating system) will require a new "*isa*.ss" compiler backend.
+operating system) will require a new "*ISA*.ss" compiler backend.
 You'll also have to set up all the "Mf-*machine-type*" makefiles and
-update "configure", "cmacro.ss", and "version.h" (plus maybe other
-files). Once you have all of the pieces working together, you
-cross-compile boot files, then copy them over to the the new machine
-to start compiling there.
+update "configure", "cmacro.ss", and "version.h"---plus maybe other
+files, such as "workarea" if you create new dependencies among "Mf-"
+or ".def" files (e.g., "workarea" needs to know that "a6nt.def" uses
+"a6.def" and "nt.def"). Once you have all of the pieces working
+together, you cross-compile boot files, then copy them over to the the
+new machine to start compiling there.
 
 You can port to a new operating system by imitating the files of a
 similar supported oerating system, but building a new backend for a

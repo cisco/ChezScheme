@@ -79,6 +79,40 @@ case "$M" in
   *) echo "Unrecognized machine name $M"; exit 1 ;;
 esac
 
+if [ "$Muni" != "" ] ; then
+    Muniarch=$Muni
+else
+    Muniarch=$M
+fi    
+
+case "$Muniarch" in
+  a6fb) March=a6 ;;
+  a6le) March=a6 ;;
+  a6nb) March=a6 ;;
+  a6nt) March=a6 ;;
+  a6ob) March=a6 ;;
+  a6osx) March=a6 ;;
+  a6s2) March=a6 ;;
+  arm32le) March=arm32 ;;
+  arm64le) March=arm64 ;;
+  i3fb) March=i3 ;;
+  i3le) March=i3 ;;
+  i3nb) March=i3 ;;
+  i3nt) March=i3 ;;
+  i3ob) March=i3 ;;
+  i3osx) March=i3 ;;
+  i3qnx) March=i3 ;;
+  i3s2) March=i3 ;;
+  ppc32le) March=ppc32 ;;
+  *) March="" ;;
+esac
+  
+case "$Muniarch" in
+  a6nt) Mos=nt ;;
+  i3nt) Mos=nt ;;
+  *) Mos="" ;;
+esac
+
 if [ "$OS" = "Windows_NT" ]
 then
     ln="/bin/cp -R"
@@ -160,10 +194,20 @@ esac
 workdir $W/s
 (cd $W/s; workln ../../s/Mf-$M Mf-$M)
 (cd $W/s; forceworkln Mf-$M Makefile)
+if [ "$Muni" != "" ] ; then
+  (cd $W/s; workln ../../s/Mf-$Muni Mf-$Muni)
+fi
 (cd $W/s; workln ../../s/Mf-base Mf-base)
 (cd $W/s; workln ../../s/Mf-cross Mf-cross)
 (cd $W/s; workln ../../s/$M.def $M.def)
 (cd $W/s; forceworkln2 $M.def machine.def)
+if [ "$March" != "" ] ; then
+  (cd $W/s; workln ../../s/$March.def $March.def)
+fi
+if [ "$Mos" != "" ] ; then
+  (cd $W/s; workln ../../s/$Mos.def $Mos.def)
+fi
+(cd $W/s; workln ../../s/default.def default.def)
 
 workdir $W/mats
 (cd $W/mats; workln ../../mats/Mf-$M Mf-$M)

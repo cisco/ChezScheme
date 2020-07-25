@@ -1,0 +1,44 @@
+;; types that are right for most platforms:
+(define-constant-default int-bits 32)
+(define-constant-default short-bits 16)
+(define-constant-default typedef-ptr "void *")
+(define-constant-default typedef-iptr "long")
+(define-constant-default typedef-uptr "unsigned long")
+(define-constant-default typedef-i8 "char")
+(define-constant-default typedef-u8 "unsigned char")
+(define-constant-default typedef-i16 "short")
+(define-constant-default typedef-u16 "unsigned short")
+(define-constant-default typedef-i32 "int")
+(define-constant-default typedef-u32 "unsigned int")
+(define-constant-default typedef-i64 (if (= 64 (constant ptr-bits))
+                                         "long"
+                                         "long long"))
+(define-constant-default typedef-u64 (if (= 64 (constant ptr-bits))
+                                         "unsigned long"
+                                         "unsigned long long"))
+(define-constant-default typedef-string-char "unsigned int")
+(define-constant-default wchar-bits 32)
+
+;; derivations that are usually right
+(define-constant-default address-bits (constant ptr-bits))
+(define-constant-default size_t-bits (constant ptr-bits))
+(define-constant-default ptrdiff_t-bits (constant ptr-bits))
+(define-constant-default long-bits (constant ptr-bits))
+(define-constant-default long-long-bits 64)
+(define-constant-default max-float-alignment (if (= 64 (constant ptr-bits))
+                                                 8
+                                                 4))
+(define-constant-default max-integer-alignment (if (= 64 (constant ptr-bits))
+                                                   8
+                                                   4))
+(define-constant-default time-t-bits (constant ptr-bits))
+(define-constant-default segment-table-levels (if (= 64 (constant ptr-bits))
+                                                  3
+                                                  1))
+
+;; instruction availability (defaults to unavailable)
+(define-constant-default integer-divide-instruction #f)
+(define-constant-default popcount-instruction #f)
+(define-constant-default sqrt-instruction #f)
+(define-constant-default fence-instruction #f)
+(define-constant-default software-floating-point #f)

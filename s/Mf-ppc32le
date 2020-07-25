@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = ppc32le
+m ?= ppc32le
 archincludes = ppc32.ss
 
 include Mf-base
+
+machine.def: ppc32.def

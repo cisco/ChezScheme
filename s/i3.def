@@ -1,0 +1,12 @@
+(define-constant architecture 'x86)
+(define-constant ptr-bits 32)
+
+(define-constant asm-arg-reg-max 1)
+(define-constant asm-arg-reg-cnt 1)
+(define-constant asm-fpreg-max 2)
+
+(define-constant native-endianness 'little)
+
+(define-constant unaligned-floats #t)
+(define-constant unaligned-integers #t)
+(define-constant integer-divide-instruction #t)

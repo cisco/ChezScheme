@@ -1,0 +1,14 @@
+(define-constant architecture 'arm32)
+(define-constant ptr-bits 32)
+
+(define-constant asm-arg-reg-max 5)
+(define-constant asm-arg-reg-cnt 3)
+(define-constant asm-fpreg-max 2)
+
+(define-constant native-endianness 'little)
+
+(define-constant max-float-alignment 8)
+(define-constant max-integer-alignment 8)
+
+(define-constant unaligned-floats #f)
+(define-constant unaligned-integers #t)

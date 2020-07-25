@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = arm32le
+m ?= arm32le
 archincludes = arm32.ss
 
 include Mf-base
+
+machine.def: arm32.def

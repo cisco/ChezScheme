@@ -1,22 +1,11 @@
 ;;; pb.def
 
 (define-constant machine-type (constant machine-type-pb))
+(features)
+
 (define-constant architecture 'pb)
-(define-constant address-bits 64)
 (define-constant ptr-bits 64)
-(define-constant int-bits 32)
-(define-constant short-bits 16)
-(define-constant long-bits 64)
-(define-constant long-long-bits 64)
-(define-constant size_t-bits 64)
-(define-constant ptrdiff_t-bits 64)
-(define-constant wchar-bits 32)
-(define-constant time-t-bits 64)
-(define-constant max-float-alignment 8)
-(define-constant max-integer-alignment 8)
-(define-constant asm-arg-reg-max 7)
-(define-constant asm-arg-reg-cnt 3)
-(define-constant asm-fpreg-max 8)
+
 (define-constant typedef-ptr "uint64_t") ; not "void *"
 (define-constant typedef-iptr "int64_t")
 (define-constant typedef-uptr "uint64_t")
@@ -29,11 +18,19 @@
 (define-constant typedef-i64 "int64_t")
 (define-constant typedef-u64 "uint64_t")
 (define-constant typedef-string-char "uint32_t")
+
+(define-constant asm-arg-reg-max 7)
+(define-constant asm-arg-reg-cnt 3)
+(define-constant asm-fpreg-max 8)
+
+(define-constant max-float-alignment 8)
+(define-constant max-integer-alignment 8)
+
 (define-constant native-endianness 'unknown)
+
 (define-constant unaligned-floats #f)
 (define-constant unaligned-integers #f)
+
 (define-constant integer-divide-instruction #t)
-(define-constant popcount-instruction #f)
-(define-constant software-floating-point #f)
-(define-constant segment-table-levels 3)
-(features)
+
+(include "default.def")

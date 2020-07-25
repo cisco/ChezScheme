@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m = i3osx
+m ?= i3osx
 archincludes = x86.ss
 
 include Mf-base

@@ -14,6 +14,5 @@
 # limitations under the License.
 
 m = ta6nt
-archincludes = x86_64.ss
 
-include Mf-base
+include Mf-a6nt

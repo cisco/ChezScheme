@@ -1,0 +1,13 @@
+(define-constant wchar-bits 16)
+(define-constant time-t-bits 64)
+(define-constant max-float-alignment 8)
+(define-constant max-integer-alignment 8)
+
+(define-constant typedef-iptr (if (= 64 (constant ptr-bits))
+                                  "long long int"
+                                  "long"))
+(define-constant typedef-uptr (if (= 64 (constant ptr-bits))
+                                  "unsigned long long int"
+                                  "unsigned long"))
+
+(define-constant long-bits 32)
