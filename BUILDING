@@ -1,11 +1,11 @@
-Building Chez Scheme Version 9.5.3
+Building Chez Scheme Version 9.5.3.x (Racket variant)
 Copyright 1984-2019 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,334 +13,328 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-----------------------------------------------------------------------------
 
-This variant of Chez Scheme is patched for Racket. It doesn't include
-boot files; instead, Racket can generate initial boot files from Chez
-Scheme's source. For more information, see "racket/src/cs/README.txt"
-in Racket sources. After you have boot files, then the directions below
-should work.
+PREREQUISITES
 
-----------------------------------------------------------------------------
+On Unix variants:
 
-This directory contains the sources for Chez Scheme, plus boot and header
-files for various supported machine types.
+ * GNU Make
+ * GCC, Clang, or a similarly capable compiler
+ * Header files and libraries for ncurses   [unless --disable-curses]
+ * Header files and libraries for X windows [unless --disable-x11]
+ * Header files and libraries for uuid
 
-BASICS
+On Windows:
 
-Building and installing Chez Scheme on a recent version of Linux or OS X
-is typically as simple as installing the prerequisites listed below and
-running (Windows build instructions appear under the heading WINDOWS
-later in this file):
+ * Microsoft Visual Studio 2019, 2017, or 2015
 
-./configure
-sudo make install
+ or
 
-This should not take more than a minute or so, after which the commands
-'scheme' and 'petite' can be used to run Chez Scheme and Petite Chez
-Scheme, while 'man scheme' and 'man petite' can be used to view the
-manual pages.  Chez Scheme and Petite Chez Scheme are terminal-based
-programs, not GUIs.  They both incorporate sophisticated command-line
-editing reminiscent of tcsh but with support for expressions that span
-multiple lines.
+ * Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed,
+   etc.
 
-Prerequisites:
 
-* GNU Make
-* gcc
-* Header files and libraries for ncurses   [unless --disable-curses]
-* Header files and libraries for X windows [unless --disable-x11]
-* Header files and libraries for uuid
+GETTING STARTED
+
+This directory contains the sources for Chez Scheme. It may also
+contain boot and header files in "boot/pb" for the "portable bytecode"
+Chez Scheme machine type, which can be used to build for native
+machine types, or you may have to create initial boot files using
+Racket.
+
+In you're on Windows, see the WINDOWS VIA COMMAND PROMPT or WINDOWS
+VIA SHELL section later in this file. Otherwise, to get further
+instructions, try running
+
+  ./configure
+  make <machine type>
+
+The output will either suggest using Racket as
+
+  racket rktboot/main.rkt --machine <machine type>
+
+or using the pb boot files with
+
+  ./configure --pb
+  make <machine type>.bootquick
+
+and then trying again with `./configure`.
+
+If you plan to build on multiple different machines, then it may be a
+good idea to generate pb boot files via Racket:
+
+  racket rktboot/main.rkt --machine pb
+
+Then, you can use the ob boot files on different machines instead of
+having to install Racket on each machine.
+
+
+CONFIGURING AND BUILDING
+
+After you have boot files for the current platform, builing an
+installing is the usual sequence:
+
+  ./configure
+  make
+  sudo make install
+
+This should not take more than a minute or so, after which the
+commands `scheme` and `petite` can be used to run Chez Scheme and
+Petite Chez Scheme, while `man scheme` and `man petite` can be used to
+view the manual pages. Chez Scheme and Petite Chez Scheme are
+terminal-based programs, not GUIs. They both incorporate sophisticated
+command-line editing reminiscent of tcsh but with support for
+expressions that span multiple lines.
 
 Uninstalling on Unix-like systems is as simple as running:
 
-sudo make uninstall
+  sudo make uninstall
 
-BUILDING VERSION 9.5 AND EARLIER
-
-If the environment variable CHEZSCHEMELIBDIRS is set, please unset
-it before running make.  Depending on the variable's value, it can
-cause the build process to fail.
 
 DETAILS
 
 The sources for Chez Scheme come in two parts:
 
-* A set of Scheme source files found in the subdirectory s.  Compiling
-  these produces the boot files petite.boot and scheme.boot, along with
-  two header files, equates.h and scheme.h.
+ * A set of Scheme source files found in the subdirectory "s".
+   Compiling these produces the boot files "petite.boot" and
+   "scheme.boot", along with two header files, "equates.h" and
+   "scheme.h".
 
-* A set of C source files found in the subdirectory c.  Compiling and
-  linking these files produces the executable scheme (scheme.exe under
-  Windows).  Compiling the C sources requires the two header files
-  produced by compiling the Scheme sources.
+ * A set of C source files found in the subdirectory "c". Compiling
+   and linking these files produces the executable "scheme" (or
+   "scheme.exe" on Windows). Compiling the C sources requires the two
+   header files produced by compiling the Scheme sources.
 
-Since the Scheme sources can be compiled only by a working version of
-Chez Scheme, it's not actually possible to build Chez Scheme from source.
-That's why the boot and header files are packaged with the sources.
+The Scheme sources can be compiled only by a working version of Chez
+Scheme or via Racket; it's not possible to build Chez Scheme from
+source using only standard Unix tools, such as a C compiler, unless
+the "pb" boot files are packaged with the source.
 
-'./configure' attempts to determine what type of machine it's on and,
-if successful, creates several files and directories:
+The "configure" script attempts to determine what type of machine it's
+on and, if successful, creates several files and directories:
 
-* The directory nanopass containing the Nanopass Infrastructure,
-  retrieved from GitHub.
+ * The directory "nanopass" containing the Nanopass Infrastructure,
+   retrieved from GitHub.
 
-* A make file, Makefile, in the root (top level) directory.
+ * "Makefile" in the root (top level) directory.
 
-* A "workarea", or subdirectory named for the machine type (e.g.,
-  a6le for nonthreaded 64-bit linux).  The workarea is a mirror of
-  the root directory, with subdirectories named c, s, and so on.
+* A workarea as a subdirectory named for the machine type (e.g.,
+  "ta6le" for threaded 64-bit linux). The workarea is a mirror of the
+  root directory, with subdirectories named "c", "s", and so on.
   Compilation takes place in the workarea.
 
-* Within the workarea, the files Makefile, Mf-install, and Mf-boot.
+ * Within the workarea, the files "Makefile", "Mf-install", "Mf-boot",
+   etc.
 
-'./configure' recognizes various options for controlling the type
-of build and the installation location.  For example, '--threads'
-requests a build with support for native threads, '--32' requests
-a 32-bit build, and '--installprefix <pathname>' specifies the
-installation root.  './configure --help' prints the supported
-options.
+The "configure" script recognizes various options for controlling the
+type of build and the installation location. For example,
+`--nothreads` requests a build without support for native threads,
+`--32` requests a 32-bit build, and `--installprefix <pathname>`
+specifies the installation root. Run `./configure --help` for
+information on the supported options.
 
-The make file supports several targets:
+The makefile supports several targets:
 
-'make' or 'make build'
-  compiles and links the C sources to produce the executable, then
-  bootstraps the Scheme sources.  Bootstrapping involves using the
-  freshly built scheme executable along with the distributed boot files
-  to compile the Scheme sources.  If the new boot files are equivalent
-  to the old boot files, the system is bootstrapped.  Otherwise, the new
-  boot files are used to create a newer set, and those are compared.
-  If this succeeds, the system is bootstrapped.  Otherwise, the make
-  fails.  This should not fail unless the distributed boot files are
-  out of sync with the sources.
+ * `make` or `make build`
 
-  When you make a modification to the system that causes the C side to
-  get out of sync with the Scheme side so that the build fails, try
-  the following from $W if you have a recent version of Chez Scheme
-  installed in your path:
+   Compiles and links the C sources to produce the executable, then
+   bootstraps the Scheme sources. Bootstrapping involves using the
+   freshly built scheme executable along with initial boot files to
+   compile the Scheme sources. If the new boot files are equivalent to
+   the old boot files, the system is bootstrapped. Otherwise, the new
+   boot files are used to create a newer set, and those are compared.
+   If this succeeds, the system is bootstrapped. Otherwise, the make
+   fails --- which should not happen, unless the initial boot files
+   are incorrect or become out of sync with the sources.
 
-    make -C s clean all patchfile=patch Scheme=scheme SCHEMEHEAPDIRS={see below}
-    make build
+   When you make a modification to the system that causes the C side
+   to get out of sync with the Scheme side so that the build fails,
+   the simplest approach is to re-bootstrapp via Racket.
 
-  Set SCHEMEHEAPDIRS to /usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m on
-  Unix-like systems and to %x/../../boot/%m on Windows systems.
+ * `make run`
 
-  Alternatively, if you have a build before the changes at full path
-  <orig>, use
+   Runs the build Chez Scheme without installing.
 
-    make from-orig ORIG=<orig>
+   Alternatively, you can run the executable directly and tell it
+   where to find boot files, either by setting `SCHEMEHEAPDIRS` as
 
-  To run Chez Scheme without installing, you need to tell the
-  executable where to find the boot files.  The run target of the
-  makefile will do that
+     env SCHEMEHEAPDIRS=<workarea>/boot/<machine type> \
+         <workarea>/bin/<machine type>/scheme
 
-    make run
+   or this through the `-b` command-line flag, which requires
+   absolute paths:
 
-  or this can be done manually via command-line arguments, e.g.:
+     <workarea>/bin/<machine type>/scheme \
+       -b /path/to/<workarea>/boot/<machine type>/petite.boot \
+       -b /path/to/<workarea>/boot/<machine type>/scheme.boot
 
-    $W/bin/$M/scheme -b $W/boot/$M/petite.boot -b $W/boot/$M/scheme.boot
+   Note that <workarea> and <machine type> are typically the same.
 
-  or by setting the SCHEMEHEAPDIRS variable to point to the directory
-  containing the boot files.  For example, in bash:
+ * `sudo make install`
 
-    SCHEMEHEAPDIRS=$W/boot/$M $W/bin/$M/scheme
+   Installs the biult executables, boot files, example files, and
+   manual pages.
 
-  and in tcsh:
+ * `sudo make uninstall`
 
-    setenv SCHEMEHEAPDIRS "$W/boot/$M"
-    $W/bin/$M/scheme
+   Uninstalls the executables, boot files, example files, and manual
+   pages.
 
-  In all cases, $W should be replaced with the name of the workarea,
-  and $M should be replaced with the machine type.  (Unless the default
-  is overridden via an argument to ./configure, $W is the same as $M.)
+ * `make test`
 
-'sudo make install'
-  runs the build plus installs the resulting executables, boot files,
-  example files, and manual pages.
+   Runs the build plus runs a set of test programs in various
+   different ways, e.g., with different compiler options. It can take
+   30 minutes or more, depending on the speed of the machine. It
+   produces voluminous output, so it's best to redirect its stdout and
+   stderr to a file.
 
-'sudo make uninstall'
-  uninstalls the executables, boot files, example files, and manual pages.
+   A complete run does *not* imply no errors occurred. To check for
+   errors, look at the file "<workarea>/mats/summary", which should
+   contain one line per test run, something like this:
 
-'make test'
-  runs the build plus runs a set of test programs in various different
-  ways, e.g., with different compiler options.  It can take 30 minutes
-  or more, depending on the speed of the machine.  It produces voluminous
-  output, so it's best to redirect its stdout and stderr to a file.
+     -------- o=0 --------
+     -------- o=3 --------
+     -------- o=0 cp0=t --------
+     -------- o=3 cp0=t --------
+     -------- o=0 spi=t p=t --------
+     -------- o=3 spi=t p=t --------
+     -------- o=0 eval=interpret --------
+     -------- o=3 eval=interpret --------
+     -------- o=0 cp0=t eval=interpret --------
+     -------- o=3 cp0=t eval=interpret --------
+     -------- o=0 ehc=t eoc=f --------
+     -------- o=3 ehc=t eval=interpret --------
 
-  NB: A complete run does not imply no errors occurred.  To check for
-  errors, look at the file $W/mats/summary, where $W is the name of the
-  workarea created by ./configure.  $W/mats/summary should contain one
-  line per test run, something like this:
+   If there is anything else in "<workarea>/mats/summary", something
+   unexpected occurred.
 
-  -------- o=0 --------
-  -------- o=3 --------
-  -------- o=0 cp0=t --------
-  -------- o=3 cp0=t --------
-  -------- o=0 spi=t p=t --------
-  -------- o=3 spi=t p=t --------
-  -------- o=0 eval=interpret --------
-  -------- o=3 eval=interpret --------
-  -------- o=0 cp0=t eval=interpret --------
-  -------- o=3 cp0=t eval=interpret --------
-  -------- o=0 ehc=t eoc=f --------
-  -------- o=3 ehc=t eval=interpret --------
+ * `make <machine type>.boot` or `make <machine type>.bootquick`
 
-  If there is anything else in $W/mats/summary, something unexpected
-  occurred.
+   Creates boot files for a supported machine type, which is not
+   necessarily the current machine type. The boot files aer written to
+   a subdirectory in "boot".
 
-'make bootfiles'
-  runs the build plus uses the locally built system to recreate the
-  distributed boot and header files for each supported machine type.
-  It should be run whenever modifications made to the Scheme sources
-  are to be committed to the source-code repository so that up-to-date
-  boot and header files can be committed as well.  'make bootfiles'
-  can take 5 minutes or more.
+   The difference between `boot` and `bootquick` is that the latter
+   assumes that up-to-date boot files are in place for the current
+   machine type, and it compile the cross compiler in unsafe mode. So,
+   `bootquick` is faster, but `boot` is more helpful during
+   development.
 
-  'make bootfiles' builds boot files for each machine type for which
-  a subdirectory exists in the top-level boot directory.  To build
-  for a supported machine type that isn't built by default, simply
-  add the appropriate subdirectory, i.e., 'mkdir boot/$M', where M
-  is the machine type, before running 'make bootfiles'.  You can
-  also run '(cd $W ; make -f Mf-boot $M.boot)', where W is the name
-  of a built work area for the host machine type, to build just the
-  boot files for machine-type M.
+ * `make bootfiles`
 
-'make clean'
-  removes binaries from the workarea.
+   Runs the build plus uses the locally built system to recreate the
+   boot and header files for multiple machine types --- each machine
+   type for which a subdirectory exists in the top-level "boot"
+   directory. To include a supported machine type that isn't already
+   represented in "boot", simply add the appropriate subdirectory as
+   empty or use `make <machine type>.boot` first.
 
-'make distclean'
-  removes nanopass, Makefile, and all workareas.
+ * `make clean`
 
-OTHER UNIX VARIANTS
+   Removes binaries from the workarea.
 
-To build on Unix variants other than Linux and OS X, you will first
-need to build boot files on a Linux or OS X machine. On that machine,
-after building Chez Scheme, create boot files for the target machine
-<machine> with:
+ * `make distclean`
+   
+    Removes "nanopass", "Makefile", and all workareas.
 
- make boot XM=<machine>
 
-Copy the generated boot/<machine> directory to the target machine,
-adding to or replacing the boot directory with pre-built boot files
-there, and then build as on Linux.
+WINDOWS VIA COMMAND PROMPT
 
-Remember to use gmake if make is not GNU make. If you run into linker
-trouble, try running configure with --libkernel so that the build
-avoids running ld directly.
+To build the Chez Scheme executable using Microsoft Visual Studio,
+first set up command-line tools. The "c\vs.bat" script can help if you
+supply `amd64` for a 64-bit build or `x86` for a 32-bit build:
 
-On OpenBSD, Chez Scheme must be built and installed on a filesystem
-that is mounted with wxallowed.
+  c\vs.bat amd64
 
-On NetBSD, note that the makefiles run "paxctl +m" to enable WX pages
-(i.e., pages that have both write and execute enabled).
+Then, run "c\build.bat" with a machine type, either `ta6nt` (64-bit
+threaded), `a6nt` (64-bit non-threaded), `ti3nt` (32-bit threaded), or
+`i3nt` (32-bit non-threaded):
 
-WINDOWS
+  c\build.bat ta6nt
+
+The resulting executable in "<machine type>\bin\<machine type>" relies
+on bootfiles in "..\boot\<machine type>" relative to the executable.
+
+
+WINDOWS VIA SHELL
 
 Building Chez Scheme under 64-bit Windows with Bash/WSL, MinGW/MSYS,
-or Cygwin follows the instructions above, except that 'make install'
-and 'make uninstall' are not supported. Alternatively, the main Chez
-Scheme executable can be built from the Windows command line or
-cross-compiled using MinGW as described further below.
+or Cygwin follows the instructions in GETTING STARTED above, except
+that `make install` and `make uninstall` are not supported.
+Alternatively, the main Chez Scheme executable can be built from the
+Windows command line or cross-compiled using MinGW as described
+further below.
 
 On Bash/WSL, the build directory must be in a location with a Windows
-path such as /mnt/c, and the 'OS' environment variable must be set to
-'Windows_NT' to indicate a build for Windows, as opposed to a build
+path such as /mnt/c, and the `OS` environment variable must be set to
+`Windows_NT` to indicate a build for Windows, as opposed to a build
 for Linux on Windows:
 
-env OS=Windows_NT ./configure
-env OS=Windows_NT make
+  env OS=Windows_NT ./configure
+  env OS=Windows_NT make
 
-Prerequisites:
+The generated executables "scheme.exe" and "petite.exe" are in
+"<machine type>\bin\<machine type>", and each relies on bootfiles in
+"..\boot\<machine type>" relative to the executable.
 
-* Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed, etc.
-* Microsoft Visual Studio 2019, 2017, or 2015
-* WiX Toolset (for making an install)
-
-Be sure that git config core.autocrlf is set to false.
-
-If you're using Visual Studio 2019, install "Desktop development with C++"
-on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs" on the
-"Individual components" tab under the "Compilers, build tools, and runtimes"
-section.
-
-To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
-set PATH:
-
-set PATH=$W\bin\$M;%PATH%
-
-again with $W and $M replaced with the workarea name and machine
-type, and start Chez Scheme with the command "scheme" or Petite
-Chez with the command "petite".
+If you're using Visual Studio 2019, install "Desktop development with
+C++" on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs"
+on the "Individual components" tab under the "Compilers, build tools,
+and runtimes" section.
 
 The executables are dynamically linked against the Microsoft Visual
 C++ run-time library vcruntime140.dll. If you distribute the
 executables to a different system, be sure to include the
 redistributable run-time library.
 
-Making an Install for Windows
+To create an installer:
 
-cd wininstall
-make workareas
-make
+  cd wininstall
+  make workareas
+  make
 
-This will create workareas and compile binaries for the a6nt, i3nt,
-ta6nt, and ti3nt configurations and then include them in a single
-Windows installer package Chez Scheme.exe. The package also includes
-example files and the redistributable Microsoft Visual C++ run-time
-libraries.
+These commands will create workareas and compile binaries for the
+`a6nt`, `i3nt`, `ta6nt`, and `ti3nt` machine types and then include
+them in a single Windows installer package "Chez Scheme.exe". The
+package also includes example files and the redistributable Microsoft
+Visual C++ run-time libraries.
 
-Testing under Windows
-
-The iconv tests in mats/io.ms require that a 32-bit or 64-bit (as
-appropriate) iconv.dll, libiconv.dll, or libiconv-2.dll implementing
-GNU libiconv be located in $W\bin\$M or the path.  Windows sources for
+When testing on Windows, the iconv tests in "mats/io.ms" require that
+a 32-bit or 64-bit (as appropriate) "iconv.dll", "libiconv.dll", or
+"libiconv-2.dll" implementing GNU libiconv be located alongside the
+executable or via the `PATH` environment variable. Windows sources for
 libiconv can be found at:
 
-http://gnuwin32.sourceforge.net/packages/libiconv.htm
+  http://gnuwin32.sourceforge.net/packages/libiconv.htm
 
-An alternative that uses the Windows API can be found at:
+An alternative implementation that uses the Windows API can be found
+at:
 
-https://github.com/burgerrg/win-iconv/releases
+  https://github.com/burgerrg/win-iconv/releases
 
 If the DLL is not present, the iconv tests will fail.  No other tests
 should be affected.
 
-Unset the TZ environment variable before running the tests, because
+Unset the `TZ` environment variable before running the tests, because
 the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
 
 Use 'make test' described above to run the tests.
 
-WINDOWS EXECUTABLE VIA COMMAND PROMPT
 
-To build the Chez Scheme executable using Microsoft Visual Studio,
-first set up command-line tools. The c\vs.bat script can help if you
-supply amd64 for a 64-bit build or x86 for a 32-bit build:
-
- c\vs.bat amd64
-
-Then, run c\build/bat with a machine name, either ta6nt (64-bit
-threaded), a6nt (64-bit non-threaded), ti3nt (32-bit threaded), or
-i3nt (32-bit non-threaded):
-
- c\build.bat ta6nt
-
-The resulting executable in <machine>\bin\<machine> relies on
-bootfiles in ..\boot\<machine> relative to the executable.
-
-CROSS-COMPILING THE WINDOWS EXECUTABLE
+WINDOWS VIA CROSS-COMPILER
 
 To cross-compile the main Chez Scheme executable for Windows using
 MinGW, specify suitable build tools to configure, perhaps using
 --toolprefix= like this:
 
- ./configure -m=ta6nt --threads --toolprefix=x86_64-w64-mingw32-
+ ./configure -m=ta6nt --toolprefix=x86_64-w64-mingw32-
 
-Then, make with c/Mf-<machine> while supplying cross=t and o=o,
-possibly like this:
+Then, make with "c/Mf-<machine type>" while supplying `cross=t` and
+`o=o`, possibly like this:
 
- (cd ta6nt/c && make -f Mf-ta6nt cross=t o=o)
+  (cd ta6nt/c && make -f Mf-ta6nt cross=t o=o)
 
-The executable is written to <machine>/bin/<machine>, and it should be
-installed with bootfiles in ../boot/<machine>/ relative to the
-executable.
+The executable is written to <machine type>/bin/<machine type>, and it
+should be installed with bootfiles in ../boot/<machine type>/ relative
+to the executable.

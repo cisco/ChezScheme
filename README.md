@@ -1,12 +1,7 @@
-This variant of Chez Scheme is patched for Racket. It doesn't include
-boot files; instead, Racket can generate initial boot files from Chez
-Scheme's source. For more information, see "racket/src/cs/README.txt"
-in Racket sources.
-
-----------------------------------------
-
-Chez Scheme is both a programming language and an implementation
-of that language, with supporting tools and documentation.
+Chez Scheme is both a programming language and an implementation of
+that language, with supporting tools and documentation.
+This variant of Chez Scheme is extended to support the implementation
+of [Racket](https://racket-lang.org/).
 
 As a superset of the language described in the
 [Revised<sup>6</sup> Report on the Algorithmic Language Scheme](http://www.r6rs.org)

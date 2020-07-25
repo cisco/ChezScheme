@@ -22,7 +22,7 @@ build:
 	(cd s && $(MAKE) bootstrap)
 
 .PHONY: install
-install: build
+install:
 	$(MAKE) -f Mf-install
 
 .PHONY: uninstall

@@ -430,15 +430,43 @@ if [ "$help" = "yes" ]; then
 fi
 
 if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
-  echo "No suitable machine type found."
-  if [ "$machine_supplied" = "no" ] ; then
-      echo "Try rerunning as $0 -m=<machine type>"
+  if [ "$m" = "" ] ; then
+      maybem="<machine type>"
+  else
+      maybem=$m
   fi
-  echo "Available machine types: $machs"
+  echo 'No suitable machine type found in "boot".'
+  echo ""
+  echo "Available machine types:"
+  echo "  $machs"
+  if [ "$machine_supplied" = "no" ] ; then
+      echo ""
+      if [ "$m" = "" ] ; then
+          echo "If the problem is that the machine type was not inferred,"
+          echo "you can try"
+      else
+          echo "If the problem is that the inferred machine type $m is"
+          echo "not correct, you can try"
+      fi
+      echo "  $0 -m=<machine type>"
+      echo "to specify one of the available machine types."
+  fi
+  echo ""
+  if [ "$m" = "" ] ; then
+      echo 'If no directory in "boot" exists for the correct machine type,'
+      echo "then you can use Racket v7.1 or later with"
+  else
+      echo "Since no directory in "'"boot"'" exists for $m, you can try"
+      echo "using Racket v7.1 or later with"
+  fi
+  echo "  racket rktboot/main.rkt --machine $maybem"
+  echo "to create the boot files, and then try $0 again."
   if [ -f boot/pb/scheme.boot ] ; then
-      echo "A pb machine type is available, so you might also try"
+      echo ""
+      echo "Alternatively, a pb machine type is available, so try"
       echo "  $0 --pb"
-      echo "  make <machine type>.bootquick"
+      echo "  make $maybem.bootquick"
+      echo "to create the boot files using a portable-bytecode build,"
       echo "and then try $0 again."
   fi
   exit 1
