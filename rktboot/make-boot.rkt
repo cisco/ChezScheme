@@ -43,7 +43,7 @@
                                          (build-path scheme-dir "s")))])
     (status (format "Use ~a" dir))
     (for/fold ([d d]) ([f (in-list (directory-list dir))]
-                       #:when (regexp-match? #rx"[.](?:rkt|ss|sls)$" f))
+                       #:when (regexp-match? #rx"[.](?:rkt|ss|sls|def)$" f))
       (max d (file-or-directory-modify-seconds (build-path dir f))))))
 
 (status (format "Check ~a" out-subdir))
@@ -348,7 +348,7 @@
   (status "Load most front.ss declarations")
   (call-with-expressions
    (build-path scheme-dir "s/front.ss")
-   (lambda (e)
+   (lambda (e)<
      ;; Skip `package-stubs`, which would undo "syntax.ss" definitions
      (let loop ([e e])
        (match e

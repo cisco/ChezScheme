@@ -10,4 +10,7 @@
                                   "unsigned long long int"
                                   "unsigned long"))
 
+(define-constant typedef-i64 "long long")
+(define-constant typedef-u64 "unsigned long long")
+
 (define-constant long-bits 32)
