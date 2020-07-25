@@ -21,7 +21,6 @@ jobs:
           distribution: 'minimal'  # minimal is enough
           variant: 'CS'            # lets dog-food CS
           version: 'current'
-          packages: 'cs-bootstrap'
       - uses: actions/checkout@v2
         with:
           submodules: 'recursive'
@@ -39,7 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev uuid-dev libssl-dev
       - name: Build bootfiles
-        run: racket -l cs-bootstrap
+        run: racket rktboot/main.rkt
       - name: Build Chez
         run: .github/scripts/build.sh
       - name: Test Chez
@@ -68,14 +67,13 @@ jobs:
           make -j  $((cpus+1)) install
           cd
           rm -Rf /tmp/racket
-          raco pkg install -i --auto --skip-installed cs-bootstrap
       - name: Checkout ChezScheme
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
           fetch-depth: 100
       - name: Build bootfiles
-        run: racket -l cs-bootstrap
+        run: racket rktboot/main.rkt
       - name: Build Chez
         run: |
           ./configure -m=$MACH
