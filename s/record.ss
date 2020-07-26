@@ -489,7 +489,7 @@
           [(_ integer-64 bytes pred)
            (< (constant ptr-bits) 64)
            (build-multi-int (#3%$object-set! r offset v) integer 32 32 #f)]
-          [(_ integer-64 bytes pred)
+          [(_ unsigned-64 bytes pred)
            (< (constant ptr-bits) 64)
            (build-multi-int (#3%$object-set! r offset v) unsigned 32 32 #f)]
           [(_ type bytes pred) (#3%$object-set! 'type r offset v)]))
