@@ -71,7 +71,8 @@
          (let ([mk (lambda (base n)
                      (datum->syntax #'moi (string->symbol (format "~a-~a" base n))))])
            (cond
-             [(not (datum swap?))
+             [(or (not (datum swap?))
+                  (fx= (datum wide-bits) (datum narrow-bits)))
               (with-syntax ([signed-wide (mk (datum signed) (datum wide-bits))]
                             [unsigned-wide (mk 'unsigned (datum wide-bits))]
                             [unsigned-middle (mk 'unsigned (datum middle-bits))]
@@ -124,11 +125,15 @@
                                                                (- (expt 2 middle-bits) 1))))
                                       (ref/set 'signed-narrow r (fx+ offset middle-bytes wide-bytes)
                                                (bitwise-arithmetic-shift-right arg ... (+ wide-bits middle-bits))))])])
-                  #'(native-endianness-case
-                     [(big) big-case]
-                     [(little) little-case])))]
+                  (if (not (datum swap?))
+                      #'(native-endianness-case
+                         [(big) big-case]
+                         [(little) little-case])
+                      #'(native-endianness-case
+                         [(big) little-case]
+                         [(little) big-case]))))]
              [else
-              ;; For swap mode, perform a sequence of byte reads or writes
+              ;; For general swap mode, perform a sequence of byte reads or writes
               (let ([mk (lambda (big?)
                           (let* ([bits (+ (datum wide-bits) (datum middle-bits) (datum narrow-bits))]
                                  [bytes (fxsrl bits 3)])
@@ -150,8 +155,8 @@
                                      #,(gen 8 type shift delta)
                                      #,(gen (- bits 8) (mk 'unsigned 8) (- shift 8) (+ delta (if big? 1 -1))))]))))])
                 #`(native-endianness-case
-                   [(big) #,(mk #t)]
-                   [(little) #,(mk #f)]))]))])))
+                   [(big) #,(mk #f)]
+                   [(little) #,(mk #t)]))]))])))
 
   ; $record is hand-coded and is defined in prims.ss
 
