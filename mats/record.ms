@@ -728,10 +728,14 @@
 (mat foreign-data
   (begin
     (module ($fd-unaligned-integers $fd-unaligned-floats)
+      (import (rename (only (chezscheme) include) [include orig-include]))
       (define-syntax define-constant
         (syntax-rules (machine-type)
           [(_ machine-type y) (begin)]
           [(_ x y) (define x y)]))
+      (define-syntax define-constant-default
+        (syntax-rules (machine-type)
+          [(_ x y) (begin)]))
       (define-syntax features
         (syntax-rules ()
           [(_ x ...) (begin)]))
@@ -751,7 +755,12 @@
              ...
              [else (syntax-error const
                      (format "unhandled value ~s" (constant const)))])]))
-      (include "../s/machine.def")
+       (define-syntax include
+         (lambda (stx)
+           (syntax-case stx ()
+             [(k path)
+              #`(#,(datum->syntax #'k 'orig-include) #,(format "../s/~a" (datum path)))])))
+       (include "machine.def")
      ; all this work for two constants:
       (define $fd-unaligned-integers (constant unaligned-integers))
       (define $fd-unaligned-floats (constant unaligned-floats)))
