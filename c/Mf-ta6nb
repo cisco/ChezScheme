@@ -1,6 +1,6 @@
 # Mf-ta6nb
 
-m = ta6nb
+m ?= ta6nb
 
 threadLibs = -lpthread 
 threadFlags = -D_REENTRANT -pthread

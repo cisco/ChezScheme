@@ -1,6 +1,6 @@
 # Mf-ti3nb
 
-m = ti3nb
+m ?= ti3nb
 
 threadLibs = -lpthread 
 threadFlags = -D_REENTRANT -pthread

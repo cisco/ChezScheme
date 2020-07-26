@@ -342,6 +342,9 @@ if [ "$m" = "" ] ; then
       if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
     fi
   fi
+elif [ $pb = yes ] ; then
+  mpbhost=$m
+  m=pb
 fi
 
 if [ "$w" = "" ] ; then
@@ -472,32 +475,28 @@ if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
   exit 1
 fi
 
-if [ -d '.git' ] && command -v git >/dev/null 2>&1 ; then
-  git submodule init && git submodule update || exit 1
-else
-  if [ ! -f 'nanopass/nanopass.ss' ] ; then
-    rmdir nanopass > /dev/null 2>&1
-    (curl  -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -zxf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
-  fi
+if [ ! -f 'nanopass/nanopass.ss' ] ; then
+    echo "nanopass source is missing; you may need to check out git submodules"
+    exit 1
+fi
 
-  if [ "${zlibDep}" != "" ] ; then
+if [ "${zlibDep}" != "" ] ; then
     if [ ! -f 'zlib/configure' ] ; then
-      rmdir zlib > /dev/null 2>&1
-      (curl -L -o v1.2.11.tar.gz https://github.com/madler/zlib/archive/v1.2.11.tar.gz && tar -xzf v1.2.11.tar.gz && mv zlib-1.2.11 zlib && rm v1.2.11.tar.gz) || exit 1
+        echo "zlib source is missing; you may need to check out git submodules"
+        exit 1
     fi
-  fi
+fi
   
-  if [ "${LZ4Dep}" != "" ] ; then
+if [ "${LZ4Dep}" != "" ] ; then
     if [ ! -f 'lz4/lib/Makefile' ] ; then
-      rmdir lz4 > /dev/null 2>&1
-      (curl -L -o v1.8.3.tar.gz https://github.com/lz4/lz4/archive/v1.8.3.tar.gz && tar -xzf v1.8.3.tar.gz && mv lz4-1.8.3 lz4 && rm v1.8.3.tar.gz) || exit 1
+        echo "lz4 source is missing; you may need to check out git submodules"
+        exit 1
     fi
-  fi
+fi
 
-  if [ ! -f 'stex/Mf-stex' ] ; then
-    rmdir stex > /dev/null 2>&1
-    (curl -L -o v1.2.1.tar.gz https://github.com/dybvig/stex/archive/v1.2.1.tar.gz && tar -zxf v1.2.1.tar.gz && mv stex-1.2.1 stex && rm v1.2.1.tar.gz) || exit 1
-  fi
+if [ ! -f 'stex/Mf-stex' ] ; then
+    echo "stex source is missing; you may need to check out git submodules"
+    exit 1
 fi
 
 ./workarea $m $w $mpbhost

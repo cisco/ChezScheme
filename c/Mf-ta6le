@@ -1,6 +1,6 @@
 # Mf-ta6le
 
-m = ta6le
+m ?= ta6le
 
 threadLibs = -lpthread 
 threadFlags = -D_REENTRANT -pthread

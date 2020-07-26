@@ -39,6 +39,11 @@ fi
 Muni=""
 
 case "$M" in
+  pb) Mhost=$Mpbhost ;;
+  *) Mhost=$M ;;
+esac
+
+case "$Mhost" in
   a6fb) ;;
   a6le) ;;
   a6nb) ;;
@@ -75,14 +80,13 @@ case "$M" in
   ti3qnx) Muni=i3qnx ;;
   ti3s2) Muni=i3s2 ;;
   tppc32le) Muni=ppc32le ;;
-  pb) ;;
-  *) echo "Unrecognized machine name $M"; exit 1 ;;
+  *) echo "Unrecognized machine name $Mhost"; exit 1 ;;
 esac
 
 if [ "$Muni" != "" ] ; then
     Muniarch=$Muni
 else
-    Muniarch=$M
+    Muniarch=$Mhost
 fi    
 
 case "$Muniarch" in

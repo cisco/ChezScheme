@@ -1,6 +1,6 @@
 # Mf-tarm32le
 
-m = tarm32le
+m ?= tarm32le
 
 threadLibs = -lpthread
 
