@@ -555,10 +555,10 @@ fi
 
 if [ ! -f "$w/c/config.h" ] ; then
    mv $w/c/next_config.h $w/c/config.h
-elif [ `cmp -s $w/c/next_config.h $w/c/config.h`] ; then
-   mv $w/c/next_config.h $w/c/config.h
-else
+elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
    rm $w/c/next_config.h
+else
+   mv $w/c/next_config.h $w/c/config.h
 fi
 
 warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"

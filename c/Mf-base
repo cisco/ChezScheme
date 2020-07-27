@@ -64,7 +64,7 @@ endif
 
 scheme.o: itest.c
 scheme.o main.o: config.h
-${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h sort.h compress-io.h nocurses.h popcount.h
+${kernelobj}: system.h types.h version.h externs.h globals.h segment.h thread.h config.h sort.h compress-io.h nocurses.h popcount.h
 ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
 ${kernelobj}: ${zlibHeaderDep} ${LZ4HeaderDep}
