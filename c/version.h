@@ -93,6 +93,9 @@
 #  define OS_ANY_OPENBSD
 # elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #  define OS_ANY_FREEBSD
+#  ifndef PORTABLE_BYTECODE_BIGENDIAN
+#   define LITTLE_ENDIAN_IEEE_DOUBLE
+#  endif
 # elif defined(_MSC_VER) || defined(__MINGW32__)
 #   define OS_ANY_WINDOWS
 # elif __APPLE__
