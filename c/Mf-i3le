@@ -16,7 +16,7 @@
 m ?= i3le
 Cpu ?= I386
 
-mdclib = -lm -ldl ${ncursesLib} ${threadLibs} -lrt -luuid
+mdclib = -lm -ldl ${ncursesLib} ${threadLibs} -lrt
 C = ${CC} ${CPPFLAGS} -m32 -msse2 ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
 mdsrc ?= i3le.c

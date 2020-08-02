@@ -22,7 +22,6 @@ On Unix variants:
  * GCC, Clang, or a similarly capable compiler
  * Header files and libraries for ncurses   [unless --disable-curses]
  * Header files and libraries for X windows [unless --disable-x11]
- * Header files and libraries for uuid
 
 On Windows:
 

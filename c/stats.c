@@ -65,7 +65,55 @@ ptr S_unique_id() {
               Sunsigned32(u.foo[3]))));
 }
 
-#elif defined(USE_OSSP_UUID) /* WIN32 */
+#elif defined(USE_DEV_URANDOM_UUID) /* WIN32 */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+
+ptr S_unique_id() {
+  U32 r[4];
+  int fd, failed = 0;
+
+  /* Implements UUIDv4 (random) using /dev/urandom */
+
+  do {
+    fd = open("/dev/urandom", O_RDONLY);
+  } while ((fd == -1) && errno == EAGAIN);
+  
+  if (fd != -1) {
+    int delta = 0, got;
+    while (delta < (int)sizeof(r)) {
+      got = read(fd, (char *)r + delta, sizeof(r) - delta);
+      if (got < 0) {
+        if (errno != EAGAIN) {
+          failed = 1;
+          break;
+        }
+      } else
+        delta += got;
+    }
+    do {
+      got = close(fd);
+    } while ((got != 0) && (errno == EAGAIN));
+  } else
+    failed = 1;
+
+  if (failed)
+    S_error("S_unique_id", "failed to access random bytes");
+
+  /* Set bits to indidate UUIDv4: */
+  r[1] = (r[1] & (U32)0xFFFF0FFF) | (U32)0x00004000;
+  r[2] = (r[2] & (U32)0x3FFFFFFF) | (U32)0x80000000;
+
+  return S_add(S_ash(Sunsigned32(r[0]), Sinteger(8*3*sizeof(U32))),
+               S_add(S_ash(Sunsigned32(r[1]), Sinteger(8*2*sizeof(U32))),
+                     S_add(S_ash(Sunsigned32(r[2]), Sinteger(8*sizeof(U32))),
+                           Sunsigned32(r[3]))));
+}
+
+#elif defined(USE_OSSP_UUID) /* USE_DEV_URANDOM_UUID */
 
 #include <ossp/uuid.h>
 

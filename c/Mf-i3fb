@@ -17,7 +17,7 @@ m ?= i3fb
 Cpu ?= I386
 
 mdinclude = -I/usr/local/include -I/usr/X11R6/include
-mdclib = -L/usr/local/lib -liconv -lm ${ncursesLib} ${threadLibs} -lossp-uuid
+mdclib = -L/usr/local/lib -liconv -lm ${ncursesLib} ${threadLibs}
 C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
 mdsrc ?= i3le.c

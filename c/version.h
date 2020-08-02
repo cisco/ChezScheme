@@ -465,3 +465,6 @@ typedef char tputsputcchar;
 #ifndef WRITE
 # define WRITE write
 #endif
+
+/* Use "/dev/urandom" everywhere except Windows */
+#define USE_DEV_URANDOM_UUID

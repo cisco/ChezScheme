@@ -16,7 +16,7 @@
 m ?= tarm64le
 Cpu ?= AARCH64
 
-mdclib = -lm -ldl ${ncursesLib} -lrt -luuid ${threadLibs}
+mdclib = -lm -ldl ${ncursesLib} -lrt ${threadLibs}
 C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS}
 o = o
 mdsrc ?= arm32le.c

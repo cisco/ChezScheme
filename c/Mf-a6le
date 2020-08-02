@@ -16,7 +16,7 @@
 m ?= a6le
 Cpu ?= X86_64
 
-mdclib = -lm -ldl ${ncursesLib} ${threadLibs} -lrt -luuid
+mdclib = -lm -ldl ${ncursesLib} ${threadLibs} -lrt
 C = ${CC} ${CPPFLAGS} -m64 -msse2 ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
 mdsrc ?= i3le.c
