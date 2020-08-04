@@ -189,6 +189,13 @@ void S_pb_interp(ptr tc, void *bytecode) {
 #endif
       }
       break;
+    case pb_mov_pb_d_s_d:
+      {
+        float f;
+        f = fpregs[INSTR_dr_reg(instr)];
+        fpregs[INSTR_dr_dest(instr)] = (double)f;
+      }
+      break;
     case pb_bin_op_pb_no_signal_pb_add_pb_register:
       regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)];
       break;

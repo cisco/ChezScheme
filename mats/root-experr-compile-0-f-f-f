@@ -9708,6 +9708,12 @@ fl.mo:Expected error in mat flround: "flround: 2.0+1.0i is not a flonum".
 fl.mo:Expected error in mat flround: "flround: 2+1i is not a flonum".
 fl.mo:Expected error in mat flround: "flround: 19 is not a flonum".
 fl.mo:Expected error in mat flround: "flround: 2/3 is not a flonum".
+fl.mo:Expected error in mat flsingle: "incorrect argument count in call (flsingle)".
+fl.mo:Expected error in mat flsingle: "incorrect argument count in call (flsingle 2.0 3.0)".
+fl.mo:Expected error in mat flsingle: "flsingle: a is not a flonum".
+fl.mo:Expected error in mat flsingle: "flsingle: 3 is not a flonum".
+fl.mo:Expected error in mat flsingle: "flsingle: 2.0+1.0i is not a flonum".
+fl.mo:Expected error in mat flsingle: "flsingle: 2+1i is not a flonum".
 fl.mo:Expected error in mat flinteger?: "flinteger?: a is not a flonum".
 fl.mo:Expected error in mat flinteger?: "flinteger?: "hi" is not a flonum".
 fl.mo:Expected error in mat flinteger?: "flinteger?: (3 . 4) is not a flonum".

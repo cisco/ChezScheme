@@ -630,6 +630,9 @@
   (define-instruction value (fpsqrt)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction effect inc-cc-counter
     [(op (x ur) (y imm32 ur) (z imm32 ur)) `(asm ,info ,asm-inc-cc-counter ,x ,y ,z)])
 
@@ -834,7 +837,7 @@
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
-                     asm-fpsqrt asm-fpop-2 asm-fpmove asm-fpcast
+                     asm-fpsqrt asm-fpop-2 asm-fpmove asm-fpcast asm-fpsingle
                      asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1728,6 +1731,12 @@
           (case op
             [(single->double) (emit sse.cvtss2sd src (cons 'reg dest-reg) code*)]
             [(double->single) (emit sse.cvtsd2ss src (cons 'reg dest-reg) code*)])))))
+
+  (define asm-fpsingle
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        (emit sse.cvtsd2ss src dest
+          (emit sse.cvtss2sd dest dest code*)))))
 
   (define asm-store-single->double
     (lambda (flreg)

@@ -606,6 +606,9 @@
         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,z (asm ,info ,asm-fptrunc ,x ,u))))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction pred (fp= fp< fp<=)
     [(op (x fpur) (y fpur))
      (let ([info (make-info-condition-code op #f #f)])
@@ -844,7 +847,8 @@
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-indirect-call asm-condition-code
-                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom asm-fptrunc 
+                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
+                     asm-fptrunc asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
@@ -1869,6 +1873,11 @@
   (define asm-fpsqrt
     (lambda (code* dest src)
       (emit vsqrt dest src code*)))
+
+  (define asm-fpsingle
+    (lambda (code* dest-reg src-reg)
+      (emit vcvt.dbl->sgl dest-reg src-reg 
+        (emit vcvt.sgl->dbl dest-reg dest-reg code*))))
 
   (define asm-fptrunc
     (lambda (code* dest flonumreg tmpreg)

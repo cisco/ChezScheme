@@ -279,6 +279,11 @@
          (unless (flonum? x) (flargerr 'flround x))
          (#3%flround x)))
 
+   (set! flsingle
+         (lambda (x)
+           (unless (flonum? x) (flargerr 'flsingle x))
+           (#3%flsingle x)))
+
    (set! fllp
       (lambda (x)
          (unless (flonum? x) (flargerr 'fllp x))

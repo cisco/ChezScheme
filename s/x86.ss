@@ -570,6 +570,9 @@
   (define-instruction value (fpsqrt)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction effect inc-cc-counter
     [(op (x ur) (y imm32 ur) (z imm32 ur)) `(asm ,info ,asm-inc-cc-counter ,x ,y ,z)])
 
@@ -749,7 +752,7 @@
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-lea1 asm-lea2 asm-indirect-call asm-fstpl asm-fstps asm-fldl asm-flds asm-condition-code
-                     asm-fl-cvt asm-store-single asm-fpt asm-fptrunc asm-div
+                     asm-fl-cvt asm-store-single asm-fpt asm-fptrunc asm-fpsingle asm-div
                      asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpop-2 asm-fpmove asm-fpmovefrom asm-fpcastfrom asm-fpcastto asm-fpsqrt asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
@@ -1551,6 +1554,12 @@
     (lambda (code* dest flreg)
       (Trivit (dest)
         (emit sse.movss (cons 'reg flreg) dest code*))))
+
+  (define asm-fpsingle
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        (emit sse.cvtsd2ss src dest
+          (emit sse.cvtss2sd dest dest code*)))))
 
   (define asm-fpt
     (lambda (code* dest src)

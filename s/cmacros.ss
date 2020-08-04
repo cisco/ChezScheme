@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050323)
+(define-constant scheme-version #x09050324)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2823,6 +2823,7 @@
      (flfloor #f 1 #t #t)
      (flceiling #f 1 #t #t)
      (fltruncate #f 1 #t #t)
+     (flsingle #f 1 #t #t)
      (flsin #f 1 #t #t)
      (flcos #f 1 #t #t)
      (fltan #f 1 #t #t)
@@ -3081,6 +3082,7 @@
     pb-d->i
     pb-s->d
     pb-d->s
+    pb-d->s->d
     pb-i-bits->d-bits     ; 64-bit only
     pb-d-bits->i-bits     ; 64-bit only
     pb-i-i-bits->d-bits   ; 32-bit only

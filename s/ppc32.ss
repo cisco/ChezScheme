@@ -522,6 +522,9 @@
     [(op (z ur) (x fpur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-trunc ,x))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction value (fp+ fp- fp/ fp*)
     [(op (x fpur) (y fpur) (z fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
@@ -735,7 +738,7 @@
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-indirect-call asm-condition-code
-                     asm-trunc asm-fpt asm-fpcastto asm-fpcastfrom
+                     asm-trunc asm-fpt asm-fpcastto asm-fpcastfrom asm-fpsingle
                      asm-lock asm-lock+/- asm-cas
                      asm-load-single->double asm-store-double->single
                      asm-fpop-2 asm-c-simple-call
@@ -1637,6 +1640,11 @@
                (emit stfs tmp dest-reg dest-offset code*))
              (lambda (dest-reg index-reg)
                (emit stfsx tmp dest-reg index-reg code*))))))))
+
+  (define asm-fpsingle
+    (lambda (code* dest-reg src-reg)
+      (Trivit (dest-reg src-reg)
+        (emit frsp dest-reg src-reg code*))))
 
   (define-who asm-fpop-2
     (lambda (op)

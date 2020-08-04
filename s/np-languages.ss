@@ -629,6 +629,7 @@
   (declare-primitive fpt value #t)
   (declare-primitive fpsqrt value #t) ; not implemented for some ppc32 (so we don't use it)
   (declare-primitive fptrunc value #t)
+  (declare-primitive fpsingle value #t)
   (declare-primitive double->single value #t) ; not required by cpnanopass
   (declare-primitive single->double value #t) ; not required by cpnanopass
 

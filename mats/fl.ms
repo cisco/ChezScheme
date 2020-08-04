@@ -668,6 +668,28 @@
     (fl= (flround -0.5000000000000001) -1.0)
  )
 
+(mat flsingle
+    (error? (flsingle))
+    (error? (flsingle 2.0 3.0))
+    (error? (flsingle 'a))
+    (error? (flsingle 3))
+    (error? (flsingle 2+1.0i))
+    (error? (flsingle 2+1i))
+    (eqv? (flsingle 19.0) 19.0)
+    (eqv? (flsingle -19.0) -19.0)
+    (eqv? (flsingle +nan.0) +nan.0)
+    (eqv? (flsingle +inf.0) +inf.0)
+    (eqv? (flsingle -inf.0) -inf.0)
+    (fl~= (flsingle 1.25e38) 1.2500000360947476e38)
+    (fl~= (flsingle 1.25e-37) 1.2500000449239123e-37)
+    (fl~= (flsingle -1.25e38) -1.2500000360947476e38)
+    (fl~= (flsingle -1.25e-37) -1.2500000449239123e-37)
+    (eqv? (flsingle 1e100) +inf.0)
+    (eqv? (flsingle -1e100) -inf.0)
+    (eqv? (flsingle 1e-100) 0.0)
+    (eqv? (flsingle -1e-100) -0.0)
+ )
+
 (mat flinteger?
     (error? (flinteger? 'a))
     (error? (flinteger? "hi"))

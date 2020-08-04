@@ -357,6 +357,9 @@
     [(op (x ur) (y fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fptrunc ,y))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction value (fpmove)
     [(op (x fpmem) (y fpur)) `(set! ,(make-live-info) ,x ,y)]
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x ,y)])
@@ -548,7 +551,8 @@
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-indirect-call asm-condition-code
-                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom asm-fptrunc 
+                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
+                     asm-fptrunc asm-fpsingle
                      asm-inc! asm-lock! asm-cas!
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-return asm-c-return asm-size
@@ -657,6 +661,8 @@
   (define-op mov.d->s mov-op (constant pb-d->s))
   (define-op mov.i->d mov-op (constant pb-i->d))
   (define-op mov.d->i mov-op (constant pb-d->i))
+
+  (define-op mov.d->s->d mov-op (constant pb-d->s->d))
 
   ;; 64-bit versions
   (define-op mov.i*>d mov-op (constant pb-i-bits->d-bits))
@@ -1190,6 +1196,11 @@
     (lambda (code* dest src)
       (Trivit (dest src)
         (emit fsqrt dest src code*))))
+
+  (define asm-fpsingle
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        (emit mov.d->s->d dest src code*))))
 
   (define asm-fptrunc
     (lambda (code* dest src)

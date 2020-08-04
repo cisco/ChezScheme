@@ -428,6 +428,9 @@
     [(op (x ur) (y fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fptrunc ,y))])
 
+  (define-instruction value (fpsingle)
+    [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
+
   (define-instruction value (fpmove)
     [(op (x fpmem) (y fpur)) `(set! ,(make-live-info) ,x ,y)]
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x ,y)])
@@ -680,7 +683,8 @@
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-indirect-call asm-condition-code
-                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom asm-fptrunc 
+                     asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
+                     asm-fptrunc asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-return asm-c-return asm-size
@@ -1758,6 +1762,13 @@
     (lambda (code* dest src)
       (Trivit (dest src)
         (emit fsqrt dest src code*))))
+
+  (define-who asm-fpsingle
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        (emit fcvt.d->s dest src
+          (emit fcvt.s->d dest dest
+            code*)))))
 
   (define asm-fptrunc
     (lambda (code* dest src)

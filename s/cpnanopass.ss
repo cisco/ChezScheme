@@ -7699,6 +7699,9 @@
                [(x86 x86_64 arm32 arm64 pb) (build-fp-op-1 %fpsqrt e)]
                [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)])])
 
+          (define-inline 3 flsingle
+            [(e) (build-fp-op-1 %fpsingle e)])
+
           (define-inline 3 flabs
             [(e) (build-flabs e)])
 
@@ -8044,6 +8047,13 @@
                    [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)]))
                (lambda (e)
                  (build-libcall #t src sexpr flsqrt e)))])
+
+          (define-inline 2 flsingle
+            [(e)
+             (build-checked-fp-op e
+               (lambda (e) (build-fp-op-1 %fpsingle e))
+               (lambda (e)
+                 (build-libcall #t src sexpr flsingle e)))])
 
           (let ()
             (define-syntax define-fl-call

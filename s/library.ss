@@ -677,6 +677,7 @@
   (define-library-entry (flfloor x) (flonum-oops 'flfloor x))
   (define-library-entry (flceiling x) (flonum-oops 'flceiling x))
   (define-library-entry (fltruncate x) (flonum-oops 'fltruncate x))
+  (define-library-entry (flsingle x) (flonum-oops 'flsingle x))
   (define-library-entry (flsin x) (flonum-oops 'flsin x))
   (define-library-entry (flcos x) (flonum-oops 'flcos x))
   (define-library-entry (fltan x) (flonum-oops 'fltan x))

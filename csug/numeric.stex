@@ -551,6 +551,17 @@ are considered nonpositive and nonnegative.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{flsingle}{\categoryprocedure}{(flsingle \var{fl})}
+\returns a possibly less precise variant of \var{fl}
+\listlibraries
+\endentryheader
+
+\noindent
+Potentially discards precision from \var{fl} so that the result is
+representable as an 32-bit IEEE floating-point number.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{decode-float}{\categoryprocedure}{(decode-float \var{x})}
 \returns see below
 \listlibraries

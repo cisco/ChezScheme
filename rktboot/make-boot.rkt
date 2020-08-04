@@ -422,9 +422,13 @@
 
   ((orig-eval 'fasl-compressed) #f)
 
+  (define all-sources (append petite-sources scheme-sources))
+  (define (source->so src #:abs? [abs? #t])
+    (path->string ((if abs? path->complete-path values) (build-path out-subdir (path-replace-suffix src #".so")))))
+
   (let ([failed? #f])
-    (for ([src (append petite-sources scheme-sources)])
-      (let ([dest (path->string (path->complete-path (build-path out-subdir (path-replace-suffix src #".so"))))])
+    (for ([src (in-list all-sources)])
+      (let ([dest (source->so src)])
         (parameterize ([current-directory (build-path scheme-dir "s")])
           ;; (status (format "Compile ~a" src)) - Chez Scheme prints its own message
           (with-handlers (#;[exn:fail? (lambda (exn)
@@ -434,8 +438,7 @@
     (when failed?
       (raise-user-error 'make-boot "compilation failure(s)")))
 
-  (let ([src->so (lambda (src)
-                   (path->string (build-path out-subdir (path-replace-suffix src #".so"))))])
+  (let ([src->so (lambda (src) (source->so #:abs? #f src))])
     (status (format "Writing ~a/petite.boot" target-machine))
     (eval `($make-boot-file ,(path->string (build-path out-subdir "petite.boot"))
                             ',(string->symbol target-machine) '()
@@ -443,4 +446,10 @@
     (status (format "Writing ~a/scheme.boot" target-machine))
     (eval `($make-boot-file ,(path->string (build-path out-subdir "scheme.boot"))
                             ',(string->symbol target-machine) '("petite")
-                            ,@(map src->so scheme-sources)))))
+                            ,@(map src->so scheme-sources))))
+
+  ;; Clean up
+  (for ([src (in-list all-sources)])
+    (define so (source->so src))
+    (when (file-exists? so)
+      (delete-file so))))
