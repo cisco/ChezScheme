@@ -10,3 +10,4 @@
 (define-constant unaligned-floats #f)
 (define-constant unaligned-integers #t)
 (define-constant integer-divide-instruction #t)
+(define-constant popcount-instruction #t)

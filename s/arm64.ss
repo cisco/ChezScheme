@@ -296,6 +296,11 @@
     [(op (z ur) (x ur) (y imm-constant ur))
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-shiftop op) ,x ,y))])
 
+  (define-instruction value popcount
+    [(op (z ur) (x ur))
+     (let ([u (make-tmp 'u 'fp)])
+       `(set! ,(make-live-info) ,z (asm ,info ,asm-popcount ,x ,u)))])
+
   (define-instruction value (move)
     [(op (z mem) (x ur))
      `(set! ,(make-live-info) ,z ,x)]
@@ -687,7 +692,7 @@
 (module asm-module (; required exports
                      asm-move asm-move/extend asm-load asm-store asm-swap asm-library-call asm-library-call! asm-library-jump
                      asm-mul asm-smulh asm-div asm-add asm-sub asm-logand asm-logor asm-logxor
-                     asm-pop-multiple asm-shiftop asm-logand asm-lognot asm-cmp/asr63
+                     asm-pop-multiple asm-shiftop asm-logand asm-lognot asm-cmp/asr63 asm-popcount
                      asm-logtest asm-fp-relop asm-relop asm-push-multiple asm-push-fpmultiple asm-pop-fpmultiple
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
@@ -808,6 +813,9 @@
   (define-op smulh mul-op  #b010)
 
   (define-op sdiv  div-op)
+
+  (define-op cnt    cnt-op)
+  (define-op addv.b addv.b-op)
 
   ;; scaled variants (offset must be aligned):
   (define-op ldri    load-imm-op  3 #b11 #b0 #b01) ; selectors are at bits 30 (size), 26, and 22 (opc)
@@ -1105,6 +1113,28 @@
         [16 (ax-ea-reg-code src1)]
         [10 #b000011]
         [5  (ax-ea-reg-code src0)]
+        [0  (ax-ea-reg-code dest)])))
+
+  (define cnt-op
+    (lambda (op dest src code*)
+      (emit-code (op dest src code*)
+        [29 #b000]
+        [24 #b01110]
+        [22 #b00] ; size
+        [17 #b10000]
+        [10 #b0010110]
+        [5  (ax-ea-reg-code src)]
+        [0  (ax-ea-reg-code dest)])))
+
+  (define addv.b-op
+    (lambda (op dest src code*)
+      (emit-code (op dest src code*)
+        [29 #b000]
+        [24 #b01110]
+        [22 #b00] ; size: 00 => b
+        [17 #b11000]
+        [10 #b1101110]
+        [5  (ax-ea-reg-code src)]
         [0  (ax-ea-reg-code dest)])))
 
   (define load-imm-op
@@ -2309,6 +2339,14 @@
     (lambda (code* dest src)
       (Trivit (dest src)
         (emit mvn dest src code*))))
+
+  (define asm-popcount
+    (lambda (code* dest src tmp)
+      (Trivit (dest src tmp)
+        (emit fmov.g->f tmp src
+          (emit cnt tmp tmp
+            (emit addv.b tmp tmp
+              (emit fmov.f->g dest tmp code*)))))))
 
   (define asm-enter values)
   
