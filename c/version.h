@@ -468,3 +468,13 @@ typedef char tputsputcchar;
 
 /* Use "/dev/urandom" everywhere except Windows */
 #define USE_DEV_URANDOM_UUID
+
+#if defined(__arm64__) || defined(__arm32__)
+# define STORE_FENCE() __asm__ __volatile__ ("dmb ishst" : : : "memory")
+#elif defined(__powerpc64__)
+# define STORE_FENCE() __asm__ __volatile__ ("lwsync" : : : "memory")
+#elif defined(__powerpc__) || defined(__POWERPC__)
+# define STORE_FENCE() __asm__ __volatile__ ("sync" : : : "memory")
+#else
+# define STORE_FENCE() /* empty */
+#endif

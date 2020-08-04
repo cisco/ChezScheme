@@ -475,9 +475,10 @@ void S_list_bits_set(p, bits) ptr p; iptr bits; {
 
     memset(list_bits, 0, segment_bitmap_bytes);
 
-    /* FIXME: A write fence is needed here to make sure `list_bits` is
-       zeroed for everyone who sees it. On x86, TSO takes care of that
+    /* A store fence is needed here to make sure `list_bits` is zeroed
+       for everyone who sees it. On x86, TSO takes care of that
        ordering already. */
+    STORE_FENCE();
 
     /* beware: racy write here */
     si->list_bits = list_bits;
