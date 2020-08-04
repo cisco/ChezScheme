@@ -37,7 +37,13 @@
       [     %r9  %Carg4    #f  9 uptr]
       [     %rcx %Carg1    #f  1 uptr] ; last to avoid use as a Scheme argument
       [%fp1                #f  4 fp]
-      [%fp2                #f  5 fp])
+      [%fp2                #f  5 fp]
+      [%fp3                #t  6 fp]
+      [%fp4                #t  7 fp]
+      [%fp5                #t  8 fp]
+      [%fp6                #t  9 fp]
+      [%fp7                #t  10 fp]
+      [%fp8                #t  11 fp])
     (machine-dependent
       [%Cfparg1 %Cfpretval #f  0 fp]  ; xmm 0-5 are caller-save
       [%Cfparg2            #f  1 fp]  ; xmm 6-15 are callee-save
@@ -66,9 +72,15 @@
       [     %rdx %Carg3    #f  2 uptr]
       [     %rcx %Carg4    #f  1 uptr]
       [%fp1                #f  8 fp]
-      [%fp2                #f  9 fp])
+      [%fp2                #f  9 fp]
+      [%fp3                #f  10 fp]
+      [%fp4                #f  11 fp]
+      [%fp5                #f  12 fp]
+      [%fp6                #f  13 fp]
+      [%fp7                #f  14 fp]
+      [%fp8                #f  15 fp])
     (machine-dependent
-      [%Cfparg1 %Cfpretval #f  0 fp]
+      [%Cfparg1 %Cfpretval #f  0 fp] ; no FP registers are callee-save
       [%Cfparg2            #f  1 fp]
       [%Cfparg3            #f  2 fp]
       [%Cfparg4            #f  3 fp]
@@ -2961,15 +2973,15 @@
                    +---------------------------+ <- 16-byte boundary
                    |                           | 
                    |  space for register args  | four quads
-         sp+80/96: |                           | 
+       sp+128/144: |                           | 
                    +---------------------------+ <- 16-byte boundary
                    |   incoming return address | one quad
       incoming sp: +---------------------------+
-            sp+72: |        active state       | zero or two quads
+           sp+120: |        active state       | zero or two quads
                    +---------------------------+
                    |                           |
                    |   callee-save registers   | RBX, RBP, RDI, RSI, R12, R13, R14, R15 (8 quads)
-                   |                           | 
+                   |                           |                            and XMM6-11 (6 quads)
                    +---------------------------+
                    | pad word / indirect space | one quad
              sp+0: +---------------------------+<- 16-byte boundary
@@ -3146,7 +3158,7 @@
              ; risp is where incoming register args are stored
              ; sisp is where incoming stack args are stored
               (if-feature windows
-                (let f ([types types] [locs '()] [isp (if adjust-active? 96 80)])
+                (let f ([types types] [locs '()] [isp (if adjust-active? 144 128)])
                   (if (null? types)
                       locs
                       (f (cdr types)
@@ -3256,7 +3268,7 @@
                 [else
                  (values (lambda ()
                            ;; Return pointer that was filled; destination was the first argument
-                           `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows (if adjust-active? 96 80) 48))))
+                           `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows (if adjust-active? 144 128) 48))))
                          (list %Cretval)
                          '())])]
               [(fp-double-float)
@@ -3282,7 +3294,7 @@
                        '())]))
           (define (unactivate result-regs)
             (let ([e `(seq
-                       (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) (if-feature windows 72 176))))
+                       (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) (if-feature windows 120 176))))
                        ,(as-c-call (%inline unactivate-thread ,%Carg1)))])
               (if (null? result-regs)
                   e
@@ -3319,6 +3331,13 @@
                            ,(%inline push ,%r13)
                            ,(%inline push ,%r14)
                            ,(%inline push ,%r15)
+                           (set! ,%sp ,(%inline - ,%sp (immediate 48)))
+                           (set! ,(%mref ,%sp ,%zero 0 fp) ,%fp3)
+                           (set! ,(%mref ,%sp ,%zero 8 fp) ,%fp4)
+                           (set! ,(%mref ,%sp ,%zero 16 fp) ,%fp5)
+                           (set! ,(%mref ,%sp ,%zero 24 fp) ,%fp6)
+                           (set! ,(%mref ,%sp ,%zero 32 fp) ,%fp7)
+                           (set! ,(%mref ,%sp ,%zero 40 fp) ,%fp8)
                            (set! ,%sp ,(%inline - ,%sp (immediate 8))))
                          (%seq
                            (set! ,%sp ,(%inline - ,%sp (immediate 136)))
@@ -3334,7 +3353,7 @@
                             (if adjust-active?
                                 (%seq
                                  ,(as-c-call `(set! ,%rax ,(%inline activate-thread)))
-                                 (set! ,(%mref ,%sp ,(if-feature windows 72 176)) ,%rax)
+                                 (set! ,(%mref ,%sp ,(if-feature windows 120 176)) ,%rax)
                                  ,e)
                                 e))
                           (%seq 
@@ -3350,7 +3369,8 @@
                    (lambda ()
                      (define callee-save-regs
                        (if-feature windows
-                         (list %rbx %rbp %rdi %rsi %r12 %r13 %r14 %r15)
+                         (list %rbx %rbp %rdi %rsi %r12 %r13 %r14 %r15
+                               %fp3 %fp4 %fp5 %fp6 %fp7 %fp8)
                          (list %rbx %rbp %r12 %r13 %r14 %r15)))
                      (in-context Tail
                       ((lambda (e)
@@ -3367,6 +3387,13 @@
                                   e))
                             (%seq
                              (set! ,%sp ,(%inline + ,%sp (immediate 8)))
+                             (set! ,%fp3 ,(%mref ,%sp ,%zero 0 fp))
+                             (set! ,%fp4 ,(%mref ,%sp ,%zero 8 fp))
+                             (set! ,%fp5 ,(%mref ,%sp ,%zero 16 fp))
+                             (set! ,%fp6 ,(%mref ,%sp ,%zero 24 fp))
+                             (set! ,%fp7 ,(%mref ,%sp ,%zero 32 fp))
+                             (set! ,%fp8 ,(%mref ,%sp ,%zero 40 fp))
+                             (set! ,%sp ,(%inline + ,%sp (immediate 48)))
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))
                              (set! ,%r13 ,(%inline pop))

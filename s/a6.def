@@ -3,7 +3,7 @@
 
 (define-constant asm-arg-reg-max 5)
 (define-constant asm-arg-reg-cnt 3)
-(define-constant asm-fpreg-max 2)
+(define-constant asm-fpreg-max 8)
 
 (define-constant native-endianness 'little)
 
