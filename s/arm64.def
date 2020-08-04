@@ -1,11 +1,12 @@
 (define-constant architecture 'arm64)
 (define-constant ptr-bits 64)
 
-(define-constant asm-arg-reg-max 9)
+(define-constant asm-arg-reg-max 14)
 (define-constant asm-arg-reg-cnt 3)
-(define-constant asm-fpreg-max 2)
+(define-constant asm-fpreg-max 6)
 
 (define-constant native-endianness 'little)
 
 (define-constant unaligned-floats #f)
 (define-constant unaligned-integers #t)
+(define-constant integer-divide-instruction #t)

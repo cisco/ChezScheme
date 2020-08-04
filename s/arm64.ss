@@ -37,9 +37,18 @@
     [     %r5  %Carg6           #f  5 uptr]
     [     %r6  %Carg7           #f  6 uptr]
     [     %r7  %Carg8           #f  7 uptr]
+    [     %r9                   #f  9 uptr]
+    [     %r12                  #f 12 uptr]
+    [     %r13                  #f 13 uptr]
+    [     %r14                  #f 14 uptr]
+    [     %r15                  #f 15 uptr]
     [     %lr                   #f 30 uptr] ; %lr is trashed by 'c' calls including calls to hand-coded routines like get-room
-    [%fp1           %v8         #f  8 fp]
-    [%fp2           %v9         #f  9 fp]
+    [%fp1           %v16        #f 16 fp]
+    [%fp2           %v17        #f 17 fp]
+    [%fp3           %v18        #f 18 fp]
+    [%fp4           %v19        #f 19 fp]
+    [%fp5           %v20        #f 20 fp]
+    [%fp6           %v21        #f 21 fp]
   )
   (machine-dependent
     [%jmptmp %argtmp            #f 10 uptr]
