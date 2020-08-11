@@ -26,11 +26,14 @@
 (unless target-machine
   (error "set `MACH` environment variable"))
 
+(define dest-dir
+  (or (getenv "SCHEME_WORKAREA") scheme-dir))
+
 ;; Writes ".boot" and ".h" files to a "boot" subdirectory of
 ;; `SCHEME_SRC`.
 
 (define-runtime-path here-dir ".")
-(define out-subdir (build-path scheme-dir "boot" target-machine))
+(define out-subdir (build-path dest-dir "boot" target-machine))
 (define nano-dir (build-path scheme-dir "nanopass"))
 
 (define (status msg)
@@ -161,7 +164,7 @@
                [compile-allow-set!-undefined #t]
                [current-eval (current-eval)])
 
-  (status "Load cmacro parts")
+  (status "Load cmacros parts")
   (call-with-expressions
    (build-path scheme-dir "s/cmacros.ss")
    (lambda (e)
@@ -217,6 +220,7 @@
           (let loop ([stx stx])
             (syntax-case* stx (#%top-interaction
                                eval-when compile
+                               constant-case architecture else
                                begin
                                include) (lambda (a b)
                                           (eq? (syntax-e a) (syntax-e b)))
@@ -237,6 +241,13 @@
                                      (if (eof-object? r)
                                          '()
                                          (cons r (loop))))))))))]
+              [(constant-case architecture [else e ...])
+               (loop #`(begin e ...))]
+              [(constant-case architecture [(arch ...) e ...] . _)
+               (memq (string->symbol target-machine) (syntax->datum #'(arch ...)))
+               (loop #`(begin e ...))]
+              [(constant-case architecture _ . clauses)
+               (loop #`(constant-case architecture . clauses))]
               [_ (go ((current-expand) (syntax->datum stx)))])))))
      (status "Load cmacros using expander")
      (load-ss (build-path scheme-dir "s/cmacros.ss"))

@@ -1715,6 +1715,8 @@ shortcuts to run the executable.
 \index{\scheme{--retain-static-relocation} command-line option}%
 \index{\scheme{-b} command-line option}%
 \index{\scheme{--boot} command-line option}%
+\index{\scheme{-B} command-line option}%
+\index{\scheme{--Boot} command-line option}%
 \index{\scheme{--verbose} command-line option}%
 \index{\scheme{--version} command-line option}%
 \index{\scheme{--help} command-line option}%
@@ -1750,6 +1752,8 @@ shortcuts to run the executable.
     & ~~keep reloc info for compute-size, etc.\\
 \scheme{-b \var{path}}, \scheme{--boot \var{path}}
     & ~~load boot file\\
+\scheme{-B \var{path}}, \scheme{--Boot \var{path}}
+    & ~~load boot file relative to the current directory\\
 \scheme{--verbose}
     & ~~trace boot-file search process\\
 \scheme{--version}
@@ -1799,7 +1803,7 @@ the Scheme system, including the interpreter, compiler, and most
 libraries.
 Boot
 files may be specified explicitly on the command
-line via \scheme{-b}
+line via \scheme{-b} (relative to installation directory) or \scheme{-B} (relative to current directory)
 options or implicitly.
 In the simplest case, no \scheme{-b}
 options

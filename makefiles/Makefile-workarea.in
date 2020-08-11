@@ -55,7 +55,7 @@ reset:
 
 %.bootquick:
 	(cd c && $(MAKE))
-	mkdir -p boot/$*
+	mkdir -p ../boot/$*
 	$(MAKE) -f Mf-boot $*.boot o=3 d=0 what=all
 
 .PHONY: bintar

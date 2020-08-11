@@ -2996,7 +2996,7 @@
   (and (eqv? (get-mode "../mats") (get-mode "../mats/"))
        (eqv? (get-mode "../mats") (get-mode "../mats/.")))
   ; access times are unreliable on contemporary file systems
-  (time? (file-access-time "../../mats/mat.ss"))
+  (time? (file-access-time "mat.ss"))
   (time<=? (file-change-time "mat.ss") (file-change-time "mat.so"))
   (time<=? (file-modification-time "mat.ss") (file-modification-time "mat.so"))
   (equal?

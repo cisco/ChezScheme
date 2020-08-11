@@ -13,17 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include Mf-config
+
 bootfiles=$(addsuffix .boot, $(shell cd ../boot ; echo *))
 
 doit: $(bootfiles)
 
 %.boot:
-	( cd .. ; ./workarea $* xc-$* )
+	rm -rf ../xc-$*
+	( cd .. ; "${srcdir}"/workarea $* xc-$* )
 	( cd ../xc-$*/s ; $(MAKE) -f Mf-cross base=../../$(workarea) m=$(m) xm=$* )
 	mkdir -p ../boot/$*
-	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc vfasl.inc` ; do\
-          if [ ! -h ../xc-$*/boot/$*/$$x ] ; then \
-            mv -f ../xc-$*/boot/$*/$$x ../boot/$*/$$x ;\
-          fi ;\
-        done
-	rm -rf ../xc-$*
+	( cd ../xc-$*/s ; $(MAKE) keepbootfiles )

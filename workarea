@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+srcdir=`dirname "$0"`
+
 if [ $# != 1 -a $# != 2  -a $# != 3 ]
 then
     echo "Usage: workarea <machine-type> { <workarea name> <pb host machine-type> }"
@@ -137,12 +139,33 @@ fi
 # make files themselves create links for the source files as needed.
 # To make local modifications, convert the links into local copies.
 
+case "$srcdir" in
+    /*)
+        upsrcdir=$srcdir
+        upupsrcdir=$srcdir
+        upupupsrcdir=$srcdir
+        ;;
+    *)
+        upsrcdir=../$srcdir
+        upupsrcdir=../../$srcdir
+        upupupsrcdir=../../../$srcdir
+        ;;
+esac
+
+if [ -f boot/$M/scheme.boot ] ; then
+    upbootdir=..
+    upupupbootdir=../../..
+else
+    upbootdir=$upsrcdir
+    upupupbootdir=$upupupsrcdir
+fi
+
 # workln source dest
 # creates link if dest does not exist and source does
 workln()
 {
-    if [ ! -e $2 -a -e $1 ] ; then
-        $ln $1 $2 2> /dev/null
+    if [ ! -e $2 -a -e "$1" ] ; then
+        $ln "$1" $2 2> /dev/null
     fi
 }
 
@@ -151,14 +174,14 @@ workln()
 forceworkln()
 {
     if [ ! -e $2 ] ; then
-        /bin/ln -s $1 $2 2> /dev/null
+        /bin/ln -s "$1" $2 2> /dev/null
     fi
 }
 
 forceworkln2()
 {
     if [ ! -e $2 ] ; then
-        $ln $1 $2 2> /dev/null
+        $ln "$1" $2 2> /dev/null
     fi
 }
 
@@ -173,16 +196,16 @@ workdir()
 workdir $W
 
 workdir $W/c
-(cd $W/c; workln ../../c/Mf-$M Mf-$M)
+(cd $W/c; workln "$upupsrcdir"/c/Mf-$M Mf-$M)
 (cd $W/c; forceworkln Mf-$M Makefile)
 if [ "$Muni" != "" ] ; then
-  (cd $W/c; workln ../../c/Mf-$Muni Mf-$Muni)
+  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Muni Mf-$Muni)
 fi
 if [ "$Mpbhost" != "" ] ; then
-  (cd $W/c; workln ../../c/Mf-$Mpbhost Mf-$Mpbhost)
+  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mpbhost Mf-$Mpbhost)
   (cd $W/c; forceworkln Mf-$Mpbhost Mf-pbhost)
 fi
-(cd $W/c; workln ../../c/Mf-base Mf-base)
+(cd $W/c; workln "$upupsrcdir"/c/Mf-base Mf-base)
 if [ ! -e $W/c/config.h ] ; then
   touch $W/c/config.h
 fi
@@ -191,104 +214,109 @@ if [ ! -e $W/c/Mf-config ] ; then
 fi
 case $M in
   *nt)
-    (cd $W/c; workln ../../c/vs.bat vs.bat)
+    (cd $W/c; workln "$upupsrcdir"/c/vs.bat vs.bat)
     ;;
 esac
 
 workdir $W/s
-(cd $W/s; workln ../../s/Mf-$M Mf-$M)
+(cd $W/s; workln ${upupsrcdir}/s/Mf-$M Mf-$M)
 (cd $W/s; forceworkln Mf-$M Makefile)
 if [ "$Muni" != "" ] ; then
-  (cd $W/s; workln ../../s/Mf-$Muni Mf-$Muni)
+  (cd $W/s; workln ${upupsrcdir}/s/Mf-$Muni Mf-$Muni)
 fi
-(cd $W/s; workln ../../s/Mf-base Mf-base)
-(cd $W/s; workln ../../s/Mf-cross Mf-cross)
-(cd $W/s; workln ../../s/$M.def $M.def)
+(cd $W/s; workln "$upupsrcdir"/s/Mf-base Mf-base)
+(cd $W/s; workln "$upupsrcdir"/s/Mf-cross Mf-cross)
+(cd $W/s; workln "$upupsrcdir"/s/$M.def $M.def)
 (cd $W/s; forceworkln2 $M.def machine.def)
 if [ "$March" != "" ] ; then
-  (cd $W/s; workln ../../s/$March.def $March.def)
+  (cd $W/s; workln "$upupsrcdir"/s/$March.def $March.def)
 fi
 if [ "$Mos" != "" ] ; then
-  (cd $W/s; workln ../../s/$Mos.def $Mos.def)
+  (cd $W/s; workln "$upupsrcdir"/s/$Mos.def $Mos.def)
 fi
-(cd $W/s; workln ../../s/default.def default.def)
+(cd $W/s; workln "$upupsrcdir"/s/default.def default.def)
 
 workdir $W/mats
-(cd $W/mats; workln ../../mats/Mf-$M Mf-$M)
+(cd $W/mats; workln "$upupsrcdir"/mats/Mf-$M Mf-$M)
 (cd $W/mats; forceworkln Mf-$M Makefile)
 if [ "$Muni" != "" ] ; then
-  (cd $W/mats; workln ../../mats/Mf-$Muni Mf-$Muni)
+  (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Muni Mf-$Muni)
 fi
 if [ "$Mpbhost" != "" ] ; then
-  (cd $W/mats; workln ../../mats/Mf-$Mpbhost Mf-$Mpbhost)
+  (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Mpbhost Mf-$Mpbhost)
   (cd $W/mats; forceworkln Mf-$Mpbhost Mf-pbhost)
 fi
-(cd $W/mats; workln ../../mats/Mf-base Mf-base)
-(cd $W/mats; workln ../../mats/Mf-exobj Mf-exobj)
+(cd $W/mats; workln "$upupsrcdir"/mats/Mf-base Mf-base)
+(cd $W/mats; workln "$upupsrcdir"/mats/Mf-exobj Mf-exobj)
 case $M in
   *nt)
-    (cd $W/mats; workln ../../mats/vs.bat vs.bat)
+    (cd $W/mats; workln "$upupsrcdir"/mats/vs.bat vs.bat)
     ;;
 esac
 
-for dir in `echo examples unicode` ; do
-  workdir $W/$dir
-  for file in `(cd $dir ; echo *)` ; do
-    (cd $W/$dir ; workln ../../$dir/$file $file)
-  done
-done
+linkeach()
+{
+    dir=$1
+    workdir $W/$dir
+    for file in `(cd "$srcdir"/$dir ; echo *)` ; do
+        (cd $W/$dir ; workln "$upupsrcdir"/$dir/$file $file)
+    done
+}
+
+linkeach examples
+linkeach unicode
 
 # deep copy submodules where builds occur so changes don't propagate through symlinks
 for dir in `echo zlib` ; do
   if [ ! -e $W/$dir ] ; then
-    /bin/cp -R $dir $W/$dir
+    /bin/cp -R "$srcdir"/$dir $W/$dir
   fi
 done
 
 for dir in `echo lz4` ; do
   if [ ! -e $W/$dir ] ; then
-    /bin/cp -R $dir $W/$dir
+    /bin/cp -R "$srcdir"/$dir $W/$dir
   fi
 done
 
 workdir $W/boot
 workdir $W/boot/$M
-(cd $W/boot/$M; workln ../../../boot/$M/scheme.h scheme.h)
-(cd $W/boot/$M; workln ../../../boot/$M/equates.h equates.h)
-(cd $W/boot/$M; workln ../../../boot/$M/gc-ocd.inc gc-ocd.inc)
-(cd $W/boot/$M; workln ../../../boot/$M/gc-oce.inc gc-oce.inc)
-(cd $W/boot/$M; workln ../../../boot/$M/vfasl.inc vfasl.inc)
-(cd $W/boot/$M; workln ../../../boot/$M/petite.boot petite.boot)
-(cd $W/boot/$M; workln ../../../boot/$M/scheme.boot scheme.boot)
-(cd $W/boot/$M; workln ../../../boot/$M/def.so def.so)
-(cd $W/boot/$M; workln ../../../boot/$M/edit.so edit.so)
-(cd $W/boot/$M; workln ../../../boot/$M/fact.so fact.so)
-(cd $W/boot/$M; workln ../../../boot/$M/fatfib.so fatfib.so)
-(cd $W/boot/$M; workln ../../../boot/$M/fib.so fib.so)
-(cd $W/boot/$M; workln ../../../boot/$M/freq.so freq.so)
-(cd $W/boot/$M; workln ../../../boot/$M/m4.so m4.so)
-(cd $W/boot/$M; workln ../../../boot/$M/macro.so macro.so)
-(cd $W/boot/$M; workln ../../../boot/$M/matrix.so matrix.so)
-(cd $W/boot/$M; workln ../../../boot/$M/object.so object.so)
-(cd $W/boot/$M; workln ../../../boot/$M/power.so power.so)
-(cd $W/boot/$M; workln ../../../boot/$M/rabbit.so rabbit.so)
-(cd $W/boot/$M; workln ../../../boot/$M/rsa.so rsa.so)
-(cd $W/boot/$M; workln ../../../boot/$M/scons.so scons.so)
-(cd $W/boot/$M; workln ../../../boot/$M/setof.so setof.so)
-(cd $W/boot/$M; workln ../../../boot/$M/unify.so unify.so)
-(cd $W/boot/$M; workln ../../../boot/$M/fft.so fft.so)
-(cd $W/boot/$M; workln ../../../boot/$M/compat.so compat.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.h scheme.h)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/equates.h equates.h)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/gc-ocd.inc gc-ocd.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/gc-oce.inc gc-oce.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/vfasl.inc vfasl.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/petite.boot petite.boot)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.boot scheme.boot)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/def.so def.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/edit.so edit.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fact.so fact.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fatfib.so fatfib.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fib.so fib.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/freq.so freq.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/m4.so m4.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/macro.so macro.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/matrix.so matrix.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/object.so object.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/power.so power.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/rabbit.so rabbit.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/rsa.so rsa.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scons.so scons.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/setof.so setof.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/unify.so unify.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fft.so fft.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/compat.so compat.so)
 case $M in
   *nt)
-    (cd $W/boot/$M; workln ../../../boot/$M/mainmd.obj mainmd.obj)
-    (cd $W/boot/$M; workln ../../../boot/$M/mainmt.obj mainmt.obj)
-    (cd $W/boot/$M; workln ../../../boot/$M/csv953md.lib csv953md.lib)
-    (cd $W/boot/$M; workln ../../../boot/$M/csv953mt.lib csv953mt.lib)
-    (cd $W/boot/$M; workln ../../../boot/$M/scheme.res scheme.res)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmd.obj mainmd.obj)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmt.obj mainmt.obj)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv953md.lib csv953md.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv953mt.lib csv953mt.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.res scheme.res)
     ;;
   *)
-    (cd $W/boot/$M; workln ../../../boot/$M/main.o main.o)
-    (cd $W/boot/$M; workln ../../../boot/$M/kernel.o kernel.o)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/main.o main.o)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/kernel.o kernel.o)
     ;;
 esac
 
@@ -296,13 +324,13 @@ workdir $W/bin
 workdir $W/bin/$M
 case $M in
   *nt)
-    (cd $W/bin/$M; workln ../../../bin/$M/scheme.exe scheme.exe)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/scheme.exe scheme.exe)
     (cd $W/bin/$M; forceworkln2 scheme.exe petite.exe)
-    (cd $W/bin/$M; workln ../../../bin/$M/csv953.dll csv953.dll)
-    (cd $W/bin/$M; workln ../../../bin/$M/csv953.lib csv953.lib)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv953.dll csv953.dll)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv953.lib csv953.lib)
     ;;
   *)
-    (cd $W/bin/$M; workln ../../../bin/$M/scheme scheme)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/scheme scheme)
     (cd $W/bin/$M; forceworkln scheme petite)
     ;;
 esac
@@ -320,19 +348,19 @@ case $M in
 esac
 
 workdir $W/bintar
-(cd $W/bintar; workln ../../bintar/Makefile Makefile)
+(cd $W/bintar; workln "$upupsrcdir"/bintar/Makefile Makefile)
 
 workdir $W/rpm
-(cd $W/rpm; workln ../../rpm/Makefile Makefile)
+(cd $W/rpm; workln "$upupsrcdir"/rpm/Makefile Makefile)
 
 workdir $W/pkg
-(cd $W/pkg; workln ../../pkg/Makefile Makefile)
-(cd $W/pkg; workln ../../pkg/rmpkg rmpkg)
+(cd $W/pkg; workln "$upupsrcdir"/pkg/Makefile Makefile)
+(cd $W/pkg; workln "$upupsrcdir"/pkg/rmpkg rmpkg)
 
 (cd $W; workln ../LOG LOG)
-(cd $W; forceworkln2 ../nanopass nanopass)
-(cd $W; workln ../makefiles/installsh installsh)
-(cd $W; workln ../scheme.1.in scheme.1.in)
+(cd $W; forceworkln2 "$upsrcdir"/nanopass nanopass)
+(cd $W; workln "$upsrcdir"/makefiles/installsh installsh)
+(cd $W; workln "$upsrcdir"/scheme.1.in scheme.1.in)
 
 case $M in
   *nt)
@@ -341,5 +369,19 @@ case $M in
     (cd $W/mats; make source > /dev/null 2>&1)
     ;;
 esac
+
+
+cat > $W/s/Mf-config << END
+upupsrcdir=$upupsrcdir
+upupupbootdir=$upupupbootdir
+END
+
+cat > $W/Mf-config << END
+srcdir=$srcdir
+END
+
+cat > $W/mats/Mf-config << END
+upupsrcdir=$upupsrcdir
+END
 
 exit 0

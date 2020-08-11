@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include Mf-config
+
 MAKEFLAGS += --no-print-directory
 
 # the following flags control various compiler options.  flags prefixed by an x
@@ -104,8 +106,10 @@ endif
 
 ProfileDumpSource = source.pd
 ProfileDumpBlock = block.pd
-PetiteBoot = ../boot/$m/petite.boot
-SchemeBoot = ../boot/$m/scheme.boot
+PetiteBootRel = boot/$m/petite.boot
+PetiteBoot = ../${PetiteBootRel}
+SchemeBootRel = boot/$m/scheme.boot
+SchemeBoot = ../${SchemeBootRel}
 Cheader = ../boot/$m/scheme.h
 Cequates = ../boot/$m/equates.h
 Cgcocd = ../boot/$m/gc-ocd.inc
@@ -347,13 +351,24 @@ resetbootlinks:
 	-@echo '(reset-handler abort)'\
                '(for-each'\
                   '(lambda (fn)'\
-                     '(let ([fn (symbol->string fn)])'\
+                     '(let ([fn (format "../~a" fn)]'\
+                           '[bn (format "$upupbootdir/~a" fn)]'\
+                           '[q  (integer->char 34)])'\
                         '(unless (file-symbolic-link? fn)'\
-                           '(when (guard (c [else #f]) (#%$$fasl-file-equal? (format "../~a" fn) fn))'\
-                              '(system (format "ln -sf ../../~a ~a" fn fn))'\
+                           '(when (guard (c [else #f]) (#%$$fasl-file-equal? bn fn))'\
+                              '(system (format "ln -sf ~a~a~a ~a" q fn q fn))'\
                               '(void)))))'\
-                  '(list (quote ${SchemeBoot}) (quote ${PetiteBoot})))'\
+                  '(list (quote ${SchemeBootRel}) (quote ${PetiteBootRel})))'\
              | ${Scheme} -q
+
+keepbootfiles:
+	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc vfasl.inc` ; do\
+          if [ ! -h ../boot/$(m)/$$x ] ; then \
+            mv -f ../boot/$(m)/$$x ../../boot/$(m)/$$x ;\
+          elif [ "${upupupbootdir}" != "../../.." ] ; then \
+            cp ../boot/$(m)/$$x ../../boot/$(m)/$$x ;\
+          fi ;\
+        done
 
 ${PetiteBoot}: ${macroobj} ${patchfile} ${baseobj}
 	echo '(reset-handler abort)'\
@@ -449,12 +464,12 @@ nanopass.so: $(shell echo ../nanopass/nanopass/*) ../nanopass/nanopass.ss
              '(compile-library "../nanopass/nanopass.ss" "nanopass.so")'\
              | ${Scheme} -q --libdirs "../nanopass${dirsep}${dirsep}." --compile-imported-libraries
 
-rootsrc = $(shell cd ../../s; echo *)
+rootsrc = $(shell cd "${upupsrcdir}"/s; echo *)
 ${rootsrc}:
 ifeq ($(OS),Windows_NT)
-	cp -p ../../s/$@ $@
+	cp -p "${upupsrcdir}"/s/$@ $@
 else
-	ln -s ../../s/$@ $@
+	ln -s "${upupsrcdir}"/s/$@ $@
 endif
 
 script.all: Mf-base
@@ -654,4 +669,4 @@ reset:
 .PHONY: reset-one
 reset-one:
 	if [ -f ../boot/${m}/${FILE} ] ; then rm ../boot/${m}/${FILE} ; fi
-	if [ ! -h ../boot/${m}/${FILE} ] ; then ln -s ../../../boot/${m}/${FILE} ../boot/${m}/${FILE} ; fi
+	if [ ! -h ../boot/${m}/${FILE} ] ; then ln -s "${upupupbootdir}"/boot/${m}/${FILE} ../boot/${m}/${FILE} ; fi

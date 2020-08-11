@@ -580,18 +580,18 @@ static boot_desc bd[MAX_BOOT_FILES];
 static octet get_u8 PROTO((INT fd));
 static uptr get_uptr PROTO((INT fd, uptr *pn));
 static INT get_string PROTO((INT fd, char *s, iptr max, INT *c));
-static IBOOL find_boot PROTO((const char *name, const char *ext, int fd, IBOOL errorp));
+static IBOOL find_boot PROTO((const char *name, const char *ext, IBOOL direct_pathp, int fd, IBOOL errorp));
 static void load PROTO((ptr tc, iptr n, IBOOL base));
 static void check_boot_file_state PROTO((const char *who));
 
-static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IBOOL errorp; {
+static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *ext; int fd; IBOOL direct_pathp, errorp; {
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n = 0;
   INT c;
   const char *path;
   char *expandedpath;
 
-  if ((fd != -1) || S_fixedpathp(name)) {
+  if ((fd != -1) || direct_pathp || S_fixedpathp(name)) {
     if (strlen(name) >= PATH_MAX) {
       fprintf(stderr, "boot-file path is too long %s\n", name);
       S_abnormal_exit();
@@ -759,7 +759,7 @@ static IBOOL find_boot(name, ext, fd, errorp) const char *name, *ext; int fd; IB
           CLOSE(fd);
           S_abnormal_exit();
         }
-        if (find_boot(buf, ".boot", -1, 0)) break;
+        if (find_boot(buf, ".boot", 0, -1, 0)) break;
         if (c == ')') {
           char *sep; char *wastebuf[8];
           fprintf(stderr, "cannot find subordinate boot file");
@@ -1040,12 +1040,17 @@ static void check_boot_file_state(const char *who) {
 
 extern void Sregister_boot_file(name) const char *name; {
   check_boot_file_state("Sregister_boot_file");
-  find_boot(name, "", -1, 1);
+  find_boot(name, "", 0, -1, 1);
+}
+
+extern void Sregister_boot_direct_file(name) const char *name; {
+  check_boot_file_state("Sregister_boot_direct_file");
+  find_boot(name, "", 1, -1, 1);
 }
 
 extern void Sregister_boot_file_fd(name, fd) const char *name; int fd; {
   check_boot_file_state("Sregister_boot_file_fd");
-  find_boot(name, "", fd, 1);
+  find_boot(name, "", 1, fd, 1);
 }
 
 extern void Sregister_heap_file(UNUSED const char *path) {
@@ -1100,7 +1105,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
     }
 #endif
 
-    if (!find_boot(name, ".boot", -1, 0)) {
+    if (!find_boot(name, ".boot", 0, -1, 0)) {
       fprintf(stderr, "cannot find compatible %s.boot in search path\n  \"%s%s\"\n",
               name,
               Sschemeheapdirs, Sdefaultheapdirs);

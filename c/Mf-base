@@ -54,12 +54,12 @@ source: ${kernelsrc} ${kernelhdr} ${mdsrc} ${mainsrc}
 ${Main}: ${mainobj}
 	cp -p ${mainobj} ${Main}
 
-rootsrc=$(shell cd ../../c; echo *)
+rootsrc=$(shell cd "${upupsrcdir}"/c; echo *)
 ${rootsrc}:
 ifeq ($(OS),Windows_NT)
-	cp -p ../../c/$@ $@
+	cp -p "${upupsrcdir}"/c/$@ $@
 else
-	ln -s ../../c/$@ $@
+	ln -s "${upupsrcdir}"/c/$@ $@
 endif
 
 scheme.o: itest.c

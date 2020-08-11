@@ -34,6 +34,8 @@
 # For example, "make o=2 cp0=t ctb=8192" causes the mats to be run at
 # optimize level 2 with cp0 enabled and collect-trip-bytes set to 8192.
 
+include Mf-config
+
 ifeq (${OS},Windows_NT)
   dirsep = ;
 else
@@ -391,12 +393,12 @@ source:
 
 source$o: ${src} mat.ss oop.ss ht.ss cat_flush.c ${fsrc} freq.in freq.out m4test.in m4test.out script.all$o prettytest.ss ftype.h
 
-rootsrc = $(shell cd ../../mats; echo *)
+rootsrc = $(shell cd ${upupsrcdir}/mats; echo *)
 ${rootsrc}:
 ifeq ($(OS),Windows_NT)
-	cp -p ../../mats/$@ $@
+	cp -p ${upupsrcdir}/mats/$@ $@
 else
-	ln -s ../../mats/$@ $@
+	ln -s ${upupsrcdir}/mats/$@ $@
 endif
 
 prettytest.ss:

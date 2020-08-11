@@ -111,17 +111,19 @@ source using only standard Unix tools, such as a C compiler, unless
 the "pb" boot files are packaged with the source.
 
 The "configure" script attempts to determine what type of machine it's
-on and, if successful, creates several files and directories:
-
- * The directory "nanopass" containing the Nanopass Infrastructure,
-   retrieved from GitHub.
+on and looks for boot files for the machine in a "boot" subdirectory
+(either in the same directory as the "configure" script or the current
+directory is "configure" is run from elsewhere). If it find suitable
+boot files, "configure" creates several files and directories in the
+current directory (which does not have to be the same as the source
+directory):
 
  * "Makefile" in the root (top level) directory.
 
-* A workarea as a subdirectory named for the machine type (e.g.,
-  "ta6le" for threaded 64-bit linux). The workarea is a mirror of the
-  root directory, with subdirectories named "c", "s", and so on.
-  Compilation takes place in the workarea.
+ * A workarea as a subdirectory named for the machine type (e.g.,
+   "ta6le" for threaded 64-bit linux). The workarea is a mirror of the
+   root directory, with subdirectories named "c", "s", and so on.
+   Compilation takes place in the workarea.
 
  * Within the workarea, the files "Makefile", "Mf-install", "Mf-boot",
    etc.

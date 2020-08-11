@@ -15,11 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+srcdir=`dirname "$0"`
+
 machs=""; last=""; sep0=""; sep1=""; sep2=""; sep3=""; sep4=" and ";
+for fn in "$srcdir"/boot/*/scheme.boot ; do
+    next=`echo $fn | sed -e 's/.*\/boot\/\(.*\)\/scheme.boot/\1/'`
+    if [ "$next" != '*' ] ; then
+        machs=$machs$sep0$last
+        last=$next
+        sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
+    fi
+done
 for fn in boot/*/scheme.boot ; do
-  machs=$machs$sep0$last
-  last=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
-  sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
+    next=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
+    if [ "$next" != '*' ] ; then
+        machs=$machs$sep0$last
+        last=$next
+        sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
+    fi
 done
 machs=$machs$sep2$last
 
@@ -432,7 +445,9 @@ if [ "$help" = "yes" ]; then
   exit 0
 fi
 
-if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
+if [ "$m" != "" -o -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
+  echo "Configuring for $m"
+else
   if [ "$m" = "" ] ; then
       maybem="<machine type>"
   else
@@ -499,23 +514,25 @@ if [ ! -f 'stex/Mf-stex' ] ; then
     exit 1
 fi
 
-./workarea $m $w $mpbhost
+"$srcdir"/workarea $m $w $mpbhost
 
 sed -e 's/$(m)/'$m'/g'\
     -e 's/$(workarea)/'$w'/g'\
-  makefiles/Makefile.in > Makefile
+  "$srcdir"/makefiles/Makefile.in > Makefile
 
+mkdir -p csug
 sed -e 's/$(m)/'$m'/g'\
-    makefiles//Makefile-csug.in > csug/Makefile
+    "$srcdir"/makefiles//Makefile-csug.in > csug/Makefile
 
+mkdir -p release_notes
 sed -e 's/$(m)/'$m'/g'\
-    makefiles//Makefile-release_notes.in > release_notes/Makefile
+    "$srcdir"/makefiles//Makefile-release_notes.in > release_notes/Makefile
 
-cat makefiles/Makefile-workarea.in > $w/Makefile
+cat "$srcdir"/makefiles/Makefile-workarea.in > $w/Makefile
 
 sed -e 's/$(m)/'$m'/g'\
     -e 's/$(workarea)/'$w'/g'\
-    makefiles/Mf-boot.in > $w/Mf-boot
+    "$srcdir"/makefiles/Mf-boot.in > $w/Mf-boot
 
 sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallBin=.*\$;InstallBin=$installbin;"\
@@ -531,7 +548,7 @@ sed -e "s;^m=none\$;m=$m;"\
     -e "s;^InstallKernelTarget=.*$;InstallKernelTarget=$installkerneltarget;"\
     -e "s;^InstallZlibTarget=.*$;InstallZlibTarget=$installzlibtarget;"\
     -e "s;^InstallLZ4Target=.*$;InstallLZ4Target=$installlz4target;"\
-    makefiles/Mf-install.in > $w/Mf-install
+    "$srcdir"/makefiles/Mf-install.in > $w/Mf-install
 
 cat > $w/c/next_config.h << END
 #define SCHEME_SCRIPT "$installscriptname"
@@ -564,7 +581,17 @@ fi
 warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
 optFlags=-O2
 
+case "$srcdir" in
+    /*)
+        upupsrcdir=$srcdir
+        ;;
+    *)
+        upupsrcdir=../../$srcdir
+        ;;
+esac
+
 cat > $w/c/Mf-config << END
+upupsrcdir=$upupsrcdir
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
