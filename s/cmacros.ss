@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050324)
+(define-constant scheme-version #x09050325)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2082,11 +2082,11 @@
 (define-constant unscaled-shot-1-shot-flag -1)
 (define-constant scaled-shot-1-shot-flag
   (* (constant unscaled-shot-1-shot-flag) (constant ptr-bytes)))
-;; opportunistic--1-shot-flag is in the continuation length field for
+;; opportunistic-1-shot-flag is in the continuation length field for
 ;; a one-shot continuation that is only treated a 1-shot when
 ;; it's contiguous with the current stack when called, in which case
 ;; the continuation can be just merged back with the current stack
-(define-constant opportunistic-1-shot-flag 0)
+(define-constant opportunistic-1-shot-flag (* -2 (constant ptr-bytes)))
 
 ;;; underflow limit determines how much we're willing to copy on
 ;;; stack underflow/continuation invocation
@@ -3238,6 +3238,7 @@
     [uptr int32 int32 uptr uptr]
     [uptr int32 void* uptr uptr]
     [uptr uptr uptr uptr uptr]
+    [uptr int32 int32 int32 uptr]
     [uptr uptr void* uptr uptr]
     [uptr uptr uptr uptr uptr int32]
     [uptr uptr uptr uptr uptr uptr]

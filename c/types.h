@@ -298,6 +298,12 @@ typedef struct _bucket_pointer_list {
 
 #define DIRTYSET(lhs,rhs) S_dirty_set(lhs, rhs);
 
+typedef struct _dirtycardinfo {
+  uptr card;
+  IGEN youngest;
+  struct _dirtycardinfo *next;
+} dirtycardinfo;
+
 /* derived accessors/constructors */
 #define FWDMARKER(p) FORWARDMARKER((uptr)UNTYPE_ANY(p))
 #define FWDADDRESS(p) FORWARDADDRESS((uptr)UNTYPE_ANY(p))

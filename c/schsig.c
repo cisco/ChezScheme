@@ -49,6 +49,7 @@ void S_promote_to_multishot(k) ptr k; {
 static void split(k, s) ptr k; ptr *s; {
     iptr m, n;
     seginfo *si;
+    ISPC spc;
 
     tc_mutex_acquire()
   /* set m to size of lower piece, n to size of upper piece */
@@ -56,8 +57,11 @@ static void split(k, s) ptr k; ptr *s; {
     n = CONTCLENGTH(k) - m;
 
     si = SegInfo(ptr_get_segment(k));
+    spc = si->space;
+    if (spc != space_new) spc = space_continuation; /* to avoid space_count_pure */
+
   /* insert a new continuation between k and link(k) */
-    CONTLINK(k) = S_mkcontinuation(si->space,
+    CONTLINK(k) = S_mkcontinuation(spc,
                                  si->generation,
                                  CLOSENTRY(k),
                                  CONTSTACK(k),

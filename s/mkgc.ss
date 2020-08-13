@@ -18,6 +18,7 @@
 ;; Currently supported traversal modes:
 ;;   - copy
 ;;   - sweep
+;;   - sweep-in-old ; like sweep, but don't update impure
 ;;   - mark
 ;;   - self-test   : check immediate pointers only for self references
 ;;   - size        : immediate size, so does not recur
@@ -201,9 +202,11 @@
                 [else space-continuation]))
        (vfasl-fail "closure")
        (size size-continuation)
-       (mark one-bit counting-root)
        (case-mode
         [self-test]
+        [mark
+         (copy-stack-length continuation-stack-length continuation-stack-clength)
+         (mark one-bit counting-root)]
         [else
          (copy-clos-code code)
          (copy-stack-length continuation-stack-length continuation-stack-clength)
@@ -214,14 +217,15 @@
            [(== (continuation-stack-length _) scaled-shot-1-shot-flag)]
            [else
             (case-mode
-             [sweep
-              (when (OLDSPACE (continuation-stack _))
+             [(sweep)
+              (define stk : ptr (continuation-stack _))
+              (when (&& (!= stk (cast ptr 0)) (OLDSPACE stk))
                 (set! (continuation-stack _)
                       (copy_stack (continuation-stack _)
                                   (& (continuation-stack-length _))
                                   (continuation-stack-clength _))))]
              [else])
-            (count countof-stack (continuation-stack-length _) 1 [sweep measure])
+            (count countof-stack (continuation-stack-length _) 1 [measure])
             (trace-pure continuation-link)
             (trace-return continuation-return-address (continuation-return-address _))
             (case-mode
@@ -607,13 +611,11 @@
       [(&& (!= cdr_p _)
            (&& (== (TYPEBITS cdr_p) type_pair)
                (&& (!= (set! qsi (MaybeSegInfo (ptr_get_segment cdr_p))) NULL)
-                   (&& (-> qsi old_space)
-                       (&& (== (-> qsi space) (-> si space))
-                           (&& (!= (FWDMARKER cdr_p) forward_marker)
-                               (&& (! (-> qsi use_marks))
-                                   ;; Checking `marked_mask`, too, in
-                                   ;; case the pair is locked
-                                   (! (-> qsi marked_mask)))))))))
+                   (&& (== qsi si)
+                       (&& (!= (FWDMARKER cdr_p) forward_marker)
+                           ;; Checking `marked_mask`, in
+                           ;; case the pair is locked
+                           (! (-> qsi marked_mask)))))))
        (check_triggers qsi)
        (size size-pair 2)
        (define new_cdr_p : ptr (cast ptr (+ (cast uptr _copy_) size_pair)))
@@ -672,7 +674,7 @@
   (case-mode
    [(copy vfasl-copy)
     (SETCLOSCODE _copy_ code)]
-   [(sweep)
+   [(sweep sweep-in-old)
     (unless-code-relocated
      (SETCLOSCODE _copy_ code))]
    [(vfasl-sweep)
@@ -684,13 +686,13 @@
 
 (define-trace-macro (copy-stack-length continuation-stack-length continuation-stack-clength)
   (case-mode
-   [copy
+   [(copy mark)
     ;; Don't promote general one-shots, but promote opportunistic one-shots
     (cond
       [(== (continuation-stack-length _) opportunistic-1-shot-flag)
        (set! (continuation-stack-length _copy_) (continuation-stack-clength _))
        ;; May need to recur at end to promote link:
-       (set! conts_to_promote (S_cons_in space_new 0 new_p conts_to_promote))]
+       (set! conts_to_promote (S_cons_in space_new 0 _copy_ conts_to_promote))]
       [else
        (copy continuation-stack-length)])]
    [else
@@ -700,7 +702,7 @@
   (case-mode
    [(copy measure)
     (trace ref)]
-   [sweep
+   [(sweep sweep-in-old)
     (trace ref) ; can't trace `val` directly, because we need an impure relocate
     (define val : ptr (ref _))]
    [vfasl-copy
@@ -709,7 +711,7 @@
 
 (define-trace-macro (trace-symcode symbol-pvalue val)
   (case-mode
-   [sweep
+   [(sweep sweep-in-old)
     (define code : ptr (cond
                          [(Sprocedurep val) (CLOSCODE val)]
                          [else (SYMCODE _)]))
@@ -780,7 +782,7 @@
           [on]
           [off
            (case-mode
-            [(sweep self-test)
+            [(sweep sweep-in-old self-test)
              ;; Bignum pointer mask may need forwarding
              (trace-pure (record-type-pm rtd))
              (set! num (record-type-pm rtd))]
@@ -895,6 +897,9 @@
                           (cast iptr (port-buffer _))))
       (trace port-buffer)
       (set! (port-last _) (cast ptr (+ (cast iptr (port-buffer _)) n))))]
+   [sweep-in-old
+    (when (& (cast uptr _tf_) flag)
+      (trace port-buffer))]
    [else
     (trace-nonself port-buffer)]))
 
@@ -906,7 +911,7 @@
     (define tc : ptr (cast ptr (offset _)))
     (when (!= tc (cast ptr 0))
       (case-mode
-       [sweep
+       [(sweep)
         (let* ([old_stack : ptr (tc-scheme-stack tc)])
           (when (OLDSPACE old_stack)
             (let* ([clength : iptr (- (cast uptr (SFP tc)) (cast uptr old_stack))])
@@ -914,7 +919,6 @@
               (set! (tc-scheme-stack tc) (copy_stack old_stack
                                                      (& (tc-scheme-stack-size tc))
                                                      (+ clength (sizeof ptr))))
-              (count countof-stack (tc-scheme-stack-size tc) 1 sweep)
               (set! (tc-sfp tc) (cast ptr (+ (cast uptr (tc-scheme-stack tc)) clength)))
               (set! (tc-esp tc) (cast ptr (- (+ (cast uptr (tc-scheme-stack tc))
                                                 (tc-scheme-stack-size tc))
@@ -1027,11 +1031,14 @@
   (define co : iptr (+ (ENTRYOFFSET xcp) (- (cast uptr xcp) (cast uptr (TO_PTR (ENTRYOFFSETADDR xcp))))))
   (define c_p : ptr (cast ptr (- (cast uptr xcp) co)))
   (case-mode
-   [sweep
+   [(sweep sweep-in-old)
     (define x_si : seginfo* (SegInfo (ptr_get_segment c_p)))
     (when (-> x_si old_space)
       (relocate_code c_p x_si)
-      (set! field (cast ptr (+ (cast uptr c_p) co))))]
+      (case-mode
+       [sweep-in-old]
+       [else
+        (set! field (cast ptr (+ (cast uptr c_p) co)))]))]
    [else
     (trace-pure (just c_p))]))
 
@@ -1042,7 +1049,7 @@
    [else
     (define t : ptr (code-reloc _))
     (case-mode
-     [(sweep vfasl-sweep)
+     [(sweep sweep-in-old vfasl-sweep)
       (define m : iptr (reloc-table-size t))
       (define oldco : ptr (reloc-table-code t))]
      [else
@@ -1154,7 +1161,7 @@
 
 (define-trace-macro (and-purity-sensitive-mode e)
   (case-mode
-   [sweep e]
+   [(sweep sweep-in-old) e]
    [else 0]))
 
 (define-trace-macro (when-vfasl e)
@@ -1342,6 +1349,7 @@
                [(sweep) (if (lookup 'as-dirty? config #f)
                             "IGEN"
                             "void")]
+               [(sweep-in-old) "void"]
                [else "void"])
              name
              (case (lookup 'mode config)
@@ -1359,9 +1367,7 @@
                [(sweep)
                 (cond
                   [(lookup 'as-dirty? config #f) ", IGEN youngest"]
-                  [(and (lookup 'from-g-only-counting? config #f)
-                        (not (lookup 'counts? config #f)))
-                   ", IGEN UNUSED(from_g)"]
+                  [(lookup 'no-from-g? config #f) ""]
                   [else ", IGEN from_g"])]
                [else ""]))
      (let ([body
@@ -1529,7 +1535,7 @@
             (code (case (and (not (lookup 'as-dirty? config #f))
                              (not (lookup 'rtd-relocated? config #f))
                              (lookup 'mode config))
-                    [(copy sweep mark)
+                    [(copy sweep sweep-in-old mark)
                      (code
                       "/* Relocate to make sure we aren't using an oldspace descriptor"
                       "   that has been overwritten by a forwarding marker, but don't loop"
@@ -1638,7 +1644,7 @@
                (statements (cons `(copy-bytes ,offset (* ptr_bytes ,len))
                                  (cdr l))
                            config)]
-              [(sweep measure vfasl-sweep)
+              [(sweep measure sweep-in-old vfasl-sweep)
                (code
                 (loop-over-pointers
                  (field-expression offset config "p" #t)
@@ -2057,6 +2063,7 @@
     (define mode (lookup 'mode config))
     (cond
       [(or (eq? mode 'sweep)
+           (eq? mode 'sweep-in-old)
            (eq? mode 'vfasl-sweep)
            (and early? (or (eq? mode 'copy)
                            (eq? mode 'mark))))
@@ -2075,6 +2082,10 @@
     (case mode
       [(vfasl-sweep)
        (format "vfasl_relocate(vfi, &~a);" e)]
+      [(sweep-in-old)
+       (if (eq? purity 'pure)
+           (format "relocate_pure(&~a);" e)
+           (format "relocate_indirect(~a);" e))]
       [else
        (if (lookup 'as-dirty? config #f)
            (begin
@@ -2286,6 +2297,7 @@
      (if (memq 'no-clear flags)
          (format "~a  /* no clearing needed */" inset)
          (format "~a  memset(~a->marked_mask, 0, segment_bitmap_bytes);" inset si))
+     (format "~a  S_G.bitmask_overhead[~a->generation] += ptr_align(segment_bitmap_bytes);" inset si)
      (format "~a}" inset)))
 
   (define (just-mark-bit-space? sp)
@@ -2464,6 +2476,9 @@
                              `((mode sweep)
                                (maybe-backreferences? ,count?)
                                (counts? ,count?))))
+       (print-code (generate "sweep_object_in_old"
+                             `((mode sweep-in-old)
+                               (maybe-backreferences? ,count?))))
        (print-code (generate "sweep_dirty_object"
                              `((mode sweep)
                                (maybe-backreferences? ,count?)
@@ -2486,7 +2501,7 @@
                                                 (as-dirty? #t)))
          (sweep1 'symbol)
          (sweep1 'symbol "sweep_dirty_symbol" '((as-dirty? #t)))
-         (sweep1 'thread "sweep_thread" '((from-g-only-counting? #t)))
+         (sweep1 'thread "sweep_thread" '((no-from-g? #t)))
          (sweep1 'port)
          (sweep1 'port "sweep_dirty_port" '((as-dirty? #t)))
          (sweep1 'closure "sweep_continuation" '((code-relocated? #t)

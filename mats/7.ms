@@ -5645,7 +5645,7 @@ evaluating module init
       (let ([b0-0 (bytes-allocated 0)]
             [b1-0 (bytes-allocated 1)]
             [bm-0 (bytes-allocated (collect-maximum-generation))])
-        (let* ([v (make-vector 2000)] [n (compute-size v)])
+        (let* ([v (make-vector 20000)] [n (compute-size v)])
           (let ([b0-1 (bytes-allocated 0)]
                 [b1-1 (bytes-allocated 1)]
                 [bm-1 (bytes-allocated (collect-maximum-generation))])

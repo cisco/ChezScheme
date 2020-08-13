@@ -157,6 +157,10 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
      /* add in bytes in active segments */
       if (next_loc != FIX(0))
         n += (uptr)next_loc - (uptr)S_G.base_loc[g][s];
+      if (s == space_data) {
+        /* don't count space used for bitmaks */
+        n -= S_G.bitmask_overhead[g];
+      }
     }
     if (g == S_G.max_nonstatic_generation)
       g = static_generation;
@@ -268,6 +272,21 @@ void S_reset_allocation_pointer(tc) ptr tc; {
   S_pants_down -= 1;
 }
 
+void S_record_new_dirty_card(ptr *ppp, IGEN to_g) {
+  uptr card = (uptr)ppp >> card_offset_bits;
+
+  dirtycardinfo *ndc = S_G.new_dirty_cards;
+  if (ndc != NULL && ndc->card == card) {
+    if (to_g < ndc->youngest) ndc->youngest = to_g;
+  } else {
+    dirtycardinfo *next = ndc;
+    find_room_voidp(space_new, 0, ptr_align(sizeof(dirtycardinfo)), ndc);
+    ndc->card = card;
+    ndc->youngest = to_g;
+    ndc->next = next;
+    S_G.new_dirty_cards = ndc;
+  }
+}
 
 FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g, IGEN to_g) {
   IGEN old_to_g = si->min_dirty_byte;
@@ -297,7 +316,7 @@ void S_dirty_set(ptr *loc, ptr x) {
       if (!IMMEDIATE(x)) {
         seginfo *t_si = SegInfo(ptr_get_segment(x));
         if (t_si->generation < si->generation)
-          S_error_abort("wrong-way pointer installed during GC");
+          S_record_new_dirty_card(loc, t_si->generation);
       }
     } else {
       IGEN from_g = si->generation;

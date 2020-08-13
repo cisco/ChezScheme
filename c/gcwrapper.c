@@ -192,8 +192,11 @@ void S_immobilize_object(x) ptr x; {
 
     /* Try a little to to support cancellation of segment-level
      * immobilzation --- but we don't try too hard */
-    if (si->must_mark < MUST_MARK_INFINITY)
+    if (si->must_mark < MUST_MARK_INFINITY) {
       si->must_mark++;
+      if (si->generation == 0)
+        S_G.must_mark_gen0 = 1;
+    }
 
     /* Note: for `space_new`, `must_mark` doesn't really mean all
        objects must be marked; only those in the locked list must be
@@ -297,8 +300,11 @@ void Slock_object(x) ptr x; {
     tc_mutex_acquire()
     S_pants_down += 1;
     /* immobilize */
-    if (si->must_mark < MUST_MARK_INFINITY)
+    if (si->must_mark < MUST_MARK_INFINITY) {
       si->must_mark++;
+      if (si->generation == 0)
+        S_G.must_mark_gen0 = 1;
+    }
    /* add x to locked list. remove from unlocked list */
     S_G.locked_objects[g] = S_cons_in((g == 0 ? space_new : space_impure), g, x, S_G.locked_objects[g]);
     if (S_G.enable_object_counts) {
@@ -512,6 +518,7 @@ static void segment_tell(seg) uptr seg; {
   if ((si = MaybeSegInfo(seg)) == NULL) {
     printf(" out of heap bounds\n");
   } else {
+    printf(" si=%p", si);
     printf(" generation=%d", si->generation);
     s = si->space;
     s1 = si->space;
@@ -671,7 +678,10 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                     if (psi != NULL) {
                       if ((psi->space == space_empty)
                           || psi->old_space
-                          || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))) {
+                          || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p))
+                              /* corner case: a continuation in space_count_pure can refer to code via CLOSENTRY
+                                 where the entry point doesn't have a mark bit: */
+                              && !((s == space_count_pure) && (psi->space == space_code)))) {
                         S_checkheap_errors += 1;
                         printf("!!! dangling reference at "PHtx" to "PHtx"%s\n", (ptrdiff_t)pp1, (ptrdiff_t)p, (aftergc ? " after gc" : ""));
                         printf("from: "); segment_tell(seg);
@@ -870,7 +880,7 @@ static void check_dirty() {
             S_checkheap_errors += 1;
             printf("!!! (check_dirty): dirty byte = %d for segment "PHtx" in %d -> %d dirty list\n", mingval, (ptrdiff_t)(si->number), from_g, to_g);
           }
-          if (s != space_new && s != space_impure && s != space_symbol && s != space_port
+          if (s != space_new && s != space_impure && s != space_count_impure && s != space_symbol && s != space_port
               && s != space_impure_record && s != space_impure_typed_object && s != space_immobile_impure 
               && s != space_weakpair && s != space_ephemeron) {
             S_checkheap_errors += 1;
@@ -989,7 +999,9 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
         RTDCOUNTSIT(counts, new_g) = RTDCOUNTSIT(counts, old_g); RTDCOUNTSIT(counts, old_g) = 0;
       }
     }
+#ifndef WIN32
     S_child_processes[new_g] = S_child_processes[old_g];
+#endif
 
     /* change old_g dirty bytes in static generation to new_g; splice list of old_g
        seginfos onto front of new_g seginfos */
@@ -1061,9 +1073,11 @@ ptr S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
       || S_G.enable_object_counts || S_G.enable_object_backreferences
       || (count_roots != Sfalse))
     return S_gc_oce(tc, max_cg, min_tg, max_tg, count_roots);
-  else if (max_cg == 0 && min_tg == 1 && max_tg == 1 && S_G.locked_objects[0] == Snil) {
+  else if (max_cg == 0 && min_tg == 1 && max_tg == 1
+           && !S_G.must_mark_gen0 && S_G.locked_objects[0] == Snil
+           && (S_G.min_mark_gen > 0)) {
     S_gc_011(tc);
-    return Sfalse;
+    return Svoid;
   } else
     return S_gc_ocd(tc, max_cg, min_tg, max_tg, Sfalse);
 }

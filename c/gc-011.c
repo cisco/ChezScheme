@@ -18,7 +18,7 @@
 #define MAX_CG 0
 #define MIN_TG 1
 #define MAX_TG 1
-#define NO_LOCKED_OLDSPACE_OBJECTS
+#define NO_NEWSPACE_MARKS
 #include "gc.c"
 
 void S_gc_011(ptr tc) {
