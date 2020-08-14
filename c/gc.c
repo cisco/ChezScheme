@@ -84,8 +84,8 @@ static void resweep_dirty_weak_pairs PROTO((ONLY_FORMAL_CTGS));
 static void add_ephemeron_to_pending PROTO((ptr p));
 static void add_trigger_ephemerons_to_repending PROTO((ptr p));
 static void check_trigger_ephemerons PROTO((seginfo *si));
-static void check_ephemeron PROTO((ptr pe, IBOOL add_to_trigger, IGEN from_g FORMAL_CTGS));
-static void check_pending_ephemerons PROTO((IGEN from_g FORMAL_CTGS));
+static void check_ephemeron PROTO((ptr pe, IBOOL add_to_trigger FORMAL_CTGS));
+static void check_pending_ephemerons PROTO((ONLY_FORMAL_CTGS));
 static IGEN check_dirty_ephemeron PROTO((ptr pe, IGEN youngest FORMAL_CTGS));
 static void clear_trigger_ephemerons PROTO(());
 
@@ -1484,8 +1484,7 @@ static void sweep_generation(ptr tc FORMAL_CTGS) {
        segment-specific trigger or gets triggered for recheck, but
        it doesn't change the worst-case complexity. */
     if (!change)
-      for (from_g = MIN_TG; from_g <= MAX_TG; from_g += 1)
-        check_pending_ephemerons(from_g ACTUAL_CTGS);
+      check_pending_ephemerons(ONLY_ACTUAL_CTGS);
   } while (change);
 }
 
@@ -2206,13 +2205,18 @@ static void add_trigger_ephemerons_to_repending(ptr pe) {
   repending_ephemerons = pe;
 }
 
-static void check_ephemeron(ptr pe, IBOOL add_to_trigger, IGEN from_g FORMAL_CTGS) {
+static void check_ephemeron(ptr pe, IBOOL add_to_trigger FORMAL_CTGS) {
   ptr p;
   seginfo *si;
+  IGEN from_g = GENERATION(pe);
 
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
     if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+#ifndef NO_DIRTY_NEWSPACE_POINTERS
+      IGEN pg = compute_target_generation(si->generation ACTUAL_CTGS);
+      if (pg < from_g) record_new_dirty_card(&INITCAR(pe), pg);
+#endif
       INITCAR(pe) = FWDADDRESS(p);
       relocate_impure(&INITCDR(pe), from_g);
       if (!add_to_trigger)
@@ -2231,14 +2235,14 @@ static void check_ephemeron(ptr pe, IBOOL add_to_trigger, IGEN from_g FORMAL_CTG
   }
 }
 
-static void check_pending_ephemerons(IGEN from_g FORMAL_CTGS) {
+static void check_pending_ephemerons(ONLY_FORMAL_CTGS) {
   ptr pe, next_pe;
 
   pe = pending_ephemerons;
   pending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONNEXT(pe);
-    check_ephemeron(pe, 1, from_g ACTUAL_CTGS);
+    check_ephemeron(pe, 1 ACTUAL_CTGS);
     pe = next_pe;
   }
 
@@ -2246,7 +2250,7 @@ static void check_pending_ephemerons(IGEN from_g FORMAL_CTGS) {
   repending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONTRIGGERNEXT(pe);
-    check_ephemeron(pe, 0, from_g ACTUAL_CTGS);
+    check_ephemeron(pe, 0 ACTUAL_CTGS);
     pe = next_pe;
   }
 }
