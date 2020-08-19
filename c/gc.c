@@ -650,11 +650,16 @@ static ptr copy_stack(old, length, clength) ptr old; iptr *length, clength; {
     *length = n = m;
   }
 
+  /* Continuations can end up with a 0-sized stack: */
+  if (n == 0)
+    return (ptr)0;
+
   n = ptr_align(n);
 #ifdef ENABLE_OBJECT_COUNTS
   S_G.countof[target_generation][countof_stack] += 1;
   S_G.bytesof[target_generation][countof_stack] += n;
 #endif /* ENABLE_OBJECT_COUNTS */
+
   find_room(space_data, target_generation, typemod, n, new);
   n = ptr_align(clength);
  /* warning: stack may have been left non-double-aligned by split_and_resize */
@@ -1553,7 +1558,7 @@ static void sweep_continuation(p) ptr p; {
  /* bug out for shot 1-shot continuations */
   if (CONTLENGTH(p) == scaled_shot_1_shot_flag) return;
 
-  if (OLDSPACE(CONTSTACK(p)))
+  if ((CONTSTACK(p) != (ptr)0) && OLDSPACE(CONTSTACK(p)))
     CONTSTACK(p) = copy_stack(CONTSTACK(p), &CONTLENGTH(p), CONTCLENGTH(p));
 
   relocate(&CONTLINK(p))
