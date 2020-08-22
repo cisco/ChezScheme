@@ -535,7 +535,16 @@ void S_pb_interp(ptr tc, void *bytecode) {
       regs[INSTR_drr_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
       break;
     case pb_ld_op_pb_int8_pb_immediate:
+#if defined(__arm__)
+      /* Complicated load to avoid an internal compiler error from an old gcc on Raspbian: */
+      {
+        int8_t v;
+        memcpy(&v, TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)), sizeof(int8_t));
+        regs[INSTR_dri_dest(instr)] = v;
+      }
+#else
       regs[INSTR_dri_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
+#endif
       break;
     case pb_ld_op_pb_uint8_pb_register:
       regs[INSTR_drr_dest(instr)] = *(uint8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);

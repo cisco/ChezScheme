@@ -4823,6 +4823,30 @@
                  (eq? (car e) key2)))))))
 
    ;; ----------------------------------------
+   ;; Check GC interaction with zero-sized contnuations - unlikely
+   ;; to crash even if things are wrong, but it's worth a try
+
+   (let ()
+     (define (loop i)
+       (if (zero? i)
+           (call/cc (lambda (k) (k '())))
+           (let ([keeps (loop (sub1 i))])
+             (call/cc
+              (lambda (k)
+                (cons k keeps))))))
+
+     (with-interrupts-disabled
+      (collect 0)
+      (let ([keeps (filter (lambda (c)
+                             (eqv? 0 (#%$continuation-stack-clength c)))
+                           (loop 1000))])
+        ;; The `keeps` list is probably non-empty
+        (collect 0 0)
+        (collect 0 0)
+        (keep-live keeps)
+        #t)))
+
+   ;; ----------------------------------------
    ;; Check fasl:
    (let ([s (gensym)])
      (define-values (o get) (open-bytevector-output-port))

@@ -273,7 +273,7 @@ void S_reset_allocation_pointer(tc) ptr tc; {
 }
 
 void S_record_new_dirty_card(ptr *ppp, IGEN to_g) {
-  uptr card = (uptr)ppp >> card_offset_bits;
+  uptr card = (uptr)TO_PTR(ppp) >> card_offset_bits;
 
   dirtycardinfo *ndc = S_G.new_dirty_cards;
   if (ndc != NULL && ndc->card == card) {

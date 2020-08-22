@@ -1435,7 +1435,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     nlp = &S_G.next_loc[from_g][s];                     \
     if (*slp == 0) *slp = S_G.first_loc[from_g][s];     \
     pp = TO_VOIDP(*slp);                                \
-    while (pp != (nl = (ptr *)*nlp)) {                  \
+    while (pp != (nl = (ptr *)TO_VOIDP(*nlp))) {        \
       do {                                              \
         if ((p = *pp) == forward_marker)                \
           pp = TO_VOIDP(*(pp + 1));                     \

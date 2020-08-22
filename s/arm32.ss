@@ -2009,11 +2009,15 @@
   (define-who asm-fence
     (lambda (kind)
       (lambda (code*)
-        (case kind
-          [(store-store) (emit dmbishst code*)]
-          [(acquire) (emit dmbish code*)]
-          [(release) (emit dmbish code*)]
-          [else (sorry! who "unexpected kind ~s" kind)]))))
+        (constant-case arm-isa-version
+          [(6)
+           (emit mcr 'al #b1111 #b000 `(reg . ,%r0) #b0111 #b1010 #b101 code*)]
+          [(7)
+           (case kind
+             [(store-store) (emit dmbishst code*)]
+             [(acquire) (emit dmbish code*)]
+             [(release) (emit dmbish code*)]
+             [else (sorry! who "unexpected kind ~s" kind)])]))))
 
   (define asm-fp-relop
     (lambda (info)

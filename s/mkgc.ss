@@ -2204,7 +2204,7 @@
                "    g = mark_si->generation;"
                "    if (!fully_marked_mask[g]) init_fully_marked_mask(g);"
                "    mark_si->marked_mask = fully_marked_mask[g];"
-               "    mark_si->marked_count = segment_bitmap_bytes;"
+               "    mark_si->marked_count = bytes_per_segment;"
                "    seg++;"
                "  }"
                "  mark_si = SegInfo(end_seg);"

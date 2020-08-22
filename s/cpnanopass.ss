@@ -12962,6 +12962,8 @@
                                      ,(if 1-shot?
                                           `(immediate ,(constant opportunistic-1-shot-flag))
                                           %ac0))
+                               ;; NB: clength will be 0 if we're reifying to hide a continuation link
+                               ;; where the attachments field is #f. Make sure the GC is ok with that.
                                (set! ,(%mref ,%xp ,(constant continuation-stack-clength-disp)) ,%ac0)
                                (set! ,(%tc-ref scheme-stack-size) ,(%inline - ,(%tc-ref scheme-stack-size) ,%ac0))
                                ,(finish %xp)))]
