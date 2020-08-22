@@ -218,6 +218,7 @@ static IGEN MAX_CG, MIN_TG, MAX_TG;
 #if defined(MIN_TG) && defined(MAX_TG) && (MIN_TG == MAX_TG)
 # define TARGET_GENERATION(si) MIN_TG
 # define compute_target_generation(g) MIN_TG 
+# define CONSTANT_TARGET_GENERATION
 #else
 # define TARGET_GENERATION(si) si->generation
 FORCEINLINE IGEN compute_target_generation(IGEN g) {
@@ -1082,13 +1083,18 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
             ls = pend_hold_ls; pend_hold_ls = Snil;
             for ( ; ls != Snil; ls = next) {
               ptr p;
-              seginfo *g_si, *t_si;
+              seginfo *t_si;
+#ifdef CONSTANT_TARGET_GENERATION
+              g = MAX_TG;
+#else
+              seginfo *g_si;
+              g_si = SegInfo(ptr_get_segment(ls));
+              g = TARGET_GENERATION(g_si);
+#endif
               
               next = GUARDIANNEXT(ls); 
 
               /* discard static pend_hold_ls entries */
-              g_si = SegInfo(ptr_get_segment(ls));
-              g = TARGET_GENERATION(g_si);
               if (g == static_generation) continue;
               
               tconc = GUARDIANTCONC(ls);
