@@ -397,10 +397,10 @@
 
   (when (getenv "MAKE_BOOT_FOR_CROSS")
     ;; Working bootfiles are not needed for a cross build (only the
-    ;; ".h" files are needed), so just make dummy files in that case
-    ;; to let `configure` work
+    ;; ".h" files are needed), so just touch dummy files in that case
+    ;; to let `configure` work and to communicate xpatch rebuild
     (define (touch p)
-      (unless (file-exists? p) (call-with-output-file* p void)))
+      (call-with-output-file* p void #:exists 'truncate))
     (touch (build-path out-subdir "petite.boot"))
     (touch (build-path out-subdir "scheme.boot"))
     (exit))
