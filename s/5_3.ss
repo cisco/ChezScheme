@@ -2780,7 +2780,7 @@
           [(fixnum? x)
            (unless (fxpositive? x) ($oops who "not a positive exact integer ~s" x))
            (meta-cond
-            [(fixnum? 4294967087)
+            [(<= (constant most-negative-fixnum) 4294967087 (constant most-positive-fixnum))
              (if (fx< x 4294967087)
                  (random-int s x)
                  (random-integer s x))]
