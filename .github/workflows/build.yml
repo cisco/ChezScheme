@@ -16,7 +16,7 @@ jobs:
       MACH: ${{ matrix.mach }}
 
     steps:
-      - uses: Bogdanp/setup-racket@v0.8
+      - uses: Bogdanp/setup-racket@v0.10
         with:
           distribution: 'minimal'  # minimal is enough
           variant: 'CS'            # lets dog-food CS
