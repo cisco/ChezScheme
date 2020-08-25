@@ -2085,3 +2085,6 @@
 - repair collector handling of an ephemerons that refers to a
   younger object during incremental promotion
     gc.c, 4.ms
+- added textual-output-port checks for record-writer write argument
+    print.ss,
+    record.ms, root-experr*

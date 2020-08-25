@@ -163,7 +163,9 @@
                  [(and ($record? x) (not (eq? x #!base-rtd)))
                   (when (print-record)
                     ((record-writer ($record-type-descriptor x)) x (bit-sink)
-                     (lambda (x p) ; could check for p == (bit-sink)
+                     (lambda (x p)
+                       (unless (and (output-port? p) (textual-port? p))
+                         ($oops 'write "~s is not a textual output port" p))
                        (find-dupls x (decr lev) len))))]
                  [(box? x) (find-dupls (unbox x) (decr lev) len)]
                  [(eq? x black-hole) (find-dupls x (decr lev) len)])]
@@ -204,7 +206,9 @@
                            (call/cc
                              (lambda (k)
                                ((record-writer ($record-type-descriptor x)) x (bit-sink)
-                                (lambda (x p) ; could check for p == (bit-sink)
+                                (lambda (x p)
+                                  (unless (and (output-port? p) (textual-port? p))
+                                    ($oops 'write "~s is not a textual output port" p))
                                   (if (cyclic? x (fx+ curlev 1) 0)
                                       (k #t))))
                                #f)))))]
@@ -283,7 +287,9 @@
                       (call/cc
                         (lambda (k)
                           ((record-writer ($record-type-descriptor x)) x (bit-sink)
-                           (lambda (x p) ; could check for p == (bit-sink)
+                           (lambda (x p)
+                             (unless (and (output-port? p) (textual-port? p))
+                               ($oops 'write "~s is not a textual output port" p))
                              (if (down x (fx- xlev 1)) (k #t))))
                           #f)))]
                 [(box? x) (down (unbox x) (fx- xlev 1))]
@@ -677,7 +683,9 @@ floating point returns with (1 0 -1 ...).
                (if (limit? lev)
                    (display-string "#[...]" p)
                    ((record-writer ($record-type-descriptor x)) x p
-                    (lambda (x p) ; could check for p == old p
+                    (lambda (x p)
+                      (unless (and (output-port? p) (textual-port? p))
+                        ($oops 'write "~s is not a textual output port" p))
                       (wr x r (decr lev) len d? env p))))
                (let ([rtd ($record-type-descriptor x)])
                  (cond ; keep in sync with default-record-writer
