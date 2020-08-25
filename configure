@@ -427,7 +427,7 @@ else
   if [ "${LZ4Dep}" != "" ] ; then
     if [ ! -f 'lz4/lib/Makefile' ] ; then
       rmdir lz4 > /dev/null 2>&1
-      (curl -L -o v1.8.3.tar.gz https://github.com/lz4/lz4/archive/v1.8.3.tar.gz && tar -xzf v1.8.3.tar.gz && mv lz4-1.8.3 lz4 && rm v1.8.3.tar.gz) || exit 1
+      (curl -L -o v1.9.2.tar.gz https://github.com/lz4/lz4/archive/v1.9.2.tar.gz && tar -xzf v1.9.2.tar.gz && mv lz4-1.9.2 lz4 && rm v1.9.2.tar.gz) || exit 1
     fi
   fi
 
