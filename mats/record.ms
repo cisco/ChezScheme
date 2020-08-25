@@ -2840,6 +2840,39 @@
 )
 
 (mat record-writer
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-record-type sp (fields lat))
+        (record-writer (type-descriptor sp)
+          (lambda (x p w) (w (sp-lat x) p)))
+        (pretty-print (list (make-sp 'ugh)))))
+    "(ugh)\n")
+  (error? ; 'sp is not an rtd
+    (with-output-to-string
+      (lambda ()
+        (define-record-type sp (fields lat))
+        (record-writer 'sp
+          (lambda (x p w) (w (sp-lat x) p))))))
+  (error? ; "oops" is not a procedure
+    (with-output-to-string
+      (lambda ()
+        (define-record-type sp (fields lat))
+        (record-writer (type-descriptor sp) "oops"))))
+  (error? ; ugh is not a textual output port
+    (with-output-to-string
+      (lambda ()
+        (define-record-type sp (fields lat))
+        (record-writer (type-descriptor sp)
+          (lambda (x p w) (w p (sp-lat x))))
+        (pretty-print (list (make-sp 'ugh))))))
+  (error? ; procedure not a textual output port
+    (with-output-to-string
+      (lambda ()
+        (define-record-type sp (fields lat))
+        (record-writer (type-descriptor sp)
+          (lambda (x p w) (w (sp-lat x) w)))
+        (pretty-print (list (make-sp 'ugh))))))
   (begin
     (define-record $froz (a b) ([c (+ a b)]))
     (define-record $fruz $froz (d))

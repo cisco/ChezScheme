@@ -7379,6 +7379,10 @@ record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 fo
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type single-float".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double-float".
+record.mo:Expected error in mat record-writer: "record-writer: sp is not a record-type descriptor".
+record.mo:Expected error in mat record-writer: "record-writer: "oops" is not a procedure".
+record.mo:Expected error in mat record-writer: "write: ugh is not a textual output port".
+record.mo:Expected error in mat record-writer: "write: #<procedure> is not a textual output port".
 record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a record-type descriptor".
 record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a record-type descriptor".
 record.mo:Expected error in mat record-equal/hash: "record-type-equal-procedure: 7 is not a procedure or #f".
