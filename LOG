@@ -2135,3 +2135,8 @@
 - added textual-output-port checks for record-writer write argument
     print.ss,
     record.ms, root-experr*
+- now using 64-bit arithmetic for seconds in S_condition_wait to
+  prevent a potential 2038 bug, at least on platforms where time_t
+  is 64 bits.  also now rounding rather than truncating nanoseconds
+  in the coversion to milliseconds on Windows.
+    thread.c
