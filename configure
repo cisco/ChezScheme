@@ -414,7 +414,7 @@ if [ -d '.git' ] && command -v git >/dev/null 2>&1 ; then
 else
   if [ ! -f 'nanopass/nanopass.ss' ] ; then
     rmdir nanopass > /dev/null 2>&1
-    (curl  -L -o v1.9.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.tar.gz && tar -zxf v1.9.tar.gz && mv nanopass-framework-scheme-1.9 nanopass && rm v1.9.tar.gz) || exit 1
+    (curl  -L -o v1.9.1.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.1.tar.gz && tar -zxf v1.9.1.tar.gz && mv nanopass-framework-scheme-1.9.1 nanopass && rm v1.9.1.tar.gz) || exit 1
   fi
 
   if [ "${zlibDep}" != "" ] ; then
