@@ -226,7 +226,7 @@
                       (seq
                        (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 (immediate ,imm)))
                        (return u x1 0)))]
-                   [(funky12 (- imm)) =>
+                   [(funky12 (- imm))
                     ; NB: dubious value?  check to see if it's exercised
                     ; NB: might should safe-assert x1 is %zero
                     (let ([u (make-tmp 'u)])
@@ -742,7 +742,7 @@
          `(set! ,(make-live-info) ,z (asm ,info ,asm-get-tc ,u ,ulr))))])
 
   (define-instruction value (asmlibcall)
-    [(op (z ur)) 
+    [(op (z ur))
      (let ([u (make-tmp 'u)])
        (if (info-asmlib-save-ra? info)
            (seq
