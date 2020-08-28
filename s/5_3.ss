@@ -663,6 +663,10 @@
                              (floatable? (imag-part x)))]
          [else #t])))
 
+(define exact-integer-fits-float?
+  (lambda (x)
+    (<= (- (expt 2 53)) x (expt 2 53))))
+
 (define exact-inexact-compare?
    ; e is an exact number, i is a flonum
    ; Preserve transitivity by making i exact,
@@ -1471,8 +1475,8 @@
                  0)]
             [(eq? x 1) 1]
             [(eq? x 2) (if (< y 0) (/ (ash 1 (- y))) (ash 1 y))]
-            [(and (flonum? x) (floatable? y)) ($flexpt x (inexact y))]
-            [(and ($inexactnum? x) (floatable? y)) (exp (* y (log x)))]
+            [(and (flonum? x) (exact-integer-fits-float? y)) ($flexpt x (inexact y))]
+            [(and ($inexactnum? x) (exact-integer-fits-float? y)) (exp (* y (log x)))]
             [(not (number? x)) (nonnumber-error 'expt x)]
             [(ratnum? x)
              (if (< y 0)
@@ -1482,10 +1486,14 @@
             [else
              (let ()
                (define (f x n)
-                 (if (eq? n 1)
-                     x
-                     (let ([s (f x (ash n -1))])
-                        (if (even? n) (* s s) (* (* s s) x)))))
+                 (let loop ([i (integer-length n)] [a 1])
+                   (let ([a (if (bitwise-bit-set? n i)
+                                (* a x)
+                                a)])
+                     (if (fx= i 0)
+                         a
+                         (loop (fx- i 1)
+                               (* a a))))))
                (if (< y 0)
                    (if (or (fixnum? x) (bignum? x))
                        (/ (f x (- y)))
