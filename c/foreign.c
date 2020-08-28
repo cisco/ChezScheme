@@ -36,13 +36,14 @@
 #if defined(HPUX)
 #include <dl.h>
 #define dlopen(path,flags) (void *)shl_load(path, BIND_IMMEDIATE, 0L)
-#define dlerror() strerror(errno)
+#define s_dlerror() Sstring_utf8(strerror(errno), -1)
 #elif defined(WIN32)
 #define dlopen(path,flags) S_ntdlopen(path)
 #define dlsym(h,s) S_ntdlsym(h,s)
-#define dlerror() S_ntdlerror()
+#define s_dlerror() S_ntdlerror()
 #else
 #include <dlfcn.h>
+#define s_dlerror() Sstring_utf8(dlerror(), -1)
 #ifndef RTLD_NOW
 #define RTLD_NOW 2
 #endif /* RTLD_NOW */
@@ -229,8 +230,7 @@ static void load_shared_object(path) const char *path; {
 
     handle = dlopen(path, RTLD_NOW);
     if (handle == (void *)NULL)
-        S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1),
-                    Sstring_utf8(dlerror(), -1));
+        S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
     S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
 
     tc_mutex_release()

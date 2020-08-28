@@ -36,6 +36,7 @@ Low-level Memory management strategy:
 #include "sort.h"
 #include <sys/types.h>
 
+static void out_of_memory PROTO((void));
 static void initialize_seginfo PROTO((seginfo *si, ISPC s, IGEN g));
 static seginfo *allocate_segments PROTO((uptr nreq));
 static void expand_segment_table PROTO((uptr base, uptr end, seginfo *si));
@@ -51,9 +52,9 @@ void S_segment_init() {
 
   S_chunks_full = NULL;
   for (i = PARTIAL_CHUNK_POOLS; i >= 0; i -= 1) S_chunks[i] = NULL;
-  for (s = 0; s <= max_real_space; s++) {
-    for (g = 0; g <= static_generation; g++) {
-      S_G.occupied_segments[s][g] = NULL;
+  for (g = 0; g <= static_generation; g++) {
+    for (s = 0; s <= max_real_space; s++) {
+      S_G.occupied_segments[g][s] = NULL;
     }
   }
   S_G.number_of_nonstatic_segments = 0;
@@ -63,14 +64,16 @@ void S_segment_init() {
 static uptr membytes = 0;
 static uptr maxmembytes = 0;
 
+static void out_of_memory(void) {
+  (void) fprintf(stderr,"out of memory\n");
+  S_abnormal_exit();
+}
+
 #if defined(USE_MALLOC)
 void *S_getmem(iptr bytes, IBOOL zerofill) {
   void *addr;
 
-  if ((addr = malloc(bytes)) == (void *)0) {
-    (void) fprintf(stderr,"out of memory\n");
-    S_abnormal_exit();
-  }
+  if ((addr = malloc(bytes)) == (void *)0) out_of_memory();
 
   debug(printf("getmem(%p) -> %p\n", bytes, addr))
   if ((membytes += bytes) > maxmembytes) maxmembytes = membytes;
@@ -86,24 +89,18 @@ void S_freemem(void *addr, iptr bytes) {
 #endif
 
 #if defined(USE_VIRTUAL_ALLOC)
-#include <WinBase.h>
+#include <winbase.h>
 void *S_getmem(iptr bytes, IBOOL zerofill) {
   void *addr;
 
   if ((uptr)bytes < S_pagesize) {
-    if ((addr = malloc(bytes)) == (void *)0) {
-      (void) fprintf(stderr,"out of memory\n");
-      S_abnormal_exit();
-    }
+    if ((addr = malloc(bytes)) == (void *)0) out_of_memory();
     debug(printf("getmem malloc(%p) -> %p\n", bytes, addr))
     if ((membytes += bytes) > maxmembytes) maxmembytes = membytes;
     if (zerofill) memset(addr, 0, bytes);
   } else {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
-    if ((addr = VirtualAlloc((void *)0, (SIZE_T)p_bytes, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == (void *)0) {
-      (void) fprintf(stderr, "out of memory\n");
-      S_abnormal_exit();
-    }
+    if ((addr = VirtualAlloc((void *)0, (SIZE_T)p_bytes, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == (void *)0) out_of_memory();
     if ((membytes += p_bytes) > maxmembytes) maxmembytes = membytes;
     debug(printf("getmem VirtualAlloc(%p => %p) -> %p\n", bytes, p_bytes, addr))
   }
@@ -134,10 +131,7 @@ void *S_getmem(iptr bytes, IBOOL zerofill) {
   void *addr;
 
   if ((uptr)bytes < S_pagesize) {
-    if ((addr = malloc(bytes)) == (void *)0) {
-      (void) fprintf(stderr,"out of memory\n");
-      S_abnormal_exit();
-    }
+    if ((addr = malloc(bytes)) == (void *)0) out_of_memory();
     debug(printf("getmem malloc(%p) -> %p\n", bytes, addr))
     if ((membytes += bytes) > maxmembytes) maxmembytes = membytes;
     if (zerofill) memset(addr, 0, bytes);
@@ -149,8 +143,7 @@ void *S_getmem(iptr bytes, IBOOL zerofill) {
     if ((addr = mmap(NULL, p_bytes, PROT_EXEC|PROT_WRITE|PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS|MAP_32BIT, -1, 0)) == (void *)-1) {
 #endif
       if ((addr = mmap(NULL, p_bytes, PROT_EXEC|PROT_WRITE|PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)) == (void *)-1) {
-        (void) fprintf(stderr,"out of memory\n");
-        S_abnormal_exit();
+        out_of_memory();
         debug(printf("getmem mmap(%p) -> %p\n", bytes, addr))
       }
 #ifdef MAP_32BIT
@@ -263,8 +256,8 @@ iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
 
         chunk->nused_segs += 1;
         initialize_seginfo(si, s, g);
-        si->next = S_G.occupied_segments[s][g];
-        S_G.occupied_segments[s][g] = si;
+        si->next = S_G.occupied_segments[g][s];
+        S_G.occupied_segments[g][s] = si;
         S_G.number_of_empty_segments -= 1;
         return si->number;
       }
@@ -297,8 +290,8 @@ iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
                   S_move_to_chunk_list(chunk, &S_chunks[PARTIAL_CHUNK_POOLS-1]);
                 }
                 chunk->nused_segs += n;
-                nextsi->next = S_G.occupied_segments[s][g];
-                S_G.occupied_segments[s][g] = si;
+                nextsi->next = S_G.occupied_segments[g][s];
+                S_G.occupied_segments[g][s] = si;
                 for (j = n, nextsi = si; j > 0; j -= 1, nextsi = nextsi->next) {
                   initialize_seginfo(nextsi, s, g);
                 }
@@ -322,8 +315,8 @@ iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
   for (nextsi = si; n > 0; n -= 1, nextsi += 1) {
     initialize_seginfo(nextsi, s, g);
     /* add segment to appropriate list of occupied segments */
-    nextsi->next = S_G.occupied_segments[s][g];
-    S_G.occupied_segments[s][g] = nextsi;
+    nextsi->next = S_G.occupied_segments[g][s];
+    S_G.occupied_segments[g][s] = nextsi;
   }
   return si->number;
 }

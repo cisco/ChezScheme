@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.3}
 \thatversion{Version 8.4}
-\pubmonth{February}
+\pubmonth{June}
 \pubyear{2020}
 
 \begin{document}
@@ -58,6 +58,35 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Incremental promotion of collected objects (9.5.3)}
+
+In previous versions of {\ChezScheme}, the collector always promoted
+surviving objects from every collected generation into a single
+target generation.
+For example, when the target generation was 3, it promoted not only
+surviving objects from generation 2 to generation 3 but also surviving
+objects from generations 0 and 1 directly to generation 3.
+This caused some prematurely promoted objects to be subjected to
+collection less frequently than their ages justified, potentially
+resulting in substantial inappropriate storage retention.
+This is particularly problematic when side effects result in pointers
+from the inappropriately retained objects to younger objects, as
+can happen with nonfunctional queues and lazy streams.
+
+Unless directed to do otherwise, the collector now promotes objects
+up only one generation at a time.
+That is, generation 0 objects that survive collection are promoted
+to generation 1, generation 1 objects are promoted to generation
+2, and so on.
+(Objects that survive a maximum nonstatic collection are promoted
+back into the maximum nonstatic collection.)
+Most applications should exhibit lower peak memory usage and possibly
+lower run times with this change.
+Applications that are adversely affected, if any, might benefit
+from a custom collect-request handler or custom values for the
+collection parameters that affect the behavior of the default
+handler.
+
 \subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.3)}
 
 Console I/O now supports characters from the Unicode Basic
@@ -98,7 +127,6 @@ raised.
 The rationale for this change is to allow the fasl reader to seek
 past, without reading, portions of an object file that contain
 compile-time code at run time and run-time code at compile time.
-
 
 \subsection{Bytevector compression and compression level (9.5.3)}
 
@@ -258,9 +286,8 @@ In particular, object files created by the compiler now tend to be
 larger but load more quickly.
 
 The new \scheme{compress-level} parameter can be used to control
-the amount of time spent on file compression (but not
-bytevector compression).
-It can be set to one of the symbols \scheme{low},
+the amount of time spent on file and bytevector compression.
+It can be set to one of the symbols \scheme{minimum}, \scheme{low},
 \scheme{medium}, \scheme{high}, and \scheme{maximum}, which are
 listed in order from shortest to longest compression time and least
 to greatest effectiveness.
@@ -1884,7 +1911,7 @@ in fasl files does not generally make sense.
 Prior to this release, only one unhandled signal was buffered for
 any signal for which a handler has been registered via
 \scheme{register-signal-handler}, so two signals delivered in
-quick succession could be see as only one.
+quick succession could be seen as only one.
 The system now buffers a much larger number (63 in this release) of
 signals, and the fact that signals can be dropped has now been
 documented.

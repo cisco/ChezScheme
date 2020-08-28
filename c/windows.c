@@ -21,6 +21,7 @@
 #include <io.h>
 #include <sys/stat.h>
 
+static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault);
 static ptr s_ErrorString(DWORD dwMessageId);
 static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid);
 static ptr s_GetRegistry(wchar_t *s);
@@ -52,17 +53,10 @@ void *S_ntdlsym(void *h, const char *s) {
     return (void *)GetProcAddress(h, s);
 }
 
-/* S_ntdlerror courtesy of Bob Burger, burgerrg@sagian.com */
-char *S_ntdlerror(void) {
-    static char s[80];
-    INT n;
-
-    n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
-                      0, (LPTSTR)s, 80, NULL);
-    if (n == 0) return "unable to load library";
-  /* Strip trailing period, newline & return when present */
-    if (n >= 3 && s[n-3] == '.') s[n-3] = 0;
-    return s;
+/* Initial version of S_ntdlerror courtesy of Bob Burger
+ * Modifications by James-Adam Renquinha Henri, jarhmander@gmail.com */
+ptr S_ntdlerror(void) {
+    return s_ErrorStringImp(GetLastError(), "unable to load library");
 }
 
 #ifdef FLUSHCACHE
@@ -242,33 +236,48 @@ static IUnknown *s_CreateInstance(CLSID *pCLSID, IID *iid) {
 }
 
 static ptr s_ErrorString(DWORD dwMessageId) {
-    char *lpMsgBuf;
+    return s_ErrorStringImp(dwMessageId, NULL);
+}
+
+static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
+    wchar_t *lpMsgBuf;
     DWORD len;
+    char *u8str;
     ptr result;
 
-    len = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                        NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
-    /* If FormatMessage fails, use the error code in hexadecimal. */
+    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                         NULL, dwMessageId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+    /* If FormatMessage fails... */
     if (len == 0) {
-#define HEXERRBUFSIZ ((sizeof(dwMessageId) * 2) + 3)
-        char hexerrbuf[HEXERRBUFSIZ];
-        snprintf(hexerrbuf, HEXERRBUFSIZ, "0x%x", dwMessageId);
-        return Sstring(hexerrbuf);
-#undef HEXERRBUFSIZ
+        if (lpcDefault) {
+            /* ... use the default string if provided... */
+            return Sstring_utf8(lpcDefault, -1);
+        } else {
+            /* ...otherwise, use the error code in hexadecimal. */
+            char buf[(sizeof(dwMessageId) * 2) + 3];
+            int n = snprintf(buf, sizeof(buf), "0x%x", dwMessageId);
+            if (n < sizeof(buf))
+                return Sstring_utf8(buf, n);
+            else
+                return Sstring("??");
+        }
     }
-    /* Otherwise remove trailing newlines & returns and strip trailing period. */
+    /* Otherwise remove trailing newlines & returns and strip trailing period, if present. */
     while (len > 0) {
-        char c = lpMsgBuf[len - 1];
-        if (c == '\n' || c == '\r')
+        wchar_t c = lpMsgBuf[len - 1];
+        if (c == L'\n' || c == '\r')
             len--;
-        else if (c == '.') {
+        else if (c == L'.') {
             len--;
             break;
         }
         else break;
     }
-    result = Sstring_of_length(lpMsgBuf, len);
+    lpMsgBuf[len] = 0;
+    u8str = Swide_to_utf8(lpMsgBuf);
     LocalFree(lpMsgBuf);
+    result = Sstring_utf8(u8str, -1);
+    free(u8str);
     return result;
 }
 
@@ -307,7 +316,7 @@ int S_windows_open_exclusive(char *who, char *path, int flags) {
 }
 #endif
 
-#include <Winbase.h>
+#include <winbase.h>
 
 /* primitive version of flock compatible with Windows 95/98/ME.  A better
    version could be implemented for Windows NT/2000/XP using LockFileEx. */

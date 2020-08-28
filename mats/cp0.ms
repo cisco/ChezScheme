@@ -367,8 +367,21 @@
                 (begin (b) (c)))
             (x)
             (y))))
-  (error? (apply zero? 0))
-  (error? (if (apply eof-object 1 2) 3 4))
+   (error? (apply zero? 0))
+   (error? (if (apply eof-object 1 2) 3 4))
+  ; test for folding of multiple-value primitives
+   (equivalent-expansion?
+     (expand/optimize '(lambda () (div-and-mod 7 3)))
+     '(lambda () (#3%values 2 1)))
+   (equivalent-expansion?
+     (expand/optimize '(lambda () (exact-integer-sqrt 19)))
+     '(lambda () (#3%values 4 3)))
+   (equivalent-expansion?
+     (expand/optimize
+       '(call-with-values
+          (lambda () (div-and-mod 7 3))
+          (lambda (x y) (#2%cons (* x 10) (/ y 10)))))
+     '(#2%cons 20 1/10))
 )
 
 (cp0-mat cp0-mrvs
