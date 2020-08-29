@@ -3081,7 +3081,7 @@
                               (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpop-multiple)
                               (inline ,(make-info-kill* callee-save-regs+lr) ,%pop-multiple)
                               ; deallocate space for pad & arg reg values
-                              (set! ,%sp ,(%inline + ,%sp (immediate ,(fx+ pre-pad-bytes int-reg-bytes post-pad-bytes float-reg-bytes))))
+                              (set! ,%sp ,(%inline + ,%sp (immediate ,(fx+ pre-pad-bytes int-reg-bytes post-pad-bytes float-reg-bytes return-bytes))))
                               ; done
                               (asm-c-return ,null-info ,callee-save-regs+lr ... ,result-regs ...)))))))))))))))
 )
