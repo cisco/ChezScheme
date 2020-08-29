@@ -1,12 +1,12 @@
 ;;; arm32.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -876,6 +876,9 @@
   (define-instruction effect (vpush-multiple)
     [(op) `(asm ,info ,(asm-vpush-multiple (info-vpush-reg info) (info-vpush-n info)))])
 
+  (define-instruction effect (vpop-multiple)
+    [(op) `(asm ,info ,(asm-vpop-multiple (info-vpush-reg info) (info-vpush-n info)))])
+
   (define-instruction effect save-flrv
     [(op) `(asm ,info ,asm-save-flrv)])
 
@@ -891,7 +894,7 @@
                     asm-move asm-move/extend asm-load asm-store asm-swap asm-library-call asm-library-call! asm-library-jump
                     asm-mul asm-smull asm-cmp/shift asm-add asm-sub asm-rsb asm-logand asm-logor asm-logxor asm-bic
                     asm-pop-multiple asm-shiftop asm-logand asm-lognot
-                    asm-logtest asm-fl-relop asm-relop asm-push-multiple asm-vpush-multiple
+                    asm-logtest asm-fl-relop asm-relop asm-push-multiple asm-vpush-multiple asm-vpop-multiple
                     asm-indirect-jump asm-literal-jump
                     asm-direct-jump asm-return-address asm-jump asm-conditional-jump asm-data-label asm-rp-header
                     asm-indirect-call asm-condition-code
@@ -1069,9 +1072,10 @@
   (define-op bls   branch-label-op     (ax-cond 'ls))
   (define-op bhi   branch-label-op     (ax-cond 'hi))
 
-  (define-op popm  pm-op #b10001011) 
+  (define-op popm  pm-op #b10001011)
   (define-op pushm pm-op #b10010010)
-  (define-op vpushm vpushm-op)
+  (define-op vpushm vpm-op #b11010 #b10)
+  (define-op vpopm  vpm-op #b11001 #b11)
 
   (define-op vldr.sgl vldr/vstr-op #b1010 #b01)
   (define-op vldr.dbl vldr/vstr-op #b1011 #b01)
@@ -1129,7 +1133,7 @@
       (emit-code (shift-type dest-ea src0-ea src1-ea code*)
         [28 (ax-cond 'al)]
         [21 #b0001101]
-        [20 #b0] 
+        [20 #b0]
         [16 #b0000]
         [12 (ax-ea-reg-code dest-ea)]
         [8  (ax-ea-reg-code src1-ea)]
@@ -1415,14 +1419,15 @@
         [12 #b1111]
         [0  #b101000010000])))
 
-  (define vpushm-op
-    (lambda (op flreg n code*)
+  (define vpm-op
+    (lambda (op opcode opcode2 flreg n code*)
       (let-values ([(d vd) (ax-flreg->bits flreg)])
         (emit-code (op flreg n code*)
           [28 (ax-cond 'al)]
-          [23 #b11010]
+          [23 opcode]
           [22 d]
-          [16 #b101101]
+          [20 opcode2]
+          [16 #b1101]
           [12 vd]
           [8  #b1011]
           [0  (fxsll n 1)]))))
@@ -2029,6 +2034,11 @@
     (lambda (reg n)
       (lambda (code*)
         (emit vpushm reg n code*))))
+
+  (define asm-vpop-multiple
+    (lambda (reg n)
+      (lambda (code*)
+        (emit vpopm reg n code*))))
 
   (define asm-save-flrv
     (lambda (code*)
@@ -2971,15 +2981,22 @@
                      (case ($ftd-size ftd)
                        [(8)
                         (values (lambda ()
-                                  `(seq
-                                     (set! ,%Cretval ,(%mref ,%sp ,return-stack-offset))
-                                     (set! ,%r1 ,(%mref ,%sp ,(fx+ 4 return-stack-offset)))))
-                                (list %Cretval %r1)
+                                   `(seq
+                                      (set! ,%Cretval ,(%mref ,%sp ,return-stack-offset))
+                                      (set! ,%r1 ,(%mref ,%sp ,(fx+ 4 return-stack-offset)))))
+                                 (list %Cretval %r1)
                                 8)]
                        [else
                         (values (lambda ()
-                                  `(set! ,%Cretval ,(%mref ,%sp ,return-stack-offset)))
-                                (list %Cretval %r1)
+                                  (case ($ftd-size ftd)
+                                    [(1)
+                                     (let ([rep (if ($ftd-unsigned? ftd) 'unsigned-8 'integer-8)])
+                                       `(set! ,%Cretval (inline ,(make-info-load rep #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset))))]
+                                    [(2)
+                                     (let ([rep (if ($ftd-unsigned? ftd) 'unsigned-16 'integer-16)])
+                                       `(set! ,%Cretval (inline ,(make-info-load rep #f) ,%load ,%sp ,%zero (immediate ,return-stack-offset))))]
+                                    [else `(set! ,%Cretval ,(%mref ,%sp ,return-stack-offset))]))
+                                (list %Cretval)
                                 4)])]))]
                 [(fp-double-float)
                  (values (lambda (rhs)
@@ -3012,16 +3029,18 @@
                   [else
                    (values (lambda (x)
                              `(set! ,%Cretval ,x))
-                           (list %Cretval %r1)
+                           (list %Cretval)
                            0)])])))
           (lambda (info)
             (define callee-save-regs+lr (list %r4 %r5 %r6 %r7 %r8 %r9 %r10 %r11 %lr))
+            (define callee-save-fpregs  (list %Cfparg1 %Cfparg1b)) ; must be consecutive
             (define isaved (length callee-save-regs+lr))
+            (define fpsaved (length callee-save-fpregs))
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [synthesize-first? (indirect-result-that-fits-in-registers? result-type)])
               (let-values ([(iint idbl) (count-reg-args arg-type* synthesize-first?)])
-                (let ([saved-reg-bytes (fx* isaved 4)]
+                (let ([saved-reg-bytes (fx+ (fx* isaved 4) (fx* fpsaved 8))]
                       [pre-pad-bytes (if (fxeven? isaved) 0 4)]
                       [int-reg-bytes (fx* iint 4)]
                       [post-pad-bytes (if (fxeven? iint) 0 4)]
@@ -3043,6 +3062,7 @@
                             ,(if (fx= pre-pad-bytes 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate 4))))
                             ; save the callee save registers & return address
                             (inline ,(make-info-kill*-live* '() callee-save-regs+lr) ,%push-multiple)
+                            (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpush-multiple)
                             ; set up tc for benefit of argument-conversion code, which might allocate
                             ,(if-feature pthreads
                                (%seq
@@ -3058,6 +3078,7 @@
                           (in-context Tail
                             (%seq
                               ; restore the callee save registers
+                              (inline ,(make-info-vpush (car callee-save-fpregs) fpsaved) ,%vpop-multiple)
                               (inline ,(make-info-kill* callee-save-regs+lr) ,%pop-multiple)
                               ; deallocate space for pad & arg reg values
                               (set! ,%sp ,(%inline + ,%sp (immediate ,(fx+ pre-pad-bytes int-reg-bytes post-pad-bytes float-reg-bytes))))

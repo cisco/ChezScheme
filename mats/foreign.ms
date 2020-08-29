@@ -2686,63 +2686,64 @@
               (eqv? pid^ pid)))))))
 )
 
-(mat varargs
-  (begin
-    (define load-libc
-      (machine-case
-        [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
-         '(load-shared-object "libc.so")]
-        [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
-         '(load-shared-object "libc.so.6")]
-        [(i3fb ti3fb a6fb ta6fb)
-         '(load-shared-object "libc.so.7")]
-        [(i3nt ti3nt a6nt ta6nt)
-         '(load-shared-object "msvcrt.dll")]
-        [(i3osx ti3osx a6osx ta6osx)
-         '(load-shared-object "libc.dylib")]
-        [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
-    #t)
-  (equal?
-    (with-input-from-string
-      (separate-eval
-        `(begin
-           ,load-libc
-           (define f (foreign-procedure "printf" (string double) int))
-           (f "(%g)" 3.5)
-           (void)))
-      read)
-    '(3.5))
-  (equal?
-    (with-input-from-string
-      (separate-eval
-        `(begin
-           ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double) int))
-           (f "(%g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5)
-           (void)))
-      read)
-    '(3.5 2.5 -1.5 6.75 8.25 -9.5))
-  (equal?
-    (with-input-from-string
-      (separate-eval
-        `(begin
-           ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double double double) int))
-           (f "(%g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5)
-           (void)))
-      read)
-    '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5))
-  (equal?
-    (with-input-from-string
-      (separate-eval
-        `(begin
-           ,load-libc
-           (define f (foreign-procedure "printf" (string double double double double double double double double double double) int))
-           (f "(%g %g %g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5)
-           (void)))
-      read)
-    '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5))
-)
+;; varargs ABI not supported for arm32le (yet)
+(unless (memq (machine-type) '(arm32le tarm32le))
+  (mat varargs
+    (begin
+      (define load-libc
+        (machine-case
+          [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
+           '(load-shared-object "libc.so")]
+          [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
+           '(load-shared-object "libc.so.6")]
+          [(i3fb ti3fb a6fb ta6fb)
+           '(load-shared-object "libc.so.7")]
+          [(i3nt ti3nt a6nt ta6nt)
+           '(load-shared-object "msvcrt.dll")]
+          [(i3osx ti3osx a6osx ta6osx)
+           '(load-shared-object "libc.dylib")]
+          [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
+      #t)
+    (equal?
+      (with-input-from-string
+        (separate-eval
+          `(begin
+             ,load-libc
+             (define f (foreign-procedure "printf" (string double) int))
+             (f "(%g)" 3.5)
+             (void)))
+        read)
+      '(3.5))
+    (equal?
+      (with-input-from-string
+        (separate-eval
+          `(begin
+             ,load-libc
+             (define f (foreign-procedure "printf" (string double double double double double double) int))
+             (f "(%g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5)
+             (void)))
+        read)
+      '(3.5 2.5 -1.5 6.75 8.25 -9.5))
+    (equal?
+      (with-input-from-string
+        (separate-eval
+          `(begin
+             ,load-libc
+             (define f (foreign-procedure "printf" (string double double double double double double double double) int))
+             (f "(%g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5)
+             (void)))
+        read)
+      '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5))
+    (equal?
+      (with-input-from-string
+        (separate-eval
+          `(begin
+             ,load-libc
+             (define f (foreign-procedure "printf" (string double double double double double double double double double double) int))
+             (f "(%g %g %g %g %g %g %g %g %g %g)" 3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5)
+             (void)))
+        read)
+      '(3.5 2.5 -1.5 6.75 8.25 -9.5 1e32 -4.5 7.25 -0.5))))
 
 (mat structs
   (begin
