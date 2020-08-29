@@ -101,7 +101,7 @@
     [%Cfparg8            %d7  %s14  #f 14]
     [%Cfparg8b                %s15  #f 15]
     [%flreg1             %d8  %s16  #f 16]
-    [%flreg2             %d9  %s18  #f 18] 
+    [%flreg2             %d9  %s18  #f 18]
     ; etc.
     #;[                  %d16       #f 32] ; >= 32: high bit goes in D, N, or M bit, low bits go in Vd, Vn, Vm
     #;[                  %d17       #f 33]
@@ -3033,7 +3033,7 @@
                            0)])])))
           (lambda (info)
             (define callee-save-regs+lr (list %r4 %r5 %r6 %r7 %r8 %r9 %r10 %r11 %lr))
-            (define callee-save-fpregs  (list %Cfparg1 %Cfparg1b)) ; must be consecutive
+            (define callee-save-fpregs  (list %flreg1 %flreg2)) ; must be consecutive
             (define isaved (length callee-save-regs+lr))
             (define fpsaved (length callee-save-fpregs))
             (let* ([arg-type* (info-foreign-arg-type* info)]
