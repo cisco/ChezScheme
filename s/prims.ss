@@ -2273,6 +2273,7 @@
     (type-check who fixnum x)
     (#3%$read-performance-monitoring-counter x)))
 
+; TODO for arm32 targets, a kernel module is required to read the time stamp counter
 (define $read-time-stamp-counter
   (lambda ()
     (#3%$read-time-stamp-counter)))

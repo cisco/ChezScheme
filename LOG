@@ -2103,3 +2103,9 @@
     foreign.ms, misc.ms
 - fixed callee-save floating point registers for arm32
     arm32.ss, ftype.ss, np-languages.ss, primdata.ss
+- added a mat for the add-with-immediate bug
+    misc.ms,
+    mats/arm-immediate-1.ss (new), mats/arm-immediate-2.ss (new)
+- added a note about arm32 targets requiring a kernel module for the
+  time stamp counter
+    prims.ss

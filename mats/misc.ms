@@ -4570,7 +4570,7 @@
   (mutable-fxvector? '#vfx())
   (mutable-string? "")
   (mutable-bytevector? '#vu8())
-  
+
  )
 
 (mat show-allocation
@@ -4578,3 +4578,13 @@
     (#%$show-allocation #t)
     #t)
 )
+
+; regression test for a bug in arm32 targets that improperly handled
+; add-with-immediate instructions when the immediate operand didn't fit
+; into 8 bits
+; h/t @weinholt on Github
+(mat arm32-immediate-operand
+  (begin
+    (compile-library "arm-immediate-1.ss")
+    (compile-library "arm-immediate-2.ss")
+    #t))

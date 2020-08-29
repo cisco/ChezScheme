@@ -1,0 +1,5 @@
+(library (arm-immediate-1)
+  (export x y)
+  (import (rnrs))
+  (define (x) '(a))
+  (define (y . _) '(a)))
