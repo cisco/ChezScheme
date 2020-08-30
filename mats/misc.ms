@@ -4437,34 +4437,35 @@
              (#2%display 1))))
 )
 
-(mat $read-time-stamp-counter
+;; #%$read-time-stamp-counter requires a kernel module on arm32le
+(unless (memq (machine-type) '(arm32le tarm32le))
+  (mat $read-time-stamp-counter
 
-  (let ([t (#%$read-time-stamp-counter)])
-    (and (integer? t) (exact? t)))
+    (let ([t (#%$read-time-stamp-counter)])
+      (and (integer? t) (exact? t)))
 
-  (let ()
-    ;; NB: pulled from thread.ms, to use as a delay
-    (define fat+
-      (lambda (x y)
-        (if (zero? y)
-            x
-            (fat+ (1+ x) (1- y)))))
-    (define fatfib
-      (lambda (x)
-        (if (< x 2)
-            1
-            (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
-    (let loop ([count 10] [success 0])
-      (if (fx= count 0)
-          (>= success 9)
-          (let ([t0 (#%$read-time-stamp-counter)])
-            (fatfib 26)
-            (let ([t1 (#%$read-time-stamp-counter)])
-              (loop (fx- count 1)
-                    (if (< t0 t1)
-                        (fx+ success 1)
-                        success)))))))
-)
+    (let ()
+      ;; NB: pulled from thread.ms, to use as a delay
+      (define fat+
+        (lambda (x y)
+          (if (zero? y)
+              x
+              (fat+ (1+ x) (1- y)))))
+      (define fatfib
+        (lambda (x)
+          (if (< x 2)
+              1
+              (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
+      (let loop ([count 10] [success 0])
+        (if (fx= count 0)
+            (>= success 9)
+            (let ([t0 (#%$read-time-stamp-counter)])
+              (fatfib 26)
+              (let ([t1 (#%$read-time-stamp-counter)])
+                (loop (fx- count 1)
+                      (if (< t0 t1)
+                          (fx+ success 1)
+                          success)))))))))
 
 (mat procedure-arity-mask
   (equal? (procedure-arity-mask (lambda () #f)) 1)
@@ -4569,7 +4570,7 @@
   (mutable-fxvector? '#vfx())
   (mutable-string? "")
   (mutable-bytevector? '#vu8())
-  
+
  )
 
 (mat show-allocation
@@ -4577,3 +4578,64 @@
     (#%$show-allocation #t)
     #t)
 )
+
+; regression test for a bug in arm32 targets that improperly handled
+; add-with-immediate instructions when the immediate operand didn't fit
+; into 8 bits
+; h/t @weinholt on Github
+(mat arm32-immediate-operand
+  (begin
+    (with-output-to-file "testfile-ai-1.ss"
+      (lambda ()
+        (pretty-print
+         '(library (arm-immediate-1)
+            (export x y)
+            (import (rnrs))
+            (define (x) '(a))
+            (define (y . _) '(a)))))
+      'replace)
+    (compile-library "testfile-ai-1.ss")
+    (with-output-to-file "testfile-ai-2.ss"
+      (lambda ()
+        (pretty-print
+         '(library (arm-immediate-2)
+            (export)
+            (import (rnrs) (arm-immediate-1))
+            (define a
+              (y (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)))
+            (define b
+              (y (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x)
+                 (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x) (x))))))
+      'replace)
+    (compile-library "testfile-ai-2.ss")
+    #t))

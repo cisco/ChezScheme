@@ -957,6 +957,12 @@ ftype operators:
       (or (ftd-struct? x)
           (ftd-union? x)
           (ftd-array? x))))
+  (set! $ftd-unsigned?
+    (lambda (x)
+      (and (ftd-base? x)
+           (case (ftd-base-type x)
+             [(unsigned-8 unsigned-16 unsigned-32 unsigned-64) #t]
+             [else #f]))))
   (set! $ftd->members
     (lambda (x)
       ;; Currently used for x86_64 and arm32 ABI: Returns a list of
