@@ -2693,31 +2693,31 @@
                    +---------------------------+
                    |                           |
                    |    incoming stack args    |
-  sp+36+R+X+Y+Z+W: |                           |
+  sp+52+R+X+Y+Z+W: |                           |
                    +---------------------------+<- 8-byte boundary
                    |                           |
                    |    saved int reg args     | 0-4 words
-    sp+36+R+X+Y+Z: |                           |
+    sp+52+R+X+Y+Z: |                           |
                    +---------------------------+
                    |                           |
                    |   pad word if necessary   | 0-1 words
-      sp+36+R+X+Y: |                           |
+      sp+52+R+X+Y: |                           |
                    +---------------------------+<- 8-byte boundary
                    |                           |
                    |   saved float reg args    | 0-16 words
-        sp+36+R+X: |                           |
+        sp+52+R+X: |                           |
                    +---------------------------+<- 8-byte boundary
                    |                           |
                    |      &-return space       | up to 8 words
-          sp+36+R: |                           |
+          sp+52+R: |                           |
                    +---------------------------+<- 8-byte boundary
                    |                           |
                    |   pad word if necessary   | 0-1 words
-            sp+36: |                           |
+            sp+52: |                           |
                    +---------------------------+
                    |                           |
-                   |   callee-save regs + lr   | 9 words
-             sp+0: |                           |
+                   |   callee-save regs + lr   | 13 words
+             sp+0: |   callee-save fpregs      |
                    +---------------------------+<- 8-byte boundary
 
       X = 0 or 4 (depending on whether pad is present)
