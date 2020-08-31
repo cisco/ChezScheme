@@ -68,7 +68,7 @@ else
 endif
 
 # clear running list of updated files
-set updatedfiles = ()
+set maybeupdatedfiles = ()
 
 ./workarea $M $W
 if ($status != 0) exit 1
@@ -79,40 +79,40 @@ cd $W
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
     ../BUILDING > BUILDING
-set updatedfiles = ($updatedfiles BUILDING)
+set maybeupdatedfiles = ($maybeupdatedfiles BUILDING)
 
 /bin/rm -f NOTICE
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
     ../NOTICE > NOTICE
-set updatedfiles = ($updatedfiles NOTICE)
+set maybeupdatedfiles = ($maybeupdatedfiles NOTICE)
 
 mkdir makefiles
 sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
 sed -e "s/csug[0-9]\.[0-9]/csug$MR.$mR/" -e "s/csug[0-9]_[0-9]/csug$MR""_$mR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
-set updatedfiles = ($updatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
+set maybeupdatedfiles = ($maybeupdatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
 
 /bin/rm scheme.1.in
 sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)* .* [0-9][0-9]*/Chez Scheme Version $R `date +'%B %Y'`/" \
     -e "s/Copyright .* Cisco Systems, Inc./Copyright `date +%Y` Cisco Systems, Inc./" \
   ../scheme.1.in > scheme.1.in
-set updatedfiles = ($updatedfiles scheme.1.in)
+set maybeupdatedfiles = ($maybeupdatedfiles scheme.1.in)
 
 /bin/rm -f c/Makefile.{,t}{i3,a6}nt
 foreach fn (c/Makefile.{,t}{a6,i3}nt)
-  set updatedfiles = ($updatedfiles $fn)
+  set maybeupdatedfiles = ($maybeupdatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
 end
 
 /bin/rm -f mats/Mf-{,t}{i3,a6}nt
 foreach fn (mats/Mf-{,t}{a6,i3}nt)
-  set updatedfiles = ($updatedfiles $fn)
+  set maybeupdatedfiles = ($maybeupdatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
 end
 
 sed -e "s/csv[0-9][.0-9][0-9]*/csv$ZR/g" ../workarea > workarea
 chmod +x workarea
-set updatedfiles = ($updatedfiles workarea)
+set maybeupdatedfiles = ($maybeupdatedfiles workarea)
 
 set RCVERSION = "$MR,$mR,$bR,0"
 sed -e "s/FILEVERSION .*/FILEVERSION $RCVERSION/"\
@@ -121,20 +121,20 @@ sed -e "s/FILEVERSION .*/FILEVERSION $RCVERSION/"\
     -e 's/"FileVersion", .*/"FileVersion", "'$R'"/'\
     -e 's/"ProductVersion", .*/"ProductVersion", "'$R'"/'\
     -e "s/Copyright 1984-..../Copyright 1984-`date +%Y`/g" ../c/scheme.rc > c/scheme.rc
-set updatedfiles = ($updatedfiles c/scheme.rc)
+set maybeupdatedfiles = ($maybeupdatedfiles c/scheme.rc)
 
 /bin/rm -f s/7.ss
 sed -e "s/nCopyright 1984-..../nCopyright 1984-`date +%Y`/g" ../s/7.ss > s/7.ss
-set updatedfiles = ($updatedfiles s/7.ss)
+set maybeupdatedfiles = ($maybeupdatedfiles s/7.ss)
 
 /bin/rm -f s/cmacros.ss
 set VNUM = `printf "%04x%02x%02x" $MR $mR $bR`
 sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" ../s/cmacros.ss > s/cmacros.ss
-set updatedfiles = ($updatedfiles s/cmacros.ss)
+set maybeupdatedfiles = ($maybeupdatedfiles s/cmacros.ss)
 
 mkdir release_notes
 sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" ../release_notes/release_notes.stex > release_notes/release_notes.stex
-set updatedfiles = ($updatedfiles release_notes/release_notes.stex)
+set maybeupdatedfiles = ($maybeupdatedfiles release_notes/release_notes.stex)
 
 mkdir csug
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" \
@@ -143,30 +143,35 @@ sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme 
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" \
     -e "s/nCopyright &copy; .* Cisco Systems, Inc./nCopyright \&copy; `date +%Y` Cisco Systems, Inc./" \
   ../csug/csug.stex > csug/csug.stex
-set updatedfiles = ($updatedfiles csug/copyright.stex csug/csug.stex)
+set maybeupdatedfiles = ($maybeupdatedfiles csug/copyright.stex csug/csug.stex)
 
 /bin/rm bintar/Makefile
 sed -e "s/^version = .*/version = $R/" \
     -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" \
   ../bintar/Makefile > bintar/Makefile
-set updatedfiles = ($updatedfiles bintar/Makefile)
+set maybeupdatedfiles = ($maybeupdatedfiles bintar/Makefile)
 
 /bin/rm rpm/Makefile
 sed -e "s/^version = .*/version = $R/" ../rpm/Makefile > rpm/Makefile
-set updatedfiles = ($updatedfiles rpm/Makefile)
+set maybeupdatedfiles = ($maybeupdatedfiles rpm/Makefile)
 
 /bin/rm pkg/Makefile
 sed -e "s/^version = .*/version = $R/" \
     -e "s/&copy; .* Cisco Systems/\&copy; `date +%Y` Cisco Systems/" \
      ../pkg/Makefile > pkg/Makefile
-set updatedfiles = ($updatedfiles pkg/Makefile)
+set maybeupdatedfiles = ($maybeupdatedfiles pkg/Makefile)
 
 mkdir wininstall
 sed -e "s/VERSION := .*/VERSION := $R/" ../wininstall/Makefile > wininstall/Makefile
-set updatedfiles = ($updatedfiles wininstall/Makefile)
+set maybeupdatedfiles = ($maybeupdatedfiles wininstall/Makefile)
 foreach fn (wininstall/{,t}{a6,i3}nt.wxs)
-  set updatedfiles = ($updatedfiles $fn)
+  set maybeupdatedfiles = ($maybeupdatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/" ../$fn > $fn
+end
+
+set updatedfiles = ()
+foreach x ($maybeupdatedfiles)
+  cmp -s ../$x $x || set updatedfiles = ($updatedfiles $x)
 end
 
 /bin/rm LOG

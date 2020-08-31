@@ -2156,6 +2156,7 @@
 - added a note about arm32 targets requiring a kernel module for the
   time stamp counter
     prims.ss
+
 9.5.4 changes:
 - updated version to 9.5.4
     BUILDING NOTICE makefiles/Mf-install.in makefiles/Makefile-csug.in
@@ -2166,3 +2167,15 @@
     bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
     wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
     wininstall/ti3nt.wxs
+
+9.5.5 changes:
+- updated version to 9.5.5
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- newrelease no longer logs as updated files with no actual changes
+    newrelease
