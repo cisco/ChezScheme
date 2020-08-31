@@ -771,7 +771,7 @@
 
 (define $scheme-greeting
   (lambda ()
-    (format "~a\nCopyright 1984-2019 Cisco Systems, Inc.\n"
+    (format "~a\nCopyright 1984-2020 Cisco Systems, Inc.\n"
       (scheme-version))))
 
 (define $session-key #f)

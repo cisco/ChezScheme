@@ -2140,3 +2140,29 @@
   is 64 bits.  also now rounding rather than truncating nanoseconds
   in the coversion to milliseconds on Windows.
     thread.c
+- fixed a bug in arm32 that caused an error when generating
+  instructions with immediate operands where the immediate was larger
+  than 8 bits.
+    arm32.ss
+- fixed formatting in arm32.ss
+    arm32.ss
+- disabled unsupported mats for arm32le
+    foreign.ms, misc.ms
+- fixed callee-save floating point registers for arm32
+    arm32.ss, ftype.ss, np-languages.ss, primdata.ss
+- added a mat for the add-with-immediate bug
+    misc.ms,
+    mats/arm-immediate-1.ss (new), mats/arm-immediate-2.ss (new)
+- added a note about arm32 targets requiring a kernel module for the
+  time stamp counter
+    prims.ss
+9.5.4 changes:
+- updated version to 9.5.4
+    BUILDING NOTICE makefiles/Mf-install.in makefiles/Makefile-csug.in
+    scheme.1.in c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt
+    c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt
+    mats/Mf-ti3nt workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/copyright.stex csug/csug.stex
+    bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs

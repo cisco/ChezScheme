@@ -321,8 +321,8 @@ case $M in
   *nt)
     (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmd.obj mainmd.obj)
     (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmt.obj mainmt.obj)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv953md.lib csv953md.lib)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv953mt.lib csv953mt.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv954md.lib csv954md.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv954mt.lib csv954mt.lib)
     (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.res scheme.res)
     ;;
   *)
@@ -337,8 +337,8 @@ case $M in
   *nt)
     (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/scheme.exe scheme.exe)
     (cd $W/bin/$M; forceworkln2 scheme.exe petite.exe)
-    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv953.dll csv953.dll)
-    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv953.lib csv953.lib)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv954.dll csv954.dll)
+    (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/csv954.lib csv954.lib)
     ;;
   *)
     (cd $W/bin/$M; workln "$upupupsrcdir"/bin/$M/scheme scheme)

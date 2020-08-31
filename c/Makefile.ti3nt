@@ -18,11 +18,11 @@ m = ti3nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-KernelDll = ..\bin\$m\csv953.dll
-KernelLib = ..\bin\$m\csv953.lib
-MTKernelLib = ..\boot\$m\csv953mt.lib
-MDKernelLib = ..\boot\$m\csv953md.lib
-KernelExp = ..\bin\$m\csv953.exp
+KernelDll = ..\bin\$m\csv954.dll
+KernelLib = ..\bin\$m\csv954.lib
+MTKernelLib = ..\boot\$m\csv954mt.lib
+MDKernelLib = ..\boot\$m\csv954md.lib
+KernelExp = ..\bin\$m\csv954.exp
 Exec = ..\bin\$m\scheme.exe
 MTMain = ..\boot\$m\mainmt.obj
 MDMain = ..\boot\$m\mainmd.obj
