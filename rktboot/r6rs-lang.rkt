@@ -142,7 +142,9 @@
          bytevector-u64-native-ref
          call-with-bytevector-output-port
          make-compile-time-value
-         optimize-level)
+         optimize-level
+         symbol-value
+         set-symbol-value!)
 
 (module+ ikarus
   (provide print-gensym
@@ -811,3 +813,7 @@
 (define (make-compile-time-value v) v)
 
 (define optimize-level (make-parameter optimize-level-init))
+
+;; For "implementation-helpers.ikarus.ss":
+(define (symbol-value s) (namespace-variable-value s #f))
+(define (set-symbol-value! s v) (namespace-set-variable-value! s v #f))

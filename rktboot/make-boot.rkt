@@ -100,10 +100,18 @@
 
 (reset-toplevels)
 
+(define (load-if-exists/cd path)
+  (when (file-exists? path)
+    (load/cd path)))
+
 (status "Load nanopass")
 (define (load-nanopass)
   (load/cd (build-path nano-dir "nanopass/helpers.ss"))
   (load/cd (build-path nano-dir "nanopass/syntaxconvert.ss"))
+  (load-if-exists/cd (build-path nano-dir "nanopass/records.ss"))
+  (load-if-exists/cd (build-path nano-dir "nanopass/nano-syntax-dispatch.ss"))
+  (load-if-exists/cd (build-path nano-dir "nanopass/parser.ss"))
+  (load-if-exists/cd (build-path nano-dir "nanopass/unparser.ss"))
   (load/cd (build-path nano-dir "nanopass/records.ss"))
   (load/cd (build-path nano-dir "nanopass/meta-syntax-dispatch.ss"))
   (load/cd (build-path nano-dir "nanopass/meta-parser.ss"))
@@ -117,6 +125,7 @@
   (load/cd (build-path nano-dir "nanopass.ss")))
 (parameterize ([current-namespace ns]
                [current-readtable r6rs-readtable])
+  (load-if-exists/cd (build-path nano-dir "nanopass/syntactic-property.sls"))
   (load/cd (build-path nano-dir "nanopass/implementation-helpers.ikarus.ss"))
   (load-nanopass))
 

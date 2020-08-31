@@ -3386,7 +3386,8 @@
                    (values new-e unboxed?))))]
           [(mvcall ,info ,e1 ,e2) (values `(mvcall ,info ,(Expr1 e1) ,(Expr1 e2)) #f)]
           [(mvlet ,e ((,x** ...) ,interface* ,body*) ...)
-           (values `(mvlet ,(Expr1 e) ((,x** ...) ,interface* ,(map Expr1 body*)) ...) #f)])
+           (values `(mvlet ,(Expr1 e) ((,x** ...) ,interface* ,(map Expr1 body*)) ...) #f)]
+          [,lvalue (Lvalue lvalue can-unbox-fp?)])
         (Lvalue : Lvalue (ir [unboxed-fp? #f]) -> Lvalue (#f)
           [(mref ,e1 ,e2 ,imm ,type)
            (let ([e `(mref ,(Expr1 e1) ,(Expr1 e2) ,imm ,type)])
