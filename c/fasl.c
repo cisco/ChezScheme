@@ -1954,18 +1954,21 @@ static void swap_code_endian(octet *code, uptr len)
       code[3] = a;
 
       if (a == pb_adr) {
-        /* after a few more instructions, we'll hit
-           a header where 64-bit values needs to be
-           swapped, instead of 32-bit values */
-        uptr delta = ((uptr)d << 16) + c;
-        octet *after_rpheader = code + 4 + delta;
+        /* delta can be negative for a mvlet-error reinstall of the return address */
+        iptr delta = (int16_t)(uint16_t)(((uptr)d << 16) + c);
+        if (delta > 0) {
+          /* after a few more instructions, we'll hit
+             a header where 64-bit values needs to be
+             swapped, instead of 32-bit values */
+          octet *after_rpheader = code + 4 + delta;
 
-        if (after_rpheader[-8] & 0x1)
-          header_size = size_rp_compact_header;
-        else
-          header_size = size_rp_header;
+          if (after_rpheader[-8] & 0x1)
+            header_size = size_rp_compact_header;
+          else
+            header_size = size_rp_header;
 
-        next_rpheader = after_rpheader - header_size;
+          next_rpheader = after_rpheader - header_size;
+        }
       }
 
       code += 4;

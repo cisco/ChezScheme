@@ -11745,8 +11745,10 @@
               (if (null? x**)
                   (%seq
                     (pariah)
-                    ; goto domvleterr before decrementing sfp, so callers frame
-                    ; is still on the stack, to go along with value in %ret / sfp[0]
+                    ;; mverror point ensures that the call's return address
+                    ;; is in sfp[0], so the caller's frame is still
+                    ;; on the stack for error reporting and debugging
+                    (mverror-point)
                     (goto ,Ldomvleterr))
                   (let ([x* (car x**)] [interface (car interface*)] [l (car l*)])
                     (let ([ebody `(mventry-point (,x* ...) ,l)])
@@ -11831,6 +11833,7 @@
         ;; if no suffix is specified the prefix is defined as a macro
         (import (only asm-module asm-foreign-call asm-foreign-callable asm-enter))
         (define newframe-info-for-mventry-point)
+        (define label-for-mverror-point)
         (define Lcall-error (make-Lcall-error))
         (define dcl*)
         (define local*)
@@ -12119,7 +12122,7 @@
                                                                (build-return-point rpl this-mrvl #f cnfv*
                                                                  (build-consumer-call tc cnfv rpl shift?)))
                                                             ,(f tc* cnfv* rpl* this-mrvl shift?*)))))))))))
-                               ,(build-postlude newframe-info))))))))))))
+                               ,(build-postlude newframe-info rpl))))))))))))
           ; NB: combine
           (define build-nontail-call-for-tail-call-with-consumers
             (lambda (info mdcl t0 t1* tc* nfv** mrvl prepare-for-consumer? build-postlude)
@@ -12230,7 +12233,7 @@
                             (let ([tc* (list-head tc* (fx- (length tc*) 1))])
                               `(seq
                                  ,(build-nontail-call info mdcl t0 t1* tc* '() mrvl #f #t
-                                    (lambda (newframe-info)
+                                    (lambda (newframe-info rpl)
                                       (%seq
                                         (remove-frame ,newframe-info)
                                         (restore-local-saves ,newframe-info)
@@ -13276,10 +13279,12 @@
                     (if (uvar-referenced? x)
                         `(seq (set! ,x ,(uvar-location x)) ,(f (cdr x*)))
                         (f (cdr x*)))))))]
+        [(mverror-point)
+         `(set! ,%ref-ret (label-ref ,label-for-mverror-point ,(constant size-rp-header)))]
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
          (let ([mrvl (make-local-label 'mrvl)])
            (build-nontail-call info mdcl t0? t1* t* '() mrvl #t #f
-             (lambda (newframe-info)
+             (lambda (newframe-info rpl)
                (%seq (label ,mrvl) (remove-frame ,newframe-info) (restore-local-saves ,newframe-info)))))]
         [(mvset ,info (,mdcl ,t0? ,t1* ...) (,t* ...) ((,x** ...) ...) ,ebody)
          (let* ([frame-x** (map (lambda (x*) (set-formal-registers! x*)) x**)]
@@ -13291,12 +13296,13 @@
                          frame-x**)])
            (let ([mrvl (make-local-label 'mrvl)])
              (build-nontail-call info mdcl t0? t1* t* nfv** mrvl #f #t
-               (lambda (newframe-info)
-                 (fluid-let ([newframe-info-for-mventry-point newframe-info])
+               (lambda (newframe-info rpl)
+                 (fluid-let ([newframe-info-for-mventry-point newframe-info]
+                             [label-for-mverror-point rpl])
                    (Effect ebody))))))]
         [(set! ,[lvalue] (mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...)))
          (build-nontail-call info mdcl t0? t1* t* '() #f #f #f
-           (lambda (newframe-info)
+           (lambda (newframe-info rpl)
              (let ([retval (make-tmp 'retval)])
                (%seq
                  (remove-frame ,newframe-info)

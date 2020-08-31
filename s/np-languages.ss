@@ -845,9 +845,10 @@
       (- (mvset info (mdcl (maybe t0) t1 ...) (t* ...) ((x** ...) interface* l*) ...))
       (+ (do-rest fixed-args)
          (mvset info (mdcl (maybe t0) t1 ...) (t* ...) ((x** ...) ...) ebody)
-         ; mventry-point can appear only within an mvset ebody
+         ; mventry-point and mverror-point can appear only within an mvset ebody
          ; ideally, grammar would reflect this
-         (mventry-point (x* ...) l))))
+         (mventry-point (x* ...) l)
+         (mverror-point))))
 
   (define-language L12.5 (extends L12)
     (entry Program)
