@@ -1614,6 +1614,7 @@ void enlarge_sweep_stack() {
   find_room(space_data, 0, typemod, ptr_align(new_sz), new_sweep_stack);
   if (sz != 0)
     memcpy(TO_VOIDP(new_sweep_stack), TO_VOIDP(sweep_stack_start), sz);
+  S_G.bitmask_overhead[0] += ptr_align(new_sz);
   sweep_stack_start = TO_VOIDP(new_sweep_stack);
   sweep_stack_limit = TO_VOIDP((uptr)new_sweep_stack + new_sz);
   sweep_stack = TO_VOIDP((uptr)new_sweep_stack + sz);
@@ -1717,6 +1718,7 @@ static void sweep_dirty() {
         if (s == space_weakpair) {
           weakseginfo *next = weaksegments_to_resweep;
           find_room_voidp(space_data, 0, ptr_align(sizeof(weakseginfo)), weaksegments_to_resweep);
+          S_G.bitmask_overhead[0] += ptr_align(sizeof(weakseginfo));
           weaksegments_to_resweep->si = dirty_si;
           weaksegments_to_resweep->next = next;
         }
@@ -2338,7 +2340,8 @@ static void init_measure(IGEN min_gen, IGEN max_gen) {
   min_measure_generation = min_gen;
   max_measure_generation = max_gen;
   
-  find_room_voidp(space_data, 0, init_stack_len, measure_stack_start);
+  find_room_voidp(space_data, 0, ptr_align(init_stack_len), measure_stack_start);
+  S_G.bitmask_overhead[0] += ptr_align(init_stack_len);
   measure_stack = TO_VOIDP(measure_stack_start);
   measure_stack_limit = TO_VOIDP((uptr)TO_PTR(measure_stack_start) + init_stack_len);
 
@@ -2423,6 +2426,7 @@ static void push_measure(ptr p)
     uptr new_sz = 2*sz;
     ptr *new_measure_stack;
     find_room_voidp(space_data, 0, ptr_align(new_sz), new_measure_stack);
+    S_G.bitmask_overhead[0] += ptr_align(new_sz);
     memcpy(new_measure_stack, measure_stack_start, sz);
     measure_stack_start = new_measure_stack;
     measure_stack_limit = TO_VOIDP((uptr)TO_PTR(new_measure_stack) + new_sz);
