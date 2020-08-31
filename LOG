@@ -2132,3 +2132,6 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - newrelease no longer logs as updated files with no actual changes
     newrelease
+- repaired continuation for exception handler of error for reurning
+  the wrong number of values to a multiple-value context
+    cpnanopass.ss, np-languages.ss, 3.ms
