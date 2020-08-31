@@ -2087,6 +2087,31 @@
                        (thing-pos posx)
                        (do-something-else)))
                list)))))
+
+  ;; regression test to make sure the continuation is well formed when
+  ;; an exception handler is call for a wrong number of values are
+  ;; returned to a multi-value context
+  (begin
+    (define ($go-fail-to-get-two-values)
+      (call-with-values (lambda () ($get-one-value))
+        (lambda (a b) (list a b))))
+    (define ($get-one-value)
+      (call/cc ; copies return address off stack
+       (lambda (k)
+         (collect) ; do something non-trivial
+         k)))
+    (#%$continuation?
+     (call/cc
+      (lambda (esc)
+        (car
+          (with-exception-handler
+           (lambda (exn)
+             (call/cc
+              (lambda (k) ; this continuation used to be broken, and
+                (collect) ; a GC was the simplest way of detecting it
+                (esc k))))
+           $go-fail-to-get-two-values))))))
+
 )
 
 (mat let-values
