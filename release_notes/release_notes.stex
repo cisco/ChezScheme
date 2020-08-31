@@ -2,7 +2,7 @@
 
 \thisversion{Version 9.5.5}
 \thatversion{Version 8.4}
-\pubmonth{June}
+\pubmonth{August}
 \pubyear{2020}
 
 \begin{document}
@@ -352,7 +352,7 @@ The default value is \scheme{medium}.
 
 The procedures \scheme{make-mutex} and \scheme{make-condition} now
 accept an optional argument \scheme{name}, which must be a symbol
-that identifies the object or \scheme{f} for no name. The name is
+that identifies the object or \scheme{#f} for no name. The name is
 printed every time the mutex or condition object is printed, which
 is useful for debugging.
 
