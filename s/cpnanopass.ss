@@ -15925,10 +15925,17 @@
                                      (dump (cdr trace-list) addr))))
                         (car trace-list)))))
                 (fprintf p "~d:~9t<end~@[ ~a~]>\n" size name))))
-          ; munge gets the code in forward order, but really wants to process it
-          ; backwards to find the label offsets.  Maybe the size would be better
-          ; tracked by doing it more like cp2 does right now and then patching in
-          ; the foward jumps and tightening up the code.
+          ;; munge gets the code in forward order, but really wants to process it
+          ;; backwards to find the label offsets.  Maybe the size would be better
+          ;; tracked by doing it more like cp2 does right now and then patching in
+          ;; the foward jumps and tightening up the code.
+          ;;
+          ;; If label addresses computed this time are not the same as last time,
+          ;; then `munge-recur?` is set, and some loop will try `munge` again.
+          ;; For that loop to converge, the instruction encoding for a larger label
+          ;; offset must not get smaller; otherwise, code might get further away,
+          ;; leading to some smaller encoding, which pulls code back closer, leading
+          ;; to a larger encoding, and so on.
           (define-who munge
             (lambda (c* size)
               (define (munge-pass c* iteration)
