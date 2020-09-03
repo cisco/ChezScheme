@@ -1674,6 +1674,12 @@
                          (bitwise-arithmetic-shift-left (logand n #xffffff) 8)
                          (bitwise-arithmetic-shift-right n 24)))))))))
 
+  ;; A region of funky12 where there's no number that fits when a smaller number doesn't
+  (define connected-funky12
+    (lambda (n)
+      (and (fixnum? n) (#%$fxu< n #x100)
+           (funky12 n))))
+
   (define shift-count?
     (lambda (imm)
       ; can also allow 0 for lsl and 32 (represented as 0) for lsr, asr
@@ -2186,11 +2192,11 @@
                  (let ([incr-offset (adjust-return-point-offset incr-offset l)])
                    (let ([disp (fx- next-addr (fx- offset incr-offset) 4)])
                      (cond
-                       [(funky12 disp)
+                       [(connected-funky12 disp)
                         (Trivit (dest)
                           ; aka adr, encoding A1
                           (emit addi #f dest `(reg . ,%pc) disp '()))]
-                       [(funky12 (- disp))
+                       [(connected-funky12 (- disp))
                         (Trivit (dest)
                           ; aka adr, encoding A2
                           (emit subi #f dest `(reg . ,%pc) (- disp) '()))]
