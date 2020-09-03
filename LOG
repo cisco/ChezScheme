@@ -2135,3 +2135,6 @@
 - repaired continuation for exception handler of error for reurning
   the wrong number of values to a multiple-value context
     cpnanopass.ss, np-languages.ss, 3.ms
+- adjust arm32 backend to not choose shorter instructions for larger
+  return-address offsets, which breaks label address assignment
+    arm32.ss

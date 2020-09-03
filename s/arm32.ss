@@ -1679,6 +1679,16 @@
                          (bitwise-arithmetic-shift-left (logand n #xffffff) 8)
                          (bitwise-arithmetic-shift-right n 24)))))))))
 
+  ;; restrict funky12 so that an code offset n will not fit
+  ;; if a smaller offset wouldn't fit, which prevents bouncing
+  ;; in the loop that computes label offsets
+  (define code-offset-funky12
+    (lambda (n)
+      (safe-assert (and (fixnum? n) (fx= 0 (fxand n 3))))
+      (and (fixnum? n)
+           (#%$fxu< n #x400)
+           (funky12 n))))
+
   (define shift-count?
     (lambda (imm)
       ; can also allow 0 for lsl and 32 (represented as 0) for lsr, asr
@@ -2144,11 +2154,11 @@
                (lambda (offset)
                  (let ([disp (fx- next-addr (fx- offset incr-offset) 4)])
                    (cond
-                     [(funky12 disp)
+                     [(code-offset-funky12 disp)
                       (Trivit (dest)
                         ; aka adr, encoding A1
                         (emit addi #f dest `(reg . ,%pc) disp '()))]
-                     [(funky12 (- disp))
+                     [(code-offset-funky12 (- disp))
                       (Trivit (dest)
                         ; aka adr, encoding A2
                         (emit subi #f dest `(reg . ,%pc) (- disp) '()))]
