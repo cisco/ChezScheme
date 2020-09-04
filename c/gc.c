@@ -131,7 +131,7 @@ static void sweep_in_old PROTO((ptr p));
 static void sweep_object_in_old PROTO((ptr p));
 static IBOOL object_directly_refers_to_self PROTO((ptr p));
 static ptr copy_stack PROTO((ptr old, iptr *length, iptr clength));
-static void resweep_weak_pairs PROTO((seginfo *oldweakspacesegments));
+static void resweep_weak_pairs PROTO((ptr tc, seginfo *oldweakspacesegments));
 static void forward_or_bwp PROTO((ptr *pp, ptr p));
 static void sweep_generation PROTO((ptr tc));
 static void sweep_from_stack PROTO((ptr tc));
@@ -148,8 +148,8 @@ static IGEN sweep_dirty_port PROTO((ptr x, IGEN youngest));
 static IGEN sweep_dirty_symbol PROTO((ptr x, IGEN youngest));
 static void sweep_code_object PROTO((ptr tc, ptr co, IGEN from_g));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
-static void sweep_dirty PROTO((void));
-static void resweep_dirty_weak_pairs PROTO((void));
+static void sweep_dirty PROTO((ptr tc));
+static void resweep_dirty_weak_pairs PROTO((ptr tc));
 static void mark_typemod_data_object PROTO((ptr p, uptr len, seginfo *si));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
@@ -167,7 +167,7 @@ static void copy_and_clear_list_bits(seginfo *oldspacesegments);
 static uptr total_size_so_far();
 static uptr list_length PROTO((ptr ls));
 #endif
-static uptr target_generation_space_so_far();
+static uptr target_generation_space_so_far(ptr tc);
 
 #ifdef ENABLE_MEASURE
 static void init_measure(IGEN min_gen, IGEN max_gen);
@@ -194,18 +194,17 @@ static void check_pending_measure_ephemerons();
 
 /* initialized and used each gc cycle.  any others should be defined in globals.h */
 static IBOOL change;
-static ptr sweep_loc[static_generation+1][max_real_space+1];
-static ptr orig_next_loc[static_generation+1][max_real_space+1];
 static ptr tlcs_to_rehash;
 static ptr conts_to_promote;
 static ptr recheck_guardians_ls;
+static seginfo *resweep_weak_segments;
 
 #ifdef ENABLE_OBJECT_COUNTS
 static int measure_all_enabled;
 static uptr count_root_bytes;
 #endif
 
-/* max_cg: maximum copied generation, i.e., maximum generation subject to collection.  max_cg >= 0 && max_cg <= 255.
+/* max_cg: maximum copied generation, i.e., maximum generation subject to collection.  max_cg >= 0 && max_cg <= static_generation.
  * min_tg: minimum target generation.  max_tg == 0 ? min_tg == 0 : min_tg > 0 && min_tg <= max_tg;
  * max_tg: maximum target generation.  max_tg == max_cg || max_tg == max_cg + 1.
  * Objects in generation g are collected into generation MIN(max_tg, MAX(min_tg, g+1)).
@@ -620,8 +619,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
    /* flush instruction cache: effectively clear_code_mod but safer */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
-      ptr tc = (ptr)THREADTC(Scar(ls));
-      S_flush_instruction_cache(tc);
+      ptr t_tc = (ptr)THREADTC(Scar(ls));
+      S_flush_instruction_cache(t_tc);
     }
 
     tlcs_to_rehash = Snil;
@@ -632,9 +631,39 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     S_G.must_mark_gen0 = 0;
 
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
-      ptr tc = (ptr)THREADTC(Scar(ls));
-      S_scan_dirty(TO_VOIDP(EAP(tc)), TO_VOIDP(REAL_EAP(tc)));
-      EAP(tc) = REAL_EAP(tc) = AP(tc) = (ptr)0;
+      ptr t_tc = (ptr)THREADTC(Scar(ls));
+      S_scan_dirty(TO_VOIDP(EAP(t_tc)), TO_VOIDP(REAL_EAP(t_tc)));
+      EAP(t_tc) = REAL_EAP(t_tc) = AP(t_tc) = (ptr)0;
+
+      /* clear thread-local allocation: */
+      for (g = 0; g <= MAX_CG; g++) {
+        for (s = 0; s <= max_real_space; s++) {
+          if (BASELOC_AT(t_tc, s, g)) {
+            /* We close off, instead of just setting BASELOC to 0,
+               in case the page ends up getting marked, in which
+               case a terminator mark needed. */
+            S_close_off_thread_local_segment(t_tc, s, g);
+          }
+        }
+      }
+
+      if (t_tc != tc) {
+        /* close off any current allocation in MAX_TG, and ensure that
+           end-of-segment markers are otherwise set (in case that's
+           needed for dirty-byte sweeping) */
+        for (s = 0; s <= max_real_space; s++) {
+          if (BASELOC_AT(t_tc, s, MAX_TG))
+            S_close_off_thread_local_segment(t_tc, s, MAX_TG);
+          for (g = MAX_TG + 1; g <= static_generation; g++) {
+            ptr old = NEXTLOC_AT(t_tc, s, g);
+            if (old != (ptr)0)
+              *(ptr*)TO_VOIDP(old) = forward_marker;
+          }
+        }
+      } else {
+        for (s = 0; s <= max_real_space; s++)
+          SWEEPLOC_AT(t_tc, s, MAX_TG) = BASELOC_AT(t_tc, s, MAX_TG);
+      }
     }
 
    /* perform after ScanDirty */
@@ -645,6 +674,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 #endif
 
     sweep_stack_start = sweep_stack = sweep_stack_limit = NULL;
+    resweep_weak_segments = NULL;
     for (g = MIN_TG; g <= MAX_TG; g++) fully_marked_mask[g] = NULL;
 
   /* set up generations to be copied */
@@ -652,7 +682,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
       S_G.bytes_of_generation[g] = 0;
       for (s = 0; s <= max_real_space; s++) {
         S_G.base_loc[g][s] = FIX(0);
-        S_G.first_loc[g][s] = FIX(0);
+        S_G.to_sweep[g][s] = NULL;
         S_G.next_loc[g][s] = FIX(0);
         S_G.bytes_left[g][s] = 0;
         S_G.bytes_of_space[g][s] = 0;
@@ -670,12 +700,13 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
       pre_phantom_bytes += S_G.bytesof[g][countof_phantom];
     }
 
-  /* set up target generation sweep_loc and orig_next_loc pointers */
+  /* set up target generation sweep_loc pointers */
     for (g = MIN_TG; g <= MAX_TG; g += 1) {
       for (s = 0; s <= max_real_space; s++) {
         /* for all but max_tg (and max_tg as well, if max_tg == max_cg), this
-           will set orig_net_loc and sweep_loc to 0 */
-        orig_next_loc[g][s] = sweep_loc[g][s] = S_G.next_loc[g][s];
+           will set sweep_loc to 0 */
+        S_G.sweep_loc[g][s] = S_G.next_loc[g][s];
+        S_G.to_sweep[g][s] = NULL;
       }
     }
 
@@ -697,7 +728,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
           si->next = oldspacesegments;
           oldspacesegments = si;
           si->old_space = 1;
-          /* update generation now, both  to computer the target generation,
+          /* update generation now, both to compute the target generation,
              and so that any updated dirty references will record the correct
              new generation; also used for a check in S_dirty_set */
           si->generation = compute_target_generation(si->generation);
@@ -962,11 +993,14 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     }
 
   /* sweep areas marked dirty by assignments into older generations */
-    sweep_dirty();
+    sweep_dirty(tc);
 
     sweep_generation(tc);
+  /* since we will later resweep dirty weak pairs, make sure sweep_generation
+     ends with a terminator in place for space_weakpair, at least in all threads
+     other than this one that may have allocated there during sweep_generation */
 
-    pre_finalization_size = target_generation_space_so_far();
+    pre_finalization_size = target_generation_space_so_far(tc);
 
   /* handle guardians */
     {   ptr pend_hold_ls, final_ls, pend_final_ls, maybe_final_ordered_ls;
@@ -1198,7 +1232,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
         }
     }
 
-    S_G.bytes_finalized = target_generation_space_so_far() - pre_finalization_size;
+    S_G.bytes_finalized = target_generation_space_so_far(tc) - pre_finalization_size;
     {
       iptr post_phantom_bytes = 0;
       for (g = MIN_TG; g <= MAX_TG; g++) {
@@ -1208,8 +1242,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     }
 
   /* handle weak pairs */
-    resweep_dirty_weak_pairs();
-    resweep_weak_pairs(oldweakspacesegments);
+    resweep_dirty_weak_pairs(tc);
+    resweep_weak_pairs(tc, oldweakspacesegments);
 
    /* still-pending ephemerons all go to bwp */
     finish_pending_ephemerons(oldspacesegments);
@@ -1436,33 +1470,62 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
       return Svoid;
 }
 
-#define sweep_space(s, from_g, body) {                  \
-    slp = &sweep_loc[from_g][s];                        \
-    nlp = &S_G.next_loc[from_g][s];                     \
-    if (*slp == 0) *slp = S_G.first_loc[from_g][s];     \
-    pp = TO_VOIDP(*slp);                                \
-    while (pp != (nl = (ptr *)TO_VOIDP(*nlp))) {        \
-      do {                                              \
-        if ((p = *pp) == forward_marker)                \
-          pp = TO_VOIDP(*(pp + 1));                     \
-        else                                            \
-          body                                          \
-      } while (pp != nl);                               \
-    }                                                   \
-    *slp = TO_PTR(pp);                                  \
+#define save_resweep(s, si) do {                  \
+    if (s == space_weakpair) {                    \
+      si->sweep_next = resweep_weak_segments;     \
+      resweep_weak_segments = si;                 \
+    }                                             \
+  } while (0)
+
+#define sweep_space_range(s, from_g, body) {                      \
+    while ((pp = TO_VOIDP(*slp)) != (nl = TO_VOIDP(*nlp))) {      \
+      *slp = TO_PTR(nl);                                          \
+      while (pp != nl) {                                          \
+        p = *pp;                                                  \
+        body                                                      \
+      }                                                           \
+    }                                                             \
   }
 
-static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
+#define sweep_space(s, from_g, body) {                  \
+    while ((si = S_G.to_sweep[from_g][s]) != NULL) {    \
+      S_G.to_sweep[from_g][s] = si->sweep_next;         \
+      save_resweep(s, si);                              \
+      pp = TO_VOIDP(si->sweep_start);                   \
+      while ((p = *pp) != forward_marker)               \
+        body                                            \
+    }                                                   \
+    slp = &S_G.sweep_loc[from_g][s];                    \
+    nlp = &S_G.next_loc[from_g][s];                     \
+    sweep_space_range(s, from_g, body)                  \
+    slp = &SWEEPLOC_AT(tc, s, from_g);                  \
+    nlp = &NEXTLOC_AT(tc, s, from_g);                   \
+    sweep_space_range(s, from_g, body)                  \
+  }
+
+static void resweep_weak_pairs(ptr tc, seginfo *oldweakspacesegments) {
     IGEN from_g;
     ptr *slp, *nlp; ptr *pp, p, *nl;
     seginfo *si;
 
     for (from_g = MIN_TG; from_g <= MAX_TG; from_g += 1) {
-      sweep_loc[from_g][space_weakpair] = orig_next_loc[from_g][space_weakpair];
+      /* By starting from `base_loc`, we may needlessly sweep pairs in `MAX_TG`
+         that were allocated before the GC, but that's ok. */
+      S_G.sweep_loc[from_g][space_weakpair] = S_G.base_loc[from_g][space_weakpair];
+      SWEEPLOC_AT(tc, space_weakpair, from_g) = BASELOC_AT(tc, space_weakpair, from_g);
+      S_G.to_sweep[space_weakpair][from_g] = NULL; /* in case there was new allocation */
       sweep_space(space_weakpair, from_g, {
           forward_or_bwp(pp, p);
           pp += 2;
       })
+    }
+
+   for (si = resweep_weak_segments; si != NULL; si = si->sweep_next) {
+     pp = TO_VOIDP(build_ptr(si->number, 0));
+     while ((p = *pp) != forward_marker) {
+       forward_or_bwp(pp, p);
+       pp += 2;
+     }
    }
 
    for (si = oldweakspacesegments; si != NULL; si = si->next) {
@@ -1506,6 +1569,7 @@ static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
 
 static void sweep_generation(ptr tc) {
   ptr *slp, *nlp; ptr *pp, p, *nl; IGEN from_g;
+  seginfo *si;
   
   do {
     change = 0;
@@ -1674,9 +1738,9 @@ static void record_dirty_segment(IGEN from_g, IGEN to_g, seginfo *si) {
   }
 }
 
-static void sweep_dirty() {
+static void sweep_dirty(ptr tc) {
   IGEN youngest, min_youngest;
-  ptr *pp, *ppend, *nl;
+  ptr *pp, *ppend, *nl, start, next_loc;
   uptr seg, d;
   ISPC s;
   IGEN from_g, to_g;
@@ -1712,8 +1776,18 @@ static void sweep_dirty() {
         }
 
         min_youngest = 0xff;
-        nl = from_g == MAX_TG ? TO_VOIDP(orig_next_loc[from_g][s]) : TO_VOIDP(S_G.next_loc[from_g][s]);
-        ppend = TO_VOIDP(build_ptr(seg, 0));
+        start = build_ptr(seg, 0);
+        ppend = TO_VOIDP(start);
+
+        /* The current allocation pointer, either global or thread-local,
+           may be relevant as the ending point. We assume that thread-local
+           regions for all other threads aer terminated and won't get new
+           allocations while dirty sweeping runs. */
+        next_loc = S_G.next_loc[from_g][s];
+        if (((uptr)next_loc < (uptr)start)
+            || ((uptr)next_loc >= ((uptr)start + bytes_per_segment)))
+          next_loc = NEXTLOC_AT(tc, s, from_g);
+        nl = TO_VOIDP(next_loc);
 
         if (s == space_weakpair) {
           weakseginfo *next = weaksegments_to_resweep;
@@ -1731,7 +1805,6 @@ static void sweep_dirty() {
           if (*dp == -1) {
             pp = ppend;
             ppend += bytes_per_card;
-            if (pp <= nl && nl < ppend) ppend = nl;
             d = dend;
           } else {
             while (d < dend) {
@@ -1981,16 +2054,26 @@ static void sweep_dirty() {
   POP_BACKREFERENCE()
 }
 
-static void resweep_dirty_weak_pairs() {
+static void resweep_dirty_weak_pairs(ptr tc) {
   weakseginfo *ls;
-  ptr *pp, *ppend, *nl, p;
+  ptr *pp, *ppend, p;
   IGEN from_g, min_youngest, youngest;
   uptr d;
+
+  /* Make sure terminator is in place for allocation areas relevant to this thread */
+  for (from_g = MIN_TG; from_g <= static_generation; from_g++) {
+    ptr old;
+    old = S_G.next_loc[from_g][space_weakpair];
+    if (old != (ptr)0)
+      *(ptr*)TO_VOIDP(old) = forward_marker;
+    old = NEXTLOC_AT(tc, space_weakpair, from_g);
+    if (old != (ptr)0)
+      *(ptr*)TO_VOIDP(old) = forward_marker;
+  }
 
   for (ls = weaksegments_to_resweep; ls != NULL; ls = ls->next) {
     seginfo *dirty_si = ls->si;
     from_g = dirty_si->generation;
-    nl = from_g == MAX_TG ? TO_VOIDP(orig_next_loc[from_g][space_weakpair]) : TO_VOIDP(S_G.next_loc[from_g][space_weakpair]);
     ppend = TO_VOIDP(build_ptr(dirty_si->number, 0));
     min_youngest = 0xff;
     d = 0;
@@ -2005,10 +2088,11 @@ static void resweep_dirty_weak_pairs() {
         while (d < dend) {
           pp = ppend;
           ppend += bytes_per_card / sizeof(ptr);
-          if (pp <= nl && nl < ppend) ppend = nl;
           if (dirty_si->dirty_bytes[d] <= MAX_CG) {
             youngest = ls->youngest[d];
             while (pp < ppend) {
+              if (!dirty_si->marked_mask && *pp == forward_marker)
+                break;
               if (!dirty_si->marked_mask || marked(dirty_si, TO_PTR(pp))) {
                 p = *pp;
                 seginfo *si;
@@ -2245,7 +2329,7 @@ static uptr total_size_so_far() {
 }
 #endif
 
-static uptr target_generation_space_so_far() {
+static uptr target_generation_space_so_far(ptr tc) {
   IGEN g;
   ISPC s;
   uptr sz = 0;
@@ -2257,6 +2341,8 @@ static uptr target_generation_space_so_far() {
       sz += S_G.bytes_of_space[g][s];
       if (S_G.next_loc[g][s] != FIX(0))
         sz += (uptr)S_G.next_loc[g][s] - (uptr)S_G.base_loc[g][s];
+      if (NEXTLOC_AT(tc, s, g) != FIX(0))
+        sz += (uptr)NEXTLOC_AT(tc, s, g) - (uptr)BASELOC_AT(tc, s, g);
     }
   }
 

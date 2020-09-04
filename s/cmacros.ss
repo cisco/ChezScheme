@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050325)
+(define-constant scheme-version #x09050326)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1493,6 +1493,9 @@
   ([iptr type] [uptr tc]))
 
 (define-constant virtual-register-count 16)
+(define-constant static-generation 7)
+(define-constant num-thread-local-allocation-segments (fx* (fx+ 1 (constant static-generation))
+                                                           (fx+ 1 (constant max-real-space))))
 
 ;;; make sure gc sweeps all ptrs
 (define-primitive-structure-disps tc typemod
@@ -1567,7 +1570,11 @@
    [ptr parameters]
    [ptr DSTBV]
    [ptr SRCBV]
-   [double fpregs (constant asm-fpreg-max)]))
+   [double fpregs (constant asm-fpreg-max)]
+   [xptr base-loc (constant num-thread-local-allocation-segments)]
+   [xptr next-loc (constant num-thread-local-allocation-segments)]
+   [iptr bytes-left (constant num-thread-local-allocation-segments)]
+   [xptr sweep-loc (constant num-thread-local-allocation-segments)]))
 
 (define tc-field-list
   (let f ([ls (oblist)] [params '()])
@@ -2018,7 +2025,6 @@
 (define-constant default-collect-trip-bytes
   (expt 2 (+ 20 (constant log2-ptr-bytes))))
 (define-constant default-heap-reserve-ratio 1.0)
-(define-constant static-generation 255)
 (define-constant default-max-nonstatic-generation 4)
 
 (constant-case address-bits

@@ -309,13 +309,10 @@ ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path, ptr externals) {
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
- /* acquire mutex in case we modify code pages */
-  tc_mutex_acquire()
   uffo.path = path;
   uffo.type = UFFO_TYPE_FD;
   uffo.fd = fd;
   x = fasl_entry(tc, situation, &uffo, externals);
-  tc_mutex_release()
   return x;
 }
 
@@ -324,11 +321,9 @@ ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path, ptr external
   ptr x; struct unbufFaslFileObj uffo;
 
  /* acquire mutex in case we modify code pages */
-  tc_mutex_acquire()
   uffo.path = path;
   uffo.type = UFFO_TYPE_BV;
   x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo, externals);
-  tc_mutex_release()
   return x;
 }
 
@@ -814,6 +809,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 
             faslin(tc, &rtd_uid, t, pstrbuf, f);
 
+            tc_mutex_acquire()
+
            /* look for rtd on uid's property list */
             plist = SYMSPLIST(rtd_uid);
             for (ls = plist; ls != Snil; ls = Scdr(Scdr(ls))) {
@@ -827,6 +824,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                   if (!rtd_equiv(tmp, rtd))
                     S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf->path);
                 }
+                tc_mutex_release()
                 return;
               }
             }
@@ -839,6 +837,9 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 
            /* register rtd on uid's property list */
             SETSYMSPLIST(rtd_uid, Scons(S_G.rtd_key, Scons(rtd, plist)));
+
+            tc_mutex_release()
+
             return;
         }
         case fasl_type_record: {
@@ -1251,7 +1252,8 @@ static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr si
   }
 }
 
-/* Result: 0 => interned; 1 => replaced; -1 => inconsistent */
+/* Call with tc mutex.
+   Result: 0 => interned; 1 => replaced; -1 => inconsistent */
 int S_fasl_intern_rtd(ptr *x)
 {
   ptr rtd, rtd_uid, plist, ls;

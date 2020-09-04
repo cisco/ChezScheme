@@ -1048,17 +1048,12 @@
     (copy-bytes code-data len)]
    [else
     (define t : ptr (code-reloc _))
-    (case-mode
-     [(sweep sweep-in-old vfasl-sweep)
-      (define m : iptr (reloc-table-size t))
-      (define oldco : ptr (reloc-table-code t))]
-     [else
-      (define m : iptr (cond
-                         [t (reloc-table-size t)]
-                         [else 0]))
-      (define oldco : ptr (cond
-                            [t (reloc-table-code t)]
-                            [else 0]))])
+    (define m : iptr (cond
+                       [t (reloc-table-size t)]
+                       [else 0]))
+    (define oldco : ptr (cond
+                          [t (reloc-table-code t)]
+                          [else 0]))
     (case-mode
      [vfasl-sweep
       (let* ([r_sz : uptr (size_reloc_table m)]

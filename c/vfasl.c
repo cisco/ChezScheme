@@ -464,6 +464,8 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     RECORDINSTTYPE(rtd) = S_G.base_rtd;
     RECORDDESCUID(rtd) = S_G.base_rtd;
 
+    tc_mutex_acquire()
+
     while (1) {
       ptr new_rtd, meta_rtd, parent_rtd;
 
@@ -494,6 +496,8 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         }
       }
     }
+
+    tc_mutex_release()
   }
   
   /* Replace rtd references to interned references */

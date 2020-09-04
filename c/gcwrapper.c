@@ -654,11 +654,20 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                    || s == space_immobile_impure || s == space_count_pure || s == space_count_impure || s == space_closure) {
           /* doesn't handle: space_port, space_continuation, space_code, space_pure_typed_object,
                              space_impure_record, or impure_typed_object */
-          nl = TO_VOIDP(S_G.next_loc[g][s]);
-
           /* check for dangling references */
           pp1 = TO_VOIDP(build_ptr(seg, 0));
           pp2 = TO_VOIDP(build_ptr(seg + 1, 0));
+
+          nl = TO_VOIDP(S_G.next_loc[g][s]);
+          if (!(pp1 <= nl && nl < pp2)) {
+            ptr ls;
+            for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+              ptr t_tc = (ptr)THREADTC(Scar(ls));
+              nl = TO_VOIDP(NEXTLOC_AT(t_tc, s, g));
+              if (pp1 <= nl && nl < pp2)
+                break;
+            }
+          }
           if (pp1 <= nl && nl < pp2) pp2 = nl;
 
           while (pp1 < pp2) {
@@ -670,7 +679,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                   /* skip non-pair part of ephemeron */
                 } else {
                   p = *pp1;
-                  if (p == forward_marker) {
+                  if (!si->marked_mask && (p == forward_marker)) {
                     pp1 = pp2; /* break out of outer loop */
                     break;
                   } else if (!IMMEDIATE(p)) {
@@ -969,9 +978,10 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
    /* now transfer old_g info to new_g, and clear old_g info */
     S_G.bytes_of_generation[new_g] = S_G.bytes_of_generation[old_g]; S_G.bytes_of_generation[old_g] = 0;
     for (s = 0; s <= max_real_space; s += 1) {
-      S_G.first_loc[new_g][s] = S_G.first_loc[old_g][s]; S_G.first_loc[old_g][s] = FIX(0);
+      S_G.to_sweep[new_g][s] = S_G.to_sweep[old_g][s]; S_G.to_sweep[old_g][s] = NULL;
       S_G.base_loc[new_g][s] = S_G.base_loc[old_g][s]; S_G.base_loc[old_g][s] = FIX(0);
       S_G.next_loc[new_g][s] = S_G.next_loc[old_g][s]; S_G.next_loc[old_g][s] = FIX(0);
+      S_G.sweep_loc[new_g][s] = S_G.sweep_loc[old_g][s]; S_G.sweep_loc[old_g][s] = FIX(0);
       S_G.bytes_left[new_g][s] = S_G.bytes_left[old_g][s]; S_G.bytes_left[old_g][s] = 0;
       S_G.bytes_of_space[new_g][s] = S_G.bytes_of_space[old_g][s]; S_G.bytes_of_space[old_g][s] = 0;
       S_G.occupied_segments[new_g][s] = S_G.occupied_segments[old_g][s]; S_G.occupied_segments[old_g][s] = NULL;

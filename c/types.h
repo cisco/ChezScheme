@@ -91,12 +91,28 @@ typedef int IFASLCODE;      /* fasl type codes */
 #define find_room(s, g, t, n, x) find_room_T(s, g, t, n, ALREADY_PTR, x)
 #define find_room_voidp(s, g, n, x) find_room_T(s, g, typemod, n, TO_VOIDP, x)
 
+#define SG_AT_TO_INDEX(s, g) ((g * (1 + max_real_space)) + s)
+
+#define BASELOC_AT(tc, s, g) BASELOC(tc, SG_AT_TO_INDEX(s, g))
+#define NEXTLOC_AT(tc, s, g) NEXTLOC(tc, SG_AT_TO_INDEX(s, g))
+#define BYTESLEFT_AT(tc, s, g) BYTESLEFT(tc, SG_AT_TO_INDEX(s, g))
+#define SWEEPLOC_AT(tc, s, g) SWEEPLOC(tc, SG_AT_TO_INDEX(s, g))
+
+/* inline allocation --- no mutex required */
+/* Like `find_room`, but allocating into thread-local space. */
+#define thread_find_room_g_T(tc, s, g, t, n, T, x) {  \
+    ptr X = NEXTLOC_AT(tc, s, g);                        \
+    NEXTLOC_AT(tc, s, g) = (ptr)((uptr)X + (n));         \
+    if ((BYTESLEFT_AT(tc, s, g) -= (n)) < 0) X = S_find_more_thread_room(tc, s, g, n, X); \
+    (x) = T(TYPE(X, t));                              \
+}
+
+#define thread_find_room_g(tc, s, g, t, n, x) thread_find_room_g_T(tc, s, g, t, n, ALREADY_PTR, x)
+#define thread_find_room_g_voidp(tc, s, g, n, x) thread_find_room_g_T(tc, s, g, typemod, n, TO_VOIDP, x)
+
 /* thread-local inline allocation --- no mutex required */
-/* thread_find_room allocates n bytes in the local allocation area of
- * the thread (hence space new, generation zero) into destination x, tagged
- * with type t, punting to find_more_room if no space is left in the current
- * allocation area.  n is assumed to be an integral multiple of the object
- * alignment. */
+/* Like `thread_find_room_g`, but always `space_new` and generation 0,
+   so using the same bump pointer as most new allocation */
 #define thread_find_room_T(tc, t, n, T, x) {     \
   ptr _tc = tc;\
   uptr _ap = (uptr)AP(_tc);\
@@ -151,7 +167,9 @@ typedef struct _seginfo {
   octet *list_bits;                         /* for `$list-bits-ref` and `$list-bits-set!` */
   uptr number;                              /* the segment number */
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
-  struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs */
+  struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs) */
+  struct _seginfo *sweep_next;              /* next in list of segments allocated during GC => need to sweep */
+  ptr sweep_start;                          /* address within segment to start sweep */
   struct _seginfo **dirty_prev;             /* pointer to the next pointer on the previous seginfo in the DirtySegments list */
   struct _seginfo *dirty_next;              /* pointer to the next seginfo on the DirtySegments list */
   ptr trigger_ephemerons;                   /* ephemerons to re-check if object in segment is copied out */

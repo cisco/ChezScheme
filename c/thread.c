@@ -113,8 +113,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
  /* S_thread had better not do thread-local allocation */
   thread = S_thread(tc);
 
- /* use S_cons_in to avoid thread-local allocation */
-  S_threads = S_cons_in(space_new, 0, thread, S_threads);
+  S_threads = S_cons_in_global(space_new, 0, thread, S_threads);
   S_nthreads += 1;
   SETSYMVAL(S_G.active_threads_id,
    FIX(UNFIX(SYMVAL(S_G.active_threads_id)) + 1));
@@ -128,6 +127,13 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   GUARDIANENTRIES(tc) = Snil;
 
   LZ4OUTBUFFER(tc) = 0;
+
+  for (i = 0; i < num_thread_local_allocation_segments; i++) {
+    BASELOC(tc, i) = (ptr)0;
+    NEXTLOC(tc, i) = (ptr)0;
+    BYTESLEFT(tc, i) = 0;
+    SWEEPLOC(tc, i) = (ptr)0;
+  }
 
   tc_mutex_release()
 
@@ -206,6 +212,15 @@ static IBOOL destroy_thread(tc) ptr tc; {
 
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr *)EAP(tc), (ptr *)REAL_EAP(tc));
+
+     /* move thread-local allocation to global space */
+      {
+        ISPC s; IGEN g;
+        for (g = 0; g <= static_generation; g++)
+          for (s = 0; s <= max_real_space; s++)
+            if (NEXTLOC_AT(tc, s, g))
+              S_close_off_thread_local_segment(tc, s, g);
+      }
 
      /* process guardian entries */
       {
@@ -314,7 +329,7 @@ void S_mutex_acquire(m) scheme_mutex_t *m; {
     m->count = count + 1;
     return;
   }
-    
+
   if ((status = s_thread_mutex_lock(&m->pmutex)) != 0)
     S_error1("mutex-acquire", "failed: ~a", S_strerror(status));
   m->owner = self;
@@ -476,4 +491,3 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   }
 }
 #endif /* PTHREADS */
-

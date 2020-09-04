@@ -274,11 +274,11 @@ effectively delays collection of older generations indefinitely.
 
 This parameter determines the maximum nonstatic generation, hence the
 total number of generations, currently in use.
-Its value is an exact integer in the range 1 through 254.
+Its value is an exact integer in the range 1 through 6.
 When set to 1, only two nonstatic generations are used; when set to 2,
 three nonstatic generations are used, and so on.
-When set to 254, 255 nonstatic generations are used, plus the single
-static generation for a total of 256 generations.
+When set to 6, 7 nonstatic generations are used, plus the single
+static generation for a total of 8 generations.
 Increasing the number of generations effectively decreases how often old
 objects are collected, potentially decreasing collection overhead but
 potentially increasing the number of inaccessible objects retained in the

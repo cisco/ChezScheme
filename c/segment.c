@@ -250,6 +250,7 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
 #endif
   si->counting_mask = NULL;
   si->measured_mask = NULL;
+  si->sweep_next = NULL;
 }
 
 iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {

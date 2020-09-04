@@ -191,9 +191,7 @@ static ptr s_weak_pairp(p) ptr p; {
 static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
   ptr p;
 
-  tc_mutex_acquire()
   p = S_ephemeron_cons_in(0, car, cdr);
-  tc_mutex_release()
 
   return p;
 }

@@ -7568,7 +7568,7 @@ format.mo:Expected error in mat format-dollar: "format: expected real number for
 7.mo:Expected error in mat exit: "exit: unexpected return from exit handler".
 7.mo:Expected error in mat abort: "abort: unexpected return from abort handler".
 7.mo:Expected error in mat collect: "collect-maximum-generation: invalid generation -1".
-7.mo:Expected error in mat collect: "collect-maximum-generation: 10000 exceeds maximum supported value 254".
+7.mo:Expected error in mat collect: "collect-maximum-generation: 10000 exceeds maximum supported value 6".
 7.mo:Expected error in mat collect: "collect-maximum-generation: invalid generation static".
 7.mo:Expected error in mat collect: "release-minimum-generation: invalid generation -1".
 7.mo:Expected error in mat collect: "release-minimum-generation: new release minimum generation must not be be greater than collect-maximum-generation".

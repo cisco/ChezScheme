@@ -51,7 +51,6 @@ static void split(k, s) ptr k; ptr *s; {
     seginfo *si;
     ISPC spc;
 
-    tc_mutex_acquire()
   /* set m to size of lower piece, n to size of upper piece */
     m = (uptr)TO_PTR(s) - (uptr)CONTSTACK(k);
     n = CONTCLENGTH(k) - m;
@@ -73,7 +72,6 @@ static void split(k, s) ptr k; ptr *s; {
     CONTLENGTH(k) = CONTCLENGTH(k) = n;
     CONTSTACK(k) = TO_PTR(s);
     *s = TO_PTR(DOUNDERFLOW);
-    tc_mutex_release()
 }
 
 /* We may come in to S_split_and_resize with a multi-shot contination whose
