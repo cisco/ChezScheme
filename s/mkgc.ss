@@ -221,7 +221,8 @@
               (define stk : ptr (continuation-stack _))
               (when (&& (!= stk (cast ptr 0)) (OLDSPACE stk))
                 (set! (continuation-stack _)
-                      (copy_stack (continuation-stack _)
+                      (copy_stack _tc_
+                                  (continuation-stack _)
                                   (& (continuation-stack-length _))
                                   (continuation-stack-clength _))))]
              [else])
@@ -853,7 +854,7 @@
               (let* ([grtd : IGEN (GENERATION c_rtd)])
                 (set! (array-ref (array-ref S_G.countof grtd) countof_rtd_counts) += 1)
                 ;; Allocate counts struct in same generation as rtd. Initialize timestamp & counts.
-                (find_room space_data grtd type_typed_object size_rtd_counts counts)
+                (thread_find_room_g _tc_ space_data grtd type_typed_object size_rtd_counts counts)
                 (set! (rtd-counts-type counts) type_rtd_counts)
                 (set! (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
                 (let* ([g : IGEN 0])
@@ -916,7 +917,8 @@
           (when (OLDSPACE old_stack)
             (let* ([clength : iptr (- (cast uptr (SFP tc)) (cast uptr old_stack))])
               ;; Include SFP[0], which contains the return address
-              (set! (tc-scheme-stack tc) (copy_stack old_stack
+              (set! (tc-scheme-stack tc) (copy_stack _tc_
+                                                     old_stack
                                                      (& (tc-scheme-stack-size tc))
                                                      (+ clength (sizeof ptr))))
               (set! (tc-sfp tc) (cast ptr (+ (cast uptr (tc-scheme-stack tc)) clength)))
@@ -1107,10 +1109,10 @@
              (cond
                [(-> t_si use_marks)
                 ;; Assert: (! (marked t_si t))
-                (mark_typemod_data_object t n t_si)]
+                (mark_typemod_data_object _tc_ t n t_si)]
                [else
                 (let* ([oldt : ptr t])
-                  (find_room space_data from_g typemod n t)
+                  (thread_find_room_g _tc_ space_data from_g typemod n t)
                   (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
@@ -1348,11 +1350,7 @@
                [else "void"])
              name
              (case (lookup 'mode config)
-               [(sweep)
-                (if (and (type-included? 'code config)
-                         (not (lookup 'as-dirty? config #f)))
-                    "ptr tc_in, "
-                    "")]
+               [(copy mark sweep sweep-in-old measure) "ptr tc_in, "]
                [(vfasl-copy vfasl-sweep)
                 "vfasl_info *vfi, "]
                [else ""])
@@ -1580,7 +1578,7 @@
               [(and preserve-flonum-eq?
                     (eq? 'copy (lookup 'mode config)))
                (code (copy-statement field config)
-                     "flonum_set_forwarded(p, si);"
+                     "flonum_set_forwarded(tc_in, p, si);"
                      "FLONUM_FWDADDRESS(p) = new_p;"
                      (statements (cdr l) config))]
               [else
@@ -1730,7 +1728,7 @@
                        (hashtable-set! (lookup 'used config) 'p_sz #t)
                        (code (format "~a, ~a, p_sz, new_p);"
                                      (case mode
-                                       [(copy) "find_room(p_spc, tg"]
+                                       [(copy) "thread_find_room_g(tc_in, p_spc, tg"]
                                        [(vfasl-copy) "FIND_ROOM(vfi, p_vspc"])
                                      (as-c 'type (lookup 'basetype config)))
                              (statements (let ([extra (lookup 'copy-extra config #f)])
@@ -1941,6 +1939,7 @@
            [(copy) "tg"]
            [(mark) "TARGET_GENERATION(si)"]
            [else "target_generation"])]
+        [`_tc_ "tc_in"]
         [`_backreferences?_
          (if (lookup 'maybe-backreferences? config #f)
              "BACKREFERENCES_ENABLED"
@@ -2093,7 +2092,7 @@
      "{ /* measure */"
      (format "  ptr r_p = ~a;" e)
      "  if (!IMMEDIATE(r_p))"
-     "    push_measure(r_p);"
+     "    push_measure(tc_in, r_p);"
      "}"))
 
   (define (copy-statement field config)
@@ -2197,7 +2196,7 @@
                "  while (seg < end_seg) {"
                "    mark_si = SegInfo(seg);"
                "    g = mark_si->generation;"
-               "    if (!fully_marked_mask[g]) init_fully_marked_mask(g);"
+               "    if (!fully_marked_mask[g]) init_fully_marked_mask(tc_in, g);"
                "    mark_si->marked_mask = fully_marked_mask[g];"
                "    mark_si->marked_count = bytes_per_segment;"
                "    seg++;"
@@ -2287,7 +2286,7 @@
   (define (ensure-segment-mark-mask si inset flags)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  find_room_voidp(space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
+     (format "~a  thread_find_room_g_voidp(tc_in, space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
              inset si si)
      (if (memq 'no-clear flags)
          (format "~a  /* no clearing needed */" inset)
@@ -2509,7 +2508,7 @@
                                (counts? ,count?))))
        (print-code (generate "object_directly_refers_to_self"
                              `((mode self-test))))
-       (print-code (code "static void mark_typemod_data_object(ptr p, uptr p_sz, seginfo *si)"
+       (print-code (code "static void mark_typemod_data_object(ptr tc_in, ptr p, uptr p_sz, seginfo *si)"
                          (code-block
                           (ensure-segment-mark-mask "si" "" '())
                           (mark-statement '(one-bit no-sweep)
