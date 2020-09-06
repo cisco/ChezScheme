@@ -55,7 +55,7 @@ static void main_init() {
   /* create dependency for linker */
     scheme_statics();
 
-  /* force thread inline allocation to go through find_room until ready */
+  /* force thread inline newspace allocation to go through find_room until ready */
     AP(tc) = (ptr)0;
     EAP(tc) = (ptr)0;
     REAL_EAP(tc) = (ptr)0;
@@ -66,8 +66,8 @@ static void main_init() {
     if (S_boot_time) S_G.protect_next = 0;
 
     S_segment_init();
-    S_alloc_init();
     S_thread_init();
+    S_alloc_init();
     S_intern_init();
     S_gc_init();
     S_number_init();

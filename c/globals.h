@@ -40,6 +40,13 @@ EXTERN scheme_mutex_t S_tc_mutex;
 EXTERN s_thread_cond_t S_collect_cond;
 EXTERN s_thread_cond_t S_collect_thread0_cond;
 EXTERN INT S_tc_mutex_depth;
+EXTERN scheme_mutex_t S_gc_tc_mutex;
+EXTERN IBOOL S_use_gc_tc_mutex;
+EXTERN int S_collect_waiting_threads;
+EXTERN ptr S_collect_waiting_tcs[maximum_parallel_collect_threads];
+# ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
+EXTERN s_thread_mutex_t S_implicit_mutex;
+# endif
 #endif
 
 /* segment.c */
@@ -96,11 +103,6 @@ EXTERN struct S_G_struct {
   /* alloc.c */
     ptr *protected[max_protected];
     uptr protect_next;
-    seginfo *to_sweep[static_generation+1][max_real_space+1];
-    ptr base_loc[static_generation+1][max_real_space+1];
-    ptr next_loc[static_generation+1][max_real_space+1];
-    ptr sweep_loc[static_generation+1][max_real_space+1];
-    iptr bytes_left[static_generation+1][max_real_space+1];
     uptr bytes_of_space[static_generation+1][max_real_space+1];
     uptr bytes_of_generation[static_generation+1];
     uptr bitmask_overhead[static_generation+1];

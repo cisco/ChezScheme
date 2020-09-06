@@ -24,14 +24,16 @@ void S_alloc_init() {
     ISPC s; IGEN g; UINT i;
 
     if (S_boot_time) {
+      ptr tc = TO_PTR(S_G.thread_context);
+
       /* reset the allocation tables */
         for (g = 0; g <= static_generation; g++) {
             S_G.bytes_of_generation[g] = 0;
             for (s = 0; s <= max_real_space; s++) {
-                S_G.base_loc[g][s] = FIX(0);
-                S_G.next_loc[g][s] = FIX(0);
-                S_G.bytes_left[g][s] = 0;
-                S_G.bytes_of_space[g][s] = 0;
+              BASELOC_AT(tc, s, g) = FIX(0);
+              NEXTLOC_AT(tc, s, g) = FIX(0);
+              BYTESLEFT_AT(tc, s, g) = 0;
+              S_G.bytes_of_space[g][s] = 0;
             }
         }
 
@@ -48,35 +50,35 @@ void S_alloc_init() {
         S_G.nonprocedure_code = FIX(0);
 
         S_protect(&S_G.null_vector);
-        find_room(space_new, 0, type_typed_object, size_vector(0), S_G.null_vector);
+        find_room(tc, space_new, 0, type_typed_object, size_vector(0), S_G.null_vector);
         VECTTYPE(S_G.null_vector) = (0 << vector_length_offset) | type_vector;
 
         S_protect(&S_G.null_fxvector);
-        find_room(space_new, 0, type_typed_object, size_fxvector(0), S_G.null_fxvector);
+        find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), S_G.null_fxvector);
         FXVECTOR_TYPE(S_G.null_fxvector) = (0 << fxvector_length_offset) | type_fxvector;
 
         S_protect(&S_G.null_bytevector);
-        find_room(space_new, 0, type_typed_object, size_bytevector(0), S_G.null_bytevector);
+        find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), S_G.null_bytevector);
         BYTEVECTOR_TYPE(S_G.null_bytevector) = (0 << bytevector_length_offset) | type_bytevector;
 
         S_protect(&S_G.null_string);
-        find_room(space_new, 0, type_typed_object, size_string(0), S_G.null_string);
+        find_room(tc, space_new, 0, type_typed_object, size_string(0), S_G.null_string);
         STRTYPE(S_G.null_string) = (0 << string_length_offset) | type_string;
 
         S_protect(&S_G.null_immutable_vector);
-        find_room(space_new, 0, type_typed_object, size_vector(0), S_G.null_immutable_vector);
+        find_room(tc, space_new, 0, type_typed_object, size_vector(0), S_G.null_immutable_vector);
         VECTTYPE(S_G.null_immutable_vector) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
 
         S_protect(&S_G.null_immutable_fxvector);
-        find_room(space_new, 0, type_typed_object, size_fxvector(0), S_G.null_immutable_fxvector);
+        find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), S_G.null_immutable_fxvector);
         FXVECTOR_TYPE(S_G.null_immutable_fxvector) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
 
         S_protect(&S_G.null_immutable_bytevector);
-        find_room(space_new, 0, type_typed_object, size_bytevector(0), S_G.null_immutable_bytevector);
+        find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), S_G.null_immutable_bytevector);
         BYTEVECTOR_TYPE(S_G.null_immutable_bytevector) = (0 << bytevector_length_offset) | type_bytevector | bytevector_immutable_flag;
 
         S_protect(&S_G.null_immutable_string);
-        find_room(space_new, 0, type_typed_object, size_string(0), S_G.null_immutable_string);
+        find_room(tc, space_new, 0, type_typed_object, size_string(0), S_G.null_immutable_string);
         STRTYPE(S_G.null_immutable_string) = (0 << string_length_offset) | type_string | string_immutable_flag;
     }
 }
@@ -101,7 +103,7 @@ void S_reset_scheme_stack(tc, n) ptr tc; iptr n; {
         if (*x == snil) {
             if (n < default_stack_size) n = default_stack_size;
           /* stacks are untyped objects */
-            find_room(space_new, 0, typemod, n, SCHEMESTACK(tc));
+            find_room(tc, space_new, 0, typemod, n, SCHEMESTACK(tc));
             break;
         }
         if ((m = CACHEDSTACKSIZE(*x)) >= n) {
@@ -150,12 +152,10 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   while (g <= gmax) {
     n += S_G.bytesof[g][countof_phantom];
     for (s = smin; s <= smax; s++) {
-      ptr next_loc = S_G.next_loc[g][s];
+      ptr next_loc;
      /* add in bytes previously recorded */
       n += S_G.bytes_of_space[g][s];
      /* add in bytes in active segments */
-      if (next_loc != FIX(0))
-        n += (uptr)next_loc - (uptr)S_G.base_loc[g][s];
       next_loc = NEXTLOC_AT(tc, s, g);
       if (next_loc != FIX(0))
         n += (uptr)next_loc - (uptr)BASELOC_AT(tc, s, g);
@@ -186,27 +186,8 @@ static void maybe_fire_collector() {
     S_fire_collector();
 }
 
-static ptr more_room_segment(ISPC s, IGEN g, iptr n, iptr *_new_bytes)
-{
-  iptr nsegs, seg;
-  ptr new;
-
-  S_pants_down += 1;
-
-  nsegs = (uptr)(n + ptr_bytes + bytes_per_segment - 1) >> segment_offset_bits;
-
- /* block requests to minimize fragmentation and improve cache locality */
-  if (s == space_code && nsegs < 16) nsegs = 16;
-
-  seg = S_find_segments(s, g, nsegs);
-  new = build_ptr(seg, 0);
-
-  *_new_bytes = nsegs * bytes_per_segment;
-
-  return new;
-}
-
-static void close_off_segment(ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN g)
+/* suitable mutex (either tc_mutex or gc_tc_mutex) must be held */
+static void close_off_segment(ptr tc, ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN g)
 {
   if (base_loc) {
     seginfo *si;
@@ -219,84 +200,66 @@ static void close_off_segment(ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN
     /* lay down an end-of-segment marker */
     *(ptr*)TO_VOIDP(old) = forward_marker;
 
-    /* add to sweep list */
+    /* in case this is during a GC, add to sweep list */
     si = SegInfo(addr_get_segment(base_loc));
-    si->sweep_next = S_G.to_sweep[g][s];
     si->sweep_start = sweep_loc;
-    S_G.to_sweep[g][s] = si;
+    si->sweep_next = TO_VOIDP(SWEEPNEXT_AT(tc, s, g));
+    SWEEPNEXT_AT(tc, s, g) = TO_PTR(si);
   }
 }
 
-static void more_room_done(IGEN g)
-{
-  if (g == 0 && S_pants_down == 1) maybe_fire_collector();
-
-  S_pants_down -= 1;
-}
-
-/* find_more_room
- * S_find_more_room is called from the macro find_room when
- * the current segment is too full to fit the allocation.
- *
- * A forward_marker followed by a pointer to
- * the newly obtained segment is placed at next_loc to show
- * gc where the end of this segment is and where the next
- * segment of this type resides.  Allocation occurs from the
- * beginning of the newly obtained segment.  The need for the
- * eos marker explains the ptr_bytes byte factor in
- * S_find_more_room.
- */
-/* S_find_more_room is always called with mutex */
-ptr S_find_more_room(s, g, n, old) ISPC s; IGEN g; iptr n; ptr old; {
-  ptr new;
-  iptr new_bytes;
-  
-  close_off_segment(old, S_G.base_loc[g][s], S_G.sweep_loc[g][s], s, g);
-
-  new = more_room_segment(s, g, n, &new_bytes);
-
-  /* base address of current block of segments to track amount of allocation
-     and to register a closed-off segment in the sweep list */
-  S_G.base_loc[g][s] = new;
-
-  /* in case a GC has started: */
-  S_G.sweep_loc[g][s] = new;
-
-  S_G.next_loc[g][s] = (ptr)((uptr)new + n);
-  S_G.bytes_left[g][s] = (new_bytes - n) - ptr_bytes;
-
-  more_room_done(g);
-  
-  return new;
-}
-
 ptr S_find_more_thread_room(ptr tc, ISPC s, IGEN g, iptr n, ptr old) {
+  iptr nsegs, seg;
   ptr new;
   iptr new_bytes;
 
-  tc_mutex_acquire()
+#ifdef PTHREADS
+  if (S_use_gc_tc_mutex)
+    gc_tc_mutex_acquire();
+  else
+    tc_mutex_acquire();
+#else
+  tc_mutex_acquire();
+#endif
+  
+  close_off_segment(tc, old, BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
 
-  /* closing off segment effectively moves to global space: */
-  close_off_segment(old, BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
+  S_pants_down += 1;
 
-  new = more_room_segment(s, g, n, &new_bytes);
+  nsegs = (uptr)(n + ptr_bytes + bytes_per_segment - 1) >> segment_offset_bits;
+
+ /* block requests to minimize fragmentation and improve cache locality */
+  if (s == space_code && nsegs < 16) nsegs = 16;
+
+  seg = S_find_segments(tc, s, g, nsegs);
+  new = build_ptr(seg, 0);
+
+  new_bytes = nsegs * bytes_per_segment;
 
   BASELOC_AT(tc, s, g) = new;
   SWEEPLOC_AT(tc, s, g) = new;
   BYTESLEFT_AT(tc, s, g) = (new_bytes - n) - ptr_bytes;
   NEXTLOC_AT(tc, s, g) = (ptr)((uptr)new + n);
 
-  more_room_done(g);
+  if (g == 0 && S_pants_down == 1) maybe_fire_collector();
 
-  tc_mutex_release()
+  S_pants_down -= 1;
 
+#ifdef PTHREADS
+  if (S_use_gc_tc_mutex)
+    gc_tc_mutex_release();
+  else
+    tc_mutex_release();
+#else
+  tc_mutex_release();
+#endif
+  
   return new;
 }
 
 /* tc_mutex must be held */
 void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
-  /* closing off segment effectively moves to global space: */
-  close_off_segment(NEXTLOC_AT(tc, s, g), BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
+  close_off_segment(tc, NEXTLOC_AT(tc, s, g), BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
 
   BASELOC_AT(tc, s, g) = (ptr)0;
   BYTESLEFT_AT(tc, s, g) = 0;
@@ -319,14 +282,14 @@ void S_reset_allocation_pointer(tc) ptr tc; {
 
   S_pants_down += 1;
 
-  seg = S_find_segments(space_new, 0, 1);
+  seg = S_find_segments(tc, space_new, 0, 1);
 
   /* NB: if allocate_segments didn't already ensure we don't use the last segment
      of memory, we'd have to reject it here so cp2-alloc can avoid a carry check for
      small allocation requests, using something like this:
 
      if (seg == (((uptr)1 << (ptr_bits - segment_offset_bits)) - 1))
-       seg = S_find_segments(space_new, 0, 1);
+       seg = S_find_segments(tc, space_new, 0, 1);
   */
 
   S_G.bytes_of_space[0][space_new] += bytes_per_segment;
@@ -340,20 +303,23 @@ void S_reset_allocation_pointer(tc) ptr tc; {
   S_pants_down -= 1;
 }
 
-void S_record_new_dirty_card(ptr *ppp, IGEN to_g) {
+void S_record_new_dirty_card(ptr tc, ptr *ppp, IGEN to_g) {
   uptr card = (uptr)TO_PTR(ppp) >> card_offset_bits;
+  dirtycardinfo *ndc;
 
-  dirtycardinfo *ndc = S_G.new_dirty_cards;
+  gc_tc_mutex_acquire();
+  ndc = S_G.new_dirty_cards;
   if (ndc != NULL && ndc->card == card) {
     if (to_g < ndc->youngest) ndc->youngest = to_g;
   } else {
     dirtycardinfo *next = ndc;
-    find_room_voidp(space_new, 0, ptr_align(sizeof(dirtycardinfo)), ndc);
+    find_room_voidp(tc, space_new, 0, ptr_align(sizeof(dirtycardinfo)), ndc);
     ndc->card = card;
     ndc->youngest = to_g;
     ndc->next = next;
     S_G.new_dirty_cards = ndc;
   }
+  gc_tc_mutex_release();
 }
 
 FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g, IGEN to_g) {
@@ -384,7 +350,7 @@ void S_dirty_set(ptr *loc, ptr x) {
       if (!IMMEDIATE(x)) {
         seginfo *t_si = SegInfo(ptr_get_segment(x));
         if (t_si->generation < si->generation)
-          S_record_new_dirty_card(loc, t_si->generation);
+          S_record_new_dirty_card(get_thread_context(), loc, t_si->generation);
       }
     } else {
       IGEN from_g = si->generation;
@@ -445,7 +411,7 @@ void S_scan_remembered_set() {
   ptr tc = get_thread_context();
   uptr ap, eap, real_eap;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   ap = (uptr)AP(tc);
   eap = (uptr)EAP(tc);
@@ -464,7 +430,7 @@ void S_scan_remembered_set() {
     S_reset_allocation_pointer(tc);
   }
 
-  tc_mutex_release()
+  tc_mutex_release();
 }
 
 /* S_get_more_room is called from genereated machine code when there is
@@ -492,7 +458,14 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
   eap = (uptr)EAP(tc);
   real_eap = (uptr)REAL_EAP(tc);
 
-  tc_mutex_acquire()
+#ifdef PTHREADS
+  if (S_use_gc_tc_mutex)
+    gc_tc_mutex_acquire();
+  else
+    tc_mutex_acquire();
+#else
+  tc_mutex_acquire();
+#endif
 
   S_scan_dirty(TO_VOIDP(eap), TO_VOIDP(real_eap));
   eap = real_eap;
@@ -512,7 +485,7 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
   } else if (eap - ap > alloc_waste_maximum) {
     AP(tc) = (ptr)ap;
     EAP(tc) = (ptr)eap;
-    find_room(space_new, 0, type, size, x);
+    find_room(tc, space_new, 0, type, size, x);
   } else {
     uptr bytes = eap - ap;
     S_G.bytes_of_space[0][space_new] -= bytes;
@@ -523,11 +496,18 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
       x = TYPE(ap, type);
       AP(tc) = (ptr)(ap + size);
     } else {
-      find_room(space_new, 0, type, size, x);
+      find_room(tc, space_new, 0, type, size, x);
     }
   }
 
-  tc_mutex_release()
+#ifdef PTHREADS
+  if (S_use_gc_tc_mutex)
+    gc_tc_mutex_release();
+  else
+    tc_mutex_release();
+#else
+  tc_mutex_release();
+#endif
 
   return x;
 }
@@ -550,16 +530,12 @@ void S_list_bits_set(p, bits) ptr p; iptr bits; {
 
   if (!si->list_bits) {
     void *list_bits;
+    ptr tc = get_thread_context();
 
-    if (si->generation == 0) {
-      ptr tc = get_thread_context();
-      thread_find_room_voidp(tc, ptr_align(segment_bitmap_bytes), list_bits);
-    } else {
-      tc_mutex_acquire()
-
-      find_room_voidp(space_data, si->generation, ptr_align(segment_bitmap_bytes), list_bits);
-      tc_mutex_release()
-    }
+    if (si->generation == 0)
+      newspace_find_room_voidp(tc, ptr_align(segment_bitmap_bytes), list_bits);
+    else
+      find_room_voidp(tc, space_data, si->generation, ptr_align(segment_bitmap_bytes), list_bits);
 
     memset(list_bits, 0, segment_bitmap_bytes);
 
@@ -576,21 +552,10 @@ void S_list_bits_set(p, bits) ptr p; iptr bits; {
   si->list_bits[segment_bitmap_byte(p)] |= segment_bitmap_bits(p, bits);
 }
 
-/* tc_mutex must be held */
-ptr S_cons_in_global(s, g, car, cdr) ISPC s; IGEN g; ptr car, cdr; {
+ptr S_cons_in(tc, s, g, car, cdr) ptr tc; ISPC s; IGEN g; ptr car, cdr; {
     ptr p;
 
-    find_room(s, g, type_pair, size_pair, p);
-    INITCAR(p) = car;
-    INITCDR(p) = cdr;
-    return p;
-}
-
-ptr S_cons_in(s, g, car, cdr) ISPC s; IGEN g; ptr car, cdr; {
-    ptr tc = get_thread_context();
-    ptr p;
-
-    thread_find_room_g(tc, s, g, type_pair, size_pair, p);
+    find_room(tc, s, g, type_pair, size_pair, p);
     INITCAR(p) = car;
     INITCDR(p) = cdr;
     return p;
@@ -600,7 +565,7 @@ ptr Scons(car, cdr) ptr car, cdr; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_pair, size_pair, p);
+    newspace_find_room(tc, type_pair, size_pair, p);
     INITCAR(p) = car;
     INITCDR(p) = cdr;
     return p;
@@ -610,7 +575,7 @@ ptr S_ephemeron_cons_in(gen, car, cdr) IGEN gen; ptr car, cdr; {
   ptr p;
   ptr tc = get_thread_context();
 
-  thread_find_room_g(tc, space_ephemeron, gen, type_pair, size_ephemeron, p);
+  find_room(tc, space_ephemeron, gen, type_pair, size_ephemeron, p);
   INITCAR(p) = car;
   INITCDR(p) = cdr;
   EPHEMERONPREVREF(p) = 0;
@@ -623,12 +588,10 @@ ptr S_box2(ref, immobile) ptr ref; IBOOL immobile; {
     ptr tc = get_thread_context();
     ptr p;
 
-    if (immobile) {
-      tc_mutex_acquire()
-      find_room(space_immobile_impure, 0, type_typed_object, size_box, p);
-      tc_mutex_release()
-    } else
-      thread_find_room(tc, type_typed_object, size_box, p);
+    if (immobile)
+      find_room(tc, space_immobile_impure, 0, type_typed_object, size_box, p);
+    else
+      newspace_find_room(tc, type_typed_object, size_box, p);
     BOXTYPE(p) = type_box;
     INITBOXREF(p) = ref;
     return p;
@@ -642,7 +605,7 @@ ptr S_symbol(name) ptr name; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_symbol, size_symbol, p);
+    newspace_find_room(tc, type_symbol, size_symbol, p);
   /* changes here should be reflected in the oblist collection code in gc.c */
     INITSYMVAL(p) = sunbound;
     INITSYMCODE(p,S_G.nonprocedure_code);
@@ -659,7 +622,7 @@ ptr S_rational(n, d) ptr n, d; {
         ptr tc = get_thread_context();
         ptr p;
 
-        thread_find_room(tc, type_typed_object, size_ratnum, p);
+        newspace_find_room(tc, type_typed_object, size_ratnum, p);
         RATTYPE(p) = type_ratnum;
         RATNUM(p) = n;
         RATDEN(p) = d;
@@ -671,7 +634,7 @@ ptr S_tlc(ptr keyval, ptr ht, ptr next) {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, size_tlc, p);
+    newspace_find_room(tc, type_typed_object, size_tlc, p);
     TLCTYPE(p) = type_tlc;
     INITTLCKEYVAL(p) = keyval;
     INITTLCHT(p) = ht;
@@ -679,8 +642,7 @@ ptr S_tlc(ptr keyval, ptr ht, ptr next) {
     return p;
 }
 
-/* S_vector_in is always called with mutex */
-ptr S_vector_in(s, g, n) ISPC s; IGEN g; iptr n; {
+ptr S_vector_in(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
     ptr p; iptr d;
 
     if (n == 0) return S_G.null_vector;
@@ -689,8 +651,7 @@ ptr S_vector_in(s, g, n) ISPC s; IGEN g; iptr n; {
         S_error("", "invalid vector size request");
 
     d = size_vector(n);
-   /* S_vector_in always called with mutex */
-    find_room(s, g, type_typed_object, d, p);
+    find_room(tc, s, g, type_typed_object, d, p);
     VECTTYPE(p) = (n << vector_length_offset) | type_vector;
     return p;
 }
@@ -707,7 +668,7 @@ ptr S_vector(n) iptr n; {
     tc = get_thread_context();
 
     d = size_vector(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    newspace_find_room(tc, type_typed_object, d, p);
     VECTTYPE(p) = (n << vector_length_offset) | type_vector;
     return p;
 }
@@ -724,7 +685,7 @@ ptr S_fxvector(n) iptr n; {
     tc = get_thread_context();
 
     d = size_fxvector(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    newspace_find_room(tc, type_typed_object, d, p);
     FXVECTOR_TYPE(p) = (n << fxvector_length_offset) | type_fxvector;
     return p;
 }
@@ -745,40 +706,42 @@ ptr S_bytevector2(n, immobile) iptr n; IBOOL immobile; {
     tc = get_thread_context();
 
     d = size_bytevector(n);
-    if (immobile) {
-      tc_mutex_acquire()
-      find_room(space_immobile_data, 0, type_typed_object, d, p);
-      tc_mutex_release()
-    } else
-      thread_find_room(tc, type_typed_object, d, p);
+    if (immobile)
+      find_room(tc, space_immobile_data, 0, type_typed_object, d, p);
+    else
+      newspace_find_room(tc, type_typed_object, d, p);
     BYTEVECTOR_TYPE(p) = (n << bytevector_length_offset) | type_bytevector;
     return p;
 }
 
 ptr S_null_immutable_vector() {
+  ptr tc = get_thread_context();
   ptr v;
-  find_room(space_new, 0, type_typed_object, size_vector(0), v);
+  find_room(tc, space_new, 0, type_typed_object, size_vector(0), v);
   VECTTYPE(v) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
   return v;
 }
 
 ptr S_null_immutable_fxvector() {
+  ptr tc = get_thread_context();
   ptr v;
-  find_room(space_new, 0, type_typed_object, size_fxvector(0), v);
+  find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), v);
   VECTTYPE(v) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
   return v;
 }
 
 ptr S_null_immutable_bytevector() {
+  ptr tc = get_thread_context();
   ptr v;
-  find_room(space_new, 0, type_typed_object, size_bytevector(0), v);
+  find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), v);
   VECTTYPE(v) = (0 << bytevector_length_offset) | type_bytevector | bytevector_immutable_flag;
   return v;
 }
 
 ptr S_null_immutable_string() {
+  ptr tc = get_thread_context();
   ptr v;
-  find_room(space_new, 0, type_typed_object, size_string(0), v);
+  find_room(tc, space_new, 0, type_typed_object, size_string(0), v);
   VECTTYPE(v) = (0 << string_length_offset) | type_string | string_immutable_flag;
   return v;
 }
@@ -791,7 +754,7 @@ ptr S_stencil_vector(mask) uptr mask; {
     tc = get_thread_context();
 
     d = size_stencil_vector(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    newspace_find_room(tc, type_typed_object, d, p);
     VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type_stencil_vector;
     return p;
 }
@@ -800,7 +763,7 @@ ptr S_record(n) iptr n; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, n, p);
+    newspace_find_room(tc, type_typed_object, n, p);
     return p;
 }
 
@@ -809,7 +772,7 @@ ptr S_closure(cod, n) ptr cod; iptr n; {
     ptr p; iptr d;
 
     d = size_closure(n);
-    thread_find_room(tc, type_closure, d, p);
+    newspace_find_room(tc, type_closure, d, p);
     CLOSENTRY(p) = cod;
     return p;
 }
@@ -820,7 +783,7 @@ ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders, at
     ptr p;
     ptr tc = get_thread_context();
 
-    thread_find_room_g(tc, s, g, type_closure, size_continuation, p);
+    find_room(tc, s, g, type_closure, size_continuation, p);
     CLOSENTRY(p) = nuate;
     CONTSTACK(p) = stack;
     CONTLENGTH(p) = length;
@@ -836,7 +799,7 @@ ptr Sflonum(x) double x; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_flonum, size_flonum, p);
+    newspace_find_room(tc, type_flonum, size_flonum, p);
     FLODAT(p) = x;
     return p;
 }
@@ -845,21 +808,19 @@ ptr S_inexactnum(rp, ip) double rp, ip; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, size_inexactnum, p);
+    newspace_find_room(tc, type_typed_object, size_inexactnum, p);
     INEXACTNUM_TYPE(p) = type_inexactnum;
     INEXACTNUM_REAL_PART(p) = rp;
     INEXACTNUM_IMAG_PART(p) = ip;
     return p;
 }
 
-/* S_thread is always called with mutex */
-ptr S_thread(xtc) ptr xtc; {
+ptr S_thread(tc) ptr tc; {
     ptr p;
 
-   /* don't use thread_find_room since we may be building the current thread */
-    find_room(space_new, 0, type_typed_object, size_thread, p);
+    find_room(tc, space_new, 0, type_typed_object, size_thread, p);
     TYPEFIELD(p) = (ptr)type_thread;
-    THREADTC(p) = (uptr)xtc;
+    THREADTC(p) = (uptr)tc;
     return p;
 }
 
@@ -867,7 +828,7 @@ ptr S_exactnum(a, b) ptr a, b; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, size_exactnum, p);
+    newspace_find_room(tc, type_typed_object, size_exactnum, p);
     EXACTNUM_TYPE(p) = type_exactnum;
     EXACTNUM_REAL_PART(p) = a;
     EXACTNUM_IMAG_PART(p) = b;
@@ -892,7 +853,7 @@ ptr S_string(s, n) const char *s; iptr n; {
     tc = get_thread_context();
 
     d = size_string(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    newspace_find_room(tc, type_typed_object, d, p);
     STRTYPE(p) = (n << string_length_offset) | type_string;
 
   /* fill the string with valid characters */
@@ -971,7 +932,7 @@ ptr Sstring_utf8(s, n) const char *s; iptr n; {
 
   tc = get_thread_context();
   d = size_string(cc);
-  thread_find_room(tc, type_typed_object, d, p);
+  newspace_find_room(tc, type_typed_object, d, p);
   STRTYPE(p) = (cc << string_length_offset) | type_string;
 
   /* fill the string */
@@ -1041,7 +1002,7 @@ ptr S_bignum(tc, n, sign) ptr tc; iptr n; IBOOL sign; {
         S_error("", "invalid bignum size request");
 
     d = size_bignum(n);
-    thread_find_room(tc, type_typed_object, d, p);
+    newspace_find_room(tc, type_typed_object, d, p);
     BIGTYPE(p) = (uptr)n << bignum_length_offset | sign << bignum_sign_offset | type_bignum;
     return p;
 }
@@ -1050,7 +1011,7 @@ ptr S_code(tc, type, n) ptr tc; iptr type, n; {
     ptr p; iptr d;
 
     d = size_code(n);
-    thread_find_room_g(tc, space_code, 0, type_typed_object, d, p);
+    find_room(tc, space_code, 0, type_typed_object, d, p);
     CODETYPE(p) = type;
     CODELEN(p) = n;
   /* we record the code modification here, even though we haven't
@@ -1065,20 +1026,21 @@ ptr S_relocation_table(n) iptr n; {
     ptr p; iptr d;
 
     d = size_reloc_table(n);
-    thread_find_room(tc, typemod, d, p);
+    newspace_find_room(tc, typemod, d, p);
     RELOCSIZE(p) = n;
     return p;
 }
 
 ptr S_weak_cons(ptr car, ptr cdr) {
-  return S_cons_in(space_weakpair, 0, car, cdr);
+  ptr tc = get_thread_context();
+  return S_cons_in(tc, space_weakpair, 0, car, cdr);
 }
 
 ptr S_phantom_bytevector(sz) uptr sz; {
     ptr tc = get_thread_context();
     ptr p;
 
-    thread_find_room(tc, type_typed_object, size_phantom, p);
+    newspace_find_room(tc, type_typed_object, size_phantom, p);
 
     PHANTOMTYPE(p) = type_phantom;
     PHANTOMLEN(p) = 0;
@@ -1093,7 +1055,7 @@ void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
   seginfo *si;
   IGEN g;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   si = SegInfo(ptr_get_segment(ph));
   g = si->generation;
@@ -1102,5 +1064,5 @@ void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
   S_adjustmembytes(new_sz - old_sz);
   PHANTOMLEN(ph) = new_sz;
 
-  tc_mutex_release()
+  tc_mutex_release();
 }

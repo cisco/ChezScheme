@@ -45,3 +45,4 @@
 
 #include "segment.h"
 
+#include "atomic.h"

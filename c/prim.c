@@ -224,9 +224,7 @@ static void s_instantiate_code_object() {
     cookie = S_get_scheme_arg(tc, 2);
     proc = S_get_scheme_arg(tc, 3);
 
-    tc_mutex_acquire()
     new = S_code(tc, CODETYPE(old), CODELEN(old));
-    tc_mutex_release()
 
     S_immobilize_object(new);
 

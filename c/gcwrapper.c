@@ -188,7 +188,7 @@ void S_immobilize_object(x) ptr x; {
     si = MaybeSegInfo(ptr_get_segment(x));
  
   if ((si != NULL) && (si->generation != static_generation)) {
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     /* Try a little to to support cancellation of segment-level
      * immobilzation --- but we don't try too hard */
@@ -202,7 +202,7 @@ void S_immobilize_object(x) ptr x; {
        objects must be marked; only those in the locked list must be
        marked. Non-locked objects on `space_new` cannot be immobilized. */
 
-    tc_mutex_release()
+    tc_mutex_release();
   }
 }
 
@@ -215,7 +215,7 @@ void S_mobilize_object(x) ptr x; {
     si = MaybeSegInfo(ptr_get_segment(x));
 
   if ((si != NULL) && (si->generation != static_generation)) {
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     if (si->must_mark == 0)
       S_error_abort("S_mobilize_object(): object was definitely not immobilzed");
@@ -224,7 +224,7 @@ void S_mobilize_object(x) ptr x; {
     if (si->must_mark < MUST_MARK_INFINITY)
       --si->must_mark;
   
-    tc_mutex_release()
+    tc_mutex_release();
   }
 }
 
@@ -260,7 +260,7 @@ IBOOL Slocked_objectp(x) ptr x; {
 
   if (IMMEDIATE(x) || (si = MaybeSegInfo(ptr_get_segment(x))) == NULL || (g = si->generation) == static_generation) return 1;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   ans = 0;
   for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
@@ -270,7 +270,7 @@ IBOOL Slocked_objectp(x) ptr x; {
     }
   }
 
-  tc_mutex_release()
+  tc_mutex_release();
 
   return ans;
 }
@@ -278,7 +278,7 @@ IBOOL Slocked_objectp(x) ptr x; {
 ptr S_locked_objects(void) {
   IGEN g; ptr ans; ptr ls;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   ans = Snil;
   for (g = 0; g <= static_generation; INCRGEN(g)) {
@@ -287,7 +287,7 @@ ptr S_locked_objects(void) {
     }
   }
 
-  tc_mutex_release()
+  tc_mutex_release();
 
   return ans;
 }
@@ -297,7 +297,8 @@ void Slock_object(x) ptr x; {
 
  /* weed out pointers that won't be relocated */
   if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
-    tc_mutex_acquire()
+    ptr tc = get_thread_context();
+    tc_mutex_acquire();
     S_pants_down += 1;
     /* immobilize */
     if (si->must_mark < MUST_MARK_INFINITY) {
@@ -306,13 +307,13 @@ void Slock_object(x) ptr x; {
         S_G.must_mark_gen0 = 1;
     }
    /* add x to locked list. remove from unlocked list */
-    S_G.locked_objects[g] = S_cons_in((g == 0 ? space_new : space_impure), g, x, S_G.locked_objects[g]);
+    S_G.locked_objects[g] = S_cons_in(tc, (g == 0 ? space_new : space_impure), g, x, S_G.locked_objects[g]);
     if (S_G.enable_object_counts) {
       if (g != 0) S_G.countof[g][countof_pair] += 1;
     }
     (void)remove_first_nomorep(x, &S_G.unlocked_objects[g], 0);
     S_pants_down -= 1;
-    tc_mutex_release()
+    tc_mutex_release();
   }
 }
 
@@ -320,7 +321,8 @@ void Sunlock_object(x) ptr x; {
   seginfo *si; IGEN g;
 
   if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
-    tc_mutex_acquire()
+    ptr tc = get_thread_context();
+    tc_mutex_acquire();
     S_pants_down += 1;
     /* mobilize, if we haven't lost track */
     if (si->must_mark < MUST_MARK_INFINITY)
@@ -328,13 +330,13 @@ void Sunlock_object(x) ptr x; {
    /* remove first occurrence of x from locked list. if there are no
       others, add x to unlocked list */
     if (remove_first_nomorep(x, &S_G.locked_objects[g], (si->space == space_new) && (si->generation > 0))) {
-      S_G.unlocked_objects[g] = S_cons_in((g == 0 ? space_new : space_impure), g, x, S_G.unlocked_objects[g]);
+      S_G.unlocked_objects[g] = S_cons_in(tc, (g == 0 ? space_new : space_impure), g, x, S_G.unlocked_objects[g]);
       if (S_G.enable_object_counts) {
         if (g != 0) S_G.countof[g][countof_pair] += 1;
       }
     }
     S_pants_down -= 1;
-    tc_mutex_release()
+    tc_mutex_release();
   }
 }
 
@@ -353,7 +355,7 @@ ptr s_help_unregister_guardian(ptr *pls, ptr tconc, ptr result) {
 
 ptr S_unregister_guardian(ptr tconc) {
   ptr result, tc; IGEN g;
-  tc_mutex_acquire()
+  tc_mutex_acquire();
   tc = get_thread_context();
   /* in the interest of thread safety, gather entries only in the current thread, ignoring any others */
   result = s_help_unregister_guardian(&GUARDIANENTRIES(tc), tconc, Snil);
@@ -361,15 +363,15 @@ ptr S_unregister_guardian(ptr tconc) {
   for (g = 0; g <= static_generation; INCRGEN(g)) {
     result = s_help_unregister_guardian(&S_G.guardians[g], tconc, result);
   }
-  tc_mutex_release()
+  tc_mutex_release();
   return result;
 }
 
 #ifndef WIN32
 void S_register_child_process(INT child) {
-  tc_mutex_acquire()
+  tc_mutex_acquire();
   S_child_processes[0] = Scons(FIX(child), S_child_processes[0]);
-  tc_mutex_release()
+  tc_mutex_release();
 }
 #endif /* WIN32 */
 
@@ -384,7 +386,7 @@ void S_set_enable_object_counts(IBOOL eoc) {
 ptr S_object_counts(void) {
   IGEN grtd, g; ptr ls; iptr i; ptr outer_alist;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   outer_alist = Snil;
 
@@ -441,7 +443,7 @@ ptr S_object_counts(void) {
     }
   }
 
-  tc_mutex_release()
+  tc_mutex_release();
 
   return outer_alist;
 }
@@ -457,12 +459,12 @@ void S_set_enable_object_backreferences(IBOOL eoc) {
 ptr S_object_backreferences(void) {
   IGEN g; ptr ls = Snil;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   for (g = S_G.max_nonstatic_generation+1; g--; )
     ls = Scons(S_G.gcbackreference[g], ls);
 
-  tc_mutex_release()
+  tc_mutex_release();
 
   return ls;
 }
@@ -564,6 +566,22 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
 
   check_dirty();
 
+  {
+    ptr ls;
+    for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+      ptr t_tc = (ptr)THREADTC(Scar(ls));
+      for (s = 0; s <= max_real_space; s += 1) {
+        for (g = 0; g <= static_generation; INCRGEN(g)) {
+          if ((NEXTLOC_AT(t_tc, s, g) == (ptr)0) != (BASELOC_AT(t_tc, s, g) == (ptr)0)) {
+            S_checkheap_errors += 1;
+            printf("!!! inconsistent thread NEXT %p and BASE %p\n",
+                   TO_VOIDP(NEXTLOC_AT(t_tc, s, g)), TO_VOIDP(BASELOC_AT(t_tc, s, g)));
+          }
+        }
+      }
+    }
+  }
+
   for (i = PARTIAL_CHUNK_POOLS; i >= -1; i -= 1) {
     chunkinfo *chunk = i == -1 ? S_chunks_full : S_chunks[i];
     while (chunk != NULL) {
@@ -658,8 +676,8 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
           pp1 = TO_VOIDP(build_ptr(seg, 0));
           pp2 = TO_VOIDP(build_ptr(seg + 1, 0));
 
-          nl = TO_VOIDP(S_G.next_loc[g][s]);
-          if (!(pp1 <= nl && nl < pp2)) {
+          nl = NULL;
+          {
             ptr ls;
             for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
               ptr t_tc = (ptr)THREADTC(Scar(ls));
@@ -978,11 +996,6 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
    /* now transfer old_g info to new_g, and clear old_g info */
     S_G.bytes_of_generation[new_g] = S_G.bytes_of_generation[old_g]; S_G.bytes_of_generation[old_g] = 0;
     for (s = 0; s <= max_real_space; s += 1) {
-      S_G.to_sweep[new_g][s] = S_G.to_sweep[old_g][s]; S_G.to_sweep[old_g][s] = NULL;
-      S_G.base_loc[new_g][s] = S_G.base_loc[old_g][s]; S_G.base_loc[old_g][s] = FIX(0);
-      S_G.next_loc[new_g][s] = S_G.next_loc[old_g][s]; S_G.next_loc[old_g][s] = FIX(0);
-      S_G.sweep_loc[new_g][s] = S_G.sweep_loc[old_g][s]; S_G.sweep_loc[old_g][s] = FIX(0);
-      S_G.bytes_left[new_g][s] = S_G.bytes_left[old_g][s]; S_G.bytes_left[old_g][s] = 0;
       S_G.bytes_of_space[new_g][s] = S_G.bytes_of_space[old_g][s]; S_G.bytes_of_space[old_g][s] = 0;
       S_G.occupied_segments[new_g][s] = S_G.occupied_segments[old_g][s]; S_G.occupied_segments[old_g][s] = NULL;
       for (si = S_G.occupied_segments[new_g][s]; si != NULL; si = si->next) {
@@ -996,6 +1009,7 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
           NEXTLOC_AT(t_tc, s, new_g) = NEXTLOC_AT(t_tc, s, old_g); NEXTLOC_AT(t_tc, s, old_g) = (ptr)0;
           BYTESLEFT_AT(t_tc, s, new_g) = BYTESLEFT_AT(t_tc, s, old_g); BYTESLEFT_AT(t_tc, s, old_g) = 0;
           SWEEPLOC_AT(t_tc, s, new_g) = SWEEPLOC_AT(t_tc, s, old_g); SWEEPLOC_AT(t_tc, s, old_g) = 0;
+          SWEEPNEXT_AT(t_tc, s, new_g) = SWEEPNEXT_AT(t_tc, s, old_g); SWEEPNEXT_AT(t_tc, s, old_g) = 0;
         }
       }
     }
@@ -1091,13 +1105,18 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
 ptr S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
   if (min_tg == static_generation
       || S_G.enable_object_counts || S_G.enable_object_backreferences
-      || (count_roots != Sfalse))
+      || (count_roots != Sfalse)) {
     return S_gc_oce(tc, max_cg, min_tg, max_tg, count_roots);
-  else if (max_cg == 0 && min_tg == 1 && max_tg == 1
+#if defined(PTHREADS)
+  } else if (S_collect_waiting_threads != 0) {
+    return S_gc_par(tc, max_cg, min_tg, max_tg, Sfalse);
+#endif
+  } else if (max_cg == 0 && min_tg == 1 && max_tg == 1
            && !S_G.must_mark_gen0 && S_G.locked_objects[0] == Snil
            && (S_G.min_mark_gen > 0)) {
     S_gc_011(tc);
     return Svoid;
-  } else
+  } else {
     return S_gc_ocd(tc, max_cg, min_tg, max_tg, Sfalse);
+  }
 }

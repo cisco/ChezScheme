@@ -466,21 +466,14 @@ typedef char tputsputcchar;
 # define WRITE write
 #endif
 
+#ifdef PTHREADS
+# define NO_THREADS_UNUSED /* empty */
+#else
+# define NO_THREADS_UNUSED UNUSED
+#endif
+
 /* Use "/dev/urandom" everywhere except Windows */
 #define USE_DEV_URANDOM_UUID
 
-#if defined(__arm64__)
-# define STORE_FENCE() __asm__ __volatile__ ("dmb ishst" : : : "memory")
-#elif defined(__arm__)
-# if arm_isa_version == 7
-#  define STORE_FENCE() __asm__ __volatile__ ("dmb ishst" : : : "memory")
-# else
-#  define STORE_FENCE() __asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 5" : : "r" (0) : "memory")
-# endif
-#elif defined(__powerpc64__)
-# define STORE_FENCE() __asm__ __volatile__ ("lwsync" : : : "memory")
-#elif defined(__powerpc__) || defined(__POWERPC__)
-# define STORE_FENCE() __asm__ __volatile__ ("sync" : : : "memory")
-#else
-# define STORE_FENCE() /* empty */
-#endif
+/* For debugging: */
+/* #define IMPLICIT_ATOMIC_AS_EXPLICIT */

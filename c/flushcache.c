@@ -59,7 +59,7 @@ void S_record_code_mod(ptr tc, uptr addr, uptr bytes) {
 #ifdef DEBUG
       printf("  record_code_mod new range %x to %x\n", addr, end); fflush(stdout);
 #endif
-  CODERANGESTOFLUSH(tc) = S_cons_in(space_new, 0, make_mod_range(addr, end), ls);
+  CODERANGESTOFLUSH(tc) = S_cons_in(tc, space_new, 0, make_mod_range(addr, end), ls);
   return;
 }
 

@@ -76,44 +76,35 @@ typedef int IFASLCODE;      /* fasl type codes */
 
 #define ALREADY_PTR(p) (p)
 
-/* inline allocation --- mutex required */
-/* find room allocates n bytes in space s and generation g into
- * destination x, tagged with ty, punting to find_more_room if
- * no space is left in the current segment.  n is assumed to be
- * an integral multiple of the object alignment. */
-#define find_room_T(s, g, t, n, T, x) {          \
-    ptr X = S_G.next_loc[g][s];\
-    S_G.next_loc[g][s] = (ptr)((uptr)X + (n));\
-    if ((S_G.bytes_left[g][s] -= (n)) < 0) X = S_find_more_room(s, g, n, X);\
-    (x) = T(TYPE(X, t));                                                \
-}
-
-#define find_room(s, g, t, n, x) find_room_T(s, g, t, n, ALREADY_PTR, x)
-#define find_room_voidp(s, g, n, x) find_room_T(s, g, typemod, n, TO_VOIDP, x)
-
-#define SG_AT_TO_INDEX(s, g) ((g * (1 + max_real_space)) + s)
+#define SG_AT_TO_INDEX(s, g) (((g) * (1 + max_real_space)) + (s))
 
 #define BASELOC_AT(tc, s, g) BASELOC(tc, SG_AT_TO_INDEX(s, g))
 #define NEXTLOC_AT(tc, s, g) NEXTLOC(tc, SG_AT_TO_INDEX(s, g))
 #define BYTESLEFT_AT(tc, s, g) BYTESLEFT(tc, SG_AT_TO_INDEX(s, g))
 #define SWEEPLOC_AT(tc, s, g) SWEEPLOC(tc, SG_AT_TO_INDEX(s, g))
+#define SWEEPNEXT_AT(tc, s, g) SWEEPNEXT(tc, SG_AT_TO_INDEX(s, g))
 
 /* inline allocation --- no mutex required */
-/* Like `find_room`, but allocating into thread-local space. */
-#define thread_find_room_g_T(tc, s, g, t, n, T, x) {  \
-    ptr X = NEXTLOC_AT(tc, s, g);                        \
-    NEXTLOC_AT(tc, s, g) = (ptr)((uptr)X + (n));         \
-    if ((BYTESLEFT_AT(tc, s, g) -= (n)) < 0) X = S_find_more_thread_room(tc, s, g, n, X); \
-    (x) = T(TYPE(X, t));                              \
-}
+/* find room allocates n bytes in space s and generation g into
+ * destination x, tagged with ty, punting to find_more_room if
+ * no space is left in the current segment.  n is assumed to be
+ * an integral multiple of the object alignment. */
+#define find_room_T(tc, s, g, t, n, T, x) do {         \
+    iptr L_IDX = SG_AT_TO_INDEX(s, g);                 \
+    iptr N_BYTES = n;                                  \
+    ptr X = NEXTLOC(tc, L_IDX);                        \
+    NEXTLOC(tc, L_IDX) = (ptr)((uptr)X + N_BYTES);     \
+    if ((BYTESLEFT(tc, L_IDX) -= (n)) < 0) X = S_find_more_thread_room(tc, s, g, N_BYTES, X); \
+    (x) = T(TYPE(X, t));                               \
+  } while(0)
 
-#define thread_find_room_g(tc, s, g, t, n, x) thread_find_room_g_T(tc, s, g, t, n, ALREADY_PTR, x)
-#define thread_find_room_g_voidp(tc, s, g, n, x) thread_find_room_g_T(tc, s, g, typemod, n, TO_VOIDP, x)
+#define find_room(tc, s, g, t, n, x) find_room_T(tc, s, g, t, n, ALREADY_PTR, x)
+#define find_room_voidp(tc, s, g, n, x) find_room_T(tc, s, g, typemod, n, TO_VOIDP, x)
 
-/* thread-local inline allocation --- no mutex required */
-/* Like `thread_find_room_g`, but always `space_new` and generation 0,
+/* new-space inline allocation --- no mutex required */
+/* Like `find_room`, but always `space_new` and generation 0,
    so using the same bump pointer as most new allocation */
-#define thread_find_room_T(tc, t, n, T, x) {     \
+#define newspace_find_room_T(tc, t, n, T, x) do {     \
   ptr _tc = tc;\
   uptr _ap = (uptr)AP(_tc);\
   if ((uptr)n > ((uptr)EAP(_tc) - _ap)) {\
@@ -123,10 +114,10 @@ typedef int IFASLCODE;      /* fasl type codes */
     (x) = T(TYPE(_ap,t));                       \
     AP(_tc) = (ptr)(_ap + n);\
   }\
-}
+ } while(0)
 
-#define thread_find_room(tc, t, n, x) thread_find_room_T(tc, t, n, ALREADY_PTR, x)
-#define thread_find_room_voidp(tc, n, x) thread_find_room_T(tc, typemod, n, TO_VOIDP, x)
+#define newspace_find_room(tc, t, n, x) newspace_find_room_T(tc, t, n, ALREADY_PTR, x)
+#define newspace_find_room_voidp(tc, n, x) newspace_find_room_T(tc, typemod, n, TO_VOIDP, x)
 
 #ifndef NO_PRESERVE_FLONUM_EQ
 # define PRESERVE_FLONUM_EQ
@@ -166,6 +157,10 @@ typedef struct _seginfo {
   octet min_dirty_byte;                     /* dirty byte for full segment, effectively min(dirty_bytes) */
   octet *list_bits;                         /* for `$list-bits-ref` and `$list-bits-set!` */
   uptr number;                              /* the segment number */
+#ifdef PTHREADS
+  ptr lock;                                 /* for parallel GC */
+  ptr creator_tc;                           /* for parallelism heuristic; might not match an active thread */
+#endif
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
   struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs) */
   struct _seginfo *sweep_next;              /* next in list of segments allocated during GC => need to sweep */
@@ -375,7 +370,7 @@ typedef struct {
 #define deactivate_thread_signal_collect(tc, check_collect) {  \
   if (ACTIVE(tc)) {\
     ptr code;\
-    tc_mutex_acquire()\
+    tc_mutex_acquire();\
     code = CP(tc);\
     if (Sprocedurep(code)) CP(tc) = code = CLOSCODE(code);\
     Slock_object(code);\
@@ -394,7 +389,7 @@ typedef struct {
 #define deactivate_thread(tc) deactivate_thread_signal_collect(tc, 1) 
 #define reactivate_thread(tc) {\
   if (!ACTIVE(tc)) {\
-    tc_mutex_acquire()\
+    tc_mutex_acquire();                         \
     SETSYMVAL(S_G.active_threads_id,\
      FIX(UNFIX(SYMVAL(S_G.active_threads_id)) + 1));\
     Sunlock_object(CP(tc));\
@@ -406,20 +401,55 @@ typedef struct {
    C code on tc_mutex.  it is used by do_error to release tc_mutex
    the appropriate number of times.
 */
-#define tc_mutex_acquire() {\
-  S_mutex_acquire(&S_tc_mutex);\
-  S_tc_mutex_depth += 1;\
-}
-#define tc_mutex_release() {\
-  S_tc_mutex_depth -= 1;\
-  S_mutex_release(&S_tc_mutex);\
-}
+#define tc_mutex_acquire() do {                 \
+    S_mutex_acquire(&S_tc_mutex);               \
+    S_tc_mutex_depth += 1;                      \
+  } while (0);
+#define tc_mutex_release() do {                 \
+    S_tc_mutex_depth -= 1;                      \
+    S_mutex_release(&S_tc_mutex);               \
+  } while (0);
+#define gc_tc_mutex_acquire() S_mutex_acquire(&S_gc_tc_mutex)
+#define gc_tc_mutex_release() S_mutex_release(&S_gc_tc_mutex)
+
+#ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
+# define AS_IMPLICIT_ATOMIC(T, X) ({       \
+      T RESLT;                             \
+      s_thread_mutex_lock(&S_implicit_mutex);   \
+      RESLT = X;                           \
+      s_thread_mutex_unlock(&S_implicit_mutex); \
+      RESLT;                               \
+  })
+# define BEGIN_IMPLICIT_ATOMIC() s_thread_mutex_lock(&S_implicit_mutex)
+# define END_IMPLICIT_ATOMIC() s_thread_mutex_unlock(&S_implicit_mutex)
+#else
+# define AS_IMPLICIT_ATOMIC(T, X) X
+# define BEGIN_IMPLICIT_ATOMIC() do {  } while (0)
+# define END_IMPLICIT_ATOMIC() do {  } while (0)
+#endif
+
+#define S_cas_load_acquire_voidp(a, old, new) CAS_LOAD_ACQUIRE(a, old, new)
+#define S_cas_store_release_voidp(a, old, new) CAS_STORE_RELEASE(a, old, new)
+#define S_cas_load_acquire_ptr(a, old, new) CAS_LOAD_ACQUIRE(a, TO_VOIDP(old), TO_VOIDP(new))
+#define S_cas_store_release_ptr(a, old, new) CAS_STORE_RELEASE(a, TO_VOIDP(old), TO_VOIDP(new))
+#define S_store_release() RELEASE_FENCE()
+
 #else
 #define get_thread_context() TO_PTR(S_G.thread_context)
 #define deactivate_thread(tc) {}
 #define reactivate_thread(tc) {}
-#define tc_mutex_acquire() {}
-#define tc_mutex_release() {}
+#define tc_mutex_acquire() do {} while (0)
+#define tc_mutex_release() do {} while (0)
+#define gc_tc_mutex_acquire() do {} while (0)
+#define gc_tc_mutex_release() do {} while (0)
+#define S_cas_load_acquire_voidp(a, old, new) (*(a) = new, 1)
+#define S_cas_store_release_voidp(a, old, new) (*(a) = new, 1)
+#define S_cas_load_acquire_ptr(a, old, new) (*(a) = new, 1)
+#define S_cas_store_release_ptr(a, old, new) (*(a) = new, 1)
+#define S_store_release() do { } while (0)
+#define BEGIN_IMPLICIT_ATOMIC() do {  } while (0)
+#define END_IMPLICIT_ATOMIC() do {  } while (0)
+#define AS_IMPLICIT_ATOMIC(T, X) X
 #endif
 
 #ifdef __MINGW32__

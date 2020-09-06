@@ -57,7 +57,7 @@ void S_machine_init() {}
 
 #define SIGN_FLIP(r, a, b) ((~((a ^ b) | (r ^ ~b))) >> (ptr_bits-1))
 
-#if __GNUC__ >= 5
+#if (__GNUC__ >= 5) || defined(__clang__)
 # define USE_OVERFLOW_INTRINSICS 1
 #else
 # define USE_OVERFLOW_INTRINSICS 0

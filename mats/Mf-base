@@ -270,8 +270,8 @@ partialx:
 	$(MAKE) allxhelp o=3 eval=interpret cp0=t rmg=2
 
 allx: prettyclean
-	$(MAKE) allxhelp o=0
-	$(MAKE) allxhelp o=3
+	$(MAKE) allxhelp o=0 eoc=f
+	$(MAKE) allxhelp o=3 eoc=f
 	$(MAKE) allxhelp o=0 cp0=t cl=3
 	$(MAKE) allxhelp o=3 cp0=t cl=3
 	$(MAKE) allxhelp o=0 spi=t rmg=2 p=t

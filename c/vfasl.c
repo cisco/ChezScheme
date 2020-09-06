@@ -243,7 +243,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 
   if (bv) {
     void *base_addr = &BVIT(bv, sizeof(vfasl_header) + offset);
-    thread_find_room(tc, typemod, header.data_size, data);
+    newspace_find_room(tc, typemod, header.data_size, data);
     memcpy(TO_VOIDP(data), base_addr, header.data_size);
     table = ptr_add(TO_PTR(base_addr), header.data_size);
   } else {
@@ -252,9 +252,9 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
         if (sz > 0) {
           if ((s == vspace_reloc) && !S_G.retain_static_relocation) {
-            thread_find_room(tc, typemod, sz, vspaces[s])
+            newspace_find_room(tc, typemod, sz, vspaces[s]);
           } else {
-            find_room(vspace_spaces[s], static_generation, typemod, sz, vspaces[s])
+            find_room(tc, vspace_spaces[s], static_generation, typemod, sz, vspaces[s]);
           }
           if (S_fasl_stream_read(stream, TO_VOIDP(vspaces[s]), sz) < 0)
             S_error("fasl-read", "input truncated");
@@ -268,12 +268,12 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       data = (ptr)0; /* => initialize below */
       to_static = 1;
     } else {
-      thread_find_room(tc, typemod, header.data_size, data)
+      newspace_find_room(tc, typemod, header.data_size, data);
       if (S_fasl_stream_read(stream, TO_VOIDP(data), header.data_size) < 0)
         S_error("fasl-read", "input truncated");
     }
 
-    thread_find_room(tc, typemod, ptr_align(header.table_size), table)
+    newspace_find_room(tc, typemod, ptr_align(header.table_size), table);
     if (S_fasl_stream_read(stream, TO_VOIDP(table), header.table_size) < 0)
       S_error("fasl-read", "input truncated");
   }
@@ -390,7 +390,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     ptr end_syms = TYPE(VSPACE_END(vspace_symbol), type_symbol);
 
     if (sym != end_syms) {
-      tc_mutex_acquire()
+      tc_mutex_acquire();
 
       while (sym < end_syms) {
         ptr isym;
@@ -432,7 +432,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         in_seg_off += size_symbol;
       }
 
-      tc_mutex_release()
+      tc_mutex_release();
     }
   }
 
@@ -464,7 +464,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     RECORDINSTTYPE(rtd) = S_G.base_rtd;
     RECORDDESCUID(rtd) = S_G.base_rtd;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     while (1) {
       ptr new_rtd, meta_rtd, parent_rtd;
@@ -497,7 +497,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       }
     }
 
-    tc_mutex_release()
+    tc_mutex_release();
   }
   
   /* Replace rtd references to interned references */
@@ -1262,7 +1262,7 @@ static iptr vfasl_symbol_to_index(vfasl_info *vfi, ptr pp)
 
 static void fasl_init_entry_tables()
 {
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   if (!S_G.c_entries) {
     iptr i;
@@ -1286,7 +1286,7 @@ static void fasl_init_entry_tables()
     }
   }
 
-  tc_mutex_release()
+  tc_mutex_release();
 }
 
 static void vfasl_check_install_library_entry(vfasl_info *vfi, ptr name)
@@ -1427,7 +1427,7 @@ static ptr vfasl_hash_table_ref(vfasl_hash_table *ht, ptr key) {
 static void *vfasl_malloc(uptr sz) {
   ptr tc = get_thread_context();
   void *p;
-  thread_find_room_voidp(tc, ptr_align(sz), p)
+  newspace_find_room_voidp(tc, ptr_align(sz), p);
   return p;
 }
 

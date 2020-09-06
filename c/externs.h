@@ -66,7 +66,7 @@ extern void S_reset_allocation_pointer PROTO((ptr tc));
 extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
 extern ptr S_bytes_finalized PROTO(());
 extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
-extern void S_record_new_dirty_card PROTO((ptr *ppp, IGEN to_g));
+extern void S_record_new_dirty_card PROTO((ptr tc, ptr *ppp, IGEN to_g));
 extern ptr S_find_more_thread_room PROTO((ptr tc, IGEN g, ISPC s, iptr n, ptr old));
 extern void S_close_off_thread_local_segment PROTO((ptr tc, ISPC s, IGEN g));
 extern void S_dirty_set PROTO((ptr *loc, ptr x));
@@ -77,13 +77,12 @@ extern void S_get_more_room PROTO((void));
 extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
 extern ptr S_list_bits_ref PROTO((ptr p));
 extern void S_list_bits_set PROTO((ptr p, iptr bits));
-extern ptr S_cons_in PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
-extern ptr S_cons_in_global PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
+extern ptr S_cons_in PROTO((ptr tc, ISPC s, IGEN g, ptr car, ptr cdr));
 extern ptr S_ephemeron_cons_in PROTO((IGEN g, ptr car, ptr cdr));
 extern ptr S_symbol PROTO((ptr name));
 extern ptr S_rational PROTO((ptr n, ptr d));
 extern ptr S_tlc PROTO((ptr keyval, ptr tconc, ptr next));
-extern ptr S_vector_in PROTO((ISPC s, IGEN g, iptr n));
+extern ptr S_vector_in PROTO((ptr tc, ISPC s, IGEN g, iptr n));
 extern ptr S_vector PROTO((iptr n));
 extern ptr S_fxvector PROTO((iptr n));
 extern ptr S_bytevector PROTO((iptr n));
@@ -179,6 +178,9 @@ extern void S_check_heap PROTO((IBOOL aftergc, IGEN target_gen));
 
 /* gc-011.c */
 extern void S_gc_011 PROTO((ptr tc));
+
+/* gc-par.c */
+extern ptr S_gc_par PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
 
 /* gc-ocd.c */
 extern ptr S_gc_ocd PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots));
@@ -380,7 +382,7 @@ extern INT matherr PROTO((struct exception *x));
 extern void S_segment_init PROTO((void));
 extern void *S_getmem PROTO((iptr bytes, IBOOL zerofill));
 extern void S_freemem PROTO((void *addr, iptr bytes));
-extern iptr S_find_segments PROTO((ISPC s, IGEN g, iptr n));
+extern iptr S_find_segments PROTO((ptr tc, ISPC s, IGEN g, iptr n));
 extern void S_free_chunk PROTO((chunkinfo *chunk));
 extern void S_free_chunks PROTO((void));
 extern uptr S_curmembytes PROTO((void));

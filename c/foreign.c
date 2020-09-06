@@ -141,7 +141,7 @@ static ptr lookup(s) const char *s; {
     x = lookup_static(s);
     if (x == addr_to_ptr(0)) return x;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     b = ptrhash(x);
     for (p = Svector_ref(S_G.foreign_names, b); p != Snil; p = Scdr(p)) {
@@ -154,14 +154,14 @@ static ptr lookup(s) const char *s; {
                                       Svector_ref(S_G.foreign_names, b)));
 
 quit:
-    tc_mutex_release()
+    tc_mutex_release();
     return x;
 }
 
 void Sforeign_symbol(s, v) const char *s; void *v; {
     iptr b; ptr x;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
 #ifdef HPUX
     v = proc2entry(v,name);
@@ -174,7 +174,7 @@ void Sforeign_symbol(s, v) const char *s; void *v; {
     } else if (ptr_to_addr(x) != v)
         S_error1("Sforeign_symbol", "duplicate symbol entry for ~s", Sstring_utf8(s, -1));
 
-    tc_mutex_release()
+    tc_mutex_release();
 }
 
 /* like Sforeign_symbol except it silently redefines the symbol
@@ -182,7 +182,7 @@ void Sforeign_symbol(s, v) const char *s; void *v; {
 void Sregister_symbol(s, v) const char* s; void *v; {
   iptr b; ptr p;
 
-  tc_mutex_acquire()
+  tc_mutex_acquire();
 
   b = symhash(s);
   for (p = Svector_ref(S_G.foreign_static, b); p != Snil; p = Scdr(p))
@@ -194,14 +194,14 @@ void Sregister_symbol(s, v) const char* s; void *v; {
                                       Svector_ref(S_G.foreign_static, b)));
 
  quit:
-  tc_mutex_release()
+  tc_mutex_release();
 }
 
 static ptr remove_foreign_entry(s) const char *s; {
     iptr b;
     ptr tbl, p1, p2;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     b = symhash(s);
     tbl = S_G.foreign_static;
@@ -214,11 +214,11 @@ static ptr remove_foreign_entry(s) const char *s; {
             } else {
                 SETCDR(p1, Scdr(p2))
             }
-            tc_mutex_release()
+            tc_mutex_release();
             return Strue;
         }
     }
-    tc_mutex_release()
+    tc_mutex_release();
     return Sfalse;
 }
 
@@ -226,7 +226,7 @@ static ptr remove_foreign_entry(s) const char *s; {
 static void load_shared_object(path) const char *path; {
     void *handle;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
 
     handle = dlopen(path, RTLD_NOW);
     if (handle == (void *)NULL)
@@ -234,7 +234,7 @@ static void load_shared_object(path) const char *path; {
                     Sstring_utf8(dlerror(), -1));
     S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
 
-    tc_mutex_release()
+    tc_mutex_release();
 
     return;
 }

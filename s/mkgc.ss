@@ -96,6 +96,8 @@
 ;;  - (as-mark-end <statment> ...) : declares that <statement>s implement counting,
 ;;       which means that it's included for mark mode
 ;;  - (skip-forwarding) : disable forward-pointer installation in copy mode
+;;  - (check-lock-failed) : bail out if a lock aquire failed; use this before dereferencing
+;;                          an object reference that might not have been relocated
 ;;  - (assert <expr>) : assertion
 ;;
 ;; In the above declarations, nonterminals like <space> can be
@@ -472,6 +474,13 @@
       (copy-type ratnum-type)
       (trace-now ratnum-numerator)
       (trace-now ratnum-denominator)
+      (case-mode
+       [(copy) (when (CHECK_LOCK_FAILED _tc_)
+                 ;; create failed relocates so that the heap checker isn't unhappy
+                 (set! (ratnum-numerator _copy_) (cast ptr 0))
+                 (set! (ratnum-denominator _copy_) (cast ptr 0)))]
+       [(mark) (check-lock-failed)]
+       [else])
       (mark)
       (vfasl-pad-word)
       (count countof-ratnum)]
@@ -483,6 +492,13 @@
       (copy-type exactnum-type)
       (trace-now exactnum-real)
       (trace-now exactnum-imag)
+      (case-mode
+       [(copy) (when (CHECK_LOCK_FAILED _tc_)
+                 ;; create failed relocates so that the heap checker isn't unhappy
+                 (set! (exactnum-real _copy_) (cast ptr 0))
+                 (set! (exactnum-imag _copy_) (cast ptr 0)))]
+       [(mark) (check-lock-failed)]
+       [else])
       (mark)
       (vfasl-pad-word)
       (count countof-exactnum)]
@@ -575,9 +591,11 @@
          (count countof-phantom)
          ;; Separate from `count`, because we want to track sizes even
          ;; if counting is not enabled:
+         (GC_TC_MUTEX_ACQUIRE)
          (set! (array-ref (array-ref S_G.bytesof _tg_) countof-phantom)
                +=
-               (phantom-length _)))]
+               (phantom-length _))
+         (GC_TC_MUTEX_RELEASE))]
        [measure (set! measure_total += (phantom-length _))]
        [else])])]))
 
@@ -611,7 +629,7 @@
     (cond
       [(&& (!= cdr_p _)
            (&& (== (TYPEBITS cdr_p) type_pair)
-               (&& (= (ptr_get_segment cdr_p) (ptr_get_segment _))
+               (&& (== (ptr_get_segment cdr_p) (ptr_get_segment _))
                    (&& (!= (FWDMARKER cdr_p) forward_marker)
                        ;; Checking `marked_mask`, in
                        ;; case the cdr pair is locked
@@ -691,7 +709,9 @@
       [(== (continuation-stack-length _) opportunistic-1-shot-flag)
        (set! (continuation-stack-length _copy_) (continuation-stack-clength _))
        ;; May need to recur at end to promote link:
-       (set! conts_to_promote (S_cons_in space_new 0 _copy_ conts_to_promote))]
+       (GC_TC_MUTEX_ACQUIRE)
+       (set! conts_to_promote (S_cons_in _tc_ space_new 0 _copy_ conts_to_promote))
+       (GC_TC_MUTEX_RELEASE)]
       [else
        (copy continuation-stack-length)])]
    [else
@@ -703,6 +723,7 @@
     (trace ref)]
    [(sweep sweep-in-old)
     (trace ref) ; can't trace `val` directly, because we need an impure relocate
+    (check-lock-failed)
     (define val : ptr (ref _))]
    [vfasl-copy
     (set! (ref _copy_) vfasl-val)]
@@ -717,6 +738,7 @@
     (case-flag as-dirty?
        [on (trace (just code))]
        [off (trace-pure (just code))])
+    (check-lock-failed)
     (INITSYMCODE _ code)]
    [measure]
    [vfasl-copy
@@ -740,7 +762,9 @@
     ;; determine if key is old, since keyval might or might not have been
     ;; swept already. NB: assuming keyvals are always pairs.
     (when (&& (!= next Sfalse) (OLDSPACE keyval))
-      (set! tlcs_to_rehash (S_cons_in space_new 0 _copy_ tlcs_to_rehash)))]
+      (GC_TC_MUTEX_ACQUIRE)
+      (set! tlcs_to_rehash (S_cons_in _tc_ space_new 0 _copy_ tlcs_to_rehash))
+      (GC_TC_MUTEX_RELEASE))]
    [else
     (trace-nonself tlc-keyval)
     (trace-nonself tlc-next)]))
@@ -784,6 +808,7 @@
             [(sweep sweep-in-old self-test)
              ;; Bignum pointer mask may need forwarding
              (trace-pure (record-type-pm rtd))
+             (check-lock-failed)
              (set! num (record-type-pm rtd))]
             [else])])
          (let* ([index : iptr (- (BIGLEN num) 1)]
@@ -852,7 +877,7 @@
               (let* ([grtd : IGEN (GENERATION c_rtd)])
                 (set! (array-ref (array-ref S_G.countof grtd) countof_rtd_counts) += 1)
                 ;; Allocate counts struct in same generation as rtd. Initialize timestamp & counts.
-                (thread_find_room_g _tc_ space_data grtd type_typed_object size_rtd_counts counts)
+                (find_room _tc_ space_data grtd type_typed_object size_rtd_counts counts)
                 (set! (rtd-counts-type counts) type_rtd_counts)
                 (set! (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
                 (let* ([g : IGEN 0])
@@ -865,7 +890,8 @@
                       ;; For max_copied_generation, the list will get copied again in `rtds_with_counts` fixup;
                       ;; meanwhile, allocating in `space_impure` would copy and sweep old list entries causing
                       ;; otherwise inaccessible rtds to be retained
-                      (S_cons_in (cond [(<= grtd MAX_CG) space_new] [else space_impure])
+                      (S_cons_in _tc_
+                                 (cond [(<= grtd MAX_CG) space_new] [else space_impure])
                                  (cond [(<= grtd MAX_CG) 0] [else grtd])
                                  c_rtd
                                  (array-ref S_G.rtds_with_counts grtd)))
@@ -1004,7 +1030,7 @@
              (set! mask >>= 1)))]
          [else
           (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
-
+          (check-lock-failed)
           (let* ([num : ptr (ENTRYLIVEMASK oldret)]
                  [index : iptr (BIGLEN num)])
             (while
@@ -1038,6 +1064,7 @@
       (case-mode
        [sweep-in-old]
        [else
+        (check-lock-failed)
         (set! field (cast ptr (+ (cast uptr c_p) co)))]))]
    [else
     (trace-pure (just c_p))]))
@@ -1094,6 +1121,7 @@
 
     (case-mode
      [sweep
+      (check-lock-failed)
       (cond
         [(&& (== from_g static_generation)
              (&& (! S_G.retain_static_relocation)
@@ -1102,16 +1130,22 @@
         [else
          (let* ([t_si : seginfo* (SegInfo (ptr_get_segment t))])
            (when (-> t_si old_space)
-             (set! n (size_reloc_table (reloc-table-size t)))
-             (count countof-relocation-table (just n) 1 sweep)
              (cond
-               [(-> t_si use_marks)
-                ;; Assert: (! (marked t_si t))
-                (mark_typemod_data_object _tc_ t n t_si)]
+               [(SEGMENT_LOCK_ACQUIRE t_si)
+                (set! n (size_reloc_table (reloc-table-size t)))
+                (count countof-relocation-table (just n) 1 sweep)
+                (cond
+                  [(-> t_si use_marks)
+                   ;; Assert: (! (marked t_si t))
+                   (mark_typemod_data_object _tc_ t n t_si)]
+                  [else
+                   (let* ([oldt : ptr t])
+                     (find_room _tc_ space_data from_g typemod n t)
+                     (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])
+                (SEGMENT_LOCK_RELEASE t_si)]
                [else
-                (let* ([oldt : ptr t])
-                  (thread_find_room_g _tc_ space_data from_g typemod n t)
-                  (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])))
+                (RECORD_LOCK_FAILED _tc_ t_si)
+                (check-lock-failed)])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
       (S_record_code_mod tc_in (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
@@ -1388,12 +1422,15 @@
        (case (lookup 'mode config)
          [(copy)
           (code-block
-           "change = 1;"
+           "ENABLE_LOCK_ACQUIRE"
+           "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
            "check_triggers(si);"
            (code-block
             "ptr new_p;"
             "IGEN tg = TARGET_GENERATION(si);"
             (body)
+            "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
+            "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
             "FWDMARKER(p) = forward_marker;"
             "FWDADDRESS(p) = new_p;"
             (and (lookup 'maybe-backreferences? config #f)
@@ -1402,14 +1439,18 @@
             "return tg;"))]
          [(mark)
           (code-block
-           "change = 1;"
+           "ENABLE_LOCK_ACQUIRE"
+           "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
            "check_triggers(si);"
            (ensure-segment-mark-mask "si" "" '())
            (body)
+           "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
            "ADD_BACKREFERENCE(p, si->generation);"
            "return si->generation;")]
          [(sweep)
           (code-block
+           (and (not (lookup 'as-dirty? config #f))
+                "ENABLE_LOCK_ACQUIRE")
            (and (lookup 'maybe-backreferences? config #f)
                 "PUSH_BACKREFERENCE(p)")
            (body)
@@ -1417,6 +1458,10 @@
                 "POP_BACKREFERENCE()")
            (and (lookup 'as-dirty? config #f)
                 "return youngest;"))]
+         [(sweep-in-old)
+          (code-block
+           "ENABLE_LOCK_ACQUIRE"
+           (body))]
          [(measure)
           (body)]
          [(self-test)
@@ -1548,6 +1593,7 @@
                   (statements (cdr l) config))]
            [`(trace-early ,field)
             (code (trace-statement field config #t 'pure)
+                  (check-lock-failure-statement config)
                   (statements (cdr l) (if (symbol? field)
                                           (cons `(copy-extra ,field) config)
                                           config)))]
@@ -1726,7 +1772,7 @@
                        (hashtable-set! (lookup 'used config) 'p_sz #t)
                        (code (format "~a, ~a, p_sz, new_p);"
                                      (case mode
-                                       [(copy) "thread_find_room_g(tc_in, p_spc, tg"]
+                                       [(copy) "find_room(tc_in, p_spc, tg"]
                                        [(vfasl-copy) "FIND_ROOM(vfi, p_vspc"])
                                      (as-c 'type (lookup 'basetype config)))
                              (statements (let ([extra (lookup 'copy-extra config #f)])
@@ -1776,6 +1822,7 @@
                (unless (null? (cdr l))
                  (error 'skip-forwarding "not at end"))
                (code "*dest = new_p;"
+                     "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
                      "return tg;")]
               [else
                (statements (cdr l) config)])]
@@ -1808,6 +1855,10 @@
                   (statements (list count-stmt) config)))]
               [else
                (statements (cdr l) config)])]
+           [`(check-lock-failed)
+            (code
+             (check-lock-failure-statement config)
+             (statements (cdr l) config))]
            [`(define ,id : ,type ,rhs)
             (let* ([used (lookup 'used config)]
                    [prev-used? (hashtable-ref used id #f)])
@@ -2153,7 +2204,7 @@
            [no-sweep? (or (memq 'no-sweep flags)
                           (eq? known-space 'space-data))]
            [within-loop-statement
-            (lambda (decl si step count?)
+            (lambda (decl si step count? final)
               (code-block
                "uptr offset = 0;"
                "while (offset < p_sz) {"
@@ -2162,6 +2213,7 @@
                (format "  ~a->marked_mask[segment_bitmap_byte(mark_p)] |= segment_bitmap_bit(mark_p);" si)
                (and count? (format "  ~a->marked_count += ~a;" si step))
                (format "  offset += ~a;" step)
+               final
                "}"))]
            [type (let ([t (lookup 'basetype config)])
                    (if (eq? t 'typemod)
@@ -2191,18 +2243,27 @@
                "  seginfo *mark_si; IGEN g;"
                "  si->marked_count += ((uptr)build_ptr(seg+1,0)) - addr;"
                "  seg++;"
+               "  /* Note: taking a sequence of locks for a span of segments */"
                "  while (seg < end_seg) {"
+               "    ENABLE_LOCK_ACQUIRE"
                "    mark_si = SegInfo(seg);"
+               "    SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
                "    g = mark_si->generation;"
                "    if (!fully_marked_mask[g]) init_fully_marked_mask(tc_in, g);"
                "    mark_si->marked_mask = fully_marked_mask[g];"
                "    mark_si->marked_count = bytes_per_segment;"
+               "    SEGMENT_LOCK_RELEASE(mark_si);"
                "    seg++;"
                "  }"
                "  mark_si = SegInfo(end_seg);"
-               (ensure-segment-mark-mask "mark_si" "  " '())
-               "    /* no need to set a bit: just make sure `marked_mask` is non-NULL */"
-               "  mark_si->marked_count += addr + p_sz - (uptr)build_ptr(end_seg,0);"
+               "  {"
+               "    ENABLE_LOCK_ACQUIRE"
+               "    SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
+               (ensure-segment-mark-mask "mark_si" "    " '())
+               "    /* no need to set a bit: it's enough to have made `marked_mask` non-NULL */"
+               "    mark_si->marked_count += addr + p_sz - (uptr)build_ptr(end_seg,0);"
+               "    SEGMENT_LOCK_RELEASE(mark_si);"
+               "  }"
                "}")]))]
          [within-segment?
           (code
@@ -2221,7 +2282,7 @@
                          "mark_p = (ptr)((uptr)mark_p + byte_alignment);"
                          (loop sz)))))))]
              [else
-              (within-loop-statement #f "si" "byte_alignment" #f)]))]
+              (within-loop-statement #f "si" "byte_alignment" #f #f)]))]
          [else
           (let ([step "byte_alignment"])
             (code-block
@@ -2229,14 +2290,17 @@
              "if (addr_get_segment(addr) == addr_get_segment(addr + p_sz - 1))"
              (code-block
               "si->marked_count += p_sz;"
-              (within-loop-statement #f "si" step #f))
+              (within-loop-statement #f "si" step #f #f))
              "else"
              (within-loop-statement (code
                                      "  seginfo *mark_si = SegInfo(ptr_get_segment(mark_p));"
+                                     "  ENABLE_LOCK_ACQUIRE"
+                                     "  SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
                                      (ensure-segment-mark-mask "mark_si" "  " '()))
                                     "mark_si"
                                     step
-                                    #t)))])
+                                    #t
+                                    "  SEGMENT_LOCK_RELEASE(mark_si);")))])
        (cond
          [no-sweep? #f]
          [else
@@ -2247,6 +2311,20 @@
                (code "if (!is_counting_root(si, p))"
                      (code-block push))]
               [else push]))]))))
+
+  (define (check-lock-failure-statement config)
+    (let ([mode (lookup 'mode config)])
+      (case mode
+        [(copy mark sweep)
+         (code
+          "if (CHECK_LOCK_FAILED(tc_in))"
+          (case mode
+            [(copy mark) (code-block "return 0xff;")]
+            [(sweep sweep-in-old)
+             (if (lookup 'as-dirty? config #f)
+                 (code-block "return 0xff;")
+                 (code-block "return;"))]))]
+        [else #f])))
 
   (define (field-expression field config arg protect?)
     (if (symbol? field)
@@ -2284,7 +2362,7 @@
   (define (ensure-segment-mark-mask si inset flags)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  thread_find_room_g_voidp(tc_in, space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
+     (format "~a  find_room_voidp(tc_in, space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
              inset si si)
      (if (memq 'no-clear flags)
          (format "~a  /* no clearing needed */" inset)

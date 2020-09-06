@@ -128,9 +128,9 @@ void S_split_and_resize() {
    * argument register values */
     n = CONTCLENGTH(k) + (value_count * sizeof(ptr)) + stack_slop;
     if (n >= SCHEMESTACKSIZE(tc)) {
-       tc_mutex_acquire()
+       tc_mutex_acquire();
        S_reset_scheme_stack(tc, n);
-       tc_mutex_release()
+       tc_mutex_release();
     }
 }
 
@@ -272,7 +272,7 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
             }
 
           /* create a continuation */
-            tc_mutex_acquire()
+            tc_mutex_acquire();
             STACKLINK(tc) = S_mkcontinuation(space_new,
                                         0,
                                         CODEENTRYPOINT(nuate),
@@ -283,7 +283,7 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
                                         *split_point,
                                         Snil,
                                         Sfalse);
-            tc_mutex_release()
+            tc_mutex_release();
 
           /* overwrite old return address with dounderflow */
               *split_point = TO_PTR(DOUNDERFLOW);
@@ -296,9 +296,9 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
 
   /* allocate a new stack, retaining same relative sfp */
     sfp_offset = (uptr)TO_PTR(sfp) - (uptr)TO_PTR(split_point);
-    tc_mutex_acquire()
+    tc_mutex_acquire();
     S_reset_scheme_stack(tc, above_split_size + frame_request);
-    tc_mutex_release()
+    tc_mutex_release();
     SFP(tc) = (ptr)((uptr)SCHEMESTACK(tc) + sfp_offset);
 
   /* copy up everything above the split point.  we don't know where the
@@ -324,14 +324,14 @@ void S_abnormal_exit() {
 static void reset_scheme() {
     ptr tc = get_thread_context();
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
    /* eap should always be up-to-date now that we write-through to the tc
       when making any changes to eap when eap is a real register */
     S_scan_dirty(TO_VOIDP(EAP(tc)), TO_VOIDP(REAL_EAP(tc)));
     S_reset_allocation_pointer(tc);
     S_reset_scheme_stack(tc, stack_slop);
     FRAME(tc,0) = TO_PTR(DOUNDERFLOW);
-    tc_mutex_release()
+    tc_mutex_release();
 }
 
 /* error_resets occur with the system in an unknown state,
@@ -516,7 +516,7 @@ void S_fire_collector() {
 
 /*    printf("really firing collector!\n"); fflush(stdout); */
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
    /* check again in case some other thread beat us to the punch */
     if (!Sboolean_value(S_symbol_value(crp_id))) {
 /* printf("firing collector nthreads = %d\n", list_length(S_threads)); fflush(stdout); */
@@ -524,7 +524,7 @@ void S_fire_collector() {
       for (ls = S_threads; ls != Snil; ls = Scdr(ls))
         SOMETHINGPENDING(THREADTC(Scar(ls))) = Strue;
     }
-    tc_mutex_release()
+    tc_mutex_release();
   }
 }
 
@@ -664,7 +664,7 @@ ptr S_allocate_scheme_signal_queue() {
 void S_register_scheme_signal(sig) iptr sig; {
     struct sigaction act;
 
-    tc_mutex_acquire()
+    tc_mutex_acquire();
     if (!scheme_signals_registered) {
       ptr ls;
       scheme_signals_registered = 1;
@@ -672,7 +672,7 @@ void S_register_scheme_signal(sig) iptr sig; {
         SIGNALINTERRUPTQUEUE(THREADTC(Scar(ls))) = S_allocate_scheme_signal_queue();
       }
     }
-    tc_mutex_release()
+    tc_mutex_release();
 
     sigfillset(&act.sa_mask);
     act.sa_flags = 0;
