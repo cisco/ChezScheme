@@ -988,6 +988,16 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
       for (si = S_G.occupied_segments[new_g][s]; si != NULL; si = si->next) {
         si->generation = new_g;
       }
+      {
+        ptr ls;
+        for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+          ptr t_tc = (ptr)THREADTC(Scar(ls));
+          BASELOC_AT(t_tc, s, new_g) = BASELOC_AT(t_tc, s, old_g); BASELOC_AT(t_tc, s, old_g) = (ptr)0;
+          NEXTLOC_AT(t_tc, s, new_g) = NEXTLOC_AT(t_tc, s, old_g); NEXTLOC_AT(t_tc, s, old_g) = (ptr)0;
+          BYTESLEFT_AT(t_tc, s, new_g) = BYTESLEFT_AT(t_tc, s, old_g); BYTESLEFT_AT(t_tc, s, old_g) = 0;
+          SWEEPLOC_AT(t_tc, s, new_g) = SWEEPLOC_AT(t_tc, s, old_g); SWEEPLOC_AT(t_tc, s, old_g) = 0;
+        }
+      }
     }
     S_G.guardians[new_g] = S_G.guardians[old_g]; S_G.guardians[old_g] = Snil;
     S_G.locked_objects[new_g] = S_G.locked_objects[old_g]; S_G.locked_objects[old_g] = Snil;
