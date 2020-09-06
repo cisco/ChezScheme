@@ -611,13 +611,11 @@
     (cond
       [(&& (!= cdr_p _)
            (&& (== (TYPEBITS cdr_p) type_pair)
-               (&& (!= (set! qsi (MaybeSegInfo (ptr_get_segment cdr_p))) NULL)
-                   (&& (== qsi si)
-                       (&& (!= (FWDMARKER cdr_p) forward_marker)
-                           ;; Checking `marked_mask`, in
-                           ;; case the pair is locked
-                           (! (-> qsi marked_mask)))))))
-       (check_triggers qsi)
+               (&& (= (ptr_get_segment cdr_p) (ptr_get_segment _))
+                   (&& (!= (FWDMARKER cdr_p) forward_marker)
+                       ;; Checking `marked_mask`, in
+                       ;; case the cdr pair is locked
+                       (! (-> si marked_mask))))))
        (size size-pair 2)
        (define new_cdr_p : ptr (cast ptr (+ (cast uptr _copy_) size_pair)))
        (set! (pair-car _copy_) (pair-car _))
