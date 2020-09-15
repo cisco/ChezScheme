@@ -153,7 +153,7 @@ ptr S_intern(const unsigned char *s) {
   iptr n = strlen((const char *)s);
   iptr hc = hash(s, n);
   iptr idx = OBINDEX(hc, S_G.oblist_length);
-  ptr sym;
+  ptr sym, str;
   bucket *b;
 
   tc_mutex_acquire();
@@ -177,7 +177,10 @@ ptr S_intern(const unsigned char *s) {
     b = b->next;
   }
 
-  sym = S_symbol(S_string((const char *)s, n));
+  str = S_string((const char *)s, n);
+  STRTYPE(str) |= string_immutable_flag;
+
+  sym = S_symbol(str);
   INITSYMHASH(sym) = FIX(hc);
   oblist_insert(sym, idx, 0);
 
