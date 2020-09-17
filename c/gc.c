@@ -1769,10 +1769,10 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     }                                             \
   } while (0)
 
-#if 1
+#if 0
 # define COUNT_SWEPT_BYTES(start, end) num_swept_bytes += ((uptr)TO_PTR(end) - (uptr)TO_PTR(start))
 #else
-# define COUNT_SWEPT_BYTES(start, end) do { } while (0);
+# define COUNT_SWEPT_BYTES(start, end) do { } while (0)
 #endif
 
 #ifdef ENABLE_PARALLEL
