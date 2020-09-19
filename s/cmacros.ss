@@ -1494,6 +1494,7 @@
 
 (define-constant virtual-register-count 16)
 (define-constant static-generation 7)
+(define-constant num-generations (fx+ (constant static-generation) 1))
 (define-constant num-thread-local-allocation-segments (fx* (fx+ 1 (constant static-generation))
                                                            (fx+ 1 (constant max-real-space))))
 (define-constant maximum-parallel-collect-threads 8)
@@ -1583,7 +1584,8 @@
    [xptr sweep-stack-start]
    [xptr sweep-stack-limit]
    [iptr sweep-change]
-   [xptr lock-status]))
+   [xptr lock-status]
+   [iptr bitmask-overhead (constant num-generations)]))
 
 (define tc-field-list
   (let f ([ls (oblist)] [params '()])

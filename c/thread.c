@@ -481,11 +481,20 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
     /* Remember the index where we record this tc, because a thread
        might temporarily wait for collection, but then get woken
        up (e.g., to make the main thread drive the collection) before
-       a collection actually happens. In that case, we may track fewer
-       tcs than possible, but it should be close enough on average. */
-    collect_index = S_collect_waiting_threads++;
-    if (collect_index < maximum_parallel_collect_threads)
-      S_collect_waiting_tcs[collect_index] = tc;
+       a collection actually happens. */
+    int i;
+    S_collect_waiting_threads++;
+    collect_index = maximum_parallel_collect_threads;
+    if (S_collect_waiting_threads <= maximum_parallel_collect_threads) {
+      /* look for an open slot in `S_collect_waiting_tcs` */
+      for (i = 0; i < maximum_parallel_collect_threads; i++) {
+        if (S_collect_waiting_tcs[i] == (ptr)0) {
+          collect_index = i;
+          S_collect_waiting_tcs[collect_index] = tc;
+          break;
+        }
+      }
+    }
   }
 
   if (is_collect || DISABLECOUNT(tc) == 0) {

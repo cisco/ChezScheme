@@ -248,7 +248,8 @@ typedef struct _t2table {
 #define DIRTY_SEGMENT_INDEX(from_g, to_g) ((((unsigned)((from_g)*((from_g)-1)))>>1)+to_g)
 #define DIRTY_SEGMENT_LISTS DIRTY_SEGMENT_INDEX(static_generation, static_generation)
 
-#define DirtySegments(from_g, to_g) S_G.dirty_segments[DIRTY_SEGMENT_INDEX(from_g, to_g)]
+#define DirtySegmentsAt(dirty_segments, from_g, to_g) dirty_segments[DIRTY_SEGMENT_INDEX(from_g, to_g)]
+#define DirtySegments(from_g, to_g) DirtySegmentsAt(S_G.dirty_segments, from_g, to_g) 
 
 /* oblist */
 

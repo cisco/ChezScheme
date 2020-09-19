@@ -1449,8 +1449,7 @@
            "return si->generation;")]
          [(sweep)
           (code-block
-           (and (not (lookup 'as-dirty? config #f))
-                "ENABLE_LOCK_ACQUIRE")
+           "ENABLE_LOCK_ACQUIRE"
            (and (lookup 'maybe-backreferences? config #f)
                 "PUSH_BACKREFERENCE(p)")
            (body)
