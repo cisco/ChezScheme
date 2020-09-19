@@ -2920,14 +2920,14 @@ static s_thread_rv_t start_sweeper(void *_data) {
   uptr sweep_accum = 0;
 #endif
 
-  s_thread_mutex_lock(&sweep_mutex);
+  (void)s_thread_mutex_lock(&sweep_mutex);
   while (1) {
     while (data->status != SWEEPER_SWEEPING) {
       s_thread_cond_wait(&sweep_cond, &sweep_mutex);
     }
     num_running_sweepers++;
     GET_TIME(start);
-    s_thread_mutex_unlock(&sweep_mutex);
+    (void)s_thread_mutex_unlock(&sweep_mutex);
 
     tc = data->sweep_tc;
     s_thread_setspecific(S_tc_key, tc);
@@ -2962,7 +2962,7 @@ static s_thread_rv_t start_sweeper(void *_data) {
       }
     }
 
-    s_thread_mutex_lock(&sweep_mutex);
+    (void)s_thread_mutex_lock(&sweep_mutex);
     --num_running_sweepers;
     if (!num_running_sweepers)
       s_thread_cond_broadcast(&postpone_cond);
@@ -3013,12 +3013,12 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
   S_use_gc_tc_mutex = 1;
 
   /* start other sweepers */
-  s_thread_mutex_lock(&sweep_mutex);
+  (void)s_thread_mutex_lock(&sweep_mutex);
   for (i = 0; i < num_sweepers; i++)
     sweepers[i].status = SWEEPER_SWEEPING;
   s_thread_cond_broadcast(&sweep_cond);
   num_running_sweepers++;
-  s_thread_mutex_unlock(&sweep_mutex);
+  (void)s_thread_mutex_unlock(&sweep_mutex);
   
   /* sweep in the main thread */
   status = 0;
@@ -3033,7 +3033,7 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
   } while (SWEEPCHANGE(tc) != SWEEP_NO_CHANGE);
   
   /* wait for other sweepers */
-  s_thread_mutex_lock(&sweep_mutex);
+  (void)s_thread_mutex_lock(&sweep_mutex);
   --num_running_sweepers;
   if (!num_running_sweepers)
     s_thread_cond_broadcast(&postpone_cond);
@@ -3043,7 +3043,7 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
     }
     S_flush_instruction_cache(sweepers[i].sweep_tc);
   }
-  s_thread_mutex_unlock(&sweep_mutex);
+  (void)s_thread_mutex_unlock(&sweep_mutex);
 
   ACCUM_TIME(par_accum, step, start);
   REPORT_TIME(fprintf(stderr, "%d par  +%ld ms  %ld ms  %ld bytes  [%p]\n", MAX_CG, step, par_accum, num_swept_bytes, tc));
@@ -3058,7 +3058,7 @@ static int gate_postponed(ptr tc, int status) {
     if (status < WAIT_AFTER_POSTPONES)
       return status + 1;
     else {
-      s_thread_mutex_lock(&sweep_mutex);
+      (void)s_thread_mutex_lock(&sweep_mutex);
       /* This thread wasn't able to make progress after a lock conflict.
          Instead of spinning, which could create livelock, wait until
          some thread makes progress. */
@@ -3070,12 +3070,12 @@ static int gate_postponed(ptr tc, int status) {
         s_thread_cond_wait(&postpone_cond, &sweep_mutex);
         num_running_sweepers++;
       }
-      s_thread_mutex_unlock(&sweep_mutex);
+      (void)s_thread_mutex_unlock(&sweep_mutex);
     }
   } else {
-    s_thread_mutex_lock(&sweep_mutex);
+    (void)s_thread_mutex_lock(&sweep_mutex);
     s_thread_cond_broadcast(&postpone_cond);
-    s_thread_mutex_unlock(&sweep_mutex);
+    (void)s_thread_mutex_unlock(&sweep_mutex);
   }
 
   return 0;
