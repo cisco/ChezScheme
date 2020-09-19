@@ -195,7 +195,7 @@ static IGEN sweep_dirty_symbol PROTO((ptr tc_in, ptr x, IGEN youngest));
 static void sweep_code_object PROTO((ptr tc_in, ptr co, IGEN from_g));
 static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void setup_sweep_dirty PROTO(());
-static void sweep_dirty_segments PROTO((ptr tc_in, seginfo **dirty_segments));
+static uptr sweep_dirty_segments PROTO((ptr tc_in, seginfo **dirty_segments));
 static void resweep_dirty_weak_pairs PROTO((ptr tc));
 static void mark_typemod_data_object PROTO((ptr tc_in, ptr p, uptr len, seginfo *si));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
@@ -229,6 +229,28 @@ static void add_ephemeron_to_pending_measure(ptr tc, ptr pe);
 static void add_trigger_ephemerons_to_pending_measure(ptr pe);
 static void check_ephemeron_measure(ptr tc_in, ptr pe);
 static void check_pending_measure_ephemerons(ptr tc_in);
+#endif
+
+#ifdef ENABLE_PARALLEL
+/* # define ENABLE_TIMING */
+#endif
+
+#ifdef ENABLE_TIMING
+#include <sys/time.h>
+/* gets milliseconds of real time (not CPU time) */
+static uptr get_time () {
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  return ((uptr) now.tv_sec) * 1000 + ((uptr) now.tv_usec) / 1000;
+}
+# define GET_TIME(x) uptr x = get_time()
+# define ACCUM_TIME(a, y, x) uptr y = get_time() - x; a += y
+# define REPORT_TIME(e) e
+static uptr collect_accum, all_accum, par_accum;
+#else
+# define GET_TIME(x) do { } while (0)
+# define ACCUM_TIME(a, y, x) do { } while (0)
+# define REPORT_TIME(e) do { } while (0)
 #endif
 
 #if defined(MIN_TG) && defined(MAX_TG)
@@ -806,6 +828,8 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     count_root_t *count_roots;
 #endif
 
+    GET_TIME(astart);
+
    /* flush instruction cache: effectively clear_code_mod but safer */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
       ptr t_tc = (ptr)THREADTC(Scar(ls));
@@ -1163,6 +1187,8 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     }
     relocate_pure_now(&S_threads);
 
+    GET_TIME(start);
+
   /* relocate nonempty oldspace symbols and set up list of buckets to rebuild later */
     buckets_to_rebuild = NULL;
     for (g = 0; g <= MAX_CG; g += 1) {
@@ -1484,6 +1510,9 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
    /* still-pending ephemerons all go to bwp */
     finish_pending_ephemerons(tc, oldspacesegments);
 
+    ACCUM_TIME(collect_accum, step, start);
+    REPORT_TIME(fprintf(stderr, "%d col  +%ld ms  %ld ms\n", MAX_CG, step, collect_accum));
+
    /* post-gc oblist handling.  rebuild old buckets in the target generation, pruning unforwarded symbols */
     { bucket_list *bl; bucket *b, *bnext; bucket_pointer_list *bpl; bucket **pb; ptr sym;
       for (bpl = buckets_to_rebuild; bpl != NULL; bpl = bpl->cdr) {
@@ -1701,6 +1730,9 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
       BITMASKOVERHEAD(tc_in, g) = 0;
     }
 
+    ACCUM_TIME(all_accum, astep, astart);
+    REPORT_TIME(fprintf(stderr, "%d all  +%ld ms  %ld ms\n", MAX_CG, astep, all_accum));
+
     if (count_roots_ls != Sfalse) {
 #ifdef ENABLE_OBJECT_COUNTS
       return count_roots_counts;
@@ -1756,7 +1788,7 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     }                                             \
   } while (0)
 
-#if 0
+#ifdef ENABLE_TIMING
 # define COUNT_SWEPT_BYTES(start, end) num_swept_bytes += ((uptr)TO_PTR(end) - (uptr)TO_PTR(start))
 #else
 # define COUNT_SWEPT_BYTES(start, end) do { } while (0)
@@ -2126,7 +2158,7 @@ static void setup_sweep_dirty() {
 #endif
 }
 
-static void sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
+static uptr sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
   ENABLE_LOCK_ACQUIRE
   IGEN youngest, min_youngest;
   ptr *pp, *ppend, *nl, start, next_loc;
@@ -2134,6 +2166,7 @@ static void sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
   ISPC s;
   IGEN from_g, to_g;
   seginfo *dirty_si, *nextsi;
+  uptr num_swept_bytes = 0;
   weakseginfo *local_weaksegments_to_resweep = NULL, *last_local_weaksegments_to_resweep = NULL;
 
   PUSH_BACKREFERENCE(Snil) /* '() => from unspecified old object */
@@ -2195,6 +2228,8 @@ static void sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
               pp = ppend;
               ppend += bytes_per_card / sizeof(ptr);
               if (pp <= nl && nl < ppend) ppend = nl;
+
+              COUNT_SWEPT_BYTES(pp, ppend);
 
               if (dirty_si->dirty_bytes[d] <= MAX_CG) {
                 /* start out with assumption that we won't find any wrong-way pointers */
@@ -2423,7 +2458,7 @@ static void sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
                   add_weaksegments_to_resweep(local_weaksegments_to_resweep, last_local_weaksegments_to_resweep);
                   CLEAR_LOCK_FAILED(tc_in);
                   SWEEPCHANGE(tc_in) = SWEEP_CHANGE_POSTPONED;
-                  return;
+                  return num_swept_bytes;
                 }
 
                 if (s == space_weakpair) {
@@ -2451,11 +2486,13 @@ static void sweep_dirty_segments(ptr tc_in, seginfo **dirty_segments) {
   SWEEPCHANGE(tc_in) = SWEEP_NO_CHANGE;
 
   POP_BACKREFERENCE()
+
+  return num_swept_bytes;
 }
 
 #ifndef ENABLE_PARALLEL
 static void sweep_dirty(ptr tc) {
-  sweep_dirty_segments(tc, S_G.dirty_segments);
+  (void)sweep_dirty_segments(tc, S_G.dirty_segments);
 }
 #endif
 
@@ -2879,6 +2916,9 @@ static s_thread_rv_t start_sweeper(void *_data) {
   int status;
   iptr num_swept_bytes;
   IGEN g;
+#ifdef ENABLE_TIMING
+  uptr sweep_accum = 0;
+#endif
 
   s_thread_mutex_lock(&sweep_mutex);
   while (1) {
@@ -2886,6 +2926,7 @@ static s_thread_rv_t start_sweeper(void *_data) {
       s_thread_cond_wait(&sweep_cond, &sweep_mutex);
     }
     num_running_sweepers++;
+    GET_TIME(start);
     s_thread_mutex_unlock(&sweep_mutex);
 
     tc = data->sweep_tc;
@@ -2901,7 +2942,7 @@ static s_thread_rv_t start_sweeper(void *_data) {
     status = 0;
     num_swept_bytes = 0;
     do {
-      sweep_dirty_segments(tc, data->dirty_segments);
+      num_swept_bytes += sweep_dirty_segments(tc, data->dirty_segments);
       status = gate_postponed(tc, status);
     } while (SWEEPCHANGE(tc) != SWEEP_NO_CHANGE);
     do {
@@ -2928,7 +2969,9 @@ static s_thread_rv_t start_sweeper(void *_data) {
     for (g = MIN_TG; g <= MAX_TG; g++)
       S_G.bitmask_overhead[g] += BITMASKOVERHEAD(tc, g);
     data->status = SWEEPER_READY;
-    /* fprintf(stderr, "%d: %p swept %ld [%d]\n", MAX_CG, TO_VOIDP(tc), num_swept_bytes, status); */
+    ACCUM_TIME(sweep_accum, step, start);
+    REPORT_TIME(fprintf(stderr, "%d swp  +%ld ms  %ld ms  %ld bytes  [%p]\n", MAX_CG, step, sweep_accum, num_swept_bytes, tc));
+
     s_thread_cond_signal(&data->done_cond);
   }
 
@@ -2964,6 +3007,9 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
   int i, status;
   iptr num_swept_bytes;
 
+  REPORT_TIME(fprintf(stderr, "------\n"));
+  GET_TIME(start);
+
   S_use_gc_tc_mutex = 1;
 
   /* start other sweepers */
@@ -2978,7 +3024,7 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
   status = 0;
   num_swept_bytes = 0;
   do {
-    sweep_dirty_segments(tc, main_dirty_segments);
+    num_swept_bytes += sweep_dirty_segments(tc, main_dirty_segments);
     status = gate_postponed(tc, status);
   } while (SWEEPCHANGE(tc) != SWEEP_NO_CHANGE);
   do {
@@ -2997,13 +3043,15 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
     }
     S_flush_instruction_cache(sweepers[i].sweep_tc);
   }
-  /* fprintf(stderr, "%d: main swept %ld [%d]\n", MAX_CG, num_swept_bytes, status); */
   s_thread_mutex_unlock(&sweep_mutex);
+
+  ACCUM_TIME(par_accum, step, start);
+  REPORT_TIME(fprintf(stderr, "%d par  +%ld ms  %ld ms  %ld bytes  [%p]\n", MAX_CG, step, par_accum, num_swept_bytes, tc));
 
   S_use_gc_tc_mutex = 0;
 }
 
-#define WAIT_AFTER_POSTPONES 100
+#define WAIT_AFTER_POSTPONES 10
 
 static int gate_postponed(ptr tc, int status) {
   if (SWEEPCHANGE(tc) == SWEEP_CHANGE_POSTPONED) {
