@@ -200,13 +200,13 @@ static void resweep_dirty_weak_pairs PROTO((ptr tc));
 static void mark_typemod_data_object PROTO((ptr tc_in, ptr p, uptr len, seginfo *si));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
-static void add_ephemeron_to_pending PROTO((ptr p));
-static void add_trigger_ephemerons_to_pending PROTO((ptr p));
-static void check_triggers PROTO((seginfo *si));
+static void add_ephemeron_to_pending PROTO((ptr tc, ptr p));
+static void add_trigger_ephemerons_to_pending PROTO((ptr tc, ptr p));
+static void check_triggers PROTO((ptr tc, seginfo *si));
 static void check_ephemeron PROTO((ptr tc_in, ptr pe));
 static void check_pending_ephemerons PROTO((ptr tc_in));
 static int check_dirty_ephemeron PROTO((ptr tc_in, ptr pe, int youngest));
-static void finish_pending_ephemerons PROTO((seginfo *si));
+static void finish_pending_ephemerons PROTO((ptr tc, seginfo *si));
 static void init_fully_marked_mask(ptr tc_in, IGEN g);
 static void copy_and_clear_list_bits(ptr tc_in, seginfo *oldspacesegments);
 
@@ -225,7 +225,7 @@ static void init_measure_mask(ptr tc_in, seginfo *si);
 static void init_counting_mask(ptr tc_in, seginfo *si);
 static void push_measure(ptr tc_in, ptr p);
 static void measure_add_stack_size(ptr stack, uptr size);
-static void add_ephemeron_to_pending_measure(ptr pe);
+static void add_ephemeron_to_pending_measure(ptr tc, ptr pe);
 static void add_trigger_ephemerons_to_pending_measure(ptr pe);
 static void check_ephemeron_measure(ptr tc_in, ptr pe);
 static void check_pending_measure_ephemerons(ptr tc_in);
@@ -623,15 +623,6 @@ static void do_relocate_pure_now(ptr tc_in, ptr *pp) {
   }
 }
 
-static void do_relocate_impure_now(ptr tc_in, ptr *pp, IGEN g) {
-  ENABLE_LOCK_ACQUIRE
-  relocate_impure(pp, g);
-  while (CHECK_LOCK_FAILED(tc_in)) {
-    CLEAR_LOCK_FAILED(tc_in);
-    relocate_impure(pp, g);
-  }
-}
-
 static void do_mark_or_copy_pure_now(ptr tc_in, ptr *dest, ptr pp, seginfo *si) {
   do {
     CLEAR_LOCK_FAILED(tc_in);
@@ -640,7 +631,6 @@ static void do_mark_or_copy_pure_now(ptr tc_in, ptr *dest, ptr pp, seginfo *si) 
 }
 
 # define relocate_pure_now(pp)       do_relocate_pure_now(tc_in, pp)
-# define relocate_impure_now(pp, g)  do_relocate_impure_now(tc_in, pp, g)
 # define mark_or_copy_pure_now(dest, pp, si) do_mark_or_copy_pure_now(tc, dest, pp, si)
 
 static void sweep_thread_now(ptr tc_in, ptr p) {
@@ -652,12 +642,11 @@ static void sweep_thread_now(ptr tc_in, ptr p) {
 
 #else
 # define relocate_pure_now(pp)       relocate_pure(pp)
-# define relocate_impure_now(pp, g)  relocate_impure(pp, g)
 # define mark_or_copy_pure_now(tc, pp, si) mark_or_copy_pure(tc, pp, si)
 # define sweep_thread_now(tc, thread) sweep_thread(tc, thread)
 #endif
 
-FORCEINLINE void check_triggers(seginfo *si) {
+FORCEINLINE void check_triggers(ptr tc_in, seginfo *si) {
   /* Registering ephemerons and guardians to recheck at the
      granularity of a segment means that the worst-case complexity of
      GC is quadratic in the number of objects that fit into a segment
@@ -666,7 +655,7 @@ FORCEINLINE void check_triggers(seginfo *si) {
      ephemerons). */
   if (si->has_triggers) {
     if (si->trigger_ephemerons) {
-      add_trigger_ephemerons_to_pending(si->trigger_ephemerons);
+      add_trigger_ephemerons_to_pending(tc_in, si->trigger_ephemerons);
       si->trigger_ephemerons = 0;
     }
     if (si->trigger_guardians) {
@@ -1493,7 +1482,7 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     resweep_weak_pairs(tc, oldweakspacesegments);
 
    /* still-pending ephemerons all go to bwp */
-    finish_pending_ephemerons(oldspacesegments);
+    finish_pending_ephemerons(tc, oldspacesegments);
 
    /* post-gc oblist handling.  rebuild old buckets in the target generation, pruning unforwarded symbols */
     { bucket_list *bl; bucket *b, *bnext; bucket_pointer_list *bpl; bucket **pb; ptr sym;
@@ -1933,7 +1922,7 @@ static iptr sweep_generation_pass(ptr tc_in) {
 
       sweep_space(space_ephemeron, from_g, {
         p = TYPE(TO_PTR(pp), type_pair);
-        add_ephemeron_to_pending(p);
+        add_ephemeron_to_pending(tc_in, p);
         pp += size_ephemeron / sizeof(ptr);
       })
       
@@ -1986,6 +1975,12 @@ static iptr sweep_generation_pass(ptr tc_in) {
     /* don't sweep from space_count_pure or space_count_impure */
     }
 
+    /* Waiting until sweeping doesn't trigger a change reduces the
+       chance that an ephemeron must be reigistered as a
+       segment-specific trigger or gets triggered for recheck, but
+       it doesn't change the worst-case complexity. */
+    if (SWEEPCHANGE(tc_in) == SWEEP_NO_CHANGE)
+      check_pending_ephemerons(tc_in);
   } while (SWEEPCHANGE(tc_in) == SWEEP_CHANGE_PROGRESS);
 
   return num_swept_bytes;
@@ -1994,12 +1989,6 @@ static iptr sweep_generation_pass(ptr tc_in) {
 static void sweep_generation(ptr tc_in) {
   do {
     sweep_generation_pass(tc_in);
-  
-    /* Waiting until sweeping doesn't trigger a change reduces the
-       chance that an ephemeron must be reigistered as a
-       segment-specific trigger or gets triggered for recheck, but
-       it doesn't change the worst-case complexity. */
-    check_pending_ephemerons(tc_in);
   } while (SWEEPCHANGE(tc_in) != SWEEP_NO_CHANGE);
 }
 
@@ -2572,9 +2561,6 @@ static void add_trigger_guardians_to_recheck(ptr ls)
   GC_TC_MUTEX_RELEASE();
 }
 
-static ptr pending_ephemerons = 0;
-/* Ephemerons that we haven't looked at, chained through `next`. */
-
 static void ephemeron_remove(ptr pe) {
   ptr next = EPHEMERONNEXT(pe);
   *((ptr *)TO_VOIDP(EPHEMERONPREVREF(pe))) = next;
@@ -2598,25 +2584,22 @@ static void ephemeron_add(ptr *first, ptr pe) {
     EPHEMERONPREVREF(next) = TO_PTR(&EPHEMERONNEXT(last_pe));
 }
 
-static void add_ephemeron_to_pending(ptr pe) {
+static void add_ephemeron_to_pending(ptr tc_in, ptr pe) {
   /* We could call check_ephemeron directly here, but the indirection
-     through `pending_ephemerons` can dramatically decrease the number
+     through `PENDINGEPHEMERONS` can dramatically decrease the number
      of times that we have to trigger re-checking, especially since
      check_pending_pehemerons() is run only after all other sweep
      opportunities are exhausted. */
-  GC_TC_MUTEX_ACQUIRE();
   if (EPHEMERONPREVREF(pe)) ephemeron_remove(pe);
-  ephemeron_add(&pending_ephemerons, pe);
-  GC_TC_MUTEX_RELEASE();
+  ephemeron_add(&PENDINGEPHEMERONS(tc_in), pe);
 }
 
-static void add_trigger_ephemerons_to_pending(ptr pe) {
-  GC_TC_MUTEX_ACQUIRE();
-  ephemeron_add(&pending_ephemerons, pe);
-  GC_TC_MUTEX_RELEASE();
+static void add_trigger_ephemerons_to_pending(ptr tc_in, ptr pe) {
+  ephemeron_add(&PENDINGEPHEMERONS(tc_in), pe);
 }
 
 static void check_ephemeron(ptr tc_in, ptr pe) {
+  ENABLE_LOCK_ACQUIRE
   ptr p;
   seginfo *si;
   IGEN from_g;
@@ -2629,41 +2612,55 @@ static void check_ephemeron(ptr tc_in, ptr pe) {
   
   p = Scar(pe);
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space) {
-    if (new_marked(si, p)) {
+    if (SEGMENT_LOCK_ACQUIRE(si)) {
+      if (new_marked(si, p)) {
+        ENABLE_LOCK_ACQUIRE /* for nested relocate */
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
-      IGEN tg = TARGET_GENERATION(si);
-      if (tg < from_g) S_record_new_dirty_card(tc_in, &INITCAR(pe), tg);
+        IGEN tg = TARGET_GENERATION(si);
+        if (tg < from_g) S_record_new_dirty_card(tc_in, &INITCAR(pe), tg);
 #endif
-      relocate_impure_now(&INITCDR(pe), from_g);
-    } else if (FORWARDEDP(p, si)) {
+        relocate_impure(&INITCDR(pe), from_g);
+      } else if (FORWARDEDP(p, si)) {
+        ENABLE_LOCK_ACQUIRE /* for nested relocate */
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
-      IGEN tg = TARGET_GENERATION(si);
-      if (tg < from_g) S_record_new_dirty_card(tc_in, &INITCAR(pe), tg);
+        IGEN tg = TARGET_GENERATION(si);
+        if (tg < from_g) S_record_new_dirty_card(tc_in, &INITCAR(pe), tg);
 #endif
-      INITCAR(pe) = FWDADDRESS(p);
-      relocate_impure_now(&INITCDR(pe), from_g);
+        INITCAR(pe) = FWDADDRESS(p);
+        relocate_impure(&INITCDR(pe), from_g);
+      } else {
+        /* If we get here, then there's no lock failure: */
+        /* Not reached, so far; install as trigger */
+        ephemeron_add(&si->trigger_ephemerons, pe);
+        si->has_triggers = 1;
+      }
+      SEGMENT_LOCK_RELEASE(si);
     } else {
-      /* Not reached, so far; install as trigger */
-      ephemeron_add(&si->trigger_ephemerons, pe);
-      si->has_triggers = 1;
+      RECORD_LOCK_FAILED(tc_in, si);
     }
   } else {
-    relocate_impure_now(&INITCDR(pe), from_g);
+    relocate_impure(&INITCDR(pe), from_g);
   }
   
   POP_BACKREFERENCE();
 }
 
-/* non-parallel: */
 static void check_pending_ephemerons(ptr tc_in) {
   ptr pe, next_pe;
 
-  pe = pending_ephemerons;
-  pending_ephemerons = 0;
+  pe = PENDINGEPHEMERONS(tc_in);
+  PENDINGEPHEMERONS(tc_in) = 0;
 
   while (pe != 0) {
     next_pe = EPHEMERONNEXT(pe);
     check_ephemeron(tc_in, pe);
+    if (CHECK_LOCK_FAILED(tc_in)) {
+      CLEAR_LOCK_FAILED(tc_in);
+      SWEEPCHANGE(tc_in) = SWEEP_CHANGE_POSTPONED;
+      EPHEMERONNEXT(pe) = next_pe;
+      ephemeron_add(&PENDINGEPHEMERONS(tc_in), pe);
+      break;
+    }
     pe = next_pe;
   }
 }
@@ -2690,7 +2687,7 @@ static IGEN check_dirty_ephemeron(ptr tc_in, ptr pe, IGEN youngest) {
           relocate_dirty(&INITCDR(pe), youngest);
         } else {
           /* Not reached, so far; add to pending list */
-          add_ephemeron_to_pending(pe);
+          add_ephemeron_to_pending(tc_in, pe);
 
           /* Make the consistent (but pessimistic w.r.t. to wrong-way
              pointers) assumption that the key will stay live and move
@@ -2721,10 +2718,10 @@ static IGEN check_dirty_ephemeron(ptr tc_in, ptr pe, IGEN youngest) {
   return youngest;
 }
 
-static void finish_pending_ephemerons(seginfo *si) {
+static void finish_pending_ephemerons(ptr tc_in, seginfo *si) {
   /* Any ephemeron still in a trigger list is an ephemeron
      whose key was not reached. */
-  if (pending_ephemerons != 0)
+  if (PENDINGEPHEMERONS(tc_in) != 0)
     S_error_abort("clear_trigger_ephemerons(gc): non-empty pending list");
 
   for (; si != NULL; si = si->next) {
@@ -3004,10 +3001,6 @@ static void parallel_sweep_dirty_and_generation(ptr tc) {
   s_thread_mutex_unlock(&sweep_mutex);
 
   S_use_gc_tc_mutex = 0;
-
-  /* check ephemerons and finish in non-parallel mode */
-  check_pending_ephemerons(tc);
-  sweep_generation(tc);
 }
 
 #define WAIT_AFTER_POSTPONES 100
@@ -3156,7 +3149,7 @@ static void measure_add_stack_size(ptr stack, uptr size) {
     measure_total += size;
 }
 
-static void add_ephemeron_to_pending_measure(ptr pe) {
+static void add_ephemeron_to_pending_measure(ptr tc_in, ptr pe) {
   /* If we're in hybrid mode and the key in `pe` is in the
      old space, then we need to use the regular pending list
      instead of the measure-specific one */
@@ -3164,7 +3157,7 @@ static void add_ephemeron_to_pending_measure(ptr pe) {
   ptr p = Scar(pe);
 
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space)
-    add_ephemeron_to_pending(pe);
+    add_ephemeron_to_pending(tc_in, pe);
   else {
     if (EPHEMERONPREVREF(pe))
       S_error_abort("add_ephemeron_to_pending_measure: ephemeron is in some list");

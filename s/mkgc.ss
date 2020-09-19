@@ -662,9 +662,9 @@
 (define-trace-macro (add-ephemeron-to-pending)
   (case-mode
    [(sweep mark)
-    (add_ephemeron_to_pending _)]
+    (add_ephemeron_to_pending _tc_ _)]
    [measure
-    (add_ephemeron_to_pending_measure _)]
+    (add_ephemeron_to_pending_measure _tc_ _)]
    [else]))
 
 (define-trace-macro (assert-ephemeron-size-ok)
@@ -1424,7 +1424,7 @@
           (code-block
            "ENABLE_LOCK_ACQUIRE"
            "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
-           "check_triggers(si);"
+           "check_triggers(tc_in, si);"
            (code-block
             "ptr new_p;"
             "IGEN tg = TARGET_GENERATION(si);"
@@ -1441,7 +1441,7 @@
           (code-block
            "ENABLE_LOCK_ACQUIRE"
            "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
-           "check_triggers(si);"
+           "check_triggers(tc_in, si);"
            (ensure-segment-mark-mask "si" "" '())
            (body)
            "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
