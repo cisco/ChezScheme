@@ -360,7 +360,6 @@ static ptr sweep_from;
 # define CHECK_LOCK_FAILED(tc) (LOCKSTATUS(tc) == Sfalse)
 # define SAVE_SWEEP_RANGE_FOR_LATER(tc, s, g, slp, sl, nl) save_sweep_range_for_later(tc, s, g, slp, sl, nl)
 # define SAVE_SWEEP_SEGMENT_FOR_LATER(tc, si) save_sweep_segment_for_later(tc, si)
-# define LOCK_CAS_LOAD_ACQUIRE(a, old, new) S_cas_load_acquire_ptr(a, old, new)
 # define GC_TC_MUTEX_ACQUIRE() gc_tc_mutex_acquire() 
 # define GC_TC_MUTEX_RELEASE() gc_tc_mutex_release()
 
@@ -398,7 +397,6 @@ static seginfo *main_dirty_segments[DIRTY_SEGMENT_LISTS];
 # define CHECK_LOCK_FAILED(tc) 0
 # define SAVE_SWEEP_RANGE_FOR_LATER(tc, s, g, slp, sl, nl) do { } while (0)
 # define SAVE_SWEEP_SEGMENT_FOR_LATER(tc, si) do { } while (0)
-# define LOCK_CAS_LOAD_ACQUIRE(a, old, new) (*(a) = new, 1)
 # define GC_TC_MUTEX_ACQUIRE() do { } while (0)
 # define GC_TC_MUTEX_RELEASE() do { } while (0)
 # define gather_active_sweepers() do { } while (0)
@@ -890,6 +888,7 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
         /* set up context for sweeping --- effectively remembering the current
            allocation state so anything new is recognized as needing sweeping */
         SWEEPSTACKSTART(t_tc) = SWEEPSTACK(t_tc) = SWEEPSTACKLIMIT(t_tc) = (ptr)0;
+        BITMASKOVERHEAD(t_tc, 0) = 0;
         for (g = MIN_TG; g <= MAX_TG; g++)
           BITMASKOVERHEAD(t_tc, g) = 0;
         for (s = 0; s <= max_real_space; s++) {
@@ -1725,10 +1724,10 @@ ptr GCENTRY(ptr tc_in, ptr count_roots_ls) {
     if (SWEEPSTACKSTART(tc_in) != SWEEPSTACK(tc_in))
       S_error_abort("gc: sweep stack ended non-empty");
 
-    for (g = MIN_TG; g <= MAX_TG; g++) {
+    S_G.bitmask_overhead[0] += BITMASKOVERHEAD(tc_in, 0);
+    BITMASKOVERHEAD(tc_in, 0) = 0;
+    for (g = MIN_TG; g <= MAX_TG; g++)
       S_G.bitmask_overhead[g] += BITMASKOVERHEAD(tc_in, g);
-      BITMASKOVERHEAD(tc_in, g) = 0;
-    }
 
     ACCUM_TIME(all_accum, astep, astart);
     REPORT_TIME(fprintf(stderr, "%d all  +%ld ms  %ld ms\n", MAX_CG, astep, all_accum));
@@ -2966,6 +2965,8 @@ static s_thread_rv_t start_sweeper(void *_data) {
     --num_running_sweepers;
     if (!num_running_sweepers)
       s_thread_cond_broadcast(&postpone_cond);
+    S_G.bitmask_overhead[0] += BITMASKOVERHEAD(tc, 0);
+    BITMASKOVERHEAD(tc, 0) = 0;
     for (g = MIN_TG; g <= MAX_TG; g++)
       S_G.bitmask_overhead[g] += BITMASKOVERHEAD(tc, g);
     data->status = SWEEPER_READY;
