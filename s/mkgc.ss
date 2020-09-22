@@ -13,7 +13,9 @@
 (disable-unbound-warning
  mkgc-ocd.inc
  mkgc-oce.inc
- mkvfasl.inc)
+ mkgc-par.inc
+ mkvfasl.inc
+ mkheapcheck.inc)
 
 ;; Currently supported traversal modes:
 ;;   - copy
@@ -25,6 +27,7 @@
 ;;   - measure     : recurs for reachable size
 ;;   - vfasl-copy
 ;;   - vfasl-sweep
+;;   - check
 
 ;; For the specification, there are a few declaration forms described
 ;; below, such as `trace` to declare a pointer-valued field within an
@@ -83,6 +86,7 @@
 ;;  - (trace-early <field>) : relocate for sweep, copy, and mark; recur otherwise; implies pure
 ;;  - (trace-now <field>) : direct recur; implies pure
 ;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd; implies pure
+;;  - (trace-pure-code <field>) : like `trace-pure`, but special handling in parallel mode
 ;;  - (trace-ptrs <field> <count>) : trace an array of pointerrs
 ;;  - (trace-pure-ptrs <field> <count>) : pure analog of `trace-ptrs`
 ;;  - (copy <field>) : copy for copy, ignore otherwise
@@ -96,8 +100,6 @@
 ;;  - (as-mark-end <statment> ...) : declares that <statement>s implement counting,
 ;;       which means that it's included for mark mode
 ;;  - (skip-forwarding) : disable forward-pointer installation in copy mode
-;;  - (check-lock-failed) : bail out if a lock aquire failed; use this before dereferencing
-;;                          an object reference that might not have been relocated
 ;;  - (assert <expr>) : assertion
 ;;
 ;; In the above declarations, nonterminals like <space> can be
@@ -150,6 +152,7 @@
 ;; Built-in variables:
 ;;  - _                 : object being copied, swept, etc.
 ;;  - _copy_            : target in copy or vfasl mode, same as _ otherwise
+;;  - _size_            : size of the current object, but only in parallel mode
 ;;  - _tf_              : type word
 ;;  - _tg_              : target generation
 ;;  - _backreferences?_ : dynamic flag indicating whether backreferences are on
@@ -173,6 +176,9 @@
        [(copy)
         (set! (ephemeron-prev-ref _copy_) 0)
         (set! (ephemeron-next _copy_) 0)]
+       [(check)
+        (trace pair-car)
+        (trace pair-cdr)]
        [else])
       (add-ephemeron-to-pending)
       (mark one-bit no-sweep)
@@ -181,6 +187,9 @@
      [space-weakpair
       (space space-weakpair)
       (vfasl-fail "weakpair")
+      (case-mode
+       [(check) (trace pair-car)]
+       [else])
       (try-double-pair copy pair-car
                        trace pair-cdr
                        countof-weakpair)]
@@ -193,7 +202,10 @@
 
    [closure
     (define code : ptr (CLOSCODE _))
-    (trace-code-early code)
+    (trace-code-early code) ; not traced in parallel mode
+    ;; In parallel mode, don't use any fields of `code` until the
+    ;; second on after the type, because the type and first field may
+    ;; be overwritten with forwarding information
     (cond
       [(and-not-as-dirty
         (or-assume-continuation
@@ -221,12 +233,23 @@
             (case-mode
              [(sweep)
               (define stk : ptr (continuation-stack _))
-              (when (&& (!= stk (cast ptr 0)) (OLDSPACE stk))
-                (set! (continuation-stack _)
-                      (copy_stack _tc_
-                                  (continuation-stack _)
-                                  (& (continuation-stack-length _))
-                                  (continuation-stack-clength _))))]
+              (define s_si : seginfo* NULL)
+              (when (&& (!= stk (cast ptr 0))
+                        (begin
+                          (set! s_si (SegInfo (ptr_get_segment stk)))
+                          (-> s_si old_space)))
+                (cond
+                  [(! (SEGMENT_IS_LOCAL s_si stk))
+                   ;; A stack segment has a single owner, so it's ok for us
+                   ;; to sweep the stack content, even though it's on a
+                   ;; remote segment relative to the current sweeper.
+                   (RECORD_REMOTE_RANGE _tc_ _ _size_ s_si)]
+                  [else
+                   (set! (continuation-stack _)
+                         (copy_stack _tc_
+                                     (continuation-stack _)
+                                     (& (continuation-stack-length _))
+                                     (continuation-stack-clength _)))]))]
              [else])
             (count countof-stack (continuation-stack-length _) 1 [measure])
             (trace-pure continuation-link)
@@ -250,9 +273,15 @@
           [else
            (cond
              [(& (code-type code) (<< code-flag-mutable-closure code-flags-offset))
+              ;; in parallel mode, assume that code pointer is static and doesn't need to be swept
               space-impure]
              [else
-              space-pure])]))
+              (case-flag parallel?
+                [on
+                 ;; use space-closure so code reference (not a regular ptr) is swept correctly
+                 space-closure]
+                [off
+                 space-pure])])]))
        (vspace vspace_closure)
        (when-vfasl
         (when (& (code-type code) (<< code-flag-mutable-closure code-flags-offset))
@@ -286,7 +315,7 @@
     (size size-symbol)
     (mark one-bit)
     (trace/define symbol-value val :vfasl-as (FIX (vfasl_symbol_to_index vfi _)))
-    (trace-symcode symbol-pvalue val)
+    (trace-local-symcode symbol-pvalue val)
     (trace-nonself/vfasl-as-nil symbol-plist)
     (trace-nonself symbol-name)
     (trace-nonself/vfasl-as-nil symbol-splist)
@@ -463,37 +492,33 @@
       (count countof-box)]
 
      [ratnum
-      (space space-data)
+      (space (case-flag parallel?
+               [on space-pure]
+               [off space-data]))
       (vspace vspace_impure) ; would be better if we had pure, but these are rare
       (size size-ratnum)
       (copy-type ratnum-type)
-      (trace-now ratnum-numerator)
-      (trace-now ratnum-denominator)
-      (case-mode
-       [(copy) (when (CHECK_LOCK_FAILED _tc_)
-                 ;; create failed relocates so that the heap checker isn't unhappy
-                 (set! (ratnum-numerator _copy_) (cast ptr 0))
-                 (set! (ratnum-denominator _copy_) (cast ptr 0)))]
-       [(mark) (check-lock-failed)]
-       [else])
+      (trace-nonparallel-now ratnum-numerator)
+      (trace-nonparallel-now ratnum-denominator)
+      (case-flag parallel?
+        [on (pad (set! (ratnum-pad _copy_) 0))]
+        [off])
       (mark)
       (vfasl-pad-word)
       (count countof-ratnum)]
 
      [exactnum
-      (space space-data)
+      (space (case-flag parallel?
+               [on space-pure]
+               [off space-data]))
       (vspace vspace_impure) ; same rationale as ratnum
       (size size-exactnum)
       (copy-type exactnum-type)
-      (trace-now exactnum-real)
-      (trace-now exactnum-imag)
-      (case-mode
-       [(copy) (when (CHECK_LOCK_FAILED _tc_)
-                 ;; create failed relocates so that the heap checker isn't unhappy
-                 (set! (exactnum-real _copy_) (cast ptr 0))
-                 (set! (exactnum-imag _copy_) (cast ptr 0)))]
-       [(mark) (check-lock-failed)]
-       [else])
+      (trace-nonparallel-now exactnum-real)
+      (trace-nonparallel-now exactnum-imag)
+      (case-flag parallel?
+        [on (pad (set! (exactnum-pad _copy_) 0))]
+        [off])
       (mark)
       (vfasl-pad-word)
       (count countof-exactnum)]
@@ -613,6 +638,11 @@
    [else
     (trace-nonself field)]))
 
+(define-trace-macro (trace-nonparallel-now field)
+  (case-flag parallel?
+    [on (trace-pure field)]
+    [off (trace-now field)]))
+
 (define-trace-macro (try-double-pair do-car pair-car
                                      do-cdr pair-cdr
                                      count-pair)
@@ -680,7 +710,16 @@
      ;; Special relocation handling for code in a closure:
      (set! code (vfasl_relocate_code vfi code))]
     [else
-     (trace-early (just code))])))
+     ;; In parallel mode, the `code` pointer may or may not have been
+     ;; forwarded. In that case, we may misinterpret the forward mmarker
+     ;; as a code type with flags, but it's ok, because the flags will
+     ;; only be set for static-generation objects
+     (case-flag parallel?
+       [on (case-mode
+            [(sweep sweep-in-old)
+             (trace-pure-code (just code))]
+            [else])]
+       [off (trace-early (just code))])])))
 
 (define-trace-macro (copy-clos-code code)
   (case-mode
@@ -718,7 +757,6 @@
     (trace ref)]
    [(sweep sweep-in-old)
     (trace ref) ; can't trace `val` directly, because we need an impure relocate
-    (check-lock-failed)
     (define val : ptr (ref _))]
    [vfasl-copy
     (set! (ref _copy_) vfasl-val)]
@@ -733,13 +771,33 @@
     (case-flag as-dirty?
        [on (trace (just code))]
        [off (trace-pure (just code))])
-    (check-lock-failed)
     (INITSYMCODE _ code)]
    [measure]
    [vfasl-copy
     (set! (symbol-pvalue _copy_) Snil)]
    [else
     (copy symbol-pvalue)]))
+
+(define-trace-macro (trace-local-symcode symbol-pvalue val)
+  (case-mode
+   [(sweep)
+    (case-flag parallel?
+      [on
+       (define v_si : seginfo* (cond
+                                 [(Sprocedurep val) (SegInfo (ptr_get_segment val))]
+                                 [else NULL]))
+       (cond
+         [(\|\|
+           (\|\|
+            (== v_si NULL)
+            (! (-> v_si old_space)))
+           (SEGMENT_IS_LOCAL v_si val))
+          (trace-symcode symbol-pvalue val)]
+         [else
+          (RECORD_REMOTE_RANGE _tc_ _ _size_ v_si)])]
+      [off (trace-symcode symbol-pvalue val)])]
+   [else
+    (trace-symcode symbol-pvalue val)]))
 
 (define-trace-macro (trace-tlc tlc-next tlc-keyval)
   (case-mode
@@ -800,11 +858,24 @@
           [on]
           [off
            (case-mode
-            [(sweep sweep-in-old self-test)
-             ;; Bignum pointer mask may need forwarding
-             (trace-pure (record-type-pm rtd))
-             (check-lock-failed)
-             (set! num (record-type-pm rtd))]
+            [(sweep)
+             (case-flag parallel?
+               [on
+                (define pm_si : seginfo* (SegInfo (ptr_get_segment num)))
+                (cond
+                  [(\|\|
+                    (! (-> pm_si old_space))
+                    (SEGMENT_IS_LOCAL pm_si num))
+                   (trace-record-type-pm num rtd)]
+                  [else
+                   ;; Try again in the bignum's sweeper
+                   (RECORD_REMOTE_RANGE _tc_ _ _size_ pm_si)
+                   (set! num S_G.zero_length_bignum)])]
+               [off
+                (trace-record-type-pm num rtd)])]
+            [(sweep-in-old self-test)
+             (trace-record-type-pm num rtd)]
+            [(check) (check-bignum num)]
             [else])])
          (let* ([index : iptr (- (BIGLEN num) 1)]
                 ;; Ignore bit for already forwarded rtd
@@ -824,6 +895,11 @@
             (set! index -= 1)
             (set! mask (bignum-data num index))
             (set! bits bigit_bits)))]))]))
+
+(define-trace-macro (trace-record-type-pm num rtd)
+  ;; Bignum pointer mask may need forwarding
+  (trace-pure (record-type-pm rtd))
+  (set! num (record-type-pm rtd)))
 
 (define-trace-macro (vfasl-check-parent-rtd rtd)
   (case-mode
@@ -917,7 +993,7 @@
                           (cast iptr (port-buffer _))))
       (trace port-buffer)
       (set! (port-last _) (cast ptr (+ (cast iptr (port-buffer _)) n))))]
-   [sweep-in-old
+   [(sweep-in-old check)
     (when (& (cast uptr _tf_) flag)
       (trace port-buffer))]
    [else
@@ -1024,10 +1100,19 @@
                (trace-pure (* pp)))
              (set! mask >>= 1)))]
          [else
-          (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
-          (check-lock-failed)
-          (let* ([num : ptr (ENTRYLIVEMASK oldret)]
-                 [index : iptr (BIGLEN num)])
+          (case-mode
+           [(check) (check-bignum num)]
+           [else
+            (define n_si : seginfo* (SegInfo (ptr_get_segment num)))
+            (cond
+              [(! (-> n_si old_space))]
+              [(SEGMENT_IS_LOCAL n_si num)
+               (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
+               (set! num  (ENTRYLIVEMASK oldret))]
+              [else
+               (RECORD_REMOTE_RANGE _tc_ _ _size_ n_si)
+               (set! num S_G.zero_length_bignum)])])
+          (let* ([index : iptr (BIGLEN num)])
             (while
              :? (!= index 0)
              (set! index -= 1)
@@ -1055,11 +1140,10 @@
    [(sweep sweep-in-old)
     (define x_si : seginfo* (SegInfo (ptr_get_segment c_p)))
     (when (-> x_si old_space)
-      (relocate_code c_p x_si)
+      (relocate_code c_p x_si _ _size_)
       (case-mode
        [sweep-in-old]
        [else
-        (check-lock-failed)
         (set! field (cast ptr (+ (cast uptr c_p) co)))]))]
    [else
     (trace-pure (just c_p))]))
@@ -1116,7 +1200,6 @@
 
     (case-mode
      [sweep
-      (check-lock-failed)
       (cond
         [(&& (== from_g static_generation)
              (&& (! S_G.retain_static_relocation)
@@ -1126,21 +1209,20 @@
          (let* ([t_si : seginfo* (SegInfo (ptr_get_segment t))])
            (when (-> t_si old_space)
              (cond
-               [(SEGMENT_LOCK_ACQUIRE t_si)
+               [(SEGMENT_IS_LOCAL t_si t)
                 (set! n (size_reloc_table (reloc-table-size t)))
                 (count countof-relocation-table (just n) 1 sweep)
                 (cond
                   [(-> t_si use_marks)
-                   ;; Assert: (! (marked t_si t))
-                   (mark_typemod_data_object _tc_ t n t_si)]
+                   (cond
+                     [(! (marked t_si t))
+                      (mark_typemod_data_object _tc_ t n t_si)])]
                   [else
                    (let* ([oldt : ptr t])
                      (find_room _tc_ space_data from_g typemod n t)
-                     (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])
-                (SEGMENT_LOCK_RELEASE t_si)]
+                     (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])]
                [else
-                (RECORD_LOCK_FAILED _tc_ t_si)
-                (check-lock-failed)])))
+                (RECORD_REMOTE_RANGE _tc_ _ _size_ t_si)])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
       (S_record_code_mod tc_in (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
@@ -1149,6 +1231,10 @@
       (set! (reloc-table-code t) (cast ptr (ptr_diff _ (-> vfi base_addr))))
       (set! (code-reloc _) (cast ptr (ptr_diff t (-> vfi base_addr))))]
      [else])]))
+
+(define-trace-macro (check-bignum var)
+  (trace (just var))
+  (check_bignum var))
 
 (define-trace-macro (unless-code-relocated stmt)
   (case-flag code-relocated?
@@ -1389,6 +1475,7 @@
                   [(lookup 'as-dirty? config #f) ", IGEN youngest"]
                   [(lookup 'no-from-g? config #f) ""]
                   [else ", IGEN from_g"])]
+               [(check) ", uptr seg, ISPC s_in, IBOOL aftergc"]
                [else ""]))
      (let ([body
             (lambda ()
@@ -1417,14 +1504,11 @@
        (case (lookup 'mode config)
          [(copy)
           (code-block
-           "ENABLE_LOCK_ACQUIRE"
-           "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
            "check_triggers(tc_in, si);"
            (code-block
             "ptr new_p;"
             "IGEN tg = TARGET_GENERATION(si);"
             (body)
-            "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
             "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
             "FWDMARKER(p) = forward_marker;"
             "FWDADDRESS(p) = new_p;"
@@ -1434,17 +1518,14 @@
             "return tg;"))]
          [(mark)
           (code-block
-           "ENABLE_LOCK_ACQUIRE"
-           "if (CHECK_LOCK_FAILED(tc_in)) return 0xff;"
            "check_triggers(tc_in, si);"
-           (ensure-segment-mark-mask "si" "" '())
+           (ensure-segment-mark-mask "si" "")
            (body)
            "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
            "ADD_BACKREFERENCE(p, si->generation);"
            "return si->generation;")]
          [(sweep)
           (code-block
-           "ENABLE_LOCK_ACQUIRE"
            (and (lookup 'maybe-backreferences? config #f)
                 "PUSH_BACKREFERENCE(p)")
            (body)
@@ -1453,9 +1534,7 @@
            (and (lookup 'as-dirty? config #f)
                 "return youngest;"))]
          [(sweep-in-old)
-          (code-block
-           "ENABLE_LOCK_ACQUIRE"
-           (body))]
+          (body)]
          [(measure)
           (body)]
          [(self-test)
@@ -1579,8 +1658,8 @@
                         (code
                          "/* Do not inspect the type or first field of the rtd, because"
                          "   it may have been overwritten for forwarding. */")])]
-                    [(measure sweep sweep-in-old)
-                     (statements `((trace-early ,field)) config)]
+                    [(measure sweep sweep-in-old check)
+                     (statements `((trace-early ,field)) (cons `(early-rtd? #t) config))]
                     [else #f])
                   (statements (cdr l) (cons `(copy-extra-rtd ,field) config)))]
            [`(trace ,field)
@@ -1590,9 +1669,12 @@
             (code (and (not (lookup 'as-dirty? config #f))
                        (trace-statement field config #f 'pure))
                   (statements (cdr l) config))]
+           [`(trace-pure-code ,field)
+            (code (and (not (lookup 'as-dirty? config #f))
+                       (trace-statement field (cons `(early-code? #t) config) #f 'pure))
+                  (statements (cdr l) config))]
            [`(trace-early ,field)
             (code (trace-statement field config #t 'pure)
-                  (check-lock-failure-statement config)
                   (statements (cdr l) (if (symbol? field)
                                           (cons `(copy-extra ,field) config)
                                           config)))]
@@ -1680,7 +1762,7 @@
                (statements (cons `(copy-bytes ,offset (* ptr_bytes ,len))
                                  (cdr l))
                            config)]
-              [(sweep measure sweep-in-old vfasl-sweep)
+              [(sweep measure sweep-in-old vfasl-sweep check)
                (code
                 (loop-over-pointers
                  (field-expression offset config "p" #t)
@@ -1855,10 +1937,6 @@
                   (statements (list count-stmt) config)))]
               [else
                (statements (cdr l) config)])]
-           [`(check-lock-failed)
-            (code
-             (check-lock-failure-statement config)
-             (statements (cdr l) config))]
            [`(define ,id : ,type ,rhs)
             (let* ([used (lookup 'used config)]
                    [prev-used? (hashtable-ref used id #f)])
@@ -1981,6 +2059,12 @@
         [`_copy_ (case (lookup 'mode config)
                    [(copy vfasl-copy) "new_p"]
                    [else "p"])]
+        [`_size_
+         (cond
+           [(lookup 'parallel? config #f)
+            (hashtable-set! (lookup 'used config) 'p_sz #t)
+            "p_sz"]
+           [else "SIZE"])]
         [`_tf_
          (lookup 'tf config "TYPEFIELD(p)")]
         [`_tg_
@@ -2052,6 +2136,8 @@
                  (expression (car (apply-macro m (list a))) config protect? multiline?))]
            [else
             (protect (format "~a(~a)" op (expression a config #t)))])]
+        [`(begin ,a ,b)
+         (format "(~a, ~a)" (expression a config #t) (expression b config #t))]
         [`(,op ,a ,b)
          (cond
            [(memq op '(& && \|\| == != + - * < > <= >= << >> ->))
@@ -2118,23 +2204,38 @@
        (measure-statement (field-expression field config "p" #f))]
       [(eq? mode 'self-test)
        (format "if (p == ~a) return 1;" (field-expression field config "p" #f))]
+      [(eq? mode 'check)
+       (format "check_pointer(&(~a), ~a, ~a, seg, s_in, aftergc);"
+               (field-expression field config "p" #f)
+               (match field
+                 [`(just ,_) "0"]
+                 [else "1"])
+               (expression '_ config))]
       [else #f]))
 
   (define (relocate-statement purity e config)
     (define mode (lookup 'mode config))
+    (define (get-start) (expression '_ config))
+    (define (get-size) (cond
+                         [(lookup 'early-rtd? config #f)
+                          (expression '(size_record_inst (UNFIX (record-type-size (record-type _)))) config)]
+                         [(lookup 'early-code? config #f)
+                          (expression '(size_closure (CODEFREE (CLOSCODE _))) config)]
+                         [else
+                          (expression '_size_ config)]))
     (case mode
       [(vfasl-sweep)
        (format "vfasl_relocate(vfi, &~a);" e)]
       [(sweep-in-old)
        (if (eq? purity 'pure)
-           (format "relocate_pure(&~a);" e)
-           (format "relocate_indirect(~a);" e))]
+           (format "relocate_pure(&~a, ~a, ~a);" e (get-start) (get-size))
+           (format "relocate_indirect(~a, ~a, ~a);" e (get-start) (get-size)))]
       [else
        (if (lookup 'as-dirty? config #f)
            (begin
              (when (eq? purity 'pure) (error 'relocate-statement "pure as dirty?"))
-             (format "relocate_dirty(&~a, youngest);" e))
-           (format "relocate_~a(&~a~a);" purity e (if (eq? purity 'impure) ", from_g" "")))]))
+             (format "relocate_dirty(&~a, youngest, ~a, ~a);" e (get-start) (get-size)))
+           (format "relocate_~a(&~a~a, ~a, ~a);" purity e (if (eq? purity 'impure) ", from_g" "") (get-start) (get-size)))]))
 
   (define (measure-statement e)
     (code
@@ -2243,26 +2344,19 @@
                "  seginfo *mark_si; IGEN g;"
                "  si->marked_count += ((uptr)build_ptr(seg+1,0)) - addr;"
                "  seg++;"
-               "  /* Note: taking a sequence of locks for a span of segments */"
                "  while (seg < end_seg) {"
-               "    ENABLE_LOCK_ACQUIRE"
                "    mark_si = SegInfo(seg);"
-               "    SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
                "    g = mark_si->generation;"
                "    if (!fully_marked_mask[g]) init_fully_marked_mask(tc_in, g);"
                "    mark_si->marked_mask = fully_marked_mask[g];"
                "    mark_si->marked_count = bytes_per_segment;"
-               "    SEGMENT_LOCK_RELEASE(mark_si);"
                "    seg++;"
                "  }"
                "  mark_si = SegInfo(end_seg);"
                "  {"
-               "    ENABLE_LOCK_ACQUIRE"
-               "    SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
-               (ensure-segment-mark-mask "mark_si" "    " '())
+               (ensure-segment-mark-mask "mark_si" "    ")
                "    /* no need to set a bit: it's enough to have made `marked_mask` non-NULL */"
                "    mark_si->marked_count += addr + p_sz - (uptr)build_ptr(end_seg,0);"
-               "    SEGMENT_LOCK_RELEASE(mark_si);"
                "  }"
                "}")]))]
          [within-segment?
@@ -2294,13 +2388,11 @@
              "else"
              (within-loop-statement (code
                                      "  seginfo *mark_si = SegInfo(ptr_get_segment(mark_p));"
-                                     "  ENABLE_LOCK_ACQUIRE"
-                                     "  SEGMENT_LOCK_MUST_ACQUIRE(mark_si);"
-                                     (ensure-segment-mark-mask "mark_si" "  " '()))
+                                     (ensure-segment-mark-mask "mark_si" "  "))
                                     "mark_si"
                                     step
                                     #t
-                                    "  SEGMENT_LOCK_RELEASE(mark_si);")))])
+                                    #f)))])
        (cond
          [no-sweep? #f]
          [else
@@ -2311,20 +2403,6 @@
                (code "if (!is_counting_root(si, p))"
                      (code-block push))]
               [else push]))]))))
-
-  (define (check-lock-failure-statement config)
-    (let ([mode (lookup 'mode config)])
-      (case mode
-        [(copy mark sweep)
-         (code
-          "if (CHECK_LOCK_FAILED(tc_in))"
-          (case mode
-            [(copy mark) (code-block "return 0xff;")]
-            [(sweep sweep-in-old)
-             (if (lookup 'as-dirty? config #f)
-                 (code-block "return 0xff;")
-                 (code-block "return;"))]))]
-        [else #f])))
 
   (define (field-expression field config arg protect?)
     (if (symbol? field)
@@ -2359,15 +2437,11 @@
            (error 'field-ref "index not allowed for non-array field ~s" acc-name))
          (format "~a(~a)" c-ref obj)])))
   
-  (define (ensure-segment-mark-mask si inset flags)
+  (define (ensure-segment-mark-mask si inset)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  find_room_voidp(tc_in, space_data, ~a->generation, ptr_align(segment_bitmap_bytes), ~a->marked_mask);"
+     (format "~a  init_mask(tc_in, ~a->marked_mask, ~a->generation, 0);"
              inset si si)
-     (if (memq 'no-clear flags)
-         (format "~a  /* no clearing needed */" inset)
-         (format "~a  memset(~a->marked_mask, 0, segment_bitmap_bytes);" inset si))
-     (format "~a  S_G.bitmask_overhead[~a->generation] += ptr_align(segment_bitmap_bytes);" inset si)
      (format "~a}" inset)))
 
   (define (just-mark-bit-space? sp)
@@ -2534,25 +2608,29 @@
                                   (loop (cdr l))))]
          [else (cons (car l) (loop (cdr l)))]))))
 
-  (define (gen-gc ofn count? measure?)
+  (define (gen-gc ofn count? measure? parallel?)
     (guard
      (x [#t (raise x)])
      (parameterize ([current-output-port (open-output-file ofn 'replace)])
        (print-code (generate "copy"
                              `((mode copy)
                                (maybe-backreferences? ,count?)
-                               (counts? ,count?))))
+                               (counts? ,count?)
+                               (parallel? ,parallel?))))
        (print-code (generate "sweep"
                              `((mode sweep)
                                (maybe-backreferences? ,count?)
-                               (counts? ,count?))))
+                               (counts? ,count?)
+                               (parallel? ,parallel?))))
        (print-code (generate "sweep_object_in_old"
                              `((mode sweep-in-old)
-                               (maybe-backreferences? ,count?))))
+                               (maybe-backreferences? ,count?)
+                               (parallel? ,parallel?))))
        (print-code (generate "sweep_dirty_object"
                              `((mode sweep)
                                (maybe-backreferences? ,count?)
                                (counts? ,count?)
+                               (parallel? ,parallel?)
                                (as-dirty? #t))))
        (letrec ([sweep1
                  (case-lambda
@@ -2566,26 +2644,32 @@
                                             (known-types (,type))
                                             (maybe-backreferences? ,count?)
                                             (counts? ,count?)))))])])
-         (sweep1 'record "sweep_record" '())
-         (sweep1 'record "sweep_dirty_record" '((as-dirty? #t)))
-         (sweep1 'symbol)
-         (sweep1 'symbol "sweep_dirty_symbol" '((as-dirty? #t)))
-         (sweep1 'thread "sweep_thread" '((no-from-g? #t)))
-         (sweep1 'port)
-         (sweep1 'port "sweep_dirty_port" '((as-dirty? #t)))
-         (sweep1 'closure "sweep_continuation" '((code-relocated? #t)
-                                                 (assume-continuation? #t)))
-         (sweep1 'code "sweep_code_object"))
+         (sweep1 'record "sweep_record" `((parallel? ,parallel?)))
+         (sweep1 'record "sweep_dirty_record" `((as-dirty? #t)
+                                                (parallel? ,parallel?)))
+         (sweep1 'symbol "sweep_symbol" `((parallel? ,parallel?)))
+         (sweep1 'symbol "sweep_dirty_symbol" `((as-dirty? #t)
+                                                (parallel? ,parallel?)))
+         (sweep1 'thread "sweep_thread" `((no-from-g? #t)
+                                          (parallel? ,parallel?)))
+         (sweep1 'port "sweep_port" `((parallel? ,parallel?)))
+         (sweep1 'port "sweep_dirty_port" `((as-dirty? #t)
+                                            (parallel? ,parallel?)))
+         (sweep1 'closure "sweep_continuation" `((code-relocated? #t)
+                                                 (assume-continuation? #t)
+                                                 (parallel? ,parallel?)))
+         (sweep1 'code "sweep_code_object" `((parallel? ,parallel?))))
        (print-code (generate "size_object"
                              `((mode size))))
        (print-code (generate "mark_object"
                              `((mode mark)
-                               (counts? ,count?))))
+                               (counts? ,count?)
+                               (parallel? ,parallel?))))
        (print-code (generate "object_directly_refers_to_self"
                              `((mode self-test))))
        (print-code (code "static void mark_typemod_data_object(ptr tc_in, ptr p, uptr p_sz, seginfo *si)"
                          (code-block
-                          (ensure-segment-mark-mask "si" "" '())
+                          (ensure-segment-mark-mask "si" "")
                           (mark-statement '(one-bit no-sweep)
                                           (cons
                                            (list 'used (make-eq-hashtable))
@@ -2603,11 +2687,22 @@
                              `((mode vfasl-sweep)
                                (return-size? #t)))))))
 
+  (define (gen-heapcheck ofn)
+    (guard
+     (x [#t (raise x)])
+     (parameterize ([current-output-port (open-output-file ofn 'replace)])
+       (print-code (generate "check_object"
+                             `((mode check))))
+       (print-code (generate "size_object"
+                             `((mode size)))))))
+
   ;; Render via mkequates to record a mapping from selectors to C
   ;; macros:
   (let-values ([(op get) (open-bytevector-output-port (native-transcoder))])
     (mkequates.h op))
   
-  (set! mkgc-ocd.inc (lambda (ofn) (gen-gc ofn #f #f)))
-  (set! mkgc-oce.inc (lambda (ofn) (gen-gc ofn #t #t)))
-  (set! mkvfasl.inc (lambda (ofn) (gen-vfasl ofn))))
+  (set! mkgc-ocd.inc (lambda (ofn) (gen-gc ofn #f #f #f)))
+  (set! mkgc-oce.inc (lambda (ofn) (gen-gc ofn #t #t #f)))
+  (set! mkgc-par.inc (lambda (ofn) (gen-gc ofn #f #f #t)))
+  (set! mkvfasl.inc (lambda (ofn) (gen-vfasl ofn)))
+  (set! mkheapcheck.inc (lambda (ofn) (gen-heapcheck ofn))))

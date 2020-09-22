@@ -1006,10 +1006,12 @@
         (defref EXACTNUM_TYPE exactnum type)
         (defref EXACTNUM_REAL_PART exactnum real)
         (defref EXACTNUM_IMAG_PART exactnum imag)
+        (defref EXACTNUM_PAD exactnum pad)
 
         (defref RATTYPE ratnum type)
         (defref RATNUM ratnum numerator)
         (defref RATDEN ratnum denominator)
+        (defref RATPAD ratnum pad)
 
         (defref CLOSENTRY closure code)
         (defref CLOSIT closure data)

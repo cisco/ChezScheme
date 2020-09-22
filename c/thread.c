@@ -142,7 +142,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   LZ4OUTBUFFER(tc) = 0;
 
   SWEEPER(tc) = -1;
-  LOCKSTATUS(tc) = Strue;
+  REMOTERANGESTART(tc) = (ptr)(uptr)-1;
+  REMOTERANGEEND(tc) = (ptr)0;
 
   tc_mutex_release();
 

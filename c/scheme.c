@@ -330,6 +330,13 @@ static void idiot_checks() {
     oops = 1;
   }
 
+  if ((((code_flag_continuation << code_flags_offset) | (code_flag_mutable_closure << code_flags_offset))
+       & (uptr)forward_marker) != 0) {
+    /* parallel GC relies on not confusing a forward marker with code flags */
+    fprintf(stderr, "code flags overlap with forwadr_marker\n");
+    oops = 1;
+  } 
+
   if (oops) S_abnormal_exit();
 }
 

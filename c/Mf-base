@@ -69,9 +69,11 @@ ${kernelobj}: ${Include}/equates.h ${Include}/scheme.h
 ${mainobj}: ${Include}/scheme.h
 ${kernelobj}: ${zlibHeaderDep} ${LZ4HeaderDep}
 gc-011.o gc-par.o gc-ocd.o gc-oce.o: gc.c
-gc-011.o gc-par.o gc-ocd.o: ${Include}/gc-ocd.inc
+gc-011.o gc-ocd.o: ${Include}/gc-ocd.inc
 gc-oce.o: ${Include}/gc-oce.inc
+gc-par.o: ${Include}/gc-par.inc
 vfasl.o: ${Include}/vfasl.inc
+gcwrapper.o: ${Include}/heapcheck.inc
 
 ../zlib/zlib.h ../zlib/zconf.h: ../zlib/configure.log
 

@@ -158,8 +158,7 @@ typedef struct _seginfo {
   octet *list_bits;                         /* for `$list-bits-ref` and `$list-bits-set!` */
   uptr number;                              /* the segment number */
 #ifdef PTHREADS
-  ptr lock;                                 /* for parallel GC */
-  ptr creator_tc;                           /* for parallelism heuristic; might not match an active thread */
+  ptr creator_tc;                           /* for GC parallelism heuristic; might not match an active thread unless old_space */
 #endif
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
   struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs) */

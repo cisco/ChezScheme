@@ -117,6 +117,7 @@ EXTERN struct S_G_struct {
     ptr null_immutable_vector;
     ptr null_immutable_fxvector;
     ptr null_immutable_bytevector;
+    ptr zero_length_bignum;
     seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];
 
   /* schsig.c */

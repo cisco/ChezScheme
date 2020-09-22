@@ -114,7 +114,9 @@ Cheader = ../boot/$m/scheme.h
 Cequates = ../boot/$m/equates.h
 Cgcocd = ../boot/$m/gc-ocd.inc
 Cgcoce = ../boot/$m/gc-oce.inc
+Cgcpar = ../boot/$m/gc-par.inc
 Cvfasl = ../boot/$m/vfasl.inc
+Cheapcheck = ../boot/$m/heapcheck.inc
 Revision = ../boot/$m/revision
 
 # The following controls the patch files loaded before compiling, typically used only
@@ -171,11 +173,11 @@ allsrc =\
  np-languages.ss fxmap.ss
 
 # doit uses a different Scheme process to compile each target
-doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cvfasl} ${Revision}
+doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cvfasl} ${Cheapcheck} ${Revision}
 
 # all uses a single Scheme process to compile all targets.  this is typically
 # faster when most of the targets need to be recompiled.
-all: bootall ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cvfasl} ${Revision}
+all: bootall ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cvfasl} ${Cheapcheck} ${Revision}
 
 # allx runs all up to three times and checks to see if the new boot file is the
 # same as the last, i.e., the system is properly bootstrapped.
@@ -362,7 +364,7 @@ resetbootlinks:
              | ${Scheme} -q
 
 keepbootfiles:
-	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc vfasl.inc` ; do\
+	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc gc-par.inc vfasl.inc heapcheck.inc` ; do\
           if [ ! -h ../boot/$(m)/$$x ] ; then \
             mv -f ../boot/$(m)/$$x ../../boot/$(m)/$$x ;\
           elif [ "${upupupbootdir}" != "../../.." ] ; then \
@@ -633,6 +635,15 @@ ${Cgcoce}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.s
           then mv -f ${Cgcoce}.bak ${Cgcoce};\
           else rm -f ${Cgcoce}.bak; fi)
 
+${Cgcpar}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
+	(if [ -r ${Cgcpar} ]; then mv -f ${Cgcpar} ${Cgcpar}.bak; fi)
+	echo '(reset-handler abort)'\
+             '(mkgc-par.inc "${Cgcpar}")' |\
+         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
+	(if `cmp -s ${Cgcpar} ${Cgcpar}.bak`;\
+          then mv -f ${Cgcpar}.bak ${Cgcpar};\
+          else rm -f ${Cgcpar}.bak; fi)
+
 ${Cvfasl}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
 	(if [ -r ${Cvfasl} ]; then mv -f ${Cvfasl} ${Cvfasl}.bak; fi)
 	echo '(reset-handler abort)'\
@@ -641,6 +652,15 @@ ${Cvfasl}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.s
 	(if `cmp -s ${Cvfasl} ${Cvfasl}.bak`;\
           then mv -f ${Cvfasl}.bak ${Cvfasl};\
           else rm -f ${Cvfasl}.bak; fi)
+
+${Cheapcheck}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
+	(if [ -r ${Cheapcheck} ]; then mv -f ${Cheapcheck} ${Cheapcheck}.bak; fi)
+	echo '(reset-handler abort)'\
+             '(mkheapcheck.inc "${Cheapcheck}")' |\
+         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
+	(if `cmp -s ${Cheapcheck} ${Cheapcheck}.bak`;\
+          then mv -f ${Cheapcheck}.bak ${Cheapcheck};\
+          else rm -f ${Cheapcheck}.bak; fi)
 
 .PHONY: ${Revision}
 ${Revision}: update-revision
@@ -664,7 +684,9 @@ reset:
 	$(MAKE) reset-one FILE=scheme.h
 	$(MAKE) reset-one FILE=gc-oce.inc
 	$(MAKE) reset-one FILE=gc-ocd.inc
+	$(MAKE) reset-one FILE=gc-par.inc
 	$(MAKE) reset-one FILE=vfasl.inc
+	$(MAKE) reset-one FILE=heapcheck.inc
 
 .PHONY: reset-one
 reset-one:

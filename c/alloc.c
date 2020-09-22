@@ -80,6 +80,9 @@ void S_alloc_init() {
         S_protect(&S_G.null_immutable_string);
         find_room(tc, space_new, 0, type_typed_object, size_string(0), S_G.null_immutable_string);
         STRTYPE(S_G.null_immutable_string) = (0 << string_length_offset) | type_string | string_immutable_flag;
+
+        S_protect(&S_G.zero_length_bignum);
+        S_G.zero_length_bignum = S_bignum(tc, 0, 0);
     }
 }
 

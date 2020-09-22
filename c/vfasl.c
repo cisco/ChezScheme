@@ -1151,10 +1151,20 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
     t = CODERELOC(co);
     t = ptr_add(vspaces[vspace_reloc], (uptr)t - vspace_offsets[vspace_reloc]);
 
-    if (to_static && !S_G.retain_static_relocation
-        && ((CODETYPE(co) & (code_flag_template << code_flags_offset)) == 0))
-      CODERELOC(co) = (ptr)0;
-    else {
+    if (to_static && !S_G.retain_static_relocation) {
+      if ((CODETYPE(co) & (code_flag_template << code_flags_offset)) == 0)
+        CODERELOC(co) = (ptr)0;
+      else {
+        ptr tc = get_thread_context();
+        iptr sz = size_reloc_table(RELOCSIZE(t));
+        ptr new_t;
+        find_room(tc, space_data, static_generation, typemod, ptr_align(sz), new_t);
+        memcpy(TO_VOIDP(new_t), TO_VOIDP(t), sz);
+        t = new_t;
+        CODERELOC(co) = t;
+        RELOCCODE(t) = co;
+      }
+    } else {
       CODERELOC(co) = t;
       RELOCCODE(t) = co;
     }

@@ -235,7 +235,6 @@ static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED ptr tc, ISPC s, IG
   si->use_marks = 0;
   si->must_mark = 0;
 #ifdef PTHREADS
-  si->lock = 0;
   si->creator_tc = tc;
 #endif
   si->list_bits = NULL;

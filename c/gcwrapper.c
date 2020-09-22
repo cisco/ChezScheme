@@ -15,6 +15,7 @@
  */
 
 #include "system.h"
+#include "popcount.h"
 
 /* locally defined functions */
 static void segment_tell PROTO((uptr seg));
@@ -545,6 +546,59 @@ void S_addr_tell(ptr p) {
   segment_tell(addr_get_segment(p));
 }
 
+static void check_pointer(ptr *pp, IBOOL address_is_meaningful, ptr base, uptr seg, ISPC s, IBOOL aftergc) {
+  ptr p = *pp;
+  if (!IMMEDIATE(p)) {
+    seginfo *psi = MaybeSegInfo(ptr_get_segment(p));
+    if (psi != NULL) {
+      if ((psi->space == space_empty)
+          || psi->old_space
+          || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p))
+              /* corner case: a continuation in space_count_pure can refer to code via CLOSENTRY
+                 where the entry point doesn't have a mark bit: */
+              && !((s == space_count_pure) && (psi->space == space_code)))) {
+        S_checkheap_errors += 1;
+        printf("!!! dangling reference at %s"PHtx" to "PHtx"%s\n",
+               (address_is_meaningful ? "" : "insideof "),
+               (ptrdiff_t)(address_is_meaningful ? pp : TO_VOIDP(base)),
+               (ptrdiff_t)p, (aftergc ? " after gc" : ""));
+        printf("from: "); segment_tell(seg);
+        printf("to:   "); segment_tell(ptr_get_segment(p));
+        {
+          ptr l;
+          for (l = S_G.locked_objects[psi->generation]; l != Snil; l = Scdr(l))
+            if (Scar(l) == p)
+              printf(" in locked\n");
+          for (l = S_G.unlocked_objects[psi->generation]; l != Snil; l = Scdr(l))
+            if (Scar(l) == p)
+              printf(" in unlocked\n");
+        }
+        abort(); // REMOVEME
+      }
+    }
+  }
+}
+
+static void check_bignum(ptr p) {
+  if (!Sbignump(p))
+    printf("!!! not a bignum %p\n", TO_VOIDP(p));
+}
+
+#include "heapcheck.inc"
+
+static ptr *find_nl(ptr *pp1, ptr *pp2, ISPC s, IGEN g) {
+  ptr *nl, ls;
+
+  for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+    ptr t_tc = (ptr)THREADTC(Scar(ls));
+    nl = TO_VOIDP(NEXTLOC_AT(t_tc, s, g));
+    if (pp1 <= nl && nl < pp2)
+      return nl;
+  }
+
+  return NULL;
+}
+
 static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
     INT d; seginfo *si;
 
@@ -576,6 +630,13 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
             S_checkheap_errors += 1;
             printf("!!! inconsistent thread NEXT %p and BASE %p\n",
                    TO_VOIDP(NEXTLOC_AT(t_tc, s, g)), TO_VOIDP(BASELOC_AT(t_tc, s, g)));
+          }
+          if ((REMOTERANGEEND(t_tc) != (ptr)0)
+              || (REMOTERANGESTART(t_tc) != (ptr)(uptr)-1)) {
+            S_checkheap_errors += 1;
+            printf("!!! nonempty thread REMOTERANGE %p-%p\n",
+                   TO_VOIDP(REMOTERANGESTART(t_tc)),
+                   TO_VOIDP(REMOTERANGEEND(t_tc)));
           }
         }
       }
@@ -669,67 +730,123 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
             printf("!!! unexpected generation %d segment "PHtx" in space_new\n", g, (ptrdiff_t)seg);
           }
         } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair || s == space_ephemeron
-                   || s == space_immobile_impure || s == space_count_pure || s == space_count_impure || s == space_closure) {
-          /* doesn't handle: space_port, space_continuation, space_code, space_pure_typed_object,
-                             space_impure_record, or impure_typed_object */
+                   || s == space_immobile_impure || s == space_count_pure || s == space_count_impure || s == space_closure
+                   || s == space_pure_typed_object || s == space_continuation || s == space_port || s == space_code
+                   || s == space_impure_record || s == space_impure_typed_object) {
+          ptr start;
+          
           /* check for dangling references */
           pp1 = TO_VOIDP(build_ptr(seg, 0));
           pp2 = TO_VOIDP(build_ptr(seg + 1, 0));
 
-          nl = NULL;
-          {
-            ptr ls;
-            for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
-              ptr t_tc = (ptr)THREADTC(Scar(ls));
-              nl = TO_VOIDP(NEXTLOC_AT(t_tc, s, g));
-              if (pp1 <= nl && nl < pp2)
-                break;
-            }
-          }
+          nl = find_nl(pp1, pp2, s, g);
           if (pp1 <= nl && nl < pp2) pp2 = nl;
 
-          while (pp1 < pp2) {
-            if (!si->marked_mask || (si->marked_mask[segment_bitmap_byte(TO_PTR(pp1))] & segment_bitmap_bit(TO_PTR(pp1)))) {
-              int a;
-              for (a = 0; (a < ptr_alignment) && (pp1 < pp2); a++) {
-#define         in_ephemeron_pair_part(pp1, seg) ((((uptr)TO_PTR(pp1) - (uptr)build_ptr(seg, 0)) % size_ephemeron) < size_pair)
-                if ((s == space_ephemeron) && !in_ephemeron_pair_part(pp1, seg)) {
-                  /* skip non-pair part of ephemeron */
+          if (s == space_pure_typed_object || s == space_port || s == space_code
+              || s == space_impure_record || s == space_impure_typed_object) {
+            if (si->marked_mask) {
+              /* not implemented */
+            } else {
+              /* only check this segment for objects that start on it */
+              uptr before_seg = seg;
+
+              /* Back up over segments for the same space and generation: */
+              while (1) {
+                seginfo *before_si = MaybeSegInfo(before_seg-1);
+                if (!before_si
+                    || (before_si->space != si->space)
+                    || (before_si->generation != si->generation)
+                    || ((before_si->marked_mask == NULL) != (si->marked_mask == NULL)))
+                  break;
+                before_seg--;
+              }
+
+              /* Move forward to reach `seg` again: */
+              start = build_ptr(before_seg, 0);
+              while (before_seg != seg) {
+                ptr *before_pp2, *before_nl;
+
+                before_pp2 = TO_VOIDP(build_ptr(before_seg + 1, 0));
+                if ((ptr *)TO_VOIDP(start) > before_pp2) {
+                  /* skipped to a further segment */
+                  before_seg++;
                 } else {
-                  p = *pp1;
-                  if (!si->marked_mask && (p == forward_marker)) {
-                    pp1 = pp2; /* break out of outer loop */
-                    break;
-                  } else if (!IMMEDIATE(p)) {
-                    seginfo *psi = MaybeSegInfo(ptr_get_segment(p));
-                    if (psi != NULL) {
-                      if ((psi->space == space_empty)
-                          || psi->old_space
-                          || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p))
-                              /* corner case: a continuation in space_count_pure can refer to code via CLOSENTRY
-                                 where the entry point doesn't have a mark bit: */
-                              && !((s == space_count_pure) && (psi->space == space_code)))) {
-                        S_checkheap_errors += 1;
-                        printf("!!! dangling reference at "PHtx" to "PHtx"%s\n", (ptrdiff_t)pp1, (ptrdiff_t)p, (aftergc ? " after gc" : ""));
-                        printf("from: "); segment_tell(seg);
-                        printf("to:   "); segment_tell(ptr_get_segment(p));
-                        {
-                          ptr l;
-                          for (l = S_G.locked_objects[psi->generation]; l != Snil; l = Scdr(l))
-                            if (Scar(l) == p)
-                              printf(" in locked\n");
-                          for (l = S_G.unlocked_objects[psi->generation]; l != Snil; l = Scdr(l))
-                            if (Scar(l) == p)
-                              printf(" in unlocked\n");
+                  before_nl = find_nl(TO_VOIDP(start), before_pp2, s, g);
+                  if (((ptr*)TO_VOIDP(start)) <= before_nl && before_nl < before_pp2) {
+                    /* this segment ends, so move to next segment */
+                    before_seg++;
+                    if (s == space_code) {
+                      /* in the case of code, it's possible for a whole segment to
+                         go unused if a large code object didn't fit; give up, just in case */
+                      start = build_ptr(seg+1, 0);
+                    } else {
+                      start = build_ptr(before_seg, 0);
+                    }
+                  } else {
+                    while (((ptr *)TO_VOIDP(start)) < before_pp2) {
+                      if (*(ptr *)TO_VOIDP(start) == forward_marker) {
+                        /* this segment ends, so move to next segment */
+                        if (s == space_code) {
+                          start = build_ptr(seg+1, 0);
+                        } else {
+                          start = build_ptr(before_seg+1, 0);
                         }
+                      } else {
+                        start = (ptr)((uptr)start + size_object(TYPE(start, type_typed_object)));
                       }
                     }
+                    before_seg++;
                   }
                 }
-                pp1 += 1;
               }
-            } else
-              pp1 += ptr_alignment;
+
+              if (((ptr *)TO_VOIDP(start)) >= pp2) {
+                /* previous object extended past the segment */
+              }  else {
+                pp1 = TO_VOIDP(start);
+                while (pp1 < pp2) {
+                  if (*pp1 == forward_marker)
+                    break;
+                  else {
+                    p = TYPE(TO_PTR(pp1), type_typed_object);
+                    check_object(p, seg, s, aftergc);
+                    pp1 = TO_VOIDP((ptr)((uptr)TO_PTR(pp1) + size_object(p)));
+                  }
+                }
+              }
+            }
+          } else if (s == space_continuation) {
+            while (pp1 < pp2) {
+              if (*pp1 == forward_marker)
+                break;
+              if (!si->marked_mask || (si->marked_mask[segment_bitmap_byte(TO_PTR(pp1))] & segment_bitmap_bit(TO_PTR(pp1)))) {
+                p = TYPE(TO_PTR(pp1), type_closure);
+                check_object(p, seg, s, aftergc);
+              }
+              pp1 = TO_VOIDP((ptr)((uptr)TO_PTR(pp1) + size_continuation));
+            }
+          } else {
+            while (pp1 < pp2) {
+              if (!si->marked_mask || (si->marked_mask[segment_bitmap_byte(TO_PTR(pp1))] & segment_bitmap_bit(TO_PTR(pp1)))) {
+                int a;
+                for (a = 0; (a < ptr_alignment) && (pp1 < pp2); a++) {
+#define         in_ephemeron_pair_part(pp1, seg) ((((uptr)TO_PTR(pp1) - (uptr)build_ptr(seg, 0)) % size_ephemeron) < size_pair)
+                  if ((s == space_ephemeron) && !in_ephemeron_pair_part(pp1, seg)) {
+                    /* skip non-pair part of ephemeron */
+                  } else {
+                    p = *pp1;
+                    if (!si->marked_mask && (p == forward_marker)) {
+                      pp1 = pp2; /* break out of outer loop */
+                      break;
+                    } else {
+                      check_pointer(pp1, 1, (ptr)0, seg, s, aftergc);
+                    }
+                  }
+                  pp1 += 1;
+                }
+              } else
+                pp1 += ptr_alignment;
+            }
           }
 
           /* verify that dirty bits are set appropriately */
