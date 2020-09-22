@@ -307,11 +307,10 @@
 
      [record
       (trace-early-rtd record-type)
-      ;; If the rtd is the only pointer and is immutable, put the record
-      ;; into space-data. If the record contains only pointers, put it
-      ;; into space-pure or space-impure. Otherwise, put it into
-      ;; space-pure-typed-object or space-impure-record. We could put all
-      ;; records into space-{pure,impure}-record or even into
+      ;; If the record contains only pointers, put it into space-pure
+      ;; or space-impure. Otherwise, put it into
+      ;; space-pure-typed-object or space-impure-record. We could put
+      ;; all records into space-{pure,impure}-record or even into
       ;; space-impure-record, but by picking the target space more
       ;; carefully, we may reduce fragmentation and sweeping cost.
       (define rtd : ptr (record-type _))
@@ -319,10 +318,6 @@
        (cond
          [(and-counts (is_counting_root si _))
           space-count-impure]
-         [(&& (== (record-type-pm rtd) (FIX 1))
-              (== (record-type-mpm rtd) (FIX 0)))
-          ;; No pointers except for type
-          space-data]
          [(== (record-type-pm rtd) (FIX -1))
           ;; All pointers
           (cond
@@ -1568,18 +1563,23 @@
               (statements (append body (cdr l)) config))]
            [`(trace-early-rtd ,field)
             (code (case (and (not (lookup 'as-dirty? config #f))
-                             (not (lookup 'rtd-relocated? config #f))
                              (lookup 'mode config))
-                    [(copy sweep sweep-in-old mark)
-                     (code
-                      "/* Relocate to make sure we aren't using an oldspace descriptor"
-                      "   that has been overwritten by a forwarding marker, but don't loop"
-                      "   on tag-reflexive base descriptor */"
-                      (format "if (p != ~a)"
-                              (lookup 'tf config (format "TYPEFIELD(p)")))
-                      (code-block
-                       (statements `((trace-early ,field)) config)))]
-                    [(measure)
+                    [(copy mark)
+                     (cond
+                       [(lookup 'counts? config #f)
+                        (code
+                         "/* Relocate to make sure we aren't using an oldspace descriptor"
+                         "   that has been overwritten by a forwarding marker, but don't loop"
+                         "   on tag-reflexive base descriptor */"
+                         (format "if (p != ~a)"
+                                 (lookup 'tf config (format "TYPEFIELD(p)")))
+                         (code-block
+                          (statements `((trace-early ,field)) config)))]
+                       [else
+                        (code
+                         "/* Do not inspect the type or first field of the rtd, because"
+                         "   it may have been overwritten for forwarding. */")])]
+                    [(measure sweep sweep-in-old)
                      (statements `((trace-early ,field)) config)]
                     [else #f])
                   (statements (cdr l) (cons `(copy-extra-rtd ,field) config)))]
@@ -1782,7 +1782,8 @@
                                                                   (lookup 'copy-extra-rtd config #f))])
                                                  (if extra
                                                      (cons `(set! (,extra _copy_)
-                                                                  ,(case mode
+                                                                  ,(case (and (lookup 'counts? config #f)
+                                                                              mode)
                                                                      [(copy)
                                                                       `(cond
                                                                          [(== tf _) _copy_]
@@ -2565,9 +2566,8 @@
                                             (known-types (,type))
                                             (maybe-backreferences? ,count?)
                                             (counts? ,count?)))))])])
-         (sweep1 'record "sweep_record" '((rtd-relocated? #t)))
-         (sweep1 'record "sweep_dirty_record" '((rtd-relocated? #t)
-                                                (as-dirty? #t)))
+         (sweep1 'record "sweep_record" '())
+         (sweep1 'record "sweep_dirty_record" '((as-dirty? #t)))
          (sweep1 'symbol)
          (sweep1 'symbol "sweep_dirty_symbol" '((as-dirty? #t)))
          (sweep1 'thread "sweep_thread" '((no-from-g? #t)))
