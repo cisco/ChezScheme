@@ -450,11 +450,13 @@ typedef struct remote_range {
   ISPC s;
   IGEN g;
   ptr start, end;
+  struct thread_gc *tgc;
   struct remote_range *next;
 } remote_range;
 
 typedef struct thread_gc {
   ptr tc;
+  ptr thread; /* set only when collecting */
 
   struct thread_gc *next;
 
@@ -474,11 +476,14 @@ typedef struct thread_gc {
   int sweep_change;
   
   int sweeper; /* parallel GC: sweeper thread identity */
-  int will_be_sweeper;
   
   struct thread_gc *remote_range_tgc;
   ptr remote_range_start;
   ptr remote_range_end;
+  remote_range *ranges_to_send; /* modified only by owning sweeper */
+  remote_range *ranges_received; /* modified with sweeper mutex held */
+
+  seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];
 
   iptr bitmask_overhead[static_generation+1];
 } thread_gc;

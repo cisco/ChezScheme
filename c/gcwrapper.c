@@ -585,6 +585,23 @@ static void check_bignum(ptr p) {
 
 #include "heapcheck.inc"
 
+#ifdef PTHREADS
+
+static ptr *find_nl(ptr *pp1, ISPC s, IGEN g) {
+  seginfo *si;
+  thread_gc *tgc;
+
+  si = SegInfo(addr_get_segment(TO_PTR(pp1)));
+  tgc = si->creator;
+  return TO_VOIDP(tgc->next_loc[g][s]);
+}
+
+
+# define FIND_NL(pp1, pp2, s, g) find_nl(pp1, s, g)
+
+#else
+
+/* no `creator` field, so we search the slow way */
 static ptr *find_nl(ptr *pp1, ptr *pp2, ISPC s, IGEN g) {
   ptr *nl, ls;
 
@@ -597,6 +614,9 @@ static ptr *find_nl(ptr *pp1, ptr *pp2, ISPC s, IGEN g) {
 
   return NULL;
 }
+# define FIND_NL(pp1, pp2, s, g) find_nl(pp1, pp2, s, g)
+
+#endif
 
 static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
     INT d; seginfo *si;
@@ -739,7 +759,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
           pp1 = TO_VOIDP(build_ptr(seg, 0));
           pp2 = TO_VOIDP(build_ptr(seg + 1, 0));
 
-          nl = find_nl(pp1, pp2, s, g);
+          nl = FIND_NL(pp1, pp2, s, g);
           if (pp1 <= nl && nl < pp2) pp2 = nl;
 
           if (s == space_pure_typed_object || s == space_port || s == space_code
@@ -771,7 +791,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                   /* skipped to a further segment */
                   before_seg++;
                 } else {
-                  before_nl = find_nl(TO_VOIDP(start), before_pp2, s, g);
+                  before_nl = FIND_NL(TO_VOIDP(start), before_pp2, s, g);
                   if (((ptr*)TO_VOIDP(start)) <= before_nl && before_nl < before_pp2) {
                     /* this segment ends, so move to next segment */
                     before_seg++;
