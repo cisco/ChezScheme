@@ -75,6 +75,7 @@ EXTERN ptr S_foreign_dynamic;
 EXTERN struct S_G_struct {
   /* scheme.c */
     double thread_context[size_tc / sizeof(double)];
+    thread_gc main_thread_gc;
     ptr active_threads_id;
     ptr error_invoke_code_object;
     ptr invoke_code_object;

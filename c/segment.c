@@ -37,7 +37,7 @@ Low-level Memory management strategy:
 #include <sys/types.h>
 
 static void out_of_memory PROTO((void));
-static void initialize_seginfo PROTO((seginfo *si, ptr tc, ISPC s, IGEN g));
+static void initialize_seginfo PROTO((seginfo *si, thread_gc *creator, ISPC s, IGEN g));
 static seginfo *allocate_segments PROTO((uptr nreq));
 static void expand_segment_table PROTO((uptr base, uptr end, seginfo *si));
 static void contract_segment_table PROTO((uptr base, uptr end));
@@ -225,7 +225,7 @@ static INT find_index(iptr n) {
   return (index < PARTIAL_CHUNK_POOLS-1) ? index : PARTIAL_CHUNK_POOLS-1;
 }
 
-static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED ptr tc, ISPC s, IGEN g) {
+static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED thread_gc *creator, ISPC s, IGEN g) {
   INT d;
 
   si->space = s;
@@ -235,7 +235,7 @@ static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED ptr tc, ISPC s, IG
   si->use_marks = 0;
   si->must_mark = 0;
 #ifdef PTHREADS
-  si->creator_tc = tc;
+  si->creator = creator;
 #endif
   si->list_bits = NULL;
   si->min_dirty_byte = 0xff;
@@ -256,7 +256,7 @@ static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED ptr tc, ISPC s, IG
   si->sweep_next = NULL;
 }
 
-iptr S_find_segments(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
+iptr S_find_segments(creator, s, g, n) thread_gc *creator; ISPC s; IGEN g; iptr n; {
   chunkinfo *chunk, *nextchunk;
   seginfo *si, *nextsi, **prevsi;
   iptr nunused_segs, j;
@@ -280,7 +280,7 @@ iptr S_find_segments(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
         }
 
         chunk->nused_segs += 1;
-        initialize_seginfo(si, tc, s, g);
+        initialize_seginfo(si, creator, s, g);
         si->next = S_G.occupied_segments[g][s];
         S_G.occupied_segments[g][s] = si;
         S_G.number_of_empty_segments -= 1;
@@ -318,7 +318,7 @@ iptr S_find_segments(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
                 nextsi->next = S_G.occupied_segments[g][s];
                 S_G.occupied_segments[g][s] = si;
                 for (j = n, nextsi = si; j > 0; j -= 1, nextsi = nextsi->next) {
-                  initialize_seginfo(nextsi, tc, s, g);
+                  initialize_seginfo(nextsi, creator, s, g);
                 }
                 S_G.number_of_empty_segments -= n;
                 return si->number;
@@ -338,7 +338,7 @@ iptr S_find_segments(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
   /* we couldn't find space, so ask for more */
   si = allocate_segments(n);
   for (nextsi = si; n > 0; n -= 1, nextsi += 1) {
-    initialize_seginfo(nextsi, tc, s, g);
+    initialize_seginfo(nextsi, creator, s, g);
     /* add segment to appropriate list of occupied segments */
     nextsi->next = S_G.occupied_segments[g][s];
     S_G.occupied_segments[g][s] = nextsi;

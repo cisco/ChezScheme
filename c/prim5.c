@@ -434,8 +434,8 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
       /* add in bytes previously recorded */
       bytes[g][s] += S_G.bytes_of_space[g][s];
       /* add in bytes in active segments */
-      if (NEXTLOC_AT(tc, s, g) != FIX(0))
-        bytes[g][s] += (uptr)NEXTLOC_AT(tc, s, g) - (uptr)BASELOC_AT(tc, s, g);
+      if (THREAD_GC(tc)->next_loc[g][s] != FIX(0))
+        bytes[g][s] += (uptr)THREAD_GC(tc)->next_loc[g][s] - (uptr)THREAD_GC(tc)->base_loc[g][s];
     }
   }
 

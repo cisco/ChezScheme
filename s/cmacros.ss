@@ -1498,11 +1498,7 @@
 
 (define-constant virtual-register-count 16)
 (define-constant static-generation 7)
-(define-constant num-generations (fx+ (constant static-generation) 1))
-(define-constant num-spaces (fx+ (constant max-real-space) 1))
-(define-constant num-thread-local-allocation-segments (fx* (constant num-generations)
-                                                           (constant num-spaces)))
-(define-constant maximum-parallel-collect-threads 8)
+(define-constant maximum-parallel-collect-threads 16)
 
 ;;; make sure gc sweeps all ptrs
 (define-primitive-structure-disps tc typemod
@@ -1578,23 +1574,7 @@
    [ptr DSTBV]
    [ptr SRCBV]
    [double fpregs (constant asm-fpreg-max)]
-   ;; thread-local allocation and parallel collection:
-   [xptr base-loc (constant num-thread-local-allocation-segments)]
-   [xptr next-loc (constant num-thread-local-allocation-segments)]
-   [iptr bytes-left (constant num-thread-local-allocation-segments)]
-   [xptr orig-next-loc (constant num-spaces)]
-   [xptr sweep-loc (constant num-thread-local-allocation-segments)]
-   [xptr sweep-next (constant num-thread-local-allocation-segments)]
-   [xptr pending-ephemerons]
-   [iptr sweeper]
-   [xptr sweep-stack]
-   [xptr sweep-stack-start]
-   [xptr sweep-stack-limit]
-   [iptr sweep-change]
-   [iptr remote-sweeper]
-   [xptr remote-range-start]
-   [xptr remote-range-end]
-   [iptr bitmask-overhead (constant num-generations)]))
+   [xptr gc-data]))
 
 (define tc-field-list
   (let f ([ls (oblist)] [params '()])

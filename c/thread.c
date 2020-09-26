@@ -16,6 +16,8 @@
 
 #include "system.h"
 
+static thread_gc *free_thread_gcs;
+
 /* locally defined functions */
 #ifdef PTHREADS
 static s_thread_rv_t start_thread PROTO((void *tc));
@@ -55,28 +57,40 @@ void S_thread_init() {
    or more places. */
 ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   ptr thread, tc;
+  thread_gc *tgc;
   INT i;
 
   tc_mutex_acquire();
 
   if (S_threads == Snil) {
     tc = TO_PTR(S_G.thread_context);
+    tgc = &S_G.main_thread_gc;
   } else { /* clone parent */
     ptr p_v = PARAMETERS(p_tc);
     iptr i, n = Svector_length(p_v);
     ptr v;
 
     tc = TO_PTR(malloc(size_tc));
+    if (free_thread_gcs) {
+      tgc = free_thread_gcs;
+      free_thread_gcs = tgc->next;
+    } else
+      tgc = malloc(sizeof(thread_gc));
 
     if (tc == (ptr)0)
       S_error(who, "unable to malloc thread data structure");
     memcpy(TO_VOIDP(tc), TO_VOIDP(p_tc), size_tc);
 
-    for (i = 0; i < num_thread_local_allocation_segments; i++) {
-      BASELOC(tc, i) = (ptr)0;
-      NEXTLOC(tc, i) = (ptr)0;
-      BYTESLEFT(tc, i) = 0;
-      SWEEPLOC(tc, i) = (ptr)0;
+    {
+      IGEN g; ISPC s;
+      for (g = 0; g <= static_generation; g++) {
+        for (s = 0; s <= max_real_space; s++) {
+          tgc->base_loc[g][s] = (ptr)0;
+          tgc->next_loc[g][s] = (ptr)0;
+          tgc->bytes_left[g][s] = 0;
+          tgc->sweep_loc[g][s] = (ptr)0;
+        }
+      }
     }
  
     v = S_vector_in(tc, space_new, 0, n);
@@ -87,6 +101,9 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
     PARAMETERS(tc) = v;
     CODERANGESTOFLUSH(tc) = Snil;
   }
+
+  GCDATA(tc) = TO_PTR(tgc);
+  tgc->tc = tc;
 
  /* override nonclonable tc fields */
   THREADNO(tc) = S_G.threadno;
@@ -141,9 +158,12 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   LZ4OUTBUFFER(tc) = 0;
 
-  SWEEPER(tc) = -1;
-  REMOTERANGESTART(tc) = (ptr)(uptr)-1;
-  REMOTERANGEEND(tc) = (ptr)0;
+  tgc->sweeper = main_sweeper_index;
+  tgc->will_be_sweeper = main_sweeper_index;
+  tgc->will_be_sweeper = main_sweeper_index;
+  tgc->remote_range_start = (ptr)(uptr)-1;
+  tgc->remote_range_end = (ptr)0;
+  tgc->pending_ephemerons = (ptr)0;
 
   tc_mutex_release();
 
@@ -158,8 +178,8 @@ IBOOL Sactivate_thread() { /* create or reactivate current thread */
     ptr thread;
 
    /* borrow base thread for now */
-    thread = S_create_thread_object("Sactivate_thread", S_G.thread_context);
-    s_thread_setspecific(S_tc_key, (ptr)THREADTC(thread));
+    thread = S_create_thread_object("Sactivate_thread", TO_PTR(S_G.thread_context));
+    s_thread_setspecific(S_tc_key, TO_VOIDP(THREADTC(thread)));
     return 1;
   } else {
     reactivate_thread(tc)
@@ -223,12 +243,13 @@ static IBOOL destroy_thread(tc) ptr tc; {
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr *)EAP(tc), (ptr *)REAL_EAP(tc));
 
-     /* move thread-local allocation to global space */
+     /* close off thread-local allocation */
       {
         ISPC s; IGEN g;
+        thread_gc *tgc = THREAD_GC(tc);
         for (g = 0; g <= static_generation; g++)
           for (s = 0; s <= max_real_space; s++)
-            if (NEXTLOC_AT(tc, s, g))
+            if (tgc->next_loc[g][s])
               S_close_off_thread_local_segment(tc, s, g);
       }
 
@@ -258,10 +279,18 @@ static IBOOL destroy_thread(tc) ptr tc; {
         }
       }
 
-      if (LZ4OUTBUFFER(tc) != NULL) free(LZ4OUTBUFFER(tc));
-      if (SIGNALINTERRUPTQUEUE(tc) != NULL) free(SIGNALINTERRUPTQUEUE(tc));
+      if (LZ4OUTBUFFER(tc) != (ptr)0) free(TO_VOIDP(LZ4OUTBUFFER(tc)));
+      if (SIGNALINTERRUPTQUEUE(tc) != (ptr)0) free(TO_VOIDP(SIGNALINTERRUPTQUEUE(tc)));
+
+      /* Never free a thread_gc, since it may be recorded in a segment
+         as the segment's creator. Recycle manually, instead. */
+      THREAD_GC(tc)->sweeper = main_sweeper_index;
+      THREAD_GC(tc)->tc = (ptr)0;
+      THREAD_GC(tc)->next = free_thread_gcs;
+      free_thread_gcs = THREAD_GC(tc);
 
       free((void *)tc);
+      
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
       break;
@@ -291,7 +320,7 @@ ptr S_fork_thread(thunk) ptr thunk; {
 static s_thread_rv_t start_thread(p) void *p; {
   ptr tc = (ptr)p; ptr cp;
 
-  s_thread_setspecific(S_tc_key, tc);
+  s_thread_setspecific(S_tc_key, TO_VOIDP(tc));
 
   cp = CP(tc);
   CP(tc) = Svoid; /* should hold calling code object, which we don't have */
@@ -303,7 +332,7 @@ static s_thread_rv_t start_thread(p) void *p; {
 
  /* find and destroy our thread */
   destroy_thread(tc);
-  s_thread_setspecific(S_tc_key, (ptr)0);
+  s_thread_setspecific(S_tc_key, NULL);
 
   s_thread_return;
 }
@@ -335,7 +364,7 @@ void S_mutex_acquire(m) scheme_mutex_t *m; {
 
   if ((count = m->count) > 0 && s_thread_equal(m->owner, self)) {
     if (count == most_positive_fixnum)
-      S_error1("mutex-acquire", "recursion limit exceeded for ~s", m);
+      S_error1("mutex-acquire", "recursion limit exceeded for ~s", TO_PTR(m));
     m->count = count + 1;
     return;
   }
@@ -353,7 +382,7 @@ INT S_mutex_tryacquire(m) scheme_mutex_t *m; {
 
   if ((count = m->count) > 0 && s_thread_equal(m->owner, self)) {
     if (count == most_positive_fixnum)
-      S_error1("mutex-acquire", "recursion limit exceeded for ~s", m);
+      S_error1("mutex-acquire", "recursion limit exceeded for ~s", TO_PTR(m));
     m->count = count + 1;
     return 0;
   }
@@ -374,7 +403,7 @@ void S_mutex_release(m) scheme_mutex_t *m; {
   INT status;
 
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
-    S_error1("mutex-release", "thread does not own mutex ~s", m);
+    S_error1("mutex-release", "thread does not own mutex ~s", TO_PTR(m));
 
   if ((m->count = count - 1) == 0) {
     m->owner = 0; /* needed for a memory model like ARM, for example */
@@ -460,10 +489,10 @@ IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   iptr collect_index = 0;
 
   if ((count = m->count) == 0 || !s_thread_equal(m->owner, self))
-    S_error1("condition-wait", "thread does not own mutex ~s", m);
+    S_error1("condition-wait", "thread does not own mutex ~s", TO_PTR(m));
 
   if (count != 1)
-    S_error1("condition-wait", "mutex ~s is recursively locked", m);
+    S_error1("condition-wait", "mutex ~s is recursively locked", TO_PTR(m));
 
   if (t != Sfalse) {
     /* Keep in sync with ts record in s/date.ss */

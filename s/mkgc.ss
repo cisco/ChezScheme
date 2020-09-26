@@ -243,10 +243,10 @@
                    ;; A stack segment has a single owner, so it's ok for us
                    ;; to sweep the stack content, even though it's on a
                    ;; remote segment relative to the current sweeper.
-                   (RECORD_REMOTE_RANGE _tc_ _ _size_ s_si)]
+                   (RECORD_REMOTE_RANGE _tgc_ _ _size_ s_si)]
                   [else
                    (set! (continuation-stack _)
-                         (copy_stack _tc_
+                         (copy_stack _tgc_
                                      (continuation-stack _)
                                      (& (continuation-stack-length _))
                                      (continuation-stack-clength _)))]))]
@@ -687,9 +687,9 @@
 (define-trace-macro (add-ephemeron-to-pending)
   (case-mode
    [(sweep mark)
-    (add_ephemeron_to_pending _tc_ _)]
+    (add_ephemeron_to_pending _tgc_ _)]
    [measure
-    (add_ephemeron_to_pending_measure _tc_ _)]
+    (add_ephemeron_to_pending_measure _tgc_ _)]
    [else]))
 
 (define-trace-macro (assert-ephemeron-size-ok)
@@ -744,7 +744,7 @@
        (set! (continuation-stack-length _copy_) (continuation-stack-clength _))
        ;; May need to recur at end to promote link:
        (GC_TC_MUTEX_ACQUIRE)
-       (set! conts_to_promote (S_cons_in _tc_ space_new 0 _copy_ conts_to_promote))
+       (set! conts_to_promote (S_cons_in (-> _tgc_ tc) space_new 0 _copy_ conts_to_promote))
        (GC_TC_MUTEX_RELEASE)]
       [else
        (copy continuation-stack-length)])]
@@ -794,7 +794,7 @@
            (SEGMENT_IS_LOCAL v_si val))
           (trace-symcode symbol-pvalue val)]
          [else
-          (RECORD_REMOTE_RANGE _tc_ _ _size_ v_si)])]
+          (RECORD_REMOTE_RANGE _tgc_ _ _size_ v_si)])]
       [off (trace-symcode symbol-pvalue val)])]
    [else
     (trace-symcode symbol-pvalue val)]))
@@ -816,7 +816,7 @@
     ;; swept already. NB: assuming keyvals are always pairs.
     (when (&& (!= next Sfalse) (OLDSPACE keyval))
       (GC_TC_MUTEX_ACQUIRE)
-      (set! tlcs_to_rehash (S_cons_in _tc_ space_new 0 _copy_ tlcs_to_rehash))
+      (set! tlcs_to_rehash (S_cons_in (-> _tgc_ tc) space_new 0 _copy_ tlcs_to_rehash))
       (GC_TC_MUTEX_RELEASE))]
    [else
     (trace-nonself tlc-keyval)
@@ -869,7 +869,7 @@
                    (trace-record-type-pm num rtd)]
                   [else
                    ;; Try again in the bignum's sweeper
-                   (RECORD_REMOTE_RANGE _tc_ _ _size_ pm_si)
+                   (RECORD_REMOTE_RANGE _tgc_ _ _size_ pm_si)
                    (set! num S_G.zero_length_bignum)])]
                [off
                 (trace-record-type-pm num rtd)])]
@@ -948,7 +948,7 @@
               (let* ([grtd : IGEN (GENERATION c_rtd)])
                 (set! (array-ref (array-ref S_G.countof grtd) countof_rtd_counts) += 1)
                 ;; Allocate counts struct in same generation as rtd. Initialize timestamp & counts.
-                (find_room _tc_ space_data grtd type_typed_object size_rtd_counts counts)
+                (find_gc_room _tgc_ space_data grtd type_typed_object size_rtd_counts counts)
                 (set! (rtd-counts-type counts) type_rtd_counts)
                 (set! (rtd-counts-timestamp counts) (array-ref S_G.gctimestamp 0))
                 (let* ([g : IGEN 0])
@@ -961,7 +961,7 @@
                       ;; For max_copied_generation, the list will get copied again in `rtds_with_counts` fixup;
                       ;; meanwhile, allocating in `space_impure` would copy and sweep old list entries causing
                       ;; otherwise inaccessible rtds to be retained
-                      (S_cons_in _tc_
+                      (S_cons_in (-> _tgc_ tc)
                                  (cond [(<= grtd MAX_CG) space_new] [else space_impure])
                                  (cond [(<= grtd MAX_CG) 0] [else grtd])
                                  c_rtd
@@ -1012,7 +1012,7 @@
           (when (OLDSPACE old_stack)
             (let* ([clength : iptr (- (cast uptr (SFP tc)) (cast uptr old_stack))])
               ;; Include SFP[0], which contains the return address
-              (set! (tc-scheme-stack tc) (copy_stack _tc_
+              (set! (tc-scheme-stack tc) (copy_stack _tgc_
                                                      old_stack
                                                      (& (tc-scheme-stack-size tc))
                                                      (+ clength (sizeof ptr))))
@@ -1110,7 +1110,7 @@
                (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
                (set! num  (ENTRYLIVEMASK oldret))]
               [else
-               (RECORD_REMOTE_RANGE _tc_ _ _size_ n_si)
+               (RECORD_REMOTE_RANGE _tgc_ _ _size_ n_si)
                (set! num S_G.zero_length_bignum)])])
           (let* ([index : iptr (BIGLEN num)])
             (while
@@ -1216,16 +1216,16 @@
                   [(-> t_si use_marks)
                    (cond
                      [(! (marked t_si t))
-                      (mark_typemod_data_object _tc_ t n t_si)])]
+                      (mark_typemod_data_object _tgc_ t n t_si)])]
                   [else
                    (let* ([oldt : ptr t])
-                     (find_room _tc_ space_data from_g typemod n t)
+                     (find_gc_room _tgc_ space_data from_g typemod n t)
                      (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])]
                [else
-                (RECORD_REMOTE_RANGE _tc_ _ _size_ t_si)])))
+                (RECORD_REMOTE_RANGE _tgc_ _ _size_ t_si)])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
-      (S_record_code_mod tc_in (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
+      (S_record_code_mod (-> _tgc_ tc) (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
      [vfasl-sweep
       ;; no vfasl_register_pointer, since relink_code can handle it
       (set! (reloc-table-code t) (cast ptr (ptr_diff _ (-> vfi base_addr))))
@@ -1463,7 +1463,7 @@
                [else "void"])
              name
              (case (lookup 'mode config)
-               [(copy mark sweep sweep-in-old measure) "ptr tc_in, "]
+               [(copy mark sweep sweep-in-old measure) "thread_gc *tgc, "]
                [(vfasl-copy vfasl-sweep)
                 "vfasl_info *vfi, "]
                [else ""])
@@ -1504,12 +1504,12 @@
        (case (lookup 'mode config)
          [(copy)
           (code-block
-           "check_triggers(tc_in, si);"
+           "check_triggers(tgc, si);"
            (code-block
             "ptr new_p;"
             "IGEN tg = TARGET_GENERATION(si);"
             (body)
-            "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
+            "tgc->sweep_change = SWEEP_CHANGE_PROGRESS;"
             "FWDMARKER(p) = forward_marker;"
             "FWDADDRESS(p) = new_p;"
             (and (lookup 'maybe-backreferences? config #f)
@@ -1518,10 +1518,10 @@
             "return tg;"))]
          [(mark)
           (code-block
-           "check_triggers(tc_in, si);"
+           "check_triggers(tgc, si);"
            (ensure-segment-mark-mask "si" "")
            (body)
-           "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
+           "tgc->sweep_change = SWEEP_CHANGE_PROGRESS;"
            "ADD_BACKREFERENCE(p, si->generation);"
            "return si->generation;")]
          [(sweep)
@@ -1703,7 +1703,7 @@
               [(and preserve-flonum-eq?
                     (eq? 'copy (lookup 'mode config)))
                (code (copy-statement field config)
-                     "flonum_set_forwarded(tc_in, p, si);"
+                     "flonum_set_forwarded(tgc, p, si);"
                      "FLONUM_FWDADDRESS(p) = new_p;"
                      (statements (cdr l) config))]
               [else
@@ -1853,7 +1853,7 @@
                        (hashtable-set! (lookup 'used config) 'p_sz #t)
                        (code (format "~a, ~a, p_sz, new_p);"
                                      (case mode
-                                       [(copy) "find_room(tc_in, p_spc, tg"]
+                                       [(copy) "find_gc_room(tgc, p_spc, tg"]
                                        [(vfasl-copy) "FIND_ROOM(vfi, p_vspc"])
                                      (as-c 'type (lookup 'basetype config)))
                              (statements (let ([extra (lookup 'copy-extra config #f)])
@@ -1904,7 +1904,7 @@
                (unless (null? (cdr l))
                  (error 'skip-forwarding "not at end"))
                (code "*dest = new_p;"
-                     "SWEEPCHANGE(tc_in) = SWEEP_CHANGE_PROGRESS;"
+                     "tgc->sweep_change = SWEEP_CHANGE_PROGRESS;"
                      "return tg;")]
               [else
                (statements (cdr l) config)])]
@@ -2072,7 +2072,7 @@
            [(copy) "tg"]
            [(mark) "TARGET_GENERATION(si)"]
            [else "target_generation"])]
-        [`_tc_ "tc_in"]
+        [`_tgc_ "tgc"]
         [`_backreferences?_
          (if (lookup 'maybe-backreferences? config #f)
              "BACKREFERENCES_ENABLED"
@@ -2242,7 +2242,7 @@
      "{ /* measure */"
      (format "  ptr r_p = ~a;" e)
      "  if (!IMMEDIATE(r_p))"
-     "    push_measure(tc_in, r_p);"
+     "    push_measure(tgc, r_p);"
      "}"))
 
   (define (copy-statement field config)
@@ -2347,7 +2347,7 @@
                "  while (seg < end_seg) {"
                "    mark_si = SegInfo(seg);"
                "    g = mark_si->generation;"
-               "    if (!fully_marked_mask[g]) init_fully_marked_mask(tc_in, g);"
+               "    if (!fully_marked_mask[g]) init_fully_marked_mask(tgc, g);"
                "    mark_si->marked_mask = fully_marked_mask[g];"
                "    mark_si->marked_count = bytes_per_segment;"
                "    seg++;"
@@ -2440,7 +2440,7 @@
   (define (ensure-segment-mark-mask si inset)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
-     (format "~a  init_mask(tc_in, ~a->marked_mask, ~a->generation, 0);"
+     (format "~a  init_mask(tgc, ~a->marked_mask, ~a->generation, 0);"
              inset si si)
      (format "~a}" inset)))
 
@@ -2667,7 +2667,7 @@
                                (parallel? ,parallel?))))
        (print-code (generate "object_directly_refers_to_self"
                              `((mode self-test))))
-       (print-code (code "static void mark_typemod_data_object(ptr tc_in, ptr p, uptr p_sz, seginfo *si)"
+       (print-code (code "static void mark_typemod_data_object(thread_gc *tgc, ptr p, uptr p_sz, seginfo *si)"
                          (code-block
                           (ensure-segment-mark-mask "si" "")
                           (mark-statement '(one-bit no-sweep)

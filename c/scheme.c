@@ -1135,7 +1135,7 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
      * thread context and hence there is no parent thread context.  */
     tc = (ptr)THREADTC(S_create_thread_object("startup", tc));
 #ifdef PTHREADS
-    s_thread_setspecific(S_tc_key, tc);
+    s_thread_setspecific(S_tc_key, TO_VOIDP(tc));
 #endif
 
     /* #scheme-init enables interrupts */

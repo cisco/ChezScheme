@@ -26,13 +26,16 @@ void S_alloc_init() {
     if (S_boot_time) {
       ptr tc = TO_PTR(S_G.thread_context);
 
+      GCDATA(tc) = TO_PTR(&S_G.main_thread_gc);
+      S_G.main_thread_gc.tc = tc;
+
       /* reset the allocation tables */
         for (g = 0; g <= static_generation; g++) {
             S_G.bytes_of_generation[g] = 0;
             for (s = 0; s <= max_real_space; s++) {
-              BASELOC_AT(tc, s, g) = FIX(0);
-              NEXTLOC_AT(tc, s, g) = FIX(0);
-              BYTESLEFT_AT(tc, s, g) = 0;
+              S_G.main_thread_gc.base_loc[g][s] = FIX(0); 
+              S_G.main_thread_gc.next_loc[g][s] = FIX(0); 
+              S_G.main_thread_gc.bytes_left[g][s] = 0;
               S_G.bytes_of_space[g][s] = 0;
             }
         }
@@ -159,9 +162,9 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
      /* add in bytes previously recorded */
       n += S_G.bytes_of_space[g][s];
      /* add in bytes in active segments */
-      next_loc = NEXTLOC_AT(tc, s, g);
+      next_loc = THREAD_GC(tc)->next_loc[g][s];
       if (next_loc != FIX(0))
-        n += (uptr)next_loc - (uptr)BASELOC_AT(tc, s, g);
+        n += (uptr)next_loc - (uptr)THREAD_GC(tc)->base_loc[g][s];
       if (s == space_data) {
         /* don't count space used for bitmaks */
         n -= S_G.bitmask_overhead[g];
@@ -190,7 +193,7 @@ static void maybe_fire_collector() {
 }
 
 /* suitable mutex (either tc_mutex or gc_tc_mutex) must be held */
-static void close_off_segment(ptr tc, ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN g)
+static void close_off_segment(thread_gc *tgc, ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN g)
 {
   if (base_loc) {
     seginfo *si;
@@ -206,12 +209,12 @@ static void close_off_segment(ptr tc, ptr old, ptr base_loc, ptr sweep_loc, ISPC
     /* in case this is during a GC, add to sweep list */
     si = SegInfo(addr_get_segment(base_loc));
     si->sweep_start = sweep_loc;
-    si->sweep_next = TO_VOIDP(SWEEPNEXT_AT(tc, s, g));
-    SWEEPNEXT_AT(tc, s, g) = TO_PTR(si);
+    si->sweep_next = tgc->sweep_next[g][s];
+    tgc->sweep_next[g][s] = si;
   }
 }
 
-ptr S_find_more_thread_room(ptr tc, ISPC s, IGEN g, iptr n, ptr old) {
+ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
   iptr nsegs, seg;
   ptr new;
   iptr new_bytes;
@@ -224,8 +227,8 @@ ptr S_find_more_thread_room(ptr tc, ISPC s, IGEN g, iptr n, ptr old) {
 #else
   tc_mutex_acquire();
 #endif
-  
-  close_off_segment(tc, old, BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
+
+  close_off_segment(tgc, old, tgc->base_loc[g][s], tgc->sweep_loc[g][s], s, g);
 
   S_pants_down += 1;
 
@@ -234,15 +237,15 @@ ptr S_find_more_thread_room(ptr tc, ISPC s, IGEN g, iptr n, ptr old) {
  /* block requests to minimize fragmentation and improve cache locality */
   if (s == space_code && nsegs < 16) nsegs = 16;
 
-  seg = S_find_segments(tc, s, g, nsegs);
+  seg = S_find_segments(tgc, s, g, nsegs);
   new = build_ptr(seg, 0);
 
   new_bytes = nsegs * bytes_per_segment;
 
-  BASELOC_AT(tc, s, g) = new;
-  SWEEPLOC_AT(tc, s, g) = new;
-  BYTESLEFT_AT(tc, s, g) = (new_bytes - n) - ptr_bytes;
-  NEXTLOC_AT(tc, s, g) = (ptr)((uptr)new + n);
+  tgc->base_loc[g][s] = new;
+  tgc->sweep_loc[g][s] = new;
+  tgc->bytes_left[g][s] = (new_bytes - n) - ptr_bytes;
+  tgc->next_loc[g][s] = (ptr)((uptr)new + n);
 
   if (g == 0 && S_pants_down == 1) maybe_fire_collector();
 
@@ -262,12 +265,14 @@ ptr S_find_more_thread_room(ptr tc, ISPC s, IGEN g, iptr n, ptr old) {
 
 /* tc_mutex must be held */
 void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
-  close_off_segment(tc, NEXTLOC_AT(tc, s, g), BASELOC_AT(tc, s, g), SWEEPLOC_AT(tc, s, g), s, g);
+  thread_gc *tgc = THREAD_GC(tc);
 
-  BASELOC_AT(tc, s, g) = (ptr)0;
-  BYTESLEFT_AT(tc, s, g) = 0;
-  NEXTLOC_AT(tc, s, g) = (ptr)0;
-  SWEEPLOC_AT(tc, s, g) = (ptr)0;
+  close_off_segment(tgc, tgc->next_loc[g][s], tgc->base_loc[g][s], tgc->sweep_loc[g][s], s, g);
+
+  tgc->base_loc[g][s] = (ptr)0;
+  tgc->bytes_left[g][s] = 0;
+  tgc->next_loc[g][s] = (ptr)0;
+  tgc->sweep_loc[g][s] = (ptr)0;
 }
 
 /* S_reset_allocation_pointer is always called with mutex */
@@ -285,14 +290,14 @@ void S_reset_allocation_pointer(tc) ptr tc; {
 
   S_pants_down += 1;
 
-  seg = S_find_segments(tc, space_new, 0, 1);
+  seg = S_find_segments(THREAD_GC(tc), space_new, 0, 1);
 
   /* NB: if allocate_segments didn't already ensure we don't use the last segment
      of memory, we'd have to reject it here so cp2-alloc can avoid a carry check for
      small allocation requests, using something like this:
 
      if (seg == (((uptr)1 << (ptr_bits - segment_offset_bits)) - 1))
-       seg = S_find_segments(tc, space_new, 0, 1);
+       seg = S_find_segments(THREAD_GC(tc), space_new, 0, 1);
   */
 
   S_G.bytes_of_space[0][space_new] += bytes_per_segment;
@@ -306,7 +311,7 @@ void S_reset_allocation_pointer(tc) ptr tc; {
   S_pants_down -= 1;
 }
 
-void S_record_new_dirty_card(ptr tc, ptr *ppp, IGEN to_g) {
+void S_record_new_dirty_card(thread_gc *tgc, ptr *ppp, IGEN to_g) {
   uptr card = (uptr)TO_PTR(ppp) >> card_offset_bits;
   dirtycardinfo *ndc;
 
@@ -316,7 +321,7 @@ void S_record_new_dirty_card(ptr tc, ptr *ppp, IGEN to_g) {
     if (to_g < ndc->youngest) ndc->youngest = to_g;
   } else {
     dirtycardinfo *next = ndc;
-    find_room_voidp(tc, space_new, 0, ptr_align(sizeof(dirtycardinfo)), ndc);
+    find_gc_room_voidp(tgc, space_new, 0, ptr_align(sizeof(dirtycardinfo)), ndc);
     ndc->card = card;
     ndc->youngest = to_g;
     ndc->next = next;
@@ -353,7 +358,7 @@ void S_dirty_set(ptr *loc, ptr x) {
       if (!IMMEDIATE(x)) {
         seginfo *t_si = SegInfo(ptr_get_segment(x));
         if (t_si->generation < si->generation)
-          S_record_new_dirty_card(get_thread_context(), loc, t_si->generation);
+          S_record_new_dirty_card(THREAD_GC(get_thread_context()), loc, t_si->generation);
       }
     } else {
       IGEN from_g = si->generation;

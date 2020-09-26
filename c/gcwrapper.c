@@ -573,7 +573,6 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, ptr base, uptr s
             if (Scar(l) == p)
               printf(" in unlocked\n");
         }
-        abort(); // REMOVEME
       }
     }
   }
@@ -591,7 +590,7 @@ static ptr *find_nl(ptr *pp1, ptr *pp2, ISPC s, IGEN g) {
 
   for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
     ptr t_tc = (ptr)THREADTC(Scar(ls));
-    nl = TO_VOIDP(NEXTLOC_AT(t_tc, s, g));
+    nl = TO_VOIDP(THREAD_GC(t_tc)->next_loc[g][s]);
     if (pp1 <= nl && nl < pp2)
       return nl;
   }
@@ -626,17 +625,18 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
       ptr t_tc = (ptr)THREADTC(Scar(ls));
       for (s = 0; s <= max_real_space; s += 1) {
         for (g = 0; g <= static_generation; INCRGEN(g)) {
-          if ((NEXTLOC_AT(t_tc, s, g) == (ptr)0) != (BASELOC_AT(t_tc, s, g) == (ptr)0)) {
+          thread_gc *tgc = THREAD_GC(t_tc);
+          if ((tgc->next_loc[g][s] == (ptr)0) != (tgc->base_loc[g][s] == (ptr)0)) {
             S_checkheap_errors += 1;
             printf("!!! inconsistent thread NEXT %p and BASE %p\n",
-                   TO_VOIDP(NEXTLOC_AT(t_tc, s, g)), TO_VOIDP(BASELOC_AT(t_tc, s, g)));
+                   TO_VOIDP(tgc->next_loc[g][s]), TO_VOIDP(tgc->base_loc[g][s]));
           }
-          if ((REMOTERANGEEND(t_tc) != (ptr)0)
-              || (REMOTERANGESTART(t_tc) != (ptr)(uptr)-1)) {
+          if ((tgc->remote_range_end != (ptr)0)
+              || (tgc->remote_range_start != (ptr)(uptr)-1)) {
             S_checkheap_errors += 1;
             printf("!!! nonempty thread REMOTERANGE %p-%p\n",
-                   TO_VOIDP(REMOTERANGESTART(t_tc)),
-                   TO_VOIDP(REMOTERANGEEND(t_tc)));
+                   TO_VOIDP(tgc->remote_range_start),
+                   TO_VOIDP(tgc->remote_range_end));
           }
         }
       }
@@ -1122,11 +1122,12 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
         ptr ls;
         for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
           ptr t_tc = (ptr)THREADTC(Scar(ls));
-          BASELOC_AT(t_tc, s, new_g) = BASELOC_AT(t_tc, s, old_g); BASELOC_AT(t_tc, s, old_g) = (ptr)0;
-          NEXTLOC_AT(t_tc, s, new_g) = NEXTLOC_AT(t_tc, s, old_g); NEXTLOC_AT(t_tc, s, old_g) = (ptr)0;
-          BYTESLEFT_AT(t_tc, s, new_g) = BYTESLEFT_AT(t_tc, s, old_g); BYTESLEFT_AT(t_tc, s, old_g) = 0;
-          SWEEPLOC_AT(t_tc, s, new_g) = SWEEPLOC_AT(t_tc, s, old_g); SWEEPLOC_AT(t_tc, s, old_g) = 0;
-          SWEEPNEXT_AT(t_tc, s, new_g) = SWEEPNEXT_AT(t_tc, s, old_g); SWEEPNEXT_AT(t_tc, s, old_g) = 0;
+          thread_gc *tgc = THREAD_GC(t_tc);
+          tgc->base_loc[new_g][s] = tgc->base_loc[old_g][s]; tgc->base_loc[old_g][s] = (ptr)0;
+          tgc->next_loc[new_g][s] = tgc->next_loc[old_g][s]; tgc->next_loc[old_g][s] = (ptr)0;
+          tgc->bytes_left[new_g][s] = tgc->bytes_left[old_g][s]; tgc->bytes_left[old_g][s] = 0;
+          tgc->sweep_loc[new_g][s] = tgc->sweep_loc[old_g][s]; tgc->sweep_loc[old_g][s] = 0;
+          tgc->sweep_next[new_g][s] = tgc->sweep_next[old_g][s]; tgc->sweep_next[old_g][s] = NULL;
         }
       }
     }

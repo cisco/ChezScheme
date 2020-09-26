@@ -76,30 +76,24 @@ typedef int IFASLCODE;      /* fasl type codes */
 
 #define ALREADY_PTR(p) (p)
 
-#define SG_AT_TO_INDEX(s, g) (((g) * (1 + max_real_space)) + (s))
-
-#define BASELOC_AT(tc, s, g) BASELOC(tc, SG_AT_TO_INDEX(s, g))
-#define NEXTLOC_AT(tc, s, g) NEXTLOC(tc, SG_AT_TO_INDEX(s, g))
-#define BYTESLEFT_AT(tc, s, g) BYTESLEFT(tc, SG_AT_TO_INDEX(s, g))
-#define SWEEPLOC_AT(tc, s, g) SWEEPLOC(tc, SG_AT_TO_INDEX(s, g))
-#define SWEEPNEXT_AT(tc, s, g) SWEEPNEXT(tc, SG_AT_TO_INDEX(s, g))
-
 /* inline allocation --- no mutex required */
 /* find room allocates n bytes in space s and generation g into
  * destination x, tagged with ty, punting to find_more_room if
  * no space is left in the current segment.  n is assumed to be
  * an integral multiple of the object alignment. */
-#define find_room_T(tc, s, g, t, n, T, x) do {         \
-    iptr L_IDX = SG_AT_TO_INDEX(s, g);                 \
-    iptr N_BYTES = n;                                  \
-    ptr X = NEXTLOC(tc, L_IDX);                        \
-    NEXTLOC(tc, L_IDX) = (ptr)((uptr)X + N_BYTES);     \
-    if ((BYTESLEFT(tc, L_IDX) -= (n)) < 0) X = S_find_more_thread_room(tc, s, g, N_BYTES, X); \
-    (x) = T(TYPE(X, t));                               \
+#define find_gc_room_T(tgc, s, g, t, n, T, x) do {         \
+    thread_gc *TGC = tgc;                                  \
+    iptr N_BYTES = n;                                      \
+    ptr X = TGC->next_loc[g][s];                           \
+    TGC->next_loc[g][s] = (ptr)((uptr)X + N_BYTES);        \
+    if ((TGC->bytes_left[g][s] -= (n)) < 0) X = S_find_more_gc_room(tgc, s, g, N_BYTES, X); \
+    (x) = T(TYPE(X, t));                                   \
   } while(0)
 
-#define find_room(tc, s, g, t, n, x) find_room_T(tc, s, g, t, n, ALREADY_PTR, x)
-#define find_room_voidp(tc, s, g, n, x) find_room_T(tc, s, g, typemod, n, TO_VOIDP, x)
+#define find_room(tc, s, g, t, n, x) find_gc_room_T(THREAD_GC(tc), s, g, t, n, ALREADY_PTR, x)
+#define find_gc_room(tgc, s, g, t, n, x) find_gc_room_T(tgc, s, g, t, n, ALREADY_PTR, x)
+#define find_room_voidp(tc, s, g, n, x) find_gc_room_T(THREAD_GC(tc), s, g, typemod, n, TO_VOIDP, x)
+#define find_gc_room_voidp(tgc, s, g, n, x) find_gc_room_T(tgc, s, g, typemod, n, TO_VOIDP, x)
 
 /* new-space inline allocation --- no mutex required */
 /* Like `find_room`, but always `space_new` and generation 0,
@@ -158,7 +152,7 @@ typedef struct _seginfo {
   octet *list_bits;                         /* for `$list-bits-ref` and `$list-bits-set!` */
   uptr number;                              /* the segment number */
 #ifdef PTHREADS
-  ptr creator_tc;                           /* for GC parallelism heuristic; might not match an active thread unless old_space */
+  struct thread_gc *creator;                /* for GC parallelism; might not have an active thread, unless old_space */
 #endif
   struct _chunkinfo *chunk;                 /* the chunk this segment belongs to */
   struct _seginfo *next;                    /* pointer to the next seginfo (used in occupied_segments and unused_segs) */
@@ -451,6 +445,47 @@ typedef struct {
 #define END_IMPLICIT_ATOMIC() do {  } while (0)
 #define AS_IMPLICIT_ATOMIC(T, X) X
 #endif
+
+typedef struct remote_range {
+  ISPC s;
+  IGEN g;
+  ptr start, end;
+  struct remote_range *next;
+} remote_range;
+
+typedef struct thread_gc {
+  ptr tc;
+
+  struct thread_gc *next;
+
+  ptr base_loc[static_generation+1][max_real_space+1];
+  ptr next_loc[static_generation+1][max_real_space+1];
+  iptr bytes_left[static_generation+1][max_real_space+1];
+  ptr orig_next_loc[max_real_space+1];
+  ptr sweep_loc[static_generation+1][max_real_space+1];
+  seginfo *sweep_next[static_generation+1][max_real_space+1];
+
+  ptr pending_ephemerons;
+
+  ptr sweep_stack;
+  ptr sweep_stack_start;
+  ptr sweep_stack_limit;
+
+  int sweep_change;
+  
+  int sweeper; /* parallel GC: sweeper thread identity */
+  int will_be_sweeper;
+  
+  struct thread_gc *remote_range_tgc;
+  ptr remote_range_start;
+  ptr remote_range_end;
+
+  iptr bitmask_overhead[static_generation+1];
+} thread_gc;
+
+#define THREAD_GC(tc) ((thread_gc *)TO_VOIDP(GCDATA(tc)))
+
+#define main_sweeper_index maximum_parallel_collect_threads
 
 #ifdef __MINGW32__
 /* With MinGW on 64-bit Windows, setjmp/longjmp is not reliable. Using
