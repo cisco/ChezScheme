@@ -1510,8 +1510,8 @@
             "IGEN tg = TARGET_GENERATION(si);"
             (body)
             "tgc->sweep_change = SWEEP_CHANGE_PROGRESS;"
-            "FWDMARKER(p) = forward_marker;"
             "FWDADDRESS(p) = new_p;"
+            "FWDMARKER(p) = forward_marker;"
             (and (lookup 'maybe-backreferences? config #f)
                  "ADD_BACKREFERENCE(p, tg);")
             "*dest = new_p;"
