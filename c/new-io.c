@@ -78,7 +78,7 @@ static int is_valid_lz4_length(iptr count);
   do { body;                                            \
     if (ok) { flag = 0; }                               \
     else {                                              \
-      INT errnum;                                       \
+      INT errnum = 0;                                   \
       S_glzerror((fd),&errnum);                         \
       S_glzclearerr((fd));                              \
       if (errnum == Z_ERRNO) {                          \
@@ -99,7 +99,7 @@ static int is_valid_lz4_length(iptr count);
   do { body;                                            \
     if (ok) { flag = 0; break; }                        \
     else {                                              \
-      INT errnum;                                       \
+      INT errnum = 0;                                   \
       S_glzerror((fd),&errnum);                         \
       S_glzclearerr((fd));                              \
       if (errnum == Z_ERRNO) {                          \
@@ -117,7 +117,7 @@ static int is_valid_lz4_length(iptr count);
   do { body;                                            \
     if (ok) { flag = 0; }                               \
     else {                                              \
-      INT errnum;                                       \
+      INT errnum = 0;                                   \
       S_glzerror((fd),&errnum);                         \
       S_glzclearerr((fd));                              \
       if (errnum == Z_ERRNO) { flag = 1; }              \
