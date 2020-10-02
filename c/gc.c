@@ -2080,8 +2080,7 @@ static ISPC infer_space(ptr p, seginfo *si) {
      parallel mode compared to non-parallel mode. Marking objects from
      a previous collection can mean sweeping from the less-specific
      space, however. We can synthesize an appropropriate space here,
-     since it will only be used only by the handling of received
-     ranges. */
+     since it will be used only by the handling of received ranges. */
 
   if (si->marked_mask) {
     ITYPE t = TYPEBITS(p);

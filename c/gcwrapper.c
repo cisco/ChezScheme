@@ -574,6 +574,21 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, ptr base, uptr s
               printf(" in unlocked\n");
         }
       }
+
+      if (address_is_meaningful) {
+        seginfo *ppsi = MaybeSegInfo(ptr_get_segment(pp));
+        if ((ppsi != NULL)
+            && (ppsi->generation > psi->generation)
+            /* space_data includes stacks, which are always swept */
+            && (ppsi->space != space_data)) {
+          uptr card = (uptr)TO_PTR(pp) >> card_offset_bits;
+          uptr cardno = card & ((1 << segment_card_offset_bits) - 1);
+          if (psi->generation < ppsi->dirty_bytes[cardno]) {
+            S_checkheap_errors += 1;
+            check_heap_dirty_msg("!!! INVALID", pp);
+          }
+        }
+      }
     }
   }
 }
@@ -764,46 +779,52 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
 
           if (s == space_pure_typed_object || s == space_port || s == space_code
               || s == space_impure_record || s == space_impure_typed_object) {
-            if (si->marked_mask) {
-              /* not implemented */
-            } else {
-              /* only check this segment for objects that start on it */
-              uptr before_seg = seg;
+            /* only check this segment for objects that start on it */
+            uptr before_seg = seg;
 
-              /* Back up over segments for the same space and generation: */
-              while (1) {
-                seginfo *before_si = MaybeSegInfo(before_seg-1);
-                if (!before_si
-                    || (before_si->space != si->space)
-                    || (before_si->generation != si->generation)
-                    || ((before_si->marked_mask == NULL) != (si->marked_mask == NULL)))
-                  break;
-                before_seg--;
-              }
+            /* Back up over segments for the same space and generation: */
+            while (1) {
+              seginfo *before_si = MaybeSegInfo(before_seg-1);
+              if (!before_si
+                  || (before_si->space != si->space)
+                  || (before_si->generation != si->generation)
+                  || ((before_si->marked_mask == NULL) != (si->marked_mask == NULL)))
+                break;
+              before_seg--;
+            }
 
-              /* Move forward to reach `seg` again: */
-              start = build_ptr(before_seg, 0);
-              while (before_seg != seg) {
-                ptr *before_pp2, *before_nl;
+            /* Move forward to reach `seg` again: */
+            start = build_ptr(before_seg, 0);
+            while (before_seg != seg) {
+              ptr *before_pp2, *before_nl;
 
-                before_pp2 = TO_VOIDP(build_ptr(before_seg + 1, 0));
-                if ((ptr *)TO_VOIDP(start) > before_pp2) {
-                  /* skipped to a further segment */
+              before_pp2 = TO_VOIDP(build_ptr(before_seg + 1, 0));
+              if ((ptr *)TO_VOIDP(start) > before_pp2) {
+                /* skipped to a further segment */
+                before_seg++;
+              } else {
+                before_nl = FIND_NL(TO_VOIDP(start), before_pp2, s, g);
+                if (((ptr*)TO_VOIDP(start)) <= before_nl && before_nl < before_pp2) {
+                  /* this segment ends, so move to next segment */
                   before_seg++;
-                } else {
-                  before_nl = FIND_NL(TO_VOIDP(start), before_pp2, s, g);
-                  if (((ptr*)TO_VOIDP(start)) <= before_nl && before_nl < before_pp2) {
-                    /* this segment ends, so move to next segment */
-                    before_seg++;
-                    if (s == space_code) {
-                      /* in the case of code, it's possible for a whole segment to
-                         go unused if a large code object didn't fit; give up, just in case */
-                      start = build_ptr(seg+1, 0);
-                    } else {
-                      start = build_ptr(before_seg, 0);
-                    }
+                  if (s == space_code) {
+                    /* in the case of code, it's possible for a whole segment to
+                       go unused if a large code object didn't fit; give up, just in case */
+                    start = build_ptr(seg+1, 0);
                   } else {
-                    while (((ptr *)TO_VOIDP(start)) < before_pp2) {
+                    start = build_ptr(before_seg, 0);
+                  }
+                } else {
+                  seginfo *before_si = MaybeSegInfo(before_seg);
+                  while (((ptr *)TO_VOIDP(start)) < before_pp2) {
+                    if (before_si->marked_mask) {
+                      if (before_si->marked_mask[segment_bitmap_byte(start)] & segment_bitmap_bit(start)) {
+                        start = (ptr)((uptr)start + size_object(TYPE(start, type_typed_object)));
+                      } else {
+                        /* skip past unmarked */
+                        start = (ptr)((uptr)start + byte_alignment);
+                      }
+                    } else {
                       if (*(ptr *)TO_VOIDP(start) == forward_marker) {
                         /* this segment ends, so move to next segment */
                         if (s == space_code) {
@@ -815,16 +836,27 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                         start = (ptr)((uptr)start + size_object(TYPE(start, type_typed_object)));
                       }
                     }
-                    before_seg++;
                   }
+                  before_seg++;
                 }
               }
+            }
 
-              if (((ptr *)TO_VOIDP(start)) >= pp2) {
-                /* previous object extended past the segment */
-              }  else {
-                pp1 = TO_VOIDP(start);
-                while (pp1 < pp2) {
+            if (((ptr *)TO_VOIDP(start)) >= pp2) {
+              /* previous object extended past the segment */
+            }  else {
+              pp1 = TO_VOIDP(start);
+              while (pp1 < pp2) {
+                if (si->marked_mask) {
+                  if (si->marked_mask[segment_bitmap_byte(TO_PTR(pp1))] & segment_bitmap_bit(TO_PTR(pp1))) {
+                    p = TYPE(TO_PTR(pp1), type_typed_object);
+                    check_object(p, seg, s, aftergc);
+                    pp1 = TO_VOIDP((ptr)((uptr)TO_PTR(pp1) + size_object(p)));
+                  } else {
+                    /* skip past unmarked */
+                    pp1 = TO_VOIDP((ptr)((uptr)pp1 + byte_alignment));
+                  }
+                } else {
                   if (*pp1 == forward_marker)
                     break;
                   else {
@@ -869,9 +901,9 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
             }
           }
 
-          /* verify that dirty bits are set appropriately */
-          /* out of date: doesn't handle space_impure_record, space_port, and maybe others */
-          /* also doesn't check the SYMCODE for symbols */
+          /* further verify that dirty bits are set appropriately; only handles some spaces
+             to make sure that the dirty byte is not unnecessarily approximate, but we have also
+             checked dirty bytes alerady via `check_pointer` */
           if (s == space_impure || s == space_symbol || s == space_weakpair || s == space_ephemeron
               || s == space_immobile_impure || s == space_closure) {
             found_eos = 0;
@@ -940,6 +972,20 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                        (aftergc ? "after gc " : ""),
                        (ptrdiff_t)seg, d);
                 segment_tell(seg);
+              }
+            }
+          } else {
+            /* at least check that no dirty bytes are set beyond the end of the segment */
+            if (pp2 < (ptr *)TO_VOIDP(build_ptr(seg + 1, 0))) {
+              uptr card = (uptr)TO_PTR(pp2) >> card_offset_bits;
+              int d = (int)(card & ((1 << segment_card_offset_bits) - 1));
+
+              for (d++; d < cards_per_segment; d++) {
+                if (si->dirty_bytes[d] != 0xff) {
+                  S_checkheap_errors += 1;
+                  printf("!!! Dirty byte set past end-of-segment for segment "PHtx", card %d\n", (ptrdiff_t)seg, d);
+                  segment_tell(seg);
+                }
               }
             }
           }
