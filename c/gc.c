@@ -1213,6 +1213,9 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
             /* coordinate with alloc.c */
             (SYMVAL(sym) != sunbound || SYMPLIST(sym) != Snil || SYMSPLIST(sym) != Snil)) {
           seginfo *sym_si = SegInfo(ptr_get_segment(sym));
+#ifdef ENABLE_PARALLEL
+          thread_gc *tgc = sym_si->creator; /* shadows enclosing `tgc` binding */
+#endif
           if (!new_marked(sym_si, sym))
             mark_or_copy_pure(&sym, sym, sym_si);
         }
@@ -1980,6 +1983,12 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
           relocate_impure_help(ppn, p, from_g, pp, 2 * ptr_bytes);
           pp = ppn + 1;
         }
+      } else if (s == space_new) { /* used by infer_space to mean "type ojbect" */
+        while (pp < nl) {
+          p = TYPE(TO_PTR(pp), type_typed_object);
+          sweep(tgc, p, from_g);
+          pp = TO_VOIDP((uptr)TO_PTR(pp) + size_object(p));
+        }
       } else if (s == space_closure) {
         while (pp < nl) {
           p = TYPE(TO_PTR(pp), type_closure);
@@ -2038,6 +2047,7 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
                         size_record_inst(UNFIX(RECORDDESCSIZE(RECORDINSTTYPE(p)))));
         }
       } else {
+        printf(">> %d\n", s);
         S_error_abort("dirty range sweep: unexpected space");
       }
       FLUSH_REMOTE_RANGE(tgc, s, from_g);
@@ -2077,21 +2087,24 @@ void enlarge_sweep_stack(thread_gc *tgc) {
 #ifdef ENABLE_PARALLEL
 static ISPC infer_space(ptr p, seginfo *si) {
   /* Certain kinds of values get allocated to more specific spaces by
-     parallel mode compared to non-parallel mode. Marking objects from
-     a previous collection can mean sweeping from the less-specific
-     space, however. We can synthesize an appropropriate space here,
-     since it will be used only by the handling of received ranges. */
+     parallel mode compared to non-parallel mode, and locked objects
+     may stay in a less-specific space like `space_new`. Marking
+     objects from a previous collection can mean sweeping from the
+     less-specific space. We can synthesize an appropropriate space
+     here, since it will be used only by the handling of received
+     ranges. */
 
   if (si->marked_mask) {
     ITYPE t = TYPEBITS(p);
-    if (t == type_typed_object) {
-      ptr tf = TYPEFIELD(p);
-      if ((iptr)tf == type_ratnum)
-        return space_pure;
-      else if ((iptr)tf == type_exactnum)
-        return space_pure;
+    if (t == type_typed_object)
+      return space_new; /* means "typed object" to sweep_generation_pass */
+    else if (t == type_pair) {
+      if (si->space == space_new)
+        return space_impure;
     } else if (t == type_closure)
       return space_closure;
+    else if (t == type_symbol)
+      return space_symbol;
   }
 
   return si->space;
