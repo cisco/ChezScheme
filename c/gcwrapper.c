@@ -576,7 +576,7 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, ptr base, uptr s
       }
 
       if (address_is_meaningful) {
-        seginfo *ppsi = MaybeSegInfo(ptr_get_segment(pp));
+        seginfo *ppsi = MaybeSegInfo(ptr_get_segment(TO_PTR(pp)));
         if ((ppsi != NULL)
             && (ppsi->generation > psi->generation)
             /* space_data includes stacks, which are always swept */
@@ -854,7 +854,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                     pp1 = TO_VOIDP((ptr)((uptr)TO_PTR(pp1) + size_object(p)));
                   } else {
                     /* skip past unmarked */
-                    pp1 = TO_VOIDP((ptr)((uptr)pp1 + byte_alignment));
+                    pp1 = TO_VOIDP((ptr)((uptr)TO_PTR(pp1) + byte_alignment));
                   }
                 } else {
                   if (*pp1 == forward_marker)
