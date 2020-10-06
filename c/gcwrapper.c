@@ -1092,7 +1092,7 @@ static void check_dirty() {
           }
           if (s != space_new && s != space_impure && s != space_count_impure && s != space_symbol && s != space_port
               && s != space_impure_record && s != space_impure_typed_object && s != space_immobile_impure 
-              && s != space_weakpair && s != space_ephemeron) {
+              && s != space_weakpair && s != space_ephemeron && s != space_closure) {
             S_checkheap_errors += 1;
             printf("!!! (check_dirty): unexpected space %d for dirty segment "PHtx"\n", s, (ptrdiff_t)(si->number));
           }
@@ -1290,6 +1290,7 @@ ptr S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
   if (min_tg == static_generation
       || S_G.enable_object_counts || S_G.enable_object_backreferences
       || (count_roots != Sfalse)) {
+    if (S_G.enable_object_backreferences) min_tg = max_tg;
     return S_gc_oce(tc, max_cg, min_tg, max_tg, count_roots);
 #if defined(PTHREADS)
   } else if (S_collect_waiting_threads != 0) {
