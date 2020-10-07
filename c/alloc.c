@@ -775,6 +775,22 @@ ptr S_record(n) iptr n; {
     return p;
 }
 
+ptr Srecord_type(ptr r) {
+  return RECORDINSTTYPE(r);
+}
+
+ptr Srecord_type_parent(ptr rtd) {
+  return RECORDDESCPARENT(rtd);
+}
+
+uptr Srecord_type_size(ptr rtd) {
+  return UNFIX(RECORDDESCSIZE(rtd));
+}
+
+int Srecord_type_uniformp(ptr rtd) {
+  return RECORDDESCPM(rtd) == FIX(-1);
+}
+
 ptr S_closure(cod, n) ptr cod; iptr n; {
     ptr tc = get_thread_context();
     ptr p; iptr d;

@@ -58,5 +58,5 @@
                       #'(put-priminfo! 'prim '(lib ...))])))
                #`(begin #,@(map do-entry #'(entry ...)))))])))
 
-  (include "../s/primdata.ss")
+  (include "primdata.ss")
 )

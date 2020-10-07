@@ -383,7 +383,14 @@
         (export "ptr" "Sunsigned32" (format "(~a)" (constant typedef-u32)))
         (export "ptr" "Sinteger64" (format "(~a)" (constant typedef-i64)))
         (export "ptr" "Sunsigned64" (format "(~a)" (constant typedef-u64)))
-  
+
+        (nl) (comment "Records")
+        (defref Srecord_uniform_ref record data)
+        (export "ptr" "Srecord_type" "(ptr)")
+        (export "ptr" "Srecord_type_parent" "(ptr)")
+        (export "int" "Srecord_type_uniformp" "(ptr)")
+        (export "uptr" "Srecord_type_size" "(ptr)")
+
         (nl) (comment "Miscellaneous")
         (export "ptr" "Stop_level_value" "(ptr)")
         (export "void" "Sset_top_level_value" "(ptr, ptr)")

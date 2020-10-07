@@ -3049,6 +3049,20 @@ the pointer points and may copy other data over the object.
 \cmacro{octet *}{Sbytevector_data}{ptr \var{bytevec}}
 \end{flushleft}
 
+\begin{flushleft}
+\cfunction{ptr}{Srecord_type}{ptr \var{rec}}
+\cfunction{ptr}{Srecord_type_parent}{ptr \var{rtd}}
+\cfunction{uptr}{Srecord_type_size}{ptr \var{rtd}}
+\cfunction{int}{Srecord_type_uniformp}{ptr \var{rtd}}
+\cmacro{ptr}{Srecord_uniform_ref}{ptr \var{rec}, iptr \var{i}}
+\end{flushleft}
+
+\noindent
+The \scheme{Srecord_uniform_ref} accessor should be used only on
+records whose fields are all Scheme values, which is a record
+for which \scheme{Srecord_type_uniformp} composed with
+\scheme{Srecord_type} returns true.
+
 \parheader{Mutators}
 Changes to mutable objects that contain pointers, such as pairs and
 vectors, must be tracked on behalf of the storage
