@@ -3475,7 +3475,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
   for (l = ls; l != Snil; l = Scdr(l)) {
     ptr p = Scar(l);
     if (!IMMEDIATE(p)) {
-      seginfo *si = si = SegInfo(ptr_get_segment(p));
+      seginfo *si = SegInfo(ptr_get_segment(p));
 
       if (!si->measured_mask)
         init_measure_mask(tgc, si);
@@ -3493,7 +3493,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
     measure_total = 0;
 
     if (!IMMEDIATE(p)) {
-      seginfo *si = si = SegInfo(ptr_get_segment(p));
+      seginfo *si = SegInfo(ptr_get_segment(p));
       measure_mask_unset(si->counting_mask, si, p);
       gc_measure_one(tgc, p);
     }
@@ -3509,7 +3509,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
   for (l = ls; l != Snil; l = Scdr(l)) {
     ptr p = Scar(l);
     if (!IMMEDIATE(p)) {
-      seginfo *si = si = SegInfo(ptr_get_segment(p));
+      seginfo *si = SegInfo(ptr_get_segment(p));
       si->counting_mask = NULL;
     }
   }
