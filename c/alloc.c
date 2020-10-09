@@ -18,7 +18,7 @@
 #include "popcount.h"
 
 /* locally defined functions */
-static void maybe_fire_collector PROTO((void));
+static void maybe_queue_fire_collector(thread_gc *tgc);
 
 void S_alloc_init() {
     ISPC s; IGEN g; UINT i;
@@ -96,7 +96,6 @@ void S_protect(p) ptr *p; {
     S_G.protected[S_G.protect_next++] = p;
 }
 
-/* S_reset_scheme_stack is always called with mutex */
 void S_reset_scheme_stack(tc, n) ptr tc; iptr n; {
     ptr *x; iptr m;
 
@@ -136,6 +135,9 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   ptr tc = get_thread_context();
   ISPC s, smax, smin; IGEN g, gmax, gmin;
   uptr n;
+
+  tc_mutex_acquire();
+  alloc_mutex_acquire();
 
   gmin = (IGEN)UNFIX(xg);
   if (gmin < 0) {
@@ -180,6 +182,9 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
   if (gmin == 0 && smin <= space_new && space_new <= smax)
       n -= (uptr)REAL_EAP(tc) - (uptr)AP(tc);
 
+  alloc_mutex_release();
+  tc_mutex_release();
+  
   return Sunsigned(n);
 }
 
@@ -187,12 +192,22 @@ ptr S_bytes_finalized() {
   return Sunsigned(S_G.bytes_finalized);
 }
 
-static void maybe_fire_collector() {
+/* called with alloc mutex */
+static void maybe_queue_fire_collector(thread_gc *tgc) {
   if ((S_G.bytes_of_generation[0] + S_G.bytesof[0][countof_phantom]) - S_G.g0_bytes_after_last_gc >= S_G.collect_trip_bytes)
-    S_fire_collector();
+    tgc->queued_fire = 1;
 }
 
-/* suitable mutex (either tc_mutex or gc_tc_mutex) must be held */
+void S_maybe_fire_collector(thread_gc *tgc) {
+  if ((tgc->during_alloc == 0) && (!IS_ALLOC_MUTEX_OWNER() || IS_TC_MUTEX_OWNER())) {
+    if (tgc->queued_fire) {
+      tgc->queued_fire = 0;
+      S_fire_collector();
+    }
+  }
+}
+
+/* allocation mutex must be held (or single-threaded guaranteed because collecting) */
 static void close_off_segment(thread_gc *tgc, ptr old, ptr base_loc, ptr sweep_loc, ISPC s, IGEN g)
 {
   if (base_loc) {
@@ -219,18 +234,11 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
   ptr new;
   iptr new_bytes;
 
-#ifdef PTHREADS
-  if (S_use_gc_tc_mutex)
-    gc_tc_mutex_acquire();
-  else
-    tc_mutex_acquire();
-#else
-  tc_mutex_acquire();
-#endif
+  alloc_mutex_acquire();
 
   close_off_segment(tgc, old, tgc->base_loc[g][s], tgc->sweep_loc[g][s], s, g);
 
-  S_pants_down += 1;
+  tgc->during_alloc += 1;
 
   nsegs = (uptr)(n + ptr_bytes + bytes_per_segment - 1) >> segment_offset_bits;
 
@@ -247,23 +255,17 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
   tgc->bytes_left[g][s] = (new_bytes - n) - ptr_bytes;
   tgc->next_loc[g][s] = (ptr)((uptr)new + n);
 
-  if (g == 0 && S_pants_down == 1) maybe_fire_collector();
+  if (tgc->during_alloc == 1) maybe_queue_fire_collector(tgc);
 
-  S_pants_down -= 1;
+  tgc->during_alloc -= 1;
 
-#ifdef PTHREADS
-  if (S_use_gc_tc_mutex)
-    gc_tc_mutex_release();
-  else
-    tc_mutex_release();
-#else
-  tc_mutex_release();
-#endif
-  
+  alloc_mutex_release();
+  S_maybe_fire_collector(tgc);
+
   return new;
 }
 
-/* tc_mutex must be held */
+/* allocation mutex must be held (or single-threaded guaranteed because collecting) */
 void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
   thread_gc *tgc = THREAD_GC(tc);
 
@@ -275,7 +277,8 @@ void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
   tgc->sweep_loc[g][s] = (ptr)0;
 }
 
-/* S_reset_allocation_pointer is always called with mutex */
+/* S_reset_allocation_pointer is always called with allocation mutex
+   (or single-threaded guaranteed because collecting) */
 /* We always allocate exactly one segment for the allocation area, since
    we can get into hot water with formerly locked objects, specifically
    symbols and impure records, that cross segment boundaries.  This allows
@@ -287,10 +290,11 @@ void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
 
 void S_reset_allocation_pointer(tc) ptr tc; {
   iptr seg;
+  thread_gc *tgc = THREAD_GC(tc);
 
-  S_pants_down += 1;
+  tgc->during_alloc += 1;
 
-  seg = S_find_segments(THREAD_GC(tc), space_new, 0, 1);
+  seg = S_find_segments(tgc, space_new, 0, 1);
 
   /* NB: if allocate_segments didn't already ensure we don't use the last segment
      of memory, we'd have to reject it here so cp2-alloc can avoid a carry check for
@@ -303,19 +307,19 @@ void S_reset_allocation_pointer(tc) ptr tc; {
   S_G.bytes_of_space[0][space_new] += bytes_per_segment;
   S_G.bytes_of_generation[0] += bytes_per_segment;
 
-  if (S_pants_down == 1) maybe_fire_collector();
+  if (tgc->during_alloc == 1) maybe_queue_fire_collector(THREAD_GC(tc));
 
   AP(tc) = build_ptr(seg, 0);
   REAL_EAP(tc) = EAP(tc) = (ptr)((uptr)AP(tc) + bytes_per_segment);
 
-  S_pants_down -= 1;
+  tgc->during_alloc -= 1;
 }
 
 void S_record_new_dirty_card(thread_gc *tgc, ptr *ppp, IGEN to_g) {
   uptr card = (uptr)TO_PTR(ppp) >> card_offset_bits;
   dirtycardinfo *ndc;
 
-  gc_tc_mutex_acquire();
+  alloc_mutex_acquire();
   ndc = S_G.new_dirty_cards;
   if (ndc != NULL && ndc->card == card) {
     if (to_g < ndc->youngest) ndc->youngest = to_g;
@@ -327,9 +331,10 @@ void S_record_new_dirty_card(thread_gc *tgc, ptr *ppp, IGEN to_g) {
     ndc->next = next;
     S_G.new_dirty_cards = ndc;
   }
-  gc_tc_mutex_release();
+  alloc_mutex_release();
 }
 
+/* allocation mutex must be held (or only one thread due to call by collector) */
 FORCEINLINE void mark_segment_dirty(seginfo *si, IGEN from_g, IGEN to_g) {
   IGEN old_to_g = si->min_dirty_byte;
   if (to_g < old_to_g) {
@@ -363,13 +368,16 @@ void S_dirty_set(ptr *loc, ptr x) {
     } else {
       IGEN from_g = si->generation;
       if (from_g != 0) {
+        alloc_mutex_acquire();
         si->dirty_bytes[((uptr)TO_PTR(loc) >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1)] = 0;
         mark_segment_dirty(si, from_g, 0);
+        alloc_mutex_release();
       }
     }
   }
 }
 
+/* only called by GC, so no other thread is running */
 void S_mark_card_dirty(uptr card, IGEN to_g) {
   uptr loc = card << card_offset_bits;
   uptr seg = addr_get_segment(loc);
@@ -381,7 +389,8 @@ void S_mark_card_dirty(uptr card, IGEN to_g) {
   }
 }
 
-/* scan remembered set from P to ENDP, transfering to dirty vector */
+/* scan remembered set from P to ENDP, transfering to dirty vector;
+   allocation mutex must be held */
 void S_scan_dirty(ptr *p, ptr *endp) {
   uptr this, last;
  
@@ -419,7 +428,7 @@ void S_scan_remembered_set() {
   ptr tc = get_thread_context();
   uptr ap, eap, real_eap;
 
-  tc_mutex_acquire();
+  alloc_mutex_acquire();
 
   ap = (uptr)AP(tc);
   eap = (uptr)EAP(tc);
@@ -438,7 +447,8 @@ void S_scan_remembered_set() {
     S_reset_allocation_pointer(tc);
   }
 
-  tc_mutex_release();
+  alloc_mutex_release();
+  S_maybe_fire_collector(THREAD_GC(tc));
 }
 
 /* S_get_more_room is called from genereated machine code when there is
@@ -466,14 +476,7 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
   eap = (uptr)EAP(tc);
   real_eap = (uptr)REAL_EAP(tc);
 
-#ifdef PTHREADS
-  if (S_use_gc_tc_mutex)
-    gc_tc_mutex_acquire();
-  else
-    tc_mutex_acquire();
-#else
-  tc_mutex_acquire();
-#endif
+  alloc_mutex_acquire();
 
   S_scan_dirty(TO_VOIDP(eap), TO_VOIDP(real_eap));
   eap = real_eap;
@@ -508,14 +511,8 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
     }
   }
 
-#ifdef PTHREADS
-  if (S_use_gc_tc_mutex)
-    gc_tc_mutex_release();
-  else
-    tc_mutex_release();
-#else
-  tc_mutex_release();
-#endif
+  alloc_mutex_release();
+  S_maybe_fire_collector(THREAD_GC(tc));
 
   return x;
 }

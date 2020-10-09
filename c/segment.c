@@ -256,6 +256,7 @@ static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED thread_gc *creator
   si->sweep_next = NULL;
 }
 
+/* allocation mutex must be held */
 iptr S_find_segments(creator, s, g, n) thread_gc *creator; ISPC s; IGEN g; iptr n; {
   chunkinfo *chunk, *nextchunk;
   seginfo *si, *nextsi, **prevsi;

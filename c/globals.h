@@ -39,9 +39,7 @@ EXTERN s_thread_key_t S_tc_key;
 EXTERN scheme_mutex_t S_tc_mutex;
 EXTERN s_thread_cond_t S_collect_cond;
 EXTERN s_thread_cond_t S_collect_thread0_cond;
-EXTERN INT S_tc_mutex_depth;
-EXTERN scheme_mutex_t S_gc_tc_mutex;
-EXTERN IBOOL S_use_gc_tc_mutex;
+EXTERN scheme_mutex_t S_alloc_mutex; /* ordered after S_tc_mutex */
 EXTERN int S_collect_waiting_threads;
 EXTERN ptr S_collect_waiting_tcs[maximum_parallel_collect_threads];
 # ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
@@ -50,6 +48,7 @@ EXTERN s_thread_mutex_t S_implicit_mutex;
 #endif
 
 /* segment.c */
+/* update of the segment table is protected by alloc mutex */
 #ifdef segment_t2_bits
 #ifdef segment_t3_bits
 EXTERN t2table *S_segment_info[1<<segment_t3_bits];
@@ -64,7 +63,6 @@ EXTERN chunkinfo *S_chunks_full;
 EXTERN chunkinfo *S_chunks[PARTIAL_CHUNK_POOLS+1];
 
 /* schsig.c */
-EXTERN IBOOL S_pants_down;
 
 /* foreign.c */
 #ifdef LOAD_SHARED_OBJECT
@@ -104,8 +102,8 @@ EXTERN struct S_G_struct {
   /* alloc.c */
     ptr *protected[max_protected];
     uptr protect_next;
-    uptr bytes_of_space[static_generation+1][max_real_space+1];
-    uptr bytes_of_generation[static_generation+1];
+    uptr bytes_of_space[static_generation+1][max_real_space+1]; /* protected by alloc mutex */
+    uptr bytes_of_generation[static_generation+1]; /* protected by alloc mutex */
     uptr bitmask_overhead[static_generation+1];
     uptr g0_bytes_after_last_gc;
     uptr collect_trip_bytes;

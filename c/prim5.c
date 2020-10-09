@@ -403,6 +403,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
   ptr tc = get_thread_context();
 
   tc_mutex_acquire();
+  alloc_mutex_acquire();
 
   if (outfn == NULL) {
     out = stderr;
@@ -627,6 +628,7 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
     fclose(out);
   }
 
+  alloc_mutex_release();
   tc_mutex_release();
 }
 
@@ -1481,7 +1483,11 @@ static iptr s_backdoor_thread(p) ptr p; {
 }
 
 static ptr s_threads() {
-  return S_threads;
+  ptr ts;
+  tc_mutex_acquire();
+  ts = S_threads;
+  tc_mutex_release();
+  return ts;
 }
 
 static void s_mutex_acquire(m) scheme_mutex_t *m; {

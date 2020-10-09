@@ -300,7 +300,7 @@ void Slock_object(x) ptr x; {
   if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
     ptr tc = get_thread_context();
     tc_mutex_acquire();
-    S_pants_down += 1;
+    THREAD_GC(tc)->during_alloc += 1;
     /* immobilize */
     if (si->must_mark < MUST_MARK_INFINITY) {
       si->must_mark++;
@@ -313,7 +313,7 @@ void Slock_object(x) ptr x; {
       if (g != 0) S_G.countof[g][countof_pair] += 1;
     }
     (void)remove_first_nomorep(x, &S_G.unlocked_objects[g], 0);
-    S_pants_down -= 1;
+    THREAD_GC(tc)->during_alloc -= 1;
     tc_mutex_release();
   }
 }
@@ -324,7 +324,7 @@ void Sunlock_object(x) ptr x; {
   if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
     ptr tc = get_thread_context();
     tc_mutex_acquire();
-    S_pants_down += 1;
+    THREAD_GC(tc)->during_alloc += 1;
     /* mobilize, if we haven't lost track */
     if (si->must_mark < MUST_MARK_INFINITY)
       --si->must_mark;
@@ -336,7 +336,7 @@ void Sunlock_object(x) ptr x; {
         if (g != 0) S_G.countof[g][countof_pair] += 1;
       }
     }
-    S_pants_down -= 1;
+    THREAD_GC(tc)->during_alloc -= 1;
     tc_mutex_release();
   }
 }
@@ -480,11 +480,11 @@ seginfo *S_ptr_seginfo(ptr p) {
 void Scompact_heap() {
   ptr tc = get_thread_context();
   IBOOL eoc = S_G.enable_object_counts;
-  S_pants_down += 1;
+  THREAD_GC(tc)->during_alloc += 1;
   S_G.enable_object_counts = 1;
   S_gc_oce(tc, S_G.max_nonstatic_generation, static_generation, static_generation, Sfalse);
   S_G.enable_object_counts = eoc;
-  S_pants_down -= 1;
+  THREAD_GC(tc)->during_alloc -= 1;
 }
 
 /* S_check_heap checks for various kinds of heap consistency
@@ -1162,7 +1162,7 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
   Slock_object(code);
 
  /* Scheme side grabs mutex before calling S_do_gc */
-  S_pants_down += 1;
+  THREAD_GC(tc)->during_alloc += 1;
 
   if (S_G.new_max_nonstatic_generation > S_G.max_nonstatic_generation) {
     S_G.min_free_gen = S_G.new_min_free_gen;
@@ -1279,7 +1279,7 @@ ptr S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
     to get_more_room if and when they awake and try to allocate */
   S_reset_allocation_pointer(tc);
 
-  S_pants_down -= 1;
+  THREAD_GC(tc)->during_alloc -= 1;
 
   Sunlock_object(code);
 

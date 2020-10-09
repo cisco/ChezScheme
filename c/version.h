@@ -472,8 +472,15 @@ typedef char tputsputcchar;
 # define NO_THREADS_UNUSED UNUSED
 #endif
 
+#if defined(__has_feature)
+# if __has_feature(thread_sanitizer)
+#  define NO_THREAD_SANITIZE __attribute__((no_sanitize("thread")))
+#  define IMPLICIT_ATOMIC_AS_EXPLICIT
+# endif
+#endif
+#ifndef NO_THREAD_SANITIZE
+# define NO_THREAD_SANITIZE /* empty */
+#endif
+
 /* Use "/dev/urandom" everywhere except Windows */
 #define USE_DEV_URANDOM_UUID
-
-/* For debugging: */
-/* #define IMPLICIT_ATOMIC_AS_EXPLICIT */

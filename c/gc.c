@@ -128,8 +128,8 @@
 
     * There are no attempts to take tc_mutex suring sweeping. To the
       degree that locking is needed (e.g., to allocate new segments),
-      `S_use_gc_tc_mutex` redirects to gc_tc_mutex. No other locks
-      can be taken while that one is held.
+      the allocation mutex is used. No other locks can be taken while
+      that one is held.
 
     * To copy from or mark on a segment, a sweeper must own the
       segment. A sweeper during sweeping may encounter a "remote"
@@ -367,12 +367,14 @@ static ptr sweep_from;
 
 #ifdef ENABLE_PARALLEL
 
+static int in_parallel_sweepers = 0;
+
 #define HAS_SWEEPER_WRT(t_tc, tc) 1
 
-# define GC_TC_MUTEX_ACQUIRE() gc_tc_mutex_acquire()
-# define GC_TC_MUTEX_RELEASE() gc_tc_mutex_release()
+# define GC_MUTEX_ACQUIRE() alloc_mutex_acquire()
+# define GC_MUTEX_RELEASE() alloc_mutex_release()
 
-# define SEGMENT_IS_LOCAL(si, p) (((si)->creator == tgc) || marked(si, p) || !S_use_gc_tc_mutex)
+# define SEGMENT_IS_LOCAL(si, p) (((si)->creator == tgc) || marked(si, p) || !in_parallel_sweepers)
 # define RECORD_REMOTE_RANGE_TO(tgc, start, size, creator) do { \
     ptr START = TO_PTR(UNTYPE_ANY(start));                     \
     ptr END = (ptr)((uptr)START + (size));                     \
@@ -424,8 +426,8 @@ static int num_sweepers;
 
 #define HAS_SWEEPER_WRT(t_tc, tc) (t_tc == tc)
 
-# define GC_TC_MUTEX_ACQUIRE() do { } while (0)
-# define GC_TC_MUTEX_RELEASE() do { } while (0)
+# define GC_MUTEX_ACQUIRE() do { } while (0)
+# define GC_MUTEX_RELEASE() do { } while (0)
 
 # define SEGMENT_IS_LOCAL(si, p) 1
 # define RECORD_REMOTE_RANGE_TO(tgc, start, size, creator) do { } while (0)
@@ -493,11 +495,11 @@ uptr list_length(ptr ls) {
 #endif
 
 static void init_fully_marked_mask(thread_gc *tgc, IGEN g) {
-  GC_TC_MUTEX_ACQUIRE();
+  GC_MUTEX_ACQUIRE();
   if (!fully_marked_mask[g]) {
     init_mask(tgc, fully_marked_mask[g], g, 0xFF);
   }
-  GC_TC_MUTEX_RELEASE();
+  GC_MUTEX_RELEASE();
 }
 
 #ifdef PRESERVE_FLONUM_EQ
@@ -1168,6 +1170,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 #ifdef ENABLE_PARALLEL
       {
         ptr t_tc = (ptr)THREADTC(thread);
+        THREAD_GC(t_tc)->during_alloc += 1; /* turned back off in parallel_sweep_dirty_and_generation */
         if (!OLDSPACE(thread)) {
           /* remember to sweep in sweeper thread */
           THREAD_GC(t_tc)->thread = thread;
@@ -1712,6 +1715,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     for (g = MIN_TG; g <= MAX_TG; g++)
       S_G.bitmask_overhead[g] += tgc->bitmask_overhead[g];
 
+    tgc->queued_fire = 0;
+
     ACCUM_REAL_TIME(all_accum, astep, astart);
     REPORT_TIME(fprintf(stderr, "%d all   +%ld ms  %ld ms  [real time]\n", MAX_CG, astep, all_accum));
 
@@ -1782,10 +1787,10 @@ static void flush_remote_range(thread_gc *tgc, ISPC s, IGEN g) {
 
 #define save_resweep(s, si) do {                  \
     if (s == space_weakpair) {                    \
-      GC_TC_MUTEX_ACQUIRE();                      \
+      GC_MUTEX_ACQUIRE();                         \
       si->sweep_next = resweep_weak_segments;     \
       resweep_weak_segments = si;                 \
-      GC_TC_MUTEX_RELEASE();                      \
+      GC_MUTEX_RELEASE();                         \
     }                                             \
   } while (0)
 
@@ -2165,23 +2170,23 @@ static void record_dirty_segment(IGEN from_g, IGEN to_g, seginfo *si) {
 
   if (to_g < from_g) {
     seginfo *oldfirst;
-    GC_TC_MUTEX_ACQUIRE();
+    GC_MUTEX_ACQUIRE();
     oldfirst = DirtySegments(from_g, to_g);
     DirtySegments(from_g, to_g) = si;
     si->dirty_prev = &DirtySegments(from_g, to_g);
     si->dirty_next = oldfirst;
     if (oldfirst != NULL) oldfirst->dirty_prev = &si->dirty_next;
     si->min_dirty_byte = to_g;
-    GC_TC_MUTEX_RELEASE();
+    GC_MUTEX_RELEASE();
   }
 }
 
 static void add_weaksegments_to_resweep(weakseginfo *segs, weakseginfo *last_seg) {
   if (segs != NULL) {
-    GC_TC_MUTEX_ACQUIRE();
+    GC_MUTEX_ACQUIRE();
     last_seg->next = weaksegments_to_resweep;
     weaksegments_to_resweep = segs;
-    GC_TC_MUTEX_RELEASE();
+    GC_MUTEX_RELEASE();
   }
 }
 
@@ -2667,7 +2672,7 @@ static void add_trigger_guardians_to_recheck(ptr ls)
 {
   ptr last = ls, next;
 
-  GC_TC_MUTEX_ACQUIRE();
+  GC_MUTEX_ACQUIRE();
 
   next = GUARDIANNEXT(ls);
   while (next != 0) {
@@ -2677,7 +2682,7 @@ static void add_trigger_guardians_to_recheck(ptr ls)
   INITGUARDIANNEXT(last) = recheck_guardians_ls;
   recheck_guardians_ls = ls;
 
-  GC_TC_MUTEX_RELEASE();
+  GC_MUTEX_RELEASE();
 }
 
 static void ephemeron_remove(ptr pe) {
@@ -3072,8 +3077,8 @@ static IBOOL sweeper_started(int i, IBOOL start_new) {
 static void parallel_sweep_dirty_and_generation(thread_gc *tgc) {
   int i;
   thread_gc *all_tgcs = NULL;
- 
-  S_use_gc_tc_mutex = 1;
+
+  in_parallel_sweepers = 1;
 
   /* start other sweepers */
   (void)s_thread_mutex_lock(&sweep_mutex);
@@ -3116,6 +3121,8 @@ static void parallel_sweep_dirty_and_generation(thread_gc *tgc) {
         S_G.bitmask_overhead[g] += t_tgc->bitmask_overhead[g];
       S_flush_instruction_cache(t_tgc->tc);
       t_tgc->sweeper = main_sweeper_index;
+      t_tgc->queued_fire = 0;
+      t_tgc->during_alloc -= 1;
 
       if (t_tgc != tgc) {
         t_tgc->next = all_tgcs;
@@ -3135,8 +3142,8 @@ static void parallel_sweep_dirty_and_generation(thread_gc *tgc) {
   (void)s_thread_mutex_unlock(&sweep_mutex);
 
   tgc->next = all_tgcs;
-  
-  S_use_gc_tc_mutex = 0;
+
+  in_parallel_sweepers = 0;
 }
 
 static void run_sweeper(gc_sweeper *sweeper) {

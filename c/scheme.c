@@ -417,7 +417,7 @@ void S_generic_invoke(tc, code) ptr tc; ptr code; {
     __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ?
              EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
     {
-        if (S_pants_down)
+        if (THREAD_GC(tc)->during_alloc)
             S_error_abort("nonrecoverable invalid memory reference");
         else
             S_error_reset("invalid memory reference");
@@ -968,7 +968,7 @@ extern void Sretain_static_relocation(void) {
 #endif
 
 static void default_abnormal_exit(void) {
-  exit(1);
+  abort();
 }
 
 extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {

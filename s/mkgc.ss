@@ -611,11 +611,11 @@
          (count countof-phantom)
          ;; Separate from `count`, because we want to track sizes even
          ;; if counting is not enabled:
-         (GC_TC_MUTEX_ACQUIRE)
+         (GC_MUTEX_ACQUIRE)
          (set! (array-ref (array-ref S_G.bytesof _tg_) countof-phantom)
                +=
                (phantom-length _))
-         (GC_TC_MUTEX_RELEASE))]
+         (GC_MUTEX_RELEASE))]
        [measure (set! measure_total += (phantom-length _))]
        [else])])]))
 
@@ -743,9 +743,9 @@
       [(== (continuation-stack-length _) opportunistic-1-shot-flag)
        (set! (continuation-stack-length _copy_) (continuation-stack-clength _))
        ;; May need to recur at end to promote link:
-       (GC_TC_MUTEX_ACQUIRE)
+       (GC_MUTEX_ACQUIRE)
        (set! conts_to_promote (S_cons_in (-> _tgc_ tc) space_new 0 _copy_ conts_to_promote))
-       (GC_TC_MUTEX_RELEASE)]
+       (GC_MUTEX_RELEASE)]
       [else
        (copy continuation-stack-length)])]
    [else
@@ -815,9 +815,9 @@
     ;; determine if key is old, since keyval might or might not have been
     ;; swept already. NB: assuming keyvals are always pairs.
     (when (&& (!= next Sfalse) (OLDSPACE keyval))
-      (GC_TC_MUTEX_ACQUIRE)
+      (GC_MUTEX_ACQUIRE)
       (set! tlcs_to_rehash (S_cons_in (-> _tgc_ tc) space_new 0 _copy_ tlcs_to_rehash))
-      (GC_TC_MUTEX_RELEASE))]
+      (GC_MUTEX_RELEASE))]
    [else
     (trace-nonself tlc-keyval)
     (trace-nonself tlc-next)]))

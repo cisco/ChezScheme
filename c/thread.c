@@ -36,11 +36,9 @@ void S_thread_init() {
     S_tc_mutex.count = 0;
     s_thread_cond_init(&S_collect_cond);
     s_thread_cond_init(&S_collect_thread0_cond);
-    S_tc_mutex_depth = 0;
-    s_thread_mutex_init(&S_gc_tc_mutex.pmutex);
-    S_tc_mutex.owner = 0;
-    S_tc_mutex.count = 0;
-    S_use_gc_tc_mutex = 0;
+    s_thread_mutex_init(&S_alloc_mutex.pmutex);
+    S_alloc_mutex.owner = 0;
+    S_alloc_mutex.count = 0;
 
 # ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
     s_thread_mutex_init(&S_implicit_mutex);
@@ -123,7 +121,11 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   FRAME(tc,0) = TO_PTR(&CODEIT(S_G.dummy_code_object,size_rp_header));
 
  /* S_reset_allocation_pointer initializes ap and eap */
+  alloc_mutex_acquire();
   S_reset_allocation_pointer(tc);
+  alloc_mutex_release();
+  S_maybe_fire_collector(tgc);
+
   RANDOMSEED(tc) = most_positive_fixnum < 0xffffffff ? most_positive_fixnum : 0xffffffff;
   X(tc) = Y(tc) = U(tc) = V(tc) = W(tc) = FIX(0);
 
@@ -159,6 +161,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   LZ4OUTBUFFER(tc) = 0;
 
+  tgc->during_alloc = 0;
   tgc->sweeper = main_sweeper_index;
   tgc->remote_range_start = (ptr)(uptr)-1;
   tgc->remote_range_end = (ptr)0;
@@ -244,6 +247,8 @@ static IBOOL destroy_thread(tc) ptr tc; {
       *ls = Scdr(*ls);
       S_nthreads -= 1;
 
+      alloc_mutex_acquire();
+
      /* process remembered set before dropping allocation area */
       S_scan_dirty((ptr *)EAP(tc), (ptr *)REAL_EAP(tc));
 
@@ -256,6 +261,8 @@ static IBOOL destroy_thread(tc) ptr tc; {
             if (tgc->next_loc[g][s])
               S_close_off_thread_local_segment(tc, s, g);
       }
+
+      alloc_mutex_release();
 
      /* process guardian entries */
       {
@@ -361,7 +368,7 @@ void S_mutex_free(m) scheme_mutex_t *m; {
   free(m);
 }
 
-void S_mutex_acquire(m) scheme_mutex_t *m; {
+void S_mutex_acquire(scheme_mutex_t *m) NO_THREAD_SANITIZE {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;
@@ -379,7 +386,7 @@ void S_mutex_acquire(m) scheme_mutex_t *m; {
   m->count = 1;
 }
 
-INT S_mutex_tryacquire(m) scheme_mutex_t *m; {
+INT S_mutex_tryacquire(scheme_mutex_t *m) NO_THREAD_SANITIZE {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;
@@ -401,7 +408,12 @@ INT S_mutex_tryacquire(m) scheme_mutex_t *m; {
   return status;
 }
 
-void S_mutex_release(m) scheme_mutex_t *m; {
+IBOOL S_mutex_is_owner(scheme_mutex_t *m) NO_THREAD_SANITIZE {
+  s_thread_t self = s_thread_self();
+  return ((m->count > 0) && s_thread_equal(m->owner, self));
+}
+
+void S_mutex_release(scheme_mutex_t *m) NO_THREAD_SANITIZE {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;

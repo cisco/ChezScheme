@@ -127,11 +127,8 @@ void S_split_and_resize() {
    * and clength + size(values) < stack-size; also, size may include
    * argument register values */
     n = CONTCLENGTH(k) + (value_count * sizeof(ptr)) + stack_slop;
-    if (n >= SCHEMESTACKSIZE(tc)) {
-       tc_mutex_acquire();
+    if (n >= SCHEMESTACKSIZE(tc))
        S_reset_scheme_stack(tc, n);
-       tc_mutex_release();
-    }
 }
 
 iptr S_continuation_depth(k) ptr k; {
@@ -296,9 +293,7 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
 
   /* allocate a new stack, retaining same relative sfp */
     sfp_offset = (uptr)TO_PTR(sfp) - (uptr)TO_PTR(split_point);
-    tc_mutex_acquire();
     S_reset_scheme_stack(tc, above_split_size + frame_request);
-    tc_mutex_release();
     SFP(tc) = (ptr)((uptr)SCHEMESTACK(tc) + sfp_offset);
 
   /* copy up everything above the split point.  we don't know where the
@@ -318,20 +313,21 @@ void S_error_abort(s) const char *s; {
 void S_abnormal_exit() {
   S_abnormal_exit_proc();
   fprintf(stderr, "abnormal_exit procedure did not exit\n");
-  exit(1);
+  abort();
 }
 
 static void reset_scheme() {
     ptr tc = get_thread_context();
 
-    tc_mutex_acquire();
+    alloc_mutex_acquire();
    /* eap should always be up-to-date now that we write-through to the tc
       when making any changes to eap when eap is a real register */
     S_scan_dirty(TO_VOIDP(EAP(tc)), TO_VOIDP(REAL_EAP(tc)));
     S_reset_allocation_pointer(tc);
     S_reset_scheme_stack(tc, stack_slop);
+    alloc_mutex_release();
     FRAME(tc,0) = TO_PTR(DOUNDERFLOW);
-    tc_mutex_release();
+    S_maybe_fire_collector(THREAD_GC(tc));
 }
 
 /* error_resets occur with the system in an unknown state,
@@ -391,10 +387,10 @@ static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr arg
                        Scons(Sstring_utf8(s, -1), args)));
 
 #ifdef PTHREADS
-    while (S_tc_mutex_depth > 0) {
+    while (S_mutex_is_owner(&S_alloc_mutex))
+      S_mutex_release(&S_alloc_mutex);
+    while (S_mutex_is_owner(&S_tc_mutex))
       S_mutex_release(&S_tc_mutex);
-      S_tc_mutex_depth -= 1;
-    }
 #endif /* PTHREADS */
     
     TRAP(tc) = (ptr)1;
@@ -511,7 +507,7 @@ void S_fire_collector() {
 
 /*  printf("firing collector!\n"); fflush(stdout); */
 
-  if (!Sboolean_value(S_symbol_value(crp_id))) {
+  if (!Sboolean_value(S_symbol_racy_value(crp_id))) {
     ptr ls;
 
 /*    printf("really firing collector!\n"); fflush(stdout); */
@@ -565,7 +561,7 @@ static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
 #else
       ptr tc = get_thread_context();
 #endif
-      if (!S_pants_down && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)))
+      if (!THREAD_GC(tc)->during_alloc && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)))
         return(FALSE);
       keyboard_interrupt(tc);
       return(TRUE);
@@ -689,7 +685,7 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
            /* disable keyboard interrupts in subordinate threads until we think
              of something more clever to do with them */
             if (tc == TO_PTR(&S_G.thread_context)) {
-              if (!S_pants_down && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc))) {
+              if (!THREAD_GC(tc)->during_alloc && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc))) {
                /* this is a no-no, but the only other options are to ignore
                   the signal or to kill the process */
                 RESET_SIGNAL
@@ -715,11 +711,14 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
         case SIGBUS:
 #endif /* SIGBUS */
         case SIGSEGV:
+          {
+            ptr tc = get_thread_context();
             RESET_SIGNAL
-            if (S_pants_down)
+            if (THREAD_GC(tc)->during_alloc)
                 S_error_abort("nonrecoverable invalid memory reference");
             else
                 S_error_reset("invalid memory reference");
+          }
         default:
             RESET_SIGNAL
             S_error_reset("unexpected signal");
@@ -820,7 +819,6 @@ void S_schsig_init() {
     }
 
 
-    S_pants_down = 0;
     S_set_symbol_value(S_G.collect_request_pending_id, Sfalse);
 
     init_signal_handlers();

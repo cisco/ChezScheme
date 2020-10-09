@@ -22,6 +22,10 @@ ptr S_symbol_value(sym) ptr sym; {
   return SYMVAL(sym);
 }
 
+ptr S_symbol_racy_value(ptr sym) NO_THREAD_SANITIZE {
+  return SYMVAL(sym);
+}
+
 void S_set_symbol_value(sym, val) ptr sym, val; {
   SETSYMVAL(sym, val);
   SETSYMCODE(sym, Sprocedurep(val) ? CLOSCODE(val) : S_G.nonprocedure_code);

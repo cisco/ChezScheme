@@ -932,7 +932,7 @@
   (let ([thread-count 2] [iterations 10000])
     (equal?
       (parameterize ([collect-trip-bytes (expt 2 15)]
-                     [collect-generation-radix 1])
+                     [collect-generation-radix 2]) ; using 1 risks extreme slowness via major collections
         (let ([out '()]
               [out-mutex (make-mutex)]
               [out-condition (make-condition)]

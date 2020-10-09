@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050327)
+(define-constant scheme-version #x09050328)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -3219,8 +3219,6 @@
     [double double]
     [double uptr]
     [double double double]
-    [int32 int32]
-    [int32 int32 uptr]
     [int32 uptr uptr uptr uptr uptr]
     [uptr]
     [uptr uptr]

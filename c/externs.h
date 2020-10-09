@@ -62,7 +62,8 @@ off64_t lseek64(int,off64_t,int);
 extern void S_alloc_init PROTO((void));
 extern void S_protect PROTO((ptr *p));
 extern void S_reset_scheme_stack PROTO((ptr tc, iptr n));
-extern void S_reset_allocation_pointer PROTO((ptr tc));
+extern void S_reset_allocation_pointer PROTO((ptr tc)); /* call S_maybe_fire_collector afterward outside alloc mutex */
+extern void S_maybe_fire_collector(thread_gc *tgc);
 extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
 extern ptr S_bytes_finalized PROTO(());
 extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
@@ -280,6 +281,7 @@ extern void S_mutex_free PROTO((scheme_mutex_t *m));
 extern void S_mutex_acquire PROTO((scheme_mutex_t *m));
 extern INT S_mutex_tryacquire PROTO((scheme_mutex_t *m));
 extern void S_mutex_release PROTO((scheme_mutex_t *m));
+extern IBOOL S_mutex_is_owner PROTO((scheme_mutex_t *m));
 extern s_thread_cond_t *S_make_condition PROTO((void));
 extern void S_condition_free PROTO((s_thread_cond_t *c));
 extern IBOOL S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m, ptr t));
@@ -404,6 +406,7 @@ extern void S_gettime PROTO((INT typeno, struct timespec *tp));
 
 /* symbol.c */
 extern ptr S_symbol_value PROTO((ptr sym));
+extern ptr S_symbol_racy_value PROTO((ptr sym));
 extern void S_set_symbol_value PROTO((ptr sym, ptr val));
 
 /* machine-dependent .c files, e.g., x88k.c */
