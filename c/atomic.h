@@ -83,6 +83,7 @@ FORCEINLINE int S_cas_any_fence(volatile void *addr, void *old_val, void *new_va
                         "strex r7, %3, [%1, #0]\n\t"
                         "cmp r7, #0\n\t"
                         "bne 1f\n\t"
+                        "it eq\n\t"
                         "moveq %0, #1\n\t"
                         "1:\n\t"
                         : "=&r" (ret)
