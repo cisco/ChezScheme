@@ -97,9 +97,11 @@
 #   define LITTLE_ENDIAN_IEEE_DOUBLE
 #  endif
 # elif defined(_MSC_VER) || defined(__MINGW32__)
-#   define OS_ANY_WINDOWS
+#  define OS_ANY_WINDOWS
 # elif __APPLE__
-#   define OS_ANY_MACOSX
+#  define OS_ANY_MACOSX
+# elif defined(sun)
+#  define OS_ANY_SOLARIS2
 # endif
 #endif
 
