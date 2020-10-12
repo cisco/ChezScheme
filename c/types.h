@@ -470,6 +470,7 @@ typedef struct thread_gc {
 
   int during_alloc;
   IBOOL queued_fire;
+  IBOOL preserve_ownership;
 
   struct thread_gc *next;
 

@@ -1286,7 +1286,10 @@ ptr S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {
     if (S_G.enable_object_backreferences) min_tg = max_tg;
     return S_gc_oce(tc, max_cg, min_tg, max_tg, count_roots);
 #if defined(PTHREADS)
-  } else if (S_collect_waiting_threads != 0) {
+  } else if ((S_collect_waiting_threads != 0)
+             || (Spairp(S_threads)
+                 && Spairp(Scdr(S_threads))
+                 && (S_num_preserve_ownership_threads > 0))) {
     return S_gc_par(tc, max_cg, min_tg, max_tg, Sfalse);
 #endif
   } else if (max_cg == 0 && min_tg == 1 && max_tg == 1

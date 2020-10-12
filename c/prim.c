@@ -132,6 +132,7 @@ static void create_c_entry_vector() {
     S_install_c_entry(CENTRY_raw_collect_cond, TO_PTR(&S_collect_cond));
     S_install_c_entry(CENTRY_raw_collect_thread0_cond, TO_PTR(&S_collect_thread0_cond));
     S_install_c_entry(CENTRY_raw_tc_mutex, TO_PTR(&S_tc_mutex));
+    S_install_c_entry(CENTRY_raw_terminated_cond, TO_PTR(&S_terminated_cond));
     S_install_c_entry(CENTRY_activate_thread, proc2ptr(S_activate_thread));
     S_install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
     S_install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));
@@ -158,7 +159,7 @@ void S_check_c_entry_vector() {
     for (i = 0; i < c_entry_vector_size; i++) {
 #ifndef PTHREADS
       if (i == CENTRY_raw_collect_cond || i == CENTRY_raw_collect_thread0_cond
-          || i == CENTRY_raw_tc_mutex
+          || i == CENTRY_raw_tc_mutex || i == CENTRY_raw_terminated_cond
           || i == CENTRY_activate_thread || i == CENTRY_deactivate_thread
           || i == CENTRY_unactivate_thread)
         continue;

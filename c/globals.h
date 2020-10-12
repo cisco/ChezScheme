@@ -40,8 +40,10 @@ EXTERN scheme_mutex_t S_tc_mutex;
 EXTERN s_thread_cond_t S_collect_cond;
 EXTERN s_thread_cond_t S_collect_thread0_cond;
 EXTERN scheme_mutex_t S_alloc_mutex; /* ordered after S_tc_mutex */
+EXTERN s_thread_cond_t S_terminated_cond;
 EXTERN int S_collect_waiting_threads;
 EXTERN ptr S_collect_waiting_tcs[maximum_parallel_collect_threads];
+EXTERN int S_num_preserve_ownership_threads;
 # ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
 EXTERN s_thread_mutex_t S_implicit_mutex;
 # endif

@@ -1760,7 +1760,10 @@
 (define $raw-collect-cond (lambda () ($raw-collect-cond)))
 (define $raw-collect-thread0-cond (lambda () ($raw-collect-thread0-cond)))
 (define $raw-tc-mutex (lambda () ($raw-tc-mutex)))
+(define $raw-terminated-cond (lambda () ($raw-terminated-cond)))
 (define fork-thread)
+(define thread-join)
+(define thread-preserve-ownership!)
 (define make-mutex)
 (define mutex?)
 (define mutex-name)
@@ -1776,6 +1779,7 @@
 (define $tc-mutex)
 (define $collect-cond)
 (define $collect-thread0-cond)
+(define $terminated-cond)
 (define get-initial-thread)
 (let ()
 ; scheme-object's below are mutex and condition addresses, which are
@@ -1836,6 +1840,29 @@
                              [reset-handler (lambda () (k (void)))])
                 (t)
                 (void))))))))
+
+(set-who! thread-join
+  (lambda (t)
+    (unless (thread? t)
+      ($oops who "~a is not a thread" t))
+    (with-tc-mutex
+     (let f ()
+       (unless (eq? ($thread-tc t) 0)
+         (condition-wait $terminated-cond $tc-mutex)
+         (f))))))
+
+(set-who! thread-preserve-ownership!
+  (let ([preserve! (foreign-procedure "(cs)thread_preserve_ownership" (ptr) void)])
+    (case-lambda
+     [(t)
+      (unless (thread? t)
+        ($oops who "~a is not a thread" t))
+      (with-tc-mutex
+       (let ([tc ($thread-tc t)])
+         (unless (eq? tc 0)
+           (preserve! tc))))]
+     [()
+      (with-tc-mutex (preserve! ($tc)))])))
 
 (set-who! make-mutex
   (case-lambda
@@ -1953,6 +1980,7 @@
 (set! $tc-mutex ($make-mutex ($raw-tc-mutex) '$tc-mutex))
 (set! $collect-cond ($make-condition ($raw-collect-cond) '$collect-cond))
 (set! $collect-thread0-cond ($make-condition ($raw-collect-thread0-cond) '$collect-thread0-cond))
+(set! $terminated-cond ($make-condition ($raw-terminated-cond) '$terminated-cond))
 
 (set! get-initial-thread
   (let ([thread (car (ts))])

@@ -37,6 +37,7 @@ void S_thread_init() {
     s_thread_cond_init(&S_collect_cond);
     s_thread_cond_init(&S_collect_thread0_cond);
     s_thread_mutex_init(&S_alloc_mutex.pmutex);
+    s_thread_cond_init(&S_terminated_cond);
     S_alloc_mutex.owner = 0;
     S_alloc_mutex.count = 0;
 
@@ -167,7 +168,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   for (i = 0; i < (int)DIRTY_SEGMENT_LISTS; i++)
     tgc->dirty_segments[i] = NULL;
   tgc->thread = (ptr)0;
-  
+  tgc->preserve_ownership = 0;
+ 
   tc_mutex_release();
 
   return thread;
@@ -289,6 +291,9 @@ static IBOOL destroy_thread(tc) ptr tc; {
       if (LZ4OUTBUFFER(tc) != (ptr)0) free(TO_VOIDP(LZ4OUTBUFFER(tc)));
       if (SIGNALINTERRUPTQUEUE(tc) != (ptr)0) free(TO_VOIDP(SIGNALINTERRUPTQUEUE(tc)));
 
+      if (THREAD_GC(tc)->preserve_ownership)
+        --S_num_preserve_ownership_threads;
+
       /* Never free a thread_gc, since it may be recorded in a segment
          as the segment's creator. Recycle manually, instead. */
       THREAD_GC(tc)->sweeper = main_sweeper_index;
@@ -300,6 +305,8 @@ static IBOOL destroy_thread(tc) ptr tc; {
       
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
+
+      s_thread_cond_broadcast(&S_terminated_cond);
       break;
     }
     ls = &Scdr(*ls);

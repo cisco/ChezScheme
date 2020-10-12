@@ -99,6 +99,7 @@ static void s_mutex_acquire PROTO((scheme_mutex_t *m));
 static ptr s_mutex_acquire_noblock PROTO((scheme_mutex_t *m));
 static void s_condition_broadcast PROTO((s_thread_cond_t *c));
 static void s_condition_signal PROTO((s_thread_cond_t *c));
+static void s_thread_preserve_ownership PROTO((ptr tc));
 #endif
 static void s_byte_copy(ptr src, iptr srcoff, ptr dst, iptr dstoff, iptr cnt);
 static void s_ptr_copy(ptr src, iptr srcoff, ptr dst, iptr dstoff, iptr cnt);
@@ -1522,6 +1523,15 @@ static void s_condition_broadcast(s_thread_cond_t *c) {
 static void s_condition_signal(s_thread_cond_t *c) {
   s_thread_cond_signal(c);
 }
+
+/* called with tc mutex held */
+static void s_thread_preserve_ownership(ptr tc) {
+  if (!THREAD_GC(tc)->preserve_ownership) {
+    THREAD_GC(tc)->preserve_ownership = 1;
+    S_num_preserve_ownership_threads++;
+  }
+}
+
 #endif
 
 static ptr s_profile_counters(void) {
@@ -1601,6 +1611,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)condition_broadcast", (void *)s_condition_broadcast);
     Sforeign_symbol("(cs)condition_signal", (void *)s_condition_signal);
     Sforeign_symbol("(cs)condition_wait", (void *)S_condition_wait);
+    Sforeign_symbol("(cs)thread_preserve_ownership", (void *)s_thread_preserve_ownership);
 #endif
     Sforeign_symbol("(cs)s_addr_in_heap", (void *)s_addr_in_heap);
     Sforeign_symbol("(cs)s_ptr_in_heap", (void *)s_ptr_in_heap);

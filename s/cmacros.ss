@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050328)
+(define-constant scheme-version #x09050329)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2942,6 +2942,7 @@
      raw-collect-cond
      raw-collect-thread0-cond
      raw-tc-mutex
+     raw-terminated-cond
      activate-thread
      deactivate-thread
      unactivate-thread

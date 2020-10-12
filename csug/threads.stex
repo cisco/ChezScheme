@@ -89,14 +89,20 @@ synchronized across processors.
 \scheme{fork-thread} invokes \var{thunk} in a new thread and returns
 a thread object.
 
-Nothing can be done with the thread object returned by
-\scheme{fork-thread}, other than to print it or use it with inspection
-functions such as \scheme{compute-size}.
-
 Threads created by foreign code using some means other than
 \scheme{fork-thread} must call \scheme{Sactivate_thread}
 (Section~\ref{SECTFOREIGNCLIB}) before touching any Scheme data
 or calling any Scheme procedures.
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{thread-join}{\categoryprocedure}{(thread-join \var{thread})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+Waits until \var{thread} has commpleted.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -125,6 +131,20 @@ The thread id is a thread number assigned by thread id, and has no
 relationship to the process id returned by
 \index{\scheme{get-process-id}}\scheme{get-process-id}, which is the same
 in all threads.
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{thread-preserve-ownership!}{\categoryprocedure}{(thread-preserve-ownership!)}
+\formdef{thread-preserve-ownership!}{\categoryprocedure}{(thread-preserve-ownership! \var{thread})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+Provides a hint to the storage manager that \var{thread} (which
+defaults to the current thread if not supplied) can particularly
+benefit from tracking the objects that it allocates for parallel
+collection.
 
 \section{Mutexes}
 
