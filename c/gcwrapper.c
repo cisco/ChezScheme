@@ -666,13 +666,6 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
             printf("!!! inconsistent thread NEXT %p and BASE %p\n",
                    TO_VOIDP(tgc->next_loc[g][s]), TO_VOIDP(tgc->base_loc[g][s]));
           }
-          if ((tgc->remote_range_end != (ptr)0)
-              || (tgc->remote_range_start != (ptr)(uptr)-1)) {
-            S_checkheap_errors += 1;
-            printf("!!! nonempty thread REMOTERANGE %p-%p\n",
-                   TO_VOIDP(tgc->remote_range_start),
-                   TO_VOIDP(tgc->remote_range_end));
-          }
         }
       }
     }
@@ -1022,7 +1015,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
 
   if (S_checkheap_errors) {
     printf("heap check failed%s\n", (aftergc ? " after gc" : ""));
-    exit(1);
+    abort();
   }
 }
 

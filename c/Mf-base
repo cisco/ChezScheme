@@ -84,6 +84,10 @@ LZ4Sources=../lz4/lib/lz4.h ../lz4/lib/lz4frame.h \
            ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c \
            ../lz4/lib/lz4hc.c ../lz4/lib/xxhash.c
 
+.PHONY: run
+run:
+	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme $(ARGS)
+
 clean:
 	rm -f *.$o ${mdclean}
 	rm -f Make.out

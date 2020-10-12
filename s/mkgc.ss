@@ -243,7 +243,7 @@
                    ;; A stack segment has a single owner, so it's ok for us
                    ;; to sweep the stack content, even though it's on a
                    ;; remote segment relative to the current sweeper.
-                   (RECORD_REMOTE_RANGE _tgc_ _ _size_ s_si)]
+                   (RECORD_REMOTE s_si)]
                   [else
                    (set! (continuation-stack _)
                          (copy_stack _tgc_
@@ -794,7 +794,7 @@
            (SEGMENT_IS_LOCAL v_si val))
           (trace-symcode symbol-pvalue val)]
          [else
-          (RECORD_REMOTE_RANGE _tgc_ _ _size_ v_si)])]
+          (RECORD_REMOTE v_si)])]
       [off (trace-symcode symbol-pvalue val)])]
    [else
     (trace-symcode symbol-pvalue val)]))
@@ -869,7 +869,7 @@
                    (trace-record-type-pm num rtd)]
                   [else
                    ;; Try again in the bignum's sweeper
-                   (RECORD_REMOTE_RANGE _tgc_ _ _size_ pm_si)
+                   (RECORD_REMOTE pm_si)
                    (set! num S_G.zero_length_bignum)])]
                [off
                 (trace-record-type-pm num rtd)])]
@@ -1110,7 +1110,7 @@
                (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
                (set! num  (ENTRYLIVEMASK oldret))]
               [else
-               (RECORD_REMOTE_RANGE _tgc_ _ _size_ n_si)
+               (RECORD_REMOTE n_si)
                (set! num S_G.zero_length_bignum)])])
           (let* ([index : iptr (BIGLEN num)])
             (while
@@ -1140,7 +1140,7 @@
    [(sweep sweep-in-old)
     (define x_si : seginfo* (SegInfo (ptr_get_segment c_p)))
     (when (-> x_si old_space)
-      (relocate_code c_p x_si _ _size_)
+      (relocate_code c_p x_si)
       (case-mode
        [sweep-in-old]
        [else
@@ -1222,7 +1222,7 @@
                      (find_gc_room _tgc_ space_data from_g typemod n t)
                      (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])]
                [else
-                (RECORD_REMOTE_RANGE _tgc_ _ _size_ t_si)])))
+                (RECORD_REMOTE t_si)])))
          (set! (reloc-table-code t) _)
          (set! (code-reloc _) t)])
       (S_record_code_mod (-> _tgc_ tc) (cast uptr (TO_PTR (& (code-data _ 0)))) (cast uptr (code-length _)))]
@@ -1526,15 +1526,20 @@
            "return si->generation;")]
          [(sweep)
           (code-block
+           "FLUSH_REMOTE_BLOCK"
            (and (lookup 'maybe-backreferences? config #f)
                 "PUSH_BACKREFERENCE(p)")
            (body)
            (and (lookup 'maybe-backreferences? config #f)
                 "POP_BACKREFERENCE()")
+           "FLUSH_REMOTE(tgc, p);"
            (and (lookup 'as-dirty? config #f)
                 "return youngest;"))]
          [(sweep-in-old)
-          (body)]
+          (code-block
+           "FLUSH_REMOTE_BLOCK"
+           (body)
+           "ASSERT_EMPTY_FLUSH_REMOTE();")]
          [(measure)
           (body)]
          [(self-test)
@@ -2215,27 +2220,19 @@
 
   (define (relocate-statement purity e config)
     (define mode (lookup 'mode config))
-    (define (get-start) (expression '_ config))
-    (define (get-size) (cond
-                         [(lookup 'early-rtd? config #f)
-                          (expression '(size_record_inst (UNFIX (record-type-size (record-type _)))) config)]
-                         [(lookup 'early-code? config #f)
-                          (expression '(size_closure (CODEFREE (CLOSCODE _))) config)]
-                         [else
-                          (expression '_size_ config)]))
     (case mode
       [(vfasl-sweep)
        (format "vfasl_relocate(vfi, &~a);" e)]
       [(sweep-in-old)
        (if (eq? purity 'pure)
-           (format "relocate_pure(&~a, ~a, ~a);" e (get-start) (get-size))
-           (format "relocate_indirect(~a, ~a, ~a);" e (get-start) (get-size)))]
+           (format "relocate_pure(&~a);" e)
+           (format "relocate_indirect(~a);" e))]
       [else
        (if (lookup 'as-dirty? config #f)
            (begin
              (when (eq? purity 'pure) (error 'relocate-statement "pure as dirty?"))
-             (format "relocate_dirty(&~a, youngest, ~a, ~a);" e (get-start) (get-size)))
-           (format "relocate_~a(&~a~a, ~a, ~a);" purity e (if (eq? purity 'impure) ", from_g" "") (get-start) (get-size)))]))
+             (format "relocate_dirty(&~a, youngest);" e))
+           (format "relocate_~a(&~a~a);" purity e (if (eq? purity 'impure) ", from_g" "")))]))
 
   (define (measure-statement e)
     (code

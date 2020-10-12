@@ -464,14 +464,6 @@ typedef struct {
 #define AS_IMPLICIT_ATOMIC(T, X) X
 #endif
 
-typedef struct remote_range {
-  ISPC s;
-  IGEN g;
-  ptr start, end;
-  struct thread_gc *tgc;
-  struct remote_range *next;
-} remote_range;
-
 typedef struct thread_gc {
   ptr tc;
   ptr thread; /* set only when collecting */
@@ -497,12 +489,16 @@ typedef struct thread_gc {
   int sweep_change;
   
   int sweeper; /* parallel GC: sweeper thread identity */
-  
-  struct thread_gc *remote_range_tgc;
-  ptr remote_range_start;
-  ptr remote_range_end;
-  remote_range *ranges_to_send; /* modified only by owning sweeper */
-  remote_range *ranges_received; /* modified with sweeper mutex held */
+
+  /* modified only by owning sweeper; contains ptr and thread_gc* */
+  ptr send_remote_sweep_stack;
+  ptr send_remote_sweep_stack_start;
+  ptr send_remote_sweep_stack_limit;
+
+  /* modified with sweeper mutex held; contains just ptr */
+  ptr receive_remote_sweep_stack;
+  ptr receive_remote_sweep_stack_start;
+  ptr receive_remote_sweep_stack_limit;
 
   seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];
 

@@ -444,6 +444,9 @@ prettyclean:
 clean: prettyclean
 	rm -f Make.out
 
+.PHONY: run
+run:
+	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme $(ARGS)
 
 ### rules for generating various experr files
 
