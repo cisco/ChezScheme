@@ -20,7 +20,9 @@
 #define _REENTRANT
 #endif
 /* make two-argument ctime_r and two-argument asctime_r visible */
-#define _POSIX_PTHREAD_SEMANTICS
+# ifndef _POSIX_PTHREAD_SEMANTICS
+#  define _POSIX_PTHREAD_SEMANTICS
+# endif
 #endif /* defined(SOLARIS) */
 
 #include "system.h"
@@ -510,7 +512,11 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
     }
   }
 #else
+# ifdef defined(SOLARIS)
+  tzoff = timezone;
+# else
   tzoff = tmxp->tm_gmtoff;
+# endif
   if (given_tzoff == Sfalse) {
 # if defined(__linux__) || defined(SOLARIS)
     /* Linux and Solaris set `tzname`: */

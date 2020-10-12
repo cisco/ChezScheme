@@ -190,7 +190,9 @@
         (constant-case architecture
           [(pb)
            (nl)
-           (pr "#define _LARGEFILE64_SOURCE\n") ; needed on some 32-bit platforms before <stdint.h>
+           (pr "#ifndef _LARGEFILE64_SOURCE\n")
+           (pr "# define _LARGEFILE64_SOURCE\n") ; needed on some 32-bit platforms before <stdint.h>
+           (pr "#endif\n")
            (pr "#include <stdint.h>\n")]
           [else (void)])
 

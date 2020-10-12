@@ -53,7 +53,9 @@ static void s_showalloc PROTO((IBOOL show_dump, const char *outfn));
 static ptr s_system PROTO((const char *s));
 static ptr s_process PROTO((char *s, IBOOL stderrp));
 static I32 s_chdir PROTO((const char *inpath));
+#ifdef GETWD
 static char *s_getwd PROTO((void));
+#endif
 static ptr s_set_code_byte PROTO((ptr p, ptr n, ptr x));
 static ptr s_set_code_word PROTO((ptr p, ptr n, ptr x));
 static ptr s_set_code_long PROTO((ptr p, ptr n, ptr x));
