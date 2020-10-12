@@ -512,7 +512,7 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
     }
   }
 #else
-# ifdef defined(SOLARIS)
+# if defined(SOLARIS)
   tzoff = timezone;
 # else
   tzoff = tmxp->tm_gmtoff;
