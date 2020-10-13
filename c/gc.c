@@ -1976,7 +1976,7 @@ static void sweep_generation(thread_gc *tgc) {
 
 void enlarge_stack(thread_gc *tgc, ptr *stack, ptr *stack_start, ptr *stack_limit, uptr grow_at_least) {
   uptr sz = ((uptr)*stack - (uptr)*stack_start);
-  uptr new_sz = 2 * ((sz == 0) ? sweep_stack_min_size : sz);
+  uptr new_sz = 2 * ((sz == 0) ? (uptr)sweep_stack_min_size : sz);
   ptr new_stack;
   if (new_sz - sz < grow_at_least) new_sz += grow_at_least;
   find_gc_room(tgc, space_data, 0, typemod, ptr_align(new_sz), new_stack);
