@@ -1110,7 +1110,9 @@
                (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
                (set! num  (ENTRYLIVEMASK oldret))]
               [else
-               (RECORD_REMOTE n_si)
+               (case-mode
+                [(measure)]
+                [else (RECORD_REMOTE n_si)])
                (set! num S_G.zero_length_bignum)])])
           (let* ([index : iptr (BIGLEN num)])
             (while
@@ -2232,7 +2234,12 @@
            (begin
              (when (eq? purity 'pure) (error 'relocate-statement "pure as dirty?"))
              (format "relocate_dirty(&~a, youngest);" e))
-           (format "relocate_~a(&~a~a);" purity e (if (eq? purity 'impure) ", from_g" "")))]))
+           (let ([in-owner (case mode
+                             [(copy mark) (if (lookup 'parallel? config #f)
+                                              "_in_owner"
+                                              "")]
+                             [else ""])])
+             (format "relocate_~a~a(&~a~a);" purity in-owner e (if (eq? purity 'impure) ", from_g" ""))))]))
 
   (define (measure-statement e)
     (code
@@ -2652,7 +2659,7 @@
          (sweep1 'port "sweep_port" `((parallel? ,parallel?)))
          (sweep1 'port "sweep_dirty_port" `((as-dirty? #t)
                                             (parallel? ,parallel?)))
-         (sweep1 'closure "sweep_continuation" `((code-relocated? #t)
+         (sweep1 'closure "sweep_continuation" `((code-relocated? ,(not parallel?))
                                                  (assume-continuation? #t)
                                                  (parallel? ,parallel?)))
          (sweep1 'code "sweep_code_object" `((parallel? ,parallel?))))
@@ -2699,7 +2706,7 @@
     (mkequates.h op))
   
   (set! mkgc-ocd.inc (lambda (ofn) (gen-gc ofn #f #f #f)))
-  (set! mkgc-oce.inc (lambda (ofn) (gen-gc ofn #t #t #f)))
+  (set! mkgc-oce.inc (lambda (ofn) (gen-gc ofn #t #t #f))) ; not currently parallel (but could be "parallel" for ownership preservation)
   (set! mkgc-par.inc (lambda (ofn) (gen-gc ofn #f #f #t)))
   (set! mkvfasl.inc (lambda (ofn) (gen-vfasl ofn)))
   (set! mkheapcheck.inc (lambda (ofn) (gen-heapcheck ofn))))

@@ -167,7 +167,6 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   tgc->pending_ephemerons = (ptr)0;
   for (i = 0; i < (int)DIRTY_SEGMENT_LISTS; i++)
     tgc->dirty_segments[i] = NULL;
-  tgc->thread = (ptr)0;
   tgc->preserve_ownership = 0;
  
   tc_mutex_release();

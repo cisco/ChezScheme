@@ -18,6 +18,7 @@
 #define ENABLE_OBJECT_COUNTS
 #define ENABLE_BACKREFERENCE
 #define ENABLE_MEASURE
+/* #define ENABLE_PARALLEL - could enable to preserve owenrship/creator information */
 #include "gc.c"
 
 ptr S_gc_oce(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg, ptr count_roots) {

@@ -466,7 +466,6 @@ typedef struct {
 
 typedef struct thread_gc {
   ptr tc;
-  ptr thread; /* set only when collecting */
 
   int during_alloc;
   IBOOL queued_fire;
