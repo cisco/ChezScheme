@@ -530,21 +530,23 @@ static void s_ee_write_char(wchar_t c) {
 }
 
 #else /* WIN32 */
+
 #include <limits.h>
 #ifdef DISABLE_CURSES
-#include "nocurses.h"
+# include "nocurses.h"
 #elif defined(SOLARIS)
-#define NCURSES_CONST
-#define CHTYPE int
-#include </usr/include/curses.h>
-#include </usr/include/term.h>
+# define NCURSES_CONST
+# define CHTYPE int
+# include </usr/include/curses.h>
+# include </usr/include/term.h>
+# define NO_USELOCALE
 #elif defined(NETBSD)
-#include <ncurses.h>
-#include <ncurses/term.h>
-#else /* NETBSD */
-#include <curses.h>
-#include <term.h>
-#endif /* SOLARIS */
+# include <ncurses.h>
+# include <ncurses/term.h>
+#else
+# include <curses.h>
+# include <term.h>
+#endif
 #include <termios.h>
 #include <signal.h>
 #include <time.h>
@@ -553,11 +555,11 @@ static void s_ee_write_char(wchar_t c) {
 #include <wchar.h>
 #include <locale.h>
 #if !defined(__GLIBC__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__linux__)
-#include <xlocale.h>
+# include <xlocale.h>
 #endif
 
 #if defined(TIOCGWINSZ) && defined(SIGWINCH) && defined(EINTR)
-#define HANDLE_SIGWINCH
+# define HANDLE_SIGWINCH
 #endif
 
 #ifdef USE_MBRTOWC_L
@@ -588,7 +590,9 @@ static void handle_sigwinch(UNUSED int sig) {
 #define STDOUT_FD 1
 
 static IBOOL disable_auto_margin = 0, avoid_last_column = 0;
+#ifndef NO_USELOCALE
 static locale_t term_locale;
+#endif
 static mbstate_t term_in_mbs;
 static mbstate_t term_out_mbs;
 
@@ -643,7 +647,9 @@ static IBOOL s_ee_init_term(void) {
     sigaction(SIGWINCH, &act, (struct sigaction *)0);
 #endif
 
+#ifndef NO_USELOCALE
     term_locale = newlocale(LC_ALL_MASK, "", NULL);
+#endif
     memset(&term_out_mbs, 0, sizeof(term_out_mbs));
     memset(&term_in_mbs, 0, sizeof(term_in_mbs));
 
@@ -659,7 +665,6 @@ static IBOOL s_ee_init_term(void) {
    only if blockp is false */
 static ptr s_ee_read_char(IBOOL blockp) {
   ptr msg; int fd = STDIN_FD; int n; char buf[1]; wchar_t wch; size_t sz;
-  locale_t old_locale;
 #ifdef PTHREADS
   ptr tc = get_thread_context();
 #endif
@@ -697,9 +702,13 @@ static ptr s_ee_read_char(IBOOL blockp) {
       if (buf[0] == '\0') {
         return Schar('\0');
       } else {
-        old_locale = uselocale(term_locale);
+#ifndef NO_USELOCALE
+        locale_t old_locale = uselocale(term_locale);
+#endif
         sz = mbrtowc(&wch, buf, 1, &term_out_mbs);
+#ifndef NO_USELOCALE
         uselocale(old_locale);
+#endif
         if (sz == 1) {
           return Schar(wch);
         }
@@ -1041,16 +1050,21 @@ static ptr s_ee_get_clipboard(void) {
 }
 
 static void s_ee_write_char(wchar_t wch) {
-  locale_t old; char buf[MB_LEN_MAX]; size_t n;
+  char buf[MB_LEN_MAX]; size_t n;
+#ifndef NO_USELOCALE
+  locale_t old = uselocale(term_locale);
+#endif
 
-  old = uselocale(term_locale);
   n = wcrtomb(buf, wch, &term_in_mbs);
   if (n == (size_t)-1) {
     putchar('?');
   } else {
     fwrite(buf, 1, n, stdout);
   }
+
+#ifndef NO_USELOCALE
   uselocale(old);
+#endif
 }
 
 #endif /* WIN32 */
