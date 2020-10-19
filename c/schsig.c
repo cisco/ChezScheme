@@ -269,7 +269,6 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
             }
 
           /* create a continuation */
-            tc_mutex_acquire();
             STACKLINK(tc) = S_mkcontinuation(space_new,
                                         0,
                                         CODEENTRYPOINT(nuate),
@@ -280,7 +279,6 @@ void S_overflow(tc, frame_request) ptr tc; iptr frame_request; {
                                         *split_point,
                                         Snil,
                                         Sfalse);
-            tc_mutex_release();
 
           /* overwrite old return address with dounderflow */
               *split_point = TO_PTR(DOUNDERFLOW);
