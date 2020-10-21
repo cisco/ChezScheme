@@ -493,8 +493,8 @@
                            (if omit-rtds? (constant fasl-omit-rtds) 0))])
               (and (not (fx= flags 0)) flags))])
      (c-build-fasl x t a?)
-     ($fasl-start p t situation
-       (lambda (p) (c-faslobj x t p a?)))))
+     ($fasl-start p t situation x
+       (lambda (x p) (c-faslobj x t p a?)))))
 
 (define-record-type visit-chunk
   (nongenerative)
@@ -616,7 +616,7 @@
                             (parameterize ([$target-machine (machine-type)])
                               (let ([t ($fasl-table)])
                                 ($fasl-enter x1 t (constant annotation-all) 0)
-                                ($fasl-start wpoop t (constant fasl-type-visit-revisit) (lambda (p) ($fasl-out x1 p t (constant annotation-all)))))))))))
+                                ($fasl-start wpoop t (constant fasl-type-visit-revisit) x1 (lambda (x p) ($fasl-out x p t (constant annotation-all)))))))))))
                   (let-values ([(rcinfo* lpinfo* final*) (compile-file-help1 x1 source-info-string)])
                     (when hostop
                       ; the host library file contains expander output possibly augmented with
@@ -627,7 +627,7 @@
                           (parameterize ([$target-machine (machine-type)])
                             (let ([t ($fasl-table)])
                               ($fasl-enter x1 t (constant annotation-all) 0)
-                              ($fasl-start hostop t (constant fasl-type-visit-revisit) (lambda (p) ($fasl-out x1 p t (constant annotation-all)))))))))
+                              ($fasl-start hostop t (constant fasl-type-visit-revisit) x1 (lambda (x p) ($fasl-out x p t (constant annotation-all)))))))))
                     (cfh0 (+ n 1) (cons rcinfo* rrcinfo**) (cons lpinfo* rlpinfo**) (cons final* rfinal**)))))))))))
 
 (define library/program-info?
@@ -1610,7 +1610,7 @@
                     (let ([x (fold-left (lambda (outer ir) (with-output-language (Lexpand Outer) `(group ,outer ,ir)))
                                (car ir*) (cdr ir*))])
                       ($fasl-enter x t (constant annotation-all) 0)
-                      ($fasl-start wpoop t (constant fasl-type-visit-revisit) (lambda (p) ($fasl-out x p t (constant annotation-all))))))))))))))
+                      ($fasl-start wpoop t (constant fasl-type-visit-revisit) x (lambda (x p) ($fasl-out x p t (constant annotation-all))))))))))))))
 
   (define build-required-library-list
     (lambda (node* visit-lib*)
