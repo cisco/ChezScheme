@@ -384,6 +384,7 @@ typedef int tputsputcchar;
 #define ARCHYPERBOLIC
 #define LOG1P
 #define DEFINE_MATHERR
+#define NO_USELOCALE
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }

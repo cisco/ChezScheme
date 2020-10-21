@@ -539,7 +539,6 @@ static void s_ee_write_char(wchar_t c) {
 # define CHTYPE int
 # include </usr/include/curses.h>
 # include </usr/include/term.h>
-# define NO_USELOCALE
 #elif defined(NETBSD)
 # include <ncurses.h>
 # include <ncurses/term.h>
