@@ -696,19 +696,16 @@ ptr S_fxvector(n) iptr n; {
 }
 
 ptr S_bytevector(n) iptr n; {
-  return S_bytevector2(n, 0);
+  return S_bytevector2(get_thread_context(), n, 0);
 }
 
-ptr S_bytevector2(n, immobile) iptr n; IBOOL immobile; {
-    ptr tc;
+ptr S_bytevector2(tc, n, immobile) ptr tc; iptr n; IBOOL immobile; {
     ptr p; iptr d;
 
     if (n == 0) return S_G.null_bytevector;
 
     if ((uptr)n > (uptr)maximum_bytevector_length)
         S_error("", "invalid bytevector size request");
-
-    tc = get_thread_context();
 
     d = size_bytevector(n);
     if (immobile)

@@ -211,7 +211,7 @@ static ptr s_box_immobile(p) ptr p; {
 }
 
 static ptr s_make_immobile_bytevector(uptr len) {
-  ptr b = S_bytevector2(len, 1);
+  ptr b = S_bytevector2(get_thread_context(), len, 1);
   S_immobilize_object(b);
   return b;
 }
