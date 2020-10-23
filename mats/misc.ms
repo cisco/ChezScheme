@@ -1108,49 +1108,49 @@
                             (let loop ()
                               (unless (check)
                                 (sleep (make-time 'time-duration 10000 0))
-                                (loop))))]
-             [th (fork-thread
-                  (lambda ()
-                    (let ([bstr (make-bytevector N)])
-                      (box-cas! ready #f 'go)
-                      ;; Block so that thread becomes deactivated
-                      (mutex-acquire m)
-                      (mutex-release m)
-                      ;; bstr is retained in the thread's continuation until here
-                      (set-box! saved (bytevector-u8-ref bstr 0))
-                      (pause-until (lambda () (box-cas! ready 'finish 'done)))
-                      ;; Block so that thread becomes deactivated, again
-                      (mutex-acquire m)
-                      (mutex-release m))))])
+                                (loop))))])
         (mutex-acquire m)
-        ;; Wait for thread to start
-        (pause-until (lambda () (eq? 'go (unbox ready))))
-        ;; Wait for thread to become inactive, blocked on the mutex
-        (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
-        ;; Get thread's size, which should include bstr
-        (let ([pre-sizes (compute-size-increments (list th))])
-          (mutex-release m)
-          ;; Wait for bytevector to be discarded in the thread
-          (pause-until (lambda () (unbox saved)))
-          (mutex-acquire m)
-          (set-box! ready 'finish)
-          ;; Wait for thread to become inactive again
+        (let ([th (fork-thread
+                   (lambda ()
+                     (let ([bstr (make-bytevector N)])
+                       (box-cas! ready #f 'go)
+                       ;; Block so that thread becomes deactivated
+                       (mutex-acquire m)
+                       (mutex-release m)
+                       ;; bstr is retained in the thread's continuation until here
+                       (set-box! saved (bytevector-u8-ref bstr 0))
+                       (pause-until (lambda () (box-cas! ready 'finish 'done)))
+                       ;; Block so that thread becomes deactivated, again
+                       (mutex-acquire m)
+                       (mutex-release m))))])
+          ;; Wait for thread to start
+          (pause-until (lambda () (eq? 'go (unbox ready))))
+          ;; Wait for thread to become inactive, blocked on the mutex
           (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
-          ;; Get thread's size, which should'nt include bstr
-          (let ([post-sizes (compute-size-increments (list th))])
+          ;; Get thread's size, which should include bstr
+          (let ([pre-sizes (compute-size-increments (list th))])
             (mutex-release m)
-            ;; Wait for thread to exit
-            (let ()
-              (define $threads (foreign-procedure "(cs)threads" () scheme-object))
-              (pause-until (lambda () (= 1 (length ($threads))))))
-            ;; Make sure `compute-size-increments` doesn't crash on a
-            ;; terminated thread:
-            (compute-size-increments (list th))
-            ;; Main result: detected size of `bstr` in the thread
-            ;; while it was part of the continuation
-            (or (eq? (current-eval) interpret) ; interpreter continuaton is not precise enough
-                (and (> (car pre-sizes) N)
-                     (< (car post-sizes) N)))))))
+            ;; Wait for bytevector to be discarded in the thread
+            (pause-until (lambda () (unbox saved)))
+            (mutex-acquire m)
+            (set-box! ready 'finish)
+            ;; Wait for thread to become inactive again
+            (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
+            ;; Get thread's size, which shouldn't include bstr
+            (let ([post-sizes (compute-size-increments (list th))])
+              (mutex-release m)
+              ;; Wait for thread to exit
+              (let ()
+                (define $threads (foreign-procedure "(cs)threads" () scheme-object))
+                (pause-until (lambda () (= 1 (length ($threads))))))
+              ;; Make sure `compute-size-increments` doesn't crash on a
+              ;; terminated thread:
+              (compute-size-increments (list th))
+              ;; Main result: detected size of `bstr` in the thread
+              ;; while it was part of the continuation
+              (or (eq? (current-eval) interpret) ; interpreter continuation is not precise enough
+                  (and (> (car pre-sizes) N)
+                       (< (car post-sizes) N))))))))
   )
 
 (mat collect+compute-size-increments
