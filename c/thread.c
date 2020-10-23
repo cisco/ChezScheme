@@ -92,7 +92,14 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
         tgc->bitmask_overhead[g] = 0;
       }
     }
- 
+
+    tgc->during_alloc = 0;
+    tgc->pending_ephemerons = (ptr)0;
+    for (i = 0; i < (int)DIRTY_SEGMENT_LISTS; i++)
+      tgc->dirty_segments[i] = NULL;
+    tgc->queued_fire = 0;
+    tgc->preserve_ownership = 0;
+
     v = S_vector_in(tc, space_new, 0, n);
 
     for (i = 0; i < n; i += 1)
@@ -105,7 +112,9 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   GCDATA(tc) = TO_PTR(tgc);
   tgc->tc = tc;
 
- /* override nonclonable tc fields */
+  tgc->sweeper = main_sweeper_index;
+
+  /* override nonclonable tc fields */
   THREADNO(tc) = S_G.threadno;
   S_G.threadno = S_add(S_G.threadno, FIX(1));
 
@@ -162,13 +171,6 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   LZ4OUTBUFFER(tc) = 0;
 
-  tgc->during_alloc = 0;
-  tgc->sweeper = main_sweeper_index;
-  tgc->pending_ephemerons = (ptr)0;
-  for (i = 0; i < (int)DIRTY_SEGMENT_LISTS; i++)
-    tgc->dirty_segments[i] = NULL;
-  tgc->preserve_ownership = 0;
- 
   tc_mutex_release();
 
   return thread;
