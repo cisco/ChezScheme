@@ -1320,6 +1320,9 @@ extern double log1p();
 #endif /* LOG1P */
 #endif /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
 
+static double s_mod PROTO((double x, double y));
+static double s_mod(x, y) double x, y; { return fmod(x, y); }
+
 static double s_exp PROTO((double x));
 static double s_exp(x) double x; { return exp(x); }
 
@@ -1756,6 +1759,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)dequeue_scheme_signals", (void *)S_dequeue_scheme_signals);
     Sforeign_symbol("(cs)register_scheme_signal", (void *)S_register_scheme_signal);
 
+    Sforeign_symbol("(cs)mod", (void *)s_mod);
     Sforeign_symbol("(cs)exp", (void *)s_exp);
     Sforeign_symbol("(cs)log", (void *)s_log);
     Sforeign_symbol("(cs)pow", (void *)s_pow);

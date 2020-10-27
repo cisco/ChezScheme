@@ -1951,13 +1951,17 @@
       [else (domain-error who y)])))
 
 (set-who! remainder
-  (let ([f (lambda (x y)
-             (let ([r (- x (* (quotient x y) y))])
-               ;;; filter out outrageous results
-               ;;; try (remainder 1e194 10.0) without this hack...
-               (if (if (negative? y) (> r y) (< r y))
-                   r
-                   0.0)))])
+  (let* ([fmod (cflop2 "(cs)mod")]
+         [f (lambda (x y)
+              (cond
+                [(eqv? x 0) 0]
+                [else
+                 (let ([r (fmod (real->flonum x) (real->flonum y))])
+                   (if (fl= r 0.0)
+                       ;; Always return positive 0.0 --- not sure why,
+                       ;; but Racket and other Schemes seem to agree
+                       0.0
+                       r))]))])
     (lambda (x y)
       (type-case y
         [(fixnum?)
