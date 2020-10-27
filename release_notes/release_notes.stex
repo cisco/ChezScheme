@@ -1906,6 +1906,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Flonum \protect\scheme{remainder} and \protect\scheme{modulo} (9.5.5)}
+
+The \scheme{remainder} and \scheme{modulo} functions could produce
+imprecise or wrong answers for large integer flonums. Most of the
+repair was to use the C library's \texttt{fmod}.
+
 \subsection{Buffering signals (9.5.3)}
 
 Prior to this release, only one unhandled signal was buffered for
