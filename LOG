@@ -2138,3 +2138,5 @@
 - adjust arm32 backend to not choose shorter instructions for larger
   return-address offsets, which breaks label address assignment
     arm32.ss
+- repair remainder and modulo on flonums by using fmod
+    prim5.c, 5_3.ss, 5_3.ms
