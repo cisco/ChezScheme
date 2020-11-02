@@ -188,7 +188,7 @@ static void fasl_init_entry_tables();
 static void vfasl_check_install_library_entry(vfasl_info *vfi, ptr name);
 
 static int detect_singleton(ptr p);
-static ptr lookup_singleton(int which);
+static ptr lookup_singleton(iptr which);
 
 typedef struct vfasl_hash_table vfasl_hash_table;
 static vfasl_hash_table *make_vfasl_hash_table(IBOOL permanent);
@@ -1189,7 +1189,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
         if (IMMEDIATE(obj)) {
           if (Sfixnump(obj)) {
             int tag = VFASL_RELOC_TAG(obj);
-            int pos = VFASL_RELOC_POS(obj);
+            iptr pos = VFASL_RELOC_POS(obj);
             if (tag == VFASL_RELOC_SINGLETON_TAG)
               obj = lookup_singleton(pos);
             else if (tag == VFASL_RELOC_C_ENTRY_TAG)
@@ -1338,7 +1338,7 @@ static int detect_singleton(ptr p) {
   return 0;
 }
 
-static ptr lookup_singleton(int which) {
+static ptr lookup_singleton(iptr which) {
   return *(singleton_refs[which-1]);
 }  
   
