@@ -52,13 +52,17 @@ installman=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+cflagsset=no
 disablex11=no
 disablecurses=no
+addflags=yes
+addwarningflags=no
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
 : ${LD:="ld"}
 : ${LDFLAGS:=""}
+: ${LIBS:=""}
 : ${AR:="ar"}
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
@@ -259,6 +263,12 @@ while [ $# != 0 ] ; do
     --disable-curses)
       disablecurses=yes
       ;;
+    --disable-auto-flags)
+      addflags=no
+      ;;
+    --enable-warning-flags)
+      addwarningflags=yes
+      ;;
     --libkernel)
       Kernel=KernelLib
       installkerneltarget=installkernellib
@@ -283,12 +293,16 @@ while [ $# != 0 ] ; do
       ;;
     CFLAGS=*)
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
+      cflagsset=yes
       ;;
     LD=*)
       LD=`echo $1 | sed -e 's/^LD=//'`
       ;;
     LDFLAGS=*)
       LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
+      ;;
+    LIBS=*)
+      LIBS=`echo $1 | sed -e 's/^LIBS=//'`
       ;;
     AR=*)
       AR=`echo $1 | sed -e 's/^AR=//'`
@@ -348,16 +362,21 @@ if [ "$m" = "" ] ; then
   if [ $pb = yes ] ; then
      m=pb
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
+     flagsm=$mpbhost
   else      
     if [ $bits = 64 ] ; then
       if [ $threads = yes ] ; then m=$tm64 ; else m=$m64 ; fi
     else
       if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
     fi
+    flagsm=$m
   fi
 elif [ $pb = yes ] ; then
   mpbhost=$m
+  flagsm=$m
   m=pb
+else
+  flagsm=$m
 fi
 
 if [ "$w" = "" ] ; then
@@ -397,6 +416,8 @@ if [ "$help" = "yes" ]; then
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
+  echo "  --disable-auto-flags              no auto additions to CFLAGS/LDFLAGS/LIBS"
+  echo "  --enable-warning-flags            add GCC warning flags to CFLAGS"
   echo "  --libkernel                       build libkernel.a (the default)"
   echo "  --kernelobj                       build kernel.o instead of libkernel.a"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
@@ -413,10 +434,11 @@ if [ "$help" = "yes" ]; then
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
   echo "  CC=<C compiler>                   C compiler"
-  echo "  CPPFLAGS=<C preprocessor flags>   additional C preprocessor flags ($CPPFLAGS)"
-  echo "  CFLAGS=<C compiler flags>         additional C compiler flags ($CFLAGS)"
+  echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
+  echo "  CFLAGS=<C compiler flags>         C compiler flags"
   echo "  LD=<linker>                       linker"
-  echo "  LDFLAGS=<linker flags>            additional linker flags ($LDFLAGS)"
+  echo "  LDFLAGS=<linker flags>            additional linker flags"
+  echo "  LIBS=<libraries>                  additional libraries"
   echo "  AR=<archiver>                     archiver"
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
@@ -443,6 +465,138 @@ if [ "$help" = "yes" ]; then
   echo "  pages in the staging area."
   echo ""
   exit 0
+fi
+
+optFlags=-O2
+
+if [ "$cflagsset" = "no" -o "$addwarningflags" = "yes" ] ; then
+    warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
+else
+    warningFlags=""
+fi
+
+# Infer flags needed for threads:
+case "${flagsm}" in
+  *le|*fb|*ob|*nb)
+      threadFlags="-D_REENTRANT -pthread"
+      threadLibs="-lpthread"
+      ;;
+  *s2)
+      threadFlags="-pthread"
+      threadLibs="-lpthread"
+      ;;
+  *)
+      threadFlags=""
+      threadLibs=""
+      ;;
+esac
+
+# Set default CFLAGS if not provided at all. Assuming that the
+# compiler is for the right platform, compilation should generally
+# succeed if no flags are set; anything required should be propagated
+# a different way
+if [ "$cflagsset" = "no" ] ; then
+  case "${flagsm}" in
+    a6le|ta6le)
+        CFLAGS="-m64 -msse2 ${optFlags}"
+        ;;
+    a6fb|ta6fb|a6nb|ta6nb|a6ob|ta6ob)
+        CFLAGS="-m64 ${optFlags}"
+        ;;
+    a6s2|ta6s2)
+        CFLAGS="-m64 ${optFlags}"
+        ;;
+    a6osx|ta6osx)
+        CFLAGS="-m64 ${optFlags}"
+        ;;
+    a6nt|ta6nt)
+        CFLAGS="${optFlags}"
+        ;;
+    arm32le|tarm32le|arm64le|tarm64le)
+        CFLAGS="${optFlags}"
+        ;;
+    i3le|ti3le)
+        CFLAGS="-m32 -msse2 ${optFlags}"
+        ;;
+    i3fb|ti3fb|i3nb|ti3nb|i3ob|ti3ob)
+        CFLAGS="-m32 ${optFlags}"
+        ;;
+    i3s2|ti3s2)
+        CFLAGS="-m32 ${optFlags}"
+        ;;
+    i3osx|ti3osx)
+        CFLAGS="-m32 ${optFlags}"
+        ;;
+    i3nt|ti3nt)
+        CFLAGS="${optFlags}"
+        ;;
+    i3qnx)
+        CC=qcc
+        CFLAGS="-m32 -N2048K ${optFlags}"
+        ;;
+    ppc32le|tppc32le)
+        CFLAGS="-m32 ${optFlags}"
+        ;;
+  esac
+fi
+
+# Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
+if [ "$addflags" = "yes" ] ; then
+  if [ "$threadFlags" != "" ] ; then
+    CFLAGS="${CFLAGS} ${threadFlags}"
+  fi
+fi
+
+cursesLib=-lcurses
+ncursesLib=-lncurses
+
+if [ "$disablecurses" = "yes" ]; then
+  cursesLib=
+  ncursesLib=
+fi
+
+# Add automatic linking flags, unless suppressed by --disable-auto-flags
+if [ "$addflags" = "yes" ] ; then
+  case "${flagsm}" in
+    *le)
+        LDFLAGS="${LDFLAGS} -rdynamic"
+        ;;
+    *fb|*nb)
+        LDFLAGS="${LDFLAGS} -rdynamic -L/usr/local/lib"
+        ;;
+    *ob)
+        LDFLAGS="${LDFLAGS} -rdynamic -Wl,--export-dynamic -Wl,-zwxneeded -L/usr/local/lib"
+        ;;
+    *)
+        ;;
+  esac
+
+  case "${flagsm}" in
+    *le)
+        LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
+        ;;
+    *fb|*ob)
+        LIBS="${LIBS} -liconv -lm ${ncursesLib}"
+        ;;
+    *nb)
+        LIBS="${LIBS} /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a"
+        ;;
+    *s2)
+        LIBS="${LIBS} -lnsl -ldl -lm ${cursesLib} -lrt"
+        ;;
+    *osx)
+        LIBS="${LIBS} -liconv -lm ${ncursesLib}"
+        ;;
+    *nt)
+        LIBS="${LIBS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid"
+        ;;
+    8qnx)
+        LIBS="${LIBS} -lm /usr/local/lib/libiconv.so -lsocket ${ncursesLib}"
+        ;;
+  esac
+  if [ "$threadLibs" != "" ] ; then
+    LIBS="${LIBS} ${threadLibs}"
+  fi
 fi
 
 if [ "$m" != "" -o -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
@@ -567,17 +721,12 @@ cat > $w/c/next_config.h << END
 #endif
 END
 
-if [ "$disablex11" = "yes" ]; then
-  echo '#define DISABLE_X11' >> $w/c/next_config.h
-fi
-
-cursesLib=-lcurses
-ncursesLib=-lncurses
-
 if [ "$disablecurses" = "yes" ]; then
   echo '#define DISABLE_CURSES' >> $w/c/next_config.h
-  cursesLib=
-  ncursesLib=
+fi
+
+if [ "$disablex11" = "yes" ]; then
+  echo '#define DISABLE_X11' >> $w/c/next_config.h
 fi
 
 if [ ! -f "$w/c/config.h" ] ; then
@@ -587,9 +736,6 @@ elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
 else
    mv $w/c/next_config.h $w/c/config.h
 fi
-
-warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
-optFlags=-O2
 
 case "$srcdir" in
     /*)
@@ -607,6 +753,7 @@ CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
 LD=$LD
 LDFLAGS=$LDFLAGS
+LIBS=$LIBS
 AR=$AR
 ARFLAGS=$ARFLAGS
 RANLIB=$RANLIB
@@ -622,9 +769,9 @@ LZ4Lib=$LZ4Lib
 zlibHeaderDep=$zlibHeaderDep
 LZ4HeaderDep=$LZ4HeaderDep
 warningFlags=$warningFlags
-optFlags=$optFlags
 KernelCFlags=$KernelCFlags
 Kernel=\${${Kernel}}
 KernelLinkDeps=\${${Kernel}LinkDeps}
 KernelLinkLibs=\${${Kernel}LinkLibs}
+C=\${CC} \${CPPFLAGS} \${CFLAGS} \${warningFlags}
 END

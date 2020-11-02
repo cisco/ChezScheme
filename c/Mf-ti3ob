@@ -2,7 +2,4 @@
 
 m ?= ti3ob
 
-threadLibs = -lpthread 
-threadFlags = -D_REENTRANT -pthread
-
 include Mf-i3ob

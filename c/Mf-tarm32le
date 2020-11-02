@@ -2,6 +2,4 @@
 
 m ?= tarm32le
 
-threadLibs = -lpthread
-
 include Mf-arm32le

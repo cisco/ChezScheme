@@ -39,10 +39,8 @@ make.bat: vs.bat
 # -------------------------------------------------------
 # For cross-compilation, triggered by setting cross=t o=o
 
-C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS}
-
 ${Scheme}${cross:t=}: ${Main} ${Kernel} ${KernelLinkDeps}
-	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
+	$C -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 
 .c.$o:
 	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c

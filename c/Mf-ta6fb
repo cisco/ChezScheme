@@ -2,7 +2,4 @@
 
 m ?= ta6fb
 
-threadLibs = -lpthread 
-threadFlags = -D_REENTRANT -pthread
-
 include Mf-a6fb

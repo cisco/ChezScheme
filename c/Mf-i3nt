@@ -39,13 +39,13 @@ make.bat: vs.bat
 # -------------------------------------------------------
 # For cross-compilation, triggered by setting cross=t o=o
 
-C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${CFLAGS} -D__MINGW_USE_VC2005_COMPAT
+MORE_CFLAGS = -D__MINGW_USE_VC2005_COMPAT
 
 ${Scheme}${cross:t=}: ${Main} ${Kernel} ${KernelLinkDeps}
-	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid
+	$C ${MORE_CFLAGS} -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS}
 
 .c.$o:
-	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
+	$C ${MORE_CFLAGS} -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}

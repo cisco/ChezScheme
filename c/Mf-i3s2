@@ -16,8 +16,6 @@
 m ?= i3s2
 Cpu ?= I386
 
-mdclib = -lnsl -ldl -lm ${cursesLib} ${threadLibs} -lrt
-C = ${CC} ${CFLAGS} -m32 ${warningFlags} ${optFlags} ${threadFlags} ${CPPFLAGS}
 o = o
 mdsrc ?= i3le.c
 mdobj ?= i3le.o
@@ -37,10 +35,10 @@ ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
 ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
-	$C -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
+	$C -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m32" ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS} -m32" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ${MAKE} liblz4.a)

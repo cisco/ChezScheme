@@ -16,8 +16,6 @@
 m ?= ppc32le
 Cpu ?= PPC32
 
-mdclib = -lm -ldl ${ncursesLib} -lrt ${threadLibs}
-C = ${CC} ${CPPFLAGS} -m32 ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
 mdsrc ?= ppc32.c
 mdobj ?= ppc32.o
@@ -37,10 +35,10 @@ ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
 ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
-	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
+	$C -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${optFlags} ${CFLAGS} -m32" ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${optFlags} ${CFLAGS} -m32" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ${MAKE} liblz4.a)

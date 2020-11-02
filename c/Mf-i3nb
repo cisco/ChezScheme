@@ -17,8 +17,6 @@ m ?= i3nb
 Cpu ?= I386
 
 mdinclude = -I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include
-mdclib = /usr/lib/i18n/libiconv_std.a -lm ${threadLibs} /usr/pkg/lib/libncurses.a
-C = ${CC} ${CPPFLAGS} ${warningFlags} ${optFlags} ${threadFlags} ${CFLAGS}
 o = o
 mdsrc ?= i3le.c
 mdobj ?= i3le.o
@@ -38,11 +36,11 @@ ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
 ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
-	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
+	$C -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 	paxctl +m ${Scheme}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${optFlags} ${CFLAGS} -m32" ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${optFlags} ${CFLAGS} -m32" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ${MAKE} liblz4.a)

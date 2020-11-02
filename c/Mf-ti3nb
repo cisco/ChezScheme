@@ -2,7 +2,4 @@
 
 m ?= ti3nb
 
-threadLibs = -lpthread 
-threadFlags = -D_REENTRANT -pthread
-
 include Mf-i3nb
