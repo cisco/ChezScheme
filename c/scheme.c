@@ -577,6 +577,9 @@ static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *
 
 typedef struct {
   INT fd;
+  iptr len; /* 0 => unknown */
+  iptr offset;
+  IBOOL need_check, close_after;
   char path[PATH_MAX];
 } boot_desc;
 
@@ -587,11 +590,83 @@ static boot_desc bd[MAX_BOOT_FILES];
 static octet get_u8 PROTO((INT fd));
 static uptr get_uptr PROTO((INT fd, uptr *pn));
 static INT get_string PROTO((INT fd, char *s, iptr max, INT *c));
-static IBOOL find_boot PROTO((const char *name, const char *ext, IBOOL direct_pathp, int fd, IBOOL errorp));
 static void load PROTO((ptr tc, iptr n, IBOOL base));
 static void check_boot_file_state PROTO((const char *who));
 
-static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *ext; int fd; IBOOL direct_pathp, errorp; {
+static IBOOL check_boot(int fd, IBOOL verbose, const char *path) {
+  uptr n = 0;
+
+  /* check for magic number */
+  if (get_u8(fd) != fasl_type_header ||
+      get_u8(fd) != 0 ||
+      get_u8(fd) != 0 ||
+      get_u8(fd) != 0 ||
+      get_u8(fd) != 'c' ||
+      get_u8(fd) != 'h' ||
+      get_u8(fd) != 'e' ||
+      get_u8(fd) != 'z') {
+    if (verbose) fprintf(stderr, "malformed fasl-object header in %s\n", path);
+    CLOSE(fd);
+    return 0;
+  }
+
+  /* check version */
+  if (get_uptr(fd, &n) != 0) {
+    if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
+    CLOSE(fd);
+    return 0;
+  }
+
+  if (n != scheme_version) {
+    if (verbose) {
+      fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
+      /* use separate fprintf since S_format_scheme_version returns static string */
+      fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
+    }
+    CLOSE(fd);
+    return 0;
+  }
+
+  /* check machine type */
+  if (get_uptr(fd, &n) != 0) {
+    if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
+    CLOSE(fd);
+    return 0;
+  }
+
+  if (n != machine_type) {
+    if (verbose)
+      fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
+              S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
+    CLOSE(fd);
+    return 0;
+  }
+
+  return 1;
+}
+
+static void check_dependencies_header(int fd, const char *path) {
+  if (get_u8(fd) != '(') {  /* ) */
+    fprintf(stderr, "malformed boot file %s\n", path);
+    CLOSE(fd);
+    S_abnormal_exit();
+  }
+}
+
+static void finish_dependencies_header(int fd, const char *path, int c) {
+  while (c != ')') {
+    if (c < 0) {
+      fprintf(stderr, "malformed boot file %s\n", path);
+      CLOSE(fd);
+      S_abnormal_exit();
+    }
+    c = get_u8(fd);
+  }
+}
+
+static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
+                       int fd,
+                       IBOOL errorp) {
   char pathbuf[PATH_MAX], buf[PATH_MAX];
   uptr n = 0;
   INT c;
@@ -623,53 +698,14 @@ static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *e
     }
     if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
-   /* check for magic number */
-    if (get_u8(fd) != fasl_type_header ||
-        get_u8(fd) != 0 ||
-        get_u8(fd) != 0 ||
-        get_u8(fd) != 0 ||
-        get_u8(fd) != 'c' ||
-        get_u8(fd) != 'h' ||
-        get_u8(fd) != 'e' ||
-        get_u8(fd) != 'z') {
-      fprintf(stderr, "malformed fasl-object header in %s\n", path);
+    if (!check_boot(fd, 1, path))
       S_abnormal_exit();
-    }
-
-   /* check version */
-    if (get_uptr(fd, &n) != 0) {
-      fprintf(stderr, "unexpected end of file on %s\n", path);
-      CLOSE(fd);
-      S_abnormal_exit();
-    }
-
-    if (n != scheme_version) {
-      fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
-     /* use separate fprintf since S_format_scheme_version returns static string */
-      fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
-      CLOSE(fd);
-      S_abnormal_exit();
-    }
-
-   /* check machine type */
-    if (get_uptr(fd, &n) != 0) {
-      fprintf(stderr, "unexpected end of file on %s\n", path);
-      CLOSE(fd);
-      S_abnormal_exit();
-    }
-
-    if (n != machine_type) {
-      fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
-              S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
-      CLOSE(fd);
-      S_abnormal_exit();
-    }
   } else {
     const char *sp = Sschemeheapdirs;
     const char *dsp = Sdefaultheapdirs;
 
     path = pathbuf;
-    for (;;) {
+    while (1) {
       if (!next_path(pathbuf, name, ext, &sp, &dsp)) {
         if (errorp) {
           fprintf(stderr, "cannot find compatible boot file %s%s in search path:\n  \"%s%s\"\n",
@@ -692,63 +728,14 @@ static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *e
 
       if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
-     /* check for magic number */
-      if (get_u8(fd) != fasl_type_header ||
-          get_u8(fd) != 0 ||
-          get_u8(fd) != 0 ||
-          get_u8(fd) != 0 ||
-          get_u8(fd) != 'c' ||
-          get_u8(fd) != 'h' ||
-          get_u8(fd) != 'e' ||
-          get_u8(fd) != 'z') {
-        if (verbose) fprintf(stderr, "malformed fasl-object header in %s\n", path);
-        CLOSE(fd);
-        continue;
-      }
-
-     /* check version */
-      if (get_uptr(fd, &n) != 0) {
-        if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-        CLOSE(fd);
-        continue;
-      }
-
-      if (n != scheme_version) {
-        if (verbose) {
-          fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
-         /* use separate fprintf since S_format_scheme_version returns static string */
-          fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
-        }
-        CLOSE(fd);
-        continue;
-      }
-
-     /* check machine type */
-      if (get_uptr(fd, &n) != 0) {
-        if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-        CLOSE(fd);
-        continue;
-      }
-
-      if (n != machine_type) {
-        if (verbose)
-          fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
-                  S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
-        CLOSE(fd);
-        continue;
-      }
-
-      break;
+      if (check_boot(fd, verbose, path))
+        break;
     }
   }
 
   if (verbose) fprintf(stderr, "version and machine type check\n");
 
-  if (get_u8(fd) != '(') {  /* ) */
-    fprintf(stderr, "malformed boot file %s\n", path);
-    CLOSE(fd);
-    S_abnormal_exit();
-  }
+  check_dependencies_header(fd, path);
 
   /* ( */
   if ((c = get_u8(fd)) == ')') {
@@ -792,14 +779,7 @@ static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *e
     }
 
    /* skip to end of header */
-    while (c != ')') {
-      if (c < 0) {
-        fprintf(stderr, "malformed boot file %s\n", path);
-        CLOSE(fd);
-        S_abnormal_exit();
-      }
-      c = get_u8(fd);
-    }
+    finish_dependencies_header(fd, path, c);
   }
 
   if (boot_count >= MAX_BOOT_FILES) {
@@ -808,6 +788,10 @@ static IBOOL find_boot(name, ext, direct_pathp, fd, errorp) const char *name, *e
   }
 
   bd[boot_count].fd = fd;
+  bd[boot_count].offset = 0;
+  bd[boot_count].len = 0;
+  bd[boot_count].need_check = 0;
+  bd[boot_count].close_after = 1;
   strcpy(bd[boot_count].path, path);
   boot_count += 1;
 
@@ -883,6 +867,16 @@ static void boot_element(ptr tc, ptr x, iptr n) {
 static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   ptr x; iptr i;
 
+  if (bd[n].need_check) {
+    if (LSEEK(bd[n].fd, bd[n].offset, SEEK_SET) != bd[n].offset) {
+      fprintf(stderr, "seek in boot file %s failed\n", bd[n].path);
+      S_abnormal_exit();
+    }
+    check_boot(bd[n].fd, 1, bd[n].path);
+    check_dependencies_header(bd[n].fd, bd[n].path);
+    finish_dependencies_header(bd[n].fd, bd[n].path, 0);
+  }
+
   if (base) {
     S_G.error_invoke_code_object = S_boot_read(bd[n].fd, bd[n].path);
     if (!Scodep(S_G.error_invoke_code_object)) {
@@ -919,7 +913,8 @@ static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
   }
 
   S_G.load_binary = Sfalse;
-  CLOSE(bd[n].fd);
+  if (bd[n].close_after)
+    CLOSE(bd[n].fd);
 }
 
 /***************************************************************************/
@@ -1058,6 +1053,27 @@ extern void Sregister_boot_direct_file(name) const char *name; {
 extern void Sregister_boot_file_fd(name, fd) const char *name; int fd; {
   check_boot_file_state("Sregister_boot_file_fd");
   find_boot(name, "", 1, fd, 1);
+}
+
+extern void Sregister_boot_file_fd_region(const char *name,
+                                          int fd,
+                                          iptr offset,
+                                          iptr len,
+                                          int close_after) {
+  check_boot_file_state("Sregister_boot_file_fd");
+
+  if (strlen(name) >= PATH_MAX) {
+    fprintf(stderr, "boot-file path is too long %s\n", name);
+    S_abnormal_exit();
+  }
+
+  bd[boot_count].fd = fd;
+  bd[boot_count].offset = offset;
+  bd[boot_count].len = len;
+  bd[boot_count].need_check = 1;
+  bd[boot_count].close_after = close_after;
+  strcpy(bd[boot_count].path, name);
+  boot_count += 1;
 }
 
 extern void Sregister_heap_file(UNUSED const char *path) {

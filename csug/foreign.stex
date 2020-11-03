@@ -2807,6 +2807,9 @@ cause problems.
 \xdef\cfunction#1#2#3{\noindent\index{\scheme{#2}}%
 [func] \scheme{#1} \scheme{#2}\scheme{(#3)}\\}
 
+\xdef\cfunctTwo#1#2#3#4{\noindent\index{\scheme{#2}}%
+[func] \scheme{#1} \scheme{#2}\scheme{(#3}\\\hphantom{[func] \scheme{#1} \scheme{#2}\scheme{(}}\scheme{#4)}\\}
+
 \parheader{Customization}
 The functions described here are used to initialize the Scheme system,
 build the Scheme heap, and run the Scheme system from a separate
@@ -2817,6 +2820,7 @@ program.
 \cfunction{void}{Sset_verbose}{int \var{v}}
 \cfunction{void}{Sregister_boot_file}{const char *\var{name}}
 \cfunction{void}{Sregister_boot_file_fd}{const char *\var{name}, int \var{fd}}
+\cfunctTwo{void}{Sregister_boot_file_fd_segment}{const char *\var{name}, int \var{fd},}{iptr \var{offset}, iptr \var{len}, int \var{close}_\var{after}}
 \cfunction{void}{Sbuild_heap}{const char *\var{exec}, void (*\var{custom}_\var{init})(void)}
 \cfunction{void}{Senable_expeditor}{const char *\var{history}_\var{file}}
 \cfunction{void}{Sretain_static_relocation}{void}
@@ -2857,6 +2861,19 @@ is used only for error reporting.
 For the first boot file registered only, the system also
 searches for the boot files upon which the named file
 depends, either directly or indirectly.
+
+The \scheme{Sregister_boot_file_fd_region} function is an alternative
+to \scheme{Sregister_boot_file_fd} that allows the same file
+descriptor to be used for multiple boot files using different offsets
+into the file. The \var{len} argument is used as a hint, but it can be
+0 to mean that the size is unknown, or it can be larger than the
+actual boot content; it must not be non-0 and smaller than the boot
+content, and the boot content must be self-terminating independent
+of]var{len}. No search is performed for dependencies. If the same file
+descriptor is used for multiple boot files, then
+\scheme{\var{close}_\var{after}} should be non-zero only for the last
+one. The boot file content is read only when \scheme{Sbuild_heap} is
+called.
 
 \scheme{Sbuild_heap} creates the Scheme heap from the registered boot
 files.

@@ -320,7 +320,6 @@ ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path, ptr external
   ptr tc = get_thread_context();
   ptr x; struct unbufFaslFileObj uffo;
 
- /* acquire mutex in case we modify code pages */
   uffo.path = path;
   uffo.type = UFFO_TYPE_BV;
   x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo, externals);
