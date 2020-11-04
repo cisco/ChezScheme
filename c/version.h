@@ -263,7 +263,7 @@ struct timespec;
 #endif
 #if defined(__MINGW32__) && (machine_type == machine_type_ti3nt || machine_type == machine_type_i3nt)
 #define time_t __time64_t
-#define time _time64
+#define GET_TIME _time64
 #endif
 #endif
 

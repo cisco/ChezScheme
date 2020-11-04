@@ -423,11 +423,16 @@ ptr S_gmtime(ptr tzoff, ptr tspair) {
   return dtvec;
 }
 
+
+#ifndef GET_TIME
+# define GET_TIME time
+#endif
+
 ptr S_asctime(ptr dtvec) {
   char buf[26];
 
   if (dtvec == Sfalse) {
-    time_t tx = time(NULL);
+    time_t tx = GET_TIME(NULL);
     if (ctime_r(&tx, buf) == NULL) return Sfalse;
   } else {
     struct tm tmx;
