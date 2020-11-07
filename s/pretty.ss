@@ -308,6 +308,17 @@
                  (make-prty `(read-macro ,s x)
                             (+ (string-length s) (prty-len p))
                             p))))]
+      [(flvector? x)
+       (let ([n (flvector-length x)])
+          (if (= n 0)
+              (if (print-vector-length)
+                  (make-prty '() 4 "#0vfl()")
+                  (make-prty '() 3 "#vfl()"))
+              (let ([p (mk-prty-vector flvector-length flvector-ref x lev len)]
+                    [s (if (print-vector-length) (format "#~dvfl" n) "#vfl")])
+                 (make-prty `(read-macro ,s x)
+                            (+ (string-length s) (prty-len p))
+                            p))))]
       [(bytevector? x)
        (let ([n (bytevector-length x)])
           (if (= n 0)

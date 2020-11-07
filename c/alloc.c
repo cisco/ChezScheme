@@ -60,6 +60,10 @@ void S_alloc_init() {
         find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), S_G.null_fxvector);
         FXVECTOR_TYPE(S_G.null_fxvector) = (0 << fxvector_length_offset) | type_fxvector;
 
+        S_protect(&S_G.null_flvector);
+        find_room(tc, space_new, 0, type_typed_object, size_flvector(0), S_G.null_flvector);
+        FXVECTOR_TYPE(S_G.null_flvector) = (0 << flvector_length_offset) | type_flvector;
+
         S_protect(&S_G.null_bytevector);
         find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), S_G.null_bytevector);
         BYTEVECTOR_TYPE(S_G.null_bytevector) = (0 << bytevector_length_offset) | type_bytevector;
@@ -71,10 +75,6 @@ void S_alloc_init() {
         S_protect(&S_G.null_immutable_vector);
         find_room(tc, space_new, 0, type_typed_object, size_vector(0), S_G.null_immutable_vector);
         VECTTYPE(S_G.null_immutable_vector) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
-
-        S_protect(&S_G.null_immutable_fxvector);
-        find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), S_G.null_immutable_fxvector);
-        FXVECTOR_TYPE(S_G.null_immutable_fxvector) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
 
         S_protect(&S_G.null_immutable_bytevector);
         find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), S_G.null_immutable_bytevector);
@@ -695,6 +695,23 @@ ptr S_fxvector(n) iptr n; {
     return p;
 }
 
+ptr S_flvector(n) iptr n; {
+    ptr tc;
+    ptr p; iptr d;
+
+    if (n == 0) return S_G.null_flvector;
+
+    if ((uptr)n > (uptr)maximum_flvector_length)
+        S_error("", "invalid flvector size request");
+
+    tc = get_thread_context();
+
+    d = size_flvector(n);
+    newspace_find_room(tc, type_typed_object, d, p);
+    FLVECTOR_TYPE(p) = (n << flvector_length_offset) | type_flvector;
+    return p;
+}
+
 ptr S_bytevector(n) iptr n; {
   return S_bytevector2(get_thread_context(), n, 0);
 }
@@ -721,14 +738,6 @@ ptr S_null_immutable_vector() {
   ptr v;
   find_room(tc, space_new, 0, type_typed_object, size_vector(0), v);
   VECTTYPE(v) = (0 << vector_length_offset) | type_vector | vector_immutable_flag;
-  return v;
-}
-
-ptr S_null_immutable_fxvector() {
-  ptr tc = get_thread_context();
-  ptr v;
-  find_room(tc, space_new, 0, type_typed_object, size_fxvector(0), v);
-  VECTTYPE(v) = (0 << fxvector_length_offset) | type_fxvector | fxvector_immutable_flag;
   return v;
 }
 

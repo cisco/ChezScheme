@@ -82,10 +82,6 @@ Notes:
     (define true-rec `(quote #t))
     (define false-rec `(quote #f))
     (define null-rec `(quote ()))
-    (define empty-vector-rec `(quote #()))
-    (define empty-string-rec `(quote ""))
-    (define empty-bytevector-rec `(quote #vu8()))
-    (define empty-fxvector-rec `(quote #vfx()))
     (define eof-rec `(quote #!eof))
     (define bwp-rec `(quote #!bwp))
 
@@ -546,6 +542,7 @@ Notes:
       [(string? d) 'string]
       [(bytevector? d) 'bytevector]
       [(fxvector? d) 'fxvector]
+      [(flvector? d) 'flvector]
       [else #f]))
 
   (define (rtd->record-predicate rtd extend?)
@@ -583,6 +580,7 @@ Notes:
       [string? 'string]
       [bytevector? 'bytevector]
       [fxvector? 'fxvector]
+      [flvector? 'flvector]
       [gensym? 'gensym]
       [uninterned-symbol? 'uninterned-symbol]
       #;[interned-symbol? 'interned-symbol]
@@ -628,6 +626,7 @@ Notes:
       [string 'string]
       [bytevector 'bytevector]
       [fxvector 'fxvector]
+      [flvector 'flvector]
       [gensym 'gensym]
       [uninterned-symbol 'uninterned-symbol]
       [interned-symbol 'interned-symbol]
@@ -753,6 +752,7 @@ Notes:
                   [(string) (check-constant-is? x string?)] ; i.e. ""
                   [(bytevector) (check-constant-is? x bytevector?)] ; i.e. '#vu8()
                   [(fxvector) (check-constant-is? x fxvector?)] ; i.e. '#vfx()
+                  [(flvector) (check-constant-is? x flvector?)] ; i.e. '#vfl()
                   [(ptr) #t]
                   [else #f])]
                [else #f]))))

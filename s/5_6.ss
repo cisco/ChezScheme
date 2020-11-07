@@ -72,7 +72,7 @@
   (lambda (v)
     (cond
       [(immutable-vector? v) v]
-      [(eqv? v '#()) ($tc-field 'null-immutable-vector ($tc))]
+      [(eqv? v '#()) (vector->immutable-vector '#())]
       [else
        (unless (vector? v) ($oops who "~s is not a vector" v))
        (let ([v2 (vector-copy v)])
@@ -126,16 +126,44 @@
               (constant fxvector-data-disp) n))
         fxv2))))
 
-(set-who! fxvector->immutable-fxvector
+(set! flvector->list
   (lambda (v)
-    (cond
-      [(immutable-fxvector? v) v]
-      [(eqv? v '#vfx()) ($tc-field 'null-immutable-fxvector ($tc))]
-      [else
-       (unless (fxvector? v) ($oops who "~s is not a fxvector" v))
-       (let ([v2 (fxvector-copy v)])
-         ($fxvector-set-immutable! v2)
-         v2)])))
+    (unless (flvector? v)
+      ($oops 'flvector->list "~s is not an flvector" v))
+    (let loop ([i (fx- (flvector-length v) 1)] [l '()])
+      (if (fx> i 0)
+          (loop
+            (fx- i 2)
+            (list* (flvector-ref v (fx- i 1)) (flvector-ref v i) l))
+          (if (fx= i 0) (cons (flvector-ref v 0) l) l)))))
+
+(set! list->flvector
+  (lambda (x)
+    (let ([v (make-flvector ($list-length x 'list->flvector))])
+      (do ([ls x (cdr ls)] [i 0 (fx+ i 1)])
+          ((null? ls) v)
+        (let ([n (car ls)])
+          (unless (flonum? n)
+            ($oops 'list->flvector "~s is not a flonum" n))
+          (flvector-set! v i n))))))
+
+(set! flvector-copy
+  (lambda (flv1)
+    (unless (flvector? flv1)
+      ($oops 'flvector-copy "~s is not an flvector" flv1))
+    (let ([n (flvector-length flv1)])
+      (let ([flv2 (make-flvector n)])
+        (if (fx<= n 10)
+            (let loop ([i (fx- n 1)])
+              (cond
+                [(fx> i 0)
+                 (flvector-set! flv2 i (flvector-ref flv1 i))
+                 (let ([i (fx- i 1)]) (flvector-set! flv2 i (flvector-ref flv1 i)))
+                 (loop (fx- i 2))]
+                [(fx= i 0) (flvector-set! flv2 i (flvector-ref flv1 i))]))
+            ($ptr-copy! flv1 (constant flvector-data-disp) flv2
+              (constant flvector-data-disp) n))
+        flv2))))
 
 (set! vector-map
   (case-lambda

@@ -276,6 +276,7 @@
   
         (deftotypep "Svectorp" ($ mask-vector) ($ type-vector))
         (deftotypep "Sfxvectorp" ($ mask-fxvector) ($ type-fxvector))
+        (deftotypep "Sflvectorp" ($ mask-flvector) ($ type-flvector))
         (deftotypep "Sbytevectorp" ($ mask-bytevector) ($ type-bytevector))
         (deftotypep "Sstringp" ($ mask-string) ($ type-string))
         (deftotypep "Sstencil_vectorp" ($ mask-stencil-vector) ($ type-stencil-vector))
@@ -310,6 +311,12 @@
             (access "x" fxvector type)
             ($ fxvector-length-offset)))
         (defref Sfxvector_ref fxvector data)
+        
+        (def "Sflvector_length(x)"
+          (format "((iptr)((uptr)~a>>~d))"
+            (access "x" flvector type)
+            ($ flvector-length-offset)))
+        (defref Sflvector_ref flvector data)
 
         (def "Sbytevector_length(x)"
           (format "((iptr)((uptr)~a>>~d))"
@@ -349,6 +356,7 @@
           (format "((void)(~a = (string_char)(uptr)Schar(c)))"
             (access "x" "i" string data)))
         (def "Sfxvector_set(x,i,n)" "((void)(Sfxvector_ref(x,i) = (n)))")
+        (def "Sflvector_set(x,i,n)" "((void)(Sflvector_ref(x,i) = (n)))")
         (def "Sbytevector_u8_set(x,i,n)" "((void)(Sbytevector_u8_ref(x,i) = (n)))")
         (export "void" "Svector_set" "(ptr, iptr, ptr)")
   
@@ -372,6 +380,7 @@
         (export "ptr" "Sflonum" "(double)")
         (export "ptr" "Smake_vector" "(iptr, ptr)")
         (export "ptr" "Smake_fxvector" "(iptr, ptr)")
+        (export "ptr" "Smake_flvector" "(iptr, ptr)")
         (export "ptr" "Smake_bytevector" "(iptr, int)")
         (export "ptr" "Smake_string" "(iptr, int)")
         (export "ptr" "Smake_uninitialized_string" "(iptr)")
@@ -1004,6 +1013,9 @@
 
         (defref FXVECTOR_TYPE fxvector type)
         (defref FXVECTIT fxvector data)
+
+        (defref FLVECTOR_TYPE flvector type)
+        (defref FLVECTIT flvector data)
 
         (defref BYTEVECTOR_TYPE bytevector type)
         (defref BVIT bytevector data)

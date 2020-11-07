@@ -759,12 +759,6 @@ The storage management system also takes advantage of the fact that
 fxvectors contain no pointers to place them in an area of memory that
 does not have to be traced during collection.
 
-\index{immutable fxvectors}\index{mutable fxvectors}%
-All fxvectors are mutable by default, including constants.
-A program can create immutable fxvectors via
-\index{\scheme{fxvector->immutable-fxvector}}\scheme{fxvector->immutable-fxvector}.
-Any attempt to modify an immutable fxvector causes an exception to be raised.
-
 See also \scheme{vector-set-fixnum!} above.
 
 %----------------------------------------------------------------------------
@@ -857,7 +851,6 @@ the length of \var{fxvector}.
 \endentryheader
 
 \noindent
-\var{fxvector} must be mutable.
 \var{n} must be a nonnegative fixnum strictly less than
 the length of \var{fxvector}.
 \scheme{fxvector-set!} changes the \var{n}th element of \var{fxvector} to \var{fixnum}.
@@ -877,7 +870,6 @@ the length of \var{fxvector}.
 \endentryheader
 
 \noindent
-\var{fxvector} must be mutable.
 \scheme{fxvector-fill!} replaces each element of \var{fxvector} with \var{fixnum}.
 
 \schemedisplay
@@ -940,39 +932,202 @@ as \var{fxvector}.
   (eq? v (fxvector-copy v))) ;=> #f
 \endschemedisplay
 
+
+    
+\section{Flonum-Only Vectors\label{SECTFLVECTORS}}
+
+\index{flvectors}%
+Flonum-only vectors, or ``flvectors,'' are like vectors but contain
+only flonums.
+Flvectors are written with the \scheme{#vfl} prefix in place of the
+\scheme{#} prefix for vectors, e.g., \scheme{#vfl(1.0 2.0 3.0)} or
+\scheme{#10vfl(2.0)}.
+The flvector syntax is disabled in an input stream after \scheme{#!r6rs}
+has been seen by the reader, unless \scheme{#!chezscheme} has been seen
+more recently.
+
+The length and indices of an flvector are always fixnums.
+
+Updating an flvector is generally less expensive than updating a vector,
+since for vectors, the system records potential assignments from older to
+younger objects to support generational garbage collection.
+An flvector stores a flonum's representation directly, instead of a reference to a
+flonum, so flonum identity is fresh when it is extracted from an flvector.
+The storage management system also takes advantage of the fact that
+flvectors contain no pointers to place them in an area of memory that
+does not have to be traced during collection.
+
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{mutable-fxvector?}{\categoryprocedure}{(mutable-fxvector? \var{obj})}
-\returns \scheme{#t} if \var{obj} is a mutable fxvector, \scheme{#f} otherwise
-\formdef{immutable-fxvector?}{\categoryprocedure}{(immutable-fxvector? \var{obj})}
-\returns \scheme{#t} if \var{obj} is an immutable fxvector, \scheme{#f} otherwise
+\formdef{flvector?}{\categoryprocedure}{(flvector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an flvector, \scheme{#f} otherwise
 \listlibraries
 \endentryheader
 
 \noskip\schemedisplay
-(mutable-fxvector? (fxvector 1 2 3)) ;=> #t
-(mutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #f
-(immutable-fxvector? (fxvector 1 2 3)) ;=> #f
-(immutable-fxvector? (fxvector->immutable-fxvector (fxvector 1 2 3))) ;=> #t
-(immutable-fxvector? (cons 3 4)) ;=> #f
+(flvector? #vfl()) ;=> #t
+(flvector? #vfl(1.0 2.0 3.0)) ;=> #t
+(flvector? (flvector 1.0 2.0 3.0)) ;=> #t
+(flvector? '#(a b c)) ;=> #f
+(flvector? '(a b c)) ;=> #f
+(flvector? "abc") ;=> #f
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{fxvector->immutable-fxvector}{\categoryprocedure}{(fxvector->immutable-fxvector \var{fxvector})}
-\returns either an immutable copy of \var{fxvector} or \var{fxvector} itself
+\formdef{flvector}{\categoryprocedure}{(flvector \var{flonum} \dots)}
+\returns an flvector of the fixnums \scheme{\var{flonum} \dots}
+\listlibraries
+\endentryheader
+
+\noskip\schemedisplay
+(flvector) ;=> #vfl()
+(flvector 1.0 3.0 5.0) ;=> #vfl(1.0 3.0 5.0)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-flvector}{\categoryprocedure}{(make-flvector \var{n})}
+\formdef{make-flvector}{\categoryprocedure}{(make-flvector \var{n} \var{flonum})}
+\returns an flvector of length \var{n}
 \listlibraries
 \endentryheader
 
 \noindent
-\index{immutable fxvectors}\index{mutable fxvectors}%
-The result is \var{fxvector} itself if \var{fxvector}
-is immutable; otherwise, the result is an immutable fxvector with the same content as \var{fxvector}.
+\var{n} must be a fixnum.
+If \var{flonum} is supplied, each element of the flvector is initialized
+to \var{flonum}; otherwise, the elements are unspecified.
 
 \schemedisplay
-(define v (fxvector->immutable-fxvector (fxvector 1 2 3)))
-(fxvector-set! v 0 0) ;=> \var{exception: not mutable}
+(make-flvector 0) ;=> #vfl()
+(make-flvector 0 7.0) ;=> #vfl()
+(make-flvector 5 7.0) ;=> #vfl(7.0 7.0 7.0 7.0 7.0)
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-length}{\categoryprocedure}{(flvector-length \var{flvector})}
+\returns the number of elements in \var{flvector}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(flvector-length #vfl()) ;=> 0
+(flvector-length #vfl(1.0 2.0 3.0)) ;=> 3
+(flvector-length #10vfl(1.0 2.0 3.0)) ;=> 10
+(flvector-length (flvector 1.0 2.0 3.0 4.0)) ;=> 4
+(flvector-length (make-flvector 300)) ;=> 300
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-ref}{\categoryprocedure}{(flvector-ref \var{flvector} \var{n})}
+\returns the \var{n}th element (zero-based) of \var{flvector}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum strictly less than
+the length of \var{flvector}.
+
+\schemedisplay
+(flvector-ref #vfl(-1.0 2.0 4.0 7.0) 0) ;=> -1.0
+(flvector-ref #vfl(-1.0 2.0 4.0 7.0) 1) ;=> 2.0
+(flvector-ref #vfl(-1.0 2.0 4.0 7.0) 3) ;=> 7.0
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-set!}{\categoryprocedure}{(flvector-set! \var{flvector} \var{n} \var{flonum})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{n} must be a nonnegative fixnum strictly less than
+the length of \var{flvector}.
+\scheme{flvector-set!} changes the \var{n}th element of \var{flvector} to \var{flonum}.
+
+\schemedisplay
+(let ([v (flvector 1.0 2.0 3.0 4.0 5.0)])
+  (flvector-set! v 2 (fx- (flvector-ref v 2)))
+  v) ;=> #vfl(1.0 2.0 -3.0 4.0 5.0)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-fill!}{\categoryprocedure}{(flvector-fill! \var{flvector} \var{flonum})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{flvector-fill!} replaces each element of \var{flvector} with \var{flonum}.
+
+\schemedisplay
+(let ([v (flvector 1.0 2.0 3.0)])
+  (flvector-fill! v 0.0)
+  v) ;=> #vfl(0.0 0.0 0.0)
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector->list}{\categoryprocedure}{(flvector->list \var{flvector})}
+\returns a list of the elements of \var{flvector}
+\listlibraries
+\endentryheader
+
+\schemedisplay
+(flvector->list (flvector)) ;=> ()
+(flvector->list #vfl(7.0 5.0 2.0)) ;=> (7.0 5.0 2.0)
+
+(let ([v #vfl(1.0 2.0 3.0 4.0 5.0)])
+  (apply fl* (flvector->list v))) ;=> 120.0
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{list->flvector}{\categoryprocedure}{(list->flvector \var{list})}
+\returns an flvector of the elements of \var{list}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{list} must consist entirely of flonums.
+
+\schemedisplay
+(list->flvector '()) ;=> #vfl()
+(list->flvector '(3.0 5.0 7.0)) ;=> #vfl(3.0 5.0 7.0)
+
+(let ([v #vfl(1.0 2.0 3.0 4.0 5.0)])
+  (let ([ls (flvector->list v)])
+    (list->flvector (map fx* ls ls)))) ;=> #vfl(1.0 4.0 9.0 16.0 25.0)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-copy}{\categoryprocedure}{(flvector-copy \var{flvector})}
+\returns a copy of \var{flvector}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{flvector-copy} creates a new flvector with the same length and contents
+as \var{flvector}.
+
+\schemedisplay
+(flvector-copy #vfl(3.0 4.0 5.0)) ;=> #vfl(3.0 4.0 5.0)
+
+(let ([v #vfl(3.0 4.0 5.0)])
+  (eq? v (flvector-copy v))) ;=> #f
+\endschemedisplay
+
 
     
 \section{Bytevectors\label{SECTBYTEVECTORS}}

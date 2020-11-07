@@ -782,6 +782,13 @@
                          (or (< i 0)
                              (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                                   (f (1- i))))))]
+                [(flvector? x)
+                 (and (flvector? y)
+                      (= (flvector-length x) (flvector-length y))
+                      (let f ([i (- (flvector-length x) 1)])
+                         (or (< i 0)
+                             (and (fl= (flvector-ref x i) (flvector-ref y i))
+                                  (f (1- i))))))]
                 [(bytevector? x)
                  (and (bytevector? y)
                       (bytevector=? x y))]

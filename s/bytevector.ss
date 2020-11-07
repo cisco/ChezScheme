@@ -786,7 +786,7 @@
     (lambda (v)
       (cond
         [(immutable-bytevector? v) v]
-        [(eqv? v '#vu8()) ($tc-field 'null-immutable-bytevector ($tc))]
+        [(eqv? v '#vu8()) (bytevector->immutable-bytevector '#vu8())]
         [else
          (unless (bytevector? v) ($oops who "~s is not a bytevector" v))
          (let ([v2 (bytevector-copy v)])

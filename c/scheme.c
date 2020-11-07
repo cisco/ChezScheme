@@ -104,11 +104,6 @@ static void main_init() {
                  i & 0x10 ? 4 : i & 0x20 ? 5 : i & 0x40 ? 6 : i & 0x80 ? 7 : 0);
     }
 
-    NULLIMMUTABLEVECTOR(tc) = S_G.null_immutable_vector;
-    NULLIMMUTABLEFXVECTOR(tc) = S_G.null_immutable_fxvector;
-    NULLIMMUTABLEBYTEVECTOR(tc) = S_G.null_immutable_bytevector;
-    NULLIMMUTABLESTRING(tc) = S_G.null_immutable_string;
-
     PARAMETERS(tc) = S_G.null_vector;
     for (i = 0 ; i < virtual_register_count ; i += 1) {
       VIRTREG(tc, i) = FIX(0);

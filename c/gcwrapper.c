@@ -122,6 +122,8 @@ void S_gc_init() {
     S_G.countof_size[countof_string] = 0;
   INITVECTIT(S_G.countof_names, countof_fxvector) = S_intern((const unsigned char *)"fxvector");
     S_G.countof_size[countof_fxvector] = 0;
+  INITVECTIT(S_G.countof_names, countof_flvector) = S_intern((const unsigned char *)"flvector");
+    S_G.countof_size[countof_flvector] = 0;
   INITVECTIT(S_G.countof_names, countof_bytevector) = S_intern((const unsigned char *)"bytevector");
     S_G.countof_size[countof_bytevector] = 0;
   INITVECTIT(S_G.countof_names, countof_locked) = S_intern((const unsigned char *)"locked");

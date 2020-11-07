@@ -166,6 +166,14 @@
                       k
                       (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                            (f (fx1- i))))))]
+          [(flvector? x)
+           (and (flvector? y)
+                (fx= (flvector-length x) (flvector-length y))
+                (let f ([i (fx- (flvector-length x) 1)])
+                  (if (fx< i 0)
+                      k
+                      (and ($fleqv? (flvector-ref x i) (flvector-ref y i))
+                           (f (fx1- i))))))]
           [(box? x)
            (and (box? y)
              (if (union-find ht x y)
@@ -233,6 +241,14 @@
                     (if (fx< i 0)
                         k
                         (and (fx= (fxvector-ref x i) (fxvector-ref y i))
+                             (f (fx1- i))))))]
+            [(flvector? x)
+             (and (flvector? y)
+                  (fx= (flvector-length x) (flvector-length y))
+                  (let f ([i (fx- (flvector-length x) 1)])
+                    (if (fx< i 0)
+                        k
+                        (and ($fleqv? (flvector-ref x i) (flvector-ref y i))
                              (f (fx1- i))))))]
             [(box? x) (and (box? y) (e? (unbox x) (unbox y) k))]
             [($record? x)
@@ -302,6 +318,14 @@
               (if (fx< i 0)
                   k
                   (and (fx= (fxvector-ref x i) (fxvector-ref y i))
+                       (f (fx1- i))))))]
+      [(flvector? x)
+       (and (flvector? y)
+            (fx= (flvector-length x) (flvector-length y))
+            (let f ([i (fx- (flvector-length x) 1)])
+              (if (fx< i 0)
+                  k
+                  (and ($fleqv? (flvector-ref x i) (flvector-ref y i))
                        (f (fx1- i))))))]
       [(box? x)
        (and (box? y)

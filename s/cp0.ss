@@ -184,6 +184,7 @@
     (define empty-string-rec `(quote ""))
     (define empty-bytevector-rec `(quote #vu8()))
     (define empty-fxvector-rec `(quote #vfx()))
+    (define empty-flvector-rec `(quote #vfl()))
 
     ;;; environments
     (module (empty-env with-extended-env lookup)
@@ -2497,6 +2498,12 @@
               empty-fxvector-rec)]
         [args #f])
 
+      (define-inline 2 flvector
+        [() (begin
+              (residualize-seq '() '() ctxt)
+              empty-flvector-rec)]
+        [args #f])
+
       (define-inline 2 (eq? eqv? equal?)
         [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
 
@@ -4772,6 +4779,9 @@
 
         (define-inline 2 fxvector-ref
           [(?x ?i) (tryref ctxt ?x ?i 'fxvector target-fixnum?)])
+
+        (define-inline 2 flvector-ref
+          [(?x ?i) (tryref ctxt ?x ?i 'flvector flonum?)])
 
         ; skipping bytevector-u8-ref and bytevector-s8-ref, which generally need to adjust the result.
 

@@ -208,7 +208,7 @@
         [($record? x) (bld-graph x t a? d #t bld-record)]
         [(box? x) (bld-graph x t a? d #t bld-box)]
         [(or (large-integer? x) (ratnum? x) ($inexactnum? x) ($exactnum? x)
-             (fxvector? x) (bytevector? x))
+             (fxvector? x) (flvector? x) (bytevector? x))
          (bld-graph x t a? d #t bld-simple)])))
 
 (module (small-integer? large-integer?)
@@ -323,15 +323,23 @@
 
 (define wrf-fxvector
   (lambda (x p t a?)
-    (put-u8 p (if (immutable-fxvector? x)
-                  (constant fasl-type-immutable-fxvector)
-                  (constant fasl-type-fxvector)))
+    (put-u8 p (constant fasl-type-fxvector))
     (let ([n (fxvector-length x)])
       (put-uptr p n)
       (let wrf-fxvector-loop ([i 0])
         (unless (fx= i n)
           (put-iptr p (fxvector-ref x i))
           (wrf-fxvector-loop (fx+ i 1)))))))
+
+(define wrf-flvector
+  (lambda (x p t a?)
+    (put-u8 p (constant fasl-type-flvector))
+    (let ([n (flvector-length x)])
+      (put-uptr p n)
+      (let wrf-flvector-loop ([i 0])
+        (unless (fx= i n)
+          (wrf-flonum (flvector-ref x i) p)
+          (wrf-flvector-loop (fx+ i 1)))))))
 
 (define wrf-bytevector
   (lambda (x p t a?)
@@ -629,6 +637,7 @@
          [(eq? x #t) (wrf-immediate (constant strue) p)]
          [(string? x) (wrf-graph x p t a? wrf-string)]
          [(fxvector? x) (wrf-graph x p t a? wrf-fxvector)]
+         [(flvector? x) (wrf-graph x p t a? wrf-flvector)]
          [(bytevector? x) (wrf-graph x p t a? wrf-bytevector)]
          ; this check must go before $record? check
          [(annotation? x)

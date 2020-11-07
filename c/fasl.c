@@ -48,6 +48,8 @@
  *
  *        -> {fxvector}<uptr n><iptr elt1>...<iptr eltn>
  *
+ *        -> {flvector}<uptr n><uptr elthi1><uptr eltlo1>...<uptr elthin><uptr eltlon>
+ *
  *        -> {bytevector}<uptr n><octet elt1>...<octet eltn>
  *
  *        -> {immediate}<uptr>
@@ -748,14 +750,13 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             while (n--) faslin(tc, p++, t, pstrbuf, f);
             if (ty == fasl_type_immutable_vector) {
               if (Svector_length(*x) == 0)
-                *x = NULLIMMUTABLEVECTOR(tc);
+                *x = S_G.null_immutable_vector;
               else
                 VECTTYPE(*x) |= vector_immutable_flag;
             }
             return;
         }
-        case fasl_type_fxvector:
-        case fasl_type_immutable_fxvector: {
+        case fasl_type_fxvector: {
             iptr n; ptr *p;
             n = uptrin(f);
             *x = S_fxvector(n);
@@ -765,11 +766,19 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               if (!FIXRANGE(t)) toolarge(f->uf->path);
               *p++ = FIX(t);
             }
-            if (ty == fasl_type_immutable_fxvector) {
-              if (Sfxvector_length(*x) == 0)
-                *x = NULLIMMUTABLEFXVECTOR(tc);
-              else
-                FXVECTOR_TYPE(*x) |= fxvector_immutable_flag;
+            return;
+        }
+        case fasl_type_flvector: {
+            iptr n; double *p;
+            n = uptrin(f);
+            *x = S_flvector(n);
+            p = &FLVECTIT(*x, 0);
+            while (n--) {
+              ptr fl;
+              faslin(tc, &fl, t, pstrbuf, f);
+              if (!Sflonump(fl))
+                S_error1("", "not a flonum in flvector ~a", f->uf->path);
+              *p++ = Sflonum_value(fl);
             }
             return;
         }
@@ -781,7 +790,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             bytesin(&BVIT(*x,0), n, f);
             if (ty == fasl_type_immutable_bytevector) {
               if (Sbytevector_length(*x) == 0)
-                *x = NULLIMMUTABLEBYTEVECTOR(tc);
+                *x = S_G.null_immutable_bytevector;
               else
                 BYTEVECTOR_TYPE(*x) |= bytevector_immutable_flag;
             }
@@ -979,7 +988,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             for (i = 0; i != n; i += 1) Sstring_set(str, i, uptrin(f));
             if (ty == fasl_type_immutable_string) {
               if (n == 0)
-                str = NULLIMMUTABLESTRING(tc);
+                str = S_G.null_immutable_string;
               else
                 STRTYPE(str) |= string_immutable_flag;
             }

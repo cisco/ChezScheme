@@ -692,3 +692,7 @@ reset:
 reset-one:
 	if [ -f ../boot/${m}/${FILE} ] ; then rm ../boot/${m}/${FILE} ; fi
 	if [ ! -h ../boot/${m}/${FILE} ] ; then ln -s "${upupupbootdir}"/boot/${m}/${FILE} ../boot/${m}/${FILE} ; fi
+
+.PHONY: run
+run:
+	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme $(ARGS)

@@ -732,6 +732,7 @@
             [#\( ;)
              (cond
                [(string=? s "fx") (nonstandard "#vfx(...) fxvector") (state-return vfxparen #f)]
+               [(string=? s "fl") (nonstandard "#vfl(...) flvector") (state-return vflparen #f)]
                [(string=? s "u8") (state-return vu8paren #f)]
                [else (xcall rd-error #f #t "invalid syntax #v~a(" s)])] ;)
             [else
@@ -753,6 +754,7 @@
             [#\( ;)
              (cond
                [(string=? s "fx") (nonstandard "#<n>vfx(...) fxvector") (state-return vfxnparen nelts)]
+               [(string=? s "fl") (nonstandard "#<n>vfl(...) flvector") (state-return vflnparen nelts)]
                [(string=? s "u8") (nonstandard "#<n>vu8(...) bytevector") (state-return vu8nparen nelts)]
                [else (xcall rd-error #f #t "invalid syntax #~v,'0dv~a(" (- preflen 1) nelts s)])] ;)
             [else
@@ -1178,6 +1180,8 @@
     [(vnparen) (xcall rd-sized-vector value)]
     [(vfxparen) (xmvlet ((v) (xcall rd-fxvector bfp 0)) (xvalues v v))]
     [(vfxnparen) (xmvlet ((v) (xcall rd-sized-fxvector value)) (xvalues v v))]
+    [(vflparen) (xmvlet ((v) (xcall rd-flvector bfp 0)) (xvalues v v))]
+    [(vflnparen) (xmvlet ((v) (xcall rd-sized-flvector value)) (xvalues v v))]
     [(vu8paren) (xmvlet ((v) (xcall rd-bytevector bfp 0)) (xvalues v v))]
     [(vu8nparen) (xmvlet ((v) (xcall rd-sized-bytevector value)) (xvalues v v))]
     [(box) (xcall rd-box)]
@@ -1433,6 +1437,48 @@
            (xcall rd-error #f #t "too many fxvector elements supplied")))
        (fxvector-set! v i value)
        (xcall rd-fill-fxvector expr-bfp v (fx+ i 1) n)])))
+
+;; an flvector contains a sequence of flonum tokens.  we don't handle
+;; graph marks and references because to do so generally, we'd have to
+;; put non-flonums (insert records) into the flonum or perhaps
+;; somehow generalize delayed records to handle flonums
+(xdefine (rd-flvector expr-bfp i)
+  (with-token (type value)
+    (case type
+      [(rparen) (xvalues (make-flvector i))]
+      [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "flvector"))]
+      [else
+       (unless (and (eq? type 'atomic) (flonum? value))
+         (xcall rd-error #f #t "non-fixnum found in flvector"))
+       (xmvlet ((v) (xcall rd-flvector expr-bfp (fx+ i 1)))
+         (flvector-set! v i value)
+         (xvalues v))])))
+
+(xdefine (rd-sized-flvector n)
+  (unless (and (fixnum? n) (fxnonnegative? n))
+    (let ([bfp (and bfp (+ bfp 1))] [fp (and fp (- fp 1))])
+      (xcall rd-error #f #t "invalid flvector length ~s" n)))
+  (xcall rd-fill-flvector bfp (make-flvector n) 0 n))
+
+(xdefine (rd-fill-flvector expr-bfp v i n)
+  (with-token (type value)
+    (case type
+      [(rparen)
+       (when (fx< 0 i n)
+         (let ((prev (flvector-ref v (fx- i 1))))
+           (do ([i i (fx+ i 1)])
+               ((fx= i n))
+               (flvector-set! v i prev))))
+       (xvalues v)]
+      [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "flvector"))]
+      [else
+       (unless (and (eq? type 'atomic) (flonum? value))
+         (xcall rd-error #f #t "non-fixnum found in flvector"))
+       (unless (fx< i n)
+         (let ([bfp expr-bfp])
+           (xcall rd-error #f #t "too many flvector elements supplied")))
+       (flvector-set! v i value)
+       (xcall rd-fill-flvector expr-bfp v (fx+ i 1) n)])))
 
 ;; a bytevector contains a sequence of fixnum tokens.  we don't handle
 ;; graph marks and references because to do so generally, we'd have to

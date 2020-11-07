@@ -404,6 +404,7 @@
               [(flonum) 0.0 0 0.0+1.0i 'a #f]
               [(ftype-pointer) *ftype-pointer 0 *time #f]
               [(fxvector) '#vfx(0) "a" #f]
+              [(flvector) '#vfl(0.0) "a" #f]
               [(gensym) *genny 'sym #f]
               [(guardian) (make-guardian) values "oops" #f]
               [(hashtable) *eq-hashtable '((a . b)) #f]

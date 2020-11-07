@@ -4234,11 +4234,11 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: -1 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: d is not a fixnum".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not a mutable fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not an fxvector".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <-int> is not a fixnum".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <int> is not a fixnum".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not a mutable fxvector".
-5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: #(3 4) is not a mutable fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: (3 4 5) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: #(3 4) is not an fxvector".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: 3 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: -3 is not a valid index for #vfx(3 4 5)".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <int> is not a valid index for #vfx(3 4 5)".
@@ -4249,11 +4249,46 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a fixnum".
 5_6.mo:Expected error in mat fxvector-copy: "fxvector-copy: (a b c) is not an fxvector".
 5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: a is not a fixnum".
-5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: #(1) is not a mutable fxvector".
+5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: #(1) is not a fxvector".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: #(a b c) is not a proper list".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 . 3) is not a proper list".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: (1 2 3 2 3 2 ...) is circular".
 5_6.mo:Expected error in mat fxvector->list: "fxvector->list: (a b c) is not an fxvector".
+5_6.mo:Expected error in mat flvector: "flvector: 1 is not a flonum".
+5_6.mo:Expected error in mat flvector: "flvector: a is not a flonum".
+5_6.mo:Expected error in mat flvector: "flvector: a is not a flonum".
+5_6.mo:Expected error in mat make-flvector: "make-flvector: a is not a flonum".
+5_6.mo:Expected error in mat make-flvector: "make-flvector: 1 is not a flonum".
+5_6.mo:Expected error in mat make-flvector: "make-flvector: a is not a flonum".
+5_6.mo:Expected error in mat flvector-length: "flvector-length: (a b c) is not an flvector".
+5_6.mo:Expected error in mat flvector-ref: "flvector-ref: 3 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-ref: "flvector-ref: -1 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-ref: "flvector-ref: a is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-ref: "flvector-ref: #(3.0 4.0 5.0) is not an flvector".
+5_6.mo:Expected error in mat flvector-ref: "flvector-ref: (3.0 4.0 5.0) is not an flvector".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 3 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: -1 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: d is not a flonum".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: (3.0 4.0 5.0) is not an flvector".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 1 is not a flonum".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a flonum".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: (3.0 4.0 5.0) is not an flvector".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: #(3.0 4.0) is not an flvector".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 3 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: -3 is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: <int> is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: <-int> is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a valid index for #vfl(3.0 4.0 5.0)".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 1 is not a flonum".
+5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a flonum".
+5_6.mo:Expected error in mat flvector-copy: "flvector-copy: (a b c) is not an flvector".
+5_6.mo:Expected error in mat flvector-fill!: "flvector-fill!: a is not a flonum".
+5_6.mo:Expected error in mat flvector-fill!: "flvector-fill!: #(1.0) is not a flvector".
+5_6.mo:Expected error in mat list->flvector: "list->flvector: #(a b c) is not a proper list".
+5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 . 3.0) is not a proper list".
+5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 3.0 2.0 3.0 2.0 ...) is circular".
+5_6.mo:Expected error in mat flvector->list: "flvector->list: (a b c) is not an flvector".
 5_6.mo:Expected error in mat vector-map: "incorrect argument count in call (vector-map)".
 5_6.mo:Expected error in mat vector-map: "incorrect argument count in call (vector-map (quote #()))".
 5_6.mo:Expected error in mat vector-map: "incorrect argument count in call (vector-map +)".
@@ -4308,8 +4343,6 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector->immutable-vector: "vector-set-fixnum!: #(1 2 3) is not a mutable vector".
 5_6.mo:Expected error in mat vector->immutable-vector: "vector-fill!: #(1 2 3) is not a mutable vector".
 5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is not a mutable vector".
-5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-set!: #vfx(1 2 3) is not a mutable fxvector".
-5_6.mo:Expected error in mat fxvector->immutable-fxvector: "fxvector-fill!: #vfx(1 2 3) is not a mutable fxvector".
 5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1)".
 5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1 1)".
 5_6.mo:Expected error in mat vector-cas!: "incorrect argument count in call (vector-cas! vec1 1 2)".

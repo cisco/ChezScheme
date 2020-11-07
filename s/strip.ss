@@ -26,7 +26,8 @@
     (string ty string)
     (gensym pname uname)
     (vector ty vfasl)
-    (fxvector ty viptr)
+    (fxvector viptr)
+    (flvector vfl)
     (bytevector ty bv)
     (record maybe-uid size nflds rtd pad-ty* fld*) ; maybe-uid => rtd
     (closure offset c)
@@ -219,14 +220,19 @@
            (let ([first (read-fasl p g)])
              (fasl-tuple ty (vector first (read-fasl p g))))]
           [(fasl-type-vector fasl-type-immutable-vector) (fasl-vector ty (read-vfasl p g (read-uptr p)))]
-          [(fasl-type-fxvector fasl-type-immutable-fxvector)
+          [(fasl-type-fxvector)
            (fasl-fxvector
-             ty
              (let ([n (read-uptr p)])
                (let ([v (make-vector n)])
                  (do ([i 0 (fx+ i 1)])
                      ((fx= i n) v)
                    (vector-set! v i (read-iptr p))))))]
+          [(fasl-type-flvector)
+           (let ([n (read-uptr p)])
+             (let ([vfl (make-vector n)])
+               (do ([i 0 (fx+ i 1)])
+                   ((fx= i n) vfl)
+                 (vector-set! vfl i (read-fasl p g)))))]
           [(fasl-type-bytevector fasl-type-immutable-bytevector)
            (fasl-bytevector ty (read-bytevector p (read-uptr p)))]
           [(fasl-type-base-rtd) (fasl-tuple ty '#())]
@@ -419,7 +425,8 @@
           [string (ty string) (build-graph! x t void)]
           [gensym (pname uname) (build-graph! x t void)]
           [vector (ty vfasl) (build-graph! x t (build-vfasl! vfasl))]
-          [fxvector (ty viptr) (build-graph! x t void)]
+          [fxvector (viptr) (build-graph! x t void)]
+          [flvector (vfl) (build-graph! x t void)]
           [bytevector (ty viptr) (build-graph! x t void)]
           [record (maybe-uid size nflds rtd pad-ty* fld*)
            (if (and strip-source-annotations? (fasl-annotation? x))
@@ -533,12 +540,18 @@
                (put-u8 p ty)
                (put-uptr p (vector-length vfasl))
                (vector-for-each (lambda (fasl) (write-fasl p t fasl)) vfasl)))]
-          [fxvector (ty viptr)
+          [fxvector (viptr)
            (write-graph p t x
              (lambda ()
-               (put-u8 p ty)
+               (put-u8 p (constant fasl-type-fxvector))
                (put-uptr p (vector-length viptr))
                (vector-for-each (lambda (iptr) (put-iptr p iptr)) viptr)))]
+          [flvector (vfl)
+           (write-graph p t x
+             (lambda ()
+               (put-u8 p (constant fasl-type-flvector))
+               (put-uptr p (vector-length vfl))
+               (vector-for-each (lambda (x) (write-fasl p t x)) vfl)))]
           [bytevector (ty bv)
            (write-graph p t x
              (lambda ()
@@ -786,7 +799,8 @@
                                    (hashtable-set! gensym-table uname1 uname2)
                                    (string=? x uname2))))]
                        [vector (ty vfasl) (and (eqv? ty1 ty2) (vandmap fasl=? vfasl1 vfasl2))]
-                       [fxvector (ty viptr) (and (eqv? ty1 ty2) (vandmap = viptr1 viptr2))]
+                       [fxvector (viptr) (vandmap = viptr1 viptr2)]
+                       [flvector (vfl) (vandmap fasl=? vfl1 vfl2)]
                        [bytevector (ty bv) (and (eqv? ty1 ty2) (bytevector=? bv1 bv2))]
                        [record (maybe-uid size nflds rtd pad-ty* fld*)
                         (and (if maybe-uid1

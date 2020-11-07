@@ -814,9 +814,21 @@
     (fxvector? (fxvector 1 2 3 4))
     (not (fxvector? '(1 2 3)))
     (not (fxvector? '#(1 2 3)))
+    (not (fxvector? '#vfl(1.0 2.0 3.0)))
     (not (fxvector? '#vu8(1 2 3)))
     (not (fxvector? "hi there"))
     (not (fxvector? 234234))
+ )
+
+(mat flvector?
+    (flvector? #vfl(1.0 2.0 3.0))
+    (flvector? (flvector 1.0 2.0 3.0 4.0))
+    (not (flvector? '(1 2 3)))
+    (not (flvector? '#(1.0 2.0 3.0)))
+    (not (flvector? '#vfx(1 2 3)))
+    (not (flvector? '#vu8(1 2 3)))
+    (not (flvector? "hi there"))
+    (not (flvector? 234234))
  )
 
 (mat bytevector?

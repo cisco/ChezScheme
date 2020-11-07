@@ -450,6 +450,15 @@
       (copy-bytes fxvector-type sz)
       (count countof-fxvector)]
 
+     [flvector
+      (space space-data)
+      (vspace vspace_data)
+      (define sz : uptr (size_flvector (Sflvector_length _)))
+      (size (just sz))
+      (mark)
+      (copy-bytes flvector-type sz)
+      (count countof-flvector)]
+
      [bytevector
       (space space-data)
       (vspace vspace_data)
@@ -1053,10 +1062,6 @@
       (trace-pure (tc-target-machine tc))
       (trace-pure (tc-fxlength-bv tc))
       (trace-pure (tc-fxfirst-bit-set-bv tc))
-      (trace-pure (tc-null-immutable-vector tc))
-      (trace-pure (tc-null-immutable-fxvector tc))
-      (trace-pure (tc-null-immutable-bytevector tc))
-      (trace-pure (tc-null-immutable-string tc))
       (trace-pure (tc-compile-profile tc))
       (trace-pure (tc-subset-mode tc))
       (trace-pure (tc-default-record-equal-procedure tc))

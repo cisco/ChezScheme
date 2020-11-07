@@ -113,10 +113,10 @@ EXTERN struct S_G_struct {
     ptr null_string;
     ptr null_vector;
     ptr null_fxvector;
+    ptr null_flvector;
     ptr null_bytevector;
     ptr null_immutable_string;
     ptr null_immutable_vector;
-    ptr null_immutable_fxvector;
     ptr null_immutable_bytevector;
     ptr zero_length_bignum;
     seginfo *dirty_segments[DIRTY_SEGMENT_LISTS];

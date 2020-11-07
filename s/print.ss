@@ -105,6 +105,7 @@
               (box? x)
               (and ($record? x) (not (eq? x #!base-rtd)))
               (fxvector? x)
+              (flvector? x)
               (string? x)
               (bytevector? x)
               (gensym? x))))))
@@ -679,6 +680,7 @@ floating point returns with (1 0 -1 ...).
                                        (string-append "stencil[" (number->string (stencil-vector-mask x) 16) "]")
                                        x r lev len d? env p)]
           [(fxvector?) (wrvector fxvector-length fxvector-ref "vfx" x r lev len d? env p)]
+          [(flvector?) (wrvector flvector-length flvector-ref "vfl" x r lev len d? env p)]
           [(bytevector?) (wrvector bytevector-length bytevector-u8-ref "vu8" x r lev len d? env p)]
           [(flonum?) (wrflonum #f x r d? p)]
           ; catch before record? case

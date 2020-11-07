@@ -287,9 +287,9 @@
   (define fxvector-oops
     (lambda (who x)
       ($oops who "~s is not an fxvector" x)))
-  (define mutable-fxvector-oops
+  (define flvector-oops
     (lambda (who x)
-      ($oops who "~s is not a mutable fxvector" x)))
+      ($oops who "~s is not an flvector" x)))
   (define bytevector-oops
     (lambda (who x)
       ($oops who "~s is not a bytevector" x)))
@@ -358,14 +358,29 @@
         (fxvector-oops 'fxvector-ref v)))
 
   (define-library-entry (fxvector-set! v i x)
-    (if (mutable-fxvector? v)
+    (if (fxvector? v)
         (if (and (fixnum? i) ($fxu< i (fxvector-length v)))
             (fixnum-oops 'fxvector-set! x)
             (index-oops 'fxvector-set! v i))
-        (mutable-fxvector-oops 'fxvector-set! v)))
+        (fxvector-oops 'fxvector-set! v)))
 
   (define-library-entry (fxvector-length v)
     (fxvector-oops 'fxvector-length v))
+
+  (define-library-entry (flvector-ref v i)
+    (if (flvector? v)
+        (index-oops 'flvector-ref v i)
+        (flvector-oops 'flvector-ref v)))
+
+  (define-library-entry (flvector-set! v i x)
+    (if (flvector? v)
+        (if (and (fixnum? i) ($fxu< i (flvector-length v)))
+            ($oops 'flvector-set! "~s is not a flonum" x)
+            (index-oops 'flvector-set! v i))
+        (flvector-oops 'flvector-set! v)))
+
+  (define-library-entry (flvector-length v)
+    (flvector-oops 'flvector-length v))
 
   (define-library-entry (bytevector-s8-ref v i)
     (if (bytevector? v)

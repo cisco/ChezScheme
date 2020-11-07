@@ -565,6 +565,8 @@
      (case type
        [(unsigned-64)
         (integer-bytes->integer (real->floating-point-bytes v 8) #f)]
+       [(integer-64)
+        (integer-bytes->integer (real->floating-point-bytes v 8) #t)]
        [else (error "unrecognized floating-point access" type offset)])]
     [else
      (unless (or (eq? type 'scheme-object)

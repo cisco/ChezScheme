@@ -268,6 +268,7 @@ typedef struct _bucket_pointer_list {
 #define size_closure(n) ptr_align(header_size_closure + (n)*ptr_bytes)
 #define size_string(n) ptr_align(header_size_string + (n)*string_char_bytes)
 #define size_fxvector(n) ptr_align(header_size_fxvector + (n)*ptr_bytes)
+#define size_flvector(n) ptr_align(header_size_fxvector + (n)*sizeof(double))
 #define size_bytevector(n) ptr_align(header_size_bytevector + (n))
 #define size_bignum(n) ptr_align(header_size_bignum + (n)*bigit_bytes)
 #define size_code(n) ptr_align(header_size_code + (n))

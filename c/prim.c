@@ -151,6 +151,9 @@ static void create_c_entry_vector() {
     S_install_c_entry(CENTRY_Scall_any_results, proc2ptr(S_call_any_results));
     S_install_c_entry(CENTRY_segment_info, proc2ptr(S_segment_info));
     S_install_c_entry(CENTRY_bignum_mask_test, proc2ptr(S_bignum_mask_test));
+    S_install_c_entry(CENTRY_null_immutable_vector, TO_PTR(S_G.null_immutable_vector));
+    S_install_c_entry(CENTRY_null_immutable_bytevector, TO_PTR(S_G.null_immutable_bytevector));
+    S_install_c_entry(CENTRY_null_immutable_string, TO_PTR(S_G.null_immutable_string));
 }
 
 void S_check_c_entry_vector() {

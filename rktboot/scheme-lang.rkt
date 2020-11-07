@@ -166,6 +166,7 @@
                      [bytes? bytevector?]
                      [bytes-set! bytevector-u8-set!]
                      [bytes-ref bytevector-u8-ref]
+                     [bytes->immutable-bytes bytevector->immutable-bytevector]
                      [bwp? bwp-object?]
                      [number->string r6rs:number->string]
                      [s:printf printf]
@@ -261,7 +262,6 @@
          immutable-string?
          immutable-vector?
          immutable-bytevector?
-         immutable-fxvector?
          immutable-box?
          require-nongenerative-clause
          generate-inspector-information
@@ -1051,9 +1051,6 @@
   (and any-immutable?
        (bytes? s)
        (immutable? s)))
-
-(define (immutable-fxvector? s)
-  #f)
 
 (define (immutable-box? s)
   (and any-immutable?

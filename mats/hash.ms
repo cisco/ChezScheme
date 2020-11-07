@@ -1663,6 +1663,7 @@
           [(5) (open-output-string)]
           [(6) (fxvector 15 55)]
           [(7) (lambda () x)]
+          [(8) (flvector 15.0 55.0)]
           [else (box 'top)])))
     (let ([ls1 (let f ([n 10000])
                  (if (fx= n 0)
@@ -3038,6 +3039,7 @@
           [(5) (open-output-string)]
           [(6) (fxvector 15 55)]
           [(7) (lambda () x)]
+          [(8) (flvector 15.0 55.0)]
           [else (box 'top)])))
     (let ([ls1 (let f ([n 10000])
                  (if (fx= n 0)

@@ -1,5 +1,6 @@
 #lang racket/base
 (require racket/fixnum
+         racket/flonum
          racket/port
          "immediate.rkt"
          "gensym.rkt")
@@ -136,9 +137,12 @@
      (define l (read/recursive in))
      (list->bytes l)]
     [(#\f)
-     (unless (eqv? #\x (read-char in)) (error 'hash-vee "not 8"))
+     (define t (read-char in))
+     (unless (or (eqv? #\x t) (eqv? #\l t)) (error 'hash-vee "not x or l"))
      (define l (read/recursive in))
-     (apply fxvector l)]
+     (if (eqv? #\x t)
+         (apply fxvector l)
+         (apply flvector l))]
     [else (error 'hash-vee "unexpected")]))
 
 (define (as-symbol c in src line col pos)

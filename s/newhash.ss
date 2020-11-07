@@ -1047,22 +1047,25 @@ Documentation notes:
       (lambda (x)
         (define (f x hc i)
           (let ([i (fx- i 1)])
+            (define-syntax (vector-hash stx)
+              (syntax-case stx ()
+                [(_ base vector-length vector-ref)
+                 #'(let ([n (vector-length x)] [hc (update hc base)])
+                     (if (fx= n 0)
+                         (values hc i)
+                         (let g ([j 0] [hc hc] [i i])
+                           (if (or (fx= j n) (fx= i 0))
+                               (values hc i)
+                               (let ([i/2 (fxsrl (fx+ i 1) 1)])
+                                 (let-values ([(hc i^) (f (vector-ref x j) hc i/2)])
+                                   (g (fx+ j 1) hc (fx+ (fx- i i/2) i^))))))))]))
             (cond
               [(fx<= i 0) (values hc 0)]
               [(pair? x)
                (let ([i/2 (fxsrl (fx+ i 1) 1)])
                  (let-values ([(hc i^) (f (car x) (update hc 119001092) i/2)])
                    (f (cdr x) hc (fx+ (fx- i i/2) i^))))]
-              [(vector? x)
-               (let ([n (vector-length x)] [hc (update hc 513566316)])
-                 (if (fx= n 0)
-                     (values hc i)
-                     (let g ([j 0] [hc hc] [i i])
-                       (if (or (fx= j n) (fx= i 0))
-                           (values hc i)
-                           (let ([i/2 (fxsrl (fx+ i 1) 1)])
-                             (let-values ([(hc i^) (f (vector-ref x j) hc i/2)])
-                               (g (fx+ j 1) hc (fx+ (fx- i i/2) i^))))))))]
+              [(vector? x) (vector-hash 513566316 vector-length vector-ref)]
               [(stencil-vector? x)
                (let ([n (stencil-vector-length x)] [hc (update hc 517766377)])
                  (if (fx= n 0)
@@ -1096,6 +1099,8 @@ Documentation notes:
                                                  sub-hc
                                                  (modulo (abs sub-hc) (greatest-fixnum))))])
                           (values hc new-i)))))]
+              [(fxvector? x) (vector-hash 513577316 fxvector-length fxvector-ref)]
+              [(flvector? x) (vector-hash 513599316 flvector-length flvector-ref)]
               [else (values (update hc 120634730) i)])))
         (let-values ([(hc i) (f x 523658599 64)])
           (hcabs hc)))))

@@ -1172,6 +1172,12 @@
     (check-loop-allocation (lambda (v) (let ([v (fl+ v 1.0)])
                                          (bytevector-ieee-double-native-set! bv 0 v)
                                          (fl* v 0.99)))))
+  (let ([flv (make-flvector 8 0.0)])
+    (check-loop-allocation (lambda (v) (fl+ v (flvector-ref flv 0)))))
+  (let ([flv (make-flvector 8 0.0)])
+    (check-loop-allocation (lambda (v) (let ([v (fl+ v 1.0)])
+                                         (flvector-set! flv 0 v)
+                                         (fl* v 0.99)))))
   (or (not (enable-cp0))
       (let ()
         (define-record pseudo-random-generator

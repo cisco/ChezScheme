@@ -59,7 +59,7 @@
 
   (define (immutable! str)
     (cond
-     [(eqv? str "") ($tc-field 'null-immutable-string ($tc))]
+     [(eqv? str "") (string->immutable-string "")]
      [else ($string-set-immutable! str)
            str]))
 
@@ -131,7 +131,7 @@
   (lambda (v)
     (cond
       [(immutable-string? v) v]
-      [(eqv? v "") ($tc-field 'null-immutable-string ($tc))]
+      [(eqv? v "") (string->immutable-string "")]
       [else
        (unless (string? v) ($oops who "~s is not a string" v))
        (let ([v2 (string-copy v)])
