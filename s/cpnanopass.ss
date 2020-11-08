@@ -3594,7 +3594,7 @@
          (define build-double-scale
            (lambda (e)
              (constant-case ptr-bits
-               [(32) (%inline sll ,e 1)]
+               [(32) (%inline sll ,e (immediate 1))]
                [(64) e]
                [else ($oops 'build-double-scale "unknown ptr-bit size ~s" (constant ptr-bits))])))
          (define build-unfix
