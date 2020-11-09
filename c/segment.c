@@ -338,12 +338,18 @@ iptr S_find_segments(creator, s, g, n) thread_gc *creator; ISPC s; IGEN g; iptr 
 
   /* we couldn't find space, so ask for more */
   si = allocate_segments(n);
-  for (nextsi = si; n > 0; n -= 1, nextsi += 1) {
+  for (nextsi = si, i = 0; i < n; i += 1, nextsi += 1) {
     initialize_seginfo(nextsi, creator, s, g);
     /* add segment to appropriate list of occupied segments */
     nextsi->next = S_G.occupied_segments[g][s];
     S_G.occupied_segments[g][s] = nextsi;
   }
+
+  /* preemptively mark a huge allocation as immobile, since
+     we don't want the GC to ever copy it */
+  if (n > 128)
+    si->must_mark = MUST_MARK_INFINITY;
+
   return si->number;
 }
 
