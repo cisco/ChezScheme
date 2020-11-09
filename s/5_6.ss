@@ -161,8 +161,8 @@
                  (let ([i (fx- i 1)]) (flvector-set! flv2 i (flvector-ref flv1 i)))
                  (loop (fx- i 2))]
                 [(fx= i 0) (flvector-set! flv2 i (flvector-ref flv1 i))]))
-            ($ptr-copy! flv1 (constant flvector-data-disp) flv2
-              (constant flvector-data-disp) n))
+            ($byte-copy! flv1 (constant flvector-data-disp) flv2
+              (constant flvector-data-disp) (fx* n (constant flonum-bytes))))
         flv2))))
 
 (set! vector-map
