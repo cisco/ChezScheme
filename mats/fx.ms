@@ -2904,3 +2904,40 @@
     '(fxreverse-bit-field -1 0 (fx- (fixnum-width) 1))
     -1)
 )
+
+(mat cp-regression-check
+  (begin
+    (define ($regression-go th) (th 'break))
+    (define ($regression-slow v) (inexact->exact (exact->inexact v)))
+    
+    (let ()
+      (define l '(1 2 3 4 5))
+      (define expected (fxvector 1 2 3 4 5))
+
+      (define xs (make-fxvector (length l)))
+      
+      (define (list->fxvector vs)
+        (let ([n 5])
+          ($regression-go
+           (lambda (break)
+             (let loop ([i 0] [vs vs])
+               (unless (null? vs)
+                 (let ([v (car vs)])
+                   (#3%fxvector-set! xs i ($regression-slow v))
+                   (loop (fx+ i 1) (cdr vs)))))))
+          xs))
+
+      (let loop ([i 1000000])
+        (cond
+          [(zero? i) #t]
+          [else
+           (fxvector-set! xs 0 0)
+           (fxvector-set! xs 1 0)
+           (fxvector-set! xs 2 0)
+           (fxvector-set! xs 3 0)
+           (fxvector-set! xs 4 0)
+           (let ([v (list->fxvector l)])
+             (unless (equal? v expected)
+               (error 'failed "~a oops ~s\n" i v)))
+           (loop (sub1 i))]))))
+  )

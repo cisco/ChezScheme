@@ -11270,7 +11270,7 @@
           (lambda (ir setup*)
             (if (var? ir)
                 (values ir setup*)
-                (let ([tmp (make-tmp 't 'uptr)])
+                (let ([tmp (make-tmp 't 'ptr)])
                   (values tmp (cons (Rhs ir tmp) setup*))))))
         (define Lvalue?
           (lambda (x)
