@@ -1048,6 +1048,7 @@
   (add-prefix [flags])
   (alias [flags])
   (annotation-options [flags])
+  (begin-unsafe [flags])
   (case [flags])
   (constructor [flags])
   (critical-section [flags])

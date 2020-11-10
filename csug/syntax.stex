@@ -1527,6 +1527,21 @@ rather than:
 \endschemedisplay
 
 
+\section{Unsafety\label{SECTSYNTAXBEGINUNSAFE}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{begin-unsafe}{\categorysyntax}{(begin-unsafe \var{e_1} \var{e_2} \dots)}
+\returns value of last \var{e}
+\listlibraries
+\endentryheader
+
+\scheme{begin-unsafe} is like \scheme{begin} in an expression
+position, but it sets \scheme{optimize-level} to 3 while expanding the
+body expressions---which, for example, causes references to primitives
+to refer to unsafe variants.
+
+
 \section{Annotations\label{SECTSYNTAXANNOTATIONS}}
 
 \index{annotations}%

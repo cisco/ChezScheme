@@ -6377,6 +6377,13 @@
          (unless (source-object? src) (syntax-error src "profile subform is not a source object"))
          (build-input-profile src))])))
 
+(global-extend 'core 'begin-unsafe
+  (lambda (e r w ae)
+    (syntax-case e ()
+      ((_ e1 e2 ...)
+       (parameterize ([optimize-level 3])
+         (chi-sequence #'(e1 e2 ...) r w no-source))))))
+
 (global-extend 'set! 'set! '())
 
 (global-extend 'alias 'alias '())
