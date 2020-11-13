@@ -54,6 +54,8 @@ jobs:
           fetch-depth: 100
       - name: Build Chez
         run: |
+          ./configure --pb -m=$MACH
+          make ${MACH}.bootquick
           ./configure -m=$MACH
           make -j$(($(nproc)+1)) -l$(nproc)
       - name: Test Chez
