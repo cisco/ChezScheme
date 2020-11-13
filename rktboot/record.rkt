@@ -567,6 +567,13 @@
         (integer-bytes->integer (real->floating-point-bytes v 8) #f)]
        [(integer-64)
         (integer-bytes->integer (real->floating-point-bytes v 8) #t)]
+       [(integer-32)
+        (define bstr (real->floating-point-bytes v 8))
+        (case offset
+          [(6) (integer-bytes->integer bstr #t (system-big-endian?) 0 4)]
+          [(10) (integer-bytes->integer bstr #t (system-big-endian?) 4 8)]
+          [else
+           (error "unrecognized floating-point access" type offset)])]
        [else (error "unrecognized floating-point access" type offset)])]
     [else
      (unless (or (eq? type 'scheme-object)

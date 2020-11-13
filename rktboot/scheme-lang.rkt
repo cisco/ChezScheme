@@ -110,6 +110,7 @@
          debug-level
          scheme-version-number
          scheme-fork-version-number
+         native-endianness
          (rename-out [make-parameter $make-thread-parameter]
                      [make-parameter make-thread-parameter]
                      [cons make-binding]
@@ -928,6 +929,11 @@
   (if (zero? (arithmetic-shift v -24))
       (values maj min sub 0)
       (values maj min sub (bitwise-and 255 v))))
+
+(define (native-endianness)
+  (if (system-big-endian?)
+      'big
+      'little))
 
 (define (make-hashtable hash eql?)
   (cond
