@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e -o pipefail
+echo Building boot files...
+./configure --pb
+make ${MACH}.bootquick
 echo Building Chez Scheme...
 ./configure -m=$MACH
 make

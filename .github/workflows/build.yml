@@ -16,11 +16,6 @@ jobs:
       MACH: ${{ matrix.mach }}
 
     steps:
-      - uses: Bogdanp/setup-racket@v0.10
-        with:
-          distribution: 'minimal'  # minimal is enough
-          variant: 'CS'            # lets dog-food CS
-          version: 'current'
       - uses: actions/checkout@v2
         with:
           submodules: 'recursive'
@@ -37,8 +32,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libncurses5-dev uuid-dev libssl-dev
-      - name: Build bootfiles
-        run: racket rktboot/main.rkt
       - name: Build Chez
         run: .github/scripts/build.sh
       - name: Test Chez
@@ -54,26 +47,11 @@ jobs:
       MACH: tarm64le
       
     steps:
-      - name: Create Racket Temp Directory
-        run: mkdir /tmp/racket
-      - name: Build Racket CGC
-        working-directory: /tmp/racket
-        run: |
-          git clone --depth=1 https://github.com/racket/racket
-          cd racket/racket/src
-          ./configure --prefix=/usr --enable-cgcdefault --disable-docs --disable-cify
-          export cpus=$(nproc)
-          make -l $cpus -j $((cpus+1))
-          make -j  $((cpus+1)) install
-          cd
-          rm -Rf /tmp/racket
       - name: Checkout ChezScheme
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
           fetch-depth: 100
-      - name: Build bootfiles
-        run: racket rktboot/main.rkt
       - name: Build Chez
         run: |
           ./configure -m=$MACH
