@@ -26,14 +26,16 @@ for fn in "$srcdir"/boot/*/scheme.boot ; do
         sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
     fi
 done
-for fn in boot/*/scheme.boot ; do
-    next=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
-    if [ "$next" != '*' ] ; then
-        machs=$machs$sep0$last
-        last=$next
-        sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
-    fi
-done
+if [ "$srcdir" != "." ]; then
+    for fn in boot/*/scheme.boot ; do
+        next=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
+        if [ "$next" != '*' ] ; then
+            machs=$machs$sep0$last
+            last=$next
+            sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
+        fi
+    done
+fi
 machs=$machs$sep2$last
 
 m=""
@@ -599,7 +601,7 @@ if [ "$addflags" = "yes" ] ; then
   fi
 fi
 
-if [ "$m" != "" -o -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
+if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
   echo "Configuring for $m"
 else
   if [ "$m" = "" ] ; then
