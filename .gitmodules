@@ -10,3 +10,7 @@
 [submodule "lz4"]
 	path = lz4
 	url = https://github.com/lz4/lz4.git
+[submodule "boot/pb"]
+	path = boot/pb
+	url = https://github.com/racket/pb
+	branch = circa-7.9.0.5-1
