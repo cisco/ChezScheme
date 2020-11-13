@@ -3035,8 +3035,10 @@ static void teardown_sweepers(void) {
       IGEN g;
       S_G.bitmask_overhead[0] += t_tgc->bitmask_overhead[0];
       t_tgc->bitmask_overhead[0] = 0;
-      for (g = MIN_TG; g <= MAX_TG; g++)
+      for (g = MIN_TG; g <= MAX_TG; g++) {
         S_G.bitmask_overhead[g] += t_tgc->bitmask_overhead[g];
+        t_tgc->bitmask_overhead[g] = 0; /* needed to avoid double add for main_sweeper_index */
+      }
       S_flush_instruction_cache(t_tgc->tc);
       t_tgc->sweeper = main_sweeper_index;
       t_tgc->queued_fire = 0;
