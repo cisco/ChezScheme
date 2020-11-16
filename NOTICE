@@ -28,3 +28,6 @@ Builds of this product incorporate separately copyrighted code from:
 
 * the Zlib compression library, developed by Jean-loup Gailly and
   Mark Adler
+
+* the LZ4 compression library, developed by Yann Collet and
+  contributors.
