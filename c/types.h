@@ -170,6 +170,9 @@ typedef struct _seginfo {
   octet *counting_mask;                     /* bitmap of counting roots during a GC */
   octet *measured_mask;                     /* bitmap of objects that have been measured */
 #ifdef PORTABLE_BYTECODE
+# ifndef PTHREADS
+  void *encorage_alignment;                 /* hack for 32-bit systems that align 64-bit values on 4 bytes */
+# endif
   union { ptr force_alignment;    
 #endif
   octet dirty_bytes[cards_per_segment];     /* one dirty byte per card */

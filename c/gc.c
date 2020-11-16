@@ -1714,7 +1714,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
         }
         INITTLCNEXT(tlc) = Sfalse;
         INITPTRFIELD(ht,eq_hashtable_size_disp) = FIX(UNFIX(PTRFIELD(ht,eq_hashtable_size_disp)) - 1);
-      } else if ((new_idx = ((uptr)key >> primary_type_bits) & (veclen - 1)) != old_idx) {
+      } else if ((new_idx = eq_hash(key) & (veclen - 1)) != old_idx) {
        /* remove tlc from old bucket */
         b = Svector_ref(vec, old_idx);
         if (b == tlc) {

@@ -113,8 +113,8 @@ Documentation notes:
       ; NB: allow negative exact integers.
       (let ([i (hash x)])
         (cond
-          [(fixnum? i) (fxlogand i mask)]
-          [(bignum? i) (logand i mask)]
+          [(fixnum? i) (fxlogand (fixmix i) mask)]
+          [(bignum? i) (fxlogand (fixmix (bitwise-and i (most-positive-fixnum))) mask)]
           [else ($oops who "invalid hash-function ~s return value ~s for ~s" hash i x)]))))
 
   (define size->minlen
@@ -428,12 +428,35 @@ Documentation notes:
                [cells2 ($ht-hashtable-cells (eqv-ht-genht h) (fx- max-sz (vector-length cells1)))])
           (vector-append cells1 cells2)))))
 
+  (define (fixmix x)
+    ;; Since mutable hash tables tend to use the low bits of a hash code,
+    ;; make sure higher bits of a fixnum are represented there
+    (let* ([x1 (constant-case ptr-bits
+                 [(64) (fxxor x (fxand (fxsrl x 32) #xFFFFFFFF))]
+                 [else x])]
+           [x2 (fxxor x1 (fxand (fxsrl x1 16) #xFFFF))]
+           [x3 (fxxor x2 (fxand (fxsrl x2 8) #xFF))])
+      x3))
+
   (define number-hash
     (lambda (z)
       (cond
         [(fixnum? z) (if (fx< z 0) (fxnot z) z)]
         [(flonum? z) ($flhash z)]
-        [(bignum? z) (modulo z (most-positive-fixnum))]
+        [(bignum? z) (let ([len (integer-length z)]
+                           [update (lambda (hc k)
+                                     (let ([hc2 (#3%fx+ hc (#3%fxsll (#3%fx+ hc k) 10))])
+                                       (fxlogxor hc2 (fxsrl hc2 6))))])
+                       (let loop ([i 0] [hc 0])
+                         (cond
+                           [(fx>= i len) hc]
+                           [else
+                            (let ([next-i (fx+ i (fx- (fixnum-width) 1))])
+                              (loop next-i
+                                    (bitwise-and
+                                     (most-positive-fixnum)
+                                     (update (bitwise-bit-field z i next-i)
+                                             hc))))])))]
         [(ratnum? z) (number-hash (+ (* (numerator z) 5) (denominator z)))]
         [else (logxor (lognot (number-hash (real-part z))) (number-hash (imag-part z)))])))
 

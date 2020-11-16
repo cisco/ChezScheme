@@ -896,7 +896,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               }
               faslin(tc, &INITCAR(keyval), t, pstrbuf, f);
               faslin(tc, &INITCDR(keyval), t, pstrbuf, f);
-              i = ((uptr)Scar(keyval) >> primary_type_bits) & (veclen - 1);
+              i = eq_hash(Scar(keyval)) & (veclen - 1);
               INITVECTIT(v, i) = S_tlc(keyval, ht, Svector_ref(v, i));
               n -= 1;
             }
