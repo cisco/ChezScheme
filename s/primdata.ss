@@ -45,7 +45,7 @@
   (fx=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
   (fx>? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
   (fx>=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; restricted to 2+ arguments
-  (fxzero? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
+  (fxzero? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs cptypes2])
   (fxnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
   (fxpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
   (fxeven? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
@@ -201,7 +201,7 @@
   ((r6rs: =) [sig [(number number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
   ((r6rs: >) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])   ; restricted to 2+ arguments
   ((r6rs: >=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])  ; restricted to 2+ arguments
-  (zero? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
+  (zero? [sig [(number) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2 ieee r5rs])
   (positive? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
   (negative? [sig [(real) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])
   (odd? [sig [(integer) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs])

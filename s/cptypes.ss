@@ -1073,6 +1073,40 @@ Notes:
                  [else
                   (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
 
+      (define-specialize 2 zero?
+        [(n) (let ([r (get-type n)])
+               (cond
+                 [(predicate-implies? r 'bignum)
+                  (values (make-seq ctxt n false-rec)
+                          false-rec ntypes #f #f)]
+                 [(predicate-implies? r 'fixnum)
+                  (values `(call ,preinfo ,(lookup-primref 3 'fxzero?) ,n)
+                          ret
+                          ntypes
+                          (pred-env-add/ref ntypes n `(quote 0) plxc)
+                          #f)]
+                 [(predicate-implies? r 'exact-integer)
+                  (values `(call ,preinfo ,(lookup-primref 3 'eq?) ,n (quote 0))
+                          ret
+                          ntypes
+                          (pred-env-add/ref ntypes n `(quote 0) plxc)
+                          #f)]
+                 [(predicate-implies? r 'flonum)
+                  (values `(call ,preinfo ,(lookup-primref 3 'flzero?) ,n)
+                          ret
+                          ntypes
+                          #f ; TODO: Add a type for flzero
+                          #f)]
+                 [else
+                  (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
+
+      (define-specialize 2 fxzero?
+        [(n) (values `(call ,preinfo ,pr ,n)
+                     ret
+                     ntypes
+                     (pred-env-add/ref ntypes n `(quote 0) plxc)
+                     #f)])
+
       (define-specialize 2 atan
         [(n) (let ([r (get-type n)])
                (cond

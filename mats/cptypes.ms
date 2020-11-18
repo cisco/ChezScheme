@@ -198,6 +198,18 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! x 0 0) (#2%odd? x) 1)
     '(lambda (x) (vector-set! x 0 0) (#2%odd? x) 2))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (zero? x)))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (#3%eq? x 0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (or (fixnum? x) (bignum? x)) (zero? x)) x))
+    '(lambda (x) (when (and (or (fixnum? x) (bignum? x)) (zero? x)) 0)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (zero? x)))
+    '(lambda (x) (when (fixnum? x) (#3%fxzero? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (fixnum? x) (zero? x)) x))
+    '(lambda (x) (when (and (fixnum? x) (zero? x)) 0)))
 )
 
 (mat cptypes-type-if
