@@ -462,7 +462,7 @@ Notes:
                       (predicate-implies? y t)))
                '(char null-or-pair $record
                  gensym uninterned-symbol interned-symbol symbol
-                 fixnum exact-integer flonum real number
+                 fixnum bignum exact-integer flonum real number
                  boolean true ptr))] ; ensure they are order from more restrictive to less restrictive
         [else #f]))
 
@@ -573,6 +573,7 @@ Notes:
       [box? 'box]
       [$record? '$record]
       [fixnum? 'fixnum]
+      [bignum? 'bignum]
       [flonum? 'flonum]
       [real? 'real]
       [number? 'number]
@@ -619,6 +620,7 @@ Notes:
       [box 'box]
       [$record '$record]
       [fixnum 'fixnum]
+      [bignum 'bignum]
       [flonum 'flonum]
       [real 'real]
       [number 'number]
@@ -716,16 +718,20 @@ Notes:
                   [(null-or-pair) (or (eq? x 'pair)
                                       (check-constant-is? x null?))]
                   [(fixnum) (check-constant-is? x target-fixnum?)]
+                  [(bignum) (check-constant-is? x target-bignum?)]
                   [(exact-integer)
                    (or (eq? x 'fixnum)
+                       (eq? x 'bignum)
                        (check-constant-is? x (lambda (x) (and (integer? x)
                                                               (exact? x)))))]
                   [(flonum) (check-constant-is? x flonum?)]
                   [(real) (or (eq? x 'fixnum)
+                              (eq? x 'bignum)
                               (eq? x 'exact-integer)
                               (eq? x 'flonum)
                               (check-constant-is? x real?))]
                   [(number) (or (eq? x 'fixnum)
+                                (eq? x 'bignum)
                                 (eq? x 'exact-integer)
                                 (eq? x 'flonum)
                                 (eq? x 'real)
