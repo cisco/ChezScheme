@@ -4790,6 +4790,8 @@
           [(e1 . e*) (reduce src sexpr moi e1 e*)])
         (define-inline 3 r6rs:fx+ ; limited to two arguments
           [(e1 e2) (%inline + ,e1 ,e2)])
+        (define-inline 3 fx+/wraparound
+          [(e1 e2) (%inline + ,e1 ,e2)])
         (define-inline 3 fx1+
           [(e) (%inline + ,e (immediate ,(fix 1)))])
         (define-inline 2 $fx+?
@@ -4835,7 +4837,13 @@
                       (goto ,Llib))))]
             [(e1 . e*) #f])
           (define-inline 2 r6rs:fx+ ; limited to two arguments
-            [(e1 e2) (go src sexpr e1 e2)]))
+            [(e1 e2) (go src sexpr e1 e2)])
+          (define-inline 2 fx+/wraparound
+            [(e1 e2)
+              (bind #t (e1 e2)
+                `(if ,(build-fixnums? (list e1 e2))
+                     ,(%inline + ,e1 ,e2)
+                     ,(build-libcall #t src sexpr fx+/wraparound e1 e2)))]))
 
         (define-inline 3 fx-
           [(e) (%inline - (immediate 0) ,e)]
@@ -4843,6 +4851,8 @@
           [(e1 . e*) (reduce src sexpr moi e1 e*)])
         (define-inline 3 r6rs:fx- ; limited to one or two arguments
           [(e) (%inline - (immediate 0) ,e)]
+          [(e1 e2) (%inline - ,e1 ,e2)])
+        (define-inline 3 fx-/wraparound
           [(e1 e2) (%inline - ,e1 ,e2)])
         (define-inline 3 fx1-
           [(e) (%inline - ,e (immediate ,(fix 1)))])
@@ -4885,7 +4895,13 @@
             [(e1 . e*) #f])
           (define-inline 2 r6rs:fx- ; limited to one or two arguments
             [(e) (go src sexpr `(immediate ,(fix 0)) e)]
-            [(e1 e2) (go src sexpr e1 e2)]))
+            [(e1 e2) (go src sexpr e1 e2)])
+          (define-inline 2 fx-/wraparound
+            [(e1 e2)
+             (bind #t (e1 e2)
+               `(if ,(build-fixnums? (list e1 e2))
+                    ,(%inline - ,e1 ,e2)
+                    ,(build-libcall #t src sexpr fx-/wraparound e1 e2)))]))
         (define-inline 2 fx1-
           [(e) (let ([Llib (make-local-label 'Llib)])
                  (bind #t (e)
@@ -4970,6 +4986,8 @@
               [(e1 . e*) (reduce src sexpr moi e1 e*)])
             (define-inline 3 r6rs:fx* ; limited to two arguments
               [(e1 e2) (build-fx* e1 e2 #f)])
+            (define-inline 3 fx*/wraparound
+              [(e1 e2) (build-fx* e1 e2 #f)])
             (let ()
               (define (go src sexpr e1 e2)
                 (let ([Llib (make-local-label 'Llib)])
@@ -5003,7 +5021,13 @@
                           (goto ,Llib))))]
                 [(e1 . e*) #f])
               (define-inline 2 r6rs:fx* ; limited to two arguments
-                [(e1 e2) (go src sexpr e1 e2)]))
+                [(e1 e2) (go src sexpr e1 e2)])
+              (define-inline 2 fx*/wraparound
+                [(e1 e2)
+                 (bind #t (e1 e2)
+                   `(if ,(build-fixnums? (list e1 e2))
+                        ,(build-fx* e1 e2 #f)
+                        ,(build-libcall #t src sexpr fx*/wraparound e1 e2)))]))
             (let ()
               (define build-fx/p2
                 (lambda (e1 p2)
@@ -5158,6 +5182,8 @@
           (define-inline 3 fxsll
             [(e1 e2) (do-fxsll e1 e2)])
           (define-inline 3 fxarithmetic-shift-left
+            [(e1 e2) (do-fxsll e1 e2)])
+          (define-inline 3 fxsll/wraparound
             [(e1 e2) (do-fxsll e1 e2)]))
         (define-inline 3 fxsrl
           [(e1 e2)
@@ -6797,6 +6823,19 @@
           [(e0 e1) (build-libcall #f src sexpr fxsll e0 e1)])
         (define-inline 2 fxarithmetic-shift-left
           [(e0 e1) (build-libcall #f src sexpr fxarithmetic-shift-left e0 e1)])
+        (define-inline 2 fxsll/wraparound
+          [(e1 e2)
+           (bind #t (e1 e2)
+             `(if ,(nanopass-case (L7 Expr) e2
+                     [(quote ,d)
+                      (guard (target-fixnum? d)
+                             ($fxu< d (fx+ 1 (constant fixnum-bits))))
+                      (build-fixnums? (list e1 e2))]
+                     [else
+                      (build-and (build-fixnums? (list e1 e2))
+                                 (%inline u< ,e2 (immediate ,(fix (fx+ 1 (constant fixnum-bits))))))])
+                  ,(%inline sll ,e1 ,(build-unfix e2))
+                  ,(build-libcall #t src sexpr fxsll/wraparound e1 e2)))])
         (define-inline 3 display-string
           [(e-s) (build-libcall #f src sexpr display-string e-s (%tc-ref current-output))]
           [(e-s e-op) (build-libcall #f src sexpr display-string e-s e-op)])

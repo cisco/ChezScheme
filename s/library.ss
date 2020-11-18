@@ -523,6 +523,14 @@
 (define-library-entry (fx1+ x) (fxoops1 'fx1+ x))
 (define-library-entry (fx1- x) (fxoops1 'fx1- x))
 
+(define-library-entry (fx+/wraparound x y) (fxoops2 'fx+/wraparound x y))
+(define-library-entry (fx-/wraparound x y) (fxoops2 'fx-/wraparound x y))
+(define-library-entry (fx*/wraparound x y) (fxoops2 'fx*/wraparound x y))
+(define-library-entry (fxsll/wraparound x y)
+  (if (and (fixnum? x) (fixnum? y))
+      (shift-count-oops 'fxsll/wraparound y)
+      (fxoops2 'fxsll/wraparound x y)))
+
 (define-library-entry (fx= x y) (fxnonfixnum2 'fx= x y))
 (define-library-entry (fx< x y) (fxnonfixnum2 'fx< x y))
 (define-library-entry (fx> x y) (fxnonfixnum2 'fx> x y))

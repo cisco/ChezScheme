@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050331)
+(define-constant scheme-version #x09050332)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2785,6 +2785,10 @@
      (sub1 #f 1 #f #t)
      (-1+ #f 1 #f #t)
      (fx* #f 2 #t #t)
+     (fx*/wraparound #f 2 #t #t)
+     (fx+/wraparound #f 2 #t #t)
+     (fx-/wraparound #f 2 #t #t)
+     (fxsll/wraparound #f 2 #t #t)
      (dofargint64 #f 1 #f #f)
      (dofretint64 #f 1 #f #f)
      (dofretuns64 #f 1 #f #f)

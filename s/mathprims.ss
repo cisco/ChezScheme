@@ -348,6 +348,14 @@
        [(x) (#2%r6rs:fx- x)]
        [(x y) (#2%r6rs:fx- x y)]))
 
+   (set-who! fx+/wraparound
+     (lambda (x1 x2)
+       (#2%fx+/wraparound x1 x2)))
+
+   (set-who! fx-/wraparound
+     (lambda (x1 x2)
+       (#2%fx-/wraparound x1 x2)))
+
    (set! fx1-
       (lambda (x)
          (#2%fx1- x)))
@@ -402,6 +410,10 @@
                  (if (fixnum? n) n (fxanserr who x1 x2)))
                (fxargerr who x2))
            (fxargerr who x1))))
+
+   (set-who! fx*/wraparound
+     (lambda (x1 x2)
+       (#2%fx*/wraparound x1 x2)))
 
    (set! fxquotient
      (rec fxquotient
@@ -518,15 +530,19 @@
 
    (set! fxsll
       (lambda (x y)
-         (#2%fxsll x y)))
+        (#2%fxsll x y)))
 
-   (set! fxarithmetic-shift-left
-     (lambda (x y)
-       (#2%fxarithmetic-shift-left x y)))
+   (set-who! fxsll/wraparound
+     (lambda (x1 x2)
+       (#2%fxsll/wraparound x1 x2)))
 
    (set! fxsrl
       (lambda (x y)
          (#2%fxsrl x y)))
+
+   (set! fxarithmetic-shift-left
+     (lambda (x y)
+       (#2%fxarithmetic-shift-left x y)))
 
    (set! fxsra
       (lambda (x y)

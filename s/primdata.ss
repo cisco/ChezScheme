@@ -1365,8 +1365,11 @@
   (ftype-pointer-null? [sig [(ftype-pointer) -> (boolean)]] [flags pure mifoldable discard])
   (ftype-pointer->sexpr [sig [(ftype-pointer) -> (ptr)]] [flags])
   (fx* [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])  ; not restricted to 2 arguments
+  (fx*/wraparound [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])
   (fx+ [sig [(fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])  ; not restricted to 2 arguments
+  (fx+/wraparound [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])
   (fx- [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])  ; not restricted to 1 or 2 arguments
+  (fx-/wraparound [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op partial-folder])
   (fx/ [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])  ; not restricted to 1 or 2 arguments
   (fx1+ [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fx1- [sig [(fixnum) -> (fixnum)]] [flags arith-op cp02])
@@ -1394,6 +1397,7 @@
   (fxquotient [sig [(fixnum fixnum ...) -> (fixnum)]] [flags arith-op partial-folder])
   (fxremainder [sig [(fixnum fixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsll [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
+  (fxsll/wraparound [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsra [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxsrl [sig [(fixnum sub-ufixnum) -> (fixnum)]] [flags arith-op cp02])
   (fxvector [sig [(fixnum ...) -> (fxvector)]] [flags alloc cp02 safeongoodargs])

@@ -2725,12 +2725,14 @@
         (partial-folder plus + + 0 generic-nan?)
         (partial-folder plus fx+ + 0 (lambda (x) #f) 3)
         (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0 (lambda (x) #f) 3)
+        (r6rs-fixnum-partial-folder plus fx+/wraparound fx+/wraparound + 0 (lambda (x) #f) 3)
         (partial-folder plus fl+ fl+ -0.0 fl-nan? #f obviously-fl?)
         (partial-folder plus cfl+ cfl+ -0.0 cfl-nan?)
 
         (partial-folder plus * * 1 exact-zero?)   ; exact zero trumps nan
         (partial-folder plus fx* * 1 exact-zero? 3)
         (r6rs-fixnum-partial-folder plus r6rs:fx* fx* * 1 exact-zero? 3)
+        (r6rs-fixnum-partial-folder plus fx*/wraparound fx*/wraparound * 1 (lambda (x) #f) 3)
         (partial-folder plus fl* fl* 1.0 fl-nan? #f obviously-fl?)
         (partial-folder plus cfl* cfl* 1.0 cfl-nan?)
 
@@ -2740,6 +2742,7 @@
         (partial-folder minus - - 0)
         (partial-folder minus fx- - 0)
         (r6rs-fixnum-partial-folder minus r6rs:fx- fx- - 0)
+        (r6rs-fixnum-partial-folder plus fx-/wraparound fx-/wraparound - 0 (lambda (x) #f) 3)
         (partial-folder minus fl- fl- -0.0)
         (partial-folder minus cfl- cfl- -0.0)
 
@@ -2883,6 +2886,7 @@
         (fold (fxarithmetic-shift-left tfixnum? u<fxwidth?) tfixnum? #2%bitwise-arithmetic-shift-left handle-shift)
         (fold (fxarithmetic-shift-right tfixnum? u<fxwidth?) tfixnum? #2%bitwise-arithmetic-shift-right handle-shift)
         (fold (fxsll tfixnum? u<=fxwidth?) tfixnum? #2%bitwise-arithmetic-shift-left handle-shift)
+        (fold (fxsll/wraparound tfixnum? u<=fxwidth?) tfixnum? #2%fxsll/wraparound handle-shift)
         (fold (fxsra tfixnum? u<=fxwidth?) tfixnum? #2%bitwise-arithmetic-shift-right handle-shift)
         (fold (fxsrl tfixnum? u<=fxwidth?) tfixnum?
           (lambda (x k)

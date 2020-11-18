@@ -177,6 +177,11 @@
                      [write-string display-string]
                      [call/ec call/1cc]
                      [s:string->symbol string->symbol])
+         ;; Wraparound behavior not needed to compile Chez Scheme itself:
+         (rename-out [fx+ fx+/wraparound]
+                     [fx- fx-/wraparound]
+                     [fx* fx*/wraparound]
+                     [fxlshift fxsll/wraparound])
          logbit? logbit1 logbit0 logtest
          (rename-out [logbit? fxlogbit?]
                      [logbit1 fxlogbit1]
