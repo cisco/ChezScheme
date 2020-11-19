@@ -1,5 +1,5 @@
-*** errors-compile-0-f-t-f	2020-11-07 06:47:03.000000000 -0700
---- errors-interpret-0-f-t-f	2020-11-07 07:16:02.000000000 -0700
+*** errors-compile-0-f-t-f	2020-11-19 10:55:55.000000000 -0700
+--- errors-interpret-0-f-t-f	2020-11-19 11:27:36.000000000 -0700
 ***************
 *** 18,25 ****
   primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote #f)): Exception in environment: invalid library reference #f
@@ -504,9 +504,9 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
 ***************
-*** 9141,9153 ****
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
+*** 9151,9163 ****
+  fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
+  fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
 ! fx.mo:Expected error in mat fx*: "fx*: fixnum overflow with arguments <int> and 2".
   fx.mo:Expected error in mat fx*: "fx*: <int> is not a fixnum".
@@ -518,9 +518,9 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 9141,9153 ----
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
+--- 9151,9163 ----
+  fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
+  fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
 ! fx.mo:Expected error in mat fx*: "fx*: fixnum overflow computing (fx* <int> 2)".
   fx.mo:Expected error in mat fx*: "fx*: <int> is not a fixnum".
@@ -533,7 +533,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 10644,10653 ****
+*** 10667,10676 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -544,7 +544,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 10644,10653 ----
+--- 10667,10676 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

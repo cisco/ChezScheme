@@ -25,7 +25,9 @@
          (only-in "r6rs-lang.rkt"
                   make-record-constructor-descriptor
                   set-car!
-                  set-cdr!)
+                  set-cdr!
+                  most-positive-fixnum
+                  most-negative-fixnum)
          (submod "r6rs-lang.rkt" hash-pair)
          (for-syntax "scheme-struct.rkt"
                      "rcd.rkt"))
@@ -177,11 +179,10 @@
                      [write-string display-string]
                      [call/ec call/1cc]
                      [s:string->symbol string->symbol])
-         ;; Wraparound behavior not needed to compile Chez Scheme itself:
-         (rename-out [fx+ fx+/wraparound]
-                     [fx- fx-/wraparound]
-                     [fx* fx*/wraparound]
-                     [fxlshift fxsll/wraparound])
+         fx+/wraparound
+         fx-/wraparound
+         fx*/wraparound
+         fxsll/wraparound
          logbit? logbit1 logbit0 logtest
          (rename-out [logbit? fxlogbit?]
                      [logbit1 fxlogbit1]
@@ -828,6 +829,25 @@
 
 (define (fxbit-field fx1 fx2 fx3)
   (fxrshift (fxand fx1 (fxnot (fxlshift -1 fx3))) fx2))
+
+(define (wraparound v)
+  (cond
+    [(fixnum? v)
+     v]
+    [(zero? (bitwise-and v (add1 (most-positive-fixnum))))
+     (bitwise-ior v (- -1 (most-positive-fixnum)))]
+    [else
+     (bitwise-and v (most-positive-fixnum))]))
+
+;; Re-implement wraparound so we can use Racket v7.9 and earlier:
+(define (fx+/wraparound x y)
+  (wraparound (+ x y)))
+(define (fx-/wraparound x y)
+  (wraparound (- x y)))
+(define (fx*/wraparound x y)
+  (wraparound (* x y)))
+(define (fxsll/wraparound x y)
+  (wraparound (arithmetic-shift x y)))
 
 (define (bitwise-bit-count fx)
   (cond

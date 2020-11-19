@@ -465,6 +465,23 @@
    (test-cp0-expansion eqv? '(r6rs:fx+ 3 3) 6)
  )
 
+(mat fx+/wraparound
+   (eqv? (fx+/wraparound 3 0) 3)
+   (eqv? (fx+/wraparound 3 1) 4)
+   (eqv? (fx+/wraparound -3 4) 1)
+   (error? (fx+/wraparound '(a . b) 0))
+   (error? (fx+ (add1 (most-positive-fixnum)) 1))
+   (error? (fx+ 1 (add1 (most-positive-fixnum))))
+   (error? (fx+ (sub1 (most-negative-fixnum)) 1))
+   (error? (fx+ 1 (sub1 (most-negative-fixnum))))
+   (eqv? (fx+/wraparound (most-positive-fixnum) 1) (most-negative-fixnum))
+   (eqv? (fx+/wraparound (most-positive-fixnum) 2) (add1 (most-negative-fixnum)))
+   (eqv? (fx+/wraparound (most-negative-fixnum) -1) (most-positive-fixnum))
+   (eqv? (fx+/wraparound (most-negative-fixnum) -2) (sub1 (most-positive-fixnum)))
+   (eqv? (fx+/wraparound (most-positive-fixnum) (most-positive-fixnum)) -2)
+   (eqv? (fx+/wraparound (most-negative-fixnum) (most-negative-fixnum)) 0)
+   )
+
 (mat fx-
    (eqv? (fx- 3 0) 3)
    (eqv? (fx- 3 1) 2)
@@ -533,6 +550,23 @@
    (test-cp0-expansion eqv? '(r6rs:fx- 3) -3)
  )
 
+(mat fx-/wraparound
+   (eqv? (fx-/wraparound 3 0) 3)
+   (eqv? (fx-/wraparound 3 1) 2)
+   (eqv? (fx-/wraparound -3 4) -7)
+   (error? (fx-/wraparound '(a . b) 0))
+   (error? (fx- (add1 (most-positive-fixnum)) 1))
+   (error? (fx- 1 (add1 (most-positive-fixnum))))
+   (error? (fx- (sub1 (most-negative-fixnum)) 1))
+   (error? (fx- 1 (sub1 (most-negative-fixnum))))
+   (eqv? (fx-/wraparound (most-negative-fixnum) 1) (most-positive-fixnum))
+   (eqv? (fx-/wraparound (most-negative-fixnum) 2) (sub1 (most-positive-fixnum)))
+   (eqv? (fx-/wraparound (most-positive-fixnum) -1) (most-negative-fixnum))
+   (eqv? (fx-/wraparound (most-positive-fixnum) -2) (add1 (most-negative-fixnum)))
+   (eqv? (fx-/wraparound (most-positive-fixnum) (most-negative-fixnum)) -1)
+   (eqv? (fx-/wraparound (most-negative-fixnum) (most-positive-fixnum)) 1)
+   )
+
 (mat fx*
    (eqv? (fx* 3 0) 0)
    (eqv? (fx* 3 1) 3)
@@ -588,6 +622,24 @@
    (test-cp0-expansion eqv? '(r6rs:fx* 3 -3) -9)
    (test-cp0-expansion eqv? '(r6rs:fx* 3 3) 9)
  )
+
+(mat fx*/wraparound
+   (eqv? (fx*/wraparound 3 0) 0)
+   (eqv? (fx*/wraparound 3 1) 3)
+   (eqv? (fx*/wraparound -3 4) -12)
+   (error? (fx*/wraparound '(a . b) 0))
+   (error? (fx* (add1 (most-positive-fixnum)) 1))
+   (error? (fx* 1 (add1 (most-positive-fixnum))))
+   (error? (fx* (sub1 (most-negative-fixnum)) 1))
+   (error? (fx* 1 (sub1 (most-negative-fixnum))))
+   (eqv? (fx*/wraparound (most-negative-fixnum) -1) (most-negative-fixnum))
+   (eqv? (fx*/wraparound (most-negative-fixnum) 2) 0)
+   (eqv? (fx*/wraparound (most-positive-fixnum) -1) (add1 (most-negative-fixnum)))
+   (eqv? (fx*/wraparound (most-positive-fixnum) 2) -2)
+   (eqv? (fx*/wraparound (most-positive-fixnum) -2) 2)
+   (eqv? (fx*/wraparound (most-positive-fixnum) (most-negative-fixnum)) (most-negative-fixnum))
+   (eqv? (fx*/wraparound (most-negative-fixnum) (most-positive-fixnum)) (most-negative-fixnum))
+   )
 
 (mat fxquotient
   (eqv? (fxquotient 3 1) 3)
@@ -1456,7 +1508,7 @@
   (test-cp0-expansion eqv? '(fxsll 1 3) 8)
   (test-cp0-expansion eqv? '(fxsll 1 4) 16)
   (test-cp0-expansion eqv? '(fxsll 1 (/ 8 2)) 16)
- )
+  )
 
 (mat fxarithmetic-shift-left
  ; bound on shift count is one less than for fxsll
@@ -1500,7 +1552,25 @@
   (test-cp0-expansion eqv? '(fxarithmetic-shift-left 1 3) 8)
   (test-cp0-expansion eqv? '(fxarithmetic-shift-left 1 4) 16)
   (test-cp0-expansion eqv? '(fxarithmetic-shift-left 1 (/ 8 2)) 16)
- )
+  )
+
+(mat fsll/wraparound
+   (eqv? (fxsll/wraparound 3 0) 3)
+   (eqv? (fxsll/wraparound 3 1) 6)
+   (eqv? (fxsll/wraparound -3 4) -48)
+   (error? (fxsll/wraparound '(a . b) 0))
+   (error? (fxsll/wraparound 4 -3))
+   (error? (fxsll/wraparound 4 1000))
+   (error? (fxsll/wraparound 4 -1000))
+   (error? (fxsll (add1 (most-positive-fixnum)) 1))
+   (error? (fxsll 1 (add1 (most-positive-fixnum))))
+   (error? (fxsll (sub1 (most-negative-fixnum)) 1))
+   (error? (fxsll 1 (sub1 (most-negative-fixnum))))
+   (eqv? (fxsll/wraparound (most-negative-fixnum) 1) 0)
+   (eqv? (fxsll/wraparound (most-negative-fixnum) 30) 0)
+   (eqv? (fxsll/wraparound (most-positive-fixnum) 1) -2)
+   (eqv? (fxsll/wraparound (most-positive-fixnum) 5) -32)
+   )
 
 (mat fxsrl
    (error? (fxsrl 1 -1))

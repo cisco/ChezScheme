@@ -445,7 +445,7 @@ Documentation notes:
         [(flonum? z) ($flhash z)]
         [(bignum? z) (let ([len (integer-length z)]
                            [update (lambda (hc k)
-                                     (let ([hc2 (#3%fx+ hc (#3%fxsll (#3%fx+ hc k) 10))])
+                                     (let ([hc2 (fx+/wraparound hc (fxsll/wraparound (fx+/wraparound hc k) 10))])
                                        (fxlogxor hc2 (fxsrl hc2 6))))])
                        (let loop ([i 0] [hc 0])
                          (cond
@@ -1004,7 +1004,7 @@ Documentation notes:
     (define (hcabs hc) (if (fx< hc 0) (fxnot hc) hc))
 
     (define (update hc k)
-      (let ([hc2 (#3%fx+ hc (#3%fxsll (#3%fx+ hc k) 10))])
+      (let ([hc2 (fx+/wraparound hc (fxsll/wraparound (fx+/wraparound hc k) 10))])
         (fxlogxor hc2 (fxsrl hc2 6))))
 
     (define bytevector-hash

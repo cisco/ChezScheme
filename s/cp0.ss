@@ -2742,7 +2742,7 @@
         (partial-folder minus - - 0)
         (partial-folder minus fx- - 0)
         (r6rs-fixnum-partial-folder minus r6rs:fx- fx- - 0)
-        (r6rs-fixnum-partial-folder plus fx-/wraparound fx-/wraparound - 0 (lambda (x) #f) 3)
+        (r6rs-fixnum-partial-folder minus fx-/wraparound fx-/wraparound - 0)
         (partial-folder minus fl- fl- -0.0)
         (partial-folder minus cfl- cfl- -0.0)
 

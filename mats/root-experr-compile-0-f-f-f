@@ -9128,6 +9128,11 @@ fx.mo:Expected error in mat r6rs:fx+: "fx+: <int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx+: "fx+: <-int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
+fx.mo:Expected error in mat fx+/wraparound: "fx+/wraparound: (a . b) is not a fixnum".
+fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
+fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx-: "fx-: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fx-: "fx-: fixnum overflow with arguments <-int> and 1".
 fx.mo:Expected error in mat fx-: "fx-: <int> is not a fixnum".
@@ -9140,6 +9145,11 @@ fx.mo:Expected error in mat r6rs:fx-: "fx-: <int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx-: "fx-: <-int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
+fx.mo:Expected error in mat fx-/wraparound: "fx-/wraparound: (a . b) is not a fixnum".
+fx.mo:Expected error in mat fx-/wraparound: "fx-: <int> is not a fixnum".
+fx.mo:Expected error in mat fx-/wraparound: "fx-: <int> is not a fixnum".
+fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
+fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
 fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fx*: "fx*: fixnum overflow with arguments <int> and 2".
 fx.mo:Expected error in mat fx*: "fx*: <int> is not a fixnum".
@@ -9152,6 +9162,11 @@ fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
+fx.mo:Expected error in mat fx*/wraparound: "fx*/wraparound: (a . b) is not a fixnum".
+fx.mo:Expected error in mat fx*/wraparound: "fx*: <int> is not a fixnum".
+fx.mo:Expected error in mat fx*/wraparound: "fx*: <int> is not a fixnum".
+fx.mo:Expected error in mat fx*/wraparound: "fx*: <-int> is not a fixnum".
+fx.mo:Expected error in mat fx*/wraparound: "fx*: <-int> is not a fixnum".
 fx.mo:Expected error in mat fxquotient: "fxquotient: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fxquotient: "fxquotient: attempt to divide by zero".
 fx.mo:Expected error in mat fxquotient: "fxquotient: <int> is not a fixnum".
@@ -9272,6 +9287,14 @@ fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: f
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <int> and 10".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments -4097 and <int>".
 fx.mo:Expected error in mat fxarithmetic-shift-left: "fxarithmetic-shift-left: fixnum overflow with arguments <-int> and 1".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll/wraparound: (a . b) is not a fixnum".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll/wraparound: invalid shift count -3".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll/wraparound: invalid shift count 1000".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll/wraparound: invalid shift count -1000".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll: <int> is not a fixnum".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll: <int> is not a fixnum".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll: <-int> is not a fixnum".
+fx.mo:Expected error in mat fsll/wraparound: "fxsll: <-int> is not a fixnum".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count -1".
 fx.mo:Expected error in mat fxsrl: "fxsrl: invalid shift count <int>".
 fx.mo:Expected error in mat fxsrl: "fxsrl: a is not a fixnum".

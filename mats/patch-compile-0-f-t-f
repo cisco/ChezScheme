@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2020-11-07 07:25:50.000000000 -0700
---- errors-compile-0-f-t-f	2020-11-07 06:47:03.000000000 -0700
+*** errors-compile-0-f-f-f	2020-11-19 11:38:38.000000000 -0700
+--- errors-compile-0-f-t-f	2020-11-19 10:55:55.000000000 -0700
 ***************
 *** 200,206 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
@@ -379,3 +379,20 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
+***************
+*** 9128,9134 ****
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: <-int> is not a fixnum".
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
+! fx.mo:Expected error in mat fx+/wraparound: "fx+/wraparound: (a . b) is not a fixnum".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
+--- 9128,9134 ----
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: <-int> is not a fixnum".
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
+  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
+! fx.mo:Expected error in mat fx+/wraparound: "incorrect argument count in call (fx+/wraparound (quote (a . b)) 0)".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
+  fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
