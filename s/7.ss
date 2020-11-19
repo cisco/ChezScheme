@@ -734,8 +734,10 @@
             ($oops 'collect "cannot collect when multiple threads are active"))
           (let-values ([(trip g gmintarget gmaxtarget) (p gc-trip)])
             (set! gc-trip trip)
-            (let ([cpu (current-time 'time-thread)] [real (current-time 'time-monotonic)])
-              (set! gc-bytes (+ gc-bytes (bytes-allocated)))
+            (let ([cpu (current-time 'time-thread)]
+		  [real (current-time 'time-monotonic)]
+		  [bytes-allocated-start (bytes-allocated)])
+              (set! gc-bytes (+ gc-bytes bytes-allocated-start))
               (when (collect-notify)
                 (fprintf (console-output-port)
                   "~%[collecting generation ~s into generation ~s..."
@@ -747,12 +749,21 @@
               ($close-resurrected-files)
               (when-feature pthreads
                 ($close-resurrected-mutexes&conditions))
-              (when (collect-notify)
-                (fprintf (console-output-port) "done]~%")
-                (flush-output-port (console-output-port)))
-              (set! gc-bytes (- gc-bytes (bytes-allocated)))
-              (set! gc-cpu (add-duration gc-cpu (time-difference (current-time 'time-thread) cpu)))
-              (set! gc-real (add-duration gc-real (time-difference (current-time 'time-monotonic) real)))
+             (let ([cpu-diff (time-difference (current-time 'time-thread) cpu)]
+                   [real-diff (time-difference (current-time 'time-monotonic) real)]
+		   [bytes-allocated-end (bytes-allocated)])
+               (when (collect-notify)
+                 (let ([bytes-to-mib-factor (exact->inexact (/ 1 1024 1024))])
+                   (fprintf (console-output-port)
+			    "~,3fM->~,3fM in ~,3fms]~%"
+			    (* bytes-allocated-start bytes-to-mib-factor)
+			    (* bytes-allocated-end bytes-to-mib-factor)
+			    (+ (* (time-second cpu-diff) 1e3)
+                               (* (time-nanosecond cpu-diff) 1e-6)))
+		   (flush-output-port (console-output-port))))
+               (set! gc-bytes (- gc-bytes bytes-allocated-end))
+               (set! gc-cpu (add-duration gc-cpu cpu-diff))
+               (set! gc-real (add-duration gc-real real-diff)))
               (set! gc-count (1+ gc-count))))))))
   (define collect-init
     (lambda ()
