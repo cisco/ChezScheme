@@ -2140,3 +2140,4 @@
     arm32.ss
 - repair remainder and modulo on flonums by using fmod
     prim5.c, 5_3.ss, 5_3.ms
+- use a 7-byte NOP in the x86_64 fasl relocator instead of 7 1-byte NOPs
