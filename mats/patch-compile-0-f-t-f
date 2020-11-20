@@ -379,20 +379,3 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
-***************
-*** 9128,9134 ****
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: <-int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
-! fx.mo:Expected error in mat fx+/wraparound: "fx+/wraparound: (a . b) is not a fixnum".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
---- 9128,9134 ----
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: <-int> is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
-  fx.mo:Expected error in mat r6rs:fx+: "fx+: #f is not a fixnum".
-! fx.mo:Expected error in mat fx+/wraparound: "incorrect argument count in call (fx+/wraparound (quote (a . b)) 0)".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <int> is not a fixnum".
-  fx.mo:Expected error in mat fx+/wraparound: "fx+: <-int> is not a fixnum".
