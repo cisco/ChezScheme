@@ -2116,3 +2116,5 @@
   i3nt/ti3nt.  more recent versions of gcc sometimes generate sse
   instructions that require 16-byte stack alignment.
     x86.ss
+- add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
+    cpnanopass.ss
