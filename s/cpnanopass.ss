@@ -3812,7 +3812,8 @@
           [e* `(values ,(make-info-call src sexpr #f #f #f) ,e* ...)])
         (define-inline 2 eq?
           [(e1 e2)
-           (or (relop-length RELOP= e1 e2)
+           (or (eqvop-null-fptr e1 e2)
+               (relop-length RELOP= e1 e2)
                (%inline eq? ,e1 ,e2))])
         (define-inline 2 $keep-live
           [(e) (%seq ,(%inline keep-live ,e) ,(%constant svoid))])
