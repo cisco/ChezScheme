@@ -480,6 +480,8 @@
    (eqv? (fx+/wraparound (most-negative-fixnum) -2) (sub1 (most-positive-fixnum)))
    (eqv? (fx+/wraparound (most-positive-fixnum) (most-positive-fixnum)) -2)
    (eqv? (fx+/wraparound (most-negative-fixnum) (most-negative-fixnum)) 0)
+   (eqv? (fx+/wraparound (collect-maximum-generation) 0) (collect-maximum-generation))
+   (eqv? (fx+/wraparound 0 (collect-maximum-generation)) (collect-maximum-generation))
    )
 
 (mat fx-
@@ -565,6 +567,7 @@
    (eqv? (fx-/wraparound (most-positive-fixnum) -2) (add1 (most-negative-fixnum)))
    (eqv? (fx-/wraparound (most-positive-fixnum) (most-negative-fixnum)) -1)
    (eqv? (fx-/wraparound (most-negative-fixnum) (most-positive-fixnum)) 1)
+   (eqv? (fx-/wraparound (collect-maximum-generation) 0) (collect-maximum-generation))
    )
 
 (mat fx*
@@ -639,6 +642,8 @@
    (eqv? (fx*/wraparound (most-positive-fixnum) -2) 2)
    (eqv? (fx*/wraparound (most-positive-fixnum) (most-negative-fixnum)) (most-negative-fixnum))
    (eqv? (fx*/wraparound (most-negative-fixnum) (most-positive-fixnum)) (most-negative-fixnum))
+   (eqv? (fx*/wraparound (collect-maximum-generation) 1) (collect-maximum-generation))
+   (eqv? (fx*/wraparound 1 (collect-maximum-generation)) (collect-maximum-generation))
    )
 
 (mat fxquotient

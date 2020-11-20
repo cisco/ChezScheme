@@ -2606,7 +2606,11 @@
                         [(eqv? a ident)
                          (if (and (fx= level 3) (null? (cdr val*)) (direct-result? (car val*)))
                              (car val*)
-                             (build-primcall (app-preinfo ctxt) level prim val*))]
+                             (if (and (null? (cdr val*))
+                                      ;; `op` may require exactly 2 arguments
+                                      (eqv? (procedure-arity-mask op) 4))
+                                 (build-primcall (app-preinfo ctxt) level prim (cons `(quote ,ident) val*))
+                                 (build-primcall (app-preinfo ctxt) level prim val*)))]
                         [else
                           (build-primcall (app-preinfo ctxt) level prim (cons `(quote ,a) val*))])]))
                 (let* ([arg (car arg*)] [val (value-visit-operand! arg)])
