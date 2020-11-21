@@ -3737,6 +3737,8 @@
             [(base index offset e build-assign build-barrier-seq)
              (if (nanopass-case (L7 Expr) e
                    [(quote ,d) (ptr->imm d)]
+                   [(call ,info ,mdcl ,pr ,e* ...)
+                    (eq? 'fixnum ($sgetprop (primref-name pr) '*result-type* #f))]
                    [else #f])
                  (build-assign base index offset e)
                  (let ([a (if (eq? index %zero)
