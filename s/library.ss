@@ -1544,12 +1544,10 @@
                        (adjust! h vec n n2)
                        (loop n2)))))))]))
 
+    ;; Must be consistent with `eq_hash` in "../c/segment.h"
     (define-syntax eq-hash
       (syntax-rules ()
-        [(_ v-expr) (let ([v v-expr])
-                      (if (fixnum? v)
-                          (fixmix v)
-                          ($fxaddress v)))]))
+        [(_ v-expr) (fixmix ($fxaddress v-expr))]))
   
     (define adjust!
       (lambda (h vec1 n1 n2)

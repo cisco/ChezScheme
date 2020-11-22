@@ -85,19 +85,15 @@ FORCEINLINE seginfo *MaybeSegInfo(uptr i) {
 #define SegmentGeneration(i) (SegInfo(i)->generation)
 #define SegmentOldSpace(i) (SegInfo(i)->old_space)
 
-
-
+/* Must be consistent with `eq-hash` in "../s/library.ss" */
 FORCEINLINE uptr eq_hash(ptr key) {
-  if (Sfixnump(key)) {
-    uptr x = UNFIX(key);
+  uptr x = (uptr)key >> primary_type_bits;
 #if (ptr_bits == 64)
-    uptr x1 = x ^ ((x >> 32) & (uptr)0xFFFFFFFF);
+  uptr x1 = x ^ ((x >> 32) & (uptr)0xFFFFFFFF);
 #else
-    uptr x1 = x;
+  uptr x1 = x;
 #endif
-    uptr x2 = x1 ^ ((x1 >> 16) & (uptr)0xFFFF);
-    uptr x3 = x2 ^ ((x2 >> 8) & (uptr)0xFF);
-    return x3;
-  } else
-    return (uptr)key >> primary_type_bits;
+  uptr x2 = x1 ^ ((x1 >> 16) & (uptr)0xFFFF);
+  uptr x3 = x2 ^ ((x2 >> 8) & (uptr)0xFF);
+  return x3;
 }
