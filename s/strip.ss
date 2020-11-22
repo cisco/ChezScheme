@@ -730,9 +730,12 @@
               [else
                (let ([p (eq-hashtable-cell ht x #f)])
                  (or (cdr p)
-                     (let ([v (describe-next x)])
-                       (set-cdr! p v)
-                       v)))]))
+                     (let ([self (vector 'CYCLE #f)])
+                       (set-cdr! p self)
+                       (let ([v (describe-next x)])
+                         (vector-set! self 1 v)
+                         (set-cdr! p v)
+                         v))))]))
           (define (describe-next x)
             (fasl-case x
               [entry (situation fasl)
