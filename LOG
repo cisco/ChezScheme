@@ -2140,3 +2140,5 @@
     arm32.ss
 - repair remainder and modulo on flonums by using fmod
     prim5.c, 5_3.ss, 5_3.ms
+- add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
+    cpnanopass.ss
