@@ -87,7 +87,8 @@ FORCEINLINE seginfo *MaybeSegInfo(uptr i) {
 
 /* Must be consistent with `eq-hash` in "../s/library.ss" */
 FORCEINLINE uptr eq_hash(ptr key) {
-  uptr x = (uptr)key >> primary_type_bits;
+  uptr x = (uptr)((iptr)key >> (primary_type_bits - fixnum_offset));
+  x = x >> fixnum_offset; /* unsigned shift */
 #if (ptr_bits == 64)
   uptr x1 = x ^ ((x >> 32) & (uptr)0xFFFFFFFF);
 #else
