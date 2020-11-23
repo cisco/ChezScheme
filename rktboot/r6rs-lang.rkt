@@ -11,7 +11,6 @@
          "gensym.rkt"
          "format.rkt"
          "syntax-mode.rkt"
-         "constant.rkt"
          "config.rkt"
          "rcd.rkt"
          (only-in "record.rkt"
@@ -798,17 +797,20 @@
   (proc o)
   (get-output-bytes o))
 
-(define (fixnum-width) (or fixnum-bits 63))
+;; Note: fixnums here are compile-time fixnums, so "config.rkt" is not needed
 
+(define 64-bit? (= (system-type 'word) 64))
+
+(define (fixnum-width) (if (eq? 'racket (system-type 'vm))
+                           (if 64-bit? 63 31)
+                           (if 64-bit? 61 30)))
 (define low-fixnum (- (expt 2 (sub1 (fixnum-width)))))
 (define high-fixnum (sub1 (expt 2 (sub1 (fixnum-width)))))
 
+(define s:fixnum? fixnum?)
+
 (define (most-positive-fixnum) high-fixnum)
 (define (most-negative-fixnum) low-fixnum)
-
-(define (s:fixnum? x)
-  (and (fixnum? x)
-       (<= low-fixnum x high-fixnum)))
 
 (define (make-compile-time-value v) v)
 

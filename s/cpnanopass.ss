@@ -16507,12 +16507,15 @@
       (define asm-rp-compact-header
         (lambda (code* err? fs lpm func code-size)
           (let ([size (constant-case ptr-bits [(32) 'long] [(64) 'quad])])
-            (let* ([code* (cons* `(,size . ,(fxior (constant compact-header-mask)
-                                                   (if err?
-                                                       (constant compact-header-values-error-mask)
-                                                       0)
-                                                   (fxsll fs (constant compact-frame-words-offset))
-                                                   (fxsll lpm (constant compact-frame-mask-offset))))
+            (let* ([code* (cons* `(,size . ,(let ([v (bitwise-ior
+                                                      (constant compact-header-mask)
+                                                      (if err?
+                                                          (constant compact-header-values-error-mask)
+                                                          0)
+                                                      (bitwise-arithmetic-shift-left fs (constant compact-frame-words-offset))
+                                                      (bitwise-arithmetic-shift-left lpm (constant compact-frame-mask-offset)))])
+                                              (safe-assert (target-fixnum? v))
+                                              v))
                                  (aop-cons* `(asm "mrv pt:" (,lpm ,fs ,(if err? 'error 'continue)))
                                             code*))]
                    [code* (cons*

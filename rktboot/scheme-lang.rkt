@@ -26,6 +26,7 @@
                   make-record-constructor-descriptor
                   set-car!
                   set-cdr!
+                  fixnum-width
                   most-positive-fixnum
                   most-negative-fixnum)
          (submod "r6rs-lang.rkt" hash-pair)
@@ -824,7 +825,7 @@
   (if (and (v . fx< . 0)
            (amt . fx> . 0))
       (bitwise-and (fxrshift v amt)
-                   (- (fxlshift 1 (- fixnum-bits amt)) 1))
+                   (- (arithmetic-shift 1 (- (fixnum-width) amt)) 1))
       (fxrshift v amt)))
 
 (define (fxbit-field fx1 fx2 fx3)
