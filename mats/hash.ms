@@ -1367,7 +1367,7 @@
 
  ; test for proper shrinkage
   (eqv?
-    (let ([ht (make-eq-hashtable 32)])
+    (let ([ht (make-weak-eq-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -1592,7 +1592,7 @@
 
  ; test for proper shrinkage
   (eqv?
-    (let ([ht (make-eq-hashtable 32)])
+    (let ([ht (make-ephemeron-eq-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -2056,7 +2056,7 @@
 
  ; test for proper shrinkage
   (eqv?
-    (let ([ht (make-eq-hashtable 32)])
+    (let ([ht (make-weak-eq-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (eq-hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -2235,7 +2235,7 @@
 
  ; test for proper shrinkage
   (eqv?
-    (let ([ht (make-eq-hashtable 32)])
+    (let ([ht (make-ephemeron-eq-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (eq-hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -2749,20 +2749,20 @@
       (set! ko (void))
       (collect (collect-maximum-generation))
       (list (hashtable-size h2) (hashtable-size h3)))
-    '(4 4))
-  (equal-entries? h2 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
-  (equal-entries? h3 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
+    '(2 2))
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+  (equal-entries? h3 `#((c) 17) '#(cval nval))
   (eqv?
     (begin
       (set! h3 (void))
       (collect (collect-maximum-generation))
       (hashtable-size h2))
-    4)
-  (equal-entries? h2 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
+    2)
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
 
  ; test for proper shrinkage
   (equal?
-    (let ([ht (make-eqv-hashtable 32)])
+    (let ([ht (make-weak-eqv-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -2984,20 +2984,20 @@
       (set! ko (void))
       (collect (collect-maximum-generation))
       (list (hashtable-size h2) (hashtable-size h3)))
-    '(4 4))
-  (equal-entries? h2 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
-  (equal-entries? h3 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
+    '(2 2))
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+  (equal-entries? h3 `#((c) 17) '#(cval nval))
   (eqv?
     (begin
       (set! h3 (void))
       (collect (collect-maximum-generation))
       (hashtable-size h2))
-    4)
-  (equal-entries? h2 `#((c) -5.75 17 ,(+ (most-positive-fixnum) 5)) '#(cval mval nval oval))
+    2)
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
 
  ; test for proper shrinkage
   (equal?
-    (let ([ht (make-eqv-hashtable 32)])
+    (let ([ht (make-ephemeron-eqv-hashtable 32)])
       (for-each
         (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
         (let ([k** (map (lambda (x) (map list (make-list 1000)))
@@ -3789,6 +3789,510 @@
                  (loop (+ i 1))]
                 [else (errorf 'test-hash "hashtable failure for key ~s" str)]))))))
     (test-hash 100000))
+)
+
+(mat generic-hashtable-arguments
+  (error? ; wrong argument count
+    (make-weak-hashtable))
+  (error? ; wrong argument count
+    (make-weak-hashtable equal-hash))
+  (error? ; wrong argument count
+    (make-weak-hashtable equal-hash equal? 45 53))
+  (error? ; not a procedure
+    (make-weak-hashtable 'a equal? 45))
+  (error? ; not a procedure
+    (make-weak-hashtable equal-hash 'a 45))
+  (error? ; invalid size
+    (make-weak-hashtable equal-hash equal? 'a))
+  (error? ; invalid size
+    (make-weak-hashtable equal-hash equal? -45))
+  (error? ; invalid size
+    (make-weak-hashtable equal-hash equal? 45.0))
+  (error? ; wrong argument count
+    (make-ephemeron-hashtable))
+  (error? ; wrong argument count
+    (make-ephemeron-hashtable equal-hash))
+  (error? ; wrong argument count
+    (make-ephemeron-hashtable equal-hash equal? 45 53))
+  (error? ; not a procedure
+    (make-ephemeron-hashtable 'a equal? 45))
+  (error? ; not a procedure
+    (make-ephemeron-hashtable equal-hash 'a 45))
+  (error? ; invalid size
+    (make-ephemeron-hashtable equal-hash equal? 'a))
+  (error? ; invalid size
+    (make-ephemeron-hashtable equal-hash equal? -45))
+  (error? ; invalid size
+    (make-ephemeron-hashtable equal-hash equal? 45.0)))
+
+(mat weak-equal-hashtable
+  (begin
+    (define ka (list 'a))
+    (define kb (list 'b))
+    (define kc (list 'c))
+    (define kq (list 'q))
+    (define ky (list 'y))
+    (define kz (list 'z))
+    (define km -5.75)
+    (define kn 17)
+    (define ko (+ (most-positive-fixnum) 5))
+    #t)
+  (begin
+    (define h (make-weak-hashtable equal-hash equal? 32))
+    (and (hashtable? h)
+         (not (eq-hashtable? h))
+         (hashtable-mutable? h)
+         (hashtable-weak? h)))
+  (eq? (hashtable-hash-function h) equal-hash)
+  (eq? (hashtable-equivalence-function h) equal?)
+  (equal? (hashtable-size h) 0)
+  (same-elements? (hashtable-keys h) '#())
+  (same-elements? (hashtable-values h) '#())
+  (equal-entries? h '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
+  (eqv? (hashtable-set! h ka 'aval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #f #f #f #f #f))
+  (eqv? (hashtable-set! h kb 'bval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #f #f #f #f))
+  (eqv? (hashtable-set! h kc 'cval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #f #f #f))
+  (eqv? (hashtable-set! h km 'mval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #f #f))
+  (eqv? (hashtable-set! h kn 'nval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #t #f))
+  (eqv? (hashtable-set! h ko 'oval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #t #t))
+  (equal? (hashtable-size h) 6)
+  (equal-entries? h `#((a) (b) (c) -5.75 17 ,ko) '#(aval bval cval mval nval oval))
+  #;(same-elements?
+    (list->vector (hashtable-map h cons))
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  #;(same-elements?
+    (let ([v (make-vector 6)] [i 0])
+      (hashtable-for-each h (lambda (key val) (vector-set! v i (cons key val)) (set! i (fx+ i 1))))
+      v)
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  #;(same-elements?
+    (let ([v (make-vector 6)] [i 0])
+      (hashtable-for-each-cell h (lambda (a) (vector-set! v i a) (set! i (fx+ i 1))))
+      v)
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  (eq? (hashtable-ref h ka 1) 'aval)
+  (eq? (hashtable-ref h kb #f) 'bval)
+  (eq? (hashtable-ref h kc 'nope) 'cval)
+  (eq? (hashtable-ref h (+ 2 -7.75) 'ugh) 'mval)
+  (eq? (hashtable-ref h (/ 34 2) 'ugh) 'nval)
+  (eq? (hashtable-ref h (+ (most-positive-fixnum) 7 -2) 'ugh) 'oval)
+  (eqv? (hashtable-delete! h kb) (void))
+  (equal? (hashtable-size h) 5)
+  (equal-entries? h `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (begin
+    (define h2 (hashtable-copy h #t))
+    (and (hashtable? h2)
+         (hashtable-mutable? h2)
+         (hashtable-weak? h2)))
+  (eq? (hashtable-hash-function h2) equal-hash)
+  (eq? (hashtable-equivalence-function h2) equal?)
+  (equal? (hashtable-size h2) 5)
+  (equal-entries? h `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (eqv? (hashtable-clear! h 4) (void))
+  (equal?
+    (list
+      (hashtable-size h)
+      (hashtable-ref h ka 1)
+      (hashtable-ref h kb #f)
+      (hashtable-ref h kc 'nope)
+      (hashtable-ref h km 'nope)
+      (hashtable-ref h kn 'nope)
+      (hashtable-ref h ko 'nope))
+   '(0 1 #f nope nope nope nope))
+  (equal-entries? h '#() '#())
+  (equal?
+    (list
+      (hashtable-size h2)
+      (hashtable-ref h2 ka 1)
+      (hashtable-ref h2 kb #f)
+      (hashtable-ref h2 kc 'nope)
+      (hashtable-ref h2 (- (+ km 1) 1) 'nope)
+      (hashtable-ref h2 (- (+ kn 1) 1) 'nope)
+      (hashtable-ref h2 (- (+ ko 1) 1) 'nope))
+    '(5 aval #f cval mval nval oval))
+  (equal-entries? h2 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (eqv?
+    (hashtable-update! h kq
+      (lambda (x) (+ x 1))
+      17)
+    (void))
+  (equal? (hashtable-ref h kq #f) 18)
+  (eqv?
+    (hashtable-update! h kq
+      (lambda (x) (+ x 1))
+      17)
+    (void))
+  (equal? (hashtable-ref h kq #f) 19)
+  (equal? (hashtable-size h) 1)
+  (equal-entries? h '#((q)) '#(19))
+  (eqv?
+    (begin
+      (set! kq (void))
+      (collect (collect-maximum-generation))
+      (hashtable-size h))
+    0)
+  (equal-entries? h '#() '#())
+  (equal? (hashtable-ref h ky #f) #f)
+  (eqv?
+    (hashtable-set! h ky 'toad)
+    (void))
+  (equal? (hashtable-ref h ky #f) 'toad)
+  (equal? (hashtable-ref h kz #f) #f)
+  (eqv?
+    (hashtable-update! h kz list 'frog)
+    (void))
+  (equal? (hashtable-ref h kz #f) '(frog))
+  (equal-entries?
+    h
+    (vector kz ky)
+    (vector (hashtable-ref h kz #f) 'toad))
+  (eqv? (hashtable-ref h '(zippo) 'nil) 'nil)
+  (begin
+    (define h3 (hashtable-copy h2 #f))
+    (and (hashtable? h3)
+         (not (hashtable-mutable? h3))
+         (hashtable-weak? h3)))
+  (equal-entries? h2 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (equal-entries? h3 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (equal?
+    (begin
+      (set! ka (void))
+      (set! km (void))
+      (set! kn (void))
+      (set! ko (void))
+      (collect (collect-maximum-generation))
+      (list (hashtable-size h2) (hashtable-size h3)))
+    '(2 2))
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+  (equal-entries? h3 `#((c) 17) '#(cval nval))
+  (eqv?
+    (begin
+      (set! h3 (void))
+      (collect (collect-maximum-generation))
+      (hashtable-size h2))
+    2)
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+
+ ; test for proper shrinkage
+  (equal?
+    (let ([ht (make-weak-hashtable equal-hash equal? 32)])
+      (for-each
+        (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
+        (let ([k** (map (lambda (x) (map list (make-list 1000)))
+                        (make-list 100))])
+          (for-each
+            (lambda (k*) (map (lambda (k) (hashtable-set! ht k 75)) k*))
+            k**)
+          k**))
+      (call-with-values (lambda () (#%$hashtable-veclen ht)) cons))
+    '(32 . 32))
+
+ ; test for proper shrinkage as objects are bwp'd
+ ; uses delete to trigger final shrinkage
+  (equal?
+    (let ([ht (make-weak-hashtable equal-hash equal? 32)])
+      (hashtable-set! ht 'a 'b)
+      (for-each
+        (lambda (k*) (map (lambda (k) (hashtable-set! ht k 75)) k*))
+        (map (lambda (x) (map list (make-list 1000))) (make-list 100)))
+      (collect (collect-maximum-generation))
+      (hashtable-delete! ht 'a)
+      (list (hashtable-size ht)
+            (let-values ([(n1 n2) (#%$hashtable-veclen ht)])
+              (= n1 n2 32))))
+    '(0 #t))
+  )
+
+(mat ephemeron-equal-hashtable
+  (begin
+    (define ka (list 'a))
+    (define kb (list 'b))
+    (define kc (list 'c))
+    (define kq (list 'q))
+    (define ky (list 'y))
+    (define kz (list 'z))
+    (define km -5.75)
+    (define kn 17)
+    (define ko (+ (most-positive-fixnum) 5))
+    #t)
+  (begin
+    (define h (make-ephemeron-hashtable equal-hash equal? 32))
+    (and (hashtable? h)
+         (not (eq-hashtable? h))
+         (hashtable-mutable? h)
+         (hashtable-ephemeron? h)))
+  (eq? (hashtable-hash-function h) equal-hash)
+  (eq? (hashtable-equivalence-function h) equal?)
+  (equal? (hashtable-size h) 0)
+  (same-elements? (hashtable-keys h) '#())
+  (same-elements? (hashtable-values h) '#())
+  (equal-entries? h '#() '#())
+  (same-elements? (hashtable-cells h) '#())
+  (same-elements? (hashtable-cells h 0) '#())
+  (same-elements? (hashtable-cells h 10) '#())
+  (eqv? (hashtable-set! h ka 'aval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #f #f #f #f #f))
+  (eqv? (hashtable-set! h kb 'bval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #f #f #f #f))
+  (eqv? (hashtable-set! h kc 'cval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #f #f #f))
+  (eqv? (hashtable-set! h km 'mval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #f #f))
+  (eqv? (hashtable-set! h kn 'nval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #t #f))
+  (eqv? (hashtable-set! h ko 'oval) (void))
+  (equal?
+    (list
+       (hashtable-contains? h ka)
+       (hashtable-contains? h kb)
+       (hashtable-contains? h kc)
+       (hashtable-contains? h km)
+       (hashtable-contains? h kn)
+       (hashtable-contains? h ko))
+    '(#t #t #t #t #t #t))
+  (equal? (hashtable-size h) 6)
+  (equal-entries? h `#((a) (b) (c) -5.75 17 ,ko) '#(aval bval cval mval nval oval))
+  #;(same-elements?
+    (list->vector (hashtable-map h cons))
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  #;(same-elements?
+    (let ([v (make-vector 6)] [i 0])
+      (hashtable-for-each h (lambda (key val) (vector-set! v i (cons key val)) (set! i (fx+ i 1))))
+      v)
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  #;(same-elements?
+    (let ([v (make-vector 6)] [i 0])
+      (hashtable-for-each-cell h (lambda (a) (vector-set! v i a) (set! i (fx+ i 1))))
+      v)
+    `#(((a) . aval) ((b) . bval) ((c) . cval) (-5.75 . mval) (17 . nval) (,ko . oval)))
+  (eq? (hashtable-ref h ka 1) 'aval)
+  (eq? (hashtable-ref h kb #f) 'bval)
+  (eq? (hashtable-ref h kc 'nope) 'cval)
+  (eq? (hashtable-ref h (+ 2 -7.75) 'ugh) 'mval)
+  (eq? (hashtable-ref h (/ 34 2) 'ugh) 'nval)
+  (eq? (hashtable-ref h (+ (most-positive-fixnum) 7 -2) 'ugh) 'oval)
+  (eqv? (hashtable-delete! h kb) (void))
+  (equal? (hashtable-size h) 5)
+  (equal-entries? h `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (begin
+    (define h2 (hashtable-copy h #t))
+    (and (hashtable? h2)
+         (hashtable-mutable? h2)
+         (hashtable-ephemeron? h2)))
+  (eq? (hashtable-hash-function h2) equal-hash)
+  (eq? (hashtable-equivalence-function h2) equal?)
+  (equal? (hashtable-size h2) 5)
+  (equal-entries? h `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (eqv? (hashtable-clear! h 4) (void))
+  (equal?
+    (list
+      (hashtable-size h)
+      (hashtable-ref h ka 1)
+      (hashtable-ref h kb #f)
+      (hashtable-ref h kc 'nope)
+      (hashtable-ref h km 'nope)
+      (hashtable-ref h kn 'nope)
+      (hashtable-ref h ko 'nope))
+   '(0 1 #f nope nope nope nope))
+  (equal-entries? h '#() '#())
+  (equal?
+    (list
+      (hashtable-size h2)
+      (hashtable-ref h2 ka 1)
+      (hashtable-ref h2 kb #f)
+      (hashtable-ref h2 kc 'nope)
+      (hashtable-ref h2 (- (+ km 1) 1) 'nope)
+      (hashtable-ref h2 (- (+ kn 1) 1) 'nope)
+      (hashtable-ref h2 (- (+ ko 1) 1) 'nope))
+    '(5 aval #f cval mval nval oval))
+  (equal-entries? h2 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (eqv?
+    (hashtable-update! h kq
+      (lambda (x) (+ x 1))
+      17)
+    (void))
+  (equal? (hashtable-ref h kq #f) 18)
+  (eqv?
+    (hashtable-update! h kq
+      (lambda (x) (+ x 1))
+      17)
+    (void))
+  (equal? (hashtable-ref h kq #f) 19)
+  (equal? (hashtable-size h) 1)
+  (equal-entries? h '#((q)) '#(19))
+  (eqv?
+    (begin
+      (set! kq (void))
+      (collect (collect-maximum-generation))
+      (hashtable-size h))
+    0)
+  (equal-entries? h '#() '#())
+  (equal? (hashtable-ref h ky #f) #f)
+  (eqv?
+    (hashtable-set! h ky 'toad)
+    (void))
+  (equal? (hashtable-ref h ky #f) 'toad)
+  (equal? (hashtable-ref h kz #f) #f)
+  (eqv?
+    (hashtable-update! h kz list 'frog)
+    (void))
+  (equal? (hashtable-ref h kz #f) '(frog))
+  (equal-entries?
+    h
+    (vector kz ky)
+    (vector (hashtable-ref h kz #f) 'toad))
+  (eqv? (hashtable-ref h '(zippo) 'nil) 'nil)
+  (begin
+    (define h3 (hashtable-copy h2 #f))
+    (and (hashtable? h3)
+         (not (hashtable-mutable? h3))
+         (hashtable-ephemeron? h3)))
+  (equal-entries? h2 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (equal-entries? h3 `#((a) (c) -5.75 17 ,ko) '#(aval cval mval nval oval))
+  (equal?
+    (begin
+      (set! ka (void))
+      (set! km (void))
+      (set! kn (void))
+      (set! ko (void))
+      (collect (collect-maximum-generation))
+      (list (hashtable-size h2) (hashtable-size h3)))
+    '(2 2))
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+  (equal-entries? h3 `#((c) 17) '#(cval nval))
+  (eqv?
+    (begin
+      (set! h3 (void))
+      (collect (collect-maximum-generation))
+      (hashtable-size h2))
+    2)
+  (equal-entries? h2 `#((c) 17) '#(cval nval))
+
+ ; test for proper shrinkage
+  (equal?
+    (let ([ht (make-ephemeron-hashtable equal-hash equal? 32)])
+      (for-each
+        (lambda (k*) (for-each (lambda (k) (hashtable-delete! ht k)) k*))
+        (let ([k** (map (lambda (x) (map list (make-list 1000)))
+                        (make-list 100))])
+          (for-each
+            (lambda (k*) (map (lambda (k) (hashtable-set! ht k 75)) k*))
+            k**)
+          k**))
+      (call-with-values (lambda () (#%$hashtable-veclen ht)) cons))
+    '(32 . 32))
+
+ ; test for proper shrinkage as objects are bwp'd
+ ; uses delete to trigger final shrinkage
+  (equal?
+    (let ([ht (make-ephemeron-hashtable equal-hash equal? 32)])
+      (hashtable-set! ht 'a 'b)
+      (for-each
+        (lambda (k*) (map (lambda (k) (hashtable-set! ht k 75)) k*))
+        (map (lambda (x) (map list (make-list 1000))) (make-list 100)))
+      (collect (collect-maximum-generation))
+      (hashtable-delete! ht 'a)
+      (list (hashtable-size ht)
+            (let-values ([(n1 n2) (#%$hashtable-veclen ht)])
+              (= n1 n2 32))))
+    '(0 #t))
 )
 
 (mat hash-functions

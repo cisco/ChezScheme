@@ -8244,6 +8244,22 @@ hash.mo:Expected error in mat generic-hashtable: "hashtable-clear!: #<hashtable>
 hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
 hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-weak-hashtable)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-weak-hashtable equal-hash)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-weak-hashtable equal-hash equal? 45 53)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-weak-hashtable: a is not a procedure".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-weak-hashtable: a is not a procedure".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-weak-hashtable: invalid size argument a".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-weak-hashtable: invalid size argument -45".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-weak-hashtable: invalid size argument 45.0".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-ephemeron-hashtable)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-ephemeron-hashtable equal-hash)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "incorrect argument count in call (make-ephemeron-hashtable equal-hash equal? 45 53)".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-ephemeron-hashtable: a is not a procedure".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-ephemeron-hashtable: a is not a procedure".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-ephemeron-hashtable: invalid size argument a".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-ephemeron-hashtable: invalid size argument -45".
+hash.mo:Expected error in mat generic-hashtable-arguments: "make-ephemeron-hashtable: invalid size argument 45.0".
 hash.mo:Expected error in mat hash-functions: "incorrect argument count in call (equal-hash)".
 hash.mo:Expected error in mat hash-functions: "incorrect argument count in call (equal-hash 0 0)".
 hash.mo:Expected error in mat hash-functions: "incorrect argument count in call (symbol-hash)".

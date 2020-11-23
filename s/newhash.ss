@@ -22,6 +22,11 @@ Documentation notes:
   hashtable-entries.
 - symbols are collectable, so weak hash tables should not be used to create
   permanent associations with symbols as keys
+- a weak or ephemeron generic hashtable maps keys to #f using weak
+  pairs, and then uses a weak or ephemeron eq hashtable to map the key
+  to its value; use the size of the eq hashtable as the generic hashtable's
+  size
+- an eqv hashtabble pairs an eq hashtable and an generic hashtable
 |#
 
 #|
@@ -133,7 +138,12 @@ Documentation notes:
           (if (null? b)
               v
               (let ([a (car b)])
-                (if (equiv? (car a) x) (cdr a) (loop (cdr b)))))))))
+                (if (equiv? (car a) x)
+                    (let ([eqht (gen-ht-eqht h)])
+                      (if eqht
+                          (eq-hashtable-ref eqht (car a) v)
+                          (cdr a)))
+                    (loop (cdr b)))))))))
 
   (define $gen-hashtable-ref-cell
     (lambda (h x who)
@@ -142,7 +152,12 @@ Documentation notes:
           (if (null? b)
               #f
               (let ([a (car b)])
-                (if (equiv? (car a) x) a (loop (cdr b)))))))))
+                (if (equiv? (car a) x)
+                    (let ([eqht (gen-ht-eqht h)])
+                      (if eqht
+                          (eq-hashtable-ref-cell eqht (car a))
+                          a))
+                    (loop (cdr b)))))))))
 
   (define $gen-hashtable-contains?
     (lambda (h x who)
@@ -155,19 +170,19 @@ Documentation notes:
   (module ($gen-hashtable-set! $gen-hashtable-update! $gen-hashtable-cell $gen-hashtable-delete!)
     (define-syntax incr-size!
       (syntax-rules ()
-        [(_ h vec who)
+        [(_ h eqht vec who)
          (let ([size (fx+ (ht-size h) 1)] [n (vector-length vec)])
            (ht-size-set! h size)
            (when (and (fx> size n) (fx< n (fxsrl (most-positive-fixnum) 1)))
-             (adjust! h vec (fxsll n 1) who)))]))
+             (adjust! h vec (if eqht (fxmin (fxsll n 1) (vector-length (ht-vec eqht))) (fxsll n 1)) who)))]))
 
     (define-syntax decr-size!
       (syntax-rules ()
-        [(_ h vec who)
+        [(_ h eqht vec who)
          (let ([size (fx- (ht-size h) 1)] [n (vector-length vec)])
            (ht-size-set! h size)
            (when (and (fx< size (fxsrl n 2)) (fx> n (ht-minlen h)))
-             (adjust! h vec (fxsrl n 1) who)))]))
+             (adjust! h vec (if eqht (fxmin (fxsrl n 1) (vector-length (ht-vec eqht))) (fxsrl n 1)) who)))]))
 
     (define adjust!
       (lambda (h vec1 n2 who)
@@ -178,8 +193,11 @@ Documentation notes:
             (lambda (b)
               (for-each
                 (lambda (a)
-                  (let ([hc (do-hash hash (car a) mask2 who)])
-                    (vector-set! vec2 hc (cons a (vector-ref vec2 hc)))))
+                  (let ([k (car a)])
+                    (if (eq? k #!bwp)
+                        (ht-size-set! h (fx- (ht-size h) 1))
+                        (let ([hc (do-hash hash k mask2 who)])
+                          (vector-set! vec2 hc (cons a (vector-ref vec2 hc)))))))
                 b))
             vec1)
           (ht-vec-set! h vec2))))
@@ -191,11 +209,21 @@ Documentation notes:
             (let ([bucket (vector-ref vec idx)])
               (let loop ([b bucket])
                 (if (null? b)
-                    (begin
-                      (vector-set! vec idx (cons (cons x v) bucket))
-                      (incr-size! h vec who))
+                    (let ([eqht (gen-ht-eqht h)])
+                      (cond
+                        [eqht
+                         (eq-hashtable-set! eqht x v)
+                         (vector-set! vec idx (cons (weak-cons x '()) bucket))]
+                        [else
+                         (vector-set! vec idx (cons (cons x v) bucket))])
+                      (incr-size! h eqht vec who))
                     (let ([a (car b)])
-                      (if (equiv? (car a) x) (set-cdr! a v) (loop (cdr b)))))))))))
+                      (if (equiv? (car a) x)
+                          (let ([eqht (gen-ht-eqht h)])
+                            (if eqht
+                                (eq-hashtable-set! eqht (car a) v)
+                                (set-cdr! a v)))
+                          (loop (cdr b)))))))))))
 
     (define $gen-hashtable-update!
       (lambda (h x p v who)
@@ -204,12 +232,21 @@ Documentation notes:
             (let ([bucket (vector-ref vec idx)])
               (let loop ([b bucket])
                 (if (null? b)
-                    (begin
-                      (vector-set! vec idx (cons (cons x (p v)) bucket))
-                      (incr-size! h vec who))
+                    (let ([eqht (gen-ht-eqht h)])
+                      (cond
+                        [eqht
+                         (eq-hashtable-set! eqht x (p v))
+                         (vector-set! vec idx (cons (weak-cons x '()) bucket))]
+                        [else
+                         (vector-set! vec idx (cons (cons x (p v)) bucket))])
+                      (incr-size! h eqht vec who))
                     (let ([a (car b)])
                       (if (equiv? (car a) x)
-                          (set-cdr! a (p (cdr a)))
+                          (let ([eqht (gen-ht-eqht h)])
+                            (if eqht
+                                (let ([c (eq-hashtable-cell eqht (car a) v)])
+                                  (set-cdr! c (p (cdr c))))
+                                (set-cdr! a (p (cdr a)))))
                           (loop (cdr b)))))))))))
 
     (define $gen-hashtable-cell
@@ -219,13 +256,24 @@ Documentation notes:
             (let ([bucket (vector-ref vec idx)])
               (let loop ([b bucket])
                 (if (null? b)
-                    (let ([a (cons x v)])
-                      (vector-set! vec idx (cons a bucket))
-                      (incr-size! h vec who)
+                    (let* ([eqht (gen-ht-eqht h)]
+                           [a (cond
+                                [eqht
+                                 (let ([a (eq-hashtable-cell eqht x v)])
+                                   (vector-set! vec idx (cons (weak-cons x '()) bucket))
+                                   a)]
+                                [else
+                                 (let ([a (cons x v)])
+                                   (vector-set! vec idx (cons a bucket))
+                                   a)])])
+                      (incr-size! h eqht vec who)
                       a)
                     (let ([a (car b)])
                       (if (equiv? (car a) x)
-                          a
+                          (let ([eqht (gen-ht-eqht h)])
+                            (if eqht
+                                (eq-hashtable-cell eqht (car a) v)
+                                a))
                           (loop (cdr b)))))))))))
 
     (define $gen-hashtable-delete!
@@ -236,32 +284,37 @@ Documentation notes:
               (unless (null? b)
                 (let ([a (car b)])
                   (if (equiv? (car a) x)
-                      (begin
+                      (let ([eqht (gen-ht-eqht h)])
+                        (when eqht (eq-hashtable-delete! eqht (car a)))
                         (if p (set-cdr! p (cdr b)) (vector-set! vec idx (cdr b)))
-                        (decr-size! h vec who))
+                        (decr-size! h eqht vec who))
                       (loop (cdr b) b))))))))))
 
   (module ($gen-hashtable-copy $symbol-hashtable-copy)
     (define copy-hashtable-vector
-      (lambda (h)
+      (lambda (h eq-ht)
         (let* ([vec1 (ht-vec h)]
                [n (vector-length vec1)]
                [vec2 (make-vector n '())])
           (do ([i 0 (fx+ i 1)])
             ((fx= i n))
             (vector-set! vec2 i
-              (map (lambda (a) (cons (car a) (cdr a)))
-                (vector-ref vec1 i))))
+              (if eq-ht
+                  (map (lambda (a) (weak-cons (car a) '()))
+                       (vector-ref vec1 i))
+                  (map (lambda (a) (cons (car a) (cdr a)))
+                       (vector-ref vec1 i)))))
           vec2)))
 
     (define $gen-hashtable-copy
       (lambda (h mutable?)
-        (make-gen-ht 'generic mutable? (copy-hashtable-vector h) (ht-minlen h) (ht-size h)
-          (gen-ht-hash h) (gen-ht-equiv? h))))
+        (let ([eq-ht (gen-ht-eqht h)])
+          (make-gen-ht 'generic mutable? (copy-hashtable-vector h eq-ht) (ht-minlen h) (ht-size h)
+                       (gen-ht-hash h) (gen-ht-equiv? h) (and eq-ht ($eq-hashtable-copy eq-ht mutable?))))))
 
     (define $symbol-hashtable-copy
       (lambda (h mutable?)
-        (make-symbol-ht 'symbol mutable? (copy-hashtable-vector h) (ht-minlen h) (ht-size h)
+        (make-symbol-ht 'symbol mutable? (copy-hashtable-vector h #f) (ht-minlen h) (ht-size h)
           (symbol-ht-equiv? h)))))
 
   (define $ht-hashtable-clear!
@@ -269,6 +322,11 @@ Documentation notes:
       (ht-vec-set! h (make-vector minlen '()))
       (ht-minlen-set! h minlen)
       (ht-size-set! h 0)))
+
+  (define $gen-hashtable-clear!
+    (lambda (h minlen)
+      (let ([h (gen-ht-eqht h)]) (when h ($eq-hashtable-clear! h minlen)))
+      ($ht-hashtable-clear! h minlen)))
 
   (define $ht-hashtable-keys
     (lambda (h max-sz)
@@ -286,6 +344,13 @@ Documentation notes:
                         (g (cdr b) (fx+ ikey 1))))))))
           keys))))
 
+  (define $gen-hashtable-keys
+    (lambda (h max-sz)
+      (let ([eqht (gen-ht-eqht h)])
+        (if eqht
+            ($eq-hashtable-keys eqht max-sz)
+            ($ht-hashtable-keys h max-sz)))))
+
   (define $ht-hashtable-values
     (lambda (h max-sz)
       (let ([size (fxmin max-sz (ht-size h))])
@@ -301,6 +366,13 @@ Documentation notes:
                         (vector-set! vals ival (cdar b))
                         (g (cdr b) (fx+ ival 1))))))))
           vals))))
+
+  (define $gen-hashtable-values
+    (lambda (h max-sz)
+      (let ([eqht (gen-ht-eqht h)])
+        (if eqht
+            ($eq-hashtable-values eqht max-sz)
+            ($ht-hashtable-values h max-sz)))))
 
   (define $ht-hashtable-entries
     (lambda (h max-sz)
@@ -320,6 +392,13 @@ Documentation notes:
                         (g (cdr b) (fx+ ikey 1))))))))
           (values keys vals)))))
 
+  (define $gen-hashtable-entries
+    (lambda (h max-sz)
+      (let ([eqht (gen-ht-eqht h)])
+        (if eqht
+            ($eq-hashtable-entries eqht max-sz)
+            ($ht-hashtable-entries h max-sz)))))
+
   (define $ht-hashtable-cells
     (lambda (h max-sz)
       (let ([sz (fxmin max-sz (ht-size h))])
@@ -335,6 +414,13 @@ Documentation notes:
                         (vector-set! cells icell a)
                         (g (cdr b) (fx+ icell 1))))))))
           cells))))
+
+  (define $gen-hashtable-cells
+    (lambda (h max-sz)
+      (let ([eqht (gen-ht-eqht h)])
+        (if eqht
+            ($eq-hashtable-cells eqht max-sz)
+            ($ht-hashtable-cells h max-sz)))))
 
   (define eqv-generic?
     (lambda (x)
@@ -408,24 +494,24 @@ Documentation notes:
     (define $eqv-hashtable-keys
       (lambda (h max-sz)
         (let* ([keys1 ($eq-hashtable-keys (eqv-ht-eqht h) max-sz)]
-               [keys2 ($ht-hashtable-keys (eqv-ht-genht h) (fx- max-sz (vector-length keys1)))])
+               [keys2 ($gen-hashtable-keys (eqv-ht-genht h) (fx- max-sz (vector-length keys1)))])
           (vector-append keys1 keys2))))
     (define $eqv-hashtable-values
       (lambda (h max-sz)
         (let* ([vals1 ($eq-hashtable-values (eqv-ht-eqht h) max-sz)]
-               [vals2 ($ht-hashtable-values (eqv-ht-genht h) (fx- max-sz (vector-length vals1)))])
+               [vals2 ($gen-hashtable-values (eqv-ht-genht h) (fx- max-sz (vector-length vals1)))])
           (vector-append vals1 vals2))))
     (define $eqv-hashtable-entries
       (lambda (h max-sz)
         (let*-values ([(keys1 vals1) ($eq-hashtable-entries (eqv-ht-eqht h) max-sz)]
-                      [(keys2 vals2) ($ht-hashtable-entries (eqv-ht-genht h) (fx- max-sz (vector-length keys1)))])
+                      [(keys2 vals2) ($gen-hashtable-entries (eqv-ht-genht h) (fx- max-sz (vector-length keys1)))])
           (values
             (vector-append keys1 keys2)
             (vector-append vals1 vals2)))))
     (define $eqv-hashtable-cells
       (lambda (h max-sz)
         (let* ([cells1 ($eq-hashtable-cells (eqv-ht-eqht h) max-sz)]
-               [cells2 ($ht-hashtable-cells (eqv-ht-genht h) (fx- max-sz (vector-length cells1)))])
+               [cells2 ($gen-hashtable-cells (eqv-ht-genht h) (fx- max-sz (vector-length cells1)))])
           (vector-append cells1 cells2)))))
 
   (define (fixmix x)
@@ -469,6 +555,11 @@ Documentation notes:
       (unless (xht? h) ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
         [(eqv) (values (vector-length (ht-vec (eqv-ht-eqht h))) (vector-length (ht-vec (eqv-ht-genht h))))]
+        [(generic) (let ([eqht (gen-ht-eqht h)]
+                         [len (vector-length (ht-vec h))])
+                     (if eqht
+                         (values len (vector-length (ht-vec eqht)))
+                         len))]
         [else (vector-length (ht-vec h))])))
 
   (set-who! $ht-veclen
@@ -574,29 +665,45 @@ Documentation notes:
 
   (let ()
     (define $make-hashtable
-      (lambda (minlen hash equiv?)
+      (lambda (minlen hash equiv? subtype)
         (if (and (eq? hash symbol-hash)
+                 (eq? subtype (constant eq-hashtable-subtype-normal))
                  (or (eq? equiv? eq?)
                      (eq? equiv? symbol=?)
                      (eq? equiv? eqv?)
                      (eq? equiv? equal?)))
             (make-symbol-ht 'symbol #t (make-vector minlen '()) minlen 0 equiv?)
-            (make-gen-ht 'generic #t (make-vector minlen '()) minlen 0 hash equiv?))))
+            (make-gen-ht 'generic #t (make-vector minlen '()) minlen 0 hash equiv?
+                         (cond
+                           [(eq? subtype (constant eq-hashtable-subtype-normal)) #f]
+                           [else ($make-eq-hashtable minlen subtype)])))))
     (define $make-eqv-hashtable
       (lambda (minlen subtype)
         (make-eqv-ht 'eqv #t
           ($make-eq-hashtable minlen subtype)
-          ($make-hashtable minlen number-hash eqv?))))
+          ($make-hashtable minlen number-hash eqv? subtype))))
+    (define $make-gen-hashtable
+      (case-lambda
+        [(who hash equiv? subtype)
+         (unless (procedure? hash) ($oops who "~s is not a procedure" hash))
+         (unless (procedure? equiv?) ($oops who "~s is not a procedure" equiv?))
+         ($make-hashtable (constant hashtable-default-size) hash equiv? subtype)]
+        [(who hash equiv? k subtype)
+         (unless (procedure? hash) ($oops who "~s is not a procedure" hash))
+         (unless (procedure? equiv?) ($oops who "~s is not a procedure" equiv?))
+         ($make-hashtable (size->minlen who k) hash equiv? subtype)]))
     (set-who! make-hashtable
       (case-lambda
-        [(hash equiv?)
-         (unless (procedure? hash) ($oops who "~s is not a procedure" hash))
-         (unless (procedure? equiv?) ($oops who "~s is not a procedure" equiv?))
-         ($make-hashtable (constant hashtable-default-size) hash equiv?)]
-        [(hash equiv? k)
-         (unless (procedure? hash) ($oops who "~s is not a procedure" hash))
-         (unless (procedure? equiv?) ($oops who "~s is not a procedure" equiv?))
-         ($make-hashtable (size->minlen who k) hash equiv?)]))
+        [(hash equiv?) ($make-gen-hashtable who hash equiv? (constant eq-hashtable-subtype-normal))]
+        [(hash equiv? k) ($make-gen-hashtable who hash equiv? k (constant eq-hashtable-subtype-normal))]))
+    (set-who! make-weak-hashtable
+      (case-lambda
+        [(hash equiv?) ($make-gen-hashtable who hash equiv? (constant eq-hashtable-subtype-weak))]
+        [(hash equiv? k) ($make-gen-hashtable who hash equiv? k (constant eq-hashtable-subtype-weak))]))
+    (set-who! make-ephemeron-hashtable
+      (case-lambda
+        [(hash equiv?) ($make-gen-hashtable who hash equiv? (constant eq-hashtable-subtype-ephemeron))]
+        [(hash equiv? k) ($make-gen-hashtable who hash equiv? k (constant eq-hashtable-subtype-ephemeron))]))
     (set-who! make-eqv-hashtable
       (case-lambda
         [() ($make-eqv-hashtable (constant hashtable-default-size) (constant eq-hashtable-subtype-normal))]
@@ -682,6 +789,8 @@ Documentation notes:
       (case (xht-type h)
         [(eq) (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype h))]
         [(eqv) (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype (eqv-ht-eqht h)))]
+        [(generic) (let ([eq-ht (gen-ht-eqht h)])
+                     (and eq-ht (eq? (constant eq-hashtable-subtype-weak) (eq-ht-subtype eq-ht))))]
         [else #f])))
 
   (set-who! hashtable-ephemeron?
@@ -690,6 +799,8 @@ Documentation notes:
       (case (xht-type h)
         [(eq) (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype h))]
         [(eqv) (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype (eqv-ht-eqht h)))]
+        [(generic) (let ([eq-ht (gen-ht-eqht h)])
+                     (and eq-ht (eq? (constant eq-hashtable-subtype-ephemeron) (eq-ht-subtype eq-ht))))]
         [else #f])))
 
   (set-who! symbol-hashtable-ref
@@ -856,7 +967,8 @@ Documentation notes:
            [(eq) ($eq-hashtable-clear! h (ht-minlen h))]
            [(eqv)
             (let ([h (eqv-ht-eqht h)]) ($eq-hashtable-clear! h (ht-minlen h)))
-            (let ([h (eqv-ht-genht h)]) ($ht-hashtable-clear! h (ht-minlen h)))]
+            (let ([h (eqv-ht-genht h)]) ($gen-hashtable-clear! h (ht-minlen h)))]
+           [(generic) ($gen-hashtable-clear! h (ht-minlen h))]
            [else ($ht-hashtable-clear! h (ht-minlen h))])]
         [(h k)
          (unless (xht? h)
@@ -868,7 +980,8 @@ Documentation notes:
              [(eq) ($eq-hashtable-clear! h minlen)]
              [(eqv)
               ($eq-hashtable-clear! (eqv-ht-eqht h) minlen)
-              ($ht-hashtable-clear! (eqv-ht-genht h) minlen)]
+              ($gen-hashtable-clear! (eqv-ht-genht h) minlen)]
+             [(generic) ($gen-hashtable-clear! h minlen)]
              [else ($ht-hashtable-clear! h minlen)]))])))
 
   (let ()
@@ -879,13 +992,14 @@ Documentation notes:
 
     (define-syntax hashtable-content-dispatch
       (syntax-rules ()
-        [(_ who $eq-hashtable-content $eqv-hashtable-content $ht-hashtable-content)
+        [(_ who $eq-hashtable-content $eqv-hashtable-content $gen-hashtable-content $ht-hashtable-content)
          (let ()
            (define (dispatch h max-sz)
              (unless (xht? h) (invalid-table who h))
              (case (xht-type h)
                [(eq) ($eq-hashtable-content h max-sz)]
                [(eqv) ($eqv-hashtable-content h max-sz)]
+               [(generic) ($gen-hashtable-content h max-sz)]
                [else ($ht-hashtable-content h max-sz)]))
            (case-lambda
             [(h max-sz)
@@ -903,6 +1017,7 @@ Documentation notes:
       (hashtable-content-dispatch who
                                   $eq-hashtable-keys
                                   $eqv-hashtable-keys
+                                  $gen-hashtable-keys
                                   $ht-hashtable-keys))
 
     (set-who! #(r6rs: hashtable-keys)
@@ -911,18 +1026,21 @@ Documentation notes:
         (case (xht-type h)
           [(eq) ($eq-hashtable-keys h (most-positive-fixnum))]
           [(eqv) ($eqv-hashtable-keys h (most-positive-fixnum))]
+          [(generic) ($gen-hashtable-keys h (most-positive-fixnum))]
           [else ($ht-hashtable-keys h (most-positive-fixnum))])))
 
     (set-who! hashtable-values
       (hashtable-content-dispatch who
                                   $eq-hashtable-values
                                   $eqv-hashtable-values
+                                  $gen-hashtable-values
                                   $ht-hashtable-values))
 
     (set-who! hashtable-entries
       (hashtable-content-dispatch who
                                   $eq-hashtable-entries
                                   $eqv-hashtable-entries
+                                  $gen-hashtable-entries
                                   $ht-hashtable-entries))
 
     (set-who! #(r6rs: hashtable-entries)
@@ -931,12 +1049,14 @@ Documentation notes:
         (case (xht-type h)
           [(eq) ($eq-hashtable-entries h (most-positive-fixnum))]
           [(eqv) ($eqv-hashtable-entries h (most-positive-fixnum))]
+          [(generic) ($gen-hashtable-entries h (most-positive-fixnum))]
           [else ($ht-hashtable-entries h (most-positive-fixnum))])))
 
     (set-who! hashtable-cells
       (hashtable-content-dispatch who
                                   $eq-hashtable-cells
                                   $eqv-hashtable-cells
+                                  $gen-hashtable-cells
                                   $ht-hashtable-cells)))
 
   (set-who! hashtable-cells
@@ -950,16 +1070,23 @@ Documentation notes:
         (case (xht-type h)
           [(eq) ($eq-hashtable-cells h max-sz)]
           [(eqv) ($eqv-hashtable-cells h max-sz)]
+          [(generic) ($gen-hashtable-cells h max-sz)]
           [else ($ht-hashtable-cells h max-sz)]))]
      [(h) (hashtable-cells h (hashtable-size h))]))
 
   (set! hashtable-size
-    (lambda (h)
-      (unless (xht? h) ($oops 'hashtable-size "~s is not a hashtable" h))
-      (if (eq? (xht-type h) 'eqv)
-          (fx+ (ht-size (eqv-ht-eqht h))
-               (ht-size (eqv-ht-genht h)))
-          (ht-size h))))
+    (let ([$gen-ht-size (lambda (h)
+                          (let ([eqht (gen-ht-eqht h)])
+                            (if eqht
+                                (ht-size eqht)
+                                (ht-size h))))])
+      (lambda (h)
+        (unless (xht? h) ($oops 'hashtable-size "~s is not a hashtable" h))
+        (case (xht-type h)
+          [(eqv) (fx+ (ht-size (eqv-ht-eqht h))
+                      ($gen-ht-size (eqv-ht-genht h)))]
+          [(generic) ($gen-ht-size h)]
+          [else (ht-size h)]))))
 
   (set! hashtable-mutable?
     (lambda (h)

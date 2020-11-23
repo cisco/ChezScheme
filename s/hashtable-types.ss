@@ -36,8 +36,8 @@
 
 (define-record-type gen-ht
   (parent ht)
-  (fields (immutable hash) (immutable equiv?))
-  (nongenerative #{gen-ht bu811z2onf9o6tfc-7})
+  (fields (immutable hash) (immutable equiv?) (immutable eqht))
+  (nongenerative #{gen-ht bu811z2onf9o6tfc-9})
   (sealed #t))
 
 (define-record-type eqv-ht

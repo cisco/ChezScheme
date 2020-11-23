@@ -2529,7 +2529,7 @@ static void resweep_dirty_weak_pairs(thread_gc *tgc) {
                       youngest = TARGET_GENERATION(si);
                     } else if (FORWARDEDP(p, si)) {
                       IGEN newpg;
-                      *pp = FWDADDRESS(p);
+                      *pp = GET_FWDADDRESS(p);
                       newpg = TARGET_GENERATION(si);
                       if (newpg < youngest) youngest = newpg;
                     } else {
@@ -2647,7 +2647,7 @@ static void check_ephemeron(thread_gc *tgc, ptr pe) {
         IGEN tg = TARGET_GENERATION(si);
         if (tg < from_g) S_record_new_dirty_card(tgc, &INITCAR(pe), tg);
 #endif
-        INITCAR(pe) = FWDADDRESS(p);
+        INITCAR(pe) = GET_FWDADDRESS(p);
         relocate_impure(&INITCDR(pe), from_g);
       } else {
         /* Not reached, so far; install as trigger */
