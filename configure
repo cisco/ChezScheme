@@ -601,6 +601,30 @@ if [ "$addflags" = "yes" ] ; then
   fi
 fi
 
+if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
+    echo "nanopass source is missing; you may need to check out git submodules"
+    exit 1
+fi
+
+if [ "${zlibDep}" != "" ] ; then
+    if [ ! -f "$srcdir"/zlib/configure ] ; then
+        echo "zlib source is missing; you may need to check out git submodules"
+        exit 1
+    fi
+fi
+
+if [ "${LZ4Dep}" != "" ] ; then
+    if [ ! -f "$srcdir"/lz4/lib/Makefile ] ; then
+        echo "lz4 source is missing; you may need to check out git submodules"
+        exit 1
+    fi
+fi
+
+if [ ! -f "$srcdir"/stex/Mf-stex ] ; then
+    echo "stex source is missing; you may need to check out git submodules"
+    exit 1
+fi
+
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
   echo "Configuring for $m"
 else
@@ -625,49 +649,25 @@ else
       echo "  $0 -m=<machine type>"
       echo "to specify one of the available machine types."
   fi
-  echo ""
-  if [ "$m" = "" ] ; then
-      echo 'If no directory in "boot" exists for the correct machine type,'
-      echo "then you can use Racket v7.1 or later with"
-  else
-      echo "Since no directory in "'"boot"'" exists for $m, you can try"
-      echo "using Racket v7.1 or later with"
-  fi
-  echo "  racket rktboot/main.rkt --machine $maybem"
-  echo "to create the boot files, and then try $0 again."
-  if [ -f boot/pb/scheme.boot ] ; then
+  if [ -f "${srcdir}"/boot/pb/scheme.boot ] ; then
       echo ""
-      echo "Alternatively, a pb machine type is available, so try"
+      echo "Otherwise, the pb machine type is available, so try"
       echo "  $0 --pb"
       echo "  make $maybem.bootquick"
       echo "to create the boot files using a portable-bytecode build,"
       echo "and then try $0 again."
   fi
+  echo ""
+  if [ "$m" = "" ] ; then
+      echo 'Alternatively, If no directory in "boot" exists for the correct'
+      echo "machine type, then you can use Racket v7.1 or later with"
+  else
+      echo "Alternatively, since no directory in "'"boot"'" exists for $m,"
+      echo "you can try using Racket v7.1 or later with"
+  fi
+  echo "  racket rktboot/main.rkt --machine $maybem"
+  echo "to create the boot files, and then try $0 again."
   exit 1
-fi
-
-if [ ! -f 'nanopass/nanopass.ss' ] ; then
-    echo "nanopass source is missing; you may need to check out git submodules"
-    exit 1
-fi
-
-if [ "${zlibDep}" != "" ] ; then
-    if [ ! -f 'zlib/configure' ] ; then
-        echo "zlib source is missing; you may need to check out git submodules"
-        exit 1
-    fi
-fi
-  
-if [ "${LZ4Dep}" != "" ] ; then
-    if [ ! -f 'lz4/lib/Makefile' ] ; then
-        echo "lz4 source is missing; you may need to check out git submodules"
-        exit 1
-    fi
-fi
-
-if [ ! -f 'stex/Mf-stex' ] ; then
-    echo "stex source is missing; you may need to check out git submodules"
-    exit 1
 fi
 
 case "$srcdir" in
