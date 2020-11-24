@@ -57,4 +57,27 @@ starting point.
 
 Get started with Chez Scheme by [Building Chez Scheme](BUILDING).
 
-For more information see the [Chez Scheme Project Page](https://cisco.github.io/ChezScheme/).
+For more information about the implementation and a guide to modifying
+Chez Scheme, see [implementation notes](IMPLEMENTATION.md).
+
+For more information on Chez Scheme, see the [Chez Scheme Project Page](https://cisco.github.io/ChezScheme/).
+
+Major additions to Chez Scheme in the Racket variant:
+
+ * AArch64 support
+
+ * pb (Portable bytecode) support, which is mainly useful for
+   bootstrapping a build on any supported platform
+
+ * Unboxed floating-point arithmetic and flvectors
+
+ * Type reconstruction during optimization (especially for safe code)
+
+ * Continuation attachments
+
+ * Parallel garbage collection, in-place garbage collection for
+   old-generation objects (instead of always copying), and
+   reachability-based memory accounting
+
+ * Ordered finalization, immobile (but collectable) objects, and
+   weak/ephemeron generic hash tables

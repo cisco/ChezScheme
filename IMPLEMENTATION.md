@@ -1,4 +1,4 @@
-# Getting Started
+# Implementation Overview
 
 The majority of the Chez Scheme compiler and libraries are implemented
 in Scheme and can be found in the "s" (for Scheme) subdirectory. The
