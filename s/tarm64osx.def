@@ -1,0 +1,6 @@
+;;; tarm64osx.def
+
+(define-constant machine-type (constant machine-type-tarm64osx))
+(features iconv expeditor pthreads)
+(include "arm64.def")
+(include "default.def")

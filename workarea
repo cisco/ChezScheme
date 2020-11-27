@@ -55,6 +55,7 @@ case "$Mhost" in
   a6s2) ;;
   arm32le) ;;
   arm64le) ;;
+  arm64osx) ;;
   i3fb) ;;
   i3le) ;;
   i3nb) ;;
@@ -73,6 +74,7 @@ case "$Mhost" in
   ta6s2) Muni=a6s2 ;;
   tarm32le) Muni=arm32le ;;
   tarm64le) Muni=arm64le ;;
+  tarm64osx) Muni=arm64osx ;;
   ti3fb) Muni=i3fb ;;
   ti3le) Muni=i3le ;;
   ti3nb) Muni=i3nb ;;
@@ -101,6 +103,7 @@ case "$Muniarch" in
   a6s2) March=a6 ;;
   arm32le) March=arm32 ;;
   arm64le) March=arm64 ;;
+  arm64osx) March=arm64 ;;
   i3fb) March=i3 ;;
   i3le) March=i3 ;;
   i3nb) March=i3 ;;

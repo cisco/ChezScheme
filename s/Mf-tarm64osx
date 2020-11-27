@@ -1,4 +1,4 @@
-# Mf-arm64le
+# Mf-tarm64osx
 # Copyright 1984-2017 Cisco Systems, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-m ?= arm64le
-archincludes = arm64.ss
+m = tarm64osx
 
-include Mf-base
-
-machine.def: arm64.def
+include Mf-arm64osx

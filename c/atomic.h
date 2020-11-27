@@ -37,38 +37,38 @@
 # define CAS_ANY_FENCE(a, old, new) ((*(a) == (old)) ? (*(a) = (new), 1) : 0)
 #elif defined(__arm64__)
 FORCEINLINE int CAS_LOAD_ACQUIRE(volatile void *addr, void *old_val, void *new_val) {
-  int ret;
+  long ret;
   __asm__ __volatile__ ("mov %0, #0\n\t"       
                         "0:\n\t"
-                        "ldaxr r12, [%1, #0]\n\t"
-                        "cmp r12, %2\n\t"
+                        "ldaxr x12, [%1, #0]\n\t"
+                        "cmp x12, %2\n\t"
                         "bne 1f\n\t"
-                        "stxr r7, %3, [%1, #0]\n\t"
-                        "cmp r7, #0\n\t"
+                        "stxr x7, %3, [%1, #0]\n\t"
+                        "cmp x7, #0\n\t"
                         "bne 1f\n\t"
                         "moveq %0, #1\n\t"
                         "1:\n\t"
                         : "=&r" (ret)
                         : "r" (addr), "r" (old_val), "r" (new_val)
-                        : "cc", "memory", "r12", "r7");
+                        : "cc", "memory", "x12", "x7");
   return ret;
 }
 /* same as above, but ldaxr -> ldxr and stxr -> stlxr */
 FORCEINLINE int CAS_STORE_RELEASE(volatile void *addr, void *old_val, void *new_val) {
-  int ret;
+  long ret;
   __asm__ __volatile__ ("mov %0, #0\n\t"       
                         "0:\n\t"
-                        "ldxr r12, [%1, #0]\n\t"
-                        "cmp r12, %2\n\t"
+                        "ldxr x12, [%1, #0]\n\t"
+                        "cmp x12, %2\n\t"
                         "bne 1f\n\t"
-                        "stlxr r7, %3, [%1, #0]\n\t"
-                        "cmp r7, #0\n\t"
+                        "stlxr x7, %3, [%1, #0]\n\t"
+                        "cmp x7, #0\n\t"
                         "bne 1f\n\t"
                         "moveq %0, #1\n\t"
                         "1:\n\t"
                         : "=&r" (ret)
                         : "r" (addr), "r" (old_val), "r" (new_val)
-                        : "cc", "memory", "r12", "r7");
+                        : "cc", "memory", "x12", "x7");
   return ret;
 }
 #elif defined(__arm__)

@@ -156,6 +156,9 @@ case "${CONFIG_UNAME}" in
       m64=a6osx
       tm32=ti3osx
       tm64=ta6osx
+    elif uname -a | egrep 'arm|aarch' > /dev/null 2>&1 ; then
+      m64=arm64osx
+      tm64=tarm6osx
     fi
     installprefix=/usr/local
     installmansuffix=share/man
@@ -510,6 +513,9 @@ if [ "$cflagsset" = "no" ] ; then
         ;;
     a6osx|ta6osx)
         CFLAGS="-m64 ${optFlags}"
+        ;;
+    arm64osx|tarm64osx)
+        CFLAGS="-arch arm ${optFlags}"
         ;;
     a6nt|ta6nt)
         CFLAGS="${optFlags}"

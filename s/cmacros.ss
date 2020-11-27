@@ -394,6 +394,7 @@
   ppc32le   tppc32le
   arm64le   tarm64le
   pb
+  arm64osx  tarm64osx
 )
 
 (include "machine.def")

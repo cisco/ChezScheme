@@ -78,6 +78,13 @@
 # endif
 #endif
 
+#if (machine_type == machine_type_arm64osx || machine_type == machine_type_tarm64osx)
+# define OS_ANY_MACOSX
+# if (machine_type == machine_type_tarm64osx)
+#  define PTHREADS
+# endif
+#endif
+
 #if (machine_type == machine_type_pb)
 # if defined(__powerpc__) && !defined(__powerpc64__)
 #  define PORTABLE_BYTECODE_BIGENDIAN

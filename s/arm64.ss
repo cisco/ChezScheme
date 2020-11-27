@@ -298,8 +298,10 @@
 
   (define-instruction value popcount
     [(op (z ur) (x ur))
-     (let ([u (make-tmp 'u 'fp)])
-       `(set! ,(make-live-info) ,z (asm ,info ,asm-popcount ,x ,u)))])
+     (let ([u (make-tmp 'u)])
+       (seq
+        `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,info ,asm-popcount ,x ,u))))])
 
   (define-instruction value (move)
     [(op (z mem) (x ur))
@@ -1254,7 +1256,7 @@
     (lambda (op dest code*)
       (record-case dest
         [(label) (offset l)
-         (safe-assert (uncond-branch-disp? (+ offset 4)))
+         (safe-assert (uncond-branch-disp? offset))
          (emit-code (op dest code*)
            [26 #b000101]
            [0  (fxand (fxsra (fx+ offset 4) 2) (fx- (fxsll 1 26) 1))])]
@@ -1550,9 +1552,10 @@
 
   (define uncond-branch-disp?
     (lambda (x)
-      (and (fixnum? x) 
-           (fx<= (- (expt 2 26)) x (- (expt 2 20) 1))
-           (not (fxlogtest x #b11)))))
+      (let ([x (+ x 4)]) ; because `branch-always-label-op` adds 4
+        (and (fixnum? x) 
+             (fx<= (- (expt 2 27)) x (- (expt 2 27) 1))
+             (not (fxlogtest x #b11))))))
   
   (define asm-size
     (lambda (x)
