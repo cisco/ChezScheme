@@ -200,6 +200,9 @@ static void s_instantiate_code_object() {
     proc = S_get_scheme_arg(tc, 3);
 
     tc_mutex_acquire()
+
+    S_thread_start_code_write();
+
     new = S_code(tc, CODETYPE(old), CODELEN(old));
     tc_mutex_release()
 
@@ -248,6 +251,8 @@ static void s_instantiate_code_object() {
            S_set_code_obj("fcallable", RELOC_TYPE(entry), new, a, obj, item_off);
     }
     S_flush_instruction_cache(tc);
+
+    S_thread_end_code_write();
 
     AC0(tc) = new;
 }

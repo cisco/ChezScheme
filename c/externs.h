@@ -341,7 +341,7 @@ extern INT matherr PROTO((struct exception *x));
 
 /* segment.c */
 extern void S_segment_init PROTO((void));
-extern void *S_getmem PROTO((iptr bytes, IBOOL zerofill));
+extern void *S_getmem PROTO((iptr bytes, IBOOL zerofill, IBOOL for_code));
 extern void S_freemem PROTO((void *addr, iptr bytes));
 extern iptr S_find_segments PROTO((ISPC s, IGEN g, iptr n));
 extern void S_free_chunk PROTO((chunkinfo *chunk));
@@ -350,6 +350,8 @@ extern uptr S_curmembytes PROTO((void));
 extern uptr S_maxmembytes PROTO((void));
 extern void S_resetmaxmembytes PROTO((void));
 extern void S_move_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
+extern void S_thread_start_code_write(void);
+extern void S_thread_end_code_write(void);
 
 /* stats.c */
 extern void S_stats_init PROTO((void));

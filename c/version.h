@@ -85,6 +85,14 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtim.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+
+#if (machine_type == machine_type_arm64osx || machine_type == machine_type_tarm64osx)
+# define OS_ANY_MACOSX
+# if (machine_type == machine_type_tarm64osx)
+#  define PTHREADS
+# endif
+# define S_MAP_CODE  MAP_JIT
+# define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
 #endif
 
 #if (machine_type == machine_type_i3le || machine_type == machine_type_ti3le || machine_type == machine_type_a6le || machine_type == machine_type_ta6le)
@@ -451,3 +459,14 @@ typedef char tputsputcchar;
 #ifndef WRITE
 # define WRITE write
 #endif
+
+#ifndef S_PROT_CODE
+# define S_PROT_CODE (PROT_READ | PROT_WRITE | PROT_EXEC)
+#endif
+#ifndef S_MAP_CODE
+# define S_MAP_CODE 0
+#endif
+#ifndef S_ENABLE_CODE_WRITE
+# define S_ENABLE_CODE_WRITE(on) do { } while (0)
+#endif
+
