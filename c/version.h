@@ -83,6 +83,8 @@
 # if (machine_type == machine_type_tarm64osx)
 #  define PTHREADS
 # endif
+# define S_MAP_CODE  MAP_JIT
+# define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
 #endif
 
 #if (machine_type == machine_type_pb)
@@ -474,6 +476,16 @@ typedef char tputsputcchar;
 #endif
 #ifndef WRITE
 # define WRITE write
+#endif
+
+#ifndef S_PROT_CODE
+# define S_PROT_CODE (PROT_READ | PROT_WRITE | PROT_EXEC)
+#endif
+#ifndef S_MAP_CODE
+# define S_MAP_CODE 0
+#endif
+#ifndef S_ENABLE_CODE_WRITE
+# define S_ENABLE_CODE_WRITE(on) do { } while (0)
 #endif
 
 #ifdef PTHREADS

@@ -63,6 +63,8 @@ EXTERN seginfo *S_segment_info[1<<segment_t1_bits];
 
 EXTERN chunkinfo *S_chunks_full;
 EXTERN chunkinfo *S_chunks[PARTIAL_CHUNK_POOLS+1];
+EXTERN chunkinfo *S_code_chunks_full;
+EXTERN chunkinfo *S_code_chunks[PARTIAL_CHUNK_POOLS+1];
 
 /* schsig.c */
 

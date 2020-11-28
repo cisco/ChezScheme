@@ -500,6 +500,8 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
         Scompact_heap();
       }
 
+      S_thread_start_code_write();
+
       switch (ty) {
         case fasl_type_gzip:
         case fasl_type_lz4: {
@@ -547,6 +549,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
           return (ptr)0;
       }
       S_flush_instruction_cache(tc);
+      S_thread_end_code_write();
       return x;
     } else {
       uf_skipbytes(uf, size);

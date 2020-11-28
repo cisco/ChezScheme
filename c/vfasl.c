@@ -213,11 +213,12 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 # define VSPACE_END(s) ptr_add(vspaces[(s)], VSPACE_LENGTH(s))
   ptr tc = get_thread_context();
   vfasl_header header;
-  ptr data, table;
+  ptr table;
   vfoff *symrefs, *rtdrefs, *singletonrefs;
   octet *bm, *bm_end;
   iptr used_len;
   int s;
+  void *bv_addr;
   IBOOL to_static = 0;
 
   used_len = sizeof(header);
@@ -241,48 +242,40 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
   }
   vspace_offsets[vspaces_count] = header.data_size;
 
-  if (bv) {
-    void *base_addr = &BVIT(bv, sizeof(vfasl_header) + offset);
-    newspace_find_room(tc, typemod, header.data_size, data);
-    memcpy(TO_VOIDP(data), base_addr, header.data_size);
-    table = ptr_add(TO_PTR(base_addr), header.data_size);
-  } else {
-    if (S_vfasl_boot_mode > 0) {
-      for (s = 0; s < vspaces_count; s++) {
-        uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
-        if (sz > 0) {
-          if ((s == vspace_reloc) && !S_G.retain_static_relocation) {
-            newspace_find_room(tc, typemod, sz, vspaces[s]);
-          } else {
-            find_room(tc, vspace_spaces[s], static_generation, typemod, sz, vspaces[s]);
-          }
-          if (S_fasl_stream_read(stream, TO_VOIDP(vspaces[s]), sz) < 0)
-            S_error("fasl-read", "input truncated");
-        } else
-          vspaces[s] = (ptr)0;
-      }
-      for (s = vspaces_count - 1; s--; ) {
-        if (!vspaces[s])
-          vspaces[s] = vspaces[s+1];
-      }
-      data = (ptr)0; /* => initialize below */
-      to_static = 1;
-    } else {
-      newspace_find_room(tc, typemod, header.data_size, data);
-      if (S_fasl_stream_read(stream, TO_VOIDP(data), header.data_size) < 0)
-        S_error("fasl-read", "input truncated");
-    }
+  bv_addr = (bv ? &BVIT(bv, sizeof(vfasl_header) + offset) : NULL);
 
+  to_static = (S_vfasl_boot_mode > 0);
+  
+  for (s = 0; s < vspaces_count; s++) {
+    uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
+    if (sz > 0) {
+      if ((s == vspace_reloc) && to_static && !S_G.retain_static_relocation) {
+        newspace_find_room(tc, typemod, sz, vspaces[s]);
+      } else {
+        find_room(tc, vspace_spaces[s], (to_static ? static_generation : 0), typemod, sz, vspaces[s]);
+      }
+      if (bv) {
+        memcpy(TO_VOIDP(vspaces[s]), bv_addr, sz);
+        bv_addr = TO_VOIDP(ptr_add(TO_PTR(bv_addr), sz));
+      } else {
+        if (S_fasl_stream_read(stream, TO_VOIDP(vspaces[s]), sz) < 0)
+          S_error("fasl-read", "input truncated");
+      }
+    } else
+      vspaces[s] = (ptr)0;
+  }
+  for (s = vspaces_count - 1; s--; ) {
+    if (!vspaces[s])
+      vspaces[s] = vspaces[s+1];
+  }
+
+  if (bv)
+    table = TO_PTR(bv_addr);
+  else {
     newspace_find_room(tc, typemod, ptr_align(header.table_size), table);
     if (S_fasl_stream_read(stream, TO_VOIDP(table), header.table_size) < 0)
       S_error("fasl-read", "input truncated");
   }
-
-  if (data) {
-    for (s = 0; s < vspaces_count; s++)
-      vspaces[s] = ptr_add(data, vspace_offsets[s]);
-  } else
-    data = vspaces[0];
 
   symrefs = TO_VOIDP(table);
   rtdrefs = TO_VOIDP(ptr_add(TO_PTR(symrefs), header.symref_count * sizeof(vfoff)));
