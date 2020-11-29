@@ -1968,7 +1968,7 @@ static void swap_code_endian(octet *code, uptr len)
 
       if (a == pb_adr) {
         /* delta can be negative for a mvlet-error reinstall of the return address */
-        iptr delta = (int16_t)(uint16_t)(((uptr)d << 16) + c);
+        iptr delta = (int16_t)(uint16_t)(((uptr)d << 8) + c);
         if (delta > 0) {
           /* after a few more instructions, we'll hit
              a header where 64-bit values needs to be
