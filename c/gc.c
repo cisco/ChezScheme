@@ -1651,7 +1651,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
         si->forwarded_flonums = 0;
 #endif
       } else {
-        chunkinfo *chunk = si->chunk;
+        chunkinfo *chunk = si->chunk, **chunks = ((si->space == space_code) ? S_code_chunks : S_chunks);
         S_G.number_of_nonstatic_segments -= 1;
         S_G.number_of_empty_segments += 1;
         si->space = space_empty;
@@ -1666,10 +1666,10 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
              * small stuff into them and thereby invite fragmentation */
             S_free_chunk(chunk);
           } else {
-            S_move_to_chunk_list(chunk, &S_chunks[PARTIAL_CHUNK_POOLS]);
+            S_move_to_chunk_list(chunk, &chunks[PARTIAL_CHUNK_POOLS]);
           }
         } else {
-          S_move_to_chunk_list(chunk, &S_chunks[PARTIAL_CHUNK_POOLS-1]);
+          S_move_to_chunk_list(chunk, &chunks[PARTIAL_CHUNK_POOLS-1]);
         }
       }
     }
