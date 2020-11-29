@@ -448,7 +448,7 @@ static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
 void S_check_heap(aftergc) IBOOL aftergc; {
   uptr seg; INT d; ISPC s; IGEN g; IDIRTYBYTE dirty; IBOOL found_eos; IGEN pg;
   ptr p, *pp1, *pp2, *nl;
-  iptr i;
+  iptr i, for_code;
   uptr empty_segments = 0;
   uptr used_segments = 0;
   uptr static_segments = 0;
@@ -456,27 +456,31 @@ void S_check_heap(aftergc) IBOOL aftergc; {
 
   check_dirty();
 
-  for (i = PARTIAL_CHUNK_POOLS; i >= -1; i -= 1) {
-    chunkinfo *chunk = i == -1 ? S_chunks_full : S_chunks[i];
-    while (chunk != NULL) {
-      seginfo *si = chunk->unused_segs;
-      iptr count = 0;
-      while(si) {
-        count += 1;
-        if (si->space != space_empty) {
-          S_checkheap_errors += 1;
-          printf("!!! unused segment has unexpected space\n");
+  for (for_code = 0; for_code < 2; for_code++) {
+    for (i = PARTIAL_CHUNK_POOLS; i >= -1; i -= 1) {
+      chunkinfo *chunk = (i == -1
+                          ? (for_code ? S_code_chunks_full : S_chunks_full)
+                          : (for_code ? S_code_chunks[i] : S_chunks[i]));
+      while (chunk != NULL) {
+        seginfo *si = chunk->unused_segs;
+        iptr count = 0;
+        while(si) {
+          count += 1;
+          if (si->space != space_empty) {
+            S_checkheap_errors += 1;
+            printf("!!! unused segment has unexpected space\n");
+          }
+          si = si->next;
         }
-        si = si->next;
+        if ((chunk->segs - count) != chunk->nused_segs) {
+          S_checkheap_errors += 1;
+          printf("!!! unexpected used segs count %td with %td total segs and %td segs on the unused list\n",
+                 (ptrdiff_t)chunk->nused_segs, (ptrdiff_t)chunk->segs, (ptrdiff_t)count);
+        }
+        used_segments += chunk->nused_segs;
+        empty_segments += count;
+        chunk = chunk->next;
       }
-      if ((chunk->segs - count) != chunk->nused_segs) {
-        S_checkheap_errors += 1;
-        printf("!!! unexpected used segs count %td with %td total segs and %td segs on the unused list\n",
-            (ptrdiff_t)chunk->nused_segs, (ptrdiff_t)chunk->segs, (ptrdiff_t)count);
-      }
-      used_segments += chunk->nused_segs;
-      empty_segments += count;
-      chunk = chunk->next;
     }
   }
 
@@ -513,123 +517,127 @@ void S_check_heap(aftergc) IBOOL aftergc; {
         (ptrdiff_t)empty_segments);
   }
 
-  for (i = PARTIAL_CHUNK_POOLS; i >= -1; i -= 1) {
-    chunkinfo *chunk = i == -1 ? S_chunks_full : S_chunks[i];
-    while (chunk != NULL) {
-      uptr nsegs; seginfo *si;
-      for (si = &chunk->sis[0], nsegs = chunk->segs; nsegs != 0; nsegs -= 1, si += 1) {
-        seginfo *recorded_si; uptr recorded_seg;
-        if ((seg = si->number) != (recorded_seg = (chunk->base + chunk->segs - nsegs))) {
-          S_checkheap_errors += 1;
-          printf("!!! recorded segment number %#tx differs from actual segment number %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_seg);
-        }
-        if ((recorded_si = SegInfo(seg)) != si) {
-          S_checkheap_errors += 1;
-          printf("!!! recorded segment %#tx seginfo %#tx differs from actual seginfo %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_si, (ptrdiff_t)si);
-        }
-        s = si->space;
-        g = si->generation;
-
-        if (s == space_new) {
-          if (g != 0) {
+  for (for_code = 0; for_code < 2; for_code++) {
+    for (i = PARTIAL_CHUNK_POOLS; i >= -1; i -= 1) {
+      chunkinfo *chunk = (i == -1
+                          ? (for_code ? S_code_chunks_full : S_chunks_full)
+                          : (for_code ? S_code_chunks[i] : S_chunks[i]));
+      while (chunk != NULL) {
+        uptr nsegs; seginfo *si;
+        for (si = &chunk->sis[0], nsegs = chunk->segs; nsegs != 0; nsegs -= 1, si += 1) {
+          seginfo *recorded_si; uptr recorded_seg;
+          if ((seg = si->number) != (recorded_seg = (chunk->base + chunk->segs - nsegs))) {
             S_checkheap_errors += 1;
-            printf("!!! unexpected generation %d segment %#tx in space_new\n", g, (ptrdiff_t)seg);
+            printf("!!! recorded segment number %#tx differs from actual segment number %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_seg);
           }
-        } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair /* || s == space_ephemeron */) {
-          /* out of date: doesn't handle space_port, space_continuation, space_code, space_pure_typed_object, space_impure_record */
-          nl = (ptr *)S_G.next_loc[g][s];
-
-          /* check for dangling references */
-          pp1 = (ptr *)build_ptr(seg, 0);
-          pp2 = (ptr *)build_ptr(seg + 1, 0);
-          if (pp1 <= nl && nl < pp2) pp2 = nl;
-
-          while (pp1 != pp2) {
-            seginfo *psi; ISPC ps;
-            p = *pp1;
-            if (p == forward_marker) break;
-            if (!IMMEDIATE(p) && (psi = MaybeSegInfo(ptr_get_segment(p))) != NULL && ((ps = psi->space) & space_old || ps == space_empty)) {
+          if ((recorded_si = SegInfo(seg)) != si) {
+            S_checkheap_errors += 1;
+            printf("!!! recorded segment %#tx seginfo %#tx differs from actual seginfo %#tx", (ptrdiff_t)seg, (ptrdiff_t)recorded_si, (ptrdiff_t)si);
+          }
+          s = si->space;
+          g = si->generation;
+  
+          if (s == space_new) {
+            if (g != 0) {
               S_checkheap_errors += 1;
-              printf("!!! dangling reference at %#tx to %#tx\n", (ptrdiff_t)pp1, (ptrdiff_t)p);
-              printf("from: "); segment_tell(seg);
-              printf("to:   "); segment_tell(ptr_get_segment(p));
+              printf("!!! unexpected generation %d segment %#tx in space_new\n", g, (ptrdiff_t)seg);
             }
-            pp1 += 1;
-          }
-
-          /* verify that dirty bits are set appropriately */
-          /* out of date: doesn't handle space_impure_record, space_port, and maybe others */
-          /* also doesn't check the SYMCODE for symbols */
-          if (s == space_impure || s == space_symbol || s == space_weakpair /* || s == space_ephemeron */) {
-            found_eos = 0;
-            pp2 = pp1 = build_ptr(seg, 0);
-            for (d = 0; d < cards_per_segment; d += 1) {
-              if (found_eos) {
-                if (si->dirty_bytes[d] != 0xff) {
-                  S_checkheap_errors += 1;
-                  printf("!!! Dirty byte set past end-of-segment for segment %#tx, card %d\n", (ptrdiff_t)seg, d);
+          } else if (s == space_impure || s == space_symbol || s == space_pure || s == space_weakpair /* || s == space_ephemeron */) {
+            /* out of date: doesn't handle space_port, space_continuation, space_code, space_pure_typed_object, space_impure_record */
+            nl = (ptr *)S_G.next_loc[g][s];
+  
+            /* check for dangling references */
+            pp1 = (ptr *)build_ptr(seg, 0);
+            pp2 = (ptr *)build_ptr(seg + 1, 0);
+            if (pp1 <= nl && nl < pp2) pp2 = nl;
+  
+            while (pp1 != pp2) {
+              seginfo *psi; ISPC ps;
+              p = *pp1;
+              if (p == forward_marker) break;
+              if (!IMMEDIATE(p) && (psi = MaybeSegInfo(ptr_get_segment(p))) != NULL && ((ps = psi->space) & space_old || ps == space_empty)) {
+                S_checkheap_errors += 1;
+                printf("!!! dangling reference at %#tx to %#tx\n", (ptrdiff_t)pp1, (ptrdiff_t)p);
+                printf("from: "); segment_tell(seg);
+                printf("to:   "); segment_tell(ptr_get_segment(p));
+              }
+              pp1 += 1;
+            }
+  
+            /* verify that dirty bits are set appropriately */
+            /* out of date: doesn't handle space_impure_record, space_port, and maybe others */
+            /* also doesn't check the SYMCODE for symbols */
+            if (s == space_impure || s == space_symbol || s == space_weakpair /* || s == space_ephemeron */) {
+              found_eos = 0;
+              pp2 = pp1 = build_ptr(seg, 0);
+              for (d = 0; d < cards_per_segment; d += 1) {
+                if (found_eos) {
+                  if (si->dirty_bytes[d] != 0xff) {
+                    S_checkheap_errors += 1;
+                    printf("!!! Dirty byte set past end-of-segment for segment %#tx, card %d\n", (ptrdiff_t)seg, d);
+                    segment_tell(seg);
+                  }
+                  continue;
+                }
+  
+                pp2 += bytes_per_card / sizeof(ptr);
+                if (pp1 <= nl && nl < pp2) {
+                  found_eos = 1;
+                  pp2 = nl;
+                }
+  
+#ifdef DEBUG
+                printf("pp1 = %#tx, pp2 = %#tx, nl = %#tx\n", (ptrdiff_t)pp1, (ptrdiff_t)pp2, (ptrdiff_t)nl);
+                fflush(stdout);
+#endif
+  
+                dirty = 0xff;
+                while (pp1 != pp2) {
+                  seginfo *psi;
+                  p = *pp1;
+  
+                  if (p == forward_marker) {
+                    found_eos = 1;
+                    break;
+                  }
+                  if (!IMMEDIATE(p) && (psi = MaybeSegInfo(ptr_get_segment(p))) != NULL && (pg = psi->generation) < g) {
+                    if (pg < dirty) dirty = pg;
+                    if (si->dirty_bytes[d] > pg) {
+                      S_checkheap_errors += 1;
+                      check_heap_dirty_msg("!!! INVALID", pp1);
+                    }
+                    else if (checkheap_noisy)
+                      check_heap_dirty_msg("... ", pp1);
+                  }
+                  pp1 += 1;
+                }
+                if (checkheap_noisy && si->dirty_bytes[d] < dirty) {
+                  /* sweep_dirty won't sweep, and update dirty byte, for
+                     cards with dirty pointers to segments older than the
+                     maximum copyied generation, so we can get legitimate
+                     conservative dirty bytes even after gc */
+                  printf("... Conservative dirty byte %x (%x) %sfor segment %#tx card %d ",
+                      si->dirty_bytes[d], dirty,
+                      (aftergc ? "after gc " : ""),
+                      (ptrdiff_t)seg, d);
                   segment_tell(seg);
                 }
-                continue;
               }
-
-              pp2 += bytes_per_card / sizeof(ptr);
-              if (pp1 <= nl && nl < pp2) {
-                found_eos = 1;
-                pp2 = nl;
-              }
-
-#ifdef DEBUG
-              printf("pp1 = %#tx, pp2 = %#tx, nl = %#tx\n", (ptrdiff_t)pp1, (ptrdiff_t)pp2, (ptrdiff_t)nl);
-              fflush(stdout);
-#endif
-
-              dirty = 0xff;
-              while (pp1 != pp2) {
-                seginfo *psi;
-                p = *pp1;
-
-                if (p == forward_marker) {
-                  found_eos = 1;
-                  break;
-                }
-                if (!IMMEDIATE(p) && (psi = MaybeSegInfo(ptr_get_segment(p))) != NULL && (pg = psi->generation) < g) {
-                  if (pg < dirty) dirty = pg;
-                  if (si->dirty_bytes[d] > pg) {
-                    S_checkheap_errors += 1;
-                    check_heap_dirty_msg("!!! INVALID", pp1);
-                  }
-                  else if (checkheap_noisy)
-                    check_heap_dirty_msg("... ", pp1);
-                }
-                pp1 += 1;
-              }
-              if (checkheap_noisy && si->dirty_bytes[d] < dirty) {
-                /* sweep_dirty won't sweep, and update dirty byte, for
-                   cards with dirty pointers to segments older than the
-                   maximum copyied generation, so we can get legitimate
-                   conservative dirty bytes even after gc */
-                printf("... Conservative dirty byte %x (%x) %sfor segment %#tx card %d ",
-                    si->dirty_bytes[d], dirty,
-                    (aftergc ? "after gc " : ""),
-                    (ptrdiff_t)seg, d);
+            }
+          }
+          if (aftergc && s != space_empty && !(s & space_locked) && (g == 0 || (s != space_impure && s != space_symbol && s != space_port && s != space_weakpair && s != space_ephemeron && s != space_impure_record))) {
+            for (d = 0; d < cards_per_segment; d += 1) {
+              if (si->dirty_bytes[d] != 0xff) {
+                S_checkheap_errors += 1;
+                printf("!!! Unnecessary dirty byte %x (%x) after gc for segment %#tx card %d ",
+                    si->dirty_bytes[d], 0xff, (ptrdiff_t)(si->number), d);
                 segment_tell(seg);
               }
             }
           }
         }
-        if (aftergc && s != space_empty && !(s & space_locked) && (g == 0 || (s != space_impure && s != space_symbol && s != space_port && s != space_weakpair && s != space_ephemeron && s != space_impure_record))) {
-          for (d = 0; d < cards_per_segment; d += 1) {
-            if (si->dirty_bytes[d] != 0xff) {
-              S_checkheap_errors += 1;
-              printf("!!! Unnecessary dirty byte %x (%x) after gc for segment %#tx card %d ",
-                  si->dirty_bytes[d], 0xff, (ptrdiff_t)(si->number), d);
-              segment_tell(seg);
-            }
-          }
-        }
+        chunk = chunk->next;
       }
-      chunk = chunk->next;
     }
   }
 }
