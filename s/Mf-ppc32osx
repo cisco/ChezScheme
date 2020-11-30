@@ -1,0 +1,6 @@
+# Mf-ppc32osx
+
+m ?= ppc32osx
+archincludes = ppc32.ss
+
+include Mf-base

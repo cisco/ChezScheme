@@ -1,0 +1,5 @@
+# Mf-tppc32osx
+
+m ?= tppc32osx
+
+include Mf-ppc32osx

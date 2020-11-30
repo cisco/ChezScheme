@@ -1,0 +1,6 @@
+;;; ppc32osx.def
+
+(define-constant machine-type (constant machine-type-ppc32osx))
+(features iconv expeditor)
+(include "ppc32.def")
+(include "default.def")

@@ -59,6 +59,7 @@ disablex11=no
 disablecurses=no
 addflags=yes
 addwarningflags=no
+default_warning_flags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
@@ -159,6 +160,10 @@ case "${CONFIG_UNAME}" in
     elif uname -a | egrep 'arm|aarch' > /dev/null 2>&1 ; then
       m64=arm64osx
       tm64=tarm6osx
+    elif uname -a | egrep 'Power' > /dev/null 2>&1 ; then
+      m64=ppc32osx
+      tm64=tppc32osx
+      default_warning_flags=""
     fi
     installprefix=/usr/local
     installmansuffix=share/man
@@ -475,7 +480,7 @@ fi
 optFlags=-O2
 
 if [ "$cflagsset" = "no" -o "$addwarningflags" = "yes" ] ; then
-    warningFlags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
+    warningFlags="$default_warning_flags"
 else
     warningFlags=""
 fi
@@ -544,6 +549,9 @@ if [ "$cflagsset" = "no" ] ; then
         ;;
     ppc32le|tppc32le)
         CFLAGS="-m32 ${optFlags}"
+        ;;
+    ppc32osx|tppc32osx)
+        CFLAGS="${optFlags}"
         ;;
   esac
 fi

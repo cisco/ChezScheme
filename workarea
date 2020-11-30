@@ -65,6 +65,7 @@ case "$Mhost" in
   i3qnx) ;;
   i3s2) ;;
   ppc32le) ;;
+  ppc32osx) ;;
   ta6fb) Muni=a6fb ;;
   ta6le) Muni=a6le ;;
   ta6nb) Muni=a6nb ;;
@@ -84,6 +85,7 @@ case "$Mhost" in
   ti3qnx) Muni=i3qnx ;;
   ti3s2) Muni=i3s2 ;;
   tppc32le) Muni=ppc32le ;;
+  tppc32osx) Muni=ppc32osx ;;
   *) echo "Unrecognized machine name $Mhost"; exit 1 ;;
 esac
 
@@ -113,7 +115,7 @@ case "$Muniarch" in
   i3qnx) March=i3 ;;
   i3s2) March=i3 ;;
   ppc32le) March=ppc32 ;;
-  pb) March=pb ;;
+  ppc32osx) March=ppc32 ;;
   *) March="" ;;
 esac
   

@@ -1,0 +1,6 @@
+;;; tppc32le.def
+
+(define-constant machine-type (constant machine-type-tppc32osx))
+(features iconv expeditor pthreads)
+(include "ppc32.def")
+(include "default.def")

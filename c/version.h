@@ -87,8 +87,16 @@
 # define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
 #endif
 
+#if (machine_type == machine_type_ppc32osx || machine_type == machine_type_tppc32osx)
+# define OS_ANY_MACOSX
+# if (machine_type == machine_type_tppc32osx)
+#  define PTHREADS
+# endif
+# define FLUSHCACHE
+#endif
+
 #if (machine_type == machine_type_pb)
-# if defined(__powerpc__) && !defined(__powerpc64__)
+# if (defined(__powerpc__) || defined(__POWERPC__)) && !defined(__powerpc64__)
 #  define PORTABLE_BYTECODE_BIGENDIAN
 # endif
 # if defined(__linux__)
@@ -314,7 +322,9 @@ typedef int tputsputcchar;
 #define USE_MMAP
 #define MMAP_HEAP
 #define IEEE_DOUBLE
-#define LITTLE_ENDIAN_IEEE_DOUBLE
+#if !defined(__POWERPC__)
+# define LITTLE_ENDIAN_IEEE_DOUBLE
+#endif
 #define LDEXP
 #define ARCHYPERBOLIC
 #define GETPAGESIZE() getpagesize()
