@@ -21,7 +21,7 @@ doit: $(bootfiles)
 
 %.boot:
 	rm -rf ../xc-$*
-	( cd .. ; "${srcdir}"/workarea $* xc-$* )
+	( cd .. ; "${srcdir}"/workarea $* xc-$* $(m) )
 	( cd ../xc-$*/s ; $(MAKE) -f Mf-cross base=../../$(workarea) m=$(m) xm=$* )
 	mkdir -p ../boot/$*
 	( cd ../xc-$*/s ; $(MAKE) keepbootfiles )

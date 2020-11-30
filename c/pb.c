@@ -17,6 +17,9 @@ typedef uint32_t instruction_t;
 #define INSTR_di_imm(instr)   (((int32_t)(instr)) >> 16)
 #define INSTR_di_imm_unsigned(instr) ((instr) >> 16)
 
+#define INSTR_adr_dest(instr) INSTR_di_dest(instr)
+#define INSTR_adr_imm(instr)  (((int32_t)(instr)) >> 12)
+
 #define INSTR_drr_dest(instr) INSTR_d_dest(instr)
 #define INSTR_drr_reg1(instr) (((instr) >> 12) & 0xF)
 #define INSTR_drr_reg2(instr) (((instr) >> 16) & 0xF)
@@ -673,7 +676,7 @@ void S_pb_interp(ptr tc, void *bytecode) {
     case pb_return:
       return; /* <--- not break */
     case pb_adr:
-      regs[INSTR_di_dest(instr)] = (uptr)TO_PTR(next_ip) + INSTR_di_imm(instr);
+      regs[INSTR_adr_dest(instr)] = (uptr)TO_PTR(next_ip) + INSTR_adr_imm(instr);
       break;
     case pb_interp:
       {

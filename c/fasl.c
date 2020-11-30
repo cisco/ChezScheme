@@ -1925,14 +1925,21 @@ static void sparc64_set_literal(address, item) void *address; uptr item; {
 #endif /* SPARC64 */
 
 #ifdef PORTABLE_BYTECODE_BIGENDIAN
+typedef struct {
+  octet *code;
+  uptr size;
+} rpheader_t;
+static rpheader_t *rpheader_stack;
+static int rpheader_stack_size = 0, rpheader_stack_pos = 0;
+
 static void swap_code_endian(octet *code, uptr len)
 {
-  octet *next_rpheader = NULL;
-  uptr header_size = 0;
-
   while (len > 0) {
-    if (code == next_rpheader) {
+    if ((rpheader_stack_pos > 0)
+	&& (code == rpheader_stack[rpheader_stack_pos-1].code)) {
       /* swap 8-byte segments while we're in the header */
+      uptr header_size = rpheader_stack[--rpheader_stack_pos].size;
+
       while (header_size > 0) {
         octet a = code[0];
         octet b = code[1];
@@ -1966,28 +1973,62 @@ static void swap_code_endian(octet *code, uptr len)
       code[2] = b;
       code[3] = a;
 
+      code += 4;
+      len -= 4;
+
       if (a == pb_adr) {
         /* delta can be negative for a mvlet-error reinstall of the return address */
-        iptr delta = (int16_t)(uint16_t)(((uptr)d << 8) + c);
+        iptr delta = (((iptr)d << (ptr_bits - 8)) >> (ptr_bits - 20)) + ((iptr)c << 4) + (b >> 4);
         if (delta > 0) {
           /* after a few more instructions, we'll hit
              a header where 64-bit values needs to be
              swapped, instead of 32-bit values */
-          octet *after_rpheader = code + 4 + delta;
+          octet *after_rpheader = code + delta, *rpheader;
+	  uptr header_size;
+	  int pos;
+
+	  if ((uptr)delta > len)
+	    S_error_abort("swap endian: delta goes past end");
+	  if (delta & 0x3)
+	    S_error_abort("swap endian: delta is not a multiple of 4");
 
           if (after_rpheader[-8] & 0x1)
             header_size = size_rp_compact_header;
           else
             header_size = size_rp_header;
+          rpheader = after_rpheader - header_size;
 
-          next_rpheader = after_rpheader - header_size;
+	  if (rpheader_stack_pos == rpheader_stack_size) {
+	    int new_size = (2 * rpheader_stack_size) + 16;
+	    rpheader_t *new_stack;
+	    new_stack = malloc(new_size * sizeof(rpheader_t));
+	    if (rpheader_stack != NULL) {
+	      memcpy(new_stack, rpheader_stack, rpheader_stack_pos * sizeof(rpheader_t));
+	      free(rpheader_stack);
+	    }
+	    rpheader_stack_size = new_size;
+	    rpheader_stack = new_stack;
+	  }
+
+	  rpheader_stack[rpheader_stack_pos].code = rpheader;
+	  rpheader_stack[rpheader_stack_pos].size = header_size;
+	  rpheader_stack_pos++;
+
+	  /* bubble down to keep sorted */
+	  for (pos = rpheader_stack_pos - 2; pos > 0; --pos) {
+	    if (rpheader_stack[pos].code < rpheader_stack[pos+1].code) {
+	      rpheader_t tmp = rpheader_stack[pos];
+	      rpheader_stack[pos] = rpheader_stack[pos+1];
+	      rpheader_stack[pos+1] = tmp;
+	    }
+	  }
         }
       }
-
-      code += 4;
-      len -= 4;
     }
   }
+
+  if (rpheader_stack_pos > 0)
+    S_error_abort("swap endian: header stack ends non-empty");
 }
 
 void S_swap_dounderflow_header_endian(ptr co)

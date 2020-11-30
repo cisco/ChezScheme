@@ -113,6 +113,7 @@ case "$Muniarch" in
   i3qnx) March=i3 ;;
   i3s2) March=i3 ;;
   ppc32le) March=ppc32 ;;
+  pb) March=pb ;;
   *) March="" ;;
 esac
   

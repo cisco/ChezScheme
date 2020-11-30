@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050334)
+(define-constant scheme-version #x09050335)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -375,6 +375,7 @@
 
 (define-machine-types
   any
+  pb
   i3le      ti3le
   i3nt      ti3nt
   i3fb      ti3fb
@@ -393,7 +394,6 @@
   arm32le   tarm32le
   ppc32le   tppc32le
   arm64le   tarm64le
-  pb
   arm64osx  tarm64osx
 )
 

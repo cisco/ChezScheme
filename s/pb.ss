@@ -37,6 +37,9 @@
 ;;  |    op    | reg  reg |      immed/reg        |
 ;;  -----------------------------------------------
 ;;  -----------------------------------------------
+;;  |    op    | reg |          immed             | 
+;;  -----------------------------------------------
+;;  -----------------------------------------------
 ;;  |    op    |              immed               |
 ;;  -----------------------------------------------
 ;;
@@ -942,8 +945,8 @@
     (lambda (op dest offset code*)
       (emit-code (op dest offset code*)
         (constant pb-adr)
-        (ax-ea-reg-code dest)
-        offset)))
+        (bitwise-ior (ax-ea-reg-code dest)
+                     (bitwise-arithmetic-shift offset 4)))))
 
   (define inc-op
     (lambda (op dest src code*)
@@ -1396,6 +1399,8 @@
            (lambda (offset)
              (let ([incr-offset (adjust-return-point-offset incr-offset l)])
                (let ([disp (fx- next-addr (fx- offset incr-offset))])
+                 (unless (<= (- (expt 2 19)) disp (sub1 (expt 2 19)))
+                   (sorry! who "displacement to large for adr ~s" disp))
                  (emit adr `(reg . ,dest) disp '()))))]
           [else
            (asm-move '() dest (with-output-language (L16 Triv) `(label-ref ,l ,incr-offset)))]))))
