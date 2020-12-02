@@ -3935,6 +3935,10 @@
                                            (and rtd (f rtd))))))
                             (residualize-seq '() (list ?x ?rtd) ctxt)
                             true-rec]
+                           [(record ,rtd ,rtd-expr ,e* ...)
+                            (obviously-incompatible? rtd d0)
+                            (residualize-seq '() (list ?x ?rtd) ctxt)
+                            false-rec]
                            [else (abandon-ship xval xres d0)]))))]
                [(record-type ,rtd ,e)
                 (cond
@@ -4092,7 +4096,22 @@
                                   (non-result-exp r-expr
                                     main)))
                               (loop (cdr e*) (cons (car e*) re*) (fx- index 1)))))]
-                  [else #f]))]
+                  [else
+                   (nanopass-case (Lsrc Expr) (result-exp/indirect-ref r-expr)
+                     [(record ,rtd1 ,rtd-expr1 ,e* ...)
+                      (guard (< d (length e*))
+                        (rtd-immutable-field? rtd1 d))
+                      (let ([e (list-ref e* d)])
+                        (and
+                         (nanopass-case (Lsrc Expr) e
+                           [(quote ,d) #t]
+                           [(ref ,maybe-src ,x) (not (prelex-assigned x))]
+                           [,pr (all-set? (prim-mask proc) (primref-flags pr))]
+                           [else #f])
+                         (begin
+                           (residualize-seq (list ?r ?i) '() ctxt)
+                           (non-result-exp i-expr (non-result-exp r-expr e)))))]
+                     [else #f])]))]
               [else #f]))])
 
       (let ()

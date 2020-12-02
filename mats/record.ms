@@ -9187,3 +9187,31 @@
                (#2%display 4)
                1)))))
 )
+
+(mat cp0-$record-ref
+  (equivalent-expansion?
+   (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize
+    '(let ()
+       (define A (make-record-type-descriptor* 'A #f #f #f #f 2 0))
+       (define x ((record-constructor A) (begin (display A) 1) (begin (display 0
+) 2)))
+       (+ (#3%$record-ref x 0) (#3%$record-ref x 1)))))
+   '(let ([a (#2%make-record-type-descriptor* 'A #f #f #f #f 2 0)])
+      (#2%display 0)
+      (#2%display a)
+      3))
+  )
+
+(mat cp0-record?
+  (equivalent-expansion?
+   (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize
+      '(let ()
+         (define A (make-record-type-descriptor* 'A #f #f #f #f 2 0))
+         (define-record B (a b))
+         (record? ((record-constructor A) 1 2) (record-type-descriptor B)))))
+   '(begin
+      (#2%make-record-type-descriptor* 'A #f #f #f #f 2 0)
+      #f))
+)
