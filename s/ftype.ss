@@ -34,12 +34,6 @@ todo:
     followed and new fptrs are generated, but that probably isn't a
     big deal.  would need to pass $fptr-ref a who argument for use in
     following pointers from ftype-&ref and ftype-set!
-  - consider trying to fix 32-bit macos x powerpc alignment issues.
-    doubles and long-longs are aligned on 8-byte boundaries if they
-    are first in a struct; otherwise, they are mostly aligned on
-    4-byte boundaries.  haven't entirely penetrated the rules governing
-    unions, but it's clear the same union can have a different size
-    depending on whether it is stand-alone or embedded in a struct
 |#
 
 #|
@@ -484,7 +478,7 @@ ftype operators:
                         (make-ftd-array ftd
                           (and defid (symbol->string (syntax->datum defid)))
                           stype
-                          (* n (ftd-size ftd))
+                          (* n ($ftd-size ftd)) ; use `$ftd-size` for PPC Mac OS
                           (ftd-alignment ftd)
                           n ftd)))]
                    [(bits-kwd (field-name signedness bits) ...)
@@ -1017,16 +1011,33 @@ ftype operators:
            (let ([ftd (expand-ftype-name r #'ftype)])
              (when (ftd-function? ftd)
                ($oops 'ftype-sizeof "function ftypes have unknown size"))
-             (ftd-size ftd))]))))
+             ($ftd-size ftd))]))))
   (set! $ftd?
     (lambda (x)
       (ftd? x)))
+  (set! $ftd-size
+    (lambda (ftd)
+      (constant-case special-initial-field-alignment?
+        [(#f) (ftd-size ftd)]
+        [else
+         ;; PPC32 Mac OS: if the first field of a compound type is size 8,
+         ;; then size is rounded up to an alignment of 8. This doesn't apply
+         ;; if the compound type is inside another one and not at the start.
+         (let ([initial (let loop ([ftd ftd])
+                          (cond
+                           [(ftd-struct? ftd)
+                            (loop (caddr (car (ftd-struct-field* ftd))))]
+                           [(ftd-union? ftd)
+                            (apply max (map (lambda (f) (loop (cdr f))) (ftd-union-field* ftd)))]
+                           [(ftd-array? ftd)
+                            (loop (ftd-array-ftd ftd))]
+                           [else (ftd-size ftd)]))])
+           (if (fx= initial 8)
+               (fxlogand (fx+ (ftd-size ftd) 7) (fxlognot 7))
+               (ftd-size ftd)))])))
   (set! $ftd-as-box? ; represents `(& <ftype>)` from `$expand-fp-ftype`
     (lambda (x)
       (and (box? x) (ftd? (unbox x)))))
-  (set! $ftd-size
-    (lambda (x)
-      (ftd-size x)))
   (set! $ftd-alignment
     (lambda (x)
       (ftd-alignment x)))
@@ -1035,6 +1046,9 @@ ftype operators:
       (or (ftd-struct? x)
           (ftd-union? x)
           (ftd-array? x))))
+  (set! $ftd-union?
+    (lambda (x)
+      (ftd-union? x)))
   (set! $ftd-unsigned?
     (lambda (x)
       (and (ftd-base? x)

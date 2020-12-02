@@ -31,6 +31,7 @@
 (define-constant-default max-integer-alignment (if (= 64 (constant ptr-bits))
                                                    8
                                                    4))
+(define-constant-default special-initial-field-alignment? #f)
 (define-constant-default time-t-bits (constant ptr-bits))
 (define-constant-default segment-table-levels (if (= 64 (constant ptr-bits))
                                                   3

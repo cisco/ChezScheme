@@ -7,8 +7,8 @@
 
 (define-constant native-endianness 'big)
 
-(define-constant max-float-alignment 8)
-(define-constant max-integer-alignment 8)
+(define-constant-default max-float-alignment 8)
+(define-constant-default max-integer-alignment 8)
 
 (define-constant unaligned-floats #f)
 (define-constant unaligned-integers #t)

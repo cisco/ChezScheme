@@ -2,5 +2,8 @@
 
 (define-constant machine-type (constant machine-type-tppc32osx))
 (features iconv expeditor pthreads)
+(define-constant max-float-alignment 4)
+(define-constant max-integer-alignment 4)
+(define-constant special-initial-field-alignment? #t)
 (include "ppc32.def")
 (include "default.def")
