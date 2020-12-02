@@ -388,7 +388,7 @@ ${SchemeBoot}: ${macroobj} ${patchfile} ${compilerobj}
              '  (map symbol->string (quote (${compilerobj}))))'\
              | ${Scheme} -q ${macroobj} ${patchfile}
 
-cmacros.so: cmacros.ss machine.def layout.ss
+cmacros.so: cmacros.ss machine.def default.def layout.ss
 	echo '(reset-handler abort)'\
              '(base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))'\
              '(keyboard-interrupt-handler (lambda () (display "interrupted---aborting\n") (reset)))'\
