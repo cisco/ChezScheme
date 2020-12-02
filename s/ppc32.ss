@@ -2327,37 +2327,62 @@
                        ,(load/store-integer 'load tmp (fxmin size 4) 'unsigned rhs delta)
                        ,(load/store-integer 'store tmp (fxmin size 4) 'unsigned %sp (fx+ offset delta))
                        ,(loop (fx+ delta 4) (fx- size 4)))))))))
-        (define load-double-int-regs
-          (lambda (hireg loreg isp indirect?)
+        (define load-double-reg+int-regs
+          (lambda (fpreg hireg loreg isp indirect?)
             (if indirect?
                 (lambda (x) ; requires var
                   (%seq
+                   (set! ,fpreg ,(%mref ,x ,%zero 0 fp))
                    (set! ,loreg ,(%mref ,x ,4))
                    (set! ,hireg ,(%mref ,x ,0))))
                 (lambda (x) ; unboxed
                   (%seq
+                   (set! ,fpreg ,x)
                    (set! ,(%mref ,%sp ,%zero ,isp fp) ,x)
                    (set! ,loreg ,(%mref ,%sp ,(fx+ isp 4)))
                    (set! ,hireg ,(%mref ,%sp ,isp)))))))
-        (define load-double-int-reg+stack
-          (lambda (hireg isp indirect?)
+        (define load-single-reg+int-regs
+          (lambda (fpreg hireg loreg isp indirect?)
             (if indirect?
                 (lambda (x) ; requires var
                   (%seq
+                   (set! ,fpreg ,(%inline load-single->double ,(%mref ,x ,%zero 0 fp)))
+                   (set! ,(%mref ,%sp ,%zero ,isp fp) ,fpreg)
+                   (set! ,loreg ,(%mref ,%sp ,(fx+ isp 4)))
+                   (set! ,hireg ,(%mref ,%sp ,isp))))
+                (load-double-reg+int-regs fpreg hireg loreg isp indirect?))))
+        (define load-double-reg+stack
+          (lambda (fpreg isp indirect?)
+            (if indirect?
+                (lambda (x) ; requires var
+                  (%seq
+                   (set! ,fpreg ,(%mref ,x ,%zero 0 fp))
+                   (set! ,(%mref ,%sp ,%zero ,isp fp) ,fpreg)))
+                (lambda (x) ; unboxed
+                  (%seq
+                   (set! ,fpreg ,x)
+                   (set! ,(%mref ,%sp ,%zero ,isp fp) ,fpreg))))))
+        (define load-double-reg+int-reg+stack
+          (lambda (fpreg hireg isp indirect?)
+            (if indirect?
+                (lambda (x) ; requires var
+                  (%seq
+                   (set! ,fpreg ,(%mref ,x ,%zero 0 fp))
                    (set! ,(%mref ,%sp ,(fx+ isp 4)) ,(%mref ,x 4))
                    (set! ,hireg ,(%mref ,x 0))))
                 (lambda (x) ; unboxed
                   (%seq
+                   (set! ,fpreg ,x)
                    (set! ,(%mref ,%sp ,%zero ,isp fp) ,x)
                    (set! ,hireg ,(%mref ,%sp ,isp)))))))
         (constant-case machine-type-name
           [(ppc32osx tppc32osx)
            ;; Mac OS X variant of `do-args`
            ;; -----------------------------
-           ;; On varargs: the PPC ABI says that unknown arguments should be in both FP
-           ;; and int registers, but in practice it seems to mean int arguments; the
-           ;; ABI actually talks about "known" and "unknown", so only "..." arguments
-           ;; are in int registers, but we just assume that all but the first is "...".
+           ;; On varargs: we can pass arguments in a way that works in both
+           ;; varargs mode and non-varargs mode, so we do that unless a specific
+           ;; 'atomic mode is used (for primitve flonum operations) to insists on
+           ;; a more efficient path
            (define register+stack-arguments-starting-offset
              ;; after linkage area:
              24)
@@ -2365,6 +2390,14 @@
              ;; after inkage area plus parameter area reserved for registers:
              (+ register+stack-arguments-starting-offset 32))
            (define (maybe-cdr p) (if (pair? p) (cdr p) p))
+           (define (rest-in-fp-regs? types flt* int*)
+             (cond
+              [(null? types) #t]
+              [(or (null? flt*) (null? int*) (null? (cdr int*))) #f]
+              [else (nanopass-case (Ltype Type) (car types)
+                      [(fp-double-float) (rest-in-fp-regs? (cdr types) (cdr flt*) (cddr int*))]
+                      [(fp-single-float) (rest-in-fp-regs? (cdr types) (cdr flt*) (cddr int*))]
+                      [else #f])]))
            (define do-args
              (lambda (types varargs?)
                ;; NB: start stack pointer at `stack-arguments-starting-offset` to put arguments above the linkage area
@@ -2379,32 +2412,36 @@
                      (nanopass-case (Ltype Type) (car types)
                        [(fp-double-float)
                         (cond
-                         [(or (null? flt*)
-                              (and varargs? (null? int*)))
+                         [(null? flt*)
                           ;; on stack
                           (loop (cdr types)
                                 (cons (load-double-stack isp (and indirect? 0)) locs)
                                 live* int* '() (fx+ isp 8) fp-live-count
                                 #f)]
-                         [(or (not varargs?)
-                              ;; hack: varargs requires at least one argument
-                              (fx= isp register+stack-arguments-starting-offset))
+                         [(not varargs?)
                           ;; in FP register
                           (loop (cdr types)
                                 (cons (load-double-reg (car flt*) (and indirect? 0)) locs)
                                 live* (maybe-cdr (maybe-cdr int*)) (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
                                 #f)]
                          [else ; => varargs
-                          ;; in integer register... maybe only halfway
-                          (if (null? (cdr int*))
-                              (loop (cdr types)
-                                    (cons (load-double-int-reg+stack (car int*) isp indirect?) locs)
-                                    (cons (car int*) live*) '() flt* (fx+ isp 8) fp-live-count
-                                    #f)
-                              (loop (cdr types)
-                                    (cons (load-double-int-regs (car int*) (cadr int*) isp indirect?) locs)
-                                    (cons* (car int*) (cadr int*) live*) (cdr (cdr int*)) flt* (fx+ isp 8) fp-live-count
-                                    #f))])]
+                          ;; in FP registers but also in integer register or on stack... maybe only halfway
+                          (cond
+                           [(null? int*)
+                            (loop (cdr types)
+                                  (cons (load-double-reg+stack (car flt*) isp indirect?) locs)
+                                  live* '() (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
+                                  #f)]
+                           [(null? (cdr int*))
+                            (loop (cdr types)
+                                  (cons (load-double-reg+int-reg+stack (car flt*) (car int*) isp indirect?) locs)
+                                  (cons (car int*) live*) '() (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
+                                  #f)]
+                           [else
+                            (loop (cdr types)
+                                  (cons (load-double-reg+int-regs (car flt*) (car int*) (cadr int*) isp indirect?) locs)
+                                  (cons* (car int*) (cadr int*) live*) (cdr (cdr int*)) (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
+                                  #f)])])]
                        [(fp-single-float)
                         (cond
                          [(null? flt*)
@@ -2413,11 +2450,23 @@
                                 (cons (load-single-stack isp (and indirect? 0)) locs)
                                 live* int* '() (fx+ isp 4) fp-live-count
                                 #f)]
-                         [(not varargs?)
+                         [(or (not varargs?)
+                              (null? int*)
+                              (null? (cdr int*))
+                              (not (rest-in-fp-regs? (cdr types) (cdr flt*) (cddr int*))))
                           ;; in FP register
                           (loop (cdr types)
                                 (cons (load-single-reg (car flt*) (and indirect? 0)) locs)
                                 live* (maybe-cdr int*) (cdr flt*) (fx+ isp 4) (fx+ fp-live-count 1)
+                                #f)]
+                         [else ; => varargs
+                          ;; Although the float type is not normally allowed with `__varargs`,
+                          ;; we might be pessimistically setting up for varargs, treating the
+                          ;; float as a double for varargs; this trick is only going to work as
+                          ;; long as it doesn't matter how many integer registers we use
+                          (loop (cdr types)
+                                (cons (load-single-reg+int-regs (car flt*) (car int*) (cadr int*) isp indirect?) locs)
+                                (cons* (car int*) (cadr int*) live*) (cdr (cdr int*)) (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
                                 #f)])]
                        [(fp-ftd& ,ftd)
                         (let ([members ($ftd->members ftd)])
@@ -2684,7 +2733,7 @@
 	     ,(save-and-restore result-live* result-fp-live-count (fp-result-regs) `(set! ,%Cretval ,(%inline activate-thread))))))
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
-          (let* ([varargs? (memq 'varargs (info-foreign-conv* info))]
+          (let* ([varargs? (not (memq 'atomic (info-foreign-conv* info)))] ; pessimistic for Mac OS
                  [arg-type* (info-foreign-arg-type* info)]
 		 [result-type (info-foreign-result-type info)]
 		 [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
@@ -3008,8 +3057,11 @@
                ;; we push all of the int reg args with one push instruction and all of the
                ;; float reg args with another (v)push instruction. It's possible for an argument
                ;; to be split across a register and the stack --- but in that case, there's
-               ;; room just before on the stack to copy in the register. See foreign-call
-               ;; for information on varrags.
+               ;; room just before on the stack to copy in the register. For varrags, the
+               ;; `__varargs` isn't technically enough information, because the ABI is specified
+               ;; in terms of specific unknown arguments (i.e., the part in the "..."); we
+               ;; just assume that all argument except the first are in "...", and that assumption
+               ;; only matters for `double` arguments.
                (lambda (types gp-reg-count fp-reg-count init-int-reg-offset float-reg-offset stack-arg-offset
                               synthesize-first-argument? varargs? return-space-offset)
                  (let loop ([types (if synthesize-first-argument? (cdr types) types)]
@@ -3455,7 +3507,7 @@
 			     (push-registers result-regs result-num-fp-regs (fp-result-regs) stash-offset
 					     e))))
           (lambda (info)
-            (define callee-save-regs (list %r16 %r17 %r18 %r19 %r20 %r21 %r22 %r23 %r24 %r25 %r26 %r27 %r28 %r29 %r30 %r31))
+            (define callee-save-regs (list %r14 %r15 %r16 %r17 %r18 %r19 %r20 %r21 %r22 %r23 %r24 %r25 %r26 %r27 %r28 %r29 %r30 %r31))
             (define callee-save-fp-regs (list %fpreg1 %fpreg2))
             (define isaved (length callee-save-regs))
             (define fpsaved (length callee-save-fp-regs))
