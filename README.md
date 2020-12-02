@@ -3,6 +3,16 @@ that language, with supporting tools and documentation.
 This variant of Chez Scheme is extended to support the implementation
 of [Racket](https://racket-lang.org/).
 
+Supported platforms:
+
+ * Windows: x86, x86_64
+ * Mac OS: x86, x86_64, PowerPC32
+ * Linux: x86, x86_64, ARMv6, AArch64, PowerPC32
+ * FreeBSD: x86, x86_64
+ * OpenBSD: x86, x86_64
+ * NetBSD: x86, x86_64
+ * Solaris: x86, x86_64
+
 As a superset of the language described in the
 [Revised<sup>6</sup> Report on the Algorithmic Language Scheme](http://www.r6rs.org)
 (R6RS), Chez Scheme supports all standard features of Scheme,

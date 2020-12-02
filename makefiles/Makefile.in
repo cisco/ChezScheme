@@ -57,6 +57,9 @@ reset:
 %.bootquick:
 	(cd $(workarea) && $(MAKE) $*.bootquick)
 
+auto.bootquick:
+	(cd $(workarea) && $(MAKE) $(defaultm).bootquick)
+
 # Supply ORIG=<dir> to build using existing at <dir>
 .PHONY: from-orig
 from-orig:

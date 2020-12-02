@@ -367,6 +367,12 @@ if [ "$threads" = "" ] ; then
   threads=yes
 fi
 
+if [ $bits = 64 ] ; then
+  if [ $threads = yes ] ; then defaultm=$tm64 ; else defaultm=$m64 ; fi
+else
+  if [ $threads = yes ] ; then defaultm=$tm32 ; else defaultm=$m32 ; fi
+fi
+
 if [ "$m" = "" ] ; then
   machine_supplied=no
   if [ $pb = yes ] ; then
@@ -374,11 +380,7 @@ if [ "$m" = "" ] ; then
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
   else      
-    if [ $bits = 64 ] ; then
-      if [ $threads = yes ] ; then m=$tm64 ; else m=$m64 ; fi
-    else
-      if [ $threads = yes ] ; then m=$tm32 ; else m=$m32 ; fi
-    fi
+    m=$defaultm
     flagsm=$m
   fi
 elif [ $pb = yes ] ; then
@@ -696,6 +698,7 @@ esac
 "$srcdir"/workarea $m $w $mpbhost
 
 sed -e 's/$(m)/'$m'/g'\
+    -e 's/$(defaultm)/'$defaultm'/g'\
     -e 's/$(workarea)/'$w'/g'\
   "$srcdir"/makefiles/Makefile.in > Makefile
 
@@ -711,6 +714,7 @@ sed -e 's/$(m)/'$m'/g'\
 cat "$srcdir"/makefiles/Makefile-workarea.in > $w/Makefile
 
 sed -e 's/$(m)/'$m'/g'\
+    -e 's/$(m)/'$m'/g'\
     -e 's/$(workarea)/'$w'/g'\
     "$srcdir"/makefiles/Mf-boot.in > $w/Mf-boot
 

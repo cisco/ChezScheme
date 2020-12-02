@@ -46,26 +46,33 @@ VIA SHELL section later in this file. Otherwise, to get further
 instructions, try running
 
   ./configure
-  make <machine type>
+  make
 
-The output will either suggest using Racket as
-
-  racket rktboot/main.rkt --machine <machine type>
-
-or using the pb boot files with
+The output will either suggest using using the pb boot files with
 
   ./configure --pb
   make <machine type>.bootquick
 
-and then trying again with `./configure`.
+or Racket as
 
-If you plan to build on multiple different machines, then it may be a
-good idea to generate pb boot files via Racket:
+  racket rktboot/main.rkt --machine <machine type>
+
+and then trying again with `./configure`. In the former case, you can
+use "auto.bootquick" instead of "<machine type>.bootquick".
+
+If you plan to build on multiple different machines and you don't have
+pbb bboot files, then it may be a good idea to generate pb boot files
+via Racket:
 
   racket rktboot/main.rkt --machine pb
 
-Then, you can use the ob boot files on different machines instead of
-having to install Racket on each machine.
+Then, you can use the pb boot files on different machines instead of
+having to install Racket on each machine. Alternatively, after you
+have a Chez Scheme build on one machine, you can use use
+
+  make <machine type>.boot
+
+to more quickly create boot files for any <machine type>.
 
 
 CONFIGURING AND BUILDING
