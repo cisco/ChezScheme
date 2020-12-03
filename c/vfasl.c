@@ -258,8 +258,21 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
         memcpy(TO_VOIDP(vspaces[s]), bv_addr, sz);
         bv_addr = TO_VOIDP(ptr_add(TO_PTR(bv_addr), sz));
       } else {
-        if (S_fasl_stream_read(stream, TO_VOIDP(vspaces[s]), sz) < 0)
+	ptr dest;
+#ifdef CANNOT_READ_DIRECTLY_INTO_CODE
+	if (s == vspace_code)
+	  newspace_find_room(tc, typemod, sz, dest);
+	else
+	  dest = vspaces[s];
+#else
+	dest = vspaces[s];
+#endif
+        if (S_fasl_stream_read(stream, TO_VOIDP(dest), sz) < 0)
           S_error("fasl-read", "input truncated");
+#ifdef CANNOT_READ_DIRECTLY_INTO_CODE
+	if (dest != vspaces[s])
+	  memcpy(TO_VOIDP(vspaces[s]), TO_VOIDP(dest), sz);
+#endif
       }
     } else
       vspaces[s] = (ptr)0;

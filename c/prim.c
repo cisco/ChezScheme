@@ -288,6 +288,7 @@ static void s_instantiate_code_object() {
 static void s_link_code_object(co, objs) ptr co, objs; {
     ptr t; uptr a, m, n;
 
+    S_thread_start_code_write();
     t = CODERELOC(co);
     m = RELOCSIZE(t);
     a = 0;
@@ -306,6 +307,7 @@ static void s_link_code_object(co, objs) ptr co, objs; {
         S_set_code_obj("gc", RELOC_TYPE(entry), co, a, Scar(objs), item_off);
         objs = Scdr(objs);
     }
+    S_thread_end_code_write();
 }
 
 static INT s_check_heap_enabledp(void) {

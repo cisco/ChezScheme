@@ -1,0 +1,5 @@
+# Mf-tarm64osx
+
+m = tarm64osx
+
+include Mf-arm64osx

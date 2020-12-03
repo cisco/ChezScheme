@@ -561,6 +561,8 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   ptr x; ptr strbuf = S_G.null_string;
   struct faslFileObj ffo;
 
+  S_thread_start_code_write();
+
   if (ty == fasl_type_vfasl) {
     x = S_vfasl(bv, NULL, offset, len);
   } else if (ty == fasl_type_fasl) {
@@ -575,6 +577,8 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   }
 
   S_flush_instruction_cache(tc);
+  S_thread_end_code_write();
+  
   return x;
 }
 
@@ -604,6 +608,25 @@ static void bytesin(octet *s, iptr n, faslFile f) {
     memcpy(s, f->next, n);
     f->next += n;
   }
+}
+
+static void code_bytesin(octet *s, iptr n, faslFile f) {
+#ifdef CANNOT_READ_DIRECTLY_INTO_CODE
+  while (1) {
+    iptr avail = f->end - f->next;
+    if (avail < n) {
+      bytesin(s, avail, f);
+      n -= avail;
+      s += avail;
+      fillFaslFile(f);
+    } else {
+      bytesin(s, n, f);
+      break;
+    }
+  }
+#else
+  bytesin(s, n, f);
+#endif
 }
 
 static void toolarge(ptr path) {
@@ -1039,7 +1062,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             if (pinfos != Snil) {
               S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
             }
-            bytesin((octet *)&CODEIT(co, 0), n, f);
+            code_bytesin((octet *)&CODEIT(co, 0), n, f);
 #ifdef PORTABLE_BYTECODE_BIGENDIAN
             swap_code_endian((octet *)&CODEIT(co, 0), n);
 #endif

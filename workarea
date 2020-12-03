@@ -66,6 +66,8 @@ case "$Mhost" in
   i3s2) ;;
   ppc32le) ;;
   ppc32osx) ;;
+  ppc32osx) ;;
+  arm64osx) ;;
   ta6fb) Muni=a6fb ;;
   ta6le) Muni=a6le ;;
   ta6nb) Muni=a6nb ;;
@@ -86,6 +88,7 @@ case "$Mhost" in
   ti3s2) Muni=i3s2 ;;
   tppc32le) Muni=ppc32le ;;
   tppc32osx) Muni=ppc32osx ;;
+  tarm64osx) Muni=arm64osx ;;
   *) echo "Unrecognized machine name $Mhost"; exit 1 ;;
 esac
 

@@ -159,7 +159,7 @@ case "${CONFIG_UNAME}" in
       tm64=ta6osx
     elif uname -a | egrep 'arm|aarch' > /dev/null 2>&1 ; then
       m64=arm64osx
-      tm64=tarm6osx
+      tm64=tarm64osx
     elif uname -a | egrep 'Power' > /dev/null 2>&1 ; then
       m64=ppc32osx
       tm64=tppc32osx
@@ -356,7 +356,7 @@ if [ "$m" = "pb" ] ; then
 fi
 
 if [ "$bits" = "" ] ; then
-  if uname -a | egrep 'amd64|x86_64|aarch64' > /dev/null 2>&1 ; then
+  if uname -a | egrep 'amd64|x86_64|aarch64|arm64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
@@ -522,7 +522,7 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m64 ${optFlags}"
         ;;
     arm64osx|tarm64osx)
-        CFLAGS="-arch arm ${optFlags}"
+        CFLAGS="-arch arm64 ${optFlags}"
         ;;
     a6nt|ta6nt)
         CFLAGS="${optFlags}"

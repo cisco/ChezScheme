@@ -783,6 +783,7 @@ void S_schsig_init() {
         S_protect(&S_G.collect_request_pending_id);
         S_G.collect_request_pending_id = S_intern((const unsigned char *)"$collect-request-pending");
 
+	S_thread_start_code_write();
         p = S_code(get_thread_context(), type_code | (code_flag_continuation << code_flags_offset), 0);
         CODERELOC(p) = S_relocation_table(0);
         CODENAME(p) = Sfalse;
@@ -790,6 +791,7 @@ void S_schsig_init() {
         CODEFREE(p) = 0;
         CODEINFO(p) = Sfalse;
         CODEPINFOS(p) = Snil;
+	S_thread_end_code_write();
 
         S_set_symbol_value(S_G.null_continuation_id,
             S_mkcontinuation(space_new,

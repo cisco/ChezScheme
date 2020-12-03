@@ -83,8 +83,7 @@
 # if (machine_type == machine_type_tarm64osx)
 #  define PTHREADS
 # endif
-# define S_MAP_CODE  MAP_JIT
-# define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
+# define FLUSHCACHE
 #endif
 
 #if (machine_type == machine_type_ppc32osx || machine_type == machine_type_tppc32osx)
@@ -324,6 +323,12 @@ typedef int tputsputcchar;
 #define IEEE_DOUBLE
 #if !defined(__POWERPC__)
 # define LITTLE_ENDIAN_IEEE_DOUBLE
+#endif
+#if defined(__arm64__)
+# define S_MAP_CODE  MAP_JIT
+# define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
+# define CANNOT_READ_DIRECTLY_INTO_CODE
+# include <pthread.h>
 #endif
 #define LDEXP
 #define ARCHYPERBOLIC
