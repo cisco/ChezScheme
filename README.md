@@ -6,7 +6,7 @@ of [Racket](https://racket-lang.org/).
 Supported platforms:
 
  * Windows: x86, x86_64
- * Mac OS: x86, x86_64, PowerPC32
+ * Mac OS: x86, x86_64, AArch64, PowerPC32
  * Linux: x86, x86_64, ARMv6, AArch64, PowerPC32
  * FreeBSD: x86, x86_64
  * OpenBSD: x86, x86_64
