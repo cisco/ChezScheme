@@ -221,7 +221,7 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx)
+  [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
    (mat load-shared-object
       (file-exists? "foreign1.so")
       (begin (load-shared-object "./foreign1.so") #t)
@@ -2735,7 +2735,7 @@
          '(load-shared-object "libc.so.7")]
         [(i3nt ti3nt a6nt ta6nt)
          '(load-shared-object "msvcrt.dll")]
-        [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx)
+        [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
          '(load-shared-object "libc.dylib")]
         [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
     #t)
