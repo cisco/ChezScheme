@@ -390,6 +390,9 @@ static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr arg
     while (S_mutex_is_owner(&S_tc_mutex))
       S_mutex_release(&S_tc_mutex);
 #endif /* PTHREADS */
+
+    /* in case error is during fasl read: */
+    S_thread_end_code_write();
     
     TRAP(tc) = (ptr)1;
     AC0(tc) = (ptr)1;
