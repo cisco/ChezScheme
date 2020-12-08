@@ -3141,3 +3141,65 @@
                '(#t #f)))
 
 )
+
+(mat make-wrapper-procedure
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '((make-wrapper-procedure (lambda (x) x) 2 'ok) 5)))
+   5)
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '((make-arity-wrapper-procedure (lambda (x) x) 2 'ok) 5)))
+   5)
+
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '((make-wrapper-procedure (lambda (x) x) 2 (g)) 5)))
+   (if (= 3 (optimize-level))
+       '(begin (g) 5)
+       '(begin (#3%$value (g)) 5)))
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '((make-arity-wrapper-procedure (lambda (x) x) 2 (g)) 5)))
+   (if (= 3 (optimize-level))
+       '(begin (g) 5)
+       '(begin (#3%$value (g)) 5)))
+
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '(let ([f (make-wrapper-procedure (lambda (x) x) 2 (g))]) (f 5))))
+   (if (= 3 (optimize-level))
+       '(begin (g) 5)
+       '(begin (#3%$value (g)) 5)))
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '(let ([f (make-arity-wrapper-procedure (lambda (x) x) 2 (g))]) (f 5))))
+   (if (= 3 (optimize-level))
+       '(begin (g) 5)
+       '(begin (#3%$value (g)) 5)))
+
+  (equivalent-expansion?
+   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize '(let ([g (let ([f (make-wrapper-procedure (lambda (x) x) 2 (g))]) f)]) (g 5))))
+   (if (= 3 (optimize-level))
+       '(begin (g) 5)
+       '(begin (#3%$value (g)) 5)))
+
+  (not
+   (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(let ([f (#2%make-wrapper-procedure (lambda (x) x) 2 (g))]) (#2%list (g f) (f 5)))))
+    '(#2%list (g (#2%make-wrapper-procedure (lambda (x) x) 2 (g))) 5)))
+  (not
+   (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize '(let ([f (#2%make-arity-wrapper-procedure (lambda (x) x) 2 (g))]) (#2%list (g f) (f 5)))))
+    '(#2%list (g (#2%make-arity-wrapper-procedure (lambda (x) x) 2 (g))) 5)))
+
+  (not
+   (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      ;; arity mismatch:
+      (expand/optimize '((make-arity-wrapper-procedure (lambda (x) x) 1 'ok) 5)))
+    5))
+  )

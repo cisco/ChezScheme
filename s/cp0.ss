@@ -5117,6 +5117,42 @@
                                                         (preinfo-call-mask))
                                                     (preinfo-call-mask no-inline)))])
          (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
+      [(call ,preinfo ,pr ,e1 ,e2 ,e3)
+       ;; remove wrapper for immediately applied
+       (guard (app? ctxt)
+              (or (eq? (primref-name pr) 'make-wrapper-procedure)
+                  (eq? (primref-name pr) 'make-arity-wrapper-procedure))
+              (nanopass-case (Lsrc Expr) e2
+                [(quote ,d)
+                 (and (exact? d) (integer? d)
+                      (bitwise-bit-set? d (length (app-opnds ctxt))))]
+                [else #f]))
+       (let ([e1 (cp0 e1 ctxt env sc wd name moi)])
+         (if (app-used ctxt)
+             (make-1seq ctxt (make-seq* 'ignored (list e2 e3)) e1)
+             (let ([e2 (cp0 e2 'value env sc wd #f moi)]
+                   [e3 (cp0 e2 'value env sc wd #f moi)])
+               `(call ,preinfo ,pr ,e1 ,e2 ,e3))))]
+      [(call ,preinfo ,pr ,e1 ,e2 ,e3)
+       ;; discard unused, non-error wrapper construction
+       (guard (or (eq? (primref-name pr) 'make-wrapper-procedure)
+                  (eq? (primref-name pr) 'make-arity-wrapper-procedure))
+              (unused-value-context? ctxt))
+       (let ([e1 (cp0 e1 'value env sc wd name moi)]
+             [e2 (cp0 e2 'value env sc wd #f moi)]
+             [e3 (cp0 e3 'value env sc wd #f moi)])
+         (cond
+           [(nanopass-case (Lsrc Expr) e2
+              [(quote ,d)
+               (and (exact? d) (integer? d)
+                    (nanopass-case (Lsrc Expr) e1
+                      [(case-lambda ,preinfo (clause (,x* ...) ,interface ,body) ...) #t]
+                      [else #f]))]
+              [else #f])
+            ;; can drop call
+            (make-1seq* 'ignored (list e1 e3))]
+           [else
+            `(call ,preinfo ,pr ,e1 ,e2 ,e3)]))]
       [(call ,preinfo ,e ,e* ...)
        (let ()
          (define lift-let
