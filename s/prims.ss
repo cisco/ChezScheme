@@ -2758,6 +2758,11 @@
                 ;; Indirect way of distinguishing from `$make-wrapper-procedure` result:
                 ($code-mutable-closure? c))))))
 
+(define-who wrapper-procedure-procedure
+  (lambda (x)
+    (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))
+    ($closure-ref x 0)))
+
 (define-who set-wrapper-procedure!
   (lambda (x proc)
     (unless (wrapper-procedure? x) ($oops who "~s is not a wrapper procedure" x))

@@ -1,4 +1,4 @@
-;;; Copyright 1984-2017 Cisco Systems, Inc.
+<;;; Copyright 1984-2017 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050335)
+(define-constant scheme-version #x09050336)
 
 (define-syntax define-machine-types
   (lambda (x)

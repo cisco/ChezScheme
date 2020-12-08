@@ -4493,8 +4493,25 @@ Determines whether \var{obj} is a wrapper procedure produced by either
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{wrapper-procedure-procedure}{\categoryprocedure}{(wrapper-procedure-data \var{w-proc})}
+\returns the procedure wrapped by the wrapper procedure \var{proc}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{w-proc} must be a wrapper procedure produced by either
+\scheme{make-wrapper-procedure} or \scheme{make-arity-wrapper-procedure}.
+
+
+\schemedisplay
+(define vector3 (make-wrapper-procedure vector 8 'my-data))
+(arity-wrapper-procedure-data vector3) ; => #<procedure vector>
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{wrapper-procedure-data}{\categoryprocedure}{(wrapper-procedure-data \var{w-proc})}
-\returns the data store with the arity wrapper procedure \var{proc}
+\returns the data stored with the wrapper procedure \var{proc}
 \listlibraries
 \endentryheader
 

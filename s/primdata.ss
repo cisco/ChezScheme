@@ -1826,7 +1826,8 @@
   (with-profile-tracker [sig [(procedure) (ptr procedure) -> (ptr ptr ...)]] [flags])
   (with-source-path [sig [(maybe-who pathname procedure) -> (ptr ...)]] [flags])
   (wrapper-procedure? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
-  (wrapper-procedure-data [sig [(ptr) -> (ptr)]] [flags discard])
+  (wrapper-procedure-data [sig [(ptr) -> (ptr)]] [flags])
+  (wrapper-procedure-procedure [sig [(ptr) -> (procedure)]] [flags true])
 )
 
 
