@@ -9302,6 +9302,41 @@
     '(#t . #t))
   (equal? (let () (import (testfile-clo-3a)) (h)) (void))
   (not (let () (import (testfile-clo-3a)) (g)))
+
+  ; testing support of procedures with improper formals
+  (begin
+    (with-output-to-file "testfile-clo-4a.ss"
+      (lambda ()
+        (pretty-print
+         '(library (testfile-clo-4a)
+            (export f g)
+            (import (chezscheme))
+            (define (f a . rest)
+              (apply list a rest))
+            (define g
+              (case-lambda
+                [(a) "foo"]
+                [(a . rest) (apply list a rest)])))))
+      'replace)
+    #t)
+  (begin
+    (load-library "testfile-clo-4a.ss"
+                  (lambda (x) (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [current-eval compile])
+                                (eval x))))
+    #t)
+  (equivalent-expansion?
+   (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize
+      '(lambda (x y z)
+         (import (testfile-clo-4a))
+         (list
+          (f x y z)
+          (g x y z)))))
+   '(begin
+      (#3%$invoke-library '(testfile-clo-4a) '() 'testfile-clo-4a)
+      (lambda (x y z)
+        (#2%list (#2%list x y z)
+                 ((#3%$top-level-value 'g) x y z)))))
 )
 
 (mat lots-of-libraries

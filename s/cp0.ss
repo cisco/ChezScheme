@@ -3038,7 +3038,9 @@
                     (preinfo-call-can-inline? (app-preinfo ctxt)) ; $top-level-value may be marked by previous inline
                     (assq ($target-machine) ($cte-optimization-info d))) =>
                (lambda (as)
-                 (let ([opt (cdr as)])
+                 (let* ([opt (cdr as)]
+                        [full? (pair? opt)]
+                        [opt (if full? (car opt) opt)])
                    (nanopass-case (Lsrc Expr) opt
                      [(quote ,d)
                       (residualize-seq '() (list x) ctxt)
@@ -3060,12 +3062,16 @@
                           ;; The `case-lambda` form for inlining may have fewer cases
                           ;; than the actual binding, so only try to inline if there's
                           ;; a matching clause
+                          ;; unless all the clauses are preserved
                           (let ([n (length (app-opnds (app-ctxt ctxt)))])
                             (cond
                              [(ormap (lambda (cl)
                                        (nanopass-case (Lsrc CaseLambdaClause) cl
                                          [(clause (,x* ...) ,interface ,body)
-                                          (= n interface)]))
+                                          (or (= n interface)
+                                              (and full?
+                                                   (fx< interface 0)
+                                                   (fx>= n (fx- -1 interface))))]))
                                      cl*)
                               (residualize-seq '() (list x) ctxt)
                               (cp0 opt (app-ctxt ctxt) empty-env sc wd (app-name ctxt) moi)]
@@ -5313,14 +5319,14 @@
        (when (enable-cross-library-optimization)
          (let ()
            (define update-box!
-             (lambda (box e)
+             (lambda (box e full?)
                (set-box! box
                  (cons
-                   (cons ($target-machine) e)
+                   (cons ($target-machine) (if full? (cons e #f) e))
                    (remp (lambda (as) (eq? (car as) ($target-machine))) (unbox box))))))
            (nanopass-case (Lsrc Expr) e
-             [(quote ,d) (and (okay-to-copy? d) (update-box! box e))]
-             [,pr (update-box! box pr)]
+             [(quote ,d) (and (okay-to-copy? d) (update-box! box e #f))]
+             [,pr (update-box! box pr #f)]
              [(ref ,maybe-src ,x)
               (and (not (prelex-was-assigned x))
                    (let ([rhs (result-exp (operand-value (prelex-operand x)))])
@@ -5329,15 +5335,16 @@
                         ;; Function registered for inlining may report fewer clauses
                         ;; than supported by the original, since only inlinable clauses
                         ;; are kept
-                        (let ([cl* (fold-right (lambda (cl cl*)
-                                                 (let ([cl (externally-inlinable cl exts)])
-                                                   (if cl
-                                                       (cons cl cl*)
-                                                       cl*)))
-                                               '()
-                                               cl*)])
-                          (when (pair? cl*)
-                            (update-box! box `(case-lambda ,preinfo ,cl* ...))))]
+                        (let ([new-cl* (fold-right (lambda (cl cl*)
+                                                     (let ([cl (externally-inlinable cl exts)])
+                                                       (if cl
+                                                           (cons cl cl*)
+                                                           cl*)))
+                                                   '()
+                                                   cl*)])
+                          (when (pair? new-cl*)
+                            (update-box! box `(case-lambda ,preinfo ,new-cl* ...)
+                                         (= (length cl*) (length new-cl*)))))]
                        [else #f])))]
              [else (void)])))
        `(cte-optimization-loc ,box ,e ,exts)]
