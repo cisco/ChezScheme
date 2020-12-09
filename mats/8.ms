@@ -9324,19 +9324,21 @@
                   (lambda (x) (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f] [current-eval compile])
                                 (eval x))))
     #t)
-  (equivalent-expansion?
-   (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-     (expand/optimize
-      '(lambda (x y z)
-         (import (testfile-clo-4a))
-         (list
-          (f x y z)
-          (g x y z)))))
-   '(begin
-      (#3%$invoke-library '(testfile-clo-4a) '() 'testfile-clo-4a)
-      (lambda (x y z)
-        (#2%list (#2%list x y z)
-                 ((#3%$top-level-value 'g) x y z)))))
+  (or
+   (and (compile-profile) #t) ; => testfile-clo-4a was compiled with profiling, so not quite the same as below
+   (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+       '(lambda (x y z)
+          (import (testfile-clo-4a))
+          (list
+           (f x y z)
+           (g x y z)))))
+    '(begin
+       (#3%$invoke-library '(testfile-clo-4a) '() 'testfile-clo-4a)
+       (lambda (x y z)
+         (#2%list (#2%list x y z)
+                  ((#3%$top-level-value 'g) x y z))))))
 )
 
 (mat lots-of-libraries
