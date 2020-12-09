@@ -4107,16 +4107,19 @@
                      [(record ,rtd1 ,rtd-expr1 ,e* ...)
                       (guard (< d (length e*))
                         (rtd-immutable-field? rtd1 d))
-                      (let ([e (list-ref e* d)])
-                        (and
-                         (nanopass-case (Lsrc Expr) e
-                           [(quote ,d) #t]
-                           [(ref ,maybe-src ,x) (not (prelex-assigned x))]
-                           [,pr (all-set? (prim-mask proc) (primref-flags pr))]
-                           [else #f])
-                         (begin
-                           (residualize-seq (list ?r ?i) '() ctxt)
-                           (non-result-exp i-expr (non-result-exp r-expr e)))))]
+                      (let* ([e (list-ref e* d)]
+                             [new-e (nanopass-case (Lsrc Expr) e
+                                      [(quote ,d) e]
+                                      [(ref ,maybe-src ,x)
+                                       (and (not (prelex-assigned x))
+                                            (residualize-ref maybe-src x sc))]
+                                      [,pr (and (all-set? (prim-mask proc) (primref-flags pr))
+                                                e)]
+                                      [else #f])])
+                        (and new-e
+                             (begin
+                               (residualize-seq (list ?r ?i) '() ctxt)
+                               (non-result-exp i-expr (non-result-exp r-expr new-e)))))]
                      [else #f])]))]
               [else #f]))])
 
