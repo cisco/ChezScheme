@@ -175,6 +175,24 @@
     (lambda (rtd index)
       (make-fld 'unknown (bitwise-bit-set? (rtd-mpm rtd) (fx+ index 1)) 'scheme-object 0)))
 
+  (define make-cte-info
+    (case-lambda
+     [(e) e]
+     [(e full? single-valued?)
+      (if (or full? single-valued?)
+          (vector e full? single-valued?)
+          e)]))
+  (define (cte-info-inline cte-info)
+    (if (vector? cte-info)
+        (vector-ref cte-info 0)
+        cte-info))
+  (define (cte-info-procedure-full? cte-info)
+    (and (vector? cte-info)
+         (vector-ref cte-info 1)))
+  (define (cte-info-procedure-single-valued? cte-info)
+    (and (vector? cte-info)
+         (vector-ref cte-info 2)))
+
   (with-output-language (Lsrc Expr)
     (define void-rec `(quote ,(void)))
     (define true-rec `(quote #t))
@@ -1374,47 +1392,60 @@
             (nanopass-case (Lsrc Expr) e
               [(quote ,d) #t]
               [(call ,preinfo ,e ,e* ...)
-               (let procedure-single-valued ([e e] [e* e*])
-                 (nanopass-case (Lsrc Expr) (result-exp e)
-                   [,pr
-                    (or (all-set? (prim-mask single-valued) (primref-flags pr))
-                        (and e*
-                             (let ([proc-e (extract-called-procedure pr e*)])
-                               (and proc-e
-                                    (memoize (procedure-single-valued proc-e #f))))))]
-                   [(case-lambda ,preinfo ,cl* ...)
-                    (memoize (or
-                              (all-set? (constant code-flag-single-valued)
-                                        (preinfo-lambda-flags preinfo))
-                              (fold-left (lambda (r cl)
-                                           (and r
-                                                (nanopass-case (Lsrc CaseLambdaClause) cl
-                                                  [(clause (,x* ...) ,interface ,body)
-                                                   (single-valued-join r (single-valued body))])))
-                                         #t
-                                         cl*)))]
-                   [(ref ,maybe-src ,x)
-                    (let ([v (and (not (prelex-was-assigned x))
-                                  (let ([opnd (prelex-operand x)])
-                                    (and opnd
-                                         (operand-exp opnd))))])
-                      (and v
-                           (nanopass-case (Lsrc Expr) v
-                             [(case-lambda ,preinfo ,cl* ...)
-                              ;; Don't recur into the clauses, since that
-                              ;; could send us into a loop for a `letrec`
-                              ;; binding. But use the prelex as a summary
-                              ;; or a way to tie a loop:
-                              (preinfo->single-valued preinfo x)]
-                             [else #f])))]
-                   ;; Recognize call to a loop, and use the loop's prelex in that case:
-                   [(letrec ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
-                    (and (eq? x1 x2)
-                         (preinfo->single-valued preinfo x1))]
-                   [(letrec* ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
-                    (and (eq? x1 x2)
-                         (preinfo->single-valued preinfo x1))]
-                   [else #f]))]
+               (or (and (preinfo-call-single-valued? preinfo)
+                        (not (preinfo-call-check? preinfo)))
+                   (let procedure-single-valued ([e e] [e* e*])
+                     (nanopass-case (Lsrc Expr) (result-exp e)
+                       [,pr
+                        (or (all-set? (prim-mask single-valued) (primref-flags pr))
+                            (all-set? (prim-mask abort-op) (primref-flags pr))
+                            (and e*
+                                 (let ([proc-e (extract-called-procedure pr e*)])
+                                   (and proc-e
+                                        (memoize (procedure-single-valued proc-e #f))))))]
+                       [(case-lambda ,preinfo ,cl* ...)
+                        (memoize (or
+                                  (all-set? (constant code-flag-single-valued)
+                                            (preinfo-lambda-flags preinfo))
+                                  (fold-left (lambda (r cl)
+                                               (and r
+                                                    (nanopass-case (Lsrc CaseLambdaClause) cl
+                                                      [(clause (,x* ...) ,interface ,body)
+                                                       (single-valued-join r (single-valued body))])))
+                                             #t
+                                             cl*)))]
+                       [(ref ,maybe-src ,x)
+                        (let ([v (and (not (prelex-was-assigned x))
+                                      (let ([opnd (prelex-operand x)])
+                                        (and opnd
+                                             (operand-exp opnd))))])
+                          (and v
+                               (nanopass-case (Lsrc Expr) v
+                                 [(case-lambda ,preinfo ,cl* ...)
+                                  ;; Don't recur into the clauses, since that
+                                  ;; could send us into a loop for a `letrec`
+                                  ;; binding. But use the prelex as a summary
+                                  ;; or a way to tie a loop:
+                                  (preinfo->single-valued preinfo x)]
+                                 [else #f])))]
+                       ;; Recognize call to a loop, and use the loop's prelex in that case:
+                       [(letrec ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
+                        (and (eq? x1 x2)
+                             (preinfo->single-valued preinfo x1))]
+                       [(letrec* ([,x1 (case-lambda ,preinfo ,cl* ...)]) (ref ,maybe-src ,x2))
+                        (and (eq? x1 x2)
+                             (preinfo->single-valued preinfo x1))]
+                       [(call ,preinfo ,pr ,e)
+                        (guard (eq? (primref-name pr) '$top-level-value))
+                        ;; Check for cross-module single-valued information:
+                        (nanopass-case (Lsrc Expr) e
+                          [(quote ,d)
+                           (guard (symbol? d))
+                           (let ([as (assq ($target-machine) ($cte-optimization-info d))])
+                             (and as
+                                  (cte-info-procedure-single-valued? (cdr as))))]
+                          [else #f])]
+                       [else #f])))]
               [(ref ,maybe-src ,x) #t]
               [(case-lambda ,preinfo ,cl* ...) #t]
               [(if ,e1 ,e2 ,e3) (memoize (single-valued-join (single-valued e2) (single-valued e3)))]
@@ -2243,6 +2274,12 @@
                                    [(ref ,maybe-src ,x) (eq? x x0)]
                                    [else #f])))
                           arg*))]
+                  [,pr0
+                   (andmap (lambda (arg)
+                             (and (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! arg))
+                                    [,pr (eq? pr pr0)]
+                                    [else #f])))
+                           arg*)]
                   [else #f]))
             (begin
               (residualize-seq '() (cons arg arg*) ctxt)
@@ -3038,46 +3075,47 @@
                     (preinfo-call-can-inline? (app-preinfo ctxt)) ; $top-level-value may be marked by previous inline
                     (assq ($target-machine) ($cte-optimization-info d))) =>
                (lambda (as)
-                 (let* ([opt (cdr as)]
-                        [full? (pair? opt)]
-                        [opt (if full? (car opt) opt)])
-                   (nanopass-case (Lsrc Expr) opt
-                     [(quote ,d)
-                      (residualize-seq '() (list x) ctxt)
-                      opt]
-                     [,pr
-                      (residualize-seq '() (list x) ctxt)
-                      opt]
-                     [(case-lambda ,preinfo ,cl* ...)
-                      (context-case (app-ctxt ctxt)
-                        [(test) (residualize-seq '() (list x) ctxt) true-rec]
-                        ; reprocess to complete inlining done in the same cp0 pass and, more
-                        ; importantly, to rewrite any prelexes so multiple call sites don't
-                        ; result in multiple bindings for the same prelexes
-                        [(app)
-                         (and
-                          ;; Check that enclosing call allows inlining, which is a
-                          ;; separate specification from the nested `$top-level-value` call:
-                          (preinfo-call-can-inline? (app-preinfo (app-ctxt ctxt)))
-                          ;; The `case-lambda` form for inlining may have fewer cases
-                          ;; than the actual binding, so only try to inline if there's
-                          ;; a matching clause
-                          ;; unless all the clauses are preserved
-                          (let ([n (length (app-opnds (app-ctxt ctxt)))])
-                            (cond
-                             [(ormap (lambda (cl)
-                                       (nanopass-case (Lsrc CaseLambdaClause) cl
-                                         [(clause (,x* ...) ,interface ,body)
-                                          (or (= n interface)
-                                              (and full?
-                                                   (fx< interface 0)
-                                                   (fx>= n (fx- -1 interface))))]))
-                                     cl*)
-                              (residualize-seq '() (list x) ctxt)
-                              (cp0 opt (app-ctxt ctxt) empty-env sc wd (app-name ctxt) moi)]
-                             [else #f])))]
-                        [else #f])]
-                     [else #f])))]
+                 (let* ([opt (cte-info-inline (cdr as))]
+                        [full? (cte-info-procedure-full? (cdr as))])
+                   (and
+                    opt
+                    (nanopass-case (Lsrc Expr) opt
+                      [(quote ,d)
+                       (residualize-seq '() (list x) ctxt)
+                       opt]
+                      [,pr
+                       (residualize-seq '() (list x) ctxt)
+                       opt]
+                      [(case-lambda ,preinfo ,cl* ...)
+                       (context-case (app-ctxt ctxt)
+                         [(test) (residualize-seq '() (list x) ctxt) true-rec]
+                         ; reprocess to complete inlining done in the same cp0 pass and, more
+                         ; importantly, to rewrite any prelexes so multiple call sites don't
+                         ; result in multiple bindings for the same prelexes
+                         [(app)
+                          (and
+                           ;; Check that enclosing call allows inlining, which is a
+                           ;; separate specification from the nested `$top-level-value` call:
+                           (preinfo-call-can-inline? (app-preinfo (app-ctxt ctxt)))
+                           ;; The `case-lambda` form for inlining may have fewer cases
+                           ;; than the actual binding, so only try to inline if there's
+                           ;; a matching clause
+                           ;; unless all the clauses are preserved
+                           (let ([n (length (app-opnds (app-ctxt ctxt)))])
+                             (cond
+                              [(ormap (lambda (cl)
+                                        (nanopass-case (Lsrc CaseLambdaClause) cl
+                                          [(clause (,x* ...) ,interface ,body)
+                                           (or (= n interface)
+                                               (and full?
+                                                    (fx< interface 0)
+                                                    (fx>= n (fx- -1 interface))))]))
+                                      cl*)
+                               (residualize-seq '() (list x) ctxt)
+                               (cp0 opt (app-ctxt ctxt) empty-env sc wd (app-name ctxt) moi)]
+                              [else #f])))]
+                         [else #f])]
+                      [else #f]))))]
               [else #f])]
            [else #f])])
 
@@ -5120,6 +5158,22 @@
                                                         (preinfo-call-mask))
                                                     (preinfo-call-mask no-inline)))])
          (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
+      [(call ,preinfo ,pr ,e ,e* ...)
+       (guard (eq? (primref-name pr) '$app/no-return))
+       (let ([preinfo (make-preinfo-call (preinfo-src preinfo) (preinfo-sexpr preinfo)
+                                         (set-flags (if (all-set? (prim-mask unsafe) (primref-flags pr))
+                                                        (preinfo-call-mask unchecked)
+                                                        (preinfo-call-mask))
+                                                    (preinfo-call-mask no-inline no-return single-valued)))])
+         (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
+      [(call ,preinfo ,pr ,e ,e* ...)
+       (guard (eq? (primref-name pr) '$app/value))
+       (let ([preinfo (make-preinfo-call (preinfo-src preinfo) (preinfo-sexpr preinfo)
+                                         (set-flags (if (all-set? (prim-mask unsafe) (primref-flags pr))
+                                                        (preinfo-call-mask unchecked)
+                                                        (preinfo-call-mask))
+                                                    (preinfo-call-mask single-valued)))])
+         (cp0 `(call ,preinfo ,e ,e* ...) ctxt env sc wd name moi))]
       [(call ,preinfo ,pr ,e1 ,e2 ,e3)
        ;; remove wrapper for immediately applied
        (guard (app? ctxt)
@@ -5358,14 +5412,14 @@
        (when (enable-cross-library-optimization)
          (let ()
            (define update-box!
-             (lambda (box e full?)
+             (lambda (box cte-info)
                (set-box! box
                  (cons
-                   (cons ($target-machine) (if full? (cons e #f) e))
+                   (cons ($target-machine) cte-info)
                    (remp (lambda (as) (eq? (car as) ($target-machine))) (unbox box))))))
            (nanopass-case (Lsrc Expr) e
-             [(quote ,d) (and (okay-to-copy? d) (update-box! box e #f))]
-             [,pr (update-box! box pr #f)]
+             [(quote ,d) (and (okay-to-copy? d) (update-box! box (make-cte-info e)))]
+             [,pr (update-box! box (make-cte-info pr))]
              [(ref ,maybe-src ,x)
               (and (not (prelex-was-assigned x))
                    (let ([rhs (result-exp (operand-value (prelex-operand x)))])
@@ -5380,10 +5434,17 @@
                                                            (cons cl cl*)
                                                            cl*)))
                                                    '()
-                                                   cl*)])
-                          (when (pair? new-cl*)
-                            (update-box! box `(case-lambda ,preinfo ,new-cl* ...)
-                                         (= (length cl*) (length new-cl*)))))]
+                                                   cl*)]
+                              [sv? (andmap (lambda (cl)
+                                             (nanopass-case (Lsrc CaseLambdaClause) cl
+                                               [(clause (,x* ...) ,interface ,body)
+                                                (single-valued? body)]))
+                                           cl*)])
+                          (when (or (pair? new-cl*) sv?)
+                            (update-box! box (make-cte-info
+                                              `(case-lambda ,preinfo ,new-cl* ...)
+                                              (= (length cl*) (length new-cl*))
+                                              sv?))))]
                        [else #f])))]
              [else (void)])))
        `(cte-optimization-loc ,box ,e ,exts)]

@@ -1838,6 +1838,8 @@
   ($allocate-thread-parameter [feature pthreads] [flags single-valued alloc])
   ($app [flags])
   ($app/no-inline [flags])
+  ($app/no-return [flags])
+  ($app/value [flags])
   ($apply [sig [(procedure exact-integer list) -> (ptr ...)]] [flags cptypes2x])
   ($assembly-output [flags single-valued])
   ($assert-continuation [sig [(ptr) -> (void)] [(ptr ptr) -> (void)]] [flags])

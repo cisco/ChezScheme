@@ -163,17 +163,22 @@
                       [,pr `(,(uncprep e) ,@(map uncprep e*))]
                       [else
                        (let ([a `(,(uncprep e) ,@(map uncprep e*))])
-                         (if (or (preinfo-call-check? preinfo)
-                                 ;; Reporting `#3%$app` is redundant for unsafe mode.
-                                 ;; Note that we're losing explicit `#2%$app`s.
-                                 (>= (optimize-level) 3)
-                                 (enable-unsafe-application))
-                             (if (preinfo-call-can-inline? preinfo)
-                                 a
-                                 (cons '$app/no-inline a))
-                             (if (preinfo-call-can-inline? preinfo)
-                                 (cons '#3%$app a)
-                                 (cons '#3%$app/no-inline a))))])))]
+                         (let ([prim (if (or (preinfo-call-check? preinfo)
+                                             ;; Reporting `#3%$app` is redundant for unsafe mode.
+                                             ;; Note that we're losing explicit `#2%$app`s.
+                                             (>= (optimize-level) 3)
+                                             (enable-unsafe-application))
+                                         (lambda (s) s)
+                                         (lambda (s) `($primitive 3 ,s)))])
+                           (cond
+                             [(preinfo-call-no-return? preinfo)
+                              (cons (prim '$app/no-return) a)]
+                             [(preinfo-call-single-valued? preinfo)
+                              (cons (prim '$app/value) a)]
+                             [(preinfo-call-can-inline? preinfo)
+                              (prim a)]
+                             [else
+                              (cons (prim '$app/no-inline) a)])))])))]
                [,pr (let ([sym (primref-name pr)])
                       (if sexpr?
                           ($sgetprop sym '*unprefixed* sym)

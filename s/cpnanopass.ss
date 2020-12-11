@@ -1147,7 +1147,8 @@
              `(letrec ([,uvar* ,e*] ...) ,(Expr body))))]
         [(call ,preinfo ,e ,[e*] ...)
          (unless (preinfo-call? preinfo) (error 'preinfo-call "oops"))
-         `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (preinfo-call-check? preinfo) #f #f)
+         `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (preinfo-call-check? preinfo) #f
+                                 (and (preinfo-call-no-return? preinfo) (not (preinfo-call-check? preinfo))))
             ,(Expr e) ,e* ...)]
         [(foreign (,conv* ...) ,name ,[e] (,arg-type* ...) ,result-type)
          (let ([info (make-info-foreign conv* arg-type* result-type #f)])

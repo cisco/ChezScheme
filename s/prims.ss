@@ -433,6 +433,17 @@
   (lambda (f . args)
     (#2%apply f args)))
 
+;; Implies no-inline, and in unsafe mode, asserts that the
+;; application will not return
+(define $app/no-return
+  (lambda (f . args)
+    (#2%apply f args)))
+
+;; In unsafe mode, asserts that the applicaiton returns a single value
+(define $app/value
+  (lambda (f . args)
+    (#2%apply f args)))
+
 (define call-with-values
   (lambda (producer consumer)
     (unless (procedure? producer)

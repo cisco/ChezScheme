@@ -593,7 +593,7 @@ Notes:
       [null? null-rec]
       [eof-object? eof-rec]
       [bwp-object? bwp-rec]
-      [list? (if (not extend?) null-rec 'null-or-pair)]
+      [(list? list-assuming-immutable?) (if (not extend?) null-rec 'null-or-pair)]
       [else ((if extend? cdr car)
              (case name
                [(record? record-type-descriptor?) '(bottom . $record)]
@@ -650,6 +650,7 @@ Notes:
                [(record rtd) '(bottom . $record)]
                [(bit length ufixnum pfixnum) '(bottom . fixnum)]
                [(uint sub-uint) '(bottom . exact-integer)]
+               [(index sub-index u8 s8) '(bottom . fixnum)]
                [(sint) '(fixnum . exact-integer)]
                [(uinteger) '(bottom . real)]
                [(integer rational) '(exact-integer . real)]
@@ -1397,7 +1398,7 @@ Notes:
                   [(e0 ret0 types0 t-types0 f-types0)
                    (Expr/call e0 'value ntypes oldtypes plxc)])
       (values `(call ,preinfo ,e0 ,e* ...)
-              ret0 types0 t-types0 f-types0)))
+              (if (preinfo-call-no-return? preinfo) 'bottom ret0) types0 t-types0 f-types0)))
 
   (define (map-Expr/delayed e* oldtypes plxc)
     (define first-pass* (map (lambda (e)

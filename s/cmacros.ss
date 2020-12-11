@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050336)
+(define-constant scheme-version #x09050337)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1861,8 +1861,10 @@
   )
 
 (define-flags preinfo-call-mask
-  (unchecked                    #b01)
-  (no-inline                    #b10)
+  (unchecked                    #b0001)
+  (no-inline                    #b0010)
+  (no-return                    #b0100)
+  (single-valued                #b1000)
   )
 
 (define-syntax define-flag-field

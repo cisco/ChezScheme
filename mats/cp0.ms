@@ -3139,6 +3139,30 @@
                       (list (mk (lambda () 1))
                             (mk (lambda () (values 1 2))))))
                '(#t #f)))
+   
+   (or (not (enable-cp0))
+       (procedure-known-single-valued? (lambda (f) (#3%$app/value f))))
+   (or (not (enable-cp0))
+       (not (procedure-known-single-valued? (lambda (f) (#2%$app/value f)))))
+   (or (not (enable-cp0))
+       (procedure-known-single-valued? (case-lambda
+                                        [(f) (#3%$app/value f)]
+                                        [(f g) (if (g)
+                                                   (abort 'oops)
+                                                   (#3%$app/value f))])))
+
+   (or (not (enable-cp0))
+       (procedure-known-single-valued? (lambda () (abort 'x))))
+   (or (not (enable-cp0))
+       (procedure-known-single-valued? (lambda (f) (#3%$app/no-return f))))
+   (or (not (enable-cp0))
+       (not (procedure-known-single-valued? (lambda (f) (#2%$app/no-return f)))))
+   (or (not (enable-cp0))
+       (procedure-known-single-valued? (case-lambda
+                                        [(f) (#3%$app/no-return f)]
+                                        [(f g) (if (g)
+                                                   (abort 'oops)
+                                                   (#3%$app/no-return f))])))
 
 )
 
