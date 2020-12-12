@@ -1979,7 +1979,9 @@
             [,pr
               (context-case ctxt
                 [(value tail)
-                 (if (all-set? (prim-mask (or primitive proc)) (primref-flags pr))
+                 ;; formerly constrained to functions marked as `primitive`,
+                 ;; which does not include `system` procedures:
+                 (if (all-set? (prim-mask proc) (primref-flags pr))
                      rhs
                      (residualize-ref maybe-src id sc))]
                 [(test)
