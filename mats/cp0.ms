@@ -3141,10 +3141,12 @@
                '(#t #f)))
    
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (procedure-known-single-valued? (lambda (f) (#3%$app/value f))))
    (or (not (enable-cp0))
        (not (procedure-known-single-valued? (lambda (f) (#2%$app/value f)))))
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (procedure-known-single-valued? (case-lambda
                                         [(f) (#3%$app/value f)]
                                         [(f g) (if (g)
@@ -3152,12 +3154,15 @@
                                                    (#3%$app/value f))])))
 
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (procedure-known-single-valued? (lambda () (abort 'x))))
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (procedure-known-single-valued? (lambda (f) (#3%$app/no-return f))))
    (or (not (enable-cp0))
        (not (procedure-known-single-valued? (lambda (f) (#2%$app/no-return f)))))
    (or (not (enable-cp0))
+       (eq? (current-eval) interpret)
        (procedure-known-single-valued? (case-lambda
                                         [(f) (#3%$app/no-return f)]
                                         [(f g) (if (g)

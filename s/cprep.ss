@@ -168,17 +168,17 @@
                                              ;; Note that we're losing explicit `#2%$app`s.
                                              (>= (optimize-level) 3)
                                              (enable-unsafe-application))
-                                         (lambda (s) s)
-                                         (lambda (s) `($primitive 3 ,s)))])
+                                         (lambda (s a) (if s (cons s a) a))
+                                         (lambda (s arg) (cons `($primitive 3 ,(or s '$app)) a)))])
                            (cond
                              [(preinfo-call-no-return? preinfo)
-                              (cons (prim '$app/no-return) a)]
+                              (prim '$app/no-return a)]
                              [(preinfo-call-single-valued? preinfo)
-                              (cons (prim '$app/value) a)]
+                              (prim '$app/value a)]
                              [(preinfo-call-can-inline? preinfo)
-                              (prim a)]
+                              (prim #f a)]
                              [else
-                              (cons (prim '$app/no-inline) a)])))])))]
+                              (prim '$app/no-inline)])))])))]
                [,pr (let ([sym (primref-name pr)])
                       (if sexpr?
                           ($sgetprop sym '*unprefixed* sym)
