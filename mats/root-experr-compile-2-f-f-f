@@ -187,18 +187,18 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 3.mo:Expected error in mat define-values: "duplicate variable in define-values left-hand side (x . x)".
 3.mo:Expected error in mat define-values: "define-values: incorrect number of values from rhs (values)".
 3.mo:Expected error in mat define-values: "duplicate variable in define-values left-hand side ($dv-foo2-x . $dv-foo2-x)".
-3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
-3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
-3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
 3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
 3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
-3.mo:Expected error in mat mrvs: "returned two values to single value return context".
-3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
+3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
 3.mo:Expected error in mat mrvs: "cdr: a is not a pair".
 3.mo:Expected error in mat let-values: "invalid syntax (let-values)".
 3.mo:Expected error in mat let-values: "invalid syntax (let-values ((x)))".

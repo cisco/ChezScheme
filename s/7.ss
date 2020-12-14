@@ -1317,7 +1317,7 @@
           (noncontinuable-interrupt))]
       [(ERROR_VALUES) (cnt)
        ($oops #f
-         "returned ~r values to single value return context"
+         "returned ~a values to single value return context"
          cnt)]
       [(ERROR_MVLET) (cnt)
        ($oops #f

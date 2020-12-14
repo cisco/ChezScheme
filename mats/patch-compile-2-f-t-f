@@ -36,27 +36,27 @@
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
 ***************
 *** 191,200 ****
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
-! 3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+! 3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
   3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
 --- 191,200 ----
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect argument count in call (call-with-values (lambda () 5 (values 2)) (lambda (x y) (+ x y)))".
 ! 3.mo:Expected error in mat mrvs: "incorrect argument count in call (call-with-values values (lambda (x) x))".
 ! 3.mo:Expected error in mat mrvs: "incorrect argument count in call (call-with-values values (lambda (x y) x))".
 ! 3.mo:Expected error in mat mrvs: "incorrect argument count in call (call-with-values f (lambda (x y) x))".
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
   3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
 ***************
 *** 3645,3651 ****
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".

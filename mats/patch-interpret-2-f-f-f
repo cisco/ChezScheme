@@ -170,30 +170,30 @@
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
 *** 191,202 ****
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
-! 3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+! 3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of values received in multiple value context".
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
 ! 3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
   3.mo:Expected error in mat mrvs: "cdr: a is not a pair".
 --- 197,208 ----
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned three values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned zero values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat mrvs: "incorrect number of arguments to #<procedure>".
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
 ! 3.mo:Expected error in mat mrvs: "call-with-values: 17 is not a procedure".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
-  3.mo:Expected error in mat mrvs: "returned two values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
+  3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
   3.mo:Expected error in mat mrvs: "cdr: a is not a pair".
 ***************
 *** 4004,4019 ****

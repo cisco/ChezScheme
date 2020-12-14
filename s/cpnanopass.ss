@@ -11366,7 +11366,7 @@
                           (literal ,(make-info-literal #t 'object '$oops (constant symbol-value-disp)))
                           ,(%constant sfalse)
                           (literal ,(make-info-literal #f 'object
-                                      (format "returned ~r values to single value return context"
+                                      (format "returned ~a values to single value return context"
                                         (length t*)) 0)))
                         (set! ,lvalue ,(%constant svoid)))]
                     [else (sorry! who "unexpected Rhs expression ~s" e)])))))))
@@ -11784,7 +11784,7 @@
                  (literal ,(make-info-literal #t 'object '$oops (constant symbol-value-disp)))
                  ,(%constant sfalse)
                  (literal ,(make-info-literal #f 'object
-                             (format "returned ~r values to single value return context"
+                             (format "returned ~a values to single value return context"
                                (length t*)) 0))
                  ())
             (true))])
