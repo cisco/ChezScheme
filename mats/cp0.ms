@@ -3232,3 +3232,93 @@
       (expand/optimize '((make-arity-wrapper-procedure (lambda (x) x) 1 'ok) 5)))
     5))
   )
+
+(mat uncprep-app-variants
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(x y))
+     '(x y)))
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app x y))
+     '(x y)))
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app x y))
+     (if (eqv? 3 (optimize-level))
+         '(x y)
+         '(#3%$app x y))))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(x y))
+     '(x y)))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app x y))
+     '(x y)))
+
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/no-return x y))
+     '($app/no-return x y)))
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/no-return x y))
+     (if (eqv? 3 (optimize-level))
+         '($app/no-return x y)
+         '(#3%$app/no-return x y))))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/no-return x y))
+     '($app/no-return x y)))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/no-return x y))
+     '($app/no-return x y)))
+
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/no-inline x y))
+     '($app/no-inline x y)))
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/no-inline x y))
+     (if (eqv? 3 (optimize-level))
+         '($app/no-inline x y)
+         '(#3%$app/no-inline x y))))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/no-inline x y))
+     '($app/no-inline x y)))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/no-inline x y))
+     '($app/no-inline x y)))
+
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/value x y))
+     '($app/value x y)))
+  (parameterize ([enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/value x y))
+     (if (eqv? 3 (optimize-level))
+         '($app/value x y)
+         '(#3%$app/value x y))))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#%$app/value x y))
+     '($app/value x y)))
+  (parameterize ([enable-unsafe-application #t]
+                 [enable-cp0 #t])
+    (equivalent-expansion?
+     (expand/optimize '(#3%$app/value x y))
+     '($app/value x y)))
+)

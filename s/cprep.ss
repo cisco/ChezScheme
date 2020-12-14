@@ -178,7 +178,7 @@
                              [(preinfo-call-can-inline? preinfo)
                               (prim #f a)]
                              [else
-                              (prim '$app/no-inline)])))])))]
+                              (prim '$app/no-inline a)])))])))]
                [,pr (let ([sym (primref-name pr)])
                       (if sexpr?
                           ($sgetprop sym '*unprefixed* sym)
