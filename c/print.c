@@ -32,6 +32,7 @@ static void pstr PROTO((ptr x));
 static void psym PROTO((ptr x));
 static void pvec PROTO((ptr x));
 static void pfxvector PROTO((ptr x));
+static void pflvector PROTO((ptr x));
 static void pbytevector PROTO((ptr x));
 static void pflonum PROTO((ptr x));
 static void pflodat PROTO((double x));
@@ -54,6 +55,7 @@ void S_prin1(x) ptr x; {
     else if (Sexactnump(x)) pexactnum(x);
     else if (Svectorp(x)) pvec(x);
     else if (Sfxvectorp(x)) pfxvector(x);
+    else if (Sflvectorp(x)) pflvector(x);
     else if (Sbytevectorp(x)) pbytevector(x);
     else if (Sboxp(x)) pbox(x);
     else if (Sprocedurep(x)) pclo(x);
@@ -159,12 +161,16 @@ static void pstr(x) ptr x; {
 }
 
 static void display_string(x) ptr x; {
-  iptr i, n = Sstring_length(x);
-
-  for (i = 0; i < n; i += 1) {
-    int k = Sstring_ref(x, i);
-    if (k >= 256) k = '?';
-    putchar(k);
+  if (!Sstringp(x)) {
+    printf("#<garbage-string>");
+  } else {
+    iptr i, n = Sstring_length(x);
+    
+    for (i = 0; i < n; i += 1) {
+      int k = Sstring_ref(x, i);
+      if (k >= 256) k = '?';
+      putchar(k);
+    }
   }
 }
 
@@ -220,6 +226,25 @@ static void pfxvector(x) ptr x; {
 
         while (1) {
             pfixnum(Sfxvector_ref(x, i));
+            if (++i == n) break;
+            putchar(' ');
+        }
+    }
+    putchar(')');
+}
+
+static void pflvector(x) ptr x; {
+    iptr n;
+
+    putchar('#');
+    n = Sflvector_length(x);
+    wrint(FIX(n));
+    printf("vfl(");
+    if (n != 0) {
+        iptr i = 0;
+
+        while (1) {
+            pflodat(Sflvector_ref(x, i));
             if (++i == n) break;
             putchar(' ');
         }

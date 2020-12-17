@@ -106,34 +106,37 @@ void S_resize_oblist(void) {
 
 #define MIX_HASH(hc) (hc += (hc << 10), hc ^= (hc >> 6))
 
+#define SYM_HASH_LOOP(uptr, iptr, extract, mask)  {     \
+    uptr h = (uptr)n + 401887359;                       \
+    while (n--) { h += extract(*s++); MIX_HASH(h); }    \
+    return (iptr)h & mask;                              \
+  }
+
+#define identity_extract(x) x
+
 static iptr hash(const unsigned char *s, iptr n) {
-  uptr h = (uptr)n + 401887359;
-  while (n--) { h += *s++; MIX_HASH(h); }
-  return (iptr)h & most_positive_fixnum;
+  SYM_HASH_LOOP(uptr, iptr, identity_extract, most_positive_fixnum);
 }
 
 static iptr hash_sc(const string_char *s, iptr n) {
-  uptr h = (uptr)n + 401887359;
-  while (n--) { h += Schar_value(*s++); MIX_HASH(h); }
-  return (iptr)h & most_positive_fixnum;
+  SYM_HASH_LOOP(uptr, iptr, Schar_value, most_positive_fixnum);
 }
 
 static iptr hash_uname(const string_char *s, iptr n) {
-  /* attempting to get dissimilar hash codes for gensyms created in the same session */
-  iptr i = n, h = 0; iptr pos = 1; int d, c;
-
-  while (i-- > 0) {
-    if ((c = Schar_value(s[i])) == '-') {
-      if (pos <= 10) break;
-      return (h + 523658599) & most_positive_fixnum;
-    }
-    d = c - '0';
-    if (d < 0 || d > 9) break;
-    h += d * pos;
-    pos *= 10;
-  }
-
   return hash_sc(s, n);
+}
+
+/* on any platform, computes the value that is computed on a 32-bit platform,
+   but needs to be `bitwise-and`ed with most_positive_fixnum */
+I32 S_symbol_hash32(ptr str) {
+  const string_char *s = &STRIT(str, 0); iptr n = Sstring_length(str);
+  SYM_HASH_LOOP(U32, I32, Schar_value, (I32)-1);
+}
+
+/* like S_symbol_hash32 for the value that is computed on a 64-bit platform */
+I64 S_symbol_hash64(ptr str) {
+  const string_char *s = &STRIT(str, 0); iptr n = Sstring_length(str);
+  SYM_HASH_LOOP(U64, I64, Schar_value, (U64)-1);
 }
 
 static ptr mkstring(const string_char *s, iptr n) {

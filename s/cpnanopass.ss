@@ -548,7 +548,7 @@
                                             arg-offset fp-offset rextra* rfpextra*)
                                          (if (eq? (syntax->datum (car other-type*)) 'fp)
                                              (f (cdr other*) (cdr other-type*) (cons fp-offset rtc-disp*)
-                                                arg-offset (fx+ fp-offset 8) rextra* (cons other rfpextra*))
+                                                arg-offset (fx+ fp-offset (constant double-bytes)) rextra* (cons other rfpextra*))
                                              (f (cdr other*) (cdr other-type*) (cons arg-offset rtc-disp*)
                                                 (fx+ arg-offset (constant ptr-bytes)) fp-offset (cons other rextra*) rfpextra*))))))]
                             [_ (syntax-error x "missing or out-of-order required registers")])]

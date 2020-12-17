@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050337)
+(define-constant scheme-version #x09050338)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -419,6 +419,12 @@
 
 (define-constant ptr-bytes (/ (constant ptr-bits) 8)) ; size in bytes
 (define-constant log2-ptr-bytes (log2 (constant ptr-bytes)))
+
+(define-constant double-bytes 8)
+
+(define-constant byte-bytes 1)
+(define-constant byte-bits 8)
+(define-constant log2-byte-bits 3)
 
 ;;; ordinary types must be no more than 8 bits long
 (define-constant ordinary-type-bits 8)    ; smallest addressable unit
@@ -2184,6 +2190,68 @@
 (define-constant time-utc 4)
 (define-constant time-collector-cpu 5)
 (define-constant time-collector-real 6)
+
+;; ---------------------------------------------------------------------
+;; vfasl
+
+;; For vfasl images: Similar to allocation spaces, but not all
+;; allocation spaces are represented, and these spaces are more
+;; fine-grained in some cases:
+(define-enumerated-constants
+  vspace-symbol
+  vspace-rtd
+  vspace-closure
+  vspace-impure
+  vspace-pure-typed
+  vspace-impure-record
+  ;; rest rest are at then end to make the pointer bitmap
+  ;; end with zeros (that can be dropped):
+  vspace-code
+  vspace-data
+  vspace-reloc ;; can be dropped after direct to static generation
+  vspaces-count)
+
+(define-constant vspaces-offsets-count (- (constant vspaces-count) 1))
+
+(define-primitive-structure-disps vfasl-header typemod
+  ([uptr data-size]
+   [uptr table-size]
+   
+   [uptr result-offset]
+   
+   ;; first starting offset is 0, so skip it in this array:
+   [uptr vspace-rel-offsets (constant vspaces-offsets-count)]
+   
+   [uptr symref-count]
+   [uptr rtdref-count]
+   [uptr singletonref-count]))
+
+(define-enumerated-constants
+  singleton-not-a-singleton
+  singleton-null-string
+  singleton-null-vector
+  singleton-null-fxvector
+  singleton-null-flvector
+  singleton-null-bytevector
+  singleton-null-immutable-string
+  singleton-null-immutable-vector
+  singleton-null-immutable-bytevector
+  singleton-eq
+  singleton-eqv
+  singleton-equal
+  singleton-symbol=?
+  singleton-symbol-symbol
+  singleton-symbol-ht-rtd)
+
+(define-constant vfasl-reloc-tag-bits 3)
+
+(define-enumerated-constants
+  vfasl-reloc-not-a-tag
+  vfasl-reloc-c-entry-tag
+  vfasl-reloc-library-entry-tag
+  vfasl-reloc-library-entry-code-tag
+  vfasl-reloc-symbol-tag
+  vfasl-reloc-singleton-tag)
 
 ;; ---------------------------------------------------------------------
 ;; General helpers for the compiler and runtime implementation:

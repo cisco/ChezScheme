@@ -13,6 +13,9 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; The fasl reader is "fasl.c", which includes an overview of the fasl
+;; format.
+
 (let ()
 (define-record-type target
   (nongenerative #{target dchg2hp5v3cck8ge283luo-1})

@@ -148,10 +148,16 @@
      (put-bytevector p (constant fasl-header))
      (put-uptr p version)
      (put-uptr p mtype)
-     (put-u8 p (char->integer #\())           ; )
+     (put-u8 p (char->integer #\())
      (let f ([bootfiles bootfiles] [sep? #f])
        (unless (null? bootfiles)
-         (when sep? (put-u8 p (char->integer #\space)))
-         (put-str p (car bootfiles))
-         (f (cdr bootfiles) #t)))        ; (
+         (cond
+           [(string? (car bootfiles))
+            (when sep? (put-u8 p (char->integer #\space)))
+            (put-str p (car bootfiles))
+            (f (cdr bootfiles) #t)]
+           [else
+            ;; strip produces dependenices as a sequence of bytes
+            (put-u8 p (car bootfiles))
+            (f (cdr bootfiles) #f)])))
      (put-u8 p (char->integer #\)))]))

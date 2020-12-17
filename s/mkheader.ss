@@ -45,6 +45,8 @@
                         [(#\?) (cons #\p rest)]
                         [(#\>) rest]
                         [(#\*) (cons #\s rest)]
+                        [(#\=) (cons* #\e #\q #\l rest)]
+                        [(#\?) (cons #\p rest)]
                         [else (cons x rest)]))
           '()
           (string->list (symbol->string x))))))
@@ -1152,6 +1154,14 @@
 
         (defref RPCOMPACTHEADERMASKANDSIZE rp-compact-header mask+size+mode)
         (defref RPCOMPACTHEADERTOPLINK rp-compact-header toplink)
+
+        (defref VFASLHEADER_DATA_SIZE vfasl-header data-size)
+        (defref VFASLHEADER_TABLE_SIZE vfasl-header table-size)
+        (defref VFASLHEADER_RESULT_OFFSET vfasl-header result-offset)
+        (defref VFASLHEADER_VSPACE_REL_OFFSETS vfasl-header vspace-rel-offsets)
+        (defref VFASLHEADER_SYMREF_COUNT vfasl-header symref-count)
+        (defref VFASLHEADER_RTDREF_COUNT vfasl-header rtdref-count)
+        (defref VFASLHEADER_SINGLETONREF_COUNT vfasl-header singletonref-count)
 
         (nl)
         (comment "machine types")

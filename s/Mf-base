@@ -115,7 +115,6 @@ Cequates = ../boot/$m/equates.h
 Cgcocd = ../boot/$m/gc-ocd.inc
 Cgcoce = ../boot/$m/gc-oce.inc
 Cgcpar = ../boot/$m/gc-par.inc
-Cvfasl = ../boot/$m/vfasl.inc
 Cheapcheck = ../boot/$m/heapcheck.inc
 Revision = ../boot/$m/revision
 
@@ -128,7 +127,7 @@ patch = patch
 patchobj = patch.patch cpnanopass.patch cprep.patch cpcheck.patch\
  cp0.patch cpvalid.patch cptypes.patch cpcommonize.patch cpletrec.patch\
  reloc.patch\
- compile.patch fasl.patch syntax.patch env.patch\
+ compile.patch fasl.patch vfasl.patch syntax.patch env.patch\
  read.patch interpret.patch ftype.patch strip.patch\
  ubify.patch
 
@@ -151,7 +150,7 @@ basesrc =\
  interpret.ss cprep.ss cpcheck.ss cp0.ss cpvalid.ss  cptypes.ss cpcommonize.ss cpletrec.ss inspect.ss\
  enum.ss io.ss read.ss primvars.ss syntax.ss costctr.ss expeditor.ss\
  exceptions.ss pretty.ss env.ss\
- fasl.ss reloc.ss pdhtml.ss strip.ss ftype.ss back.ss
+ fasl.ss vfasl.ss reloc.ss pdhtml.ss strip.ss ftype.ss back.ss
 
 baseobj = ${basesrc:%.ss=%.$m}
 
@@ -170,14 +169,14 @@ macroobj =\
 allsrc =\
  ${basesrc} ${compilersrc} cmacros.ss ${archincludes} setup.ss debug.ss priminfo.ss primdata.ss layout.ss\
  base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss\
- np-languages.ss fxmap.ss
+ np-languages.ss fxmap.ss strip-types.ss
 
 # doit uses a different Scheme process to compile each target
-doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cvfasl} ${Cheapcheck} ${Revision}
+doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cheapcheck} ${Revision}
 
 # all uses a single Scheme process to compile all targets.  this is typically
 # faster when most of the targets need to be recompiled.
-all: bootall ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cvfasl} ${Cheapcheck} ${Revision}
+all: bootall ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cheapcheck} ${Revision}
 
 # allx runs all up to three times and checks to see if the new boot file is the
 # same as the last, i.e., the system is properly bootstrapped.
@@ -364,7 +363,7 @@ resetbootlinks:
              | ${Scheme} -q
 
 keepbootfiles:
-	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc gc-par.inc vfasl.inc heapcheck.inc` ; do\
+	for x in `echo scheme.boot petite.boot scheme.h equates.h gc-oce.inc gc-ocd.inc gc-par.inc heapcheck.inc` ; do\
           if [ ! -h ../boot/$(m)/$$x ] ; then \
             mv -f ../boot/$(m)/$$x ../../boot/$(m)/$$x ;\
           elif [ "${upupupbootdir}" != "../../.." ] ; then \
@@ -593,11 +592,15 @@ ${patch}: ${patchobj}
 ${asm} ${obj} mkheader.so: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss ${patchfile}
 primvars.so setup.so mkheader.so env.so: cmacros.so priminfo.so primref.ss
 setup.so: debug.ss
+strip.so: strip-types.ss
+vfasl.so: strip-types.ss
 
-${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss env.ss
+${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss strip-types.ss env.ss
 cpnanopass.$m cpnanopass.patch: nanopass.so np-languages.ss fxmap.ss ${archincludes}
 cptypes.$m: fxmap.ss
 5_4.$m: ../unicode/unicode-char-cases.ss ../unicode/unicode-charinfo.ss
+strip.$m: strip-types.ss
+vfasl.$m: strip-types.ss
 
 ${Cheader}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
 	(if [ -r ${Cheader} ]; then mv -f ${Cheader} ${Cheader}.bak; fi)
@@ -644,15 +647,6 @@ ${Cgcpar}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.s
           then mv -f ${Cgcpar}.bak ${Cgcpar};\
           else rm -f ${Cgcpar}.bak; fi)
 
-${Cvfasl}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
-	(if [ -r ${Cvfasl} ]; then mv -f ${Cvfasl} ${Cvfasl}.bak; fi)
-	echo '(reset-handler abort)'\
-             '(mkvfasl.inc "${Cvfasl}")' |\
-         ${Scheme} -q ${macroobj} mkheader.so mkgc.so
-	(if `cmp -s ${Cvfasl} ${Cvfasl}.bak`;\
-          then mv -f ${Cvfasl}.bak ${Cvfasl};\
-          else rm -f ${Cvfasl}.bak; fi)
-
 ${Cheapcheck}: mkgc.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
 	(if [ -r ${Cheapcheck} ]; then mv -f ${Cheapcheck} ${Cheapcheck}.bak; fi)
 	echo '(reset-handler abort)'\
@@ -685,7 +679,6 @@ reset:
 	$(MAKE) reset-one FILE=gc-oce.inc
 	$(MAKE) reset-one FILE=gc-ocd.inc
 	$(MAKE) reset-one FILE=gc-par.inc
-	$(MAKE) reset-one FILE=vfasl.inc
 	$(MAKE) reset-one FILE=heapcheck.inc
 
 .PHONY: reset-one

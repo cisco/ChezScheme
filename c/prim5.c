@@ -1678,6 +1678,8 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_strings_to_gensym", (void *)s_strings_to_gensym);
     Sforeign_symbol("(cs)s_intern_gensym", (void *)S_intern_gensym);
     Sforeign_symbol("(cs)s_uninterned", (void *)S_uninterned);
+    Sforeign_symbol("(cs)symbol_hash32", (void *)S_symbol_hash32);
+    Sforeign_symbol("(cs)symbol_hash64", (void *)S_symbol_hash64);
     Sforeign_symbol("(cs)cputime", (void *)S_cputime);
     Sforeign_symbol("(cs)realtime", (void *)S_realtime);
     Sforeign_symbol("(cs)clock_gettime", (void *)S_clock_gettime);
@@ -1706,9 +1708,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)getpid", (void *)s_getpid);
     Sforeign_symbol("(cs)fasl_read", (void *)S_fasl_read);
     Sforeign_symbol("(cs)bv_fasl_read", (void *)S_bv_fasl_read);
-    Sforeign_symbol("(cs)to_vfasl", (void *)S_to_vfasl);
     Sforeign_symbol("(cs)vfasl_to", (void *)S_vfasl_to);
-    Sforeign_symbol("(cs)vfasl_can_combinep", (void *)S_vfasl_can_combinep);
     Sforeign_symbol("(cs)s_decode_float", (void *)s_decode_float);
 
     Sforeign_symbol("(cs)new_open_input_fd", (void *)S_new_open_input_fd);

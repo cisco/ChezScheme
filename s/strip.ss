@@ -13,41 +13,17 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; The `strip-fasl-file` and related functions use a fasl reader and
+;; writer that are completely separate from the ones in "fasl.ss" and
+;; "fasl.c", so changes made in those places must be duplicated here.
+;; The vfasl writer uses this fasl reader.
+
 (let ()
   ; per file
   (define-threaded fasl-who)
   (define-threaded fasl-count)
 
-  (define-datatype fasl
-    (entry situation fasl)
-    (header version machine dependencies)
-    (pair vfasl)
-    (tuple ty vfasl)
-    (string ty string)
-    (gensym pname uname)
-    (vector ty vfasl)
-    (fxvector viptr)
-    (flvector vfl)
-    (bytevector ty bv)
-    (record maybe-uid size nflds rtd pad-ty* fld*) ; maybe-uid => rtd
-    (rtd-ref uid) ; field info not recorded
-    (closure offset c)
-    (flonum high low)
-    (small-integer iptr)
-    (large-integer sign vuptr)
-    (eq-hashtable mutable? subtype minlen veclen vpfasl)
-    (symbol-hashtable mutable? minlen equiv veclen vpfasl)
-    (code flags free name arity-mask info pinfo* bytes m vreloc)
-    (atom ty uptr)
-    (reloc type-etc code-offset item-offset fasl)
-    (indirect g i))
-
-  (define-datatype field
-    (ptr fasl)
-    (byte n)
-    (iptr n)
-    (single n)
-    (double high low))
+  (include "strip-types.ss")
 
   (define follow-indirect
     (lambda (x)
@@ -217,10 +193,12 @@
           [(fasl-type-gensym)
            (let* ([pname (read-string p)] [uname (read-string p)])
              (fasl-gensym pname uname))]
-          [(fasl-type-ratnum fasl-type-exactnum fasl-type-inexactnum fasl-type-weak-pair)
+          [(fasl-type-ratnum fasl-type-exactnum fasl-type-inexactnum
+                             fasl-type-weak-pair fasl-type-ephemeron)
            (let ([first (read-fasl p g)])
              (fasl-tuple ty (vector first (read-fasl p g))))]
-          [(fasl-type-vector fasl-type-immutable-vector) (fasl-vector ty (read-vfasl p g (read-uptr p)))]
+          [(fasl-type-vector fasl-type-immutable-vector fasl-type-flvector)
+           (fasl-vector ty (read-vfasl p g (read-uptr p)))]
           [(fasl-type-fxvector)
            (fasl-fxvector
              (let ([n (read-uptr p)])
@@ -228,14 +206,11 @@
                  (do ([i 0 (fx+ i 1)])
                      ((fx= i n) v)
                    (vector-set! v i (read-iptr p))))))]
-          [(fasl-type-flvector)
-           (let ([n (read-uptr p)])
-             (let ([vfl (make-vector n)])
-               (do ([i 0 (fx+ i 1)])
-                   ((fx= i n) vfl)
-                 (vector-set! vfl i (read-fasl p g)))))]
           [(fasl-type-bytevector fasl-type-immutable-bytevector)
            (fasl-bytevector ty (read-bytevector p (read-uptr p)))]
+          [(fasl-type-stencil-vector)
+           (let ([mask (read-uptr p)])
+             (fasl-stencil-vector mask (read-vfasl p g (bitwise-bit-count mask))))]
           [(fasl-type-base-rtd) (fasl-tuple ty '#())]
           [(fasl-type-rtd) (let* ([uid (read-fasl p g)]
                                   [size (read-uptr p)])
@@ -319,6 +294,14 @@
            (let ([n (read-uptr p)])
              (or (vector-ref g n)
                  (fasl-indirect g n)))]
+          [(fasl-type-begin)
+           (let loop ([n (read-uptr p)])
+             (if (fx= n 1)
+                 (read-fasl p g)
+                 (begin
+                   ;; will set graph definitions:
+                   (read-fasl p g)
+                   (loop (fx- n 1)))))]
           [else (bogus "unexpected fasl code ~s in ~a" ty (port-name p))]))))
 
   (define read-script-header
@@ -439,8 +422,8 @@
           [gensym (pname uname) (build-graph! x t void)]
           [vector (ty vfasl) (build-graph! x t (build-vfasl! vfasl))]
           [fxvector (viptr) (build-graph! x t void)]
-          [flvector (vfl) (build-graph! x t void)]
           [bytevector (ty viptr) (build-graph! x t void)]
+          [stencil-vector (mask vfasl) (build-graph! x t (build-vfasl! vfasl))]
           [record (maybe-uid size nflds rtd pad-ty* fld*)
            (if (and strip-source-annotations? (fasl-annotation? x))
                (build! (fasl-annotation-stripped x) t)
@@ -488,24 +471,35 @@
 
     (include "fasl-helpers.ss")
 
-    (define write-entry
-      (lambda (p x)
+    (define handle-entry
+      (lambda (x header-k entry-k)
         (fasl-case x
           [header (version machine dependencies)
-           (emit-header p version machine dependencies)]
+           (header-k (lambda (p) (emit-header p version machine dependencies)))]
           [entry (situation fasl)
-           (let ([t (make-table)])
-             (build! fasl t)
-             (let-values ([(bv* size)
-                           (let-values ([(p extractor) ($open-bytevector-list-output-port)])
-                             (let ([n (table-count t)])
-                               (unless (fx= n 0)
-                                 (put-u8 p (constant fasl-type-graph))
-                                 (put-uptr p n)))
-                             (write-fasl p t fasl)
-                             (extractor))])
-               ($write-fasl-bytevectors p bv* size situation (constant fasl-type-fasl))))]
-          [else (sorry! "unrecognized top-level fasl-record-type ~s" x)])))
+           (entry-k situation fasl)]
+          [else
+           (sorry! "unrecognized top-level fasl-record-type ~s" x)])))
+
+    (define (write-one-entry p situation fasl)
+      (let ([t (make-table)])
+        (build! fasl t)
+        (let-values ([(bv* size)
+                      (let-values ([(p extractor) ($open-bytevector-list-output-port)])
+                        (let ([n (table-count t)])
+                          (unless (fx= n 0)
+                            (put-u8 p (constant fasl-type-graph))
+                            (put-uptr p n)))
+                        (write-fasl p t fasl)
+                        (extractor))])
+          ($write-fasl-bytevectors p bv* size situation (constant fasl-type-fasl)))))
+
+    (define write-entry
+      (lambda (p x)
+        (handle-entry
+         x
+         (lambda (write-k) (write-k p))
+         (lambda (situation fasl) (write-one-entry p situation fasl)))))
 
     (define write-graph
       (lambda (p t x th)
@@ -560,18 +554,18 @@
                (put-u8 p (constant fasl-type-fxvector))
                (put-uptr p (vector-length viptr))
                (vector-for-each (lambda (iptr) (put-iptr p iptr)) viptr)))]
-          [flvector (vfl)
-           (write-graph p t x
-             (lambda ()
-               (put-u8 p (constant fasl-type-flvector))
-               (put-uptr p (vector-length vfl))
-               (vector-for-each (lambda (x) (write-fasl p t x)) vfl)))]
           [bytevector (ty bv)
            (write-graph p t x
              (lambda ()
                (put-u8 p ty)
                (put-uptr p (bytevector-length bv))
                (put-bytevector p bv)))]
+          [stencil-vector (mask vfasl)
+           (write-graph p t x
+             (lambda ()
+               (put-u8 p (constant fasl-type-stencil-vector))
+               (put-uptr p mask)
+               (vector-for-each (lambda (fasl) (write-fasl p t fasl)) vfasl)))]
           [record (maybe-uid size nflds rtd pad-ty* fld*)
            (if (and strip-source-annotations? (fasl-annotation? x))
                (write-fasl p t (fasl-annotation-stripped x))
@@ -771,6 +765,9 @@
                  [(fasl-type-weak-pair)
                   (weak-cons (describe (vector-ref vfasl 0))
                              (describe (vector-ref vfasl 1)))]
+                 [(fasl-type-ephemeron)
+                  (ephemeron-cons (describe (vector-ref vfasl 0))
+                                  (describe (vector-ref vfasl 1)))]
                  [(fasl-type-base-rtd)
                   #!base-rtd]
                  [else
@@ -782,8 +779,8 @@
               [gensym (pname uname) (gensym pname uname)]
               [vector (ty vfasl) (vector-map describe vfasl)]
               [fxvector (viptr) viptr]
-              [flvector (vfl) vfl]
               [bytevector (ty bv) bv]
+              [stencil-vector (ty vfasl) (vector-map describe vfasl)]
               [record (maybe-uid size nflds rtd pad-ty* fld*)
                (vector 'RECORD
                        (and maybe-uid (describe maybe-uid))
@@ -885,6 +882,25 @@
           (let ([ip ($open-file-input-port fasl-who ifn)])
             (on-reset (close-port ip)
                       (read-and-strip-from-port ip ifn #f)))))
+      (define convert-fasl-file
+        (lambda (who ifn ofn options write)
+          (unless (string? ifn) ($oops who "~s is not a string" ifn))
+          (unless (string? ofn) ($oops who "~s is not a string" ofn))
+          (unless (and (enum-set? options) (enum-set-subset? options $fasl-strip-options))
+            ($oops who "~s is not a fasl-strip-options object" options))
+          (fluid-let ([strip-inspector-information? (enum-set-subset? (fasl-strip-options inspector-source) options)]
+                      [strip-profile-information? (enum-set-subset? (fasl-strip-options profile-source) options)]
+                      [strip-source-annotations? (enum-set-subset? (fasl-strip-options source-annotations) options)]
+                      [strip-compile-time-information? (enum-set-subset? (fasl-strip-options compile-time-information) options)]
+                      [fasl-who who]
+                      [fasl-count 0])
+            (let-values ([(script-header mode entry*) (read-and-strip-file ifn)])
+              (let ([op ($open-file-output-port who ofn (file-options replace))])
+                (on-reset (delete-file ofn #f)
+                  (on-reset (close-port op)
+                    (write script-header mode entry* op)
+                    (close-port op)
+                    (unless-feature windows (when mode (chmod ofn mode))))))))))
       (set-who! $describe-fasl-from-port
         (rec $describe-fasl-from-port
           (case-lambda
@@ -901,26 +917,60 @@
                 (list (and script-header (describe script-header))
                       (map describe entry*))))])))
       (set-who! strip-fasl-file
-        (rec strip-fasl-file
-          (lambda (ifn ofn options)
-            (unless (string? ifn) ($oops who "~s is not a string" ifn))
-            (unless (string? ofn) ($oops who "~s is not a string" ofn))
-            (unless (and (enum-set? options) (enum-set-subset? options $fasl-strip-options))
-              ($oops who "~s is not a fasl-strip-options object" options))
-            (fluid-let ([strip-inspector-information? (enum-set-subset? (fasl-strip-options inspector-source) options)]
-                        [strip-profile-information? (enum-set-subset? (fasl-strip-options profile-source) options)]
-                        [strip-source-annotations? (enum-set-subset? (fasl-strip-options source-annotations) options)]
-                        [strip-compile-time-information? (enum-set-subset? (fasl-strip-options compile-time-information) options)]
-                        [fasl-who who]
-                        [fasl-count 0])
-              (let-values ([(script-header mode entry*) (read-and-strip-file ifn)])
-                (let ([op ($open-file-output-port who ofn (file-options replace))])
-                  (on-reset (delete-file ofn #f)
-                    (on-reset (close-port op)
-                      (when script-header (put-bytevector op script-header))
-                      (for-each (lambda (entry) (write-entry op entry)) entry*)
-                      (close-port op)
-                      (unless-feature windows (when mode (chmod ofn mode)))))))))))))
+        (lambda (ifn ofn options)
+          (convert-fasl-file who ifn ofn options
+                             (lambda (script-header mode entry* op)
+                               (when script-header (put-bytevector op script-header))
+                               (for-each (lambda (entry) (write-entry op entry)) entry*)))))
+      (set-who! vfasl-convert-file
+        (lambda (ifn ofn bootfile*)
+          (convert-fasl-file who ifn ofn (fasl-strip-options)
+                             (lambda (script-header mode entry* op)
+                               (when bootfile*
+                                 ($emit-boot-header op (constant machine-type-name) bootfile*))
+                               (let* ([write-out
+                                       (lambda (x situation)
+                                         (let ([bv ($fasl-to-vfasl x)])
+                                           ($write-fasl-bytevectors op (list bv) (bytevector-length bv)
+                                                                    ;; see "promoting" below:
+                                                                    (constant fasl-type-visit-revisit)
+                                                                    (constant fasl-type-vfasl))))]
+                                      [write-out-accum (lambda (accum situation)
+                                                         (unless (null? accum)
+                                                           (if (null? (cdr accum))
+                                                               (write-out (car accum) situation)
+                                                               (write-out (fasl-vector (constant fasl-type-vector)
+                                                                                       (list->vector (reverse accum)))
+                                                                          situation))))])
+                                 (let loop ([ignore-header? #f] [accum '()] [accum-situation #f] [entry* entry*])
+                                   (cond
+                                     [(null? entry*)
+                                      (write-out-accum accum accum-situation)]
+                                     [else
+                                      (handle-entry
+                                       (car entry*)
+                                       (lambda (write-k)
+                                         (unless ignore-header?
+                                           (write-k op))
+                                         (loop #t accum accum-situation (cdr entry*)))
+                                       (lambda (situation x)
+                                         (cond
+                                           [(vector? x)
+                                            (loop #t
+                                                  (append (reverse (vector->list x)) accum)
+                                                  situation
+                                                  (cdr entry*))]
+                                           [(or (not ($fasl-can-combine? x))
+                                                ;; improve sharing by promiting everyting to visit-revisit,
+                                                ;; instead of comparing situations
+                                                #;
+                                                (and accum-situation
+                                                     (not (eqv? accum-situation situation))))
+                                            (write-out-accum accum accum-situation)
+                                            (write-out x situation)
+                                            (loop #t '() #f (cdr entry*))]
+                                           [else
+                                            (loop #t (cons x accum) situation (cdr entry*))])))])))))))))
 
   (let ()
     ; per file
@@ -995,8 +1045,8 @@
                                    (string=? x uname2))))]
                        [vector (ty vfasl) (and (eqv? ty1 ty2) (vandmap fasl=? vfasl1 vfasl2))]
                        [fxvector (viptr) (vandmap = viptr1 viptr2)]
-                       [flvector (vfl) (vandmap fasl=? vfl1 vfl2)]
                        [bytevector (ty bv) (and (eqv? ty1 ty2) (bytevector=? bv1 bv2))]
+                       [stencil-vector (mask vfasl) (and (eqv? mask1 mask2) (vandmap fasl=? vfasl1 vfasl2))]
                        [record (maybe-uid size nflds rtd pad-ty* fld*)
                         (and (if maybe-uid1
                                  (and maybe-uid2 (fasl=? maybe-uid1 maybe-uid2))

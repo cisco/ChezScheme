@@ -344,8 +344,11 @@ static void idiot_checks() {
 static ptr boot_call PROTO((ptr tc, ptr p, INT n));
 static void check_ap PROTO((ptr tc));
 
+int boot_calls = 0;
+
 /* arguments and ac0 set up */
 static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
+  boot_calls++;
     AC1(tc) = p;
     CP(tc) = Svoid; /* don't have calling code object */
 

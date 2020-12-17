@@ -9,7 +9,8 @@ found in the "c" directory.
 
 Some key files in "s":
 
- * "cmacro.ss": object layouts and other global constants
+ * "cmacro.ss": object layouts and other global constants, including
+   constants that are needed by both the compiler and the kernel
 
  * "syntax.ss": the macro expander
 
@@ -141,6 +142,28 @@ Tests go in "mats/*...*.ms". In "*machine-type*/mats", you can use
 changing `7.ms`. Makefile variables like `o` control the way tests
 are run; for example, use `make o=3 7.mo` to test in unsafe mode.
 
+# Compiled Files and Boot Files
+
+A Scheme file conventionally uses the suffix ".ss" and it's compiled
+form uses the suffix ".so". The format of a compiled file is closely
+related to the fasl format that is exposed by `fasl-write` and
+`fasl-read`, but you can't compile Scheme code to some value that is
+written with `fasl-write`. Instead, `compile-file` and related
+functions directly generate compiled code in a fasled form that
+includes needed linking information.
+
+A boot file, usually with the suffix ".boot", has the same format as a
+compiled file, but with an extra header that identifies it as a boot
+file and takes care of some singleton objects, such as `#!base-rtd`
+and the stub to invoke compiled code.
+
+The vfasl format is used for the same purposes as the fasl format, but
+mostly for boot files. It is always platform-specific and its content
+is very close to the form that the content will take when loaded into
+memory. It can load especially quickly with streamlined linking and
+interning of symbols and record types, especially in uncompressed
+form. The build scripts do not convert boot files to vfasl format.
+
 # Scheme Objects
 
 A Scheme object is represented at run time by a pointer. The low bits
@@ -211,6 +234,13 @@ the first field above is `type`, and it turns out that it will always
 contain the value `type-inexactnum`. The `iptr` type for `type` means
 "a pointer-sized signed integer". The `ptr` type for `real` and `imag`
 means "pointer" or "Scheme object".
+
+If you create a new type of object, then several pieces need to be
+updated: the garbage collector (in "mkgc.ss" and "gc.c"), the compiler
+to implement primitives that generate the kind of objects, the fasl
+writer (in "fasl.ss"), the fasl reader (in "fasl.c"), the fasl reader
+used by `strip-fasl-file` and `vfasl-convert-file` (in "strip.ss"),
+the vfasl writer (in "vfasl.ss"), and the inspector (in "inspect.ss").
 
 # Functions and Calls
 
@@ -1078,6 +1108,31 @@ The `asm-foreign-callable` function returns 4 values:
 
    Generate the code for a C return, including any teardown needed to
    balance `c-init`.
+
+# Cross Compilation and Compile-Time Constants
+
+When cross compiling, there are two notions of quantities/properties
+like the size of pointers or endianness: the host notion and the
+target platform's notion. A function like `(native-endianness)` always
+reports the host's notion. A constant like `(constant
+native-endianness)` refers to the target machine notion.
+
+Cross compilation works by starting with a Chez Scheme that runs on
+the host machine and then re-compiling a subset of the Chez Scheme
+implementation to run on the host machine but with `constant` values
+suitable for the target machine. The recompiled parts are assembled
+into an `xpatch` file that can be loaded to replace functions like
+`compile-file` and `vfasl-convert-file` with ones that use the
+target-machine constants. Loading an `xpatch` file tends to make
+compilation or fasl operations for the host machine inaccessible, so a
+given Chez Scheme process is only good for targeting one particular
+platform.
+
+When working on the compiler or fasl-related tools, take care to use
+the right notion of a quantity or property. If you need the host
+value, then there must be some function that provides the value. If
+you need the target machine's value, then it must be accessed using
+`constant`.
 
 # Changing the Version Number
 

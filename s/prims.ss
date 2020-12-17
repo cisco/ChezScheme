@@ -1805,6 +1805,8 @@
       ($oops '$thread-tc "~s is not a thread" thread))
     ($thread-tc thread)))
 
+)
+
 (when-feature pthreads
 
 (define $raw-collect-cond (lambda () ($raw-collect-cond)))
@@ -2036,7 +2038,7 @@
   (let ([thread (car (ts))])
     (lambda () thread)))
 ))
-
+(begin
 (let ()
   (define-syntax define-tc-parameter
     (lambda (x)

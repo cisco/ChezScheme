@@ -113,11 +113,11 @@ extern void S_phantom_bytevector_adjust PROTO((ptr ph, uptr new_sz));
 
 /* fasl.c */
 extern void S_fasl_init PROTO((void));
-ptr S_fasl_read PROTO((INT fd, IFASLCODE situation, ptr path, ptr externals));
-ptr S_bv_fasl_read PROTO((ptr bv, int ty, uptr offset, uptr len, ptr path, ptr externals));
-ptr S_boot_read PROTO((INT fd, const char *path));
-char *S_format_scheme_version PROTO((uptr n));
-char *S_lookup_machine_type PROTO((uptr n));
+extern ptr S_fasl_read PROTO((INT fd, IFASLCODE situation, ptr path, ptr externals));
+extern ptr S_bv_fasl_read PROTO((ptr bv, int ty, uptr offset, uptr len, ptr path, ptr externals));
+extern ptr S_boot_read PROTO((INT fd, const char *path));
+extern char *S_format_scheme_version PROTO((uptr n));
+extern char *S_lookup_machine_type PROTO((uptr n));
 extern void S_set_code_obj PROTO((char *who, IFASLCODE typ, ptr p, iptr n,
              ptr x, iptr o));
 extern ptr S_get_code_obj PROTO((IFASLCODE typ, ptr p, iptr n, iptr o));
@@ -131,10 +131,8 @@ extern void S_swap_dounderflow_header_endian PROTO((ptr code));
 #endif
 
 /* vfasl.c */
-extern ptr S_to_vfasl PROTO((ptr v));
 extern ptr S_vfasl PROTO((ptr bv, void *stream, iptr offset, iptr len));
 extern ptr S_vfasl_to PROTO((ptr v));
-extern IBOOL S_vfasl_can_combinep(ptr v);
 
 /* flushcache.c */
 extern void S_record_code_mod PROTO((ptr tc, uptr addr, uptr bytes));
@@ -201,6 +199,8 @@ extern ptr S_intern4 PROTO((ptr sym));
 extern void S_intern_gensym PROTO((ptr g));
 extern void S_retrofit_nonprocedure_code PROTO((void));
 extern ptr S_mkstring PROTO((const string_char *s, iptr n));
+extern I32 S_symbol_hash32(ptr str);
+extern I64 S_symbol_hash64(ptr str);
 
 /* io.c */
 extern IBOOL S_file_existsp PROTO((const char *inpath, IBOOL followp));

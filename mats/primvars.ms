@@ -395,6 +395,7 @@
               [(environment) *env '((a . b)) #f]
               [(eq-hashtable) *eq-hashtable *symbol-hashtable #f]
               [(exact-integer) (- (most-negative-fixnum) 1) 2.0 1/2 #f]
+              [(exact-uinteger) (+ (most-positive-fixnum) 1) -10 2.0 1/2 #f]
               [(exception-state) (current-exception-state) 0 #f]
               [(eof/char) #\a 0 #f]
               [(eof/u8) 0 -1 (expt 2 8) "a" #f]
