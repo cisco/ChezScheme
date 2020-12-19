@@ -329,6 +329,9 @@ typedef int tputsputcchar;
 # define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
 # define CANNOT_READ_DIRECTLY_INTO_CODE
 # include <pthread.h>
+#elif defined(__x86_64__)
+/* needed to run under Rosetta2 on ARM Mac OS: */
+# define CANNOT_READ_DIRECTLY_INTO_CODE
 #endif
 #define LDEXP
 #define ARCHYPERBOLIC
