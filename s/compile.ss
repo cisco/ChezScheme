@@ -70,7 +70,7 @@
     (with-output-language (Lsrc Expr)
       ($c-make-closure
         ; pretending main is a library routine to avoid argument-count check
-        (let ([x `(case-lambda ,(make-preinfo-lambda #f #f (lookup-libspec main)) (clause () 0 ,x))])
+        (let ([x `(case-lambda ,(make-preinfo-lambda #f #f (lookup-libspec main) #f (constant code-flag-lift-barrier)) (clause () 0 ,x))])
           ($np-compile x #f))))))
 
 (define c-set-code-quad!
@@ -559,6 +559,7 @@
                    [$compile-profile ($compile-profile)]
                    [generate-interrupt-trap (generate-interrupt-trap)]
                    [$optimize-closures ($optimize-closures)]
+                   [$lift-closures ($lift-closures)]
                    [enable-cross-library-optimization (enable-cross-library-optimization)]
                    [generate-covin-files (generate-covin-files)]
                    [enable-arithmetic-left-associative (enable-arithmetic-left-associative)]
@@ -646,7 +647,7 @@
         (with-output-language (Lsrc Expr)
           (define (lambda-chunk lsrc)
             ; pretending main is a library routine to avoid argument-count check
-            `(case-lambda ,(make-preinfo-lambda #f #f (lookup-libspec main))
+            `(case-lambda ,(make-preinfo-lambda #f #f (lookup-libspec main) #f (constant code-flag-lift-barrier))
                (clause () 0 ,lsrc)))
           (define (visit lsrc e* rchunk*)
             (define (rchunks) (cons (make-visit-chunk (lambda-chunk lsrc)) rchunk*))

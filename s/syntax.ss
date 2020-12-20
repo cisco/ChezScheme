@@ -501,7 +501,7 @@
           (if src `(seq (profile ,src) ,e) e))
         e)))
 
-(module (build-lambda build-library-case-lambda build-case-lambda)
+(module (build-lambda build-lambda/lift-barrier build-library-case-lambda build-case-lambda)
   (define build-clause
     (lambda (fmls body)
       (let f ((ids fmls) (n 0))
@@ -527,6 +527,12 @@
       (build-profile ae
          `(case-lambda ,(make-preinfo-lambda (ae->src ae))
             ,(build-clause vars exp)))))
+
+  (define build-lambda/lift-barrier
+    (lambda (ae vars exp)
+      (build-profile ae
+        `(case-lambda ,(make-preinfo-lambda (ae->src ae) #f #f #f (constant code-flag-lift-barrier))
+           ,(build-clause vars exp)))))
 
   (define build-case-lambda
     (lambda (ae clauses)
@@ -2704,7 +2710,7 @@
                             (make-ctdesc import-req* visit-visit-req* visit-req* #t #t '() #f #f)
                             (make-rtdesc invoke-req* #t
                               (top-level-eval-hook
-                                (build-lambda no-source '()
+                                (build-lambda/lift-barrier no-source '()
                                   (build-library-body no-source dl* db* dv* de*
                                     (build-sequence no-source `(,@inits ,(build-void)))))))))
 
@@ -5614,7 +5620,7 @@
   (lambda (uid dl* db* dv* de* body)
     (build-primcall no-source 3 '$install-library/rt-code
       (build-data no-source uid)
-      (build-lambda no-source '()
+      (build-lambda/lift-barrier no-source '()
         (build-library-body no-source dl* db* dv* de* body)))))
 
 (let ()
@@ -6215,6 +6221,13 @@
       ((_ . c)
        (let-values ([(vars body) (chi-lambda-clause (source-wrap e w ae) (syntax c) r w)])
          (build-lambda ae vars body))))))
+
+(global-extend 'core '$lambda/lift-barrier
+  (lambda (e r w ae)
+    (syntax-case e ()
+      ((_ . c)
+       (let-values ([(vars body) (chi-lambda-clause (source-wrap e w ae) (syntax c) r w)])
+         (build-lambda/lift-barrier ae vars body))))))
 
 (global-extend 'core 'case-lambda
   (lambda (e r w ae)

@@ -170,6 +170,7 @@
   compile-whole-library
   compile-whole-program
   ($dynamic-closure-counts compile)
+  ($lift-closures compile)
   ($loop-unroll-limit compile)
   make-boot-file
   ($make-boot-file make-boot-file)

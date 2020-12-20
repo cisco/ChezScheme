@@ -86,7 +86,8 @@
   prelex-was-flags-offset
   prelex-sticky-mask
   prelex-is-mask
-  scheme-version)
+  scheme-version
+  code-flag-lift-barrier)
 
 (provide record-ptr-offset)
 (define record-ptr-offset 1)

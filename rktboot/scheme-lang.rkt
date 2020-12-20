@@ -104,6 +104,7 @@
          $compile-profile
          compile-profile
          $optimize-closures
+         $lift-closures
          $profile-block-data?
          run-cp0
          generate-interrupt-trap
@@ -332,7 +333,8 @@
          priminfo-libraries
          $c-bufsiz
          $foreign-procedure
-         make-guardian)
+         make-guardian
+         $lambda/lift-barrier)
 
 (module+ callback
   (provide set-current-expand-set-callback!))
@@ -703,6 +705,7 @@
            [(prelex-was-flags-offset) prelex-was-flags-offset]
            [(prelex-sticky-mask) prelex-sticky-mask]
            [(prelex-is-mask) prelex-is-mask]
+           [(code-flag-lift-barrier) code-flag-lift-barrier]
            [else (error 'constant "unknown: ~s" #'id)])]))
 
 (define $target-machine (make-parameter (string->symbol target-machine)))
@@ -932,6 +935,7 @@
 (define $compile-profile (make-parameter #f))
 (define compile-profile $compile-profile)
 (define $optimize-closures (make-parameter #t))
+(define $lift-closures (make-parameter #t))
 (define $profile-block-data? (make-parameter #f))
 (define run-cp0 (make-parameter error))
 (define generate-interrupt-trap (make-parameter #t))
@@ -1287,3 +1291,7 @@
     [() #f]
     [(v) (void)]
     [(v rep) (void)]))
+
+(define-syntax $lambda/lift-barrier
+  (syntax-rules ()
+    [(_ fmls body ...) (lambda fmls body ...)]))

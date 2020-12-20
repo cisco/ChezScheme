@@ -869,13 +869,14 @@
 
 ;; Flags that matter to the GC must apply only to static-generation
 ;; objects, and they must not overlap with `forward-marker`
-(define-constant code-flag-system           #b0000001)
-(define-constant code-flag-continuation     #b0000010)
-(define-constant code-flag-template         #b0000100)
-(define-constant code-flag-guardian         #b0001000)
-(define-constant code-flag-mutable-closure  #b0010000)
-(define-constant code-flag-arity-in-closure #b0100000)
-(define-constant code-flag-single-valued    #b1000000)
+(define-constant code-flag-system           #b00000001)
+(define-constant code-flag-continuation     #b00000010)
+(define-constant code-flag-template         #b00000100)
+(define-constant code-flag-guardian         #b00001000)
+(define-constant code-flag-mutable-closure  #b00010000)
+(define-constant code-flag-arity-in-closure #b00100000)
+(define-constant code-flag-single-valued    #b01000000)
+(define-constant code-flag-lift-barrier     #b10000000)
 
 (define-constant fixnum-bits
   (case (constant ptr-bits)

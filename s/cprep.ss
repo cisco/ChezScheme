@@ -131,7 +131,8 @@
                    '(let $primitive quote begin case-lambda
                       library-case-lambda lambda if set!
                       letrec letrec* $foreign-procedure
-                      $foreign-callable eval-when))))
+                      $foreign-callable eval-when
+                      $lambda/lift-barrier))))
              (nanopass-case (Lsrc Expr) x
                [(ref ,maybe-src ,x) (get-name x)]
                [(call ,preinfo0 (case-lambda ,preinfo1 (clause (,x* ...) ,interface ,body)) ,e* ...)
@@ -198,7 +199,10 @@
                   (lambda ()
                     (let ((cl* (map uncprep-lambda-clause cl*)))
                       (if (and (not (null? cl*)) (null? (cdr cl*)))
-                          `(lambda ,@(car cl*))
+                          (if (fx= (bitwise-and (constant code-flag-lift-barrier) (preinfo-lambda-flags preinfo))
+                                   (constant code-flag-lift-barrier))
+                              `($lambda/lift-barrier ,@(car cl*))
+                              `(lambda ,@(car cl*)))
                           `(case-lambda ,@cl*)))))]
                [(if ,[e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
                [(set! ,maybe-src ,x ,[e]) `(set! ,(get-name x) ,e)]
