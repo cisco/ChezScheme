@@ -556,7 +556,7 @@ ftype operators:
                       (make-ftd-function rtd/fptr
                         (and defid (symbol->string (syntax->datum defid)))
                         stype #f #f
-                        ($filter-conv 'function-ftype #'(conv ...))
+                        ($filter-conv 'function-ftype #'(conv ...) (length #'(arg-type ...)))
                         (map (lambda (x) (filter-type r x #f)) #'(arg-type ...))
                         (filter-type r #'result-type #t)))]
                    [(packed-kwd ftype)

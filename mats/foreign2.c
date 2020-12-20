@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <wchar.h>
+#include <stdarg.h>
 
 #ifdef _WIN32
 #  define SCHEME_IMPORT
@@ -244,15 +245,88 @@ EXPORT double_float call_df(ptr code, double_float x, int m, int k) {
   return (*((double_float (*) (double_float))Sforeign_callable_entry_point(code)))(x + m) + k;
 }
 
+/* varargs after 1 argument */
 EXPORT double_float call_varargs_df(ptr code, double_float x, int m, int k) {
   return (*((double_float (*) (double, ...))Sforeign_callable_entry_point(code)))(x - m, x + m) + k;
 }
 
+/* varargs after 2 arguments */
+EXPORT double_float call_varargs_dfii(ptr code, double_float x, int m, int k) {
+  return (*((double_float (*) (double, int, ...))Sforeign_callable_entry_point(code)))(x - m, x + m, k) + k;
+}
+
+/* varargs after 2 arguments */
+EXPORT double_float call_varargs_dfidf(ptr code, double_float x, int m, double k) {
+  return (*((double_float (*) (double, int, ...))Sforeign_callable_entry_point(code)))(x - m, x + m, x) + k;
+}
+
+/* varargs after 2 arguments */
+EXPORT double_float call_varargs_dfsfi(ptr code, double_float x, single_float m, int k) {
+  return (*((double_float (*) (double, float, ...))Sforeign_callable_entry_point(code)))(x - m, x + m, k) + k;
+}
+
+/* varargs after 1 argument */
 EXPORT double_float call_varargs_i7df(ptr code, int i,
                                       double_float a, double_float b, double_float c,
                                       double_float d, double_float e, double_float f,
                                       double_float g) {
   return (*((double_float (*) (int, ...))Sforeign_callable_entry_point(code)))(i, a, b, c, d, e, f, g);
+}
+
+EXPORT double_float varargs_df(double_float x, ...) {
+  va_list va;
+  int m, k;
+  va_start(va, x);
+  m = va_arg(va, int);
+  k = va_arg(va, int);
+  va_end(va);
+  return x + m + k;
+}
+
+EXPORT double_float varargs_dfii(double_float x, int m, ...) {
+  va_list va;
+  int k;
+  va_start(va, m);
+  k = va_arg(va, int);
+  va_end(va);
+  return x + m + k;
+}
+
+EXPORT double_float varargs_dfidf(double_float x, int m, ...) {
+  va_list va;
+  double k;
+  va_start(va, m);
+  k = va_arg(va, double);
+  va_end(va);
+  return x + m + k;
+}
+
+EXPORT double_float varargs_sfdfi(single_float x, double_float m, ...) {
+  va_list va;
+  int k;
+  va_start(va, m);
+  k = va_arg(va, int);
+  va_end(va);
+  return x + m + k;
+}
+
+EXPORT double_float varargs_i7df(int i, ...) {
+  va_list va;
+  double_float a, b, c;
+  double_float d, e, f;
+  double_float g;
+
+  va_start(va, i);
+  a = va_arg(va, double_float);
+  b = va_arg(va, double_float);
+  c = va_arg(va, double_float);
+  d = va_arg(va, double_float);
+  e = va_arg(va, double_float);
+  f = va_arg(va, double_float);
+  g = va_arg(va, double_float);
+  va_end(va);
+  
+  return a + b + c + d + e + f + g + i;
 }
 
 EXPORT u8 *u8_star_to_u8_star(u8 *s) {

@@ -2421,6 +2421,11 @@
 			(inline ,(make-info-kill*-live* fp-regs '()) ,%pop-fpmultiple))])))])
             (save-and-restore-gp regs (save-and-restore-fp regs e))))))
 
+    (define (extract-varargs-after-conv conv*)
+      (ormap (lambda (conv)
+               (and (pair? conv) (eq? (car conv) 'varargs) (cdr conv)))
+             conv*))
+
     (define-record-type cat
       (nongenerative #{cat jqrttgvpydsbdo0l736l43udu-1})
       (sealed #t)
@@ -2431,11 +2436,11 @@
               indirect-bytes)) ; #f or extra bytes on stack for indirect
 
     (define alignment-via-lookahead
-      (lambda (size types stack-align varargs? k)
+      (lambda (size types stack-align varargs-after k)
         (constant-case machine-type-name
           [(arm64osx tarm64osx)
            (cond
-             [varargs? (k (align 8 size) 0 0)]
+             [(eqv? 0 varargs-after) (k (align 8 size) 0 0)]
              [else
               ;; On Mac OS, a non-varargs stack argument does not have to use a
               ;; multiple of 8, but we need to work out any padding that
@@ -2463,14 +2468,12 @@
            (k (align 8 size) 0 0)])))
 
     (define rest-of
-      (lambda (regs n varargs?)
+      (lambda (regs n next-varargs-after)
         (constant-case machine-type-name
           [(arm64osx tarm64osx)
            (cond
-             [varargs?
-              ;; Assume (arbitraily) that all but the first argument
-              ;; is varargs, which means that all the rest go on the
-              ;; stack.
+             [(eqv? next-varargs-after 0)
+              ;; All the rest go on the stack
               '()]
              [else
               (list-tail regs n)])]
@@ -2478,108 +2481,123 @@
            (list-tail regs n)])))
 
     (define categorize-arguments
-      (lambda (types varargs?)
+      (lambda (types varargs-after)
         (let loop ([types types] [int* (int-argument-regs)] [fp* (fp-argument-regs)]
+                   [varargs-after varargs-after]
                    ;; accumulate alignment from previous args so we can compute any
                    ;; needed padding and alignment after this next argument
                    [stack-align 0])
-          (if (null? types)
-              '()
-              (nanopass-case (Ltype Type) (car types)
-                [(fp-double-float)
-                 (cond
-                   [(null? fp*)
-                    (cons (make-cat 'stack '() 8 0 #f) (loop (cdr types) int* '() 0))]
-                   [else
-                    (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
-                          (loop (cdr types) (rest-of int* 0 varargs?) (rest-of fp* 1 varargs?) stack-align))])]
-                [(fp-single-float)
-                 (cond
-                   [(null? fp*)
-                    (alignment-via-lookahead
-                     4 (cdr types) stack-align varargs?
-                     (lambda (bytes pad stack-align)
-                       (cons (make-cat 'stack '() bytes pad #f) (loop (cdr types) int* '() stack-align))))]
-                   [else
-                    (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
-                          (loop (cdr types) (rest-of int* 0 varargs?)(rest-of fp* 1 varargs?) stack-align))])]
-                [(fp-ftd& ,ftd)
-                 (let* ([size ($ftd-size ftd)]
-                        [members ($ftd->members ftd)]
-                        [num-members (length members)]
-                        [doubles? (and (fx= 8 ($ftd-alignment ftd))
-                                       (fx<= num-members 4)
-                                       (andmap double-member? members))]
-                        [floats? (and (fx= 4 ($ftd-alignment ftd))
-                                      (fx<= num-members 4)
-                                      (andmap float-member? members))])
+          (let ([next-varargs-after (and varargs-after (if (fx> varargs-after 0) (fx- varargs-after 1) 0))])
+            (if (null? types)
+                '()
+                (nanopass-case (Ltype Type) (car types)
+                  [(fp-double-float)
                    (cond
-                     [doubles?
-                      ;; Sequence of up to 4 doubles that may fit in registers
-                      (cond
-                        [(fx>= (length fp*) num-members)
-                         ;; Allocate each double to a register
-                         (cons (make-cat 'fp (list-head fp* num-members) (fx* 8 num-members) 0 #f)
-                               (loop (cdr types) (rest-of int* 0 varargs?) (rest-of fp* num-members varargs?) stack-align))]
-                        [else
-                         ;; Stop using fp registers, put on stack
-                         (cons (make-cat 'stack '() size 0 #f)
-                               (loop (cdr types) int* '() 0))])]
-                     [floats?
-                      ;; Sequence of up to 4 floats that may fit in registers
-                      (cond
-                        [(fx>= (length fp*) num-members)
-                         ;; Allocate each float to a register
-                         (cons (make-cat 'fp (list-head fp* num-members) (fx* 8 num-members) 0 #f)
-                               (loop (cdr types) (rest-of int* 0 varargs?) (rest-of fp* num-members varargs?) stack-align))]
-                        [else
-                         ;; Stop using fp registers, put on stack
-                         (alignment-via-lookahead
-                          size (cdr types) stack-align varargs?
-                          (lambda (size pad stack-align)
-                            (cons (make-cat 'stack '() size pad #f)
-                                  (loop (cdr types) int* '() stack-align))))])]
-                     [(fx> size 16)
-                      ;; Indirect; pointer goes in a register or on the stack
-                      (cond
-                        [(null? int*)
-                         ;; Pointer on the stack
-                         (cons (make-cat 'stack '() (constant ptr-bytes) 0 (align 8 size))
-                               (loop (cdr types) '() fp* 0))]
-                        [else
-                         ;; Pointer in register
-                         (cons (make-cat 'int (list (car int*)) 8 0 (align 8 size))
-                               (loop (cdr types) (rest-of int* 1 varargs?) (rest-of fp* 0 varargs?) stack-align))])]
+                     [(null? fp*)
+                      (cons (make-cat 'stack '() 8 0 #f) (loop (cdr types) int* '() next-varargs-after 0))]
                      [else
-                      ;; Maybe put in integer registers
-                      (let* ([regs (fxquotient (align 8 size) 8)])
+                      (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
+                            (loop (cdr types) (rest-of int* 0 next-varargs-after) (rest-of fp* 1 next-varargs-after)
+                                  next-varargs-after
+                                  stack-align))])]
+                  [(fp-single-float)
+                   (cond
+                     [(null? fp*)
+                      (alignment-via-lookahead
+                       4 (cdr types) stack-align varargs-after
+                       (lambda (bytes pad stack-align)
+                         (cons (make-cat 'stack '() bytes pad #f) (loop (cdr types) int* '() next-varargs-after stack-align))))]
+                     [else
+                      (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
+                            (loop (cdr types) (rest-of int* 0 next-varargs-after)(rest-of fp* 1 next-varargs-after)
+                                  next-varargs-after
+                                  stack-align))])]
+                  [(fp-ftd& ,ftd)
+                   (let* ([size ($ftd-size ftd)]
+                          [members ($ftd->members ftd)]
+                          [num-members (length members)]
+                          [doubles? (and (fx= 8 ($ftd-alignment ftd))
+                                         (fx<= num-members 4)
+                                         (andmap double-member? members))]
+                          [floats? (and (fx= 4 ($ftd-alignment ftd))
+                                        (fx<= num-members 4)
+                                        (andmap float-member? members))])
+                     (cond
+                       [doubles?
+                        ;; Sequence of up to 4 doubles that may fit in registers
                         (cond
-                          [(fx<= regs (length int*))
-                           ;; Fits in registers
-                           (cons (make-cat 'int (list-head int* regs) (align 8 size) 0 #f)
-                                 (loop (cdr types) (rest-of int* regs varargs?) (rest-of fp* 0 varargs?) stack-align))]
+                          [(fx>= (length fp*) num-members)
+                           ;; Allocate each double to a register
+                           (cons (make-cat 'fp (list-head fp* num-members) (fx* 8 num-members) 0 #f)
+                                 (loop (cdr types) (rest-of int* 0 next-varargs-after) (rest-of fp* num-members next-varargs-after)
+                                       next-varargs-after
+                                       stack-align))]
                           [else
-                           ;; Stop using int registers, put on stack
+                           ;; Stop using fp registers, put on stack
+                           (cons (make-cat 'stack '() size 0 #f)
+                                 (loop (cdr types) int* '() next-varargs-after 0))])]
+                       [floats?
+                        ;; Sequence of up to 4 floats that may fit in registers
+                        (cond
+                          [(fx>= (length fp*) num-members)
+                           ;; Allocate each float to a register
+                           (cons (make-cat 'fp (list-head fp* num-members) (fx* 8 num-members) 0 #f)
+                                 (loop (cdr types) (rest-of int* 0 next-varargs-after) (rest-of fp* num-members next-varargs-after)
+                                       next-varargs-after
+                                       stack-align))]
+                          [else
+                           ;; Stop using fp registers, put on stack
                            (alignment-via-lookahead
-                            size (cdr types) stack-align varargs?
+                            size (cdr types) stack-align varargs-after
                             (lambda (size pad stack-align)
                               (cons (make-cat 'stack '() size pad #f)
-                                    (loop (cdr types) '() fp* stack-align))))]))]))]
-                [else
-                 ;; integers, scheme-object, etc.
-                 (cond
-                   [(null? int*) 
-                    (let ([size (nanopass-case (Ltype Type) (car types)
-                                  [(fp-integer ,bits) (fxquotient bits 8)]
-                                  [(fp-unsigned ,bits) (fxquotient bits 8)]
-                                  [else 8])])
-                      (alignment-via-lookahead
-                       size (cdr types) stack-align varargs?
-                       (lambda (size pad stack-align)
-                         (cons (make-cat 'stack '() size pad #f) (loop (cdr types) '() fp* stack-align)))))]
-                   [else
-                    (cons (make-cat 'int (list (car int*)) 8 0 #f)
-                          (loop (cdr types) (rest-of int* 1 varargs?) (rest-of fp* 0 varargs?) stack-align))])])))))
+                                    (loop (cdr types) int* '() next-varargs-after stack-align))))])]
+                       [(fx> size 16)
+                        ;; Indirect; pointer goes in a register or on the stack
+                        (cond
+                          [(null? int*)
+                           ;; Pointer on the stack
+                           (cons (make-cat 'stack '() (constant ptr-bytes) 0 (align 8 size))
+                                 (loop (cdr types) '() fp* next-varargs-after 0))]
+                          [else
+                           ;; Pointer in register
+                           (cons (make-cat 'int (list (car int*)) 8 0 (align 8 size))
+                                 (loop (cdr types) (rest-of int* 1 next-varargs-after) (rest-of fp* 0 next-varargs-after)
+                                       next-varargs-after
+                                       stack-align))])]
+                       [else
+                        ;; Maybe put in integer registers
+                        (let* ([regs (fxquotient (align 8 size) 8)])
+                          (cond
+                            [(fx<= regs (length int*))
+                             ;; Fits in registers
+                             (cons (make-cat 'int (list-head int* regs) (align 8 size) 0 #f)
+                                   (loop (cdr types) (rest-of int* regs next-varargs-after) (rest-of fp* 0 next-varargs-after)
+                                         next-varargs-after
+                                         stack-align))]
+                            [else
+                             ;; Stop using int registers, put on stack
+                             (alignment-via-lookahead
+                              size (cdr types) stack-align varargs-after
+                              (lambda (size pad stack-align)
+                                (cons (make-cat 'stack '() size pad #f)
+                                      (loop (cdr types) '() fp* next-varargs-after stack-align))))]))]))]
+                  [else
+                   ;; integers, scheme-object, etc.
+                   (cond
+                     [(null? int*) 
+                      (let ([size (nanopass-case (Ltype Type) (car types)
+                                    [(fp-integer ,bits) (fxquotient bits 8)]
+                                    [(fp-unsigned ,bits) (fxquotient bits 8)]
+                                    [else 8])])
+                        (alignment-via-lookahead
+                         size (cdr types) stack-align varargs-after
+                         (lambda (size pad stack-align)
+                           (cons (make-cat 'stack '() size pad #f) (loop (cdr types) '() fp* next-varargs-after stack-align)))))]
+                     [else
+                      (cons (make-cat 'int (list (car int*)) 8 0 #f)
+                            (loop (cdr types) (rest-of int* 1 next-varargs-after) (rest-of fp* 0 next-varargs-after)
+                                  next-varargs-after stack-align))])]))))))
 
     (define get-registers
       (lambda (cats kind)
@@ -2892,7 +2910,7 @@
                                   (cdr arg-type*)
                                   arg-type*)]
                    [conv* (info-foreign-conv* info)]
-                   [arg-cat* (categorize-arguments arg-type* (memq 'varargs conv*))]
+                   [arg-cat* (categorize-arguments arg-type* (extract-varargs-after-conv conv*))]
 		   [result-cat (car (categorize-arguments (list result-type) #f))]
                    [result-reg* (cat-regs result-cat)]
 		   [fill-result-here? (and ftd-result?
@@ -3225,7 +3243,7 @@
                                   (cdr arg-type*)
                                   arg-type*)]
 		   [conv* (info-foreign-conv* info)]
-                   [arg-cat* (categorize-arguments arg-type* (memq 'varargs conv*))]
+                   [arg-cat* (categorize-arguments arg-type* (extract-varargs-after-conv conv*))]
                    [result-cat (car (categorize-arguments (list result-type) #f))]
                    [synthesize-first? (and ftd-result?
                                            (not (cat-indirect-bytes result-cat))

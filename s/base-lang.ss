@@ -157,7 +157,9 @@
 
   (define convention?
     (lambda (x)
-      (symbol? x)))
+      (or (symbol? x)
+          (and (pair? x)
+               (eq? 'varargs (car x))))))
 
   (define-record-type preinfo
     (nongenerative #{preinfo e23pkvo5btgapnzomqgegm-2})

@@ -1044,10 +1044,13 @@
     (define call-df (foreign-procedure "call_df" (ptr double-float int int) double-float))
     (define call-varargs-df (foreign-procedure "call_varargs_df" (ptr double-float int int) double-float))
     (define call-varargs-i7df (foreign-procedure "call_varargs_i7df" (ptr int
-                                                                          double-float double-float double-float
-                                                                          double-float double-float double-float
-                                                                          double-float)
+                                                                                    double-float double-float double-float
+                                                                                    double-float double-float double-float
+                                                                                    double-float)
                                                  double-float))
+    (define call-varargs-dfii (foreign-procedure "call_varargs_dfii" (ptr double-float int int) double-float))
+    (define call-varargs-dfidf (foreign-procedure "call_varargs_dfidf" (ptr double-float int double-float) double-float))
+    (define call-varargs-dfsfi (foreign-procedure "call_varargs_dfsfi" (ptr double-float single-float int) double-float))
     (define ($test-call-int signed? size call-int make-fc)
       (define n10000 (expt 256 size))
       (define nffff (- n10000 1))
@@ -1177,6 +1180,35 @@
         (int double-float double-float double-float double-float double-float double-float double-float) double-float)
       1 2.2 3.2 4.5 6.7 8.9 10.1 11.5)
     55.1)
+
+  (equal?
+   (call-varargs-dfii
+    (foreign-callable
+     (__varargs_after 2)
+     (lambda (x y z) (+ x y z))
+     (double-float int int) double-float)
+    10.25 20 300)
+   620.25)
+
+  (equal?
+   (call-varargs-dfidf
+    (foreign-callable
+     (__varargs_after 2)
+     (lambda (x y z) (+ x y z))
+     (double-float int double-float) double-float)
+    10.25 20 300.25)
+   330.75)
+
+  (equal?
+   (call-varargs-dfsfi
+    (foreign-callable
+     (__varargs_after 2)
+     (lambda (x y z) (+ x y z))
+     (double-float single-float int) double-float)
+    10.25 20.0 300)
+   620.5)
+  
+  ;(define call-varargs-dfsfi (foreign-procedure #;__varargs #;2 "call_varargs_dfsfi" (ptr double-float single-float int) double-float))
 
   (error?
     (call-i8
@@ -2738,6 +2770,12 @@
         [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
          '(load-shared-object "libc.dylib")]
         [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
+    (define varargs_df (foreign-procedure (__varargs_after 1) "varargs_df" (double int int) double))
+    (define varargs_dfii (foreign-procedure (__varargs_after 2) "varargs_dfii" (double int int) double))
+    (define varargs_dfidf (foreign-procedure (__varargs_after 2) "varargs_dfidf" (double int double) double))
+    (define varargs_sfdfi (foreign-procedure (__varargs_after 2) "varargs_sfdfi" (float double int) double))
+    (define varargs_i7df (foreign-procedure (__varargs_after 1) "varargs_i7df" (int double double double double double double double)
+                                            double))
     #t)
   (equal?
     (with-input-from-string
@@ -2798,6 +2836,22 @@
                                  (double-float double-float) single-float)
               3.5 -5.25)))
           3.25)
+
+  (equal?
+   (varargs_df 13.5 7 10)
+   30.5)
+  (equal?
+   (varargs_dfii 13.5 -7 -10)
+   -3.5)
+  (equal?
+   (varargs_dfidf 13.5 10 7.5)
+   31.0)
+  (equal?
+   (varargs_sfdfi 10.5 3.25 8)
+   21.75)
+  (equal?
+   (varargs_i7df 1 2.0 3.0 4.0 5.0 6.0 7.0 8.0)
+   36.0)
 )
 
 (mat structs

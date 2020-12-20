@@ -3057,13 +3057,9 @@
                ;; we push all of the int reg args with one push instruction and all of the
                ;; float reg args with another (v)push instruction. It's possible for an argument
                ;; to be split across a register and the stack --- but in that case, there's
-               ;; room just before on the stack to copy in the register. For varrags, the
-               ;; `__varargs` isn't technically enough information, because the ABI is specified
-               ;; in terms of specific unknown arguments (i.e., the part in the "..."); we
-               ;; just assume that all argument except the first are in "...", and that assumption
-               ;; only matters for `double` arguments.
+               ;; room just before on the stack to copy in the register.
                (lambda (types gp-reg-count fp-reg-count init-int-reg-offset float-reg-offset stack-arg-offset
-                              synthesize-first-argument? varargs? return-space-offset)
+                              synthesize-first-argument? varargs-after return-space-offset)
                  (let loop ([types (if synthesize-first-argument? (cdr types) types)]
                             [locs '()]
                             [iint 0]
@@ -3071,133 +3067,144 @@
                             [int-reg-offset init-int-reg-offset]
                             [float-reg-offset float-reg-offset]
                             [stack-arg-offset (fx- stack-arg-offset (fx- stack-arguments-starting-offset
-                                                                         register+stack-arguments-starting-offset))])
-                   (if (null? types)
-                       (let ([locs (reverse locs)])
-                         (if synthesize-first-argument?
-                             (cons (load-stack-address return-space-offset)
-                                   locs)
-                             locs))
-                       (cond
-                         [(nanopass-case (Ltype Type) (car types)
-                            [(fp-double-float) 2]
-                            [(fp-single-float) 1]
-                            [else #f])
-                          => (lambda (width)
-                               (let ([size (fx* width 4)])
-                                 (cond
-                                  [(and (fx< iflt fp-reg-count)
-                                        (or (not varargs?)
-                                            ;; hack: varargs function requires at least one argument
-                                            (fx= int-reg-offset init-int-reg-offset)))
-                                   ;; in FP register
+                                                                         register+stack-arguments-starting-offset))]
+                            [varargs-after varargs-after])
+                   (let ([next-varargs-after (and varargs-after (if (fx> varargs-after 0) (fx- varargs-after 1) 0))])
+                     (if (null? types)
+                         (let ([locs (reverse locs)])
+                           (if synthesize-first-argument?
+                               (cons (load-stack-address return-space-offset)
+                                     locs)
+                               locs))
+                         (cond
+                           [(nanopass-case (Ltype Type) (car types)
+                              [(fp-double-float) 2]
+                              [(fp-single-float) 1]
+                              [else #f])
+                            => (lambda (width)
+                                 (let ([size (fx* width 4)])
+                                   (cond
+                                     [(and (fx< iflt fp-reg-count)
+                                           (not (eq? varargs-after 0)))
+                                      ;; in FP register
+                                      (loop (cdr types)
+                                            (cons (load-double-stack float-reg-offset) locs)
+                                            (fx+ iint width) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset size)
+                                            (fx+ stack-arg-offset size)
+                                            next-varargs-after)]
+                                     [(or (not (eq? varargs-after 0))
+                                          (fx>= iint gp-reg-count))
+                                      ;; on stack
+                                      (loop (cdr types)
+                                            (cons (load-double-stack stack-arg-offset) locs)
+                                            iint iflt int-reg-offset float-reg-offset
+                                            (fx+ stack-arg-offset size)
+                                            next-varargs-after)]
+                                     [else ;; => varargs
+                                      ;; in integer register --- but maybe halfway on stack
+                                      (loop (cdr types)
+                                            (cons (if (fx< (fx+ iint 1) gp-reg-count)
+                                                      (load-double-stack int-reg-offset)
+                                                      (load-split-double-stack int-reg-offset (fx+ stack-arg-offset 4)))
+                                                  locs)
+                                            (fx+ iint width) iflt (fx+ int-reg-offset size) float-reg-offset
+                                            (fx+ stack-arg-offset size)
+                                            next-varargs-after)])))]
+                           [(nanopass-case (Ltype Type) (car types)
+                              [(fp-ftd& ,ftd) ftd]
+                              [else #f])
+                            =>
+                            (lambda (ftd)
+                              (let ([members ($ftd->members ftd)])
+                                (cond
+                                  [(and (not ($ftd-union? ftd))
+                                        (pair? members)
+                                        (null? (cdr members))
+                                        (eq? 'float (caar members))
+                                        (fx< iflt fp-reg-count))
+                                   ;; single member as float => in register
+                                   (let ([load-address (case ($ftd-size ftd)
+                                                         [(4) load-stack-address/convert-float]
+                                                         [else load-stack-address])]
+                                         [size ($ftd-size ftd)])
+                                     (loop (cdr types)
+                                           (cons (load-address float-reg-offset) locs)
+                                           (fx+ iint (fxsrl size 2)) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset 8)
+                                           (fx+ stack-arg-offset size)
+                                           next-varargs-after))]
+                                  [(memv ($ftd-size ftd) '(1 2))
+                                   ;; byte or word; need to load address into middle
                                    (loop (cdr types)
-                                         (cons (load-double-stack float-reg-offset) locs)
-                                         (fx+ iint width) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset size)
-                                         (fx+ stack-arg-offset size))]
-                                  [(or (not varargs?)
-                                       (fx>= iint gp-reg-count))
-                                   ;; on stack
-                                   (loop (cdr types)
-                                         (cons (load-double-stack stack-arg-offset) locs)
-                                         iint iflt int-reg-offset float-reg-offset
-                                         (fx+ stack-arg-offset size))]
-                                  [else ;; => varargs
-                                   ;; in integer register --- but maybe halfway on stack
-                                   (loop (cdr types)
-                                         (cons (if (fx< (fx+ iint 1) gp-reg-count)
-                                                   (load-double-stack int-reg-offset)
-                                                   (load-split-double-stack int-reg-offset (fx+ stack-arg-offset 4)))
+                                         (cons (load-stack-address (fx+ (fx- 4 ($ftd-size ftd))
+                                                                        (if (< iint gp-reg-count)
+                                                                            int-reg-offset
+                                                                            stack-arg-offset)))
                                                locs)
-                                         (fx+ iint width) iflt (fx+ int-reg-offset size) float-reg-offset
-                                         (fx+ stack-arg-offset size))])))]
-                         [(nanopass-case (Ltype Type) (car types)
-                            [(fp-ftd& ,ftd) ftd]
-                            [else #f])
-                          =>
-                          (lambda (ftd)
-                            (let ([members ($ftd->members ftd)])
-                              (cond
-                               [(and (not ($ftd-union? ftd))
-                                     (pair? members)
-                                     (null? (cdr members))
-                                     (eq? 'float (caar members))
-                                     (fx< iflt fp-reg-count))
-                                ;; single member as float => in register
-                                (let ([load-address (case ($ftd-size ftd)
-                                                      [(4) load-stack-address/convert-float]
-                                                      [else load-stack-address])]
-                                      [size ($ftd-size ftd)])
-                                  (loop (cdr types)
-                                        (cons (load-address float-reg-offset) locs)
-                                        (fx+ iint (fxsrl size 2)) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset 8)
-                                        (fx+ stack-arg-offset size)))]
-                               [(memv ($ftd-size ftd) '(1 2))
-                                ;; byte or word; need to load address into middle
-                                (loop (cdr types)
-                                      (cons (load-stack-address (fx+ (fx- 4 ($ftd-size ftd))
-                                                                     (if (< iint gp-reg-count)
-                                                                         int-reg-offset
-                                                                         stack-arg-offset)))
-                                            locs)
-                                      (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset
-                                      (fx+ stack-arg-offset 4))]
-                               [else
-                                ;; in registers until they run out; copy the registers
-                                ;; to the reserved space just before arguments that
-                                ;; are only on the stack, and then we have a contiguous
-                                ;; object on the stack; except that sizes not a multiple
-                                ;; of 4 are always on the stack and no copying is needed
-                                (let* ([size ($ftd-size ftd)]
-                                       [words (fxsrl (align 4 size) 2)]
-                                       [loc
-                                        (cond
-                                         [(not (fx= size (fx* words 4)))
-                                          (load-stack-address stack-arg-offset)]
-                                         [else
-                                          (let c-loop ([size size] [iint iint] [offset 0])
-                                            (cond
-                                             [(or (fx<= size 0)
-                                                  (fx>= iint gp-reg-count))
+                                         (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset
+                                         (fx+ stack-arg-offset 4)
+                                         next-varargs-after)]
+                                  [else
+                                   ;; in registers until they run out; copy the registers
+                                   ;; to the reserved space just before arguments that
+                                   ;; are only on the stack, and then we have a contiguous
+                                   ;; object on the stack; except that sizes not a multiple
+                                   ;; of 4 are always on the stack and no copying is needed
+                                   (let* ([size ($ftd-size ftd)]
+                                          [words (fxsrl (align 4 size) 2)]
+                                          [loc
+                                           (cond
+                                             [(not (fx= size (fx* words 4)))
                                               (load-stack-address stack-arg-offset)]
                                              [else
-                                              (let ([loc (c-loop (fx- size 4) (fx+ iint 1) (fx+ offset 4))]
-                                                    [tmp %Carg8])
-                                                (lambda (lvalue)
-                                                  (%seq
-                                                   (set! ,tmp ,(%mref ,%sp ,(fx+ int-reg-offset offset)))
-                                                   (set! ,(%mref ,%sp ,(fx+ stack-arg-offset offset)) ,tmp)
-                                                   ,(loc lvalue))))]))])])
-                                  (loop (cdr types)
-                                        (cons loc locs)
-                                        (fx+ iint words) iflt (fx+ int-reg-offset (fx* 4 words)) float-reg-offset
-                                        (fx+ stack-arg-offset (fx* 4 words))))])))]
-                         [(nanopass-case (Ltype Type) (car types)
-                            [(fp-integer ,bits) (fx= bits 64)]
-                            [(fp-unsigned ,bits) (fx= bits 64)]
-                            [else #f])
-                          (cond
-                            [(fx< (fx+ iint 1) gp-reg-count)
-                             (loop (cdr types)
-                                   (cons (load-int64-stack int-reg-offset) locs)
-                                   (fx+ iint 2) iflt (fx+ int-reg-offset 8) float-reg-offset (fx+ stack-arg-offset 8))]
-                            [(fx< iint gp-reg-count)
-                             ;; split across a register and the stack
-                             (loop (cdr types)
-                                   (cons (load-split-int64-stack int-reg-offset stack-arg-offset) locs)
-                                   (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset (fx+ stack-arg-offset 8))]
-                            [else
-                             (loop (cdr types)
-                                   (cons (load-int64-stack stack-arg-offset) locs)
-                                   iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8))])]
-                         [else
-                          (if (fx< iint gp-reg-count)
-                              (loop (cdr types)
-                                    (cons (load-int-stack (car types) int-reg-offset) locs)
-                                    (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset (fx+ stack-arg-offset 4))
-                              (loop (cdr types)
-                                    (cons (load-int-stack (car types) stack-arg-offset) locs)
-                                    iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 4)))])))))
+                                              (let c-loop ([size size] [iint iint] [offset 0])
+                                                (cond
+                                                  [(or (fx<= size 0)
+                                                       (fx>= iint gp-reg-count))
+                                                   (load-stack-address stack-arg-offset)]
+                                                  [else
+                                                   (let ([loc (c-loop (fx- size 4) (fx+ iint 1) (fx+ offset 4))]
+                                                         [tmp %Carg8])
+                                                     (lambda (lvalue)
+                                                       (%seq
+                                                        (set! ,tmp ,(%mref ,%sp ,(fx+ int-reg-offset offset)))
+                                                        (set! ,(%mref ,%sp ,(fx+ stack-arg-offset offset)) ,tmp)
+                                                        ,(loc lvalue))))]))])])
+                                     (loop (cdr types)
+                                           (cons loc locs)
+                                           (fx+ iint words) iflt (fx+ int-reg-offset (fx* 4 words)) float-reg-offset
+                                           (fx+ stack-arg-offset (fx* 4 words))
+                                           next-varargs-after))])))]
+                           [(nanopass-case (Ltype Type) (car types)
+                              [(fp-integer ,bits) (fx= bits 64)]
+                              [(fp-unsigned ,bits) (fx= bits 64)]
+                              [else #f])
+                            (cond
+                              [(fx< (fx+ iint 1) gp-reg-count)
+                               (loop (cdr types)
+                                     (cons (load-int64-stack int-reg-offset) locs)
+                                     (fx+ iint 2) iflt (fx+ int-reg-offset 8) float-reg-offset (fx+ stack-arg-offset 8)
+                                     next-varargs-after)]
+                              [(fx< iint gp-reg-count)
+                               ;; split across a register and the stack
+                               (loop (cdr types)
+                                     (cons (load-split-int64-stack int-reg-offset stack-arg-offset) locs)
+                                     (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset (fx+ stack-arg-offset 8)
+                                     next-varargs-after)]
+                              [else
+                               (loop (cdr types)
+                                     (cons (load-int64-stack stack-arg-offset) locs)
+                                     iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8)
+                                     next-varargs-after)])]
+                           [else
+                            (if (fx< iint gp-reg-count)
+                                (loop (cdr types)
+                                      (cons (load-int-stack (car types) int-reg-offset) locs)
+                                      (fx+ iint 1) iflt (fx+ int-reg-offset 4) float-reg-offset (fx+ stack-arg-offset 4)
+                                      next-varargs-after)
+                                (loop (cdr types)
+                                      (cons (load-int-stack (car types) stack-arg-offset) locs)
+                                      iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 4)
+                                      next-varargs-after))]))))))
              (define count-reg-args
                (lambda (types gp-reg-count fp-reg-count synthesize-first-argument?)
                  (let f ([types types] [iint (if synthesize-first-argument? -1 0)] [iflt 0])
@@ -3248,7 +3255,7 @@
                ;; we push all of the int reg args with one push instruction and all of the
                ;; float reg args with another (v)push instruction
                (lambda (types gp-reg-count fp-reg-count int-reg-offset float-reg-offset stack-arg-offset
-                              synthesize-first-argument? varargs? return-space-offset)
+                              synthesize-first-argument? varargs-after return-space-offset)
                  (let loop ([types (if synthesize-first-argument? (cdr types) types)]
                             [locs '()]
                             [iint 0]
@@ -3524,7 +3531,8 @@
                        [callee-save-fp-offset (fx+ (fx* isaved 4) callee-save-offset)]
 		       [synthesize-first-argument? (indirect-result-that-fits-in-registers? result-type)]
 		       [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)]
-                       [varargs? (memq 'varargs (info-foreign-conv* info))]
+                       [varargs-after (ormap (lambda (conv) (and (pair? conv) (eq? 'varargs (car conv)) (cdr conv)))
+                                             (info-foreign-conv* info))]
                        [unactivate-mode-offset (fx+ (fx* fpsaved 8) callee-save-fp-offset)]
                        [return-space-offset (align 8 (fx+ unactivate-mode-offset (if adjust-active? 4 0)))]
                        [stack-size (align 16 (fx+ return-space-offset (if synthesize-first-argument? 8 0)))]
@@ -3555,7 +3563,7 @@
                      ; to the Scheme argument locations
                      (do-stack (indirect-result-to-pointer result-type arg-type*)
                                gp-reg-count fp-reg-count int-reg-offset float-reg-offset stack-arg-offset
-			       synthesize-first-argument? varargs? return-space-offset)
+			       synthesize-first-argument? varargs-after return-space-offset)
 		     get-result
 		     (lambda ()
 		       (in-context Tail

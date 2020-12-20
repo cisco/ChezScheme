@@ -2770,7 +2770,7 @@
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [conv* (info-foreign-conv* info)]
-                   [varargs? (memq 'varargs conv*)]
+                   [varargs? (ormap (lambda (conv) (and (pair? conv) (eq? (car conv) 'varargs))) conv*)]
 		   [result-type (info-foreign-result-type info)]
                    [result-reg* (get-result-regs result-type varargs?)]
 		   [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
@@ -3240,7 +3240,7 @@
                                  (vector->list regvec)))
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [conv* (info-foreign-conv* info)]
-		   [varargs? (memq 'varargs conv*)]
+                   [varargs? (ormap (lambda (conv) (and (pair? conv) (eq? (car conv) 'varargs))) conv*)]
 		   [result-type (info-foreign-result-type info)]
                    [synthesize-first? (indirect-result-that-fits-in-registers? result-type)]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
