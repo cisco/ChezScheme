@@ -53,7 +53,7 @@ csrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-011.c gc-par.c
  windows.c\
  schlib.c thread.c expeditor.c scheme.c compress-io.c random.c
 
-cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-011.c gc-par.obj gc-oce.obj gc-ocd.obj\
+cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-011.obj gc-par.obj gc-oce.obj gc-ocd.obj\
  number.obj schsig.obj io.obj new-io.obj print.obj fasl.obj vfasl.obj stats.obj\
  foreign.obj prim.obj prim5.obj flushcache.obj\
  windows.obj\
