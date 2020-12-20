@@ -377,6 +377,18 @@
        '(lambda (x)
           (#3%$value (if x 1 (#2%values 3 3 3)))
           #t)))
+
+  (not
+   (equivalent-expansion?
+    (expand/optimize
+     '(lambda (g x y)
+        (call-with-values (lambda ()
+                            (values
+                             (values x y)))
+          (case-lambda
+           [(x y) (g x y)]))))
+    '(lambda (g x y) (g x y))))
+
 )
 
 (cp0-mat cp0-mrvs

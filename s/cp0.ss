@@ -2457,7 +2457,7 @@
         [(p-opnd c-opnd)
          (let ((p-temp (cp0-make-temp #f)) (c-temp (cp0-make-temp #f)))
            (with-extended-env ((env ids) (empty-env (list p-temp c-temp) (app-opnds ctxt)))
-             (let ((ctxt1 (make-app '() 'value 'call #f (app-preinfo ctxt))))
+             (let ((ctxt1 (make-app '() 'tail 'call #f (app-preinfo ctxt))))
                (let ((*p-val (cp0 (build-ref p-temp) ctxt1 env sc wd #f moi)))
                  (cond
                    [(and (app-used ctxt1)
