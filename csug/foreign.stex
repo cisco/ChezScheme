@@ -1295,7 +1295,7 @@ the C stack is reset to its original value.
 
 The procedures described in this section directly create and manipulate
 foreign data, i.e., data that resides outside of the Scheme heap.
-With the exception of \scheme{foreign-alloc} and \scheme{foreign-sizeof},
+With the exception of \scheme{foreign-alloc}, \scheme{foreign-sizeof}, and \scheme{foreign-alignof},
 these procedures are inherently unsafe in the sense that they do not (and
 cannot) check the validity of the addresses they are passed.
 Improper use of these procedures can result in invalid memory references,
@@ -1467,6 +1467,17 @@ For multiple-byte values, the native endianness of the machine is assumed.
 \entryheader
 \formdef{foreign-sizeof}{\categoryprocedure}{(foreign-sizeof \var{type})}
 \returns the size in bytes of \var{type}
+\listlibraries
+\endentryheader
+
+\var{type} must be one of the symbols listed in the description
+of \scheme{foreign-ref} above.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{foreign-alignof}{\categoryprocedure}{(foreign-alignof \var{type})}
+\returns the alignment in bytes of \var{type}
 \listlibraries
 \endentryheader
 

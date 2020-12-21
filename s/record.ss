@@ -509,6 +509,21 @@
       (record-datatype cases (filter-foreign-type ty) size
         ($oops who "invalid foreign type specifier ~s" ty))))
 
+  (set-who! foreign-alignof
+    (lambda (ty)
+      (define-syntax size
+        (syntax-rules ()
+          [(_ type bytes pred)
+           ;; rely on cp0 expansion:
+           (case 'type
+             [(double-float) (foreign-alignof 'double)]
+             [(single-float) (foreign-alignof 'float)]
+             [(integer-64) (foreign-alignof 'integer-64)]
+             [(unsigned-64) (foreign-alignof 'unsigned-64)]
+             [else bytes])]))
+      (record-datatype cases (filter-foreign-type ty) size
+        ($oops who "invalid foreign type specifier ~s" ty))))
+
   (set-who! #(csv7: record-type-descriptor)
     (lambda (r)
       (unless (record? r) ($oops who "~s is not a record" r))

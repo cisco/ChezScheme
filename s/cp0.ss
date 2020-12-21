@@ -2333,7 +2333,7 @@
                (residualize-seq '() (list c) ctxt)
                `(quote ,(and (memv dc (if-feature windows '(#\\ #\/) '(#\/))) #t)))])
 
-      (define-inline 2 foreign-sizeof
+      (define-inline 2 (foreign-sizeof foreign-alignof)
         [(x) (and (okay-to-handle?)
                   (let ([xval (value-visit-operand! x)])
                     (nanopass-case (Lsrc Expr) (result-exp xval)
@@ -2344,7 +2344,13 @@
                              [(_ type bytes pred)
                               (begin
                                 (residualize-seq '() (list x) ctxt)
-                                `(quote ,bytes))]))
+                                `(quote ,(cond
+                                           [(eq? prim-name 'foreign-alignof)
+                                            (case 'type
+                                              [(double-float single-float) (gcd (constant max-float-alignment) bytes)]
+                                              [(integer-64 unsigned-64) (gcd (constant max-integer-alignment) bytes)]
+                                              [else bytes])]
+                                           [else bytes])))]))
                          (record-datatype cases (filter-foreign-type d) size #f))]
                       [else #f])))])
 

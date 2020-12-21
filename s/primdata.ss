@@ -1350,6 +1350,7 @@
   (foreign-address-name [sig [(uptr/iptr) -> (maybe-string)]] [flags discard])
   (foreign-callable-entry-point [sig [(code) -> (uint)]] [flags discard])
   (foreign-callable-code-object [sig [(sint) -> (code)]] [flags discard])
+  (foreign-alignof [sig [(sub-symbol) -> (fixnum)]] [flags pure true cp02])
   (foreign-alloc [sig [(pfixnum) -> (uint)]] [flags discard true])
   (foreign-free [sig [(sub-uint) -> (void)]] [flags true])
   (foreign-ref [sig [(sub-symbol uptr/iptr uptr/iptr) -> (ptr)]] [flags])
