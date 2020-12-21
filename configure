@@ -617,28 +617,31 @@ if [ "$addflags" = "yes" ] ; then
   fi
 fi
 
-if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
-    echo "nanopass source is missing; you may need to check out git submodules"
+submod_instructions () {
+    echo $1"; check out Git submodules using"
+    echo "   git submodule init"
+    echo "   git submodule update"
     exit 1
+}
+
+if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
+    submod_instructions 'Source in "nanopass" is missing'
 fi
 
 if [ "${zlibDep}" != "" ] ; then
     if [ ! -f "$srcdir"/zlib/configure ] ; then
-        echo "zlib source is missing; you may need to check out git submodules"
-        exit 1
+        submod_instructions 'Source in "zlib" is missing'
     fi
 fi
 
 if [ "${LZ4Dep}" != "" ] ; then
     if [ ! -f "$srcdir"/lz4/lib/Makefile ] ; then
-        echo "lz4 source is missing; you may need to check out git submodules"
-        exit 1
+        submod_instructions 'Source in "lz4" is missing'
     fi
 fi
 
 if [ ! -f "$srcdir"/stex/Mf-stex ] ; then
-    echo "stex source is missing; you may need to check out git submodules"
-    exit 1
+    submod_instructions 'Source in "stex" is missing'
 fi
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
