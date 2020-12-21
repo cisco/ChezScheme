@@ -3226,15 +3226,6 @@
        '(begin (g) 5)
        '(begin (#3%$value (g)) 5)))
 
-  (equivalent-expansion?
-   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-     (expand/optimize '(let ([f (#2%make-wrapper-procedure (lambda (x) x) 2 'data)]) (#2%list f (f 5)))))
-   '(#2%list (#2%make-wrapper-procedure (lambda (x) x) 2 'data) 5))
-  (equivalent-expansion?
-   (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-     (expand/optimize '(let ([f (#2%make-arity-wrapper-procedure (lambda (x) x) 2 'data)]) (#2%list f (f 5)))))
-   '(#2%list (#2%make-arity-wrapper-procedure (lambda (x) x) 2 'data) 5))
-
   (not
    (equivalent-expansion?
     (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])

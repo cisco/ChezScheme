@@ -1989,20 +1989,6 @@
                      true-rec
                      (residualize-ref maybe-src id sc))]
                 [else (fold-primref rhs ctxt sc wd name moi)])]
-            [(call ,preinfo ,pr ,e1 ,e2 ,e3)
-             ;; inline wrapped procedure, if it's easy:
-             (guard (app? ctxt)
-                    (or (eq? (primref-name pr) 'make-wrapper-procedure)
-                        (eq? (primref-name pr) 'make-arity-wrapper-procedure))
-                    (nanopass-case (Lsrc Expr) e2
-                      [(quote ,d)
-                       (and (exact? d) (integer? d)
-                            (bitwise-bit-set? d (length (app-opnds ctxt))))]
-                      [else #f])
-                    (nanopass-case (Lsrc Expr) e2
-                      [(quote ,d) #t]
-                      [else #f]))
-             (loop e1)]
             [else (residualize-ref maybe-src id sc)]))))
 
     (define fold-primref
