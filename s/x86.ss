@@ -728,6 +728,9 @@
   (define-instruction effect (push)
     [(op (x ur)) `(asm ,info ,asm-push ,x)])
 
+  (define-instruction effect (check-stack-align)
+    [(op) `(asm ,info ,asm-check-stack-align)])
+
   (define-instruction effect save-flrv
     [(op) `(asm ,info ,asm-save-flrv)])
 
@@ -755,7 +758,7 @@
                      asm-fl-cvt asm-store-single asm-fpt asm-fptrunc asm-fpsingle asm-div
                      asm-exchange asm-pause asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpop-2 asm-fpmove asm-fpmovefrom asm-fpcastfrom asm-fpcastto asm-fpsqrt asm-c-simple-call
-                     asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
+                     asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size asm-check-stack-align
                      asm-enter asm-foreign-call asm-foreign-callable
                      asm-inc-profile-counter
                      asm-inc-cc-counter asm-read-time-stamp-counter asm-read-performance-monitoring-counter
@@ -890,6 +893,8 @@
   (define-op sahf      byte-op     #b10011110)
   (define-op extad     byte-op     #b10011001)  ; extend eax to edx
 
+  (define-op int3      byte-op     #b11001100)
+  
   (define-op rdtsc     two-byte-op     #b1111 #b00110001) ; read time-stamp counter
   (define-op rdpmc     two-byte-op     #b1111 #b00110011) ; read performance monitoring counter
   (define-op pause     two-byte-op #b11110011 #b10010000) ; equivalent to rep nop
@@ -1802,6 +1807,13 @@
             (emit retl `(imm ,offset) '()))
           (emit ret '()))))
 
+  ;; debugging helper; use as `(%inline check-stack-align)`
+  (define asm-check-stack-align
+    (lambda (code*)
+      (emit testi (list 'imm 15) (cons 'reg %sp)
+            (emit beq `(label 1 #f)
+                  (emit int3 code*)))))
+
   (define asm-locked-incr
     (lambda (code* base index offset)
       (let ([dest (build-mem-opnd base index offset)])
@@ -2211,7 +2223,7 @@
           [(i3nt ti3nt) offset]
           [else
            (fx- (fxlogand (fx+ offset (fx* 4 arg-count) 15) -16)
-                 (fx* 4 arg-count))])))
+                (fx* 4 arg-count))])))
     (define (push-registers regs fp-reg-count arg-count)
       (let ([offset (push-registers-size regs fp-reg-count arg-count)])
         (move-registers regs fp-reg-count #f offset
@@ -2376,6 +2388,14 @@
                  ,e
                  ,(save-and-restore result-regs result-fp-count `(set! ,%eax ,(%inline activate-thread))))))]
            [else e]))
+        (define (add-cleanup-compensate result-type e)
+          ;; The convention for the calle to pop the return-pointer argument makes a mess,
+          ;; especially for alignment, so counteract it right away
+          (if (callee-pops-result-pointer? result-type)
+              (%seq
+               ,e
+               (set! ,%sp ,(%inline - ,%sp ,(%constant ptr-bytes))))
+              e))
         (define returnem
           (lambda (conv* orig-frame-size locs result-type ccall r-loc)
             (let ([frame-size (constant-case machine-type-name
@@ -2394,10 +2414,7 @@
                 (lambda ()
                   (if (or (fx= frame-size 0) (memq 'i3nt-stdcall conv*) (memq 'i3nt-com conv*))
                       `(nop)
-                      (let ([frame-size (if (callee-pops-result-pointer? result-type)
-                                            (fx- frame-size (constant ptr-bytes))
-                                            frame-size)])
-                        `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size))))))))))
+                      `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size)))))))))
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
           (let ([conv* (info-foreign-conv* info)]
@@ -2413,18 +2430,20 @@
                            [live* (add-caller-save-registers (reg-list %eax %edx))]
                            [call
                             (add-deactivate adjust-active? fill-result-here? t0 result-type
-                              (cond
-                                [(memq 'i3nt-com conv*)
-                                 (when (null? arg-type*)
-                                   ($oops 'foreign-procedure
-                                          "__com convention requires instance argument"))
-                                 ; jump indirect
-                                 (%seq
-                                  (set! ,%eax ,(%mref ,%sp 0))
-                                  (set! ,%eax ,(%mref ,%eax 0))
-                                  (set! ,%eax ,(%inline + ,%eax ,t))
-                                  (inline ,(make-info-kill*-live* live* '()) ,%c-call ,(%mref ,%eax 0)))]
-                                [else `(inline ,(make-info-kill*-live* live* '()) ,%c-call ,t)]))])
+                              (add-cleanup-compensate result-type
+                                (cond
+                                  [(memq 'i3nt-com conv*)
+                                   (when (null? arg-type*)
+                                     ($oops 'foreign-procedure
+                                            "__com convention requires instance argument"))
+                                   ;; jump indirect
+                                   (%seq
+                                    (set! ,%eax ,(%mref ,%sp 0))
+                                    (set! ,%eax ,(%mref ,%eax 0))
+                                    (set! ,%eax ,(%inline + ,%eax ,t))
+                                    (inline ,(make-info-kill*-live* live* '()) ,%c-call ,(%mref ,%eax 0)))]
+                                  [else
+                                   `(inline ,(make-info-kill*-live* live* '()) ,%c-call ,t)])))])
                       (cond
                        [fill-result-here?
                         (let* ([ftd (nanopass-case (Ltype Type) result-type
@@ -2661,12 +2680,13 @@
                          (list %eax)
                          0)])]))
           (define (unactivate result-regs result-num-fp-regs)
-            (let ([e (%seq
-                       (set! ,%eax ,(%mref ,%sp ,(+ 8 (push-registers-size result-regs result-num-fp-regs 1))))
+            (let* ([push-size (push-registers-size result-regs result-num-fp-regs 1)]
+                   [e (%seq
+                       (set! ,%eax ,(%mref ,%sp ,(+ 8 push-size)))
                        ,(%inline push ,%eax)
                        ,(%inline unactivate-thread)
                        (set! ,%eax ,(%inline pop)))])
-              (if (and (null? result-regs) (fx= 0 result-num-fp-regs))
+              (if (and (null? result-regs) (fx= 0 result-num-fp-regs) (fx= 0 push-size))
                   e
                   (%seq
                    ,(push-registers result-regs result-num-fp-regs 1)

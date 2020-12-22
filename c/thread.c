@@ -64,6 +64,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
   if (S_threads == Snil) {
     tc = TO_PTR(S_G.thread_context);
     tgc = &S_G.main_thread_gc;
+    GCDATA(tc) = TO_PTR(tgc);
+    tgc->tc = tc;
   } else { /* clone parent */
     ptr p_v = PARAMETERS(p_tc);
     iptr i, n = Svector_length(p_v);
@@ -79,6 +81,9 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
     if (tc == (ptr)0)
       S_error(who, "unable to malloc thread data structure");
     memcpy(TO_VOIDP(tc), TO_VOIDP(p_tc), size_tc);
+
+    GCDATA(tc) = TO_PTR(tgc);
+    tgc->tc = tc;
 
     {
       IGEN g; ISPC s;
@@ -108,9 +113,6 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
     PARAMETERS(tc) = v;
     CODERANGESTOFLUSH(tc) = Snil;
   }
-
-  GCDATA(tc) = TO_PTR(tgc);
-  tgc->tc = tc;
 
   tgc->sweeper = main_sweeper_index;
 
@@ -171,6 +173,8 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 
   LZ4OUTBUFFER(tc) = 0;
 
+  CP(tc) = 0;
+
   tc_mutex_release();
 
   return thread;
@@ -183,7 +187,7 @@ IBOOL Sactivate_thread() { /* create or reactivate current thread */
   if (tc == (ptr)0) { /* thread created by someone else */
     ptr thread;
 
-   /* borrow base thread for now */
+   /* borrow base thread to clone */
     thread = S_create_thread_object("Sactivate_thread", TO_PTR(S_G.thread_context));
     s_thread_setspecific(S_tc_key, TO_VOIDP(THREADTC(thread)));
     return 1;
