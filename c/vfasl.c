@@ -207,17 +207,6 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
          VFASLHEADER_RTDREF_COUNT(header) * sizeof(vfoff),
          VFASLHEADER_SINGLETONREF_COUNT(header) * sizeof(vfoff));
 #endif
-
-  if (VSPACE_LENGTH(vspace_rtd) > 0) {
-    ptr rtd = TYPE(vspaces[vspace_rtd], type_typed_object);
-    ptr rtd_end = TYPE(VSPACE_END(vspace_rtd), type_typed_object);
-
-    while (1) {
-      rtd = ptr_add(rtd, size_record_type);
-      if (rtd == rtd_end)
-        break;
-    }
-  }
     
   /* We have to convert an offset relative to the start of data in the
      vfasl format to an offset relative to an individual space, at
