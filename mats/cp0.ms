@@ -2465,7 +2465,11 @@
                     (begin (#%write 'e) ($xxx-ok))))))
     ; other possibilities exist...
    '(begin (#%write 'a) (#%write 'b) (#%cdr (begin (#%write 'c) (#%write 'd) (#%write 'e) ($xxx-ok)))))
- )
+  (expansion-matches?
+   '(cdr (let ([x (#%write 1)])
+           (cons x (#%write 2))))
+   '(begin (#%write 1) (#%write 2)))
+  )
 
 (mat cp0-seq-ref
   (equivalent-expansion?
@@ -2870,13 +2874,14 @@
         '(let ()
            (define-record foo ((immutable boolean x)))
            (or (foo-x e1) e2))))
-    `(if (let ([g0 e1])
-           (if (#3%record? g0 ',record-type-descriptor?)
-               (#2%void)
-               (#3%$record-oops 'foo-x g0 ',record-type-descriptor?))
-           (#3%$object-ref 'boolean g0 ,fixnum?))
-         #t
-         e2))
+    `(let ([g0 e1])
+       (if (begin
+             (if (#3%record? g0 ',record-type-descriptor?)
+                 (#2%void)
+                 (#3%$record-oops 'foo-x g0 ',record-type-descriptor?))
+             (#3%$object-ref 'boolean g0 ,fixnum?))
+           #t
+           e2)))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 3] [compile-profile #f])
       (expand/optimize

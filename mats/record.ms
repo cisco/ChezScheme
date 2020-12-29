@@ -5362,9 +5362,8 @@
                  r)))
            (#2%pretty-print
              ($record->vector
-               (let ([r (let ([r (#3%$record crtd 2 7 1)])
-                          (#2%pretty-print (#2%list 'parent ($record->vector r)))
-                          r)])
+               (let ([r (#3%$record crtd 2 7 1)])
+                 (#2%pretty-print (#2%list 'parent ($record->vector r)))
                  (#2%pretty-print (#2%list 'child ($record->vector r)))
                  r)))))))
   (equivalent-expansion? ; optimize-level 3 expansion of above
@@ -5403,9 +5402,8 @@
                  r)))
            (#3%pretty-print
              ($record->vector
-               (let ([r (let ([r (#3%$record crtd 2 7 1)])
-                          (#3%pretty-print (#3%list 'parent ($record->vector r)))
-                          r)])
+               (let ([r (#3%$record crtd 2 7 1)])
+                 (#3%pretty-print (#3%list 'parent ($record->vector r)))
                  (#3%pretty-print (#3%list 'child ($record->vector r)))
                  r)))))))
   (equal?
@@ -5504,18 +5502,15 @@
                    r)))
              (#2%pretty-print
                ($record->vector
-                 (let ([r (let ([r (#3%$record crtd 2 7 1)])
-                            (#2%pretty-print (#2%list 'parent ($record->vector r)))
-                            r)])
+                 (let ([r (#3%$record crtd 2 7 1)])
+                   (#2%pretty-print (#2%list 'parent ($record->vector r)))
                    (#2%pretty-print (#2%list 'child ($record->vector r)))
                    r)))
              (#2%pretty-print
                ($record->vector
-                 (let ([r (let ([r (let ([r (#3%$record gcrtd 2 10 4 3)])
-                                     (#2%pretty-print (#2%list 'parent ($record->vector r)))
-                                     r)])
-                            (#2%pretty-print (#2%list 'child ($record->vector r)))
-                            r)])
+                 (let ([r (#3%$record gcrtd 2 10 4 3)])
+                   (#2%pretty-print (#2%list 'parent ($record->vector r)))
+                   (#2%pretty-print (#2%list 'child ($record->vector r)))
                    (#2%pretty-print (#2%list 'grand-child ($record->vector r)))
                    r))))))))
   (equivalent-expansion? ; optimize-level 3 expansion of above
@@ -5566,18 +5561,15 @@
                    r)))
              (#3%pretty-print
                ($record->vector
-                 (let ([r (let ([r (#3%$record crtd 2 7 1)])
-                            (#3%pretty-print (#3%list 'parent ($record->vector r)))
-                            r)])
+                 (let ([r (#3%$record crtd 2 7 1)])
+                   (#3%pretty-print (#3%list 'parent ($record->vector r)))
                    (#3%pretty-print (#3%list 'child ($record->vector r)))
                    r)))
              (#3%pretty-print
                ($record->vector
-                 (let ([r (let ([r (let ([r (#3%$record gcrtd 2 10 4 3)])
-                                     (#3%pretty-print (#3%list 'parent ($record->vector r)))
-                                     r)])
-                            (#3%pretty-print (#3%list 'child ($record->vector r)))
-                            r)])
+                 (let ([r (#3%$record gcrtd 2 10 4 3)])
+                   (#3%pretty-print (#3%list 'parent ($record->vector r)))
+                   (#3%pretty-print (#3%list 'child ($record->vector r)))
                    (#3%pretty-print (#3%list 'grand-child ($record->vector r)))
                    r))))))))
   (error? ; given prcd is not for parent rtd
@@ -7602,12 +7594,15 @@
                (#3%$record-oops 'moi g63
                  ',record-type-descriptor?))
            (#3%$object-set! 'scheme-object g63 ,fixnum? g64)))
-       (#2%equal?
-         (#2%map
-           (lambda (x) (if (#2%$record? x) ($record->vector x) x))
-           (let ([x ($make-cpoint 3 4 ($color->rgb 'red))])
-             (#2%list x ($cpoint-rgb x) ($make-point -8 -15))))
-         '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15)))))
+       (let ([x ($make-cpoint 3 4 ($color->rgb 'red))])
+         (#2%equal?
+          (let ([g0 ($cpoint-rgb x)]
+                [g1 ($make-point -8 -15)])
+            (#2%list
+             (if (#2%$record? x) ($record->vector x) x)
+             (if (#2%$record? g0) ($record->vector g0) g0)
+             (if (#2%$record? g1) ($record->vector g1) g1)))
+          '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15))))))
   (equivalent-expansion? ; optimize-level 3 expansion of above
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -7648,12 +7643,15 @@
        (set! $cpoint-rgb-set!
          (lambda (g99 g100)
            (#3%$object-set! 'scheme-object g99 ,fixnum? g100)))
-       (#3%equal?
-         (#3%map
-           (lambda (x) (if (#3%$record? x) ($record->vector x) x))
-           (let ([x ($make-cpoint 3 4 ($color->rgb 'red))])
-             (#3%list x ($cpoint-rgb x) ($make-point -8 -15))))
-         '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15)))))
+       (let ([x ($make-cpoint 3 4 ($color->rgb 'red))])
+         (#3%equal?
+          (let ([g0 ($cpoint-rgb x)]
+                [g1 ($make-point -8 -15)])
+            (#3%list
+             (if (#3%$record? x) ($record->vector x) x)
+             (if (#3%$record? g0) ($record->vector g0) g0)
+             (if (#3%$record? g1) ($record->vector g1) g1)))
+          '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15))))))
   (begin
    ; test global define-record-type
     (define ($color->rgb c) (cons 'rgb c))
@@ -7740,12 +7738,15 @@
                (#3%$record-oops 'moi g147
                  ',record-type-descriptor?))
            (#3%$object-set! 'scheme-object g147 ,fixnum? g148)))
-       (#2%equal?
-         (#2%map
-           (lambda (x) (if (#2%$record? x) ($record->vector x) x))
-           (let ([x ($make-cpoint 3 4 'red)])
-             (#2%list x ($cpoint-rgb x) ($make-point -8 -15))))
-         '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15)))))
+       (let ([x ($make-cpoint 3 4 'red)])
+         (#2%equal?
+          (let ([g0 ($cpoint-rgb x)]
+                [g1 ($make-point -8 -15)])
+            (#2%list
+             (if (#2%$record? x) ($record->vector x) x)
+             (if (#2%$record? g0) ($record->vector g0) g0)
+             (if (#2%$record? g1) ($record->vector g1) g1)))
+          '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15))))))
   (equivalent-expansion? ; optimize-level 3 expansion of above
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -7796,12 +7797,15 @@
        (set! $cpoint-rgb-set!
          (lambda (g123 g124)
            (#3%$object-set! 'scheme-object g123 ,fixnum? g124)))
-       (#3%equal?
-         (#3%map
-           (lambda (x) (if (#3%$record? x) ($record->vector x) x))
-           (let ([x ($make-cpoint 3 4 'red)])
-             (#3%list x ($cpoint-rgb x) ($make-point -8 -15))))
-         '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15)))))
+       (let ([x ($make-cpoint 3 4 'red)])
+         (#3%equal?
+          (let ([g0 ($cpoint-rgb x)]
+                [g1 ($make-point -8 -15)])
+            (#3%list
+             (if (#3%$record? x) ($record->vector x) x)
+             (if (#3%$record? g0) ($record->vector g0) g0)
+             (if (#3%$record? g1) ($record->vector g1) g1)))
+          '(#4($cpoint 3 4 (rgb . red)) (rgb . red) #3($point -8 -15))))))
   (error? ; can't handle define-record-type parent
     (let ()
       (define-record-type fratrat)

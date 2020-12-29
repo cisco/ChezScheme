@@ -370,12 +370,13 @@
         (mutable opending)
         (mutable value)
         (mutable singly-referenced-score)
-        (mutable lifted))
+        (mutable lifted)
+        (mutable can-lift?))
       (nongenerative)
       (protocol
         (lambda (new)
           (lambda (exp env wd moi)
-            (new exp env wd moi #f 0 0 0 #f #f #f)))))
+            (new exp env wd moi #f 0 0 0 #f #f #f #f)))))
 
     (define-record-type lifted
       (fields (immutable seq?) (immutable ids) (immutable vals))
@@ -383,8 +384,20 @@
       (sealed #t))
 
     (define build-operands
-      (lambda (args env wd moi)
-        (map (lambda (x) (make-operand x env wd moi)) args)))
+      (lambda (ivory-so-far? args env wd moi)
+        (let ([opnds (map (lambda (x) (make-operand x env wd moi)) args)])
+          (when (and ivory-so-far?
+                     ;; since arguments are evaluated in any order, allow
+                     ;; up to 1 non-ivory argument for arguments be liftable:
+                     (let loop ([one-non-ivory? #f] [args args])
+                       (cond
+                         [(null? args) #t]
+                         [(ivory? (car args)) (loop one-non-ivory? (cdr args))]
+                         [one-non-ivory? #f]
+                         [else (loop #t (cdr args))])))
+            (for-each (lambda (opnd) (operand-can-lift?-set! opnd #t))
+                      opnds))
+          opnds)))
 
     (define build-cooked-opnd
       (lambda (e)
@@ -529,7 +542,7 @@
                  [else #f])))
         ; set up to assimilate nested let/letrec/letrec* bindings.
         ; lifting job is completed by cp0-call or letrec/letrec*
-        (define (split-value e)
+        (define (split-value e can-lift?)
           (nanopass-case (Lsrc Expr) e
             [(call ,preinfo0 (case-lambda ,preinfo1 (clause (,x* ...) ,interface ,body)) ,e* ...)
              (guard (fx= interface (length e*)))
@@ -540,7 +553,8 @@
                ; further, require each RHS to be pure unless the body is pure, since it's
                ; unsound to split apart two things that can observe a side effect or two
                ; allocation operations that can be separated by a continuation grab.
-               [(if (ivory? body) (andmap simple/profile1? e*) (andmap ivory1? e*))
+               [(or can-lift? ; => `build-operands` says it's ok to lift anything past other ivory
+                    (if (ivory? body) (andmap simple/profile1? e*) (andmap ivory1? e*)))
                 ; assocate each lhs with cooked operand for corresponding rhs.  make-record-constructor-descriptor,
                 ; at least, counts on this to allow protocols to be inlined.
                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e))) x* e*)
@@ -648,7 +662,7 @@
               (let ([e0 (pending-protect opnd
                           (cp0 (operand-exp opnd) ctxt (operand-env opnd) sc (operand-wd opnd) (operand-name opnd) (operand-moi opnd)))])
                 (let-values ([(e1 eprof) (extract-profile-forms e0)])
-                  (with-values (split-value e1)
+                  (with-values (split-value e1 (operand-can-lift? opnd))
                     (lambda (lifted e)
                       (let ([e (if eprof (make-seq ctxt eprof e) e)])
                         (operand-lifted-set! opnd lifted)
@@ -1778,7 +1792,7 @@
     (define cp0-rec-let
       (lambda (seq? ids vals body ctxt env sc wd name moi)
         (with-extended-env ((env ids) (env ids #f))
-          (let ((opnds (build-operands vals env wd moi)))
+          (let ((opnds (build-operands #f vals env wd moi)))
             ; these operands will be cleared by with-extended-env
             (for-each (lambda (id opnd)
                         (prelex-operand-set! id opnd)
@@ -5253,7 +5267,7 @@
                                 xids xargs)])))]
                [else (values e args)])))
          (let-values ([(e args) (lift-let e e*)])
-           (cp0-call preinfo e (build-operands args env wd moi) ctxt env sc wd name moi)))]
+           (cp0-call preinfo e (build-operands (ivory? e) args env wd moi) ctxt env sc wd name moi)))]
       [(case-lambda ,preinfo ,cl* ...)
        (context-case ctxt
          [(value tail)

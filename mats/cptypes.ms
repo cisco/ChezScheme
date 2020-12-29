@@ -126,10 +126,10 @@
     '(let ([y (vector 1 2 3)]) (display (list y y)) #t))
   (cptypes-equivalent-expansion?
     '(vector? (let ([y (vector 1 2 3)]) (display (list y y)) y))
-    '(begin (let ([y (vector 1 2 3)]) (display (list y y)) y) #t))
+    '(let ([y (vector 1 2 3)]) (display (list y y)) #t))
   (cptypes-equivalent-expansion?
     '(vector? (let ([y (vector 1 2 3)]) (display (list y y)) (vector 4 5 6)))
-    '(begin (let ([y (vector 1 2 3)]) (display (list y y)) (vector 4 5 6)) #t))
+    '(let ([y (vector 1 2 3)]) (display (list y y)) #t))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (null? x) (display x)))
     '(lambda (x) (when (null? x) (display '()))))
