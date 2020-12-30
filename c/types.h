@@ -279,6 +279,8 @@ typedef struct _bucket_pointer_list {
 #define size_record_inst(n) ptr_align(n)
 #define unaligned_size_record_inst(n) (n)
 
+#define rtd_parent(x) INITVECTIT(RECORDDESCANCESTRY(x), 0)
+
 /* type tagging macros */
 
 #define TYPE(x,type) ((ptr)((iptr)(x) - typemod + (type)))

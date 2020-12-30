@@ -127,7 +127,7 @@
                    [(and (not (eq? x1 %zero)) (unsigned12? (- imm)))
                     (let ([u (make-tmp 'u)])
                       (seq
-                       (build-set! ,u (asm ,null-info ,(asm-sub #f) ,x1 (immediate ,imm)))
+                       (build-set! ,u (asm ,null-info ,(asm-sub #f) ,x1 (immediate ,(- imm))))
                        (return x0 u 0 type)))]
                    [else
                     (let ([u (make-tmp 'u)])
@@ -661,6 +661,10 @@
     ;; NB: use sqrt or something like that?
     [(op) '()])
 
+  (define-instruction effect (debug)
+    [(op)
+     `(asm ,info ,asm-debug)])
+
   (define-instruction effect (c-call)
     [(op (x ur))
      (let ([ulr (make-precolored-unspillable 'ulr %lr)])
@@ -705,6 +709,7 @@
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
                      asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
+                     asm-debug
                      asm-read-counter
                      asm-inc-cc-counter
                      signed9? unsigned12? aligned-offset? funkymask shifted16
@@ -937,6 +942,8 @@
   (define-op rev32  rev-op  #b10)
 
   (define-op mrs  mrs-op)
+
+  (define-op und  und-op)
 
   (define-op fadd  f-arith-op  #b0010) ; selector is at bit 12
   (define-op fsub  f-arith-op  #b0011)
@@ -1395,6 +1402,11 @@
         [8  crm]
         [5  op2]
         [0 (ax-ea-reg-code dest)])))
+
+  (define und-op
+    (lambda (op code*)
+      (emit-code (op code*)
+        [0 0])))
 
   ;; asm helpers
 
@@ -2052,6 +2064,10 @@
            (two sp (cons 'reg (car regs)) (cons 'reg (cadr regs)) (loop (cddr regs) code*))]
           [else
            (loop (cddr regs) (two sp (cons 'reg (car regs)) (cons 'reg (cadr regs)) code*))]))))
+
+  (define asm-debug
+    (lambda (code*)
+      (emit und code*)))
 
   (define asm-read-counter
     (lambda (op0 op1 crn crm op2)

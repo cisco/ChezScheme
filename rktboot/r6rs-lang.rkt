@@ -17,6 +17,7 @@
                   do-$make-record-type
                   register-rtd-name!
                   register-rtd-fields!
+                  register-rtd-ancestors!
                   s:struct-type?
                   record-predicate
                   record-accessor
@@ -563,6 +564,7 @@
                     (install-protocol! struct:name name-protocol)
                     (register-rtd-name! struct:name 'name)
                     (register-rtd-fields! struct:name 'fields-vec)
+                    (register-rtd-ancestors! struct:name super)
                     (define make-name (name-protocol maker))
                     (define . getter) ...
                     (define . setter) ...))))]))]

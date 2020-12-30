@@ -217,6 +217,8 @@
           (annotation-expression x)
           x)))
 
+  (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
+
   (let ()
     (import (nanopass) np-languages)
 
@@ -11099,23 +11101,42 @@
                       ,e-rtd))))))
           (define build-unsealed-isa?
             (lambda (e e-rtd)
-              (let ([t (make-assigned-tmp 't)] [Ltop (make-local-label 'Ltop)])
-                (bind #t (e e-rtd)
-                  (build-and
-                    (%type-check mask-typed-object type-typed-object ,e)
-                    `(let ([,t ,(%mref ,e ,(constant typed-object-type-disp))])
-                       ,(build-simple-or
-                          (%inline eq? ,t ,e-rtd)
-                          (build-and
+              (let ([t (make-tmp 't)] [a (make-tmp 'a)] [d (make-tmp 'd)])
+                (let ([known-depth (nanopass-case (L7 Expr) e-rtd
+                                     [(quote ,d) (and (record-type-descriptor? d)
+                                                      (vector-length (rtd-ancestors d)))]
+                                     [else #f])])
+                  (bind #t (e e-rtd)
+                    (build-and
+                      (%type-check mask-typed-object type-typed-object ,e)
+                      `(let ([,t ,(%mref ,e ,(constant typed-object-type-disp))])
+                         ,(build-simple-or
+                           (%inline eq? ,t ,e-rtd)
+                           (build-and
                             (%type-check mask-record type-record ,t)
-                            `(label ,Ltop
-                               (seq
-                                 (set! ,t ,(%mref ,t ,(constant record-type-parent-disp)))
-                                 ,(build-simple-or
-                                    (%inline eq? ,t ,e-rtd)
-                                    `(if ,(%inline eq? ,t ,(%constant sfalse))
-                                         ,(%constant sfalse)
-                                         (goto ,Ltop)))))))))))))
+                            `(let ([,a ,(%mref ,t ,(constant record-type-ancestry-disp))])
+                               ,(begin
+                                  ;; take advantage of being able to use the type field of a vector
+                                  ;; as a pointer offset with just shifting:
+                                  (safe-assert (zero? (constant type-vector)))
+                                  (cond
+                                    [known-depth
+                                     `(let ([,d ,(%mref ,a ,(constant vector-type-disp))])
+                                        ,(build-and
+                                          (%inline < (immediate ,(fxsll known-depth (constant vector-length-offset))) ,d)
+                                          (%inline eq? ,e-rtd ,(%mref ,a
+                                                                      ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
+                                                                      ,(fx- (constant vector-data-disp) (fx* (fx+ known-depth 1)
+                                                                                                             (constant ptr-bytes)))))))]
+                                    [else
+                                     `(let ([,d ,(%inline - ,(%mref ,a ,(constant vector-type-disp))
+                                                          ,(%mref ,(%mref ,e-rtd ,(constant record-type-ancestry-disp))
+                                                                  ,(constant vector-type-disp)))])
+                                        ,(build-and
+                                          (%inline > ,d (immediate 0))
+                                          (%inline eq? ,e-rtd ,(%mref ,a
+                                                                      ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
+                                                                      ,(fx- (constant vector-data-disp) (constant ptr-bytes))))))]))))))))))))
           (define-inline 3 record?
             [(e) (build-record? e)]
             [(e e-rtd)

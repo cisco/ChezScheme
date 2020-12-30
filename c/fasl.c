@@ -1341,7 +1341,7 @@ static IBOOL rtd_equiv(x, y) ptr x, y; {
           /* recognize `base-rtd` shape: */
           || ((RECORDINSTTYPE(x) == x)
               && (RECORDINSTTYPE(y) == y))) &&
-         RECORDDESCPARENT(x) == RECORDDESCPARENT(y) &&
+         rtd_parent(x) == rtd_parent(y) &&
          equalp(RECORDDESCPM(x), RECORDDESCPM(y)) &&
          equalp(RECORDDESCMPM(x), RECORDDESCMPM(y)) &&
          equalp(RECORDDESCFLDS(x), RECORDDESCFLDS(y)) &&

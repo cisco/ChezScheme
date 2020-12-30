@@ -11,6 +11,7 @@
 (provide do-$make-record-type
          register-rtd-name!
          register-rtd-fields!
+         register-rtd-ancestors!
          s:struct-type?
 
          $make-record-type
@@ -42,6 +43,22 @@
          csv7:record-type-field-decls
          record-writer
          $object-ref)
+
+;; Let there be records: this declaration is the root origin of
+;; #!base-rtd. From this description, #!base-rtd gets fasled in a boot
+;; file and loaded to define #!base-rtd on startup. The field offsets
+;; below don't matter, since they're fixed up for the target plaform.
+(define base-rtd-fields
+  (map vector-copy
+       '(#(fld ancestors #f scheme-object 9)
+         #(fld size #f scheme-object 17)
+         #(fld pm #f scheme-object 25)
+         #(fld mpm #f scheme-object 33)
+         #(fld name #f scheme-object 41)
+         #(fld flds #f scheme-object 49)
+         #(fld flags #f scheme-object 57)
+         #(fld uid #f scheme-object 65)
+         #(fld counts #f scheme-object 73))))
 
 (define (s:struct-type? v)
   (or (struct-type? v)
@@ -83,6 +100,7 @@
     (hash-set! rtd-extensions struct:name (apply (struct-type-make-constructor in-base-rtd) more)))
   (register-rtd-name! struct:name name)
   (register-rtd-fields! struct:name fields)
+  (register-rtd-ancestors! struct:name super)
   (when sealed? (hash-set! rtd-sealed?s struct:name #t))
   (when (or opaque?
             (and super (hash-ref rtd-opaque?s super #f)))
@@ -117,6 +135,20 @@
 (define (register-rtd-name! struct:name name)
   (hash-set! rtd-names struct:name name))
 
+(define rtd-ancestors (make-weak-hasheq))
+
+(define (register-rtd-ancestors! struct:name parent)
+  (unless (hash-ref rtd-ancestors struct:name #f)
+    (cond
+      [(not parent)
+       (hash-set! rtd-ancestors struct:name (vector #f))]
+      [(eq? parent struct:base-rtd-subtype)
+       (hash-set! rtd-ancestors struct:name (vector base-rtd #f))]
+      [else
+       (define p-vec (hash-ref rtd-ancestors parent))
+       (define vec (make-vector (+ 1 (vector-length p-vec)) parent))
+       (vector-copy! vec 1 p-vec)
+       (hash-set! rtd-ancestors struct:name vec)])))
 
 (define rtd-fields (make-weak-hasheq))
 
@@ -244,18 +276,6 @@
            (struct-type-info rtd))
          (make-struct-field-mutator set i))))
 
-(define base-rtd-fields
-  (map vector-copy
-       '(#(fld parent #f scheme-object 9)
-         #(fld size #f scheme-object 17)
-         #(fld pm #f scheme-object 25)
-         #(fld mpm #f scheme-object 33)
-         #(fld name #f scheme-object 41)
-         #(fld flds #f scheme-object 49)
-         #(fld flags #f scheme-object 57)
-         #(fld uid #f scheme-object 65)
-         #(fld counts #f scheme-object 73))))
-
 ;; If `sym/i` is an integer, it *does* count parent fields
 (define (csv7:record-field-accessor/mutator rtd sym/i mut?)
   (define (lookup-field-by-name rtd sym)
@@ -320,17 +340,22 @@
             (if (base-rtd? rtd)
                 null
                 (hash-ref rtd-fields rtd)))))]
-       [(parent)
+       [(ancestors)
         (assert-accessor)
         (lambda (rtd)
           (cond
-            [(base-rtd? rtd) #f]
+            [(base-rtd? rtd) '#(#f)]
             [else
+             (define vec (hash-ref rtd-ancestors rtd))
              (define-values (r-name init-cnt auto-cnt ref set immutables super skipped?)
                (struct-type-info rtd))
-             (if (eq? super struct:base-rtd-subtype)
-                 base-rtd
-                 super)]))]
+             (define parent
+               (if (eq? super struct:base-rtd-subtype)
+                   base-rtd
+                   super))
+             (unless (eq? parent (vector-ref vec 0))
+               (error "ancestry sanity check failed" rtd vec parent))
+             vec]))]
        [(size)
         (assert-accessor)
         (lambda (rtd)

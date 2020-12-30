@@ -370,12 +370,13 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
       if (!Ssymbolp(RECORDDESCUID(meta_rtd)))
         RECORDINSTTYPE(rtd) = RECORDDESCUID(meta_rtd);
  
-      /* fixup parent before continuing, relying on parents being earlier in `rtd`s */
-      parent_rtd = RECORDDESCPARENT(rtd);
+      /* fixup parent before continuing, relying on parents being earlier in `rtd`s;
+         we let the rest of the ancestor vector get fixed up later */
+      parent_rtd = rtd_parent(rtd);
       if (parent_rtd != Sfalse) {
         ptr parent_uid = RECORDDESCUID(parent_rtd);
         if (!Ssymbolp(parent_uid))
-          RECORDDESCPARENT(rtd) = parent_uid;
+          rtd_parent(rtd) = parent_uid;
       }
 
       new_rtd = rtd;
@@ -561,7 +562,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
                   }
                   break;
                 }
-                tf = RECORDDESCPARENT(tf);
+                tf = rtd_parent(tf);
                 if (tf == Sfalse)
                   break;
               }

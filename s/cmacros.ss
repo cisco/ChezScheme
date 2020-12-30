@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050339)
+(define-constant scheme-version #x0905033A)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1626,7 +1626,7 @@
 
 (define-primitive-structure-disps record-type type-typed-object
   ([ptr type]
-   [ptr parent]
+   [ptr ancestry] ; vector: parent at 0, grandparent at 1, etc.
    [ptr size]  ; total record size in bytes, including type tag
    [ptr pm]    ; pointer mask, where low bit corresponds to type tag
    [ptr mpm]   ; mutable-pointer mask, where low bit for type is always 0

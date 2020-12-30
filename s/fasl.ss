@@ -38,7 +38,7 @@
 ; file for cross compilation, because the offsets may be incorrect
 (define rtd-size (csv7:record-field-accessor #!base-rtd 'size))
 (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
-(define rtd-parent (csv7:record-field-accessor #!base-rtd 'parent))
+(define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
 (define rtd-name (csv7:record-field-accessor #!base-rtd 'name))
 (define rtd-uid (csv7:record-field-accessor #!base-rtd 'uid))
 (define rtd-flags (csv7:record-field-accessor #!base-rtd 'flags))

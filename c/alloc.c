@@ -783,7 +783,7 @@ ptr Srecord_type(ptr r) {
 }
 
 ptr Srecord_type_parent(ptr rtd) {
-  return RECORDDESCPARENT(rtd);
+  return rtd_parent(rtd);
 }
 
 uptr Srecord_type_size(ptr rtd) {

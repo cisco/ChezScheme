@@ -537,6 +537,7 @@
   (declare-primitive c-simple-return effect #f)
   (declare-primitive check-stack-align effect #f) ; x86
   (declare-primitive deactivate-thread effect #f) ; threaded version only
+  (declare-primitive debug effect #f) ; x86_64 and arm64
   (declare-primitive fldl effect #f) ; x86
   (declare-primitive flds effect #f) ; x86
   (declare-primitive inc-cc-counter effect #f)

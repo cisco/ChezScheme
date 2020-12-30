@@ -25,7 +25,8 @@
 ;;; include size of tag in record size OR don't include tag in record offsets
 
 (let ()
-  (define (rtd-parent x) ($object-ref 'scheme-object x (constant record-type-parent-disp)))
+  (define (rtd-ancestry x) ($object-ref 'scheme-object x (constant record-type-ancestry-disp)))
+  (define (rtd-parent x) (vector-ref (rtd-ancestry x) 0))
   (define (rtd-size x) ($object-ref 'scheme-object x (constant record-type-size-disp)))
   (define (rtd-pm x) ($object-ref 'scheme-object x (constant record-type-pm-disp)))
   (define (rtd-mpm x) ($object-ref 'scheme-object x (constant record-type-mpm-disp)))
@@ -618,10 +619,16 @@
                  (unless (eq? (rtd-size rtd) size) (squawk "different size")))
                rtd)]
             [else
-             (let ([rtd (apply #%$record base-rtd parent size pm mpm name
-                          (if (pair? flds) (cdr flds) (fx- flds 1)) flags uid #f extras)])
-               (with-tc-mutex ($sputprop uid '*rtd* rtd))
-               rtd)]))))
+             (let* ([len (if (not parent) 0 (vector-length (rtd-ancestry parent)))]
+                    [ancestry (make-vector (fx+ 1 len) parent)])
+               (let loop ([i 0])
+                 (unless (fx= i len)
+                   (vector-set! ancestry (fx+ i 1) (vector-ref (rtd-ancestry parent) i))
+                   (loop (fx+ i 1))))
+               (let ([rtd (apply #%$record base-rtd ancestry size pm mpm name
+                                 (if (pair? flds) (cdr flds) (fx- flds 1)) flags uid #f extras)])
+                 (with-tc-mutex ($sputprop uid '*rtd* rtd))
+                 rtd))]))))
 
     (set-who! $remake-rtd
       (lambda (rtd compute-field-offsets)
@@ -629,7 +636,7 @@
           (assert (not (eq? key (machine-type))))
           (or ($sgetprop uid key #f)
               (let ([base-rtd ($record-type-descriptor rtd)]
-                    [parent (rtd-parent rtd)]
+                    [ancestry (rtd-ancestry rtd)]
                     [name (rtd-name rtd)]
                     [flags (rtd-flags rtd)]
                     [flds (rtd-flds rtd)])
@@ -642,7 +649,7 @@
                                     (compute-field-offsets who
                                       (constant record-type-disp)
                                       (cons `(immutable scheme-object ,uid) fields))))])
-                  (let ([rtd (apply #%$record base-rtd parent size pm mpm name
+                  (let ([rtd (apply #%$record base-rtd ancestry size pm mpm name
                                (if (pair? flds) (cdr flds) (fx- flds 1)) flags uid #f
                                (let* ([n (length (rtd-flds ($record-type-descriptor base-rtd)))]
                                       [ls (list-tail (rtd-flds base-rtd) n)])

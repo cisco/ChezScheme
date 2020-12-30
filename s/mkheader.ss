@@ -1099,7 +1099,7 @@
         (defref RTDCOUNTSTIMESTAMP rtd-counts timestamp)
         (defref RTDCOUNTSIT rtd-counts data)
 
-        (defref RECORDDESCPARENT record-type parent)
+        (defref RECORDDESCANCESTRY record-type ancestry)
         (defref RECORDDESCSIZE record-type size)
         (defref RECORDDESCPM record-type pm)
         (defref RECORDDESCMPM record-type mpm)
