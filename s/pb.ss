@@ -214,7 +214,7 @@
   ; WARNING: do not assume that if x isn't the same as z then x is independent
   ; of z, since x might be an mref with z as it's base or index
 
-  (define-instruction value (- -/ovfl -/eq)
+  (define-instruction value (- -/ovfl -/eq -/pos)
     [(op (z ur) (x ur) (y signed16))
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-sub op) ,x ,y))]
     [(op (z ur) (x ur) (y ur))
@@ -623,6 +623,7 @@
   (define-op div   bin-op (constant pb-div))
 
   (define-op subz  signal-bin-op (constant pb-subz)) ; signals on 0 instead of overflow
+  (define-op subp  signal-bin-op (constant pb-subp)) ; signals on positive
 
   (define-op land  bin-op (constant pb-and))
   (define-op lior  bin-op (constant pb-ior))
@@ -1110,9 +1111,13 @@
     (lambda (op)
       (lambda (code* dest src0 src1)
         (Trivit (dest src0 src1)
-          (if (eq? op '-/eq)
-              (emit subz #t dest src0 src1 code*)
-              (emit sub (eq? op '-/ovfl) dest src0 src1 code*))))))
+          (cond
+            [(eq? op '-/eq)
+             (emit subz #t dest src0 src1 code*)]
+            [(eq? op '-/pos)
+             (emit subp #t dest src0 src1 code*)]
+            [else
+             (emit sub (eq? op '-/ovfl) dest src0 src1 code*)])))))
 
   (define asm-mul
     (lambda (set-cc?)
@@ -1624,5 +1629,6 @@
 
     (define-who asm-foreign-callable
       (lambda (info)
-        (sorry! who "callables are not supported"))))
+        (sorry! who "callables are not supported")
+        (values 'c-init 'c-args 'c-result 'c-return))))
 )

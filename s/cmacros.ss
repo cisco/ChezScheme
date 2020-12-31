@@ -3215,6 +3215,7 @@
     pb-mul
     pb-div
     pb-subz
+    pb-subp
     pb-and
     pb-ior
     pb-xor

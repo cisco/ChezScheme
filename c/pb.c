@@ -401,6 +401,20 @@ void S_pb_interp(ptr tc, void *bytecode) {
         flag = (r == 0);
       }
       break;
+    case pb_bin_op_pb_signal_pb_subp_pb_register:
+      {
+        iptr r = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)];
+        regs[INSTR_drr_dest(instr)] = r;
+        flag = (r > 0);
+      }
+      break;
+    case pb_bin_op_pb_signal_pb_subp_pb_immediate:
+      {
+        iptr r = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);
+        regs[INSTR_dri_dest(instr)] = r;
+        flag = (r > 0);
+      }
+      break;
     case pb_cmp_op_pb_eq_pb_register:
       flag = regs[INSTR_dr_dest(instr)] == regs[INSTR_dr_reg(instr)];
       break;

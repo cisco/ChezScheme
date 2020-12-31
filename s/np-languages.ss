@@ -591,6 +591,7 @@
   (declare-primitive +/carry value #f)
   (declare-primitive -/ovfl value #f)
   (declare-primitive -/eq value #f)
+  (declare-primitive -/pos value #f)
   (declare-primitive asmlibcall value #f)
   (declare-primitive cpuid value #t) ; x86_64 only, actually side-effects ebx/ecx/edx
   (declare-primitive fstpl value #f) ; x86 only

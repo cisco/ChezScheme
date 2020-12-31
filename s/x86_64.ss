@@ -323,7 +323,7 @@
          `(set! ,(make-live-info) ,t (asm ,info ,asm-sub ,t ,y))
          `(set! ,(make-live-info) ,z ,t)))])
 
-  (define-instruction value (-/ovfl -/eq) ; must set condition codes, so can't use lea or sub-negate
+  (define-instruction value (-/ovfl -/eq -/pos) ; must set condition codes, so can't use lea or sub-negate
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-sub ,x ,y))]
     [(op (z mem) (x zero) (y z))
@@ -2383,6 +2383,7 @@
               [(>) (i? (r? bge ble) (r? blt bgt))]
               [(>=) (i? (r? bgt blt) (r? ble bge))]
               [(overflow multiply-overflow) (i? bvc bvs)]
+              [(positive) (i? ble bgt)]
               [(carry) (i? bcc bcs)]
               ; unordered: zf,pf,cf <- 111; gt: 000; lt: 001; eq: 100
               ; reversed & inverted: !(fl< y x) = !(fl> x y) iff zf = 1 & cf = 1

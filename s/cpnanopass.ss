@@ -11101,7 +11101,7 @@
                       ,e-rtd))))))
           (define build-unsealed-isa?
             (lambda (e e-rtd)
-              (let ([t (make-tmp 't)] [a (make-tmp 'a)] [d (make-tmp 'd)])
+              (let ([t (make-tmp 't)] [a (make-tmp 'a)])
                 (let ([known-depth (nanopass-case (L7 Expr) e-rtd
                                      [(quote ,d) (and (record-type-descriptor? d)
                                                       (vector-length (rtd-ancestors d)))]
@@ -11119,24 +11119,16 @@
                                   ;; take advantage of being able to use the type field of a vector
                                   ;; as a pointer offset with just shifting:
                                   (safe-assert (zero? (constant type-vector)))
-                                  (cond
-                                    [known-depth
-                                     `(let ([,d ,(%mref ,a ,(constant vector-type-disp))])
-                                        ,(build-and
-                                          (%inline < (immediate ,(fxsll known-depth (constant vector-length-offset))) ,d)
-                                          (%inline eq? ,e-rtd ,(%mref ,a
-                                                                      ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
-                                                                      ,(fx- (constant vector-data-disp) (fx* (fx+ known-depth 1)
-                                                                                                             (constant ptr-bytes)))))))]
-                                    [else
-                                     `(let ([,d ,(%inline - ,(%mref ,a ,(constant vector-type-disp))
-                                                          ,(%mref ,(%mref ,e-rtd ,(constant record-type-ancestry-disp))
-                                                                  ,(constant vector-type-disp)))])
-                                        ,(build-and
-                                          (%inline > ,d (immediate 0))
-                                          (%inline eq? ,e-rtd ,(%mref ,a
-                                                                      ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
-                                                                      ,(fx- (constant vector-data-disp) (constant ptr-bytes))))))]))))))))))))
+                                  (bind #f ([d (%inline -/pos ,(%mref ,a ,(constant vector-type-disp))
+                                                        ,(if known-depth
+                                                             `(immediate ,(fxsll known-depth (constant vector-length-offset)))
+                                                             (%mref ,(%mref ,e-rtd ,(constant record-type-ancestry-disp))
+                                                                    ,(constant vector-type-disp))))])
+                                     `(if (inline ,(make-info-condition-code 'positive #f #t) ,%condition-code)
+                                          ,(%inline eq? ,e-rtd ,(%mref ,a
+                                                                       ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
+                                                                       ,(fx- (constant vector-data-disp) (constant ptr-bytes))))
+                                          ,(%constant sfalse))))))))))))))
           (define-inline 3 record?
             [(e) (build-record? e)]
             [(e e-rtd)

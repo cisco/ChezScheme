@@ -296,7 +296,7 @@
     [(op (z ur) (x ur) (y ur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-sub-from/ovfl ,y ,x))])
 
-  (define-instruction value (-/eq)
+  (define-instruction value (-/eq -/pos)
     [(op (z ur) (x ur) (y ur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-sub-from/eq ,y ,x))])
 
@@ -1994,7 +1994,8 @@
         [(fp<= <=) (i? (r? blt bgt) (r? bge ble))]
         [(>) (i? (r? bge ble) (r? blt bgt))]
         [(>=) (i? (r? bgt blt) (r? ble bge))]
-        [(carry multiply-overflow overflow) (i? bns bso)])
+        [(carry multiply-overflow overflow) (i? bns bso)]
+        [(positive) (i? ble bgt)])
       (let ([type (info-condition-code-type info)]
             [reversed? (info-condition-code-reversed? info)])
         (make-cgchunk info l1 l2 next-addr
