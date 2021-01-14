@@ -1,4 +1,5 @@
-BODY {background-color: #FFFFFF}
+BODY { background-color: #FFFFFF; max-width: 40rem; margin:auto }
+
 
 a:link, a:active, a:visited { color:#005568; text-decoration:underline }
 a:hover { color:white; text-decoration:underline; background:#005568 }
