@@ -2142,3 +2142,5 @@
     prim5.c, 5_3.ss, 5_3.ms
 - add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
     cpnanopass.ss
+- fix signature of generate-temporaries
+    primdata.ss primvars.ss

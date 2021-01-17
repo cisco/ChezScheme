@@ -799,7 +799,7 @@
   (free-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
   (syntax->datum [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
   (datum->syntax [sig [(identifier ptr) -> (ptr)]] [flags pure mifoldable discard])
-  (generate-temporaries [sig [(list) -> (list)]] [flags alloc])
+  (generate-temporaries [sig [(ptr) -> (list)]] [flags alloc]) ; the argument can be a list, a syntax with a list or an annotation
   (syntax-violation [sig [(who string ptr) (who string ptr ptr) -> (bottom)]] [flags abort-op])
 )
 
