@@ -741,7 +741,7 @@ static ptr s_ee_get_screen_size(void) {
   static IBOOL tried_resize = 0;
  /* attempt to work around 10.6 tty driver / xterm bug */
   if (ee_rows == 0 && ee_cols == 0 && !tried_resize) {
-    system("exec /usr/X11/bin/resize >& /dev/null");
+    SYSTEM("exec /usr/X11/bin/resize >& /dev/null");
     tried_resize = 1;
     return s_ee_get_screen_size();
   }

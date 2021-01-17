@@ -393,8 +393,8 @@ extern uptr S_maxmembytes PROTO((void));
 extern void S_resetmaxmembytes PROTO((void));
 extern void S_adjustmembytes PROTO((iptr amt));
 extern void S_move_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
-extern void S_thread_start_code_write(void);
-extern void S_thread_end_code_write(void);
+extern void S_thread_start_code_write PROTO((ptr tc, IGEN maxg, IBOOL current, void *hint));
+extern void S_thread_end_code_write PROTO((ptr tc, IGEN maxg, IBOOL current, void *hint));
 
 /* stats.c */
 extern void S_stats_init PROTO((void));

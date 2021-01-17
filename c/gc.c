@@ -870,7 +870,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
     GET_REAL_TIME(astart);
 
-    S_thread_start_code_write();
+    S_thread_start_code_write(tc, MAX_TG, 0, NULL);
 
    /* flush instruction cache: effectively clear_code_mod but safer */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
@@ -1679,7 +1679,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
     if (MAX_CG >= S_G.min_free_gen) S_free_chunks();
 
     S_flush_instruction_cache(tc);
-    S_thread_end_code_write();
+    S_thread_end_code_write(tc, MAX_TG, 0, NULL);
 
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
     /* mark dirty those newspace cards to which we've added wrong-way pointers */
@@ -2950,7 +2950,9 @@ static void setup_sweepers(thread_gc *tgc) {
 static s_thread_rv_t start_sweeper(void *_sweeper) {
   gc_sweeper *sweeper = _sweeper;
 
-  S_thread_start_code_write(); /* never ended */
+#if !defined(WRITE_XOR_EXECUTE_CODE)
+  S_thread_start_code_write((ptr)0, static_generation, 0, NULL); /* never ended */
+#endif
 
   (void)s_thread_mutex_lock(&sweep_mutex);
   while (1) {

@@ -109,7 +109,7 @@ static void main_init() {
       VIRTREG(tc, i) = FIX(0);
     }
 
-    S_thread_start_code_write();
+    S_thread_start_code_write(tc, 0, 0, NULL);
     p = S_code(tc, type_code, size_rp_header);
     CODERELOC(p) = S_relocation_table(0);
     CODENAME(p) = Sfalse;
@@ -123,7 +123,7 @@ static void main_init() {
         (uptr)TO_PTR(&RPHEADERTOPLINK(TO_PTR(&CODEIT(p, 0)))) - (uptr)p;
     S_protect(&S_G.dummy_code_object);
     S_G.dummy_code_object = p;
-    S_thread_end_code_write();
+    S_thread_end_code_write(tc, 0, 0, NULL);
 
     S_protect(&S_G.error_invoke_code_object);
     S_G.error_invoke_code_object = Snil;

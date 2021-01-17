@@ -31,7 +31,7 @@ compiler to build a Chez Scheme compiler. The compiler and makefiles
 support cross-compilation, so you can work from an already supported
 host to cross-compile the boot files and produce the header files for
 a new platform. In particular, the `pb` (portable bytecode) machine
-type can run on any supported hardward and operating system, so having
+type can run on any supported hardware and operating system, so having
 `pb` boot files is one way to get started in a new environment.
 
 # Build System

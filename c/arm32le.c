@@ -19,6 +19,10 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#ifdef TARGET_OS_IPHONE
+# include <libkern/OSCacheControl.h>
+#endif
+
 /* we don't count on having the right value for correctness,
  * but the right value will give maximum efficiency */
 #define DEFAULT_L1_MAX_CACHE_LINE_SIZE 32
@@ -35,7 +39,11 @@ void S_doflush(uptr start, uptr end) {
   printf("  doflush(%x, %x)\n", start, end); fflush(stdout);
 #endif
 
+#ifdef TARGET_OS_IPHONE
+  sys_icache_invalidate((void *)start, (char *)end-(char *)start);
+#else
   __clear_cache((char *)start, (char *)end);
+#endif
 }
 
 void S_machine_init() {

@@ -16,7 +16,7 @@
 m ?= arm64osx
 Cpu ?= AARCH64
 
-mdinclude = -I/opt/X11/include/ 
+mdinclude = -I/opt/X11/include/
 o = o
 mdsrc ?= arm32le.c
 mdobj ?= arm32le.o
@@ -39,7 +39,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ./configure)
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
-	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" ${MAKE} liblz4.a)
+	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${MAKE} liblz4.a)
