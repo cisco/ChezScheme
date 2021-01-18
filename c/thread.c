@@ -93,6 +93,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
           tgc->next_loc[g][s] = (ptr)0;
           tgc->bytes_left[g][s] = 0;
           tgc->sweep_loc[g][s] = (ptr)0;
+          tgc->sweep_next[g][s] = NULL;
         }
         tgc->bitmask_overhead[g] = 0;
       }

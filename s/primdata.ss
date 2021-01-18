@@ -1238,7 +1238,7 @@
   (compile-script [sig [(pathname) (pathname pathname) (pathname pathname sub-symbol) -> (void)]] [flags true])
   (compile-time-value? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (compile-time-value-value [sig [(compile-time-value) -> (ptr)]] [flags pure mifoldable discard])
-  (compile-to-file [sig [(list pathname) (list pathname maybe-sfd) -> (void/list)]] [flags true])
+  (compile-to-file [sig [(list pathname) (list pathname maybe-sfd) (list pathname maybe-sfd maybe-force-host-out?) -> (void/list)]] [flags true])
   (compile-to-port [sig [(list binary-output-port) (list binary-output-port maybe-sfd) (list binary-output-port maybe-sfd maybe-binary-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port ptr) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port ptr ptr) -> (void/list)]] [flags true])
   (compile-whole-program [sig [(string string) (string string ptr) -> (void)]] [flags])
   (compile-whole-library [sig [(string string) -> (void)]] [flags])

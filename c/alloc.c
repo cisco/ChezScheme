@@ -284,9 +284,6 @@ void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
   close_off_segment(tgc, tgc->next_loc[g][s], tgc->base_loc[g][s], tgc->sweep_loc[g][s], s, g);
 
   tgc->base_loc[g][s] = (ptr)0;
-#if defined(WRITE_XOR_EXECUTE_CODE)
-  tgc->base_loc[g][s] = 0;
-#endif
   tgc->bytes_left[g][s] = 0;
   tgc->next_loc[g][s] = (ptr)0;
   tgc->sweep_loc[g][s] = (ptr)0;

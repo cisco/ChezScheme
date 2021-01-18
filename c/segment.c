@@ -659,10 +659,12 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
     if (!on) {
       while ((sip = tgc->sweep_next[0][space_code]) != NULL) {
         tgc->sweep_next[0][space_code] = sip->sweep_next;
-        addr = sip->sweep_start;
-        bytes = sip->sweep_bytes;
-        if (mprotect(addr, bytes, flags) != 0) {
-          S_error_abort("failed to protect recent allocation segments");
+        if (sip->generation == 0) {
+          addr = sip->sweep_start;
+          bytes = sip->sweep_bytes;
+          if (mprotect(addr, bytes, flags) != 0) {
+            S_error_abort("failed to protect recent allocation segments");
+          }
         }
       }
     }

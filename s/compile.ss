@@ -2227,17 +2227,20 @@
   (set-who! compile-to-file
     (rec compile-to-file
       (case-lambda
-        [(sexpr* out) (compile-to-file sexpr* out #f)]
-        [(sexpr* out sfd)
+        [(sexpr* out) (compile-to-file sexpr* out #f #f)]
+        [(sexpr* out sfd) (compile-to-file sexpr* out sfd #f)]
+        [(sexpr* out sfd force-host-out?)
          (unless (list? sexpr*) ($oops who "~s is not a proper list" sexpr*))
          (unless (string? out) ($oops who "~s is not a string" out))
          (when sfd (unless (source-file-descriptor? sfd) ($oops who "~s is not a source-file descriptor or #f" sfd)))
+         (unless (boolean? force-host-out?) ($oops who "~s is not a boolean" force-host-out?))
          (let ([library? (and (= (length sexpr*) 1) (pair? (car sexpr*)) (eq? (caar sexpr*) 'library))]
                [program? (and (= (length sexpr*) 1) (pair? (car sexpr*)) (eq? (caar sexpr*) 'top-level-program))])
            (define (go)
              (do-compile-to-file who out
                (and library?
-                    (not (eq? (constant machine-type-name) (machine-type)))
+                    (or force-host-out?
+                        (not (eq? (constant machine-type-name) (machine-type))))
                     (format "~a.~s" (path-root out) (machine-type)))
                (constant machine-type-name)
                sfd

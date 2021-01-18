@@ -426,6 +426,7 @@
               [(list-of-symbols) '(a b c) '("a") #f]
               [(maybe-binary-output-port) *binary-output-port *binary-input-port (current-output-port)]
               [(maybe-char) #\a 0]
+              [(maybe-force-host-out?) #t 0]
               [(maybe-pathname) "a" 'a]
               [(maybe-procedure) values 0]
               [(maybe-rtd) *rtd *record ""]
