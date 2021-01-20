@@ -558,11 +558,14 @@
 
 (mat cptypes-type-implies?
   (test-chain '((lambda (x) (eq? x 0)) fixnum? #;exact-integer? real? number?))
+  (test-chain* '((lambda (x) (or (eq? x 0) (eq? x 10))) fixnum? #;exact-integer? real? number?))
   (test-chain* '(fixnum? integer? real?))
   (test-chain* '(fixnum? exact? number?)) ; exact? may raise an error
   (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
   (test-chain* '((lambda (x) (eq? x (expt 256 100))) bignum? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
+  (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
+  (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
   (test-chain '(gensym? symbol?))
   (test-chain '(not boolean?))
   (test-chain '((lambda (x) (eq? x #t)) boolean?))
