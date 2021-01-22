@@ -96,7 +96,8 @@
                expand
                compile
                error
-               format))))
+               format
+               make-variable-transformer))))
 
 (reset-toplevels)
 

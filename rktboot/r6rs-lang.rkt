@@ -59,6 +59,7 @@
                      [s:quasisyntax quasisyntax]
                      [s:define-syntax define-syntax]
                      [s:syntax->datum syntax->datum]
+                     [make-set!-transformer make-variable-transformer]
                      [s:if if]
                      [lambda trace-lambda]
                      [define-syntax trace-define-syntax]
