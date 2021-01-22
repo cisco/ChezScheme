@@ -16,7 +16,6 @@
 m ?= arm64osx
 Cpu ?= AARCH64
 
-mdinclude = -I/opt/X11/include/
 o = o
 mdsrc ?= arm32le.c
 mdobj ?= arm32le.o

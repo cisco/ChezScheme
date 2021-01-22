@@ -16,7 +16,6 @@
 m ?= a6osx
 Cpu ?= X86_64
 
-mdinclude = -I/opt/X11/include/ 
 o = o
 mdsrc ?= i3le.c
 mdobj ?= i3le.o

@@ -16,7 +16,6 @@
 m ?= i3osx
 Cpu ?= I386
 
-mdinclude = -I/opt/X11/include/ 
 o = o
 mdsrc ?= i3le.c
 mdobj ?= i3le.o

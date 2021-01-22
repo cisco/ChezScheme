@@ -352,7 +352,10 @@ typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
 #ifndef DISABLE_X11
-#define LIBX11 "/usr/X11R6/lib/libX11.dylib"
+# define DISABLE_X11
+#endif
+#ifndef DISABLE_X11
+# define LIBX11 "/usr/X11R6/lib/libX11.dylib"
 #endif
 #define _DARWIN_USE_64_BIT_INODE
 #define SECATIME(sb) (sb).st_atimespec.tv_sec
