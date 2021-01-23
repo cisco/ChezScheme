@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050501)
+(define-constant scheme-version #x09050502)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1545,6 +1545,7 @@
    [xptr ts]
    [xptr td]
    [xptr real_eap]
+   [xptr save1]
    [ptr virtual-registers (constant virtual-register-count)]
    [ptr guardian-entries]
    [ptr cchain]

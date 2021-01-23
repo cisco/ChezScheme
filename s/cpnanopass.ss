@@ -496,6 +496,7 @@
              [(%trap) (constant tc-trap-disp)]
              [(%xp) (constant tc-xp-disp)]
              [(%yp) (constant tc-yp-disp)]
+             [(%save1) (constant tc-save1-disp)]
              [else #f])])))
 
     (define-syntax define-reserved-registers
@@ -3516,20 +3517,6 @@
            (if (real-register? (datum reg))
                #'reg
                (with-implicit (k %mref) #`(%mref ,%tc ,(tc-disp reg))))])))
-
-    (define-syntax ref-reg-list
-      (lambda (x)
-        (syntax-case x ()
-          [(k ?reg ...)
-           (fold-right
-            (lambda (reg ref*)
-              (cond
-                [(real-register? (syntax->datum reg))
-                 #`(cons #,reg #,ref*)]
-                [(memq (syntax->datum reg) '(%ac0 %ac1 %sfp %cp %esp %ap %eap %trap %xp %yp))
-                 (with-implicit (k ref-reg) #`(cons (ref-reg #,reg) #,ref*))]
-                [else ref*]))
-            #''() #'(?reg ...))])))
 
     ;; After the `np-expand-primitives` pass, some expression produce
     ;; double (i.e., floating-point) values instead of pointer values.
@@ -12479,13 +12466,13 @@
                      [ref-tmpreg* (with-output-language (L13 Lvalue)
                                     ;; Does not have to be in the same order as `tmp-reg*`,
                                     ;; but everything here must be in `tmp-reg*`
-                                    (ref-reg-list %ac1 %yp %save1))]
+                                    (list (ref-reg %ac1) (ref-reg %yp) (ref-reg %save1)))]
                      [save-reg* (fold-left (lambda (reg* r)
                                              (cond
                                                [(memq r reg*) reg*]
                                                [(memq r reify-cc-modify-reg*) (cons r reg*)]
                                                [(memq r tmp-reg*)
-                                                ($oops who "reify-cc-save live register conflicts ~s" reg*)]
+                                                ($oops who "reify-cc-save live register conflicts ~s ~s" r tmp-reg*)]
                                                [else reg*]))
                                            '() live-reg*)])
                 (define (ref-tmp-reg i)
