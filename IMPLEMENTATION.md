@@ -985,8 +985,8 @@ machine-specific linking dierctives can appear. In the case of
 address), `arm32-call` (call an asolute address while setting the link
 register), and a`arm32-jump` (jump to an asolute address). These are
 turned into relocation entries associated with compiled code by steps
-in "compile.ss". Relocaiton entires are used when loding an GCing with
-update routines implemented in "fasl.c".
+in "compile.ss". Relocation entries are used when loading and GCing
+with update routines implemented in "fasl.c".
 
 Typically, a linking directive is written just after some code that is
 generated as installing a dummy value, and theen the update routine in

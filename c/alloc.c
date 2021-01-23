@@ -36,6 +36,7 @@ void S_alloc_init() {
               S_G.main_thread_gc.base_loc[g][s] = FIX(0);
               S_G.main_thread_gc.next_loc[g][s] = FIX(0);
               S_G.main_thread_gc.bytes_left[g][s] = 0;
+              S_G.main_thread_gc.sweep_next[g][s] = NULL;
               S_G.bytes_of_space[g][s] = 0;
             }
         }
@@ -287,6 +288,7 @@ void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
   tgc->bytes_left[g][s] = 0;
   tgc->next_loc[g][s] = (ptr)0;
   tgc->sweep_loc[g][s] = (ptr)0;
+  tgc->sweep_next[g][s] = NULL;
 }
 
 /* S_reset_allocation_pointer is always called with allocation mutex

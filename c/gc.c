@@ -126,7 +126,7 @@
    Parallel mode runs `sweep_generation` concurrently in multiple
    sweeper threads. It relies on a number of invariants:
 
-    * There are no attempts to take tc_mutex suring sweeping. To the
+    * There are no attempts to take tc_mutex during sweeping. To the
       degree that locking is needed (e.g., to allocate new segments),
       the allocation mutex is used. No other locks can be taken while
       that one is held.
@@ -167,7 +167,7 @@
 
     * Normally, a sweeper that encounters a remote reference can
       continue sweeping and eventually register the remote re-sweep.
-      An object is swept by only one sweeper at a time; if mmultiple
+      An object is swept by only one sweeper at a time; if multiple
       remote references to different sweepers are discovered in an
       object, it is sent to only one of the remote sweepers, and that
       sweeper will eventually send on the object to the other sweeper.
@@ -1907,7 +1907,7 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
     for (from_g = MIN_TG; from_g <= MAX_TG; from_g += 1) {
 
       sweep_space(space_impure, from_g, {
-          /* only pairs in theses spaces in backreference mode */
+          /* only pairs in these spaces in backreference mode */
           FLUSH_REMOTE_BLOCK
           SET_BACKREFERENCE(TYPE(TO_PTR(pp), type_pair));
           relocate_impure_help(pp, p, from_g);

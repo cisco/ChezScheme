@@ -579,12 +579,11 @@ static void contract_segment_table(uptr base, uptr end) {
    Scheme rule that a foreign thread is allowed to invoke a callback
    (as long as the callback is immobile/locked) at any time --- even,
    say, while Scheme is collecting garbage and needs to write to
-   executable pages.  However, on platforms where such a disposition
-   is enforced (eg. iOS), we provide a best-effort implementation that
-   flips pages between W and X for the minimal set of segments
-   possible (depending on the context) in an effort to minimize the
-   chances of a page being flipped while a thread is executing code
-   off of it.
+   executable pages.  However, on platforms where W^X is enforced
+   (eg. iOS), we provide a best-effort implementation that flips pages
+   between W and X for the minimal set of segments possible (depending
+   on the context) in an effort to minimize the chances of a page
+   being flipped while a thread is executing code off of it.
 */
 
 void S_thread_start_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current, WX_UNUSED void *hint) {
@@ -659,12 +658,10 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
     if (!on) {
       while ((sip = tgc->sweep_next[0][space_code]) != NULL) {
         tgc->sweep_next[0][space_code] = sip->sweep_next;
-        if (sip->generation == 0) {
-          addr = sip->sweep_start;
-          bytes = sip->sweep_bytes;
-          if (mprotect(addr, bytes, flags) != 0) {
-            S_error_abort("failed to protect recent allocation segments");
-          }
+        addr = sip->sweep_start;
+        bytes = sip->sweep_bytes;
+        if (mprotect(addr, bytes, flags) != 0) {
+          S_error_abort("failed to protect recent allocation segments");
         }
       }
     }
