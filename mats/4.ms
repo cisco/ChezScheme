@@ -3808,6 +3808,19 @@
                     (lambda () (set! did (cons 'out did))))]
                [else did]))))
 
+  ;; regression test to make sure the compiler doesn't run out of
+  ;; registers:
+  (procedure? (lambda (f a b c)
+                (#3%call-with-values
+                 (lambda ()
+                   (#3%call-with-values
+                    (lambda ()
+                      (call-setting-continuation-attachment
+                       1024
+                       (lambda ()
+                         (#3%$app f a b c))))
+                    fx+/carry))
+                 f)))
 )
 
 ;;; section 4-7:

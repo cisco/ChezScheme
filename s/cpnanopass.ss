@@ -3517,6 +3517,20 @@
                #'reg
                (with-implicit (k %mref) #`(%mref ,%tc ,(tc-disp reg))))])))
 
+    (define-syntax ref-reg-list
+      (lambda (x)
+        (syntax-case x ()
+          [(k ?reg ...)
+           (fold-right
+            (lambda (reg ref*)
+              (cond
+                [(real-register? (syntax->datum reg))
+                 #`(cons #,reg #,ref*)]
+                [(memq (syntax->datum reg) '(%ac0 %ac1 %sfp %cp %esp %ap %eap %trap %xp %yp))
+                 (with-implicit (k ref-reg) #`(cons (ref-reg #,reg) #,ref*))]
+                [else ref*]))
+            #''() #'(?reg ...))])))
+
     ;; After the `np-expand-primitives` pass, some expression produce
     ;; double (i.e., floating-point) values instead of pointer values.
     ;; Those expression results always flow to an `inline` primitive
@@ -12459,9 +12473,13 @@
               ;; Save and restore any live registers that may be used by the `reify-1cc` instrinsic.
               ;; Since we can't use temporaries at this point --- %sfp is already moved --- manually
               ;; allocate a few registers (that may not be real registers) and hope that we
-              ;; have enough.
+              ;; have enough. On a platform that may need an extra register, define `%save1`.
               (let* ([reify-cc-modify-reg* (intrinsic-modify-reg* reify-1cc)]
-                     [tmp-reg* (reg-list %ac1 %yp)]
+                     [tmp-reg* (reg-list %ac1 %yp %save1)]
+                     [ref-tmpreg* (with-output-language (L13 Lvalue)
+                                    ;; Does not have to be in the same order as `tmp-reg*`,
+                                    ;; but everything here must be in `tmp-reg*`
+                                    (ref-reg-list %ac1 %yp %save1))]
                      [save-reg* (fold-left (lambda (reg* r)
                                              (cond
                                                [(memq r reg*) reg*]
@@ -12470,6 +12488,12 @@
                                                 ($oops who "reify-cc-save live register conflicts ~s" reg*)]
                                                [else reg*]))
                                            '() live-reg*)])
+                (define (ref-tmp-reg i)
+                  (let loop ([i i] [ref-tmpreg* ref-tmpreg*])
+                    (cond
+                      [(null? ref-tmpreg*) ($oops who "reify-cc-save too many live registers ~s" save-reg*)]
+                      [(fx= i 0) (car ref-tmpreg*)]
+                      [else (loop (fx- i 1) (cdr ref-tmpreg*))])))
                 (safe-assert (andmap (lambda (tmp-reg) (not (memq tmp-reg reify-cc-modify-reg*))) tmp-reg*))
                 (with-output-language (L13 Effect)
                   (let loop ([save-reg* save-reg*] [i 0])
@@ -12477,14 +12501,9 @@
                       [(null? save-reg*) (with-saved-ret-reg e)]
                       [else
                        (%seq
-                        ,(case i
-                           [(0) `(set! ,(ref-reg %ac1) ,(car save-reg*))]
-                           [(1) `(set! ,(ref-reg %yp) ,(car save-reg*))]
-                           [else ($oops who "reify-cc-save too many live reigsters ~s" save-reg*)])
+                        (set! ,(ref-tmp-reg i) ,(car save-reg*))
                         ,(loop (cdr save-reg*) (fx+ i 1))
-                        ,(case i
-                           [(0) `(set! ,(car save-reg*) ,(ref-reg %ac1))]
-                           [(1) `(set! ,(car save-reg*) ,(ref-reg %yp))]))]))))))
+                        (set! ,(car save-reg*) ,(ref-tmp-reg i)))]))))))
           (define build-call
             (with-output-language (L13 Tail)
               (case-lambda
