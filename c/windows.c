@@ -255,8 +255,8 @@ static ptr s_ErrorStringImp(DWORD dwMessageId, const char *lpcDefault) {
         } else {
             /* ...otherwise, use the error code in hexadecimal. */
             char buf[(sizeof(dwMessageId) * 2) + 3];
-            int n = snprintf(buf, sizeof(buf), "0x%x", dwMessageId);
-            if (n < sizeof(buf))
+            int n = snprintf(buf, sizeof(buf), "0x%lx", dwMessageId);
+            if ((unsigned)n < sizeof(buf))
                 return Sstring_utf8(buf, n);
             else
                 return Sstring("??");
