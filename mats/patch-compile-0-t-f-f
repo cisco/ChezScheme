@@ -171,8 +171,8 @@
   5_2.mo:Expected error in mat c....r-errors: "cddddr: incorrect list structure (a . b)".
 ! 5_2.mo:Expected error in mat list*: "incorrect argument count in call (list*)".
 ! 5_2.mo:Expected error in mat cons*: "incorrect argument count in call (cons*)".
-  5_2.mo:Expected error in mat list-ref: "list-ref: a is not a proper list".
-  5_2.mo:Expected error in mat list-ref: "list-ref: (a b . c) is not a proper list".
+  5_2.mo:Expected error in mat list-ref: "list-ref: index 0 reaches a non-pair in a".
+  5_2.mo:Expected error in mat list-ref: "list-ref: index 4 reaches a non-pair in (a b . c)".
   5_2.mo:Expected error in mat list-ref: "list-ref: index 4 is out of range for list (a b)".
 --- 693,700 ----
   5_2.mo:Expected error in mat c....r-errors: "cddadr: incorrect list structure (a . b)".
@@ -180,8 +180,8 @@
   5_2.mo:Expected error in mat c....r-errors: "cddddr: incorrect list structure (a . b)".
 ! 5_2.mo:Expected error in mat list*: "incorrect number of arguments -1 to #<procedure list*>".
 ! 5_2.mo:Expected error in mat cons*: "incorrect number of arguments -1 to #<procedure cons*>".
-  5_2.mo:Expected error in mat list-ref: "list-ref: a is not a proper list".
-  5_2.mo:Expected error in mat list-ref: "list-ref: (a b . c) is not a proper list".
+  5_2.mo:Expected error in mat list-ref: "list-ref: index 0 reaches a non-pair in a".
+  5_2.mo:Expected error in mat list-ref: "list-ref: index 4 reaches a non-pair in (a b . c)".
   5_2.mo:Expected error in mat list-ref: "list-ref: index 4 is out of range for list (a b)".
 ***************
 *** 781,793 ****

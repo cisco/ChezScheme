@@ -80,6 +80,9 @@
    (define index-range-error
       (lambda (who ls n)
          ($oops who "index ~s is out of range for list ~s" n ls)))
+   (define index-pair-error
+      (lambda (who ls n)
+         ($oops who "index ~s reaches a non-pair in ~s" n ls)))
    (define index-type-error
       (lambda (who n)
          ($oops who "index ~s is not an exact nonnegative integer" n)))
@@ -87,7 +90,7 @@
       (lambda (who tail ls n)
          (if (null? tail)
              (index-range-error who ls n)
-             (improper-list-error who ls))))
+             (index-pair-error who ls n))))
    (define list-length
      (lambda (ls who)
        (let loop ([hare ls] [i 0])

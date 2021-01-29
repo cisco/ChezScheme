@@ -695,46 +695,46 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_2.mo:Expected error in mat c....r-errors: "cddddr: incorrect list structure (a . b)".
 5_2.mo:Expected error in mat list*: "incorrect argument count in call (list*)".
 5_2.mo:Expected error in mat cons*: "incorrect argument count in call (cons*)".
-5_2.mo:Expected error in mat list-ref: "list-ref: a is not a proper list".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 0 reaches a non-pair in a".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 4 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 4 is out of range for list (a b)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 4 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 4 is out of range for list (a b c d)".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b c . e) is not a proper list".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b c d . e) is not a proper list".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 4 reaches a non-pair in (a b c . e)".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 4 reaches a non-pair in (a b c d . e)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 5 is out of range for list (a b c d)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 5 is out of range for list (a b c d e)".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b c d e . f) is not a proper list".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 5 reaches a non-pair in (a b c d e . f)".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 10000 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 10000 is out of range for list (a b c)".
-5_2.mo:Expected error in mat list-ref: "list-ref: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-ref: "list-ref: index 444444444444444444444444444444444444444444 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index 444444444444444444444444444444444444444444 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-ref: "list-ref: index -1 is not an exact nonnegative integer".
 5_2.mo:Expected error in mat list-ref: "list-ref: index -4444444444444444444444 is not an exact nonnegative integer".
 5_2.mo:Expected error in mat list-ref: "list-ref: index a is not an exact nonnegative integer".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b . c) is not a proper list".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b c . d) is not a proper list".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b . c) is not a proper list".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b c . d) is not a proper list".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b c d . e) is not a proper list".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 4 reaches a non-pair in (a b . c)".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 4 reaches a non-pair in (a b c . d)".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 5 reaches a non-pair in (a b . c)".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 5 reaches a non-pair in (a b c . d)".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 5 reaches a non-pair in (a b c d . e)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 4 is out of range for list (a)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 4 is out of range for list (a b)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 4 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 5 is out of range for list (a b)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 5 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 5 is out of range for list (a b c d)".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 10000 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 10000 is out of range for list (a b c)".
-5_2.mo:Expected error in mat list-tail: "list-tail: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-tail: "list-tail: index 444444444444444444444444444444444444444444 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index 444444444444444444444444444444444444444444 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-tail: "list-tail: index -1 is not an exact nonnegative integer".
 5_2.mo:Expected error in mat list-tail: "list-tail: index -4444444444444444444444 is not an exact nonnegative integer".
 5_2.mo:Expected error in mat list-tail: "list-tail: index a is not an exact nonnegative integer".
-5_2.mo:Expected error in mat list-head: "list-head: (a . b) is not a proper list".
-5_2.mo:Expected error in mat list-head: "list-head: (a b . c) is not a proper list".
-5_2.mo:Expected error in mat list-head: "list-head: (a b . c) is not a proper list".
-5_2.mo:Expected error in mat list-head: "list-head: (a b c . d) is not a proper list".
-5_2.mo:Expected error in mat list-head: "list-head: (a b . c) is not a proper list".
+5_2.mo:Expected error in mat list-head: "list-head: index 3 reaches a non-pair in (a . b)".
+5_2.mo:Expected error in mat list-head: "list-head: index 3 reaches a non-pair in (a b . c)".
+5_2.mo:Expected error in mat list-head: "list-head: index 4 reaches a non-pair in (a b . c)".
+5_2.mo:Expected error in mat list-head: "list-head: index 4 reaches a non-pair in (a b c . d)".
+5_2.mo:Expected error in mat list-head: "list-head: index 10000 reaches a non-pair in (a b . c)".
 5_2.mo:Expected error in mat list-head: "list-head: index 4 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-head: "list-head: index 5 is out of range for list (a b c)".
 5_2.mo:Expected error in mat list-head: "list-head: index 5 is out of range for list (a b c d)".
