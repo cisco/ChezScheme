@@ -4097,22 +4097,26 @@
               ,(%inline sll ,e
                  (immediate ,(fx- (constant char-data-offset) (constant fixnum-offset))))
               ,(%constant type-char))))
+        (define need-store-fence?
+          (if-feature pthreads
+	     (constant-case architecture
+               [(arm32 arm64) #t]
+               [else #f])
+             #f))
 	(define add-store-fence
           ;; A store--store fence should be good enough for safety on a platform that
           ;; orders load dependencies (which is anything except Alpha)
 	  (lambda (e)
-            (if-feature pthreads
-	      (constant-case architecture
-	        [(arm32 arm64) `(seq ,(%inline store-store-fence) ,e)]
-                [else e])
-              e)))
+            (if need-store-fence?
+                `(seq ,(%inline store-store-fence) ,e)
+                e)))
         (define build-dirty-store
           (case-lambda
             [(base offset e) (build-dirty-store base %zero offset e)]
             [(base index offset e) (build-dirty-store base index offset e
                                      (lambda (base index offset e) `(set! ,(%mref ,base ,index ,offset) ,e))
-                                     (lambda (s r) (add-store-fence `(seq ,s ,r))))]
-            [(base index offset e build-assign build-barrier-seq)
+                                     (lambda (s r) `(seq ,s ,r)))]
+            [(base index offset e build-assign build-remember-seq)
              (nanopass-case (L7 Expr) e
                [(call ,info ,mdcl ,pr ,e)
                 (guard (eq? (primref-name pr) '$immediate))
@@ -4135,17 +4139,30 @@
                           (bind #f ([e e])
                             ; eval a second so the address is not live across any calls
                             (bind #t ([a a])
-                              (build-barrier-seq
-                               (build-assign a %zero 0 e)
-                               (%inline remember ,a))))
+                              (add-store-fence
+                               (build-remember-seq
+                                (build-assign a %zero 0 e)
+                                (%inline remember ,a)))))
                           (bind #t ([e e])
                             ; eval a second so the address is not live across any calls
                             (bind #t ([a a])
-			      (build-barrier-seq
-                               (build-assign a %zero 0 e)
-                               `(if ,(%type-check mask-fixnum type-fixnum ,e)
-                                    ,(%constant svoid)
-                                    ,(%inline remember ,a))))))))])]))
+                              (if need-store-fence?
+                                  ;; Fence needs to be before store, so duplicate
+                                  ;; store instruction to lift out fixnum check; this
+                                  ;; appears to be worthwhile on the Apple M1 to avoid
+                                  ;; tighly interleaved writes and fences
+                                  `(if ,(%type-check mask-fixnum type-fixnum ,e)
+                                       ,(build-assign a %zero 0 e)
+                                       ,(add-store-fence
+			                 (build-remember-seq
+                                          (build-assign a %zero 0 e)
+                                          (%inline remember ,a))))
+                                  ;; Generate one copy of store instruction
+			          (build-remember-seq
+                                   (build-assign a %zero 0 e)
+                                   `(if ,(%type-check mask-fixnum type-fixnum ,e)
+                                        ,(%constant svoid)
+                                        ,(%inline remember ,a)))))))))])]))
         (define make-build-cas
           (lambda (old-v)
             (lambda (base index offset v)
@@ -4154,10 +4171,9 @@
                 (inline ,(make-info-condition-code 'eq? #f #t) ,%condition-code)))))
         (define build-cas-seq
           (lambda (cas remember)
-	    (add-store-fence
-             `(if ,cas
-                  (seq ,remember ,(%constant strue))
-                  ,(%constant sfalse)))))
+            `(if ,cas
+                 (seq ,remember ,(%constant strue))
+                 ,(%constant sfalse))))
         (define build-$record
           (lambda (tag args)
             (bind #f (tag)
