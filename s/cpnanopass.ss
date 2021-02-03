@@ -3842,6 +3842,15 @@
                   (values (cons e e*)
                     (lambda (body)
                       (dobind (dobind* body))))))))
+        (define dirty-store-binder
+          (lambda (multiple-ref? type e)
+            (nanopass-case (L7 Expr) e
+              [(call ,info ,mdcl ,pr ,e)
+               (guard (eq? (primref-name pr) '$immediate))
+               (let-values ([(t dobind) (binder multiple-ref? type e)])
+                 (values `(call ,info ,mdcl ,pr ,t) dobind))]
+              [else
+               (binder multiple-ref? type e)])))
         (define-syntax $bind
           (lambda (x)
             (syntax-case x ()
@@ -3872,6 +3881,10 @@
              ($bind list-binder multiple-ref? type (b ...) e)]
             [(_ multiple-ref? (b ...) e)
              ($bind list-binder multiple-ref? ptr (b ...) e)]))
+        (define-syntax dirty-store-bind
+          (syntax-rules ()
+            [(_ multiple-ref? (b ...) e)
+             ($bind dirty-store-binder multiple-ref? ptr (b ...) e)]))
         (define lift-fp-unboxed
           (lambda (k)
             (lambda (e)
@@ -4100,34 +4113,39 @@
                                      (lambda (base index offset e) `(set! ,(%mref ,base ,index ,offset) ,e))
                                      (lambda (s r) (add-store-fence `(seq ,s ,r))))]
             [(base index offset e build-assign build-barrier-seq)
-             (if (nanopass-case (L7 Expr) e
-                   [(quote ,d) (ptr->imm d)]
-                   [(call ,info ,mdcl ,pr ,e* ...)
-                    (eq? 'fixnum ($sgetprop (primref-name pr) '*result-type* #f))]
-                   [else #f])
-                 (build-assign base index offset e)
-                 (let ([a (if (eq? index %zero)
-                              (%lea ,base offset)
-                              (%lea ,base ,index offset))])
-                   ; NB: should work harder to determine cases where x can't be a fixnum
-                   (if (nanopass-case (L7 Expr) e
-                         [(quote ,d) #t]
-                         [(literal ,info) #t]
-                         [else #f])
-                       (bind #f ([e e])
-                         ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
-                           (build-barrier-seq
-                             (build-assign a %zero 0 e)
-                             (%inline remember ,a))))
-                       (bind #t ([e e])
-                         ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
-			   (build-barrier-seq
-                             (build-assign a %zero 0 e)
-                             `(if ,(%type-check mask-fixnum type-fixnum ,e)
-                                  ,(%constant svoid)
-                                  ,(%inline remember ,a))))))))]))
+             (nanopass-case (L7 Expr) e
+               [(call ,info ,mdcl ,pr ,e)
+                (guard (eq? (primref-name pr) '$immediate))
+                (build-assign base index offset e)]
+               [else
+                (if (nanopass-case (L7 Expr) e
+                      [(quote ,d) (ptr->imm d)]
+                      [(call ,info ,mdcl ,pr ,e* ...)
+                       (eq? 'fixnum ($sgetprop (primref-name pr) '*result-type* #f))]
+                      [else #f])
+                    (build-assign base index offset e)
+                    (let ([a (if (eq? index %zero)
+                                 (%lea ,base offset)
+                                 (%lea ,base ,index offset))])
+                      ; NB: should work harder to determine cases where x can't be a fixnum
+                      (if (nanopass-case (L7 Expr) e
+                            [(quote ,d) #t]
+                            [(literal ,info) #t]
+                            [else #f])
+                          (bind #f ([e e])
+                            ; eval a second so the address is not live across any calls
+                            (bind #t ([a a])
+                              (build-barrier-seq
+                               (build-assign a %zero 0 e)
+                               (%inline remember ,a))))
+                          (bind #t ([e e])
+                            ; eval a second so the address is not live across any calls
+                            (bind #t ([a a])
+			      (build-barrier-seq
+                               (build-assign a %zero 0 e)
+                               `(if ,(%type-check mask-fixnum type-fixnum ,e)
+                                    ,(%constant svoid)
+                                    ,(%inline remember ,a))))))))])]))
         (define make-build-cas
           (lambda (old-v)
             (lambda (base index offset v)
@@ -6063,6 +6081,8 @@
                  `(if ,(%type-check mask-fixnum type-fixnum ,e)
                       ,(%constant strue)
                       ,(%type-check mask-immediate type-immediate ,e)))])
+        (define-inline 3 $immediate
+          [(e) e])
 
         (define-inline 3 $inexactnum-real-part
           [(e) (build-$inexactnum-real-part e)])
@@ -6552,28 +6572,32 @@
           [(e1 e2) (build-dirty-store e1 (constant port-name-disp) e2)])
         (define-inline 2 set-box!
           [(e-box e-new)
-           (bind #t (e-box e-new)
-             `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
-                  ,(build-dirty-store e-box (constant box-ref-disp) e-new)
-                  ,(build-libcall #t src sexpr set-box! e-box e-new)))])
+           (bind #t (e-box)
+             (dirty-store-bind #t (e-new)
+               `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
+                    ,(build-dirty-store e-box (constant box-ref-disp) e-new)
+                    ,(build-libcall #t src sexpr set-box! e-box e-new))))])
         (define-inline 2 box-cas!
           [(e-box e-old e-new)
-           (bind #t (e-box e-old e-new)
-             `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
-                  ,(build-dirty-store e-box %zero (constant box-ref-disp) e-new (make-build-cas e-old) build-cas-seq)
-                  ,(build-libcall #t src sexpr box-cas! e-box e-old e-new)))])
+           (bind #t (e-box e-old)
+             (dirty-store-bind #t (e-new)
+               `(if ,(%typed-object-check mask-mutable-box type-mutable-box ,e-box)
+                    ,(build-dirty-store e-box %zero (constant box-ref-disp) e-new (make-build-cas e-old) build-cas-seq)
+                    ,(build-libcall #t src sexpr box-cas! e-box e-old e-new))))])
         (define-inline 2 set-car!
           [(e-pair e-new)
-           (bind #t (e-pair e-new)
-             `(if ,(%type-check mask-pair type-pair ,e-pair)
-                  ,(build-dirty-store e-pair (constant pair-car-disp) e-new)
-                  ,(build-libcall #t src sexpr set-car! e-pair e-new)))])
+           (bind #t (e-pair)
+             (dirty-store-bind #t (e-new)
+               `(if ,(%type-check mask-pair type-pair ,e-pair)
+                    ,(build-dirty-store e-pair (constant pair-car-disp) e-new)
+                    ,(build-libcall #t src sexpr set-car! e-pair e-new))))])
         (define-inline 2 set-cdr!
           [(e-pair e-new)
-           (bind #t (e-pair e-new)
-             `(if ,(%type-check mask-pair type-pair ,e-pair)
-                  ,(build-dirty-store e-pair (constant pair-cdr-disp) e-new)
-                  ,(build-libcall #t src sexpr set-cdr! e-pair e-new)))])
+           (bind #t (e-pair)
+             (dirty-store-bind #t (e-new)
+               `(if ,(%type-check mask-pair type-pair ,e-pair)
+                    ,(build-dirty-store e-pair (constant pair-cdr-disp) e-new)
+                    ,(build-libcall #t src sexpr set-cdr! e-pair e-new))))])
         (define-inline 3 $set-symbol-hash!
           ; no need for dirty store---e2 should be a fixnum
           [(e1 e2) `(set! ,(%mref ,e1 ,(constant symbol-hash-disp)) ,e2)])
@@ -9746,10 +9770,11 @@
               [(e-v e-i e-new) (go e-v e-i e-new)])
             (define-inline 2 vector-set!
               [(e-v e-i e-new)
-               (bind #t (e-v e-i e-new)
-                 `(if ,(build-vector-set!-check e-v e-i #f)
-                      ,(go e-v e-i e-new)
-                      ,(build-libcall #t src sexpr vector-set! e-v e-i e-new)))])
+               (bind #t (e-v e-i)
+                 (dirty-store-bind #t (e-new)
+                   `(if ,(build-vector-set!-check e-v e-i #f)
+                        ,(go e-v e-i e-new)
+                        ,(build-libcall #t src sexpr vector-set! e-v e-i e-new))))])
             (define-inline 3 $vector-set-immutable!
               [(e-fv) ((build-set-immutable! vector-type-disp vector-immutable-flag) e-fv)]))
           (let ()
@@ -9763,10 +9788,11 @@
               [(e-v e-i e-old e-new) (go e-v e-i e-old e-new)])
             (define-inline 2 vector-cas!
               [(e-v e-i e-old e-new)
-               (bind #t (e-v e-i e-old e-new)
-                 `(if ,(build-vector-set!-check e-v e-i #f)
-                      ,(go e-v e-i e-old e-new)
-                      ,(build-libcall #t src sexpr vector-cas! e-v e-i e-old e-new)))]))
+               (bind #t (e-v e-i e-old)
+                 (dirty-store-bind #t (e-new)
+                   `(if ,(build-vector-set!-check e-v e-i #f)
+                        ,(go e-v e-i e-old e-new)
+                        ,(build-libcall #t src sexpr vector-cas! e-v e-i e-old e-new))))]))
           (let ()
             (define (go e-v e-i e-new)
               `(set!

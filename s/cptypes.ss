@@ -649,9 +649,10 @@ Notes:
     (primref-name->predicate (primref-name pr) extend?))
 
   (define (check-constant-is? x pred?)
-    (nanopass-case (Lsrc Expr) x
-      [(quote ,d) (pred? d)]
-      [else #f]))
+    (and (Lsrc? x)
+         (nanopass-case (Lsrc Expr) x
+           [(quote ,d) (pred? d)]
+           [else #f])))
 
   (define (primref->result-predicate pr arity)
     (define parameterlike? box?)
@@ -693,6 +694,18 @@ Notes:
 
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
+
+  (define (predicate-implies-immediate? x)
+    (and (not (eq? x 'ptr)) ;fast path to avoid duplicated computation
+         (or (check-constant-is? x (lambda (x) (and ($immediate? x)
+                                                    (not (fixnum? x)))))
+             (predicate-implies? x 'fixnum)
+             (predicate-implies? x 'boolean)
+             (predicate-implies? x 'char))))
+
+  (define (non-literal-immediate? e x)
+    (and (not (check-constant-is? e (lambda (e) #t)))
+         (predicate-implies-immediate? x)))
 
 
   (module ()
@@ -891,6 +904,30 @@ Notes:
 
       (define-specialize 2 $record
         [(rtd . e*) (values `(call ,preinfo ,pr ,rtd ,e* ...) (rtd->record-predicate rtd #t) ntypes #f #f)])
+
+      (let ()
+        (define-syntax define-set-immediate
+          (syntax-rules ()
+            [(_ set (args ... val))
+             (define-set-immediate set (args ... val) void-rec)]
+            [(_ set (args ... val) ret)
+             (define-specialize 2 set
+               [(args ... val) (values `(call ,preinfo ,pr
+                                              ,args ...
+                                              ,(if (non-literal-immediate? val (get-type val))
+                                                   `(call ,(make-preinfo-call)
+                                                          ,(lookup-primref 3 '$immediate)
+                                                          ,val)
+                                                   val))
+                                       ret ntypes #f #f)])]))
+        (define-set-immediate $record-set! (rec i val))
+        (define-set-immediate $record-cas! (rec i old new) 'boolean)
+        (define-set-immediate vector-set! (vec i val))
+        (define-set-immediate vector-cas! (vec i old new) 'boolean)
+        (define-set-immediate set-box! (b val))
+        (define-set-immediate box-cas! (b old new) 'boolean)
+        (define-set-immediate set-car! (p val))
+        (define-set-immediate set-cdr! (p val)))
 
       (define-specialize 2 (record? $sealed-record?)
         [(val rtd) (let* ([val-type (get-type val)]
@@ -1500,7 +1537,10 @@ Notes:
                                                          types1
                                                          new-types)])))])))])]
       [(set! ,maybe-src ,x ,[e 'value types plxc -> e ret types t-types f-types])
-       (values `(set! ,maybe-src ,x ,e) void-rec types #f #f)]
+       (values `(set! ,maybe-src ,x ,(if (non-literal-immediate? e ret)
+                                         `(call ,(make-preinfo-call) ,(lookup-primref 3 '$immediate) ,e)
+                                         e))
+               void-rec types #f #f)]
       [(call ,preinfo ,pr ,e* ...)
        (fold-call/primref preinfo pr e* ctxt types plxc)]
       [(case-lambda ,preinfo ,cl* ...)
@@ -1566,7 +1606,14 @@ Notes:
                #f #f)]
       [(record-set! ,rtd ,type ,index ,[e1 'value types plxc -> e1 ret1 types1 t-types1 f-types1]
                     ,[e2 'value types plxc -> e2 ret2 types2 t-types2 f-types2])
-       (values `(record-set! ,rtd ,type ,index ,e1 ,e2)
+       (values `(record-set! ,rtd ,type ,index ,e1
+                             ,(cond
+                               [(and (eq? type 'scheme-object)
+                                     (non-literal-immediate? e2 ret2))
+                                `(call ,(make-preinfo-call)
+                                       ,(lookup-primref 3 '$immediate)
+                                       ,e2)]
+                               [else e2]))
                void-rec
                (pred-env-add/ref (pred-env-intersect/base types1 types2 types)
                                  e1 '$record plxc)

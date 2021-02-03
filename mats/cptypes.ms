@@ -1128,3 +1128,19 @@
     '(lambda (f) (box? (box (f))))
     '(lambda (f) (#3%$value (f)) #t))
 )
+
+(mat cptypes-store-immediate
+  (cptypes-equivalent-expansion?
+   '(lambda (v)
+      (let loop ([i 0])
+        (when (fx< i (vector-length v))
+          (vector-set! v i i)
+          (loop (fx+ i 1)))))
+   '(lambda (v)
+      (let loop ([i 0])
+        (when (fx< i (vector-length v))
+          (vector-set! v i (#3%$immediate i))
+          (loop (fx+ i 1))))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (set-box! x (if (vector? y) #t (error 't))))
+   '(lambda (x y) (set-box! x (#3%$immediate (if (vector? y) #t (error 't)))))))

@@ -5233,6 +5233,15 @@
             (make-1seq* 'ignored (list e1 e3))]
            [else
             `(call ,preinfo ,pr ,e1 ,e2 ,e3)]))]
+      [(call ,preinfo ,pr ,e)
+       (guard (eq? (primref-name pr) '$immediate))
+       (context-case ctxt
+         [(ignored) (cp0 e ctxt env sc wd name moi)]
+         [else
+          (let ([e (cp0 e 'value env sc wd name moi)])
+            (nanopass-case (Lsrc Expr) e
+              [(quote ,d) e]
+              [else `(call ,preinfo ,pr ,e)]))])]
       [(call ,preinfo ,e ,e* ...)
        (let ()
          (define lift-let

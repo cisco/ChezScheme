@@ -1412,6 +1412,12 @@
   (lambda (b) 
     (#3%immutable-box? b)))
 
+(define-who $immediate
+  (lambda (x)
+    (if ($immediate? x)
+        x
+        ($oops who "~s is not an immediate value" x))))
+
 (define pair? (lambda (x) (pair? x)))
 
 (define box? (lambda (x) (box? x)))
