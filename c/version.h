@@ -134,7 +134,9 @@ typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
 typedef int tputsputcchar;
-#define LOCKF
+#ifndef __ANDROID__
+# define LOCKF
+#endif
 #define DIRMARKERP(c) ((c) == '/')
 #ifndef DISABLE_X11
 # define LIBX11 "libX11.so"
@@ -149,6 +151,10 @@ typedef int tputsputcchar;
 #define NSECCTIME(sb) (sb).st_ctim.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtim.tv_nsec
 #define ICONV_INBUF_TYPE char **
+#ifdef __ANDROID__
+# define NOFILE 256
+# define NO_USELOCALE
+#endif
 #define UNUSED __attribute__((__unused__))
 #endif
 

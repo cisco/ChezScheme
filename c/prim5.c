@@ -2088,7 +2088,12 @@ static void s_free(uptr addr) {
 }
 
 #ifdef FEATURE_ICONV
-#ifdef WIN32
+#ifdef DISABLE_ICONV
+# define iconv_t int
+#define ICONV_OPEN(to, from) -1
+#define ICONV(cd, in, inb, out, outb) -1
+#define ICONV_CLOSE(cd) -1
+#elif defined(WIN32)
 typedef void *iconv_t;
 typedef iconv_t (*iconv_open_ft)(const char *tocode, const char *fromcode);
 typedef size_t (*iconv_ft)(iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);

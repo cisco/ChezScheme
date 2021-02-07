@@ -57,6 +57,7 @@ installscriptname="scheme-script"
 cflagsset=no
 disablex11=no
 disablecurses=no
+disableiconv=no
 addflags=yes
 addwarningflags=no
 default_warning_flags="-Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough"
@@ -273,6 +274,9 @@ while [ $# != 0 ] ; do
     --disable-curses)
       disablecurses=yes
       ;;
+    --disable-iconv)
+      disableiconv=yes
+      ;;
     --disable-auto-flags)
       addflags=no
       ;;
@@ -420,6 +424,7 @@ if [ "$help" = "yes" ]; then
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
+  echo "  --disable-iconv                   disable iconv support"
   echo "  --disable-auto-flags              no auto additions to CFLAGS/LDFLAGS/LIBS"
   echo "  --enable-warning-flags            add GCC warning flags to CFLAGS"
   echo "  --libkernel                       build libkernel.a (the default)"
@@ -565,6 +570,13 @@ if [ "$disablecurses" = "yes" ]; then
   ncursesLib=
 fi
 
+if [ "$disableiconv" = "yes" ]; then
+    iconvLib=
+    CPPFLAGS="${CPPFLAGS} -DDISABLE_ICONV"
+else
+    iconvLib="-liconv"
+fi
+
 # Add automatic linking flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
   case "${flagsm}" in
@@ -586,22 +598,28 @@ if [ "$addflags" = "yes" ] ; then
         LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
         ;;
     *fb|*ob)
-        LIBS="${LIBS} -liconv -lm ${ncursesLib}"
+        LIBS="${LIBS} ${iconvLib} -lm ${ncursesLib}"
         ;;
     *nb)
-        LIBS="${LIBS} /usr/lib/i18n/libiconv_std.a -lm /usr/pkg/lib/libncurses.a"
+        if [ "$disablecurses" = "no" ]; then
+            iconvLib="/usr/lib/i18n/libiconv_std.a"
+        fi
+        LIBS="${LIBS} ${iconvLib} -lm /usr/pkg/lib/libncurses.a"
         ;;
     *s2)
         LIBS="${LIBS} -lnsl -ldl -lm ${cursesLib} -lrt"
         ;;
     *osx)
-        LIBS="${LIBS} -liconv -lm ${ncursesLib}"
+        LIBS="${LIBS} ${iconvLib} -lm ${ncursesLib}"
         ;;
     *nt)
         LIBS="${LIBS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid"
         ;;
     8qnx)
-        LIBS="${LIBS} -lm /usr/local/lib/libiconv.so -lsocket ${ncursesLib}"
+        if [ "$disablecurses" = "no" ]; then
+            iconvLib="/usr/local/lib/libiconv.so"
+        fi
+        LIBS="${LIBS} -lm ${iconvLib} -lsocket ${ncursesLib}"
         ;;
   esac
   if [ "$threadLibs" != "" ] ; then

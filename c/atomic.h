@@ -5,7 +5,7 @@
 # define ACQUIRE_FENCE() __asm__ __volatile__ ("dmb ish" : : : "memory")
 # define RELEASE_FENCE() ACQUIRE_FENCE()
 #elif defined(__arm__)
-# if arm_isa_version == 7
+# if (arm_isa_version >= 7) || (__ARM_ARCH >= 7)
 #  define STORE_FENCE() __asm__ __volatile__ ("dmb ishst" : : : "memory")
 #  define ACQUIRE_FENCE() __asm__ __volatile__ ("dmb ish" : : : "memory")
 #  define RELEASE_FENCE() ACQUIRE_FENCE()
@@ -72,15 +72,18 @@ FORCEINLINE int CAS_STORE_RELEASE(volatile void *addr, void *old_val, void *new_
   return ret;
 }
 #elif defined(__arm__)
-FORCEINLINE int S_cas_any_fence(volatile void *addr, void *old_val, void *new_val) {
+FORCEINLINE int S_cas_any_fence(int load_acquire, volatile void *addr, void *old_val, void *new_val) {
   int ret;
-  __asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 5\n\t"
-                        "mov %0, #0\n\t"       
+  if (load_acquire)
+    ACQUIRE_FENCE();
+  else
+    RELEASE_FENCE();
+  __asm__ __volatile__ ("mov %0, #0\n\t"
                         "0:\n\t"
-                        "ldrex r12, [%1, #0]\n\t"
+                        "ldrex r12, [%1]\n\t"
                         "cmp r12, %2\n\t"
                         "bne 1f\n\t"
-                        "strex r7, %3, [%1, #0]\n\t"
+                        "strex r7, %3, [%1]\n\t"
                         "cmp r7, #0\n\t"
                         "bne 1f\n\t"
                         "it eq\n\t"
@@ -91,7 +94,8 @@ FORCEINLINE int S_cas_any_fence(volatile void *addr, void *old_val, void *new_va
                         : "cc", "memory", "r12", "r7");
   return ret;
 }
-# define CAS_ANY_FENCE(a, old, new) S_cas_any_fence(a, old, new)
+# define CAS_LOAD_ACQUIRE(a, old, new) S_cas_any_fence(1, a, old, new)
+# define CAS_STORE_RELEASE(a, old, new) S_cas_any_fence(0, a, old, new)
 #elif (__GNUC__ >= 5) || defined(__clang__)
 # define CAS_ANY_FENCE(a, old, new) __sync_bool_compare_and_swap(a, old, new)
 #elif defined(_MSC_VER)

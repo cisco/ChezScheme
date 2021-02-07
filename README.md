@@ -12,6 +12,8 @@ Supported platforms:
  * OpenBSD: x86, x86_64
  * NetBSD: x86, x86_64
  * Solaris: x86, x86_64
+ * Android: ARMv7, AArch64
+ * iOS: AArch64
 
 As a superset of the language described in the
 [Revised<sup>6</sup> Report on the Algorithmic Language Scheme](http://www.r6rs.org)
