@@ -25,6 +25,8 @@ static void handle_call_error PROTO((ptr tc, iptr type, ptr x));
 static void init_signal_handlers PROTO((void));
 static void keyboard_interrupt PROTO((ptr tc));
 
+static void (*register_modified_signal)(int);
+
 ptr S_get_scheme_arg(tc, n) ptr tc; iptr n; {
 
     if (n <= asm_arg_reg_cnt) return REGARG(tc, n);
@@ -533,6 +535,10 @@ void S_noncontinuable_interrupt() {
   do_error(ERROR_NONCONTINUABLE_INTERRUPT,"","",Snil);
 }
 
+void Sscheme_register_signal_registerer(void (*registerer)(int)) {
+  register_modified_signal = registerer;
+}
+
 #ifdef WIN32
 ptr S_dequeue_scheme_signals(UNUSED ptr tc) {
   return Snil;
@@ -726,20 +732,28 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
     }
 }
 
+static void no_op_register(UNUSED int sigid) {
+}
+
+#define SIGACTION(id, act_p, old_p) (register_modified_signal(id), sigaction(id, act_p, old_p))
+
 static void init_signal_handlers() {
     struct sigaction act;
+
+    if (register_modified_signal == NULL)
+      register_modified_signal = no_op_register;
 
     sigemptyset(&act.sa_mask);
 
   /* drop pending keyboard interrupts */
     act.sa_flags = 0;
     act.sa_handler = SIG_IGN;
-    sigaction(SIGINT, &act, (struct sigaction *)0);
+    SIGACTION(SIGINT, &act, (struct sigaction *)0);
 
   /* ignore broken pipe signals */
     act.sa_flags = 0;
     act.sa_handler = SIG_IGN;
-    sigaction(SIGPIPE, &act, (struct sigaction *)0);
+    SIGACTION(SIGPIPE, &act, (struct sigaction *)0);
 
   /* set up to catch SIGINT w/no system call restart */
 #ifdef SA_INTERRUPT
@@ -748,7 +762,7 @@ static void init_signal_handlers() {
     act.sa_flags = SA_SIGINFO;
 #endif /* SA_INTERRUPT */
     act.sa_sigaction = handle_signal;
-    sigaction(SIGINT, &act, (struct sigaction *)0);
+    SIGACTION(SIGINT, &act, (struct sigaction *)0);
 #ifdef BSDI
     siginterrupt(SIGINT, 1);
 #endif
@@ -760,14 +774,14 @@ static void init_signal_handlers() {
     act.sa_flags |= SA_RESTART;
 #endif /* SA_RESTART */
 #ifdef SIGQUIT
-    sigaction(SIGQUIT, &act, (struct sigaction *)0);
+    SIGACTION(SIGQUIT, &act, (struct sigaction *)0);
 #endif /* SIGQUIT */
-    sigaction(SIGILL, &act, (struct sigaction *)0);
-    sigaction(SIGFPE, &act, (struct sigaction *)0);
+    SIGACTION(SIGILL, &act, (struct sigaction *)0);
+    SIGACTION(SIGFPE, &act, (struct sigaction *)0);
 #ifdef SIGBUS
-    sigaction(SIGBUS, &act, (struct sigaction *)0);
+    SIGACTION(SIGBUS, &act, (struct sigaction *)0);
 #endif /* SIGBUS */
-    sigaction(SIGSEGV, &act, (struct sigaction *)0);
+    SIGACTION(SIGSEGV, &act, (struct sigaction *)0);
 }
 
 #endif /* WIN32 */
