@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050502)
+(define-constant scheme-version #x09050503)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1627,7 +1627,7 @@
 
 (define-primitive-structure-disps record-type type-typed-object
   ([ptr type]
-   [ptr ancestry] ; vector: parent at 0, grandparent at 1, etc.
+   [ptr ancestry] ; (vector #f .... grandparent parent self)
    [ptr size]  ; total record size in bytes, including type tag
    [ptr pm]    ; pointer mask, where low bit corresponds to type tag
    [ptr mpm]   ; mutable-pointer mask, where low bit for type is always 0
@@ -1640,6 +1640,9 @@
 (define-constant rtd-generative #b0001)
 (define-constant rtd-opaque     #b0010)
 (define-constant rtd-sealed     #b0100)
+
+(define-constant ancestry-parent-offset 2)
+(define-constant minimum-ancestry-vector-length 2)
 
 ; we do this as a macro here since we want the freshest version possible
 ; in syntax.ss when we use it as a patch, whereas we want the old

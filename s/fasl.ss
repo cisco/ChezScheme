@@ -500,6 +500,11 @@
         [(record-type-descriptor? x)
          (put-u8 p (constant fasl-type-rtd))
          (wrf (record-type-uid x) p t a?)
+         (unless (eq? x (let ([a (rtd-ancestors x)])
+                          (vector-ref a (sub1 (vector-length a)))))
+           (error 'fasl "mismatch"))
+         (unless (eq-hashtable-ref (table-hash t) x #f)
+           (error 'fasl "not in table!?"))
          (if (and a? (fxlogtest a? (constant fasl-omit-rtds)))
              (put-uptr p 0) ; => must be registered already at load time
              (wrf-fields (maybe-remake-rtd x) p t a?))]
@@ -677,7 +682,7 @@
 
 (module (start)
   (define start
-    (lambda (p t situation x proc)
+    (lambda (p t situation x a? proc)
       (shift-externals! t)
       (dump-graph)
       (let-values ([(bv* size)
@@ -693,7 +698,7 @@
                           (for-each (lambda (x)
                                       (if (eq? 'begin (cdr (eq-hashtable-ref (table-hash t) x #f)))
                                           (proc x p)
-                                          (wrf x p t (constant annotation-all))))
+                                          (wrf x p t a?)))
                                     begins)))
                       (proc x p)
                       (extractor))])
@@ -733,7 +738,7 @@
                            (constant fasl-omit-rtds)
                            0))])
          (bld x t a? 0)
-         (start p t (constant fasl-type-visit-revisit) x (lambda (x p) (wrf x p t a?))))))
+         (start p t (constant fasl-type-visit-revisit) x a? (lambda (x p) (wrf x p t a?))))))
 
   (define-who fasl-write
     (case-lambda
@@ -775,7 +780,7 @@
     (emit-header p (constant scheme-version) (constant machine-type-any))
     (let ([t (make-table)])
       (bld-graph x t #f 0 #t really-bld-record)
-      (start p t (constant fasl-type-visit-revisit) x (lambda (x p) (wrf-graph x p t #f really-wrf-record))))))
+      (start p t (constant fasl-type-visit-revisit) x #f (lambda (x p) (wrf-graph x p t #f really-wrf-record))))))
 
 ($fasl-target (make-target bld-graph bld wrf start make-table wrf-graph fasl-base-rtd fasl-write fasl-file))
 )
@@ -789,7 +794,7 @@
   (set! $fasl-bld-graph (lambda (x t a? d inner? handler) ((target-fasl-bld-graph (fasl-target)) x t a? d inner? handler)))
   (set! $fasl-enter (lambda (x t a? d) ((target-fasl-enter (fasl-target)) x t a? d)))
   (set! $fasl-out (lambda (x p t a?) ((target-fasl-out (fasl-target)) x p t a?)))
-  (set! $fasl-start (lambda (p t situation x proc) ((target-fasl-start (fasl-target)) p t situation x proc)))
+  (set! $fasl-start (lambda (p t situation x a? proc) ((target-fasl-start (fasl-target)) p t situation x a? proc)))
   (set! $fasl-table (case-lambda
                      [() ((target-fasl-table (fasl-target)))]
                      [(external?-pred) ((target-fasl-table (fasl-target)) external?-pred)]))

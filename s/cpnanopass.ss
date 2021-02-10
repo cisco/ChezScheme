@@ -3963,6 +3963,11 @@
         (define build-and
           (lambda (e1 e2)
             `(if ,e1 ,e2 ,(%constant sfalse))))
+        (define maybe-build-and
+          (lambda (e1 e2)
+            (if e1
+                (build-and e1 e2)
+                e2)))
         (define build-simple-or
           (lambda (e1 e2)
             `(if ,e1 ,(%constant strue) ,e2)))
@@ -11134,44 +11139,66 @@
                           ,(%mref ,t ,(constant record-type-flags-disp))
                           (immediate ,(fix (constant rtd-opaque)))))))))))
           (define build-sealed-isa?
-            (lambda (e e-rtd)
+            (lambda (e e-rtd assume-record?)
               (bind #t (e)
                 (bind #f (e-rtd)
-                  (build-and
-                    (%type-check mask-typed-object type-typed-object ,e)
+                  (maybe-build-and
+                    (and (not assume-record?)
+                         (%type-check mask-typed-object type-typed-object ,e))
                     (%inline eq?
                       ,(%mref ,e ,(constant typed-object-type-disp))
                       ,e-rtd))))))
           (define build-unsealed-isa?
-            (lambda (e e-rtd)
-              (let ([t (make-tmp 't)] [a (make-tmp 'a)])
-                (let ([known-depth (nanopass-case (L7 Expr) e-rtd
-                                     [(quote ,d) (and (record-type-descriptor? d)
-                                                      (vector-length (rtd-ancestors d)))]
-                                     [else #f])])
-                  (bind #t (e e-rtd)
-                    (build-and
-                      (%type-check mask-typed-object type-typed-object ,e)
-                      `(let ([,t ,(%mref ,e ,(constant typed-object-type-disp))])
-                         ,(build-simple-or
-                           (%inline eq? ,t ,e-rtd)
-                           (build-and
-                            (%type-check mask-record type-record ,t)
-                            `(let ([,a ,(%mref ,t ,(constant record-type-ancestry-disp))])
-                               ,(begin
-                                  ;; take advantage of being able to use the type field of a vector
-                                  ;; as a pointer offset with just shifting:
-                                  (safe-assert (zero? (constant type-vector)))
-                                  (bind #f ([d (%inline -/pos ,(%mref ,a ,(constant vector-type-disp))
-                                                        ,(if known-depth
-                                                             `(immediate ,(fxsll known-depth (constant vector-length-offset)))
-                                                             (%mref ,(%mref ,e-rtd ,(constant record-type-ancestry-disp))
-                                                                    ,(constant vector-type-disp))))])
-                                     `(if (inline ,(make-info-condition-code 'positive #f #t) ,%condition-code)
-                                          ,(%inline eq? ,e-rtd ,(%mref ,a
-                                                                       ,(translate d (constant vector-length-offset) (constant log2-ptr-bytes))
-                                                                       ,(fx- (constant vector-data-disp) (constant ptr-bytes))))
-                                          ,(%constant sfalse))))))))))))))
+            (lambda (e e-rtd assume-record?)
+              (let ([known-depth (nanopass-case (L7 Expr) e-rtd
+                                   [(quote ,d) (and (record-type-descriptor? d)
+                                                    (vector-length (rtd-ancestors d)))]
+                                   [else #f])])
+                ;; `t` is rtd of `e`, and it's used once
+                (define (compare-at-depth t known-depth)
+                  (cond
+                    [(eqv? known-depth (constant minimum-ancestry-vector-length))
+                     ;; no need to check ancestry array length
+                     (%inline eq? ,e-rtd ,(%mref ,(%mref ,t ,(constant record-type-ancestry-disp))
+                                                 ,(fx+ (constant vector-data-disp)
+                                                       (fx* (fx- known-depth 1) (constant ptr-bytes)))))]
+                    [known-depth
+                     ;; need to check ancestry array length
+                     (let ([a (make-tmp 'a)])
+                       `(let ([,a ,(%mref ,t ,(constant record-type-ancestry-disp))])
+                          (if ,(%inline <=
+                                        (immediate ,(fxsll known-depth (constant vector-length-offset)))
+                                        ,(%mref ,a ,(constant vector-type-disp)))
+                              ,(%inline eq? ,e-rtd ,(%mref ,a ,(fx+ (constant vector-data-disp)
+                                                                    (fx* (fx- known-depth 1) (constant ptr-bytes)))))
+                              ,(%constant sfalse))))]
+                    [else
+                     (bind #t (e-rtd)
+                       (let ([a (make-tmp 'a)] [rtd-a (make-tmp 'rtd-a)] [rtd-len (make-tmp 'rtd-len)])
+                         `(let ([,rtd-a ,(%mref ,e-rtd ,(constant record-type-ancestry-disp))])
+                            (let ([,a ,(%mref ,t ,(constant record-type-ancestry-disp))])
+                              (let ([,rtd-len ,(%mref ,rtd-a ,(constant vector-type-disp))])
+                                (if ,(%inline <= ,rtd-len ,(%mref ,a ,(constant vector-type-disp)))
+                                    ,(begin
+                                       ;; take advantage of being able to use the type field of a vector
+                                       ;; as a pointer offset with just shifting:
+                                       (safe-assert (zero? (constant type-vector)))
+                                       (%inline eq? ,e-rtd ,(%mref ,a
+                                                                   ,(translate rtd-len (constant vector-length-offset) (constant log2-ptr-bytes))
+                                                                   ,(fx- (constant vector-data-disp) (constant ptr-bytes)))))
+                                    ,(%constant sfalse)))))))]))
+                (cond
+                  [assume-record?
+                   (compare-at-depth (%mref ,e ,(constant typed-object-type-disp)) known-depth)]
+                  [else
+                   (let ([t (make-tmp 't)])
+                     (bind #t (e)
+                       (build-and
+                        (%type-check mask-typed-object type-typed-object ,e)
+                        `(let ([,t ,(%mref ,e ,(constant typed-object-type-disp))])
+                           ,(build-and
+                             (%type-check mask-record type-record ,t)
+                             (compare-at-depth t known-depth))))))]))))
           (define-inline 3 record?
             [(e) (build-record? e)]
             [(e e-rtd)
@@ -11179,8 +11206,16 @@
                               (and (record-type-descriptor? x)
                                    (record-type-sealed? x)))
                    e-rtd)
-                 (build-sealed-isa? e e-rtd)
-                 (build-unsealed-isa? e e-rtd))])
+                 (build-sealed-isa? e e-rtd #f)
+                 (build-unsealed-isa? e e-rtd #f))])
+          (define-inline 3 record-instance?
+            [(e e-rtd)
+             (if (constant? (lambda (x)
+                              (and (record-type-descriptor? x)
+                                   (record-type-sealed? x)))
+                   e-rtd)
+                 (build-sealed-isa? e e-rtd #t)
+                 (build-unsealed-isa? e e-rtd #t))])
           (define-inline 2 r6rs:record?
             [(e) (build-record? e)])
           (define-inline 2 record?
@@ -11190,11 +11225,13 @@
                [(quote ,d)
                 (and (record-type-descriptor? d)
                      (if (record-type-sealed? d)
-                         (build-sealed-isa? e e-rtd)
-                         (build-unsealed-isa? e e-rtd)))]
+                         (build-sealed-isa? e e-rtd #f)
+                         (build-unsealed-isa? e e-rtd #f)))]
                [else #f])])
           (define-inline 2 $sealed-record?
-            [(e e-rtd) (build-sealed-isa? e e-rtd)])
+            [(e e-rtd) (build-sealed-isa? e e-rtd #f)])
+          (define-inline 2 $sealed-record-instance?
+            [(e e-rtd) (build-sealed-isa? e e-rtd #t)])
           (define-inline 3 $record-type-field-count
             [(e) (%inline srl ,(%inline - ,(%mref ,e ,(constant record-type-size-disp))
                                         (immediate ,(fxsll (fx- (constant record-data-disp) (constant record-type-disp))
@@ -11204,8 +11241,8 @@
             [(e) (let ([rtd (let () (include "hashtable-types.ss") (record-type-descriptor eq-ht))])
                    (let ([e-rtd `(quote ,rtd)])
                      (if (record-type-sealed? rtd)
-                         (build-sealed-isa? e e-rtd)
-                         (build-unsealed-isa? e e-rtd))))]))
+                         (build-sealed-isa? e e-rtd #f)
+                         (build-unsealed-isa? e e-rtd #f))))]))
         (define-inline 2 gensym?
           [(e)
            (bind #t (e)

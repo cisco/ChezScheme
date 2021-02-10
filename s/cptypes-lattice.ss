@@ -42,9 +42,6 @@
   ; don't use rtd-* as defined in record.ss in case we're building a patch
   ; file for cross compilation, because the offsets may be incorrect
   (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
-  (define (rtd-parent x) (vector-ref (rtd-ancestors x) 0))
-  ;(define (rtd-ancestry x) ($object-ref 'scheme-object x (constant record-type-ancestry-disp)))
-  ;(define (rtd-parent x) (vector-ref (rtd-ancestry x) 0))
 
   (define-record-type pred-$record/rtd
     (fields rtd)
@@ -55,7 +52,6 @@
     (fields ref)
     (nongenerative #{pred-$record/ref zc0e8e4cs8scbwhdj7qpad6k3-0})
     (sealed #t))
-
 
   (define (check-constant-is? x pred?)
     (and (Lsrc? x)
@@ -210,9 +206,8 @@
           (define lx (vector-length ax))
           (define ay (rtd-ancestors y))
           (define ly (vector-length ay))
-          (let ([pos (fx- ly lx 1)])
-            (and (fx>= pos 0)
-                 (eq? x (vector-ref ay pos)))))))
+          (and (fx<= lx ly)
+               (eq? x (vector-ref ay (fx- lx 1)))))))
 
   ;includes the case when the are the same
   ;or when one is the ancester of the other
@@ -226,36 +221,26 @@
          (define ay (rtd-ancestors y))
          (define ly (vector-length ay))
          (cond
-           [(let ([pos (fx- ly lx 1)])
-              (and (fx>= pos 0)
-                   (eq? x (vector-ref ay pos))))
+           [(and (fx<= lx ly)
+                 (eq? x (vector-ref ay (fx- lx 1))))
             x]
-           [(let ([pos (fx- lx ly 1)])
-              (and (fx>= pos 0)
-                   (eq? y (vector-ref ax pos))))
+           [(and (fx<= ly lx)
+                 (eq? y (vector-ref ax (fx- ly 1))))
             y]
-           [(fx= lx 1) #f]
-           [(fx= ly 1) #f]
-           [else 
-             (let ()
-               (define offset (fx- lx ly))
-               (define f (if (fx< lx ly) (fx- offset) 0))
-               (define l (fx- ly 1))
-               (cond
-                 [(eq? (vector-ref ay f)
-                       (vector-ref ax (fx+ f offset)))
-                  (vector-ref ay f)]
-                 [else
-                  (let loop ([f f] [l l])
-                    (cond
-                      [(fx= (fx- l f) 1) (vector-ref ay l)]
-                      [else
-                       (let ()
-                         (define m (fxquotient (fx+ f l) 2))
-                         (if (eq? (vector-ref ay m)
-                                  (vector-ref ax (fx+ m offset)))
-                          (loop f m)
-                          (loop m l)))]))]))]))]))
+           [else
+            ;; binary search to find a common prefix, given that
+            ;; no elements are the same after a common prefix
+            (let loop ([lo 0] [hi (fxmin lx ly)])
+              (cond
+                [(fx= lo hi) #f]
+                [else (let* ([i (fxquotient (fx+ lo hi) 2)]
+                             [v (vector-ref ax i)])
+                        (cond
+                          [(eq? v (vector-ref ay i))
+                           (or (loop (fx+ i 1) hi)
+                               v)]
+                          [else
+                           (loop lo i)]))]))]))]))
 
   (define (exact-integer? x)
     (and (integer? x) (exact? x)))

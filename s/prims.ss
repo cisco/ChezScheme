@@ -2319,7 +2319,21 @@
     ($oops who "~s is not a record type descriptor" rtd))
   (#3%$sealed-record? x rtd))
 
+(define-who ($sealed-record-instance? x rtd)
+  (unless (record? x)
+    ($oops who "~s is not a record" x))
+  (unless (record-type-descriptor? rtd)
+    ($oops who "~s is not a record type descriptor" rtd))
+  (#3%$sealed-record-instance? x rtd))
+
 (define ($record? x) (#3%$record? x))
+
+(define-who (record-instance? x rtd)
+  (unless (record? x)
+    ($oops who "~s is not a record" x))
+  (unless (record-type-descriptor? rtd)
+    ($oops who "~s is not a record type descriptor" rtd))
+  (#3%record-instance? x rtd))
 
 (define-who ($record-type-descriptor r)
   (unless ($record? r) ($oops who "~s is not a record" r))

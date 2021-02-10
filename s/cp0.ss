@@ -120,7 +120,8 @@
   ; file for cross compilation, because the offsets may be incorrect
   (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
   (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
-  (define rtd-parent (lambda (x) (vector-ref (rtd-ancestors x) 0)))
+  (define rtd-parent (lambda (x) (let ([a (rtd-ancestors x)])
+                                   (vector-ref a (fx- (vector-length a) (constant ancestry-parent-offset))))))
   (define rtd-size (csv7:record-field-accessor #!base-rtd 'size))
   (define rtd-pm (csv7:record-field-accessor #!base-rtd 'pm))
   (define rtd-mpm (csv7:record-field-accessor #!base-rtd 'mpm))
@@ -3936,19 +3937,19 @@
                            (begin
                              (residualize-seq '() (list ?x) ctxt)
                              false-rec))]))))
-        (define-inline 2 r6rs:record?
-          [(?x) (one-arg-case ?x ctxt)])
-        (define-inline 2 record?
-          [(?x) (one-arg-case ?x ctxt)]
-          [(?x ?rtd)
+        (define two-arg-case
+          (lambda (?x ?rtd level ctxt needs-record?)
            (let ([rtdval (value-visit-operand! ?rtd)])
              (define abandon-ship
                (lambda (xval xres maybe-rtd)
                  (if (definitely-not-a-record? xres)
-                     (begin
-                       (residualize-seq '() (list ?x ?rtd) ctxt)
-                       false-rec)
+                     (cond
+                       [needs-record? #f]
+                       [else
+                        (residualize-seq '() (list ?x ?rtd) ctxt)
+                        false-rec])
                      (and maybe-rtd
+                          (not needs-record?)
                           (begin
                             (residualize-seq (list ?x ?rtd) '() ctxt)
                             (build-primcall (app-preinfo ctxt) 3
@@ -3993,7 +3994,9 @@
                            [(quote ,d1)
                             ; could also return #f here and let folding happen
                             (residualize-seq '() (list ?x ?rtd) ctxt)
-                            (if (record? d1 d0) true-rec false-rec)]
+                            (cond
+                              [(and needs-record? (not (record? d1))) #f]
+                              [else (if (record? d1 d0) true-rec false-rec)])]
                            ; could handle record-type forms if ctrtd recorded rtdrtd (a ctrtd's rtd is always base-ctrtd)
                            [(record ,rtd ,rtd-expr ,e* ...)
                             (guard (let f ([rtd rtd])
@@ -4033,7 +4036,14 @@
                [else
                 (and (fx= level 3)
                      (let ([xval (value-visit-operand! ?x)])
-                       (abandon-ship xval (result-exp/indirect-ref xval) #f)))]))]))
+                       (abandon-ship xval (result-exp/indirect-ref xval) #f)))]))))
+        (define-inline 2 r6rs:record?
+          [(?x) (one-arg-case ?x ctxt)])
+        (define-inline 2 record?
+          [(?x) (one-arg-case ?x ctxt)]
+          [(?x ?rtd) (two-arg-case ?x ?rtd level ctxt #f)])
+        (define-inline 2 record-instance?
+          [(?x ?rtd) (two-arg-case ?x ?rtd level ctxt #t)]))
 
       (define-inline 2 csv7:record-type-field-names
         [(?rtd)

@@ -6405,10 +6405,10 @@
                        (begin
                          (if (#3%record? b g6) (#2%void) (#3%$record-oops 'unbox b g6))
                          (#3%$object-ref 'scheme-object b ,fixnum?)))])
-             (if (#3%record? b g4) (#2%void) (#3%$record-oops 'set-box! b g4))
+             (if (#3%record-instance? b g4) (#2%void) (#3%$record-oops 'set-box! b g4))
              (#3%$object-set! 'scheme-object b ,fixnum? g7))
            (#2%list
-             (#3%record? b g5)
+             (#3%record-instance? b g5)
              (#3%$object-ref 'scheme-object b ,fixnum?))))))
     (equal?
       (let ()

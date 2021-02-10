@@ -929,13 +929,23 @@ Notes:
         (define-set-immediate set-car! (p val))
         (define-set-immediate set-cdr! (p val)))
 
-      (define-specialize 2 (record? $sealed-record?)
-        [(val rtd) (let* ([val-type (get-type val)]
+      (define-specialize 2 (record? $sealed-record? record-instance? $sealed-record-instance?)
+        [(val rtd) (let* ([alt-if-record (case (primref-name pr)
+                                           [record? 'record-instance?]
+                                           [$sealed-record? '$sealed-record-instance?]
+                                           [else #f])]
+                          [val-type (get-type val)]
                           [to-unsafe (and (fx= level 2) 
-                                          (expr-is-rtd? rtd oldtypes))] ; use the old types
+                                          (expr-is-rtd? rtd oldtypes) ; use the old types
+                                          (or alt-if-record
+                                              (predicate-implies? val-type '$record)))]
                           [level (if to-unsafe 3 level)]
                           [pr (if to-unsafe
                                   (primref->unsafe-primref pr)
+                                  pr)]
+                          [pr (if (and alt-if-record
+                                       (predicate-implies? val-type '$record))
+                                  (lookup-primref (primref-level pr) alt-if-record)
                                   pr)])
                      (cond
                        [(predicate-implies? val-type (rtd->record-predicate rtd #f))

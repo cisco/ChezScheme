@@ -4348,6 +4348,20 @@ record-type descriptor \var{rtd} is equivalent to the following.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{record-instance?}{\categoryprocedure}{(record-instance? \var{obj} \var{rtd})}
+\returns \scheme{#t} if \var{obj} is a record of the given type, otherwise \scheme{#f}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{obj} must be a record, and \var{rtd} must be a record-type descriptor.
+
+The result is the same as for a two-argument \scheme{record?} call,
+but \var{obj} is constrained to be a record. In unsafe mode,
+\scheme{record-instance?} might be faster than \scheme{record?}.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{record-type-descriptor}{\categoryprocedure}{(record-type-descriptor \var{rec})}
 \returns the record-type descriptor of \var{rec}
 \listlibraries

@@ -26,7 +26,8 @@
 
 (let ()
   (define (rtd-ancestry x) ($object-ref 'scheme-object x (constant record-type-ancestry-disp)))
-  (define (rtd-parent x) (vector-ref (rtd-ancestry x) 0))
+  (define (rtd-parent x) (let ([a (rtd-ancestry x)])
+                           (vector-ref a (fx- (vector-length a) (constant ancestry-parent-offset)))))
   (define (rtd-size x) ($object-ref 'scheme-object x (constant record-type-size-disp)))
   (define (rtd-pm x) ($object-ref 'scheme-object x (constant record-type-pm-disp)))
   (define (rtd-mpm x) ($object-ref 'scheme-object x (constant record-type-mpm-disp)))
@@ -619,14 +620,15 @@
                  (unless (eq? (rtd-size rtd) size) (squawk "different size")))
                rtd)]
             [else
-             (let* ([len (if (not parent) 0 (vector-length (rtd-ancestry parent)))]
-                    [ancestry (make-vector (fx+ 1 len) parent)])
-               (let loop ([i 0])
+             (let* ([len (if (not parent) 1 (vector-length (rtd-ancestry parent)))]
+                    [ancestry (make-vector (fx+ 1 len) #f)])
+               (let loop ([i 1])
                  (unless (fx= i len)
-                   (vector-set! ancestry (fx+ i 1) (vector-ref (rtd-ancestry parent) i))
+                   (vector-set! ancestry i (vector-ref (rtd-ancestry parent) i))
                    (loop (fx+ i 1))))
                (let ([rtd (apply #%$record base-rtd ancestry size pm mpm name
                                  (if (pair? flds) (cdr flds) (fx- flds 1)) flags uid #f extras)])
+                 (vector-set! ancestry len rtd)
                  (with-tc-mutex ($sputprop uid '*rtd* rtd))
                  rtd))]))))
 

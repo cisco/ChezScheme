@@ -588,6 +588,7 @@
 
 ; use a gensym to make expansions equivalent
 (define my-rec (gensym "my-rec"))
+(define my-sub-rec (gensym "my-sub-rec"))
 (mat cptypes-type-record?
   ; define-record
   (parameterize ([optimize-level 2])
@@ -673,6 +674,28 @@
                               (define-record-type ,my-rec (fields a) (sealed #t))
                               (define-record-type ,(gensym "other-rec") (fields a)))
                             '(my-rec? other-rec?))
+
+  ;; substituting `record-instance?`
+  (cptypes-equivalent-expansion?
+   `(let ()
+      (define-record-type ,my-rec (fields a))
+      (define-record-type ,my-sub-rec (fields a) (parent ,my-rec))
+      (lambda (x) (and (my-rec? x) (list 'ok (my-sub-rec? x)))))
+   `(let ()
+      (define-record-type ,my-rec (fields a))
+      (define-record-type ,my-sub-rec (fields a) (parent ,my-rec))
+      (lambda (x) (and (my-rec? x) (list 'ok (#3%record-instance? x (record-type-descriptor ,my-sub-rec)))))))
+
+  ;; substituting `sealed-record-instance?`
+  (cptypes-equivalent-expansion?
+   `(let ()
+      (define-record-type ,my-rec (fields a))
+      (define-record-type ,my-sub-rec (fields a) (parent ,my-rec) (sealed #t))
+      (lambda (x) (and (my-rec? x) (list 'ok (my-sub-rec? x)))))
+   `(let ()
+      (define-record-type ,my-rec (fields a))
+      (define-record-type ,my-sub-rec (fields a) (parent ,my-rec) (sealed #t))
+      (lambda (x) (and (my-rec? x) (list 'ok (#3%$sealed-record-instance? x (record-type-descriptor ,my-sub-rec)))))))
 )
 
 (mat cptypes-unsafe

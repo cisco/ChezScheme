@@ -753,11 +753,17 @@
           (when maybe-uid
             (eq-hashtable-set! (vfasl-info-rtds vfi) (unpack-symbol maybe-uid) v)
             ;; make sure parent type is earlier
-            (for-each (lambda (fld)
-                        (field-case (car fld*)
-                                    [ptr (elem) (copy elem vfi)]
-                                    [else (void)]))
-                      fld*))
+            (safe-assert (pair? fld*))
+            (let ([ancestry (car fld*)])
+              (field-case ancestry
+                          [ptr (elem)
+                               (fasl-case* elem
+                                 [(vector ty vec)
+                                  (let ([parent (vector-ref vec (fx- (vector-length vec)
+                                                                     (constant ancestry-parent-offset)))])
+                                    (copy parent vfi))]
+                                 [else (safe-assert (not 'vector)) (void)])]
+                          [else (safe-assert (not 'ptr)) (void)])))
           (let* ([vspc (cond
                          [maybe-uid
                           (constant vspace-rtd)]
