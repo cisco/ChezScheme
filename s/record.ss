@@ -555,8 +555,8 @@
     (define ($mrt who base-rtd name parent uid flags fields mutability-mask extras)
       (include "layout.ss")
       (when parent
-        (when (record-type-sealed? parent)
-          ($oops who "cannot extend sealed record type ~s" parent))
+        (when ($record-type-act-sealed? parent)
+          ($oops who "cannot extend sealed record type ~s as ~s" parent name))
         (if (fixnum? fields)
             (unless (fixnum? (rtd-flds parent))
               ($oops who "cannot make anonymous-field record type ~s from named-field parent record type ~s" name parent))
@@ -900,6 +900,20 @@
       (unless (record-type-descriptor? rtd)
         ($oops 'record-type-sealed? "~s is not a record type descriptor" rtd))
       (#3%record-type-sealed? rtd)))
+
+  (set-who! $record-type-act-sealed!
+    (lambda (rtd)
+      (unless (record-type-descriptor? rtd)
+        ($oops who "~s is not a record type descriptor" rtd))
+      (unless ($record-type-act-sealed? rtd)
+        ($object-set! 'scheme-object rtd (constant record-type-flags-disp)
+                      (fxior (rtd-flags rtd) (constant rtd-act-sealed))))))
+
+  (set-who! $record-type-act-sealed?
+    (lambda (rtd)
+      (unless (record-type-descriptor? rtd)
+        ($oops who "~s is not a record type descriptor" rtd))
+      (#3%$record-type-act-sealed? rtd)))
 
   (set! record-type-generative?
     (lambda (rtd)

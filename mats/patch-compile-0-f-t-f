@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2020-11-23 06:11:33.000000000 -0700
---- errors-compile-0-f-t-f	2020-11-23 05:33:39.000000000 -0700
+*** errors-compile-0-f-f-f	2021-02-23 12:07:37.000000000 -0700
+--- errors-compile-0-f-t-f	2021-02-23 11:37:54.000000000 -0700
 ***************
 *** 200,206 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
@@ -182,10 +182,10 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7846,7884 ****
+*** 7850,7888 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
-  record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
+  record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo> as bar".
 ! record.mo:Expected error in mat record25: "invalid value 1.0 for foreign type int".
 ! record.mo:Expected error in mat record25: "invalid value 2.0 for foreign type unsigned".
 ! record.mo:Expected error in mat record25: "invalid value three for foreign type unsigned-int".
@@ -222,10 +222,10 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7846,7884 ----
+--- 7850,7888 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
-  record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
+  record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo> as bar".
 ! record.mo:Expected error in mat record25: "make-r25-bar: invalid value 1.0 for foreign type int".
 ! record.mo:Expected error in mat record25: "make-r25-bar: invalid value 2.0 for foreign type unsigned".
 ! record.mo:Expected error in mat record25: "make-r25-bar: invalid value three for foreign type unsigned-int".
@@ -263,7 +263,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7893,7949 ****
+*** 7897,7953 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -276,7 +276,7 @@
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
-  record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
+  record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 ! record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure constructor>".
 ! record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure constructor>".
@@ -321,7 +321,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7893,7949 ----
+--- 7897,7953 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -334,7 +334,7 @@
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call (n (+ z 7) w "what?")".
 ! record.mo:Expected error in mat r6rs-records-procedural: "incorrect argument count in call ((p x 17) y (quote #(oops)))".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
-  record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
+  record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
   record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 ! record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure make-point>".
 ! record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure make-point>".

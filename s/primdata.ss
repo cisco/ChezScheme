@@ -2319,6 +2319,8 @@
   ($record-oops [sig [(maybe-who sub-ptr rtd) -> (bottom)]] [flags abort-op])
   ($record-ref [sig [(ptr sub-index) -> (ptr)]] [flags single-valued discard cp03])
   ($record-set! [sig [(ptr sub-index ptr) -> (void)]] [flags true cptypes2])
+  ($record-type-act-sealed! [sig [(ptr) -> (void)]] [flags single-valued true])
+  ($record-type-act-sealed? [sig [(ptr) -> (boolean)]] [flags single-valued])
   ($record-type-descriptor [flags single-valued pure mifoldable discard true])
   ($record-type-field-offsets [flags single-valued pure mifoldable discard true])
   ($record-type-field-count [sig [(ptr) -> (fixnum)]] [flags single-valued pure mifoldable discard true])

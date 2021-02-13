@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050503)
+(define-constant scheme-version #x09050504)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1640,6 +1640,7 @@
 (define-constant rtd-generative #b0001)
 (define-constant rtd-opaque     #b0010)
 (define-constant rtd-sealed     #b0100)
+(define-constant rtd-act-sealed #b1000)
 
 (define-constant ancestry-parent-offset 2)
 (define-constant minimum-ancestry-vector-length 2)

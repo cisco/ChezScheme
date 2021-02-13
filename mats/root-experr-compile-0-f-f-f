@@ -7849,7 +7849,7 @@ record.mo:Expected error in mat record22: "record-field-mutable?: unrecognized f
 record.mo:Expected error in mat record22: "make-record-type: invalid field specifier (mutable creepy q)".
 record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
 record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
-record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
+record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo> as bar".
 record.mo:Expected error in mat record25: "invalid value 1.0 for foreign type int".
 record.mo:Expected error in mat record25: "invalid value 2.0 for foreign type unsigned".
 record.mo:Expected error in mat record25: "invalid value three for foreign type unsigned-int".
@@ -7906,7 +7906,7 @@ record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of ar
 record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
 record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
-record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar>".
+record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
 record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure constructor>".
 record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure constructor>".
@@ -8298,7 +8298,7 @@ enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration f
 enum.mo:Expected error in mat enumeration: "invalid syntax (define-enumeration foo (a 3) bar)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (foo 3)".
 enum.mo:Expected error in mat enumeration: "invalid syntax (bar 3)".
-enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend sealed record type #<record type enum-type>".
+enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend sealed record type #<record type enum-type> as foo".
 8.mo:Expected error in mat define-syntax: "invalid syntax (foo)".
 8.mo:Expected error in mat define-syntax: "invalid syntax (foo . a)".
 8.mo:Expected error in mat define-syntax: "invalid syntax (foo a)".

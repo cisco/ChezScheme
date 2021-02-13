@@ -4402,7 +4402,7 @@ count and mutability mask in place of a vector of field descriptions,
 which results in a record type with anonymous fields. The \var{fields}
 argument must be a non-negative fixnum for the field count, and it is
 added to any fields present in \var{parent} to determine the record
-type's total numnber of fields. The \var{mutability} argument must be
+type's total number of fields. The \var{mutability} argument must be
 an exact non-negative integer that is treated as a bit array; a
 \scheme{1} bit indicates the the corresponding field among
 \var{fields} is mutable.
