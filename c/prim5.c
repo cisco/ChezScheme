@@ -1339,8 +1339,8 @@ static ptr s_set_collect_trip_bytes(n) ptr n; {
     return Svoid;
 }
 
-static void c_exit(UNUSED I32 status) {
-    S_abnormal_exit();
+static void c_exit(I32 status) {
+    exit(status);
 }
 
 #if defined(__STDC__) || defined(USE_ANSI_PROTOTYPES)
