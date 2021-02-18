@@ -528,7 +528,10 @@ Notes:
           (make-pred-$record/rtd d)]
          [(ref ,maybe-src ,x)
           (guard (not (prelex-assigned x)))
-          (make-pred-$record/ref x)]
+          (make-pred-$record/ref x #f)]
+         [(record-type ,rtd (ref ,maybe-src ,x))
+          (guard (not (prelex-assigned x)))
+          (make-pred-$record/ref x rtd)]
          [(record-type ,rtd ,e)
           (rtd->record-predicate e extend?)]
          [else (if (not extend?) 'bottom '$record)])]

@@ -42,6 +42,7 @@
   ; don't use rtd-* as defined in record.ss in case we're building a patch
   ; file for cross compilation, because the offsets may be incorrect
   (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
+  (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
 
   (define-record-type pred-$record/rtd
     (fields rtd)
@@ -49,9 +50,22 @@
     (sealed #t))
 
   (define-record-type pred-$record/ref
-    (fields ref)
-    (nongenerative #{pred-$record/ref zc0e8e4cs8scbwhdj7qpad6k3-0})
+    (fields ref maybe-rtd)
+    (nongenerative #{pred-$record/ref zc0e8e4cs8scbwhdj7qpad6k3-1})
     (sealed #t))
+
+  ;could be a ctrtd
+  (define (pred-$record-maybe-rtd x)
+    (cond
+     [(pred-$record/rtd? x) (pred-$record/rtd-rtd x)]
+     [(pred-$record/ref? x) (pred-$record/ref-maybe-rtd x)]
+     [else #f]))
+
+  (define (rtd-obviously-incompatible? x y)
+    (let ([x-flds (rtd-flds x)]
+          [y-flds (rtd-flds y)])
+      (or (and (fixnum? x-flds) (not (fixnum? y-flds)))
+          (and (not (fixnum? x-flds)) (fixnum? y-flds)))))
 
   (define (check-constant-is? x pred?)
     (and (Lsrc? x)
@@ -592,10 +606,20 @@
                  [(rtd-ancestor*? y-rtd x-rtd) x]
                  [(rtd-ancestor*? x-rtd y-rtd) y]
                  [else 'bottom])]))]
+         [(pred-$record/ref? x)
+          (let ([x-rtd (pred-$record/ref-maybe-rtd x)]
+                [y-rtd (pred-$record/rtd-rtd y)])
+            (if (and x-rtd (rtd-obviously-incompatible? x-rtd y-rtd))
+                'bottom
+                (intersect/record x y)))]
          [else
           (intersect/record x y)])]
       [(pred-$record/ref? y)
-       (intersect/record x y)]
+       (let ([y-rtd (pred-$record/ref-maybe-rtd y)]
+             [x-rtd (pred-$record-maybe-rtd x)])
+         (if (and x-rtd y-rtd (rtd-obviously-incompatible? x-rtd y-rtd))
+             'bottom
+             (intersect/record x y)))]
       [else
        (case y
          [($record)

@@ -696,6 +696,18 @@
       (define-record-type ,my-rec (fields a))
       (define-record-type ,my-sub-rec (fields a) (parent ,my-rec) (sealed #t))
       (lambda (x) (and (my-rec? x) (list 'ok (#3%$sealed-record-instance? x (record-type-descriptor ,my-sub-rec)))))))
+
+  ;; obviously incompatible rtds
+  ;; the third pass is needed to eliminate #3%$value
+  (parameterize ([run-cp0 (lambda (cp0 x) (cp0 (cp0 (cp0 x))))])
+    (cptypes-equivalent-expansion?
+     `(let ()
+        (define-record I (a))
+        (define A (make-record-type-descriptor* 'a #f #f #f #f 1 0))
+        (lambda (x) (and ((record-predicate A) x) (I? x))))
+     `(begin
+        (make-record-type-descriptor* 'a #f #f #f #f 1 0)
+        (lambda (x) #f))))
 )
 
 (mat cptypes-unsafe
