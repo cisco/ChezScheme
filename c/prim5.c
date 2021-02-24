@@ -1765,6 +1765,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_big_positive_bit_field", (void *)S_big_positive_bit_field);
     Sforeign_symbol("(cs)s_big_eq", (void *)S_big_eq);
     Sforeign_symbol("(cs)s_big_lt", (void *)S_big_lt);
+    Sforeign_symbol("(cs)s_big_trailing_zero_bits", (void *)S_big_trailing_zero_bits);
     Sforeign_symbol("(cs)s_bigoddp", (void *)s_bigoddp);
     Sforeign_symbol("(cs)s_div", (void *)S_div);
     Sforeign_symbol("(cs)s_float", (void *)s_float);

@@ -1481,6 +1481,23 @@ ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend) {
   return copy_normalize(tc, &BIGIT(W(tc), 0), wl, 0);
 }
 
+/* returns a lower bound on the number of trailing 0 bits in the
+   binary representation: */
+ptr S_big_trailing_zero_bits(ptr x) {
+  bigit *xp = &BIGIT(x, 0);
+  iptr xl = BIGLEN(x), i;
+
+  for (i = xl; i-- > 0; ) {
+    if (xp[i] != 0)
+      break;
+  }
+
+  i = (xl - 1) - i;
+  i *= bigit_bits;
+
+  return FIX(i);
+}
+
 /* logical operations simulate two's complement operations using the
    following general strategy:
 

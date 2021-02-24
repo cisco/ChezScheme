@@ -2197,6 +2197,7 @@
           [else (nonnumber-error who x)])])))
 
 (set! $*
+  (let ([$bignum-trailing-zero-bits (foreign-procedure "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
    (lambda (who x y)
     (cond
       [(and (fixnum? y) ($fxu< (#3%fx+ y 1) 3))
@@ -2217,7 +2218,7 @@
                               [(fx= x 1) (unless (number? y) (nonnumber-error who y)) y]
                               [else ($negate who y)])]
                             [else (integer* x y)])
-                            (let ()
+                           (let ()
                               ;; _Modern Computer Arithmetic_, Brent and Zimmermann
                               (define (karatsuba x y)
                                 (define xl (if (bignum? x) ($bignum-length x) 0))
@@ -2247,7 +2248,17 @@
                                                    [else
                                                     (- c1 (karatsuba (- x-lo x-hi) (- y-lo y-hi)))])])])
                                     (+ c0 (integer-ash (+ c0 c1-c2) k) (integer-ash c1 (fx* 2 k))))]))
-                              (karatsuba x y)))]
+                              ;; Multiplying numbers with trailing 0s is common, so
+                              ;; check for that case:
+                              (let ([xz ($bignum-trailing-zero-bits x)]
+                                    [yz (if (bignum? y) ($bignum-trailing-zero-bits y) 0)])
+                                (let ([z (fx+ xz yz)])
+                                  (if (fx= z 0)
+                                      (karatsuba x y)
+                                      (bitwise-arithmetic-shift-left
+                                       (karatsuba (bitwise-arithmetic-shift-right x xz)
+                                                  (bitwise-arithmetic-shift-right y yz))
+                                       z))))))]
              [(ratnum?) (/ (* x ($ratio-numerator y)) ($ratio-denominator y))]
              [($exactnum? $inexactnum?)
               (make-rectangular (* x (real-part y)) (* x (imag-part y)))]
@@ -2281,7 +2292,7 @@
                     [c (real-part y)] [d (imag-part y)])
                 (make-rectangular (- (* a c) (* b d)) (+ (* a d) (* b c))))]
              [else (nonnumber-error who y)])]
-          [else (nonnumber-error who x)])])))
+          [else (nonnumber-error who x)])]))))
 
 (set! $-
   (lambda (who x y)

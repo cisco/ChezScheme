@@ -313,6 +313,7 @@ extern ptr S_gcd PROTO((ptr x, ptr y));
 extern ptr S_ash PROTO((ptr x, ptr n));
 extern ptr S_big_positive_bit_field PROTO((ptr x, ptr fxstart, ptr fxend));
 extern ptr S_integer_length PROTO((ptr x));
+extern ptr S_big_trailing_zero_bits PROTO((ptr x));
 extern ptr S_big_first_bit_set PROTO((ptr x));
 extern double S_random_double PROTO((U32 m1, U32 m2,
                U32 m3, U32 m4, double scale));
