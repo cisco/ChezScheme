@@ -36,7 +36,7 @@ static ptr big_mul PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
 static void big_short_trunc PROTO((ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs, ptr *q, ptr *r));
 static void big_trunc PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL qs, IBOOL rs, ptr *q, ptr *r));
 static INT normalize PROTO((bigit *xp, bigit *yp, iptr xl, iptr yl));
-static bigit quotient_digit PROTO((bigit *xp, bigit *yp, iptr yl));
+static bigit quotient_digit PROTO((ptr tc, bigit *xp, bigit *yp, iptr yl));
 static bigit qhat PROTO((bigit *xp, bigit *yp));
 static ptr big_short_gcd PROTO((ptr tc, ptr x, bigit y, iptr xl));
 static ptr big_gcd PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl));
@@ -636,6 +636,9 @@ static ptr big_mul(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IBOOL sign
   PREPARE_BIGNUM(tc, W(tc),xl+yl)
   for (xi = xl, zp = &BIGIT(W(tc),xl+yl-1); xi-- > 0; ) *zp-- = 0;
 
+  /* account for nested loop: */
+  USE_TRAP_FUEL(tc, xl * yl);
+
   for (yi=yl,yp= &BIGIT(y,yl-1),zp= &BIGIT(W(tc),xl+yl-1); yi-- > 0; yp--, zp--)
     if (*yp == 0)
       *(zp-xl) = 0;
@@ -796,11 +799,11 @@ static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
   d = normalize(xp, yp, xl, yl);
 
   if (q == (ptr *)NULL) {
-    for (i = m; i-- > 0 ; xp++) (void) quotient_digit(xp, yp, yl);
+    for (i = m; i-- > 0 ; xp++) (void) quotient_digit(tc, xp, yp, yl);
   } else {
     PREPARE_BIGNUM(tc, W(tc),m)
     p = &BIGIT(W(tc),0);
-    for (i = m; i-- > 0 ; xp++) *p++ = quotient_digit(xp, yp, yl);
+    for (i = m; i-- > 0 ; xp++) *p++ = quotient_digit(tc, xp, yp, yl);
     *q = copy_normalize(tc, &BIGIT(W(tc),0),m,qs);
   }
 
@@ -829,9 +832,12 @@ static INT normalize(xp, yp, xl, yl) bigit *xp, *yp; iptr xl, yl; {
   return shft;
 }
 
-static bigit quotient_digit(xp, yp, yl) bigit *xp, *yp; iptr yl; {
+static bigit quotient_digit(tc, xp, yp, yl) ptr tc; bigit *xp, *yp; iptr yl; {
   bigit *p1, *p2, q, k, b, prod;
   iptr i;
+
+  /* this function is called in loops, so use fuel every time */
+  USE_TRAP_FUEL(tc, yl);
 
   q = qhat(xp, yp);
 
@@ -934,6 +940,9 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
     if (asc+shft >= bigit_bits) shft -= bigit_bits;
     asc += shft;
 
+    /* account for nested loops: */
+    USE_TRAP_FUEL(tc, xl + yl);
+
    /* shift left or right; adjust lengths, xp and yp */
     if (shft < 0) {                /* shift right */
       for (i = yl--, p = yp++, k = 0; i-- > 0; p++) ERSH(-shft,p,&k)
@@ -948,7 +957,7 @@ static ptr big_gcd(tc, x, y, xl, yl) ptr tc, x, y; iptr xl, yl; {
     }
 
    /* destructive remainder x = x rem y */
-    for (i = xl-yl+1; i-- > 0; xp++) (void) quotient_digit(xp, yp, yl);
+    for (i = xl-yl+1; i-- > 0; xp++) (void) quotient_digit(tc, xp, yp, yl);
 
    /* strip leading zero bigits.  remainder is at most yl bigits long */
     for (i = yl ; *xp == 0 && i > 0; xp++, i--);
@@ -1121,7 +1130,7 @@ static double big_floatify(tc, x, y, xl, yl, sign) ptr tc, x, y; iptr xl, yl; IB
   p = &BIGIT(W(tc),0);
 
  /* compute 'enough' bigits of the quotient */
-  for (i = enough; i-- > 0; xp++) *p++ = quotient_digit(xp, yp, yl);
+  for (i = enough; i-- > 0; xp++) *p++ = quotient_digit(tc, xp, yp, yl);
 
  /* set k if remainder is nonzero */
   k = 0;

@@ -1042,6 +1042,9 @@ ptr S_bignum(tc, n, sign) ptr tc; iptr n; IBOOL sign; {
     if ((uptr)n > (uptr)maximum_bignum_length)
         S_error("", "invalid bignum size request");
 
+    /* for anything that allocates bignums, make sure scheduling fuel is consumed */
+    USE_TRAP_FUEL(tc, n);
+
     d = size_bignum(n);
     newspace_find_room(tc, type_typed_object, d, p);
     BIGTYPE(p) = (uptr)n << bignum_length_offset | sign << bignum_sign_offset | type_bignum;

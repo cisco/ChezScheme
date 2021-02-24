@@ -2223,7 +2223,7 @@
                                 (define xl (if (bignum? x) ($bignum-length x) 0))
                                 (define yl (if (bignum? y) ($bignum-length y) 0))
                                 (cond
-                                 [(and (fx< xl 10) (fx< yl 10))
+                                 [(and (fx< xl 30) (fx< yl 30))
                                   (integer* x y)]
                                  [else
                                   (let* ([k (fx* (fxquotient (fxmax xl yl) 2) (constant bigit-bits))]

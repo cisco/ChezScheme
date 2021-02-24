@@ -558,3 +558,11 @@ typedef struct thread_gc {
    and it would be ok to round up the length to a word size. But
    probably the compiler does a fine job with plain old `mempcy`. */
 #define memcpy_aligned memcpy
+
+#define USE_TRAP_FUEL(tc, n) do {                         \
+    uptr _amt_ = (uptr)(n);                               \
+    if ((uptr)TRAP(tc) > _amt_)                           \
+      TRAP(tc) = (ptr)((uptr)TRAP(tc) - _amt_);           \
+     else                                                 \
+       TRAP(tc) = (ptr)1;                                 \
+  } while (0)
