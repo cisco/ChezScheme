@@ -1783,6 +1783,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_set_random_seed", (void *)s_set_random_seed);
     Sforeign_symbol("(cs)ss_trunc", (void *)S_trunc);
     Sforeign_symbol("(cs)ss_trunc_rem", (void *)s_trunc_rem);
+    Sforeign_symbol("(cs)s_rational", (void *)S_rational);
     Sforeign_symbol("(cs)sub", (void *)S_sub);
     Sforeign_symbol("(cs)rem", (void *)S_rem);
 #ifdef GETWD

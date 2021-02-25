@@ -82,10 +82,12 @@
 (define integer+ (schemeop2 "(cs)add"))
 (define integer* (schemeop2 "(cs)mul"))
 (define integer- (schemeop2 "(cs)sub"))
-(define integer/ (schemeop2 "(cs)s_div"))
-(define intquotient (schemeop2 "(cs)ss_trunc"))
-(define intquotient-remainder (schemeop2 "(cs)ss_trunc_rem"))
-(define intremainder (schemeop2 "(cs)rem"))
+(define schoolbook-integer/ (schemeop2 "(cs)s_div"))
+(define schoolbook-intquotient (schemeop2 "(cs)ss_trunc"))
+(define schoolbook-intquotient-remainder (schemeop2 "(cs)ss_trunc_rem"))
+(define schoolbook-intremainder (schemeop2 "(cs)rem"))
+(define make-ratnum (schemeop2 "(cs)s_rational"))
+(define exgcd (schemeop2 "(cs)gcd"))
 
 (define $flsin (cflop1 "(cs)sin"))
 
@@ -96,6 +98,179 @@
 (define $flacos (cflop1 "(cs)acos"))
 (define $flfloor (cflop1 "(cs)floor"))
 (define $flceiling (cflop1 "(cs)ceil"))
+
+(let ()
+
+;; Burnikel-Ziegler division by Peter Bex from a series about CHICKEN's
+;; numeric tower:
+;;   https://www.more-magic.net/posts/numeric-tower-part-3.html
+;;   Licensed under the Creative Commons Attribution 3.0 License.
+;; The Scheme code here appears to be directly based on the C
+;; code in CHICKEN's BSD-licensed "runtime.c":
+;;   Copyright (c) 2008-2020, The CHICKEN Team
+;;   Copyright (c) 2000-2007, Felix L. Winkelmann
+;;   All rights reserved.
+
+(define DIV-LIMIT 100)
+
+(define (bigits->bits n) (fx* (constant bigit-bits) n))    ; Small helper
+
+(define (extract-bigits n start end)
+  (let ([s-bits (bigits->bits start)])
+    (bitwise-bit-field n s-bits (if end
+                                    (bigits->bits end)
+                                    (fxmax s-bits (integer-length n))))))
+
+;; Here and in 2n/1n we pass both b and [b1, b2] to avoid splitting
+;; up the number more than once.  This is a helper function for 2n/n.
+(define (burnikel-ziegler-3n/2n a12 a3 b b1 b2 n)
+  (let-values ([(q^ r1) (if (< (bitwise-arithmetic-shift-right a12 (bigits->bits n)) b1)
+                            (let* ((n/2 (fxsra n 1))                     ; (floor (/ n 2))
+                                   (b11 (extract-bigits b1 n/2 #f))      ; b1[n..n/2]
+                                   (b12 (extract-bigits b1 0 n/2)))      ; b1[n/2..0]
+                              (burnikel-ziegler-2n/1n a12 b1 b11 b12 n #t))
+                            ;; Don't bother dividing if a1 is a larger number than b1.
+	                    ;; We use a maximum guess instead (see paper for proof).
+                            (let ((base*n (bigits->bits n)))
+                              (values (- (bitwise-arithmetic-shift-left 1 base*n) 1)  ; B^n-1
+                                      (+ (- a12 (bitwise-arithmetic-shift-left b1 base*n)) b1))))])
+    (let ((r1a3 (+ (bitwise-arithmetic-shift-left r1 (bigits->bits n)) a3)))
+      (let lp ((r^ (- r1a3 (* q^ b2)))
+               (q^ q^))
+        (if (negative? r^)
+            (lp (+ r^ b) (- q^ 1))                     ; Adjust!
+            (values q^ r^))))))
+
+;; The main 2n/n algorithm which calls 3n/2n twice.  Here, a is the
+;; numerator, b the denominator, n is the length of b (in digits) and
+;; b1 and b2 are the two halves of b (these never change).
+(define (burnikel-ziegler-2n/1n a b b1 b2 n return-quot?)
+  (if (or (fxodd? n) (fx< n DIV-LIMIT))             ; Can't recur?
+      (let ([p (schoolbook-intquotient-remainder a b)]) ; Use school division
+        (values (car p) (cdr p)))
+      (let* ((n/2 (fxsra n 1))
+             ;; Split a and b into n-sized parts [a1, ..., a4] and [b1, b2]
+             (a12 (extract-bigits a n #f))             ; a[m..n]
+             (a3  (extract-bigits a n/2 n))            ; a[n..n/2]
+             (a4  (extract-bigits a 0 n/2)))           ; a[n..0]
+        ;; Calculate high quotient and intermediate remainder (first half)
+        (let-values ([(q1 r1) (burnikel-ziegler-3n/2n a12 a3 b b1 b2 n/2)])
+          ;; Calculate low quotient and final remainder (second half)
+          (let-values ([(q2 r) (burnikel-ziegler-3n/2n r1 a4 b b1 b2 n/2)])
+            ;; Recombine quotient parts as q = [q1,q2]
+            (values (and return-quot?
+                         (+ (bitwise-arithmetic-shift-left q1 (bigits->bits n/2)) q2))
+                    r))))))
+
+(define (quotient&remainder/burnikel-ziegler x y return-quot? return-rem?)
+  ;; Caller will have made sure that x and y are bignums
+  (let* ((q-neg? (if (negative? y) (not (negative? x)) (negative? x)))
+         (r-neg? (negative? x))
+         (abs-x (abs x))
+         (abs-y (abs y)))
+    (cond
+      [(> abs-x abs-y)
+       (let* ((x abs-x)
+              (y abs-y)
+              (s ($bignum-length y))
+              ;; Define m as min{2^k|(2^k)*DIV_LIMIT > s}.
+              ;; This ensures we shift as little as possible (less pressure
+              ;; on the GC) while maintaining a power of two until we drop
+              ;; below the threshold, so we can always split N in half.
+              (m (fxsll 1 (integer-length (fx/ s DIV-LIMIT))))
+              (j (fx/ (fx+ s (fx- m 1)) m))  ; j = s/m, rounded up
+              (n (fx* j m))
+              ;; Normalisation, just like with normal school division
+              (norm-shift (fx- (bigits->bits n) (integer-length y)))
+              (x (bitwise-arithmetic-shift-left x norm-shift))
+              (y (bitwise-arithmetic-shift-left y norm-shift))
+              ;; l needs to be the smallest value so that a < base^{l*n}/2
+              (l (fx/ (fx+ ($bignum-length x) n) n))
+              (l (if (fx= (bigits->bits l) (integer-length x)) (fx+ l 1) l))
+              (t (fxmax l 2))
+              (y-hi (extract-bigits y (fxsra n 1) #f))   ; y[n..n/2]
+              (y-lo (extract-bigits y 0 (fxsra n 1))))   ; y[n/2..0]
+         (let lp ((zi (bitwise-arithmetic-shift-right x (bigits->bits (fx* (fx- t 2) n))))
+                  (i (fx- t 2))
+                  (quot 0))
+           (let-values ([(qi ri) (burnikel-ziegler-2n/1n zi y y-hi y-lo n return-quot?)])
+             (let ((quot (and return-quot?
+                              (+ (bitwise-arithmetic-shift-left quot (bigits->bits n)) qi))))
+               (if (fx> i 0)
+                   (let ((zi-1 (let* ((base*n*i-1 (fx* n (fx- i 1)))
+                                      (base*n*i   (fx* n i))
+                                      ;; x_{i-1} = x[n*i..n*(i-1)]
+                                      (xi-1 (extract-bigits x base*n*i-1 base*n*i)))
+                                 (+ (bitwise-arithmetic-shift-left ri (bigits->bits n)) xi-1))))
+                     (lp zi-1 (fx- i 1) quot))
+                   ;; De-normalise remainder, but only if necessary
+                   (let ((rem (if (or (not return-rem?) (eq? 0 norm-shift))
+                                  ri
+                                  (bitwise-arithmetic-shift-right ri norm-shift))))
+                     ;; Return values (quot, rem or both) with correct sign:
+                     (cond ((and return-quot? return-rem?)
+                            (values (if q-neg? (- quot) quot)
+                                    (if r-neg? (- rem) rem)))
+                           (return-quot? (if q-neg? (- quot) quot))
+                           (else (if r-neg? (- rem) rem)))))))))]
+      [(< abs-x abs-y)
+       (cond
+         [(and return-quot? return-rem?) (values 0 x)]
+         [return-quot? 0]
+         [else x])]
+      [else
+       (cond
+         [(and return-quot? return-rem?) (values (if q-neg? -1 1) 0)]
+         [return-quot? (if q-neg? -1 1)]
+         [else 0])])))
+
+;; Only try to use Burnikel-Ziegler when we have large enough bignums:
+(define (big-divide-bignums? n d)
+  (and (bignum? n)
+       (bignum? d)
+       (fx>= ($bignum-length n) DIV-LIMIT)
+       (fx>= ($bignum-length d) DIV-LIMIT)))
+
+(define integer/
+  (lambda (n d)
+    (cond
+      [(big-divide-bignums? n d)
+       (let* ([g (exgcd n d)]
+              [g (if ($bigpositive? d)
+                     g
+                     (- g))])
+         (if (or (fixnum? g)
+                 (fx< ($bignum-length g) DIV-LIMIT))
+             (make-ratnum (schoolbook-intquotient n g)
+                          (schoolbook-intquotient d g))
+             (make-ratnum (quotient&remainder/burnikel-ziegler n g #t #f)
+                          (quotient&remainder/burnikel-ziegler d g #t #f))))]
+      [else (schoolbook-integer/ n d)])))
+
+(define intquotient
+  (lambda (n d)
+    (cond
+      [(big-divide-bignums? n d)
+       (quotient&remainder/burnikel-ziegler n d #t #f)]
+      [else
+       (schoolbook-intquotient n d)])))
+
+(define intquotient-remainder
+  (lambda (n d)
+    (cond
+      [(big-divide-bignums? n d)
+       (let-values ([(q r) (quotient&remainder/burnikel-ziegler n d #t #t)])
+         (cons q r))]
+      [else
+       (schoolbook-intquotient-remainder n d)])))
+
+(define intremainder
+  (lambda (n d)
+    (cond
+      [(big-divide-bignums? n d)
+       (quotient&remainder/burnikel-ziegler n d #f #t)]
+      [else
+       (schoolbook-intremainder n d)])))
 
 (let ()
 
@@ -914,7 +1089,7 @@
            (fx- x))]
       [(bignum?) (big-negate x)]
       [(flonum?) (fl- x)]
-      [(ratnum?) (integer/ (- ($ratio-numerator x)) ($ratio-denominator x))]
+      [(ratnum?) (make-ratnum (- ($ratio-numerator x)) ($ratio-denominator x))]
       [($exactnum? $inexactnum?) (make-rectangular (- (real-part x)) (- (imag-part x)))]
       [else (nonnumber-error who x)])))
 
@@ -1154,11 +1329,6 @@
               (loop (max x (car z)) (cdr z))))])))
 
 (let ()
-  (define exgcd
-    (foreign-procedure "(cs)gcd"
-      (scheme-object scheme-object)
-      scheme-object))
-
   (define (exlcm x1 x2)
     (if (or (eqv? x1 0) (eqv? x2 0))
         0
@@ -2151,7 +2321,7 @@
         [(fixnum? bignum?) (integer+ x y)]
         [(ratnum?)
          (let ([d ($ratio-denominator y)])
-           (integer/ (+ (* x d) ($ratio-numerator y)) d))]
+           (make-ratnum (+ (* x d) ($ratio-numerator y)) d))]
         [(flonum?) (exact-inexact+ x y)]
         [($exactnum? $inexactnum?)
          (make-rectangular (+ x (real-part y)) (imag-part y))]
@@ -2169,7 +2339,7 @@
            (type-case y
              [(fixnum? bignum?)
               (let ([d ($ratio-denominator x)])
-                (integer/ (+ (* y d) ($ratio-numerator x)) d))]
+                (make-ratnum (+ (* y d) ($ratio-numerator x)) d))]
              [(ratnum?)
               (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
                 (integer/
@@ -2301,7 +2471,7 @@
         [(fixnum? bignum?) (integer- x y)]
         [(ratnum?)
          (let ([d ($ratio-denominator y)])
-           (integer/ (- (* x d) ($ratio-numerator y)) d))]
+           (make-ratnum (- (* x d) ($ratio-numerator y)) d))]
         [($exactnum? $inexactnum?)
          (make-rectangular (- x (real-part y)) (- (imag-part y)))]
         [(flonum?) (exact-inexact- x y)]
@@ -2319,7 +2489,7 @@
            (type-case y
              [(fixnum? bignum?)
               (let ([d ($ratio-denominator x)])
-                (integer/ (- ($ratio-numerator x) (* y d)) d))]
+                (make-ratnum (- ($ratio-numerator x) (* y d)) d))]
              [(ratnum?)
               (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
                 (integer/
@@ -3310,5 +3480,5 @@
              [m^ 0 (logor (sll m^ w-1) ($fxreverse (logand m mask) w-1))]
              [k (- end start) (- k w-1)])
             ((<= k w-1) (logor (sll m^ k) ($fxreverse m k))))))))
-)))))))
+))))))))
 )
