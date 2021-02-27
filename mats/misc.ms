@@ -1113,7 +1113,7 @@
         (let ([th (fork-thread
                    (lambda ()
                      (let ([bstr (make-bytevector N)])
-                       (box-cas! ready #f 'go)
+                       (set-box! ready 'go)
                        ;; Block so that thread becomes deactivated
                        (mutex-acquire m)
                        (mutex-release m)
