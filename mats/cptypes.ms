@@ -1178,4 +1178,20 @@
           (loop (fx+ i 1))))))
   (cptypes-equivalent-expansion?
    '(lambda (x y) (set-box! x (if (vector? y) #t (error 't))))
-   '(lambda (x y) (set-box! x (#3%$fixmediate (if (vector? y) #t (error 't)))))))
+   '(lambda (x y) (set-box! x (#3%$fixmediate (if (vector? y) #t (error 't))))))
+)
+
+(mat cptypes-maybe
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (not x) (vector? x)) (box? x)))
+    '(lambda (x) (when (or (not x) (vector? x)) #f)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (or (not x) (vector? x)) (vector? x)))
+         '(lambda (x) (when (or (not x) (vector? x)) #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (not x) (vector? x)) (when x (vector? x))))
+    '(lambda (x) (when (or (not x) (vector? x)) (when x #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (s) (define x (string->number s)) (when x (number? x)))
+    '(lambda (s) (define x (string->number s)) (when x #t)))
+)

@@ -54,6 +54,9 @@ Notes:
               * a record #[pred-$record/ref <ref>] to signal that it's a
                 record of a type that is stored in the variable <ref>
                 (these may collide with other records)
+              * a record #[pred-or <imm> <nor> <rec>] where <imm> a predicate for 
+                an immediate, <rec> is a predicate for a record and <nor> is a 
+                predicate for anything else.
               * TODO?: add something to indicate that x is a procedure to
                        create/setter/getter/predicate of a record of that type
 
@@ -85,12 +88,6 @@ Notes:
           c)))
 
   (with-output-language (Lsrc Expr)
-    (define void-rec `(quote ,(void)))
-    (define true-rec `(quote #t))
-    (define false-rec `(quote #f))
-    (define null-rec `(quote ()))
-    (define eof-rec `(quote #!eof))
-    (define bwp-rec `(quote #!bwp))
 
     (module (simple?)  ; Simplified version copied from cp0. TODO: copy the rest.
       (define default-fuel 5)
@@ -316,7 +313,7 @@ Notes:
     (define (pred-env-add/key types key pred)
       (cond
         [(and pred
-              (not (eq? pred 'ptr)) ; filter 'ptr to reduce the size
+              (not (predicate-is-ptr? pred)) ; filter 'ptr to reduce the size
               (not (eq? types bottom-fxmap)))
          (let ([old (fxmap-ref types key #f)])
            (cond
@@ -537,14 +534,10 @@ Notes:
          [else (if (not extend?) 'bottom '$record)])]
       [else (if (not extend?) 'bottom '$record)]))
 
-  ; when extend is #f the result is a predicate that recognizes less values
-  ; than the one in name. This is useful for reductions like
-  ; (pred? x) ==> #t and (something x) ==> (#3%something x)
-  ; when extend is #t the result is a predicate that recognizes more values
-  ; than the one in name. This is useful for reductions like
-  ; (pred? x) ==> #f and (something x) ==> <error>
-  ; in case the non extended version is not #f, the extended version must be not #f
-  (define (primref-name->predicate name extend?)
+  ; Recognize predicates and get the corresponding
+  ; type using the notation in primdata.ss
+  ; TODO: Move this info to primdata.ss
+  (define (primref-name->predicate name)
     (case name
       [pair? 'pair]
       [box? 'box]
@@ -561,95 +554,26 @@ Notes:
       [flvector? 'flvector]
       [gensym? 'gensym]
       [uninterned-symbol? 'uninterned-symbol]
-      #;[interned-symbol? 'interned-symbol]
       [symbol? 'symbol]
       [char? 'char]
       [boolean? 'boolean]
       [procedure? 'procedure]
-      [not false-rec]
-      [null? null-rec]
-      [eof-object? eof-rec]
-      [bwp-object? bwp-rec]
-      [(list? list-assuming-immutable?) (if (not extend?) null-rec 'null-or-pair)]
-      [else ((if extend? cdr car)
-             (case name
-               [(record? record-type-descriptor?) '(bottom . $record)]
-               [(integer? rational?) '(exact-integer . real)]
-               [(cflonum?) '(flonum . number)]
-               [else '(#f . #f)]))])) ; this is used only to detect predicates.
-
-  (define (maybe-predicate? name)
-    (let ([name (symbol->string name)])
-      (and (>= (string-length name) 6)
-           (let loop ([n 0])
-             (or (fx= n 6)
-                 (and (eq? (string-ref name n) 
-                           (string-ref "maybe-" n))
-                      (loop (fx+ n 1))))))))
-
-  ; nqm: no question mark
-  ; this is almost duplicated code, but with more cases
-  ; it's also useful to avoid the allocation
-  ; of the temporal strings to transform: vector -> vector?
-  (define (primref-name/nqm->predicate name extend?)
-    (case name
-      [pair 'pair]
-      [box 'box]
-      [$record '$record]
-      [fixnum 'fixnum]
-      [bignum 'bignum]
-      [flonum 'flonum]
-      [real 'real]
-      [number 'number]
-      [vector 'vector]
-      [string 'string]
-      [bytevector 'bytevector]
-      [fxvector 'fxvector]
-      [flvector 'flvector]
-      [gensym 'gensym]
-      [uninterned-symbol 'uninterned-symbol]
-      [interned-symbol 'interned-symbol]
-      [symbol 'symbol]
-      [char 'char]
-      [bottom 'bottom] ;pseudo-predicate
-      [ptr 'ptr] ;pseudo-predicate
-      [boolean 'boolean]
-      [true 'true]
-      [procedure 'procedure]
-      [exact-integer 'exact-integer] ;fake-predicate
-      [void void-rec] ;fake-predicate
-      [null null-rec]
-      [eof-object eof-rec]
-      [bwp-object bwp-rec]
-      [list (if (not extend?) null-rec 'null-or-pair)] ;fake-predicate
-      [else ((if extend? cdr car)
-             (case name
-               [(record rtd) '(bottom . $record)]
-               [(bit length ufixnum pfixnum) '(bottom . fixnum)]
-               [(uint sub-uint) '(bottom . exact-integer)]
-               [(index sub-index u8 s8) '(bottom . fixnum)]
-               [(sint) '(fixnum . exact-integer)]
-               [(uinteger) '(bottom . real)]
-               [(integer rational) '(exact-integer . real)]
-               [(cflonum) '(flonum . number)]
-               [(sub-ptr) '(bottom . ptr)]
-               [else
-                (cond
-                  [(not name) ; TODO: Move this case to the top?
-                   '(#f . #f)]
-                  [(pair? name) ; TODO: Move this case to the top?
-                   (cond
-                     [(equal? name '(ptr . ptr))
-                      '(pair . pair)]
-                     [else
-                      '(bottom . pair)])]
-                  [(maybe-predicate? name)
-                   '(bottom . ptr)]         ; for types like maybe-*
-                  [else
-                   '(bottom . true)])]))])) ; for all other types that exclude #f
+      [not 'false]
+      [null? 'null]
+      [eof-object? 'eof-object]
+      [bwp-object? 'bwp-object]
+      [$immediate? '$immediate]
+      [list? 'list]
+      [list-assuming-immutable? 'list-assuming-immutable]
+      [record? 'record]
+      [record-type-descriptor? 'rtd]
+      [integer? 'integer]
+      [rational? 'rational]
+      [cflonum? 'cflonum]
+      [else #f])) ; this function is used only to detect predicates.
 
   (define (primref->predicate pr extend?)
-    (primref-name->predicate (primref-name pr) extend?))
+    (primref-name/nqm->predicate (primref-name->predicate (primref-name pr)) extend?))
 
   (define (check-constant-is? x pred?)
     (and (Lsrc? x)
@@ -698,16 +622,9 @@ Notes:
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
 
-  (define (predicate-implies-fixmediate? x)
-    (and (not (eq? x 'ptr)) ;fast path to avoid duplicated computation
-         (or (check-constant-is? x $immediate?)
-             (predicate-implies? x 'fixnum)
-             (predicate-implies? x 'boolean)
-             (predicate-implies? x 'char))))
-
   (define (non-literal-fixmediate? e x)
     (and (not (check-constant-is? e (lambda (e) #t)))
-         (predicate-implies-fixmediate? x)))
+         (predicate-implies? x $fixmediate-pred)))
 
 
   (module ()
@@ -1056,27 +973,27 @@ Notes:
                    [ir `(call ,preinfo ,pr ,n)])
                (cond
                  [(predicate-implies? r 'char)
-                  (values ir 'ptr ntypes #f #f)] ; should be maybe-symbol
+                  (values ir ptr-pred ntypes #f #f)] ; should be maybe-symbol
                  [(predicate-implies? r 'symbol)
-                  (values ir 'ptr ntypes #f #f)] ; should be maybe-char
+                  (values ir ptr-pred ntypes #f #f)] ; should be maybe-char
                  [(and (predicate-disjoint? r 'char)
                        (predicate-disjoint? r 'symbol))
                   (values ir 'bottom pred-env-bottom #f #f)]
                  [else
-                  (values ir 'ptr                                            ; should be maybe-(union 'char 'symbol)
-                          (pred-env-add/ref ntypes n 'true  plxc) #f #f)]))] ; should be (union 'char 'symbol)
+                  (values ir ptr-pred                ; should be maybe-(union 'char 'symbol)
+                          (pred-env-add/ref ntypes n true-pred  plxc) #f #f)]))] ; should be (union 'char 'symbol)
         [(n c) (let ([rn (get-type n)]
                      [rc (get-type c)]
                      [ir `(call ,preinfo ,pr ,n ,c)])
                  (cond
                    [(or (predicate-disjoint? rn 'symbol)
-                        (predicate-disjoint? rc 'ptr)) ; should be maybe-char
+                        (predicate-disjoint? rc ptr-pred)) ; should be maybe-char
                     (values ir 'bottom pred-env-bottom #f #f)]
                    [else
                     (values ir void-rec
                             (pred-env-add/ref (pred-env-add/ref ntypes
                                                                 n 'symbol plxc)
-                                              c 'ptr plxc) ; should be maybe-char
+                                              c ptr-pred plxc) ; should be maybe-char
                              #f #f)]))])
 
       (define-specialize/unrestricted 2 call-with-values
@@ -1092,7 +1009,7 @@ Notes:
 
       (define-specialize/unrestricted 2 apply
         [(proc . e*) (let-values ([(e* r* t* t-t* f-t*)
-                                   (map-values 5 (lambda (e) (Expr/main e 'value oldtypes plxc)) e*)])
+                                   (map-values 5 (lambda (e) (Expr e 'value oldtypes plxc)) e*)])
                      (let ([mtypes (fold-left (lambda (f t) (pred-env-intersect/base f t oldtypes)) oldtypes t*)])
                        (let-values ([(proc retproc typesproc t-typesproc f-typesproc)
                                      (Expr/call proc ctxt mtypes oldtypes plxc)])
@@ -1101,9 +1018,9 @@ Notes:
 
       (define-specialize/unrestricted 2 $apply
         [(proc n args) (let*-values ([(n rn tn t-tn f-tn)
-                                      (Expr/main n 'value oldtypes plxc)]
+                                      (Expr n 'value oldtypes plxc)]
                                      [(args rargs targs t-targs f-targs)
-                                      (Expr/main args 'value oldtypes plxc)])
+                                      (Expr args 'value oldtypes plxc)])
                          (let* ([predn (primref->argument-predicate pr 1 3 #t)]
                                 [tn (if (predicate-disjoint? rn predn)
                                         'bottom
@@ -1124,7 +1041,7 @@ Notes:
         (define (handle-dynamic-wind critical? in body out ctxt oldtypes plxc)
           (let*-values ([(critical? rcritical? tcritical? t-tcritical? f-tcritical?)
                          (if critical?
-                             (Expr/main critical? 'value oldtypes plxc)
+                             (Expr critical? 'value oldtypes plxc)
                              (values #f #f oldtypes #f #f))]
                         [(ìn rin tin t-tin f-tin)
                          (Expr/call in 'value tcritical? oldtypes plxc)]
@@ -1262,14 +1179,14 @@ Notes:
     (define (finish preinfo preinfo2 x* interface body e* r* ntypes)
        (let ([ntypes/x (fold-left (lambda (t x p) (pred-env-add t x p plxc)) ntypes x* r*)])
          (let*-values ([(body ret n-types/x t-types/x f-types/x)
-                       (Expr/main body ctxt ntypes/x plxc)]
+                       (Expr body ctxt ntypes/x plxc)]
                        [(n-types t-types f-types)
                         (pred-env-triple-filter/base n-types/x t-types/x f-types/x x* ctxt ntypes plxc)])
           (values `(call ,preinfo (case-lambda ,preinfo2 (clause (,x* ...) ,interface ,body)) ,e* ...)
                   ret n-types t-types f-types))))
     (define (bad-arity preinfo e0 e* ctxt ntypes)
       (let*-values ([(e0 ret0 n-types0 t-types0 f-types0)
-                     (Expr/main e0 'value ntypes plxc)])
+                     (Expr e0 'value ntypes plxc)])
         (values `(call ,preinfo ,e0 ,e* ...)
                'bottom pred-env-bottom #f #f)))
     (define (cut-r* r* n)
@@ -1329,7 +1246,7 @@ Notes:
                                  [else
                                    (cons 'ready
                                          (call-with-values
-                                           (lambda () (Expr/main e 'value oldtypes plxc))
+                                           (lambda () (Expr e 'value oldtypes plxc))
                                            list))]))
                              e*))
     (define fp-types (fold-left (lambda (t x)
@@ -1342,7 +1259,7 @@ Notes:
                                 (cond
                                   [(eq? (car e) 'delayed)
                                    (call-with-values
-                                            (lambda () (Expr/main (cdr e) 'value fp-types plxc))
+                                            (lambda () (Expr (cdr e) 'value fp-types plxc))
                                             list)]
                                   [else
                                    (cdr e)]))
@@ -1368,13 +1285,13 @@ Notes:
 
   (define (Expr/fix-tf-types ir ctxt types plxc)
     (let-values ([(ir ret types t-types f-types)
-                  (Expr/main ir ctxt types plxc)])
+                  (Expr ir ctxt types plxc)])
       (values ir ret
               types
               (if (predicate-implies? ret false-rec)
                   pred-env-bottom
                   (or t-types types))
-              (if (predicate-implies? ret 'true)
+              (if (predicate-implies? ret true-pred)
                   pred-env-bottom
                   (or f-types types)))))
 
@@ -1397,7 +1314,7 @@ Notes:
             (nanopass-case (Lsrc CaseLambdaClause) (car cl*)
               [(clause (,x* ...) ,interface ,body)
                (let-values ([(body ret2 types2 t-types2 f-types2)
-                             (Expr/main body ctxt types plxc)])
+                             (Expr body ctxt types plxc)])
                  (let* ([cl2 (with-output-language (Lsrc CaseLambdaClause)
                                  `(clause (,x* ...) ,interface ,body))]
                         [t-types2 (or t-types2 types2)]
@@ -1443,7 +1360,7 @@ Notes:
                                                             ntypes)])))])))])]))]
       [else
        (let-values ([(ir ret n-types t-types f-types)
-                     (Expr/main ir 'value outtypes plxc)])
+                     (Expr ir 'value outtypes plxc)])
          (values ir
                 (if (predicate-disjoint? ret 'procedure)
                     'bottom
@@ -1462,14 +1379,14 @@ Notes:
          [(test)
           (let ([t (pred-env-lookup types x plxc)])
             (cond
-              [(predicate-implies? t 'true)
+              [(predicate-implies? t true-pred)
                (values true-rec true-rec types #f #f)]
               [(predicate-implies? t false-rec)
                (values false-rec false-rec types #f #f)]
               [else
                (values ir t
                       types
-                      (pred-env-add/ref types ir 'true plxc) ; don't confuse it with true-rec
+                      (pred-env-add/ref types ir true-pred plxc) ; don't confuse it with true-rec
                       (pred-env-add/ref types ir false-rec plxc))]))]
          [else
            (let ([t (pred-env-lookup types x plxc)])
@@ -1481,26 +1398,26 @@ Notes:
                  [else
                   (values ir t types #f #f)])]
                [else
-                (values ir (or t 'ptr) types #f #f)]))])] ; In case there is no saved type, use 'ptr to mark it as single valued 
+                (values ir (or t ptr-pred) types #f #f)]))])] ; In case there is no saved type, use ptr-pred to mark it as single valued 
       [(seq ,[e1 'effect types plxc -> e1 ret1 types t-types f-types] ,e2)
        (cond
          [(predicate-implies? ret1 'bottom)
           (values e1 'bottom pred-env-bottom #f #f)]
          [else
           (let-values ([(e2 ret types t-types f-types)
-                        (Expr/main e2 ctxt types plxc)])
+                        (Expr e2 ctxt types plxc)])
             (values (make-seq/no-drop ctxt e1 e2) ret types t-types f-types))])]
       [(if ,[Expr/fix-tf-types : e1 'test types plxc -> e1 ret1 types1 t-types1 f-types1] ,e2 ,e3)
        (cond
          [(predicate-implies? ret1 'bottom) ;check bottom first
           (values e1 'bottom pred-env-bottom #f #f)]
-         [(predicate-implies? ret1 'true)
+         [(predicate-implies? ret1 true-pred)
           (let-values ([(e2 ret types t-types f-types)
-                        (Expr/main e2 ctxt types1 plxc)])
+                        (Expr e2 ctxt types1 plxc)])
             (values (make-seq ctxt e1 e2) ret types t-types f-types))]
          [(predicate-implies? ret1 false-rec)
           (let-values ([(e3 ret types t-types f-types)
-                        (Expr/main e3 ctxt types1 plxc)])
+                        (Expr e3 ctxt types1 plxc)])
             (values (make-seq ctxt e1 e3) ret types t-types f-types))]
          [else
           (let-values ([(e2 ret2 types2 t-types2 f-types2)
@@ -1560,7 +1477,7 @@ Notes:
                         (nanopass-case (Lsrc CaseLambdaClause) cl
                           [(clause (,x* ...) ,interface ,body)
                            (let-values ([(body ret types t-types f-types)
-                                         (Expr/main body 'value types plxc)])
+                                         (Expr body 'value types plxc)])
                              (for-each (lambda (x) (prelex-operand-set! x #f)) x*)
                              (with-output-language (Lsrc CaseLambdaClause)
                                `(clause (,x* ...) ,interface ,body)))]))
@@ -1575,7 +1492,7 @@ Notes:
                      (map-Expr/delayed e* types plxc)])
          (let ([ntypes/x (fold-left (lambda (t x p) (pred-env-add t x p plxc)) ntypes x* r*)])
            (let*-values ([(body ret n-types/x t-types/x f-types/x)
-                         (Expr/main body ctxt ntypes/x plxc)]
+                         (Expr body ctxt ntypes/x plxc)]
                          [(n-types t-types f-types)
                           (pred-env-triple-filter/base n-types/x t-types/x f-types/x x* ctxt ntypes plxc)])
                (values `(letrec ([,x* ,e*] ...) ,body)
@@ -1586,11 +1503,11 @@ Notes:
                         (if (null? x*)
                           (values (reverse rev-e*) types)
                           (let-values ([(e ret types t-types f-types)
-                                        (Expr/main (car e*) 'value types plxc)])
+                                        (Expr (car e*) 'value types plxc)])
                             (let ([types (pred-env-add types (car x*) ret plxc)])
                               (loop (cdr x*) (cdr e*) types (cons e rev-e*))))))]
                      [(body ret n-types/x t-types/x f-types/x)
-                      (Expr/main body ctxt ntypes/x plxc)]
+                      (Expr body ctxt ntypes/x plxc)]
                      [(n-types t-types f-types)
                       (pred-env-triple-filter/base n-types/x t-types/x f-types/x x* ctxt types plxc)])
          (values `(letrec* ([,x* ,e*] ...) ,body)
@@ -1656,12 +1573,12 @@ Notes:
 
   ; friendly name to use in other internal functions
   ; so it is similar to Expr/call and Expr/fix-tf-types
-  (define Expr/main cptypes)
+  (define Expr cptypes)
 
   ; external version of cptypes: Lsrc -> Lsrc 
   (define (Scptypes ir)
     (let-values ([(ir ret types t-types f-types)
-                  (Expr/main ir 'value pred-env-empty (box 0))])
+                  (Expr ir 'value pred-env-empty (box 0))])
       ir))
 
     (set! $cptypes Scptypes)
