@@ -563,7 +563,7 @@ static int flonum_is_forwarded_p(ptr p, seginfo *si) {
 
 #define relocate_pure_help(ppp, pp) do {     \
     seginfo *SI;                             \
-    if (!IMMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL) {  \
+    if (!FIXMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL) {  \
       if (SI->old_space)                      \
         relocate_pure_help_help(ppp, pp, SI); \
       ELSE_MEASURE_NONOLDSPACE(pp)            \
@@ -609,7 +609,7 @@ static int flonum_is_forwarded_p(ptr p, seginfo *si) {
 static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
   seginfo *si;
   ptr pp = *ppp;
-  if (!IMMEDIATE(pp)
+  if (!FIXMEDIATE(pp)
       && (si = MaybeSegInfo(ptr_get_segment(pp))) != NULL
       && si->old_space) {
     BLOCK_SET_THREAD(si->creator);
@@ -639,7 +639,7 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
 
 #define relocate_impure_help(ppp, pp, from_g) do {                      \
     seginfo *SI;                                                        \
-    if (!IMMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL) { \
+    if (!FIXMEDIATE(pp) && (SI = MaybeSegInfo(ptr_get_segment(pp))) != NULL) { \
       if (SI->old_space)                                                \
         relocate_impure_help_help(ppp, pp, from_g, SI);                 \
       ELSE_MEASURE_NONOLDSPACE(pp)                                      \
@@ -673,7 +673,7 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
 
 #define relocate_dirty(PPP, YOUNGEST) do {                              \
     seginfo *_si; ptr *_ppp = PPP, _pp = *_ppp; IGEN _pg;               \
-    if (!IMMEDIATE(_pp) && (_si = MaybeSegInfo(ptr_get_segment(_pp))) != NULL) { \
+    if (!FIXMEDIATE(_pp) && (_si = MaybeSegInfo(ptr_get_segment(_pp))) != NULL) { \
       if (!_si->old_space) {                                            \
         _pg = _si->generation;                                          \
       } else {                                                          \
@@ -815,7 +815,7 @@ static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength) {
   }
 }
 
-#define NONSTATICINHEAP(si, x) (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && si->generation != static_generation)
+#define NONSTATICINHEAP(si, x) (!FIXMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && si->generation != static_generation)
 #define ALWAYSTRUE(si, x) (si = SegInfo(ptr_get_segment(x)), 1)
 #define partition_guardians(LS, FILTER) do {                    \
     ptr ls; seginfo *si;                                        \
@@ -1070,7 +1070,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
        for (ls = count_roots_ls, i = 0; ls != Snil; ls = Scdr(ls), i++) {
          ptr p = Scar(ls);
-         if (IMMEDIATE(p)) {
+         if (FIXMEDIATE(p)) {
            count_roots[i].p = p;
            count_roots[i].weak = 0;
          } else {
@@ -1106,7 +1106,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
        for (i = 0; i < count_roots_len; i++) {
          uptr total;
          ptr p = count_roots[i].p;
-         if (IMMEDIATE(p)) {
+         if (FIXMEDIATE(p)) {
            /* nothing to do */
          } else {
            seginfo *si = SegInfo(ptr_get_segment(p));
@@ -1152,7 +1152,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
        /* clear `counting_mask`s */
        for (i = 0; i < count_roots_len; i++) {
          ptr p = count_roots[i].p;
-         if (!IMMEDIATE(p)) {
+         if (!FIXMEDIATE(p)) {
            seginfo *si = SegInfo(ptr_get_segment(p));
            si->counting_mask = NULL;
          }
@@ -1368,7 +1368,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
                     pend_hold_ls = ls;
                   } else {
                     seginfo *si;
-                    if (!IMMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && si->old_space) {
+                    if (!FIXMEDIATE(rep) && (si = MaybeSegInfo(ptr_get_segment(rep))) != NULL && si->old_space) {
                       /* mark things reachable from `rep`, but not `rep` itself, unless
                          `rep` is immediately reachable from itself */
                       PUSH_BACKREFERENCE(ls)
@@ -1885,7 +1885,7 @@ static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
 static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
   seginfo *si;
  /* adapted from relocate */
-  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space && !new_marked(si, p)) {
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space && !new_marked(si, p)) {
     if (FORWARDEDP(p, si)) {
       *pp = GET_FWDADDRESS(p);
     } else {
@@ -2526,7 +2526,7 @@ static void resweep_dirty_weak_pairs(thread_gc *tgc) {
                 seginfo *si;
 
                 /* handle car field */
-                if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+                if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
                   if (si->old_space) {
                     if (new_marked(si, p)) {
                       youngest = TARGET_GENERATION(si);
@@ -2637,7 +2637,7 @@ static void check_ephemeron(thread_gc *tgc, ptr pe) {
   from_g = GENERATION(pe);
   
   p = Scar(pe);
-  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space) {
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space) {
     if (SEGMENT_IS_LOCAL(si, p)) {
       if (new_marked(si, p)) {
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
@@ -2696,7 +2696,7 @@ static IGEN check_dirty_ephemeron(thread_gc *tgc, ptr pe, IGEN youngest) {
   PUSH_BACKREFERENCE(pe);
  
   p = Scar(pe);
-  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
     if (si->old_space) {
       if (SEGMENT_IS_LOCAL(si, p)) {
         if (new_marked(si, p)) {
@@ -3305,7 +3305,7 @@ static void add_ephemeron_to_pending_measure(thread_gc *tgc, ptr pe) {
   seginfo *si;
   ptr p = Scar(pe);
 
-  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space)
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space)
     add_ephemeron_to_pending(tgc, pe);
   else {
     if (EPHEMERONPREVREF(pe))
@@ -3326,7 +3326,7 @@ static void check_ephemeron_measure(thread_gc *tgc, ptr pe) {
   EPHEMERONNEXT(pe) = 0;
 
   p = Scar(pe);
-  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL
       && (si->generation <= max_measure_generation)
       && (si->generation >= min_measure_generation)
       && (!(si->old_space) || !FORWARDEDP(p, si))
@@ -3341,7 +3341,7 @@ static void check_ephemeron_measure(thread_gc *tgc, ptr pe) {
   }
 
   p = Scdr(pe);
-  if (!IMMEDIATE(p))
+  if (!FIXMEDIATE(p))
     push_measure(tgc, p);
 }
 
@@ -3398,7 +3398,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
 
   for (l = ls; l != Snil; l = Scdr(l)) {
     ptr p = Scar(l);
-    if (!IMMEDIATE(p)) {
+    if (!FIXMEDIATE(p)) {
       seginfo *si = SegInfo(ptr_get_segment(p));
 
       if (!si->measured_mask)
@@ -3416,7 +3416,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
 
     measure_total = 0;
 
-    if (!IMMEDIATE(p)) {
+    if (!FIXMEDIATE(p)) {
       seginfo *si = SegInfo(ptr_get_segment(p));
       measure_mask_unset(si->counting_mask, si, p);
       gc_measure_one(tgc, p);
@@ -3432,7 +3432,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
 
   for (l = ls; l != Snil; l = Scdr(l)) {
     ptr p = Scar(l);
-    if (!IMMEDIATE(p)) {
+    if (!FIXMEDIATE(p)) {
       seginfo *si = SegInfo(ptr_get_segment(p));
       si->counting_mask = NULL;
     }

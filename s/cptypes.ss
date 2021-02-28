@@ -698,17 +698,16 @@ Notes:
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
 
-  (define (predicate-implies-immediate? x)
+  (define (predicate-implies-fixmediate? x)
     (and (not (eq? x 'ptr)) ;fast path to avoid duplicated computation
-         (or (check-constant-is? x (lambda (x) (and ($immediate? x)
-                                                    (not (fixnum? x)))))
+         (or (check-constant-is? x $immediate?)
              (predicate-implies? x 'fixnum)
              (predicate-implies? x 'boolean)
              (predicate-implies? x 'char))))
 
-  (define (non-literal-immediate? e x)
+  (define (non-literal-fixmediate? e x)
     (and (not (check-constant-is? e (lambda (e) #t)))
-         (predicate-implies-immediate? x)))
+         (predicate-implies-fixmediate? x)))
 
 
   (module ()
@@ -917,9 +916,9 @@ Notes:
              (define-specialize 2 set
                [(args ... val) (values `(call ,preinfo ,pr
                                               ,args ...
-                                              ,(if (non-literal-immediate? val (get-type val))
+                                              ,(if (non-literal-fixmediate? val (get-type val))
                                                    `(call ,(make-preinfo-call)
-                                                          ,(lookup-primref 3 '$immediate)
+                                                          ,(lookup-primref 3 '$fixmediate)
                                                           ,val)
                                                    val))
                                        ret ntypes #f #f)])]))
@@ -1550,8 +1549,8 @@ Notes:
                                                          types1
                                                          new-types)])))])))])]
       [(set! ,maybe-src ,x ,[e 'value types plxc -> e ret types t-types f-types])
-       (values `(set! ,maybe-src ,x ,(if (non-literal-immediate? e ret)
-                                         `(call ,(make-preinfo-call) ,(lookup-primref 3 '$immediate) ,e)
+       (values `(set! ,maybe-src ,x ,(if (non-literal-fixmediate? e ret)
+                                         `(call ,(make-preinfo-call) ,(lookup-primref 3 '$fixmediate) ,e)
                                          e))
                void-rec types #f #f)]
       [(call ,preinfo ,pr ,e* ...)
@@ -1622,9 +1621,9 @@ Notes:
        (values `(record-set! ,rtd ,type ,index ,e1
                              ,(cond
                                [(and (eq? type 'scheme-object)
-                                     (non-literal-immediate? e2 ret2))
+                                     (non-literal-fixmediate? e2 ret2))
                                 `(call ,(make-preinfo-call)
-                                       ,(lookup-primref 3 '$immediate)
+                                       ,(lookup-primref 3 '$fixmediate)
                                        ,e2)]
                                [else e2]))
                void-rec

@@ -277,7 +277,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
 	for (ges = GUARDIANENTRIES(tc); ges != Snil; ges = next) {
 	  obj = GUARDIANOBJ(ges);
 	  next = GUARDIANNEXT(ges);
-	  if (!IMMEDIATE(obj) && (si = MaybeSegInfo(ptr_get_segment(obj))) != NULL && si->generation != static_generation) {
+	  if (!FIXMEDIATE(obj) && (si = MaybeSegInfo(ptr_get_segment(obj))) != NULL && si->generation != static_generation) {
 	    INITGUARDIANNEXT(ges) = target;
 	    target = ges;
 	  }

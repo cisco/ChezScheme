@@ -353,7 +353,7 @@
 
 (set! assv
   (lambda (x alist)
-    (if (or (symbol? x) (#%$immediate? x))
+    (if (or (symbol? x) (fixmediate? x))
         (ass-eq? x alist 'assv)
         (do-assoc x alist 'assv eqv?))))
 
@@ -363,7 +363,7 @@
       [(string? x)
        (do-assoc x alist 'assoc
          (lambda (x y) (and (string? x) (string=? x y))))]
-      [(or (symbol? x) (#%$immediate? x))
+      [(or (symbol? x) (fixmediate? x))
        (ass-eq? x alist 'assoc)]
       [else
        (do-assoc x alist 'assoc equal?)])))

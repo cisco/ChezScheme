@@ -1964,6 +1964,7 @@
   ($filter-conv [flags single-valued])
   ($filter-foreign-type [flags single-valued])
   ($fixed-path? [sig [(string) -> (boolean)]] [flags pure safeongoodargs])
+  ($fixmediate [sig [(ptr) -> (ptr)]] [flags pure discard])
   ($flvector-ref-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted pure])
   ($flvector-set!-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted discard])
   ($<= [flags single-valued])
@@ -2165,8 +2166,7 @@
   ($hashtable-veclen [flags discard])
   ($ht-minlen [flags single-valued discard])
   ($ht-veclen [flags single-valued discard])
-  ($immediate [sig [(ptr) -> (ptr)]] [flags pure discard])
-  ($immediate? [sig [(ptr) -> (boolean)]] [flags pure unrestricted]) ; no mifoldable due to fixnum
+  ($immediate? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($impoops [flags abort-op])
   ($import-library [flags single-valued])
   ($inexactnum? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])

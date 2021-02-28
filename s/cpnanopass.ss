@@ -3846,7 +3846,7 @@
           (lambda (multiple-ref? type e)
             (nanopass-case (L7 Expr) e
               [(call ,info ,mdcl ,pr ,e)
-               (guard (eq? (primref-name pr) '$immediate))
+               (guard (eq? (primref-name pr) '$fixmediate))
                (let-values ([(t dobind) (binder multiple-ref? type e)])
                  (values `(call ,info ,mdcl ,pr ,t) dobind))]
               [else
@@ -4124,7 +4124,7 @@
             [(base index offset e build-assign build-remember-seq)
              (nanopass-case (L7 Expr) e
                [(call ,info ,mdcl ,pr ,e)
-                (guard (eq? (primref-name pr) '$immediate))
+                (guard (eq? (primref-name pr) '$fixmediate))
                 (build-assign base index offset e)]
                [else
                 (if (nanopass-case (L7 Expr) e
@@ -6098,11 +6098,8 @@
                       ,(%constant strue)
                       ,(%typed-object-check mask-inexactnum type-inexactnum ,e)))])
         (define-inline 2 $immediate?
-          [(e) (bind #t (e)
-                 `(if ,(%type-check mask-fixnum type-fixnum ,e)
-                      ,(%constant strue)
-                      ,(%type-check mask-immediate type-immediate ,e)))])
-        (define-inline 3 $immediate
+          [(e) (bind #t (e) (%type-check mask-immediate type-immediate ,e))])
+        (define-inline 3 $fixmediate
           [(e) e])
 
         (define-inline 3 $inexactnum-real-part

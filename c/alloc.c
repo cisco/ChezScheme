@@ -374,7 +374,7 @@ void S_dirty_set(ptr *loc, ptr x) {
     seginfo *si = SegInfo(addr_get_segment(TO_PTR(loc)));
     if (si->use_marks) {
       /* GC must be in progress */
-      if (!IMMEDIATE(x)) {
+      if (!FIXMEDIATE(x)) {
         seginfo *t_si = SegInfo(ptr_get_segment(x));
         if (t_si->generation < si->generation)
           S_record_new_dirty_card(THREAD_GC(get_thread_context()), loc, t_si->generation);

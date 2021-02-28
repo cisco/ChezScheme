@@ -519,7 +519,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
         /* offset is stored in place of constant-loading code: */
         memcpy(&obj, TO_VOIDP((ptr)((uptr)co + a)), sizeof(ptr));
 
-        if (IMMEDIATE(obj)) {
+        if (FIXMEDIATE(obj)) {
           if (Sfixnump(obj)) {
             int tag = VFASL_RELOC_TAG(obj);
             iptr pos = VFASL_RELOC_POS(obj);

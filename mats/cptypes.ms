@@ -1174,8 +1174,8 @@
    '(lambda (v)
       (let loop ([i 0])
         (when (fx< i (vector-length v))
-          (vector-set! v i (#3%$immediate i))
+          (vector-set! v i (#3%$fixmediate i))
           (loop (fx+ i 1))))))
   (cptypes-equivalent-expansion?
    '(lambda (x y) (set-box! x (if (vector? y) #t (error 't))))
-   '(lambda (x y) (set-box! x (#3%$immediate (if (vector? y) #t (error 't)))))))
+   '(lambda (x y) (set-box! x (#3%$fixmediate (if (vector? y) #t (error 't)))))))

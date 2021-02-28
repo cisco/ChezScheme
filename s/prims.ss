@@ -1412,12 +1412,6 @@
   (lambda (b) 
     (#3%immutable-box? b)))
 
-(define-who $immediate
-  (lambda (x)
-    (if ($immediate? x)
-        x
-        ($oops who "~s is not an immediate value" x))))
-
 (define pair? (lambda (x) (pair? x)))
 
 (define box? (lambda (x) (box? x)))
@@ -1593,6 +1587,14 @@
      (display-string s)]))
 
 (define $immediate? (lambda (x) ($immediate? x)))
+
+;; Used to communicate fixmediateness from cptypes to cpnanopass:
+(define-who $fixmediate
+  (lambda (x)
+    (if (fixmediate? x)
+        x
+        ($oops who "~s is not a fixnum or immediate value" x))))
+
 (define $inexactnum? (lambda (x) ($inexactnum? x)))
 
 (define $inexactnum-real-part

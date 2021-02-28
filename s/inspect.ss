@@ -2591,7 +2591,7 @@
          (define cookie (cons 'date 'nut)) ; recreate on each call to $compute-size
          (define compute-size
            (lambda (x)
-             (if (or ($immediate? x)
+             (if (or (fixmediate? x)
                      (let ([g ($generation x)])
                        (or (not g) (fx> g maxgen))))
                  0
@@ -2784,7 +2784,7 @@
         rtd-counts phantom)
       (define compute-composition!
         (lambda (x)
-          (unless (or ($immediate? x)
+          (unless (or (fixmediate? x)
                       (let ([g ($generation x)])
                         (or (not g) (fx> g maxgen))))
             (let ([a (eq-hashtable-cell seen-ht x #f)])
@@ -2945,7 +2945,7 @@
           (lambda (x path next-proc)
             (let ([path (cons x path)])
               (cond
-                [(or ($immediate? x) (let ([g ($generation x)]) (or (not g) (fx> g maxgen))))
+                [(or (fixmediate? x) (let ([g ($generation x)]) (or (not g) (fx> g maxgen))))
                  (if (pred x) 
                      (begin (set! saved-next-proc next-proc) path)
                      (next-proc))]

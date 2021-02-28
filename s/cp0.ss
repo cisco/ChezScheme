@@ -5244,7 +5244,7 @@
            [else
             `(call ,preinfo ,pr ,e1 ,e2 ,e3)]))]
       [(call ,preinfo ,pr ,e)
-       (guard (eq? (primref-name pr) '$immediate))
+       (guard (eq? (primref-name pr) '$fixmediate))
        (context-case ctxt
          [(ignored) (cp0 e ctxt env sc wd name moi)]
          [else

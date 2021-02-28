@@ -2197,6 +2197,11 @@
 (define-constant time-collector-cpu 5)
 (define-constant time-collector-real 6)
 
+(define-syntax fixmediate?
+  (lambda (stx)
+    (syntax-case stx ()
+      [(_ e) #'(let ([v e]) (or (fixnum? v) ($immediate? v)))])))
+
 ;; ---------------------------------------------------------------------
 ;; vfasl
 

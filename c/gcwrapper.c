@@ -185,7 +185,7 @@ void S_set_minmarkgen(IGEN g) {
 void S_immobilize_object(x) ptr x; {
   seginfo *si;
 
-  if (IMMEDIATE(x))
+  if (FIXMEDIATE(x))
     si = NULL;
   else
     si = MaybeSegInfo(ptr_get_segment(x));
@@ -212,7 +212,7 @@ void S_immobilize_object(x) ptr x; {
 void S_mobilize_object(x) ptr x; {
   seginfo *si;
 
-  if (IMMEDIATE(x))
+  if (FIXMEDIATE(x))
     si = NULL;
   else
     si = MaybeSegInfo(ptr_get_segment(x));
@@ -261,7 +261,7 @@ static IBOOL remove_first_nomorep(x, pls, look) ptr x, *pls; IBOOL look; {
 IBOOL Slocked_objectp(x) ptr x; {
   seginfo *si; IGEN g; IBOOL ans; ptr ls;
 
-  if (IMMEDIATE(x) || (si = MaybeSegInfo(ptr_get_segment(x))) == NULL || (g = si->generation) == static_generation) return 1;
+  if (FIXMEDIATE(x) || (si = MaybeSegInfo(ptr_get_segment(x))) == NULL || (g = si->generation) == static_generation) return 1;
 
   tc_mutex_acquire();
 
@@ -299,7 +299,7 @@ void Slock_object(x) ptr x; {
   seginfo *si; IGEN g;
 
  /* weed out pointers that won't be relocated */
-  if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
+  if (!FIXMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
     ptr tc = get_thread_context();
     tc_mutex_acquire();
     THREAD_GC(tc)->during_alloc += 1;
@@ -323,7 +323,7 @@ void Slock_object(x) ptr x; {
 void Sunlock_object(x) ptr x; {
   seginfo *si; IGEN g;
 
-  if (!IMMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
+  if (!FIXMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
     ptr tc = get_thread_context();
     tc_mutex_acquire();
     THREAD_GC(tc)->during_alloc += 1;
@@ -550,7 +550,7 @@ void S_addr_tell(ptr p) {
 
 static void check_pointer(ptr *pp, IBOOL address_is_meaningful, ptr base, uptr seg, ISPC s, IBOOL aftergc) {
   ptr p = *pp;
-  if (!IMMEDIATE(p)) {
+  if (!FIXMEDIATE(p)) {
     seginfo *psi = MaybeSegInfo(ptr_get_segment(p));
     if (psi != NULL) {
       if ((psi->space == space_empty)
@@ -945,7 +945,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
                           found_eos = 1;
                           pp1 = pp2;
                           break;
-                        } else if (!IMMEDIATE(p)) {
+                        } else if (!FIXMEDIATE(p)) {
                           seginfo *psi = MaybeSegInfo(ptr_get_segment(p));
                           if ((psi != NULL) && ((pg = psi->generation) < g)) {
                             if (pg < dirty) dirty = pg;

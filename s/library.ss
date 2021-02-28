@@ -1473,7 +1473,7 @@
         [else #f])))
 
 (define-library-entry (memv x ls)
-  (if (or (symbol? x) (#%$immediate? x))
+  (if (or (symbol? x) (fixmediate? x))
       (memq x ls)
       (let memv ([ls ls])
         (and (not (null? ls))

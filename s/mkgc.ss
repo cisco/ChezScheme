@@ -2058,7 +2058,7 @@
     (code
      "{ /* measure */"
      (format "  ptr r_p = ~a;" e)
-     "  if (!IMMEDIATE(r_p))"
+     "  if (!FIXMEDIATE(r_p))"
      "    push_measure(tgc, r_p);"
      "}"))
 

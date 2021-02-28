@@ -95,7 +95,7 @@
 
 (define hashable?
   (lambda (x)
-    (if ($immediate? x)
+    (if (fixmediate? x)
         (eq? x black-hole)
         (and
           ($object-in-heap? x)
@@ -203,7 +203,7 @@
 
   (define cyclic?
     (lambda (x curlev lstlen)
-      (if ($immediate? x)
+      (if (fixmediate? x)
           (if (eq? x black-hole) (not lev) #f)
           (and ($object-in-heap? x)
                (cond
@@ -279,7 +279,7 @@
                          (constant cycle-node-max))])
       (cond
         [(fx= xlev 0) (or (not lev) (fx> lev (constant cycle-node-max)))]
-        [($immediate? x) (if (eq? x black-hole) (not lev) #f)]
+        [(fixmediate? x) (if (eq? x black-hole) (not lev) #f)]
         [else
          (and ($object-in-heap? x)
               (cond
@@ -322,7 +322,7 @@
 
 (set! $make-graph-env
   (lambda (who x lev len)
-    (and (if ($immediate? x)
+    (and (if (fixmediate? x)
              (eq? x black-hole)
              (and ($object-in-heap? x)
                   (or (pair? x) (vector? x) (stencil-vector? x) (box? x) (and ($record? x) (not (eq? x #!base-rtd))))))
@@ -634,7 +634,6 @@ floating point returns with (1 0 -1 ...).
      (cond
        [($immediate? x)
         (type-case x
-          [(fixnum?) (wrfixnum x r d? p)]
           [(null?) (display-string "()" p)]
           [(boolean?) (display-string (if x "#t" "#f") p)]
           [(char?) (if d? (write-char x p) (wrchar x p))]
@@ -644,6 +643,7 @@ floating point returns with (1 0 -1 ...).
           [(void?) (display-string "#<void>" p)]
           [(black-hole?) (wrblack-hole x r lev len d? env p)]
           [else (display-string "#<garbage>" p)])]
+       [(fixnum? x) (wrfixnum x r d? p)]
        [($object-in-heap? x)
         (type-case x
           [(symbol?)
