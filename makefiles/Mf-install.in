@@ -114,12 +114,12 @@ bininstall: ${Bin}
 libbininstall: ${LibBin}
 	$I -m 444 ${PetiteBoot} ${LibBin}/petite.boot
 	if [ "${InstallPetiteName}" != "petite" ]; then\
-          /bin/rm -f ${LibBin}/${InstallPetiteName}.boot;\
+          rm -f ${LibBin}/${InstallPetiteName}.boot;\
           ln -f ${LibBin}/petite.boot ${LibBin}/${InstallPetiteName}.boot;\
         fi
 	$I -m 444 ${SchemeBoot} ${LibBin}/scheme.boot;\
 	if [ "${InstallSchemeName}" != "scheme" ]; then\
-          /bin/rm -f ${LibBin}/${InstallSchemeName}.boot;\
+          rm -f ${LibBin}/${InstallSchemeName}.boot;\
           ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallSchemeName}.boot;\
         fi
 	ln -f ${LibBin}/scheme.boot ${LibBin}/${InstallScriptName}.boot;

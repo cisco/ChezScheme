@@ -72,8 +72,8 @@
   (mat system
     (eqv? (with-output-to-file "testfile.ss" void '(replace)) (void))
     (begin
-      (system (format "~:[~;/pkg~]/bin/rm testfile.ss" (embedded?)))
-      (system (format "~:[~;/pkg~]/bin/echo hello > testfile.ss" (embedded?)))
+      (system (format "~:[~;/pkg~]rm testfile.ss" (embedded?)))
+      (system (format "~:[~;/pkg~]echo hello > testfile.ss" (embedded?)))
       (let ([p (open-input-file "testfile.ss")])
         (and (eq? (read p) 'hello)
              (begin (close-input-port p) #t))))

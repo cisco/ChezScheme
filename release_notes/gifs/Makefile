@@ -15,7 +15,7 @@ density=-r90x90
           ${density} - |\
           pnmcrop |\
           ppmtogif -transparent white > $*.gif
-	/bin/rm -f $*.dvi $*.log *.aux
+	rm -f $*.dvi $*.log *.aux
 	test -f $*.gif && chmod 644 $*.gif
 
 all: ${gifs}
@@ -44,7 +44,7 @@ ghostRightarrow.gif: Rightarrow.tex
           giftrans -g '#000000=#ffffff' |\
           giftopnm |\
           ppmtogif -transparent white > $*.gif
-	/bin/rm -f Rightarrow.dvi Rightarrow.log Rightarrow.aux
+	rm -f Rightarrow.dvi Rightarrow.log Rightarrow.aux
 	test -f $*.gif && chmod 644 $*.gif
 
-clean: ; /bin/rm -f *.gif Make.out
+clean: ; rm -f *.gif Make.out

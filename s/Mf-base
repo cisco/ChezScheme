@@ -214,7 +214,7 @@ profiled:
 	$(MAKE) all loadspd=t bp=t PetiteBoot=../boot/$m/xpetite.boot SchemeBoot=../boot/$m/xscheme.boot
 	$(MAKE) prettyclean
 	$(MAKE) io.$m loadspd=t dumpbpd=t Scheme="../bin/$m/scheme -b ../boot/$m/xpetite.boot -b ../boot/$m/xscheme.boot"
-	/bin/rm -f ../boot/$m/xpetite.boot ../boot/$m/xscheme.boot
+	rm -f ../boot/$m/xpetite.boot ../boot/$m/xscheme.boot
 	$(MAKE) prettyclean
 	$(MAKE) all loadspd=t loadbpd=t
 

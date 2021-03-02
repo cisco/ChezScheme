@@ -2179,3 +2179,12 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - newrelease no longer logs as updated files with no actual changes
     newrelease
+- avoid hard-coded paths for utilities in build scripts
+    csug/gifs/Makefile csug/math/Makefile examples/Makefile
+    makefiles/Makefile-csug.in makefiles/Makefile-release_notes.in
+    makefiles/Mf-install.in makefiles/installsh mats/6.ms mats/Mf-a6fb
+    mats/Mf-a6le mats/Mf-a6nb mats/Mf-a6ob mats/Mf-a6osx mats/Mf-arm32le
+    mats/Mf-arm64le mats/Mf-arm64osx mats/Mf-i3fb mats/Mf-i3le mats/Mf-i3nb
+    mats/Mf-i3ob mats/Mf-i3osx mats/Mf-i3qnx mats/Mf-ppc32le mats/Mf-ppc32osx
+    mats/unix.ms newrelease pkg/Makefile release_notes/gifs/Makefile
+    release_notes/math/Makefile s/Mf-base workarea
