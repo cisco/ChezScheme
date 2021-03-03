@@ -34,8 +34,6 @@
 #include <sys/resource.h>
 #endif
 
-#include <time.h>
-
 static struct timespec starting_mono_tp;
 
 static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff);
