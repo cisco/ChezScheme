@@ -699,6 +699,10 @@
       [() ((abort-handler)) (unexpected-return who)]
       [(x) ((abort-handler) x) (unexpected-return who)])))
 
+(define-who assert-unreachable
+  (lambda ()
+    ($oops who "unreachable code reached")))
+
 (define $interrupt ($make-thread-parameter void))
 
 (define $format-scheme-version

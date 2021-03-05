@@ -11430,6 +11430,9 @@
              [(arm32 ppc32 pb) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)]
              [(arm64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
 
+        (define-inline 3 assert-unreachable
+          [() (%constant svoid)])
+
     )) ; expand-primitives module
 
     (define-pass np-place-overflow-and-trap : L9 (ir) -> L9.5 ()

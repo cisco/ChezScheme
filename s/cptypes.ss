@@ -226,6 +226,14 @@ Notes:
       )
     )
 
+    (define (unsafe-unreachable? ir)
+      (nanopass-case (Lsrc Expr) ir
+        [(call ,preinfo ,pr)
+         (guard (and (eq? (primref-name pr) 'assert-unreachable)
+                     (all-set? (prim-mask unsafe) (primref-flags pr))))
+         #t]
+        [else #f]))
+    
     (define make-seq
       ; ensures that the right subtree of the output seq is not a seq if the
       ; last argument is similarly constrained, to facilitate result-exp
@@ -1430,10 +1438,14 @@ Notes:
                       (predicate-implies? ret3 'bottom)) ;check bottom first
                  (values ir 'bottom pred-env-bottom #f #f)]
                 [(predicate-implies? ret2 'bottom) ;check bottom first
-                 (values (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3)
+                 (values (if (unsafe-unreachable? e2)
+                             (make-seq ctxt e1 e3)
+                             (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3))
                          ret3 types3 t-types3 f-types3)]
                 [(predicate-implies? ret3 'bottom) ;check bottom first
-                 (values (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2)
+                 (values (if (unsafe-unreachable? e3)
+                             (make-seq ctxt e1 e2)
+                             (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2))
                          ret2 types2 t-types2 f-types2)]
                 [else
                  (let ([new-types (pred-env-union/super-base types2 t-types1

@@ -1195,3 +1195,13 @@
     '(lambda (s) (define x (string->number s)) (when x (number? x)))
     '(lambda (s) (define x (string->number s)) (when x #t)))
 )
+
+(mat cptypes-unreachable
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (if (pair? x) (car x) (#3%assert-unreachable)))
+   '(lambda (x) (#3%car x)))
+  (not
+   (cptypes-equivalent-expansion?
+    '(lambda (x) (if (pair? x) (car x) (#2%assert-unreachable)))
+    '(lambda (x) (#3%car x))))
+)

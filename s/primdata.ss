@@ -1146,6 +1146,7 @@
   (apropos [sig [(sub-ptr) (sub-ptr environment) -> (void)]] [flags true])
   (apropos-list [sig [(sub-ptr) (sub-ptr environment) -> (list)]] [flags alloc])
   (ash [sig [(sint sint) -> (sint)]] [flags arith-op discard cp02 cp03]) ; can take too long to fold
+  (assert-unreachable [sig [() -> (bottom)]] [flags abort-op])
   (assertion-violationf [sig [(maybe-who string sub-ptr ...) -> (bottom)]] [flags abort-op]) ; 2nd arg is format string
   (asinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (atanh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])

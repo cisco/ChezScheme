@@ -270,6 +270,40 @@ to the value of the following expression.
 (lambda (x) ((base-exception-handler) x))
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{assert-unreachable}{\categoryprocedure}{(assert-unreachable)}
+\listlibraries
+\endentryheader
+
+\scheme{assert-unreachable} is used an assertion and optimization hint
+in an expression that must not be reached.
+
+When a safe reference to the procedure is applied, it acts as an
+assertion. In that case, an exception is raised if control reaches the
+application.
+
+When an unsafe reference to the procedure is applied, the behavior of
+the application is undefined, which gives the compiler liberty to pick
+convenient or efficient behavior. For example, the expression
+
+\schemedisplay
+(lambda (x)
+  (if (pair? x)
+      (car x)
+      (#3%assert-unreachable)))
+\endschemedisplay
+
+is compiled to code equivalent to
+
+\schemedisplay
+(lambda (x) (#3%car x))
+\endschemedisplay
+
+because choosing to make \scheme{(assert-unreachable)} behave the same
+as \scheme{(#3%car x)} makes both branches of the \scheme{if} the
+same, and then \scheme{pair?} test can be eliminated.
+
 \section{Interrupts\label{SECTSYSTEMINTERRUPTS}}
 
 \index{interrupts}{\ChezScheme} allows programs to control
