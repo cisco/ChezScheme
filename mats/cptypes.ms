@@ -1205,3 +1205,61 @@
     '(lambda (x) (if (pair? x) (car x) (#2%assert-unreachable)))
     '(lambda (x) (#3%car x))))
 )
+
+(mat cptypes-bottom
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (error 'x "no") (add1 x))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (f) (f (error 'x "no") f))
+   '(lambda (f) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (f) ((error 'x "no") f f))
+   '(lambda (f) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (if (error 'x "no") (add1 x) (sub1 x)))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (+ (error 'x "no") x))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (list x (add1 x) (error 'x "no") (sub1 x)))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (apply x (add1 x) (error 'x "no") (sub1 x)))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (apply (error 'x "no") (add1 x) (sub1 x)))
+   '(lambda (x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (let* ([x (add1 x)] [y (error 'x "no")]) (+ x y)))
+   '(lambda (x) (add1 x) (error 'x "no")))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (list (if (odd? x) (error 'x "no") (error 'x "nah")) 17))
+   '(lambda (x) (if (odd? x) (error 'x "no") (error 'x "nah"))))
+  (cptypes-equivalent-expansion?
+   '(let ([x #f]) (case-lambda [() x] [(y) (set! x (error 'x "no"))]))
+   '(let ([x #f]) (case-lambda [() x] [(y) (error 'x "no")])))
+
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (+ (call-setting-continuation-attachment 'a (lambda () (error 'x "no"))) 1))
+   '(lambda (x) (#%$value (call-setting-continuation-attachment 'a (lambda () (error 'x "no"))))))
+  (not
+   (cptypes-equivalent-expansion?
+    '(lambda (x) (+ (call-setting-continuation-attachment 'a (lambda () (error 'x "no"))) 1))
+    '(lambda (x) (call-setting-continuation-attachment 'a (lambda () (error 'x "no"))))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (+ (call-getting-continuation-attachment 'a (lambda (a) (error 'x "no"))) 1))
+   '(lambda (x) (#%$value (call-getting-continuation-attachment 'a (lambda (a) (error 'x "no"))))))
+  (not
+   (cptypes-equivalent-expansion?
+    '(lambda (x) (+ (call-getting-continuation-attachment 'a (lambda (a) (error 'x "no"))) 1))
+    '(lambda (x) (call-getting-continuation-attachment 'a (lambda (a) (error 'x "no"))))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (+ (call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no"))) 1))
+   '(lambda (x) (#%$value (call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no"))))))
+  (not
+   (cptypes-equivalent-expansion?
+    '(lambda (x) (+ (call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no"))) 1))
+    '(lambda (x) (call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no"))))))
+)

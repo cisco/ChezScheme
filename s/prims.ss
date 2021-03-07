@@ -434,12 +434,16 @@
     (#2%apply f args)))
 
 ;; Implies no-inline, and in unsafe mode, asserts that the
-;; application will not return
+;; application will not return and that it does not inspect/change
+;; the immediate continuation attachment (so it can be moved to a
+;; more-tail position)
 (define $app/no-return
   (lambda (f . args)
     (#2%apply f args)))
 
 ;; In unsafe mode, asserts that the applicaiton returns a single value
+;; and that it does not inspect/change the immediate continuation
+;; attachment (so it can be moved to a more-tail position)
 (define $app/value
   (lambda (f . args)
     (#2%apply f args)))

@@ -843,7 +843,7 @@
              [(and (eq? ctxt 'ignored) (simple1? e2)
                    ;; don't move e1 into a single-value
                    ;; position unless that's ok
-                   (single-valued? e1))
+                   (single-valued/inspect-ok? e1))
               e1]
              [else
               (let ([e1 (nanopass-case (Lsrc Expr) e1
@@ -863,7 +863,7 @@
 
     (define (safe-single-value e1)
       (if (or (fx= (optimize-level) 3)
-              (single-valued? e1))
+              (single-valued/inspect-ok? e1))
           e1
           (build-primcall 3 '$value (list e1))))
 
@@ -911,7 +911,7 @@
       (lambda (ctxt e)
         (context-case ctxt
           [(tail)
-           (if (single-valued-without-inspecting-continuation? e)
+           (if (single-valued? e)
                e
                (build-primcall 3 '$value (list e)))]
           ;; An 'effect, 'ignored, 'value, or 'test position will not
@@ -1071,7 +1071,7 @@
 
     (module (pure? ivory? ivory1? simple? simple1? simple/profile? simple/profile1? boolean-valued?
                    single-valued? single-valued single-valued-join single-valued-reduce?
-                   single-valued-without-inspecting-continuation?)
+                   single-valued/inspect-ok?)
 
       ;; The memoization table has, for each key, either a flags integer
       ;; or a pair of a flags integer and a value. The value corresponds to
@@ -1099,8 +1099,9 @@
                      (car val)
                      (let ([r (pred?)])
                        (let ([p (cdr a)])
-                         (unless (pair? p)
-                           (set-cdr! a (cons r p))))
+                         ;; p may have been set meanwhile, but we want to update
+                         ;; the cdr to handle joins around recursive calls
+                         (set-cdr! a (cons r (if (pair? p) (cdr p) p))))
                        r)))))]))
 
       (define-syntax with-memoize
@@ -1354,6 +1355,15 @@
                 (car e*))]
           [else #f]))
 
+      (define (extract-called-procedure/inspect-ok pr e*)
+        (case (primref-name pr)
+          [(call-setting-continuation-attachment
+            call-getting-continuation-attachment
+            call-consuming-continuation-attachment)
+           (and (fx= (length e*) 2)
+                (cadr e*))]
+          [else #f]))
+
       (define-who boolean-valued?
         (lambda (e)
           (with-memoize (boolean-valued-known boolean-valued) e
@@ -1398,8 +1408,9 @@
               [(pariah) #f]
               [else ($oops who "unrecognized record ~s" e)]))))
 
-      ;; Returns #t, #f, or a prelex for a lambda that needs to be
-      ;; single-valued to imply #t. The prelex case is useful to
+      ;; Returns #t, #f, 'value/inspect (single-valued, but may
+      ;; inspect continuation), or a prelex for a lambda that needs to
+      ;; be single-valued to imply #t. The prelex case is useful to
       ;; detect a single-valued loop.
       (define-who single-valued
         (lambda (e)
@@ -1416,9 +1427,15 @@
                         (or (all-set? (prim-mask single-valued) (primref-flags pr))
                             (all-set? (prim-mask abort-op) (primref-flags pr))
                             (and e*
-                                 (let ([proc-e (extract-called-procedure pr e*)])
-                                   (and proc-e
-                                        (memoize (procedure-single-valued proc-e #f))))))]
+                                 (cond
+                                   [(extract-called-procedure pr e*)
+                                    => (lambda (proc-e)
+                                         (memoize (procedure-single-valued proc-e #f)))]
+                                   [(extract-called-procedure/inspect-ok pr e*)
+                                    => (lambda (proc-e)
+                                         (memoize (single-valued-join 'value/inspect
+                                                                      (procedure-single-valued proc-e #f))))]
+                                   [else #f])))]
                        [(case-lambda ,preinfo ,cl* ...)
                         (memoize (or
                                   (all-set? (constant code-flag-single-valued)
@@ -1498,32 +1515,31 @@
            [(eq? a b) a]
            [(eq? a #t) b]
            [(eq? b #t) a]
+           [(eq? a 'value/inspect) b]
+           [(eq? b 'value/inspect) a]
            ;; If `a` and `b` are different prelexes, we currently give
            ;; up, because a prelex is used only to find a
            ;; single-function fixpoint.
            [else #f])))
 
-      (define-who single-valued?
+      (define-who single-valued/inspect-ok?
         (lambda (e)
-          (single-valued-reduce? (single-valued e))))
+          (let ([r (single-valued e)])
+            (or (eq? r 'value/inspect) ; i.e., ok to inspect continuation
+                (single-valued-reduce? r)))))
 
       (define single-valued-reduce?
         (lambda (r)
           (cond
            [(eq? r #t) #t]
            [(eq? r #f) #f]
+           [(eq? r 'value/inspect) #f]
            ;; conservative assumption for a prelex:
            [else #f])))
 
-      (define-who single-valued-without-inspecting-continuation?
+      (define-who single-valued?
         (lambda (e)
-          ;; Single-valued and does not observe or affect the
-          ;; immediate continuation frame (so removing (an enclosing
-          ;; frame would be ok). This currently can be implemented as
-          ;; `single-valued?`, because `single-valued?` does not look
-          ;; into continuation-observing calls like `(call/cc (lambda
-          ;; (k) <body>))` to detect that `<body>` is single valued.
-          (single-valued? e))))
+          (single-valued-reduce? (single-valued e)))))
 
     (define find-call-lambda-clause
       (lambda (exp opnds)
@@ -2474,7 +2490,7 @@
                              [(call ,preinfo ,pr ,e* ...)
                               (guard (eq? (primref-name pr) 'values))
                               e*]
-                             [else (and (single-valued? e)
+                             [else (and (single-valued/inspect-ok? e)
                                         (list e))]))) =>
                     (lambda (args)
                       ; (with-values (values arg ...) c-temp) => (c-temp arg ...)
@@ -2666,7 +2682,7 @@
                         [(null? val*) `(quote ,a)]
                         [(eqv? a ident)
                          (if (and (fx= level 3) (null? (cdr val*)) (direct-result? (car val*)))
-                             (car val*)
+                             (make-nontail (app-ctxt ctxt) (car val*))
                              (if (and (null? (cdr val*))
                                       ;; `op` may require exactly 2 arguments
                                       (eqv? (procedure-arity-mask op) 4))
@@ -5480,7 +5496,7 @@
                               [sv? (andmap (lambda (cl)
                                              (nanopass-case (Lsrc CaseLambdaClause) cl
                                                [(clause (,x* ...) ,interface ,body)
-                                                (single-valued? body)]))
+                                                (single-valued/inspect-ok? body)]))
                                            cl*)])
                           (when (or (pair? new-cl*) sv?)
                             (update-box! box (make-cte-info

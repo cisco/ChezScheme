@@ -1195,12 +1195,12 @@
   (bytevector-compress [sig [(ptr) -> (ptr)]] [flags])
   (bytevector-uncompress [sig [(ptr) -> (ptr)]] [flags])
   (call/1cc [sig [(procedure) -> (ptr ...)]] [flags])
-  (call-consuming-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
-  (call-getting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-consuming-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags cptypes2x])
+  (call-getting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags cptypes2x])
   (call-in-continuation [sig [(ptr procedure) -> (ptr ...)] [(ptr ptr procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument
-  (call-setting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-setting-continuation-attachment [sig [(ptr procedure) -> (ptr ...)]] [flags cptypes2x])
   (cfl* [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
   (cfl+ [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
   (cfl- [sig [(cflonum cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])

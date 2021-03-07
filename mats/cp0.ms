@@ -2614,7 +2614,8 @@
                  (begin (#%write 'f) #\y)
                  (begin (#%write 'g) ($zzz-ok))))
              (begin (#%write 'h) 1)))))
-  (expansion-matches?
+  (parameterize ([enable-type-recovery #f])
+   (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) string-ref)
             (begin (write 'c)
@@ -2637,7 +2638,7 @@
                  (begin (#%write 'e) ($xxx-ok))
                  (begin (#%write 'f) 'oops)
                  (begin (#%write 'g) ($zzz-ok))))
-             (begin (#%write 'h) 1)))))
+             (begin (#%write 'h) 1))))))
   (expansion-matches?
         `(begin (write 'a)
            ((begin (write 'b) string-ref)
@@ -2730,7 +2731,8 @@
                  (begin (#%write 'f) 121)
                  (begin (#%write 'g) ($zzz-ok))))
              (begin (#%write 'h) 1)))))
-  (expansion-matches?
+  (parameterize ([enable-type-recovery #f])
+   (expansion-matches?
         '(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
             (begin (write 'c)
@@ -2753,7 +2755,7 @@
                  (begin (#%write 'e) ($xxx-ok))
                  (begin (#%write 'f) 'oops)
                  (begin (#%write 'g) ($zzz-ok))))
-             (begin (#%write 'h) 1)))))
+             (begin (#%write 'h) 1))))))
   (expansion-matches?
         `(begin (write 'a)
            ((begin (write 'b) fxvector-ref)
@@ -2894,12 +2896,12 @@
       (expand/optimize
         '(lambda (v)
            (let ([v2 (if (vector? v) v (error))])
-             (let ([q (vector-sort v2)] [n (#3%vector-length v)])
+             (let ([q (vector-sort < v2)] [n (#3%vector-length v)])
                (display "1")
                (list q n))))))
     '(lambda (v)
        (let ([v2 (begin (if (#2%vector? v) (#2%void) (#2%error)) v)])
-         (let ([q (#2%vector-sort v2)] [n (#3%vector-length v)])
+         (let ([q (#2%vector-sort #2%< v2)] [n (#3%vector-length v)])
            (#2%display "1")
            (#2%list q n)))))
   (equivalent-expansion?
@@ -2907,11 +2909,11 @@
       (expand/optimize
         '(lambda (v)
            (let ([v2 (if (vector? v) v (error))])
-             (let ([q (vector-sort v2)] [n (or v 72)])
+             (let ([q (vector-sort < v2)] [n (or v 72)])
                (display "1")
                (list q n))))))
     '(lambda (v)
-       (let ([q (#2%vector-sort (begin (if (#2%vector? v) (#2%void) (#2%error)) v))]
+       (let ([q (#2%vector-sort #2%< (begin (if (#2%vector? v) (#2%void) (#2%error)) v))]
              [n (if v v 72)])
          (#2%display "1")
          (#2%list q n))))
@@ -2923,7 +2925,7 @@
       (syntax-rules ()
         [(_ eqprim) (eqtest eqprim #f)]
         [(_ eqprim generic?)
-         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+         (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [enable-type-recovery #f])
            (let ([arity-mask (procedure-arity-mask eqprim)] [primref `($primitive ,(if (= (optimize-level) 3) 3 2) eqprim)])
              (define-syntax ifsafe
                (syntax-rules ()
