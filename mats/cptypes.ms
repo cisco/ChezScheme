@@ -1192,8 +1192,17 @@
     '(lambda (x) (when (or (not x) (vector? x)) (when x (vector? x))))
     '(lambda (x) (when (or (not x) (vector? x)) (when x #t))))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (not x) (char? x)) (when x (char? x))))
+    '(lambda (x) (when (or (not x) (char? x)) (when x #t))))
+  (cptypes-equivalent-expansion?
     '(lambda (s) (define x (string->number s)) (when x (number? x)))
     '(lambda (s) (define x (string->number s)) (when x #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-char p)) (not x))
+    '(lambda (p) (define x (get-char p)) #f))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-char p)) (box? x))
+    '(lambda (p) (define x (get-char p)) #f))
 )
 
 (mat cptypes-unreachable

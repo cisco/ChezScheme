@@ -30,6 +30,9 @@
 (module cptypes-lattice
   (primref-name/nqm->predicate
    ptr-pred
+   eof/char-pred
+   maybe-char-pred
+   maybe-symbol-pred
    $fixmediate-pred
    true-pred ; anything that is not #f
    true-rec  ; only the #t object
@@ -70,18 +73,22 @@
     (define eof-rec `(quote #!eof))
     (define bwp-rec `(quote #!bwp)))
 
-  (define true-pred (make-pred-or '$immediate/true 'normalptr '$record))
-  (define ptr-pred (make-pred-or '$immediate 'normalptr '$record))
+  (define true-pred (make-pred-or 'true-immediate 'normalptr '$record))
+  (define ptr-pred (make-pred-or 'immediate 'normalptr '$record))
   (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom))
-  (define $fixmediate-pred (make-pred-or '$immediate 'fixnum 'bottom))
+  (define $fixmediate-pred (make-pred-or 'immediate 'fixnum 'bottom))
   (define maybe-number-pred (make-pred-or false-rec 'number 'bottom))
   (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
+  (define maybe-symbol-pred (make-pred-or false-rec 'symbol 'bottom))
+  ; These are just symbols, but we assign a name for uniformity.
+  (define maybe-char-pred 'maybe-char)
+  (define eof/char-pred 'eof/char)
 
   ; This can be implemented with implies?
   ; but let's use the straightforward test.
   (define (predicate-is-ptr? x)
     (and (pred-or? x)
-         (eq? (pred-or-imm x) '$immediate)
+         (eq? (pred-or-imm x) 'immediate)
          (eq? (pred-or-nor x) 'normalptr)
          (eq? (pred-or-rec x) '$record)))
 
@@ -116,7 +123,7 @@
                (eq? x (vector-ref ay (fx- lx 1)))))))
 
   ;includes the case when they are the same
-  ;or when one is the ancester of the other
+  ;or when one is the ancestor of the other
   (define (rdt-last-common-ancestor* x y)
     (cond 
       [(eq? x y) x]
@@ -198,12 +205,15 @@
       [null null-rec]
       [eof-object eof-rec]
       [bwp-object bwp-rec]
-      [$immediate '$immediate]
+      [$immediate 'immediate]
       [(list list-assume-immutable) (if (not extend?) null-rec null-or-pair-pred)]
       [sub-ptr (if (not extend?) 'bottom ptr-pred)]
       [maybe-number maybe-number-pred]
       [maybe-fixnum maybe-fixnum-pred]
       [maybe-ufixnum (if (not extend?) false-rec maybe-fixnum-pred)]
+      [maybe-symbol maybe-symbol-pred]
+      [maybe-char 'maybe-char]
+      [eof/char 'eof/char]
       [else ((if extend? cdr car)
              (case name
                [(record rtd) '(bottom . $record)]
@@ -249,23 +259,24 @@
          (not (gensym? x))
          (not (uninterned-symbol? x))))
 
-  ;only false-rec, boolean and $immediate may be '#f
+  ;only false-rec, boolean, maybe-char and immediate may be '#f
   ;use when the other argument is truthy bur not exactly '#t
   (define (union/true x)
     (cond
       [(or (eq? x 'boolean)
+           (eq? x 'maybe-char)
            (check-constant-eqv? x #f))
-       '$immediate]
+       'immediate]
       [else
-       '$immediate/true]))
+       'true-immediate]))
 
   (define (predicate-union/immediate x y)
     (cond
       [(eq? x y) y]
       [(eq? x 'bottom) y]
       [(eq? y 'bottom) x]
-      [(eq? y '$immediate) y]
-      [(eq? x '$immediate) x]
+      [(eq? y 'immediate) y]
+      [(eq? x 'immediate) x]
       [(Lsrc? y)
        (nanopass-case (Lsrc Expr) y
          [(quote ,d1)
@@ -278,20 +289,40 @@
                [(or (eq? x 'boolean)
                     (check-constant-eqv? x #t))
                 'boolean]
+               [(or (eq? x 'char)
+                    (eq? x 'maybe-char)
+                    (check-constant-is? x char?))
+                'maybe-char]
                [else
-                '$immediate])]
+                'immediate])]
             [(eq? dy #t)
              (cond 
                [(or (eq? x 'boolean)
                     (check-constant-eqv? x #f))
                 'boolean]
+               [(eq? x 'maybe-char)
+                'immediate]
                [else
-                '$immediate/true])]
+                'true-immediate])]
             [(char? dy)
              (cond
                [(or (eq? x 'char)
                     (check-constant-is? x char?))
                 'char]
+               [(or (eq? x 'maybe-char)
+                    (check-constant-eqv? x #f))
+                'maybe-char]
+               [(or (eq? x 'eof/char)
+                    (check-constant-is? x eof-object?))
+                'eof/char]
+               [else
+                (union/true x)])]
+            [(eof-object? dy)
+             (cond
+               [(or (eq? x 'eof/char)
+                    (eq? x 'char)
+                    (check-constant-is? x char?))
+                'eof/char]
                [else
                 (union/true x)])]
             [else
@@ -303,13 +334,35 @@
             [(check-constant-is? x boolean?)
              y]
             [else
-             '$immediate])]
+             'immediate])]
          [(char)
           (cond
+           [(or (eq? x 'maybe-char)
+                (check-constant-eqv? x #f))
+            'maybe-char]
+           [(or (eq? x 'eof/char)
+                (check-constant-is? x eof-object?))
+            'eof/char]
            [(check-constant-is? x char?)
             y]
            [else
             (union/true x)])]
+         [(eof/char)
+          (cond
+           [(or (eq? x 'char)
+                (check-constant-is? x char?)
+                (check-constant-is? x eof-object?))
+            y]
+           [else
+            (union/true x)])]
+         [(maybe-char)
+          (cond
+           [(or (eq? x 'char)
+                (check-constant-is? x char?)
+                (check-constant-eqv? x #f))
+            y]
+           [else
+            'immediate])]
          [else
           (union/true x)])]))
 
@@ -534,7 +587,7 @@
 
   (define (intersect/true x y)
     (cond
-      [(eq? x '$immediate/true)
+      [(eq? x 'true-immediate)
        y]
       [else
        'bottom]))
@@ -544,8 +597,8 @@
       [(eq? x y) x]
       [(eq? y 'bottom) 'bottom]
       [(eq? x 'bottom) 'bottom]
-      [(eq? y '$immediate) x]
-      [(eq? x '$immediate) y]
+      [(eq? y 'immediate) x]
+      [(eq? x 'immediate) y]
       [(Lsrc? y)
        (nanopass-case (Lsrc Expr) y
          [(quote ,d1)
@@ -555,7 +608,8 @@
              x]
             [(not dy)
              (cond 
-               [(eq? x 'boolean)
+               [(or (eq? x 'boolean)
+                    (eq? x 'maybe-char))
                 y]
                [else
                 'bottom])]
@@ -567,7 +621,15 @@
                 (intersect/true x y)])]
             [(char? dy)
              (cond
-               [(eq? x 'char)
+               [(or (eq? x 'char)
+                    (eq? x 'maybe-char)
+                    (eq? x 'eof/char))
+                y]
+               [else
+                (intersect/true x y)])]
+            [(eof-object? dy)
+             (cond 
+               [(eq? x 'eof/char)
                 y]
                [else
                 (intersect/true x y)])]
@@ -577,26 +639,56 @@
        (case y
          [(boolean)
           (cond 
-            [(eq? x '$immediate/true)
+            [(eq? x 'true-immediate)
              true-rec]
+            [(eq? x 'maybe-char)
+             false-rec]
             [(check-constant-is? x boolean?)
              x]
             [else
              'bottom])]
-         [($immediate/true)
+         [(true-immediate)
           (cond 
             [(eq? x 'boolean)
              true-rec]
+            [(eq? x 'maybe-char)
+             'char]
             [(check-constant-eqv? x #f)
              'bottom]
             [else
              x])]
          [(char)
           (cond
+            [(or (eq? x 'maybe-char)
+                 (eq? x 'eof/char))
+             y]
             [(check-constant-is? x char?)
              x]
             [else
              (intersect/true x y)])]
+         [(eof/char)
+          (cond
+            [(eq? x 'maybe-char)
+             'char]
+            [(or (eq? x 'char)
+                 (check-constant-is? x char?)
+                 (check-constant-is? x eof-object?))
+             x]
+            [else
+             (intersect/true x y)])]
+         [(maybe-char)
+          (cond
+            [(or (eq? x 'eof/char)
+                 (eq? x 'true-immediate))
+             'char]
+            [(or (eq? x 'char)
+                 (check-constant-is? x char?)
+                 (check-constant-eqv? x #f))
+             x]
+            [(eq? x 'boolean)
+             false-rec]
+            [else
+             'bottom])]
          [else
           (intersect/true x y)])]))
 
@@ -839,8 +931,8 @@
     (cond
       #;[(eq? x 'bottom) 'bottom]
       [(or (check-constant-is? x $immediate?)
-           (memq x '(boolean char $immediate/true $immediate)))
-       '$immediate]
+           (memq x '(boolean char maybe-char eof/char true-immediate immediate)))
+       'immediate]
       [(or (eq? x '$record)
            (pred-$record/rtd? x)
            (pred-$record/ref? x))
@@ -893,7 +985,7 @@
          (build-pred-or i n r y x))]
       [(pred-or? x)
        (case (predicate->class y)
-         [($immediate)
+         [(immediate)
           (build-pred-or (predicate-union/immediate (pred-or-imm x) y)
                          (pred-or-nor x)
                          (pred-or-rec x)
@@ -910,7 +1002,7 @@
                          x)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [($immediate)
+         [(immediate)
           (build-pred-or (predicate-union/immediate x (pred-or-imm y))
                          (pred-or-nor y)
                          (pred-or-rec y)
@@ -932,7 +1024,7 @@
          (cond
            [(eq? cx cy)
             (case cx
-              [($immediate)
+              [(immediate)
                (predicate-union/immediate x y)]
               [(normalptr)
                (predicate-union/normal x y)]
@@ -941,8 +1033,8 @@
            [else
             (let ()
               (define i (cond
-                          [(eq? cx '$immediate) x]
-                          [(eq? cy '$immediate) y]
+                          [(eq? cx 'immediate) x]
+                          [(eq? cy 'immediate) y]
                           [else 'bottom]))
               (define n (cond
                           [(eq? cx 'normalptr) x]
@@ -974,7 +1066,7 @@
          (build-pred-or i n r x y))]
       [(pred-or? x)
        (case (predicate->class y)
-         [($immediate)
+         [(immediate)
           (predicate-intersect/immediate (pred-or-imm x) y)]
          [(normalptr)
           (predicate-intersect/normal (pred-or-nor x) y)]
@@ -982,7 +1074,7 @@
           (predicate-intersect/record (pred-or-rec x) y)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [($immediate)
+         [(immediate)
           (predicate-intersect/immediate x (pred-or-imm y))]
          [(normalptr)
           (predicate-intersect/normal x (pred-or-nor y))]
@@ -997,7 +1089,7 @@
             'bottom]
            [else
             (case cx
-              [($immediate)
+              [(immediate)
                (predicate-intersect/immediate x y)]
               [(normalptr)
                (predicate-intersect/normal x y)]

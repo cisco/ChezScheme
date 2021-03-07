@@ -998,27 +998,27 @@ Notes:
                    [ir `(call ,preinfo ,pr ,n)])
                (cond
                  [(predicate-implies? r 'char)
-                  (values ir ptr-pred ntypes #f #f)] ; should be maybe-symbol
+                  (values ir maybe-symbol-pred ntypes #f #f)]
                  [(predicate-implies? r 'symbol)
-                  (values ir ptr-pred ntypes #f #f)] ; should be maybe-char
+                  (values ir maybe-char-pred ntypes #f #f)]
                  [(and (predicate-disjoint? r 'char)
                        (predicate-disjoint? r 'symbol))
                   (values ir 'bottom pred-env-bottom #f #f)]
                  [else
-                  (values ir ptr-pred                ; should be maybe-(union 'char 'symbol)
-                          (pred-env-add/ref ntypes n true-pred  plxc) #f #f)]))] ; should be (union 'char 'symbol)
+                  (values ir (predicate-union maybe-char-pred 'symbol)
+                          (pred-env-add/ref ntypes n (predicate-union 'char 'symbol) plxc) #f #f)]))]
         [(n c) (let ([rn (get-type n)]
                      [rc (get-type c)]
                      [ir `(call ,preinfo ,pr ,n ,c)])
                  (cond
                    [(or (predicate-disjoint? rn 'symbol)
-                        (predicate-disjoint? rc ptr-pred)) ; should be maybe-char
+                        (predicate-disjoint? rc maybe-char-pred))
                     (values ir 'bottom pred-env-bottom #f #f)]
                    [else
                     (values ir void-rec
                             (pred-env-add/ref (pred-env-add/ref ntypes
                                                                 n 'symbol plxc)
-                                              c ptr-pred plxc) ; should be maybe-char
+                                              c maybe-char-pred plxc)
                              #f #f)]))])
 
       (define-specialize/unrestricted 2 call-with-values
