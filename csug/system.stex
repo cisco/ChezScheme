@@ -1898,7 +1898,9 @@ an expression.
 or unannotated value.
 \scheme{expand/optimize} expands the expression in environment \var{env}
 and passes the expression through the source optimizer \scheme{cp0}
-(unless \scheme{cp0} is disabled via \scheme{run-cp0}).
+and a type-inferring optimizer \scheme{cptypes}
+(unless \scheme{cp0} and \scheme{cptypes} are disabled via \scheme{run-cp0},
+or unless \scheme{cptypes} is disabled via \scheme{enable-type-recovery}).
 It also simplifies \scheme{letrec} and \scheme{letrec*} expressions within
 the expression and makes their undefined checks explicit.
 It returns an object representing the expanded, simplified, and optimized form.
@@ -1906,7 +1908,7 @@ If no environment is provided, it defaults to the environment
 returned by \scheme{interaction-environment}.
 
 \scheme{expand/optimize} is primarily useful for understanding what
-\scheme{cp0} does and does not optimize.
+\scheme{cp0} plus \scheme{cptypes} does and does not optimize.
 Many optimizations are performed later in the compiler,
 so \scheme{expand/optimize} does not give a complete picture of
 optimizations performed.
@@ -2864,15 +2866,23 @@ When the parameter is set to \scheme{#f}, the message is not printed.
 \endentryheader
 
 \noindent
-These parameters control the operation of \scheme{cp0}, a source
-optimization pass that runs after macro expansion and prior
+These parameters control the operation of \scheme{cp0} plus \scheme{cptypes}, source
+optimization passes that run after macro expansion and prior
 to most other compiler passes.
+
 \scheme{cp0} performs procedure inlining, in which the code of one
 procedure is inlined at points where it is called by other procedures,
 as well as copy propagation, constant folding, useless code
 elimination, and several related optimizations.
 The algorithm used by the optimizer is described in detail in the paper
 ``Fast and effective procedure inlining''~\cite{waddell:sas97}.
+
+\scheme{cptypes} performs additional optimizations based on type
+information about primitives, such as the fact that \scheme{+} always
+returns a number; since it primarily removes unneecssary run-time
+checks, \scheme{cptypes} primarly benefits compilation in safe mode.
+The \scheme{cptypes} pass can be independently disabled through the
+\scheme{enable-type-recovery} parameter.
 
 When \scheme{cp0} is enabled, the programmer can count on the compiler
 to fold constants, eliminate unnecessary \scheme{let} bindings, and
@@ -2903,9 +2913,9 @@ if \scheme{e} turns out to be an unassigned variable, and count on
 the entire \scheme{case} expression to be folded if \scheme{e} turns
 out to be a constant.
 
-It is possible to see what \scheme{cp0} does with an expression
+It is possible to see what \scheme{cp0} plus \scheme{cptypes} does with an expression
 via the procedure \index{\scheme{expand/optimize}}\scheme{expand/optimize},
-which expands its argument and passes the result through \scheme{cp0}, as
+which expands its argument and passes the result through \scheme{cp0} and \scheme{cptypes}, as
 illustrated by the following transcript.
 
 \schemedisplay
@@ -2914,9 +2924,9 @@ illustrated by the following transcript.
     '(lambda (x)
        (case x [(a) 1] [(b c) 2] [(d) 3] [else 4])))
 (lambda (x)
-  (if (#2%memv x '(a))
+  (if (#2%member x '(a))
       1
-      (if (#2%memv x '(b c)) 2 (if (#2%memv x '(d)) 3 4))))
+      (if (#2%member x '(b c)) 2 (if (#2%member x '(d)) 3 4))))
 > (expand/optimize
     '(+ (let ([f (lambda (x)
                 (case x [(a) 1] [(b c) 2] [(d) 3] [else 4]))])
@@ -2928,7 +2938,7 @@ illustrated by the following transcript.
 In the first example, the \scheme{let} expression produced by \scheme{case}
 is eliminated, and in the second, the entire expression is optimized down
 to the constant \scheme{17}.
-Although not shown by \scheme{expand/optimize}, the \scheme{memv} calls
+Although not shown by \scheme{expand/optimize}, the \scheme{member} calls
 in the output code for the first example will be replaced by calls to the
 less expensive \scheme{eq?} by a later pass of the compiler.
 Additional examples are given in the description
@@ -2937,9 +2947,9 @@ of \scheme{expand/optimize}.
 The value of \scheme{run-cp0} must be a procedure.
 Whenever the compiler is invoked on a Scheme form, the value \var{p}
 of this parameter is called to determine whether and how
-\scheme{cp0} is run.
-\var{p} receives two arguments: \var{cp0}, the entry point into
-\scheme{cp0}, and \var{x}, the form being compiled.
+\scheme{cp0} and \scheme{cptypes} are run.
+\var{p} receives two arguments: \var{cp0}, the entry point into the
+\scheme{cp0} plus \scheme{cptypes} passes, and \var{x}, the form being compiled.
 The default value of \scheme{run-cp0} simply invokes \var{cp0} on
 \var{x}, then \var{cp0} again on the result.
 The second run is useful in some cases because the first run
