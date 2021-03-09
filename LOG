@@ -2144,3 +2144,5 @@
     cpnanopass.ss
 - fix missing include in externs.h for struct timespec
     c/expeditor.c, c/externs.h, c/prim5.c, c/scheme.c, c/stats.c
+- fix signature of generate-temporaries
+    primdata.ss primvars.ss

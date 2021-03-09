@@ -415,7 +415,7 @@
               [(length) 0 -1 (+ (most-positive-fixnum) 1) 'a #f]
               [(library-path) '(a) "hereiam" #f]
               [(library-requirements-options) (library-requirements-options import invoke) 1/2 #f]
-              [(list) '(a) '#1=(a . #1#) 17 '#() #f]
+              [(list) '(a) '#1=(a . #1#) 17 '#() #'(1 2 3) #f]
               [(list-of-string-pairs) '(("a" . "b")) '("a") #f]
               [(list-of-symbols) '(a b c) '("a") #f]
               [(maybe-binary-output-port) *binary-output-port *binary-input-port (current-output-port)]
