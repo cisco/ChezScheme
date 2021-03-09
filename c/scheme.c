@@ -20,7 +20,6 @@
 #include <limits.h>
 #ifdef WIN32
 #include <io.h>
-#include <time.h>
 #else
 #include <sys/time.h>
 #endif
