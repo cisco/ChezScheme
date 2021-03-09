@@ -43,7 +43,7 @@
   silence unused return-value warnings.
     prim5.c
 - liberalized get-mode check for ../mats.  it's not our business whether
-  people make their directories group and/or other writeable.
+  people make their directories group and/or other writable.
     6.ms
 - make test now prints the actual relative path to summary in the
   "check summary" message, whether invoked from the top-level directory
@@ -85,7 +85,7 @@
   errors to be reported by other routines.
     strnum.ss, exceptions.ss, read.ss
     5_3.ms, 6.ms, root-experr*, patch*
-- added pdtml flag, which if set to t causes profile-dump-html to be
+- added pdhtml flag, which if set to t causes profile-dump-html to be
   called at the end of a mat run.
     mats/Mf-base
 - compile-whole-program and compile-whole-library now copy the hash-bang
@@ -514,14 +514,14 @@
 - support Windows build on Bash/WSL
     BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
     c/Mf-*nt, mats/Mf-*, s/Mf-base
-- fix c/version.h for FreeBDS (machine types i3fb, ti3fb, a6fb, ta6fb)
+- fix c/version.h for FreeBSD (machine types i3fb, ti3fb, a6fb, ta6fb)
 - fix reference to libc.so to be libc.so.7 for FreeBSD (machine types
   i3fb, ti3fb, a6fb, ta6fb)
     foreign.ms
 - added CC option to configure for selecting the compiler
     configure,
     c/Mf-*
-- Suppress warnings from implicit fallthrough in case labels.
+- Suppress warnings from implicit fall-through in case labels.
     Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
 - added bytevector-compress and bytevector-uncompress
     bytevector.ss, primdata.ss, new-io.c, prim5.c, externs.h,
@@ -547,7 +547,7 @@
   locate-source-object-source function that uses the new components,
   a current-locate-source-object-source parameter to control looking up
   line and column information, a current-make-source-object parameter to
-  control loation recording, an optional use-cache argument to
+  control location recording, an optional use-cache argument to
   locate-source, and a 'source-object message for code and continuation
   inspectors
     read.ss, syntax.ss, 7.ss, compile.ss, cpnanopass.ss, exceptions.ss,
@@ -670,7 +670,7 @@
     cpnanopass.ss
 - augmented tree representation with a constant representation
   for full trees to reduce the overhead of manipulating trees or
-  subtress with all bits set.
+  subtrees with all bits set.
     cpnanopass.ss
 - tree-for-each now takes start and end offsets; this cuts the
   cost of traversing and applying the action when the range of
@@ -736,7 +736,7 @@
   in the list.  this affects only languages where two expressions
   can start at the same character position.
     pdhtml.ss
-- expanded capability of ez-grammar with support for simpl
+- expanded capability of ez-grammar with support for simple
   parsing of binary operators w/precedence and associativity
   and automatically generated markdown grammar descriptions.
   ez-grammar-test.ss now also doubles as a test of pdhtml for
@@ -1071,7 +1071,7 @@
   compile-time-value-value accessor
     syntax.ss, primdata.ss,
     8.ms, primvars.ms, root-experr*
-- $pass-stats now returns accurrate stats for the currently timed
+- $pass-stats now returns accurate stats for the currently timed
   pass.
     7.ss
 - compile-whole-program and compile-whole-library now propagate
@@ -1135,7 +1135,7 @@
 - reverted the earlier change to restore indirection through
   InstallPrefix, since it didn't and can't play well with the
   generated config.h.  Instead removed InstallPrefix entirely so
-  it isn't an attractive hazzard.
+  it isn't an attractive hazard.
     configure, makefiles/Mf-install.in
 - fixed bug in inline-lists: wasn't setting multiply-referenced flag
   on p to account for the procedure? check at optimize-level 2.
@@ -1788,7 +1788,7 @@
   to help in diagnosing separate-eval and separate-compile issues.
     mat.ss
 - added unregister-guardian, which can be used to unregister
-  the unressurected objects registered with any guardian.  guardian?
+  the unresurrected objects registered with any guardian.  guardian?
   can be used to distinguish guardian procedures from other objects.
     cp0.ss, cmacros.ss, cpnanopass.ss, ftype.ss, primdata.ss,
     prims.ss,
@@ -1994,7 +1994,7 @@
     strnum.ss, syntax.ss, trace.ss
 - updated bullyx patches
     patch*
-- fixed csug copyright year substititions and changed revisiondate
+- fixed csug copyright year substitutions and changed revisiondate
   to not be generated, making the csug build reproducible
     newrelease csug/csug.stex
 - fixed Windows build using MSYS2
@@ -2054,7 +2054,7 @@
   called when the collector is running.
     alloc.c, gc.c, gcwrapper.c, globals.h
 - copy now copies two pairs at once only if they are in the same
-  segment, which saves a few memonry references and tests and turns
+  segment, which saves a few memory references and tests and turns
   out not to reduce the number of opportunities significantly in
   tested programs.
     gc.c
@@ -2091,7 +2091,7 @@
 - now using 64-bit arithmetic for seconds in S_condition_wait to
   prevent a potential 2038 bug, at least on platforms where time_t
   is 64 bits.  also now rounding rather than truncating nanoseconds
-  in the coversion to milliseconds on Windows.
+  in the conversion to milliseconds on Windows.
     thread.c
 - fixed a bug in arm32 that caused an error when generating
   instructions with immediate operands where the immediate was larger
@@ -2132,7 +2132,7 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - newrelease no longer logs as updated files with no actual changes
     newrelease
-- repaired continuation for exception handler of error for reurning
+- repaired continuation for exception handler of error for returning
   the wrong number of values to a multiple-value context
     cpnanopass.ss, np-languages.ss, 3.ms
 - adjust arm32 backend to not choose shorter instructions for larger
@@ -2142,5 +2142,7 @@
     prim5.c, 5_3.ss, 5_3.ms
 - add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
     cpnanopass.ss
+- fix missing include in externs.h for struct timespec
+    c/expeditor.c, c/externs.h, c/prim5.c, c/scheme.c, c/stats.c
 - fix signature of generate-temporaries
     primdata.ss primvars.ss
