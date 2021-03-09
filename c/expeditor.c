@@ -547,7 +547,6 @@ static void s_ee_write_char(wchar_t c) {
 #endif /* SOLARIS */
 #include <termios.h>
 #include <signal.h>
-#include <time.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <wchar.h>
