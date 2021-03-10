@@ -636,7 +636,11 @@
     [(op (x fpur) (y ur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpcast ,y))])
 
   (define-instruction value (fp+ fp- fp* fp/)
-    [(op (x fpur) (y fpmem fpur) (z fpmem fpur))
+    [(op (x fpur) (y fpur) (z fpmem fpur))
+     (seq
+      `(move-related ,x ,y)
+      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z)))]
+    [(op (x fpur) (y fpmem) (z fpmem fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
 
   (define-instruction value (fpsqrt)
