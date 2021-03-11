@@ -107,6 +107,9 @@ scheme.1 petite.1: scheme.1.in
 I=./installsh -o "${InstallOwner}" -g "${InstallGroup}"
 
 bininstall: ${Bin}
+	rm -f ${SchemePath}
+	rm -f ${PetitePath}
+	rm -f ${SchemeScriptPath}
 	$I -m 555 ${Scheme} ${SchemePath}
 	ln -f ${SchemePath} ${PetitePath}
 	ln -f ${SchemePath} ${SchemeScriptPath}
