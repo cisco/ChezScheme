@@ -2148,3 +2148,14 @@
     primdata.ss primvars.ss
 - sleep of negative durations now returns immediately
     7.ss
+- avoid hard-coded paths for utilities in build scripts
+    checkin csug/gifs/Makefile csug/math/Makefile examples/Makefile
+    makefiles/Makefile-csug.in makefiles/Makefile-release_notes.in
+    makefiles/Mf-install.in makefiles/installsh mats/6.ms mats/Mf-a6fb
+    mats/Mf-a6le mats/Mf-a6nb mats/Mf-a6ob mats/Mf-a6osx mats/Mf-arm32le
+    mats/Mf-i3fb mats/Mf-i3le mats/Mf-i3nb mats/Mf-i3ob mats/Mf-i3osx
+    mats/Mf-i3qnx mats/Mf-ppc32le mats/Mf-ta6fb mats/Mf-ta6le mats/Mf-ta6nb
+    mats/Mf-ta6ob mats/Mf-ta6osx mats/Mf-ti3fb mats/Mf-ti3le mats/Mf-ti3nb
+    mats/Mf-ti3ob mats/Mf-ti3osx mats/Mf-tppc32le mats/unix.ms newrelease
+    pkg/Makefile release_notes/gifs/Makefile release_notes/math/Makefile
+    s/Mf-base workarea
