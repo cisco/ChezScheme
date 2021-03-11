@@ -771,7 +771,9 @@
     (lambda (t)
       (unless (and (time? t) (eq? (time-type t) 'time-duration))
         ($oops who "~s is not a time record of type time-duration" t))
-      (fp (time-second t) (time-nanosecond t)))))
+      (let ([s (time-second t)])
+        (when (>= s 0)
+          (fp s (time-nanosecond t)))))))
 
 (define $scheme-greeting
   (lambda ()

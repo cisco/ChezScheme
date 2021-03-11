@@ -1961,6 +1961,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\protect\scheme{sleep} with negative duration (9.5.5)}
+
+Prior to this release, \scheme{sleep} of a negative duration would
+result in an infinite pause in Windows. Now \scheme{sleep} returns
+immediately on all platforms when given a negative duration.
+
 \subsection{Buffering signals (9.5.3)}
 
 Prior to this release, only one unhandled signal was buffered for
