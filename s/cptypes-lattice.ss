@@ -77,9 +77,20 @@
   (define ptr-pred (make-pred-or 'immediate 'normalptr '$record))
   (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom))
   (define $fixmediate-pred (make-pred-or 'immediate 'fixnum 'bottom))
-  (define maybe-number-pred (make-pred-or false-rec 'number 'bottom))
   (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
+  (define eof/fixnum-pred (make-pred-or eof-rec 'fixnum 'bottom))
+  (define maybe-exact-integer-pred (make-pred-or false-rec 'fixnum 'bottom))
+  (define maybe-flonum-pred (make-pred-or false-rec 'flonum 'bottom))
+  (define maybe-number-pred (make-pred-or false-rec 'number 'bottom))
   (define maybe-symbol-pred (make-pred-or false-rec 'symbol 'bottom))
+  (define maybe-procedure-pred (make-pred-or false-rec 'procedure 'bottom))
+  (define maybe-string-pred (make-pred-or false-rec 'string 'bottom))
+  (define eof/string-pred (make-pred-or eof-rec 'string 'bottom))
+  (define maybe-bytevector-pred (make-pred-or false-rec 'bytevector 'bottom))
+  (define eof/bytevector-pred (make-pred-or eof-rec 'bytevector 'bottom))
+  (define maybe-pair-pred (make-pred-or false-rec 'pair 'bottom))
+  (define maybe-normalptr-pred (make-pred-or false-rec 'normalptr 'bottom))
+  (define maybe-$record-pred (make-pred-or false-rec 'bottom '$record))
   ; These are just symbols, but we assign a name for uniformity.
   (define maybe-char-pred 'maybe-char)
   (define eof/char-pred 'eof/char)
@@ -155,15 +166,6 @@
                           [else
                            (loop lo i)]))]))]))]))
 
-  (define (maybe-predicate? name)
-    (let ([name (symbol->string name)])
-      (and (>= (string-length name) 6)
-           (let loop ([n 0])
-             (or (fx= n 6)
-                 (and (eq? (string-ref name n) 
-                           (string-ref "maybe-" n))
-                      (loop (fx+ n 1))))))))
-
   ; nqm: no question mark
   ; Transform the types used in primdata.ss
   ; to the internal representation used here
@@ -175,69 +177,98 @@
   ; (pred? x) ==> #f and (something x) ==> <error>
   ; In case the non extended version is not #f, the extended version must be not #f
   (define (primref-name/nqm->predicate name extend?)
+    (cond
+      [(not name)
+       #f]
+      [(pair? name)
+       (cond
+         [(equal? name '(ptr . ptr))
+          'pair]
+         [else
+          (if (not extend?) 'bottom 'pair)])]
+      [else
+       (let ([r (do-primref-name/nqm->predicate name extend?)])
+         (cond
+           [(pair? r)
+            (if extend? (cdr r) (car r))]
+           [else
+            r]))]))
+
+  (define (do-primref-name/nqm->predicate name extend?)
     (case name
-      [pair 'pair]
-      [box 'box]
-      [$record '$record]
-      [fixnum 'fixnum]
-      [bignum 'bignum]
-      [flonum 'flonum]
-      [real 'real]
-      [number 'number]
-      [vector 'vector]
-      [string 'string]
-      [bytevector 'bytevector]
-      [fxvector 'fxvector]
-      [flvector 'flvector]
-      [gensym 'gensym]
-      [uninterned-symbol 'uninterned-symbol]
-      [interned-symbol 'interned-symbol]
-      [symbol 'symbol]
-      [char 'char]
       [bottom 'bottom]
       [ptr ptr-pred]
+      [sub-ptr (cons 'bottom ptr-pred)]
+
+      [char 'char]
+      [maybe-char maybe-char-pred]
+      [eof/char eof/char-pred]
       [boolean 'boolean]
       [true true-pred]
       [false false-rec]
-      [procedure 'procedure]
-      [exact-integer 'exact-integer]
       [void void-rec]
       [null null-rec]
       [eof-object eof-rec]
       [bwp-object bwp-rec]
       [$immediate 'immediate]
-      [(list list-assume-immutable) (if (not extend?) null-rec null-or-pair-pred)]
-      [sub-ptr (if (not extend?) 'bottom ptr-pred)]
-      [maybe-number maybe-number-pred]
-      [maybe-fixnum maybe-fixnum-pred]
-      [maybe-ufixnum (if (not extend?) false-rec maybe-fixnum-pred)]
+
+      [pair 'pair]
+      [maybe-pair maybe-pair-pred]
+      [(list list-assume-immutable) (cons null-rec null-or-pair-pred)]
+      [box 'box]
+      [vector 'vector]
+      [string 'string]
+      [sub-string '(bottom . string)]
+      [maybe-string maybe-string-pred]
+      [eof/string eof/string-pred]
+      [bytevector 'bytevector]
+      [maybe-bytevector maybe-bytevector-pred]
+      [eof/bytevector eof/bytevector-pred]
+      [fxvector 'fxvector]
+      [flvector 'flvector]
+      [pathname 'string]
+      [maybe-pathname maybe-string-pred]
+      [procedure 'procedure]
+      [maybe-procedure maybe-procedure-pred]
+      [maybe-who maybe-normalptr-pred] ;should be maybe-string/symbol
+
+      [gensym 'gensym]
+      [uninterned-symbol 'uninterned-symbol]
+      [interned-symbol 'interned-symbol]
+      [symbol 'symbol]
       [maybe-symbol maybe-symbol-pred]
-      [maybe-char 'maybe-char]
-      [eof/char 'eof/char]
-      [else ((if extend? cdr car)
-             (case name
-               [(record rtd) '(bottom . $record)]
-               [(bit length ufixnum pfixnum) '(bottom . fixnum)]
-               [(uint sub-uint) '(bottom . exact-integer)]
-               [(index sub-index u8 s8) '(bottom . fixnum)]
-               [(sint) '(fixnum . exact-integer)]
-               [(uinteger) '(bottom . real)]
-               [(integer rational) '(exact-integer . real)]
-               [(cflonum) '(flonum . number)]
-               [else
-                (cond
-                  [(not name) ; TODO: Move this case to the top?
-                   '(#f . #f)]
-                  [(pair? name) ; TODO: Move this case to the top?
-                   (cond
-                     [(equal? name '(ptr . ptr))
-                      '(pair . pair)]
-                     [else
-                      '(bottom . pair)])]
-                  [(maybe-predicate? name)
-                   (cons false-rec ptr-pred)]         ; for types like maybe-*
-                  [else
-                   (cons 'bottom true-pred)])]))])) ; for all other types that exclude #f
+      [sub-symbol '(bottom . symbol)]
+      [maybe-sub-symbol (cons false-rec maybe-symbol-pred)]
+
+      [fixnum 'fixnum]
+      [(sub-fixnum bit length sub-length ufixnum sub-ufixnum pfixnum index sub-index u8 s8 u8/s8) '(bottom . fixnum)]
+      [maybe-fixnum maybe-fixnum-pred]
+      [maybe-ufixnum (cons false-rec maybe-fixnum-pred)]
+      [(eof/length eof/u8) (cons eof-rec eof/fixnum-pred)]
+      [bignum 'bignum]
+      [(exact-integer sint) 'exact-integer]
+      [(uint sub-uint nzuint exact-uinteger sub-sint) '(bottom . exact-integer)]
+      [maybe-uint (cons false-rec maybe-exact-integer-pred)]
+      [flonum 'flonum]
+      [sub-flonum '(bottom . flonum)]
+      [maybe-flonum maybe-flonum-pred]
+      [real 'real]
+      [(integer rational) '(exact-integer . real)]
+      [(uinteger sub-integer) '(bottom . real)]
+      [cflonum '(flonum . number)]
+      [number 'number]
+      [sub-number '(bottom . number)]
+      [maybe-number maybe-number-pred]
+
+      [$record '$record]
+      [(record rtd) '(bottom . $record)] ; not sealed
+      [(maybe-rtd) (cons false-rec maybe-$record-pred)]
+      [(transcoder textual-input-port textual-output-port binary-input-port binary-output-port) '(bottom . $record)]  ; opaque
+      [(maybe-transcoder maybe-textual-input-port maybe-textual-output-port maybe-binary-input-port maybe-binary-output-port input-port output-port) (cons false-rec maybe-$record-pred)]
+      [(rcd sfd timeout) '(bottom . $record)] ; not opaque, sealed
+      [(maybe-rcd maybe-sub-rcd maybe-sfd maybe-timeout) (cons false-rec maybe-$record-pred)]
+
+      [else (cons 'bottom true-pred)])); for all other types that exclude #f
 
   (define (check-constant-is? x pred?)
     (and (Lsrc? x)

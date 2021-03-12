@@ -1203,6 +1203,9 @@
   (cptypes-equivalent-expansion?
     '(lambda (p) (define x (get-char p)) (box? x))
     '(lambda (p) (define x (get-char p)) #f))
+(cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (when (number? p) (fixnum? p)))
+    '(lambda (p) (define x (get-u8 p)) (when (number? p) #t)))
 )
 
 (mat cptypes-unreachable
