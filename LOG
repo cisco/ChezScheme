@@ -2159,3 +2159,8 @@
     mats/Mf-ti3ob mats/Mf-ti3osx mats/Mf-tppc32le mats/unix.ms newrelease
     pkg/Makefile release_notes/gifs/Makefile release_notes/math/Makefile
     s/Mf-base workarea
+- fixed configure script for update of nanopass to v1.9.2
+    configure
+- fixed help description for configure options --installschemename,
+  --installpetitename, and --installscriptname
+    configure
