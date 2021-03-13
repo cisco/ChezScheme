@@ -92,7 +92,7 @@ sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makef
 sed -e "s/csug[0-9]\.[0-9]/csug$MR.$mR/" -e "s/csug[0-9]_[0-9]/csug$MR""_$mR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
 set maybeupdatedfiles = ($maybeupdatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
 
-rm scheme.1.in
+rm -f scheme.1.in
 sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)* .* [0-9][0-9]*/Chez Scheme Version $R `date +'%B %Y'`/" \
     -e "s/Copyright .* Cisco Systems, Inc./Copyright `date +%Y` Cisco Systems, Inc./" \
   ../scheme.1.in > scheme.1.in
@@ -145,17 +145,17 @@ sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Schem
   ../csug/csug.stex > csug/csug.stex
 set maybeupdatedfiles = ($maybeupdatedfiles csug/copyright.stex csug/csug.stex)
 
-rm bintar/Makefile
+rm -f bintar/Makefile
 sed -e "s/^version = .*/version = $R/" \
     -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" \
   ../bintar/Makefile > bintar/Makefile
 set maybeupdatedfiles = ($maybeupdatedfiles bintar/Makefile)
 
-rm rpm/Makefile
+rm -f rpm/Makefile
 sed -e "s/^version = .*/version = $R/" ../rpm/Makefile > rpm/Makefile
 set maybeupdatedfiles = ($maybeupdatedfiles rpm/Makefile)
 
-rm pkg/Makefile
+rm -f pkg/Makefile
 sed -e "s/^version = .*/version = $R/" \
     -e "s/&copy; .* Cisco Systems/\&copy; `date +%Y` Cisco Systems/" \
      ../pkg/Makefile > pkg/Makefile
@@ -174,7 +174,7 @@ foreach x ($maybeupdatedfiles)
   cmp -s ../$x $x || set updatedfiles = ($updatedfiles $x)
 end
 
-rm LOG
+rm -f LOG
 cat ../LOG > LOG
 echo "" >> LOG
 echo "$R changes:" >> LOG
