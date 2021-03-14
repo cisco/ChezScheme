@@ -95,38 +95,33 @@
          ((new kill*) libspec save-ra?)]))))
 
 (module (intrinsic-info-asmlib intrinsic-return-live* intrinsic-entry-live* intrinsic-modify-reg* dorest-intrinsics)
-  ; standing on our heads here to avoid referencing registers at
-  ; load time...would be cleaner if registers were immutable,
-  ; i.e., mutable fields (direct and inherited from var) were kept
-  ; in separate tables...but that might add more cost to register
-  ; allocation, which is already expensive.
   (define-record-type intrinsic
-    (nongenerative #{intrinsic bcpkdd2y9yyv643zicd4jbe3y-8})
+    (nongenerative #{intrinsic bcpkdd2y9yyv643zicd4jbe3y-A})
     (sealed #t)
-    (fields libspec get-kill* get-live* get-rv*))
+    (fields libspec kill* live* rv*))
   (define intrinsic-info-asmlib
     (lambda (intrinsic save-ra?)
-      (make-info-asmlib ((intrinsic-get-kill* intrinsic))
+      (make-info-asmlib (intrinsic-kill* intrinsic)
         (intrinsic-libspec intrinsic)
         save-ra?
-        ((intrinsic-get-live* intrinsic)))))
+        (intrinsic-live* intrinsic))))
   (define intrinsic-return-live*
     ; used a handful of times, just while compiling library.ss...don't bother optimizing
     (lambda (intrinsic)
       (fold-left (lambda (live* kill) (remq kill live*))
-        (vector->list regvec) ((intrinsic-get-kill* intrinsic)))))
+        (vector->list regvec) (intrinsic-kill* intrinsic))))
   (define intrinsic-entry-live*
     ; used a handful of times, just while compiling library.ss...don't bother optimizing
     (lambda (intrinsic) ; return-live* - rv + live*
       (fold-left (lambda (live* live) (if (memq live live*) live* (cons live live*)))
         (fold-left (lambda (live* rv) (remq rv live*))
           (intrinsic-return-live* intrinsic)
-          ((intrinsic-get-rv* intrinsic)))
-        ((intrinsic-get-live* intrinsic)))))
+          (intrinsic-rv* intrinsic))
+        (intrinsic-live* intrinsic))))
   (define intrinsic-modify-reg*
     (lambda (intrinsic)
-      (append ((intrinsic-get-rv* intrinsic))
-              ((intrinsic-get-kill* intrinsic)))))
+      (append (intrinsic-rv* intrinsic)
+              (intrinsic-kill* intrinsic))))
   (define-syntax declare-intrinsic
     (syntax-rules (unquote)
       [(_ name entry-name (kill ...) (live ...) (rv ...))
@@ -134,9 +129,9 @@
          (define name
            (make-intrinsic
              (lookup-libspec entry-name)
-             (lambda () (reg-list kill ...))
-             (lambda () (reg-list live ...))
-             (lambda () (reg-list rv ...))))
+             (reg-list kill ...)
+             (reg-list live ...)
+             (reg-list rv ...)))
          (export name))]))
   ; must include in kill ... any register explicitly assigned by the intrinsic
   ; plus additional registers as needed to avoid spilled unspillables.  the
@@ -183,9 +178,9 @@
                     '()
                     (cons #`(make-intrinsic
                               (lookup-libspec #,(construct-name #'k "dorest" i))
-                              (lambda () (reg-list %ac0 %xp %ts %td))
-                              (lambda () (reg-cons* %ac0 (list-xtail arg-registers #,i)))
-                              (lambda () (let ([ls (list-xtail arg-registers #,i)]) (if (null? ls) '() (list (car ls))))))
+                              (reg-list %ac0 %xp %ts %td)
+                              (reg-cons* %ac0 (list-xtail arg-registers #,i))
+                              (let ([ls (list-xtail arg-registers #,i)]) (if (null? ls) '() (list (car ls)))))
                       (f (fx+ i 1))))))))
       dorests)))
 

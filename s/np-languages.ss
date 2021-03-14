@@ -32,6 +32,7 @@
     fv-offset fv-type
     var-spillable-conflict* var-spillable-conflict*-set!
     var-unspillable-conflict* var-unspillable-conflict*-set!
+    var-spillinfo-redirect! make-redirect-var
     uvar-degree uvar-degree-set!
     uvar-info-lambda uvar-info-lambda-set!
     uvar-iii uvar-iii-set!
@@ -86,14 +87,89 @@
   (define datum? (lambda (x) #t))
 
   (define-record-type var
-    (fields (mutable index) (mutable spillable-conflict*) (mutable unspillable-conflict*))
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-1})
+    (fields (mutable index-or-redirect) (mutable spillable-conflict*-or-redirect) (mutable unspillable-conflict*-or-redirect))
+    (nongenerative #{var fjh3mleeyv82pb1x1uhd4vsbv-1})
     (protocol (lambda (new) (lambda () (new #f #f #f)))))
+
+  ;; relies on pairs being distinct from conflict sets and indices:
+  (define (make-spillinfo-redirect index) (cons index '()))
+  (define (spillinfo-redirect? v) (pair? v))
+  (define (spillinfo-redirect-index r) (car r))
+
+  (define-record-type precolor-var
+    (parent var)
+    (fields (mutable precolored))
+    (nongenerative #{precolor-var fjh3mleeyv82pb1x1uhd4vsbv-5})
+    (protocol (lambda (pargs->new) (lambda () ((pargs->new) #f)))))
+  
+  (define (make-redirect-var name)
+    (make-precolor-var))
+
+  (define (var-spillinfo-redirect! v index)
+    (let ([r (make-spillinfo-redirect index)])
+      (var-index-or-redirect-set! v r)
+      (var-spillable-conflict*-or-redirect-set! v r)
+      (var-unspillable-conflict*-or-redirect-set! v r)))
+
+  (define var-index
+    (case-lambda
+     [(v) ; when index is not used for spill information
+      (safe-assert (not (spillinfo-redirect? (var-index-or-redirect v))))
+      (var-index-or-redirect v)]
+     [(v reg-spillinfo) ; when index is used for spill information
+      (let ([i (var-index-or-redirect v)])
+        (if (spillinfo-redirect? i)
+            (var-index-or-redirect
+             (vector-ref reg-spillinfo (spillinfo-redirect-index i)))
+            i))]))
+
+  (define var-index-set!
+    (case-lambda
+     [(v i) ; when index is not used for spill information
+      (safe-assert (not (spillinfo-redirect? (var-index-or-redirect v))))
+      (var-index-or-redirect-set! v i)]
+     [(v reg-spillinfo i) ; when index is used for spill information
+      (let ([old-i (var-index-or-redirect v)])
+        (if (spillinfo-redirect? old-i)
+            (var-index-or-redirect-set!
+             (vector-ref reg-spillinfo (spillinfo-redirect-index old-i))
+             i)
+            (var-index-or-redirect-set! v i)))]))
+      
+  (define (var-spillable-conflict* v reg-spillinfo)
+    (let ([c* (var-spillable-conflict*-or-redirect v)])
+      (if (spillinfo-redirect? c*)
+          (var-spillable-conflict*-or-redirect
+           (vector-ref reg-spillinfo (spillinfo-redirect-index c*)))
+          c*)))
+
+  (define (var-unspillable-conflict* v reg-spillinfo)
+    (let ([c* (var-unspillable-conflict*-or-redirect v)])
+      (if (spillinfo-redirect? c*)
+          (var-unspillable-conflict*-or-redirect
+           (vector-ref reg-spillinfo (spillinfo-redirect-index c*)))
+          c*)))
+
+  (define (var-spillable-conflict*-set! v reg-spillinfo c*)
+    (let ([old-c* (var-spillable-conflict*-or-redirect v)])
+      (if (spillinfo-redirect? old-c*)
+          (var-spillable-conflict*-or-redirect-set!
+           (vector-ref reg-spillinfo (spillinfo-redirect-index old-c*))
+           c*)
+          (var-spillable-conflict*-or-redirect-set! v c*))))
+
+  (define (var-unspillable-conflict*-set! v reg-spillinfo c*)
+    (let ([old-c* (var-unspillable-conflict*-or-redirect v)])
+      (if (spillinfo-redirect? old-c*)
+          (var-unspillable-conflict*-or-redirect-set!
+           (vector-ref reg-spillinfo (spillinfo-redirect-index old-c*))
+           c*)
+          (var-unspillable-conflict*-or-redirect-set! v c*))))
 
   (define-record-type (fv $make-fv fv?)
     (parent var)
     (fields offset type)
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-2})
+    (nongenerative #{fv fjh3mleeyv82pb1x1uhd4vsbv-2})
     (sealed #t)
     (protocol
       (lambda (pargs->new)
@@ -107,13 +183,20 @@
 
   (define-record-type reg
     (parent var)
-    (fields name mdinfo tc-disp callee-save? type (mutable precolored))
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-3})
+    (fields name mdinfo tc-disp callee-save? type)
+    (nongenerative #{reg fjh3mleeyv82pb1x1uhd4vsbv-6})
     (sealed #t)
     (protocol
       (lambda (pargs->new)
         (lambda (name mdinfo tc-disp callee-save? type)
-          ((pargs->new) name mdinfo tc-disp callee-save? type #f)))))
+          ((pargs->new) name mdinfo tc-disp callee-save? type)))))
+
+  (define (reg-precolored reg reg-spillinfo)
+    (let ([i (var-index-or-redirect reg)])
+      (precolor-var-precolored (vector-ref reg-spillinfo (spillinfo-redirect-index i)))))
+  (define (reg-precolored-set! reg reg-spillinfo v)
+    (let ([i (var-index-or-redirect reg)])
+      (precolor-var-precolored-set! (vector-ref reg-spillinfo (spillinfo-redirect-index i)) v)))
 
   (module ()
     (record-writer (record-type-descriptor reg)
@@ -181,7 +264,7 @@
       (mutable save-weight)   ; must be a fixnum!
       (mutable live-count)    ; must be a fixnum!
      )
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-4})
+    (nongenerative #{uvar fjh3mleeyv82pb1x1uhd4vsbv-4})
     (sealed #t)
     (protocol
       (lambda (pargs->new)

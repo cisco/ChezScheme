@@ -27,11 +27,15 @@
              (module (alias ...) (define x regid) (define alias x) ...))
            ...)])))
 
+(define-syntax define-register-aliases
+  (syntax-rules ()
+    [(_ regid reg-alias ...) (begin (define reg-alias regid) ...)]))
+
 (define-syntax define-allocable-registers
   (lambda (x)
     (assert (fx<= (constant asm-arg-reg-cnt) (constant asm-arg-reg-max)))
     (syntax-case x ()
-      [(_ regvec arg-registers extra-registers extra-fpregisters with-initialized-registers
+      [(_ regvec arg-registers extra-registers extra-fpregisters make-reg-spillinfo
           [regid reg-alias ... callee-save? mdinfo type] ...)
        (with-syntax ([((tc-disp ...) (arg-regid ...) (extra-regid ...) (extra-fpregid ...))
                       (syntax-case #'([regid type] ...) (%ac0 %xp %ts %td uptr)
@@ -72,36 +76,20 @@
                                          (f (cdr other*) (cdr other-type*) (cons arg-offset rtc-disp*)
                                             (fx+ arg-offset (constant ptr-bytes)) fp-offset (cons other rextra*) rfpextra*))))))]
                         [_ (syntax-error x "missing or out-of-order required registers")])]
-                     [(regid-loc ...) (generate-temporaries #'(regid ...))])
+                     [(reg-spillinfo-index ...) (iota (length #'(regid ...)))])
          #'(begin
-             (define-syntax define-squawking-parameter
-               (syntax-rules ()
-                 [(_ (id (... ...)) loc)
-                  (begin
-                    (define-once loc (id (... ...)) ($make-thread-parameter #f))
-                    (define-syntax id
-                      (lambda (q)
-                        (unless (identifier? q) (syntax-error q))
-                        #`(let ([x (loc)])
-                            (unless x (syntax-error #'#,q "uninitialized"))
-                            x)))
-                    (... ...))]
-                 [(_ id loc) (define-squawking-parameter (id) loc)]))
-             (define-squawking-parameter (regid reg-alias ...) regid-loc)
+             (define-once regid (let ([r (make-reg 'regid 'mdinfo tc-disp callee-save? 'type)])
+                                  (var-spillinfo-redirect! r reg-spillinfo-index)
+                                  r))
              ...
-             (define-squawking-parameter regvec regvec-loc)
-             (define-squawking-parameter arg-registers arg-registers-loc)
-             (define-squawking-parameter extra-registers extra-registers-loc)
-             (define-squawking-parameter extra-fpregisters extra-fpregisters-loc)
-             (define-syntax with-initialized-registers
-               (syntax-rules ()
-                 [(_ b1 b2 (... ...))
-                  (parameterize ([regid-loc (make-reg 'regid 'mdinfo tc-disp callee-save? 'type)] ...)
-                    (parameterize ([regvec-loc (vector regid ...)]
-                                   [arg-registers-loc (list arg-regid ...)]
-                                   [extra-registers-loc (list extra-regid ...)]
-                                   [extra-fpregisters-loc (list extra-fpregid ...)])
-                      (let () b1 b2 (... ...))))]))))])))
+             (define-register-aliases regid reg-alias ...) ...
+             (define regvec (vector regid ...))
+             (define arg-registers (list arg-regid ...))
+             (define extra-registers (list extra-regid ...))
+             (define extra-fpregisters (list extra-fpregid ...))
+             (define (make-reg-spillinfo)
+               (vector (make-redirect-var 'regid)
+                       ...))))])))
 
 (define-syntax define-machine-dependent-registers
   (lambda (x)
@@ -119,10 +107,10 @@
       [(k (reserved [rreg rreg-alias ... rreg-callee-save? rreg-mdinfo rreg-type] ...)
           (allocable [areg areg-alias ... areg-callee-save? areg-mdinfo areg-type] ...)
           (machine-depdendent [mdreg mdreg-alias ... mdreg-callee-save? mdreg-mdinfo mdreg-type] ...))
-       (with-implicit (k regvec arg-registers extra-registers extra-fpregisters real-register? with-initialized-registers)
+       (with-implicit (k regvec arg-registers extra-registers extra-fpregisters real-register? make-reg-spillinfo)
          #`(begin
              (define-reserved-registers [rreg rreg-alias ... rreg-callee-save? rreg-mdinfo rreg-type] ...)
-             (define-allocable-registers regvec arg-registers extra-registers extra-fpregisters with-initialized-registers
+             (define-allocable-registers regvec arg-registers extra-registers extra-fpregisters make-reg-spillinfo
                [areg areg-alias ... areg-callee-save? areg-mdinfo areg-type] ...)
              (define-machine-dependent-registers [mdreg mdreg-alias ... mdreg-callee-save? mdreg-mdinfo mdreg-type] ...)
              (define-syntax real-register?

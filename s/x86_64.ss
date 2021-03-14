@@ -2431,11 +2431,11 @@
   (module (asm-foreign-call asm-foreign-callable)
     (if-feature windows
       (begin
-        (define make-vint (lambda () (vector %Carg1 %Carg2 %Carg3 %Carg4)))
-        (define make-vfp (lambda () (vector %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4))))
+        (define vint (vector %Carg1 %Carg2 %Carg3 %Carg4))
+        (define vfp (vector %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4)))
       (begin
-        (define make-vint (lambda () (vector %Carg1 %Carg2 %Carg3 %Carg4 %Carg5 %Carg6)))
-        (define make-vfp (lambda () (vector %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4 %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8)))))
+        (define vint (vector %Carg1 %Carg2 %Carg3 %Carg4 %Carg5 %Carg6))
+        (define vfp (vector %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4 %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8))))
 
     (define (align n size)
       (fxlogand (fx+ n (fx- size 1)) (fx- size)))
@@ -2629,7 +2629,7 @@
                           `(set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-8 #f)
                                                                ,%load ,x ,%zero (immediate ,x-offset)))]))))]
                  [load-content-regs
-                  (lambda (classes size iint ifp vint vfp)
+                  (lambda (classes size iint ifp)
                     (lambda (x) ; requires var
                       (let loop ([size size] [iint iint] [ifp ifp] [classes classes] [x-offset 0])
                         (cond
@@ -2686,7 +2686,7 @@
                       (add-regs (fx- ints 1) (fx+ ir 1) vr
                                 (cons (vector-ref vr ir) regs))]))]
                  [do-args
-                  (lambda (types vint vfp)
+                  (lambda (types)
                     (if-feature windows
                       (let loop ([types types] [locs '()] [regs '()] [fp-regs '()] [i 0] [isp 0])
                         (if (null? types)
@@ -2721,12 +2721,12 @@
                                           (eq? 'float (caar ($ftd->members ftd))))
                                      ;; float or double
                                      (loop (cdr types)
-                                       (cons (load-content-regs '(sse) ($ftd-size ftd) i i vint vfp) locs)
+                                       (cons (load-content-regs '(sse) ($ftd-size ftd) i i) locs)
                                        (add-regs 1 i vint regs) (add-regs 1 i vfp fp-regs) (fx+ i 1) isp)]
                                     [else
                                      ;; integer
                                      (loop (cdr types)
-                                       (cons (load-content-regs '(integer) ($ftd-size ftd) i i vint vfp) locs)
+                                       (cons (load-content-regs '(integer) ($ftd-size ftd) i i) locs)
                                        (add-regs 1 i vint regs) fp-regs(fx+ i 1) isp)])]
                                   [else
                                    ;; pass as value on the stack
@@ -2790,7 +2790,7 @@
                                   [else
                                    ;; pass in registers
                                    (loop (cdr types)
-                                         (cons (load-content-regs classes ($ftd-size ftd) iint ifp vint vfp) locs)
+                                         (cons (load-content-regs classes ($ftd-size ftd) iint ifp) locs)
                                          (add-regs ints iint vint regs) (add-regs fps ifp vfp fp-regs)
                                          (fx+ iint ints) (fx+ ifp fps) isp)]))]
                               [else
@@ -2921,7 +2921,7 @@
                    [fill-result-here? (result-fits-in-registers? result-classes)]
                    [result-reg* (get-result-regs fill-result-here? result-type result-classes)]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
-              (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*) (make-vint) (make-vfp))
+              (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*))
                 (lambda (frame-size nfp locs live* fp-live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
@@ -3065,8 +3065,6 @@
                 `(set! ,lvalue ,(%inline + ,%sp (immediate ,offset))))))
           (define save-arg-regs
             (lambda (types)
-              (define vint (make-vint))
-              (define vfp (make-vfp))
               (if-feature windows
                 (let f ([types types] [i 0] [isp 8])
                   (if (or (null? types) (fx= i 4))

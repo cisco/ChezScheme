@@ -8473,6 +8473,7 @@
       (define-threaded max-fv)
       (define-threaded max-fs@call)
       (define-threaded poison-cset)
+      (define-threaded current-reg-spillinfo)
 
       (define no-live* empty-tree)
 
@@ -8486,18 +8487,18 @@
           (tree-same? live1 live2)))
 
       (define live?
-        (lambda (live* live-size x)
-          (tree-bit-set? live* live-size (var-index x))))
+        (lambda (live* live-size x reg-spillinfo)
+          (tree-bit-set? live* live-size (var-index x reg-spillinfo))))
 
       (define get-live-vars
         (lambda (live* live-size v)
           (tree-extract live* live-size v)))
 
       (define make-add-var
-        (lambda (live-size)
+        (lambda (live-size reg-spillinfo)
           ; add x to live*.  result is eq? to live* if x is already in live*.
           (lambda (live* x)
-            (let ([index (var-index x)])
+            (let ([index (var-index x reg-spillinfo)])
               (if index
                   (let ([new (tree-bit-set live* live-size index)])
                     (safe-assert (or (eq? new live*) (not (tree-same? new live*))))
@@ -8506,11 +8507,11 @@
 
       (define make-remove-var
         ; remove x from live*.  result is eq? to live* if x is not in live*.
-        (lambda (live-size)
+        (lambda (live-size reg-spillinfo)
           (lambda (live* x)
-            (let ([index (var-index x)])
+            (let ([index (var-index x reg-spillinfo)])
               (if index
-                  (let ([new (tree-bit-unset live* live-size (var-index x))])
+                  (let ([new (tree-bit-unset live* live-size (var-index x reg-spillinfo))])
                     (safe-assert (or (eq? new live*) (not (tree-same? new live*))))
                     new)
                   live*)))))
@@ -8580,9 +8581,9 @@
             [(1) #t])))
 
       (define do-live-analysis!
-        (lambda (live-size entry-block*)
-          (define add-var (make-add-var live-size))
-          (define remove-var (make-remove-var live-size))
+        (lambda (live-size entry-block* reg-spillinfo)
+          (define add-var (make-add-var live-size reg-spillinfo))
+          (define remove-var (make-remove-var live-size reg-spillinfo))
           (define-who scan-block
             ; if we maintain a list of kills and a list of useless variables for
             ; each block, and we discover on entry to scan-block that the useless
@@ -8638,7 +8639,7 @@
                     (lambda (out instr)
                       (nanopass-case (L15a Effect) instr
                         [(set! ,live-info ,x ,rhs)
-                         (if (var-index x)
+                         (if (var-index x reg-spillinfo)
                              (let ([new-out (remove-var out x)])
                                (if (and (eq? new-out out)
                                         (nanopass-case (L15a Rhs) rhs
@@ -8888,11 +8889,11 @@
                   (refine (fxsrl skip 1) skip)))))))
 
       (define-who do-spillable-conflict!
-        (lambda (kspillable kfv varvec live-size block*)
-          (define remove-var (make-remove-var live-size))
+        (lambda (kspillable reg-spillinfo kfv varvec live-size block*)
+          (define remove-var (make-remove-var live-size reg-spillinfo))
           (define add-move!
             (lambda (x1 x2)
-              (when (var-index x2)
+              (when (var-index x2 reg-spillinfo)
                 ($add-move! x1 x2 2)
                 ($add-move! x2 x1 2))))
           (define add-conflict!
@@ -8900,14 +8901,14 @@
               ; invariants:
               ;   all poison spillables explicitly point to all spillables
               ;   all non-poison spillables implicitly point to all poison spillables via poison-cset
-              (let ([x-offset (var-index x)])
+              (let ([x-offset (var-index x reg-spillinfo)])
                 (when x-offset
                   (if (and (fx< x-offset kspillable) (uvar-poison? x))
                       (tree-for-each out live-size kspillable (fx+ kspillable kfv)
                         (lambda (y-offset)
                           ; frame y -> poison spillable x
-                          (conflict-bit-set! (var-spillable-conflict* (vector-ref varvec y-offset)) x-offset)))
-                      (let ([cset (var-spillable-conflict* x)])
+                          (conflict-bit-set! (var-spillable-conflict* (vector-ref varvec y-offset) reg-spillinfo) x-offset)))
+                      (let ([cset (var-spillable-conflict* x reg-spillinfo)])
                         (if (fx< x-offset kspillable)
                             (begin
                               (tree-for-each out live-size 0 kspillable
@@ -8917,12 +8918,12 @@
                                       ; non-poison spillable x -> non-poison spillable y
                                       (conflict-bit-set! cset y-offset)
                                       ; and vice versa
-                                      (conflict-bit-set! (var-spillable-conflict* y) x-offset)))))
+                                      (conflict-bit-set! (var-spillable-conflict* y reg-spillinfo) x-offset)))))
                               (tree-for-each out live-size kspillable live-size
                                 (lambda (y-offset)
                                   (let ([y (vector-ref varvec y-offset)])
                                     ; frame or register y -> non-poison spillable x
-                                    (conflict-bit-set! (var-spillable-conflict* y) x-offset)))))
+                                    (conflict-bit-set! (var-spillable-conflict* y reg-spillinfo) x-offset)))))
                             (if (fx< x-offset (fx+ kspillable kfv))
                                 (tree-for-each out live-size 0 kspillable
                                   (lambda (y-offset)
@@ -8947,8 +8948,8 @@
                  (if (live-info-useless live-info)
                      new-effect*
                      (let ([live (live-info-live live-info)])
-                       (when (var-index x)
-                         (if (and (var? rhs) (var-index rhs))
+                       (when (var-index x reg-spillinfo)
+                         (if (and (var? rhs) (var-index rhs reg-spillinfo))
                              (begin
                                (add-conflict! x (remove-var live rhs))
                                (add-move! x rhs))
@@ -8970,11 +8971,11 @@
                     (conflict-bit-set! poison-cset i)
                     ; leaving each poison spillable in conflict with itself, but this shouldn't matter
                     ; since we never ask for the degree of a poison spillable
-                    (var-spillable-conflict*-set! x (make-full-cset kspillable)))
-                  (var-spillable-conflict*-set! x (make-empty-cset kspillable)))))
+                    (var-spillable-conflict*-set! x reg-spillinfo (make-full-cset kspillable)))
+                  (var-spillable-conflict*-set! x reg-spillinfo (make-empty-cset kspillable)))))
           (do ([i kspillable (fx+ i 1)])
               ((fx= i live-size))
-            (var-spillable-conflict*-set! (vector-ref varvec i) (make-empty-cset kspillable)))
+            (var-spillable-conflict*-set! (vector-ref varvec i) reg-spillinfo (make-empty-cset kspillable)))
           (for-each
             (lambda (block)
               (block-effect*-set! block
@@ -8982,15 +8983,15 @@
             block*)))
 
       (define-who show-conflicts
-        (lambda (name varvec unvarvec)
+        (lambda (name varvec unvarvec reg-spillinfo)
           (define any? #f)
           (printf "\n~s conflicts:" name)
           (for-each
             (lambda (x)
               (let ([ls (append
-                          (let ([cset (var-spillable-conflict* x)])
+                          (let ([cset (var-spillable-conflict* x reg-spillinfo)])
                             (if cset (extract-conflicts cset varvec) '()))
-                          (let ([cset (var-unspillable-conflict* x)])
+                          (let ([cset (var-unspillable-conflict* x reg-spillinfo)])
                             (if cset (extract-conflicts cset unvarvec) '())))])
                 (unless (null? ls) (set! any? #t) (printf "\n~s:~{ ~s~}" x ls))))
             (append spillable* unspillable* (vector->list regvec) (map get-fv (iota (fx+ max-fv 1)))))
@@ -8999,19 +9000,19 @@
 
       (module (assign-frame! assign-new-frame!)
         (define update-conflict!
-          (lambda (fv spill)
-            (let ([cset1 (var-spillable-conflict* fv)]
-                  [cset2 (var-spillable-conflict* spill)])
+          (lambda (fv spill reg-spillinfo)
+            (let ([cset1 (var-spillable-conflict* fv reg-spillinfo)]
+                  [cset2 (var-spillable-conflict* spill reg-spillinfo)])
               (if cset1
                   (cset-merge! cset1 cset2)
                   ; tempting to set to cset2 rather than (cset-copy cset2), but this would not be
                   ; correct for local saves, which need their unaltered sets for later, and copying
                   ; is cheap anyway.
-                  (var-spillable-conflict*-set! fv (cset-copy cset2))))
-            (unless (uvar-poison? spill) (cset-merge! (var-spillable-conflict* fv) poison-cset))))
+                  (var-spillable-conflict*-set! fv reg-spillinfo (cset-copy cset2))))
+            (unless (uvar-poison? spill) (cset-merge! (var-spillable-conflict* fv reg-spillinfo) poison-cset))))
 
         (define assign-frame!
-          (lambda (spill*)
+          (lambda (spill* reg-spillinfo)
             (define sort-spill*
               ; NB: sorts based on likelihood of successfully assigning move-related vars to the same location
               ; NB: probably should sort based on value of assigning move-related vars to the same location,
@@ -9035,8 +9036,8 @@
               (lambda (x0 succ fail)
                 (define conflict-fv?
                   (lambda (x fv)
-                    (let ([cset (var-spillable-conflict* fv)])
-                      (and cset (conflict-bit-set? cset (var-index x))))))
+                    (let ([cset (var-spillable-conflict* fv reg-spillinfo)])
+                      (and cset (conflict-bit-set? cset (var-index x reg-spillinfo))))))
                 (let f ([x x0] [work* '()] [clear-seen! void])
                   (if (uvar-seen? x)
                       (if (null? work*) (begin (clear-seen!) (fail)) (f (car work*) (cdr work*) clear-seen!))
@@ -9067,7 +9068,7 @@
                   (lambda (home max-fv first-open)
                     (safe-assert (compatible-fv? home (uvar-type spill)))
                     (uvar-location-set! spill home)
-                    (update-conflict! home spill)
+                    (update-conflict! home spill reg-spillinfo)
                     (let ([max-fv
                            (constant-case ptr-bits
                              [(32)
@@ -9084,14 +9085,14 @@
                   (lambda (home) (return home max-fv first-open))
                   (lambda ()
                     (let f ([first-open first-open])
-                      (let* ([fv (get-fv first-open (uvar-type spill))] [cset (var-spillable-conflict* fv)])
+                      (let* ([fv (get-fv first-open (uvar-type spill))] [cset (var-spillable-conflict* fv reg-spillinfo)])
                         (if (and cset (cset-full? cset))
                             (f (fx+ first-open 1))
-                            (let ([spill-offset (var-index spill)])
+                            (let ([spill-offset (var-index spill reg-spillinfo)])
                               (let f ([fv-offset first-open] [fv fv] [cset cset])
                                 (if (or (and cset (conflict-bit-set? cset spill-offset))
                                         (not (compatible-fv? fv (uvar-type spill))))
-                                    (let* ([fv-offset (fx+ fv-offset 1)] [fv (get-fv fv-offset (uvar-type spill))] [cset (var-spillable-conflict* fv)])
+                                    (let* ([fv-offset (fx+ fv-offset 1)] [fv (get-fv fv-offset (uvar-type spill))] [cset (var-spillable-conflict* fv reg-spillinfo)])
                                       (f fv-offset fv cset))
                                     (return fv (fxmax fv-offset max-fv) first-open)))))))))))
             (define find-homes!
@@ -9106,9 +9107,9 @@
             ; live across only a few (only when setup-nfv?)
             (set! max-fv (find-homes! (sort-spill* spill*) max-fv 1))))
 
-        (define-pass assign-new-frame! : (L15a Dummy) (ir lambda-info live-size varvec block*) -> (L15b Dummy) ()
+        (define-pass assign-new-frame! : (L15a Dummy) (ir lambda-info live-size varvec reg-spillinfo block*) -> (L15b Dummy) ()
           (definitions
-            (define remove-var (make-remove-var live-size))
+            (define remove-var (make-remove-var live-size reg-spillinfo))
             (define find-max-fv
               (lambda (call-live*)
                 (fold-left
@@ -9122,8 +9123,8 @@
                       (and (or (not (car nfv*))
                                (let ([fv (get-fv offset)])
                                  (and (compatible-fv? fv 'ptr)
-                                      (let ([cset (var-spillable-conflict* fv)])
-                                        (not (and cset (conflict-bit-set? cset (var-index (car nfv*)))))))))
+                                      (let ([cset (var-spillable-conflict* fv reg-spillinfo)])
+                                        (not (and cset (conflict-bit-set? cset (var-index (car nfv*) reg-spillinfo))))))))
                            (loop (cdr nfv*) (fx+ offset 1)))))))
             (define assign-new-frame!
               (lambda (cnfv* nfv** call-live*)
@@ -9134,7 +9135,7 @@
                         (let* ([nfv (car nfv*)] [home (get-fv offset (uvar-type nfv))])
                           (safe-assert (compatible-fv? home (uvar-type nfv)))
                           (uvar-location-set! nfv home)
-                          (update-conflict! home nfv)
+                          (update-conflict! home nfv reg-spillinfo)
                           (set-offsets! (cdr nfv*) (fx+ offset 1))))))
                 (let ([arg-offset (fx+ (length cnfv*) 1)]) ; +1 for return address slot
                   (let loop ([base (fx+ (find-max-fv call-live*) 1)])
@@ -9246,7 +9247,7 @@
             [(restore-local-saves ,live-info ,info)
              (with-output-language (L15b Effect)
                (let ([live (live-info-live live-info)])
-                 (let loop ([x* (filter (lambda (x) (live? live live-size x)) (info-newframe-local-save* info))]
+                 (let loop ([x* (filter (lambda (x) (live? live live-size x reg-spillinfo)) (info-newframe-local-save* info))]
                             [live live]
                             [new-effect* new-effect*])
                    (if (null? x*)
@@ -9292,7 +9293,8 @@
                       [(newframe-block? block)
                        (let ([info (newframe-block-info block)])
                          (process-info-newframe! info)
-                         (safe-assert (andmap (lambda (x) (live? (newframe-block-live-call block) live-size x)) (info-newframe-local-save* info)))
+                         (safe-assert (andmap (lambda (x) (live? (newframe-block-live-call block) live-size x reg-spillinfo))
+                                              (info-newframe-local-save* info)))
                          (with-output-language (L15b Effect)
                            (let ([live (newframe-block-live-out block)])
                              (fold-left
@@ -9415,7 +9417,8 @@
         (define make-restricted-unspillable
           (lambda (x reg*)
             (import (only np-languages make-restricted-unspillable))
-            (safe-assert (andmap reg? reg*) (andmap var-index reg*))
+            (safe-assert (andmap reg? reg*)
+                         (andmap (lambda (r) (var-index r current-reg-spillinfo)) reg*))
             (let ([tmp (make-restricted-unspillable x reg*)])
               (set! unspillable* (cons tmp unspillable*))
               tmp)))
@@ -9425,11 +9428,12 @@
           ; for correct code but causes a spilled unspillable error if we try to use the same
           ; machine register for two conflicting variables
           (lambda (name reg)
-            (or (reg-precolored reg)
-                (let ([tmp (make-restricted-unspillable name (remq reg (vector->list regvec)))])
-                  (safe-assert (memq reg (vector->list regvec)))
-                  (reg-precolored-set! reg tmp)
-                  tmp))))
+            (let ([reg-spillinfo current-reg-spillinfo])
+              (or (reg-precolored reg reg-spillinfo)
+                  (let ([tmp (make-restricted-unspillable name (remq reg (vector->list regvec)))])
+                    (safe-assert (memq reg (vector->list regvec)))
+                    (reg-precolored-set! reg reg-spillinfo tmp)
+                    tmp)))))
 
         (define-syntax build-set!
           (lambda (x)
@@ -9737,10 +9741,10 @@
               [(k context (sym ...) cl ...) #'(k context (sym ...) (definitions) cl ...)]
               [(k context sym cl ...) (identifier? #'sym) #'(k context (sym) (definitions) cl ...)])))
 
-        (define-pass select-instructions! : (L15c Dummy) (ir block* live-size force-overflow?) -> (L15d Dummy) ()
+        (define-pass select-instructions! : (L15c Dummy) (ir block* live-size reg-spillinfo force-overflow?) -> (L15d Dummy) ()
           (definitions
             (module (handle-jump handle-effect-inline handle-pred-inline handle-value-inline)
-              (define add-var (make-add-var live-size))
+              (define add-var (make-add-var live-size reg-spillinfo))
               (define Triv
                 (lambda (out t)
                   (nanopass-case (L15d Triv) t
@@ -9927,8 +9931,8 @@
       )
 
       (define-who do-unspillable-conflict!
-        (lambda (kfv kspillable varvec live-size kunspillable unvarvec block*)
-          (define remove-var (make-remove-var live-size))
+        (lambda (kfv kspillable reg-spillinfo varvec live-size kunspillable unvarvec block*)
+          (define remove-var (make-remove-var live-size reg-spillinfo))
           (define unspillable?
             (lambda (x)
               (and (uvar? x) (uvar-unspillable? x))))
@@ -9941,26 +9945,26 @@
                   unspillable*)))
           (define add-move!
             (lambda (x1 x2)
-              (when (var-index x2)
+              (when (var-index x2 reg-spillinfo)
                 ($add-move! x1 x2 2)
                 ($add-move! x2 x1 2))))
           (define add-move-hint!
             (lambda (x1 x2)
-              (when (var-index x2)
+              (when (var-index x2 reg-spillinfo)
                 ($add-move! x1 x2 1)
                 ($add-move! x2 x1 1))))
           (define add-static-conflict!
             (lambda (u reg*)
-              (let ([u-offset (var-index u)])
+              (let ([u-offset (var-index u reg-spillinfo)])
                 (for-each
-                  (lambda (reg) (conflict-bit-set! (var-unspillable-conflict* reg) u-offset))
+                  (lambda (reg) (conflict-bit-set! (var-unspillable-conflict* reg reg-spillinfo) u-offset))
                   reg*))))
           (define add-us->s-conflicts!
             (lambda (x out) ; x is an unspillable
-              (let ([x-offset (var-index x)] [cset (var-spillable-conflict* x)])
+              (let ([x-offset (var-index x reg-spillinfo)] [cset (var-spillable-conflict* x reg-spillinfo)])
                 (tree-for-each out live-size 0 live-size
                   (lambda (y-offset)
-                    (let* ([y (vector-ref varvec y-offset)] [y-cset (var-unspillable-conflict* y)])
+                    (let* ([y (vector-ref varvec y-offset)] [y-cset (var-unspillable-conflict* y reg-spillinfo)])
                       (when y-cset
                         ; if y is a spillable, point the unspillable x at y
                         (when (fx< y-offset kspillable) (conflict-bit-set! cset y-offset))
@@ -9968,23 +9972,23 @@
                         (conflict-bit-set! y-cset x-offset))))))))
           (define add-us->us-conflicts!
             (lambda (x unspillable*) ; x is a unspillable
-              (let ([x-offset (var-index x)] [cset (var-unspillable-conflict* x)])
+              (let ([x-offset (var-index x reg-spillinfo)] [cset (var-unspillable-conflict* x reg-spillinfo)])
                 (for-each
                   (lambda (y)
-                    (let ([y-offset (var-index y)])
+                    (let ([y-offset (var-index y reg-spillinfo)])
                       (conflict-bit-set! cset y-offset)
-                      (conflict-bit-set! (var-unspillable-conflict* y) x-offset)))
+                      (conflict-bit-set! (var-unspillable-conflict* y reg-spillinfo) x-offset)))
                   unspillable*))))
           (define add-s->us-conflicts!
             (lambda (x unspillable*) ; x is a spillable or register
-              (let ([x-offset (var-index x)] [cset (var-unspillable-conflict* x)])
+              (let ([x-offset (var-index x reg-spillinfo)] [cset (var-unspillable-conflict* x reg-spillinfo)])
                 (for-each
                   (lambda (y)
-                    (let ([y-offset (var-index y)])
+                    (let ([y-offset (var-index y reg-spillinfo)])
                       ; point x at unspillable y
                       (conflict-bit-set! cset y-offset)
                       ; if x is a spillable, point unspillable y at x
-                      (when (fx< x-offset kspillable) (conflict-bit-set! (var-spillable-conflict* y) x-offset))))
+                      (when (fx< x-offset kspillable) (conflict-bit-set! (var-spillable-conflict* y reg-spillinfo) x-offset))))
                   unspillable*))))
           (define Triv
             (lambda (unspillable* t)
@@ -10021,7 +10025,7 @@
                              (let ([unspillable* (remq x unspillable*)])
                                (safe-assert (uvar-seen? x))
                                (uvar-seen! x #f)
-                               (if (and (var? rhs) (var-index rhs))
+                               (if (and (var? rhs) (var-index rhs reg-spillinfo))
                                    (begin
                                      (if (unspillable? rhs)
                                          (begin
@@ -10036,7 +10040,7 @@
                                      (add-us->s-conflicts! x spillable-live)))
                                (Rhs unspillable* rhs))
                              (begin
-                               (when (var-unspillable-conflict* x)
+                               (when (var-unspillable-conflict* x reg-spillinfo)
                                  (if (unspillable? rhs)
                                      (begin
                                        (add-s->us-conflicts! x (remq rhs unspillable*))
@@ -10048,8 +10052,8 @@
                       [(move-related ,x1 ,x2) (add-move-hint! x1 x2) unspillable*]
                       [(overflow-check ,p ,e* ...) (Effect* (reverse e*) '()) (Pred p)]
                       [else unspillable*])))))
-          (for-each (lambda (x) (var-spillable-conflict*-set! x (make-empty-cset kspillable))) unspillable*)
-          (let ([f (lambda (x) (var-unspillable-conflict*-set! x (make-empty-cset kunspillable)))])
+          (for-each (lambda (x) (var-spillable-conflict*-set! x reg-spillinfo (make-empty-cset kspillable))) unspillable*)
+          (let ([f (lambda (x) (var-unspillable-conflict*-set! x reg-spillinfo (make-empty-cset kunspillable)))])
             (vector-for-each f regvec)
             (for-each f spillable*)
             (vector-for-each f unvarvec))
@@ -10065,7 +10069,7 @@
             block*)))
 
       (define-who assign-registers!
-        (lambda (lambda-info varvec unvarvec)
+        (lambda (lambda-info varvec unvarvec reg-spillinfo)
           (define total-k (vector-length regvec))
           (define fp-k (length extra-fpregisters))
           (define ptr-k (- total-k fp-k))
@@ -10089,18 +10093,18 @@
                   (uvar-degree-set! x
                     (fx+
                       ; spills have been trimmed from the var-spillable-conflict* sets
-                      (conflict-bit-count (var-spillable-conflict* x))
-                      (conflict-bit-count (var-unspillable-conflict* x)))))
+                      (conflict-bit-count (var-spillable-conflict* x reg-spillinfo))
+                      (conflict-bit-count (var-unspillable-conflict* x reg-spillinfo)))))
                 x*)
               ; account for reg -> uvar conflicts
               (vector-for-each
                 (lambda (reg)
-                  (cset-for-each (var-spillable-conflict* reg)
+                  (cset-for-each (var-spillable-conflict* reg reg-spillinfo)
                     (lambda (x-offset)
                       (let ([x (vector-ref varvec x-offset)])
                         (unless (uvar-location x)
                           (uvar-degree-set! x (fx+ (uvar-degree x) 1))))))
-                  (cset-for-each (var-unspillable-conflict* reg)
+                  (cset-for-each (var-unspillable-conflict* reg reg-spillinfo)
                     (lambda (x-offset)
                       (let ([x (vector-ref unvarvec x-offset)])
                         (uvar-degree-set! x (fx+ (uvar-degree x) 1))))))
@@ -10110,8 +10114,8 @@
               (define conflict?
                 (lambda (reg x)
                   (or (not (compatible-var-types? (reg-type reg) (uvar-type x)))
-                      (let ([cset (if (uvar-unspillable? x) (var-unspillable-conflict* reg) (var-spillable-conflict* reg))])
-                        (conflict-bit-set? cset (var-index x))))))
+                      (let ([cset (if (uvar-unspillable? x) (var-unspillable-conflict* reg reg-spillinfo) (var-spillable-conflict* reg reg-spillinfo))])
+                        (conflict-bit-set? cset (var-index x reg-spillinfo))))))
               (define find-move-related-home
                 (lambda (x0 succ fail)
                   (let f ([x x0] [work* '()] [clear-seen! void])
@@ -10140,8 +10144,8 @@
                 (lambda (home)
                   (define update-conflict!
                     (lambda (reg x)
-                      (cset-merge! (var-spillable-conflict* reg) (var-spillable-conflict* x))
-                      (cset-merge! (var-unspillable-conflict* reg) (var-unspillable-conflict* x))))
+                      (cset-merge! (var-spillable-conflict* reg reg-spillinfo) (var-spillable-conflict* x reg-spillinfo))
+                      (cset-merge! (var-unspillable-conflict* reg reg-spillinfo) (var-unspillable-conflict* x reg-spillinfo))))
                   (uvar-location-set! x home)
                   (update-conflict! home x)))
               (find-move-related-home x
@@ -10177,11 +10181,11 @@
                     (values x (remq x x*)))))
               (define remove-victim!
                 (lambda (victim)
-                  (cset-for-each (var-spillable-conflict* victim)
+                  (cset-for-each (var-spillable-conflict* victim reg-spillinfo)
                     (lambda (offset)
                       (let ([x (vector-ref varvec offset)])
                         (uvar-degree-set! x (fx- (uvar-degree x) 1)))))
-                  (cset-for-each (var-unspillable-conflict* victim)
+                  (cset-for-each (var-unspillable-conflict* victim reg-spillinfo)
                     (lambda (offset)
                       (let ([x (vector-ref unvarvec offset)])
                         (uvar-degree-set! x (fx- (uvar-degree x) 1)))))))
@@ -10438,16 +10442,17 @@
                    [(_ ?unparser pass-name ?arg ...)
                     #'(xpass pass-name (RAprinter ?unparser) (list ?arg ...))]))))
            (safe-assert (andmap (lambda (x) (eq? (uvar-location x) #f)) local*))
-           (let ([kspillable (length local*)] [kfv (fx+ max-fv0 1)] [kreg (vector-length regvec)])
-             (fluid-let ([spillable* local*] [unspillable* '()] [max-fv max-fv0] [max-fs@call 0] [poison-cset (make-empty-cset kspillable)])
+           (let ([kspillable (length local*)] [kfv (fx+ max-fv0 1)] [kreg (vector-length regvec)] [reg-spillinfo (make-reg-spillinfo)])
+             (fluid-let ([spillable* local*] [unspillable* '()] [max-fv max-fv0] [max-fs@call 0]
+                         [poison-cset (make-empty-cset kspillable)] [current-reg-spillinfo reg-spillinfo])
                (let* ([live-size (fx+ kfv kreg kspillable)] [varvec (make-vector live-size)])
                  ; set up var indices & varvec mapping from indices to vars
                  (fold-left (lambda (i x) (var-index-set! x i) (vector-set! varvec i x) (fx+ i 1)) 0 spillable*)
                  (do ([i 0 (fx+ i 1)]) ((fx= i kfv)) (let ([fv (get-fv i)] [i (fx+ i kspillable)]) (var-index-set! fv i) (vector-set! varvec i fv)))
-                 (do ([i 0 (fx+ i 1)]) ((fx= i kreg)) (let ([reg (vector-ref regvec i)] [i (fx+ i kspillable kfv)]) (var-index-set! reg i) (vector-set! varvec i reg)))
+                 (do ([i 0 (fx+ i 1)]) ((fx= i kreg)) (let ([reg (vector-ref regvec i)] [i (fx+ i kspillable kfv)]) (var-index-set! reg reg-spillinfo i) (vector-set! varvec i reg)))
                  (with-live-info-record-writer live-size varvec
                    ; run intra/inter-block live analysis
-                   (RApass unparse-L15a do-live-analysis! live-size entry-block*)
+                   (RApass unparse-L15a do-live-analysis! live-size entry-block* reg-spillinfo)
                    ; this is worth enabling from time to time...
                    #;(check-entry-live! (info-lambda-name info) live-size varvec entry-block*)
                    ; rerun intra-block live analysis and record (fv v reg v spillable) x spillable conflicts
@@ -10455,64 +10460,64 @@
                    ;; NB: we could just use (vector-length varvec) to get live-size
                    (when (fx> kspillable 1000) ; NB: parameter?
                      (RApass unparse-L15a identify-poison! kspillable varvec live-size block*))
-                   (RApass unparse-L15a do-spillable-conflict! kspillable kfv varvec live-size block*)
-                   #;(show-conflicts (info-lambda-name info) varvec '#())
+                   (RApass unparse-L15a do-spillable-conflict! kspillable reg-spillinfo kfv varvec live-size block*)
+                   #;(show-conflicts (info-lambda-name info) varvec '#() reg-spillinfo)
                    ; find frame homes for call-live variables; adds new fv x spillable conflicts
-                   (RApass unparse-L15a assign-frame! (filter uvar-spilled? spillable*))
+                   (RApass unparse-L15a assign-frame! (filter uvar-spilled? spillable*) reg-spillinfo)
                    #;(show-homes)
                    (RApass unparse-L15a record-inspector-information! info)
                    ; determine frame sizes at nontail-call sites and assign homes to new-frame variables
                    ; adds new fv x spillable conflicts
-                   (let ([dummy (RApass unparse-L15b assign-new-frame! (with-output-language (L15a Dummy) `(dummy)) info live-size varvec block*)])
+                   (let ([dummy (RApass unparse-L15b assign-new-frame! (with-output-language (L15a Dummy) `(dummy)) info live-size varvec reg-spillinfo block*)])
                      ; record fp offset on entry to each block
                      (RApass unparse-L15b record-fp-offsets! entry-block*)
                      ; assign frame homes to poison variables
                      (let ([spill* (filter (lambda (x) (and (not (uvar-location x)) (uvar-poison? x))) spillable*)])
                        (unless (null? spill*)
                          (for-each (lambda (x) (uvar-spilled! x #t)) spill*)
-                         (RApass unparse-L15b assign-frame! spill*)))
+                         (RApass unparse-L15b assign-frame! spill* reg-spillinfo)))
                      ; on entry to loop, have assigned call-live and new-frame variables to frame homes, determined frame sizes, and computed block-entry fp offsets
-                     (let ([saved-reg-csets (vector-map (lambda (reg) (cset-copy (var-spillable-conflict* reg))) regvec)]
+                     (let ([saved-reg-csets (vector-map (lambda (reg) (cset-copy (var-spillable-conflict* reg reg-spillinfo))) regvec)]
                            [bcache* (map cache-block-info block*)])
                        (let loop ()
                          (for-each
                            (lambda (spill)
                              ; remove each spill from each other spillable's spillable conflict set
                              (unless (uvar-poison? spill)
-                               (let ([spill-index (var-index spill)])
-                                 (cset-for-each (var-spillable-conflict* spill)
+                               (let ([spill-index (var-index spill reg-spillinfo)])
+                                 (cset-for-each (var-spillable-conflict* spill reg-spillinfo)
                                    (lambda (i)
                                      (let ([x (vector-ref varvec i)])
                                        (unless (uvar-location x)
-                                         (conflict-bit-unset! (var-spillable-conflict* x) spill-index)))))))
+                                         (conflict-bit-unset! (var-spillable-conflict* x reg-spillinfo) spill-index)))))))
                              ; release the spill's conflict* set
-                             (var-spillable-conflict*-set! spill #f))
+                             (var-spillable-conflict*-set! spill reg-spillinfo #f))
                            (filter uvar-location spillable*))
                          (set! spillable* (remp uvar-location spillable*))
                          (let ([saved-move* (map uvar-move* spillable*)])
                            #;(show-homes)
                            (let ([dummy (RApass unparse-L15c finalize-frame-locations! dummy block*)])
-                             (let ([dummy (RApass unparse-L15d select-instructions! dummy block* live-size
+                             (let ([dummy (RApass unparse-L15d select-instructions! dummy block* live-size reg-spillinfo
                                             (let ([libspec (info-lambda-libspec info)])
                                               (and libspec (libspec-does-not-expect-headroom? libspec))))])
-                               (vector-for-each (lambda (reg) (reg-precolored-set! reg #f)) regvec)
+                               (vector-for-each (lambda (reg) (reg-precolored-set! reg reg-spillinfo #f)) regvec)
                                (let* ([kunspillable (length unspillable*)] [unvarvec (make-vector kunspillable)])
                                  ; set up var indices & unvarvec mapping from indices to unspillables
-                                 (fold-left (lambda (i x) (var-index-set! x i) (vector-set! unvarvec i x) (fx+ i 1)) 0 unspillable*)
+                                 (fold-left (lambda (i x) (var-index-set! x reg-spillinfo i) (vector-set! unvarvec i x) (fx+ i 1)) 0 unspillable*)
                                  ; select-instrcutions! kept intra-block live analysis up-to-date, so now
                                  ; record (reg v spillable v unspillable) x unspillable conflicts
-                                 (RApass unparse-L15d do-unspillable-conflict! kfv kspillable varvec live-size kunspillable unvarvec block*)
-                                 #;(show-conflicts (info-lambda-name info) varvec unvarvec)
-                                 (RApass unparse-L15d assign-registers! info varvec unvarvec)
+                                 (RApass unparse-L15d do-unspillable-conflict! kfv kspillable reg-spillinfo varvec live-size kunspillable unvarvec block*)
+                                 #;(show-conflicts (info-lambda-name info) varvec unvarvec reg-spillinfo)
+                                 (RApass unparse-L15d assign-registers! info varvec unvarvec reg-spillinfo)
                                  ; release the unspillable conflict sets
-                                 (for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) spillable*)
-                                 (vector-for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) regvec)
+                                 (for-each (lambda (x) (var-unspillable-conflict*-set! x reg-spillinfo #f)) spillable*)
+                                 (vector-for-each (lambda (x) (var-unspillable-conflict*-set! x reg-spillinfo #f)) regvec)
                                  #;(show-homes unspillable*)
                                  (if (everybody-home?)
                                      (let ([dummy (RApass unparse-L15e finalize-register-locations! dummy block*)])
                                        ; release the spillable conflict sets
-                                       (vector-for-each (lambda (reg) (var-spillable-conflict*-set! reg #f)) regvec)
-                                       (do ([i max-fv (fx- i 1)]) ((fx< i 0)) (var-spillable-conflict*-set! (get-fv i) #f))
+                                       (vector-for-each (lambda (reg) (var-spillable-conflict*-set! reg reg-spillinfo #f)) regvec)
+                                       (do ([i max-fv (fx- i 1)]) ((fx< i 0)) (var-spillable-conflict*-set! (get-fv i) reg-spillinfo #f))
                                        (let-values ([(dummy entry-block* block*)
                                                      (xpass expose-overflow-check-blocks!
                                                        (lambda (val*)
@@ -10525,11 +10530,12 @@
                                          `(lambda ,info (,entry-block* ...) (,block* ...))))
                                      (begin
                                        (for-each restore-block-info! block* bcache*)
-                                       (vector-for-each var-spillable-conflict*-set! regvec saved-reg-csets)
+                                       (vector-for-each (lambda (r c*) (var-spillable-conflict*-set! r reg-spillinfo c*))
+                                                        regvec saved-reg-csets)
                                        (for-each (lambda (x) (uvar-location-set! x #f)) spillable*)
                                        (for-each uvar-move*-set! spillable* saved-move*)
                                        (set! unspillable* '())
-                                       (RApass unparse-L15b assign-frame! (filter uvar-spilled? spillable*))
+                                       (RApass unparse-L15b assign-frame! (filter uvar-spilled? spillable*) reg-spillinfo)
                                        (loop)))))))))))))))])))
 
     ; NB: commonize with earlier
@@ -10679,7 +10685,6 @@
 
     (set! $np-compile
       (lambda (original-input-expression pt?)
-        (with-initialized-registers
           (fluid-let ([frame-vars (make-vector 8 #f)]
                       [next-lambda-seqno 0]
                       [pass-time? pass-time?])
@@ -10722,11 +10727,10 @@
               (pass np-flatten-case-lambda unparse-L12)
               (pass np-insert-trap-check unparse-L12.5)
               (pass np-impose-calling-conventions unparse-L13)
-              np-after-calling-conventions)))))
+              np-after-calling-conventions))))
 
     (set! $np-boot-code
       (lambda (which)
-        (with-initialized-registers
           ($c-func-code-record
             (fluid-let ([frame-vars (make-vector 8 #f)]
                         [next-lambda-seqno 0]
@@ -10735,7 +10739,7 @@
                 (np-after-calling-conventions
                   (with-output-language (L13 Program)
                     (let ([l (make-local-label 'Linvoke)])
-                      `(labels ([,l (hand-coded ,which)]) ,l))))))))))
+                      `(labels ([,l (hand-coded ,which)]) ,l)))))))))
   )
 
   (set! $np-tracer tracer)

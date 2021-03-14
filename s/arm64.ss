@@ -2408,10 +2408,10 @@
 		    (or (andmap double-member? members)
 			(andmap float-member? members)))))]
 	[else #f]))
-    (define int-argument-regs (lambda () (list %Carg1 %Carg2 %Carg3 %Carg4
-                                               %Carg5 %Carg6 %Carg7 %Carg8)))
-    (define fp-argument-regs (lambda () (list %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4
-                                              %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8)))
+    (define int-argument-regs (list %Carg1 %Carg2 %Carg3 %Carg4
+                                    %Carg5 %Carg6 %Carg7 %Carg8))
+    (define fp-argument-regs (list %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4
+                                   %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8))
     (define save-and-restore
       (lambda (regs e)
         (safe-assert (andmap reg? regs))
@@ -2499,7 +2499,7 @@
 
     (define categorize-arguments
       (lambda (types varargs-after)
-        (let loop ([types types] [int* (int-argument-regs)] [fp* (fp-argument-regs)]
+        (let loop ([types types] [int* int-argument-regs] [fp* fp-argument-regs]
                    [varargs-after varargs-after]
                    ;; accumulate alignment from previous args so we can compute any
                    ;; needed padding and alignment after this next argument
