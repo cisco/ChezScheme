@@ -16,11 +16,11 @@ density=-r90x90
           ${density} - |\
           pnmcrop |\
           ppmtogif -transparent white > $*.gif
-	/bin/rm -f $*.dvi $*.log $*.aux
+	rm -f $*.dvi $*.log $*.aux
 	test -f $*.gif && chmod 644 $*.gif
 
 all: ${gifs}
 
 ${gifs}: mathmacros
 
-clean: ; /bin/rm -f *.gif Make.out
+clean: ; rm -f *.gif Make.out

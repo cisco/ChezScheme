@@ -70,9 +70,9 @@ esac
 
 if [ "$OS" = "Windows_NT" ]
 then
-    ln="/bin/cp -R"
+    ln="cp -R"
 else
-    ln="/bin/ln -s"
+    ln="ln -s"
 fi
 
 # This shell script creates a workarea for local modifications to the
@@ -102,7 +102,7 @@ workln()
 forceworkln()
 {
     if [ ! -e $2 ] ; then
-        /bin/ln -s $1 $2 2> /dev/null
+        ln -s $1 $2 2> /dev/null
     fi
 }
 
@@ -168,13 +168,13 @@ done
 # deep copy submodules where builds occur so changes don't propagate through symlinks
 for dir in `echo zlib` ; do
   if [ ! -e $W/$dir ] ; then
-    /bin/cp -R $dir $W/$dir
+    cp -R $dir $W/$dir
   fi
 done
 
 for dir in `echo lz4` ; do
   if [ ! -e $W/$dir ] ; then
-    /bin/cp -R $dir $W/$dir
+    cp -R $dir $W/$dir
   fi
 done
 

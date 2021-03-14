@@ -2685,7 +2685,7 @@
       (begin
         (system "ln -s ../examples .")
         (load "examples/fatfib.ss" compile)
-        (system "/bin/rm examples")
+        (system "rm -f examples")
         #t))
   (or (windows?) (embedded?)
       (equal?

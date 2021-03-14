@@ -25,4 +25,4 @@ needed:	${obj}
 
 all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | ${Scheme}
 
-clean: ; /bin/rm -f $(obj) expr.md
+clean: ; rm -f $(obj) expr.md
