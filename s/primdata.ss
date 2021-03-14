@@ -2274,6 +2274,8 @@
   ($np-last-pass [flags single-valued])
   ($np-reset-timers! [flags single-valued])
   ($np-tracer [flags single-valued])
+  ($np-expand-primitives [flags single-valued])
+  ($np-next-lambda-seqno [flags single-valued])
   ($null-continuation [flags single-valued])
   ($object-address [flags single-valued])
   ($object-in-heap? [sig [(ptr) -> (boolean)]] [flags discard])

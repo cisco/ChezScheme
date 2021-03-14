@@ -14,17 +14,18 @@ Some key files in "s":
 
  * "syntax.ss": the macro expander
 
- * "cpnanopass.ss": the main compiler
+ * "cpnanopass.ss" and "cpprim.ss": the main compiler, where
+   "cpprim.ss" is the part that inlines primitives
 
  * "cp0.ss", "cptypes.ss", "cpletrec.ss", etc.: source-to-source
    passes that apply before the main compiler
 
  * "x86_64.ss", "arm64.ss", etc.: backends that are used by
-   "cpnanopass.ss"
+   "cpnanopass.ss" and "cpprim.ss"
 
  * "ta6os.def", "tarm64le", etc.: one per OS-architecture combination,
    provides platform-specific constants that feed into "cmacro.ss" and
-   selects the backend used by "cpnanopass.ss"
+   selects the backend used by "cpnanopass.ss" and "cpprim.ss"
 
 Chez Scheme is a bootstrapped compiler, meaning you need a Chez Scheme
 compiler to build a Chez Scheme compiler. The compiler and makefiles
@@ -375,12 +376,12 @@ recogizes an immediate application of the `set-car!` primitive and
 inlines its implementation. The `#2%` prefix instructs the compiler to
 inline the safe implementation of `set-car!`, which checks whether its
 first argument is a pair. Look for `define-inline 2 set-car!` in
-"cpnanopass.ss" for that part of the compiler. The content of
-"prims.ss" is compiled in unsafe mode, so that's why safe mode needs
-to be selected explicitly when needed.
+"cpprim.ss" for that part of the compiler. The content of "prims.ss"
+is compiled in unsafe mode, so that's why safe mode needs to be
+selected explicitly when needed.
 
 What if the argument to `set-car!` is not a pair? The implementation
-of inline `set-car!` in "cpnanopass.ss" includes
+of inline `set-car!` in "cpprim.ss" includes
 
 ```scheme
 (build-libcall #t src sexpr set-car! e-pair e-new)
@@ -457,9 +458,9 @@ Compilation
  * performs front-end optimizations on that representation (see
    "cp0.ss", "cptypes.ss", etc.),
 
- * and then compiles to machine code (see "cpnanopass.ss"), which
-   involves many individual passes that convert through many different
-   intermediate forms (see "np-language.ss").
+ * and then compiles to machine code (see "cpnanopass.ss" and
+   "cpprim.ss"), which involves many individual passes that convert
+   through many different intermediate forms (see "np-language.ss").
 
 It's worth noting that Chez Scheme produces machine code directly,
 instead of relying on a system-provided assembler. Chez Scheme also

@@ -124,7 +124,7 @@ patchfile =
 patch = patch
 
 # putting cpnanopass.patch early for maximum make --jobs=2 benefit
-patchobj = patch.patch cpnanopass.patch cprep.patch cpcheck.patch\
+patchobj = patch.patch cpnanopass.patch cpprim.patch cprep.patch cpcheck.patch\
  cp0.patch cpvalid.patch cptypes.patch cpcommonize.patch cpletrec.patch\
  reloc.patch\
  compile.patch fasl.patch vfasl.patch syntax.patch env.patch\
@@ -155,7 +155,7 @@ basesrc =\
 baseobj = ${basesrc:%.ss=%.$m}
 
 compilersrc =\
- cpnanopass.ss compile.ss cback.ss
+ cpnanopass.ss cpprim.ss compile.ss cback.ss
 
 compilerobj = ${compilersrc:%.ss=%.$m}
 
@@ -169,7 +169,7 @@ macroobj =\
 allsrc =\
  ${basesrc} ${compilersrc} cmacros.ss ${archincludes} setup.ss debug.ss priminfo.ss primdata.ss layout.ss\
  base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss\
- np-languages.ss fxmap.ss cptypes-lattice.ss strip-types.ss
+ np-languages.ss fxmap.ss cptypes-lattice.ss strip-types.ss np-register.ss np-info.ss np-help.ss
 
 # doit uses a different Scheme process to compile each target
 doit: ${PetiteBoot} ${SchemeBoot} ${Cheader} ${Cequates} ${Cgcocd} ${Cgcoce} ${Cgcpar} ${Cheapcheck} ${Revision}
@@ -252,6 +252,7 @@ clean: profileclean
              '(collect 1 2)'\
              '(delete-file "$*.covin")'\
              '(time (${compile} "$*.ss" "$*.$m" (quote $m)))'\
+             '(printf "    ~a bytes peak memory use~n" (maximum-memory-bytes))' \
              '(when #${pdhtml} (profile-dump-html))'\
              '(when #${dumpspd} (profile-dump-data "${ProfileDumpSource}"))'\
              '(when #${dumpbpd} (profile-dump-data "${ProfileDumpBlock}"))'\
@@ -320,6 +321,7 @@ clean: profileclean
              '(collect-request-handler (lambda () (collect 0 1)))'\
              '(collect 1 2)'\
              '(time (${compile} "$*.ss" "$*.patch" (quote $m)))'\
+             '(printf "    ~a bytes peak memory use~n" (maximum-memory-bytes))' \
              | ${Scheme} -q ${macroobj}
 
 saveboot:
@@ -506,6 +508,7 @@ script.all makescript:
              '                                 (quote $m)))'\
              '                (quote (${src}))'\
              '                (quote (${obj}))))'\
+             '(printf "    ~a bytes peak memory use~n" (maximum-memory-bytes))' \
              '(when #${pps} (#%$$print-pass-stats))'\
              '(delete-file (string-append (path-root "${PetiteBoot}") ".covin"))'\
              '(apply #%$$make-boot-file "${PetiteBoot}" (quote $m) (quote ())'\
@@ -596,7 +599,7 @@ strip.so: strip-types.ss
 vfasl.so: strip-types.ss
 
 ${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss strip-types.ss env.ss fxmap.ss cptypes-lattice.ss 
-cpnanopass.$m cpnanopass.patch: nanopass.so np-languages.ss ${archincludes}
+cpnanopass.$m cpnanopass.patch cpnanopass.so cpprim.$m cpprim.patch: nanopass.so np-languages.ss np-register.ss np-info.ss np-help.ss ${archincludes}
 cptypes.$m: fxmap.ss cptypes-lattice.ss
 5_4.$m: ../unicode/unicode-char-cases.ss ../unicode/unicode-charinfo.ss
 strip.$m: strip-types.ss
