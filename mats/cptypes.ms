@@ -210,6 +210,18 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (and (fixnum? x) (zero? x)) x))
     '(lambda (x) (when (and (fixnum? x) (zero? x)) 0)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x f) (when (list-assuming-immutable? x) (f x) (list-assuming-immutable? x)))
+    '(lambda (x f) (when (list-assuming-immutable? x) (f x) #t)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x f) (when (list? x) (f x) (unless (list? x) 1)))
+         '(lambda (x f) (when (list? x) (f x) (unless (list? x) 2)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (f) (define x '(1 2 3)) (f x) (list-assuming-immutable? x))
+    '(lambda (f) (define x '(1 2 3)) (f x) #t))
+  (cptypes-equivalent-expansion?
+    '(lambda () (define x '(1 2 3)) (pair? x))
+    '(lambda () (define x '(1 2 3)) #t))
 )
 
 (mat cptypes-type-if
@@ -572,6 +584,7 @@
   (test-chain* '(record? #3%$record?))
   (test-chain* '((lambda (x) (eq? x car)) procedure?))
   (test-chain* '(record-type-descriptor? #3%$record?))
+  (test-chain* '(null? list-assuming-immutable? list? #;(lambda (x) (or (null? x) (pair? x)))))
   (test-disjoint '(pair? box? #3%$record? number?
                    vector? string? bytevector? fxvector? symbol?
                    char? boolean? null? (lambda (x) (eq? x (void)))
@@ -584,6 +597,9 @@
   (test-disjoint* '(list? record? vector?))
   (not (test-disjoint* '(list? null?)))
   (not (test-disjoint* '(list? pair?)))
+  (not (test-disjoint* '(list-assuming-immutable? null?)))
+  (not (test-disjoint* '(list-assuming-immutable? pair?)))
+  (not (test-disjoint* '(list-assuming-immutable? list?)))
 )
 
 ; use a gensym to make expansions equivalent
@@ -708,6 +724,21 @@
      `(begin
         (make-record-type-descriptor* 'a #f #f #f #f 1 0)
         (lambda (x) #f))))
+)
+
+(mat cptypes-lists
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (list-assuming-immutable? x) (list? (cdr x))))
+    '(lambda (x) (when (list-assuming-immutable? x) (cdr x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (list-assuming-immutable? x) (pair? x)) (list? (cdr x))))
+    '(lambda (x) (when (and (list-assuming-immutable? x) (pair? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (list-assuming-immutable? x) (list? (cdr (error 'e "")))))
+    '(lambda (x) (when (list-assuming-immutable? x) (error 'e ""))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (vector? x) (list? (#2%cdr x)) 1))
+    '(lambda (x) (when (vector? x) (#2%cdr x))))
 )
 
 (mat cptypes-unsafe

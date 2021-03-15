@@ -257,7 +257,7 @@
   (cons [sig [(ptr ptr) -> (#1=(ptr . ptr))]] [flags unrestricted alloc ieee r5rs])
  ; c..r non-alphabetic so marks come before references
   (car [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 safeongoodargs ieee r5rs])
-  (cdr [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 safeongoodargs ieee r5rs])
+  (cdr [sig [(#1#) -> (ptr)]] [flags mifoldable discard cp02 cptypes2 safeongoodargs ieee r5rs])
   (caar [sig [(#2=(#1# . ptr)) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (cdar [sig [(#2#) -> (ptr)]] [flags mifoldable discard ieee r5rs])
   (cadr [sig [(#3=(ptr . #1#)) -> (ptr)]] [flags mifoldable discard ieee r5rs])

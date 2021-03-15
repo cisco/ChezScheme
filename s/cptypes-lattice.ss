@@ -34,6 +34,7 @@
    maybe-char-pred
    maybe-symbol-pred
    $fixmediate-pred
+   $list-pred ; immutable lists
    true-pred ; anything that is not #f
    true-rec  ; only the #t object
    false-rec
@@ -76,6 +77,7 @@
   (define true-pred (make-pred-or 'true-immediate 'normalptr '$record))
   (define ptr-pred (make-pred-or 'immediate 'normalptr '$record))
   (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom))
+  (define $list-pred (make-pred-or null-rec '$list-pair 'bottom))
   (define $fixmediate-pred (make-pred-or 'immediate 'fixnum 'bottom))
   (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
   (define eof/fixnum-pred (make-pred-or eof-rec 'fixnum 'bottom))
@@ -214,7 +216,8 @@
 
       [pair 'pair]
       [maybe-pair maybe-pair-pred]
-      [(list list-assume-immutable) (cons null-rec null-or-pair-pred)]
+      [list (cons $list-pred null-or-pair-pred)]
+      [list-assuming-immutable $list-pred]
       [box 'box]
       [vector 'vector]
       [string 'string]
@@ -568,6 +571,13 @@
           (union/symbol x interned-symbol? 'interned-symbol)]
          [(symbol)
           (union/symbol x symbol? 'symbol)]
+         [(pair $list-pair)
+          (cond 
+	        [(or (eq? x 'pair)
+		         (eq? x '$list-pair))
+	         'pair]
+	        [else
+	         'normalptr])]
          [(vector) (union/simple x vector? y)]; i.e. #()
          [(string) (union/simple x string? y)]; i.e. ""
          [(bytevector) (union/simple x bytevector? y)] ; i.e. '#vu8()
@@ -884,6 +894,13 @@
                  (eq? x 'symbol)
                  (check-constant-is? x symbol?))
              x]
+            [else
+             'bottom])]
+         [(pair $list-pair)
+          (cond
+            [(or (eq? x 'pair)
+                 (eq? x '$list-pair))
+             '$list-pair]
             [else
              'bottom])]
          [(vector) (intersect/simple x vector? 'vector y)]; i.e. #()

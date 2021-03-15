@@ -530,6 +530,7 @@ Notes:
       [(#3%$record? d) '$record] ;check first to avoid double representation of rtd
       [(okay-to-copy? d) ir]
       [(and (integer? d) (exact? d)) 'exact-integer]
+      [(list? d) '$list-pair] ; quoted list should not be modified.
       [(pair? d) 'pair]
       [(box? d) 'box]
       [(vector? d) 'vector]
@@ -845,6 +846,17 @@ Notes:
       (define-specialize 2 list
         [() (values null-rec null-rec ntypes #f #f)] ; should have been reduced by cp0
         [e* (values `(call ,preinfo ,pr ,e* ...) 'pair ntypes #f #f)])
+
+      (define-specialize 2 cdr
+        [(v) (values `(call ,preinfo ,pr ,v)
+                     (cond
+                       [(predicate-implies? ret 'bottom)
+                        ret]
+                       [(predicate-implies? (predicate-intersect (get-type v) 'pair) '$list-pair)
+                        $list-pred]
+                       [else
+                        ptr-pred])
+                     ntypes #f #f)])
 
       (define-specialize 2 $record
         [(rtd . e*) (values `(call ,preinfo ,pr ,rtd ,e* ...) (rtd->record-predicate rtd #t) ntypes #f #f)])
@@ -1634,7 +1646,7 @@ Notes:
       [(immutable-list (,[e* 'value types plxc -> e* r* t* t-t* f-t*] ...)
                        ,[e 'value types plxc -> e ret types t-types f-types])
        (values `(immutable-list (,e*  ...) ,e)
-               ret types #f #f)]
+               (if (null? e*) null-rec '$list-pair) types #f #f)]
       [(moi) (values ir #f types #f #f)]
       [(pariah) (values ir void-rec types #f #f)]
       [(cte-optimization-loc ,box ,[e 'value types plxc -> e ret types t-types f-types] ,exts)
