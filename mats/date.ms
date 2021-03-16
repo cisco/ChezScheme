@@ -506,6 +506,10 @@
     (and (date? $date-d5) (not (time? $date-d5))))
   (date? (make-date 0 0 0 0 1 1 1970 -24))
   (date? (make-date 999999999 59 59 23 31 12 2007 24))
+  (begin
+    (define $date-d8 (make-date 999999999 59 59 23 31 12 2007 24))
+    #t)
+  (not (fixnum? (date-nanosecond $date-d8)))
   (eqv? (date-nanosecond $date-d1) 1)
   (eqv? (date-second $date-d1) 2)
   (eqv? (date-minute $date-d1) 3)

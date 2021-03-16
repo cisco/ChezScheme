@@ -860,7 +860,7 @@
   (date-hour [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-minute [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-month [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
-  (date-nanosecond [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
+  (date-nanosecond [sig [(date) -> (uint)]] [flags pure mifoldable discard true])
   (date-second [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-week-day [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-year-day [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
@@ -869,8 +869,8 @@
   (date-zone-offset [sig [(date) -> (fixnum)]] [flags pure mifoldable discard true])
   (date-zone-name [sig [(date) -> (ptr)]] [flags pure mifoldable discard])
   (date->time-utc [sig [(date) -> (time-utc)]] [flags alloc])
-  (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]
-                  [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]]
+  (make-date [sig [(sub-uint sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]
+                  [(sub-uint sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]]
              [flags alloc])
   (make-time [sig [(sub-symbol sub-uint exact-integer) -> (time)]] [flags alloc])
   (set-time-nanosecond! [sig [(time sub-uint) -> (void)]] [flags true])
