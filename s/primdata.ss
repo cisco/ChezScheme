@@ -872,7 +872,7 @@
   (make-date [sig [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum) -> (date)]
                   [(sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-ufixnum sub-fixnum) -> (date)]]
              [flags alloc])
-  (make-time [sig [(sub-symbol sub-ufixnum exact-integer) -> (time)]] [flags alloc])
+  (make-time [sig [(sub-symbol sub-uint exact-integer) -> (time)]] [flags alloc])
   (set-time-nanosecond! [sig [(time sub-uint) -> (void)]] [flags true])
   (set-time-second! [sig [(time exact-integer) -> (void)]] [flags true])
   (set-time-type! [sig [(time sub-symbol) -> (void)]] [flags true])
