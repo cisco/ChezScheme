@@ -509,7 +509,8 @@
   (begin
     (define $date-d8 (make-date 999999999 59 59 23 31 12 2007 24))
     #t)
-  (not (fixnum? (date-nanosecond $date-d8)))
+  (eqv? (fixnum? 999999999)
+        (fixnum? (date-nanosecond $date-d8)))
   (eqv? (date-nanosecond $date-d1) 1)
   (eqv? (date-second $date-d1) 2)
   (eqv? (date-minute $date-d1) 3)
