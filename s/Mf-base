@@ -38,7 +38,7 @@ cp0 = 2
 # fc determines whether fasl objects are compressed
 fc = t
 
-# xf determines the compression foramt
+# xf determines the compression format
 xf = (compress-format)
 
 # xl determine the compression level
