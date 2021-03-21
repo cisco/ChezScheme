@@ -1476,6 +1476,11 @@ Notes:
               [(Lsrc? t)
                (nanopass-case (Lsrc Expr) t
                  [(quote ,d)
+                  (guard (or (not (number? d))
+                             ; To avoid problems with cross compilation and eq?-ness
+                             ; ensure that it's a fixnum in both machines.
+                             (and (fixnum? d)
+                                  (target-fixnum? d))))
                   (values t t types #f #f)]
                  [else
                   (values ir t types #f #f)])]
