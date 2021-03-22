@@ -85,6 +85,12 @@
     '(pair? (list)) 
     #f)
   (cptypes-equivalent-expansion?
+    '(eq? (newline) (void))
+    '(begin (newline) #t))
+  (cptypes-equivalent-expansion?
+    '(eq? (newline) 0)
+    '(begin (newline) #f))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! x 0 0) (vector? x))
     '(lambda (x) (vector-set! x 0 0) #t))
   (cptypes-equivalent-expansion?
@@ -574,11 +580,12 @@
   (test-chain* '(fixnum? integer? real?))
   (test-chain* '(fixnum? exact? number?)) ; exact? may raise an error
   (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
-  (test-chain* '((lambda (x) (eq? x (expt 256 100))) bignum? real? number?))
+  (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
   (test-chain '(gensym? symbol?))
+  (test-chain '((lambda (x) (eq? x 'banana)) symbol?))
   (test-chain '(not boolean?))
   (test-chain '((lambda (x) (eq? x #t)) boolean?))
   (test-chain* '(record? #3%$record?))
@@ -594,6 +601,7 @@
   (test-disjoint '(pair? box? fixnum? flonum? (lambda (x) (eq? #t x))))
   (test-disjoint '((lambda (x) (eq? x 0)) (lambda (x) (eq? x 1)) flonum?))
   (test-disjoint '((lambda (x) (eqv? x 0.0)) (lambda (x) (eqv? x 1.0)) fixnum?))
+  (test-disjoint '((lambda (x) (eq? x 'banana)) (lambda (x) (eq? x 'apple))))
   (test-disjoint* '(list? record? vector?))
   (not (test-disjoint* '(list? null?)))
   (not (test-disjoint* '(list? pair?)))

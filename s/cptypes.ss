@@ -826,10 +826,44 @@ Notes:
             [(_ id) (or (lookup #'id #'get-type-key)
                         ($oops 'get-type "invalid identifier ~s" #'id))])))
 
+      (define (try-compare-constants e1 e2 prim-name)
+        ; yes     => true-rec
+        ; no      => false-rec
+        ; unknown => #f
+        (and (Lsrc? e1)
+             (Lsrc? e2)
+             (nanopass-case (Lsrc Expr) e1
+               [(quote ,d1)
+                (nanopass-case (Lsrc Expr) e2
+                  [(quote ,d2)
+                   (cond
+                     [(eqv? d1 d2)
+                      (cond
+                        [(eq? prim-name 'eq?)
+                         (cond
+                           [(or (not (number? d1))
+                                ; To avoid problems with cross compilation and eq?-ness
+                                ; ensure that it's a fixnum in both machines.
+                                (and (fixnum? d1)
+                                     (target-fixnum? d1)))
+                            true-rec]
+                           [else
+                            #f])]
+                        [else
+                         true-rec])]
+                     [else
+                      false-rec])]
+                  [else #f])]
+               [else #f])))
+
       (define-specialize 2 (eq? eqv?)
         [(e1 e2) (let ([r1 (get-type e1)]
                        [r2 (get-type e2)])
                     (cond
+                      [(try-compare-constants r1 r2 prim-name)
+                       => (lambda (ret)
+                            (values (make-seq ctxt e1 e2 ret)
+                                    ret ntypes #f #f))]
                       [(predicate-disjoint? r2 r1)
                        (values (make-seq ctxt e1 e2 false-rec)
                                false-rec ntypes #f #f)]
