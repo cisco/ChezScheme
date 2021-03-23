@@ -57,6 +57,9 @@ Handling letrec and letrec*
   (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
   (define rtd-mpm (csv7:record-field-accessor #!base-rtd 'mpm))
 
+  ;; use to preserve sharing with `exts` renaming
+  (define-threaded exts-table)
+
   (define-pass lift-profile-forms : Lsrc (ir) -> Lsrc ()
     (definitions
       (with-output-language (Lsrc Expr)
@@ -388,7 +391,14 @@ Handling letrec and letrec*
       [(moi) (values ir #t)]
       [(pariah) (values ir #t)]
       [(cte-optimization-loc ,box ,[e pure?] ,exts)
-       (values `(cte-optimization-loc ,box ,e ,exts) pure?)]
+       (let ([new-exts (or (hashtable-ref exts-table exts #f)
+                           (let ([new-exts (map (lambda (p)
+                                                  (let ([x (car p)])
+                                                    (cons (or (prelex-operand x) x) (cdr p))))
+                                                exts)])
+                             (hashtable-set! exts-table exts new-exts)
+                             new-exts))])
+         (values `(cte-optimization-loc ,box ,e ,new-exts) pure?))]
       [(profile ,src) (values ir #f)]
       [else (sorry! who "unhandled record ~s" ir)])
     (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
@@ -401,5 +411,6 @@ Handling letrec and letrec*
 
 (lambda (x)
   (let ([x (if (eq? ($compile-profile) 'source) (lift-profile-forms x) x)])
-    (cpletrec x)))
+    (fluid-let ([exts-table (make-weak-eq-hashtable)])
+      (cpletrec x))))
 ))

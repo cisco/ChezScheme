@@ -3341,3 +3341,28 @@
      (expand/optimize '(#3%$app/value x y))
      '($app/value x y)))
 )
+
+(mat cross-library-inlining
+  (begin
+    ;; Make sure inlining doesn't use the wrong `helper`
+    (library (cross-library-inlining-test)
+      (export a b am bm)
+      (import (rnrs))
+      (define-syntax def
+        (syntax-rules ()
+          [(_ id idm)
+           (begin
+             (define (helper x) (if (zero? x) 'id (helper (- x 1))))
+             (define (id x) (helper x))
+             ;; causes `helper` to be preserved:
+             (define-syntax idm (syntax-rules () [(_) helper])))]))
+      (def a am)
+      (def b bm))
+    #t)
+  (eq? 'a (let ()
+            (import (cross-library-inlining-test))
+            (a 10)))
+  (eq? 'b (let ()
+            (import (cross-library-inlining-test))
+            (b 10)))
+  )

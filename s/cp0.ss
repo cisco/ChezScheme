@@ -87,6 +87,9 @@
   ;;; used to memoize pure?, etc.
   (define-threaded cp0-info-hashtable)
 
+  ;; use to preserve sharing with `exts` renaming
+  (define-threaded exts-table)
+
   (module ()
     (define-syntax define-cp0-param
       (syntax-rules ()
@@ -991,7 +994,7 @@
                 (let loop ([exts exts])
                   (cond
                    [(null? exts) #f]
-                   [(eq? (prelex-name x) (prelex-name (caar exts)))
+                   [(eq? (prelex-uname x) (prelex-uname (caar exts)))
                     (cdar exts)]
                    [else (loop (cdr exts))]))))
             (define (ids->do-clause ids)
@@ -5467,6 +5470,12 @@
       [(moi) (if moi `(quote ,moi) ir)]
       [(pariah) ir]
       [(cte-optimization-loc ,box ,[cp0 : e ctxt env sc wd name moi -> e] ,exts)
+       (define new-exts (or (hashtable-ref exts-table exts #f)
+                            (let ([new-exts (map (lambda (p)
+                                                   (cons (lookup (car p) env) (cdr p)))
+                                                 exts)])
+                              (hashtable-set! exts-table exts new-exts)
+                              new-exts)))
        (when (enable-cross-library-optimization)
          (let ()
            (define update-box!
@@ -5487,7 +5496,7 @@
                         ;; than supported by the original, since only inlinable clauses
                         ;; are kept
                         (let ([new-cl* (fold-right (lambda (cl cl*)
-                                                     (let ([cl (externally-inlinable cl exts)])
+                                                     (let ([cl (externally-inlinable cl new-exts)])
                                                        (if cl
                                                            (cons cl cl*)
                                                            cl*)))
@@ -5505,7 +5514,7 @@
                                               sv?))))]
                        [else #f])))]
              [else (void)])))
-       `(cte-optimization-loc ,box ,e ,exts)]
+       `(cte-optimization-loc ,box ,e ,new-exts)]
       [(cpvalid-defer ,e) (sorry! who "cpvalid leaked a cpvalid-defer form ~s" ir)]
       [(profile ,src) ir]
       [else ($oops who "unrecognized record ~s" ir)])
@@ -5519,7 +5528,8 @@
       [(x ltbc?)
        (fluid-let ([likely-to-be-compiled? ltbc?]
                    [opending-list '()]
-                   [cp0-info-hashtable (make-weak-eq-hashtable)])
+                   [cp0-info-hashtable (make-weak-eq-hashtable)]
+                   [exts-table (make-weak-eq-hashtable)])
          (cp0 x 'tail empty-env (new-scorer) (new-watchdog) #f #f))]))))
 
 ; check to make sure all required handlers were seen, after expansion of the

@@ -1250,7 +1250,7 @@
       (lambda (node thunk)
         (build-primcall '$install-library/rt-code `(quote ,(library-node-uid node)) thunk)))
 
-    (define-pass patch : Lsrc (ir env) -> Lsrc ()
+    (define-pass patch : Lsrc (ir env exts-table) -> Lsrc ()
       (definitions
         (define with-initialized-ids
           (lambda (old-id* proc)
@@ -1299,7 +1299,17 @@
         [(letrec* ([,x* ,e*] ...) ,body)
          (with-initialized-ids x*
            (lambda (x*)
-             `(letrec* ([,x* ,(map Expr e*)] ...) ,(Expr body))))])
+             `(letrec* ([,x* ,(map Expr e*)] ...) ,(Expr body))))]
+        [(cte-optimization-loc ,box ,e ,exts)
+         (define new-exts (or (hashtable-ref exts-table exts #f)
+                              (let ([new-exts (map (lambda (p)
+                                                     (let ([x (car p)])
+                                                       (cons (or (prelex-operand x) x) (cdr p))))
+                                                   exts)])
+                                (hashtable-set! exts-table exts new-exts)
+                                new-exts)))
+         (let ([e (Expr e)])
+           `(cte-optimization-loc ,box ,e ,new-exts))])
       (CaseLambdaClause : CaseLambdaClause (ir) -> CaseLambdaClause ()
         [(clause (,x* ...) ,interface ,body)
          (with-initialized-ids x*
@@ -1367,7 +1377,8 @@
                 (nanopass-case (Lexpand Program) (program-node-ir program)
                   [(program ,uid ,body) body])
                 node*)
-              (make-patch-env (list node*))))))
+              (make-patch-env (list node*))
+              (make-eq-hashtable)))))
 
     (define build-combined-library-ir
       (lambda (cluster*)
@@ -1442,7 +1453,8 @@
                                                    ,body))
                                     body cluster))
                       (build-void) cluster* cluster-idx*)))))
-        (make-patch-env cluster*)))))
+          (make-patch-env cluster*)
+          (make-eq-hashtable)))))
 
   (with-output-language (Lexpand Outer)
     (define add-recompile-info
