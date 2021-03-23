@@ -854,7 +854,7 @@
 (define-constant type-exactnum         #b01010110)
 (define-constant type-box               #b0001110) ; bit 3 set for non-numbers
 (define-constant type-immutable-box    #b10001110) ; low 7 bits match `type-box`
-(define-constant type-stencil-vector     #b011110) ; remianing bits for stencil; type looks like immediate
+(define-constant type-stencil-vector     #b011110) ; remaining bits for mask; type looks like immediate
 ; #b00101110 (forward_marker) must not be used
 (define-constant type-code             #b00111110)
 (define-constant type-port             #b11001110)

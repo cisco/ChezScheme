@@ -393,7 +393,7 @@
       (count countof-vector)]
 
      [stencil-vector
-      ;; Assumes stencil-vector masks look like fixnums;
+      ;; Assumes stencil-vector tags look like immediates or fixnums;
       ;; if not, stencil vectors will need their own space
       (space
        (cond

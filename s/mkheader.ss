@@ -339,9 +339,9 @@
   
         (def "Sstencil_vector_length(x)"
           (format "Spopcount(((uptr)~a)>>~d)"
-            (access "x" vector type)
+            (access "x" stencil-vector type)
             ($ stencil-vector-mask-offset)))
-        (defref Sstencil_vector_ref vector data)
+        (defref Sstencil_vector_ref stencil-vector data)
         
         (export "iptr" "Sinteger_value" "(ptr)")
         (def "Sunsigned_value(x)" "(uptr)Sinteger_value(x)")
