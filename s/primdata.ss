@@ -2147,10 +2147,10 @@
   ($ftype-guardian-oops [flags])
   ($ftype-pointer? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($fxaddress [flags single-valued unrestricted alloc])
-  ($fx-? [sig [(maybe-fixnum maybe-fixnum) -> (maybe-fixnum)]] [flags pure]) ; not boolean
+  ($fx-? [sig [(ptr ptr) -> (maybe-fixnum)]] [flags unrestricted pure]) ; not boolean
   ($fx/ [flags single-valued])
   ($fx* [flags single-valued])
-  ($fx+? [sig [(maybe-fixnum maybe-fixnum) -> (maybe-fixnum)]] [flags pure]) ; not boolean
+  ($fx+? [sig [(ptr ptr) -> (maybe-fixnum)]] [flags unrestricted pure]) ; not boolean
   ($fxu< [flags single-valued pure cp02])
   ($fxvector-ref-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted pure])
   ($fxvector-set!-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted discard])
