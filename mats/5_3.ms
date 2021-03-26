@@ -1690,6 +1690,16 @@
                                  (and (exact? x) (exact? y))
                                  (or (inexact? x) (inexact? y)))
                              (g (+ j 1)))))))))
+    (let ([sb* (foreign-procedure
+		"(cs)mul" (scheme-object scheme-object) scheme-object)])
+      ;; (expt 2 100000) is big enough that all multiplication algorithms
+      ;; are exercised
+      ;; we add a power of 3 so that the number isn't too simple
+      (eqv? (sb* (+ 1 (expt 3 50) (expt 2 100000))
+		 3)
+	    (* (+ 1 (expt 3 50) (expt 2 100000))
+	       3)))
+      
     (error? ; #f is not a fixnum
       (* 3 #f))
     (error? ; #f is not a fixnum
