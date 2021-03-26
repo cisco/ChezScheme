@@ -5242,7 +5242,7 @@ Otherwise, it returns \scheme{#f}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{get-process-id}{\categoryprocedure}{(get-process-id)}
-\returns the operating system process id if the current process
+\returns the operating system process id of the current process
 \listlibraries
 \endentryheader
 
