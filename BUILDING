@@ -148,10 +148,14 @@ The make file supports several targets:
 
 'sudo make install'
   runs the build plus installs the resulting executables, boot files,
-  example files, and manual pages.
+  example files, and manual pages.  If the installprefix used with
+  './configure' is writable by the current user, then 'sudo' is not
+  necessary.
 
 'sudo make uninstall'
   uninstalls the executables, boot files, example files, and manual pages.
+  As with 'make install', if the installprefix used with './configure' is
+  writable by the current user, then 'sudo' is not necessary.
 
 'make test'
   runs the build plus runs a set of test programs in various different
@@ -197,11 +201,31 @@ The make file supports several targets:
   of a built work area for the host machine type, to build just the
   boot files for machine-type M.
 
+'make docs'
+  runs the build plus generates HTML and PDF versions of the Chez Scheme
+  Users Guide and the release notes.  Unlike the other build targets,
+  the documentation is not built in the workarea, but rather in the
+  'csug' and 'release_notes' directories.
+
+  Building the documentation requires a few prerequisites not required
+  to build the rest of Chez Scheme.  The following must be available
+  in your PATH:
+    * A TeX distribution (including latex, pdflatex, dvips, and gs)
+    * ppmtogif and pnmcrop (from Netpbm)
+  An X11 installation is not required, but ppmtogif does require an
+  'rgb.txt' file, which it will automatically locate in the common
+  X11 installation locations.  If ppmtogif fails because it cannot find
+  an rgb.txt file, you can use the RGBDEF environment variable to
+  specify the path to a file.  If your system has an emacs installation,
+  then you can find an rgb.txt file in the 'etc' directory of the emacs
+  installation.  If your system has a vim installation, then it might
+  contain an rgb.txt in $VIMRUNTIME.
+
 'make clean'
   removes binaries from the workarea.
 
 'make distclean'
-  removes nanopass, Makefile, and all workareas.
+  removes nanopass, Makefile, built documentation, and all workareas.
 
 OTHER UNIX VARIANTS
 
