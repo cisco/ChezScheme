@@ -63,6 +63,10 @@ Online versions of both books can be found at
 When the reader reports an invalid bytevector element, the error
 message now includes the token value only if the token type is atomic.
 
+When the expander reports that an ellipsis is missing in a syntax form,
+it now includes the name of an identifier that is missing an ellipsis
+within that form.
+
 \subsection{Additional reader syntax for booleans (9.5.5)}
 
 The reader now case-insensitively accepts \scheme{#true} and

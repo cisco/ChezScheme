@@ -2217,3 +2217,7 @@
     mats/6.ms, mats/root-experr-compile-0-f-f-f,
     mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
     s/read.ss
+- include an identifier name in the syntax error for missing ellipsis
+    mats/8.ms, mats/root-experr-compile-0-f-f-f,
+    mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
+    s/syntax.ss

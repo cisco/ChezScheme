@@ -6087,7 +6087,7 @@
         (if (fx= level 0)
             (values var maps)
             (if (null? maps)
-                (syntax-error src "missing ellipsis in syntax form")
+                (syntax-error src (format "missing ellipsis for ~s in syntax form" var))
                 (let-values ([(outer-var outer-maps) (gen-ref src var (fx- level 1) (cdr maps))])
                   (let ((b (assq outer-var (car maps))))
                     (if b

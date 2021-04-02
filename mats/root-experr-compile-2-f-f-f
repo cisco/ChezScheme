@@ -8454,6 +8454,8 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat define-syntax: "extra ellipsis in syntax form (syntax (z ...))".
 8.mo:Expected error in mat define-syntax: "variable $dsmat-y is not bound".
 8.mo:Expected error in mat define-syntax: "misplaced ellipsis in syntax template (syntax #(... (x)))".
+8.mo:Expected error in mat define-syntax: "missing ellipsis for x in syntax form (syntax (quote (x y ...)))".
+8.mo:Expected error in mat define-syntax: "missing ellipsis for w in syntax form (syntax (quote (v ... w)))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid syntax-rules clause ((_ a b) (identifier? (syntax a)) (let ((...)) (* a b)))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid literals list in (syntax-rules (_))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid literals list in (syntax-rules (_))".
