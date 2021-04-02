@@ -149,13 +149,13 @@ The make file supports several targets:
 'sudo make install'
   runs the build plus installs the resulting executables, boot files,
   example files, and manual pages.  If the installprefix used with
-  './configure' is writable by the current user then 'sudo' is not
+  './configure' is writable by the current user, then 'sudo' is not
   necessary.
 
 'sudo make uninstall'
   uninstalls the executables, boot files, example files, and manual pages.
   As with 'make install', if the installprefix used with './configure' is
-  writable by the current user then 'sudo' is not necessary.
+  writable by the current user, then 'sudo' is not necessary.
 
 'make test'
   runs the build plus runs a set of test programs in various different
@@ -216,9 +216,9 @@ The make file supports several targets:
   'rgb.txt' file, which it will automatically locate in the common
   X11 installation locations.  If ppmtogif fails because it cannot find
   an rgb.txt file, you can use the RGBDEF environment variable to
-  specify the path to a file.  If your system has an emacs installation
+  specify the path to a file.  If your system has an emacs installation,
   then you can find an rgb.txt file in the 'etc' directory of the emacs
-  installation.  If your system has a vim installation then it might
+  installation.  If your system has a vim installation, then it might
   contain an rgb.txt in $VIMRUNTIME.
 
 'make clean'
