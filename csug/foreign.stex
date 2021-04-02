@@ -600,26 +600,27 @@ the endianness of the target machine.
 For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
 under Windows running on Intel hardware.
 
-\foreigntype{\scheme{(* \var{ftype})}}
+\foreigntype{\scheme{(* \var{ftype-name})}}
 \index{ftype}This type allows a pointer to a foreign
 type (ftype) to be passed.
-The argument must be an ftype pointer of type \var{ftype},
+The argument must be an ftype pointer of the type identified by
+\var{ftype-name},
 and the actual argument is the address encapsulated in the
 ftype pointer.
 See Section~\ref{SECTFOREIGNDATA} for a description of
 foreign types.
 
-\foreigntype{\scheme{(& \var{ftype})}}
+\foreigntype{\scheme{(& \var{ftype-name})}}
 \index{ftype}This type allows a foreign
 type (ftype) to be passed as a value, but represented
 on the Scheme side as a pointer to the foreign-type data.
-That is, a \scheme{(& \var{ftype})} argument is represented on
-the Scheme side the same as a \scheme{(* \var{ftype})} argument,
-but a \scheme{(& \var{ftype})} argument is passed to the foreign procedure as the
+That is, a \scheme{(& \var{ftype-name})} argument is represented on
+the Scheme side the same as a \scheme{(* \var{ftype-name})} argument,
+but a \scheme{(& \var{ftype-name})} argument is passed to the foreign procedure as the
 content at the foreign pointer's address instead of as the
-address. For example, if \var{ftype} is a \scheme{struct} type,
-then \scheme{(& \var{ftype})} passes a struct argument instead of
-a struct-pointer argument. The \var{ftype} cannot refer to an array type.
+address. For example, if \var{ftype-name} identifies a \scheme{struct} type,
+then \scheme{(& \var{ftype-name})} passes a struct argument instead of
+a struct-pointer argument. The \var{ftype-name} cannot refer to an array type.
 
 \medskip\noindent
 The result types are similar to the parameter types with the addition of a
@@ -872,22 +873,22 @@ the endianness of the target machine.
 For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
 under Windows running on Intel hardware.
 
-\foreigntype{\scheme{(* \var{ftype})}}
+\foreigntype{\scheme{(* \var{ftype-name})}}
 \index{ftype}The result is interpreted as the address of a foreign object
-whose structure is described by \var{ftype}, and a freshly allocated
+whose structure is described by the ftype identified by \var{ftype-name}, and a freshly allocated
 ftype pointer encapsulating the address is returned.
 See Section~\ref{SECTFOREIGNDATA} for a description of
 foreign types.
 
-\foreigntype{\scheme{(& \var{ftype})}}
+\foreigntype{\scheme{(& \var{ftype-name})}}
 \index{ftype}The result is interpreted as a foreign object
-whose structure is described by \var{ftype}, where the foreign
-procedure returns a \var{ftype} result, but the caller
-must provide an extra \scheme{(* \var{ftype})} argument before
+whose structure is described by the ftype identified by \var{ftype-name}, where the foreign
+procedure returns a \var{ftype-name} result, but the caller
+must provide an extra \scheme{(* \var{ftype-name})} argument before
 all other arguments to receive the result. An unspecified Scheme object
 is returned when the foreign procedure is called, since the result
 is instead written into storage referenced by the extra argument.
- The \var{ftype} cannot refer to an array type.
+ The \var{ftype-name} cannot refer to an array type.
 
 \medskip\noindent
 Consider a C identity procedure:
