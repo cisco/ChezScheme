@@ -4820,7 +4820,7 @@
    ;; ----------------------------------------
    ;; Check interaction of mutation and incremental generation promotion
 
-   (with-interrupts-disabled
+   (parameterize ([collect-request-handler void] [collect-maximum-generation (max (collect-maximum-generation) 2)])
     (let ([key "key"])
       (let ([e (ephemeron-cons key #f)])
         (collect 0 1 1)
