@@ -2190,3 +2190,9 @@
     x86_64, s/Mf-[t]a6{le,osx}
 - fixed misnamed pattern variables in bytevector-*-ref
     bytevector.ss
+- add workaround for Rosetta 2 bug in [t]a6osx builds.  The overhead
+  during native (x86) execution is the addition of a single int compare
+  and branch in S_bytevector_read, plus a small amount of work at startup
+  to determine whether we are running under Rosetta translation.
+    c/new-io.c c/scheme.c c/version.h
+

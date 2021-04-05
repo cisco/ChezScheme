@@ -291,6 +291,12 @@ typedef int tputsputcchar;
 #if (machine_type == machine_type_ti3osx || machine_type == machine_type_ta6osx)
 #define PTHREADS
 #endif
+#if (machine_type == machine_type_a6osx || machine_type == machine_type_ta6osx)
+#ifndef NO_ROSETTA_CHECK
+#define CHECK_FOR_ROSETTA
+extern int is_rosetta;
+#endif
+#endif
 #define MACOSX
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
