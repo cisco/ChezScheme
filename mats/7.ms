@@ -488,7 +488,7 @@
     (separate-eval '(load-program "testfile-mc-foo.so"))
     "(\"a\" \"b\" \"c\")\n")
   (touch "testfile-mc-foo.so" "testfile-mc-a.ss")
-  ((lambda (x ls) (and (member x ls) #t))
+  (equal?
     (let ([mt* (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))])
       (let ([s (separate-compile '(lambda (x) (parameterize ([compile-program-handler (lambda (ifn ofn) (printf "yippee!\n") (compile-program ifn ofn))]
                                                              [compile-imported-libraries #t]
@@ -501,8 +501,7 @@
             (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))
             mt*)
           s)))
-    '(((> > >) . "yippee!\n((testfile-mc-a) (testfile-mc-b))\n")
-      ((> > >) . "yippee!\n((testfile-mc-b) (testfile-mc-a))\n")))
+    '((> > >) . "yippee!\n"))
   (equal?
     (let ([mt* (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))])
       (let ([s (separate-compile '(lambda (x) (parameterize ([compile-imported-libraries #t] [compile-file-message #f]) (maybe-compile-program x))) 'mc-foo)])
@@ -512,7 +511,7 @@
             (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))
             mt*)
           s)))
-    '((= = =) . "#f\n"))
+    '((= = =) . ""))
   (equal?
     (separate-eval '(load-program "testfile-mc-foo.so"))
     "(\"a\" \"b\" \"c\")\n")
