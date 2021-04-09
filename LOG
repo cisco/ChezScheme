@@ -2164,3 +2164,5 @@
 - fixed help description for configure options --installschemename,
   --installpetitename, and --installscriptname
     configure
+- maybe-compile-program now returns void
+    compile.ss 7.ms

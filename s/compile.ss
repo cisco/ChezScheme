@@ -2082,11 +2082,13 @@
       [(in out)
        (unless (string? in) ($oops who "~s is not a string" in))
        (unless (string? out) ($oops who "~s is not a string" out))
-       ($maybe-compile-file who in out (compile-program-handler))]
+       ($maybe-compile-file who in out (compile-program-handler))
+       (void)]
       [(in)
        (unless (string? in) ($oops who "~s is not a string" in))
        (let-values ([(in out) (in&out in)])
-         ($maybe-compile-file who in out (compile-program-handler)))]))
+         ($maybe-compile-file who in out (compile-program-handler)))
+       (void)]))
 
   (set-who! compile-to-file
     (rec compile-to-file
