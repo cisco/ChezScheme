@@ -42,6 +42,8 @@
        (load (format "~a/~a.ss" *examples-directory* str) eval)
        #t]))
 
+(define (example-file file) (format "~a/~a" *mats-dir* file))
+
 (define file=?
    (lambda (fn1 fn2)
       (let ([p1 (open-input-file fn1)] [p2 (open-input-file fn2)])
@@ -96,8 +98,8 @@ edit>
 (examples-mat freq ("freq")
    ;; freq.in and freq.out come from example in TSPL
    (begin (delete-file "testfile.freq" #f) #t)
-   (begin (frequency "freq.in" "testfile.freq")
-          (file=? "testfile.freq" "freq.out"))
+   (begin (frequency (example-file "freq.in") "testfile.freq")
+          (file=? "testfile.freq" (example-file "freq.out")))
  )
 
 ;-------- freq.in: --------
@@ -133,8 +135,8 @@ edit>
 ; )
 
 (examples-mat m4 ("m4")
-   (begin (m4 "testfile.m4" "m4test.in")
-          (file=? "m4test.out" "testfile.m4"))
+   (begin (m4 "testfile.m4" (example-file "m4test.in"))
+          (file=? (example-file "m4test.out") "testfile.m4"))
  )
 
 (examples-mat macro ("macro")

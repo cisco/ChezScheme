@@ -3,12 +3,12 @@
 ***************
 *** 1,3 ****
 --- 1,9 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1030, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1032, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1039, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1041, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1048, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1050, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1032, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1034, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1041, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1043, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1050, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1052, char 4 of ../6.ms
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x at line 1, char 19 of testfile.ss".
   profile.mo:Expected warning in mat compile-profile: "profile-dump-list: unmodified source file "testfile.ss" not found in source directories".

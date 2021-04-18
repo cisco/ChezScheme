@@ -511,7 +511,7 @@
     (define C-test-code
       (lambda (ftype-defn* path* ndefs npaths i* j*)
         (let ([ndefs (length ftype-defn*)])
-          (printf "#include \"ftype.h\"\n\
+          (printf "#include \"~a/ftype.h\"\n\
                    #define offset(x, y) (int)((char *)&y - (char *)&x)\n\
                    EXPORT int *foo() {\n\
                      ~{~a\n~}\
@@ -520,6 +520,7 @@
                      ~{~a\n~}\
                      return a;\
                    }\n"
+            *mats-dir*
             (map
               (lambda (ftype-defn)
                 (format "typedef ~a typedef_~a ~a;"
