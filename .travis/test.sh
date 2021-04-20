@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make -C "$TARGET_MACHINE"/mats -j 2 partialxp
+make -C "$TARGET_MACHINE"/mats -j $(getconf _NPROCESSORS_ONLN) partialxp
 
 if [ -f "$TARGET_MACHINE"/mats/summary ]; then
   diff -q .travis/summary "$TARGET_MACHINE"/mats/summary
