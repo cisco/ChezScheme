@@ -32,7 +32,7 @@
 # with the -j flag).  Most output from the parallel targets is
 # directed to (separate) files, with status printed to stdout when
 # testing of each different configuration begins and ends.
-# In addition, each concatinates the summary file from all
+# In addition, each concatenates the summary file from all
 # configurations run into "summary" in the current directory.
 
 # Running make with the argument "clean" removes the .so files, .mo
