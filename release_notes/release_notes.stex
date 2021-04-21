@@ -1906,14 +1906,16 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Bitwise right shoft of negative fixnum (9.5.5)}
+\subsection{Bitwise right shift of negative bignum (9.5.5)}
 
 When a negative bignum is shifted right by a multiple of the big-digit
-bit size (which is 32), when a shifted-off bit is non-0, and when the
-result would be a sequence of big-digits with all 1 bits before
-rounding to deal with the dropped bits, a carry that should have been
-delivered to a new high digit was dropped, producing 0 instead of a
-negative number.
+bit size (32), a shifted-off bit is non-zero, and the result would be
+a sequence of big digits with all one bits before rounding to deal
+with the dropped bits, then a carry that should have been delivered to
+a new high digit was dropped, producing 0 instead of a negative
+number.
+
+For example, \scheme{(ash (- 1 (ash 1 64)) -32)} no longer returns 0.
 
 \subsection{\protect\scheme{sleep} with negative duration (9.5.5)}
 
