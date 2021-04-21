@@ -296,7 +296,7 @@ partialxp-targets: $(partialxp-confs:%=parallel%)
 
 partialxp: prettyclean
 	@echo building prereqs with output to Make.out
-	@$(MAKE) parallel-prereqs &> Make.out
+	@$(MAKE) parallel-prereqs > Make.out 2>&1
 	@$(MAKE) partialxp-targets
 	cat $(partialxp-confs:%=output-%/summary) > summary && cat summary
 
@@ -312,7 +312,7 @@ allxp-targets: $(allxp-confs:%=parallel%)
 
 allxp: prettyclean
 	@echo building prereqs with output to Make.out
-	@$(MAKE) parallel-prereqs &> Make.out
+	@$(MAKE) parallel-prereqs > Make.out 2>&1
 	@$(MAKE) allxp-targets
 	@$(MAKE) doallcoverage
 	cat $(allxp-confs:%=output-%/summary) > summary && cat summary
@@ -351,7 +351,7 @@ bullyxp-targets: $(bullyxp-confs:%=parallel%)
 
 bullyxp: prettyclean
 	@echo building prereqs with output to Make.out
-	@$(MAKE) parallel-prereqs &> Make.out
+	@$(MAKE) parallel-prereqs > Make.out 2>&1
 	@$(MAKE) bullyxp-targets
 	@$(MAKE) doallcoverage
 	cat $(bullyxp-confs:%=output-%/summary) > summary && cat summary
@@ -385,7 +385,7 @@ full-config-str = $(strip o=$(o) $(foreach var, $(config-vars),$(if $(filter-out
 allxphelp-target = allxhelp
 allxphelp: $(outdir)
 	@echo "matting configuration ($(full-config-str)) with output to $(outdir)/Make.out"
-	@$(MAKE) $(allxphelp-target) &> "$(outdir)/Make.out"
+	@$(MAKE) $(allxphelp-target) > "$(outdir)/Make.out" 2>&1
 	@echo "finished matting configuration $(full-config-str)"
 
 summary-file=$(outdir)/summary
