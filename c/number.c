@@ -1313,8 +1313,10 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
     if ((xl -= (whole_bigits = (cnt = -cnt) / bigit_bits)) <= 0) return sign ? FIX(-1) : FIX(0);
     cnt -= whole_bigits * bigit_bits;
 
-    /* shift by remaining count to scratch bignum, tracking bits shifted off to the right */
-    PREPARE_BIGNUM(tc, W(tc),xl)
+    /* shift by remaining count to scratch bignum, tracking bits shifted off to the right;
+       prepare a bignum one larger than probably needed, in case we have to deal with a
+       carry bit when rounding down for a negative number */
+    PREPARE_BIGNUM(tc, W(tc),xl+1)
     p1 = &BIGIT(W(tc), 0);
     p2 = xp;
     k = 0;
@@ -1344,6 +1346,13 @@ static ptr s_big_ash(tc, xp, xl, sign, cnt) ptr tc; bigit *xp; iptr xl; IBOOL si
         p1 = &BIGIT(W(tc), xl - 1);
         for (i = xl, k = 1; k != 0 && i-- > 0; p1 -= 1)
           EADDC(0, *p1, p1, &k)
+        if (k) {
+          /* add carry bit back; we prepared a large enough bignum,
+             and since all of the middle are zero, we don't have to reshift */
+          BIGIT(W(tc), xl) = 0;
+          BIGIT(W(tc), 0) = 1;
+          xl++;
+        }
       }
     }
 
