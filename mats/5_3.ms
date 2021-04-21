@@ -3300,6 +3300,7 @@
    (eqv? (bitwise-arithmetic-shift 0 (- (expt 2 100))) 0)
    (eqv? (bitwise-arithmetic-shift 0 (expt 2 100)) 0)
    (eqv? (bitwise-arithmetic-shift 0 (expt 2 100)) 0)
+   (eqv? (- (expt 16 232)) (bitwise-arithmetic-shift (- 307 (expt 16 240)) -32))
    ($test-right-shift (lambda (x n) (bitwise-arithmetic-shift x (- n))))
 )
 
@@ -3348,6 +3349,7 @@
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 31) #x-100000000)
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 32) #x-80000000)
    (eqv? (bitwise-arithmetic-shift-right #x-8000000000000000 33) #x-40000000)
+   (eqv? (- (expt 16 232)) (bitwise-arithmetic-shift-right (- 307 (expt 16 240)) 32))
    ($test-right-shift (lambda (x n) (bitwise-arithmetic-shift-right x n)))
 )
 
