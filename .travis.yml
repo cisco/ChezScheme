@@ -61,4 +61,4 @@ jobs:
 dist: bionic
 script:
   - .travis/build.sh
-  - .travis/test.sh
+  - travis_wait 35 .travis/test.sh

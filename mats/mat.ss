@@ -243,7 +243,7 @@
                   (let ([go (lambda () (mat-load ifn))] [universe-ct (coverage-table)])
                     (if universe-ct
                         (let-values ([(ct . ignore) (with-profile-tracker go)])
-                          (store-coverage universe-ct ct (format "~a/~a.covout" dir mat)))
+                          (store-coverage universe-ct ct (format "~a.covout" mat)))
                         (go))))
                 (lambda () (close-output-port (mat-output))))))))))
 
