@@ -484,18 +484,22 @@
        ;; Trying to specify a R7RS boolean.
        (let* ([s (if x "true" "false")]
               [last-index (fx- (string-length s) 1)])
-         (let scan ([i 1])
-           (with-read-char c
-             (cond
-               [(eof-object? c)
-                ;; we ruled out a possible initial eof before, so it is always an error, here
-                (with-unread-char c (xcall rd-eof-error "boolean"))]
-               [(not (char-ci=? c (string-ref s i)))
-                (with-unread-char c
-                  (xcall rd-error #f #t "invalid boolean #~a~c" (substring s 0 i) (char-downcase c)))]
-               [(fx= i last-index) (nonstandard "r7rs boolean") (*state rd-token-delimiter x "boolean")]
-               [else (scan (fx+ i 1))]))))]
+         (*state rd-token-boolean-rest x s 1 last-index))]
       [else (*state rd-token-delimiter x "boolean")])))
+
+(define-state (rd-token-boolean-rest x s i last-index)
+  (with-read-char c
+    (cond
+      [(eof-object? c)
+        ;; we ruled out a possible initial eof before, so it is always an error, here
+        (with-unread-char c (xcall rd-eof-error "boolean"))]
+      [(not (char-ci=? c (string-ref s i)))
+       (with-unread-char c
+         (xcall rd-error #f #t "invalid boolean #~a~c" (substring s 0 i) (char-downcase c)))]
+      [(fx= i last-index)
+       (nonstandard "r7rs boolean")
+       (*state rd-token-delimiter x "boolean")]
+      [else (*state rd-token-boolean-rest x s (fx+ i 1) last-index)])))
 
 (define-state (rd-token-delimiter x what)
   (with-peek-char c

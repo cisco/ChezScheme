@@ -1660,14 +1660,30 @@
                            (lambda () (close-input-port ip))))])
       vals)
     '(atomic eat 1 4))
-  (for-all
-    (lambda (str expected)
-      (let-values ([t (with-input-from-string str read-token)])
-        (equal? t `(atomic ,@expected))))
-    '("#t" "#true" "#True" "#TRUE"
-      "#f" "#false" "#False" "#FALSE")
-    '((#t 0 2) (#t 0 5) (#t 0 5) (#t 0 5)
-      (#f 0 2) (#f 0 6) (#f 0 6) (#f 0 6)))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#t" read-token)) list)
+    '(atomic #t 0 2))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#true" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#True" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#TRUE" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#f" read-token)) list)
+    '(atomic #f 0 2))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#false" read-token)) list)
+    '(atomic #f 0 6))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#False" read-token)) list)
+    '(atomic #f 0 6))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#FALSE" read-token)) list)
+    '(atomic #f 0 6))
  )
 
 (define read-test
