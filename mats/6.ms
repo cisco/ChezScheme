@@ -1893,7 +1893,7 @@
   "; Test error \"invalid delimiter 2 for boolean\"\n\n#true2\n"
   "; Test error \"invalid delimiter 3 for boolean\"\n\n#f3\n"
   "; Test error \"invalid delimiter 3 for boolean\"\n\n#false3\n"
-  ;; NOTE: there's no "delimiter not allowed in #!r6rs mode" for r7rs booleans because r7rs booleans are not r6rs!
+  ;; NOTE: there's no "delimiter not allowed in #!r6rs mode" test for r7rs-style booleans because they are not r6rs!
   "; Test error \"#!eof syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!eof\n"
   "; Test error \"#!bwp syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!bwp\n"
   "; Test error \"#vfx(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#vfx(1 2 3)\n"
@@ -1907,12 +1907,12 @@
   "; Test error \"123# number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 123#\n"
   "; Test error \"#x1/2e2 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 1/2e2\n"
   "; Test error \"#x.3 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs #x.3\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #true\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #True\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #TRUE\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #false\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #False\n"
-  "; Test error \"r7rs boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #FALSE\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #true\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #True\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #TRUE\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #false\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #False\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #FALSE\n"
  ; following tests adapted from the read0 benchmark distributed by Will
  ; Clinger, which as of 08/08/2009 appears to be in the public domain,
  ; with no license, copyright notice, author name, or date.

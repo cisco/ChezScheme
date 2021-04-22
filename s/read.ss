@@ -497,7 +497,7 @@
        (with-unread-char c
          (xcall rd-error #f #t "invalid boolean #~a~c" (substring s 0 i) (char-downcase c)))]
       [(fx= i last-index)
-       (nonstandard "r7rs boolean")
+       (nonstandard "alternative boolean")
        (*state rd-token-delimiter x "boolean")]
       [else (*state rd-token-boolean-rest x s (fx+ i 1) last-index)])))
 
