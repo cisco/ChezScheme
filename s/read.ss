@@ -480,9 +480,6 @@
   (with-peek-char c
     (state-case c
       [eof (state-return atomic x)]
-      [(#\space #\( #\) #\[ #\] #\" #\; #\#) (state-return atomic x)]
-      [char-whitespace? (state-return atomic x)]
-      [(#\{ #\} #\' #\` #\,) (nonstandard-delimiter c) (state-return atomic x)]
       [char-alphabetic?
        ;; Trying to specify a R7RS boolean.
        (let* ([s (if x "true" "false")]
@@ -497,8 +494,8 @@
                 (with-unread-char c
                   (xcall rd-error #f #t "invalid boolean #~a~c" (substring s 0 i) (char-downcase c)))]
                [(fx= i last-index) (nonstandard "r7rs boolean") (*state rd-token-delimiter x "boolean")]
-               [else (scan (+ i 1))]))))]
-      [else (xcall rd-delimiter-error c "boolean")])))
+               [else (scan (fx+ i 1))]))))]
+      [else (*state rd-token-delimiter x "boolean")])))
 
 (define-state (rd-token-delimiter x what)
   (with-peek-char c
