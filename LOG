@@ -2166,6 +2166,8 @@
     configure
 - maybe-compile-program now returns void
     compile.ss 7.ms
+- fixed right shift of a negative bignum by a multiple of 32
+    number.c 5_3.ms
 - refactor mats to allow different configurations to run in parallel.
   Add {partial,all,bully}xp ("p" for parallel) targets to the makefile.
   Update travis-ci build scripts to use new partialx target and run two
