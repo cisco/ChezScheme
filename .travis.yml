@@ -59,6 +59,8 @@ jobs:
         - git config core.autocrlf false; rm .git/index; git reset --hard
         - choco install make -y
 dist: bionic
+before_install:
+  - .travis/maybe-skip-build.sh
 script:
   - .travis/build.sh
   - travis_wait 60 .travis/test.sh
