@@ -7,3 +7,4 @@ if echo "$TRAVIS_COMMIT_MESSAGE" | grep -q "^travis:only:" ; then
         exit 1
     fi
 fi
+
