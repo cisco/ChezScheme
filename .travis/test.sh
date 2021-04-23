@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "Running test.sh; bash version $BASH_VERSION"
 make -C "$TARGET_MACHINE"/mats -j $(getconf _NPROCESSORS_ONLN) partialxp
 
 if [ -f "$TARGET_MACHINE"/mats/summary ]; then
