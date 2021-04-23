@@ -1893,6 +1893,8 @@
   "; Test error \"invalid delimiter 2 for boolean\"\n\n#true2\n"
   "; Test error \"invalid delimiter 3 for boolean\"\n\n#f3\n"
   "; Test error \"invalid delimiter 3 for boolean\"\n\n#false3\n"
+  "; Test error \"invalid boolean\"\n\n#travis"
+  "; Test error \"invalid boolean\"\n\n#FALSIFY"
   ;; NOTE: there's no "delimiter not allowed in #!r6rs mode" test for r7rs-style booleans because they are not r6rs!
   "; Test error \"#!eof syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!eof\n"
   "; Test error \"#!bwp syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!bwp\n"
