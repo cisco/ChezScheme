@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo 'travis_fold:start:test_env_variables'
-echo "Environment Variables:"
-set
-echo 'travis_fold:end:test_env_variables'
 if test -n "$PARALLEL_MATS" ; then
     njobs="$PARALLEL_MATS"
 else
