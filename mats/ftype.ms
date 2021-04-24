@@ -558,9 +558,11 @@
                        [(a6osx a6osx)
                         (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
                        [(a6nt ta6nt)
-                        (system (format "set cl= && ~a\\..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" *mats-dir* testfile.so testfile.c))]
+                        (system (format "set cl= && ~a\\..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
+                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
                        [(i3nt ti3nt)
-                        (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" *mats-dir* testfile.so testfile.c))]
+                        (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
+                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
                        [(arm32le tarm32le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...

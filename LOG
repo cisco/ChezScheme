@@ -2170,9 +2170,9 @@
     number.c 5_3.ms
 - refactor mats to allow different configurations to run in parallel.
   Add {partial,all,bully}xp ("p" for parallel) targets to the makefile.
-  Update travis-ci build scripts to use new partialx target and run two
-  jobs in parallel (because the default travis-ci environment has 2 cores).
+  Update travis-ci build scripts to use new partialx target and run
+  jobs in parallel (based on the number of cores available)
     .travis/{build.sh,test.sh}
     mats/{5_4,6,7,8,bytevector,examples,foreign}.ms
     mats/{ftype,hash,io,misc,primvars,profile,record}.ms
-    mats/MF-base mats/mat.ss mats/patch-interpret*
+    mats/MF-base mats/Mf-*nt mats/mat.ss mats/patch-interpret*
