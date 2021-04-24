@@ -31,4 +31,4 @@ cat_flush.exe: cat_flush.c
 	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /MD /nologo $<"
 
 cat_flush: cat_flush.exe
-           # empty recipe to avoid a default rule doing something stupid
+	# empty recipe to avoid a default rule doing something stupid
