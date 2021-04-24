@@ -1,7 +1,15 @@
 #!/bin/bash
 
-echo "Running test.sh; bash version $BASH_VERSION"
-make -C "$TARGET_MACHINE"/mats -j $(getconf _NPROCESSORS_ONLN) partialxp
+echo 'travis_fold:start:test_env_variables'
+echo "Environment Variables:"
+set
+echo 'travis_fold:end:test_env_variables'
+if test -n "$PARALLEL_MATS" ; then
+    njobs="$PARALLEL_MATS"
+else
+    njobs="$(getconf _NPROCESSORS_ONLN)"
+fi
+make -C "$TARGET_MACHINE"/mats -j "$njobs" partialxp
 
 if [ -f "$TARGET_MACHINE"/mats/summary ]; then
   diff -q .travis/summary "$TARGET_MACHINE"/mats/summary

@@ -6,14 +6,16 @@ jobs:
     # macOS
     - env: TARGET_MACHINE=i3osx
       os: osx
-    - env: TARGET_MACHINE=ti3osx
+    - env:
+      - TARGET_MACHINE=ti3osx
+      - PARALLEL_MATS=1
       os: osx
-      osx_image: xcode11.3 # latest for MacOS 10.14.6
     - env: TARGET_MACHINE=a6osx
       os: osx
-    - env: TARGET_MACHINE=ta6osx
+    - env:
+      - TARGET_MACHINE=ta6osx
+      - PARALLEL_MATS=1
       os: osx
-      osx_image: xcode11.3 # latest for MacOS 10.14.6
 
     # Linux
     - env: TARGET_MACHINE=i3le
