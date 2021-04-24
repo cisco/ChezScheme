@@ -267,7 +267,7 @@ To the degree that the runtime system needs global state, that state
 is in the thread context (so, it's thread-local), which we'll
 abbreviate as "TC". Some machine register is designated as the `%tc`
 register, and it's initialized on entry to Scheme code. For the
-defintion of TC, see `(define-primitive-structure-disps tc ...)` in
+definition of TC, see `(define-primitive-structure-disps tc ...)` in
 "cmacro.ss".
 
 The first several fields of TC are virtual registers that may be
@@ -306,7 +306,7 @@ frame is the return address, so a frame looks like this:
 
 On entry to a Scheme function, a check ensures that the difference
 between SFP and the end of the current stack segment is big enough to
-accomodate the (spilled) variables of the called function, plus enough
+accommodate the (spilled) variables of the called function, plus enough
 slop to deal with some primitive operations.
 
 A non-tail call moves SFP past all the live variables of the current
@@ -437,7 +437,7 @@ implementation.
 Finally, some primitives in "prims.ss" are implemented in the kernel
 and simply accessed with `foreign-procedure`. Other parts of the
 implementation also use `foreign-procedure` instead of having a
-defintion in "prims.ss".
+definition in "prims.ss".
 
 If you're looking for math primitives, see "mathprims.ss" instead of
 "prims.ss".
@@ -724,7 +724,7 @@ backend can assume that a `uvar` wil be replaced later by a register.
 When reading the compiler's implementation, `make-tmp` in most passes
 creates a `uvar` (that may eventually be spilled to a stack-frame
 slot). A `make-tmp` in the instruction-selection pass, however, makes
-an unspillable. In earlies passes of the compiler, new temporaries
+an unspillable. In earliest passes of the compiler, new temporaries
 must be bound with a `let` form (i.e., a `let` in the intermediate
 repressentation) before they can be used; in later passes, a `set!`
 initializes a temporary.
@@ -929,7 +929,7 @@ instruction for the register--register and the register--immediate
 cases. A more explicit distinction could be made in the output of
 instruction selection, but delaying the choice is anologous to how
 assembly languages often use the same mnemonic for related
-instructions. The `asm-move` and `asm-fpmove` must accomodate
+instructions. The `asm-move` and `asm-fpmove` must accommodate
 register--memory, memory--register, and register--register cases,
 because `set!` forms after instruction selection can have those
 variants.
@@ -1000,7 +1000,7 @@ handling in "compile.ss", and the update routine in "fasl.c".
 # Foreign Function ABI
 
 Support for foreign procedures and callables in Chez Scheme boils down
-to foriegn calls and callable stubs for the backend. A backend's
+to foreign calls and callable stubs for the backend. A backend's
 `asm-foreign-call` and `asm-foreign-callbable` function receives an
 `info-foreign` record, which describes the argument and result types
 in relatively primitive forms:
