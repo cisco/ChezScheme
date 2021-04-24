@@ -296,8 +296,7 @@ partialxp-targets: $(partialxp-confs:%=parallel%)
 
 partialxp: prettyclean
 	@echo building prereqs with output to Make.out
-	@$(MAKE) parallel-prereqs # > Make.out 2>&1
-	ls -ld *cat_flush*
+	@$(MAKE) parallel-prereqs > Make.out 2>&1
 	@$(MAKE) partialxp-targets
 	cat $(partialxp-confs:%=output-%/summary) > summary && cat summary
 
