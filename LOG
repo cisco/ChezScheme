@@ -2168,3 +2168,6 @@
     compile.ss 7.ms
 - fixed right shift of a negative bignum by a multiple of 32
     number.c 5_3.ms
+- fixed the documentation of load-shared-object to mention an up-to-date
+  dll for Windows
+    foreign.stex
