@@ -58,6 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Additional reader syntax for booleans (9.5.5)}
+
+The reader now case-insensitively accepts \scheme{#true} and
+\scheme{#false} as alternative spellings of the booleans \scheme{#t}
+and \scheme{#f}, respectively.
+
 \subsection{Incremental promotion of collected objects (9.5.3)}
 
 In previous versions of {\ChezScheme}, the collector always promoted
