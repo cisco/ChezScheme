@@ -439,8 +439,8 @@
   (with-read-char c
     (state-case c
       [eof (with-unread-char c (xcall rd-eof-error "# prefix"))]
-      [(#\f #\F) (xcall rd-token-delimiter #f "boolean")]
-      [(#\t #\T) (xcall rd-token-delimiter #t "boolean")]
+      [(#\f #\F) (*state rd-token-boolean #f)]
+      [(#\t #\T) (*state rd-token-boolean #t)]
       [#\\ (*state rd-token-char)]
       [#\( (state-return vparen #f)] ;) for paren bouncer
       [#\' (state-return quote 'syntax)]
@@ -475,6 +475,31 @@
                  (state-return atomic (maybe-fold/gensym (rcb-ip rcb) tb n slashed?)))))]
       [#\| (*state rd-token-block-comment 0)]
       [else (xcall rd-error #f #t "invalid sharp-sign prefix #~c" c)])))
+
+(define-state (rd-token-boolean x)
+  (with-peek-char c
+    (state-case c
+      [eof (state-return atomic x)]
+      [char-alphabetic?
+       ;; Trying to specify a R7RS boolean.
+       (let* ([s (if x "true" "false")]
+              [last-index (fx- (string-length s) 1)])
+         (*state rd-token-boolean-rest x s 1 last-index))]
+      [else (*state rd-token-delimiter x "boolean")])))
+
+(define-state (rd-token-boolean-rest x s i last-index)
+  (with-read-char c
+    (cond
+      [(eof-object? c)
+        ;; we ruled out a possible initial eof before, so it is always an error, here
+        (with-unread-char c (xcall rd-eof-error "boolean"))]
+      [(not (char-ci=? c (string-ref s i)))
+       (with-unread-char c
+         (xcall rd-error #f #t "invalid boolean #~a~c" (substring s 0 i) (char-downcase c)))]
+      [(fx= i last-index)
+       (nonstandard "alternative boolean")
+       (*state rd-token-delimiter x "boolean")]
+      [else (*state rd-token-boolean-rest x s (fx+ i 1) last-index)])))
 
 (define-state (rd-token-delimiter x what)
   (with-peek-char c

@@ -4621,6 +4621,11 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading s-expression comment at line 3, char 15 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
@@ -4689,6 +4694,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: octal character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid delimiter 1 for character at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: delimiter { is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid boolean #tra at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid boolean #falsi at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #!eof syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
@@ -4702,6 +4713,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -5404,6 +5421,11 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading s-expression comment at line 3, char 15 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
@@ -5472,6 +5494,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: octal character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid delimiter 1 for character at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: delimiter { is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid boolean #tra at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid boolean #falsi at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #!eof syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
@@ -5485,6 +5513,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -6187,6 +6221,11 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading character at line 2, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading boolean at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading s-expression comment at line 3, char 15 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading gensym at line 2, char 16 of testfile.ss".
@@ -6255,6 +6294,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: octal character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid delimiter 1 for character at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: delimiter { is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid delimiter 2 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid delimiter 3 for boolean at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid boolean #tra at line 3, char 1 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid boolean #falsi at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #!eof syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
@@ -6268,6 +6313,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+488 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @ symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @b symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".

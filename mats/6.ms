@@ -1731,6 +1731,30 @@
                            (lambda () (close-input-port ip))))])
       vals)
     '(atomic eat 1 4))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#t" read-token)) list)
+    '(atomic #t 0 2))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#true" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#True" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#TRUE" read-token)) list)
+    '(atomic #t 0 5))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#f" read-token)) list)
+    '(atomic #f 0 2))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#false" read-token)) list)
+    '(atomic #f 0 6))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#False" read-token)) list)
+    '(atomic #f 0 6))
+  (equal?
+    (call-with-values (lambda () (with-input-from-string "#FALSE" read-token)) list)
+    '(atomic #f 0 6))
  )
 
 (define read-test
@@ -1863,6 +1887,11 @@
   "; Test error \"unexpected end-of-file reading character\"\n#\\"
   "; Test error \"unexpected end-of-file reading character\"\n#\\new"
   "; Test error \"unexpected end-of-file reading character\"\n#\\02"
+  "; Test error \"unexpected end-of-file reading boolean\"\n\n#tr"
+  "; Test error \"unexpected end-of-file reading boolean\"\n\n#tru"
+  "; Test error \"unexpected end-of-file reading boolean\"\n\n#fa"
+  "; Test error \"unexpected end-of-file reading boolean\"\n\n#fal"
+  "; Test error \"unexpected end-of-file reading boolean\"\n\n#fals"
   "; Test error \"unexpected end-of-file reading expression comment\"\n\n(define oops '#; ; that's all I've got!\n"
   "; Test error \"unexpected end-of-file reading gensym\"\n(pretty-print '#{"
   "; Test error \"unexpected end-of-file reading gensym\"\n(pretty-print '#{foo"
@@ -1931,6 +1960,13 @@
   "; Test error \"octal character syntax not allowed in #!r6rs mode\"\n\n#!r6rs #\\010\n"
   "; Test error \"invalid delimiter 1 for character\"\n\n#\\0001\n"
   "; Test error \"delimiter { is not allowed in #!r6rs mode\"\n\n#!r6rs #\\0{\n"
+  "; Test error \"invalid delimiter 2 for boolean\"\n\n#t2\n"
+  "; Test error \"invalid delimiter 2 for boolean\"\n\n#true2\n"
+  "; Test error \"invalid delimiter 3 for boolean\"\n\n#f3\n"
+  "; Test error \"invalid delimiter 3 for boolean\"\n\n#false3\n"
+  "; Test error \"invalid boolean\"\n\n#travis"
+  "; Test error \"invalid boolean\"\n\n#FALSIFY"
+  ;; NOTE: there's no "delimiter not allowed in #!r6rs mode" test for r7rs-style booleans because they are not r6rs!
   "; Test error \"#!eof syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!eof\n"
   "; Test error \"#!bwp syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!bwp\n"
   "; Test error \"#vfx(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#vfx(1 2 3)\n"
@@ -1944,7 +1980,12 @@
   "; Test error \"123# number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 123#\n"
   "; Test error \"#x1/2e2 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs 1/2e2\n"
   "; Test error \"#x.3 number syntax not allowed in #!r6rs mode\"\n\n#!r6rs #x.3\n"
-
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #true\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #True\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #TRUE\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #false\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #False\n"
+  "; Test error \"alternative boolean syntax not allowed in #!r6rs mode\"\n\n#!r6rs #FALSE\n"
  ; following tests adapted from the read0 benchmark distributed by Will
  ; Clinger, which as of 08/08/2009 appears to be in the public domain,
  ; with no license, copyright notice, author name, or date.

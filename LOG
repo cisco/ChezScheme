@@ -2192,3 +2192,5 @@
 - fixed the documentation of load-shared-object to mention an up-to-date
   dll for Windows
     foreign.stex
+- New spellings #true and #false for #t and #f are recognized
+    read.ss 6.ms

@@ -58,6 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Additional reader syntax for booleans (9.5.5)}
+
+The reader now case-insensitively accepts \scheme{#true} and
+\scheme{#false} as alternative spellings of the booleans \scheme{#t}
+and \scheme{#f}, respectively.
+
 \subsection{Phantom bytevectors (9.5.1)}
 
 Phantom bytevectors reflect externally allocated memory use in an
