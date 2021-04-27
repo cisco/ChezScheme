@@ -248,6 +248,12 @@ parentheses, open and close brackets, double quotes, semi-colon,
 and \scheme{#}), {\ChezScheme} also treats as delimiters
 open and close braces, single quote, backward quote, and comma.
 
+Finally, {\ChezScheme} accepts \index{\scheme{#true}}\scheme{#true} and
+\index{\scheme{#false}}\scheme{#false} as alternative spellings of the booleans
+\scheme{#t} and \scheme{#f}. Like the external representation of numbers, case
+is not significant; for example, \scheme{#T}, \scheme{#True} and \scheme{#TRUE}
+are all equivalent.
+
 The {\ChezScheme} lexical extensions described above are disabled in an
 input stream after an \scheme{#!r6rs} comment directive has been seen,
 unless a \scheme{#!chezscheme} comment directive has been seen since.
