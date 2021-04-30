@@ -5,7 +5,7 @@ if test -n "$PARALLEL_MATS" ; then
 else
     njobs="$(getconf _NPROCESSORS_ONLN)"
 fi
-make -C "$TARGET_MACHINE"/mats -j "$njobs" partialxp
+make -C "$TARGET_MACHINE"/mats -j "$njobs" partialx
 
 if [ -f "$TARGET_MACHINE"/mats/summary ]; then
   diff -q .travis/summary "$TARGET_MACHINE"/mats/summary
