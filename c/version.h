@@ -35,6 +35,8 @@
 
 #if (machine_type == machine_type_pb)
 # undef FLUSHCACHE
+#else
+# undef PORTABLE_BYTECODE_BIGENDIAN
 #endif
 
 /*****************************************/

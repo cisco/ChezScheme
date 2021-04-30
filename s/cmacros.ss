@@ -396,6 +396,15 @@
   arm64le   tarm64le
   arm64osx  tarm64osx
   ppc32osx  tppc32osx
+  arm32fb   tarm32fb
+  ppc32fb   tppc32fb
+  arm64fb   tarm64fb
+  arm32ob   tarm32ob
+  ppc32ob   tppc32ob
+  arm64ob   tarm64ob
+  arm32nb   tarm32nb
+  ppc32nb   tppc32nb
+  arm64nb   tarm64nb
 )
 
 (include "machine.def")

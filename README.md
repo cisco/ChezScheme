@@ -8,9 +8,9 @@ Supported platforms:
  * Windows: x86, x86_64
  * Mac OS: x86, x86_64, AArch64, PowerPC32
  * Linux: x86, x86_64, ARMv6, AArch64, PowerPC32
- * FreeBSD: x86, x86_64
- * OpenBSD: x86, x86_64
- * NetBSD: x86, x86_64
+ * FreeBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
+ * OpenBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
+ * NetBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
  * Solaris: x86, x86_64
  * Android: ARMv7, AArch64
  * iOS: AArch64

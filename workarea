@@ -54,7 +54,13 @@ case "$Mhost" in
   a6osx) ;;
   a6s2) ;;
   arm32le) ;;
+  arm32fb) ;;
+  arm32ob) ;;
+  arm32nb) ;;
   arm64le) ;;
+  arm64fb) ;;
+  arm64ob) ;;
+  arm64nb) ;;
   arm64osx) ;;
   i3fb) ;;
   i3le) ;;
@@ -65,7 +71,9 @@ case "$Mhost" in
   i3qnx) ;;
   i3s2) ;;
   ppc32le) ;;
-  ppc32osx) ;;
+  ppc32fb) ;;
+  ppc32ob) ;;
+  ppc32nb) ;;
   ppc32osx) ;;
   arm64osx) ;;
   ta6fb) ;;
@@ -76,7 +84,13 @@ case "$Mhost" in
   ta6osx) ;;
   ta6s2) ;;
   tarm32le) ;;
+  tarm32fb) ;;
+  tarm32ob) ;;
+  tarm32nb) ;;
   tarm64le) ;;
+  tarm64fb) ;;
+  tarm64ob) ;;
+  tarm64nb) ;;
   tarm64osx) ;;
   ti3fb) ;;
   ti3le) ;;
@@ -86,6 +100,9 @@ case "$Mhost" in
   ti3osx) ;;
   ti3s2) ;;
   tppc32le) ;;
+  tppc32fb) ;;
+  tppc32ob) ;;
+  tppc32nb) ;;
   tppc32osx) ;;
   tarm64osx) ;;
   *) echo "Unrecognized machine name $Mhost"; exit 1 ;;

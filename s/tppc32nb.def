@@ -1,0 +1,5 @@
+(define-constant machine-type (constant machine-type-tppc32nb))
+(features iconv expeditor pthreads)
+(define-constant time-t-bits 64)
+(include "ppc32.def")
+(include "default.def")

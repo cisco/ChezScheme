@@ -94,20 +94,7 @@ fi
 
 case "${CONFIG_UNAME}" in
   Linux)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
-      m32=i3le
-      m64=a6le
-      tm32=ti3le
-      tm64=ta6le
-    elif uname -a | grep -i power > /dev/null 2>&1 ; then
-      m32=ppc32le
-      tm32=tppc32le
-    elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
-      m32=arm32le
-      m64=arm64le
-      tm32=tarm32le
-      tm64=tarm64le
-    fi
+    unixsuffix=le
     installprefix=/usr
     installmansuffix=share/man
     ;;
@@ -120,32 +107,17 @@ case "${CONFIG_UNAME}" in
     installmansuffix=man
     ;;
   FreeBSD)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
-      m32=i3fb
-      m64=a6fb
-      tm32=ti3fb
-      tm64=ta6fb
-    fi
+    unixsuffix=fb
     installprefix=/usr/local
     installmansuffix=man
     ;;
   OpenBSD)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
-      m32=i3ob
-      m64=a6ob
-      tm32=ti3ob
-      tm64=ta6ob
-    fi
+    unixsuffix=ob
     installprefix=/usr/local
     installmansuffix=man
     ;;
   NetBSD)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
-      m32=i3nb
-      m64=a6nb
-      tm32=ti3nb
-      tm64=ta6nb
-    fi
+    unixsuffix=nb
     installprefix=/usr
     installmansuffix=share/man
     gzipmanpages=no
@@ -189,6 +161,23 @@ case "${CONFIG_UNAME}" in
     fi
     ;;
 esac
+
+if [ "$unixsuffix" != "" ] ; then
+    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+        m32=i3${unixsuffix}
+        m64=a6${unixsuffix}
+        tm32=ti3${unixsuffix}
+        tm64=ta6${unixsuffix}
+    elif uname -a | egrep 'power|macppc' > /dev/null 2>&1 ; then
+        m32=ppc32${unixsuffix}
+        tm32=tppc32${unixsuffix}
+    elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
+        m32=arm32${unixsuffix}
+        m64=arm64${unixsuffix}
+        tm32=tarm32${unixsuffix}
+        tm64=tarm64${unixsuffix}
+    fi
+fi
 
 threads=""
 bits=""
@@ -510,35 +499,14 @@ if [ "$cflagsset" = "no" ] ; then
     a6le)
         CFLAGS="-m64 -msse2 ${optFlags}"
         ;;
-    a6fb|a6nb|a6ob)
-        CFLAGS="-m64 ${optFlags}"
-        ;;
-    a6s2)
-        CFLAGS="-m64 ${optFlags}"
-        ;;
-    a6osx)
-        CFLAGS="-m64 ${optFlags}"
-        ;;
-    arm64osx)
-        CFLAGS="-arch arm64 ${optFlags}"
-        ;;
     a6nt)
         CFLAGS="${optFlags}"
         ;;
-    arm32le|tarm32le|arm64le|tarm64le)
-        CFLAGS="${optFlags}"
+    a6*)
+        CFLAGS="-m64 ${optFlags}"
         ;;
     i3le)
         CFLAGS="-m32 -msse2 ${optFlags}"
-        ;;
-    i3fb|i3nb|i3ob)
-        CFLAGS="-m32 ${optFlags}"
-        ;;
-    i3s2)
-        CFLAGS="-m32 ${optFlags}"
-        ;;
-    i3osx)
-        CFLAGS="-m32 ${optFlags}"
         ;;
     i3nt)
         CFLAGS="${optFlags}"
@@ -547,11 +515,20 @@ if [ "$cflagsset" = "no" ] ; then
         CC=qcc
         CFLAGS="-m32 -N2048K ${optFlags}"
         ;;
-    ppc32le)
+    i3*)
         CFLAGS="-m32 ${optFlags}"
+        ;;
+    arm32*)
+        CFLAGS="-m32 ${optFlags}"
+        ;;
+    arm64osx)
+        CFLAGS="-arch arm64 ${optFlags}"
         ;;
     ppc32osx)
         CFLAGS="${optFlags}"
+        ;;
+    ppc32*)
+        CFLAGS="-m32 ${optFlags}"
         ;;
   esac
 fi
@@ -726,12 +703,12 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
-    ppc32le|arm32le|arm64le)
-        ;;
-    a6fb|a6ob|a6nb|i3fb|i3ob)
+    *le)
         ;;
     i3nb)
         mdldflags="-m elf_i386"
+        ;;
+    *fb|*ob|*nb)
         ;;
     *osx)
         ;;

@@ -43,6 +43,13 @@ void S_doflush(uptr start, uptr end) {
   sys_icache_invalidate((void *)start, (char *)end-(char *)start);
 #else
   __clear_cache((char *)start, (char *)end);
+# if defined(__clang__) && defined(__aarch64__) && !defined(__APPLE__)
+  /* Seem to need an extra combination of barriers here to make up for
+     something in Clang's __clear_cache() */
+  asm volatile ("dsb ish\n\t"
+                "isb"
+                : : : "memory");
+# endif
 #endif
 }
 
