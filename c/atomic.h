@@ -1,6 +1,6 @@
 #if !defined(PTHREADS)
 # define STORE_FENCE() do { } while (0)
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 # define STORE_FENCE() __asm__ __volatile__ ("dmb ishst" : : : "memory")
 # define ACQUIRE_FENCE() __asm__ __volatile__ ("dmb ish" : : : "memory")
 # define RELEASE_FENCE() ACQUIRE_FENCE()
@@ -35,7 +35,7 @@
   
 #if !defined(PTHREADS)
 # define CAS_ANY_FENCE(a, old, new) ((*(a) == (old)) ? (*(a) = (new), 1) : 0)
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 FORCEINLINE int CAS_LOAD_ACQUIRE(volatile void *addr, void *old_val, void *new_val) {
   long ret;
   __asm__ __volatile__ ("mov %0, #0\n\t"       
