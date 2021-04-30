@@ -14,6 +14,7 @@
          "scheme-readtable.rkt"
          "parse-makefile.rkt"
          "config.rkt"
+         "machine-def.rkt"
          "strip.rkt")
 
 ;; Set `SCHEME_SRC` and `MACH` to specify the ChezScheme source
@@ -243,14 +244,14 @@
                (loop
                 #`(begin #,@(with-source-path 'include (syntax->datum #'fn)
                               (lambda (n)
-                                (call-with-input-file*
-                                 n
-                                 (lambda (i)
-                                   (let loop ()
-                                     (define r (read-syntax n i))
-                                     (if (eof-object? r)
-                                         '()
-                                         (cons r (loop))))))))))]
+                                (define i (open-file-with-machine.def-redirect n target-machine 'same))
+                                (begin0
+                                  (let loop ()
+                                    (define r (read-syntax n i))
+                                    (if (eof-object? r)
+                                        '()
+                                        (cons r (loop))))
+                                  (close-input-port i))))))]
               [(constant-case architecture [else e ...])
                (loop #`(begin e ...))]
               [(constant-case architecture [(arch ...) e ...] . _)

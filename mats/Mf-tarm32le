@@ -1,5 +1,0 @@
-# Mf-tarm32le
-
-m = tarm32le
-
-include Mf-arm32le

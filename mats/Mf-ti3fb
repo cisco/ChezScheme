@@ -1,7 +1,0 @@
-# Mf-ti3fb
-
-m = ti3fb
-
-threadFlags = -pthread
- 
-include Mf-i3fb

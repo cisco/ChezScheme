@@ -22,6 +22,7 @@
          "record.rkt"
          (for-syntax "record.rkt")
          "constant.rkt"
+         "machine-def.rkt"
          (only-in "r6rs-lang.rkt"
                   make-record-constructor-descriptor
                   set-car!
@@ -345,7 +346,6 @@
 (define-syntax include
   (lambda (stx)
     (syntax-case stx ()
-      [(form "machine.def") #`(form ,(string-append target-machine ".def"))]
       [(form p) #'(r:include-at/relative-to form form p)])))
 
 ;; If we have to avoid `read-syntax`:
@@ -353,7 +353,6 @@
 (define-syntax include
   (lambda (stx)
     (syntax-case stx ()
-      [(form "machine.def") #`(form #,(string-append target-machine ".def"))]
       [(form p)
        (let ([r (call-with-input-file*
                  (syntax->datum #'p)
@@ -1167,11 +1166,7 @@
 (define who 'some-who)
 
 (define (with-source-path who name procedure)
-  (cond
-    [(equal? name "machine.def")
-     (procedure (string-append target-machine ".def"))]
-    [else
-     (procedure name)]))
+  (procedure name))
 
 (define ($make-source-oops . args) #f)
 
@@ -1192,7 +1187,7 @@
 (define (interpret e) (eval e))
 
 (define ($open-file-input-port who filename [options #f])
-  (open-input-file filename))
+  (open-file-with-machine.def-redirect filename target-machine 'same))
 
 (define ($open-file-output-port who filename options)
   (open-output-file filename #:exists (if (eval `(enum-set-subset? (file-options replace) ',options))

@@ -1,7 +1,8 @@
 #lang racket/base
 (require racket/match
          "scheme-readtable.rkt"
-         "config.rkt")
+         "config.rkt"
+         "machine-def.rkt")
 
 ;; Extract constants that we need to get started by reading
 ;; "cmacros.ss" and the machine ".def" file (without trying to run or
@@ -58,13 +59,13 @@
     [else e]))
 
 (define (read-constants-from-file fn)
-  (call-with-input-file
-   (build-path scheme-dir "s" fn)
-   read-constants))
+  (define i (open-file-with-machine.def-redirect fn target-machine (build-path scheme-dir "s")))
+  (begin0
+    (read-constants i)
+    (close-input-port i)))
 
 (when scheme-dir
-  (read-constants-from-file
-   (string-append target-machine ".def"))
+  (read-constants-from-file "machine.def")
   (read-constants-from-file "cmacros.ss"))
 
 (define-syntax-rule (define-constant id ...)

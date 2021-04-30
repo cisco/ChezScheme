@@ -1,9 +1,0 @@
-# Mf-pb
-
-# Override definitions in `Mf-pbhost`
-m = pb
-Cpu = PORTABLE_BYTECODE
-mdsrc = pb.c
-mdobj = pb.o
-
-include Mf-pbhost

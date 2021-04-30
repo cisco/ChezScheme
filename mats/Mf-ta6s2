@@ -1,7 +1,0 @@
-# Mf-ta6s2
-
-m = ta6s2
-
-threadFlags = -D_REENTRANT
-
-include Mf-a6s2

@@ -22,7 +22,7 @@ base = ../..
 
 xdoit:	xboot
 
-include Mf-${xm}
+include Mf-base
 
 Scheme=$(base)/bin/${m}/scheme
 export SCHEMEHEAPDIRS=$(base)/boot/${m}
@@ -34,7 +34,7 @@ xpatch = xpatch
 xpatchobj = ${patchobj}
 
 xboot: ${xpatch}
-	$(MAKE) -f Mf-${xm} ${what} m=${xm} patchfile=${xpatch} Scheme="${Scheme}" SCHEMEHEAPDIRS=${SCHEMEHEAPDIRS}
+	$(MAKE) -f Mf-base ${what} m=${xm} patchfile=${xpatch} Scheme="${Scheme}" SCHEMEHEAPDIRS=${SCHEMEHEAPDIRS}
 
 ${xpatch}: ${xpatchobj}
 	cat ${xpatchobj} > ${xpatch}

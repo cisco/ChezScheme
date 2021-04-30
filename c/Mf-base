@@ -15,6 +15,9 @@
 
 include Mf-config
 
+mdsrc ?= ${mdarchsrc}.c
+mdobj ?= ${mdarchsrc}.o
+
 Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot

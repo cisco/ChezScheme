@@ -1,7 +1,0 @@
-# Mf-ta6le
-
-m = ta6le
-
-threadFlags = -pthread
-
-include Mf-a6le

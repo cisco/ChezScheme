@@ -1,7 +1,0 @@
-# Mf-ti3le
-
-m = ti3le
-
-threadFlags = -pthread
-
-include Mf-i3le

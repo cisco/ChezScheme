@@ -1184,6 +1184,8 @@
 
         (nl)
         (comment "threads")
+        (when-feature pthreads
+          (pr "#define scheme_feature_pthreads 1~%"))
         (defref THREADTYPE thread type)
         (defref THREADTC thread tc)
 

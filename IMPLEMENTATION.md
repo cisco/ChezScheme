@@ -23,9 +23,10 @@ Some key files in "s":
  * "x86_64.ss", "arm64.ss", etc.: backends that are used by
    "cpnanopass.ss" and "cpprim.ss"
 
- * "ta6os.def", "tarm64le", etc.: one per OS-architecture combination,
-   provides platform-specific constants that feed into "cmacro.ss" and
-   selects the backend used by "cpnanopass.ss" and "cpprim.ss"
+ * "ppc32osx.def", "tppc32osx.def", etc., with common combinations
+   produced from the "unix.def" and "tunix.def" templates: provides
+   platform-specific constants that feed into "cmacro.ss" and selects
+   the backend used by "cpnanopass.ss" and "cpprim.ss"
 
 Chez Scheme is a bootstrapped compiler, meaning you need a Chez Scheme
 compiler to build a Chez Scheme compiler. The compiler and makefiles
@@ -54,11 +55,13 @@ directory "boot/*machine-type*". (If it doesn't find them, then
 configuration cannot continue.)
 
 The supported machine types are listed in "cmacros.ss" and reflected
-by a "boot/*machine-type*" directory for boot and headers files, a
-"s/*machine-type*.def" file to describe the platform, a
-"s/Mf-*machine-type*" makefile to select relevant files in "s", a
-"c/Mf-*machine-type*" makefile for configration in "c", and a
-"mats/Mf-*machine-type*" makefile to configure testing.
+by a "boot/*machine-type*" directory for boot and headers files and a
+combination of "s/*kind*.def" files to describe the platform. There
+may also be a "s/Mf-*machine-type*" makefile to select relevant files
+in "s", a "c/Mf-*machine-type*" makefile for configration in "c", and
+a "mats/Mf-*machine-type*" makefile to configure testing, but Unix
+machine types are handled by Mf-unix and variables configured in the
+"configure" and "workarea" scripts.
 
 The "workarea" script in the root of the Chez Scheme project is used
 to generate a subdirectory with the appropriate contents to build for
@@ -89,21 +92,23 @@ handled by having the Scheme compiler generate a couple of C headers:
 "scheme.h" and "equates.h", that the contain the information about the
 Scheme compiler the C kernel needs to do its job.
 
-Most of the work of porting to a new platform is producing a new
-"*machine-type*.def" file, which (except in simple ports to a new
-operating system) will require a new "*ISA*.ss" compiler backend.
-You'll also have to set up all the "Mf-*machine-type*" makefiles and
-update "configure", "cmacro.ss", and "version.h"---plus maybe other
-files, such as "workarea" if you create new dependencies among "Mf-"
-or ".def" files (e.g., "workarea" needs to know that "a6nt.def" uses
-"a6.def" and "nt.def"). Once you have all of the pieces working
-together, you cross-compile boot files, then copy them over to the the
-new machine to start compiling there.
+You can port to a new operating system by imitating the files and
+configuration of a similar supported operating system, but building a
+new backend for a new processor requires much more understanding of
+the compiler and runtime system.
 
-You can port to a new operating system by imitating the files of a
-similar supported oerating system, but building a new backend for a
-new processor requires much more understanding of the compiler and
-runtime system.
+Most of the work of porting to a new architecture is producing a new
+"*ISA*.ss" compiler backend, and there will be a "*arch*.def" file to
+go with it. For all ports, including a new operating system on an
+already-supported architecture, you'll need to update "configure",
+"workarea", "cmacro.ss", and possibly "version.h". If the generic
+"unix.def" and/or "tunix.def" templates do not work for the
+OS--architecture combination, you'll need to create a new
+"*machine-type*.def" file.
+
+Once you have all of the pieces working together, you cross-compile
+boot files, then copy them over to the the new machine to start
+compiling there.
 
 # Adding Functionality
 

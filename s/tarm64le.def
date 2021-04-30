@@ -1,6 +1,0 @@
-;;; tarm64le.def
-
-(define-constant machine-type (constant machine-type-tarm64le))
-(features iconv expeditor pthreads)
-(include "arm64.def")
-(include "default.def")

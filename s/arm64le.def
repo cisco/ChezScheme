@@ -1,6 +1,0 @@
-;;; arm64le.def
-
-(define-constant machine-type (constant machine-type-arm64le))
-(features iconv expeditor)
-(include "arm64.def")
-(include "default.def")

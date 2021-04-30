@@ -1,7 +1,0 @@
-# Mf-ta6nb
-
-m = ta6nb
-
-threadFlags = -pthread
-
-include Mf-a6nb

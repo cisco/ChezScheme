@@ -1,5 +1,0 @@
-# Mf-ti3fb
-
-m ?= ti3fb
-
-include Mf-i3fb

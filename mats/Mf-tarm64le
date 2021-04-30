@@ -1,5 +1,0 @@
-# Mf-tarm64le
-
-m = tarm64le
-
-include Mf-arm64le

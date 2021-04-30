@@ -1,5 +1,0 @@
-# Mf-tppc32le
-
-m ?= tppc32le
-
-include Mf-ppc32le

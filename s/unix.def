@@ -1,0 +1,7 @@
+;; This template is turned into a machine-specific ".def" file
+;; by the `workarea` script
+
+(define-constant machine-type (constant machine-type-$(M)))
+(features iconv expeditor)
+(include "$(March).def")
+(include "default.def")

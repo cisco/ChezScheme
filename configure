@@ -101,9 +101,7 @@ case "${CONFIG_UNAME}" in
       tm64=ta6le
     elif uname -a | grep -i power > /dev/null 2>&1 ; then
       m32=ppc32le
-      m64=""
       tm32=tppc32le
-      tm64=""
     elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
       m32=arm32le
       m64=arm64le
@@ -500,60 +498,91 @@ case "${flagsm}" in
       ;;
 esac
 
+flagsmuni=`echo $flagsm | sed -e 's/^t//'`
+muni=`echo $m | sed -e 's/^t//'`
+
 # Set default CFLAGS if not provided at all. Assuming that the
 # compiler is for the right platform, compilation should generally
 # succeed if no flags are set; anything required should be propagated
 # a different way
 if [ "$cflagsset" = "no" ] ; then
-  case "${flagsm}" in
-    a6le|ta6le)
+  case "${flagsmuni}" in
+    a6le)
         CFLAGS="-m64 -msse2 ${optFlags}"
         ;;
-    a6fb|ta6fb|a6nb|ta6nb|a6ob|ta6ob)
+    a6fb|a6nb|a6ob)
         CFLAGS="-m64 ${optFlags}"
         ;;
-    a6s2|ta6s2)
+    a6s2)
         CFLAGS="-m64 ${optFlags}"
         ;;
-    a6osx|ta6osx)
+    a6osx)
         CFLAGS="-m64 ${optFlags}"
         ;;
-    arm64osx|tarm64osx)
+    arm64osx)
         CFLAGS="-arch arm64 ${optFlags}"
         ;;
-    a6nt|ta6nt)
+    a6nt)
         CFLAGS="${optFlags}"
         ;;
     arm32le|tarm32le|arm64le|tarm64le)
         CFLAGS="${optFlags}"
         ;;
-    i3le|ti3le)
+    i3le)
         CFLAGS="-m32 -msse2 ${optFlags}"
         ;;
-    i3fb|ti3fb|i3nb|ti3nb|i3ob|ti3ob)
+    i3fb|i3nb|i3ob)
         CFLAGS="-m32 ${optFlags}"
         ;;
-    i3s2|ti3s2)
+    i3s2)
         CFLAGS="-m32 ${optFlags}"
         ;;
-    i3osx|ti3osx)
+    i3osx)
         CFLAGS="-m32 ${optFlags}"
         ;;
-    i3nt|ti3nt)
+    i3nt)
         CFLAGS="${optFlags}"
         ;;
     i3qnx)
         CC=qcc
         CFLAGS="-m32 -N2048K ${optFlags}"
         ;;
-    ppc32le|tppc32le)
+    ppc32le)
         CFLAGS="-m32 ${optFlags}"
         ;;
-    ppc32osx|tppc32osx)
+    ppc32osx)
         CFLAGS="${optFlags}"
         ;;
   esac
 fi
+
+# architecture-specific for Mf-unix
+case "${muni}" in
+  pb)
+      Cpu=PORTABLE_BYTECODE
+      mdarchsrc=pb
+      ;;
+  a6*)
+      Cpu=X86_64
+      mdarchsrc=i3le
+      ;;
+  i3*)
+      Cpu=I386
+      mdarchsrc=i3le
+      ;;
+  arm32*)
+      Cpu=ARMV6
+      mdarchsrc=arm32le
+      ;;
+  arm64*)
+      Cpu=AARCH64
+      mdarchsrc=arm32le
+      ;;
+  ppc32*)
+      Cpu=PPC32
+      mdarchsrc=ppc32
+      ;;
+esac
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
@@ -653,6 +682,84 @@ fi
 if [ ! -f "$srcdir"/stex/Mf-stex ] ; then
     submod_instructions 'Source in "stex" is missing'
 fi
+
+# more compile and link flags for c/Mf-unix and mats/Mf-unix
+mdinclude=
+mdcppflags=
+mdcflags=
+mdldflags=
+mdlinkflags= 
+zlibConfigureFlags=
+exePostStep=":"
+
+# compile flags for c/Mf-unix and mats/Mf-unix
+case "${flagsmuni}" in
+    *le)
+        mdcflags="-fPIC -shared"
+        ;;
+    *fb|*ob)
+        mdcflags="-fPIC -shared"
+        mdinclude="-I/usr/local/include -I/usr/X11R6/include"
+        ;;
+    *nb)
+        mdcflags="-fPIC -shared"
+        mdinclude="-I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include"
+        ;;
+    *osx)
+        mdcflags="-dynamiclib -undefined dynamic_lookup"
+        ;;
+    *s2)
+        mdcflags="-fPIC -shared"
+        mdcppflags="-DSOLARIS"
+        ;;
+    *qnx)
+        mdcflags="-fPIC -shared"
+        mdinclude="-I/usr/local/include"
+        ;;
+esac
+
+# dynamic linking flags for c/Mf-unix
+case "${flagsmuni}" in
+    a6le)
+        mdldflags="-melf_x86_64"
+        ;;
+    i3le)
+        mdldflags="-melf_i386"
+        ;;
+    ppc32le|arm32le|arm64le)
+        ;;
+    a6fb|a6ob|a6nb|i3fb|i3ob)
+        ;;
+    i3nb)
+        mdldflags="-m elf_i386"
+        ;;
+    *osx)
+        ;;
+    a6s2)
+        mdldflags="-melf_x86_64"
+        ;;
+    i3s2)
+        mdldflags="-melf_i386"
+        ;;
+    i3qnx)
+        mdlinkflags="-Wl,--export-dynamic"
+        mdldflags="-mi386nto"
+        ;;
+esac
+
+# post-link-executable step for c/Mf-unix
+case "${flagsmuni}" in
+    *nb)
+        exePostStep='paxctl +m ${Scheme}'
+        ;;
+esac
+
+# zlib configure flags for c/Mf-unix
+case "${flagsmuni}" in
+    a6*)
+        zlibConfigureFlags="--64"
+        ;;
+esac
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
   echo "Configuring for $m"
@@ -781,6 +888,15 @@ esac
 
 cat > $w/c/Mf-config << END
 upupsrcdir=$upupsrcdir
+m=$m
+Cpu=$Cpu
+mdarchsrc=$mdarchsrc
+mdinclude=$mdinclude
+mdcppflags=$mdcppflags
+mdldflags=$mdldflags
+mdlinkflags=$mdlinkflags
+exePostStep=$exePostStep
+zlibConfigureFlags=
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
@@ -807,4 +923,13 @@ Kernel=\${${Kernel}}
 KernelLinkDeps=\${${Kernel}LinkDeps}
 KernelLinkLibs=\${${Kernel}LinkLibs}
 C=\${CC} \${CPPFLAGS} \${CFLAGS} \${warningFlags}
+END
+
+cat > $w/mats/Mf-config << END
+upupsrcdir=$upupsrcdir
+m=$m
+mdcflags=$mdcflags
+CC=$CC
+CPPFLAGS=$CPPFLAGS
+CFLAGS=$CFLAGS
 END

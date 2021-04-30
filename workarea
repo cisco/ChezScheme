@@ -68,28 +68,36 @@ case "$Mhost" in
   ppc32osx) ;;
   ppc32osx) ;;
   arm64osx) ;;
-  ta6fb) Muni=a6fb ;;
-  ta6le) Muni=a6le ;;
-  ta6nb) Muni=a6nb ;;
-  ta6nt) Muni=a6nt ;;
-  ta6ob) Muni=a6ob ;;
-  ta6osx) Muni=a6osx ;;
-  ta6s2) Muni=a6s2 ;;
-  tarm32le) Muni=arm32le ;;
-  tarm64le) Muni=arm64le ;;
-  tarm64osx) Muni=arm64osx ;;
-  ti3fb) Muni=i3fb ;;
-  ti3le) Muni=i3le ;;
-  ti3nb) Muni=i3nb ;;
-  ti3nt) Muni=i3nt ;;
-  ti3ob) Muni=i3ob ;;
-  ti3osx) Muni=i3osx ;;
-  ti3qnx) Muni=i3qnx ;;
-  ti3s2) Muni=i3s2 ;;
-  tppc32le) Muni=ppc32le ;;
-  tppc32osx) Muni=ppc32osx ;;
-  tarm64osx) Muni=arm64osx ;;
+  ta6fb) ;;
+  ta6le) ;;
+  ta6nb) ;;
+  ta6nt) ;;
+  ta6ob) ;;
+  ta6osx) ;;
+  ta6s2) ;;
+  tarm32le) ;;
+  tarm64le) ;;
+  tarm64osx) ;;
+  ti3fb) ;;
+  ti3le) ;;
+  ti3nb) ;;
+  ti3nt) ;;
+  ti3ob) ;;
+  ti3osx) ;;
+  ti3s2) ;;
+  tppc32le) ;;
+  tppc32osx) ;;
+  tarm64osx) ;;
   *) echo "Unrecognized machine name $Mhost"; exit 1 ;;
+esac
+
+Muni=`echo $M | sed -e 's/^t//'`
+
+# If Mtype is set, then Mf-$Mtype is used,
+# otherwise Mf-$M and Mf-$Muni is used
+case "$Mhost" in
+  *nt) ;;
+  *) Mtype=unix ;;
 esac
 
 if [ "$Muni" != "" ] ; then
@@ -98,30 +106,37 @@ else
     Muniarch=$Mhost
 fi    
 
-case "$Muniarch" in
-  a6fb) March=a6 ;;
-  a6le) March=a6 ;;
-  a6nb) March=a6 ;;
-  a6nt) March=a6 ;;
-  a6ob) March=a6 ;;
-  a6osx) March=a6 ;;
-  a6s2) March=a6 ;;
-  arm32le) March=arm32 ;;
-  arm64le) March=arm64 ;;
-  arm64osx) March=arm64 ;;
-  i3fb) March=i3 ;;
-  i3le) March=i3 ;;
-  i3nb) March=i3 ;;
-  i3nt) March=i3 ;;
-  i3ob) March=i3 ;;
-  i3osx) March=i3 ;;
-  i3qnx) March=i3 ;;
-  i3s2) March=i3 ;;
-  ppc32le) March=ppc32 ;;
-  ppc32osx) March=ppc32 ;;
-  *) March="" ;;
+case "$Muni" in
+    a6*)
+        March=a6
+        archincludes=x86_64.ss
+        ;;
+    arm32*)
+        March=arm32
+        archincludes=arm32.ss
+        ;;
+    arm64*)
+        March=arm64
+        archincludes=arm64.ss
+        ;;
+    i3*)
+        March=i3
+        archincludes=x86.ss
+        ;;
+    ppc32*)
+        March=ppc32
+        archincludes=ppc32.ss
+        ;;
+    pb)
+        March=pb
+        archincludes=pb.ss
+        ;;
+    *)
+        March=""
+        archincludes=""
+        ;;
 esac
-  
+
 case "$Muniarch" in
   a6nt) Mos=nt ;;
   i3nt) Mos=nt ;;
@@ -182,6 +197,9 @@ workln()
 # attempts to create link even if source does not exist
 forceworkln()
 {
+    if [ -h $2 ] ; then
+        rm $2
+    fi
     if [ ! -e $2 ] ; then
         ln -s "$1" $2 2> /dev/null
     fi
@@ -205,14 +223,15 @@ workdir()
 workdir $W
 
 workdir $W/c
-(cd $W/c; workln "$upupsrcdir"/c/Mf-$M Mf-$M)
-(cd $W/c; forceworkln Mf-$M Makefile)
-if [ "$Muni" != "" ] ; then
-  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Muni Mf-$Muni)
-fi
-if [ "$Mpbhost" != "" ] ; then
-  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mpbhost Mf-$Mpbhost)
-  (cd $W/c; forceworkln Mf-$Mpbhost Mf-pbhost)
+if [ "$Mtype" != "" ] ; then
+  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mtype Mf-$Mtype)
+  (cd $W/c; forceworkln Mf-$Mtype Makefile)
+else
+  (cd $W/c; workln "$upupsrcdir"/c/Mf-$M Mf-$M)
+  (cd $W/c; forceworkln Mf-$M Makefile)
+  if [ "$Muni" != "" ] ; then
+    (cd $W/c; workln "$upupsrcdir"/c/Mf-$Muni Mf-$Muni)
+  fi
 fi
 (cd $W/c; workln "$upupsrcdir"/c/Mf-base Mf-base)
 if [ ! -e $W/c/config.h ] ; then
@@ -228,14 +247,34 @@ case $M in
 esac
 
 workdir $W/s
-(cd $W/s; workln ${upupsrcdir}/s/Mf-$M Mf-$M)
-(cd $W/s; forceworkln Mf-$M Makefile)
-if [ "$Muni" != "" ] ; then
-  (cd $W/s; workln ${upupsrcdir}/s/Mf-$Muni Mf-$Muni)
+if [ "$Mtype" != "" ] ; then
+  (cd $W/s; workln ${upupsrcdir}/s/Mf-$Mtype Mf-$Mtype)
+  (cd $W/s; forceworkln Mf-$Mtype Makefile)
+else
+  (cd $W/s; workln ${upupsrcdir}/s/Mf-$M Mf-$M)
+  (cd $W/s; forceworkln Mf-$M Makefile)
+  if [ "$Muni" != "" ] ; then
+    (cd $W/s; workln ${upupsrcdir}/s/Mf-$Muni Mf-$Muni)
+  fi
 fi
 (cd $W/s; workln "$upupsrcdir"/s/Mf-base Mf-base)
 (cd $W/s; workln "$upupsrcdir"/s/Mf-cross Mf-cross)
-(cd $W/s; workln "$upupsrcdir"/s/$M.def $M.def)
+if [ -e "$srcdir"/s/$M.def ] ; then
+  (cd $W/s; workln "$upupsrcdir"/s/$M.def $M.def)
+else
+    # synthesize generic Unix .def file
+    if [ -h $W/s/$M.def ] ; then
+        rm $W/s/$M.def
+    fi
+    if [ $"M" = "$Muni" ] ; then
+        Munix=unix
+    else
+        Munix=tunix
+    fi
+    sed -e 's/$(M)/'$M'/g'\
+        -e 's/$(March)/'$March'/g'\
+        "$srcdir"/s/${Munix}.def > $W/s/$M.def
+fi
 (cd $W/s; forceworkln2 $M.def machine.def)
 if [ "$March" != "" ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$March.def $March.def)
@@ -246,10 +285,15 @@ fi
 (cd $W/s; workln "$upupsrcdir"/s/default.def default.def)
 
 workdir $W/mats
-(cd $W/mats; workln "$upupsrcdir"/mats/Mf-$M Mf-$M)
-(cd $W/mats; forceworkln Mf-$M Makefile)
-if [ "$Muni" != "" ] ; then
-  (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Muni Mf-$Muni)
+if [ "$Mtype" != "" ] ; then
+  (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Mtype Mf-$Mtype)
+  (cd $W/mats; forceworkln Mf-$Mtype Makefile)
+else
+  (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$M Mf-$M)
+  (cd $W/mats; forceworkln Mf-$M Makefile)
+  if [ "$Muni" != "" ] ; then
+    (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Muni Mf-$Muni)
+  fi
 fi
 if [ "$Mpbhost" != "" ] ; then
   (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Mpbhost Mf-$Mpbhost)
@@ -385,14 +429,12 @@ esac
 cat > $W/s/Mf-config << END
 upupsrcdir=$upupsrcdir
 upupupbootdir=$upupupbootdir
+m=$M
+archincludes=$archincludes
 END
 
 cat > $W/Mf-config << END
 srcdir=$srcdir
-END
-
-cat > $W/mats/Mf-config << END
-upupsrcdir=$upupsrcdir
 END
 
 exit 0
