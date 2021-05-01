@@ -46,7 +46,7 @@ static seginfo *sort_seginfo PROTO((seginfo *si, uptr n));
 static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
 
 #if defined(WRITE_XOR_EXECUTE_CODE)
-static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, ptr hint, uptr hint_len));
+static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len));
 #endif
 
 void S_segment_init() {
@@ -628,8 +628,8 @@ static IBOOL is_unused_seg(chunkinfo *chunk, seginfo *si) {
 static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len) {
   thread_gc *tgc;
   chunkinfo *chunk;
-  seginfo si, *sip;
-  iptr i, j, bytes;
+  seginfo *sip;
+  iptr i, bytes;
   void *addr;
   INT flags = (on ? PROT_WRITE : PROT_EXEC) | PROT_READ;
 
@@ -650,7 +650,7 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
   /* Flip only the current allocation segments. */
   tgc = THREAD_GC(tc);
   if (maxg == 0 && current) {
-    addr = tgc->base_loc[0][space_code];
+    addr = TO_VOIDP(tgc->base_loc[0][space_code]);
     if (addr == NULL) {
       return;
     }
@@ -665,7 +665,7 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
     if (!on) {
       while ((sip = tgc->sweep_next[0][space_code]) != NULL) {
         tgc->sweep_next[0][space_code] = sip->sweep_next;
-        addr = sip->sweep_start;
+        addr = TO_VOIDP(sip->sweep_start);
         bytes = sip->sweep_bytes;
         if (mprotect(addr, bytes, flags) != 0) {
           S_error_abort("failed to protect recent allocation segments");
@@ -688,8 +688,9 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
       } else {
         /* Flip bits for whole runs of segs that are either unused or
            whose generation is within the range [0, maxg]. */
+        int j;
         for (j = 0; j < chunk->segs; j++) {
-          si = chunk->sis[j];
+          seginfo si = chunk->sis[j];
           /* When maxg is 0, limit the search to unused segments and
              segments that belong to the current thread. */
           if ((maxg == 0 && si.generation == 0 && si.creator == tgc) ||
