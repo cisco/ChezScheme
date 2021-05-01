@@ -46,7 +46,7 @@ static seginfo *sort_seginfo PROTO((seginfo *si, uptr n));
 static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
 
 #if defined(WRITE_XOR_EXECUTE_CODE)
-static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, ptr hint));
+static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, ptr hint, uptr hint_len));
 #endif
 
 void S_segment_init() {
@@ -586,17 +586,19 @@ static void contract_segment_table(uptr base, uptr end) {
    being flipped while a thread is executing code off of it.
 */
 
-void S_thread_start_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current, WX_UNUSED void *hint) {
+void S_thread_start_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current,
+                               WX_UNUSED void *hint, WX_UNUSED uptr hint_len) {
 #if defined(WRITE_XOR_EXECUTE_CODE)
-  enable_code_write(tc, maxg, 1, current, hint);
+  enable_code_write(tc, maxg, 1, current, hint, hint_len);
 #else
   S_ENABLE_CODE_WRITE(1);
 #endif
 }
 
-void S_thread_end_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current, WX_UNUSED void *hint) {
+void S_thread_end_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current,
+                             WX_UNUSED void *hint, WX_UNUSED uptr hint_len) {
 #if defined(WRITE_XOR_EXECUTE_CODE)
-  enable_code_write(tc, maxg, 0, current, hint);
+  enable_code_write(tc, maxg, 0, current, hint, hint_len);
 #else
   S_ENABLE_CODE_WRITE(0);
 #endif
@@ -623,7 +625,7 @@ static IBOOL is_unused_seg(chunkinfo *chunk, seginfo *si) {
 }
 # endif
 
-static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint) {
+static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len) {
   thread_gc *tgc;
   chunkinfo *chunk;
   seginfo si, *sip;
@@ -633,9 +635,14 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
 
   /* Flip only the segment hinted at by the caller. */
   if (maxg == 0 && hint != NULL) {
-    addr = TO_VOIDP((char*)hint - ((uptr)hint % bytes_per_segment));
-    if (mprotect(addr, bytes_per_segment, flags) != 0) {
-      S_error_abort("bad hint to enable_code_write");
+    uptr seg, start_seg, end_seg;
+    start_seg = addr_get_segment(TO_PTR(hint));
+    end_seg = addr_get_segment((uptr)TO_PTR(hint) + hint_len - 1);
+    for (seg = start_seg; seg <= end_seg; seg++) {
+      addr = TO_VOIDP(build_ptr(seg, 0));
+      if (mprotect(addr, bytes_per_segment, flags) != 0) {
+        S_error_abort("bad hint to enable_code_write");
+      }
     }
     return;
   }

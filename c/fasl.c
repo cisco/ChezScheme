@@ -508,7 +508,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
         Scompact_heap();
       }
 
-      S_thread_start_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL);
+      S_thread_start_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
 
       switch (ty) {
         case fasl_type_gzip:
@@ -557,7 +557,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
           return (ptr)0;
       }
       S_flush_instruction_cache(tc);
-      S_thread_end_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL);
+      S_thread_end_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
       return x;
     } else {
       uf_skipbytes(uf, size);
@@ -569,7 +569,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   ptr x; ptr strbuf = S_G.null_string;
   struct faslFileObj ffo;
 
-  S_thread_start_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL);
+  S_thread_start_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
 
   if (ty == fasl_type_vfasl) {
     x = S_vfasl(bv, NULL, offset, len);
@@ -585,7 +585,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   }
 
   S_flush_instruction_cache(tc);
-  S_thread_end_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL);
+  S_thread_end_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
 
   return x;
 }

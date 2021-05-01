@@ -394,7 +394,7 @@ static void do_error(type, who, s, args) iptr type; const char *who, *s; ptr arg
 #endif /* PTHREADS */
 
     /* in case error is during fasl read: */
-    S_thread_end_code_write(tc, static_generation, 0, NULL);
+    S_thread_end_code_write(tc, static_generation, 0, NULL, 0);
 
     TRAP(tc) = (ptr)1;
     AC0(tc) = (ptr)1;
@@ -801,7 +801,7 @@ void S_schsig_init() {
         S_protect(&S_G.collect_request_pending_id);
         S_G.collect_request_pending_id = S_intern((const unsigned char *)"$collect-request-pending");
 
-        S_thread_start_code_write(tc, 0, 0, NULL);
+        S_thread_start_code_write(tc, 0, 0, NULL, 0);
         p = S_code(tc, type_code | (code_flag_continuation << code_flags_offset), 0);
         CODERELOC(p) = S_relocation_table(0);
         CODENAME(p) = Sfalse;
@@ -809,7 +809,7 @@ void S_schsig_init() {
         CODEFREE(p) = 0;
         CODEINFO(p) = Sfalse;
         CODEPINFOS(p) = Snil;
-        S_thread_end_code_write(tc, 0, 0, NULL);
+        S_thread_end_code_write(tc, 0, 0, NULL, 0);
 
         S_set_symbol_value(S_G.null_continuation_id,
             S_mkcontinuation(space_new,

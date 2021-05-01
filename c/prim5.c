@@ -879,9 +879,9 @@ static ptr s_set_code_byte(p, n, x) ptr p, n, x; {
     ptr tc = get_thread_context();
 
     a = (I8 *)TO_VOIDP((uptr)p + UNFIX(n));
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I8));
     *a = (I8)UNFIX(x);
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I8));
 
     return Svoid;
 }
@@ -891,9 +891,9 @@ static ptr s_set_code_word(p, n, x) ptr p, n, x; {
     ptr tc = get_thread_context();
 
     a = (I16 *)TO_VOIDP((uptr)p + UNFIX(n));
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I16));
     *a = (I16)UNFIX(x);
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I16));
 
     return Svoid;
 }
@@ -903,9 +903,9 @@ static ptr s_set_code_long(p, n, x) ptr p, n, x; {
     ptr tc = get_thread_context();
 
     a = (I32 *)TO_VOIDP((uptr)p + UNFIX(n));
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I32));
     *a = (I32)(Sfixnump(x) ? UNFIX(x) : Sinteger_value(x));
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I32));
 
     return Svoid;
 }
@@ -915,9 +915,9 @@ static void s_set_code_long2(p, n, h, l) ptr p, n, h, l; {
     ptr tc = get_thread_context();
 
     a = (I32 *)TO_VOIDP((uptr)p + UNFIX(n));
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I32));
     *a = (I32)((UNFIX(h) << 16) + UNFIX(l));
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I32));
 }
 
 static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
@@ -925,21 +925,18 @@ static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
     ptr tc = get_thread_context();
 
     a = (I64 *)TO_VOIDP((uptr)p + UNFIX(n));
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I64));
     *a = Sfixnump(x) ? UNFIX(x) : S_int64_value("\\#set-code-quad!", x);
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I64));
 
     return Svoid;
 }
 
 static ptr s_set_reloc(p, n, e) ptr p, n, e; {
     iptr *a;
-    ptr tc = get_thread_context();
 
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(p)));
     a = (iptr *)(&RELOCIT(CODERELOC(p), UNFIX(n)));
     *a = Sfixnump(e) ? UNFIX(e) : Sinteger_value(e);
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(p)));
 
     return e;
 }
@@ -954,7 +951,7 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
     ptr co;
     ptr tc = get_thread_context();
 
-    S_thread_start_code_write(tc, 0, 0, NULL);
+    S_thread_start_code_write(tc, 0, 0, NULL, 0);
 
     co = S_code(tc, type_code | (flags << code_flags_offset), n);
     CODEFREE(co) = free;
@@ -966,7 +963,7 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
       S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
     }
 
-    S_thread_end_code_write(tc, 0, 0, NULL);
+    S_thread_end_code_write(tc, 0, 0, NULL, 0);
 
     return co;
 }
@@ -974,10 +971,10 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
 static ptr s_make_reloc_table(codeobj, n) ptr codeobj, n; {
     ptr tc = get_thread_context();
 
-    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(codeobj)));
+    S_thread_start_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(codeobj)), sizeof(ptr));
     CODERELOC(codeobj) = S_relocation_table(UNFIX(n));
     RELOCCODE(CODERELOC(codeobj)) = codeobj;
-    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(codeobj)));
+    S_thread_end_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(codeobj)), sizeof(ptr));
     return Svoid;
 }
 

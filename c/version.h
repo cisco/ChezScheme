@@ -248,12 +248,10 @@ typedef int tputsputcchar;
 /* for both iPhone and iPhoneSimulator */
 #if defined(TARGET_OS_IPHONE)
 # define SYSTEM(s) ((void)s, -1)
-# define S_PROT_CODE (PROT_WRITE | PROT_READ)
 # define WRITE_XOR_EXECUTE_CODE
-# define WX_UNUSED
 #endif
 #if defined(__arm64__)
-# if !defined(TARGET_OS_IPHONE)
+# if !defined(WRITE_XOR_EXECUTE_CODE)
 #  define S_MAP_CODE MAP_JIT
 #  define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
 # endif
@@ -419,7 +417,11 @@ typedef char tputsputcchar;
 #endif
 
 #ifndef S_PROT_CODE
-# define S_PROT_CODE (PROT_READ | PROT_WRITE | PROT_EXEC)
+# ifdef WRITE_XOR_EXECUTE_CODE
+#  define S_PROT_CODE (PROT_WRITE | PROT_READ)
+# else
+#  define S_PROT_CODE (PROT_READ | PROT_WRITE | PROT_EXEC)
+# endif
 #endif
 #ifndef S_MAP_CODE
 # define S_MAP_CODE 0
@@ -428,10 +430,14 @@ typedef char tputsputcchar;
 # define S_ENABLE_CODE_WRITE(on) do { } while (0)
 #endif
 
-/* Signals that an argument is unused when W&X memory pages are
-   supported. Relevant in relation to WRITE_XOR_EXECUTE_CODE. */
+/* WX_UNUSED indicates that an argument is used only for
+   WRITE_XOR_EXECUTE_CODE mode */
 #ifndef WX_UNUSED
-# define WX_UNUSED UNUSED
+# ifdef WRITE_XOR_EXECUTE_CODE
+#  define WX_UNUSED
+# else
+#  define WX_UNUSED UNUSED
+# endif
 #endif
 
 #ifdef PTHREADS

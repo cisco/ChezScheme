@@ -264,7 +264,7 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
     /* Ensure allocated code segments are writable. The caller should
        already have bracketed the writes with calls to start and stop
        so there is no need for a stop here. */
-    S_thread_start_code_write(tgc->tc, 0, 1, NULL);
+    S_thread_start_code_write(tgc->tc, 0, 1, NULL, 0);
   }
 #endif
 
