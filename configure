@@ -168,7 +168,7 @@ if [ "$unixsuffix" != "" ] ; then
         m64=a6${unixsuffix}
         tm32=ti3${unixsuffix}
         tm64=ta6${unixsuffix}
-    elif uname -a | egrep 'power|macppc' > /dev/null 2>&1 ; then
+    elif uname -a | egrep 'power|ppc' > /dev/null 2>&1 ; then
         m32=ppc32${unixsuffix}
         tm32=tppc32${unixsuffix}
     elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
@@ -347,7 +347,7 @@ if [ "$m" = "pb" ] ; then
 fi
 
 if [ "$bits" = "" ] ; then
-  if uname -a | egrep 'amd64|x86_64|aarch64|arm64' > /dev/null 2>&1 ; then
+  if uname -a | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
@@ -370,6 +370,16 @@ if [ "$m" = "" ] ; then
      m=pb
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
+     if [ "$mpbhost" = "" ] ; then
+         echo "Could not infer current machine type."
+         echo ""
+         echo "Event for a pb build, a machine type is needed to select C compiler"
+         echo "and linker flags. You can use"
+         echo "  $0 --pb -m=<machine type>"
+         echo "to specify the available machine type, but since it wasn't inferred,"
+         echo "probably your OS and architecture combination is not supported."
+         exit 1
+     fi
   else      
     m=$defaultm
     flagsm=$m
@@ -792,7 +802,12 @@ case "$srcdir" in
         ;;
 esac
 
-"$srcdir"/workarea $m $w $mpbhost
+if "$srcdir"/workarea $m $w $mpbhost ; then
+    :
+else
+    # not a recognized host, or other error
+    exit 1
+fi
 
 sed -e 's/$(m)/'$m'/g'\
     -e 's/$(defaultm)/'$defaultm'/g'\

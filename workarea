@@ -105,7 +105,7 @@ case "$Mhost" in
   tppc32nb) ;;
   tppc32osx) ;;
   tarm64osx) ;;
-  *) echo "Unrecognized machine name $Mhost"; exit 1 ;;
+  *) echo "unrecognized machine name: $Mhost"; exit 1 ;;
 esac
 
 Muni=`echo $M | sed -e 's/^t//'`
