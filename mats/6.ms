@@ -15,6 +15,8 @@
 
 ;;; sections 6-1 and 6-2:
 
+(define prettytest.ss (format "~a/prettytest.ss" *mats-dir*))
+
 (mat current-input-port
    (port? (current-input-port))
    (input-port? (current-input-port))
@@ -422,21 +424,21 @@
                 mode2))
             mode1))))
     (and
-      (cmp '() "prettytest.ss" '() "prettytest.ss")
-      (cmp '(compressed) "prettytest.ss" '() "prettytest.ss")
-      (cmp '() "prettytest.ss" '(compressed) "prettytest.ss")
-      (cmp '(compressed) "prettytest.ss" '(compressed) "prettytest.ss")
+      (cmp '() prettytest.ss '() prettytest.ss)
+      (cmp '(compressed) prettytest.ss '() prettytest.ss)
+      (cmp '() prettytest.ss '(compressed) prettytest.ss)
+      (cmp '(compressed) prettytest.ss '(compressed) prettytest.ss)
       (begin
-        (cp '(replace compressed) "prettytest.ss" "testfile.ss")
+        (cp '(replace compressed) prettytest.ss "testfile.ss")
         #t)
-      (cmp '(compressed) "testfile.ss" '() "prettytest.ss")
-      (not (= (call-with-input-file "testfile.ss" file-length) (call-with-input-file "prettytest.ss" file-length)))
+      (cmp '(compressed) "testfile.ss" '() prettytest.ss)
+      (not (= (call-with-input-file "testfile.ss" file-length) (call-with-input-file prettytest.ss file-length)))
      ; the following test could cause an error with anything but latin-1 codec
-      #;(not (cmp '() "testfile.ss" '() "prettytest.ss"))
+      #;(not (cmp '() "testfile.ss" '() prettytest.ss))
       (begin
-        (cp '(compressed append) "prettytest.ss" "testfile.ss")
+        (cp '(compressed append) prettytest.ss "testfile.ss")
         #t)
-      (not (cmp '(compressed) "testfile.ss" '() "prettytest.ss"))
+      (not (cmp '(compressed) "testfile.ss" '() prettytest.ss))
     ))
   (error? (open-output-file "testfile.ss" '(replace append)))
   (error? (open-output-file "testfile.ss" '(append truncate)))
@@ -812,8 +814,8 @@
                    (lambda ()
                       (close-input-port ip)
                       (close-output-port op)))))])
-      (pretty-copy "prettytest.ss" "testfile.ss"))
-   (let ([p1 (open-input-file "prettytest.ss")]
+      (pretty-copy prettytest.ss "testfile.ss"))
+   (let ([p1 (open-input-file prettytest.ss)]
          [p2 (open-input-file "testfile.ss")])
       (dynamic-wind
          (lambda () #f)
@@ -870,8 +872,8 @@
                    (lambda ()
                       (close-input-port ip)
                       (close-output-port op)))))])
-      (unpretty-copy "prettytest.ss" "testfile.ss"))
-   (let ([p1 (open-input-file "prettytest.ss")]
+      (unpretty-copy prettytest.ss "testfile.ss"))
+   (let ([p1 (open-input-file prettytest.ss)]
          [p2 (open-input-file "testfile.ss")])
       (dynamic-wind
          (lambda () #f)
@@ -914,7 +916,7 @@
         (lambda (p) (fasl-write +nan.0 p)))
       (call-with-port (open-file-input-port "testfile.ss") fasl-read))
     (/ 0.0 0.0))
-  (let ([ls (with-input-from-file "prettytest.ss"
+  (let ([ls (with-input-from-file prettytest.ss
               (rec f
                 (lambda ()
                   (let ([x (read)])
@@ -964,8 +966,8 @@
           (open-bytevector-input-port
             (call-with-bytevector-output-port put-stuff))
           (get-stuff fasl-read)))))
-  (eqv? (fasl-file "prettytest.ss" "testfile.ss") (void))
-  (let ([ls (with-input-from-file "prettytest.ss"
+  (eqv? (fasl-file prettytest.ss "testfile.ss") (void))
+  (let ([ls (with-input-from-file prettytest.ss
               (rec f
                 (lambda ()
                   (let ([x (read)])
@@ -2622,8 +2624,8 @@
   (eq? '\x23;foo\x7C;bar '\#foo\|bar)
  )
 
-(mat with-source-path
-  (equal? (source-directories) '("."))
+(mat with-source-path (parameters [current-directory *mats-dir*] [source-directories '(".")] [library-directories '(".")])
+  (equal? (separate-eval '(source-directories)) "(\".\")\n")
   (equal?
     (with-source-path 'test "I should not be here" list)
     '("I should not be here"))
@@ -2958,6 +2960,18 @@
   (error? (get-mode "probably/not/there"))
   (error? (get-mode "probably/not/there" #f))
   (error? (get-mode "probably/not/there" #t))
+  (error? (file-access-time "probably/not/there"))
+  (error? (file-access-time "probably/not/there" #f))
+  (error? (file-access-time "probably/not/there" #t))
+  (error? (file-change-time "probably/not/there"))
+  (error? (file-change-time "probably/not/there" #f))
+  (error? (file-change-time "probably/not/there" #t))
+  (error? (file-modification-time "probably/not/there"))
+  (error? (file-modification-time "probably/not/there" #f))
+  (error? (file-modification-time "probably/not/there" #t))
+  )
+
+(mat filesystem-operations2 (parameters [current-directory *mats-dir*])
   (if (or (windows?) (embedded?))
       (fixnum? (get-mode "mat.ss"))
       (let ([m (get-mode "mat.ss")])
@@ -3008,15 +3022,6 @@
       (time=? (file-change-time "Makefile") (file-change-time (format "Mf-~a" (machine-type)))))
   (or (windows?) (embedded?)
       (time=? (file-modification-time "Makefile") (file-modification-time (format "Mf-~a" (machine-type)))))
-  (error? (file-access-time "probably/not/there"))
-  (error? (file-access-time "probably/not/there" #f))
-  (error? (file-access-time "probably/not/there" #t))
-  (error? (file-change-time "probably/not/there"))
-  (error? (file-change-time "probably/not/there" #f))
-  (error? (file-change-time "probably/not/there" #t))
-  (error? (file-modification-time "probably/not/there"))
-  (error? (file-modification-time "probably/not/there" #f))
-  (error? (file-modification-time "probably/not/there" #t))
 )
 
 (mat unicode-filesystem-operations

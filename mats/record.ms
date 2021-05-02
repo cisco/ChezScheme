@@ -751,7 +751,14 @@
              ...
              [else (syntax-error const
                      (format "unhandled value ~s" (constant const)))])]))
-      (include "../s/machine.def")
+      (define-syntax include-from-s
+        (lambda (x)
+          (syntax-case x ()
+            [(k ?path)
+             (string? (datum ?path))
+             (let ([s-path (format "~a/../s/~a" *mats-dir* (datum ?path))])
+               (datum->syntax #'k `(include ,s-path)))])))
+      (include-from-s "machine.def")
      ; all this work for two constants:
       (define $fd-unaligned-integers (constant unaligned-integers))
       (define $fd-unaligned-floats (constant unaligned-floats)))
