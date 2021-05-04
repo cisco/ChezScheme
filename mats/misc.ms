@@ -1514,8 +1514,8 @@
  )
 
 (mat source-directories
-  (equal? (source-directories) '("."))
-  (equal? (parameterize ((source-directories (cons "/a" (source-directories))))
+  (equal? (separate-eval '(source-directories)) "(\".\")\n")
+  (equal? (parameterize ((source-directories (list "/a" ".")))
             (source-directories))
           '("/a" "."))
   (error? (source-directories 'a))
@@ -1866,7 +1866,7 @@
   (begin
     (with-output-to-file "testfile-sff.ss"
       (lambda ()
-        (printf "#! ../bin/~a/scheme --script\n" (machine-type))
+        (printf "#! ~a --script\n" *scheme*)
         (pretty-print '(define (hello) (import (chezscheme)) (printf "hello\n")))
         (pretty-print '(hello)))
       'replace)
@@ -1971,13 +1971,13 @@
 )
 
 (mat $fasl-file-equal?
-  (begin
+  (let ([fn (format "~a/fatfib.ss" *examples-directory*)])
     (parameterize ([generate-inspector-information #t])
-      (compile-file "../examples/fatfib.ss" "testfile-fatfib1.so"))
+      (compile-file fn "testfile-fatfib1.so"))
     (parameterize ([generate-inspector-information #t])
-      (compile-file "../examples/fatfib.ss" "testfile-fatfib2.so"))
+      (compile-file fn "testfile-fatfib2.so"))
     (parameterize ([generate-inspector-information #f])
-      (compile-file "../examples/fatfib.ss" "testfile-fatfib3.so"))
+      (compile-file fn "testfile-fatfib3.so"))
     #t)
   (error? ; not a string
     (#%$fasl-file-equal? 'testfile-fatfib1.so "testfile-fatfib2.so"))

@@ -174,8 +174,9 @@
 
   (eqv? ($qw 0 0) 0.0) ; bfp, efp combination not in database
   (eqv? ; file not in database
-    (let* ([ip (open-file-input-port "Mf-base")]
-           [sfd (make-source-file-descriptor "Mf-base" ip)])
+    (let* ([fn (format "~a/Mf-base" *mats-dir*)]
+           [ip (open-file-input-port fn)]
+           [sfd (make-source-file-descriptor fn ip)])
       (close-port ip)
       (profile-query-weight (make-source-object sfd 0 0)))
     #f)

@@ -755,11 +755,11 @@
              ...
              [else (syntax-error const
                      (format "unhandled value ~s" (constant const)))])]))
-       (define-syntax include
+       (define-syntax include ; defining `include` so that a ".def" can `include` other ".def"s
          (lambda (stx)
            (syntax-case stx ()
              [(k path)
-              #`(#,(datum->syntax #'k 'orig-include) #,(format "../s/~a" (datum path)))])))
+              #`(#,(datum->syntax #'k 'orig-include) #,(format "~a/../s/~a" *mats-dir* (datum path)))])))
        (include "machine.def")
      ; all this work for two constants:
       (define $fd-unaligned-integers (constant unaligned-integers))

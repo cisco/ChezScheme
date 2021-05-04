@@ -1121,12 +1121,12 @@
     "(aye captain)\n")
   (equal?
     (begin
-      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+      (unless (or (embedded?) (equal? *scheme* (format "~a/bin/~a/scheme~a" (path-parent *mats-dir*) (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
           (machine-type) (machine-type) (if (windows?) ".exe" "")))
       (parameterize ([optimize-level 2])
         (make-boot-file "testfile.boot" '()
-          (format "../boot/~a/petite.boot" (machine-type))
+          (format "~a/boot/~a/petite.boot" (path-parent *mats-dir*) (machine-type))
           "testfile-1.so"
           "testfile-2.so"
           "testfile-3.ss"
@@ -1152,7 +1152,7 @@
    (case (machine-type) [(pb) #t] [else #f]) ; no callables in pb
    (equal?
     (begin
-      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+      (unless (or (embedded?) (equal? *scheme* (format "~a/bin/~a/scheme~a" (path-parent *mats-dir*) (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
           (machine-type) (machine-type) (if (windows?) ".exe" "")))
       (mkfile "testfile.ss"

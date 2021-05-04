@@ -179,43 +179,45 @@
                         (x v ...))
                       (+ v ...)))))))))
 
+(define foreign1.so (format "~a/foreign1.so" *mats-dir*))
+
 (machine-case
   [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "./foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.so") #t)
       (error? (load-shared-object 3))
     )
    ]
   [(i3le ti3le a6le ta6le arm32le tarm32le arm64le tarm64le ppc32le tppc32le)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "./foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.so.6") #t)
       (error? (load-shared-object 3))
     )
    ]
   [(i3fb ti3fb a6fb ta6fb)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "./foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.so.7") #t)
       (error? (load-shared-object 3))
     )
    ]
   [(i3nb ti3nb a6nb ta6nb)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "./foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.so") #t)
       (error? (load-shared-object 3))
     )
    ]
   [(i3nt ti3nt a6nt ta6nt)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "msvcrt.dll") #t)
       (begin (load-shared-object "kernel32.dll") #t)
       (error? (load-shared-object 3))
@@ -223,8 +225,8 @@
    ]
   [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
    (mat load-shared-object
-      (file-exists? "foreign1.so")
-      (begin (load-shared-object "./foreign1.so") #t)
+      (file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.dylib") #t)
       #t
       (error? (load-shared-object 3))
@@ -2531,7 +2533,7 @@
         (let ()
           (define *m*)
           (define *k*)
-          (define ip (open-file-input-port "mat.ss"))
+          (define ip (open-file-input-port (format "~a/mat.ss" *mats-dir*)))
           (define-ftype foo (function (fixnum fixnum) fixnum))
           (define f
             (lambda (n m)

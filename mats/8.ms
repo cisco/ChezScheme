@@ -10606,7 +10606,9 @@
     (separate-compile 'imno1)
     #t)
   (equal?
-    (parameterize ([console-output-port (open-output-string)])
+    (parameterize ([source-directories '(".")]
+                   [library-directories '(".")]
+                   [console-output-port (open-output-string)])
       (eval '(lambda () (import (testfile-imno2)) y))
       (get-output-string (console-output-port)))
     "import: did not find source file \"testfile-imno2.chezscheme.sls\"\nimport: found source file \"testfile-imno2.ss\"\nimport: did not find corresponding object file \"testfile-imno2.so\"\nimport: loading source file \"testfile-imno2.ss\"\nimport: did not find source file \"testfile-imno1.chezscheme.sls\"\nimport: found source file \"testfile-imno1.ss\"\nimport: found corresponding object file \"testfile-imno1.so\"\nimport: object file is not older\nimport: visiting object file \"testfile-imno1.so\"\nattempting to 'revisit' previously 'visited' \"testfile-imno1.so\" for library (testfile-imno1) run-time info\n")

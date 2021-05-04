@@ -511,7 +511,7 @@
     (define C-test-code
       (lambda (ftype-defn* path* ndefs npaths i* j*)
         (let ([ndefs (length ftype-defn*)])
-          (printf "#include \"ftype.h\"\n\
+          (printf "#include \"~a/ftype.h\"\n\
                    #define offset(x, y) (int)((char *)&y - (char *)&x)\n\
                    EXPORT int *foo() {\n\
                      ~{~a\n~}\
@@ -520,6 +520,7 @@
                      ~{~a\n~}\
                      return a;\
                    }\n"
+            *mats-dir*
             (map
               (lambda (ftype-defn)
                 (format "typedef ~a typedef_~a ~a;"
@@ -557,9 +558,11 @@
                        [(a6osx a6osx)
                         (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
                        [(a6nt ta6nt)
-                        (system (format "set cl= && ..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
+                        (system (format "set cl= && ~a\\..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
+                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
                        [(i3nt ti3nt)
-                        (system (format "set cl= && ..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a" testfile.so testfile.c))]
+                        (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
+                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
                        [(arm32le tarm32le arm64le tarm64le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...

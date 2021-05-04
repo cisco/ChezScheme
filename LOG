@@ -2194,3 +2194,15 @@
     foreign.stex
 - New spellings #true and #false for #t and #f are recognized
     read.ss 6.ms
+- refactor mats to allow different configurations to run in parallel.
+  The {partial,all,bully}x targets in Mats/Mf-base now support running
+  in parallel if make chooses to do so (e.g., if instructed via -j).
+  Update travis-ci build scripts to use new partialx target and run
+  jobs in parallel (based on the number of cores available).  Also
+  add the ability to "skip" (i.e., error before building) travis targets
+  by using a line (or lines) beginning with "travis:only:" and listing
+  the desired target machine type(s) in the commit message.
+    .travis.yml .travis/{build,test,maybe-skip-build}.sh
+    mats/{5_4,6,7,8,bytevector,examples,foreign}.ms
+    mats/{ftype,hash,io,misc,primvars,profile,record}.ms
+    mats/Mf-base mats/Mf-*nt mats/mat.ss mats/patch-interpret*
