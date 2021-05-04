@@ -1861,6 +1861,8 @@
             (syntax-type (chi-macro (binding-value b) e r w ae rib)
               r empty-wrap ae rib)]
            [else (values type (binding-value b) e w ae)]))]
+      [(vector? e)
+       (values 'constant #f (strip e w) w ae)]
       [(self-evaluating? e) (values 'constant #f e w ae)]
       [else (values 'other #f e w ae)])))
 
