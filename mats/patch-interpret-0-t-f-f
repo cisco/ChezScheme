@@ -1,141 +1,154 @@
-*** errors-compile-0-t-f-f	2019-02-12 01:30:17.595345564 -0500
---- errors-interpret-0-t-f-f	2019-02-12 03:03:25.069665634 -0500
+*** errors-compile-0-t-f-f	2021-05-04 16:23:16.000000000 -0600
+--- errors-interpret-0-t-f-f	2021-05-04 16:34:53.000000000 -0600
 ***************
-*** 1,7 ****
+*** 18,25 ****
+  primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote #f)): Exception in environment: invalid library reference #f
+  primvars.mo:Expected error testing (base-exception-handler (quote 0)): Exception in default-exception-handler: 0 is not a procedure
+  primvars.mo:Expected error testing (base-exception-handler (quote #f)): Exception in default-exception-handler: #f is not a procedure
+! primvars.mo:Expected error testing (eval 1.0+2.0i (quote ((a . b)))): Exception in compile: ((a . b)) is not an environment
+! primvars.mo:Expected error testing (eval 1.0+2.0i (quote #f)): Exception in compile: #f is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b)))): Exception in sc-expand: ((a . b)) is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f)): Exception in sc-expand: #f is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i): Exception in sc-expand: ((a . b)) is not an environment
+--- 18,25 ----
+  primvars.mo:Expected error testing (environment (quote (chezscheme)) (quote (chezscheme)) (quote #f)): Exception in environment: invalid library reference #f
+  primvars.mo:Expected error testing (base-exception-handler (quote 0)): Exception in default-exception-handler: 0 is not a procedure
+  primvars.mo:Expected error testing (base-exception-handler (quote #f)): Exception in default-exception-handler: #f is not a procedure
+! primvars.mo:Expected error testing (eval 1.0+2.0i (quote ((a . b)))): Exception in interpret: ((a . b)) is not an environment
+! primvars.mo:Expected error testing (eval 1.0+2.0i (quote #f)): Exception in interpret: #f is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b)))): Exception in sc-expand: ((a . b)) is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f)): Exception in sc-expand: #f is not an environment
+  primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i): Exception in sc-expand: ((a . b)) is not an environment
+***************
+*** 76,82 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
   primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
-  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
-! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments to #<procedure x>".
+  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments 1 to #<procedure>".
+! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments 0 to #<procedure x>".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
---- 1,13 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of 6.ms
+--- 76,82 ----
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
   primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
-  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
-! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments to #<procedure>".
+  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments 1 to #<procedure>".
+! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments 0 to #<procedure>".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
 ***************
-*** 28,98 ****
+*** 103,173 ****
   primvars.mo:Expected error in mat print-radix: "print-radix: 1 is not between 2 and 36".
   primvars.mo:Expected error in mat timer-interrupt-handler: "timer-interrupt-handler: midnight is not a procedure".
   primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input port string> is not a textual output port".
-! 3.mo:Expected error in mat matrest1: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest1: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest2: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest2: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest3: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest3: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest3: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 5 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 6 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 5 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 7 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 6 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 5 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 8 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 7 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 6 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 5 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 0 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 9 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 8 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 7 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 6 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 5 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 4 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 3 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 2 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 1 to #<procedure matrestf>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 0 to #<procedure matrestf>".
   3.mo:Expected error in mat application: "attempt to apply non-procedure ((a b c))".
   3.mo:Expected error in mat case-lambda: "incorrect argument count in call ((case-lambda))".
   3.mo:Expected error in mat case-lambda: "incorrect argument count in call (f 3 4 5)".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
-! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 1 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 4 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 1 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 4 to #<procedure foo>".
+! 3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
   3.mo:Expected error in mat let: "incorrect argument count in call ((lambda (x . r) ((...) x (...))))".
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
---- 34,104 ----
+--- 103,173 ----
   primvars.mo:Expected error in mat print-radix: "print-radix: 1 is not between 2 and 36".
   primvars.mo:Expected error in mat timer-interrupt-handler: "timer-interrupt-handler: midnight is not a procedure".
   primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input port string> is not a textual output port".
-! 3.mo:Expected error in mat matrest1: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest2: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest1: "incorrect number of arguments 0 to #<procedure>".
+! 3.mo:Expected error in mat matrest2: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest2: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest3: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest3: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest3: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest4: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest4: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest5: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest5: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest6: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest6: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest7: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest7: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest8: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest8: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
@@ -143,8 +156,8 @@
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest9: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest9: "incorrect number of arguments 0 to #<procedure>".
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
@@ -153,8 +166,8 @@
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
 ! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
-! 3.mo:Expected error in mat matrest10: "incorrect number of arguments to #<procedure>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 1 to #<procedure>".
+! 3.mo:Expected error in mat matrest10: "incorrect number of arguments 0 to #<procedure>".
   3.mo:Expected error in mat application: "attempt to apply non-procedure ((a b c))".
   3.mo:Expected error in mat case-lambda: "incorrect argument count in call ((case-lambda))".
   3.mo:Expected error in mat case-lambda: "incorrect argument count in call (f 3 4 5)".
@@ -169,26 +182,7 @@
   3.mo:Expected error in mat letrec: "variable f is not bound".
   3.mo:Expected error in mat letrec: "attempt to reference undefined variable a".
 ***************
-*** 4076,4091 ****
-  6.mo:Expected error in mat pretty-print: "incorrect number of arguments to #<procedure pretty-format>".
-  6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
-  6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format at line 1, char 28 of testfile.ss".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format at line 1, char 28 of testfile.ss".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to printf".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to printf".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to printf at line 1, char 28 of testfile.ss".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to printf at line 1, char 28 of testfile.ss".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf".
-- 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "abc~s" in call to fprintf at line 1, char 29 of testfile.ss".
-  6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~%~abc~adef~ag~s~~~%" in call to fprintf at line 1, char 29 of testfile.ss".
-  6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
---- 4082,4091 ----
-***************
-*** 7032,7038 ****
+*** 7517,7523 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -196,7 +190,7 @@
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7032,7038 ----
+--- 7517,7523 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -205,15 +199,15 @@
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
-*** 7360,7366 ****
+*** 7912,7918 ****
   record.mo:Expected error in mat record25: "invalid value #\9 for foreign type uptr".
   record.mo:Expected error in mat record25: "invalid value 10 for foreign type float".
   record.mo:Expected error in mat record25: "invalid value 11.0+0.0i for foreign type double".
-! record.mo:Expected error in mat record25: "incorrect number of arguments to #<procedure make-r25-bar>".
+! record.mo:Expected error in mat record25: "incorrect number of arguments 18 to #<procedure make-r25-bar>".
   record.mo:Expected error in mat record25: "invalid value 12.0 for foreign type long-long".
   record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
   record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
---- 7360,7366 ----
+--- 7912,7918 ----
   record.mo:Expected error in mat record25: "invalid value #\9 for foreign type uptr".
   record.mo:Expected error in mat record25: "invalid value 10 for foreign type float".
   record.mo:Expected error in mat record25: "invalid value 11.0+0.0i for foreign type double".
@@ -222,7 +216,7 @@
   record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
   record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
 ***************
-*** 9362,9386 ****
+*** 10008,10032 ****
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
@@ -248,7 +242,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
---- 9362,9386 ----
+--- 10008,10032 ----
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
@@ -275,8 +269,8 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
 ***************
-*** 9393,9424 ****
-  foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments to #<procedure foreign-sizeof>".
+*** 10039,10070 ****
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments 2 to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
 ! foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
@@ -308,8 +302,8 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
---- 9393,9424 ----
-  foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments to #<procedure foreign-sizeof>".
+--- 10039,10070 ----
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments 2 to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
 ! foreign.mo:Expected error in mat foreign-bytevectors: "u8_star_to_u8_star: invalid foreign-procedure argument "hello"".
@@ -342,7 +336,7 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
 ***************
-*** 9426,9451 ****
+*** 10072,10097 ****
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -369,7 +363,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
---- 9426,9451 ----
+--- 10072,10097 ----
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -397,7 +391,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 ***************
-*** 9456,9490 ****
+*** 10103,10137 ****
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -433,7 +427,7 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
---- 9456,9490 ----
+--- 10103,10137 ----
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -470,25 +464,25 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
 ***************
-*** 10091,10100 ****
+*** 10738,10747 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 0 to #<procedure make-<a>>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 2 to #<procedure make-<a>>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 1 to #<procedure m1>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 3 to #<procedure m1>".
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 10091,10100 ----
+--- 10738,10747 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 0 to #<procedure>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 2 to #<procedure>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 1 to #<procedure>".
+! oop.mo:Expected error in mat oop: "incorrect number of arguments 3 to #<procedure>".
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".

@@ -4223,7 +4223,7 @@
        (let loop ([tries 3])
          (or (< (/ (measure-guardian-chain-time 10000 get-key ordered?)
                    (measure-guardian-chain-time 1000 get-key ordered?))
-                20)
+                50)
              (and (positive? tries)
                   (loop (sub1 tries))))))
 

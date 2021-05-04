@@ -286,10 +286,10 @@ to create new vesions of the files in the workarea directory. Copy
 changed files to the "mats" source directory; if the only change to a
 patch file is to the line-number hints, then it's probably not worth
 keeping the update (as long as the line numbers are not too far off).
-A `make clean` will delete any "root-experr-..." or "patch-..." files,
-and links are created on demand in the workarea space to
-"root-experr-..." or "patch-..." files that are needed to generate
-expexted-error diffs.
+After copying to source, delete any "root-experr-..." or "patch-..."
+files, and then links are recreated on demand in the workarea space to
+"root-experr-..." or "patch-..." files when they are needed to
+generate expexted-error diffs.
 
 Despite its name, `make allx` does not run all available tests. Use
 `make bullyx` to run a different, more stressfull set of tests. The

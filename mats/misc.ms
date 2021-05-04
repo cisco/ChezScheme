@@ -4797,9 +4797,11 @@
   (ok-name? (procedure-name should-be-named-j) "j")
 
   (or (not (enable-cp0))
+      (#%$suppress-primitive-inlining)
       (let ([gx (make-guardian)])
         (ok-name? (procedure-name gx) "gx")))
   (or (not (enable-cp0))
+      (#%$suppress-primitive-inlining)
       (ok-name? (procedure-name (result-should-be-named-mk-CP)) "mk-CP"))
 
   (or (not (enable-cp0))

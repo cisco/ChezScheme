@@ -2616,9 +2616,13 @@
     (close-output-port p)
     #t)
   (begin
+    (define make-sure-this-symbol-stays '#{%foo %bar})
     (load "testfile.ss")
     #t)
   (record? (cadr $$rats) (type-descriptor #{%foo %bar}))
+  (begin
+    (define make-sure-this-symbol-stays #f)
+    #t)
   (let ([r (cadr $$rats)])
     (eq? (%foo-x r) (car $$rats))
     (equal? (%foo-y r) '(d e)))
