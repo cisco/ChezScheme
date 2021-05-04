@@ -2188,3 +2188,7 @@
     mats/Mf-i3ob mats/Mf-i3osx mats/Mf-i3qnx mats/Mf-ppc32le mats/Mf-ppc32osx
     mats/unix.ms newrelease pkg/Makefile release_notes/gifs/Makefile
     release_notes/math/Makefile s/Mf-base workarea
+    zlib/contrib/minizip/Makefile
+- fixed the documentation of load-shared-object to mention an up-to-date
+  dll for Windows
+    foreign.stex

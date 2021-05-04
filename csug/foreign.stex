@@ -2496,7 +2496,7 @@ On MacOS X systems:
 On Windows:
 
 \schemedisplay
-(load-shared-object "crtdll.dll")
+(load-shared-object "msvcrt.dll")
 \endschemedisplay
 
 Once the C library has been loaded, \scheme{getenv} should be available
