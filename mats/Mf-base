@@ -158,7 +158,7 @@ Examples = $(abspath ../examples)
 MAKEFLAGS += --no-print-directory
 
 # directory where (most) output for this run will be written
-outdir=output
+outdir=.
 
 conf = $(eval)-$o-$(spi)-$(cp0)-$(cis)
 objdir=output-$(conf)
@@ -214,6 +214,7 @@ $(objdir)/%.mo : %.ms mat.so
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
              '  (abort))'\
            | ${Scheme} -q mat.so ${patchfile}
+	! egrep "Bug|Error|invalid memory" $*.mo
 
 %.so : %.ss
 	echo '(reset-handler abort) (time (compile-file "$*"))' | ${Scheme} -q ${patchfile}
@@ -332,7 +333,14 @@ just-reports:
 allxhelp:
 	$(MAKE) doheader
 	-$(MAKE) all
+	$(MAKE) errors-$(conf) forpatches=.
 	$(MAKE) dosummary
+
+# To support an eventual `make patches`, link `errors-$(conf)` to allxhelp output
+# if there's not already a representative for the configuration:
+forpatches = different-from-outdir
+$(forpatches)/errors-$(conf): $(outdir)/errors-$(conf)
+	ln -s $(outdir)/errors-$(conf) errors-$(conf)
 
 config-vars = spi hci ecpf cp0 cis p eval ctb cgr cmg eoc cl rmg
 full-config-str = $(strip o=$(o) $(foreach var, $(config-vars),$(if $(filter-out $($(var:%=default%)),$($(var))),$(var)=$($(var)))) $(hdrmsg))
@@ -471,7 +479,7 @@ experr-compile-$o-f-f-f: root-experr-compile-$o-f-f-f
 
 root-experr: # don't list dependencies!
 	rm -f root-experr-compile-$o-f-f-f
-	cp errors-compile-$o-f-f-f root-experr-compile-$o-f-f-f
+	cp $(outdir)/errors-compile-$o-f-f-f root-experr-compile-$o-f-f-f
 
 # derive spi=t experr files by patching spi=f experr files
 # cp first in case patch is empty, since patch produces an empty output

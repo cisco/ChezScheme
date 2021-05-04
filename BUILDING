@@ -195,13 +195,11 @@ The makefile supports several targets:
 
    Runs the build plus runs a set of test programs in various
    different ways, e.g., with different compiler options. It can take
-   30 minutes or more, depending on the speed of the machine. It
-   produces voluminous output, so it's best to redirect its stdout and
-   stderr to a file.
+   on the order of an hour, depending on the speed of the machine.
 
-   A complete run does *not* imply no errors occurred. To check for
-   errors, look at the file "<workarea>/mats/summary", which should
-   contain one line per test run, something like this:
+   At the end of a complete run, the summary recorded in
+   "<workarea>/mats/summary" is shown. It should contain one line per
+   test configuration, something like this:
 
      -------- o=0 --------
      -------- o=3 --------
@@ -217,7 +215,7 @@ The makefile supports several targets:
      -------- o=3 ehc=t eval=interpret --------
 
    If there is anything else in "<workarea>/mats/summary", something
-   unexpected occurred.
+   unexpected occurred. See "IMPLEMENTATION.md" for more information.
 
  * `make <machine type>.boot` or `make <machine type>.bootquick`
 
