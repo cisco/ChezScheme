@@ -6142,9 +6142,10 @@ evaluating module init
    (>= (collections) 0)
    (>= (bytes-deallocated) 0)
    (let ([b (bytes-deallocated)] [c (collections)])
-     (let ([x (make-list 10 'a)])
-       (pretty-print x))
-     (collect)
+     (with-interrupts-disabled ; ensure allocated list stays in generation 0 until printed
+      (let ([x (make-list 10 'a)])
+        (pretty-print x))
+      (collect))
      (and (> (collections) c) (> (bytes-deallocated) b)))
    (>= (bytes-allocated #f #f) 0)
    (andmap (lambda (space)
