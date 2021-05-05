@@ -339,7 +339,7 @@ allxhelp:
 # To support an eventual `make patches`, link `errors-$(conf)` to allxhelp output
 # if there's not already a representative for the configuration:
 forpatches = different-from-outdir
-$(forpatches)/errors-$(conf): $(outdir)/errors-$(conf)
+$(forpatches)/errors-$(conf):
 	ln -s $(outdir)/errors-$(conf) errors-$(conf)
 
 config-vars = spi hci ecpf cp0 cis p eval ctb cgr cmg eoc cl rmg
