@@ -1,5 +1,5 @@
 Building Chez Scheme Version 9.5.5
-Copyright 1984-2020 Cisco Systems, Inc.
+Copyright 1984-2021 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -159,9 +159,10 @@ The make file supports several targets:
 
 'make test'
   runs the build plus runs a set of test programs in various different
-  ways, e.g., with different compiler options.  It can take 30 minutes
-  or more, depending on the speed of the machine.  It produces voluminous
-  output, so it's best to redirect its stdout and stderr to a file.
+  ways, e.g., with different compiler options.  It can take 20 minutes
+  to more than an hour, depending on the speed of the machine and number
+  of parallel targets executed by make (as configured, e.g., by the -j
+  flag).
 
   NB: A complete run does not imply no errors occurred.  To check for
   errors, look at the file $W/mats/summary, where $W is the name of the
