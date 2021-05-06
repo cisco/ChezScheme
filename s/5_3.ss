@@ -2762,7 +2762,7 @@
                                       (/ (- (* b c) (* a d)) t))))
                 ;; Let r = c/d or d/c, depending on which is larger
                 (cond
-                 [(and ($exactnum? x) ($exactnum? y))
+                 [(or (eq? c 0) (and ($exactnum? x) ($exactnum? y)))
                   (simpler-divide a b c d)]
                  [(< (abs c) (abs d))
                   (let ([r (/ d c)])
