@@ -86,6 +86,15 @@ static void out_of_memory(void) {
   S_abnormal_exit();
 }
 
+#if defined(USE_MMAP)
+static int for_code_succeeded = 0;
+static void w_and_x_problem(void) {
+  (void) fprintf(stderr,
+                 "allocation failed for code; maybe write+execute permission is not allowed\n");
+  S_abnormal_exit();
+}
+#endif
+
 #if defined(USE_MALLOC)
 void *S_getmem(iptr bytes, IBOOL zerofill, UNUSED IBOOL for_code) {
   void *addr;
@@ -163,12 +172,15 @@ void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
     if ((addr = mmap(NULL, p_bytes, perm, flags|MAP_32BIT, -1, 0)) == (void *)-1) {
 #endif
       if ((addr = mmap(NULL, p_bytes, perm, flags, -1, 0)) == (void *)-1) {
+        if (for_code && !for_code_succeeded)
+          w_and_x_problem();
         out_of_memory();
         debug(printf("getmem mmap(%p) -> %p\n", TO_VOIDP(bytes), addr))
       }
 #ifdef MAP_32BIT
     }
 #endif
+    if (for_code) for_code_succeeded = 1;
     if ((membytes += p_bytes) > maxmembytes) maxmembytes = membytes;
     debug(printf("getmem mmap(%p => %p) -> %p\n", TO_VOIDP(bytes), TO_VOIDP(p_bytes), addr))
   }
