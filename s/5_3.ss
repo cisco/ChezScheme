@@ -2341,10 +2341,26 @@
               (let ([d ($ratio-denominator x)])
                 (make-ratnum (+ (* y d) ($ratio-numerator x)) d))]
              [(ratnum?)
-              (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
-                (integer/
-                  (+ (* ($ratio-numerator x) yd) (* ($ratio-numerator y) xd))
-                  (* xd yd)))]
+	      ;; adapted from Gambit, see gambit/lib/_num.scm
+	      (let ((p ($ratio-numerator x))
+		    (q ($ratio-denominator x))
+		    (r ($ratio-numerator y))
+		    (s ($ratio-denominator y)))
+		(let ((d1 (exgcd q s)))
+		  (if (eqv? d1 1)
+		      (make-ratnum (+ (* p s)
+				      (* r q))
+				   (* q s))
+		      (let* ((s-prime (intquotient s d1))
+			     (t (+ (* p s-prime)
+				   (* r (intquotient q d1))))
+			     (d2 (exgcd d1 t))
+			     (num (intquotient t d2))
+			     (den (* (intquotient q d2)
+				     s-prime)))
+			(if (eqv? den 1)
+			    num
+			    (make-ratnum num den))))))]
              [($exactnum? $inexactnum?)
               (make-rectangular (+ x (real-part y)) (imag-part y))]
              [(flonum?) (exact-inexact+ x y)]
@@ -2535,9 +2551,20 @@
              [(fixnum? bignum?)
               (integer/ (* y ($ratio-numerator x)) ($ratio-denominator x))]
              [(ratnum?)
-              (integer/
-                (* ($ratio-numerator x) ($ratio-numerator y))
-                (* ($ratio-denominator x) ($ratio-denominator y)))]
+	      ;; adapted from Gambit, see gambit/lib/_num.scm
+	      (let ((p ($ratio-numerator x))
+		    (q ($ratio-denominator x))
+		    (r ($ratio-numerator y))
+		    (s ($ratio-denominator y)))
+		(if (eq? x y)
+		    (make-ratnum (magnitude-squared p) (magnitude-squared q))     ;; already in lowest form
+		    (let* ((gcd-ps (exgcd p s))
+			   (gcd-rq (exgcd r q))
+			   (num (* (intquotient p gcd-ps) (intquotient r gcd-rq)))
+			   (den (* (intquotient q gcd-rq) (intquotient s gcd-ps))))
+		      (if (eqv? den 1)
+			  num
+			  (make-ratnum num den)))))]
              [($exactnum? $inexactnum?)
               (make-rectangular (* x (real-part y)) (* x (imag-part y)))]
              [(flonum?) (exact-inexact* x y)]
@@ -2587,10 +2614,26 @@
               (let ([d ($ratio-denominator x)])
                 (make-ratnum (- ($ratio-numerator x) (* y d)) d))]
              [(ratnum?)
-              (let ([xd ($ratio-denominator x)] [yd ($ratio-denominator y)])
-                (integer/
-                  (- (* ($ratio-numerator x) yd) (* ($ratio-numerator y) xd))
-                  (* xd yd)))]
+	      ;; adapted from Gambit, see gambit/lib/_num.scm
+	      (let ((p ($ratio-numerator x))
+		    (q ($ratio-denominator x))
+		    (r ($ratio-numerator y))
+		    (s ($ratio-denominator y)))
+		(let ((d1 (gcd q s)))
+		  (if (eqv? d1 1)
+		      (make-ratnum (- (* p s)
+				      (* r q))
+				   (* q s))
+		      (let* ((s-prime (intquotient s d1))
+			     (t (- (* p s-prime)
+				   (* r (intquotient q d1))))
+			     (d2 (exgcd d1 t))
+			     (num (intquotient t d2))
+			     (den (* (intquotient q d2)
+				     s-prime)))
+			(if (eqv? den 1)
+			    num
+			    (make-ratnum num den))))))]
              [($exactnum? $inexactnum?)
               (make-rectangular (- x (real-part y)) (- (imag-part y)))]
              [(flonum?) (exact-inexact- x y)]
@@ -2657,7 +2700,7 @@
              [else (nonnumber-error who x)])]
          [(ratnum?)
           (type-case x
-             [(fixnum? bignum?)
+	     [(fixnum? bignum?)
               (cond
                 [(eq? x 1) (if (negative? ($ratio-numerator y))
                                (make-ratnum ($negate who ($ratio-denominator y)) ($negate who ($ratio-numerator y)))
@@ -2668,8 +2711,24 @@
                 [else
                  (integer/ (* x ($ratio-denominator y)) ($ratio-numerator y))])]
              [(ratnum?)
-              (integer/ (* ($ratio-numerator x) ($ratio-denominator y))
-                        (* ($ratio-denominator x) ($ratio-numerator y)))]
+	      ;; adapted from Gambit, see gambit/lib/_num.scm
+	      (let ((p ($ratio-numerator x))
+		    (q ($ratio-denominator x))
+		    (r ($ratio-denominator y))
+		    (s ($ratio-numerator y)))
+		(if (eq? x y)
+		    1
+		    (let* ((gcd-ps (exgcd p s))
+			   (gcd-rq (exgcd r q))
+			   (num (* (intquotient p gcd-ps) (intquotient r gcd-rq)))
+			   (den (* (intquotient q gcd-rq) (intquotient s gcd-ps))))
+		      (if (negative? den)
+			  (if (eqv? den -1)
+			      (- num)
+			      (make-ratnum (- num) (- den)))
+			  (if (eqv? den 1)
+			      num
+			      (make-ratnum num den))))))]
              [($exactnum? $inexactnum?)
               (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
              [(flonum?) (inexact-exact/ x y)]
