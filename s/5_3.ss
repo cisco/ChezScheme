@@ -86,7 +86,7 @@
 (define schoolbook-intquotient (schemeop2 "(cs)ss_trunc"))
 (define schoolbook-intquotient-remainder (schemeop2 "(cs)ss_trunc_rem"))
 (define schoolbook-intremainder (schemeop2 "(cs)rem"))
-(define make-ratnum (schemeop2 "(cs)s_rational"))
+(define make-ratnum (schemeop2 "(cs)s_rational")) ; does not normalize, except detecting 1 as demoninator
 (define exgcd (schemeop2 "(cs)gcd"))
 
 (define $flsin (cflop1 "(cs)sin"))
@@ -2562,7 +2562,15 @@
          [(ratnum?)
           (type-case x
              [(fixnum? bignum?)
-              (integer/ (* x ($ratio-denominator y)) ($ratio-numerator y))]
+              (cond
+                [(eq? x 1) (if (negative? ($ratio-numerator y))
+                               (make-ratnum ($negate who ($ratio-denominator y)) ($negate who ($ratio-numerator y)))
+                               (make-ratnum ($ratio-denominator y) ($ratio-numerator y)))]
+                [(eq? x -1) (if (negative? ($ratio-numerator y))
+                                (make-ratnum ($ratio-denominator y) ($negate who ($ratio-numerator y)))
+                                (make-ratnum ($negate who ($ratio-denominator y)) ($ratio-numerator y)))]
+                [else
+                 (integer/ (* x ($ratio-denominator y)) ($ratio-numerator y))])]
              [(ratnum?)
               (integer/ (* ($ratio-numerator x) ($ratio-denominator y))
                         (* ($ratio-denominator x) ($ratio-numerator y)))]
