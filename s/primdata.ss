@@ -604,7 +604,7 @@
   (get-char [sig [(textual-input-port) -> (eof/char)]] [flags true])
   (lookahead-char [sig [(textual-input-port) -> (eof/char)]] [flags true])
   (get-string-n [sig [(textual-input-port length) -> (eof/string)]] [flags true])
-  (get-string-n! [sig [(textual-input-port string length length) -> (èof/length)]] [flags true])
+  (get-string-n! [sig [(textual-input-port string length length) -> (eof/length)]] [flags true])
   (get-string-all [sig [(textual-input-port) -> (eof/string)]] [flags true])
   (get-line [sig [(textual-input-port) -> (eof/string)]] [flags true])
   (get-datum [sig [(textual-input-port) -> (ptr)]] [flags])
