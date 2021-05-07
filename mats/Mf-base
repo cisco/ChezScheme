@@ -230,7 +230,7 @@ maybe-doreport:
 $(outdir)/errors-$(conf): ${obj}
 	$(MAKE) doerrors
 
-doerrors:
+doerrors: $(outdir)
 	rm -f $(outdir)/errors-$(conf)
 	-(cd $(objdir); grep '^Error' $(objname)) > $(outdir)/errors-$(conf)
 	-(cd $(objdir); grep '^Bug' $(objname)) >> $(outdir)/errors-$(conf)
@@ -446,7 +446,7 @@ prettyclean:
  ${fobj} prettytest.ss cat_flush${ExeSuffix} so_locations\
  build-examples script.all? *.html experr*.rej experr*.orig
 	rm -rf testdir*
-	rm -rf output-*
+	rm -rf output output-* patches-work-dir
 	( cd ../examples && ${MAKE} Scheme=${Scheme} clean )
 
 clean: prettyclean
@@ -462,7 +462,12 @@ experr-compile-$o-f-f-f: root-experr-compile-$o-f-f-f
 
 root-experr: # don't list dependencies!
 	rm -f root-experr-compile-$o-f-f-f
-	cp errors-compile-$o-f-f-f root-experr-compile-$o-f-f-f
+	# use the shell glob mechanism to find the file in any output* dir
+	err_file=(output*/errors-compile-$o-f-f-f); cp $${err_file[0]} root-experr-compile-$o-f-f-f
+
+root-experrs: # don't list dependencies!
+	$(MAKE) root-experr o=0
+	$(MAKE) root-experr o=3
 
 # derive spi=t experr files by patching spi=f experr files
 # cp first in case patch is empty, since patch produces an empty output
@@ -491,19 +496,22 @@ experr-interpret-$o-$(spi)-$(cp0)-$(cis): experr-compile-$o-$(spi)-$(cp0)-f patc
 ### rebuilding patch files
 
 patches:
+	rm -rf patches-work-dir
+	mkdir patches-work-dir
+	shopt -s nullglob; cp output*/errors-compile* output*/errors-interpret* patches-work-dir
 	for O in 0 2 3 ; do\
-	  if [ -f errors-compile-$$O-f-f-f -a -e errors-compile-$$O-t-f-f ] ; then \
+	  if [ -f patches-work-dir/errors-compile-$$O-f-f-f -a -e patches-work-dir/errors-compile-$$O-t-f-f ] ; then \
             $(MAKE) xpatch-compile-$$O-t-f-f o=$$O spi=t ; \
           fi ;\
           for SPI in f t ; do\
-	    if [ -f errors-compile-$$O-$$SPI-f-f -a -e errors-compile-$$O-$$SPI-t-f ] ; then \
+	    if [ -f patches-work-dir/errors-compile-$$O-$$SPI-f-f -a -e patches-work-dir/errors-compile-$$O-$$SPI-t-f ] ; then \
               $(MAKE) xpatch-compile-$$O-$$SPI-t-f o=$$O spi=$$SPI cp0=t ;\
             fi ;\
             for CP0 in f t ; do\
-	      if [ -f errors-compile-$$O-$$SPI-$$CP0-f -a -e errors-compile-$$O-$$SPI-$$CP0-t ] ; then \
+	      if [ -f patches-work-dir/errors-compile-$$O-$$SPI-$$CP0-f -a -e patches-work-dir/errors-compile-$$O-$$SPI-$$CP0-t ] ; then \
                 $(MAKE) xpatch-compile-$$O-$$SPI-$$CP0-t o=$$O spi=$$SPI cp0=$$CP0 cis=t ;\
               fi ;\
-	      if [ -f errors-compile-$$O-$$SPI-$$CP0-f -a -e errors-interpret-$$O-$$SPI-$$CP0-f ] ; then \
+	      if [ -f patches-work-dir/errors-compile-$$O-$$SPI-$$CP0-f -a -e patches-work-dir/errors-interpret-$$O-$$SPI-$$CP0-f ] ; then \
                 $(MAKE) xpatch-interpret-$$O-$$SPI-$$CP0-f o=$$O spi=$$SPI cp0=$$CP0 ;\
               fi\
             done\
@@ -512,24 +520,24 @@ patches:
 
 xpatch-compile-$o-t-f-f: # don't list dependencies!
 	rm -f patch-compile-$o-t-f-f
-	-diff --context errors-compile-$o-f-f-f\
-                        errors-compile-$o-t-f-f\
+	-diff --context patches-work-dir/errors-compile-$o-f-f-f\
+                        patches-work-dir/errors-compile-$o-t-f-f\
                         > patch-compile-$o-t-f-f
 
 xpatch-compile-$o-$(spi)-t-f: # don't list dependencies!
 	rm -f patch-compile-$o-$(spi)-t-f
-	-diff --context errors-compile-$o-$(spi)-f-f\
-                        errors-compile-$o-$(spi)-t-f\
+	-diff --context patches-work-dir/errors-compile-$o-$(spi)-f-f\
+                        patches-work-dir/errors-compile-$o-$(spi)-t-f\
                         > patch-compile-$o-$(spi)-t-f
 
 xpatch-compile-$o-$(spi)-$(cp0)-t: # don't list dependencies!
 	rm -f patch-compile-$o-$(spi)-$(cp0)-t
-	-diff --context errors-compile-$o-$(spi)-$(cp0)-f\
-                        errors-compile-$o-$(spi)-$(cp0)-t\
+	-diff --context patches-work-dir/errors-compile-$o-$(spi)-$(cp0)-f\
+                        patches-work-dir/errors-compile-$o-$(spi)-$(cp0)-t\
                         > patch-compile-$o-$(spi)-$(cp0)-t
 
 xpatch-interpret-$o-$(spi)-$(cp0)-f: # don't list dependencies!
 	rm -f patch-interpret-$o-$(spi)-$(cp0)-f
-	-diff --context errors-compile-$o-$(spi)-$(cp0)-f\
-                        errors-interpret-$o-$(spi)-$(cp0)-f\
+	-diff --context patches-work-dir/errors-compile-$o-$(spi)-$(cp0)-f\
+                        patches-work-dir/errors-interpret-$o-$(spi)-$(cp0)-f\
                         > patch-interpret-$o-$(spi)-$(cp0)-f
