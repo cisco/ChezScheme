@@ -628,7 +628,7 @@
            [(arm32 arm64) #t]
            [else #f])
          #f))
-	(define add-store-fence
+    (define add-store-fence
       ;; A store--store fence should be good enough for safety on a platform that
       ;; orders load dependencies (which is anything except Alpha)
 	  (lambda (e)
@@ -679,11 +679,11 @@
                               `(if ,(%type-check mask-fixnum type-fixnum ,e)
                                    ,(build-assign a %zero 0 e)
                                    ,(add-store-fence
-			                 (build-remember-seq
+			             (build-remember-seq
                                       (build-assign a %zero 0 e)
                                       (%inline remember ,a))))
                               ;; Generate one copy of store instruction
-			          (build-remember-seq
+			      (build-remember-seq
                                (build-assign a %zero 0 e)
                                `(if ,(%type-check mask-fixnum type-fixnum ,e)
                                     ,(%constant svoid)
@@ -872,7 +872,7 @@
                          ,(case width
                             [(32) (intrinsic-info-asmlib dofretuns32 #f)]
                             [(64) (intrinsic-info-asmlib dofretuns64 #f)]
-                              [else ($oops who "can't handle width ~s" width)])
+                            [else ($oops who "can't handle width ~s" width)])
                          ,%asmlibcall))
                      ,%ac0)
                    ,(build-fix %ac0))))))
@@ -2909,7 +2909,7 @@
        (void)]
       [else
        (let ()
-         (define (build-seginfo maybe? e)
+         (define (build-seginfo maybe? object? e)
            (let ([ptr (make-assigned-tmp 'ptr)]
                  [seginfo (make-assigned-tmp 'seginfo)])
              (define (build-level-3 seginfo k)
@@ -2943,7 +2943,9 @@
                                  ,(k s2))
                             (k s2))))]
                  [else (k s3)]))
-             `(let ([,ptr ,(%inline srl ,(%inline + ,e (immediate ,(fx- (constant typemod) 1)))
+             `(let ([,ptr ,(%inline srl ,(if object?
+                                             (%inline + ,e (immediate ,(fx- (constant typemod) 1)))
+                                             e)
                                     (immediate ,(constant segment-offset-bits)))])
                 (let ([,seginfo (literal ,(make-info-literal #f 'entry (lookup-c-entry segment-info) 0))])
                   ,(build-level-3 seginfo
@@ -2959,7 +2961,7 @@
                 ,(%constant sfalse)
                 (if ,(%type-check mask-immediate type-immediate ,e)
                     ,(%constant sfalse)
-                    ,(let ([s-e (build-seginfo #T e)]
+                    ,(let ([s-e (build-seginfo #t #t e)]
                            [si (make-assigned-tmp 'si)])
                        `(let ([,si ,s-e])
                           (if ,(%inline eq? ,si (immediate 0))
@@ -2974,7 +2976,7 @@
                    ,(%constant sfalse)
                    (if ,(%type-check mask-immediate type-immediate ,e)
                        ,(%constant sfalse)
-                       ,(let ([s-e (build-seginfo #t e)]
+                       ,(let ([s-e (build-seginfo #t #t e)]
                               [si (make-assigned-tmp 'si)])
                           `(let ([,si ,s-e])
                              (if ,(%inline eq? ,si (immediate 0))
@@ -2982,7 +2984,7 @@
                                  ,si))))))])
          (define-inline 2 $seginfo
            [(e)
-            (bind #t (e) (build-seginfo #f e))])
+            (bind #t (e) (build-seginfo #f #t e))])
          (define-inline 2 $seginfo-generation
            [(e)
             (bind #f (e) (build-object-ref #f 'unsigned-8 e %zero (constant seginfo-generation-disp)))])
@@ -2997,7 +2999,7 @@
                         [list-bits (make-assigned-tmp 'list-bits)]
                         [offset (make-assigned-tmp 'offset)]
                         [byte (make-assigned-tmp 'byte)])
-                    `(let ([,si ,(build-seginfo #f e)])
+                    `(let ([,si ,(build-seginfo #f #t e)])
                        (let ([,list-bits ,(%mref ,si ,(constant seginfo-list-bits-disp))])
                          (if ,(%inline eq? ,list-bits (immediate 0))
                              (immediate 0)
@@ -3012,7 +3014,7 @@
             (bind #t (e)
               `(if ,(%type-check mask-fixnum type-fixnum ,e)
                    ,(%constant sfalse)
-                   ,(let ([s-e (build-seginfo #t e)]
+                   ,(let ([s-e (build-seginfo #t #t e)]
                           [si (make-assigned-tmp 'si)])
                       `(let ([,si ,s-e])
                          (if ,(%inline eq? ,si (immediate 0))
@@ -3021,7 +3023,9 @@
          (define-inline 2 weak-pair?
            [(e) (bind #t (e) (build-space-test e (constant space-weakpair)))])
          (define-inline 2 ephemeron-pair?
-           [(e) (bind #t (e) (build-space-test e (constant space-ephemeron)))]))])
+           [(e) (bind #t (e) (build-space-test e (constant space-ephemeron)))])
+         (define-inline 2 reference-bytevector?
+           [(e) (bind #t (e) (build-space-test e (constant space-reference-array)))]))])
 
     (define-inline 2 unbox
       [(e)
@@ -5161,6 +5165,16 @@
          (%inline -
             ,(ptr->integer e-addr (type->width ptr-type))
             ,(build-unfix e-roffset)))])
+    (define-inline 3 object->reference-address
+      [(e-ptr) (bind #t (e-ptr)
+                 `(if ,(%inline eq? ,e-ptr (immediate ,(constant sfalse)))
+                      (immediate 0)
+                      ,(unsigned->ptr (%inline + ,e-ptr ,(%constant reference-disp)) (type->width ptr-type))))])
+    (define-inline 3 reference-address->object
+      [(e-ptr) (bind #t (e-ptr)
+                 `(if ,(%inline eq? ,e-ptr (immediate 0))
+                      (immediate ,(constant sfalse))
+                      ,(%inline - ,(ptr->integer e-ptr (type->width ptr-type)) ,(%constant reference-disp))))])
     (define-inline 2 $object-ref
       [(type base offset)
        (nanopass-case (L7 Expr) type
@@ -6366,6 +6380,35 @@
             [else (build-dirty-store e-v e-i (constant stencil-vector-data-disp) e-new)]))
         (define-inline 3 stencil-vector-set!
           [(e-v e-i e-new) (go e-v e-i e-new)]))
+      (let ()
+        (define (build-dirty-store-reference base index offset e)
+          (let ([a (if (eq? index %zero)
+                       (%lea ,base offset)
+                       (%lea ,base ,index offset))])
+            (bind #t ([e e])
+              ;; eval a second so the address is not live across any calls
+              (bind #t ([a a])
+                `(if ,(%inline eq? ,e (immediate ,(constant sfalse)))
+                     (set! ,(%mref ,a ,0) (immediate 0))
+                     ,(add-store-fence
+                       (%seq
+                        (set! ,(%mref ,a ,0) ,(%inline + ,e ,(%constant reference-disp)))
+                        ,(%inline remember ,a))))))))
+        (define (go e-v e-i e-new)
+          (nanopass-case (L7 Expr) e-i
+            [(quote ,d)
+             (guard (target-fixnum? d))
+             (build-dirty-store-reference e-v %zero (+ d (constant bytevector-data-disp)) e-new)]
+            [else (build-dirty-store-reference e-v (build-unfix e-i) (constant bytevector-data-disp) e-new)]))
+        (define-inline 3 bytevector-reference-set!
+          [(e-v e-i e-new) (go e-v e-i e-new)])
+        (define-inline 3 bytevector-reference-ref
+          [(bv i) (let ([t (make-tmp 't 'uptr)])
+                    `(let ([,t (inline ,(make-info-load ptr-type #f) ,%load
+                                       ,bv ,(build-unfix i) (immediate ,(constant bytevector-data-disp)))])
+                       (if ,(%inline eq? ,t (immediate 0))
+                           (immediate ,(constant sfalse))
+                           ,(%inline - ,t ,(%constant reference-disp)))))]))
       (let ()
         (define (go e-v e-i e-new)
           `(set!

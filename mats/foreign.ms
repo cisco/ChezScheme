@@ -3300,3 +3300,105 @@
        37))])
 
 ])
+
+(mat reference-bytevector
+  (error? (make-reference-bytevector -1))
+  (error? (bytevector-reference-ref #vu8(1 2 3) 0))
+  (error? (bytevector-reference-ref (make-reference-bytevector 8) -8))
+  (error? (bytevector-reference-ref (make-reference-bytevector 8) 'oops))
+  (error? (bytevector-reference*-ref (make-reference-bytevector 8) -8))
+  (error? (bytevector-reference*-ref (make-reference-bytevector 8) 'oops))
+  (error? (reference-address->object #f))
+  (error? (reference*-address->object #f))
+
+  (not (reference-bytevector? #vu8(1 2 3)))
+  (not (reference-bytevector? 7))
+  (begin
+    (define $reftest-bv (make-reference-bytevector (* 2 (foreign-sizeof 'ptr))))
+    (reference-bytevector? $reftest-bv))
+  (eqv? (* 2 (foreign-sizeof 'ptr)) (bytevector-length $reftest-bv))
+  (eq? #f (bytevector-reference-ref $reftest-bv 0))
+  (begin
+    (define $reftest-bv2 (bytevector 1 2 3 4 5 6))
+    (bytevector-reference-set! $reftest-bv 0 $reftest-bv2)
+    (collect)
+    (eq? $reftest-bv2 (bytevector-reference-ref $reftest-bv 0)))
+  (with-interrupts-disabled
+   (eq? (if (= (foreign-sizeof 'ptr) 8)
+            (bytevector-u64-native-ref $reftest-bv 0)
+            (bytevector-u32-native-ref $reftest-bv 0))
+        (object->reference-address $reftest-bv2)))
+  (with-interrupts-disabled
+   (and (eq? $reftest-bv2
+             (reference-address->object (object->reference-address $reftest-bv2)))
+        (eq? $reftest-bv2
+             (reference*-address->object (object->reference-address $reftest-bv2)))))
+  (begin
+    (define $reftest-bv3 (bytevector 5 6 7 8))
+    (bytevector-reference-set! $reftest-bv (foreign-sizeof 'ptr) $reftest-bv3)
+    (collect)
+    (eq? $reftest-bv2 (bytevector-reference-ref $reftest-bv 0)))
+  (eq? $reftest-bv3 (bytevector-reference-ref $reftest-bv (foreign-sizeof 'ptr)))
+  (eq? $reftest-bv3 (bytevector-reference*-ref $reftest-bv (foreign-sizeof 'ptr)))
+
+  (let ()
+    (lock-object $reftest-bv3)
+    (let ([p (if (= (foreign-sizeof 'ptr) 8)
+                 (bytevector-u64-native-ref $reftest-bv 8)
+                 (bytevector-u32-native-ref $reftest-bv 4))])
+      (foreign-set! 'unsigned-8 p 1 77)
+      (equal? $reftest-bv3 #vu8(5 77 7 8))))
+
+  (begin
+    (unlock-object $reftest-bv3)
+    (define $reftest-mem4 (foreign-alloc 20))
+    (if (= (foreign-sizeof 'ptr) 8)
+        (bytevector-u64-native-set! $reftest-bv 8 $reftest-mem4)
+        (bytevector-u32-native-set! $reftest-bv 4 $reftest-mem4))
+    (eqv? $reftest-mem4 (bytevector-reference*-ref $reftest-bv (foreign-sizeof 'ptr))))
+
+  (begin
+    (foreign-free $reftest-mem4)
+    (define $reftest-flv (flvector 3.0 6.0 7.0))
+    (bytevector-reference-set! $reftest-bv 0 $reftest-flv)
+    (collect)
+    (eq? $reftest-flv (bytevector-reference-ref $reftest-bv 0)))
+  (with-interrupts-disabled
+   (eq? (if (= (foreign-sizeof 'ptr) 8)
+            (bytevector-u64-native-ref $reftest-bv 0)
+            (bytevector-u32-native-ref $reftest-bv 0))
+        (object->reference-address $reftest-flv)))
+  (with-interrupts-disabled
+   (eq? $reftest-flv
+        (reference-address->object (object->reference-address $reftest-flv))))
+
+  (let ()
+    (lock-object $reftest-flv)
+    (let ([p (if (= (foreign-sizeof 'ptr) 8)
+                 (bytevector-u64-native-ref $reftest-bv 0)
+                 (bytevector-u32-native-ref $reftest-bv 0))])
+      (foreign-set! 'double p 8 77.0)
+      (equal? $reftest-flv #vfl(3.0 77.0 7.0))))
+
+  (let ([b (box 45)])
+    (bytevector-reference-set! $reftest-bv 0 b)
+    (collect)
+    (eq? b (bytevector-reference-ref $reftest-bv 0)))
+
+  (reference-bytevector? (make-immobile-reference-bytevector 16))
+  (let* ([i (make-immobile-reference-bytevector 16)]
+         [p (#%$object-address i 0)]
+         [cp (object->reference-address i)])
+    (collect)
+    (and (eqv? p (#%$object-address i 0))
+         (eqv? cp (object->reference-address i))))
+  (let ([i (make-immobile-reference-bytevector 16)])
+    (bytevector-reference-set! i 0 '#(hello))
+    (collect)
+    (equal? '#(hello) (bytevector-reference-ref i 0)))
+
+  (begin
+    (bytevector-reference-set! $reftest-bv 0 #f)
+    (eq? #f (bytevector-reference-ref $reftest-bv 0)))
+)
+

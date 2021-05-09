@@ -727,10 +727,10 @@ ptr S_flvector(n) iptr n; {
 }
 
 ptr S_bytevector(n) iptr n; {
-  return S_bytevector2(get_thread_context(), n, 0);
+  return S_bytevector2(get_thread_context(), n, space_new);
 }
 
-ptr S_bytevector2(tc, n, immobile) ptr tc; iptr n; IBOOL immobile; {
+ptr S_bytevector2(tc, n, spc) ptr tc; iptr n; ISPC spc; {
     ptr p; iptr d;
 
     if (n == 0) return S_G.null_bytevector;
@@ -739,8 +739,8 @@ ptr S_bytevector2(tc, n, immobile) ptr tc; iptr n; IBOOL immobile; {
         S_error("", "invalid bytevector size request");
 
     d = size_bytevector(n);
-    if (immobile)
-      find_room(tc, space_immobile_data, 0, type_typed_object, d, p);
+    if (spc != space_new)
+      find_room(tc, spc, 0, type_typed_object, d, p);
     else
       newspace_find_room(tc, type_typed_object, d, p);
     BYTEVECTOR_TYPE(p) = (n << bytevector_length_offset) | type_bytevector;

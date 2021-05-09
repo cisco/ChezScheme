@@ -388,6 +388,7 @@
               [(boolean) #f '()]
               [(box) &a '((a)) #f]
               [(bytevector) '#vu8(0) "a" #f]
+              [(sub-bytevector) no-good]
               [(cflonum) 0.0+1.0i 0 'a #f]
               [(char) #\a 0 #f]
               [(codec) (latin-1-codec) 0 #f]

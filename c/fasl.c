@@ -1569,7 +1569,10 @@ static void pb_set_abs(void *address, uptr item) {
   int dest_reg = ((U32 *)address)[1] & DEST_REG_MASK;
 #endif
 
-  ((U32 *)address)[0] = (pb_mov16_pb_zero_bits_pb_shift0 | dest_reg | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  /* pb_link is the same as pb_mov16_pb_zero_bits_pb_shift0, but with
+     a promise of the subsequent instructions to load a full word */
+
+  ((U32 *)address)[0] = (pb_link | dest_reg | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
   ((U32 *)address)[1] = (pb_mov16_pb_keep_bits_pb_shift1 | dest_reg | (((item >> 16) & 0xFFFF) << ADDRESS_BITS_SHIFT));
 #if ptr_bytes == 8  
   ((U32 *)address)[2] = (pb_mov16_pb_keep_bits_pb_shift2 | dest_reg | (((item >> 32) & 0xFFFF) << ADDRESS_BITS_SHIFT));

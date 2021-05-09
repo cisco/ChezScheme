@@ -91,6 +91,23 @@ void S_pb_interp(ptr tc, void *bytecode) {
     next_ip = ip + 1;
 
     switch(INSTR_op(instr)) {
+    case pb_link:
+      /* same as pb_mov16_pb_zero_bits_pb_shift0, but with a promise
+         of collowing pb_mov16_pb_keep_bits_pb_shift1... with the same
+         destination */
+      regs[INSTR_di_dest(instr)] = ((uptr)INSTR_di_imm_unsigned(instr)
+                                    | ((uptr)INSTR_di_imm_unsigned(ip[1]) << 16)
+#if ptr_bits == 64      
+                                    | ((uptr)INSTR_di_imm_unsigned(ip[2]) << 32)
+                                    | ((uptr)INSTR_di_imm_unsigned(ip[3]) << 48)
+#endif
+                                    );
+#if ptr_bits == 64
+      next_ip = ip + 4;
+#else
+      next_ip = ip + 2;
+#endif
+      break;
     case pb_mov16_pb_zero_bits_pb_shift0:
       regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr);
       break;

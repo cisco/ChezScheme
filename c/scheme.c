@@ -331,7 +331,17 @@ static void idiot_checks() {
     /* parallel GC relies on not confusing a forward marker with code flags */
     fprintf(stderr, "code flags overlap with forwadr_marker\n");
     oops = 1;
-  } 
+  }
+
+  if ((reference_disp != bytevector_data_disp)
+      || (reference_disp != flvector_data_disp)) {
+    fprintf(stderr, "reference displacement does not match bytevector or flvector displacement\n");
+    oops = 1;
+  }
+  if (reference_disp >= (2 * ptr_bytes)) {
+    fprintf(stderr, "reference displacement is larger than two words\n");
+    oops = 1;
+  }
 
   if (oops) S_abnormal_exit();
 }

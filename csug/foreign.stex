@@ -2318,6 +2318,183 @@ value is the symbol \scheme{invalid}.
 \endschemedisplay
 
 
+\section{Foreign Arrays of Managed Objects\label{SECTREFERENCEARRAY}}
+
+When a bytevector value is passed in a foreign call an an argument
+type \scheme{u8*}, the foreign procedure receives a pointer to the
+start of the bytevector's content. The function
+\scheme{object->reference-address} returns that same address, but it
+is valid only if the bytevector does not move. If the storage manager
+later moves the bytevector in memory, then the address becomes
+invalid. The bytevector can be locked with \scheme{lock-object} to
+prevent the storage manage from relocating it, so that the content
+address will remain valid, but then it must be explicitly unlocked
+later with \scheme{unlock-object}.
+
+Having to explicitly lock and unlock objects can make interoperating
+with foreign procedures difficult when the foreign procedure expects
+an array of references. It may seem that a vector could serve that
+purpose, but although a Scheme vector is an array of references at
+some level, a vector's reference to a bytevector does not point to the
+start of the bytevector's content.
+
+A \emph{reference bytevector} is a bytevector that can be used as an
+array of pointers that is passed to a foreign procedure. Use
+\scheme{bytevector-reference-set!} to install reference to another
+bytevector or to an flvector, and that reference can be both (1)
+recognized as a reference and updated as needed by the storage
+manager, and (2) recognized as a pointer to the bytevector's content
+by a foreign procedure. When a reference bytevector refers to
+\scheme{#f}, its representation within the bytevector is the address
+\scheme{0}. A reference bytevector can refer to other kinds of Scheme
+objects, too, although the meaning of an address for other kinds of
+objects is unspecified. In addition, a reference bytevector can
+contain foreign addresses, which are addresses of memory outside of
+the storage manager's ranges, but beware that an address range
+released by a foreign allocator might later become a range that
+belongs to the Scheme storage manager. During the time that a garbage
+collection is possible (i.e., when interrupts have not been disabled),
+every aligned word in a reference bytevector must hold a valid object
+reference or a foreign address.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-reference-bytevector}{\categoryprocedure}{(make-reference-bytevector \var{n})}
+\returns a reference bytevector of length \var{n}
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{make-bytevector}, but the result is a reference
+bytevector that is initialized with all \scheme{#f}, except that
+trailing bytes after the last multiple of a pointer size.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-immobile-reference-bytevector}{\categoryprocedure}{(make-immobile-reference-bytevector \var{n})}
+\returns a reference bytevector of length \var{n}
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{make-reference-bytevector}, but creates a reference
+bytevector that will not be relocated in memory by the storage
+management system until it is reclaimed.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{reference-bytevector?}{\categoryprocedure}{(reference-bytevector? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an reference bytevector, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+Note that every reference bytevector is also a bytevector that is
+recognized by \scheme{bytevector?}, and \scheme{equal?} considers two
+bytevectors independent of whether either is a reference bytevector.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-reference-set!}{\categoryprocedure}{(bytevector-reference-set! \var{bytevector} \var{n} \var{obj})}
+\returns unspecified
+\listlibraries
+\endentryheader
+
+\noindent
+\var{bytevector} must be a reference bytevector, and \var{n} must
+be a nonnegative fixnum strictly less than the length of
+\var{bytevector}.
+
+Installs a reference to \var{obj} at byte offset \var{n} within
+\var{bytevector}. In the case that \var{obj} is a bytevector or
+flvector, the reference is represented as the starting address of the
+bytevector or flvector's content.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-reference-ref}{\categoryprocedure}{(bytevector-reference-ref \var{bytevector} \var{n})}
+\returns a Scheme object
+\listlibraries
+\endentryheader
+
+\noindent
+\var{bytevector} must be a reference bytevector, and \var{n} must
+be a nonnegative fixnum strictly less than the length of
+\var{bytevector}.
+
+Returns the object that is refefenced \var{bytevector} at byte offset
+\var{n}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{bytevector-reference*-ref}{\categoryprocedure}{(bytevector-reference*-ref \var{bytevector} \var{n})}
+\returns an allocated Scheme object or an exact integer
+\listlibraries
+\endentryheader
+
+\noindent
+Like \scheme{bytevector-reference-ref}, but if \var{bytevector} at
+byte offset \var{n} holds a non-\scheme{0} foreign address,
+\scheme{bytevector-reference*-ref} returns an integer. The
+representation of a reference to a Scheme object can overlap with the
+representation of a foreign address; see
+\scheme{reference*-address->object}.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{object->reference-address}{\categoryprocedure}{(object->reference-address \var{obj})}
+\returns a nonnegative exact integer
+\listlibraries
+\endentryheader
+
+\noindent
+The result is \scheme{0} if \scheme{obj} is \scheme{#f}, and it is the
+address of \var{objs}'s content in the case that \var{obj} is a
+bytevector of flvector---at least, at the point where
+\scheme{object->reference-address} was called. Unless \var{obj} is
+a locked or immobile bytevector or flvector, its address can change at
+any time that a garbage collection is possible (i.e., when interrupts
+are enabled). For other kinds of \var{objs}, the representation at the
+returned address is not specified, except that it is a nonnegative
+exact integer that is distinct from any other object's representation.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{reference-address->object}{\categoryprocedure}{(reference-address->object \var{addr})}
+\returns a Scheme object
+\listlibraries
+\endentryheader
+
+\noindent
+\var{addr} must be a nonnegative exact integer that is a valid reference
+to a Scheme object, and the result is the referenced Scheme object.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{reference*-address->object}{\categoryprocedure}{(reference*-address->object \var{addr})}
+\returns a Scheme object, possibly \var{addr} itself
+\listlibraries
+\endentryheader
+
+\noindent
+\var{addr} must be a nonnegative exact integer that is a valid
+reference to a Scheme object, or it must be an foreign address that is
+outside the range that belongs to the storage manager.
+
+When \var{addr} is \scheme{0}, the result is \scheme{#f}. Otherwise,
+if \var{addr} is a foreign address, then \var{addr} itself is
+returned.
+
+The representation of a reference to a bytevector or flvector is
+guaranteed to be distinct from any foreign address, but other values
+may have a representation that overlaps with foreign addresses, and
+\var{addr} is returned (i.e., the foreign-address interpretation takes
+precedence) in that case. Thus, \scheme{reference*-address->object}
+and \scheme{bytevector-reference*-ref} are mainly useful for an address
+that is known to be either a bytevector reference, an flvector
+reference, or a foreign address.
+
+%----------------------------------------------------------------------------
 
 
 \section{Providing Access to Foreign Procedures\label{SECTFOREIGNACCESS}}

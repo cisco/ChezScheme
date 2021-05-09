@@ -554,6 +554,9 @@ typedef struct thread_gc {
 #define INCRGEN(g) (g = g == S_G.max_nonstatic_generation ? static_generation : g+1)
 #define FIXMEDIATE(x) (Sfixnump(x) || Simmediatep(x))
 
+#define Sbytevector_reference_length(p) (Sbytevector_length(p) >> log2_ptr_bytes)
+#define INITBVREFIT(p, i) (*(ptr *)(&BVIT(p, (i) << log2_ptr_bytes)))
+
 /* For `memcpy_aligned, that the first two arguments are word-aligned
    and it would be ok to round up the length to a word size. But
    probably the compiler does a fine job with plain old `mempcy`. */

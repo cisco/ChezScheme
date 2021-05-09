@@ -84,8 +84,10 @@
 ;;  - (trace-now <field>) : direct recur; implies pure
 ;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd; implies pure
 ;;  - (trace-pure-code <field>) : like `trace-pure`, but special handling in parallel mode
+;;  - (trace-reference <field>) : like `trace`, but for a reference bytevector element
 ;;  - (trace-ptrs <field> <count>) : trace an array of pointerrs
 ;;  - (trace-pure-ptrs <field> <count>) : pure analog of `trace-ptrs`
+;;  - (trace-reference-ptrs <field> <count>) : like `trace-ptrs`, but for a reference bytevector
 ;;  - (copy <field>) : copy for copy, ignore otherwise
 ;;  - (copy-bytes <field> <count>) : copy an array of bytes
 ;;  - (copy-flonum <field>) : copy flonum and forward
@@ -162,6 +164,11 @@
    
    [pair
     (case-space
+     [(< space-weakpair)
+      (space space-impure)
+      (try-double-pair trace pair-car
+                       trace pair-cdr
+                       countof-pair)]
      [space-ephemeron
       (space space-ephemeron)
       (size size-ephemeron)
@@ -187,12 +194,17 @@
       (try-double-pair copy pair-car
                        trace pair-cdr
                        countof-weakpair)]
-     [else
-      (space space-impure)
-      (try-double-pair trace pair-car
-                       trace pair-cdr
-                       countof-pair)])]
-
+     [else ; => space-reference-array as used for dirty resweep by owner thread
+      (case-mode
+       [(sweep)
+        (space space-reference-array)
+        (size size-pair)
+        (mark)
+        (trace-reference pair-car)
+        (trace-reference pair-cdr)
+        (count countof-pair)]
+       [else
+        (S_error_abort "misplaced pair")])])]
    [closure
     (define code : ptr (CLOSCODE _))
     (trace-code-early code) ; not traced in parallel mode
@@ -434,12 +446,25 @@
       (count countof-flvector)]
 
      [bytevector
-      (space space-data)
-      (define sz : uptr (size_bytevector (Sbytevector_length _)))
-      (size (just sz))
-      (mark)
-      (copy-bytes bytevector-type sz)
-      (count countof-bytevector)]
+      (case-space
+       [space-reference-array
+        (space space-reference-array)
+        (define sz : uptr (size_bytevector (Sbytevector_length _)))
+        (size (just sz))
+        (mark)
+        (copy-type bytevector-type)
+        (define len : uptr (Sbytevector_reference_length _))
+        (trace-reference-ptrs bytevector-data len)
+        (pad (when (== (& len 1) 0)
+               (set! (INITBVREFIT _copy_ len) (FIX 0))))
+        (count countof-bytevector)]
+       [else
+        (space space-data)
+        (define sz : uptr (size_bytevector (Sbytevector_length _)))
+        (size (just sz))
+        (mark)
+        (copy-bytes bytevector-type sz)
+        (count countof-bytevector)])]
 
      [tlc
       (space
@@ -1478,10 +1503,18 @@
                     "else"
                     (code-block (statements body config)))]
                   [`([,spc . ,body] . ,rest)
+                   (unless (or (symbol? spc)
+                               (and (pair? spc)
+                                    (memq (car spc) '(< <= == >= >))
+                                    (pair? (cdr spc))
+                                    (symbol? (cadr spc))
+                                    (null? (cddr spc))))
+                     (error 'case-space "bad space spec: ~s" spc))
                    (code
-                    (format "~aif (p_at_spc == ~a)"
+                    (format "~aif (p_at_spc ~a ~a)"
                             (if else? "else " "")
-                            (as-c spc))
+                            (if (pair? spc) (car spc) "==")
+                            (as-c (if (pair? spc) (cadr spc) spc)))
                     (code-block (statements body config))
                     (loop rest #t))])))
              (statements (cdr l) config))]
@@ -1547,6 +1580,9 @@
                 (and (not (lookup 'as-dirty? config #f))
                      (trace-statement field config #f 'pure))])
              (statements (cdr l) config))]
+           [`(trace-reference ,field)
+            (code (trace-statement field config #f 'reference)
+                  (statements (cdr l) config))]
            [`(copy ,field)
             (code (copy-statement field config)
                   (statements (cdr l) config))]
@@ -1606,26 +1642,24 @@
             (statements (cons `(trace-ptrs ,offset ,len pure)
                               (cdr l))
                         config)]
-           [`(trace-ptrs ,offset ,len ,purity)
+           [`(trace-reference-ptrs ,offset ,len)
+            (statements (cons `(trace-ptrs ,offset ,len reference)
+                              (cdr l))
+                        config)]
+           [`(trace-ptrs ,offset ,len ,purity/kind)
             (case (lookup 'mode config)
               [(copy)
                (statements (cons `(copy-bytes ,offset (* ptr_bytes ,len))
                                  (cdr l))
                            config)]
-              [(sweep measure sweep-in-old check)
+              [(sweep measure sweep-in-old check self-test)
                (code
                 (loop-over-pointers
                  (field-expression offset config "p" #t)
                  len
-                 (trace-statement `(array-ref p_p idx) config #f purity)
-                 config)
-                (statements (cdr l) config))]
-              [(self-test)
-               (code
-                (loop-over-pointers (field-expression offset config "p" #t)
-                                    len
-                                    (code "if (p_p[idx] == p) return 1;")
-                                    config)
+                 (trace-statement `(array-ref p_p idx) config #f purity/kind)
+                 config
+                 purity/kind)
                 (statements (cdr l) config))]
               [else (statements (cdr l) config)])]
            [`(count ,counter)
@@ -2005,54 +2039,62 @@
         [`()
          (error 'case-mode "no matching case for ~s in ~s" mode all-clauses)])))
 
-  (define (loop-over-pointers ptr-e len body config)
+  (define (loop-over-pointers ptr-e len body config purity/kind)
     (code-block
      (format "uptr idx, p_len = ~a;" (expression len config))
-     (format "ptr *p_p = &~a;" ptr-e)
+     (format "ptr *p_p = ~a&~a;" (if (eq? purity/kind 'reference) "(ptr*)" "")
+             ptr-e)
      "for (idx = 0; idx < p_len; idx++)"
      (code-block body)))
 
-  (define (trace-statement field config early? purity)
+  (define (trace-statement field config early? purity/kind)
     (define mode (lookup 'mode config))
+    (define (reference->object e)
+      (if (eq? purity/kind 'reference)
+          (format "S_maybe_reference_to_object(~a)" e)
+          e))
     (cond
       [(or (eq? mode 'sweep)
            (eq? mode 'sweep-in-old)
            (and early? (or (eq? mode 'copy)
                            (eq? mode 'mark))))
-       (relocate-statement purity (field-expression field config "p" #t) config)]
+       (relocate-statement purity/kind (field-expression field config "p" #t) config)]
       [(eq? mode 'copy)
        (copy-statement field config)]
       [(eq? mode 'measure)
-       (measure-statement (field-expression field config "p" #f))]
+       (measure-statement (reference->object (field-expression field config "p" #f)))]
       [(eq? mode 'self-test)
-       (format "if (p == ~a) return 1;" (field-expression field config "p" #f))]
+       (format "if (p == ~a) return 1;" (reference->object (field-expression field config "p" #f)))]
       [(eq? mode 'check)
-       (format "check_pointer(&(~a), ~a, ~a, seg, s_in, aftergc);"
+       (format "check_pointer(&(~a), ~a, ~a, ~a, seg, s_in, aftergc);"
                (field-expression field config "p" #f)
                (match field
                  [`(just ,_) "0"]
                  [else "1"])
+               (if (eq? purity/kind 'reference) "1" "0")
                (expression '_ config))]
       [else #f]))
 
-  (define (relocate-statement purity e config)
+  (define (relocate-statement purity/kind e config)
     (define mode (lookup 'mode config))
     (case mode
       [(sweep-in-old)
-       (if (eq? purity 'pure)
-           (format "relocate_pure(&~a);" e)
-           (format "relocate_indirect(~a);" e))]
+       (case purity/kind
+         [(pure) (format "relocate_pure(&~a);" e)]
+         [(reference) (format "relocate_reference_indirect(~a);" e)]
+         [else (format "relocate_indirect(~a);" e)])]
       [else
        (if (lookup 'as-dirty? config #f)
-           (begin
-             (when (eq? purity 'pure) (error 'relocate-statement "pure as dirty?"))
-             (format "relocate_dirty(&~a, youngest);" e))
+           (case purity/kind
+             [(pure) (error 'relocate-statement "pure as dirty?")]
+             [(reference) (format "relocate_reference_dirty(&~a, youngest);" e)]
+             [else (format "relocate_dirty(&~a, youngest);" e)])
            (let ([in-owner (case mode
                              [(copy mark) (if (lookup 'parallel? config #f)
                                               "_in_owner"
                                               "")]
                              [else ""])])
-             (format "relocate_~a~a(&~a~a);" purity in-owner e (if (eq? purity 'impure) ", from_g" ""))))]))
+             (format "relocate_~a~a(&~a~a);" purity/kind in-owner e (if (eq? purity/kind 'pure) "" ", from_g"))))]))
 
   (define (measure-statement e)
     (code

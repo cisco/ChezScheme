@@ -697,6 +697,24 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
     }                                                                   \
   } while (0)
 
+#define relocate_reference(ppp, from_g) do {                    \
+    ptr* rPPP = ppp; ptr rPP = *rPPP;                           \
+    if (!FOREIGN_REFERENCEP(rPP)) {                             \
+      *rPPP = S_reference_to_object(rPP);                       \
+      relocate_impure(rPPP, from_g);                            \
+      *rPPP = S_object_to_reference(*rPPP);                     \
+    }                                                           \
+  } while (0)
+
+#define relocate_reference_dirty(ppp, YOUNGEST) do {            \
+    ptr* rPPP = ppp;                                            \
+    if (!FOREIGN_REFERENCEP(*rPPP)) {                           \
+      *rPPP = S_reference_to_object(*rPPP);                     \
+      relocate_dirty(rPPP, YOUNGEST);                           \
+      *rPPP = S_object_to_reference(*rPPP);                     \
+    }                                                           \
+  } while (0)
+
 #ifdef ENABLE_OBJECT_COUNTS
 # define is_counting_root(si, p) (si->counting_mask && (si->counting_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))
 #endif
@@ -704,6 +722,14 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
 # define relocate_indirect(p) do { \
     ptr _P = p;                    \
     relocate_pure(&_P);            \
+  } while (0)
+
+# define relocate_reference_indirect(p) do {   \
+    ptr _P = p;                                \
+    if (!FOREIGN_REFERENCEP(_P)) {             \
+      _P = S_reference_to_object(_P);          \
+      relocate_pure(&_P);                      \
+    }                                          \
   } while (0)
 
 FORCEINLINE void check_triggers(thread_gc *tgc, seginfo *si) {
@@ -1914,7 +1940,7 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
           ppn = pp + 1;
           p = *ppn;
           relocate_impure_help(ppn, p, from_g);
-          FLUSH_REMOTE(tgc, TYPE(TO_PTR(pp), type_pair));
+          FLUSH_REMOTE(tgc, TYPE(TO_PTR(pp), type_pair)); /* can always treat as a pair to sweep words */
           pp = ppn + 1;
         });
       SET_BACKREFERENCE(Sfalse);
@@ -1996,6 +2022,12 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
           sweep(tgc, p, from_g);
           pp = TO_VOIDP((uptr)TO_PTR(pp) + size_object(p));
         });
+
+      sweep_space(space_reference_array, from_g, {
+          p = TYPE(TO_PTR(pp), type_typed_object);
+          pp = TO_VOIDP((uptr)TO_PTR(pp) + sweep_typed_object(tgc, p, from_g));
+        });
+
     }
 
     /* May add to the sweep stack: */
@@ -2447,6 +2479,33 @@ static uptr sweep_dirty_segments(thread_gc *tgc, seginfo **dirty_segments) {
                     if (!dirty_si->marked_mask || marked(dirty_si, p))
                       youngest = check_dirty_ephemeron(tgc, p, youngest);
                     pp += size_ephemeron / sizeof(ptr);
+                  }
+                } else if (s == space_reference_array) {
+                  /* the same as space_impure and others above, but for object references */
+                  if (dirty_si->marked_mask) {
+                    while (pp < ppend) {
+                      /* handle two pointers at a time */
+                      if (marked(dirty_si, TO_PTR(pp))) {
+                        FLUSH_REMOTE_BLOCK
+                        relocate_reference_dirty(pp, youngest);
+                        ppn = pp + 1;
+                        relocate_reference_dirty(ppn, youngest);
+                        FLUSH_REMOTE(tgc, TYPE(TO_PTR(pp), type_pair)); /* can treat as a pair for resweep */
+                        pp = ppn + 1;
+                      } else {
+                        pp += 2;
+                      }
+                    }
+                  } else {
+                    while (pp < ppend && *pp != forward_marker) {
+                      /* handle two pointers at a time */
+                      FLUSH_REMOTE_BLOCK
+                      relocate_reference_dirty(pp, youngest);
+                      ppn = pp + 1;
+                      relocate_reference_dirty(ppn, youngest);
+                      FLUSH_REMOTE(tgc, TYPE(TO_PTR(pp), type_pair));
+                      pp = ppn + 1;
+                    }
                   }
                 } else {
                   S_error_abort("sweep_dirty(gc): unexpected space");

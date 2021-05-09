@@ -30,7 +30,7 @@ static uptr max_gap;
 static ptr make_mod_range PROTO((ptr tc, uptr start, uptr end));
 
 static ptr make_mod_range(ptr tc, uptr start, uptr end) {
-  ptr bv = S_bytevector2(tc, sizeof(mod_range), 0);
+  ptr bv = S_bytevector2(tc, sizeof(mod_range), space_new);
   mod_range_start(bv) = start;
   mod_range_end(bv) = end;
   return bv;

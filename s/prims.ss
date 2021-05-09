@@ -76,6 +76,57 @@
     [else
      (lambda (p) (ephemeron-pair? p))]))
 
+(define reference-bytevector?
+  (constant-case architecture
+    [(pb)
+     (foreign-procedure "(cs)s_reference_bytevectorp" (scheme-object) scheme-object)]
+    [else
+     (lambda (p) (reference-bytevector? p))]))
+
+(define-who bytevector-reference-ref
+  (lambda (bv i)
+    (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
+    (unless (and (fixnum? i)
+                 (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+      ($oops who "invalid index ~s for ~s" i bv))
+    (bytevector-reference-ref bv i)))
+
+(define-who bytevector-reference*-ref
+  (let ([ref (foreign-procedure "(cs)s_bytevector_reference_star_ref" (ptr uptr) ptr)])
+    (lambda (bv i)
+      (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
+      (unless (and (fixnum? i)
+                   (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+        ($oops who "invalid index ~s for ~s" i bv))
+      (ref bv i))))
+
+(define-who bytevector-reference-set!
+  (lambda (bv i val)
+    (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
+    (unless (and (fixnum? i)
+                 (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+      ($oops who "invalid index ~s for ~s" i bv))
+    (bytevector-reference-set! bv i val)))
+
+(define-who object->reference-address
+  (lambda (v)
+    (object->reference-address v)))
+
+(define-who reference-address->object
+  (lambda (a)
+    (unless (and (or (fixnum? a) (bignum? a))
+                 (< -1 a (bitwise-arithmetic-shift 1 (constant ptr-bits))))
+      ($oops who "invalid address ~s" a))
+    (reference-address->object a)))
+
+(define-who reference*-address->object
+  (let ([ref->obj (foreign-procedure "(cs)s_reference_star_address_object" (uptr) ptr)])
+    (lambda (a)
+      (unless (and (or (fixnum? a) (bignum? a))
+                   (< -1 a (bitwise-arithmetic-shift 1 (constant ptr-bits))))
+        ($oops who "invalid address ~s" a))
+      (ref->obj a))))
+
 (define $split-continuation
   (foreign-procedure "(cs)single_continuation"
     (scheme-object iptr)
@@ -341,6 +392,20 @@
        (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
          ($oops who "~s is not a valid vector length" n))
        ($make-immobile-vector n 0)])))
+
+(define-who make-reference-bytevector
+  (let ([$make-reference-bytevector (foreign-procedure "(cs)s_make_reference_bytevector" (uptr) ptr)])
+    (lambda (n)
+      (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
+        ($oops who "~s is not a valid bytevector length" n))
+      ($make-reference-bytevector n))))
+
+(define-who make-immobile-reference-bytevector
+  (let ([$make-immobile-reference-bytevector (foreign-procedure "(cs)s_make_immobile_reference_bytevector" (uptr) ptr)])
+    (lambda (n)
+      (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
+        ($oops who "~s is not a valid bytevector length" n))
+      ($make-immobile-reference-bytevector n))))
 
 (define $make-eqhash-vector
   (case-lambda
