@@ -1912,6 +1912,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Certain foreign calls with signed 8- and 16-bit integers on x86_64 (9.5.5)}
+
+The x86_64 code generator now properly sign-extends foreign-call
+arguments passed in registers via \scheme{(& integer-8)} and \code{(&
+integer-16)}.
+
 \subsection{Bitwise right shift of negative bignum (9.5.5)}
 
 When a negative bignum is shifted right by a multiple of the big-digit

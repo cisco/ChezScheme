@@ -2669,7 +2669,7 @@
                           `(set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-8 #f)
                                                                ,%load ,x ,%zero (immediate ,x-offset)))]))))]
                  [load-content-regs
-                  (lambda (classes size iint ifp vint vfp)
+                  (lambda (classes size unsigned? iint ifp vint vfp)
                     (lambda (x) ; requires var
                       (let loop ([size size] [iint iint] [ifp ifp] [classes classes] [x-offset 0])
                         (cond
@@ -2694,13 +2694,13 @@
                           (let loop ([reg (vector-ref vint iint)] [size size] [x-offset x-offset])
                             (cond
                              [(= size 4)
-                              `(set! ,reg (inline ,(make-info-load 'unsigned-32 #f)
+                              `(set! ,reg (inline ,(make-info-load (if unsigned? 'unsigned-32 'integer-32) #f)
                                                   ,%load ,x ,%zero (immediate ,x-offset)))]
                              [(= size 2)
-                              `(set! ,reg (inline ,(make-info-load 'unsigned-16 #f)
+                              `(set! ,reg (inline ,(make-info-load (if unsigned? 'unsigned-16 'integer-16) #f)
                                                   ,%load ,x ,%zero (immediate ,x-offset)))]
                              [(= size 1)
-                              `(set! ,reg (inline ,(make-info-load 'unsigned-8 #f)
+                              `(set! ,reg (inline ,(make-info-load (if unsigned? 'unsigned-8 'integer-8) #f)
                                                   ,%load ,x ,%zero (immediate ,x-offset)))]
                              [(> size 4)
                               ;; 5, 6, or 7: multiple steps to avoid reading too many bytes
@@ -2761,12 +2761,12 @@
                                           (eq? 'float (caar ($ftd->members ftd))))
                                      ;; float or double
                                      (loop (cdr types)
-                                       (cons (load-content-regs '(sse) ($ftd-size ftd) i i vint vfp) locs)
+                                       (cons (load-content-regs '(sse) ($ftd-size ftd) #t i i vint vfp) locs)
                                        (add-regs 1 i vint regs) (add-regs 1 i vfp fp-regs) (fx+ i 1) isp)]
                                     [else
                                      ;; integer
                                      (loop (cdr types)
-                                       (cons (load-content-regs '(integer) ($ftd-size ftd) i i vint vfp) locs)
+                                       (cons (load-content-regs '(integer) ($ftd-size ftd) ($ftd-unsigned? ftd) i i vint vfp) locs)
                                        (add-regs 1 i vint regs) fp-regs(fx+ i 1) isp)])]
                                   [else
                                    ;; pass as value on the stack
@@ -2830,7 +2830,7 @@
                                   [else
                                    ;; pass in registers
                                    (loop (cdr types)
-                                         (cons (load-content-regs classes ($ftd-size ftd) iint ifp vint vfp) locs)
+                                         (cons (load-content-regs classes ($ftd-size ftd) ($ftd-unsigned? ftd) iint ifp vint vfp) locs)
                                          (add-regs ints iint vint regs) (add-regs fps ifp vfp fp-regs)
                                          (fx+ iint ints) (fx+ ifp fps) isp)]))]
                               [else
