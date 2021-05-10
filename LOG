@@ -2173,3 +2173,6 @@
     foreign.stex
 - New spellings #true and #false for #t and #f are recognized
     read.ss 6.ms
+- Converted built-in foreign types to work like other ftypes using a
+  compile-time value to specify the value of the foreign type.
+    primdata.ss, ftype.ss

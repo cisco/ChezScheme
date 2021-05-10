@@ -424,7 +424,12 @@ ftype operators:
                       (unless funok?
                         (when (ftd-function? ftd)
                           (syntax-error ftype "unexpected function ftype name outside pointer field")))
-                      ftd)]
+                      (cond
+                        [(and swap? 
+                              (find (let ([x (ftd-base-type ftd)])
+                                      (lambda (ftd) (eq? (ftd-base-type ftd) x)))
+                                swap-base-ftds))]
+                        [else ftd]))]
                    [(find (let ([x (syntax->datum ftype)])
                             (lambda (ftd) (eq? (ftd-base-type ftd) x)))
                       (if swap? swap-base-ftds native-base-ftds))]
@@ -675,6 +680,13 @@ ftype operators:
   (record-writer rtd/fptr
     (lambda (x p wr)
       (fprintf p "#<ftype-pointer ~s ~s>" (record-type-name (record-rtd x)) ($ftype-pointer-address x))))
+  (set! $trans-base-ftypes
+    (lambda (x)
+      (syntax-case x ()
+        [(k) (with-syntax ([(tys ...) (map (lambda (ftd) (datum->syntax #'k (ftd-base-type ftd))) native-base-ftds)]
+                           [(ftds ...) native-base-ftds])
+               #'(begin
+                   (define-syntax tys (make-compile-time-value 'ftds)) ...))])))
   (set! $verify-ftype-address
     (lambda (who addr)
       (define address?
@@ -2057,4 +2069,6 @@ ftype operators:
 (define-syntax ftype-spin-lock! (lambda (x) ($trans-ftype-locked-op! #'ftype-spin-lock! x #'$fptr-spin-lock!)))
 (define-syntax ftype-unlock! (lambda (x) ($trans-ftype-locked-op! #'ftype-unlock! x #'$fptr-unlock!)))
 (define-syntax ftype-set! (lambda (x) ($trans-ftype-set! x)))
+(let-syntax ([define-base-ftypes (lambda (x) ($trans-base-ftypes x))])
+  (define-base-ftypes))
 )
