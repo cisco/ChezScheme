@@ -2870,6 +2870,7 @@
     (~= (sqrt 5-12i) (sqrt 5.0-12.0i))
     (~= (sqrt -5-12i) (sqrt -5.0-12.0i))
     (~= (sqrt 1e38) (sqrt #e1e38))
+    (~= (sqrt -1.0-0.0i) 0.0-1.0i)
  )
 
 (mat isqrt
@@ -2932,6 +2933,7 @@
     (error? (sin 3 4)) 
     (error? (sin 'a))
     (fl~= (sin (/ pi 6)) 0.5)
+    (~= (sin 1e-30+1e-40i) 1e-30+1e-40i)
  )
 
 (mat cos
@@ -2954,6 +2956,7 @@
     (error? (tan 'a))
     (fl~= (tan (/ pi 4)) 1.0)
     (let ([x 4.4]) (~= (tan x) (/ (sin x) (cos x))))
+    (~= (tan 1e-30+1e-40i) 1e-30+1e-40i)
     (fluid-let ([*fuzz* 3e-12])
        (let ([x 4.4-5.5i]) (cfl~= (tan x) (/ (sin x) (cos x)))))
  )
@@ -3027,7 +3030,8 @@
       (let ([s (sinh x)]) (~= (* s s) (* 1/2 (- (cosh (* 2 x)) 1)))))
    (let ([x 5.4+4.5i])
       (let ([s (sinh x)])
-         (~= (* s s s) (* 1/4 (+ (* -3 (sinh x)) (sinh (* 3 x)))))))
+	(~= (* s s s) (* 1/4 (+ (* -3 (sinh x)) (sinh (* 3 x)))))))
+   (~= (sinh 1e-30+1e-40i) 1e-30+1e-40i)
  )
 
 (mat cosh
@@ -3059,6 +3063,7 @@
    (fluid-let ([*fuzz* 1e-13])
      (let ([x 3-2i]) (~= (tanh x) (/ (sinh x) (cosh x)))))
    (let ([x 5.4+4.5i]) (~= (tanh (* +i x)) (* +i (tan x))))
+   (~= (tanh 1e-30+1e-40i) 1e-30+1e-40i)
  )
 
 
