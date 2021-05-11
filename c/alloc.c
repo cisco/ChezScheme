@@ -244,7 +244,7 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
 
   tgc->during_alloc += 1;
 
-  nsegs = (uptr)(n + ptr_bytes + bytes_per_segment - 1) >> segment_offset_bits;
+  nsegs = (uptr)(n + allocation_segment_tail_padding + bytes_per_segment - 1) >> segment_offset_bits;
 
  /* block requests to minimize fragmentation and improve cache locality */
   if (s == space_code && nsegs < 16) nsegs = 16;
@@ -256,7 +256,7 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
 
   tgc->base_loc[g][s] = new;
   tgc->sweep_loc[g][s] = new;
-  tgc->bytes_left[g][s] = (new_bytes - n) - ptr_bytes;
+  tgc->bytes_left[g][s] = (new_bytes - n) - allocation_segment_tail_padding;
   tgc->next_loc[g][s] = (ptr)((uptr)new + n);
 
 #if defined(WRITE_XOR_EXECUTE_CODE)

@@ -112,8 +112,12 @@ FORCEINLINE ptr S_reference_to_object(ptr p) {
     return ((ptr)((uptr)(p) - reference_disp));
 }
 
-/* We take advantage of the fact `reference_disp` is less than two
-   words and that every allocation region has a one-word padding, so
+/* An allocation region needs room at the end of a formarding pointer
+   as a terminator */
+#define allocation_segment_tail_padding ptr_bytes
+
+/* We take advantage of the fact `reference_disp` is less than the
+   minimum allocation size plus `allocation_segment_tail_padding`, so
    there's no possibility that the referece address for an object will
    be off of its GC-managed page (even for a pair or an bytevector
    with an empty payload). */

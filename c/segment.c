@@ -666,7 +666,8 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
     if (addr == NULL) {
       return;
     }
-    bytes = (char*)tgc->next_loc[0][space_code] - (char*)tgc->base_loc[0][space_code] + tgc->bytes_left[0][space_code] + ptr_bytes;
+    bytes = ((char*)tgc->next_loc[0][space_code] - (char*)tgc->base_loc[0][space_code]
+             + tgc->bytes_left[0][space_code] + allocation_segment_tail_padding);
     if (mprotect(addr, bytes, flags) != 0) {
       S_error_abort("failed to protect current allocation segments");
     }

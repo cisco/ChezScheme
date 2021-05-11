@@ -338,8 +338,15 @@ static void idiot_checks() {
     fprintf(stderr, "reference displacement does not match bytevector or flvector displacement\n");
     oops = 1;
   }
-  if (reference_disp >= (2 * ptr_bytes)) {
-    fprintf(stderr, "reference displacement is larger than two words\n");
+  
+  if (reference_disp >= (allocation_segment_tail_padding
+                         /* to determine the minimum distince from the start of an
+                            alocated object to the end of its alloted space, take the
+                            smaller of the allocation alignment or sizeof(double), where
+                            the latter is relevant for a flonum that points into the
+                            imaginary half of an inexactnum */
+                         + ((byte_alignment < sizeof(double)) ? byte_alignment : sizeof(double)))) {
+    fprintf(stderr, "reference displacement can extend past the end of an allocation page\n");
     oops = 1;
   }
 
