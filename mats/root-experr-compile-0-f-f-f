@@ -64,6 +64,10 @@ primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random
 primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f)): Exception in pseudo-random-generator-next!: not a pseudo-random generator #f
 primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #!eof) *pseudo-random-generator): Exception: variable *pseudo-random-generator is not bound
 primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f) *pseudo-random-generator): Exception: variable *pseudo-random-generator is not bound
+primvars.mo:Expected error testing (reference-address->object (quote #!eof)): Exception in reference-address->object: invalid address #!eof
+primvars.mo:Expected error testing (reference-address->object (quote #f)): Exception in reference-address->object: invalid address #f
+primvars.mo:Expected error testing (reference*-address->object (quote #!eof)): Exception in reference*-address->object: invalid address #!eof
+primvars.mo:Expected error testing (reference*-address->object (quote #f)): Exception in reference*-address->object: invalid address #f
 primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote 0)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
 primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote #f)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector "a"
@@ -10193,6 +10197,14 @@ foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result 
 foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
 foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
 foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+foreign.mo:Expected error in mat reference-bytevector: "make-reference-bytevector: -1 is not a valid bytevector length".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: #vu8(1 2 3) is not a reference bytevector".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index oops for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index oops for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "reference-address->object: invalid address #f".
+foreign.mo:Expected error in mat reference-bytevector: "reference*-address->object: invalid address #f".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
