@@ -3324,10 +3324,10 @@
     (collect)
     (eq? $reftest-bv2 (bytevector-reference-ref $reftest-bv 0)))
   (with-interrupts-disabled
-   (eq? (if (= (foreign-sizeof 'ptr) 8)
-            (bytevector-u64-native-ref $reftest-bv 0)
-            (bytevector-u32-native-ref $reftest-bv 0))
-        (object->reference-address $reftest-bv2)))
+   (eqv? (if (= (foreign-sizeof 'ptr) 8)
+             (bytevector-u64-native-ref $reftest-bv 0)
+             (bytevector-u32-native-ref $reftest-bv 0))
+         (object->reference-address $reftest-bv2)))
   (with-interrupts-disabled
    (and (eq? $reftest-bv2
              (reference-address->object (object->reference-address $reftest-bv2)))
@@ -3364,10 +3364,10 @@
     (collect)
     (eq? $reftest-flv (bytevector-reference-ref $reftest-bv 0)))
   (with-interrupts-disabled
-   (eq? (if (= (foreign-sizeof 'ptr) 8)
-            (bytevector-u64-native-ref $reftest-bv 0)
-            (bytevector-u32-native-ref $reftest-bv 0))
-        (object->reference-address $reftest-flv)))
+   (eqv? (if (= (foreign-sizeof 'ptr) 8)
+             (bytevector-u64-native-ref $reftest-bv 0)
+             (bytevector-u32-native-ref $reftest-bv 0))
+         (object->reference-address $reftest-flv)))
   (with-interrupts-disabled
    (eq? $reftest-flv
         (reference-address->object (object->reference-address $reftest-flv))))
