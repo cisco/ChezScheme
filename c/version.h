@@ -85,6 +85,7 @@ typedef int tputsputcchar;
 #define NSECMTIME(sb) (sb).st_mtim.tv_nsec
 #define ICONV_INBUF_TYPE char **
 #define UNUSED __attribute__((__unused__))
+#endif
 
 #if (machine_type == machine_type_arm64osx || machine_type == machine_type_tarm64osx)
 # define OS_ANY_MACOSX

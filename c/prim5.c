@@ -232,7 +232,7 @@ static ptr sorted_chunk_list(void) {
       n += 1;
     }
     for (chunk = (i == -1) ? S_code_chunks_full : S_code_chunks[i]; chunk != NULL; chunk = chunk->next) {
-      ls = Scons(TO_PTR(chunk), ls);
+      ls = Scons(chunk, ls);
       n += 1;
     }
   }
