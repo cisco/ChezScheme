@@ -2188,3 +2188,5 @@
 - fix x86_64 (& integer-8) and (& integer-16) foreign-call argument
   passing
     x86_64, s/Mf-[t]a6{le,osx}
+- fixed misnamed pattern variables in bytevector-*-ref
+    bytevector.ss
