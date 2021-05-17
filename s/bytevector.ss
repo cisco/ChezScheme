@@ -296,8 +296,8 @@
           [(kwd s/u bits)
            (with-syntax ([prim-name (construct-name #'kwd "bytevector-" #'s/u #'bits "-ref")]
                          [native-name (construct-name #'kwd "bytevector-" #'s/u #'bits "-native-ref")]
-                         [little-set! (construct-name #'kwd "little-ref-" #'s/u #'bits)]
-                         [big-set! (construct-name #'kwd "big-ref-" #'s/u #'bits)])
+                         [little-ref (construct-name #'kwd "little-ref-" #'s/u #'bits)]
+                         [big-ref (construct-name #'kwd "big-ref-" #'s/u #'bits)])
              #`(lambda (v i eness who)
                  (unless (bytevector? v) (not-a-bytevector who v))
                  (unaligned-ref-check who (fxquotient bits 8) v i)
