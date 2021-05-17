@@ -976,8 +976,10 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
   S_pagesize = GETPAGESIZE();
 
   idiot_checks();
+#if defined(CHECK_FOR_ROSETTA)
   init_rosetta_check();
-
+#endif
+  
   switch (current_state) {
     case RUNNING:
       fprintf(stderr, "error (Sscheme_init): call Sscheme_deinit first to terminate\n");
