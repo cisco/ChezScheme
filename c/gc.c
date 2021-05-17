@@ -779,6 +779,8 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
 #endif /* !NO_LOCKED_OLDSPACE_OBJECTS */
     DECLARE_CTGS(max_cg, min_tg, max_tg);
 
+    S_thread_start_code_write();
+
    /* flush instruction cache: effectively clear_code_mod but safer */
     for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
       ptr tc = (ptr)THREADTC(Scar(ls));
@@ -1284,7 +1286,7 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
         si->next = S_G.occupied_segments[g][s];
         S_G.occupied_segments[g][s] = si;
       } else {
-        chunkinfo *chunk = si->chunk;
+        chunkinfo *chunk = si->chunk, **chunks = ((si->space == space_code) ? S_code_chunks : S_chunks);
         if (si->generation != static_generation) S_G.number_of_nonstatic_segments -= 1;
         S_G.number_of_empty_segments += 1;
         si->space = space_empty;
@@ -1299,10 +1301,10 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
              * small stuff into them and thereby invite fragmentation */
             S_free_chunk(chunk);
           } else {
-            S_move_to_chunk_list(chunk, &S_chunks[PARTIAL_CHUNK_POOLS]);
+            S_move_to_chunk_list(chunk, &chunks[PARTIAL_CHUNK_POOLS]);
           }
         } else {
-          S_move_to_chunk_list(chunk, &S_chunks[PARTIAL_CHUNK_POOLS-1]);
+          S_move_to_chunk_list(chunk, &chunks[PARTIAL_CHUNK_POOLS-1]);
         }
       }
     }
@@ -1312,6 +1314,7 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
     if (max_cg >= S_G.min_free_gen) S_free_chunks();
 
     S_flush_instruction_cache(tc);
+    S_thread_end_code_write();
 
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
     /* mark dirty those newspace cards to which we've added wrong-way pointers */

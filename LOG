@@ -2190,3 +2190,5 @@
     x86_64, s/Mf-[t]a6{le,osx}
 - fixed misnamed pattern variables in bytevector-*-ref
     bytevector.ss
+- distinguish code vs non-code allocation segments.  This will be
+  required to port to architectures that enforce W^X semantics.

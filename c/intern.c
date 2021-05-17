@@ -115,7 +115,7 @@ void S_intern_init() {
     S_G.oblist_length_pointer = &oblist_lengths[3];
     S_G.oblist_length = *S_G.oblist_length_pointer;
     S_G.oblist_count = 0;
-    S_G.oblist = S_getmem(S_G.oblist_length * sizeof(bucket *), 1);
+    S_G.oblist = S_getmem(S_G.oblist_length * sizeof(bucket *), 1, 0);
     for (g = 0; g < static_generation; g += 1) S_G.buckets_of_generation[g] = NULL;
 }
 
@@ -165,7 +165,7 @@ void S_resize_oblist(void) {
   if (new_oblist_length_pointer == S_G.oblist_length_pointer) return;
 
   new_oblist_length = *new_oblist_length_pointer;
-  new_oblist = S_getmem(new_oblist_length * sizeof(bucket *), 1);
+  new_oblist = S_getmem(new_oblist_length * sizeof(bucket *), 1, 0);
 
   for (i = 0; i < S_G.oblist_length; i += 1) {
     for (b = S_G.oblist[i]; b != NULL; b = bnext) {
