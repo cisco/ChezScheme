@@ -267,9 +267,9 @@ doallcoverage: mat.so
 
 define parallel-config-template
 parallel$(1)-0:
-	-@$(MAKE) allxphelp outdir=output-$(1)-0 objdir=output-$(1)-0 o=0 $(2)
+	-@$$(MAKE) allxphelp outdir=output-$(1)-0 objdir=output-$(1)-0 o=0 $(2)
 parallel$(1)-3:
-	-@$(MAKE) allxphelp outdir=output-$(1)-3 objdir=output-$(1)-3 o=3 $(2)
+	-@$$(MAKE) allxphelp outdir=output-$(1)-3 objdir=output-$(1)-3 o=3 $(2)
 endef
 
 #configs from partialx and allx
@@ -306,9 +306,9 @@ define parallel-target-template
 $(1)-targets: $($(1)-confs:%=parallel%)
 $(1): prettyclean
 	@echo building prereqs with output to Make.out
-	@$(MAKE) parallel-prereqs > Make.out 2>&1
-	@$(MAKE) $(1)-targets
-	$(if $(2),@$(MAKE) $(2))
+	@$$(MAKE) parallel-prereqs > Make.out 2>&1
+	@$$(MAKE) $(1)-targets
+	$(if $(2),@$$(MAKE) $(2))
 	cat $($(1)-confs:%=output-%/summary) > summary && cat summary
 endef
 

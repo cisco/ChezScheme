@@ -2206,3 +2206,6 @@
     mats/{5_4,6,7,8,bytevector,examples,foreign}.ms
     mats/{ftype,hash,io,misc,primvars,profile,record}.ms
     mats/Mf-base mats/Mf-*nt mats/mat.ss mats/patch-interpret*
+- escape $(MAKE) to fix parallel mat issue observed with GNU Make 4.2.1:
+  "make[1]: warning: jobserver unavailable: using -j1."
+    mats/Mf-base
