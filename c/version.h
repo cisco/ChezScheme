@@ -150,6 +150,7 @@ typedef int tputsputcchar;
 #define USE_VIRTUAL_ALLOC
 #define NAN_INCLUDE <math.h>
 #define MAKE_NAN(x) { x = sqrt(-1.0); }
+#define ARCHYPERBOLIC
 #ifndef PATH_MAX
 # define PATH_MAX _MAX_PATH
 #endif
