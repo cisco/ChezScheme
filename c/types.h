@@ -92,8 +92,8 @@ typedef int IFASLCODE;      /* fasl type codes */
 
 #define find_room(tc, s, g, t, n, x) find_gc_room_T(THREAD_GC(tc), s, g, t, n, ALREADY_PTR, x)
 #define find_gc_room(tgc, s, g, t, n, x) find_gc_room_T(tgc, s, g, t, n, ALREADY_PTR, x)
-#define find_room_voidp(tc, s, g, n, x) find_gc_room_T(THREAD_GC(tc), s, g, typemod, n, TO_VOIDP, x)
-#define find_gc_room_voidp(tgc, s, g, n, x) find_gc_room_T(tgc, s, g, typemod, n, TO_VOIDP, x)
+#define find_room_voidp(tc, s, g, n, x) find_gc_room_T(THREAD_GC(tc), s, g, type_untyped, n, TO_VOIDP, x)
+#define find_gc_room_voidp(tgc, s, g, n, x) find_gc_room_T(tgc, s, g, type_untyped, n, TO_VOIDP, x)
 
 /* new-space inline allocation --- no mutex required */
 /* Like `find_room`, but always `space_new` and generation 0,
@@ -111,7 +111,7 @@ typedef int IFASLCODE;      /* fasl type codes */
  } while(0)
 
 #define newspace_find_room(tc, t, n, x) newspace_find_room_T(tc, t, n, ALREADY_PTR, x)
-#define newspace_find_room_voidp(tc, n, x) newspace_find_room_T(tc, typemod, n, TO_VOIDP, x)
+#define newspace_find_room_voidp(tc, n, x) newspace_find_room_T(tc, type_untyped, n, TO_VOIDP, x)
 
 #ifndef NO_PRESERVE_FLONUM_EQ
 # define PRESERVE_FLONUM_EQ

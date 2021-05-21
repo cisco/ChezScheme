@@ -223,7 +223,7 @@ static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
 static void setup_sweep_dirty PROTO((thread_gc *tgc));
 static uptr sweep_dirty_segments PROTO((thread_gc *tgc, seginfo **dirty_segments));
 static void resweep_dirty_weak_pairs PROTO((thread_gc *tgc));
-static void mark_typemod_data_object PROTO((thread_gc *tgc, ptr p, uptr len, seginfo *si));
+static void mark_untyped_data_object PROTO((thread_gc *tgc, ptr p, uptr len, seginfo *si));
 static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
 static void add_trigger_guardians_to_recheck PROTO((ptr ls));
 static void add_ephemeron_to_pending PROTO((thread_gc *tgc, ptr p));
@@ -805,7 +805,7 @@ static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength) {
 #ifndef NO_NEWSPACE_MARKS
   if (si->use_marks) {
     if (!marked(si, old)) {
-      mark_typemod_data_object(tgc, old, n, si);
+      mark_untyped_data_object(tgc, old, n, si);
     
 #ifdef ENABLE_OBJECT_COUNTS
       S_G.countof[newg][countof_stack] += 1;
@@ -831,7 +831,7 @@ static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength) {
   if (n == 0) {
     return (ptr)0;
   } else {
-    find_gc_room(tgc, space_data, newg, typemod, n, new);
+    find_gc_room(tgc, space_data, newg, type_untyped, n, new);
     n = ptr_align(clength);
     /* warning: stack may have been left non-double-aligned by split_and_resize */
     memcpy_aligned(TO_VOIDP(new), TO_VOIDP(old), n);
@@ -1466,7 +1466,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
                 /* In backreference mode, we rely on sweep of the guardian
                    entry not registering any backreferences. Otherwise,
                    bogus pair pointers would get created. */
-                find_gc_room(tgc, space_pure, g, typemod, size_guardian_entry, p);
+                find_gc_room(tgc, space_pure, g, type_untyped, size_guardian_entry, p);
                 INITGUARDIANOBJ(p) = GUARDIANOBJ(ls);
                 INITGUARDIANREP(p) = rep;
                 INITGUARDIANTCONC(p) = tconc;
@@ -2060,7 +2060,7 @@ void enlarge_stack(thread_gc *tgc, ptr *stack, ptr *stack_start, ptr *stack_limi
   uptr new_sz = 2 * ((sz == 0) ? (uptr)sweep_stack_min_size : sz);
   ptr new_stack;
   if (new_sz - sz < grow_at_least) new_sz += grow_at_least;
-  find_gc_room(tgc, space_data, 0, typemod, ptr_align(new_sz), new_stack);
+  find_gc_room(tgc, space_data, 0, type_untyped, ptr_align(new_sz), new_stack);
   if (sz != 0)
     memcpy(TO_VOIDP(new_stack), TO_VOIDP(*stack_start), sz);
   tgc->bitmask_overhead[0] += ptr_align(new_sz);

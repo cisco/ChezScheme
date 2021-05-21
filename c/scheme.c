@@ -273,6 +273,14 @@ static void idiot_checks() {
     fprintf(stderr, "sizeof(string_char) [%ld] != string_char_bytes [%d]\n", (long)sizeof(string_char), string_char_bytes);
     oops = 1;
   }
+  if (TYPE((ptr)0, type_untyped) != (ptr)0) {
+    fprintf(stderr, "tagging with type_untyped changes an address\n");
+    oops = 1;
+  }
+  if (record_ptr_offset != record_type_disp) {
+    fprintf(stderr, "record_ptr_offset != record_type_disp\n");
+    oops = 1;
+  }
   if (UNFIX(fixtest) != -1) {
     fprintf(stderr, "UNFIX operation failed\n");
     oops = 1;

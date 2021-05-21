@@ -135,9 +135,9 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     uptr sz = vspace_offsets[s+1] - vspace_offsets[s];
     if (sz > 0) {
       if ((s == vspace_reloc) && to_static && !S_G.retain_static_relocation) {
-        newspace_find_room(tc, typemod, sz, vspaces[s]);
+        newspace_find_room(tc, type_untyped, sz, vspaces[s]);
       } else {
-        find_room(tc, vspace_spaces[s], (to_static ? static_generation : 0), typemod, sz, vspaces[s]);
+        find_room(tc, vspace_spaces[s], (to_static ? static_generation : 0), type_untyped, sz, vspaces[s]);
       }
       if (bv) {
         memcpy(TO_VOIDP(vspaces[s]), bv_addr, sz);
@@ -146,7 +146,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 	ptr dest;
 #ifdef CANNOT_READ_DIRECTLY_INTO_CODE
 	if (s == vspace_code)
-	  newspace_find_room(tc, typemod, sz, dest);
+	  newspace_find_room(tc, type_untyped, sz, dest);
 	else
 	  dest = vspaces[s];
 #else
@@ -170,7 +170,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
   if (bv)
     table = TO_PTR(bv_addr);
   else {
-    newspace_find_room(tc, typemod, ptr_align(VFASLHEADER_TABLE_SIZE(header)), table);
+    newspace_find_room(tc, type_untyped, ptr_align(VFASLHEADER_TABLE_SIZE(header)), table);
     if (S_fasl_stream_read(stream, TO_VOIDP(table), VFASLHEADER_TABLE_SIZE(header)) < 0)
       S_error("fasl-read", "input truncated");
   }
@@ -489,7 +489,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
         ptr tc = get_thread_context();
         iptr sz = size_reloc_table(RELOCSIZE(t));
         ptr new_t;
-        find_room(tc, space_data, static_generation, typemod, ptr_align(sz), new_t);
+        find_room(tc, space_data, static_generation, type_untyped, ptr_align(sz), new_t);
         memcpy(TO_VOIDP(new_t), TO_VOIDP(t), sz);
         t = new_t;
         CODERELOC(co) = t;

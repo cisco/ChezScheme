@@ -1143,10 +1143,10 @@
                   [(-> t_si use_marks)
                    (cond
                      [(! (marked t_si t))
-                      (mark_typemod_data_object _tgc_ t n t_si)])]
+                      (mark_untyped_data_object _tgc_ t n t_si)])]
                   [else
                    (let* ([oldt : ptr t])
-                     (find_gc_room _tgc_ space_data from_g typemod n t)
+                     (find_gc_room _tgc_ space_data from_g type-untyped n t)
                      (memcpy_aligned (TO_VOIDP t) (TO_VOIDP oldt) n))])]
                [else
                 (RECORD_REMOTE t_si)])))
@@ -2176,7 +2176,7 @@
                final
                "}"))]
            [type (let ([t (lookup 'basetype config)])
-                   (if (eq? t 'typemod)
+                   (if (eq? t 'type-untyped)
                        #f
                        (as-c 'type (lookup 'basetype config))))]
            [untype (lambda ()
@@ -2526,13 +2526,13 @@
                                (parallel? ,parallel?))))
        (print-code (generate "object_directly_refers_to_self"
                              `((mode self-test))))
-       (print-code (code "static void mark_typemod_data_object(thread_gc *tgc, ptr p, uptr p_sz, seginfo *si)"
+       (print-code (code "static void mark_untyped_data_object(thread_gc *tgc, ptr p, uptr p_sz, seginfo *si)"
                          (code-block
                           (ensure-segment-mark-mask "si" "")
                           (mark-statement '(one-bit no-sweep)
                                           (cons
                                            (list 'used (make-eq-hashtable))
-                                           '((basetype typemod)))))))
+                                           '((basetype type-untyped)))))))
        (when measure?
          (print-code (generate "measure" `((mode measure))))))))
 

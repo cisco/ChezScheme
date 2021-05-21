@@ -3443,7 +3443,7 @@
     (define-inline 3 $install-guardian
       [(e-obj e-rep e-tconc ordered?)
        (bind #f (e-obj e-rep e-tconc ordered?)
-         (bind #t ([t (%constant-alloc typemod (constant size-guardian-entry))])
+         (bind #t ([t (%constant-alloc type-untyped (constant size-guardian-entry))])
            (%seq
              (set! ,(%mref ,t ,(constant guardian-entry-obj-disp)) ,e-obj)
              (set! ,(%mref ,t ,(constant guardian-entry-rep-disp)) ,e-rep)
@@ -3456,7 +3456,7 @@
     (define-inline 3 $install-ftype-guardian
       [(e-obj e-tconc)
        (bind #f (e-obj e-tconc)
-         (bind #t ([t (%constant-alloc typemod (constant size-guardian-entry))])
+         (bind #t ([t (%constant-alloc type-untyped (constant size-guardian-entry))])
            (%seq
              (set! ,(%mref ,t ,(constant guardian-entry-obj-disp)) ,e-obj)
              (set! ,(%mref ,t ,(constant guardian-entry-rep-disp)) (immediate ,(constant ftype-guardian-rep)))
@@ -7872,7 +7872,7 @@
                 ,(%primcall #f sexpr $gensym->pretty-name ,e-sym))))])
     (define-inline 3 $fxaddress
       [(e) (%inline logand
-              ,(let ([n (- (log2 (constant typemod)) (constant fixnum-offset))])
+              ,(let ([n (- (constant primary-type-bits) (constant fixnum-offset))])
                  (if (> n 0) (%inline sra ,e (immediate ,n)) e))
               (immediate ,(- (constant fixnum-factor))))])
     (define-inline 3 $set-timer

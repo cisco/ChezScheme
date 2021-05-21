@@ -109,7 +109,7 @@ void S_reset_scheme_stack(tc, n) ptr tc; iptr n; {
         if (*x == snil) {
             if (n < default_stack_size) n = default_stack_size;
           /* stacks are untyped objects */
-            find_room(tc, space_new, 0, typemod, n, SCHEMESTACK(tc));
+            find_room(tc, space_new, 0, type_untyped, n, SCHEMESTACK(tc));
             break;
         }
         if ((m = CACHEDSTACKSIZE(*x)) >= n) {
@@ -477,7 +477,8 @@ void S_get_more_room() {
   ptr xp; uptr ap, type, size;
 
   xp = XP(tc);
-  if ((type = TYPEBITS(xp)) == 0) type = typemod;
+  type = TYPEBITS(xp);
+  if ((type_untyped != 0) && (type == 0)) type = type_untyped;
   ap = (uptr)UNTYPE(xp, type);
   size = (uptr)((iptr)AP(tc) - (iptr)ap);
 
@@ -1070,7 +1071,7 @@ ptr S_relocation_table(n) iptr n; {
     ptr p; iptr d;
 
     d = size_reloc_table(n);
-    newspace_find_room(tc, typemod, d, p);
+    newspace_find_room(tc, type_untyped, d, p);
     RELOCSIZE(p) = n;
     return p;
 }

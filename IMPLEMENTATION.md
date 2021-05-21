@@ -320,10 +320,10 @@ For example, if "cmacro.ss" says
 
 then that means an address with only the lowest bit set among the low
 three bits refers to a pair. To get the address where the pair content
-is stored, round *up* to the nearest word. So, on a 64-bit machine,
-add 7 to get to the `car` and add 15 to get to the `cdr`. Since
-allocation on a 64-byte machine is 16-byte aligned, the hexadecimal
-form of every pair pointer will end in "9".
+is stored, round *up* to the nearest multiple 8 bytes. So, on a 64-bit
+machine, add 7 to get to the `car` and add 15 to get to the `cdr`.
+Since allocation on a 64-byte machine is 16-byte aligned, the
+hexadecimal form of every pair pointer will end in "9".
 
 The `type-typed-object` type,
 
@@ -337,14 +337,14 @@ of a Scheme record, that first word will be a record-type descriptor
 as a record. The based record type, `#!base-rtd` has itself as its
 record type. Since the type bits are all ones, on a 64-bit machine,
 every object tagged with an additional type workd will end in "F" in
-hexadecimal, and adding 1 to the pointer produces the <address
+hexadecimal, and adding 1 to the pointer produces the address
 containing the record content (which starts with the record type, so
 add 9 instead to get to the first field in the record).
 
 As another example, a vector is represented as `type-typed-object`
 pointer where the first word is a fixnum. That is, a fixnum used a
 type word indicates a vector. The fixnum value is the vector's length
-in wordobjects, but shifted up by 1 bit, and then the low bit is set
+in words/objects, but shifted up by 1 bit, and then the low bit is set
 to 1 for an immutable vector.
 
 Most kinds of Scheme values are represented records, so the layout is

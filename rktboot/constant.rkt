@@ -53,6 +53,10 @@
        [(=)
         (= (constant-eval (cadr e) ht)
            (constant-eval (caddr e) ht))]
+       [(fx- -)
+        (apply - (map (lambda (e) (constant-eval e esc)) (cdr e)))]
+       [(fx+ +)
+        (apply + (map (lambda (e) (constant-eval e esc)) (cdr e)))]
        [(quote)
         (cadr e)]
        [else (esc)])]
@@ -88,7 +92,5 @@
   prelex-sticky-mask
   prelex-is-mask
   scheme-version
-  code-flag-lift-barrier)
-
-(provide record-ptr-offset)
-(define record-ptr-offset 1)
+  code-flag-lift-barrier
+  record-ptr-offset)

@@ -5312,7 +5312,7 @@
                                 (if ,(%inline eq? ,%sfp ,(%constant snil))
                                     ,(%seq
                                        (set! ,%ac0 ,%xp)
-                                       (set! ,%xp ,(%constant-alloc typemod (constant default-stack-size)))
+                                       (set! ,%xp ,(%constant-alloc type-untyped (constant default-stack-size)))
                                        (set! ,%sfp ,%xp)
                                        (set! ,(%tc-ref scheme-stack) ,%sfp)
                                        (set! ,(%tc-ref scheme-stack-size) ,(%constant default-stack-size))

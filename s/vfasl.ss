@@ -1030,7 +1030,7 @@
   (let* ([new-p (find-room 'reloc vfi
                            (constant vspace-reloc)
                            (fx+ (constant header-size-reloc-table) (fx* m (constant ptr-bytes)))
-                           (constant typemod))])
+                           (constant type-untyped))])
     (set-uptr! new-p (constant reloc-table-size-disp) m vfi)
     (set-ptr!/no-record new-p (constant reloc-table-code-disp) code-p vfi)
     (let loop ([n 0] [a 0] [i 0])
