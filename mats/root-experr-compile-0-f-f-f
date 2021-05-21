@@ -4355,7 +4355,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1267650600228229401496703205376 is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: -1 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: -2 is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 5 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 67108864 is not a valid index for #(4 5 3)".
+5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1099511627776 is not a valid index for #(4 5 3)".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask x".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask -1".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 0 does not match given number of items 1".

@@ -739,58 +739,89 @@
   (define-instruction pred (condition-code)
     [(op) (values '() `(asm ,info ,(asm-condition-code info)))])
 
-  (let* ([info-cc-eq (make-info-condition-code 'eq? #f #t)]
-         [asm-eq (asm-relop info-cc-eq)])
-    (define-instruction pred (type-check?)
-      [(op (x ur mem) (mask imm32 ur) (type imm32 ur))
-       (let ([tmp (make-tmp 'u)])
-         (values
-           (with-output-language (L15d Effect)
-             (seq
+  (let ()
+    (define imm->imm32
+      (lambda (y w k)
+        (nanopass-case (L15d Triv) w
+          [(immediate ,imm)
+           (if (signed-32? imm)
+               (k y w)
+               (let ([tmp (make-tmp 'u)]
+                     [zero (with-output-language (L15d Triv)
+                             `(immediate 0))])
+                 (with-output-language (L15d Effect)
+                   (seq
+                    `(set! ,(make-live-info) ,tmp ,w)
+                    (if (eq? y %zero)
+                        (k tmp zero)
+                        (seq
+                         `(set! ,(make-live-info) ,tmp (asm ,null-info ,asm-add ,tmp ,y))
+                         (k tmp zero)))))))])))
+
+    (let* ([info-cc-eq (make-info-condition-code 'eq? #f #t)]
+           [asm-eq (asm-relop info-cc-eq)])
+      (define-instruction pred (type-check?)
+        [(op (x ur mem) (mask imm32 ur) (type imm32 ur))
+         (let ([tmp (make-tmp 'u)])
+           (values
+            (with-output-language (L15d Effect)
+              (seq
                `(set! ,(make-live-info) ,tmp ,x)
                `(set! ,(make-live-info) ,tmp (asm ,null-info ,asm-logand ,tmp ,mask))))
-           `(asm ,info-cc-eq ,asm-eq ,tmp ,type)))])
+            `(asm ,info-cc-eq ,asm-eq ,tmp ,type)))])
 
-    (define-instruction pred (logtest log!test)
-      [(op (x mem) (y ur imm32))
-       (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,x ,y))]
-      [(op (x ur imm32) (y mem))
-       (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,y ,x))]
-      [(op (x imm32) (y ur))
-       (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,y ,x))]
-      [(op (x ur) (y ur imm32))
-       (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,x ,y))])
+      (define-instruction pred (logtest log!test)
+        [(op (x mem) (y ur imm32))
+         (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,x ,y))]
+        [(op (x ur imm32) (y mem))
+         (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,y ,x))]
+        [(op (x imm32) (y ur))
+         (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,y ,x))]
+        [(op (x ur) (y ur imm32))
+         (values '() `(asm ,info-cc-eq ,(asm-logtest (eq? op 'log!test) info-cc-eq) ,x ,y))])
 
-    (define-instruction pred (lock!)
-      [(op (x ur) (y ur) (w imm32))
-       (let ([uts (make-precolored-unspillable 'uts %ts)])
-         (values
-           (nanopass-case (L15d Triv) w
-             [(immediate ,imm)
-              (with-output-language (L15d Effect)
-                (seq
-                  `(set! ,(make-live-info) ,uts (immediate 1))
-                  `(set! ,(make-live-info) ,uts
-                     (asm ,info ,asm-exchange ,uts
-                       (mref ,x ,y ,imm uptr)))))])
-           `(asm ,info-cc-eq ,asm-eq ,uts (immediate 0))))]))
+      (define-instruction pred (lock!)
+        [(op (x ur) (y ur) (w imm))
+         (imm->imm32
+          y w
+          (lambda (y w)
+            (let ([uts (make-precolored-unspillable 'uts %ts)])
+              (values
+               (nanopass-case (L15d Triv) w
+                 [(immediate ,imm)
+                  (with-output-language (L15d Effect)
+                    (seq
+                     `(set! ,(make-live-info) ,uts (immediate 1))
+                     `(set! ,(make-live-info) ,uts
+                            (asm ,info ,asm-exchange ,uts
+                                 (mref ,x ,y ,imm uptr)))))])
+               `(asm ,info-cc-eq ,asm-eq ,uts (immediate 0))))))]))
 
-  (define-instruction effect (locked-incr!)
-    [(op (x ur) (y ur) (w imm32))
-     `(asm ,info ,asm-locked-incr ,x ,y ,w)])
+    (define-instruction effect (locked-incr!)
+      [(op (x ur) (y ur) (w imm))
+       (imm->imm32
+        y w
+        (lambda (y w)
+          `(asm ,info ,asm-locked-incr ,x ,y ,w)))])
 
-  (define-instruction effect (locked-decr!)
-    [(op (x ur) (y ur) (w imm32))
-     `(asm ,info ,asm-locked-decr ,x ,y ,w)])
+    (define-instruction effect (locked-decr!)
+      [(op (x ur) (y ur) (w imm))
+       (imm->imm32
+        y w
+        (lambda (y w)
+          `(asm ,info ,asm-locked-decr ,x ,y ,w)))])
 
-  (define-instruction effect (cas)
-    [(op (x ur) (y ur) (w imm32) (old ur) (new ur))
-     (let ([urax (make-precolored-unspillable 'urax %rax)])
-       (with-output-language (L15d Effect)
-         (seq
-           `(set! ,(make-live-info) ,urax ,old)
-           ;; NB: may modify %rax:
-           `(asm ,info ,asm-locked-cmpxchg ,x ,y ,w ,urax ,new))))])
+    (define-instruction effect (cas)
+      [(op (x ur) (y ur) (w imm) (old ur) (new ur))
+       (imm->imm32
+        y w
+        (lambda (y w)
+          (let ([urax (make-precolored-unspillable 'urax %rax)])
+            (with-output-language (L15d Effect)
+              (seq
+               `(set! ,(make-live-info) ,urax ,old)
+               ;; NB: may modify %rax:
+               `(asm ,info ,asm-locked-cmpxchg ,x ,y ,w ,urax ,new))))))]))
 
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-pause)])

@@ -600,12 +600,20 @@
         (with-output-language (L15d Effect)
           (define add-offset
             (lambda (r)
-              (if (eqv? (nanopass-case (L15d Triv) w [(immediate ,imm) imm]) 0)
-                  (k r)
-                  (let ([u (make-tmp 'u)])
-                    (seq
+              (let ([i (nanopass-case (L15d Triv) w [(immediate ,imm) imm])])
+                (cond
+                  [(eqv? i 0) (k r)]
+                  [(unsigned12? i)
+                   (let ([u (make-tmp 'u)])
+                     (seq
                       `(set! ,(make-live-info) ,u (asm ,null-info ,(asm-add #f) ,r ,w))
-                      (k u))))))
+                      (k u)))]
+                  [else
+                   (let ([u (make-tmp 'u)])
+                     (seq
+                      `(set! ,(make-live-info) ,u ,w)
+                      `(set! ,(make-live-info) ,u (asm ,null-info ,(asm-add #f) ,r ,u))
+                      (k u)))]))))
           (if (eq? y %zero)
               (add-offset x)
               (let ([u (make-tmp 'u)])
@@ -614,7 +622,7 @@
                   (add-offset u)))))))
     ;; NB: compiler implements init-lock! and unlock! as word store of zero 
     (define-instruction pred (lock!)
-      [(op (x ur) (y ur) (w unsigned12))
+      [(op (x ur) (y ur) (w imm-constant))
        (let ([u (make-tmp 'u)]
              [u2 (make-tmp 'u2)])
          (values
@@ -627,7 +635,7 @@
                    `(asm ,null-info ,asm-lock ,r ,u ,u2)))))
            `(asm ,info-cc-eq ,asm-eq ,u (immediate 0))))])
     (define-instruction effect (locked-incr! locked-decr!)
-      [(op (x ur) (y ur) (w unsigned12))
+      [(op (x ur) (y ur) (w imm-constant))
        (lea->reg x y w
          (lambda (r)
            (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
@@ -636,7 +644,7 @@
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
                `(asm ,null-info ,(asm-lock+/- op) ,r ,u1 ,u2)))))])
     (define-instruction effect (cas)
-      [(op (x ur) (y ur) (w unsigned12) (old ur) (new ur))
+      [(op (x ur) (y ur) (w imm-constant) (old ur) (new ur))
        (lea->reg x y w
          (lambda (r)
 	   (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])

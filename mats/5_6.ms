@@ -1405,7 +1405,10 @@
   (error? (vector-cas! vec1 vec1 2 3)) ; not a fixnum
   (error? (vector-cas! vec1 (expt 2 100) 2 3)) ; not a fixnum
   (error? (vector-cas! vec1 -1 2 3)) ; out of range
+  (error? (vector-cas! vec1 -2 2 3)) ; out of range
   (error? (vector-cas! vec1 5 2 3)) ; out of range
+  (error? (vector-cas! vec1 (expt 2 26) 2 3)) ; out of range
+  (error? (vector-cas! vec1 (expt 2 40) 2 3)) ; out of range
 
   ;; make sure `vector-cas!` works with GC generations:
   (begin

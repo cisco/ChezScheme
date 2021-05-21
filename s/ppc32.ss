@@ -674,14 +674,14 @@
                     (k x u)))])))))
     ;; compiler implements init-lock! and unlock! as 32-bit store of zero 
     (define-instruction pred (lock!)
-      [(op (x ur) (y ur) (w shifted-integer16 integer16))
+      [(op (x ur) (y ur) (w imm-constant))
        (lea->reg x y w
          (lambda (base index)
            (values
              '()
              `(asm ,info-cc-eq ,(asm-lock info-cc-eq) ,base ,index))))])
     (define-instruction effect (locked-incr! locked-decr!)
-      [(op (x ur) (y ur) (w shifted-integer16 integer16))
+      [(op (x ur) (y ur) (w imm-constant))
        (lea->reg x y w
          (lambda (base index)
            (let ([u (make-tmp 'u)])
@@ -689,7 +689,7 @@
                `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
                `(asm ,null-info ,(asm-lock+/- op) ,base ,index ,u)))))])
     (define-instruction effect (cas)
-      [(op (x ur) (y ur) (w shifted-integer16 integer16) (old ur) (new ur))
+      [(op (x ur) (y ur) (w imm-constant) (old ur) (new ur))
        (lea->reg x y w
          (lambda (base index)
 	   (let ([u (make-tmp 'u)])
