@@ -32,7 +32,14 @@ uninstall:
 .PHONY: test
 test: build
 	(cd mats && $(MAKE) allx)
-	@echo "test run complete.  check $(PREFIX)mats/summary for errors."
+
+.PHONY: test-some
+test-some: build
+	(cd mats && $(MAKE) partialx)
+
+.PHONY: test-more
+test-more: build
+	(cd mats && $(MAKE) bullyx)
 
 .PHONY: coverage
 coverage:

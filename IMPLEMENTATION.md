@@ -291,8 +291,10 @@ files, and then links are recreated on demand in the workarea space to
 "root-experr-..." or "patch-..." files when they are needed to
 generate expexted-error diffs.
 
-Despite its name, `make allx` does not run all available tests. Use
-`make bullyx` to run a different, more stressfull set of tests. The
+You can run a smaller set of tests using `make partialx` or using
+`make test-some` directly in your build directory. Despite its name,
+`make allx` does not run all available tests. Use `make bullyx` or
+`make test-more` to run a different, more stressfull set of tests. The
 bully tests may cover more configurations than `allx`, so `make
 patches` after `make bullyx` may pick up additional "patch-..." file
 changes.
