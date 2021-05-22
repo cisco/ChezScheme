@@ -1457,7 +1457,7 @@
                         (format "~a is defunct" what)))])
         (thunk)
         (error #f "error expected")))
-    (let ([g (make-guardian)])
+    (let ([g (make-guardian #t)])
       (g (make-mutex))
       (collect)
       (let ([m (g)])

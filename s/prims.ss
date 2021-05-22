@@ -1952,8 +1952,8 @@
       (condition-guardian c)
       c)))
 
-(define mutex-guardian (make-guardian))
-(define condition-guardian (make-guardian))
+(define mutex-guardian (make-guardian #t))
+(define condition-guardian (make-guardian #t))
 
 (set! fork-thread
   (lambda (t)
