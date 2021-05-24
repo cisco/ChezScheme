@@ -4639,3 +4639,19 @@
       'replace)
     (compile-library "testfile-ai-2.ss")
     #t))
+
+(mat self-evaluating-vectors
+  ;; do not assume the initial state of self-evaluating-vectors
+  (error? (parameterize ([self-evaluating-vectors #f])
+            (eval '#(1 a b))))
+
+  (parameterize ([self-evaluating-vectors #t])
+    (equal? (eval '#(2 c d)) '#(2 c d)))
+
+  (parameterize ([self-evaluating-vectors #t])
+    (equal? (eval '(let ()
+                     (define-syntax qv
+                       (syntax-rules ()
+                         [(_ a ...) #(a ...)]))
+                     (qv 3 e f)))
+            '#(3 e f))))
