@@ -2196,3 +2196,6 @@
 - export some Mf-config variables and include Mf-config in mats to support
   arm32le cross-compilation
     c/Mf-base, mats/Mf-arm32le, mats/Mf-base
+- vector literals can be made self-evaluating with the new parameter
+  self-evaluating-vectors
+    s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
