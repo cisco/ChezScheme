@@ -718,7 +718,7 @@ is immutable; otherwise, the result is an immutable vector with the same content
 The default value of this parameter is \scheme{#f}, meaning that vector literals must be quoted, as
 required by the Revised$^6$ Report.
 Setting \scheme{self-evaluating-vectors} to a true value may be useful to provide compatibility with
-R$^7$RS, as the later states that vectors are self-evaluating.
+R$^7$RS, as the latter states that vectors are self-evaluating.
 
 \schemedisplay
 #(a b c) ;=> \var{exception: invalid syntax}
