@@ -230,19 +230,22 @@
     (lambda (mat)
       (unless (string? mat)
         (errorf 'mat-file "~s is not a string" mat))
-      (let ([ifn (format "~a.ms" mat)] [ofn (format "~a/~a.mo" dir mat)])
-        (printf "matting ~a with output to ~a~%" ifn ofn)
-        (delete-file ofn #f)
-        (parameterize ([mat-output (open-output-file ofn)])
-          (dynamic-wind
-            (lambda () #f)
-            (lambda ()
-              (let ([go (lambda () (mat-load ifn))] [universe-ct (coverage-table)])
-                (if universe-ct
-                    (let-values ([(ct . ignore) (with-profile-tracker go)])
-                      (store-coverage universe-ct ct (format "~a/~a.covout" dir mat)))
-                    (go))))
-            (lambda () (close-output-port (mat-output)))))))))
+      (let ([ifn (format "~a.ms" mat)] [ofn (format "~a.mo" mat)])
+        (parameterize ([current-directory dir]
+                       [source-directories (cons ".." (source-directories))]
+                       [library-directories (cons ".." (library-directories))])
+          (printf "matting ~a with output to ~a/~a~%" ifn dir ofn)
+          (delete-file ofn #f)
+          (parameterize ([mat-output (open-output-file ofn)])
+            (dynamic-wind
+                (lambda () #f)
+                (lambda ()
+                  (let ([go (lambda () (mat-load ifn))] [universe-ct (coverage-table)])
+                    (if universe-ct
+                        (let-values ([(ct . ignore) (with-profile-tracker go)])
+                          (store-coverage universe-ct ct (format "~a.covout" mat)))
+                        (go))))
+                (lambda () (close-output-port (mat-output))))))))))
 
 (set! record-run-coverage
   (lambda (covout th)

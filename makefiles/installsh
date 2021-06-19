@@ -1,7 +1,8 @@
 #! /bin/sh
 if [ -x /bin/true ]; then TRUE=/bin/true;
 elif [ -x /usr/bin/true ]; then TRUE=/usr/bin/true;
-else echo "Can't find /bin/true or /usr/bin/true" ; exit 1;
+elif command -v true &> /dev/null; then TRUE=true;
+else echo "Can't find /bin/true or /usr/bin/true and no true command" ; exit 1;
 fi
 
 while ${TRUE} ; do

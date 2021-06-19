@@ -482,7 +482,7 @@
     (separate-eval '(load-program "testfile-mc-foo.so"))
     "(\"a\" \"b\" \"c\")\n")
   (touch "testfile-mc-foo.so" "testfile-mc-a.ss")
-  ((lambda (x ls) (and (member x ls) #t))
+  (equal?
     (let ([mt* (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))])
       (let ([s (separate-compile '(lambda (x) (parameterize ([compile-program-handler (lambda (ifn ofn) (printf "yippee!\n") (compile-program ifn ofn))]
                                                              [compile-imported-libraries #t]
@@ -495,8 +495,7 @@
             (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))
             mt*)
           s)))
-    '(((> > >) . "yippee!\n((testfile-mc-a) (testfile-mc-b))\n")
-      ((> > >) . "yippee!\n((testfile-mc-b) (testfile-mc-a))\n")))
+    '((> > >) . "yippee!\n"))
   (equal?
     (let ([mt* (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))])
       (let ([s (separate-compile '(lambda (x) (parameterize ([compile-imported-libraries #t] [compile-file-message #f]) (maybe-compile-program x))) 'mc-foo)])
@@ -506,7 +505,7 @@
             (map file-modification-time (list "testfile-mc-a.so" "testfile-mc-b.so" "testfile-mc-foo.so"))
             mt*)
           s)))
-    '((= = =) . "#f\n"))
+    '((= = =) . ""))
   (equal?
     (separate-eval '(load-program "testfile-mc-foo.so"))
     "(\"a\" \"b\" \"c\")\n")
@@ -1116,12 +1115,12 @@
     "(aye captain)\n")
   (equal?
     (begin
-      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+      (unless (or (embedded?) (equal? *scheme* (format "~a/bin/~a/scheme~a" (path-parent *mats-dir*) (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
           (machine-type) (machine-type) (if (windows?) ".exe" "")))
       (parameterize ([optimize-level 2])
         (make-boot-file "testfile.boot" '()
-          (format "../boot/~a/petite.boot" (machine-type))
+          (format "~a/boot/~a/petite.boot" (path-parent *mats-dir*) (machine-type))
           "testfile-1.so"
           "testfile-2.so"
           "testfile-3.ss"
@@ -1145,7 +1144,7 @@
   ; by the static-generation collection.
   (equal?
     (begin
-      (unless (or (embedded?) (equal? *scheme* (format "../bin/~a/scheme~a" (machine-type) (if (windows?) ".exe" ""))))
+      (unless (or (embedded?) (equal? *scheme* (format "~a/bin/~a/scheme~a" (path-parent *mats-dir*) (machine-type) (if (windows?) ".exe" ""))))
         (errorf #f "not testing boot file based on ../boot/~a/petite.boot, since *scheme* isn't ../bin/~a/scheme~a"
           (machine-type) (machine-type) (if (windows?) ".exe" "")))
       (mkfile "testfile.ss"

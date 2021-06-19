@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <ctype.h>
-#include <time.h>
 
 /* locally defined functions */
 static INT s_errno PROTO((void));

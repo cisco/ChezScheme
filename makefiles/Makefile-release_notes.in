@@ -38,7 +38,7 @@ install: $x.pdf $x.html
 	$(INSTALL) -m 2755 -d $(installdir)/gifs
 	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
 	$(INSTALL) -m 2755 -d $(installdir)/math
-	-/bin/rm -rf $(installdir)/$(mathdir)
+	-rm -rf $(installdir)/$(mathdir)
 	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
 	if [ -e $(mathdir)/0.gif ] ; then $(INSTALL) -m 0644 $(mathdir)/*.gif $(installdir)/$(mathdir) ; fi
 

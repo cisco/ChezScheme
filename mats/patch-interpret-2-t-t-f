@@ -10,12 +10,12 @@
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
   primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
 --- 1,13 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of 6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of 6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1005, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1007, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1014, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1016, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1023, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1025, char 4 of ../6.ms
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
   primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
   primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".

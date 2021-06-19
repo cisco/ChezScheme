@@ -20,7 +20,6 @@
 #include <limits.h>
 #ifdef WIN32
 #include <io.h>
-#include <time.h>
 #else
 #include <sys/time.h>
 #endif
@@ -940,6 +939,27 @@ extern void Sretain_static_relocation(void) {
   S_G.retain_static_relocation = 1;
 }
 
+#if defined(CHECK_FOR_ROSETTA)
+#include <sys/sysctl.h>
+int is_rosetta = 0;
+static void init_rosetta_check() {
+  int val = 0;
+  size_t size = sizeof(val);
+  if (sysctlbyname("sysctl.proc_translated", &val, &size, NULL, 0) != 0) {
+    if (errno == ENOENT) {
+         is_rosetta = 0;
+    } else {
+      perror("checking to see if running under Rosetta");
+      // if for some reason we can't tell whether we are running under Rosetta or not,
+      // default to the safer choice.  It doesn't impact correctness to do the Rosetta
+      // workarounds when they are not needed.
+      is_rosetta = 1;
+    }
+  }
+  is_rosetta = val;
+}
+#endif
+
 #ifdef ITEST
 #include "itest.c"
 #endif
@@ -956,7 +976,10 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
   S_pagesize = GETPAGESIZE();
 
   idiot_checks();
-
+#if defined(CHECK_FOR_ROSETTA)
+  init_rosetta_check();
+#endif
+  
   switch (current_state) {
     case RUNNING:
       fprintf(stderr, "error (Sscheme_init): call Sscheme_deinit first to terminate\n");

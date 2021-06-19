@@ -363,9 +363,9 @@ if [ "$help" = "yes" ]; then
   echo "  --temproot=<pathname>             staging root ($temproot)"
   echo "  --installowner=<ownername>        install with owner ($installowner)"
   echo "  --installgroup=<groupname>        install with group ($installgroup)"
-  echo "  --installschemename=<schemename>  install with group ($installschemename)"
-  echo "  --installpetitename=<petitename>  install with group ($installpetitename)"
-  echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
+  echo "  --installschemename=<schemename>  install scheme as ($installschemename)"
+  echo "  --installpetitename=<petitename>  install petite as ($installpetitename)"
+  echo "  --installscriptname=<scriptname>  install scheme-script as ($installscriptname)"
   echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
@@ -414,7 +414,7 @@ if [ -d '.git' ] && command -v git >/dev/null 2>&1 ; then
 else
   if [ ! -f 'nanopass/nanopass.ss' ] ; then
     rmdir nanopass > /dev/null 2>&1
-    (curl  -L -o v1.9.1.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.1.tar.gz && tar -zxf v1.9.1.tar.gz && mv nanopass-framework-scheme-1.9.1 nanopass && rm v1.9.1.tar.gz) || exit 1
+    (curl  -L -o v1.9.2.tar.gz https://github.com/nanopass/nanopass-framework-scheme/archive/v1.9.2.tar.gz && tar -zxf v1.9.2.tar.gz && mv nanopass-framework-scheme-1.9.2 nanopass && rm v1.9.2.tar.gz) || exit 1
   fi
 
   if [ "${zlibDep}" != "" ] ; then

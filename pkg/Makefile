@@ -39,7 +39,7 @@ $(PKG): $(BUILDROOT)/$(PKG)
           --package-path $(BUILDROOT)\
           $(PKG)
 	sudo chown $(DOTUSER):$(DOTGROUP) $(PKG)
-	sudo /bin/rm -rf $(RELEASE) $(BUILDROOT)
+	sudo rm -rf $(RELEASE) $(BUILDROOT)
 
 $(BUILDROOT)/$(PKG): $(PKGCONTENT)
 	sudo /usr/bin/pkgbuild\

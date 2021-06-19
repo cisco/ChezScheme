@@ -6,11 +6,15 @@ jobs:
     # macOS
     - env: TARGET_MACHINE=i3osx
       os: osx
-    - env: TARGET_MACHINE=ti3osx
+    - env:
+      - TARGET_MACHINE=ti3osx
+      - PARALLEL_MATS=1
       os: osx
     - env: TARGET_MACHINE=a6osx
       os: osx
-    - env: TARGET_MACHINE=ta6osx
+    - env:
+      - TARGET_MACHINE=ta6osx
+      - PARALLEL_MATS=1
       os: osx
 
     # Linux
@@ -59,6 +63,8 @@ jobs:
         - git config core.autocrlf false; rm .git/index; git reset --hard
         - choco install make -y
 dist: bionic
+before_install:
+  - .travis/maybe-skip-build.sh
 script:
   - .travis/build.sh
-  - .travis/test.sh
+  - travis_wait 60 .travis/test.sh

@@ -21,7 +21,7 @@ fobj = foreign1.so
 include Mf-base
 
 foreign1.so: ${fsrc} ../boot/$m/scheme.h
-	cc -m64 -fPIC -shared -I${Include} -o foreign1.so ${fsrc}
+	$(CC) -m64 -fPIC -shared -O2 -I${Include} -o foreign1.so ${fsrc}
 
 cat_flush: cat_flush.c
-	cc -o cat_flush cat_flush.c
+	$(CC) -o cat_flush cat_flush.c

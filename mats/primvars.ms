@@ -19,7 +19,7 @@
       (memq x
         '(equivalent-expansion? mat-run mat mat/cf
            mat-file mat-output enable-cp0 windows? embedded?
-           *examples-directory* *scheme*
+           *examples-directory* *scheme* *mats-dir*
            *fuzz* ~= fl~= cfl~= == nan pi +pi +pi/2 +pi/4 -pi -pi/2 -pi/4 +e -e
            separate-eval-tools separate-compile separate-eval run-script patch-exec-path $record->vector
            $cat_flush
@@ -162,7 +162,15 @@
             0 a*))
         (define prim-arity
           (lambda (x)
-            (module (primref-arity) (include "../s/primref.ss"))
+            (module (primref-arity)
+              (define-syntax include-from-s
+                (lambda (x)
+                  (syntax-case x ()
+                    [(k ?path)
+                     (string? (datum ?path))
+                     (let ([s-path (format "~a/../s/~a" *mats-dir* (datum ?path))])
+                       (datum->syntax #'k `(include ,s-path)))])))
+              (include-from-s "primref.ss"))
             (let ([primref2 (#%$sgetprop x '*prim2* #f)] [primref3 (#%$sgetprop x '*prim3* #f)])
               (if primref2
                   (if primref3
@@ -415,7 +423,7 @@
               [(length) 0 -1 (+ (most-positive-fixnum) 1) 'a #f]
               [(library-path) '(a) "hereiam" #f]
               [(library-requirements-options) (library-requirements-options import invoke) 1/2 #f]
-              [(list) '(a) '#1=(a . #1#) 17 '#() #f]
+              [(list) '(a) '#1=(a . #1#) 17 '#() #'(1 2 3) #f]
               [(list-of-string-pairs) '(("a" . "b")) '("a") #f]
               [(list-of-symbols) '(a b c) '("a") #f]
               [(maybe-binary-output-port) *binary-output-port *binary-input-port (current-output-port)]
