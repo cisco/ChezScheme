@@ -2195,3 +2195,5 @@
   and branch in S_bytevector_read, plus a small amount of work at startup
   to determine whether we are running under Rosetta translation.
     new-io.c, scheme.c, version.h
+- use a 7-byte NOP in the x86_64 fasl relocator instead of 7 1-byte NOPs
+    fasl.c
