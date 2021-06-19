@@ -1347,7 +1347,7 @@ It should be an address returned by an earlier call to
 \endentryheader
 
 \scheme{foreign-ref} extracts the value of type \var{type}
-\var{offset} bytes into the block of foreign data addressed by
+from the memory location at \var{offset} bytes offset from
 \var{address}.
 
 \var{type} must be a symbol identifying the type of value
