@@ -2194,5 +2194,4 @@
   during native (x86) execution is the addition of a single int compare
   and branch in S_bytevector_read, plus a small amount of work at startup
   to determine whether we are running under Rosetta translation.
-    c/new-io.c c/scheme.c c/version.h
-
+    new-io.c, scheme.c, version.h
