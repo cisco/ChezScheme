@@ -258,7 +258,6 @@ entry, as appropriate.
 
 The behavior of this command is undefined if used for something other
 than a parenthesis or bracket.
-parentheses and brackets.
 \endeditproc
 
 \editproc{ee-newline}{none}
