@@ -2197,3 +2197,5 @@
     new-io.c, scheme.c, version.h
 - use a 7-byte NOP in the x86_64 fasl relocator instead of 7 1-byte NOPs
     fasl.c
+- Move unused terminals in L4.5 to later languages.
+    np-languages.ss
