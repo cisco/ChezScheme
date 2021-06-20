@@ -2199,3 +2199,6 @@
     fasl.c
 - Move unused terminals in L4.5 to later languages.
     np-languages.ss
+- vector literals can be made self-evaluating with the new parameter
+  self-evaluating-vectors
+    s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
