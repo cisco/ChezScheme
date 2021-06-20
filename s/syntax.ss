@@ -1882,6 +1882,8 @@
             (syntax-type (chi-macro (binding-value b) e r w ae rib)
               r empty-wrap ae rib)]
            [else (values type (binding-value b) e w ae)]))]
+      [(and (self-evaluating-vectors) (vector? e))
+       (values 'constant #f (vector-map (lambda (e) (strip e w)) e) w ae)]
       [(self-evaluating? e) (values 'constant #f e w ae)]
       [else (values 'other #f e w ae)])))
 

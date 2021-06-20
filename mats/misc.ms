@@ -5050,6 +5050,88 @@
     (compile-library "testfile-ai-2.ss")
     #t))
 
+(mat self-evaluating-vectors
+  ;; Do not assume the initial state of self-evaluating-vectors. For the tests below however, set it
+  ;; to #t
+  (begin
+    (define default-sev (self-evaluating-vectors))
+    (self-evaluating-vectors #t)
+    #t)
+
+  (error? (parameterize ([self-evaluating-vectors #f])
+            (eval '#(1 a b))))
+
+  (equal? (eval '#(2 c d)) '#(2 c d))
+
+  (equal? (eval '(let ()
+                   (define-syntax qv
+                     (syntax-rules ()
+                       [(_ a ...) #(a ...)]))
+                   (qv 3 e f)))
+          '#(3 e f))
+
+  ;; There were bugs in handling of annotations in vectors (which only manifests when loading from files)
+  (begin
+    (define-syntax exptest
+      (lambda (stx)
+        (define (testfile . forms)
+          (with-output-to-file "testfile-sev.ss"
+            (lambda ()
+              (for-each pretty-print forms))
+            'replace)
+          (load "testfile-sev.ss"))
+
+        (syntax-case stx ()
+          [(_ (lib name . libbody) b b* ...)
+           (let ()
+             (testfile (datum (lib name . libbody)))
+             #'(let ()
+                 (import name)
+                 b b* ...))])))
+    #t)
+
+  (equal? (exptest (library (test-self-eval-vector)
+                     (export v)
+                     (import (chezscheme))
+                     (define v #(a b c)))
+                   v)
+          '#(a b c))
+  (equal? (exptest (library (test-self-eval-vector)
+                     (export v)
+                     (import (chezscheme))
+                     (define v #(a (b) #(c (d) e))))
+                   v)
+          '#(a (b) #(c (d) e)))
+  (equal? (exptest (library (test-self-eval-vector)
+                     (export qv)
+                     (import (chezscheme))
+                     (define-syntax qv
+                       (syntax-rules ()
+                         [(_ a ...)
+                          #(a ...)])))
+                   (qv a (b c #(d) e) f))
+          '#(a (b c #(d) e) f))
+  (equal? (exptest (library (test-self-eval-vector)
+                     (export mqv v)
+                     (import (chezscheme))
+                     (define-syntax mqv
+                       (syntax-rules ()
+                         [(_ mm init)
+                          (define-syntax mm
+                            (syntax-rules ()
+                              [(_ a (... ...))
+                               #(init a (... ...) #(init a) (... ...) (#(init a)) (... ...))]))]))
+                     (mqv M zz)
+                     (define v (M a- b-)))
+                   (mqv mm XX)
+                   (list (mm aa bb cc) v))
+          '(#(XX aa bb cc #(XX aa) #(XX bb) #(XX cc) (#(XX aa)) (#(XX bb)) (#(XX cc)))
+            #(zz a- b- #(zz a-) #(zz b-) (#(zz a-)) (#(zz b-)))))
+  ;; Restore the flag in order not to disturb the other tests
+  (begin
+    (self-evaluating-vectors default-sev)
+    #t))
+
 (mat current-generate-id
   (begin
     (define (make-x-generator)

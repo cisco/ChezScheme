@@ -2209,3 +2209,6 @@
 - escape $(MAKE) to fix parallel mat issue observed with GNU Make 4.2.1:
   "make[1]: warning: jobserver unavailable: using -j1."
     mats/Mf-base
+- vector literals can be made self-evaluating with the new parameter
+  self-evaluating-vectors
+    s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms

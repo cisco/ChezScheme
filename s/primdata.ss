@@ -1021,6 +1021,7 @@
   (scheme-start [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (scheme-program [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (scheme-script [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (self-evaluating-vectors [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (source-directories [sig [() -> (list)] [(sub-list) -> (void)]] [flags])
   (subset-mode [sig [() -> (maybe-symbol)] [(maybe-sub-symbol) -> (void)]] [flags])
   (suppress-greeting [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])

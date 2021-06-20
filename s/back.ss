@@ -228,5 +228,8 @@
 (define internal-defines-as-letrec*
   ($make-thread-parameter #t (lambda (x) (and x #t))))
 
+(define self-evaluating-vectors
+  ($make-thread-parameter #f (lambda (x) (and x #t))))
+
 (set! $scheme-version (string->symbol ($format-scheme-version (constant scheme-version))))
 )
