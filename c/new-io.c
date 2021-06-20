@@ -453,6 +453,27 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
 #endif
 
   LOCKandDEACTIVATE(tc, bv)
+#ifdef CHECK_FOR_ROSETTA
+  /* If we are running on Apple Silicon under Rosetta 2 translation, work around
+     a bug (present in 11.2.3 at least) in its handling of memory page protection
+     bits.  One of the tasks that Rosetta handles is to appropriately twiddle the
+     execute and write bits based on what's happinging to the memory in order to
+     preserve the illusion that the pages have RWX permissions, whereas Apple
+     Silicon enforces a W^X (write XOR execute) model.  For some reason, this
+     bit-twiddling sometimes fails when the bytevector passed to `read` extends
+     onto a page that's currently R-X, causing the `read` to fail with EFAULT
+     ("bad address").  By writing to each subsequent page, we force Rosetta to
+     do the right magic to the protection bits.  (Or at least it makes the error
+     go away and all the mats pass.)
+     */
+  if (is_rosetta) {
+    for (iptr idx = start+count; idx > start; idx -= S_pagesize) {
+      volatile octet b = BVIT(bv,idx);
+      BVIT(bv,idx) = b;
+    }
+  }
+#endif
+
 #ifdef WIN32
   if (!gzflag && fd == 0 && hStdin != NULL) {
     DWORD error_code;

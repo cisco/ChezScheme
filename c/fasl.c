@@ -1461,13 +1461,14 @@ static void x86_64_set_jump(void *address, uptr item, IBOOL callp) {
   if ((I32)disp == disp) {
     *(octet *)address = callp ? 0xE8 : 0xE9;  /* call or jmp disp32 opcode */
     *(I32 *)((uptr)address + 1) = (I32)disp;
-    *((octet *)address + 5) = 0x90; /* nop */
-    *((octet *)address + 6) = 0x90; /* nop */
-    *((octet *)address + 7) = 0x90; /* nop */
-    *((octet *)address + 8) = 0x90; /* nop */
-    *((octet *)address + 9) = 0x90; /* nop */
-    *((octet *)address + 10) = 0x90; /* nop */
-    *((octet *)address + 11) = 0x90; /* nop */
+    /* 7-byte long NOP */
+    *((octet *)address + 5) = 0x0f;
+    *((octet *)address + 6) = 0x1f;
+    *((octet *)address + 7) = 0x80;
+    *((octet *)address + 8) = 0x00;
+    *((octet *)address + 9) = 0x00;
+    *((octet *)address + 10) = 0x00;
+    *((octet *)address + 11) = 0x00;
   } else {
     *(octet *)address = 0x48; /* REX w/REX.w set */
     *((octet *)address + 1)= 0xB8;  /* MOV imm64 to RAX */
