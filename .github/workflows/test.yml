@@ -1,0 +1,47 @@
+---
+name: test
+on: [push]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - machine: a6osx
+            os: macos-latest
+          - machine: ta6osx
+            os: macos-latest
+            parallel: 1
+          - machine: i3le
+            os: ubuntu-latest
+          - machine: ti3le
+            os: ubuntu-latest
+          - machine: a6le
+            os: ubuntu-latest
+          - machine: ta6le
+            os: ubuntu-latest
+          - machine: i3nt
+            os: windows-latest
+          - machine: ti3nt
+            os: windows-latest
+          - machine: a6nt
+            os: windows-latest
+          - machine: ta6nt
+            os: windows-latest
+    runs-on: ${{ matrix.config.os }}
+    env:
+      TARGET_MACHINE: ${{ matrix.config.machine }}
+      PARALLEL_MATS: ${{ matrix.config.parallel }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup
+        run: .github/workflows/setup.sh
+      - name: Build
+        run: .github/workflows/build.sh
+      - name: Test
+        run: .github/workflows/test.sh
