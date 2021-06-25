@@ -2202,5 +2202,7 @@
 - vector literals can be made self-evaluating with the new parameter
   self-evaluating-vectors
     s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
+- remove obsolete travis-ci.org configuration
+    README.md .travis.yml .travis/*
 - add GitHub actions workflow for automated testing
-    .github/workflows/*
+    .github/workflows/{build.sh,summary,test.sh,test.yml}
