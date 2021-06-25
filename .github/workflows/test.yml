@@ -37,12 +37,17 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}
     steps:
-      - name: Configure git
+      - name: Configure git on Windows
+        if: ${{ runner.os == 'Windows' }}
         run: git config --global core.autocrlf false
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup
-        run: .github/workflows/setup.sh
+      - name: Setup 32-bit Linux
+        if: ${{ endsWith(matrix.config.machine, 'i3le') }}
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
       - name: Build
         run: .github/workflows/build.sh
       - name: Run mats

@@ -2202,3 +2202,5 @@
 - vector literals can be made self-evaluating with the new parameter
   self-evaluating-vectors
     s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
+- add GitHub actions workflow for automated testing
+    .github/workflows/*
