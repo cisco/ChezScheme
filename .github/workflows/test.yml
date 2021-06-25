@@ -53,4 +53,4 @@ jobs:
       - name: Check mats
         run: |
           cat "$TARGET_MACHINE"/mats/summary
-          diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
+          diff -q --strip-trailing-cr .github/workflows/summary "$TARGET_MACHINE"/mats/summary
