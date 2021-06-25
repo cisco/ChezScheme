@@ -222,7 +222,7 @@ $(outdir)/report-$(conf): $(outdir)/errors-$(conf)
 
 doreport: experr-$(conf)
 	rm -f $(outdir)/report-$(conf)
-	-diff --strip-trailing-cr experr-$(conf) $(outdir)/errors-$(conf) > $(outdir)/report-$(conf) 2>&1
+	-diff experr-$(conf) $(outdir)/errors-$(conf) > $(outdir)/report-$(conf) 2>&1
 
 maybe-doreport:
 	-if [ -f $(outdir)/errors-$(conf) ] ; then\

@@ -37,6 +37,8 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}
     steps:
+      - name: Configure git
+        run: git config --global core.autocrlf false
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup
@@ -53,4 +55,4 @@ jobs:
       - name: Check mats
         run: |
           cat "$TARGET_MACHINE"/mats/summary
-          diff -q --strip-trailing-cr .github/workflows/summary "$TARGET_MACHINE"/mats/summary
+          diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
