@@ -39,20 +39,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup 32-bit Linux
-        if: endsWith(matrix.config.machine, 'i3le')
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
+      - name: Setup
+        run: .github/workflows/setup.sh
       - name: Build
         run: .github/workflows/build.sh
-      - name: Test
+      - name: Run mats
         run: .github/workflows/test.sh
       - name: Archive mats
         uses: actions/upload-artifact@v2
         with:
           name: mats-${{ matrix.config.machine }}
           path: ${{ matrix.config.machine }}/mats
-      - name: Check results
-        run: diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
+      - name: Check mats
+        run: |
+          cat "$TARGET_MACHINE"/mats/summary
+          diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
