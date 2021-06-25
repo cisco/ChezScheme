@@ -54,3 +54,5 @@ jobs:
         with:
           name: mats-${{ matrix.config.machine }}
           path: ${{ matrix.config.machine }}/mats
+      - name: Check results
+        run: diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
