@@ -1,0 +1,65 @@
+---
+name: test
+on: [push]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - machine: a6osx
+            os: macos-latest
+          - machine: ta6osx
+            os: macos-latest
+            parallel: 1
+          - machine: i3le
+            os: ubuntu-latest
+          - machine: ti3le
+            os: ubuntu-latest
+          - machine: a6le
+            os: ubuntu-latest
+          - machine: ta6le
+            os: ubuntu-latest
+          - machine: i3nt
+            os: windows-latest
+          - machine: ti3nt
+            os: windows-latest
+          - machine: a6nt
+            os: windows-latest
+          - machine: ta6nt
+            os: windows-latest
+    runs-on: ${{ matrix.config.os }}
+    env:
+      TARGET_MACHINE: ${{ matrix.config.machine }}
+      PARALLEL_MATS: ${{ matrix.config.parallel }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Configure git on Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: git config --global core.autocrlf false
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup 32-bit Linux
+        if: ${{ endsWith(matrix.config.machine, 'i3le') }}
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
+      - name: Build Chez Scheme
+        run: .github/workflows/build.sh
+      - name: Run tests
+        run: .github/workflows/test.sh
+      - name: Archive workspace
+        run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
+      - name: Upload archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.machine }}
+          path: ${{ matrix.config.machine }}.tgz
+      - name: Check test results
+        run: |
+          cat $TARGET_MACHINE/mats/summary
+          diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary
