@@ -48,16 +48,18 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
-      - name: Build
+      - name: Build Chez Scheme
         run: .github/workflows/build.sh
-      - name: Run mats
+      - name: Run tests
         run: .github/workflows/test.sh
-      - name: Archive mats
+      - name: Archive workspace
+        run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
+      - name: Upload archive
         uses: actions/upload-artifact@v2
         with:
-          name: mats-${{ matrix.config.machine }}
-          path: ${{ matrix.config.machine }}/mats
-      - name: Check mats
+          name: ${{ matrix.config.machine }}
+          path: ${{ matrix.config.machine }}.tgz
+      - name: Check test results
         run: |
-          cat "$TARGET_MACHINE"/mats/summary
-          diff -q .github/workflows/summary "$TARGET_MACHINE"/mats/summary
+          cat $TARGET_MACHINE/mats/summary
+          diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary
