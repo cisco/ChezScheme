@@ -1,0 +1,74 @@
+---
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - machine: a6osx
+            os: macos-11
+          - machine: ta6osx
+            os: macos-11
+          - machine: i3le
+            os: ubuntu-20.04
+          - machine: ti3le
+            os: ubuntu-20.04
+          - machine: a6le
+            os: ubuntu-20.04
+          - machine: ta6le
+            os: ubuntu-20.04
+          - machine: i3nt
+            os: windows-2019
+          - machine: i3nt
+            os: windows-2022
+          - machine: ti3nt
+            os: windows-2019
+          - machine: ti3nt
+            os: windows-2022
+          - machine: a6nt
+            os: windows-2019
+          - machine: a6nt
+            os: windows-2022
+          - machine: ta6nt
+            os: windows-2019
+          - machine: ta6nt
+            os: windows-2022
+    runs-on: ${{ matrix.config.os }}
+    env:
+      TARGET_MACHINE: ${{ matrix.config.machine }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Configure git on Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: git config --global core.autocrlf false
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup 32-bit Linux
+        if: ${{ endsWith(matrix.config.machine, 'i3le') }}
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
+      - name: Build Chez Scheme
+        run: .github/workflows/build.sh
+      - name: Run tests
+        timeout-minutes: 30
+        run: .github/workflows/test.sh
+      - name: Archive workspace
+        if: always()
+        run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
+      - name: Upload archive
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.config.machine }}
+          path: ${{ matrix.config.machine }}.tgz
+      - name: Check test results
+        run: |
+          cat $TARGET_MACHINE/mats/summary
+          diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary
