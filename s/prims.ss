@@ -357,6 +357,12 @@
     ($oops who "invalid new length ~s for ~s" n st))
   (string-truncate! st n))
 
+(define-who $make-uninitialized-string
+  (lambda (n)
+    (unless (and (fixnum? n) (not ($fxu< (constant maximum-string-length) n)))
+      ($oops who "~s is not a valid string length" n))
+    ($make-uninitialized-string n)))
+
 (define-who make-string
   (case-lambda
     [(n c)

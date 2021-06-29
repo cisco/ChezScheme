@@ -2269,6 +2269,7 @@
   ($make-textual-input-port [sig [(string port-handler string) (string port-handler string ptr) -> (textual-input-port)]] [flags alloc])
   ($make-textual-output-port [sig [(string port-handler string) (string port-handler string ptr) -> (textual-output-port)]] [flags alloc])
   ($make-tlc [flags single-valued alloc])
+  ($make-uninitialized-string [sig [(length) -> (string)]] [flags alloc])
   ($make-vtable [flags single-valued])
   ($make-wrapper-procedure [flags single-valued])
   ($map [flags single-valued])

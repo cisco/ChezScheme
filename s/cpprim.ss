@@ -7047,9 +7047,9 @@
         (make-build-fill (constant string-char-bytes) (constant string-data-disp)))
       (let ()
         (define do-make-string
-          (lambda (e-length e-fill)
+          (lambda (e-length maybe-e-fill)
             ; NB: caller must bind e-fill
-            (safe-assert (no-need-to-bind? #f e-fill))
+            (safe-assert (or (not maybe-e-fill) (no-need-to-bind? #f maybe-e-fill)))
             (if (constant? (lambda (x) (and (fixnum? x) (fx<= 0 x 10000))) e-length)
                 (let ([n (constant-value e-length)])
                   (if (fx= n 0)
@@ -7061,7 +7061,9 @@
                              (set! ,(%mref ,t ,(constant string-type-disp))
                                (immediate ,(fx+ (fx* n (constant string-length-factor))
                                                    (constant type-string))))
-                             ,(build-string-fill t `(immediate ,bytes) e-fill))))))
+                             ,(if maybe-e-fill
+                                  (build-string-fill t `(immediate ,bytes) maybe-e-fill)
+                                  t))))))
                 (bind #t (e-length)
                   (let ([t-bytes (make-tmp 'tsize 'uptr)] [t-str (make-tmp 'tstr)])
                     `(if ,(%inline eq? ,e-length (immediate 0))
@@ -7081,8 +7083,12 @@
                                     (constant type-string)
                                     (constant string-char-offset)
                                     (constant string-length-offset)))
-                               ,(build-string-fill t-str t-bytes e-fill))))))))))
+                               ,(if maybe-e-fill
+                                    (build-string-fill t-str t-bytes maybe-e-fill)
+                                    t-str))))))))))
         (define default-fill `(immediate ,(ptr->imm #\nul)))
+        (define-inline 3 $make-uninitialized-string
+          [(e-length) (do-make-string e-length #f)])
         (define-inline 3 make-string
           [(e-length) (do-make-string e-length default-fill)]
           [(e-length e-fill) (bind #t (e-fill) (do-make-string e-length e-fill))])
