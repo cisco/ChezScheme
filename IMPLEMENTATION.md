@@ -619,9 +619,9 @@ represented as calls to functions. In later passes in "cpnanopass.ss",
 some primitive operations get inlined into a combination of core
 forms, some of which are `inline` forms. The `inline` forms eventually
 get delivered to a backend for instruction selection. For example, a
-use of safe `fx+` is inlines as argument checks that guard an `(inline
-+ ...)`, and the `(inline + ...)` eventually becomes a machine-level
-addition instruction.
+use of safe `fx+` is inlines as argument checks that guard an
+`(inline + ...)`, and the `(inline + ...)` eventually becomes a
+machine-level addition instruction.
 
 # Machine Registers
 
