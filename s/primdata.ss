@@ -1244,8 +1244,8 @@
   (compile-time-value-value [sig [(compile-time-value) -> (ptr)]] [flags pure mifoldable discard])
   (compile-to-file [sig [(list pathname) (list pathname maybe-sfd) (list pathname maybe-sfd boolean) -> (void/list)]] [flags true])
   (compile-to-port [sig [(list binary-output-port) (list binary-output-port maybe-sfd) (list binary-output-port maybe-sfd maybe-binary-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port ptr) (list binary-output-port maybe-sfd maybe-binary-output-port maybe-textual-output-port sub-symbol maybe-binary-output-port ptr ptr) -> (void/list)]] [flags true])
-  (compile-whole-program [sig [(string string) (string string ptr) -> (void)]] [flags])
-  (compile-whole-library [sig [(string string) -> (void)]] [flags])
+  (compile-whole-program [sig [(string string) (string string ptr) -> (list)]] [flags])
+  (compile-whole-library [sig [(string string) -> (list)]] [flags])
   (compute-composition [sig [(ptr) -> (list)] [(ptr sub-ufixnum) -> (list)]] [flags alloc])
   (compute-size [sig [(ptr) -> (uint)] [(ptr sub-ufixnum) -> (uint)]] [flags alloc])
   (compute-size-increments [sig [(list) -> (list)] [(list ptr) -> (list)]] [flags alloc]) ; the second argument is ufixnum or 'static
