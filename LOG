@@ -2206,3 +2206,5 @@
     README.md .travis.yml .travis/*
 - add GitHub actions workflow for automated testing
     .github/workflows/{build.sh,summary,test.sh,test.yml}
+- corrected signature of compile-whole-program and compile-whole-library
+    s/primdata.ss
