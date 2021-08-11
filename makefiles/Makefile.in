@@ -35,6 +35,14 @@ uninstall:
 test:
 	(cd $(workarea) && $(MAKE) test PREFIX=$(workarea)/)
 
+.PHONY: test-some
+test-some:
+	(cd $(workarea) && $(MAKE) test-some PREFIX=$(workarea)/)
+
+.PHONY: test-more
+test-more:
+	(cd $(workarea) && $(MAKE) test-more PREFIX=$(workarea)/)
+
 .PHONY: coverage
 coverage:
 	(cd $(workarea) && $(MAKE) coverage)
