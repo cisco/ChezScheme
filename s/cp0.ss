@@ -1022,7 +1022,7 @@
                           [(set! ,maybe-src ,x ,e)
                            (unless (memq x ids) (exit #f))
                            (bump!)
-                           (do-expr e)]
+                           `(set! ,maybe-src ,x ,(do-expr e))]
                           [(call ,preinfo ,e ,e* ...)
                            ; reject calls to gensyms, since they might represent library exports,
                            ; and we have no way to set up the required invoke dependencies, unless

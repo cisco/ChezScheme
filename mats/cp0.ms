@@ -3368,4 +3368,19 @@
   (eq? 'b (let ()
             (import (cross-library-inlining-test))
             (b 10)))
+
+  (begin
+    (library (check-that-inlined-set!-is-handled-correctly)
+      (export make-param)
+      (import (scheme))
+      (define (make-param initial)
+        (let ([v initial])
+          (case-lambda
+           [() v]
+           [(x) (set! v x)]))))
+    (import (check-that-inlined-set!-is-handled-correctly))
+    (define parameter-porentially-inlined (make-param #f))
+    (not (parameter-porentially-inlined)))
+  (eq? (void) (parameter-porentially-inlined 'other))
+  (eq? 'other (parameter-porentially-inlined))
   )
