@@ -2208,3 +2208,8 @@
     .github/workflows/{build.sh,summary,test.sh,test.yml}
 - corrected signature of compile-whole-program and compile-whole-library
     s/primdata.ss
+- clarify rd-bytevector error message for non-atomic token types, such
+  as vparen, where the token value is #f
+    mats/6.ms, mats/root-experr-compile-0-f-f-f,
+    mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
+    s/read.ss

@@ -58,6 +58,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Improved error messages (9.5.5)}
+
+When the reader reports an invalid bytevector element, the error
+message now includes the token value only if the token type is atomic.
+
 \subsection{Additional reader syntax for booleans (9.5.5)}
 
 The reader now case-insensitively accepts \scheme{#true} and
