@@ -1515,11 +1515,16 @@
       [(rparen) (xvalues (make-bytevector i))]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bytevector"))]
       [else
-       (unless (and (eq? type 'atomic) (fixnum? value) (fx<= 0 value 255))
-         (xcall rd-error #f #t "invalid value ~s found in bytevector" value))
+       (xcall rd-bytevector-check type value)
        (xmvlet ((v) (xcall rd-bytevector expr-bfp (fx+ i 1)))
          (bytevector-u8-set! v i value)
          (xvalues v))])))
+
+(xdefine (rd-bytevector-check type value)
+  (unless (and (eq? type 'atomic) (fixnum? value) (fx<= 0 value 255))
+    (if (eq? type 'atomic)
+        (xcall rd-error #f #t "invalid value ~:[~s~;~a~] found in bytevector" (symbol? value) value)
+        (xcall rd-error #f #t "non-octet found in bytevector"))))
 
 (xdefine (rd-sized-bytevector n)
   (unless (and (fixnum? n) (fxnonnegative? n))
@@ -1539,8 +1544,7 @@
        (xvalues v)]
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "bytevector"))]
       [else
-       (unless (and (eq? type 'atomic) (fixnum? value) (fx<= 0 value 255))
-         (xcall rd-error #f #t "invalid value ~s found in bytevector" value))
+       (xcall rd-bytevector-check type value)
        (unless (fx< i n)
          (let ([bfp expr-bfp])
            (xcall rd-error #f #t "too many bytevector elements supplied")))

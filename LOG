@@ -2212,3 +2212,8 @@
 - vector literals can be made self-evaluating with the new parameter
   self-evaluating-vectors
     s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
+- clarify rd-bytevector error message for non-atomic token types, such
+  as vparen, where the token value is #f
+    mats/6.ms, mats/root-experr-compile-0-f-f-f,
+    mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
+    s/read.ss
