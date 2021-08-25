@@ -56,7 +56,7 @@ void S_doflush(uptr start, uptr end) {
 void S_machine_init() {
   int l1_dcache_line_size, l1_icache_line_size;
 
-#if defined(__linux__)
+#if defined(__linux__) && defined(_SC_LEVEL1_DCACHE_LINESIZE)
   if ((l1_dcache_line_size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)) <= 0) {
     l1_dcache_line_size = DEFAULT_L1_MAX_CACHE_LINE_SIZE;
   }
