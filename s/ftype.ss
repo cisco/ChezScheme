@@ -384,11 +384,7 @@ ftype operators:
       [(r ftype) (expand-ftype-name r ftype #t)]
       [(r ftype error?)
        (cond
-         [(r ftype) =>
-          (lambda (ftd)
-            (if (ftd? ftd)
-                ftd
-                (and error? (syntax-error ftype "unrecognized ftype name"))))]
+         [(let ([maybe-ftd (r ftype)]) (and maybe-ftd (ftd? maybe-ftd) maybe-ftd)) => (lambda (ftd) ftd)]
          [(find (let ([x (syntax->datum ftype)])
                   (lambda (ftd) (eq? (ftd-base-type ftd) x)))
             native-base-ftds)]
@@ -411,16 +407,22 @@ ftype operators:
                  (cond
                    [(assp (lambda (x) (bound-identifier=? ftype x)) def-alist) =>
                     (lambda (a)
-                      (let ([ftd (cdr a)])
+                      (let ([ftd (let ([ftd (cdr a)])
+                                   (if (ftd? ftd)
+                                       ftd
+                                       (or (find (let ([x (syntax->datum ftype)])
+                                                   (lambda (ftd)
+                                                     (eq? (ftd-base-type ftd) x)))
+                                             (if swap? swap-base-ftds native-base-ftds))
+                                           ftd)))])
                         (unless (ftd? ftd)
                           (syntax-error ftype "recursive or forward reference outside pointer field"))
                         (unless funok?
                           (when (ftd-function? ftd)
                             (syntax-error ftype "unexpected function ftype name outside pointer field")))
                         ftd))]
-                   [(r ftype) =>
+                   [(let ([maybe-ftd (r ftype)]) (and maybe-ftd (ftd? maybe-ftd) maybe-ftd)) =>
                     (lambda (ftd)
-                      (unless (ftd? ftd) (syntax-error ftype "unrecognized ftype name"))
                       (unless funok?
                         (when (ftd-function? ftd)
                           (syntax-error ftype "unexpected function ftype name outside pointer field")))
