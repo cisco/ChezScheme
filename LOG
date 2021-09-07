@@ -2188,3 +2188,23 @@
 - fix x86_64 (& integer-8) and (& integer-16) foreign-call argument
   passing
     x86_64, s/Mf-[t]a6{le,osx}
+- fixed misnamed pattern variables in bytevector-*-ref
+    bytevector.ss
+- add workaround for Rosetta 2 bug in [t]a6osx builds.  The overhead
+  during native (x86) execution is the addition of a single int compare
+  and branch in S_bytevector_read, plus a small amount of work at startup
+  to determine whether we are running under Rosetta translation.
+    new-io.c, scheme.c, version.h
+- use a 7-byte NOP in the x86_64 fasl relocator instead of 7 1-byte NOPs
+    fasl.c
+- Move unused terminals in L4.5 to later languages.
+    np-languages.ss
+- vector literals can be made self-evaluating with the new parameter
+  self-evaluating-vectors
+    s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
+- remove obsolete travis-ci.org configuration
+    README.md .travis.yml .travis/*
+- add GitHub actions workflow for automated testing
+    .github/workflows/{build.sh,summary,test.sh,test.yml}
+- corrected signature of compile-whole-program and compile-whole-library
+    s/primdata.ss

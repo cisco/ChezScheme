@@ -1,7 +1,5 @@
 #!/bin/bash
 set -e -o pipefail
-echo 'travis_fold:start:build'
-echo Building Chez Scheme...
 ./configure -m="$TARGET_MACHINE"
 make -j $(getconf _NPROCESSORS_ONLN)
 case "$TARGET_MACHINE" in
@@ -12,4 +10,3 @@ case "$TARGET_MACHINE" in
     curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.9/iconv-x86.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
     ;;
 esac
-echo 'travis_fold:end:build'

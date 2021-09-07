@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/cisco/ChezScheme.svg?branch=master)](https://travis-ci.org/cisco/ChezScheme)
+[![test](https://github.com/cisco/ChezScheme/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/cisco/ChezScheme/actions/workflows/test.yml)
 
 Chez Scheme is both a programming language and an implementation
 of that language, with supporting tools and documentation.

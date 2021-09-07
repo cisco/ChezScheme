@@ -14,6 +14,7 @@
 # limitations under the License.
 
 include Mf-config
+export CC CFLAGS LD LDFLAGS
 
 Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
