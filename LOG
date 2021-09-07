@@ -2188,6 +2188,3 @@
 - fix x86_64 (& integer-8) and (& integer-16) foreign-call argument
   passing
     x86_64, s/Mf-[t]a6{le,osx}
-- Converted built-in foreign types to work like other ftypes using a
-  compile-time value to specify the value of the foreign type.
-    primdata.ss, ftype.ss
