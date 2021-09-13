@@ -2216,4 +2216,4 @@
   type by using (define-ftype <native-type> <native-type>), allowing
   users to create standard ftype bindings for the native-types if that
   is preferred.
-    s/ftype.ss
+    s/ftype.ss, mats/ftype.ms
