@@ -1695,6 +1695,7 @@ The \scheme{native} specifier can be used to force a return
 back to \scheme{native} representation.
 Each \scheme{endian} form affects only ftypes nested syntactically
 within it and not nested within a closer \scheme{endian} form.
+The endianness of an ftype is fixed once it is defined.
 
 The total size $n$ of the fields within an ftype bits form must
 be 8, 16, 24, 32, 40, 48, 56, or 64.  padding must be added manually if needed.
