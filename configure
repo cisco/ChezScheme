@@ -617,7 +617,7 @@ if [ "$addflags" = "yes" ] ; then
         LIBS="${LIBS} ${iconvLib} -lm ${ncursesLib}"
         ;;
     *nb)
-        if [ "$disablecurses" = "no" ]; then
+        if [ "$disableiconv" = "no" ]; then
             iconvLib="/usr/lib/i18n/libiconv_std.a"
         fi
         LIBS="${LIBS} ${iconvLib} -lm /usr/pkg/lib/libncurses.a"
@@ -632,7 +632,7 @@ if [ "$addflags" = "yes" ] ; then
         LIBS="${LIBS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid"
         ;;
     8qnx)
-        if [ "$disablecurses" = "no" ]; then
+        if [ "$disableiconv" = "no" ]; then
             iconvLib="/usr/local/lib/libiconv.so"
         fi
         LIBS="${LIBS} -lm ${iconvLib} -lsocket ${ncursesLib}"
