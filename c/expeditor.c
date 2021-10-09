@@ -246,6 +246,9 @@ static void s_ee_noraw(void) {
                S_LastErrorString());
 }
 
+static void s_ee_postoutput(void) { }
+static void s_ee_nopostoutput(void) { }
+
 static void s_ee_enter_am_mode(void) { return; }
 
 static void s_ee_exit_am_mode(void) { return; }
@@ -774,17 +777,40 @@ static int eeputc(tputsputcchar c) {
 
 static struct termios orig_termios;
 
-static void s_ee_raw(void) {
-  struct termios new_termios;
-  while (tcgetattr(STDIN_FD, &orig_termios) != 0) {
+static void get_stdin_attr (struct termios *t,
+                            const char *err_msg,
+                            const char *err_msg_w_str) {
+  while (tcgetattr(STDIN_FD, t) != 0) {
     if (errno != EINTR) {
       ptr msg = S_strerror(errno);
       if (msg != Sfalse)
-        S_error1("expeditor", "error entering raw mode: ~a", msg);
+        S_error1("expeditor", err_msg_w_str, msg);
       else
-        S_error("expeditor", "error entering raw mode");
+        S_error("expeditor", err_msg);
     }
   }
+}
+
+static void set_stdin_attr (struct termios *t,
+                            const char *err_msg,
+                            const char *err_msg_w_str) {
+  while (tcsetattr(STDIN_FD, TCSADRAIN, t) != 0) {
+    if (errno != EINTR) {
+      ptr msg = S_strerror(errno);
+      if (msg != Sfalse)
+        S_error1("expeditor", err_msg_w_str, msg);
+      else
+        S_error("expeditor", err_msg);
+    }
+  }
+}
+
+static void s_ee_raw(void) {
+  struct termios new_termios;
+  get_stdin_attr(&orig_termios,
+                 "error entering raw mode",
+                 "error entering raw mode: ~a");
+  
   new_termios = orig_termios;
 
  /* essentially want "stty raw -echo".  the appropriate flags to accomplish
@@ -799,27 +825,41 @@ static void s_ee_raw(void) {
   new_termios.c_cc[VMIN] = 1;
   new_termios.c_cc[VTIME] = 0;
 
-  while (tcsetattr(STDIN_FD, TCSADRAIN, &new_termios) != 0) {
-    if (errno != EINTR) {
-      ptr msg = S_strerror(errno);
-      if (msg != Sfalse)
-        S_error1("expeditor", "error entering raw mode: ~a", msg);
-      else
-        S_error("expeditor", "error entering raw mode");
-    }
-  }
+  set_stdin_attr(&new_termios,
+                 "error entering raw mode",
+                 "error entering raw mode: ~a");
 }
 
 static void s_ee_noraw(void) {
-  while (tcsetattr(STDIN_FD, TCSADRAIN, &orig_termios) != 0) {
-    if (errno != EINTR) {
-      ptr msg = S_strerror(errno);
-      if (msg != Sfalse)
-        S_error1("expeditor", "error leaving raw mode: ~a", msg);
-      else
-        S_error("expeditor", "error leaving raw mode");
-    }
-  }
+  set_stdin_attr(&orig_termios,
+                 "error leaving raw mode",
+                 "error leaving raw mode: ~a");
+}
+
+static void s_ee_postoutput(void) {
+  struct termios new_termios;
+  get_stdin_attr(&new_termios,
+                 "error entering postoutput mode",
+                 "error entering postoutput mode: ~a");
+
+  new_termios.c_oflag |= OPOST;
+
+  set_stdin_attr(&new_termios,
+                 "error entering postoutput mode",
+                 "error entering postoutput mode: ~a");
+}
+
+static void s_ee_nopostoutput(void) {
+  struct termios new_termios;
+  get_stdin_attr(&new_termios,
+                 "error exiting postoutput mode",
+                 "error exiting postoutput mode: ~a");
+
+  new_termios.c_oflag &= (~OPOST);
+
+  set_stdin_attr(&new_termios,
+                 "error exiting postoutput mode",
+                 "error exiting postoutput mode: ~a");
 }
 
 static void s_ee_enter_am_mode(void) {
@@ -1080,6 +1120,8 @@ void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_get_screen_size", (void *)s_ee_get_screen_size);
   Sforeign_symbol("(cs)ee_raw", (void *)s_ee_raw);
   Sforeign_symbol("(cs)ee_noraw", (void *)s_ee_noraw);
+  Sforeign_symbol("(cs)ee_postoutput", (void *)s_ee_postoutput);
+  Sforeign_symbol("(cs)ee_nopostoutput", (void *)s_ee_nopostoutput);
   Sforeign_symbol("(cs)ee_enter_am_mode", (void *)s_ee_enter_am_mode);
   Sforeign_symbol("(cs)ee_exit_am_mode", (void *)s_ee_exit_am_mode);
   Sforeign_symbol("(cs)ee_pause", (void *)s_ee_pause);
