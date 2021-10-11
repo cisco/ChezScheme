@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "config.h"
+#ifndef EXPEDITOR_EXTERNAL_USE
+# include "config.h"
+#endif
 
 #if defined(scheme_feature_pthreads)
 # define PTHREADS

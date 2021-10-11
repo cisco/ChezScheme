@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "system.h"
+#ifndef EXPEDITOR_EXTERNAL_USE
+# include "system.h"
+#endif
 
 #ifdef FEATURE_EXPEDITOR
 
