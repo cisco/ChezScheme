@@ -263,6 +263,18 @@ static void s_ee_noraw(void) {
 static void s_ee_postoutput(void) { }
 static void s_ee_nopostoutput(void) { }
 
+static void s_ee_signal(void) {
+  if (!SetConsoleMode(hStdin, ENABLE_WINDOW_INPUT | ENABLE_PROCESSED_INPUT))
+    S_error1("expeditor", "error setting signal mode: ~a",
+             S_LastErrorString());
+}
+      
+static void s_ee_nosignal(void) {
+  if (!SetConsoleMode(hStdin, ENABLE_WINDOW_INPUT))
+    S_error1("expeditor", "error setting nosignal mode: ~a",
+             S_LastErrorString());
+}
+
 static void s_ee_enter_am_mode(void) { return; }
 
 static void s_ee_exit_am_mode(void) { return; }
@@ -868,39 +880,35 @@ static int eeputc(tputsputcchar c) {
 
 static struct termios orig_termios;
 
-static void get_stdin_attr (struct termios *t,
-                            const char *err_msg,
-                            const char *err_msg_w_str) {
-  while (tcgetattr(STDIN_FD, t) != 0) {
-    if (errno != EINTR) {
-      ptr msg = S_strerror(errno);
-      if (msg != Sfalse)
-        S_error1("expeditor", err_msg_w_str, msg);
-      else
-        S_error("expeditor", err_msg);
-    }
+static void attr_error (const char *who) {
+  char buf[256];
+  ptr msg = S_strerror(errno);
+  if (msg != Sfalse) {
+    snprintf(buf, sizeof(buf), "error entering %s mode: ~a", who);
+    S_error1("expeditor", buf, msg);
+  } else {
+    snprintf(buf, sizeof(buf), "error entering %s mode: ~a", who);
+    S_error("expeditor", buf);
   }
 }
 
-static void set_stdin_attr (struct termios *t,
-                            const char *err_msg,
-                            const char *err_msg_w_str) {
+static void get_stdin_attr (struct termios *t, const char *who) {
+  while (tcgetattr(STDIN_FD, t) != 0) {
+    if (errno != EINTR)
+      attr_error(who);
+  }
+}
+
+static void set_stdin_attr (struct termios *t, const char *who) {
   while (tcsetattr(STDIN_FD, TCSADRAIN, t) != 0) {
-    if (errno != EINTR) {
-      ptr msg = S_strerror(errno);
-      if (msg != Sfalse)
-        S_error1("expeditor", err_msg_w_str, msg);
-      else
-        S_error("expeditor", err_msg);
-    }
+    if (errno != EINTR)
+      attr_error(who);
   }
 }
 
 static void s_ee_raw(void) {
   struct termios new_termios;
-  get_stdin_attr(&orig_termios,
-                 "error entering raw mode",
-                 "error entering raw mode: ~a");
+  get_stdin_attr(&orig_termios, "raw");
   
   new_termios = orig_termios;
 
@@ -916,41 +924,47 @@ static void s_ee_raw(void) {
   new_termios.c_cc[VMIN] = 1;
   new_termios.c_cc[VTIME] = 0;
 
-  set_stdin_attr(&new_termios,
-                 "error entering raw mode",
-                 "error entering raw mode: ~a");
+  set_stdin_attr(&new_termios, "raw");
 }
 
 static void s_ee_noraw(void) {
-  set_stdin_attr(&orig_termios,
-                 "error leaving raw mode",
-                 "error leaving raw mode: ~a");
+  set_stdin_attr(&orig_termios, "noraw");
 }
 
 static void s_ee_postoutput(void) {
   struct termios new_termios;
-  get_stdin_attr(&new_termios,
-                 "error entering postoutput mode",
-                 "error entering postoutput mode: ~a");
+  get_stdin_attr(&new_termios, "postoutput");
 
   new_termios.c_oflag |= OPOST;
 
-  set_stdin_attr(&new_termios,
-                 "error entering postoutput mode",
-                 "error entering postoutput mode: ~a");
+  set_stdin_attr(&new_termios, "postoutput");
 }
 
 static void s_ee_nopostoutput(void) {
   struct termios new_termios;
-  get_stdin_attr(&new_termios,
-                 "error exiting postoutput mode",
-                 "error exiting postoutput mode: ~a");
+  get_stdin_attr(&new_termios, "nopostoutput");
 
   new_termios.c_oflag &= (~OPOST);
 
-  set_stdin_attr(&new_termios,
-                 "error exiting postoutput mode",
-                 "error exiting postoutput mode: ~a");
+  set_stdin_attr(&new_termios, "nopostoutput");
+}
+
+static void s_ee_signal(void) {
+  struct termios new_termios;
+  get_stdin_attr(&new_termios, "signal");
+
+  new_termios.c_lflag |= ISIG;
+
+  set_stdin_attr(&new_termios, "signal");
+}
+
+static void s_ee_nosignal(void) {
+  struct termios new_termios;
+  get_stdin_attr(&new_termios, "nosignal");
+
+  new_termios.c_lflag &= (~ISIG);
+
+  set_stdin_attr(&new_termios, "nosignal");
 }
 
 static void s_ee_enter_am_mode(void) {
@@ -1236,6 +1250,8 @@ void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_noraw", (void *)s_ee_noraw);
   Sforeign_symbol("(cs)ee_postoutput", (void *)s_ee_postoutput);
   Sforeign_symbol("(cs)ee_nopostoutput", (void *)s_ee_nopostoutput);
+  Sforeign_symbol("(cs)ee_signal", (void *)s_ee_signal);
+  Sforeign_symbol("(cs)ee_nosignal", (void *)s_ee_nosignal);
   Sforeign_symbol("(cs)ee_enter_am_mode", (void *)s_ee_enter_am_mode);
   Sforeign_symbol("(cs)ee_exit_am_mode", (void *)s_ee_exit_am_mode);
   Sforeign_symbol("(cs)ee_set_color", (void *)s_ee_set_color);
