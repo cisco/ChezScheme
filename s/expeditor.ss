@@ -131,7 +131,7 @@
  ; because curses requires initscr(), which clears the screen, discarding
  ; the current context.  this is a shell, not a full-screen user interface.
 
-  (define init-term (foreign-procedure "(cs)ee_init_term" () boolean))
+  (define init-term (foreign-procedure "(cs)ee_init_term" (iptr iptr) boolean))
   (define $ee-read-char (foreign-procedure "(cs)ee_read_char" (boolean) scheme-object))
   (define $ee-write-char (foreign-procedure "(cs)ee_write_char" (wchar_t) void))
   (define ee-flush (foreign-procedure "(cs)ee_flush" () void))
@@ -165,7 +165,7 @@
   (define (screen-cols) cols)
 
   (define (init-screen)
-    (and (init-term)
+    (and (init-term -1 -1)
          (begin
            (set! cursor-col 0)
            (set! the-unread-char #f)

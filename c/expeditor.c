@@ -21,9 +21,10 @@
 #ifdef FEATURE_EXPEDITOR
 
 /* locally defined functions */
-static IBOOL s_ee_init_term(void);
+static IBOOL s_ee_init_term(iptr in, iptr out);
 static ptr s_ee_read_char(IBOOL blockp);
 static void s_ee_write_char(wchar_t c);
+static void s_ee_set_color(int color_id, IBOOL background);
 static void s_ee_flush(void);
 static ptr s_ee_get_screen_size(void);
 static void s_ee_raw(void);
@@ -55,14 +56,25 @@ static INT init_status = -1;
 static HANDLE hStdout, hStdin; 
 static DWORD InMode, OutMode;
 
-static IBOOL s_ee_init_term(void) {
-  CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
+static IBOOL s_ee_init_term(iptr hIn, iptr hOut) {
+  CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
-  if (init_status != -1) return init_status;
+  if (hIn == -1)
+    hIn = (iptr)GetStdHandle(STD_INPUT_HANDLE);
+  if (hOut == -1)
+    hOut = (iptr)GetStdHandle(STD_OUTPUT_HANDLE);
+
+  if (init_status != -1) {
+    if ((HANDLE)hIn != hStdin)
+      return 0;
+    if ((HANDLE)hOut != hStdout)
+      return 0;
+    return init_status;
+  }
 
   init_status =
-     (hStdin = GetStdHandle(STD_INPUT_HANDLE)) != INVALID_HANDLE_VALUE
-     && (hStdout = GetStdHandle(STD_OUTPUT_HANDLE)) != INVALID_HANDLE_VALUE
+    (hStdin = (HANDLE)hIn) != INVALID_HANDLE_VALUE
+    && (hStdout = (HANDLE)hOut) != INVALID_HANDLE_VALUE
      && GetConsoleScreenBufferInfo(hStdout, &csbiInfo)
      && GetConsoleMode(hStdin, &InMode)
      && GetConsoleMode(hStdout, &OutMode);
@@ -534,6 +546,76 @@ static void s_ee_write_char(wchar_t c) {
   WriteConsoleW(hStdout, &c, 1, &n, NULL);
 }
 
+static int foreground_colors[] =
+  { 0, /* Black = 0 */
+    FOREGROUND_RED, /* Red = 1 */
+    FOREGROUND_GREEN, /* Green = ... */
+    FOREGROUND_RED | FOREGROUND_GREEN, /* Yellow */
+    FOREGROUND_BLUE, /* Blue */
+    FOREGROUND_RED | FOREGROUND_BLUE, /* Magenta */
+    FOREGROUND_GREEN | FOREGROUND_BLUE, /* Cyan */
+    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE, /* Light gray */
+    FOREGROUND_INTENSITY, /* Dark gray */
+    FOREGROUND_RED | FOREGROUND_INTENSITY, /* Light red */
+    FOREGROUND_GREEN | FOREGROUND_INTENSITY, /* Light green*/
+    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, /* Yellow */
+    FOREGROUND_BLUE | FOREGROUND_INTENSITY, /* Blue */
+    FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY, /* Magenta */
+    FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY, /* Cyan */
+    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY, /* Light gray */
+  };
+
+static int background_colors[] =
+  { 0, /* Black = 0 */
+    BACKGROUND_RED, /* Red = 1 */
+    BACKGROUND_GREEN, /* Green = ... */
+    BACKGROUND_RED | BACKGROUND_GREEN, /* Yellow */
+    BACKGROUND_BLUE, /* Blue */
+    BACKGROUND_RED | BACKGROUND_BLUE, /* Magenta */
+    BACKGROUND_GREEN | BACKGROUND_BLUE, /* Cyan */
+    BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE, /* Light gray */
+    BACKGROUND_INTENSITY, /* Dark gray */
+    BACKGROUND_RED | BACKGROUND_INTENSITY, /* Light red */
+    BACKGROUND_GREEN | BACKGROUND_INTENSITY, /* Light green*/
+    BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY, /* Yellow */
+    BACKGROUND_BLUE | BACKGROUND_INTENSITY, /* Blue */
+    BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY, /* Magenta */
+    BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY, /* Cyan */
+    BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY, /* Light gray */
+  };
+
+static int initial_colors_set = 0;
+static int current_foreground, initial_foreground;
+static int current_background, initial_background;
+
+static void s_ee_set_color(int color_id, IBOOL background) {
+  if (!initial_colors_set) {
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    int i;
+    GetConsoleScreenBufferInfo(hStdout, &info);
+    for (i = 0; i < 16; i++) {
+      if ((info.wAttributes & 0xf) == foreground_colors[i])
+        initial_foreground = i;
+      if ((info.wAttributes & 0xf0) == background_colors[i])
+        initial_background = i;
+    }
+    initial_colors_set = 1;
+    current_foreground = initial_foreground;
+    current_background = initial_background;
+  }
+
+  if (color_id < 0) {
+    current_foreground = initial_foreground;
+    current_background = initial_background;
+  } else if (background)
+    current_background = color_id;
+  else
+    current_foreground = color_id;
+
+  SetConsoleTextAttribute(hStdout, (foreground_colors[current_foreground]
+                                    | background_colors[current_background]));
+}
+
 #else /* WIN32 */
 
 #include <limits.h>
@@ -599,9 +681,16 @@ static locale_t term_locale;
 static mbstate_t term_in_mbs;
 static mbstate_t term_out_mbs;
 
-static IBOOL s_ee_init_term(void) {
+static IBOOL s_ee_init_term(iptr in, iptr out) {
   int errret;
 
+  if (in == -1) in = STDIN_FD;
+  if (out == -1) out = STDOUT_FD;
+
+  /* uses C library with stdout and stderr */
+  if (in != STDIN_FD) return 0;
+  if (out != STDOUT_FD) return 0;
+  
   if (init_status != -1) return init_status;
 
   if (isatty(STDIN_FD)
@@ -1108,6 +1197,28 @@ static void s_ee_write_char(wchar_t wch) {
 #endif
 }
 
+/* see Windows s_ee_set_color for color-index meanings */
+static void s_ee_set_color(int color_id, IBOOL background) {
+  char buf[6];
+  int len = 5;
+  memcpy(buf, "\033[__m", len);
+  if (color_id < 0) {
+    buf[2] = '0';
+    buf[3] = 'm';
+    len = 4;
+  } else if (background && (color_id > 8)) {
+    buf[2] = '1';
+    buf[3] = '0';
+    buf[4] = '0' + (color_id & 0x7);
+    buf[5] = 'm';
+    len = 6;
+  } else {
+    buf[2] = ((color_id > 8) ? '9' : (background ? '4' : '3'));
+    buf[3] = '0' + (color_id & 0x7);
+  }
+  fwrite(buf, 1, len, stdout);
+}
+
 #endif /* WIN32 */
 
 static void s_ee_flush(void) {
@@ -1118,6 +1229,7 @@ void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_init_term", (void *)s_ee_init_term);
   Sforeign_symbol("(cs)ee_read_char", (void *)s_ee_read_char);
   Sforeign_symbol("(cs)ee_write_char", (void *)s_ee_write_char);
+  Sforeign_symbol("(cs)ee_set_color", (void *)s_ee_set_color);
   Sforeign_symbol("(cs)ee_flush", (void *)s_ee_flush);
   Sforeign_symbol("(cs)ee_get_screen_size", (void *)s_ee_get_screen_size);
   Sforeign_symbol("(cs)ee_raw", (void *)s_ee_raw);
@@ -1126,6 +1238,7 @@ void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_nopostoutput", (void *)s_ee_nopostoutput);
   Sforeign_symbol("(cs)ee_enter_am_mode", (void *)s_ee_enter_am_mode);
   Sforeign_symbol("(cs)ee_exit_am_mode", (void *)s_ee_exit_am_mode);
+  Sforeign_symbol("(cs)ee_set_color", (void *)s_ee_set_color);
   Sforeign_symbol("(cs)ee_pause", (void *)s_ee_pause);
   Sforeign_symbol("(cs)ee_nanosleep", (void *)s_ee_nanosleep);
   Sforeign_symbol("(cs)ee_get_clipboard", (void *)s_ee_get_clipboard);
