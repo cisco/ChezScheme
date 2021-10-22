@@ -3980,30 +3980,32 @@
                (lambda (instance-rtd rtd)
                  (let ([flds1 (rtd-flds instance-rtd)]
                        [flds2 (rtd-flds rtd)])
-                   (cond
-                    [(or (fixnum? flds1) (fixnum? flds2))
-                     (or (not (fixnum? flds1))
-                         (not (fixnum? flds2))
-                         (fx< flds1 flds2)
-                         (not (= (rtd-mpm instance-rtd)
-                                 (bitwise-and (rtd-mpm rtd)
-                                              (sub1 (bitwise-arithmetic-shift-left 1 (fx+ flds1 1)))))))]
-                    [else
-                     (let f ([ls1 flds1] [ls2 flds2])
-                       (if (null? ls2)
-                           (if (record-type-parent instance-rtd)
-                               ; could work harder here, though it gets trickier (so not obvious)...
-                               #f
-                               ; instance has no parent, so rtds are compatible only if they are the same modulo incomplete info if one or both are ctrtds
-                               (or (not (null? ls1))
-                                   (and (record-type-parent rtd) #t)
-                                   (and (and (record-type-sealed-known? rtd) (record-type-sealed-known? instance-rtd))
-                                        (not (eq? (record-type-sealed? instance-rtd) (record-type-sealed? rtd))))
-                                   (and (and (record-type-opaque-known? rtd) (record-type-opaque-known? instance-rtd))
-                                        (not (eq? (record-type-opaque? instance-rtd) (record-type-opaque? rtd))))))
-                           (or (null? ls1)
-                               (not (equal? (car ls1) (car ls2)))
-                               (f (cdr ls1) (cdr ls2)))))]))))
+                   (or (cond
+                         [(or (fixnum? flds1) (fixnum? flds2))
+                          (or (not (fixnum? flds1))
+                              (not (fixnum? flds2))
+                              (fx< flds1 flds2)
+                              (not (= (rtd-mpm rtd)
+                                      (bitwise-and (rtd-mpm instance-rtd)
+                                                   (sub1 (bitwise-arithmetic-shift-left 1 (fx+ 1 flds2)))))))]
+                         [else
+                          (let f ([ls1 flds1] [ls2 flds2])
+                            (if (null? ls2)
+                                (and (not (record-type-parent instance-rtd))
+                                     (not (null? ls1)))
+                                (or (null? ls1)
+                                    (not (equal? (car ls1) (car ls2)))
+                                    (f (cdr ls1) (cdr ls2)))))])
+                       (if (record-type-parent instance-rtd)
+                           ;; could work harder here, though it gets trickier (so not obvious)...
+                           #f
+                           ;; instance has no parent, so rtds are compatible only if they are the same modulo
+                           ;; incomplete info if one or both are ctrtds
+                           (or (and (record-type-parent rtd) #t)
+                               (and (and (record-type-sealed-known? rtd) (record-type-sealed-known? instance-rtd))
+                                    (not (eq? (record-type-sealed? instance-rtd) (record-type-sealed? rtd))))
+                               (and (and (record-type-opaque-known? rtd) (record-type-opaque-known? instance-rtd))
+                                    (not (eq? (record-type-opaque? instance-rtd) (record-type-opaque? rtd))))))))))
              (nanopass-case (Lsrc Expr) (result-exp rtdval)
                [(quote ,d0)
                 (and (record-type-descriptor? d0)
