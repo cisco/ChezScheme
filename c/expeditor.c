@@ -695,6 +695,7 @@ static mbstate_t term_out_mbs;
 
 static IBOOL s_ee_init_term(iptr in, iptr out) {
   int errret;
+  const char *term;
 
   if (in == -1) in = STDIN_FD;
   if (out == -1) out = STDOUT_FD;
@@ -705,9 +706,16 @@ static IBOOL s_ee_init_term(iptr in, iptr out) {
   
   if (init_status != -1) return init_status;
 
+  term = getenv("TERM");
+# ifdef SCHEME_PORTABLE_TERM
+  /* avoid problems with statically linked ncurses running on newer */
+  if (term && !strcmp(term, "xterm-256color"))
+    term = "xterm";
+# endif
+
   if (isatty(STDIN_FD)
       && isatty(STDOUT_FD)
-      && setupterm(NULL, STDOUT_FD, &errret) != ERR
+      && setupterm(term, STDOUT_FD, &errret) != ERR
 /* assuming here and in our optproc definitions later that the names of
    missing capabilities are set to NULL, although this does not appear
    to be documented */
