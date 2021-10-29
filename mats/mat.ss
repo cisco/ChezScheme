@@ -222,6 +222,18 @@
 
 (set! coverage-table (make-parameter #f))
 
+(set! for-each-mat
+  (lambda (proc mats)
+    ;; this imperative variant of `for-each` is meant to avoid running
+    ;; forever if a continuation somehow gets captured part-way
+    ;; through one mat and restored during a later mat
+    (let loop ()
+      (unless (null? mats)
+        (let ([mat (car mats)])
+          (set! mats (cdr mats))
+          (proc mat)
+          (loop))))))
+
 (set! mat-file
   (lambda (dir)
     (unless (string? dir)
