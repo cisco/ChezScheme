@@ -18,7 +18,7 @@
     (define (mat-id? x)
       (memq x
         '(equivalent-expansion? mat-run mat mat/cf
-           mat-file mat-output enable-cp0 windows? embedded?
+           mat-file mat-output for-each-mat enable-cp0 windows? embedded?
            *examples-directory* *scheme* *mats-dir*
            *fuzz* ~= fl~= cfl~= == nan pi +pi +pi/2 +pi/4 -pi -pi/2 -pi/4 +e -e
            separate-eval-tools separate-compile separate-eval run-script patch-exec-path $record->vector
