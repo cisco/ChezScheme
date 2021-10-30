@@ -2462,7 +2462,7 @@
                          (set! ,(%mref ,%sp ,offset) ,lorhs)
                          (set! ,(%mref ,%sp ,(fx+ offset 4)) ,hirhs))))]
                  [load-int-indirect-stack
-                   (lambda (offset from-offset size)
+                   (lambda (offset from-offset size unsigned?)
                      (lambda (x) ; requires var
 		       (case size
 			 [(3)
@@ -2471,8 +2471,8 @@
 			   (set! ,(%mref ,%sp ,(fx+ offset 2)) (inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,(fx+ from-offset 2)))))]
 			 [else
 			  `(set! ,(%mref ,%sp ,offset) ,(case size
-							  [(1) `(inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,from-offset))]
-							  [(2) `(inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset))]
+							  [(1) `(inline ,(make-info-load (if unsigned? 'unsigned-8 'integer-8) #f) ,%load ,x ,%zero (immediate ,from-offset))]
+							  [(2) `(inline ,(make-info-load (if unsigned? 'unsigned-16 'integer-16) #f) ,%load ,x ,%zero (immediate ,from-offset))]
 							  [(4) (%mref ,x ,from-offset)]))])))]
                  [load-int64-indirect-stack
                    (lambda (offset from-offset)
@@ -2495,6 +2495,14 @@
                        (%seq
                         (set! ,loreg ,(%inline fpcastto/lo ,x))
                         (set! ,hireg ,(%inline fpcastto/hi ,x)))))]
+		 [load-single-int-reg
+                   (lambda (reg)
+                     (lambda (x) ; unboxed
+                       (%seq
+			;; we can use `%Cfparg1` because this only happens
+			;; when FP registers are not used for arguments
+			(set! ,%Cfparg1 ,(%inline double->single ,x))
+			(set! ,reg ,(%inline fpcastto/lo ,%Cfparg1)))))]
                  [load-boxed-double-reg
                    (lambda (fpreg fp-disp)
                      (lambda (x) ; address (always a var) of a flonum
@@ -2515,7 +2523,7 @@
                          (set! ,loreg ,lo)
                          (set! ,hireg ,hi))))]
                  [load-int-indirect-reg
-                   (lambda (ireg from-offset size)
+                   (lambda (ireg from-offset size unsigned?)
                      (lambda (x)
 		       (case size
 			 [(3)
@@ -2527,8 +2535,8 @@
 			     (set! ,ireg ,(%inline + ,ireg ,tmp))))]
 			 [else
 			  `(set! ,ireg ,(case size
-					  [(1) `(inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,from-offset))]
-					  [(2) `(inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset))]
+					  [(1) `(inline ,(make-info-load (if unsigned? 'unsigned-8 'integer-8) #f) ,%load ,x ,%zero (immediate ,from-offset))]
+					  [(2) `(inline ,(make-info-load (if unsigned? 'unsigned-16 'integer-16) #f) ,%load ,x ,%zero (immediate ,from-offset))]
 					  [(4) (%mref ,x ,from-offset)]))])))]
                  [load-int64-indirect-reg
                    (lambda (loreg hireg from-offset)
@@ -2565,18 +2573,25 @@
                                   (cons (load-double-reg (car sgl*)) locs)
                                   (cons (car sgl*) live*) int* (cddr sgl*) bsgl isp)])]
                             [(fp-single-float)
-                             (safe-assert (not varargs?))
-                             (if bsgl
-                                 (loop (cdr types)
-                                   (cons (load-single-reg bsgl #f) locs)
-                                   (cons bsgl live*) int* sgl* #f isp)
-                                 (if (null? sgl*)
-                                     (loop (cdr types)
-                                       (cons (load-single-stack isp) locs)
-                                       live* int* '() #f (fx+ isp 4))
-                                     (loop (cdr types)
-                                       (cons (load-single-reg (car sgl*) #f) locs)
-                                       (cons (car sgl*) live*) int* (cddr sgl*) (cadr sgl*) isp)))]
+			     (cond
+			      [bsgl
+                               (loop (cdr types)
+                                 (cons (load-single-reg bsgl #f) locs)
+                                 (cons bsgl live*) int* sgl* #f isp)]
+			      [(and (not (null? sgl*))
+				    (not varargs?))
+                               (loop (cdr types)
+                                  (cons (load-single-reg (car sgl*) #f) locs)
+                                  (cons (car sgl*) live*) int* (cddr sgl*) (cadr sgl*) isp)]
+			      [(and varargs?
+				    (not (null? int*)))
+			       (loop (cdr types)
+                                  (cons (load-single-int-reg (car int*)) locs)
+                                  (cons* (car int*) live*) (cdr int*) sgl* bsgl isp)]
+			      [else
+                               (loop (cdr types)
+                                  (cons (load-single-stack isp) locs)
+                                  live* int* '() #f (fx+ isp 4))])]
 			    [(fp-ftd& ,ftd)
 			     (let ([size ($ftd-size ftd)]
 				   [members ($ftd->members ftd)]
@@ -2628,6 +2643,7 @@
 				      ;; Sequence of up to 4 floats that fits in registers?
 				      (cond
 				       [(and floats?
+					     (not varargs?)
 					     (fx>= (fx+ (length sgl*) (if bsgl 1 0)) num-members))
 					;; Allocate each float to register
 					(let flt-loop ([size size] [offset 0] [sgl* sgl*] [bsgl bsgl] [loc #f] [live* live*])
@@ -2651,10 +2667,10 @@
 					   [else
 					    (if (or (null? int*) floats?)
 						(obj-loop (fx- size 4) (fx+ offset 4)
-							  (combine-loc loc (load-int-indirect-stack isp offset (fxmin size 4)))
+							  (combine-loc loc (load-int-indirect-stack isp offset (fxmin size 4) ($ftd-unsigned? ftd)))
 							  live* int* (fx+ isp 4))
 						(obj-loop (fx- size 4) (fx+ offset 4)
-							  (combine-loc loc (load-int-indirect-reg (car int*) offset (fxmin size 4)))
+							  (combine-loc loc (load-int-indirect-reg (car int*) offset (fxmin size 4) ($ftd-unsigned? ftd)))
 							  (cons (car int*) live*) (cdr int*) isp))]))]))]))]
 			    [else
                              (if (nanopass-case (Ltype Type) (car types)
@@ -2940,17 +2956,20 @@
                                (f (cdr types) iint (fx+ idbl 1) bsgl?)
                                (f (cdr types) iint idbl #f)))]
                       [(fp-single-float)
-                       (if bsgl?
-                           (f (cdr types) iint idbl #f)
-                           (if (fx< idbl 8)
-                               (f (cdr types) iint (fx+ idbl 1) #t)
-                               (f (cdr types) iint idbl #f)))]
+		       (if varargs?
+                           (f (cdr types) (if (fx< iint num-int-regs) (fx+ iint 1) iint) idbl bsgl?)
+			   (if bsgl?
+                               (f (cdr types) iint idbl #f)
+                               (if (fx< idbl 8)
+				   (f (cdr types) iint (fx+ idbl 1) #t)
+				   (f (cdr types) iint idbl #f))))]
 		      [(fp-ftd& ,ftd)
 		       (let* ([size ($ftd-size ftd)]
 			      [members ($ftd->members ftd)]
 			      [num-members (length members)])
 			 (cond
 			  [(and (fx<= num-members 4)
+				(not varargs?)
 				(andmap double-member? members))
 			   ;; doubles are either in registers or all on stack
 			   (if (fx<= (fx+ idbl num-members) 8)
@@ -2958,6 +2977,7 @@
 			       ;; no more floating-point registers should be used, but ok if we count more
 			       (f (cdr types) iint idbl #f))]
 			  [(and (fx<= num-members 4)
+				(not varargs?)
 				(andmap float-member? members))
 			   ;; floats are either in registers or all on stack
 			   (let ([amt (fxsrl (align 2 (fx- num-members (if bsgl? 1 0))) 1)])
@@ -3033,20 +3053,27 @@
                                 (cons (load-double-stack stack-arg-offset) locs)
                                 iint num-dbl-regs #f int-reg-offset float-reg-offset (fx+ stack-arg-offset 8)))])]
                         [(fp-single-float)
-                         (safe-assert (not varargs?))
-                         (if bsgl-offset
-                             (loop (cdr types)
-                               (cons (load-single-stack bsgl-offset) locs)
-                               iint idbl #f int-reg-offset float-reg-offset stack-arg-offset)
-                             (if (< idbl num-dbl-regs)
-                                 (loop (cdr types)
-                                   ; with big-endian ARM might need to adjust offset +/- 4 since pair of
-                                   ; single floats in a pushed double float might be reversed
-                                   (cons (load-single-stack float-reg-offset) locs)
-                                   iint (fx+ idbl 1) (fx+ float-reg-offset 4) int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)
-                                 (loop (cdr types)
-                                   (cons (load-single-stack stack-arg-offset) locs)
-                                   iint num-dbl-regs #f int-reg-offset float-reg-offset (fx+ stack-arg-offset 4))))]
+                         (cond
+			  [bsgl-offset
+                           (loop (cdr types)
+                              (cons (load-single-stack bsgl-offset) locs)
+                              iint idbl #f int-reg-offset float-reg-offset stack-arg-offset)]
+			  [(and (< idbl num-dbl-regs)
+				(not varargs?))
+                           (loop (cdr types)
+			      ; with big-endian ARM might need to adjust offset +/- 4 since pair of
+                              ; single floats in a pushed double float might be reversed
+                              (cons (load-single-stack float-reg-offset) locs)
+                              iint (fx+ idbl 1) (fx+ float-reg-offset 4) int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)]
+			  [(and varargs?
+				(fx< iint num-int-regs))
+			   (loop (cdr types)
+                              (cons (load-single-stack int-reg-offset) locs)
+                              (fx+ iint 1) idbl bsgl-offset (fx+ int-reg-offset 4) float-reg-offset stack-arg-offset)]
+			  [else
+                           (loop (cdr types)
+                             (cons (load-single-stack stack-arg-offset) locs)
+                             iint num-dbl-regs #f int-reg-offset float-reg-offset (fx+ stack-arg-offset 4))])]
 			[(fp-ftd& ,ftd)
 			 (let* ([size ($ftd-size ftd)]
 				[members ($ftd->members ftd)]

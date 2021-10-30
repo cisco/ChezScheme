@@ -529,7 +529,7 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m32 ${optFlags}"
         ;;
     arm32*)
-        CFLAGS="-m32 ${optFlags}"
+        CFLAGS="${optFlags}"
         ;;
     arm64osx)
         CFLAGS="-arch arm64 ${optFlags}"
