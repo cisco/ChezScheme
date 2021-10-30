@@ -144,6 +144,7 @@
          call-with-bytevector-output-port
          make-compile-time-value
          optimize-level
+         self-evaluating-vectors
          symbol-value
          set-symbol-value!)
 
@@ -828,6 +829,8 @@
 (define (make-compile-time-value v) v)
 
 (define optimize-level (make-parameter optimize-level-init))
+
+(define self-evaluating-vectors (make-parameter #f))
 
 ;; For "implementation-helpers.ikarus.ss":
 (define (symbol-value s) (namespace-variable-value s #f))
