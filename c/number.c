@@ -906,6 +906,8 @@ static ptr big_short_gcd(ptr tc, ptr x, bigit y, iptr xl) {
 
   if (y == 0) return BIGSIGN(x) ? big_negate(tc, x) : x;
 
+  USE_TRAP_FUEL(tc, xl);
+
   for (i = xl, r = 0, xp = &BIGIT(x,0); i-- > 0; )
     EDIV(r, *xp++, y, &q, &r)
 
