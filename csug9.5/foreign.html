@@ -616,25 +616,26 @@ For example, <tt>wstring</tt> is equivalent to <tt>utf-16le</tt>
 under Windows running on Intel hardware.
 
 <p>
-<p><tt>(*&nbsp;<i>ftype</i>)</tt>: <a name="./foreign:s72"></a>This type allows a pointer to a foreign
+<p><tt>(*&nbsp;<i>ftype-name</i>)</tt>: <a name="./foreign:s72"></a>This type allows a pointer to a foreign
 type (ftype) to be passed.
-The argument must be an ftype pointer of type <tt><i>ftype</i></tt>,
+The argument must be an ftype pointer of the type identified by
+<tt><i>ftype-name</i></tt>,
 and the actual argument is the address encapsulated in the
 ftype pointer.
 See Section&nbsp;<a href="./foreign.html#g31">4.5</a> for a description of
 foreign types.
 
 <p>
-<p><tt>(&amp;&nbsp;<i>ftype</i>)</tt>: <a name="./foreign:s73"></a>This type allows a foreign
+<p><tt>(&amp;&nbsp;<i>ftype-name</i>)</tt>: <a name="./foreign:s73"></a>This type allows a foreign
 type (ftype) to be passed as a value, but represented
 on the Scheme side as a pointer to the foreign-type data.
-That is, a <tt>(&amp;&nbsp;<i>ftype</i>)</tt> argument is represented on
-the Scheme side the same as a <tt>(*&nbsp;<i>ftype</i>)</tt> argument,
-but a <tt>(&amp;&nbsp;<i>ftype</i>)</tt> argument is passed to the foreign procedure as the
+That is, a <tt>(&amp;&nbsp;<i>ftype-name</i>)</tt> argument is represented on
+the Scheme side the same as a <tt>(*&nbsp;<i>ftype-name</i>)</tt> argument,
+but a <tt>(&amp;&nbsp;<i>ftype-name</i>)</tt> argument is passed to the foreign procedure as the
 content at the foreign pointer's address instead of as the
-address. For example, if <tt><i>ftype</i></tt> is a <tt>struct</tt> type,
-then <tt>(&amp;&nbsp;<i>ftype</i>)</tt> passes a struct argument instead of
-a struct-pointer argument. The <tt><i>ftype</i></tt> cannot refer to an array type.
+address. For example, if <tt><i>ftype-name</i></tt> identifies a <tt>struct</tt> type,
+then <tt>(&amp;&nbsp;<i>ftype-name</i>)</tt> passes a struct argument instead of
+a struct-pointer argument. The <tt><i>ftype-name</i></tt> cannot refer to an array type.
 
 <p>
 <p>The result types are similar to the parameter types with the addition of a
@@ -888,21 +889,21 @@ For example, <tt>wstring</tt> is equivalent to <tt>utf-16le</tt>
 under Windows running on Intel hardware.
 
 <p>
-<p><tt>(*&nbsp;<i>ftype</i>)</tt>: <a name="./foreign:s124"></a>The result is interpreted as the address of a foreign object
-whose structure is described by <tt><i>ftype</i></tt>, and a freshly allocated
+<p><tt>(*&nbsp;<i>ftype-name</i>)</tt>: <a name="./foreign:s124"></a>The result is interpreted as the address of a foreign object
+whose structure is described by the ftype identified by <tt><i>ftype-name</i></tt>, and a freshly allocated
 ftype pointer encapsulating the address is returned.
 See Section&nbsp;<a href="./foreign.html#g31">4.5</a> for a description of
 foreign types.
 
 <p>
-<p><tt>(&amp;&nbsp;<i>ftype</i>)</tt>: <a name="./foreign:s125"></a>The result is interpreted as a foreign object
-whose structure is described by <tt><i>ftype</i></tt>, where the foreign
-procedure returns a <tt><i>ftype</i></tt> result, but the caller
-must provide an extra <tt>(*&nbsp;<i>ftype</i>)</tt> argument before
+<p><tt>(&amp;&nbsp;<i>ftype-name</i>)</tt>: <a name="./foreign:s125"></a>The result is interpreted as a foreign object
+whose structure is described by the ftype identified by <tt><i>ftype-name</i></tt>, where the foreign
+procedure returns a <tt><i>ftype-name</i></tt> result, but the caller
+must provide an extra <tt>(*&nbsp;<i>ftype-name</i>)</tt> argument before
 all other arguments to receive the result. An unspecified Scheme object
 is returned when the foreign procedure is called, since the result
 is instead written into storage referenced by the extra argument.
- The <tt><i>ftype</i></tt> cannot refer to an array type.
+ The <tt><i>ftype-name</i></tt> cannot refer to an array type.
 
 <p>
 <p>Consider a C identity procedure:
@@ -1455,7 +1456,7 @@ It should be an address returned by an earlier call to
 <b>libraries: </b><tt>(chezscheme)</tt>
 
 <p><tt>foreign-ref</tt> extracts the value of type <tt><i>type</i></tt>
-<tt><i>offset</i></tt> bytes into the block of foreign data addressed by
+from the memory location at <tt><i>offset</i></tt> bytes offset from
 <tt><i>address</i></tt>.
 
 <p>
@@ -2815,7 +2816,7 @@ On Linux systems:
 
 <p>
 
-<p><tt>(load-shared-object&nbsp;"crtdll.dll")</tt>
+<p><tt>(load-shared-object&nbsp;"msvcrt.dll")</tt>
 <p>Once the C library has been loaded, <tt>getenv</tt> should be available
 as a foreign entry.
 
@@ -4627,10 +4628,10 @@ server:<br>
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2020 Cisco Systems, Inc.<br>
+Copyright &copy; 2021 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised August 2020 for Chez Scheme Version 9.5.4<br>
+Revised November 2021 for Chez Scheme Version 9.5.6<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
