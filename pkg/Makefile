@@ -14,7 +14,7 @@
 # limitations under the License.
 
 m := $(shell find ../bin/* -type d | xargs basename)
-version = 9.5.6
+version = 9.5.7
 release = 1
 
 DOTUSER = $(shell ls -ld . | sed -e 's/[^ ]* *[^ ]* *\([^ ]*\).*/\1/')
