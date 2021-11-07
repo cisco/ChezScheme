@@ -553,7 +553,7 @@
                              (windows?))])
           (with-output-to-file testfile.c thunk 'replace)
           (unless (= (case (machine-type)
-                       [(i3osx ti3osx)
+                       [(i3osx ti3osx ppc32osx tppc32osx)
                         (system (format "cc -m32 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
                        [(a6osx a6osx)
                         (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
@@ -5583,7 +5583,7 @@
       [(eq? (machine-type) 'pb) '(endian little double)]
       [else
        (case (native-endianness)
-         [(big) '(endian little double)]
+         [(big) '(endian swapped double)]
          [(little) 'double]
          [else (errorf #f "unexpected native endianness")])]))
 

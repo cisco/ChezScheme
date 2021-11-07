@@ -2510,10 +2510,10 @@
                                                       (case size
                                                         [(4) `(fp-single-float)]
                                                         [else `(fp-double-float)])]
-                                                     [(eq? category 'integer)
-                                                      `(fp-integer ,(fx* 8 size))]
                                                      [else
-                                                      `(fp-unsigned ,(fx* 8 size))]))])
+                                                      (if ($ftd-unsigned? ftd)
+                                                          `(fp-unsigned ,(fx* 8 size))
+                                                          `(fp-integer ,(fx* 8 size)))]))])
                               (loop (cons unpacked-type (cdr types)) locs live* int* flt* isp fp-live-count
                                     ;; indirect?
                                     #t))]))]
@@ -3471,8 +3471,12 @@
 		      (values
 		       (lambda ()
 			 (case ($ftd-size ftd)
-			   [(1) `(set! ,%Cretval (inline ,(make-info-load 'integer-8 #f) ,%load ,%sp ,%zero (immediate ,return-space-offset)))]
-			   [(2) `(set! ,%Cretval (inline ,(make-info-load 'integer-16 #f) ,%load ,%sp ,%zero (immediate ,return-space-offset)))]
+			   [(1)
+                            (let ([type (if ($ftd-unsigned? ftd) 'unsigned-8 'integer-8)])
+                              `(set! ,%Cretval (inline ,(make-info-load type #f) ,%load ,%sp ,%zero (immediate ,return-space-offset))))]
+			   [(2)
+                            (let ([type (if ($ftd-unsigned? ftd) 'unsigned-16 'integer-16)])
+                              `(set! ,%Cretval (inline ,(make-info-load type #f) ,%load ,%sp ,%zero (immediate ,return-space-offset))))]
 			   [else `(set! ,%Cretval ,(%mref ,%sp ,return-space-offset))]))
 		       (list %Cretval)
 		       0)])])]

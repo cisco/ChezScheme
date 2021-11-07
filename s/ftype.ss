@@ -454,7 +454,7 @@ ftype operators:
                           (let ([ftd (car ftd*)])
                             (let ([offset (pad offset (ftd-alignment ftd))])
                               (loop (cdr id*) (cdr ftd*)
-                                (+ offset (ftd-size ftd))
+                                (+ offset ($ftd-size ftd))
                                 (max alignment (ftd-alignment ftd))
                                 (cons (list (car id*) offset ftd) field*))))))]
                    [(union-kwd (field-name ftype) ...)
@@ -466,7 +466,7 @@ ftype operators:
                         (make-ftd-union rtd/fptr
                           (and defid (symbol->string (syntax->datum defid)))
                           stype
-                          (pad (apply max 0 (map ftd-size ftd*)) alignment)
+                          (pad (apply max 0 (map $ftd-size ftd*)) alignment)
                           alignment
                           (map cons id* ftd*))))]
                    [(array-kwd ?n ftype)
