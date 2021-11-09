@@ -42,6 +42,7 @@
   (error? (fprintf 'not-a-port "~a ~s" 17 34))
   (error? (format 'not-a-string-port-or-boolean "~a ~s" 17 34))
   (error? (format "bad~\rdirective"))
+  (error? (printf "~a~:*"))
 )
 
 (mat format-continuation ; like slib tests, but with \r\n for DOS

@@ -765,25 +765,26 @@
                 (let ([cmd (car cmd*)] [cmd* (cdr cmd*)])
                   (cond
                     [(string? cmd)
-                     (make-seq (make-call src display-string (build-quote cmd)  op)
+                     (make-seq (make-call src display-string (build-quote cmd) op)
                        (f cmd* arg* #f))]
                     [(char? cmd)
-                     (make-seq (make-call src write-char (build-quote cmd)  op)
+                     (make-seq (make-call src write-char (build-quote cmd) op)
                        (f cmd* arg* #f))]
                     [(fmt? cmd)
-                     (fmt-case cmd
-                       [simple-display ()
-                         (make-seq (make-call src display (car arg*) op)
-                           (f cmd* (cdr arg*) #f))]
-                       [simple-write ()
-                         (make-seq (make-call src write (car arg*) op)
-                           (f cmd* (cdr arg*) #f))]
-                       [cwrite (colon? at?)
-                         (and (not colon?)
-                              (not at?)
-                              (make-seq (make-call src write-char (car arg*) op)
-                                (f cmd* (cdr arg*) #f)))]
-                       [else #f])]
+                     (and (not (null? arg*))
+                          (fmt-case cmd
+                            [simple-display ()
+                              (make-seq (make-call src display (car arg*) op)
+                                (f cmd* (cdr arg*) #f))]
+                            [simple-write ()
+                              (make-seq (make-call src write (car arg*) op)
+                                (f cmd* (cdr arg*) #f))]
+                            [cwrite (colon? at?)
+                              (and (not colon?)
+                                   (not at?)
+                                   (make-seq (make-call src write-char (car arg*) op)
+                                     (f cmd* (cdr arg*) #f)))]
+                            [else #f]))]
                     [else ($oops 'fmt->expr "internal error: ~s" cmd)])))))))
 
   ;;; perform formatting operation from parsed string (cmd*)

@@ -7473,6 +7473,7 @@ format.mo:Expected error in mat format-errors: "printf: hello is not a string".
 format.mo:Expected error in mat format-errors: "fprintf: not-a-port is not a textual output port".
 format.mo:Expected error in mat format-errors: "format: not-a-string-port-or-boolean is not a string".
 format.mo:Expected error in mat format-errors: "format: unrecognized directive ~<return>".
+format.mo:Expected error in mat format-errors: "printf: too few arguments for control string "~a~:*"".
 format.mo:Expected error in mat format-plural: "format: too many arguments for control string "abc~:p"".
 format.mo:Expected error in mat format-plural: "format: no previous argument for ~:p".
 format.mo:Expected error in mat format-plural: "format: no previous argument for ~:@p".

@@ -1927,6 +1927,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Calls to \protect\scheme{printf} may cause an invalid memory reference at
+compile time (9.5.8)}
+
+A bug in the compiler that causes an invalid memory reference with particular
+\scheme{printf} control strings and argument counts has been fixed. One example is
+\scheme{(printf "~a~:*")}.
+
 \subsection{Certain foreign calls with signed 8- and 16-bit integers on x86\_64 (9.5.6)}
 
 The x86\_64 code generator now properly sign-extends foreign-call
