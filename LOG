@@ -2239,3 +2239,6 @@
     csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
     wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix bug in printf with certain control strings and argument counts
+    s/format.ss mats/format.ms mats/root-experr-compile-{0,2}-fff
+    release_notes/release_notes.stex
