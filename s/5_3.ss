@@ -226,10 +226,12 @@
 
 ;; Only try to use Burnikel-Ziegler when we have large enough bignums:
 (define (big-divide-bignums? n d)
+  ;; Based on Brian Burkhalter's recommendation:
+  ;;  http://mail.openjdk.java.net/pipermail/core-libs-dev/2013-November/023493.html
   (and (bignum? n)
        (bignum? d)
-       (fx>= ($bignum-length n) DIV-LIMIT)
-       (fx>= ($bignum-length d) DIV-LIMIT)))
+       (fx>= ($bignum-length d) DIV-LIMIT)
+       (fx>= (- ($bignum-length n) ($bignum-length d)) DIV-LIMIT)))
 
 (define integer/
   (lambda (n d)
