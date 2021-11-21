@@ -2208,6 +2208,40 @@
     .github/workflows/{build.sh,summary,test.sh,test.yml}
 - corrected signature of compile-whole-program and compile-whole-library
     s/primdata.ss
+- clarify rd-bytevector error message for non-atomic token types, such
+  as vparen, where the token value is #f
+    mats/6.ms, mats/root-experr-compile-0-f-f-f,
+    mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
+    s/read.ss
+- include an identifier name in the syntax error for missing ellipsis
+    mats/8.ms, mats/root-experr-compile-0-f-f-f,
+    mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
+    s/syntax.ss
+
+9.5.6 changes:
+- added back.patch to patchobj
+    s/Mf-base
+- updated version to 9.5.6
+    makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt c/Makefile.i3nt
+    c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt
+    mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc s/7.ss
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs
+
+9.5.7 changes:
+- updated version to 9.5.7
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix bug in printf with certain control strings and argument counts
+    s/format.ss mats/format.ms mats/root-experr-compile-{0,2}-fff
+    release_notes/release_notes.stex
 - updated ftypes to allow native ftypes to be used even if another
   non-ftype syntactic binding for the type exists.  for instance, if a
   syntactic binding for integer-32 is introduced which is not bound to

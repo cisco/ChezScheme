@@ -249,6 +249,10 @@
   (equal? ($dsmat-bar $dsmat-y) '(10 77))
   (error? ; misplaced ellipsis
     (with-syntax ([x 3]) #'#(... (x))))
+  (error? ; missing ellipsis
+    (syntax-case '((1 2) (3 4)) () [((x y) ...) #'(quote (x y ...))]))
+  (error? ; missing ellipsis
+    (syntax-case '((1 2) (3 4)) () [((v w) ...) #'(quote (v ... w))]))
   (equal?
     (let ()
       (define b)

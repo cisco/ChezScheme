@@ -4384,6 +4384,31 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value #t found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value "foo" found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value { found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value } found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value 3.4 found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value - found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value + found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value .. found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid value ... found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many bytevector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too few fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
@@ -5184,6 +5209,31 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value #t found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value "foo" found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value { found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value } found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value 3.4 found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value - found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value + found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value .. found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid value ... found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many bytevector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too few fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
@@ -5984,6 +6034,31 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value #t found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value "foo" found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value { found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value } found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value 3.4 found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value - found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value + found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value .. found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid value ... found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-octet found in bytevector at line 3, char 10 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many bytevector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too few fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many fields supplied for record zinjanthropus at line 3, char 12 of testfile.ss".
@@ -7173,6 +7248,7 @@ format.mo:Expected error in mat format-errors: "printf: hello is not a string".
 format.mo:Expected error in mat format-errors: "fprintf: not-a-port is not a textual output port".
 format.mo:Expected error in mat format-errors: "format: not-a-string-port-or-boolean is not a string".
 format.mo:Expected error in mat format-errors: "format: unrecognized directive ~<return>".
+format.mo:Expected error in mat format-errors: "printf: too few arguments for control string "~a~:*"".
 format.mo:Expected error in mat format-plural: "format: too many arguments for control string "abc~:p"".
 format.mo:Expected error in mat format-plural: "format: no previous argument for ~:p".
 format.mo:Expected error in mat format-plural: "format: no previous argument for ~:@p".
@@ -8116,6 +8192,8 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat define-syntax: "extra ellipsis in syntax form (syntax (z ...))".
 8.mo:Expected error in mat define-syntax: "variable $dsmat-y is not bound".
 8.mo:Expected error in mat define-syntax: "misplaced ellipsis in syntax template (syntax #(... (x)))".
+8.mo:Expected error in mat define-syntax: "missing ellipsis for x in syntax form (syntax (quote (x y ...)))".
+8.mo:Expected error in mat define-syntax: "missing ellipsis for w in syntax form (syntax (quote (v ... w)))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid syntax-rules clause ((_ a b) (identifier? (syntax a)) (let ((...)) (* a b)))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid literals list in (syntax-rules (_))".
 8.mo:Expected error in mat r6rs:syntax-rules: "invalid literals list in (syntax-rules (_))".
