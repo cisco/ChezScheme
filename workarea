@@ -283,7 +283,7 @@ else
     if [ -h $W/s/$M.def ] ; then
         rm $W/s/$M.def
     fi
-    if [ $"M" = "$Muni" ] ; then
+    if [ "$M" = "$Muni" ] ; then
         Munix=unix
     else
         Munix=tunix
