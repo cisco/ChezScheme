@@ -51,10 +51,13 @@ jobs:
       - name: Build Chez Scheme
         run: .github/workflows/build.sh
       - name: Run tests
+        timeout-minutes: 45
         run: .github/workflows/test.sh
       - name: Archive workspace
+        if: always()
         run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
       - name: Upload archive
+        if: always()
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.config.machine }}
