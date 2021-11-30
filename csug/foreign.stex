@@ -1589,9 +1589,9 @@ takes two arguments, a wide character and an integer, and returns an
 integer.
 The ftype \scheme{A} is simply an array of 10 \scheme{wchar_t} values,
 and its size will be 10 times the size of a single \scheme{wchar_t}.
-The ftype \scheme{E} is a structure with five fields: an integer
+The ftype \scheme{E} is a structure with six fields: an integer
 \scheme{a}, a double-float \scheme{b}, an array \scheme{c}, a
-union \scheme{d}, and a pointer \scheme{e}.
+union \scheme{d}, and a pointer \scheme{e}, and a pointer \scheme{f}.
 The array \scheme{c} is an array of 25 structs, each of which
 contains a short integer, a long integer, and a \scheme{A} array.
 The size of the \scheme{c} array will be 25 times the size of a
@@ -1713,6 +1713,7 @@ The \scheme{swapped} specifier can be used to swap the
 representation relative to the default or enclosing representation.
 Each \scheme{endian} form affects only ftypes nested syntactically
 within it and not nested within a closer \scheme{endian} form.
+The endianness of an ftype is fixed once it is defined.
 
 The total size $n$ of the fields within an ftype bits form must
 be 8, 16, 24, 32, 40, 48, 56, or 64.  Padding must be added manually, if needed.

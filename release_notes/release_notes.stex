@@ -58,6 +58,29 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.7)}
+
+Previously, it was possible to interfere with the definition of ftypes by
+creating a syntactic binding for one of the built-in types, such as
+\scheme{integer-32}, \scheme{float}, etc.
+As of 9.5.7, syntactic bindings that do not bind an ftype descriptor are no
+longer considered when defining ftypes.
+
+This change also allows a base ftype to be bound using `define-ftype`, though
+this fixes the endianness of the type.  For instance:
+
+\schemedisplay
+(define-ftype integer-32 integer-32)
+\endschemedisplay
+
+This binds the ftype `integer-32` to the native-endian `integer-32`.  It is possible to bind both endiannesses by using explicit names:
+
+\schemedisplay
+(define-ftype integer-32-be (endian big integer-32))
+(define-ftype integer-32-le (endian little integer-32))
+(define-ftype integer-32 integer-32) ;; fixed to native endianness
+\endschemedisplay
+
 \subsection{Improved error messages (9.5.6)}
 
 When the reader reports an invalid bytevector element, the error

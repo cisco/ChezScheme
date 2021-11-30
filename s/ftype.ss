@@ -389,11 +389,7 @@ ftype operators:
       [(r ftype) (expand-ftype-name r ftype #t)]
       [(r ftype error?)
        (cond
-         [(r ftype) =>
-          (lambda (ftd)
-            (if (ftd? ftd)
-                ftd
-                (and error? (syntax-error ftype "unrecognized ftype name"))))]
+         [(let ([maybe-ftd (r ftype)]) (and maybe-ftd (ftd? maybe-ftd) maybe-ftd)) => (lambda (ftd) ftd)]
          [(find (let ([x (syntax->datum ftype)])
                   (lambda (ftd) (eq? (ftd-base-type ftd) x)))
             native-base-ftds)]
@@ -411,33 +407,41 @@ ftype operators:
        (check-size
          (let f/flags ([ftype ftype] [defid defid] [stype (syntax->datum ftype)] [packed? #f] [eness 'native] [funok? #t])
            (define (pad n k) (if packed? n (logand (+ n (- k 1)) (- k))))
+           (define (native-ftds)
+             (case eness
+               [(native) native-base-ftds]
+               [(swapped) swap-base-ftds]
+               [(big) big-base-ftds]
+               [(little) little-base-ftds]
+               [else (error 'eness "unexpected ~s" eness)]))
            (let f ([ftype ftype] [defid defid] [stype stype] [funok? funok?])
              (if (identifier? ftype)
                  (cond
                    [(assp (lambda (x) (bound-identifier=? ftype x)) def-alist) =>
                     (lambda (a)
-                      (let ([ftd (cdr a)])
+                      (let ([ftd (let ([ftd (cdr a)])
+                                   (if (ftd? ftd)
+                                       ftd
+                                       (or (find (let ([x (syntax->datum ftype)])
+                                                   (lambda (ftd)
+                                                     (eq? (ftd-base-type ftd) x)))
+                                             (native-ftds))
+                                           ftd)))])
                         (unless (ftd? ftd)
                           (syntax-error ftype "recursive or forward reference outside pointer field"))
                         (unless funok?
                           (when (ftd-function? ftd)
                             (syntax-error ftype "unexpected function ftype name outside pointer field")))
                         ftd))]
-                   [(r ftype) =>
+                   [(let ([maybe-ftd (r ftype)]) (and maybe-ftd (ftd? maybe-ftd) maybe-ftd)) =>
                     (lambda (ftd)
-                      (unless (ftd? ftd) (syntax-error ftype "unrecognized ftype name"))
                       (unless funok?
                         (when (ftd-function? ftd)
                           (syntax-error ftype "unexpected function ftype name outside pointer field")))
                       ftd)]
                    [(find (let ([x (syntax->datum ftype)])
                             (lambda (ftd) (eq? (ftd-base-type ftd) x)))
-                          (case eness
-                            [(native) native-base-ftds]
-                            [(swapped) swap-base-ftds]
-                            [(big) big-base-ftds]
-                            [(little) little-base-ftds]
-                            [else (error 'eness "unexpected ~s" eness)]))]
+                          (native-ftds))]
                    [else (syntax-error ftype "unrecognized ftype name")])
                  (syntax-case ftype ()
                    [(struct-kwd (field-name ftype) ...)

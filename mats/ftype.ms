@@ -1284,6 +1284,35 @@
   (begin
     (fptr-free b)
     #t)
+
+ ; ----------------
+ (begin
+   ;; Bind a native built-in type as a normal ftype (note this fixes the endianness).
+   (define-ftype integer-8 integer-8)
+   (define-ftype float float)
+   (define-ftype S (struct [i integer-8] [f float]))
+   #t)
+ (let ([int-fptr (make-ftype-pointer integer-8 (foreign-alloc (ftype-sizeof integer-8)))]
+       [flo-fptr (make-ftype-pointer float (foreign-alloc (ftype-sizeof float)))]
+       [s-fptr (make-ftype-pointer S (foreign-alloc (ftype-sizeof S)))])
+   (ftype-set! integer-8 () int-fptr 42)
+   (ftype-set! float () flo-fptr 7.125)
+   (ftype-set! S (i) s-fptr 75)
+   (ftype-set! S (f) s-fptr 8.25)
+   (let ([a (ftype-ref integer-8 () int-fptr)]
+         [b (ftype-ref float () flo-fptr)]
+         [c (ftype-ref S (i) s-fptr)]
+         [d (ftype-ref S (f) s-fptr)])
+     (foreign-free (ftype-pointer-address int-fptr))
+     (foreign-free (ftype-pointer-address flo-fptr))
+     (foreign-free (ftype-pointer-address s-fptr))
+     (equal? (list a b c d) (list 42 7.125 75 8.25))))
+
+ (begin
+   ;; Show that binding does not interfere with native types.
+   (define-syntax unsigned-16 (make-compile-time-value "Non-interfering binding"))
+   (let ([fptr (make-ftype-pointer unsigned-16 0)])
+     (= (ftype-pointer-address fptr) 0)))
 )
 
 (mat ftype-pointer-address-optimizations
