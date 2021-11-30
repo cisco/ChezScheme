@@ -2242,3 +2242,12 @@
 - fix bug in printf with certain control strings and argument counts
     s/format.ss mats/format.ms mats/root-experr-compile-{0,2}-fff
     release_notes/release_notes.stex
+- updated ftypes to allow native ftypes to be used even if another
+  non-ftype syntactic binding for the type exists.  for instance, if a
+  syntactic binding for integer-32 is introduced which is not bound to
+  an ftd, using integer-32 in the context of an ftype will still work.
+  this change also allows an ftype binding to be created for a native
+  type by using (define-ftype <native-type> <native-type>), allowing
+  users to create standard ftype bindings for the native-types if that
+  is preferred.
+    s/ftype.ss, mats/ftype.ms
