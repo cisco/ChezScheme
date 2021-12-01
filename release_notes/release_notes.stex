@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.5}
+\thisversion{Version 9.5.7}
 \thatversion{Version 8.4}
-\pubmonth{August}
-\pubyear{2020}
+\pubmonth{November}
+\pubyear{2021}
 
 \begin{document}
 
@@ -58,7 +58,7 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Improved error messages (9.5.5)}
+\subsection{Improved error messages (9.5.6)}
 
 When the reader reports an invalid bytevector element, the error
 message now includes the token value only if the token type is atomic.
@@ -67,67 +67,19 @@ When the expander reports that an ellipsis is missing in a syntax form,
 it now includes the name of an identifier that is missing an ellipsis
 within that form.
 
-\subsection{Additional reader syntax for booleans (9.5.5)}
+\subsection{Additional reader syntax for booleans (9.5.6)}
 
 The reader now case-insensitively accepts \scheme{#true} and
 \scheme{#false} as alternative spellings of the booleans \scheme{#t}
 and \scheme{#f}, respectively.
 
-\subsection{Phantom bytevectors (9.5.1)}
+\subsection{Self-evaluating vector literals (9.5.6)}
 
-Phantom bytevectors reflect externally allocated memory use in an
-object. A phamtom bytevector is recognized by \scheme{compute-size},
-and it can affect garbage-collection heuristics to trigger earlier
-finalization of the external object through a guardian.
+The new parameter \scheme{self-evaluating-vectors} can be used to treat unquoted vector
+literals as self-evaluating instead of syntax errors. This parameter is turned off by
+default.
 
-\subsection{Counting reachable objects from multiple sources (9.5.1)}
-
-The new procedure \scheme{compute-size-increments} is like
-\scheme{compute-size}, but it reports sizes for only newly reached
-objects for later elements of a given list. It also treats weak and
-ephemeron pairs in a way that assigns sizes to references that cause a
-weakly held value to be retained, as opposed to assigning the size to
-the pair.
-
-\subsection{Faster loading format (9.5.1)}
-
-The new procedure \scheme{vfasl-convert-file} converts a file to a
-format that can be loaded more quickly, especially for an uncompressed
-boot file.
-
-\subsection{Extracting a subset of hashtable cells (9.5.1)}
-
-The new \scheme{hashtable-cells} function is similar to
-\scheme{hashtable-entries}, but it returns a vector of cells instead
-of two vectors. An optional argument limits the size of the result vector,
-which enables a traversal of $N$ entries in $O(N)$ time when a hash table
-has more than $O(N)$ entries.
-
-\subsection{Procedure redirection with arity-mask adjustment (9.5.1)}
-
-The new procedures \scheme{make-wrapper-procedure} and \scheme{make-arity-wrapper-procedure},
-create a procedure that behaves like a given one, but with an
-associated data value and a potentially different result for
-\scheme{procedure-arity-mask}. If different, the new mask is intended to be a
-subset of the original procedure's arity mask, although that is not checked.
-The procedure returned by \scheme{make-arity-wrapper-procedure} checks the
-argument count against the given arity mask when call, while \scheme{make-wrapper-procedure}
-expects the original procedure is intended to
-report its own error for argument counts that do not fit the specified mask. The wrapped
-procedure (or its data value) can be replaced imperatively,
-which is useful for triggering just-in-time conversions of a procedure's implementation
-while imposing a minimal overhead on calls to the procedure before or after
-conversion.
-
-\subsection{Ordered guardians (9.5.1)}
-
-The \scheme{make-guardian} function now accepts an optional argument to
-indicate whether the guardian is ordered or unordered. A guardian is
-unordered by default. An ordered guardian's objects are classified as
-inaccessible only when they are not reachable from the represetative
-of any inaccessible object in any other guardian.
-
-\subsection{Incremental promotion of collected objects (9.5.3)}
+\subsection{Incremental promotion of collected objects (9.5.4)}
 
 In previous versions of {\ChezScheme}, the collector always promoted
 surviving objects from every collected generation into a single
@@ -156,13 +108,13 @@ from a custom collect-request handler or custom values for the
 collection parameters that affect the behavior of the default
 handler.
 
-\subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.3)}
+\subsection{Unicode Basic Multilingual Plane console I/O in Windows (9.5.4)}
 
 Console I/O now supports characters from the Unicode Basic
 Multilingual Plane in Windows. Windows consoles do not yet support the
 supplementary planes.
 
-\subsection{Incompatible fasl-format and compiled-file compression changes (9.5.3)}
+\subsection{Incompatible fasl-format and compiled-file compression changes (9.5.4)}
 
 The fasl (fast-load) format now supports per-object compression.
 Whether the fasl writer actually performs compression is determined
@@ -197,7 +149,7 @@ The rationale for this change is to allow the fasl reader to seek
 past, without reading, portions of an object file that contain
 compile-time code at run time and run-time code at compile time.
 
-\subsection{Bytevector compression and compression level (9.5.3)}
+\subsection{Bytevector compression and compression level (9.5.4)}
 
 The procedure \scheme{bytevector-compress} now selects the level of
 compression based on the \scheme{compress-level} parameter.
@@ -207,7 +159,7 @@ The \scheme{compress-level} parameter can now take on the new value
 \scheme{minimum} in addition to \scheme{low}, \scheme{medium},
 \scheme{high}, and \scheme{maximum}.
 
-\subsection{Combining object files (9.5.3)}
+\subsection{Combining object files (9.5.4)}
 
 In previous versions of Chez Scheme, multiple object files could
 be combined by concatinating them into a single file.  To support faster
@@ -218,7 +170,7 @@ file.  The new \scheme{concatenate-object-files} procedure can be used to
 combine multiple object files while moving this information to the
 top of the combined file.
 
-\subsection{Explicitly invoking libraries (9.5.3)}
+\subsection{Explicitly invoking libraries (9.5.4)}
 
 The new procedure \scheme{invoke-library} can be used to force
 the evaluation of a library's body expressions (variable definition
@@ -227,7 +179,7 @@ otherwise be needed.
 It is generally useful only for libraries whose body expressions
 have side effects.
 
-\subsection{Verifying loadability of libraries and programs (9.5.3)}
+\subsection{Verifying loadability of libraries and programs (9.5.4)}
 
 The new procedure \scheme{verify-loadability} can be used to
 determine, without actually loading any object code or defining any
@@ -244,7 +196,7 @@ is backward compatible for standard use cases in which each file
 contains one or more libraries possibly followed by a top-level
 program.
 
-\subsection{Unregistering objects from guardians (9.5.3)}
+\subsection{Unregistering objects from guardians (9.5.4)}
 
 The set of as-yet unresurrected objects registered with a guardian
 can be unregistered and retrieved by means of the new primitive
@@ -253,7 +205,7 @@ Consult the user's guide for usage and caveats.
 Guardians can now be distinguished from other procedures (and other
 objects) via the new primitive \scheme{guardian?}.
 
-\subsection{Coverage support and source tables (9.5.3)}
+\subsection{Coverage support and source tables (9.5.4)}
 
 When the new parameter \scheme{generate-covin-files} is set to \scheme{#t}
 rather than the default \scheme{#f}, file compilation routines such as
@@ -280,7 +232,7 @@ or more source files with the set of source objects in the source
 tables produced by one or more runs of tests run with profile
 information tracked by \scheme{with-profile-tracker}.
 
-\subsection{Importing a library from an object file now visits the file (9.5.3)}
+\subsection{Importing a library from an object file now visits the file (9.5.4)}
 
 As described in Section~\ref{sec:faster-object-file-loading},
 importing a library from an object file now causes the object file
@@ -292,7 +244,7 @@ if the program changes its current directory (via
 \scheme{current-directory}) prior to invoking a library, and the
 object file cannot be found.
 
-\subsection{Recompile information (9.5.3)}
+\subsection{Recompile information (9.5.4)}
 
 As described in Section~\ref{sec:faster-object-file-loading}, all
 recompile information is now placed at the front of each object
@@ -313,7 +265,7 @@ This does not affect top-level programs, which were already handled
 as a whole, or a typical library file that contains just a single
 library form.
 
-\subsection{Optional new \protect\scheme{fasl-read} situation argument (9.5.3)}
+\subsection{Optional new \protect\scheme{fasl-read} situation argument (9.5.4)}
 
 It is now possible to direct \scheme{fasl-read} to read only visit
 (compile-time) or revisit (run-time) objects via the optional new
@@ -324,7 +276,7 @@ revisit (run-time-only) objects, while
 visit (compile-time-only) objects.
 Situation \scheme{load} doesn't skip over any objects.
 
-\subsection{Optional \protect\scheme{read-token} \protect\var{sfd} and \protect\var{bfp} arguments (9.5.3)}
+\subsection{Optional \protect\scheme{read-token} \protect\var{sfd} and \protect\var{bfp} arguments (9.5.4)}
 
 In addition to the optional input-port argument, \scheme{read-token} now takes
 optional \var{sfd} (source-file-descriptor) and \var{bfp} (beginning-file-position)
@@ -339,7 +291,7 @@ to \scheme{read-token} at the start of a file,
 and the \var{end} return value of the preceding
 call for each subsequent call.
 
-\subsection{Compression format and level (9.5.3)}
+\subsection{Compression format and level (9.5.4)}
 
 Support for LZ4 compression has been added.
 LZ4 is now the default format when compressing files (including
@@ -355,15 +307,14 @@ In particular, object files created by the compiler now tend to be
 larger but load more quickly.
 
 The new \scheme{compress-level} parameter can be used to control
-the amount of time spent on file compression (but not
-bytevector compression).
-It can be set to one of the symbols \scheme{low},
+the amount of time spent on file and bytevector compression.
+It can be set to one of the symbols \scheme{minimum}, \scheme{low},
 \scheme{medium}, \scheme{high}, and \scheme{maximum}, which are
 listed in order from shortest to longest compression time and least
 to greatest effectiveness.
 The default value is \scheme{medium}.
 
-\subsection{Mutexes and condition variables can have names (9.5.3)}
+\subsection{Mutexes and condition variables can have names (9.5.4)}
 
 The procedures \scheme{make-mutex} and \scheme{make-condition} now
 accept an optional argument \scheme{name}, which must be a symbol
@@ -1976,12 +1927,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Certain foreign calls with signed 8- and 16-bit integers on x86\_64 (9.5.5)}
+\subsection{Certain foreign calls with signed 8- and 16-bit integers on x86\_64 (9.5.6)}
 
 The x86\_64 code generator now properly sign-extends foreign-call
 arguments passed in registers via \scheme{(& integer-8)} and \scheme{(& integer-16)}.
 
-\subsection{Bitwise right shift of negative bignum (9.5.5)}
+\subsection{Bitwise right shift of negative bignum (9.5.6)}
 
 When a negative bignum is shifted right by a multiple of the big-digit
 bit size (32), a shifted-off bit is non-zero, and the result would be
@@ -1992,43 +1943,49 @@ number.
 
 For example, \scheme{(ash (- 1 (ash 1 64)) -32)} no longer returns 0.
 
-\subsection{\protect\scheme{sleep} with negative duration (9.5.5)}
+\subsection{\protect\scheme{sleep} with negative duration (9.5.6)}
 
 Prior to this release, \scheme{sleep} of a negative duration would
 result in an infinite pause in Windows. Now \scheme{sleep} returns
 immediately on all platforms when given a negative duration.
 
-\subsection{Buffering signals (9.5.3)}
+\subsection{Flonum \protect\scheme{remainder} and \protect\scheme{modulo} (9.5.6)}
+
+The \scheme{remainder} and \scheme{modulo} functions could produce
+imprecise or wrong answers for large integer flonums. Most of the
+repair was to use the C library's \texttt{fmod}.
+
+\subsection{Buffering signals (9.5.4)}
 
 Prior to this release, only one unhandled signal was buffered for
 any signal for which a handler has been registered via
 \scheme{register-signal-handler}, so two signals delivered in
-quick succession could be see as only one.
+quick succession could be seen as only one.
 The system now buffers a much larger number (63 in this release) of
 signals, and the fact that signals can be dropped has now been
 documented.
 
-\subsection{Clear-output bug (9.5.3)}
+\subsection{Clear-output bug (9.5.4)}
 
 A bug has been fixed in which a call to \scheme{clear-output-port}
 on a port could lead to unexpected behavior involving the port,
 including loss of buffering or suppression of future output to the
 port.
 
-\subsection{Various argument type-error issues (9.5.3)}
+\subsection{Various argument type-error issues (9.5.4)}
 
 A variety of primitive argument type-checking issues have been
 fixed, including missing checks, misleading error messages,
 and checks made later than appropriate, i.e., after the primitive
 has already had side effects.
 
-\subsection{\protect\scheme{__collect_safe}, x86\_64, and floating-point arguments or results (9.5.3)}
+\subsection{\protect\scheme{__collect_safe}, x86\_64, and floating-point arguments or results (9.5.4)}
 
 The \scheme{__collect_safe} mode for a foreign call or callable now
 correctly preserves floating-point registers used for arguments or
 results while activating or deactivating a thread on x86\_64.
 
-\subsection{\protect\scheme{putenv} memory leak (9.5.3)}
+\subsection{\protect\scheme{putenv} memory leak (9.5.4)}
 
 \scheme{putenv} now calls the host system's \scheme{setenv} instead of
 \scheme{putenv} on non-Windows hosts and avoids allocating memory that
@@ -2040,12 +1997,12 @@ A bug that miscalculated the buffer size for
 \scheme{open-string-input-port} given an immutable string has been
 fixed.
 
-\subsection{Multiplying $-2^{30}$ with itself on 64-bit platforms (9.5.3)}
+\subsection{Multiplying $-2^{30}$ with itself on 64-bit platforms (9.5.4)}
 
 A bug that produced the wrong sign when multiplying $-2^{30}$ with
 itself on 64-bit platforms has been fixed.
 
-\subsection{Compiler dropping affects from record-accessor calls (9.5.3)}
+\subsection{Compiler dropping affects from record-accessor calls (9.5.4)}
 
 A bug that could cause the source optimizer to drop effects within
 the argument of a record-accessor call has been fixed.
@@ -2431,20 +2388,20 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
-\subsection{Special-cased basic arithmetic operations (9.5.3)}
+\subsection{Special-cased basic arithmetic operations (9.5.4)}
 
 The basic arithmetic operations (addition, subtraction, multiplication,
 division) are now much faster when presented with certain special
 cases, e.g., multiplication of a large integer by 1 or -1 or addition
 of large integer and 0.
 
-\subsection{Faster right-shift of large integers (9.5.3)}
+\subsection{Faster right-shift of large integers (9.5.4)}
 
 Right shifting a large integer is now much faster in most cases
 where the shift count is a significant fraction of the number of
 bits in the large integer.
 
-\subsection{Faster object-file loading (9.5.3)}\label{sec:faster-object-file-loading}
+\subsection{Faster object-file loading (9.5.4)}\label{sec:faster-object-file-loading}
 
 Visiting an object file (to obtain only compile-time information and
 code) and revisiting an object file (to obtain only run-time information
@@ -2475,14 +2432,14 @@ Together these changes can significantly reduce compile-time and
 run-time overhead, particularly in applications that make use of
 a large number of libraries.
 
-\subsection{Faster \protect\scheme{profile-release-counters} (9.5.3)}
+\subsection{Faster \protect\scheme{profile-release-counters} (9.5.4)}
 
 \scheme{profile-release-counters} is now generation-friendly, meaning
 it does not incur any overhead for code objects in generations that
 have not been collected since the last call to\scheme{profile-release-counters}. 
 Also, it no longer allocates memory when counters are released.
 
-\subsection{Reduced cost for obtaining profile counts (9.5.3)}
+\subsection{Reduced cost for obtaining profile counts (9.5.4)}
 
 The cost of obtaining profile counts via \scheme{profile-dump} and
 other mechanisms has been reduced significantly.

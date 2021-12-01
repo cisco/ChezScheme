@@ -76,7 +76,7 @@ if ($status != 0) exit 1
 cd $W
 
 rm -f BUILDING
-sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
+sed -e "s/Chez Scheme Version [^ ]*.x/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
     ../BUILDING > BUILDING
 set maybeupdatedfiles = ($maybeupdatedfiles BUILDING)
@@ -88,7 +88,7 @@ sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
 set maybeupdatedfiles = ($maybeupdatedfiles NOTICE)
 
 mkdir makefiles
-sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
+sed -e "s/csv[0-9]\.[0-9]\(\.[0-9]\)*/csv$R.1/" ../makefiles/Mf-install.in > makefiles/Mf-install.in
 sed -e "s/csug[0-9]\.[0-9]/csug$MR.$mR/" -e "s/csug[0-9]_[0-9]/csug$MR""_$mR/" ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
 set maybeupdatedfiles = ($maybeupdatedfiles makefiles/Mf-install.in makefiles/Makefile-csug.in)
 
@@ -128,7 +128,7 @@ sed -e "s/nCopyright 1984-..../nCopyright 1984-`date +%Y`/g" ../s/7.ss > s/7.ss
 set maybeupdatedfiles = ($maybeupdatedfiles s/7.ss)
 
 rm -f s/cmacros.ss
-set VNUM = `printf "%04x%02x%02x" $MR $mR $bR`
+set VNUM = `printf "%02x%02x%02x01" $MR $mR $bR`
 sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" ../s/cmacros.ss > s/cmacros.ss
 set maybeupdatedfiles = ($maybeupdatedfiles s/cmacros.ss)
 
@@ -138,10 +138,10 @@ set maybeupdatedfiles = ($maybeupdatedfiles release_notes/release_notes.stex)
 
 mkdir csug
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" \
-    -e "s/n\\copyright~ .* Cisco Systems, Inc./n\\copyright~`date +%Y` Cisco Systems, Inc./" \
+    -e "s/\\copyright~.* Cisco Systems, Inc./\\copyright~`date +%Y` Cisco Systems, Inc./" \
   ../csug/copyright.stex > csug/copyright.stex
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*<br>/Revised\1for Chez Scheme Version $R<br>/" \
-    -e "s/nCopyright &copy; .* Cisco Systems, Inc./nCopyright \&copy; `date +%Y` Cisco Systems, Inc./" \
+    -e "s/Copyright &copy; .* Cisco Systems, Inc./Copyright \&copy; `date +%Y` Cisco Systems, Inc./" \
   ../csug/csug.stex > csug/csug.stex
 set maybeupdatedfiles = ($maybeupdatedfiles csug/copyright.stex csug/csug.stex)
 
@@ -180,5 +180,10 @@ echo "" >> LOG
 echo "$R changes:" >> LOG
 echo "- updated version to $R" >> LOG
 echo $updatedfiles | sed -e 's/^/    /' | fmt >> LOG
+
+foreach x ($updatedfiles)
+  cp $x ../$x
+end
+cp LOG ../LOG
 
 exit 0

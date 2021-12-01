@@ -43,7 +43,7 @@
   silence unused return-value warnings.
     prim5.c
 - liberalized get-mode check for ../mats.  it's not our business whether
-  people make their directories group and/or other writeable.
+  people make their directories group and/or other writable.
     6.ms
 - make test now prints the actual relative path to summary in the
   "check summary" message, whether invoked from the top-level directory
@@ -85,7 +85,7 @@
   errors to be reported by other routines.
     strnum.ss, exceptions.ss, read.ss
     5_3.ms, 6.ms, root-experr*, patch*
-- added pdtml flag, which if set to t causes profile-dump-html to be
+- added pdhtml flag, which if set to t causes profile-dump-html to be
   called at the end of a mat run.
     mats/Mf-base
 - compile-whole-program and compile-whole-library now copy the hash-bang
@@ -514,14 +514,14 @@
 - support Windows build on Bash/WSL
     BUILDING, configure, workarea, c/vs.bat (new), mats/vs.bat (new),
     c/Mf-*nt, mats/Mf-*, s/Mf-base
-- fix c/version.h for FreeBDS (machine types i3fb, ti3fb, a6fb, ta6fb)
+- fix c/version.h for FreeBSD (machine types i3fb, ti3fb, a6fb, ta6fb)
 - fix reference to libc.so to be libc.so.7 for FreeBSD (machine types
   i3fb, ti3fb, a6fb, ta6fb)
     foreign.ms
 - added CC option to configure for selecting the compiler
     configure,
     c/Mf-*
-- Suppress warnings from implicit fallthrough in case labels.
+- Suppress warnings from implicit fall-through in case labels.
     Mf-{a6,arm32,i3,ppc,ta6,ti3,tpp32}le
 - added bytevector-compress and bytevector-uncompress
     bytevector.ss, primdata.ss, new-io.c, prim5.c, externs.h,
@@ -547,7 +547,7 @@
   locate-source-object-source function that uses the new components,
   a current-locate-source-object-source parameter to control looking up
   line and column information, a current-make-source-object parameter to
-  control loation recording, an optional use-cache argument to
+  control location recording, an optional use-cache argument to
   locate-source, and a 'source-object message for code and continuation
   inspectors
     read.ss, syntax.ss, 7.ss, compile.ss, cpnanopass.ss, exceptions.ss,
@@ -670,7 +670,7 @@
     cpnanopass.ss
 - augmented tree representation with a constant representation
   for full trees to reduce the overhead of manipulating trees or
-  subtress with all bits set.
+  subtrees with all bits set.
     cpnanopass.ss
 - tree-for-each now takes start and end offsets; this cuts the
   cost of traversing and applying the action when the range of
@@ -736,7 +736,7 @@
   in the list.  this affects only languages where two expressions
   can start at the same character position.
     pdhtml.ss
-- expanded capability of ez-grammar with support for simpl
+- expanded capability of ez-grammar with support for simple
   parsing of binary operators w/precedence and associativity
   and automatically generated markdown grammar descriptions.
   ez-grammar-test.ss now also doubles as a test of pdhtml for
@@ -1042,51 +1042,6 @@
 - clarified required use of scheme-start to start an application
   packaged as a boot file and added a short "myecho" example.
     use.stex
-- add ordered guardians through a new optional argument to make-guardian
-    prims.ss, primdata.ss, cp0.ss, cpnanopass.ss,
-    cmacros.ss, mkheader.ss, gc.c, segment.c, types.h,
-    4.ms, smgmt.stex, release_notes.stex
- - add make-wrapper-procedure, make-arity-wrapper-procedure, etc.
-     cmacros.ss, cpnanopass.ss, interpret.ss, library.ss, primdata.ss,
-     prims.ss, print.ss, gc.c, number.c, prim.c, externs.h,
-     objects.stex, release_notes.stex, misc.ms, mats/patch*, mats/root*
-- add object-backreferences and enable-object-backreferences as an aid
-  to debugging memory leaks
-     back.ss, cmacros.ss, inspect.ss, primdata.ss,
-     gc-oce.c, gc.c, gcwrapper.c, prim.c, scheme.c,
-     globals.h, externs.h,
-     system.stex, 7.ms
-- add vfasl format for faster loading
-     compile.ss, back.ss, library.ss, primdata.ss, cmacros.ss,
-     vfasl.c, fasl.c, alloc.c, scheme.c, intern.c, globals.h, externs.h,
-     Mf-base, misc.ms, system.stex, release_notes.stex
-- avoid fasl overflow of C stack
-    fasl.ss, compile.ss, cmacros.ss, fasl.c, 6.ms
-- adjust cp0 to avoid turning errors like `(let ([x (values 1 2)]) x)`
-  into programs that return multiple values
-    cp0.ss, primdata.ss, cmacros.ss, syntax.ss, cp0.ms
-- added `compute-size-increments` and `get-initial-thread`, and
-  adjust compiler to inline `weak-pair?` and `ephemeron-pair?`
-    inspect.ss, bitset.ss, cmacros.ss, prims.ss, primdata.ss, Mf-base,
-    prim.c, types.h, misc.ms, thread.ms, debug.stex, threads.stex,
-    release_notes.stex
-- adjust compiler, especially cp0, to avoid turning errors like `(let
-  ([x (values 1 2)]) x)` into programs that return multiple values
-    cp0.ss, cpletrec.ss, cpnanopass, prims.ss, primdata.ss, priminfo.ss,
-    primvars.ss, cmacros.ss, syntax.ss, cp0.ms, record.ms
-- use the "single-valued" flag on primitives to simplify certain
-  call-with-values patterns
-    cp0.ss, cp0.ms
-- added phantom bytevectors
-    cmacros.ss, primdata.ss, prims.ss, cpnanopass.ss, fasl.ss,
-    inspect.ss, prin.ss, mkheader.ss, misc.ms,
-    alloc.c, prim5.c, gc.c, fasl.c, externs.h,
-    smgmt.stex, system.stex, release_notes.stex
-- fix `string-titlecase` on special-casing characters like #\xDF and
-   #\xFB00
-    5_4.ss, 5_4.ms
-- added enable-arithmetic-left-associative
-    cp0.ss, compile.ss, primdata.ss, front.ss, cp0.ms, system.stex
 - fixed a bug in cp0 bug that could fold the apply of a primitive, where
   the last argument is not a list, as if it were a call to the primitive
   with those arguments
@@ -1116,7 +1071,7 @@
   compile-time-value-value accessor
     syntax.ss, primdata.ss,
     8.ms, primvars.ms, root-experr*
-- $pass-stats now returns accurrate stats for the currently timed
+- $pass-stats now returns accurate stats for the currently timed
   pass.
     7.ss
 - compile-whole-program and compile-whole-library now propagate
@@ -1180,7 +1135,7 @@
 - reverted the earlier change to restore indirection through
   InstallPrefix, since it didn't and can't play well with the
   generated config.h.  Instead removed InstallPrefix entirely so
-  it isn't an attractive hazzard.
+  it isn't an attractive hazard.
     configure, makefiles/Mf-install.in
 - fixed bug in inline-lists: wasn't setting multiply-referenced flag
   on p to account for the procedure? check at optimize-level 2.
@@ -1833,7 +1788,7 @@
   to help in diagnosing separate-eval and separate-compile issues.
     mat.ss
 - added unregister-guardian, which can be used to unregister
-  the unressurected objects registered with any guardian.  guardian?
+  the unresurrected objects registered with any guardian.  guardian?
   can be used to distinguish guardian procedures from other objects.
     cp0.ss, cmacros.ss, cpnanopass.ss, ftype.ss, primdata.ss,
     prims.ss,
@@ -2039,7 +1994,7 @@
     strnum.ss, syntax.ss, trace.ss
 - updated bullyx patches
     patch*
-- fixed csug copyright year substititions and changed revisiondate
+- fixed csug copyright year substitutions and changed revisiondate
   to not be generated, making the csug build reproducible
     newrelease csug/csug.stex
 - fixed Windows build using MSYS2
@@ -2089,7 +2044,7 @@
     gc.c, gc-011.c (new), gcwrapper.c, externs.h, c/Mf-base
 - maybe-fire-collector no longer tries to be so precise and instead
   just counts the number of generation-bytes allocated since the
-  last gc.  suprisingly, rebuilding the s directory requires about
+  last gc.  surprisingly, rebuilding the s directory requires about
   the same number of collections with this coarser (and less
   expensive) measurement.  this change also fixes a problem with
   too-frequent collections when the maximum-generation is set to
@@ -2099,7 +2054,7 @@
   called when the collector is running.
     alloc.c, gc.c, gcwrapper.c, globals.h
 - copy now copies two pairs at once only if they are in the same
-  segment, which saves a few memonry references and tests and turns
+  segment, which saves a few memory references and tests and turns
   out not to reduce the number of opportunities significantly in
   tested programs.
     gc.c
@@ -2116,8 +2071,6 @@
   i3nt/ti3nt.  more recent versions of gcc sometimes generate sse
   instructions that require 16-byte stack alignment.
     x86.ss
-- add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
-    cpnanopass.ss
 - added missing #ifndef WIN32
     gcwrapper.c
 - added initialization of __to_g to make gcc 7.5.0 happy
@@ -2138,7 +2091,7 @@
 - now using 64-bit arithmetic for seconds in S_condition_wait to
   prevent a potential 2038 bug, at least on platforms where time_t
   is 64 bits.  also now rounding rather than truncating nanoseconds
-  in the coversion to milliseconds on Windows.
+  in the conversion to milliseconds on Windows.
     thread.c
 - fixed a bug in arm32 that caused an error when generating
   instructions with immediate operands where the immediate was larger
@@ -2179,16 +2132,42 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - newrelease no longer logs as updated files with no actual changes
     newrelease
+- repaired continuation for exception handler of error for returning
+  the wrong number of values to a multiple-value context
+    cpnanopass.ss, np-languages.ss, 3.ms
+- adjust arm32 backend to not choose shorter instructions for larger
+  return-address offsets, which breaks label address assignment
+    arm32.ss
+- repair remainder and modulo on flonums by using fmod
+    prim5.c, 5_3.ss, 5_3.ms
+- add special case in cpnanopass.ss for (eq? (ftype-pointer-address x) 0)
+    cpnanopass.ss
+- fix missing include in externs.h for struct timespec
+    c/expeditor.c, c/externs.h, c/prim5.c, c/scheme.c, c/stats.c
+- fix signature of generate-temporaries
+    primdata.ss primvars.ss
+- sleep of negative durations now returns immediately
+    7.ss
 - avoid hard-coded paths for utilities in build scripts
-    csug/gifs/Makefile csug/math/Makefile examples/Makefile
+    checkin csug/gifs/Makefile csug/math/Makefile examples/Makefile
     makefiles/Makefile-csug.in makefiles/Makefile-release_notes.in
     makefiles/Mf-install.in makefiles/installsh mats/6.ms mats/Mf-a6fb
     mats/Mf-a6le mats/Mf-a6nb mats/Mf-a6ob mats/Mf-a6osx mats/Mf-arm32le
-    mats/Mf-arm64le mats/Mf-arm64osx mats/Mf-i3fb mats/Mf-i3le mats/Mf-i3nb
-    mats/Mf-i3ob mats/Mf-i3osx mats/Mf-i3qnx mats/Mf-ppc32le mats/Mf-ppc32osx
-    mats/unix.ms newrelease pkg/Makefile release_notes/gifs/Makefile
-    release_notes/math/Makefile s/Mf-base workarea
-    zlib/contrib/minizip/Makefile
+    mats/Mf-i3fb mats/Mf-i3le mats/Mf-i3nb mats/Mf-i3ob mats/Mf-i3osx
+    mats/Mf-i3qnx mats/Mf-ppc32le mats/Mf-ta6fb mats/Mf-ta6le mats/Mf-ta6nb
+    mats/Mf-ta6ob mats/Mf-ta6osx mats/Mf-ti3fb mats/Mf-ti3le mats/Mf-ti3nb
+    mats/Mf-ti3ob mats/Mf-ti3osx mats/Mf-tppc32le mats/unix.ms newrelease
+    pkg/Makefile release_notes/gifs/Makefile release_notes/math/Makefile
+    s/Mf-base workarea
+- fixed configure script for update of nanopass to v1.9.2
+    configure
+- fixed help description for configure options --installschemename,
+  --installpetitename, and --installscriptname
+    configure
+- maybe-compile-program now returns void
+    compile.ss 7.ms
+- fixed right shift of a negative bignum by a multiple of 32
+    number.c 5_3.ms
 - fixed the documentation of load-shared-object to mention an up-to-date
   dll for Windows
     foreign.stex
@@ -2206,12 +2185,29 @@
     mats/{5_4,6,7,8,bytevector,examples,foreign}.ms
     mats/{ftype,hash,io,misc,primvars,profile,record}.ms
     mats/Mf-base mats/Mf-*nt mats/mat.ss mats/patch-interpret*
-- escape $(MAKE) to fix parallel mat issue observed with GNU Make 4.2.1:
-  "make[1]: warning: jobserver unavailable: using -j1."
-    mats/Mf-base
+- fix x86_64 (& integer-8) and (& integer-16) foreign-call argument
+  passing
+    x86_64, s/Mf-[t]a6{le,osx}
+- fixed misnamed pattern variables in bytevector-*-ref
+    bytevector.ss
+- add workaround for Rosetta 2 bug in [t]a6osx builds.  The overhead
+  during native (x86) execution is the addition of a single int compare
+  and branch in S_bytevector_read, plus a small amount of work at startup
+  to determine whether we are running under Rosetta translation.
+    new-io.c, scheme.c, version.h
+- use a 7-byte NOP in the x86_64 fasl relocator instead of 7 1-byte NOPs
+    fasl.c
+- Move unused terminals in L4.5 to later languages.
+    np-languages.ss
 - vector literals can be made self-evaluating with the new parameter
   self-evaluating-vectors
     s/back.ss s/primdata.ss s/syntax.ss csug/objects.tex mats/misc.ms
+- remove obsolete travis-ci.org configuration
+    README.md .travis.yml .travis/*
+- add GitHub actions workflow for automated testing
+    .github/workflows/{build.sh,summary,test.sh,test.yml}
+- corrected signature of compile-whole-program and compile-whole-library
+    s/primdata.ss
 - clarify rd-bytevector error message for non-atomic token types, such
   as vparen, where the token value is #f
     mats/6.ms, mats/root-experr-compile-0-f-f-f,
@@ -2221,3 +2217,25 @@
     mats/8.ms, mats/root-experr-compile-0-f-f-f,
     mats/root-experr-compile-2-f-f-f, release_notes/release_notes.stex,
     s/syntax.ss
+
+9.5.6 changes:
+- added back.patch to patchobj
+    s/Mf-base
+- updated version to 9.5.6
+    makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt c/Makefile.i3nt
+    c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt
+    mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc s/7.ss
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs
+
+9.5.7 changes:
+- updated version to 9.5.7
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs

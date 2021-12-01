@@ -129,7 +129,7 @@ patchobj = patch.patch cpnanopass.patch cpprim.patch cprep.patch cpcheck.patch\
  reloc.patch\
  compile.patch fasl.patch vfasl.patch syntax.patch env.patch\
  read.patch interpret.patch ftype.patch strip.patch\
- ubify.patch
+ ubify.patch back.patch
 
 #ordering constraints:
 #first: library, prims, mathprims, front, 5_?
