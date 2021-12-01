@@ -2882,12 +2882,13 @@
                                         (fx+ isp (cat-size cat) (cat-pad cat)) ind-sp)])])))))]
 		 [add-fill-result
                   ;; may destroy the values in result registers
-		  (lambda (result-cat result-type args-frame-size e)
+		  (lambda (result-cat result-type args-frame-size fill-result-here? e)
                     (nanopass-case (Ltype Type) result-type
                       [(fp-ftd& ,ftd)
                        (let* ([size ($ftd-size ftd)]
                               [tmp %argtmp])
-                         (case (cat-place result-cat)
+                         (case (and fill-result-here?
+                                    (cat-place result-cat))
                            [(int)
                             ;; result is in integer registers
                             (let loop ([int* (cat-regs result-cat)] [offset 0] [size size])
@@ -2971,7 +2972,7 @@
                     (cons (lambda (rhs) `(set! ,%r8 ,rhs)) locs)]
                    [else locs]))
                (lambda (t0 not-varargs?)
-                 (add-fill-result result-cat result-type (fx+ arg-stack-bytes indirect-stack-bytes)
+                 (add-fill-result result-cat result-type (fx+ arg-stack-bytes indirect-stack-bytes) fill-result-here?
                                   (add-deactivate adjust-active? t0 live* result-reg*
                                                   (lambda (t0)
                                                     `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
