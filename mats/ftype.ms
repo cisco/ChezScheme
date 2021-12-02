@@ -5559,6 +5559,8 @@
 
     #t)
 
+  ;; works on most machines, but we can't really guarantee anything about a fault:
+  #;
   (if (memq (machine-type) '(ti3ob ta6ob)) ; avoid openbsd/pthreads signal bugs
       (error #f "openbsd pthreads + signals is fubar")
       (equal?
@@ -5575,6 +5577,8 @@
            [i null]
            [j (* invalid)])))
 
+  ;; works on most machines, but we can't really guarantee anything about a fault:
+  #;
   (if (memq (machine-type) '(ti3ob ta6ob)) ; avoid openbsd/pthreads signal bugs
       (error #f "openbsd pthreads + signals is fubar")
       (equal?

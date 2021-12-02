@@ -1001,7 +1001,7 @@ void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
               && (g == 0
                   || (s != space_new && s != space_impure && s != space_symbol && s != space_port && s != space_weakpair && s != space_ephemeron
                       && s != space_impure_record && s != space_impure_typed_object
-                      && s != space_immobile_impure && s != space_count_impure && s != space_closure))) {
+                      && s != space_immobile_impure && s != space_count_impure && s != space_closure && s != space_reference_array))) {
             for (d = 0; d < cards_per_segment; d += 1) {
               if (si->dirty_bytes[d] != 0xff) {
                 S_checkheap_errors += 1;
@@ -1099,7 +1099,7 @@ static void check_dirty() {
           }
           if (s != space_new && s != space_impure && s != space_count_impure && s != space_symbol && s != space_port
               && s != space_impure_record && s != space_impure_typed_object && s != space_immobile_impure 
-              && s != space_weakpair && s != space_ephemeron && s != space_closure) {
+              && s != space_weakpair && s != space_ephemeron && s != space_closure && s != space_reference_array) {
             S_checkheap_errors += 1;
             printf("!!! (check_dirty): unexpected space %d for dirty segment "PHtx"\n", s, (ptrdiff_t)(si->number));
           }
@@ -1116,6 +1116,7 @@ static void check_dirty() {
   check_dirty_space(space_weakpair);
   check_dirty_space(space_ephemeron);
   check_dirty_space(space_immobile_impure);
+  check_dirty_space(space_reference_array);
 
   fflush(stdout);
 }
