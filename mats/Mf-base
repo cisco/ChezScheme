@@ -283,7 +283,7 @@ $(eval $(call parallel-config-template,7,eoc=f hci=101 cl=9))
 $(eval $(call parallel-config-template,8,eval=interpret hci=101 rmg=2))
 
 #configs from bullyx
-$(eval $(call parallel-config-template,b1,allxphelp-target=allxhelpnotall spi=t cp0=f))
+$(eval $(call parallel-config-template,b1,spi=t cp0=f))
 $(eval $(call parallel-config-template,b2,spi=f cp0=f cl=9 ctb='(/ (collect-trip-bytes) 64)' hci=503))
 $(eval $(call parallel-config-template,b3,spi=t cp0=f cis=t cmg=1))
 $(eval $(call parallel-config-template,b4,spi=f cp0=f cis=t cmg=6 hci=101))

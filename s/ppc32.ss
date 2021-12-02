@@ -533,7 +533,11 @@
   (define-instruction pred (fp= fp< fp<=)
     [(op (x fpur) (y fpur))
      (let ([info (make-info-condition-code op #f #f)])
-        (values '() `(asm ,info ,(asm-fp-relop info) ,x ,y)))])
+       (values '() `(asm ,info ,(asm-fp-relop info) ,x ,y)))])
+
+  (define-instruction effect (set-cr-bit)
+    [(op (c integer16))
+     `(asm ,info ,asm-set-cr-bit ,c)])
 
   (define-instruction effect (inc-cc-counter)
     [(op (x ur) (w shifted-integer16 integer16 ur) (z ur))
@@ -745,6 +749,7 @@
                      asm-fpop-2 asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
+                     asm-set-cr-bit
                      asm-read-counter
                      asm-read-time-base
                      asm-inc-cc-counter
@@ -919,6 +924,7 @@
   (define-op fmr  fmr-op)
 
   (define-op cror cror-op)
+  (define-op creqv creqv-op)
 
   (define-op fcmpu compare-op     #b111111 #b0000000000)
   (define-op cmp   compare-op     #b011111 #b0000000000)
@@ -1199,6 +1205,16 @@
         [16 opnd0-fld]
         [11 opnd1-fld]
         [1  #b0111000001]
+        [0  #b0])))
+
+  (define creqv-op
+    (lambda (op dest-fld opnd0-fld opnd1-fld code*)
+      (emit-code (op dest-fld opnd0-fld opnd1-fld code*)
+        [26 #b010011]
+        [21 dest-fld]
+        [16 opnd0-fld]
+        [11 opnd1-fld]
+        [1  #b100100001]
         [0  #b0])))
 
   (define fmr-op
@@ -2079,6 +2095,12 @@
         (emit nor dest src src code*))))
 
   (define asm-enter values)
+
+  (define asm-set-cr-bit
+    (lambda (code* bit)
+      (Trivit (bit)
+        (let ([b (ax-imm-data bit)])
+          (emit creqv b b b code*)))))
   
   (define-who asm-inc-cc-counter
     (lambda (code* addr val tmp)
@@ -2735,6 +2757,8 @@
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
           (let* ([varargs? (not (memq 'atomic (info-foreign-conv* info)))] ; pessimistic for Mac OS
+                 [really-varargs? (ormap (lambda (conv) (and (pair? conv) (eq? 'varargs (car conv))))
+                                         (info-foreign-conv* info))]
                  [arg-type* (info-foreign-arg-type* info)]
 		 [result-type (info-foreign-result-type info)]
 		 [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
@@ -2764,11 +2788,21 @@
 		       [else locs]))
                     (lambda (t0 not-varargs?)
 		      (define (make-call result-live* result-fp-live-count)
-			(cond
-			 [adjust-active?
-			  (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
-					  `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,%deact))]
-			 [else `(inline ,(make-info-kill*-live* (add-caller-save-registers result-live*) live*) ,%c-call ,t0)]))
+                        (let ([result-live* (add-caller-save-registers result-live*)])
+                          (define (add-crset e)
+                            (constant-case machine-type-name
+                              [(ppc32osx tppc32osx) e]
+                              [else
+                               (if (and really-varargs? (not (fx= 0 fp-live-count)))
+                                   `(seq
+                                     ,(%inline set-cr-bit (immediate 6))
+                                     ,e)
+                                   e)]))
+			  (cond
+			    [adjust-active?
+			     (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
+					     (add-crset `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,%deact)))]
+			    [else (add-crset `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,t0))])))
 		      (if (constant software-floating-point)
                           (let ()
                             (define handle-64-bit

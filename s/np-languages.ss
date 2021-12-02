@@ -664,6 +664,7 @@
   (declare-primitive store-store-fence effect #f)
   (declare-primitive acquire-fence effect #f)
   (declare-primitive release-fence effect #f)
+  (declare-primitive set-cr-bit effect #f) ; ppc32
   
   (declare-primitive < pred #t)
   (declare-primitive <= pred #t)

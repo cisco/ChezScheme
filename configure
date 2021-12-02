@@ -713,6 +713,9 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
+    ppc32le)
+        mdlinkflags="-rdynamic"
+        ;;
     *le)
         ;;
     i3nb)
