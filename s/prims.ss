@@ -1980,11 +1980,14 @@
   (lambda (t)
     (unless (thread? t)
       ($oops who "~a is not a thread" t))
-    (with-tc-mutex
-     (let f ()
-       (unless (eq? ($thread-tc t) 0)
-         (condition-wait $terminated-cond $tc-mutex)
-         (f))))))
+    ;; not using `with-tc-mutex` because we don't want to
+    ;; disable interrupts
+    (mutex-acquire $tc-mutex)
+    (let f ()
+      (unless (eq? ($thread-tc t) 0)
+        (condition-wait $terminated-cond $tc-mutex)
+        (f)))
+    (mutex-release $tc-mutex)))
 
 (set-who! thread-preserve-ownership!
   (let ([preserve! (foreign-procedure "(cs)thread_preserve_ownership" (ptr) void)])

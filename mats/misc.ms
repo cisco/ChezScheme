@@ -2156,7 +2156,6 @@
     #t)
 
   (when-threaded
-    ; copied from thread.ms
     (begin
       (define $threads (foreign-procedure "(cs)threads" () scheme-object))
       (define $nthreads 1)
@@ -2165,41 +2164,24 @@
           (lambda () (sleep t))))
       (define $thread-check
         (lambda ()
-          (let loop ([n 10] [nt (length ($threads))])
-            (cond
-              [(<= nt $nthreads)
-               (set! $nthreads nt)
-               (collect)]
-              [else
-                ($yield)
-                (let* ([ls ($threads)] [nnt (length ls)])
-                  (cond
-                    [(< nnt nt) (loop n nnt)]
-                    [(= n 0)
-                     (set! $nthreads nnt)
-                     (errorf #f "extra threads running ~s" ls)]
-                    [else (loop (- n 1) nnt)]))]))
+          (let ([ls ($threads)])
+            (unless (= $nthreads (length ls))
+              (errorf #f "extra threads running ~s" ls))
+            (collect))
           #t))
       ($thread-check)))
 
   (when-threaded
     ((lambda (x)
        (<= 200 x 2000))
-     (let ([cc (make-cost-center)]
-           [finished #f]
-           [finished-mutex (make-mutex)]
-           [finished-condition (make-condition)])
+     (let ([cc (make-cost-center)])
        (define sum-th
          (lambda ()
-           (with-cost-center cc (lambda () ($cc-sum-1 (iota 10))))
-           (with-mutex finished-mutex
-             (if finished
-                 (condition-signal finished-condition)
-                 (set! finished #t)))))
-       (with-mutex finished-mutex
-         (fork-thread sum-th)
-         (fork-thread sum-th)
-         (condition-wait finished-condition finished-mutex))
+           (with-cost-center cc (lambda () ($cc-sum-1 (iota 10))))))
+       (define t1 (fork-thread sum-th))
+       (define t2 (fork-thread sum-th))
+       (thread-join t1)
+       (thread-join t2)
        (cost-center-instruction-count cc))))
 
   (when-threaded ($thread-check))
@@ -2208,41 +2190,28 @@
     (reset-cost-center! $cc-1)
     ((lambda (x)
        (<= 200 x 3000))
-     (let ([finished #f]
-           [finished-mutex (make-mutex)]
-           [finished-condition (make-condition)])
+     (let ()
        (define sum-th
          (lambda ()
-           ($cc-sum-2 (iota 10))
-           (with-mutex finished-mutex
-             (if finished
-                 (condition-signal finished-condition)
-                 (set! finished #t)))))
-       (with-mutex finished-mutex
-         (fork-thread sum-th)
-         (fork-thread sum-th)
-         (condition-wait finished-condition finished-mutex))
+           ($cc-sum-2 (iota 10))))
+       (define t1 (fork-thread sum-th))
+       (define t2 (fork-thread sum-th))
+       (thread-join t1)
+       (thread-join t2)
        (cost-center-instruction-count $cc-1))))
 
   (when-threaded ($thread-check))
 
   (when-threaded
     (reset-cost-center! $cc-1)
-    (let ([cc (make-cost-center)]
-          [finished #f]
-          [finished-mutex (make-mutex)]
-          [finished-condition (make-condition)])
+    (let ([cc (make-cost-center)])
       (define sum-th
         (lambda ()
-          (with-cost-center cc (lambda () ($cc-sum-2 (iota 10))))
-          (with-mutex finished-mutex
-            (if finished
-                (condition-signal finished-condition)
-                (set! finished #t)))))
-       (with-mutex finished-mutex
-         (fork-thread sum-th)
-         (fork-thread sum-th)
-         (condition-wait finished-condition finished-mutex))
+          (with-cost-center cc (lambda () ($cc-sum-2 (iota 10))))))
+       (define t1 (fork-thread sum-th))
+       (define t2 (fork-thread sum-th))
+       (thread-join t1)
+       (thread-join t2)
        (<= (cost-center-instruction-count $cc-1)
            (cost-center-instruction-count cc))))
 
@@ -2391,21 +2360,14 @@
       (case (fixnum-width)
         [(30) 160]
         [(61) 320])
-      (let ([cc (make-cost-center)]
-            [finished #f]
-            [finished-mutex (make-mutex)]
-            [finished-condition (make-condition)])
+      (let ([cc (make-cost-center)])
         (define reverse-th
           (lambda ()
-            (with-cost-center cc (lambda () ($cc-reverse-1 (iota 10))))
-            (with-mutex finished-mutex
-              (if finished
-                  (condition-signal finished-condition)
-                  (set! finished #t)))))
-        (with-mutex finished-mutex
-          (fork-thread reverse-th)
-          (fork-thread reverse-th)
-          (condition-wait finished-condition finished-mutex))
+            (with-cost-center cc (lambda () ($cc-reverse-1 (iota 10))))))
+        (define t1 (fork-thread reverse-th))
+        (define t2 (fork-thread reverse-th))
+        (thread-join t1)
+        (thread-join t2)
         (cost-center-allocation-count cc))))
 
   (when-threaded ($thread-check))
@@ -2414,41 +2376,28 @@
     (reset-cost-center! $cc-2)
     ((lambda (x) ; wide range to accommodate both 4-byte and 8-byte words
        (<= 160 x 960))
-     (let ([finished #f]
-           [finished-mutex (make-mutex)]
-           [finished-condition (make-condition)])
+     (let ()
        (define reverse-th
          (lambda ()
-           ($cc-reverse-2 (iota 10))
-           (with-mutex finished-mutex
-             (if finished
-                 (condition-signal finished-condition)
-                 (set! finished #t)))))
-       (with-mutex finished-mutex
-         (fork-thread reverse-th)
-         (fork-thread reverse-th)
-         (condition-wait finished-condition finished-mutex))
+           ($cc-reverse-2 (iota 10))))
+        (define t1 (fork-thread reverse-th))
+        (define t2 (fork-thread reverse-th))
+        (thread-join t1)
+        (thread-join t2)
        (cost-center-allocation-count $cc-2))))
 
   (when-threaded ($thread-check))
 
   (when-threaded
     (reset-cost-center! $cc-2)
-    (let ([cc (make-cost-center)]
-          [finished #f]
-          [finished-mutex (make-mutex)]
-          [finished-condition (make-condition)])
+    (let ([cc (make-cost-center)])
       (define reverse-th
         (lambda ()
-          (with-cost-center cc (lambda () ($cc-reverse-2 (iota 10))))
-          (with-mutex finished-mutex
-            (if finished
-                (condition-signal finished-condition)
-                (set! finished #t)))))
-       (with-mutex finished-mutex
-         (fork-thread reverse-th)
-         (fork-thread reverse-th)
-         (condition-wait finished-condition finished-mutex))
+          (with-cost-center cc (lambda () ($cc-reverse-2 (iota 10))))))
+       (define t1 (fork-thread reverse-th))
+       (define t2 (fork-thread reverse-th))
+       (thread-join t1)
+       (thread-join t2)
        (<= (cost-center-instruction-count $cc-2)
            (cost-center-instruction-count cc))))
 
