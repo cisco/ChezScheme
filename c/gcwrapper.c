@@ -548,6 +548,26 @@ void S_addr_tell(ptr p) {
   segment_tell(addr_get_segment(p));
 }
 
+static int maybe_inexactnum_marked(ptr p, seginfo *psi) {
+  /* test for possible flonum within marked inexactnum */
+  uptr real_delta = (uptr)TO_PTR(&INEXACTNUM_REAL_PART(TYPE((ptr)0, type_typed_object)));
+  uptr imag_delta = (uptr)TO_PTR(&INEXACTNUM_IMAG_PART(TYPE((ptr)0, type_typed_object)));
+  ptr maybe_pr = TYPE((uptr)UNTYPE(p, type_flonum) - real_delta, type_typed_object);
+  ptr maybe_pi = TYPE((uptr)UNTYPE(p, type_flonum) - imag_delta, type_typed_object);
+
+  if ((MaybeSegInfo(ptr_get_segment(maybe_pr)) == psi)
+      && (psi->marked_mask[segment_bitmap_byte(maybe_pr)] & segment_bitmap_bit(maybe_pr))) {
+    return 1;
+  }
+
+  if ((MaybeSegInfo(ptr_get_segment(maybe_pi)) == psi)
+      && (psi->marked_mask[segment_bitmap_byte(maybe_pi)] & segment_bitmap_bit(maybe_pi))) {
+    return 1;
+  }
+
+  return 0;
+}
+
 static void check_pointer(ptr *pp, IBOOL address_is_meaningful, IBOOL is_reference, ptr base, uptr seg, ISPC s, IBOOL aftergc) {
   ptr p = *pp;
 
@@ -562,7 +582,11 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, IBOOL is_referen
           || (psi->marked_mask && !(psi->marked_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p))
               /* corner case: a continuation in space_count_pure can refer to code via CLOSENTRY
                  where the entry point doesn't have a mark bit: */
-              && !((s == space_count_pure) && (psi->space == space_code)))) {
+              && !((s == space_count_pure) && (psi->space == space_code))
+              /* another corner case: a flonum might be inside a marked inexactnum */
+              && !(Sflonump(p)
+                   && ((psi->space == space_data) || (psi->space == space_new))
+                   && maybe_inexactnum_marked(p, psi)))) {
         S_checkheap_errors += 1;
         printf("!!! dangling reference at %s"PHtx" to "PHtx"%s\n",
                (address_is_meaningful ? "" : "insideof "),
