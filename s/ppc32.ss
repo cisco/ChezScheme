@@ -1322,9 +1322,10 @@
 
   (define conditional-branch-disp?
     (lambda (x)
-      (and (fixnum? x) 
-           (fx<= (- (expt 2 15)) x (- (expt 2 15) 1))
-           (not (fxlogtest x #b11)))))
+      (let ([x (+ x 4)])
+        (and (fixnum? x)
+             (fx<= (- (expt 2 15)) x (- (expt 2 15) 1))
+             (not (fxlogtest x #b11))))))
 
   (define asm-size
     (lambda (x)
