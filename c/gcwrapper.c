@@ -606,7 +606,7 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, IBOOL is_referen
       }
 
       if (address_is_meaningful) {
-        seginfo *ppsi = MaybeSegInfo(ptr_get_segment(TO_PTR(pp)));
+        seginfo *ppsi = MaybeSegInfo(addr_get_segment(TO_PTR(pp)));
         if ((ppsi != NULL)
             && (ppsi->generation > psi->generation)
             /* space_data includes stacks, which are always swept */
@@ -670,7 +670,7 @@ static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
     d = (INT)(((uptr)TO_PTR(x) >> card_offset_bits) & ((1 << segment_card_offset_bits) - 1));
     printf("%s dirty byte %d found in segment "PHtx", card %d at "PHtx"\n", msg, si->dirty_bytes[d], (ptrdiff_t)(si->number), d, (ptrdiff_t)x);
     printf("from "); segment_tell(addr_get_segment(TO_PTR(x)));
-    printf("to   "); segment_tell(addr_get_segment(*x));
+    printf("to   "); segment_tell(ptr_get_segment(*x));
 }
 
 void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
