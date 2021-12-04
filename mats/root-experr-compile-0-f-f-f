@@ -7860,18 +7860,18 @@ record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: inc
 record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type cpoint>".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
+record.mo:Expected error in mat r6rs-records-syntactic: "unrecognized parent record type fratrat".
 record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record parent fratrat".
 record.mo:Expected error in mat r6rs-records-syntactic: "make-record-constructor-descriptor: cannot create constructor descriptor for record type with non-scheme-object fields".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has both parent and parent-rtd clauses (define-record-type dormy (parent fratrat2) (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has both parent and parent-rtd clauses (define-record-type dormy (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (parent fratrat2) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple parent-rtd clauses (define-record-type dormy (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple parent clauses (define-record-type dormy (parent fratrat2) (parent fratrat2) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple fields clauses (define-record-type dormy (parent fratrat2) (fields z) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple nongenerative clauses (define-record-type dormy (parent fratrat2) (nongenerative) (nongenerative spam-for-dinner) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple sealed clauses (define-record-type dormy (parent fratrat2) (sealed #t) (sealed #t) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple opaque clauses (define-record-type dormy (parent fratrat2) (opaque #t) (opaque #t) (fields (immutable y)))".
-record.mo:Expected error in mat r6rs-records-syntactic: "record definition has multiple protocol clauses (define-record-type dormy (parent fratrat2) (protocol values) (protocol (lambda (...) x)) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has both parent and parent-rtd clauses (define-record-type dormy (parent fratrat2) (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has both parent and parent-rtd clauses (define-record-type dormy (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (parent fratrat2) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple parent-rtd clauses (define-record-type dormy (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (parent-rtd (type-descriptor fratrat) (make-record-constructor-descriptor (...) #f #f)) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple parent clauses (define-record-type dormy (parent fratrat2) (parent fratrat2) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple fields clauses (define-record-type dormy (parent fratrat2) (fields z) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple nongenerative clauses (define-record-type dormy (parent fratrat2) (nongenerative) (nongenerative spam-for-dinner) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple sealed clauses (define-record-type dormy (parent fratrat2) (sealed #t) (sealed #t) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple opaque clauses (define-record-type dormy (parent fratrat2) (opaque #t) (opaque #t) (fields (immutable y)))".
+record.mo:Expected error in mat r6rs-records-syntactic: "record-type definition has multiple protocol clauses (define-record-type dormy (parent fratrat2) (protocol values) (protocol (lambda (...) x)) (fields (immutable y)))".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: invalid protocol whoops!".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: invalid record constructor descriptor rats".
 record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: invalid parent rats".
@@ -7896,6 +7896,62 @@ record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier
 record.mo:Expected error in mat r6rs-records-syntactic: "invalid field specifier (mutable x foo-x (foo-x!))".
 record.mo:Expected error in mat define-record-type-extensions: "missing nongenerative clause and require-nongenerative-clause is #t (define-record-type foo)".
 record.mo:Expected error in mat cp0-record-ref-optimizations: "make-record-type-descriptor: invalid uid 5".
+record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+record.mo:Expected error in mat oop: "m1: not applicable to 17".
+record.mo:Expected error in mat oop: "arity not supported by base record-type method hit".
+record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type b (parent a) (nongenerative) (methods (m1 (...) (...))))".
+record.mo:Expected error in mat oop: "no inherited bar method for baz in (super)".
+record.mo:Expected error in mat oop: "arity not supported by interface method whack".
+record.mo:Expected error in mat oop: "arity not supported by interface method whack".
+record.mo:Expected error in mat oop: "arity not supported by interface method whack".
+record.mo:Expected error in mat oop: "arity not supported by interface method whack".
+record.mo:Expected error in mat oop: "arity not supported by interface method whack".
+record.mo:Expected error in mat oop: "fish: not applicable to 3".
+record.mo:Expected error in mat oop: "rats: not applicable to 3".
+record.mo:Expected error in mat oop: "fish: not applicable to #<record of type frob>".
+record.mo:Expected error in mat oop: "no suitable implementation for interface method rats (define-record-type <d> (implements i1 i2) (fields x) (protocol (lambda (...) (...))) (methods (fish (...) (...)) (run (...) (...)) (x! (...) (...))))".
+record.mo:Expected error in mat oop: "define-record-type: incompatible record type frap - different fields".
+record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type frap (nongenerative #{frap \x2E;R@iB9FE~OXVz\x5C;\x5C;%}) (methods (m1 () 5)))".
+record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type frap (nongenerative) (methods (m1 () 5)))".
+record.mo:Expected error in mat oop: "invalid syntax <frozwell>".
+record.mo:Expected error in mat oop: "record-type definition has multiple fields clauses (define-record-type foo (fields x) (fields y) (methods (show () (...))))".
+record.mo:Expected error in mat oop: "record-type definition has multiple method clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
+record.mo:Expected error in mat oop: "invalid assignment of immutable field (set! x v)".
+record.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
+record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <r>>".
+record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <r>>".
+record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <s>>".
+record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <s>>".
+record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
+record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
+record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
+record.mo:Expected error in mat oop: "parent record type is sealed b".
+record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
+record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
+record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
+record.mo:Expected error in mat oop-contributed: "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names (define-record-type Vars (parent <root>) (fields (mutable i) (mutable i)) (protocol (lambda (...) (...))) (methods))".
+record.mo:Expected error in mat oop-contributed: "define-record-type: unrecognized parent record type aaaaa".
+record.mo:Expected error in mat oop-contributed: "define-record-type: unrecognized parent record type aaaaa".
+record.mo:Expected error in mat oop-contributed: "duplicate arity for method M1".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "variable j is not bound".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "variable unbound is not bound".
+record.mo:Expected error in mat oop-contributed: "multiple definitions for M1 in body (let () (define-record-type One (parent <root>) (fields) (protocol (...)) (methods (...))) (define-record-type Two (parent <root>) (fields) (protocol (...)) (methods (...))) 0)".
+record.mo:Expected error in mat oop-contributed: "multiple definitions for M2 in body (let () (define-record-type One (parent Pop) (fields) (protocol (...)) (methods (...) (...))) (define-record-type Two (parent Pop) (fields) (protocol (...)) (methods (...))) 0)".
+record.mo:Expected error in mat oop-contributed: "variable ingnacious is not bound".
+record.mo:Expected error in mat oop-contributed: "invalid syntax Class".
+record.mo:Expected error in mat oop-contributed: "variable make-fowl is not bound".
 hash.mo:Expected error in mat old-hash-table: "get-hash-table: ((a . b)) is not an eq hashtable".
 hash.mo:Expected error in mat old-hash-table: "put-hash-table!: ((a . b)) is not an eq hashtable".
 hash.mo:Expected error in mat old-hash-table: "remove-hash-table!: ((a . b)) is not an eq hashtable".
@@ -10532,71 +10588,3 @@ date.mo:Expected error in mat conversions/sleep: "sleep: 20 is not a time record
 exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
 exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
 exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-oop.mo:Expected error in mat oop: "m1: not applicable to 17".
-oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
-oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
-oop.mo:Expected error in mat oop: "arity not supported by base class method hit".
-oop.mo:Expected error in mat oop: "no inherited bar method for baz in (super)".
-oop.mo:Expected error in mat oop: "arity not supported by interface method whack".
-oop.mo:Expected error in mat oop: "arity not supported by interface method whack".
-oop.mo:Expected error in mat oop: "arity not supported by interface method whack".
-oop.mo:Expected error in mat oop: "arity not supported by interface method spam".
-oop.mo:Expected error in mat oop: "arity not supported by interface method spam".
-oop.mo:Expected error in mat oop: "fish: not applicable to 3".
-oop.mo:Expected error in mat oop: "rats: not applicable to 3".
-oop.mo:Expected error in mat oop: "fish: not applicable to #<frob>".
-oop.mo:Expected error in mat oop: "no suitable implementation for interface method rats".
-oop.mo:Expected error in mat oop: "make-record-type: incompatible record type frap - different fields".
-oop.mo:Expected error in mat oop: "cannot specify gensym class-name with methods or interfaces #{frap \x2E;R@iB9FE~OXVz\x5C;\x5C;%}".
-oop.mo:Expected error in mat oop: "invalid syntax <frozwell>".
-oop.mo:Expected error in mat oop: "extra ivars clause (ivars (y 1))".
-oop.mo:Expected error in mat oop: "extra methods clause (methods (get-x () x))".
-oop.mo:Expected error in mat oop: "invalid assignment of immutable ivar (set! x (* x x))".
-oop.mo:Expected error in mat oop: "invalid assignment of immutable ivar (set! x v)".
-oop.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr4 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr5 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-impr6 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr7 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr8 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-impr9 is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-impu3-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr4-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr5-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-impr6-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr7-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-mupr8-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <q>-impr9-set! is not bound".
-oop.mo:Expected error in mat oop: "variable <r>-impu3-set! is not bound".
-oop.mo:Expected error in mat oop: "<r>-mupu1: not applicable to #<instance of <q>>".
-oop.mo:Expected error in mat oop: "<r>-mupu1-set!: not applicable to #<instance of <q>>".
-oop.mo:Expected error in mat oop: "variable <s>-impu1 is not bound".
-oop.mo:Expected error in mat oop: "variable s$impu3-set! is not bound".
-oop.mo:Expected error in mat oop: "s$mupu1: not applicable to #<instance of <q>>".
-oop.mo:Expected error in mat oop: "s$mupu1-set!: not applicable to #<instance of <q>>".
-oop.mo:Expected error in mat oop: "s$mupu1: not applicable to #<instance of <r>>".
-oop.mo:Expected error in mat oop: "s$mupu1-set!: not applicable to #<instance of <r>>".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to base class <a>".
-oop.mo:Expected error in mat oop: "no inherited foo method for <a> in (super)".
-oop.mo:Expected error in mat oop: "multiple definitions for Repeat and other identifiers in body (let () (define-class (Repeat) (<root>) (ivars) (methods)) (define-class (Repeat) (<root>) (ivars) (methods)) 0)".
-oop.mo:Expected error in mat oop: "duplicate instance variable i".
-oop.mo:Expected error in mat oop: "define-class: unrecognized base class aaaaa".
-oop.mo:Expected error in mat oop: "define-class: unrecognized base class aaaaa".
-oop.mo:Expected error in mat oop: "duplicate arity for method M1".
-oop.mo:Expected error in mat oop: "incorrect number of arguments to base class <root>".
-oop.mo:Expected error in mat oop: "variable unbound is not bound".
-oop.mo:Expected error in mat oop: "variable unbound is not bound".
-oop.mo:Expected error in mat oop: "variable j is not bound".
-oop.mo:Expected error in mat oop: "variable unbound is not bound".
-oop.mo:Expected error in mat oop: "variable unbound is not bound".
-oop.mo:Expected error in mat oop: "variable unbound is not bound".
-oop.mo:Expected error in mat oop: "multiple definitions for M1 in body (let () (define-class (One) (<root>) (ivars) (methods (...))) (define-class (Two) (<root>) (ivars) (methods (...))) 0)".
-oop.mo:Expected error in mat oop: "multiple definitions for M2 in body (let () (define-class (One) (Pop) (ivars) (methods (...) (...))) (define-class (Two) (Pop) (ivars) (methods (...))) 0)".
-oop.mo:Expected error in mat oop: "variable ingnacious is not bound".
-oop.mo:Expected error in mat oop: "invalid syntax Class".
-oop.mo:Expected error in mat oop: "variable oop-x1 is not bound".
-oop.mo:Expected error in mat oop: "variable make-fowl is not bound".

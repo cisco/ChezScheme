@@ -383,9 +383,9 @@
       (define fasl-annotation-stripped (fasl-record-accessor (record-type-descriptor annotation) 'stripped)))
 
     (define-record-type table
-      (nongenerative)
-      (sealed #t)
       (fields (mutable count) (immutable ht))
+      (nongenerative #{table k5guqz75doouswc2fxse10v5j-0})
+      (sealed #t)
       (protocol
         (lambda (new)
           (lambda ()

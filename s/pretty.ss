@@ -698,6 +698,10 @@
   `(alt (_ var (x 0 ...) . (alt () (#f ([bracket x y] 0 ...) . (alt () (#f ([bracket x y ...] ...))))))
         (_ var var (x 0 ...) . (alt () (#f ([bracket x y] 0 ...) . (alt () (#f ([bracket x y ...] ...))))))))
 (pretty-format 'define-record-type '(_ x #f ...))
+(pretty-format 'methods '(_ #f (bracket x (fill 0 x ...) #f e ...) ...))
+(pretty-format 'define-interface
+  '(alt (_ var var #f (bracket x x) ...)
+        (_ var #f (bracket x x) ...)))
 (pretty-format 'define-structure '(_ (x 0 ...) #f ([bracket x 0 ...] 0 ...)))
 (pretty-format 'define-syntax '(_ (x ...) #f e ...))
 (pretty-format 'define-values '(_ (fill 0 x ...) #f e ...))

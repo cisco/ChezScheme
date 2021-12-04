@@ -1,5 +1,5 @@
-*** patches-work-dir/errors-compile-0-f-t-f	2021-06-14 11:18:43.650000000 -0400
---- patches-work-dir/errors-interpret-0-f-t-f	2021-06-14 11:18:43.650000000 -0400
+*** patches-work-dir/errors-compile-0-f-t-f	2021-12-03 16:51:41.000000000 -0800
+--- patches-work-dir/errors-interpret-0-f-t-f	2021-12-03 16:51:41.000000000 -0800
 ***************
 *** 1,3 ****
 --- 1,9 ----
@@ -31,23 +31,6 @@
   primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b)))): Exception in sc-expand: ((a . b)) is not an environment
   primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f)): Exception in sc-expand: #f is not an environment
   primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i): Exception in sc-expand: ((a . b)) is not an environment
-***************
-*** 54,60 ****
-  primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
-  primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
-  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
-! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments to #<procedure x>".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
---- 60,66 ----
-  primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
-  primvars.mo:Expected error in mat make-parameter: "+: a is not a number".
-  primvars.mo:Expected error in mat make-parameter: "incorrect number of arguments to #<procedure>".
-! primvars.mo:Expected error in mat parameterize: "incorrect number of arguments to #<procedure>".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
-  primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
 ***************
 *** 81,151 ****
   primvars.mo:Expected error in mat print-radix: "print-radix: 1 is not between 2 and 36".
@@ -213,7 +196,7 @@
   6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
 --- 4281,4290 ----
 ***************
-*** 7300,7306 ****
+*** 7376,7382 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -221,7 +204,7 @@
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7300,7306 ----
+--- 7376,7382 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -230,7 +213,7 @@
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
-*** 7500,7507 ****
+*** 7576,7583 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -239,7 +222,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 7500,7507 ----
+--- 7576,7583 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -249,7 +232,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 7509,7523 ****
+*** 7585,7599 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -265,7 +248,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 7509,7523 ----
+--- 7585,7599 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -282,7 +265,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 7530,7555 ****
+*** 7606,7631 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -309,7 +292,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 7530,7555 ----
+--- 7606,7631 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -337,7 +320,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7684,7722 ****
+*** 7760,7798 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -377,7 +360,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7684,7722 ----
+--- 7760,7798 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -418,7 +401,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7731,7787 ****
+*** 7807,7863 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -475,8 +458,8 @@
 ! record.mo:Expected error in mat r6rs-records-syntactic: "cpoint-rgb: #<record of type cpoint> is not of type #<record type cpoint>".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7731,7787 ----
+  record.mo:Expected error in mat r6rs-records-syntactic: "unrecognized parent record type fratrat".
+--- 7807,7863 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -533,9 +516,69 @@
 ! record.mo:Expected error in mat r6rs-records-syntactic: "#<record of type cpoint> is not of type #<record type cpoint>".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
-  record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
+  record.mo:Expected error in mat r6rs-records-syntactic: "unrecognized parent record type fratrat".
 ***************
-*** 8958,8970 ****
+*** 7898,7905 ****
+  record.mo:Expected error in mat cp0-record-ref-optimizations: "make-record-type-descriptor: invalid uid 5".
+  record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+  record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+! record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+! record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
+  record.mo:Expected error in mat oop: "m1: not applicable to 17".
+  record.mo:Expected error in mat oop: "arity not supported by base record-type method hit".
+  record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type b (parent a) (nongenerative) (methods (m1 (...) (...))))".
+--- 7898,7905 ----
+  record.mo:Expected error in mat cp0-record-ref-optimizations: "make-record-type-descriptor: invalid uid 5".
+  record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+  record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure constructor>".
+! record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
+! record.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
+  record.mo:Expected error in mat oop: "m1: not applicable to 17".
+  record.mo:Expected error in mat oop: "arity not supported by base record-type method hit".
+  record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type b (parent a) (nongenerative) (methods (m1 (...) (...))))".
+***************
+*** 7921,7939 ****
+  record.mo:Expected error in mat oop: "record-type definition has multiple method clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
+  record.mo:Expected error in mat oop: "invalid assignment of immutable field (set! x v)".
+  record.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
+! record.mo:Expected error in mat oop: "<r>-mupu1: #<record of type <q>> is not of type #<record type <r>>".
+! record.mo:Expected error in mat oop: "<r>-mupu2-set!: #<record of type <q>> is not of type #<record type <r>>".
+! record.mo:Expected error in mat oop: "s$impu1: #<record of type <q>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "s$mupu2-set!: #<record of type <q>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "s$mupu2: #<record of type <r>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "s$mupu2-set!: #<record of type <r>> is not of type #<record type <s>>".
+  record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
+  record.mo:Expected error in mat oop: "parent record type is sealed b".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+! record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure make-<a>>".
+  record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
+  record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
+  record.mo:Expected error in mat oop-contributed: "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names (define-record-type Vars (parent <root>) (fields (mutable i) (mutable i)) (protocol (lambda (...) (...))) (methods))".
+--- 7921,7939 ----
+  record.mo:Expected error in mat oop: "record-type definition has multiple method clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
+  record.mo:Expected error in mat oop: "invalid assignment of immutable field (set! x v)".
+  record.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
+! record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <r>>".
+! record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <r>>".
+! record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
+! record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
+  record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
+  record.mo:Expected error in mat oop: "parent record type is sealed b".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+! record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
+  record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
+  record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
+  record.mo:Expected error in mat oop-contributed: "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names (define-record-type Vars (parent <root>) (fields (mutable i) (mutable i)) (protocol (lambda (...) (...))) (methods))".
+***************
+*** 9092,9104 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -549,7 +592,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 8958,8970 ----
+--- 9092,9104 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -563,26 +606,3 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
-***************
-*** 10454,10463 ****
-  exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
-  exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
-  exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure make-<a>>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure m1>".
-  oop.mo:Expected error in mat oop: "m1: not applicable to 17".
-  oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
-  oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 10454,10463 ----
-  exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
-  exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
-  exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-! oop.mo:Expected error in mat oop: "incorrect number of arguments to #<procedure>".
-  oop.mo:Expected error in mat oop: "m1: not applicable to 17".
-  oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
-  oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".

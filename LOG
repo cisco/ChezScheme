@@ -2251,3 +2251,35 @@
   users to create standard ftype bindings for the native-types if that
   is preferred.
     s/ftype.ss, mats/ftype.ms
+- for each input-list element that is an identifier, symbol, or string,
+  generate-temporaries uses the identifier name, symbol name, or string
+  as the name for the corresponding generated temporary.
+    syntax.ss
+- updated the just-reports target to look for reports to regenerate in
+  the output* directories.
+    mats/Mf-base
+- fixed bug in strip: was counting on the two definitions of the table
+  table record type in fasl.ss and the table record type in strip.ss being
+  identical without assigning a uid.  this worked at optimize-level 3
+  but not at optimize-level 2.  also eliminated an unused variable
+  addr from put-padty and fixed the call to put-field to pass in the
+  correct (target) fld record.
+    strip.ss, fasl.ss
+- added define-record-type support for declaring methods and implementing
+  interfaces, along with a new define-interfaces form for defining
+  interfaces.  the implementation is based on combination of the
+  existing define-record-type code and the code for define-class
+  that used to reside in mats/oop.ss.  every record-type descriptor
+  now contains an slot for interfaces (accessed via
+  record-type-interfaces), and those for record types with methods
+  additionally have one slot per method.  bootstrapping with this
+  change to record-type descriptors required using a modified
+  fasl.patch to rewrite all rtds to include the extra rtd field.
+  the various procedures for creating record types now check to
+  make sure the interfaces and extra fields are equal when verifying
+  equality of nongenerative record types with the same name.
+    record-defin.ss (new), syntax.ss, cmacros.ss, cp0.ss, cpnanopass.ss,
+    mkheader.ss, pretty.ss, s/Mf-base, 
+    record.ms, mats/Mf-base, 8.ms, patch-compile-0-f-t-f,
+    patch-interpret-0-f-f-f, patch=interpret-0-f-t-f,
+    root-experr-compile-0-f-f-f

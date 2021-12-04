@@ -5025,6 +5025,7 @@
           (inline-accessor csv7:record-type-descriptor record-type-disp)
           (inline-accessor $record-type-descriptor record-type-disp)
           (inline-accessor record-rtd record-type-disp)
+          (inline-accessor record-type-interfaces record-type-interfaces-disp)
           (inline-accessor $port-handler port-handler-disp)
           (inline-accessor $port-info port-info-disp)
           (inline-accessor port-name port-name-disp)

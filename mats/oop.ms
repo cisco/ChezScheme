@@ -629,6 +629,30 @@
   (error? ; not applicable
     (s$mupu1-set! i2 55))
 
+  ; field-name used in procedure position
+  (eqv?
+    (let ()
+      (define-class (<frob> a) (<root>)
+        (ivars [private a a])
+        (methods
+          [call-a (x) (a x)]))
+      (define q (make-<frob> (lambda (x) (+ x 5))))
+      (call-a q 7))
+    12)
+
+  ; field-name used in procedure position
+  (eqv?
+    (let ()
+      (define-class (<frob> a) (<root>)
+        (ivars [private mutable a a])
+        (methods
+          [call-a (x) (a x)]))
+      (define q (make-<frob> (lambda (x) (+ x 5))))
+      (call-a q 7))
+    12)
+)
+
+(mat oop-contributed
   ;;; tests from Michael Lenaghan of frogware, Inc.
 
   (begin

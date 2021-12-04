@@ -41,8 +41,8 @@
 (define rtd-flags (csv7:record-field-accessor #!base-rtd 'flags))
 
 (define-record-type table
-  (fields (mutable count) (immutable hash))
-  (nongenerative)
+  (fields (mutable count) (immutable ht))
+  (nongenerative #{table k5guqz75doouswc2fxse10v5j-0})
   (sealed #t)
   (protocol
     (lambda (new)
@@ -132,11 +132,11 @@
           vcat ventry vdup))))
   (define bld-graph
     (lambda (x t a? handler)
-      (let ([a (eq-hashtable-cell (table-hash t) x 'first)])
+      (let ([a (eq-hashtable-cell (table-ht t) x 'first)])
         (let ([p (cdr a)])
           (cond
             [(eq? p 'first)
-             #;(let ([n (hashtable-size (table-hash t))])
+             #;(let ([n (hashtable-size (table-ht t))])
                  (when (fx= (modulo n 10000) 0)
                    (printf "entries = ~s, ba = ~s, count = ~s\n" n (bytes-allocated) (table-count t))))
              (record! ventry x)
@@ -226,7 +226,7 @@
                   (if (and (pair? x)
                            (not (weak-pair? x))
                            (not (ephemeron-pair? x))
-                           (not (eq-hashtable-ref (table-hash t) x #f)))
+                           (not (eq-hashtable-ref (table-ht t) x #f)))
                       (wrf-pair-loop0 (fx+ n 1) (cdr x))
                       n))])
          (put-uptr p n)
@@ -367,7 +367,7 @@
             (syntax-rules ()
               [(_ fasl-fld-type)
                (put-u8 p (fxlogor (fxsll pad 4) (constant fasl-fld-type)))]))
-          (let ([type (fld-type target-fld)] [addr (fld-byte target-fld)])
+          (let ([type (fld-type target-fld)])
             ; using filter-foreign-type to get target filtering
             (case (filter-foreign-type type)
               [(scheme-object) (put-padty fasl-fld-ptr) (wrf val p t a?) (constant ptr-bytes)]
@@ -412,7 +412,7 @@
             (let ([val (get-field host-fld)])
               (check-field target-fld val)
               (let ([target-addr (fld-byte target-fld)])
-                (fx+ target-addr (put-field host-fld (fx- target-addr last-target-addr) val)))))
+                (fx+ target-addr (put-field target-fld (fx- target-addr last-target-addr) val)))))
           (constant record-data-disp)
           (rtd-flds host-rtd)
           target-fld*))))
@@ -535,7 +535,7 @@
 
 (define wrf-graph
    (lambda (x p t a? handler)
-      (let ([a (eq-hashtable-ref (table-hash t) x #f)])
+      (let ([a (eq-hashtable-ref (table-ht t) x #f)])
          (cond
             [(not a)
              (handler x p t a?)]

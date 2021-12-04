@@ -905,6 +905,7 @@
         (defref RECORDDESCFLAGS record-type flags)
         (defref RECORDDESCUID record-type uid)
         (defref RECORDDESCCOUNTS record-type counts)
+        (defref RECORDDESINTERFACES record-type interfaces)
 
         (defref RECORDINSTTYPE record type)
         (defref RECORDINSTIT record data)

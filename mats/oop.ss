@@ -265,7 +265,8 @@ reaching into Chez Scheme's internals for:
                 (lambda (x)
                   (syntax-case x (set!)
                     [id (identifier? #'id) #'(#3%$object-ref 'scheme-object ego ivar-offset)]
-                    [(set! var val) (syntax-error x "invalid assignment of immutable ivar")])))))))
+                    [(set! var val) (syntax-error x "invalid assignment of immutable ivar")]
+                    [(id e . stuff) (identifier? #'id) #'((#3%$object-ref 'scheme-object ego ivar-offset) e . stuff)])))))))
 
   (define free-id-member
     (lambda (id ls2)

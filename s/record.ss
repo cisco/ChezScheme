@@ -33,6 +33,7 @@
   (define (rtd-flds x) ($object-ref 'scheme-object x (constant record-type-flds-disp)))
   (define (rtd-flags x) ($object-ref 'scheme-object x (constant record-type-flags-disp)))
   (define (rtd-uid x) ($object-ref 'scheme-object x (constant record-type-uid-disp)))
+  (define (rtd-interfaces x) ($object-ref 'scheme-object x (constant record-type-interfaces-disp)))
 
   (define (child-flds rtd)
     (let ([flds (rtd-flds rtd)] [prtd (rtd-parent rtd)])
@@ -402,7 +403,7 @@
             (constant rtd-opaque)
             0)
         (if sealed? (constant rtd-sealed) 0)))
-    (define ($mrt who base-rtd name parent uid flags fields extras)
+    (define ($mrt who base-rtd name parent uid flags fields interfaces extras)
       (include "layout.ss")
       (when (and parent (record-type-sealed? parent))
         ($oops who "cannot extend sealed record type ~s" parent))
@@ -437,19 +438,32 @@
                             #;(= (fld-byte fld1) (fld-byte fld2)))))
                    (and (= (length flds1) (length flds2))
                         (andmap same-field? flds1 flds2))))
-              ; following assumes extras match
                (let ()
+                 (define (check-extras rtd extras)
+                   ; assumes equivalence of base-rtd has already been checked
+                   (let ([extra-flds (list-tail (rtd-flds base-rtd) (length (rtd-flds #!base-rtd)))])
+                     (unless (fx= (length extras) (length extra-flds)) (squawk "different number of extra rtd fields"))
+                     (for-each
+                       (lambda (fld extra)
+                         (let ([base-extra ($object-ref 'ptr rtd (fld-byte fld))])
+                           (unless (equal? extra base-extra)
+                             ($oops who "incompatible record type ~s - extra ~s differs from base extra ~s"
+                               name extra base-extra))))
+                       extra-flds extras)))
                  (define (squawk what) ($oops who "incompatible record type ~s - ~a" name what))
                  (unless (eq? ($record-type-descriptor rtd) base-rtd) (squawk "different base rtd"))
                  (unless (eq? (rtd-parent rtd) parent) (squawk "different parent"))
                  (unless (same-fields? (rtd-flds rtd) (cdr flds)) (squawk "different fields"))
                  (unless (= (rtd-mpm rtd) mpm) (squawk "different mutability"))
                  (unless (fx= (rtd-flags rtd) flags) (squawk "different flags"))
-                 (unless (eq? (rtd-size rtd) size) (squawk "different size")))
+                 (unless (eq? (rtd-size rtd) size) (squawk "different size"))
+                 (unless (equal? (rtd-interfaces rtd) interfaces) (squawk "different interfaces"))
+                 ; must come after base-rtd equivalence check
+                 (check-extras rtd extras))
                rtd)]
             [else
              (let ([rtd (apply #%$record base-rtd parent size pm mpm name
-                          (cdr flds) flags uid #f extras)])
+                          (cdr flds) flags uid #f interfaces extras)])
                (with-tc-mutex ($sputprop uid '*rtd* rtd))
                rtd)]))))
 
@@ -462,12 +476,13 @@
                     [parent (rtd-parent rtd)]
                     [name (rtd-name rtd)]
                     [flags (rtd-flags rtd)]
+                    [interfaces (rtd-interfaces rtd)]
                     [fields (csv7:record-type-field-decls rtd)])
                 (let-values ([(pm mpm flds size)
                               (compute-field-offsets who
                                 (constant record-type-disp)
                                 (cons `(immutable scheme-object ,uid) fields))])
-                  (let ([rtd (apply #%$record base-rtd parent size pm mpm name (cdr flds) flags uid #f
+                  (let ([rtd (apply #%$record base-rtd parent size pm mpm name (cdr flds) flags uid #f interfaces
                                (let* ([n (length (rtd-flds ($record-type-descriptor base-rtd)))]
                                       [ls (list-tail (rtd-flds base-rtd) n)])
                                  (let f ([n n] [ls ls])
@@ -485,12 +500,12 @@
            ($mrt 'make-record-type base-rtd
              (string->symbol (symbol->string name)) parent name
              (make-flags name sealed? opaque? parent)
-             fields extras)]
+             fields '#() extras)]
           [(string? name)
            ($mrt 'make-record-type base-rtd
              (string->symbol name) parent #f
              (make-flags #f sealed? opaque? parent)
-             fields extras)]
+             fields '#() extras)]
           [else ($oops 'make-record-type "invalid record name ~s" name)]))
 
       (set-who! make-record-type
@@ -521,7 +536,7 @@
           (mrt base-rtd parent name fields sealed? opaque? extras))))
 
     (let ()
-      (define (mrtd base-rtd name parent uid sealed? opaque? fields who extras)
+      (define (mrtd base-rtd name parent uid sealed? opaque? fields interfaces who extras)
         (unless (symbol? name)
           ($oops who "invalid record name ~s" name))
         (unless (or (not parent) (record-type-descriptor? parent))
@@ -530,6 +545,14 @@
           ($oops who "invalid uid ~s" uid))
         (unless (vector? fields)
           ($oops who "invalid field vector ~s" fields))
+        ; TODO: more thorough check
+        (unless (and (vector? interfaces)
+                     (let ([n (vector-length interfaces)])
+                       (let loop ([i 0])
+                         (or (fx= i n)
+                             (and ($record? (vector-ref interfaces i))
+                                  (loop (fx+ i 1)))))))
+          ($oops who "invalid interfaces vector ~s" interfaces))
         ($mrt who base-rtd name parent uid
           (make-flags uid sealed? opaque? parent)
           (let ([n (vector-length fields)])
@@ -545,17 +568,24 @@
                                         (null? (cdr x)))))
                       ($oops who "invalid field specifier ~s" x))
                     (cons x (f (fx+ i 1)))))))
+          interfaces
           extras))
 
       (set! $make-record-type-descriptor
         (lambda (base-rtd name parent uid sealed? opaque? fields who . extras)
           (unless (record-type-descriptor? base-rtd)
             ($oops who "invalid base rtd ~s" base-rtd))
-          (mrtd base-rtd name parent uid sealed? opaque? fields who extras)))
+          (mrtd base-rtd name parent uid sealed? opaque? fields '#() who extras)))
+
+      (set! $make-record-type-descriptor/interfaces
+        (lambda (base-rtd name parent uid sealed? opaque? fields interfaces who . extras)
+          (unless (record-type-descriptor? base-rtd)
+            ($oops who "invalid base rtd ~s" base-rtd))
+          (mrtd base-rtd name parent uid sealed? opaque? fields interfaces who extras)))
 
       (set-who! make-record-type-descriptor
         (lambda (name parent uid sealed? opaque? fields)
-          (mrtd base-rtd name parent uid sealed? opaque? fields who '()))))
+          (mrtd base-rtd name parent uid sealed? opaque? fields '#() who '()))))
 
     (set! record-type-descriptor?
       (lambda (x)
@@ -649,6 +679,12 @@
       (unless (record-type-descriptor? rtd)
         ($oops 'record-type-generative? "~s is not a record type descriptor" rtd))
       (#3%record-type-generative? rtd)))
+
+  (set-who! record-type-interfaces
+    (lambda (rtd)
+      (unless (record-type-descriptor? rtd)
+        ($oops who "~s is not a record type descriptor" rtd))
+      (rtd-interfaces rtd)))
 
   (let ()
     (define (find-fld who rtd field-spec)
