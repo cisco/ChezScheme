@@ -2314,3 +2314,7 @@
   It now returns a negative number in this situation.
     cpnanopass.ss
     5_4.ms root-experr-* patch-*
+- fix ppc32 conditional-branch code generation when displacement is
+  exactly 32764
+    s/ppc32.ss
+

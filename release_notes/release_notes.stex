@@ -1950,6 +1950,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair ppc32 code generation for a specific branch displacement (9.5.9)}
+
+Branch generation would go wrong if the displacement was exactly 32,764
+bytes.
+
 \subsection{\scheme{char-} returns negative results (9.6.0)}
 
 The character difference oprator returned a large positive integer in
