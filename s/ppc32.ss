@@ -2829,21 +2829,20 @@
             (with-values (do-args (if fill-result-here? (cdr arg-type*) (indirect-result-to-pointer result-type arg-type*))
                                   varargs?)
               (lambda (orig-frame-size locs live* fp-live-count)
-                ;; NB: add 4 to frame size for CR save word
                 (let ([fill-stash-offset orig-frame-size])
                   (let-values ([(result-live* result-fp-live-count make-call)
                                 (plan-result result-type fill-result-here? fill-stash-offset)])
-                    (let* ([result-live* (add-caller-save-registers result-live*)]
-                           [base-frame-size (fx+ orig-frame-size (if fill-result-here? 4 0))]
-		           [deactivate-save-offset (if (and adjust-active? (fx> fp-live-count 0))
+                    (let* ([base-frame-size (fx+ orig-frame-size (if fill-result-here? 4 0))]
+		           [deactivate-save-offset (if (and adjust-active?
+                                                            (or (fx> fp-live-count 0)
+                                                                (fx> result-fp-live-count 0)))
 						       (align 8 base-frame-size) ; for `double` save
 						       base-frame-size)]
-		           [frame-size (align 16 (fx+ 4 ; for CR save
-						      (if adjust-active?
-						          (fx+ deactivate-save-offset
-							       (fx* (fxmax fp-live-count result-fp-live-count) 8)
-							       (fx* (fxmax (add1 (length live*)) (length result-live*)) 4))
-						          deactivate-save-offset)))])
+		           [frame-size (align 16 (if adjust-active?
+						     (fx+ deactivate-save-offset
+							  (fx* (fxmax fp-live-count result-fp-live-count) 8)
+							  (fx* (fxmax (add1 (length live*)) (length result-live*)) 4))
+						     deactivate-save-offset))])
                       (values
                        (lambda () (%inline store-with-update ,%Csp ,%Csp (immediate ,(fx- frame-size))))
                        (let ([locs (reverse locs)])
@@ -2862,12 +2861,13 @@
                                     ,(%inline set-cr-bit (immediate 6))
                                     ,e)
                                   e)]))
-                         (make-call
-			  (cond
-			    [adjust-active?
-			     (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
-					     (add-crset `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,%deact)))]
-			    [else (add-crset `(inline ,(make-info-kill*-live* result-live* live*) ,%c-call ,t0))])))
+                         (let ([kill* (add-caller-save-registers result-live*)])
+                           (make-call
+			    (cond
+			      [adjust-active?
+			       (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
+					       (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,%deact)))]
+			      [else (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,t0))]))))
                        (nanopass-case (Ltype Type) result-type
                          [(fp-double-float)
                           (lambda (lvalue) ; unboxed
@@ -3557,6 +3557,13 @@
 			     `(set! ,%Cretval ,rhs))
 			   (list %Cretval)
 			   0)])])))
+          (define result-regs-bytes
+            (lambda (result-type)
+              (let-values ([(get-result result-regs result-num-fp-regs)
+                            ;; Use `do-result` with dummy offsets, since we just want regs
+                            (do-result result-type 0 0)])
+                (fx+ (fx* (length result-regs) 4)
+                     (fx* result-num-fp-regs 8)))))
           (define (unactivate unactivate-mode-offset result-regs result-num-fp-regs stash-offset)
             (let ([e (%seq
                        (set! ,%Carg1 ,(%mref ,%sp ,unactivate-mode-offset))
@@ -3572,17 +3579,21 @@
             (let ([arg-type* (info-foreign-arg-type* info)]
 		  [result-type (info-foreign-result-type info)]
                   [gp-reg-count (length (gp-parameter-regs))]
-                  [fp-reg-count (length (fp-parameter-regs))])
+                  [fp-reg-count (length (fp-parameter-regs))]
+                  [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)])
               (let-values ([(iint iflt) (count-reg-args arg-type* gp-reg-count fp-reg-count (indirect-result-that-fits-in-registers? result-type))])
                 (let* ([int-reg-offset stack-arguments-starting-offset] ; leave space for next callee, such as get-tc
-                       [float-reg-offset (align 8 (fx+ (fx* gp-reg-count 4) int-reg-offset))]
+                       [float-reg-offset (align 8 (fx+ (fxmax (fx* gp-reg-count 4)
+                                                              (if adjust-active?
+                                                                  (result-regs-bytes result-type)
+                                                                  0))
+                                                       int-reg-offset))]
                        [callee-save-offset (if (constant software-floating-point)
                                                float-reg-offset
                                                (fx+ (fx* fp-reg-count 8) float-reg-offset))]
                        [callee-save-fp-offset (fx+ (fx* isaved 4) callee-save-offset)]
 		       [synthesize-first-argument? (indirect-result-that-fits-in-registers? result-type)]
-		       [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)]
-                       [varargs-after (ormap (lambda (conv) (and (pair? conv) (eq? 'varargs (car conv)) (cdr conv)))
+		       [varargs-after (ormap (lambda (conv) (and (pair? conv) (eq? 'varargs (car conv)) (cdr conv)))
                                              (info-foreign-conv* info))]
                        [unactivate-mode-offset (fx+ (fx* fpsaved 8) callee-save-fp-offset)]
                        [return-space-offset (align 8 (fx+ unactivate-mode-offset (if adjust-active? 4 0)))]
