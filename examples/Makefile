@@ -19,10 +19,10 @@ Scheme = ../bin/scheme -q
 
 .SUFFIXES:
 .SUFFIXES: .ss .so
-.ss.so: ; echo '(time (compile-file "$*"))' | ${Scheme}
+.ss.so: ; echo '(time (compile-file "$*"))' | "${Scheme}"
 
 needed:	${obj}
 
-all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | ${Scheme}
+all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | "${Scheme}"
 
 clean: ; rm -f $(obj) expr.md

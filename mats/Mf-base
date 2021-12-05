@@ -42,7 +42,11 @@
 
 include Mf-config
 
-MatsDir = $(abspath .)
+ifeq (${OS},Windows_NT)
+  MatsDir = $(shell wslpath -am .)
+else
+  MatsDir = $(abspath .)
+endif
 
 ifeq (${OS},Windows_NT)
   dirsep = ;
@@ -61,6 +65,11 @@ endif
 # it where to find its boot files, and CHEZSCHEMELIBDIRS tells
 # it where to find libraries.
 Scheme = $(abspath ../bin/$m/scheme${ExeSuffix})
+ifeq ($(OS),Windows_NT)
+  SchemePath = $(shell wslpath -am ../bin/$m/scheme${ExeSuffix})
+else
+  SchemePath = ${Scheme}
+endif
 export SCHEMEHEAPDIRS=.${dirsep}$(abspath ../boot)/%m
 export CHEZSCHEMELIBDIRS=.
 
@@ -146,14 +155,22 @@ defaultc = f
 c = $(defaultc)
 
 # set of coverage files to load
-coverage-files = $(abspath ../boot/$m/petite.covin ../boot/$m/scheme.covin)
+ifeq ($(OS),Windows_NT)
+  coverage-files = $(shell wslpath -am ../boot/$m/petite.covin) $(shell wslpath -am ../boot/$m/scheme.covin)
+else
+  coverage-files = $(abspath ../boot/$m/petite.covin ../boot/$m/scheme.covin)
+endif
 
 # set of mats to run
 mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread profile\
  misc cp0 cptypes 5_6 5_7 5_8 6 io format 7 record hash enum 8 fx fl cfl foreign\
  ftype unix windows examples ieee date exceptions oop
 
-Examples = $(abspath ../examples)
+ifeq ($(OS),Windows_NT)
+  Examples = $(shell wslpath -am ../examples)
+else
+  Examples = $(abspath ../examples)
+endif
 
 MAKEFLAGS += --no-print-directory
 
@@ -190,7 +207,7 @@ define conf-scheme-code
   '(compile-interpret-simple #${cis})'\
   '(set! *examples-directory* "${Examples}")'\
   '(enable-cp0 #${cp0})'\
-  '(set! *scheme* "${Scheme}")'\
+  '(set! *scheme* "${SchemePath}")'\
   '(set! *mats-dir* "${MatsDir}")'\
   '(set! $$cat_flush "${MatsDir}/cat_flush${ExeSuffix}")'\
   '(current-eval ${eval})'\
@@ -203,7 +220,7 @@ $(objdir)/%.mo : %.ms mat.so
              '(unless (= (#%$$check-heap-errors) 0)'\
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
              '  (abort))'\
-           | ${Scheme} -q mat.so ${patchfile}
+           | "${Scheme}" -q mat.so ${patchfile}
 
 # same as above except puts the .mo file in .
 %.mo : %.ms mat.so
@@ -213,11 +230,11 @@ $(objdir)/%.mo : %.ms mat.so
              '(unless (= (#%$$check-heap-errors) 0)'\
              '  (fprintf (console-error-port) "check heap detected errors---grep standard output for !!!\n")'\
              '  (abort))'\
-           | ${Scheme} -q mat.so ${patchfile}
+           | "${Scheme}" -q mat.so ${patchfile}
 	! egrep "Bug|Error|invalid memory" $*.mo
 
 %.so : %.ss
-	echo '(reset-handler abort) (time (compile-file "$*"))' | ${Scheme} -q ${patchfile}
+	echo '(reset-handler abort) (time (compile-file "$*"))' | "${Scheme}" -q ${patchfile}
 
 report: $(outdir)/report-$(conf)
 
@@ -252,17 +269,17 @@ fastreport:
 
 docoverage: mat.so
 	if [ "$c" = "t" ] ; then\
-          echo '(reset-handler abort) (combine-coverage-files "$(objdir)/all.covout" (quote ($(mats:%="$(objdir)/%.covout"))))' | ${Scheme} -q ${patchfile} mat.so ;\
-          echo '(reset-handler abort) (coverage-percent "$(objdir)/all.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
-          echo '(reset-handler abort) (coverage-percent "$(objdir)/run.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (combine-coverage-files "$(objdir)/all.covout" (quote ($(mats:%="$(objdir)/%.covout"))))' | "${Scheme}" -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "$(objdir)/all.covout" ${coverage-files:%="%"})'  | "${Scheme}" -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "$(objdir)/run.covout" ${coverage-files:%="%"})'  | "${Scheme}" -q ${patchfile} mat.so ;\
         fi
 
 doallcoverage: mat.so
 	if [ "$c" = "t" ] ; then\
-          echo '(reset-handler abort) (combine-coverage-files "all.covout" (map symbol->string (quote ($(shell echo */all.covout)))))' | ${Scheme} -q ${patchfile} mat.so ;\
-          echo '(reset-handler abort) (coverage-percent "all.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
-          echo '(reset-handler abort) (combine-coverage-files "run.covout" (map symbol->string (quote ($(shell echo */run.covout)))))' | ${Scheme} -q ${patchfile} mat.so ;\
-          echo '(reset-handler abort) (coverage-percent "run.covout" ${coverage-files:%="%"})'  | ${Scheme} -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (combine-coverage-files "all.covout" (map symbol->string (quote ($(shell echo */all.covout)))))' | "${Scheme}" -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "all.covout" ${coverage-files:%="%"})'  | "${Scheme}" -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (combine-coverage-files "run.covout" (map symbol->string (quote ($(shell echo */run.covout)))))' | "${Scheme}" -q ${patchfile} mat.so ;\
+          echo '(reset-handler abort) (coverage-percent "run.covout" ${coverage-files:%="%"})'  | "${Scheme}" -q ${patchfile} mat.so ;\
         fi
 
 define parallel-config-template
@@ -396,7 +413,7 @@ all3: ; $(MAKE) all o=3
 parallel-prereqs: $(src) oop.ss ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
 
 all: $(outdir) $(outdir)/script.all $(src) oop.ss ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
-	${Scheme} --verbose -q mat.so ${patchfile} < $(outdir)/script.all
+	"${Scheme}" --verbose -q mat.so ${patchfile} < $(outdir)/script.all
 	$(MAKE) doerrors
 	$(MAKE) doreport
 	$(MAKE) docoverage
@@ -452,7 +469,7 @@ ftype.mo ${objdir}/ftype.mo: ftype.h
 hash.mo ${objdir}/hash.mo: ht.ss
 
 build-examples:
-	( cd ../examples && ${MAKE} Scheme=${Scheme} )
+	( cd ../examples && ${MAKE} Scheme="${Scheme}" )
 	touch build-examples
 
 prettyclean:
@@ -461,7 +478,7 @@ prettyclean:
  build-examples script.all? *.html experr*.rej experr*.orig
 	rm -rf testdir*
 	rm -rf output-*
-	( cd ../examples && ${MAKE} Scheme=${Scheme} clean )
+	( cd ../examples && ${MAKE} Scheme="${Scheme}" clean )
 
 clean: prettyclean
 	rm -f Make.out

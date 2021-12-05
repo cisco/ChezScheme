@@ -439,7 +439,7 @@
 (define patch-exec-path
   (lambda (p)
     (if (windows?)
-        (list->string (subst #\\ #\/ (string->list p)))
+        (string-append "\"" (list->string (subst #\\ #\/ (string->list p))) "\"")
         p)))
 
 (module separate-eval-tools (separate-eval run-script separate-compile)
