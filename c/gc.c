@@ -1677,7 +1677,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
         si->forwarded_flonums = 0;
 #endif
       } else {
-        chunkinfo *chunk = si->chunk, **chunks = ((si->space == space_code) ? S_code_chunks : S_chunks);
+        IBOOL for_code = (si->space == space_code);
+        chunkinfo *chunk = si->chunk, **chunks = (for_code ? S_code_chunks : S_chunks);
         S_G.number_of_nonstatic_segments -= 1;
         S_G.number_of_empty_segments += 1;
         si->space = space_empty;
@@ -1690,7 +1691,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
           if (chunk->bytes != (minimum_segment_request + 1) * bytes_per_segment) {
             /* release oversize chunks back to the O/S immediately to avoid allocating
              * small stuff into them and thereby invite fragmentation */
-            S_free_chunk(chunk);
+            S_free_chunk(chunk, for_code);
           } else {
             S_move_to_chunk_list(chunk, &chunks[PARTIAL_CHUNK_POOLS]);
           }

@@ -872,9 +872,27 @@
    ; align sp on 16-byte boundary, taking into account 8-byte
    ; return address already pushed by caller
     [(op)
-     (seq
+     ((lambda (e)
+        (if-feature windows
+          (seq
+           ;; these pushes are so that unwind info works on Windows; otherwise,
+           ;; we rely on the setjmp/longjmp combination in S_call_help() and
+           ;; S_return() to save volatiles (i.e., there are no pops to go with
+           ;; these pushes); note that a change to this code needs a change
+           ;; to unwind handling
+           `(asm ,null-info ,asm-push ,%rbx)
+           `(asm ,null-info ,asm-push ,%rbp)
+           `(asm ,null-info ,asm-push ,%rdi)
+           `(asm ,null-info ,asm-push ,%rsi)
+           `(asm ,null-info ,asm-push ,%r12)
+           `(asm ,null-info ,asm-push ,%r13)
+           `(asm ,null-info ,asm-push ,%r14)
+           `(asm ,null-info ,asm-push ,%r15)
+           e)
+          e))
+      (seq
        `(set! ,(make-live-info) ,%sp (asm ,info ,asm-sub ,%sp (immediate 8)))
-       `(set! ,(make-live-info) ,%tc ,%Carg1))])
+       `(set! ,(make-live-info) ,%tc ,%Carg1)))])
   )
 
 ;;; SECTION 3: assembler
@@ -2267,8 +2285,8 @@
           (let ([sp-opnd (cons 'reg %sp)])
             (if (fx= entry (lookup-c-entry Sreturn))
                 ; pretend S_generic_invoke called Sreturn directly by wiping out
-                ; pad added by invoke-prelude and jumping rather than calling
-                (emit addi '(imm 8) sp-opnd
+                ; stack space added by invoke-prelude and jumping rather than calling
+                (emit addi (if-feature windows '(imm 72) '(imm 8)) sp-opnd
                   (asm-helper-jump code* `(x86_64-jump 0 (entry ,entry))))
                 (let ([target `(x86_64-call 0 (entry ,entry))])
                   (if-feature windows
@@ -3015,18 +3033,18 @@
                    |                           |
                    |    incoming stack args    |
                    |                           |
-                   +---------------------------+ <- 16-byte boundary
+           sp+176: +---------------------------+ <- 16-byte boundary
                    |                           | 
                    |  space for register args  | four quads
-       sp+128/144: |                           | 
-                   +---------------------------+ <- 16-byte boundary
-                   |   incoming return address | one quad
-      incoming sp: +---------------------------+
-           sp+120: |        active state       | zero or two quads
-                   +---------------------------+
+                   |                           | 
+           sp+144: +---------------------------+ <- 16-byte boundary
+incoming           |   incoming return address | one quad
+      sp-> sp+120: +---------------------------+
                    |                           |
                    |   callee-save registers   | RBX, RBP, RDI, RSI, R12, R13, R14, R15 (8 quads)
                    |                           |                            and XMM6-11 (6 quads)
+            sp+24: +---------------------------+
+                   |        active state       | two quads
                    +---------------------------+
                    | pad word / indirect space | one quad
              sp+0: +---------------------------+<- 16-byte boundary
@@ -3057,6 +3075,9 @@
       |#
       (with-output-language (L13 Effect)
         (let ()
+          (define saved-register-arg-offset (if-feature windows 144 48))
+          (define active-state-offset (if-feature windows 24 176))
+          (define stack-args-offset (if-feature windows 176 192))
           (define load-double-stack
             (lambda (offset)
               (lambda (x) ; boxed (always a var)
@@ -3097,7 +3118,7 @@
           (define save-arg-regs
             (lambda (types)
               (if-feature windows
-                (let f ([types types] [i 0] [isp 8])
+                (let f ([types types] [i 0] [isp saved-register-arg-offset])
                   (if (or (null? types) (fx= i 4))
                       `(nop)
                       (nanopass-case (Ltype Type) (car types)
@@ -3152,7 +3173,7 @@
                                (set! ,(%mref ,%sp ,isp) ,(vector-ref vint i))
                                ,(f (cdr types) (fx+ i 1) (fx+ isp 8)))
                              (f (cdr types) i isp))])))
-                (let f ([types types] [iint 0] [ifp 0] [isp 48])
+                (let f ([types types] [iint 0] [ifp 0] [isp saved-register-arg-offset])
                   (if (or (null? types) (and (fx>= iint 6) (fx>= ifp 8)))
                       `(nop)
                       (nanopass-case (Ltype Type) (car types)
@@ -3201,7 +3222,7 @@
              ; risp is where incoming register args are stored
              ; sisp is where incoming stack args are stored
               (if-feature windows
-                (let f ([types types] [locs '()] [isp (if adjust-active? 144 128)])
+                (let f ([types types] [locs '()] [isp saved-register-arg-offset]) ; stack args follow saved registers
                   (if (null? types)
                       locs
                       (f (cdr types)
@@ -3224,8 +3245,8 @@
                         [locs '()]
                         [iint 0]
                         [ifp 0]
-                        [risp 48]
-                        [sisp 192])
+                        [risp saved-register-arg-offset]
+                        [sisp stack-args-offset])
                   (if (null? types)
                       locs
                       (nanopass-case (Ltype Type) (car types)
@@ -3311,7 +3332,7 @@
                 [else
                  (values (lambda ()
                            ;; Return pointer that was filled; destination was the first argument
-                           `(set! ,%Cretval ,(%mref ,%sp ,(if-feature windows (if adjust-active? 144 128) 48))))
+                           `(set! ,%Cretval ,(%mref ,%sp ,saved-register-arg-offset)))
                          (list %Cretval)
                          '())])]
               [(fp-double-float)
@@ -3337,7 +3358,7 @@
                        '())]))
           (define (unactivate result-regs)
             (let ([e `(seq
-                       (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) (if-feature windows 120 176))))
+                       (set! ,%Carg1 ,(%mref ,%sp ,(+ (push-registers-size result-regs) active-state-offset)))
                        ,(as-c-call (%inline unactivate-thread ,%Carg1)))])
               (if (null? result-regs)
                   e
@@ -3360,12 +3381,6 @@
                      (%seq
                       ,(if-feature windows
                          (%seq
-                           ,(let ([e (save-arg-regs arg-type*)])
-                              (if adjust-active?
-                                  (%seq
-                                    ,e
-                                    (set! ,%sp ,(%inline - ,%sp (immediate 16))))
-                                  e))
                            ,(%inline push ,%rbx)
                            ,(%inline push ,%rbp)
                            ,(%inline push ,%rdi)
@@ -3374,14 +3389,17 @@
                            ,(%inline push ,%r13)
                            ,(%inline push ,%r14)
                            ,(%inline push ,%r15)
-                           (set! ,%sp ,(%inline - ,%sp (immediate 48)))
+                           ;; 16 bytes of this space is needed needed only for `adjust-active?`, but
+                           ;; always add the space so that unwind info can be consistent:
+                           (set! ,%sp ,(%inline - ,%sp (immediate 64)))
                            (set! ,(%mref ,%sp ,%zero 0 fp) ,%fp3)
                            (set! ,(%mref ,%sp ,%zero 8 fp) ,%fp4)
                            (set! ,(%mref ,%sp ,%zero 16 fp) ,%fp5)
                            (set! ,(%mref ,%sp ,%zero 24 fp) ,%fp6)
                            (set! ,(%mref ,%sp ,%zero 32 fp) ,%fp7)
                            (set! ,(%mref ,%sp ,%zero 40 fp) ,%fp8)
-                           (set! ,%sp ,(%inline - ,%sp (immediate 8))))
+                           (set! ,%sp ,(%inline - ,%sp (immediate 8)))
+                           ,(save-arg-regs arg-type*))
                          (%seq
                            (set! ,%sp ,(%inline - ,%sp (immediate 136)))
                            ,(%inline push ,%rbx)
@@ -3396,7 +3414,7 @@
                             (if adjust-active?
                                 (%seq
                                  ,(as-c-call `(set! ,%rax ,(%inline activate-thread)))
-                                 (set! ,(%mref ,%sp ,(if-feature windows 120 176)) ,%rax)
+                                 (set! ,(%mref ,%sp ,active-state-offset) ,%rax)
                                  ,e)
                                 e))
                           (%seq 
@@ -3424,11 +3442,7 @@
                              e))
                        (%seq
                         ,(if-feature windows
-                           ((lambda (e)
-                              (if adjust-active?
-                                  (%seq ,e (set! ,%sp ,(%inline + ,%sp (immediate 16))))
-                                  e))
-                            (%seq
+                           (%seq
                              (set! ,%sp ,(%inline + ,%sp (immediate 8)))
                              (set! ,%fp3 ,(%mref ,%sp ,%zero 0 fp))
                              (set! ,%fp4 ,(%mref ,%sp ,%zero 8 fp))
@@ -3436,7 +3450,7 @@
                              (set! ,%fp6 ,(%mref ,%sp ,%zero 24 fp))
                              (set! ,%fp7 ,(%mref ,%sp ,%zero 32 fp))
                              (set! ,%fp8 ,(%mref ,%sp ,%zero 40 fp))
-                             (set! ,%sp ,(%inline + ,%sp (immediate 48)))
+                             (set! ,%sp ,(%inline + ,%sp (immediate 64)))
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))
                              (set! ,%r13 ,(%inline pop))
@@ -3444,7 +3458,7 @@
                              (set! ,%rsi ,(%inline pop))
                              (set! ,%rdi ,(%inline pop))
                              (set! ,%rbp ,(%inline pop))
-                             (set! ,%rbx ,(%inline pop))))
+                             (set! ,%rbx ,(%inline pop)))
                            (%seq
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))

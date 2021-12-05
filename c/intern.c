@@ -97,7 +97,7 @@ void S_resize_oblist(void) {
     }
   }
 
-  S_freemem(S_G.oblist, S_G.oblist_length * sizeof(bucket *));
+  S_freemem(S_G.oblist, S_G.oblist_length * sizeof(bucket *), 0);
   S_G.bytesof[static_generation][countof_oblist] += (new_oblist_length - S_G.oblist_length) * sizeof(bucket *);
 
   S_G.oblist_length = new_oblist_length;

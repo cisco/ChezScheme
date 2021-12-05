@@ -434,15 +434,6 @@ workdir $W/pkg
 (cd $W; workln "$upsrcdir"/makefiles/installsh installsh)
 (cd $W; workln "$upsrcdir"/scheme.1.in scheme.1.in)
 
-case $M in
-  *nt)
-    (cd $W/c; make source > /dev/null 2>&1)
-    (cd $W/s; make source > /dev/null 2>&1)
-    (cd $W/mats; make source > /dev/null 2>&1)
-    ;;
-esac
-
-
 cat > $W/s/Mf-config << END
 upupsrcdir=$upupsrcdir
 upupupbootdir=$upupupbootdir
@@ -453,5 +444,25 @@ END
 cat > $W/Mf-config << END
 srcdir=$srcdir
 END
+
+# temporary; replaced by `configure`, but needed for *nt
+cat > $W/c/Mf-config << END
+upupsrcdir=$upupsrcdir
+m=$M
+END
+
+# temporary; replaced by `configure`, but needed for *nt
+cat > $W/mats/Mf-config << END
+upupsrcdir=$upupsrcdir
+m=$M
+END
+
+case $M in
+  *nt)
+    (cd $W/c; make source > /dev/null 2>&1)
+    (cd $W/s; make source > /dev/null 2>&1)
+    (cd $W/mats; make source > /dev/null 2>&1)
+    ;;
+esac
 
 exit 0

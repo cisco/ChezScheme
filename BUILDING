@@ -276,20 +276,31 @@ The makefile supports several targets:
 
 WINDOWS VIA COMMAND PROMPT
 
-To build the Chez Scheme executable using Microsoft Visual Studio,
-first set up command-line tools. The "c\vs.bat" script can help if you
-supply `amd64` for a 64-bit build or `x86` for a 32-bit build:
+To build on Windows with Microsoft Visual Studio, you'll need initial
+boot files for Chez Scheme. The simplest approach is to install Racket
+and run
+
+  racket rktboot/main.rkt --machine <machine type>
+
+where the part after `--machine` is either `ta6nt` (64-bit threaded),
+`a6nt` (64-bit non-threaded), `ti3nt` (32-bit threaded), or `i3nt`
+(32-bit non-threaded). You may have to supply the full path to your
+Racket installation.
+
+Next, make sure you've set up Microsoft Visual Studio command-line
+tools. The "c\vs.bat" script can help if you supply `amd64` for a
+64-bit build or `x86` for a 32-bit build:
 
   c\vs.bat amd64
 
-Then, run "c\build.bat" with a machine type, either `ta6nt` (64-bit
-threaded), `a6nt` (64-bit non-threaded), `ti3nt` (32-bit threaded), or
-`i3nt` (32-bit non-threaded):
+Finally, run "c\build.bat" with the same <machine type> as when
+creating boot files:
 
-  c\build.bat ta6nt
+  c\build.bat <machine type>
 
 The resulting executable in "<machine type>\bin\<machine type>" relies
-on bootfiles in "..\boot\<machine type>" relative to the executable.
+on generated boot files in "..\boot\<machine type>" relative to the
+executable.
 
 
 WINDOWS VIA SHELL
@@ -310,8 +321,8 @@ for Linux on Windows:
   env OS=Windows_NT make
 
 The generated executables "scheme.exe" and "petite.exe" are in
-"<machine type>\bin\<machine type>", and each relies on bootfiles in
-"..\boot\<machine type>" relative to the executable.
+"<machine type>\bin\<machine type>", and each relies on generated boot
+files in "..\boot\<machine type>" relative to the executable.
 
 If you're using Visual Studio 2019, install "Desktop development with
 C++" on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs"
@@ -372,5 +383,5 @@ Then, make with "c/Mf-<machine type>" while supplying `cross=t` and
   (cd ta6nt/c && make -f Mf-ta6nt cross=t o=o)
 
 The executable is written to <machine type>/bin/<machine type>, and it
-should be installed with bootfiles in ../boot/<machine type>/ relative
-to the executable.
+should be installed with boot files in ../boot/<machine type>/
+relative to the executable.

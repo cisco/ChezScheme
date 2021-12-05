@@ -209,6 +209,9 @@ struct timespec;
 #define time_t __time64_t
 #define GET_TIME _time64
 #endif
+#if defined(_WIN64) && !defined(__MINGW32__)
+# define PROVIDE_WINDOWS_UNWIND_INFO
+#endif
 #endif
 
 #if defined(__OpenBSD__) && !defined(__Bitrig__)
@@ -447,6 +450,12 @@ typedef char tputsputcchar;
 # define NO_THREADS_UNUSED /* empty */
 #else
 # define NO_THREADS_UNUSED UNUSED
+#endif
+
+#if defined(PROVIDE_WINDOWS_UNWIND_INFO)
+# define UNUSED_UNLESS_UNWIND /* empty */
+#else
+# define UNUSED_UNLESS_UNWIND UNUSED
 #endif
 
 #if defined(__has_feature)
