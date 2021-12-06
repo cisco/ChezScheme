@@ -15,14 +15,15 @@ src = def.ss edit.ss fact.ss fatfib.ss fft.ss fib.ss freq.ss interpret.ss\
  scons.ss setof.ss socket.ss unify.ss compat.ss ez-grammar-test.ss
 obj = ${src:%.ss=%.so}
 
-Scheme = ../bin/scheme -q
+Scheme = ../bin/scheme
+SchemeArg = -q
 
 .SUFFIXES:
 .SUFFIXES: .ss .so
-.ss.so: ; echo '(time (compile-file "$*"))' | "${Scheme}"
+.ss.so: ; echo '(time (compile-file "$*"))' | "${Scheme}" "${SchemeArg}"
 
 needed:	${obj}
 
-all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | "${Scheme}"
+all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | "${Scheme}" "${SchemeArg}"
 
 clean: ; rm -f $(obj) expr.md

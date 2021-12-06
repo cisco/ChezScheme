@@ -469,7 +469,7 @@ ftype.mo ${objdir}/ftype.mo: ftype.h
 hash.mo ${objdir}/hash.mo: ht.ss
 
 build-examples:
-	( cd ../examples && ${MAKE} Scheme="${Scheme}" )
+	( cd ../examples && ${MAKE} Scheme="${Scheme}" SchemeArg="" )
 	touch build-examples
 
 prettyclean:
@@ -478,7 +478,7 @@ prettyclean:
  build-examples script.all? *.html experr*.rej experr*.orig
 	rm -rf testdir*
 	rm -rf output-*
-	( cd ../examples && ${MAKE} Scheme="${Scheme}" clean )
+	( cd ../examples && ${MAKE} Scheme="${Scheme}" SchemeArg="" clean )
 
 clean: prettyclean
 	rm -f Make.out

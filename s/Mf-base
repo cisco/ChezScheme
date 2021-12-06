@@ -664,7 +664,7 @@ ${Revision}: update-revision
 	@./update-revision > ${Revision}
 
 examples:
-	( cd ../examples && ${MAKE} all Scheme="${Scheme} ../s/${patchfile}" )
+	( cd ../examples && ${MAKE} all Scheme="${Scheme}" SchemeArg="../s/${patchfile}" )
 
 prettyclean:
 	rm -f *.$m xpatch ${patch} *.patch *.so *.covin *.asm script.all header.tmp *.html
