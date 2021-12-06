@@ -528,6 +528,11 @@ typedef struct thread_gc {
 # define FREEJMPBUF(jb) free(jb)
 # define SETJMP(jb) (JMPBUF_RET(jb) = 0, __builtin_setjmp(jb), JMPBUF_RET(jb))
 # define LONGJMP(jb,n) (JMPBUF_RET(jb) = n, __builtin_longjmp(jb, 1))
+#elif defined(HAND_CODED_SETJMP_SIZE)
+# define CREATEJMPBUF() malloc(sizeof(ptr) * HAND_CODED_SETJMP_SIZE)
+# define FREEJMPBUF(jb) free(jb)
+# define SETJMP(jb) S_setjmp(jb)
+# define LONGJMP(jb,n) S_longjmp(jb, n)
 #else
 /* assuming malloc will give us required alignment */
 # define CREATEJMPBUF() malloc(sizeof(jmp_buf))

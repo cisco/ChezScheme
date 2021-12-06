@@ -872,27 +872,9 @@
    ; align sp on 16-byte boundary, taking into account 8-byte
    ; return address already pushed by caller
     [(op)
-     ((lambda (e)
-        (if-feature windows
-          (seq
-           ;; these pushes are so that unwind info works on Windows; otherwise,
-           ;; we rely on the setjmp/longjmp combination in S_call_help() and
-           ;; S_return() to save volatiles (i.e., there are no pops to go with
-           ;; these pushes); note that a change to this code needs a change
-           ;; to unwind handling
-           `(asm ,null-info ,asm-push ,%rbx)
-           `(asm ,null-info ,asm-push ,%rbp)
-           `(asm ,null-info ,asm-push ,%rdi)
-           `(asm ,null-info ,asm-push ,%rsi)
-           `(asm ,null-info ,asm-push ,%r12)
-           `(asm ,null-info ,asm-push ,%r13)
-           `(asm ,null-info ,asm-push ,%r14)
-           `(asm ,null-info ,asm-push ,%r15)
-           e)
-          e))
-      (seq
+     (seq
        `(set! ,(make-live-info) ,%sp (asm ,info ,asm-sub ,%sp (immediate 8)))
-       `(set! ,(make-live-info) ,%tc ,%Carg1)))])
+       `(set! ,(make-live-info) ,%tc ,%Carg1))])
   )
 
 ;;; SECTION 3: assembler
@@ -2286,7 +2268,7 @@
             (if (fx= entry (lookup-c-entry Sreturn))
                 ; pretend S_generic_invoke called Sreturn directly by wiping out
                 ; stack space added by invoke-prelude and jumping rather than calling
-                (emit addi (if-feature windows '(imm 72) '(imm 8)) sp-opnd
+                (emit addi '(imm 8) sp-opnd
                   (asm-helper-jump code* `(x86_64-jump 0 (entry ,entry))))
                 (let ([target `(x86_64-call 0 (entry ,entry))])
                   (if-feature windows

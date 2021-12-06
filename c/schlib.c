@@ -312,198 +312,90 @@ void S_return() {
     LONGJMP(TO_VOIDP(CAAR(yp)), 1);
 }
 
-#ifdef PROVIDE_WINDOWS_UNWIND_INFO
+#ifdef HAND_CODED_SETJMP_SIZE
 
-/* Provide approximate unwind information --- good enough for
-   stack unwinding that's friendly to exception handlers. 
-   See `S_regsiter_unwind` below for more information. */
+/*
+  We use our own setjmp/longjmp to avoid having to cooperate with
+  stack unwinding for generated code.
 
-/* Code from
-      https://docs.microsoft.com/en-us/cpp/build/exception-handling-x64
-   but with `S_` added as a prefix */
-
-typedef unsigned char S_UBYTE;
-
-typedef enum S_UNWIND_OP_CODES {
-  S_UWOP_PUSH_NONVOL = 0, /* info == register number */
-  S_UWOP_ALLOC_LARGE,     /* no info, alloc size in next 2 slots */
-  S_UWOP_ALLOC_SMALL,     /* info == size of allocation / 8 - 1 */
-  S_UWOP_SET_FPREG,       /* no info, FP = RSP + UNWIND_INFO.FPRegOffset*16 */
-  S_UWOP_SAVE_NONVOL,     /* info == register number, offset in next slot */
-  S_UWOP_SAVE_NONVOL_FAR, /* info == register number, offset in next 2 slots */
-  S_UWOP_SAVE_XMM128 = 8, /* info == XMM reg number, offset in next slot */
-  S_UWOP_SAVE_XMM128_FAR, /* info == XMM reg number, offset in next 2 slots */
-  S_UWOP_PUSH_MACHFRAME   /* info == 0: no error-code, 1: error-code */
-} UNWIND_CODE_OPS;
-
-typedef union S_UNWIND_CODE {
-  struct {
-    S_UBYTE CodeOffset;
-    S_UBYTE UnwindOp : 4;
-    S_UBYTE OpInfo   : 4;
-  };
-  USHORT FrameOffset;
-} S_UNWIND_CODE;
-
-#define S_UNW_FLAG_EHANDLER  0x01
-#define S_UNW_FLAG_UHANDLER  0x02
-#define S_UNW_FLAG_CHAININFO 0x04
-
-typedef struct S_UNWIND_INFO {
-  S_UBYTE Version       : 3;
-  S_UBYTE Flags         : 5;
-  S_UBYTE SizeOfProlog;
-  S_UBYTE CountOfCodes;
-  S_UBYTE FrameRegister : 4;
-  S_UBYTE FrameOffset   : 4;
-  S_UNWIND_CODE UnwindCode[1];
-  /*  UNWIND_CODE MoreUnwindCode[((CountOfCodes + 1) & ~1) - 1];
-   *   union {
-   *       OPTIONAL ULONG ExceptionHandler;
-   *       OPTIONAL ULONG FunctionEntry;
-   *   };
-   *   OPTIONAL ULONG ExceptionData[]; */
-} S_UNWIND_INFO;
-
-/* [end of code from docs.microsoft.com] */
-
-#define STEP_UNWIND_NODE(ui, c, off, count, instr_size, op, arg) do {	\
-    ui->UnwindCode[count-c-1].CodeOffset = off;				\
-    ui->UnwindCode[count-c-1].UnwindOp = op;				\
-    ui->UnwindCode[count-c-1].OpInfo = arg;				\
-    c++;								\
-    off += instr_size;							\
-  } while (0)
-
-#define S_INVOKE_RUNTIME_FUNCTION 0
-#define S_CALLABLE_RUNTIME_FUNCTION 1
-
-/* Probably nothing cares about the actual size, especially since
-   we're claiming a range that is well away from the actual code: */
-#define FAKE_INSTRUCTION_SIZE 4
-
-static PRUNTIME_FUNCTION S_unwind_callback(DWORD64 ControlPc, PVOID base_addr)
-{
-  /* We're supporting unwind information for code that is currently on
-     the C call stack. If `ControlPc` is in a code object in
-     CCHAIN(tc), then we can know that it's the callable protocol.
-     Otherwise, we assume the `invoke` protocol. See
-     `S_register_unwind` beloe for more. */
-  ptr tc = get_thread_context(), xp;
-
-  for (xp = CCHAIN(tc); xp != Snil; xp = Scdr(xp)) {
-    ptr code = Scdr(CDAR(xp));
-    if (!FIXMEDIATE(code)
-	&& ((DWORD64)CODEENTRYPOINT(code) <= ControlPc)
-        && ((DWORD64)((iptr)CODEENTRYPOINT(code) + CODELEN(code)) > ControlPc)) {
-      /* generate info for a callable wrapper */
-      return &(((RUNTIME_FUNCTION *)base_addr)[S_CALLABLE_RUNTIME_FUNCTION]);
-    }
-  }
-
-  return &(((RUNTIME_FUNCTION *)base_addr)[S_INVOKE_RUNTIME_FUNCTION]);
-}
-
-void S_register_unwind(void* addr, iptr num_bytes) {
-  S_UNWIND_INFO *ui;
-  int c, off, count;
-  uptr delta;
-
-  /* To provide unwind information, we reserve a page at the start of
-     each executable chunk to hold `RUNTIME_FUNCTION` records. Unwind
-     information is attached to the chunk because its addresses are
-     specified as 32-bit offsets relative to the code's base address.
-
-     We're not actually generating unwind information for each chunk
-     of code, but only generating two shapes of unwinding: one for
-     `invoke` going into Scheme code, which is lways through
-     `S_call_help`, and one for a foreign callable, which is invoked
-     directly (and then uses `S_call_help` to get to the general
-     Scheme code that's wrapped as a callable).
-
-     The unwind record that we return lies about the actual code
-     location. Instead, each unwind record claims the entire chunk as
-     a function's region. Also, the size of the code described in
-     unwind node is a lie; we could work out the actual size if we had
-     to. The assumption behind these lies is that unwinding will not
-     care, and it just needs the steps to move the stack pointer and
-     shuffle nonvolatile registers. */
-
-  ((RUNTIME_FUNCTION *)addr)[S_INVOKE_RUNTIME_FUNCTION].BeginAddress = 0;
-  ((RUNTIME_FUNCTION *)addr)[S_INVOKE_RUNTIME_FUNCTION].EndAddress = (DWORD)num_bytes;
-
-  ((RUNTIME_FUNCTION *)addr)[S_CALLABLE_RUNTIME_FUNCTION].BeginAddress = 0;
-  ((RUNTIME_FUNCTION *)addr)[S_CALLABLE_RUNTIME_FUNCTION].EndAddress = (DWORD)num_bytes;
-
-  ui = (S_UNWIND_INFO *)(((RUNTIME_FUNCTION *)addr) + 2);
-
-  /* invoke */
-  ((RUNTIME_FUNCTION *)addr)[S_INVOKE_RUNTIME_FUNCTION].UnwindData = (DWORD)((uptr)TO_PTR(ui) - (uptr)TO_PTR(addr));
-  ui->Version = 1;
-  ui->Flags = 0;
-  ui->FrameRegister = 0;
-  ui->FrameOffset = 0;
-
-  c = 0;
-  off = 0;
-
-  /* This sequence corresponds to `invoke-prelude` in "x86_64.ss" plus the call in `foreign-call` */
-  count = 10;
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 3); /* RBX */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 5); /* RBP */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 7); /* RDI */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 6); /* RSI */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 12); /* R12 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 13); /* R13 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 14); /* R14 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 15); /* R15 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_ALLOC_SMALL, 0); /* 0*8 + 8 = 8 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_ALLOC_SMALL, 3); /* 3*8 + 8 = 32  for `foreign call` */
-  if (c != count) 
-    S_error_abort("inconsistent unwind");
+  Instead of getting an assembler involved in the Scheme build
+  process, we just directly use the machine-code bytes that an
+  assembler would generate.
+*/
   
-  ui->SizeOfProlog = off;
-  ui->CountOfCodes = c;
-  
-  /* next ui location, conservatively aligned: */
-  delta = (uptr)TO_PTR(&(ui->UnwindCode[c])) - (uptr)TO_PTR(addr);
-  delta = (delta + 31) & (~31);
-  ui = TO_VOIDP((uptr)TO_PTR(addr) + delta);
+unsigned char setjmp_code[] = {
+  0x48, 0x89, 0x19,                                     /* mov    %rbx,(%rcx)    */
+  0x48, 0x89, 0x69, 0x08,                               /* mov    %rbp,0x8(%rcx) */
+  0x48, 0x89, 0x79, 0x10,                               /* mov    %rdi,0x10(%rcx) */
+  0x48, 0x89, 0x71, 0x18,                               /* mov    %rsi,0x18(%rcx) */
+  0x48, 0x89, 0x61, 0x20,                               /* mov    %rsp,0x20(%rcx) */
+  0x4c, 0x89, 0x61, 0x28,                               /* mov    %r12,0x28(%rcx) */
+  0x4c, 0x89, 0x69, 0x30,                               /* mov    %r13,0x30(%rcx) */
+  0x4c, 0x89, 0x71, 0x38,                               /* mov    %r14,0x38(%rcx) */
+  0x4c, 0x89, 0x79, 0x40,                               /* mov    %r15,0x40(%rcx) */
+  0x0f, 0xae, 0x59, 0x48,                               /* stmxcsr 0x48(%rcx)     */
+  0xf3, 0x0f, 0x7f, 0x71, 0x50,                         /* movdqu %xmm6,0x50(%rcx) */
+  0xf3, 0x0f, 0x7f, 0x79, 0x60,                         /* movdqu %xmm7,0x60(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0x41, 0x70,                   /* movdqu %xmm8,0x70(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0x89, 0x80, 0x00, 0x00, 0x00, /* movdqu %xmm9,0x80(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0x91, 0x90, 0x00, 0x00, 0x00, /* movdqu %xmm10,0x90(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0x99, 0xa0, 0x00, 0x00, 0x00, /* movdqu %xmm11,0xa0(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0xa1, 0xb0, 0x00, 0x00, 0x00, /* movdqu %xmm12,0xb0(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0xa9, 0xc0, 0x00, 0x00, 0x00, /* movdqu %xmm13,0xc0(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0xb1, 0xd0, 0x00, 0x00, 0x00, /* movdqu %xmm14,0xd0(%rcx) */
+  0xf3, 0x44, 0x0f, 0x7f, 0xb9, 0xe0, 0x00, 0x00, 0x00, /* movdqu %xmm15,0xe0(%rcx) */
+  0x48, 0x8b, 0x04, 0x24,                               /* mov    (%rsp),%rax */
+  0x48, 0x89, 0x81, 0xf0, 0x00, 0x00, 0x00,             /* mov    %rax,0xf0(%rcx) */
+  0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00,             /* mov    $0x0,%rax */
+  0xc3                                                  /* ret */
+};
 
-  /* callable */
-  ((RUNTIME_FUNCTION *)addr)[S_CALLABLE_RUNTIME_FUNCTION].UnwindData = (DWORD)((uptr)TO_PTR(ui) - (uptr)TO_PTR(addr));
-  ui->Version = 1;
-  ui->Flags = 0;
-  ui->FrameRegister = 0;
-  ui->FrameOffset = 0;
+unsigned char longjmp_code[] = {
+  0x48, 0x8b, 0x19,                                     /* mov    (%rcx),%rbx */
+  0x48, 0x8b, 0x69, 0x08,                               /* mov    0x8(%rcx),%rbp */
+  0x48, 0x8b, 0x79, 0x10,                               /* mov    0x10(%rcx),%rdi */
+  0x48, 0x8b, 0x71, 0x18,                               /* mov    0x18(%rcx),%rsi */
+  0x48, 0x8b, 0x61, 0x20,                               /* mov    0x20(%rcx),%rsp */
+  0x4c, 0x8b, 0x61, 0x28,                               /* mov    0x28(%rcx),%r12 */
+  0x4c, 0x8b, 0x69, 0x30,                               /* mov    0x30(%rcx),%r13 */
+  0x4c, 0x8b, 0x71, 0x38,                               /* mov    0x38(%rcx),%r14 */
+  0x4c, 0x8b, 0x79, 0x40,                               /* mov    0x40(%rcx),%r15 */
+  0x0f, 0xae, 0x51, 0x48,                               /* ldmxcsr 0x48(%rcx)     */
+  0xf3, 0x0f, 0x6f, 0x71, 0x50,                         /* movdqu 0x50(%rcx),%xmm6 */
+  0xf3, 0x0f, 0x6f, 0x79, 0x60,                         /* movdqu 0x60(%rcx),%xmm7 */
+  0xf3, 0x44, 0x0f, 0x6f, 0x41, 0x70,                   /* movdqu 0x70(%rcx),%xmm8 */
+  0xf3, 0x44, 0x0f, 0x6f, 0x89, 0x80, 0x00, 0x00, 0x00, /* movdqu 0x80(%rcx),%xmm9 */
+  0xf3, 0x44, 0x0f, 0x6f, 0x91, 0x90, 0x00, 0x00, 0x00, /* movdqu 0x90(%rcx),%xmm10 */
+  0xf3, 0x44, 0x0f, 0x6f, 0x99, 0xa0, 0x00, 0x00, 0x00, /* movdqu 0xa0(%rcx),%xmm11 */
+  0xf3, 0x44, 0x0f, 0x6f, 0xa1, 0xb0, 0x00, 0x00, 0x00, /* movdqu 0xb0(%rcx),%xmm12 */
+  0xf3, 0x44, 0x0f, 0x6f, 0xa9, 0xc0, 0x00, 0x00, 0x00, /* movdqu 0xc0(%rcx),%xmm13 */
+  0xf3, 0x44, 0x0f, 0x6f, 0xb1, 0xd0, 0x00, 0x00, 0x00, /* movdqu 0xd0(%rcx),%xmm14 */
+  0xf3, 0x44, 0x0f, 0x6f, 0xb9, 0xe0, 0x00, 0x00, 0x00, /* movdqu 0xe0(%rcx),%xmm15 */
+  0x48, 0x8b, 0x81, 0xf0, 0x00, 0x00, 0x00,             /* mov    0xf0(%rcx),%rax */
+  0x48, 0x89, 0x04, 0x24,                               /* mov    %rax,(%rsp) */
+  0x48, 0x8b, 0xc2,                                     /* mov    %rdx,%rax */
+  0xc3                                                  /* ret */
+};
 
-  c = 0;
-  off = 0;
+int (*S_setjmp)(void *b);
+void (*S_longjmp)(void *b, int v);
 
-  /* This sequence corresponds to `asm-foreign-callable` in "x86_64.ss" plus `c-simple-call` */
-  count = 11;
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 3); /* RBX */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 5); /* RBP */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 7); /* RDI */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 6); /* RSI */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 12); /* R12 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 13); /* R13 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 14); /* R14 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_PUSH_NONVOL, 15); /* R15 */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_ALLOC_SMALL, 1); /* 1*8 + 8 = 16 bytes for active state */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_ALLOC_SMALL, 6); /* 6*8 + 8 = 48 bytes (6 doubles) + 8 align */
-  STEP_UNWIND_NODE(ui, c, off, count, FAKE_INSTRUCTION_SIZE, S_UWOP_ALLOC_SMALL, 3); /* 3*8 + 8 = 32 bytes from c-simple-call */
-  if (c != count) 
-    S_error_abort("inconsistent unwind");
+extern void S_init_hand_coded_setjmp() {
+  void *addr;
+  int longjmp_offset;
 
-  ui->SizeOfProlog = off;
-  ui->CountOfCodes = c;
-  
-  RtlInstallFunctionTableCallback(((DWORD64)addr)|3, (DWORD64)addr, (DWORD)num_bytes, S_unwind_callback, addr, NULL);
-}
+  longjmp_offset = (sizeof(setjmp_code) + 31) & ~31;
 
-void S_unregister_unwind(void* addr, UNUSED iptr num_bytes) {
-  RtlDeleteFunctionTable(TO_VOIDP(((DWORD64)addr)|3));
+  addr = VirtualAlloc((void *)0,
+                      (SIZE_T)(longjmp_offset + sizeof(longjmp_code)),
+                      MEM_COMMIT,
+                      PAGE_EXECUTE_READWRITE);
+
+  S_setjmp = addr;
+  S_longjmp = (void *)((char *)addr + longjmp_offset);
+
+  memcpy(S_setjmp, setjmp_code, sizeof(setjmp_code));
+  memcpy(S_longjmp, longjmp_code, sizeof(longjmp_code));
 }
 
 #endif

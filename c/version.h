@@ -159,8 +159,12 @@ typedef int tputsputcchar;
 typedef char *memcpy_t;
 struct timespec;
 #ifndef __MINGW32__
-# define _setjmp setjmp
-# define _longjmp longjmp
+# if defined(_WIN64)
+#  define HAND_CODED_SETJMP_SIZE 32
+# else
+#  define _setjmp setjmp
+#  define _longjmp longjmp
+# endif
 #endif
 #ifndef __MINGW32__
 #define ftruncate _chsize_s
@@ -208,9 +212,6 @@ struct timespec;
 #if defined(__MINGW32__) && (machine_type == machine_type_ti3nt || machine_type == machine_type_i3nt)
 #define time_t __time64_t
 #define GET_TIME _time64
-#endif
-#if defined(_WIN64) && !defined(__MINGW32__)
-# define PROVIDE_WINDOWS_UNWIND_INFO
 #endif
 #endif
 
@@ -450,12 +451,6 @@ typedef char tputsputcchar;
 # define NO_THREADS_UNUSED /* empty */
 #else
 # define NO_THREADS_UNUSED UNUSED
-#endif
-
-#if defined(PROVIDE_WINDOWS_UNWIND_INFO)
-# define UNUSED_UNLESS_UNWIND /* empty */
-#else
-# define UNUSED_UNLESS_UNWIND UNUSED
 #endif
 
 #if defined(__has_feature)

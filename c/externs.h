@@ -428,9 +428,8 @@ extern void S_return PROTO((void));
 extern void S_call_help PROTO((ptr tc, IBOOL singlep, IBOOL lock_ts));
 extern void S_call_one_result PROTO((void));
 extern void S_call_any_results PROTO((void));
-#ifdef PROVIDE_WINDOWS_UNWIND_INFO
-extern void S_register_unwind PROTO((void* addr, iptr num_bytes));
-extern void S_unregister_unwind PROTO((void* addr, iptr num_bytes));
+#ifdef HAND_CODED_SETJMP_SIZE
+extern void S_init_hand_coded_setjmp PROTO(());
 #endif
 
 #ifdef PORTABLE_BYTECODE

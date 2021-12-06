@@ -127,44 +127,21 @@ void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
   } else {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
     int perm = (for_code ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE);
-
-# ifdef PROVIDE_WINDOWS_UNWIND_INFO
-    /* add an extra page at the front to use for unwind info; we have
-       to keep the unwind info with the code, because the info is
-       in terms of a DWORD offset from the registered base address */
-    if (for_code) p_bytes += S_pagesize;
-# endif
-
     if ((addr = VirtualAlloc((void *)0, (SIZE_T)p_bytes, MEM_COMMIT, perm)) == (void *)0) out_of_memory();
     if ((membytes += p_bytes) > maxmembytes) maxmembytes = membytes;    
     debug(printf("getmem VirtualAlloc(%p => %p) -> %p\n", TO_VOIDP(bytes), TO_VOIDP(p_bytes), addr))
-
-# ifdef PROVIDE_WINDOWS_UNWIND_INFO
-    if (for_code) {
-      S_register_unwind(addr, p_bytes);
-      addr = TO_VOIDP((uptr)TO_PTR(addr) + S_pagesize);
-    }
-# endif
   }
 
   return addr;
 }
 
-void S_freemem(void *addr, iptr bytes, UNUSED_UNLESS_UNWIND IBOOL for_code) {
+void S_freemem(void *addr, iptr bytes, UNUSED IBOOL for_code) {
   if ((uptr)bytes < S_pagesize) {
     debug(printf("freemem free(%p, %p)\n", addr, bytes))
     membytes -= bytes;
     free(addr);
   } else {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
-# ifdef PROVIDE_WINDOWS_UNWIND_INFO
-    if (for_code) {
-      /* back up to include the page that we had reserved for unwind info */
-      addr = TO_VOIDP((uptr)TO_PTR(addr) - S_pagesize);
-      p_bytes += S_pagesize;
-      S_unregister_unwind(addr, p_bytes);
-    }
-# endif
     debug(printf("freemem VirtualFree(%p, %p => %p)\n", addr, bytes, p_bytes))
     membytes -= p_bytes;
     VirtualFree(addr, 0, MEM_RELEASE);

@@ -73,6 +73,12 @@ EXTERN chunkinfo *S_code_chunks[PARTIAL_CHUNK_POOLS+1];
 EXTERN ptr S_foreign_dynamic;
 #endif
 
+/* schlib.h */
+#ifdef HAND_CODED_SETJMP_SIZE
+EXTERN int (*S_setjmp)(void *b);
+EXTERN void (*S_longjmp)(void *b, int v);
+#endif
+
 /* globals that do need to be preserved in a saved heap */
 EXTERN struct S_G_struct {
   /* scheme.c */

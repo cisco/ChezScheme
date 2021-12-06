@@ -20,10 +20,10 @@ SchemeArg = -q
 
 .SUFFIXES:
 .SUFFIXES: .ss .so
-.ss.so: ; echo '(time (compile-file "$*"))' | "${Scheme}" "${SchemeArg}"
+.ss.so: ; echo '(time (compile-file "$*"))' | "${Scheme}" ${SchemeArg}
 
 needed:	${obj}
 
-all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | "${Scheme}" "${SchemeArg}"
+all: ; echo "(time (for-each compile-file (map symbol->string '(${src}))))" | "${Scheme}" ${SchemeArg}
 
 clean: ; rm -f $(obj) expr.md

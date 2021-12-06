@@ -995,6 +995,10 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
   S_pagesize = GETPAGESIZE();
 
   idiot_checks();
+  
+#ifdef HAND_CODED_SETJMP_SIZE
+  S_init_hand_coded_setjmp();
+#endif
 
   switch (current_state) {
     case RUNNING:
