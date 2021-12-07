@@ -2251,3 +2251,7 @@
   users to create standard ftype bindings for the native-types if that
   is preferred.
     s/ftype.ss, mats/ftype.ms
+- fix occasional 0xC0000409 STATUS_STACK_BUFFER_OVERRUN crash on 64-bit
+  Windows from Microsoft's longjmp by implementing our own setjmp/longjmp
+    c/Makefile.{a6nt,ta6nt} c/Mf-{a6nt,ta6nt} c/a6nt-jump.asm c/externs.h
+    c/types.h c/version.h release_notes/release_notes.stex
