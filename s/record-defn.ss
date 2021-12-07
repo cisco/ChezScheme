@@ -49,8 +49,8 @@ private, i.e., visible only within the methods of the record type.
 
 The following summarizes the extended syntax:
 
-  definition -> (define-record-type rtname clause ...)
-                (define-record-type (rtname maker-name predicate-name) clause ...)
+  definition -> (define-record-type <rtname> <clause> ...)
+                (define-record-type (<rtname> <maker-name> <predicate-name>) <clause> ...)
 
   A clause can be one of the define-record-type clauses, an implements clause,
   or a methods clause.
@@ -87,45 +87,41 @@ The following summarizes the extended syntax:
 
   <method-spec> -> (<method-name> <formals> <body>)
 
-  <field-name> -> <identifier>
   <rtname> -> <identifier>
+  <field-name> -> <identifier>
   <uid> -> <identifier>
   <interface-name> -> <identifier>
   <method-name> -> <identifier>
-  formals -> (<identifier>*) | <identifier> | (<identifier>+ . <identifier>)
+  <formals> -> (<identifier>*) | <identifier> | (<identifier>+ . <identifier>)
 
-notes:
+restrictions:
   - at most one of each kind of clause may be present
   - multiple methods of the same name but different arities can be present
+  - a record type with methods (including inherited methods) or implementing
+    interfaces cannot be nongenerative
 
 products:
   - The specified rtname NAME is bound to record-type information in the expand-time environment
-  - make-NAME (or other specified constructor name) is bound to creation procedure
-  - NAME? (or other specified predicate name) is bound to predicate procedure
+  - make-NAME (or other specified constructor name) is bound to a creation procedure
+  - NAME? (or other specified predicate name) is bound to a predicate procedure
   - NAME-FIELD and, for mutable fields, NAME-FIELD-SET! (or other specified accessor and
     mutator names) are bound to accessor (and mutator) procedures for each new (not
     inherited) public field FIELD.
   - new (not inherited) method names are bound to method-dispatch procedures
 
 define-interface:
-  definition -> (define-interface interface-name method*)
-              | (define-interface interface-name base-name method*)
+  definition -> (define-interface interface-name <interface-clause> ...)
+                (define-interface (interface-name predicate-name) <interface-clause> ...)
 
-  method -> (method-name formals)
+  <interface-clause> -> (parent <interface-name>)
+                        (methods <interface-method-spec>*)
+
+  <interface-method-spec> -> (<method-name> <formals>)
 
 products:
-  - interface-name is bound to interface information in the expand-time environment
+  - the specified interface-name NAME is bound to interface information in the expand-time environment
+  - NAME? (or other specified predicate name) is bound to a predicate procedure
   - new (not inherited) method names are bound to method-dispatch procedures
-|#
-
-#|
-reaching into Chez Scheme's internals for:
-  #!base-rtd
-  $make-record-type-descriptor
-  $make-record-type-descriptor/interfaces
-  $make-record-constructor-descriptor
-  $record
-  $syntax-top-level?
 |#
 
 (define require-nongenerative-clause

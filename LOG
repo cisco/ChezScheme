@@ -2284,7 +2284,7 @@
     patch-interpret-0-f-f-f, patch=interpret-0-f-t-f,
     root-experr-compile-0-f-f-f
 - removed the old oop mat files
-    mats/oop.ss, mats/oop.ms
+    mats/oop.ss (removed), mats/oop.ms (removed)
 - added missing unwrap-drtinfo call to record-type-descriptor so that
   it recognizes record types with methods.
     record-defn.ss
@@ -2299,3 +2299,5 @@
   define-record-type multiple methods clause error message.
     record-defn.ss, cpnanopass.ss, primdata.ss, record.ss,
     record.ms, root-experr-compile-0-f-f-f
+- updated comments describing the new features
+    record-defn.ss
