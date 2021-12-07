@@ -349,11 +349,17 @@ typedef struct {
 # define SETJMP(jb) (JMPBUF_RET(jb) = 0, __builtin_setjmp(jb), JMPBUF_RET(jb))
 # define LONGJMP(jb,n) (JMPBUF_RET(jb) = n, __builtin_longjmp(jb, 1))
 #else
+# ifdef _WIN64
+#  define CREATEJMPBUF() malloc(256)
+#  define SETJMP(jb) S_setjmp(jb)
+#  define LONGJMP(jb,n) S_longjmp(jb, n)
+# else
 /* assuming malloc will give us required alignment */
-# define CREATEJMPBUF() malloc(sizeof(jmp_buf))
+#  define CREATEJMPBUF() malloc(sizeof(jmp_buf))
+#  define SETJMP(jb) _setjmp(jb)
+#  define LONGJMP(jb,n) _longjmp(jb, n)
+# endif
 # define FREEJMPBUF(jb) free(jb)
-# define SETJMP(jb) _setjmp(jb)
-# define LONGJMP(jb,n) _longjmp(jb, n)
 #endif
 
 #define DOUNDERFLOW\

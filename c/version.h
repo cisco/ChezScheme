@@ -211,9 +211,7 @@ struct timespec;
 #ifndef __MINGW32__
 # define _setjmp setjmp
 # define _longjmp longjmp
-#endif
-#ifndef __MINGW32__
-#define ftruncate _chsize_s
+# define ftruncate _chsize_s
 #endif
 #define LOCK_SH 1
 #define LOCK_EX 2

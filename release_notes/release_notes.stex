@@ -1950,6 +1950,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Calls to foreign-callable procedures may cause the process to terminate with
+error 0xC0000409 STATUS\_STACK\_BUFFER\_OVERRUN on 64-bit Windows (9.5.8)}
+
+A interaction bug between Microsoft's longjmp on 64-bit Windows and foreign-callable stack
+frames has been fixed.
+
 \subsection{Calls to \protect\scheme{printf} may cause an invalid memory reference at
 compile time (9.5.8)}
 

@@ -401,6 +401,11 @@ extern int S_windows_unlink(const char *pathname);
 extern char *S_windows_getcwd(char *buffer, int maxlen);
 #endif /* WIN32 */
 
+#ifdef _WIN64
+extern int S_setjmp(void* jb);
+extern void S_longjmp(void* jb, int value);
+#endif /* _WIN64 */
+
 #ifdef FEATURE_EXPEDITOR
 /* expeditor.c */
 extern void S_expeditor_init PROTO((void));

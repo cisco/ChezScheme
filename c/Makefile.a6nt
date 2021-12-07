@@ -70,15 +70,15 @@ $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeI
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ..\zlib/zconf.h ..\zlib/zlib.h
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame.h
 
-$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
+$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib) a6nt-jump.obj
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib) a6nt-jump.obj
 
-$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 
 # nmake builds Dll twice if we list it with $(KernelLib) below
 $(KernelDll): $(KernelLib)
@@ -89,11 +89,11 @@ $(KernelDll): $(KernelLib)
 # conflicts with other dlls.  use 'depends <exefile>' to check.
 # we no longer attempt to rebase other the CRT dll since it
 # has already been signed.
-$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 	-del /f $(KernelLib)
 	-del /f $(KernelDll)
 	cl /c $(MDCFLAGS) $(csrc)
-	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
+	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib) a6nt-jump.obj
 	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
 
 $(MTMain): main.c
@@ -145,7 +145,10 @@ $(MDLZ4Lib) $(MTLZ4Lib): ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c ../lz4/lib/lz4hc
         cl /c /Fo../lz4/lib/xxhashmt.obj $(MTCFLAGS) ../lz4/lib/xxhash.c
         lib /OUT:$(MTLZ4Lib) ../lz4/lib/lz4mt.obj ../lz4/lib/lz4framemt.obj ../lz4/lib/lz4hcmt.obj ../lz4/lib/xxhashmt.obj
 
+a6nt-jump.obj: a6nt-jump.asm
+	ml64 /nologo /W3 /Zi /c a6nt-jump.asm
+
 clean:
-	-del /f $(cobj) main.obj $(KernelExp)
+	-del /f $(cobj) main.obj $(KernelExp) a6nt-jump.obj
 	-del /f mtscheme.exe
 	-del /f mdscheme.exe
