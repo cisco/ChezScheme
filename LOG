@@ -2259,7 +2259,7 @@
   the output* directories.
     mats/Mf-base
 - fixed bug in strip: was counting on the two definitions of the table
-  table record type in fasl.ss and the table record type in strip.ss being
+  record type in fasl.ss and the table record type in strip.ss being
   identical without assigning a uid.  this worked at optimize-level 3
   but not at optimize-level 2.  also eliminated an unused variable
   addr from put-padty and fixed the call to put-field to pass in the
@@ -2267,7 +2267,7 @@
     strip.ss, fasl.ss
 - added define-record-type support for declaring methods and implementing
   interfaces, along with a new define-interfaces form for defining
-  interfaces.  the implementation is based on combination of the
+  interfaces.  the implementation is based on a combination of the
   existing define-record-type code and the code for define-class
   that used to reside in mats/oop.ss.  every record-type descriptor
   now contains an slot for interfaces (accessed via
@@ -2278,8 +2278,24 @@
   the various procedures for creating record types now check to
   make sure the interfaces and extra fields are equal when verifying
   equality of nongenerative record types with the same name.
-    record-defin.ss (new), syntax.ss, cmacros.ss, cp0.ss, cpnanopass.ss,
+    record-defn.ss (new), syntax.ss, cmacros.ss, cp0.ss, cpnanopass.ss,
     mkheader.ss, pretty.ss, s/Mf-base, 
     record.ms, mats/Mf-base, 8.ms, patch-compile-0-f-t-f,
     patch-interpret-0-f-f-f, patch=interpret-0-f-t-f,
     root-experr-compile-0-f-f-f
+- removed the old oop mat files
+    mats/oop.ss, mats/oop.ms
+- added missing unwrap-drtinfo call to record-type-descriptor so that
+  it recognizes record types with methods.
+    record-defn.ss
+- changed the syntax of define-interface to be more like that of
+  define-record-type, with explicit parent and methods clauses.
+  (define-interface <name> clause ...) now defines a predicate
+  <name?> that returns true for records that support the interface,
+  and (define-interface (<name> <pred-name>) clause ...) uses
+  <pred-name> as the name of the predicate.  removed the user-visible
+  record-type-interfaces primitive and replaced it with the system
+  primitive $record-type-interfaces.  fixed a typo in the
+  define-record-type multiple methods clause error message.
+    record-defn.ss, cpnanopass.ss, primdata.ss, record.ss,
+    record.ms, root-experr-compile-0-f-f-f

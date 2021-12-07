@@ -9271,6 +9271,7 @@
     (make-<a>))
   (error? ; incorrect argument count
     (make-<a> 1 2))
+  (record-type-descriptor? (record-type-descriptor <a>))
   (begin
     (define i1 (make-<a> 3))
     #t)
@@ -9462,7 +9463,7 @@
   ; as an interface method, i.e., supply an implementation of an
   ; interface-inherited method with the wrong arity
   (begin
-    (define-interface bonk [whack (a mole)])
+    (define-interface bonk (methods [whack (a mole)]))
     #t)
   (error? ; invalid arity for whack
     (define-record-type pewter
@@ -9475,7 +9476,7 @@
   ; with the same name as an interface method, i.e., supply an implementation
   ; of an interface-inherited method with the wrong arity
   (begin
-    (define-interface bark [ham ()] [spam (y)])
+    (define-interface bark (methods [ham ()] [spam (y)]))
     #t)
   (error? ; invalid arity for whack
     (define-record-type platinum
@@ -9516,21 +9517,28 @@
 
 
   (begin
-    (define-interface i1 [fish (fry)])
-    (define-interface i2 [rats (around)])
+    (define-interface i1 (methods [fish (fry)]))
+    (define-interface i2 (methods [rats (around)]))
     #t)
 
+  (not (i1? 3))
   (error? ; fish not applicable to 3
     (fish 3 4))
   (error? ; rats not applicable to 3
     (rats 3 4))
+  (not (i1? (let () (define-record-type frob) (make-frob))))
   (error? ; fish not applicable to #<frob>
     (let ()
-      (define-record frob ())
+      (define-record-type frob)
       (record-writer (type-descriptor frob)
         (lambda (x p wr)
           (display "#<frob>" p)))
       (fish (make-frob) 4)))
+  (not (i1? (let ()
+              (define-record-type frob
+                (methods
+                  [fish (fry) 'bass]))
+              (make-frob))))
 
   (error? ; no implementation of interface method rats
     (define-record-type <d>
@@ -9721,7 +9729,7 @@
       (methods [get-x () x])))
 
   (begin
-    (define-interface istud [cram (z)])
+    (define-interface istud (methods [cram (z)]))
     (define-record-type (fritz fritzit ?fritzy)
       (fields (mutable x))
       (protocol (lambda (new) (lambda (q) (new (* q q)))))
@@ -10001,7 +10009,7 @@
 
   (error? ; m1 is not applicable to record instance b
     (let ()
-      (define-interface iface (m1 ()))
+      (define-interface iface (methods (m1 ())))
       (define-record-type a (implements iface) (fields x) (methods (m1 () (* x 2))))
       (define-record-type b (parent-rtd (record-rtd (make-a 0)) #f))
       (m1 (make-b 79))))
@@ -10251,18 +10259,22 @@
   (begin
     ;; base interface
     (define-interface <<interface-1>>
-      [imethod-1 ()]
-      [imethod-2 (x)])
+      (methods
+        [imethod-1 ()]
+        [imethod-2 (x)]))
   
     ;; sub-interface
-    (define-interface <<interface-2>> <<interface-1>>
-      [imethod-3 ()]
-      [imethod-4 (x)])
+    (define-interface <<interface-2>>
+      (parent <<interface-1>>)
+      (methods
+        [imethod-3 ()]
+        [imethod-4 (x)]))
   
     ;; base interface
     (define-interface <<interface-3>>
-      [imethod-5 ()]
-      [imethod-6 (x)])
+      (methods
+        [imethod-5 ()]
+        [imethod-6 (x)]))
   
     ;; base class w/ base interface
     (define-record-type <itest-1>
@@ -10354,15 +10366,18 @@
     ;; export interface from module
     (module test-1 (<<interface-1>> imethod-1 imethod-2)
       (define-interface <<interface-1>>
-        [imethod-1 ()]
-        [imethod-2 (v)]))
+        (methods
+          [imethod-1 ()]
+          [imethod-2 (v)])))
   
     ;; export sub-interface from module
     (module test-2 (<<interface-2>> imethod-3 imethod-4)
       (import test-1)
-      (define-interface <<interface-2>> <<interface-1>>
-        [imethod-3 ()]
-        [imethod-4 (v)]))
+      (define-interface <<interface-2>>
+        (parent <<interface-1>>)
+        (methods
+          [imethod-3 ()]
+          [imethod-4 (v)])))
   
     ;; use class w/ interface exported from module
     (module test-3 (<itest-3> make-<itest-3> imethod-1 imethod-2)

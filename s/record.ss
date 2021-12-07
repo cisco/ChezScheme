@@ -680,7 +680,7 @@
         ($oops 'record-type-generative? "~s is not a record type descriptor" rtd))
       (#3%record-type-generative? rtd)))
 
-  (set-who! record-type-interfaces
+  (set-who! $record-type-interfaces
     (lambda (rtd)
       (unless (record-type-descriptor? rtd)
         ($oops who "~s is not a record type descriptor" rtd))

@@ -1,5 +1,5 @@
 ;;; record-defn.ss
-;;; Copyright 1984-2017 Cisco Systems, Inc.
+;;; Copyright 1984-2021 Cisco Systems, Inc.
 ;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
@@ -185,16 +185,34 @@ reaching into Chez Scheme's internals for:
              #,(syntax->datum #'protocol?))]
         [_ x])))
 
+  (module ($make-diinfo $diinfo? $diinfo-rtd $diinfo-minfos unwrap-diinfo)
+    (define-vector-record ($$make-diinfo $$diinfo?)
+      $diinfo-uid
+      $diinfo-rtd
+      $diinfo-minfos)
+
+    (module ($make-diinfo $diinfo?)
+      (define the-diinfo-uid '#{diinfo cb2hekodjsht6om8o8t9g00vq-1})
+      (define ($make-diinfo rtd minfos)
+        ($$make-diinfo (datum->syntax #'* the-diinfo-uid) rtd minfos))
+      (define $diinfo?
+        (lambda (x)
+          (and ($$diinfo? x) (eq? (syntax->datum ($diinfo-uid x)) the-diinfo-uid)))))
+
+    (define (unwrap-diinfo x)
+      (syntax-case x ()
+        [#(uid rtd (mimfo ...))
+         #`#(uid
+             #,(syntax->datum #'rtd)
+             (mimfo ...))]
+        [_ x])))
+
   (define-vector-record (make-minfo minfo?)
     minfo-mname
     minfo-hidden-mname
     minfo-arity
     minfo-formals
     minfo-flat-formals)
-
-  (define-vector-record (make-interface interface?)
-    interface-rtd
-    interface-minfos)
 
   (define construct-name
     (lambda (template-identifier . args)
@@ -203,8 +221,8 @@ reaching into Chez Scheme's internals for:
           (apply string-append
                  (map (lambda (x)
                         (if (string? x)
-                            x
-                            (symbol->string (syntax->datum x))))
+                          x
+                          (symbol->string (syntax->datum x))))
                       args))))))
 
   (define parse-formals
@@ -287,77 +305,120 @@ reaching into Chez Scheme's internals for:
 
   (set! $trans-define-interface
     (lambda (x)
-      (define build-minfo
-        (lambda (mname formals)
-          (let-values ([(arity flat-formals) (parse-formals formals)])
-            (make-minfo mname "ignored" arity formals flat-formals))))
-      (define (goforit iname method-name* method-formals* base-minfo* base-rtd)
-        (for-each
-          (let ([base-mnames (map minfo-mname base-minfo*)])
-            (lambda (mname)
-              (when (free-id-member mname base-mnames)
-                (syntax-error mname "conflict with inherited interface method"))))
-          method-name*)
-        (with-syntax ([iname iname]
-                      [(method-name ...) method-name*]
-                      [(method-formals ...) method-formals*]
-                      [(base-minfo ...) base-minfo*]
-                      [(minfo ...) (map build-minfo method-name* method-formals*)])
-          (with-syntax ([iface-rtd
-                         ($make-record-type-descriptor
-                           #!base-rtd
-                           (datum iname)
-                           base-rtd
-                           #f #f #f
-                           (vector-map
-                             (lambda (x) `(immutable ,(syntax->datum (minfo-mname x))))
-                             #'#(minfo ...))
-                           'define-interface)])
-            (with-syntax ([((generic-name (generic-formals generic-flat-formals generic-index) ...) ...)
-                           (build-generic
-                             #'(minfo ...)
-                             (let ([ls (enumerate (csv7:record-type-field-names #'iface-rtd))])
-                               (list-tail ls (- (length ls) (length #'(minfo ...))))))]
-                          [opt3 (= (optimize-level) 3)])
-              (with-syntax ([((method-accessor ...) ...) (map generate-temporaries #'((generic-index ...) ...))])
-                #`(begin
-                    (define-syntax iname
-                      (make-compile-time-value
-                        #'#,(make-interface
-                              #'iface-rtd
-                              #'(base-minfo ... minfo ...))))
-                    (define (qi who ego)
-                      (or (and (or opt3 (#3%record? ego))
-                               (let ([rtd (#3%record-rtd ego)])
-                                 (let* ([v (record-type-interfaces rtd)] [n (vector-length v)])
-                                   (let loop ([i 0])
-                                     (and (fx< i n)
+      (define src x)
+      (lambda (env)
+        (define (do-define-interface iname pred-name clause*)
+          (define-flags clause-key
+            (parent        #b0000000010)
+            (methods       #b0010000000))
+          (define (parse-method x)
+            (syntax-case x ()
+              [(name formals)
+               (let-values ([(arity flat-formals) (parse-formals #'formals)])
+                 (make-minfo #'name "ignored" arity #'formals flat-formals))]))
+          (define-syntactic-monad Mclause %minfos %parent)
+          (define parse-clauses
+            (Mclause lambda (keys-seen clause*)
+              (if (null? clause*)
+                  (Mclause values () keys-seen)
+                  (syntax-case (car clause*) (methods parent)
+                    [(methods method ...)
+                     (begin
+                       (when (any-set? keys-seen (clause-key methods))
+                         (syntax-error src "interface definition has multiple methods clauses"))
+                       (Mclause parse-clauses
+                         ([%minfos (map parse-method #'(method ...))])
+                         (set-flags keys-seen (clause-key methods))
+                         (cdr clause*)))]
+                    [(parent pname)
+                     (identifier? #'pname)
+                     (let ()
+                       (when (any-set? keys-seen (clause-key parent))
+                         (syntax-error src "interface definition has multiple parent clauses"))
+                       (let ([x (unwrap-diinfo (env #'pname))])
+                         (unless ($diinfo? x)
+                           (syntax-error #'pname "define-interface: unrecognized parent interface"))
+                         (Mclause parse-clauses ([%parent x])
+                           (set-flags keys-seen (clause-key parent))
+                           (cdr clause*))))]
+                    [_ (syntax-error (car clause*) "invalid define-interface clause")]))))
+          (call-with-values
+            (lambda ()
+              (Mclause parse-clauses
+                ([%minfos '()]
+                 [%parent #f])
+                (clause-key (or))
+                clause*))
+            (Mclause lambda (keys-seen)
+              (let ([parent-iface-rtd (and %parent ($diinfo-rtd %parent))]
+                    [parent-minfos (if %parent ($diinfo-minfos %parent) '())])
+                (for-each
+                  (let ([parent-mnames (map minfo-mname parent-minfos)])
+                    (lambda (minfo)
+                      (when (free-id-member (minfo-mname minfo) parent-mnames)
+                        (syntax-error (minfo-mname minfo) "conflict with inherited interface method"))))
+                  %minfos)
+                (let ([iface-rtd
+                       ($make-record-type-descriptor
+                         #!base-rtd
+                         (datum iname)
+                         parent-iface-rtd
+                         #f #f #f
+                         (vector-map
+                           (lambda (x) `(immutable ,(syntax->datum (minfo-mname x))))
+                           (list->vector %minfos))
+                         'define-interface)])
+                  (with-syntax ([((generic-name (generic-formals generic-flat-formals generic-index) ...) ...)
+                                 (build-generic
+                                   %minfos
+                                   (let ([ls (enumerate (csv7:record-type-field-names iface-rtd))])
+                                     (list-tail ls (- (length ls) (length %minfos)))))]
+                                [opt3 (= (optimize-level) 3)])
+                    (with-syntax ([((method-accessor ...) ...) (map generate-temporaries #'((generic-index ...) ...))])
+                      #`(begin
+                          (define-syntax #,iname
+                            (make-compile-time-value
+                              #'#,($make-diinfo
+                                    iface-rtd
+                                    #`(#,@parent-minfos #,@%minfos))))
+                          ; this could be put out of line by abstracting over iface-rtd
+                          (define (qi ego)
+                            (let ([rtd (#3%record-rtd ego)])
+                              (let* ([v ($record-type-interfaces rtd)] [n (vector-length v)])
+                                (let loop ([i 0])
+                                  (and (fx< i n)
                                        (let ([iface (vector-ref v i)])
-                                         (if (#3%record? iface 'iface-rtd)
-                                             iface
-                                             (loop (fx+ i 1)))))))))
-                          (errorf who "not applicable to ~s" ego)))
-                    (define generic-name
-                      (let ([who 'generic-name]) ; can't ref generic-name pattern vble inside ... below
-                        (define method-accessor (csv7:record-field-accessor 'iface-rtd generic-index))
-                        ...
-                        (case-lambda
-                          [(ego . generic-formals)
-                           ((method-accessor (qi who ego)) ego . generic-flat-formals)]
-                          ...)))
-                    ...))))))
+                                         (if (#3%record? iface '#,iface-rtd)
+                                           iface
+                                           (loop (fx+ i 1)))))))))
+                          (define (qi! who ego)
+                            (or (and (or opt3 (record? ego)) (qi ego))
+                                (errorf who "not applicable to ~s" ego)))
+                          (define #,pred-name
+                            (lambda (x)
+                              (and (record? x) (qi x) #t)))
+                          (define generic-name
+                            (let ([who 'generic-name]) ; can't ref generic-name pattern vble inside ... below
+                              (define method-accessor (csv7:record-field-accessor '#,iface-rtd generic-index))
+                              ...
+                              (case-lambda
+                                [(ego . generic-formals)
+                                 ((method-accessor (qi! who ego)) ego . generic-flat-formals)]
+                                ...)))
+                          ...))))))))
       (syntax-case x ()
-        [(_ iname [method-name method-formals] ...)
-         (and (identifier? #'iname) (andmap identifier? #'(method-name ...)))
-         (goforit #'iname #'(method-name ...) #'(method-formals ...) '() #f)]
-        [(_ iname base-iname [method-name method-formals] ...)
-         (and (identifier? #'iname) (identifier? #'base-iname) (andmap identifier? #'(method-name ...)))
-         (lambda (r)
-           (let ([bi (r #'base-iname)])
-             (unless (interface? bi)
-               (syntax-error #'base-iname
-                 "define-interface: unrecognized base interface"))
-             (goforit #'iname #'(method-name ...) #'(method-formals ...) (interface-minfos bi) (interface-rtd bi))))])))
+        [(_ (name pred-name) clause ...)
+         (and (identifier? #'name) (identifier? #'pred-name))
+         (do-define-interface
+           #'name
+           #'pred-name
+           #'(clause ...))]
+        [(_ name clause ...)
+         (identifier? #'name)
+         (do-define-interface
+           #'name
+           (construct-name #'name #'name "?")
+           #'(clause ...))]))))
 
   (set! $trans-define-record-type
     (lambda (x)
@@ -399,7 +460,7 @@ reaching into Chez Scheme's internals for:
         (lambda (minfos)
           (lambda (iface)
             (with-syntax
-              ([irtd (interface-rtd iface)]
+              ([irtd ($diinfo-rtd iface)]
                [(hidden ...)
                 (map (lambda (iminfo)
                        (let ([mname (minfo-mname iminfo)] [arity (minfo-arity iminfo)])
@@ -411,7 +472,7 @@ reaching into Chez Scheme's internals for:
                                                  (syntax->datum mname)))]
                              [(minfo-match? (car minfos) mname arity) (minfo-hidden-mname (car minfos))]
                              [else (f (cdr minfos))]))))
-                     (unwrap-minfos (interface-minfos iface)))])
+                     (unwrap-minfos ($diinfo-minfos iface)))])
               #'(#3%$record 'irtd hidden ...)))))
       (define minfo-match?
         (lambda (minfo mname arity)
@@ -448,7 +509,7 @@ reaching into Chez Scheme's internals for:
                                         (let ([interface-mname (minfo-mname m)])
                                           (when (free-identifier=? mname interface-mname)
                                             (syntax-error mname "arity not supported by interface method"))))
-                                      (unwrap-minfos (interface-minfos i))))
+                                      (unwrap-minfos ($diinfo-minfos i))))
                                   interfaces)))
                               generics)
                           (list (reverse all-minfos)
@@ -466,7 +527,7 @@ reaching into Chez Scheme's internals for:
                                              (if (ormap
                                                    (lambda (i)
                                                      (ormap (lambda (m) (minfo-match? m mname arity))
-                                                            (unwrap-minfos (interface-minfos i))))
+                                                            (unwrap-minfos ($diinfo-minfos i))))
                                                    interfaces)
                                                  included-minfos
                                                  (cons minfo included-minfos)))))))))
@@ -484,7 +545,7 @@ reaching into Chez Scheme's internals for:
                                (if (ormap
                                      (lambda (i)
                                        (ormap (lambda (m) (minfo-match? m mname arity))
-                                         (unwrap-minfos (interface-minfos i))))
+                                         (unwrap-minfos ($diinfo-minfos i))))
                                      interfaces)
                                    generics
                                    (cons minfo generics)))))))
@@ -590,7 +651,7 @@ reaching into Chez Scheme's internals for:
                     [(methods method ...)
                      (begin
                        (when (any-set? keys-seen (clause-key methods))
-                         (syntax-error src "record-type definition has multiple method clauses"))
+                         (syntax-error src "record-type definition has multiple methods clauses"))
                        (Mclause parse-clauses
                          ([%methods (let ([ls #'(method ...)])
                                       (map parse-method ls (generate-temporaries ls)))])
@@ -717,9 +778,9 @@ reaching into Chez Scheme's internals for:
               (let* ([%mutable-fields (filter field-desc-mutator %fields)]
                      [%all-interface-names (free-id-union %interface-names (if %parent (syntax->list ($drtinfo-interface-names %parent)) '()))]
                      [%interfaces (map (lambda (x)
-                                         (let ([iface (env x)])
-                                           (unless (interface? iface) (syntax-error x "unrecognized interface"))
-                                           iface))
+                                         (let ([diinfo (unwrap-diinfo (env x))])
+                                           (unless ($diinfo? diinfo) (syntax-error x "unrecognized interface"))
+                                           diinfo))
                                         %all-interface-names)]
                      [%parent-minfos (if %parent (unwrap-minfos ($drtinfo-minfos %parent)) '())])
                 (if (and (null? %interfaces) (null? %methods) (null? %parent-minfos))
@@ -966,15 +1027,15 @@ reaching into Chez Scheme's internals for:
         [(_ name)
          (identifier? #'name)
          (lambda (r)
-           (define info (r #'name))
-           (cond
-             [(and (pair? info) (eq? (car info) '#{record val9xfsq6oa12q4-a}))
-              (with-syntax ([(rtd . stuff) (cdr info)])
-                #''rtd)]
-             [($drtinfo? info)
-              (let ([maybe-rtd ($drtinfo-maybe-rtd info)])
-                (if maybe-rtd #`'#,maybe-rtd ($drtinfo-rtd-expr info)))]
-             [else (syntax-error #'name (format "~a: unrecognized record" what))]))])))
+           (let ([info (unwrap-drtinfo (r #'name))])
+             (cond
+               [(and (pair? info) (eq? (car info) '#{record val9xfsq6oa12q4-a}))
+                (with-syntax ([(rtd . stuff) (cdr info)])
+                  #''rtd)]
+               [($drtinfo? info)
+                (let ([maybe-rtd ($drtinfo-maybe-rtd info)])
+                  (if maybe-rtd #`'#,maybe-rtd ($drtinfo-rtd-expr info)))]
+               [else (syntax-error #'name (format "~a: unrecognized record" what))])))])))
 
   (set! $trans-record-constructor-descriptor
     (lambda (x)
@@ -1033,17 +1094,6 @@ reaching into Chez Scheme's internals for:
         (lambda (x)
           (let ((x (syntax->datum x)))
             (if (gensym? x) x (symbol->string x)))))
-      (define construct-name
-        (lambda (template-identifier . args)
-          (datum->syntax
-            template-identifier
-            (string->symbol
-              (apply string-append
-                     (map (lambda (x)
-                            (if (string? x)
-                                x
-                                (symbol->string (syntax->datum x))))
-                          args))))))
       (define field->id
         ; field -> id | ([class] [type] id)
         ; class -> immutable | mutable
