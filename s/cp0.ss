@@ -2782,7 +2782,13 @@
             [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who . ?extras)
              (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
                $make-record-type-descriptor '$make-record-type-descriptor
-               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])))
+               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])
+
+          (define-inline 2 $make-record-type-descriptor/interfaces
+            [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?interfaces ?who . ?extras)
+             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
+               $make-record-type-descriptor '$make-record-type-descriptor/interfaces
+               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?interfaces ?who ?extras))])))
       (let ()
         ; if you update this, also update duplicate in record.ss
         (define-record-type rcd

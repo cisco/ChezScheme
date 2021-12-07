@@ -33,6 +33,7 @@
               [(foo (bar x)) x]
               [(foo x) (cons x '())]
               [(foo x y ...) (cons x (foo y ...))]))
+          (define a)
           #t)
    (equivalent-expansion? (expand '(foo)) ''())
    (equivalent-expansion? (expand '(foo (bar a))) 'a)
@@ -67,6 +68,9 @@
               (syntax-case x ()
                 [(_ keys)
                  (with-syntax ([x `,(syntax keys)]) (syntax x))])))
+          (define a)
+          (define b)
+          (define c)
           (equivalent-expansion? (expand '(foo (a b c))) '(a b c)))
    (begin (define-syntax foo ; test exponential "with" time problem
             (lambda (x)
@@ -2560,7 +2564,7 @@
     (with-implicit (a 2 c) d e))
   (error? ; 15 is not an identifier
     (with-syntax ([a 15])
-      (with-implicit (a b c) d e)))
+      (with-implicit (a b c) 1 2)))
   (eqv?
     (let ((borf 'borf-outer))
       (define-syntax frob

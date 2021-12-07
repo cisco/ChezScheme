@@ -445,6 +445,7 @@ typedef unsigned long U64;
 #define record_type_disp 0x1
 #define record_type_flags_disp 0x39
 #define record_type_flds_disp 0x31
+#define record_type_interfaces_disp 0x51
 #define record_type_mpm_disp 0x21
 #define record_type_name_disp 0x29
 #define record_type_parent_disp 0x9
@@ -508,7 +509,7 @@ typedef unsigned long U64;
 #define size_pair 0x10
 #define size_port 0x50
 #define size_ratnum 0x20
-#define size_record_type 0x50
+#define size_record_type 0x60
 #define size_rp_header 0x20
 #define size_rtd_counts 0x810
 #define size_symbol 0x30
@@ -875,6 +876,7 @@ typedef unsigned long U64;
 #define RECORDDESCFLAGS(x) (*((ptr *)((uptr)(x)+57)))
 #define RECORDDESCUID(x) (*((ptr *)((uptr)(x)+65)))
 #define RECORDDESCCOUNTS(x) (*((ptr *)((uptr)(x)+73)))
+#define RECORDDESINTERFACES(x) (*((ptr *)((uptr)(x)+81)))
 #define RECORDINSTTYPE(x) (*((ptr *)((uptr)(x)+1)))
 #define RECORDINSTIT(x,i) (((ptr *)((uptr)(x)+9))[i])
 #define CLOSCODE(p) ((ptr)((uptr)CLOSENTRY(p)-code_data_disp))

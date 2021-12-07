@@ -1434,7 +1434,8 @@
    [ptr flds]
    [ptr flags]
    [ptr uid]
-   [ptr counts]))
+   [ptr counts]
+   [ptr interfaces]))
 
 (define-constant rtd-generative #b0001)
 (define-constant rtd-opaque     #b0010)

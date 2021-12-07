@@ -147,7 +147,7 @@ coverage-files = $(abspath ../boot/$m/petite.covin ../boot/$m/scheme.covin)
 # set of mats to run
 mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread profile\
  misc cp0 5_6 5_7 5_8 6 io format 7 record hash enum 8 fx fl cfl foreign\
- ftype unix windows examples ieee date exceptions oop
+ ftype unix windows examples ieee date exceptions
 
 Examples = $(abspath ../examples)
 
@@ -312,12 +312,14 @@ $(eval $(call parallel-target-template,bullyx,doallcoverage))
 
 
 just-reports:
-	for EVAL in compile interpret ; do\
-          for O in 0 2 3 ; do\
-            for SPI in f t ; do\
-              for CP0 in f t ; do\
-                for CIS in f t ; do\
-                  $(MAKE) maybe-doreport eval=$$EVAL o=$$O spi=$$SPI cp0=$$CP0 cis=$$CIS ;\
+	for OUTDIR in output* ; do\
+          for EVAL in compile interpret ; do\
+            for O in 0 2 3 ; do\
+              for SPI in f t ; do\
+                for CP0 in f t ; do\
+                  for CIS in f t ; do\
+                    $(MAKE) maybe-doreport outdir=$$OUTDIR eval=$$EVAL o=$$O spi=$$SPI cp0=$$CP0 cis=$$CIS ;\
+                  done\
                 done\
               done\
             done\
@@ -381,9 +383,9 @@ all1: ; $(MAKE) all o=1
 all2: ; $(MAKE) all o=2
 all3: ; $(MAKE) all o=3
 
-parallel-prereqs: $(src) oop.ss ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
+parallel-prereqs: $(src) ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
 
-all: $(outdir) $(outdir)/script.all $(src) oop.ss ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
+all: $(outdir) $(outdir)/script.all $(src) ht.ss mat.so cat_flush${ExeSuffix} ${fobj} m4test.in m4test.out prettytest.ss ftype.h freq.in freq.out ${patchfile} build-examples
 	${Scheme} --verbose -q mat.so ${patchfile} < $(outdir)/script.all
 	$(MAKE) doerrors
 	$(MAKE) doreport
@@ -408,7 +410,7 @@ source:
 	$(MAKE) source2 o=2
 	$(MAKE) source3 o=3
 
-source$o: ${src} mat.ss oop.ss ht.ss cat_flush.c ${fsrc} freq.in freq.out m4test.in m4test.out $(outdir)/script.all prettytest.ss ftype.h
+source$o: ${src} mat.ss ht.ss cat_flush.c ${fsrc} freq.in freq.out m4test.in m4test.out $(outdir)/script.all prettytest.ss ftype.h
 
 rootsrc = $(shell cd ../../mats; echo *)
 ${rootsrc}:
@@ -435,7 +437,6 @@ examples.mo ${objdir}/examples.mo: m4test.in m4test.out freq.in freq.out build-e
 bytevector.mo ${objdir}/bytevector.mo: prettytest.ss
 io.mo ${objdir}/io.mo: prettytest.ss
 unix.mo ${objdir}/unix.mo io.mo ${objdir}/io.mo 6.mo ${objdir}/6.mo: cat_flush${ExeSuffix}
-oop.mo ${objdir}/oop.mo: oop.ss
 ftype.mo ${objdir}/ftype.mo: ftype.h
 hash.mo ${objdir}/hash.mo: ht.ss
 
