@@ -996,10 +996,6 @@ extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
 
   idiot_checks();
   
-#ifdef HAND_CODED_SETJMP_SIZE
-  S_init_hand_coded_setjmp();
-#endif
-
   switch (current_state) {
     case RUNNING:
       fprintf(stderr, "error (Sscheme_init): call Sscheme_deinit first to terminate\n");

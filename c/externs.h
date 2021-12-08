@@ -428,8 +428,11 @@ extern void S_return PROTO((void));
 extern void S_call_help PROTO((ptr tc, IBOOL singlep, IBOOL lock_ts));
 extern void S_call_one_result PROTO((void));
 extern void S_call_any_results PROTO((void));
+
 #ifdef HAND_CODED_SETJMP_SIZE
-extern void S_init_hand_coded_setjmp PROTO(());
+/* w64setjmp.S */
+int S_setjmp(void *b);
+void S_longjmp(void *b, int v);
 #endif
 
 #ifdef PORTABLE_BYTECODE

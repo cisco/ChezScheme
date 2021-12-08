@@ -59,6 +59,8 @@ cobj=statics.obj segment.obj alloc.obj symbol.obj intern.obj gcwrapper.obj gc-01
  windows.obj\
  schlib.obj thread.obj expeditor.obj scheme.obj compress-io.obj random.obj
 
+sjobj=w64setjmp.obj
+
 hsrc=system.h types.h version.h globals.h externs.h compress-io.h segment.h atomic.h gc.c thread.h sort.h itest.c
 
 .SUFFIXES:
@@ -70,15 +72,15 @@ $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeI
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ..\zlib/zconf.h ..\zlib/zlib.h
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame.h
 
-$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
+$(MTKernelLib): $(csrc) $(sjobj) $(MTZlibLib) $(MTLZ4Lib)
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(sjobj) $(MTZlibLib) $(MTLZ4Lib)
 
-$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(MDKernelLib): $(csrc) $(sjobj) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(sjobj) $(MDZlibLib) $(MDLZ4Lib)
 
 # nmake builds Dll twice if we list it with $(KernelLib) below
 $(KernelDll): $(KernelLib)
@@ -89,12 +91,15 @@ $(KernelDll): $(KernelLib)
 # conflicts with other dlls.  use 'depends <exefile>' to check.
 # we no longer attempt to rebase other the CRT dll since it
 # has already been signed.
-$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(KernelLib): $(ResFile) $(csrc) $(sjobj) $(MDZlibLib) $(MDLZ4Lib)
 	-del /f $(KernelLib)
 	-del /f $(KernelDll)
 	cl /c $(MDCFLAGS) $(csrc)
-	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
+	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(sjobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
 	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
+
+$(sjobj): w64setjmp.S
+	ml64 /c /Cx /Fo $(sjobj) w64setjmp.S
 
 $(MTMain): main.c $(SchemeInclude)/scheme.h
 	-del /f $(MTMain)
@@ -146,6 +151,6 @@ $(MDLZ4Lib) $(MTLZ4Lib): ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c ../lz4/lib/lz4hc
         lib /OUT:$(MTLZ4Lib) ../lz4/lib/lz4mt.obj ../lz4/lib/lz4framemt.obj ../lz4/lib/lz4hcmt.obj ../lz4/lib/xxhashmt.obj
 
 clean:
-	-del /f $(cobj) main.obj $(KernelExp)
+	-del /f $(cobj) $(sjobj) main.obj $(KernelExp)
 	-del /f mtscheme.exe
 	-del /f mdscheme.exe
