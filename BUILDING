@@ -270,15 +270,15 @@ env OS=Windows_NT make
 Prerequisites:
 
 * Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed, etc.
-* Microsoft Visual Studio 2019, 2017, or 2015
+* Microsoft Visual Studio 2022, 2019, 2017, or 2015
 * WiX Toolset (for making an install)
 
 Be sure that git config core.autocrlf is set to false.
 
-If you're using Visual Studio 2019, install "Desktop development with C++"
-on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs" on the
-"Individual components" tab under the "Compilers, build tools, and runtimes"
-section.
+If you're using Visual Studio 2022 or 2019, install "Desktop
+development with C++" on the "Workloads" tabs and the "C++ 2022 [or
+2019] Redistributable MSMs" on the "Individual components" tab under
+the "Compilers, build tools, and runtimes" section.
 
 To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
 set PATH:

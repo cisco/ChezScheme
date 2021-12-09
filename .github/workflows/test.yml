@@ -8,25 +8,33 @@ jobs:
       matrix:
         config:
           - machine: a6osx
-            os: macos-latest
+            os: macos-11
           - machine: ta6osx
-            os: macos-latest
+            os: macos-11
           - machine: i3le
-            os: ubuntu-latest
+            os: ubuntu-20.04
           - machine: ti3le
-            os: ubuntu-latest
+            os: ubuntu-20.04
           - machine: a6le
-            os: ubuntu-latest
+            os: ubuntu-20.04
           - machine: ta6le
-            os: ubuntu-latest
+            os: ubuntu-20.04
           - machine: i3nt
-            os: windows-latest
+            os: windows-2019
+          - machine: i3nt
+            os: windows-2022
           - machine: ti3nt
-            os: windows-latest
+            os: windows-2019
+          - machine: ti3nt
+            os: windows-2022
           - machine: a6nt
-            os: windows-latest
+            os: windows-2019
+          - machine: a6nt
+            os: windows-2022
           - machine: ta6nt
-            os: windows-latest
+            os: windows-2019
+          - machine: ta6nt
+            os: windows-2022
     runs-on: ${{ matrix.config.os }}
     env:
       TARGET_MACHINE: ${{ matrix.config.machine }}
