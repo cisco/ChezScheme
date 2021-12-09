@@ -2255,3 +2255,5 @@
   Windows from Microsoft's longjmp by implementing our own setjmp/longjmp
     c/Makefile.{a6nt,ta6nt} c/Mf-{a6nt,ta6nt} c/a6nt-jump.asm c/externs.h
     c/types.h c/version.h release_notes/release_notes.stex
+- support Microsoft Visual Studio 2022 on Windows
+    BUILDING, c/vs.bat, wininstall/locate-vcredist.bat

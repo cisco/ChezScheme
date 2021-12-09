@@ -25,7 +25,7 @@ On Unix variants:
 
 On Windows:
 
- * Microsoft Visual Studio 2019, 2017, or 2015
+ * Microsoft Visual Studio 2022, 2019, 2017, or 2015
 
  or
 
@@ -324,10 +324,10 @@ The generated executables "scheme.exe" and "petite.exe" are in
 "<machine type>\bin\<machine type>", and each relies on generated boot
 files in "..\boot\<machine type>" relative to the executable.
 
-If you're using Visual Studio 2019, install "Desktop development with
-C++" on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs"
-on the "Individual components" tab under the "Compilers, build tools,
-and runtimes" section.
+If you're using Visual Studio 2022 or 2019, install "Desktop
+development with C++" on the "Workloads" tabs and the "C++ 20[xx]
+Redistributable MSMs" on the "Individual components" tab under the
+"Compilers, build tools, and runtimes" section.
 
 The executables are dynamically linked against the Microsoft Visual
 C++ run-time library vcruntime140.dll. If you distribute the

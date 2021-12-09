@@ -7,7 +7,7 @@
   SET "Path64=%CommonProgramFiles(x86)%\Merge Modules\Microsoft_VC140_CRT_x64.msm"
 )
 
-@IF "%VisualStudioVersion%"=="15.0" or "%VisualStudioVersion%"=="16.0" (
+@IF "%VisualStudioVersion%"=="15.0" or "%VisualStudioVersion%"=="16.0" or "%VisualStudioVersion%"=="17.0" (
   @PUSHD "%VCINSTALLDIR%Redist\MSVC"
   @FOR /D %%D IN (*) DO (
     @PUSHD %%D
