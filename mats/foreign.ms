@@ -3252,7 +3252,7 @@
                        (let loop ([i 10])
                          (unless (zero? i)
                            (let ([spin (eval '(foreign-procedure __collect_safe "spin_a_while" (int unsigned unsigned) unsigned))])
-                             (spin 1000000 0 1))
+                             (spin 100000000 0 1))
                            (loop (sub1 i))))
                        (mutex-acquire m)
                        (set! done? #t)
