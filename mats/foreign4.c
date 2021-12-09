@@ -167,7 +167,7 @@ EXPORT unsigned spin_a_while(int amt, unsigned a, unsigned b)
 
   /* A loop that the compiler is unlikely to optimize away */
   for (i = 0; i < amt; i++) {
-    a = a + 1;
+    a = a + b;
     b = b + a;
   }
 
