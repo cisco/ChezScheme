@@ -2257,3 +2257,5 @@
     c/types.h c/version.h release_notes/release_notes.stex
 - support Microsoft Visual Studio 2022 on Windows
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
+- make threaded foreign mats more robust
+    mats/foreign.ms

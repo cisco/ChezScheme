@@ -3170,12 +3170,18 @@
   (begin
     (define-ftype thread-callback-T (function __collect_safe (double) double))
     (define (call-with-thread-callback cb-proc proc)
-      (let ([callback (make-ftype-pointer thread-callback-T cb-proc)])
-        (let ([r (proc callback)])
-          (unlock-object
-           (foreign-callable-code-object
-            (ftype-pointer-address callback)))
-          r)))
+      (let* ([exception #f]
+             [callback (make-ftype-pointer thread-callback-T
+                         (lambda (arg)
+                           ;; Don't let an exception reset this tread.
+                           (guard [c (else (set! exception c) 0.0)]
+                             (cb-proc arg))))]
+             [r (proc callback)])
+        (unlock-object
+         (foreign-callable-code-object
+          (ftype-pointer-address callback)))
+        (when exception (raise exception))
+        r))
     (define (call-in-unknown-thread-1 proc arg n-times)
       ;; Baseline implementation that uses the current thread
       (let loop ([i 0] [arg arg])
@@ -3246,14 +3252,17 @@
   ;; current code object.
   (or (not (threaded?))
       (let ([m (make-mutex)]
+            [exception #f]
             [done? #f]
             [ok? #t])
         (fork-thread (lambda ()
-                       (let loop ([i 10])
-                         (unless (zero? i)
-                           (let ([spin (eval '(foreign-procedure __collect_safe "spin_a_while" (int unsigned unsigned) unsigned))])
-                             (spin 100000000 0 1))
-                           (loop (sub1 i))))
+                       ;; Don't let an exception reset this thread.
+                       (guard [c (else (set! exception c))]
+                         (let loop ([i 10])
+                           (unless (zero? i)
+                             (let ([spin (eval '(foreign-procedure __collect_safe "spin_a_while" (int unsigned unsigned) unsigned))])
+                               (spin 100000000 0 1))
+                             (loop (sub1 i)))))
                        (mutex-acquire m)
                        (set! done? #t)
                        (mutex-release m)))
@@ -3267,6 +3276,7 @@
                   (eval '(foreign-procedure "spin_a_while" () void))
                   (loop (sub1 i))))
               (loop))))
+        (when exception (raise exception))
         ok?))
 )
 
