@@ -57,7 +57,7 @@ jobs:
       - name: Build Chez Scheme
         run: .github/workflows/build.sh
       - name: Run tests
-        timeout-minutes: 45
+        timeout-minutes: 30
         run: .github/workflows/test.sh
       - name: Archive workspace
         if: always()
