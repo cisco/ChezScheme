@@ -1,7 +1,8 @@
 Chez Scheme is both a programming language and an implementation of
 that language, with supporting tools and documentation.
 This variant of Chez Scheme is extended to support the implementation
-of [Racket](https://racket-lang.org/).
+of [Racket](https://racket-lang.org/), and the main additions are
+listed at the end of this README.
 
 Supported platforms:
 
@@ -74,11 +75,11 @@ Chez Scheme, see [implementation notes](IMPLEMENTATION.md).
 
 For more information on Chez Scheme, see the [Chez Scheme Project Page](https://cisco.github.io/ChezScheme/).
 
-Major additions to Chez Scheme in the Racket variant:
+Main additions to Chez Scheme in the Racket variant:
 
  * AArch64 support
 
- * pb (Portable bytecode) support, which is mainly useful for
+ * Portable bytes (pb) support, which is mainly useful for
    bootstrapping a build on any supported platform
 
  * Unboxed floating-point arithmetic and flvectors
@@ -91,5 +92,7 @@ Major additions to Chez Scheme in the Racket variant:
    old-generation objects (instead of always copying), and
    reachability-based memory accounting
 
- * Ordered finalization, immobile (but collectable) objects, and
-   weak/ephemeron generic hash tables
+ * Ordered finalization, immobile (but collectable) objects,
+   weak/ephemeron generic hash tables, and reference bytevectors
+
+ * Faster multiplication and division for large exact numbers
