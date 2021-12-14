@@ -8306,6 +8306,7 @@
                     (include "types.ss")
                     (make-code-info
                       (info-lambda-src info)
+                      (compile-procedure-realm)
                       (info-lambda-sexpr info)
                       (and (eq? (info-lambda-closure-rep info) 'closure)
                            (let f ([fv* (info-lambda-fv* info)] [n 0])
@@ -8333,7 +8334,11 @@
                        (info-lambda-src info)) =>
                   (lambda (src)
                     (include "types.ss")
-                    (make-code-info src #f #f #f #f))]
+                    (make-code-info src (compile-procedure-realm) #f #f #f #f))]
+                 [(compile-procedure-realm)
+                  => (lambda (r)
+                       (include "types.ss")
+                       (make-code-info #f r #f #f #f #f))]
                  [else #f])
                (info-lambda-pinfo* info))
              (lambda (p) (c-trace (info-lambda-name info) code-size trace* p)))])

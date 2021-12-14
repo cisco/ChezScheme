@@ -1782,6 +1782,16 @@ as part of a binary-only package.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{compile-procedure-realm}{\categorythreadparameter}{compile-procedure-realm}
+\listlibraries
+\endentryheader
+
+This parameter can be set to \scheme{#f} or to a symbol. The realm of
+a procedure (or, more precisely, a procedure's code object) is
+accessible though the inspector.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{vfasl-convert-file}{\categoryprocedure}{(vfasl-convert-file \var{input-path} \var{output-path} \var{base-boots})}
 \returns unspecified
 \listlibraries

@@ -270,15 +270,28 @@
   (foreign-procedure "(cs)fxdiv" (fixnum fixnum)
     fixnum))
 
-(define $procedure-name
+(define-who $procedure-name
   (lambda (x)
     (unless (procedure? x)
-      ($oops '$procedure-name "~s is not a procedure" x))
+      ($oops who "~s is not a procedure" x))
     (let name ([x x])
       (let ([code ($closure-code x)])
         (if ($code-arity-in-closure? code)
             (name ($closure-ref x 0))
             ($code-name code))))))
+
+(define-who $procedure-realm
+  (lambda (x)
+    (unless (procedure? x)
+      ($oops who "~s is not a procedure" x))
+    (let realm ([x x])
+      (let ([code ($closure-code x)])
+        (if ($code-arity-in-closure? code)
+            (realm ($closure-ref x 0))
+            (let ([info ($code-info code)])
+              (include "types.ss")
+              (and (code-info? info)
+                   (code-info-realm info))))))))
 
 (define-who procedure-arity-mask
   (lambda (x)

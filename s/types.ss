@@ -51,11 +51,12 @@
 (define-record-type code-info
   (fields
     (immutable src)
+    (immutable realm)   ; symbol or #f
     (immutable sexpr)
     (immutable free)    ; vector of elts, elt = symbols #f
     (immutable live)    ; vector of pairs each mapping a symbol or pair of symbols to an index
     (immutable rpis))   ; vector of rp-infos
-  (nongenerative #{code-info gr886ae7iuw4wt9ft4vxym-2})
+  (nongenerative #{code-info let7gjkji5i3z5a2rnityfvf6-0})
   (sealed #t))
 
 (define-record-type rp-info

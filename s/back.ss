@@ -217,6 +217,13 @@
 (define-who compile-omit-concatenate-support
   ($make-thread-parameter #f (lambda (x) (and x #t))))
 
+(define-who compile-procedure-realm
+  ($make-thread-parameter #f (lambda (x)
+                               (when x
+                                 (unless (symbol? x)
+                                   ($oops who "~a not is #f or a symbol" x)))
+                               x)))
+
 (define-who debug-level
   ($make-thread-parameter
     1

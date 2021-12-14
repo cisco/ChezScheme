@@ -2217,7 +2217,7 @@
       (foreign-procedure "(cs)s_get_reloc"
         (scheme-object boolean) scheme-object))
 
-    (module (get-code-src get-code-sexpr)
+    (module (get-code-src get-code-sexpr get-code-realm)
       (include "types.ss")
       (define get-code-src
         (lambda (x)
@@ -2226,7 +2226,11 @@
       (define get-code-sexpr
         (lambda (x)
           (let ([info ($code-info x)])
-            (and (code-info? info) (code-info-sexpr info))))))
+            (and (code-info? info) (code-info-sexpr info)))))
+      (define get-code-realm
+        (lambda (x)
+          (let ([info ($code-info x)])
+            (and (code-info? info) (code-info-realm info))))))
 
     (define make-code-object
       (make-object-maker code (x)
@@ -2241,6 +2245,7 @@
             [else #f])]
         [source-path () (return-source (get-code-src x))]
         [source-object () (get-code-src x)]
+        [realm () (get-code-realm x)]
         [reloc () (make-object (get-reloc-objs x #f))]
         [reloc+offset () (make-object (get-reloc-objs x #t))]
         [size (g) (compute-size x g)]
