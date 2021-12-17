@@ -877,6 +877,39 @@ Notes:
                                      e2 r1 plxc))
                                #f)]))])
 
+      (let ()
+        (define-syntax define-specialize/fxfl
+          (syntax-rules ()
+            [(_ lev prim fxprim flprim)
+             (define-specialize/fxfl lev prim fxprim flprim #t)]
+            [(_ lev prim fxprim flprim boolean?)
+             (define-specialize lev prim
+               ; Arity is checked before calling this handle.
+               [e* (let ([r* (get-type e*)])
+                     (cond
+                       [(andmap (lambda (r) (predicate-implies? r 'fixnum)) r*)
+                        (let ([pr (lookup-primref 3 'fxprim)])
+                          (values `(call ,preinfo ,pr ,e* (... ...))
+                                  (if boolean? 'boolean 'fixnum)
+                                  ntypes #f #f))]
+                       [(andmap (lambda (r) (predicate-implies? r 'flonum)) r*)
+                        (let ([pr (lookup-primref 3 'flprim)])
+                          (values `(call ,preinfo ,pr ,e* (... ...))
+                                  (if boolean? 'boolean 'flonum)
+                                  ntypes #f #f))]
+                       [else
+                        (values `(call ,preinfo ,pr ,e* (... ...))
+                                ret ntypes #f #f)]))])]))
+
+        (define-specialize/fxfl 2 (< r6rs:<) fx< fl<)
+        (define-specialize/fxfl 2 (<= r6rs:<=) fx<= fl<=)
+        (define-specialize/fxfl 2 (= r6rs:=) fx= fl=)
+        (define-specialize/fxfl 2 (> r6rs:>) fx> fl>)
+        (define-specialize/fxfl 2 (>= r6rs:>=) fx>= fl>=)
+        (define-specialize/fxfl 2 min fxmin flmin #f)
+        (define-specialize/fxfl 2 max fxmax flmax #f)
+      )
+
       (define-specialize 2 list
         [() (values null-rec null-rec ntypes #f #f)] ; should have been reduced by cp0
         [e* (values `(call ,preinfo ,pr ,e* ...) 'pair ntypes #f #f)])

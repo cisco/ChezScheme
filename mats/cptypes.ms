@@ -406,6 +406,33 @@
        (if (if t (unbox b) #f) #f (box? b))))
 )
 
+(mat cptypes-type-specialize-numbers
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (= x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (#3%fx= x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (= x y)))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%fl= x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (> x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (#3%fx> x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (> x y)))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%fl> x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (max x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (#3%fxmax x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (max x y)))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%flmax x y))))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (fixnum? (max x y))))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y)) (#3%fxmax x y) #t)))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (flonum? (max x y))))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%flmax x y) #t)))
+)
+
 (mat cptype-directly-applied-case-lambda
   (equal?
     (parameterize ([enable-type-recovery #t]
