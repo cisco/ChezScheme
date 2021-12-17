@@ -216,6 +216,9 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (and (fixnum? x) (zero? x)) x))
     '(lambda (x) (when (and (fixnum? x) (zero? x)) 0)))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (zero? x) 7))
+    '(lambda (x) (when (fixnum? x) 7)))
   (cptypes-equivalent-expansion?
     '(lambda (x f) (when (list-assuming-immutable? x) (f x) (list-assuming-immutable? x)))
     '(lambda (x f) (when (list-assuming-immutable? x) (f x) #t)))

@@ -1527,7 +1527,7 @@ Notes:
          [else
           (let-values ([(e2 ret types t-types f-types)
                         (Expr e2 ctxt types plxc)])
-            (values (make-seq/no-drop ctxt e1 e2) ret types t-types f-types))])]
+            (values (make-seq ctxt e1 e2) ret types t-types f-types))])]
       [(if ,[Expr/fix-tf-types : e1 'test types plxc -> e1 ret1 types1 t-types1 f-types1] ,e2 ,e3)
        (cond
          [(predicate-implies? ret1 'bottom) ;check bottom first
