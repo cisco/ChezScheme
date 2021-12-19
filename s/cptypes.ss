@@ -293,7 +293,7 @@ Notes:
              e1
              `(call ,(make-preinfo-call) ,(lookup-primref 3 '$value) ,e1))]))
 
-    #;(define (make-seq* ctxt e*) ; requires at least one operand
+    (define (make-seq* ctxt e*) ; requires at least one operand
       (if (null? (cdr e*))
           (car e*)
           (make-seq ctxt (car e*) (make-seq* ctxt (cdr e*)))))
@@ -669,10 +669,12 @@ Notes:
       ; Similar to the define-inline in other passes, but the result can't be #f.
       ; The arguments have already been analyzed, and the type of the result
       ; is available with the macro (get-type <arg>).
+      ; If the primitive is unsafe, (get-type <arg>) is the intersection of the
+      ; type of the result of <arg> and the type declared for that argumnet.
       ; A good default is (values `(call ,preinfo ,pr ,<args> ...) ret ntypes #f #f)
       ; In particular, ntypes has all the types discovered in the arguments and
       ; the types implied by the signatures. For the types before the arguments
-      ; were analyzed, use oldtypes. (See exact? for an example.)
+      ; were analyzed, use oldtypes.
       ; Also, prim-name and level repeat the information available in pr,
       ; and ctxt and plxc are available.
       (define-syntax define-specialize
@@ -917,8 +919,6 @@ Notes:
       (define-specialize 2 cdr
         [(v) (values `(call ,preinfo ,pr ,v)
                      (cond
-                       [(predicate-implies? ret 'bottom)
-                        ret]
                        [(predicate-implies? (predicate-intersect (get-type v) 'pair) '$list-pair)
                         $list-pred]
                        [else
@@ -1260,36 +1260,42 @@ Notes:
       (cond
         [(ormap (lambda (e r) (and (predicate-implies? r 'bottom) e)) e* r*)
          => (lambda (e) (unwrapped-error ctxt e))]
+        [(eq? t pred-env-bottom)
+         (let ([e* (map ensure-single-value e* r*)])
+           (values (make-seq* ctxt e*) 'bottom pred-env-bottom #f #f))]
         [else
-         (let* ([len (length e*)]
-                [ret (primref->result-predicate pr len)])
-           (let-values ([(ret t)
-                         (let loop ([e* e*] [r* r*] [n 0] [ret ret] [t t])
+         (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
+                [len (length e*)]
+                [ret (primref->result-predicate pr len)]
+                [err (or (predicate-implies? ret 'bottom)
+                         (not (arity-okay? (primref-arity pr) len)))]
+                [to-unsafe (and (not unsafe)
+                                (all-set? (prim-mask safeongoodargs) (primref-flags pr)))])
+           (let-values ([(err nr* t to-unsafe)
+                         (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [t t] [err err] [to-unsafe to-unsafe])
                            (if (null? e*)
-                               (values ret t)
-                               (let ([pred (primref->argument-predicate pr n len #t)])
+                               (values err (reverse rev-nr*) t to-unsafe)
+                               (let* ([r (car r*)]
+                                      [pred (primref->argument-predicate pr n len #t)]
+                                      [pred* (primref->argument-predicate pr n len #f)]
+                                      [nr (predicate-intersect r pred)])
                                  (loop (cdr e*)
                                        (cdr r*)
                                        (fx+ n 1)
-                                       (if (predicate-disjoint? (car r*) pred)
-                                           'bottom
-                                           ret)
-                                       (pred-env-add/ref t (car e*) pred plxc)))))])
+                                       (cons nr rev-nr*)
+                                       (pred-env-add/ref t (car e*) pred plxc)
+                                       (or err (predicate-implies? nr 'bottom))
+                                       (and to-unsafe (predicate-implies? r pred*))))))])
              (cond
-               [(or (predicate-implies? ret 'bottom)
-                    (not (arity-okay? (primref-arity pr) (length e*))))
+               [(or err (eq? t pred-env-bottom))
                 (fold-primref/default preinfo pr e* 'bottom r* ctxt pred-env-bottom oldtypes plxc)]
                [else
-                (let* ([to-unsafe (and (not (all-set? (prim-mask unsafe) (primref-flags pr)))
-                                       (all-set? (prim-mask safeongoodargs) (primref-flags pr))
-                                       (andmap (lambda (r n)
-                                                 (predicate-implies? r
-                                                                     (primref->argument-predicate pr n (length e*) #f)))
-                                               r* (enumerate r*)))]
-                       [pr (if to-unsafe
-                               (primref->unsafe-primref pr)
-                               pr)])
-                  (fold-primref/normal preinfo pr e* ret r* ctxt t oldtypes plxc))])))])))
+                (let ([ret (if err 'bottom ret)]
+                      [pr (if to-unsafe
+                              (primref->unsafe-primref pr)
+                              pr)]
+                      [nr* (if unsafe nr* r*)])
+                  (fold-primref/normal preinfo pr e* ret nr* ctxt t oldtypes plxc))])))])))
 
   (define (fold-primref/normal preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (cond

@@ -196,6 +196,13 @@
     '(lambda (x) (vector-set! x 0 0) (set-box! x 0) 1)
     '(lambda (x) (vector-set! x 0 0) (set-box! x 0) 2))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (vector-set! x x x) 1)
+    '(lambda (x) (vector-set! x x x) 2))
+  ;This test may fail because the subexpressions may be reordered
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (+ (unbox x) (car x)))
+    '(lambda (x) (- (unbox x) (car x))))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! (box 5) 0 0) 1)
     '(lambda (x) (vector-set! (box 5) 0 0) 2))
   (cptypes-equivalent-expansion?
