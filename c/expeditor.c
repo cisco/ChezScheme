@@ -23,7 +23,8 @@
 /* locally defined functions */
 static IBOOL s_ee_init_term(iptr in, iptr out);
 static ptr s_ee_read_char(IBOOL blockp);
-static void s_ee_write_char(wchar_t c);
+static int s_ee_write_char(wchar_t c);
+static int s_ee_char_width(wchar_t c);
 static void s_ee_set_color(int color_id, IBOOL background);
 static void s_ee_flush(void);
 static ptr s_ee_get_screen_size(void);
@@ -553,9 +554,24 @@ static ptr s_ee_get_clipboard(void) {
   return x;
 }
 
-static void s_ee_write_char(wchar_t c) {
+static int s_ee_write_char(wchar_t c) {
   DWORD n;
+  CONSOLE_SCREEN_BUFFER_INFO pre_info, post_info;
+
+  GetConsoleScreenBufferInfo(hStdout, &pre_info);
+
   WriteConsoleW(hStdout, &c, 1, &n, NULL);
+
+  GetConsoleScreenBufferInfo(hStdout, &post_info);
+
+  return post_info.dwCursorPosition.X - pre_info.dwCursorPosition.X;
+}
+
+static int s_ee_char_width(wchar_t c)
+{
+  /* There's no `wcwidth` on Windows. An editor can gather results
+     from `s_ee_write_char`, though. */
+  return 1;
 }
 
 static int foreground_colors[] =
@@ -1207,7 +1223,8 @@ static ptr s_ee_get_clipboard(void) {
   return p;
 }
 
-static void s_ee_write_char(wchar_t wch) {
+static int s_ee_write_char(wchar_t wch) {
+  int width;
   char buf[MB_LEN_MAX]; size_t n;
 #ifndef NO_USELOCALE
   locale_t old = uselocale(term_locale);
@@ -1220,9 +1237,29 @@ static void s_ee_write_char(wchar_t wch) {
     fwrite(buf, 1, n, stdout);
   }
 
+  width = wcwidth(wch);
+
 #ifndef NO_USELOCALE
   uselocale(old);
 #endif
+
+  return width;
+}
+
+static int s_ee_char_width(wchar_t wch)
+{
+  int width;
+#ifndef NO_USELOCALE
+  locale_t old = uselocale(term_locale);
+#endif
+
+  width = wcwidth(wch);
+
+#ifndef NO_USELOCALE
+  uselocale(old);
+#endif
+
+  return width;
 }
 
 /* see Windows s_ee_set_color for color-index meanings */
@@ -1257,6 +1294,7 @@ void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_init_term", (void *)s_ee_init_term);
   Sforeign_symbol("(cs)ee_read_char", (void *)s_ee_read_char);
   Sforeign_symbol("(cs)ee_write_char", (void *)s_ee_write_char);
+  Sforeign_symbol("(cs)ee_char_width", (void *)s_ee_char_width);
   Sforeign_symbol("(cs)ee_set_color", (void *)s_ee_set_color);
   Sforeign_symbol("(cs)ee_flush", (void *)s_ee_flush);
   Sforeign_symbol("(cs)ee_get_screen_size", (void *)s_ee_get_screen_size);
