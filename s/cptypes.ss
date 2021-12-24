@@ -293,10 +293,20 @@ Notes:
              e1
              `(call ,(make-preinfo-call) ,(lookup-primref 3 '$value) ,e1))]))
 
-    (define (make-seq* ctxt e*) ; requires at least one operand
-      (if (null? (cdr e*))
-          (car e*)
-          (make-seq ctxt (car e*) (make-seq* ctxt (cdr e*)))))
+    (define (make-seq* ctxt e*)
+      ; requires at least one operand, unless for effect
+      (cond
+        [(null? e*)
+         (if (eq? ctxt 'effect)
+             void-rec
+             ($oops make-seq "empty operand list"))]
+        [else
+         (let loop ([e1 (car e*)] [e* (cdr e*)])
+           (if (null? e*)
+               e1
+               (make-seq ctxt e1
+                              (loop (car e*) (cdr e*)))))]))
+
 
     (define (make-1seq* ctxt e*)
       ; requires at least one operand, unless for effect
@@ -1262,7 +1272,8 @@ Notes:
          => (lambda (e) (unwrapped-error ctxt e))]
         [(eq? t pred-env-bottom)
          (let ([e* (map ensure-single-value e* r*)])
-           (values (make-seq* ctxt e*) 'bottom pred-env-bottom #f #f))]
+           (values (make-seq ctxt (make-seq* 'effect e*) void-rec)
+                   'bottom pred-env-bottom #f #f))]
         [else
          (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
                 [len (length e*)]

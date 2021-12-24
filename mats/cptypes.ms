@@ -202,6 +202,10 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (+ (unbox x) (car x)))
     '(lambda (x) (- (unbox x) (car x))))
+  ;Regresion test for primitives with 0 arguments after an error
+  (cptypes-equivalent-expansion?
+    '(lambda () (box (let ([x (error 'who "msg")]) (cons x (random)))))
+    '(lambda () (error 'who "msg")))
   (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! (box 5) 0 0) 1)
     '(lambda (x) (vector-set! (box 5) 0 0) 2))
