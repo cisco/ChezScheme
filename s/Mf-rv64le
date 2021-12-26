@@ -1,0 +1,6 @@
+# Mf-rv64le
+
+m = rv64le
+archincludes = riscv64.ss
+
+include Mf-base

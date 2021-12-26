@@ -1,0 +1,63 @@
+;;; rv64le.def
+
+#|
+from https://groups.google.com/g/chez-scheme/c/dz6nn-8KDQE
+
+asm-arg-reg-max is the maximum number of registers available for use when passing procedure arguments. It is expected to correspond to the number of “extra” allocatable registers listed in the assembler's ``define-registers`` form.  The allocable registers are expected to provide registers for %ac0, %xp, %ts, and %td which are used for some of “hand-coded” forms like the call/cc, continuation invoke, and rest-args handlers.  Additionally %ac1, %yp, %cp, and %ret can be specified.  Any allocable register beyond the initial four to eight specific purpose registers, are considered eligible for use as argument registers.  The specific registers are used for:
+
+%ac0 is used for passing the argument count to functions (needed to support argument count check and dispatch for calls where the function is not “known” (e.g. the function definition is not immediately visible to to the caller).
+
+%xp is used during allocation for the computed allocation spot (and in various places in the hand-coded functions).
+
+%ts and %td are special temporaries used in the hand-coded functions.
+
+Since some of the hand-coded functions (like the one that deals with rest arguments) are called at the start of a function, before the normal argument handling is done, these cannot be used for passing arguments.
+
+%ac1 and %yp are both also used for hand-coded functions, but can be ‘auxiliary’ registers, which are memory locations referenced from the %tc register.
+
+%cp is used for the closure pointer (again this is a memory location off the %tc if not specified).
+
+%ret is the function return pointer (e.g. the pointer back to the caller’s next instruction).  We’ve mostly stopped putting this in the register after experimenting with it, keeping it on the stack seems to work out pretty decently.
+
+Anyway, any other allocable register is considered a potential arg.
+
+asm-arg-reg-cnt is the actual number of registers used for arguments.  Registers are used for the first asm-arg-reg-cnt arguments and additional arguments are passed on the stack.
+|#
+
+(define-constant machine-type (constant machine-type-rv64le))
+(define-constant architecture 'riscv64)
+(define-constant address-bits 64)
+(define-constant ptr-bits 64)
+(define-constant int-bits 32)
+(define-constant short-bits 16)
+(define-constant long-bits 64)
+(define-constant long-long-bits 64)
+(define-constant size_t-bits 64)
+(define-constant ptrdiff_t-bits 64)
+(define-constant wchar-bits 32)
+(define-constant time-t-bits 64)
+(define-constant max-float-alignment 8)
+(define-constant max-integer-alignment 8)
+
+(define-constant asm-arg-reg-max 18)
+(define-constant asm-arg-reg-cnt 8)
+
+(define-constant typedef-ptr "void *")
+(define-constant typedef-iptr "long int")
+(define-constant typedef-uptr "unsigned long int")
+(define-constant typedef-i8 "char")
+(define-constant typedef-u8 "unsigned char")
+(define-constant typedef-i16 "short")
+(define-constant typedef-u16 "unsigned short")
+(define-constant typedef-i32 "int")
+(define-constant typedef-u32 "unsigned int")
+(define-constant typedef-i64 "long")
+(define-constant typedef-u64 "unsigned long")
+(define-constant typedef-string-char "unsigned int")
+(define-constant native-endianness 'little)
+(define-constant unaligned-floats #t)
+(define-constant unaligned-integers #t)
+(define-constant integer-divide-instruction #t)
+(define-constant software-floating-point #f)
+(define-constant segment-table-levels 3)
+(features iconv expeditor pthreads)

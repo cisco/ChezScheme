@@ -48,6 +48,7 @@ case "$M" in
   i3qnx) ;;
   i3s2) ;;
   ppc32le) ;;
+  rv64le) ;;
   ta6fb) ;;
   ta6le) ;;
   ta6nb) ;;
@@ -56,6 +57,7 @@ case "$M" in
   ta6osx) ;;
   ta6s2) ;;
   tarm32le) ;;
+  trv64le) ;;
   ti3fb) ;;
   ti3le) ;;
   ti3nb) ;;

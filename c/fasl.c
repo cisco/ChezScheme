@@ -256,6 +256,12 @@ static U32 adjust_delay_inst PROTO((U32 delay_inst, U32 *old_call_addr, U32 *new
 static INT sparc64_set_lit_only PROTO((void *address, uptr item, I32 destreg));
 static void sparc64_set_literal PROTO((void *address, uptr item));
 #endif /* SPARC64 */
+#ifdef RISCV64
+static void riscv64_set_abs PROTO((void *address, uptr item));
+static uptr riscv64_get_abs PROTO((void *address));
+static void riscv64_set_jump PROTO((void *address, uptr item, IBOOL callp));
+static uptr riscv64_get_jump PROTO((void *address));
+#endif /* RISCV64 */
 
 static double s_nan;
 
@@ -1268,7 +1274,18 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
             *(U32 *)address = *(U32 *)address & ~0x3fffffff | item >> 2 & 0x3fffffff;
             break;
 #endif /* SPARC */
-        default:
+#ifdef RISCV64
+    case reloc_riscv64_abs:
+      riscv64_set_abs(address, item);
+      break;
+    case reloc_riscv64_jump:
+      riscv64_set_jump(address, item, 0);
+      breal;
+    case reloc_riscv_call:
+      riscv64_set_jump(address, item, 1);
+      break;
+#endif /* RISCV64 */
+    default:
             S_error1(who, "invalid relocation type ~s", FIX(typ));
     }
 }
@@ -1332,6 +1349,15 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
             item += (uptr)address;
             break;
 #endif /* SPARC */
+#ifdef RISCV64 //@ todo
+    case reloc_riscv64_abs:
+      item = riscv64_get_abs(address);
+      break;
+    case reloc_riscv64_jump:
+    case reloc_riscv64_call:
+      item = riscv64_get_jump(address);
+      break;
+#endif /* RISCV64 */
         default:
             S_error1("", "invalid relocation type ~s", FIX(typ));
             return (ptr)0 /* not reached */;
@@ -1660,3 +1686,74 @@ static void sparc64_set_literal(address, item) void *address; uptr item; {
   sparc64_set_lit_only(address, item, destreg);
 }
 #endif /* SPARC64 */
+
+#ifdef RISCV64 //@ todo
+static uptr riscv64_get_abs(void* address)
+{
+  I32 upper20, lower12;
+  
+  upper20 = *((I32 *)address) & 0xFFFFF000;
+  lower12 = *((I32 *)address + 1) >> 20;
+
+  return (uptr)(upper20 | lower12);    
+}
+
+static uptr riscv_get_jump(void* address)
+{
+  I32 upper20, lower12;
+  upper20 = *((I32 *)address) & 0xFFFFF000;
+  lower12 = *((I32 *)address + 1) >> 20;
+  
+  return (uptr)(upper20 | lower12);
+}
+
+/*
+lui
+             0110111 
+upper[20] rd opcode
+addi
+              000       0010011
+lower[12] rs1 funct3 rd opcode
+*/
+static void riscv64_set_abs(void* address, uptr item)
+{
+  I32 upper20, lower12;
+  if((I32)item == item){
+    upper20 = item & 0xFFFFF000;
+    lower12 = item & 0x00000FFF;
+    // lui
+    *((I32*)address) = (*((I32 *)address) & 0x00000FFF) | upper20;
+    // addi
+    *((I32*)address + 1) = (*((I32 *)address + 1) & 0x000FFFFF) | (lower12 << 20);
+  }
+  else
+    S_error("", "number larger than 32 bits not supported"); 
+}
+
+/*
+auipc:
+                  0010111
+upper[20] rd(x27) opcode
+jalr:
+                     000    00001/00000 1100111
+lower[12] rs1(x27) funct3   rd(ra/x0)   opcode
+*/
+#define X27 0b11011
+
+static void riscv64_set_jump(void* address, uptr item, IBOOL callp)
+{
+  I32 upper20, lower12;
+  I64 disp = (I64)item - (I64)address;
+  if((I32)disp == disp){
+    upper20 = disp & 0xFFFFF000;
+    lower12 = disp & 0x00000FFF;
+    // auipc
+    *((I32 *)address) = upper20 | (X27 << 6) | 0b0010111;
+    // jalr
+    *((I32 *)address + 1) = (lower12 << 20) | (X27 << 15) | 0b000 | (callp ? 0b00001 : 0b00000) | 0b1100111;
+  }
+  else
+    S_error("", "jump target longer than 2^32 not supported");
+  
+}
+#endif /* RISCV64 */

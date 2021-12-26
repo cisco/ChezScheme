@@ -81,6 +81,11 @@ case "${CONFIG_UNAME}" in
       m64=""
       tm32=tppc32le
       tm64=""
+    elif uname -a | grep 'riscv64' > /dev/null 2>&1 ; then
+      m32=""
+      m64=rv64le
+      tm32=""
+      tm64=trv64le
     fi
     installprefix=/usr
     installmansuffix=share/man
