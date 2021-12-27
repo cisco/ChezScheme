@@ -671,6 +671,10 @@ static void s_ee_set_color(int color_id, IBOOL background) {
 # include <xlocale.h>
 #endif
 
+#if defined(__linux__) && !defined(_XOPEN_SOURCE)
+extern int wcwidth(wchar_t);
+#endif
+
 #if defined(TIOCGWINSZ) && defined(SIGWINCH) && defined(EINTR)
 # define HANDLE_SIGWINCH
 #endif
