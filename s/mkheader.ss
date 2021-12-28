@@ -687,6 +687,8 @@
             (pr "                        : \"=&r\" (ret)\\~%")
             (pr "                        : \"r\" (addr)\\~%")
             (pr "                        : \"cc\", \"memory\", \"r12\", \"r11\")~%")]
+          [(riscv64)
+           (nl)]
           [else
             ($oops who "asm locking code is not yet defined for ~s" (constant architecture))]))))
 
