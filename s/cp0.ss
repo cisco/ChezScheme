@@ -4822,7 +4822,7 @@
                    (residualize-seq '() (list ?x) ctxt)
                    (make-nontail (app-ctxt ctxt) (car e*))))]
            [(call ,preinfo ,pr ,e1 ,e2)
-            (guard (eq? (primref-name pr) 'cons))
+            (guard (memq (primref-name pr) '(cons weak-cons ephemeron-cons)))
             (residualize-seq (list ?x) '() ctxt)
             (non-result-exp (operand-value ?x)
               (make-1seq (app-ctxt ctxt) e2 (make-nontail (app-ctxt ctxt) e1)))]
@@ -4847,7 +4847,7 @@
                       ,(build-primcall (app-preinfo ctxt) 3 'cdr
                          (list e)))))]
            [(call ,preinfo ,pr ,e1 ,e2)
-            (guard (eq? (primref-name pr) 'cons))
+            (guard (memq (primref-name pr) '(cons weak-cons ephemeron-cons)))
             (residualize-seq (list ?x) '() ctxt)
             (non-result-exp (operand-value ?x)
               (make-1seq (app-ctxt ctxt) e1 (make-nontail (app-ctxt ctxt) e2)))]
@@ -4863,6 +4863,42 @@
             (non-result-exp (operand-value ?x)
               (make-1seq (app-ctxt ctxt) (car e*)
                 (build-call (app-preinfo ctxt) pr (cdr e*))))]
+           [else #f])])
+
+      (define-inline 2 cadr
+        [(?x)
+         (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?x))
+           [(immutable-list (,e* ...) ,e)
+            (and (>= (length e*) 2))
+                 (begin
+                   (residualize-seq '() (list ?x) ctxt)
+                   (make-nontail (app-ctxt ctxt) (cadr e*)))]
+           [(call ,preinfo ,pr ,e* ...)
+            (guard (eq? (primref-name pr) 'list) (>= (length e*) 2))
+            (residualize-seq (list ?x) '() ctxt)
+            (non-result-exp (operand-value ?x)
+              (fold-right
+                (lambda (e1 e2) (make-1seq (app-ctxt ctxt) e1 e2))
+                (make-nontail (app-ctxt ctxt) (cadr e*))
+                (cons (car e*) (cddr e*))))]
+           [(call ,preinfo ,pr ,e* ...)
+            (guard (memq (primref-name pr) '(list list* cons*)) (> (length e*) 2))
+            (residualize-seq (list ?x) '() ctxt)
+            (non-result-exp (operand-value ?x)
+              (fold-right
+                (lambda (e1 e2) (make-1seq (app-ctxt ctxt) e1 e2))
+                (make-nontail (app-ctxt ctxt) (cadr e*))
+                (cons (car e*) (cddr e*))))]
+           [else #f])])
+
+      (define-inline 2 unbox
+        [(?x)
+         (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?x))
+           [(call ,preinfo ,pr ,e)
+            (guard (memq (primref-name pr) '(box box-immobile box-immutable)))
+            (residualize-seq (list ?x) '() ctxt)
+            (non-result-exp (operand-value ?x)
+              (make-nontail (app-ctxt ctxt) e))]
            [else #f])])
 
       (let ()
