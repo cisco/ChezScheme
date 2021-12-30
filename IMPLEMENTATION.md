@@ -149,7 +149,7 @@ standard, your addition will go in one of the sets that is declared
 with `[libraries]`, meaning that the binding is in the `chezscheme`
 library.
 
-When a helper function needs to be a different source file than the
+When a helper function needs to be in a different source file than the
 place where it's used, so it can't just be locally defined, prefix the
 helper function name with `$` and register it in the `[flags system
 proc]` group in "primdata.ss".
@@ -162,8 +162,8 @@ your new functionality is needed to compile Chez Scheme itself, you'll
 have to implement a copy of the functionality (or enough of it) in
 "rktboot".
 
-Take care to implement and new functionality as safe, which means
-checking arguments fully. Keep in mind that your implementation tself
+Take care to implement a new functionality as safe, which means
+checking arguments fully. Keep in mind that your implementation itself
 will be compiled as unsafe. While testing and debugging your
 additions, however, you'll probably want to use `make o=0` in the
 "*machine-type*/s" workarea space, which compiles in safe mode.
@@ -364,7 +364,7 @@ number with exact real and imaginary components) is defined as
 
 The `type-typed-object` in the first line indicates that an `exactnum`
 is represented by a pointer that is tagged with `type-typed-object`,
-and so we should expect the first first to be a type word. That's why
+and so we should expect the first field to be a type word. That's why
 the first field above is `type`, and it turns out that it will always
 contain the value `type-inexactnum`. The `iptr` type for `type` means
 "a pointer-sized signed integer". The `ptr` type for `real` and `imag`
@@ -414,7 +414,7 @@ the only two that absolutely must be registers, but AP (allocation
 pointer) and TRAP registers are also good candidates on architectures
 where plenty of registers are available.
 
-The Scheme stack grows up, and SFP points to the beginning (i.e., the
+The Scheme stack grows up in the heap, and SFP points to the beginning (i.e., the
 low address) of the current stack frame. The first word of a stack
 frame is the return address, so a frame looks like this:
 
@@ -465,7 +465,7 @@ return register into SFP[0].
 There are two ways that control transitions from C to Scheme: an
 initial call through `S_generic_invoke` (see "scheme.c") or via a
 foreign callable. Both of those go through `S_call_help` (see
-"schlib.c"). The `S_generic_invoke` function calls `S_call_help`
+"schlib.c"). The `S_call_help` function calls `S_generic_invoke`
 directly. A foreign callable is represented by generated code that
 converts arguments and then calls `S_call_help` to run the Scheme
 procedure that is wrapped by the callable.
@@ -784,7 +784,7 @@ Overall, the allocator see several kinds of "variables":
    instruction-selection pass, where an instruction may require a
    register argument; and
 
- * pre-colored unspillable variables, each which must be allocated to
+ * pre-colored unspillable variables, each of which must be allocated to
    a specific real register; these are introduced by a backend where
    an instruction may require an argument in a specific registers.
 
@@ -826,7 +826,7 @@ through the jump), even though the machine-level jump instruction
 doesn't refer to the result values. The `kill` dummy instruction can
 be used with `set!` to indicate that a variable is trashed, but the
 `kill` is discarded after register allocation. It's also possible for
-an insstruction to produce results in multiple registers. So, besides
+an instruction to produce results in multiple registers. So, besides
 using dummy arguments and `kill`, an instruction form can have a
 `info-kill*-live*` record attached to it, which lists the `kill*`
 variables that the expression effectively assigns and the `live*`
@@ -841,14 +841,14 @@ variables, so some of them need to be spilled. The register allocator
 does that before consulting the backend. So, some of the variables in
 the intermediate form will stay as `uvar`s, and some will get
 converted to a frame reference of them form SFP[pos]. When the backend
-is then asked to select an instruction for an operation that cosumes
+is then asked to select an instruction for an operation that consumes
 some variables and delivers a result to some destination variable, it
 may not be able to work with one or more of the arguments or
 destination in SFP[pos] form; in that case, it will create an
 unspillable and assign the SFP[pos] value to the unspillable, then use
 the unspillable in a generated instruction sequence. Of course,
 introducing unspillables may mean that some of the remaining `uvar`s
-to no longer fit in registers after all; when that happens, the
+no longer fit in registers after all; when that happens, the
 register allocator will discard the tentative instruction selection
 and try again after spilling for `uvar`s (which will then create even
 more unspillables locally, but those will have short lifetimes, so
@@ -864,7 +864,7 @@ repressentation) before they can be used; in later passes, a `set!`
 initializes a temporary.
 
 In all but the very earliest passes, an `mref` form represents a
-memory reference. Typically, a memory reference consistents of a
+memory reference. Typically, a memory reference consists of a
 variable and an offset. The general form is two variables and an
 offset, all of which are added to obtain an address, because many
 machine support indexed memory references of that form. The `%zero`
@@ -917,7 +917,7 @@ form in the output intermediate representation of the
 instruction-selection pass (see `L15d` in "np-languages.ss"). The
 `asm` form in the output language has a function that represents the
 instruction; that function again takes the arguments of the `asm`
-form, plus an extra leading argument for the destiination if it's on
+form, plus an extra leading argument for the destination if it's on
 the right-hand side of a `set!` (plus an argument before that for the
 machine-code sequence following the instruction, and it returns an
 extended machine-code sequence; that is, a machine-code sequence is
@@ -929,7 +929,7 @@ backend may produces a result that includes a reference to an
 `asm-logand` instruction procedure. Or maybe the machine instruction
 for logical "and" has a variant that sets condition codes and one that
 doesn't, and they're both useful, so `asm-logand` actually takes a
-curried bboolean to pick; in thatt case, `%logand` returns an
+curried boolean to pick; in that case, `%logand` returns an
 instruction with `(asm-logand #f)`, which produces a function that
 takes the destination and `asm` arguments. Whether an argument to
 `asm-logand` is suitable for currying or inclusion as an `asm`
@@ -941,7 +941,7 @@ importance are `asm-move` and `asm-fpmove`, which are eventually used
 for `set!` forms after the instruction-selection pass. That is, the
 output of instruction selection still uses `set!`, and then those are
 converted to memory and register-moving instructions later. The
-instruction-selecton pass must ensure that any surving `set!`s are
+instruction-selection pass must ensure that any surviving `set!`s are
 simple enough, though, to map to instructions without further register
 allocation. In other words, the backend instruction selector should
 only return `set!`s as instructions when they are simple enough, and
@@ -951,7 +951,7 @@ of instruction selection, those are send to the backend as `%move` and
 `%fpmove` primitives (which may simply turn back into `set!s` using
 the output language, or they may get simplified). When the compiler
 generates additional `set!`s after instruction selection, it generates
-only cnstrainted forms, where target or source `mref`s have a single
+only constrained forms, where target or source `mref`s have a single
 register and a small, aligned offset.
 
 To organize all of this work, a backend implementation like
@@ -1087,7 +1087,7 @@ The `dest` argument corresponds to the result register, and `src0` and
 `src1` are the two arguments.
 
 The `Trivit` form is a bridge between intermediate languages. It takes
-variables that are boudn already and it rebinds them for the body of
+variables that are bound already and it rebinds them for the body of
 the `Trivit` form. Each rebinding translate the argument from an `L16`
 `Triv` record to a list that starts 'reg, 'disp, 'index, 'literal, or
 'literal@. (Beware of missing this step, and beware of backends that
@@ -1124,7 +1124,7 @@ in "compile.ss". Relocation entries are used when loading and GCing
 with update routines implemented in "fasl.c".
 
 Typically, a linking directive is written just after some code that is
-generated as installing a dummy value, and theen the update routine in
+generated as installing a dummy value, and then the update routine in
 "fasl.c" writes the non-dummy value when it becomes available later.
 Each linking directive must be handled in "compile.ss", and it must
 know the position and size of the code (relative to the direction) to
@@ -1135,7 +1135,7 @@ handling in "compile.ss", and the update routine in "fasl.c".
 
 Support for foreign procedures and callables in Chez Scheme boils down
 to foreign calls and callable stubs for the backend. A backend's
-`asm-foreign-call` and `asm-foreign-callbable` function receives an
+`asm-foreign-call` and `asm-foreign-callable` function receives an
 `info-foreign` record, which describes the argument and result types
 in relatively primitive forms:
 
@@ -1149,7 +1149,7 @@ in relatively primitive forms:
 
 If the result type is a "&" type, then the function expects an extra
 first argument on the Scheme side. That extra argument is reflected by
-an extra pointer type at the statr of the argument list, but the "&"
+an extra pointer type at the start of the argument list, but the "&"
 type is also left for the result type as an indication about that
 first argument. In other words, the result type is effectively
 duplicated in the result (matching the C view) and an argument
@@ -1201,7 +1201,7 @@ The `asm-foreign-call` function returns 5 values:
    floating-point value, the provided destination variable has type
    'fp.
 
- * `allocate : -> L13.Effect`
+ * `deallocate : -> L13.Effect`
 
    Any needed teardown, such as deallocating C stack space.
 
