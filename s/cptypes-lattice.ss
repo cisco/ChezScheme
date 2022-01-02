@@ -30,11 +30,13 @@
 (module cptypes-lattice
   (primref-name/nqm->predicate
    ptr-pred
+   char-pred
    eof/char-pred
    maybe-char-pred
    maybe-symbol-pred
    $fixmediate-pred
    $list-pred ; immutable lists
+   boolean-pred
    true-pred ; anything that is not #f
    true-rec  ; only the #t object
    false-rec
@@ -47,12 +49,18 @@
    predicate-disjoint?
    predicate-intersect
    predicate-union
+   predicate-substract
    make-pred-$record/rtd
    make-pred-$record/ref)
 
   (define-record-type pred-or
     (fields imm nor rec)
     (nongenerative #{pred-or nlomo7xtc1nguv2umpzwho0dt-0})
+    (sealed #t))
+
+  (define-record-type pred-immediate
+    (fields mask)
+    (nongenerative #{pred-or m4e7t2fuam2my9kt17zpmxnzc-0})
     (sealed #t))
 
   (define-record-type pred-$record/rtd
@@ -65,6 +73,7 @@
     (nongenerative #{pred-$record/ref zc0e8e4cs8scbwhdj7qpad6k3-1})
     (sealed #t))
 
+  (define ($black-hole) '#6=#6#)
   (include "base-lang.ss")
   (with-output-language (Lsrc Expr)
     (define void-rec `(quote ,(void)))
@@ -72,13 +81,88 @@
     (define false-rec `(quote #f))
     (define null-rec `(quote ()))
     (define eof-rec `(quote #!eof))
-    (define bwp-rec `(quote #!bwp)))
+    (define bwp-rec `(quote #!bwp))
+    (define black-hole-rec `(quote ,($black-hole)))
+    (define unbound-rec `(quote ,($unbound-object))))
 
-  (define true-pred (make-pred-or 'true-immediate 'normalptr '$record))
-  (define ptr-pred (make-pred-or 'immediate 'normalptr '$record))
+  (module (immediate-rec->mask
+           build-pred-immediate
+           immediate-pred-mask
+           immediate-pred true-immediate-pred boolean-pred
+           char-pred maybe-char-pred eof/char-pred)
+
+    (define false-object-mask               #b0000000001)
+    (define true-object-mask                #b0000000010)
+    (define null-object-mask                #b0000000100)
+    (define void-object-mask                #b0000001000)
+    (define eof-object-mask                 #b0000010000)
+    (define bwp-object-mask                 #b0000100000)
+    (define black-hole-object-mask          #b0001000000)
+    (define unbound-object-mask             #b0010000000)
+
+    (define char-pred-mask                  #b0100000000)
+    (define immediate-pred-mask             #b0111111111)
+
+    (define boolean-pred-mask (fxior true-object-mask false-object-mask))
+    (define maybe-char-pred-mask (fxior char-pred-mask false-object-mask))
+    (define eof/char-pred-mask (fxior char-pred-mask eof-object-mask))
+    (define true-immediate-pred-mask (fxand immediate-pred-mask (fxnot false-object-mask)))
+
+    (define (immediate-rec->mask x extend)
+      (cond
+        [(Lsrc? x)
+         (nanopass-case (Lsrc Expr) x
+           [(quote ,d)
+            (cond
+              [(char? d) (if (not extend) 0 char-pred-mask)]
+              [(not d) false-object-mask]
+              [(eq? d #t) true-object-mask]
+              [(null? d) null-object-mask]
+              [(eq? d (void)) void-object-mask]
+              [(eof-object? d) eof-object-mask]
+              [(bwp-object? d) bwp-object-mask]
+              [(eq? d ($black-hole)) black-hole-object-mask]
+              [($unbound-object? d) unbound-object-mask]
+              [else ($oops 'immediate-rec->mask "invalid immediate ~s" d)])]
+           [else ($oops 'immediate-rec->mask "invalid expression ~s" x)])]
+        [else ($oops 'immediate-rec->mask "invalid expression ~s" x)]))
+
+    (define (mask->immediate-rec y)
+      (cond
+        [(fx= y char-pred-mask) char-pred]
+        [(fx= y false-object-mask) false-rec]
+        [(fx= y true-object-mask) true-rec]
+        [(fx= y null-object-mask) null-rec]
+        [(fx= y void-object-mask) void-rec]
+        [(fx= y eof-object-mask) eof-rec]
+        [(fx= y bwp-object-mask) bwp-rec]
+        [(fx= y black-hole-object-mask) black-hole-rec]
+        [(fx= y unbound-object-mask) unbound-rec]
+        [else ($oops 'mask->immediate-rec "invalid mask number ~s" y)]))  
+
+    (define (build-pred-immediate mask x y)
+      (cond
+        [(and x (fx= (pred-immediate-mask x) mask)) x]
+        [(and y (fx= (pred-immediate-mask y) mask)) y]
+        [else
+         (case (fxbit-count mask)
+           [(0) 'bottom]
+           [(1) (mask->immediate-rec mask)]
+           [else (make-pred-immediate mask)])]))
+
+    (define maybe-char-pred (make-pred-immediate maybe-char-pred-mask))
+    (define eof/char-pred (make-pred-immediate eof/char-pred-mask))
+    (define char-pred (make-pred-immediate char-pred-mask))
+    (define boolean-pred (make-pred-immediate boolean-pred-mask))
+    (define immediate-pred (make-pred-immediate immediate-pred-mask))
+    (define true-immediate-pred (make-pred-immediate true-immediate-pred-mask))
+  )
+
+  (define true-pred (make-pred-or true-immediate-pred 'normalptr '$record))
+  (define ptr-pred (make-pred-or immediate-pred 'normalptr '$record))
   (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom))
   (define $list-pred (make-pred-or null-rec '$list-pair 'bottom))
-  (define $fixmediate-pred (make-pred-or 'immediate 'fixnum 'bottom))
+  (define $fixmediate-pred (make-pred-or immediate-pred 'fixnum 'bottom))
   (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
   (define eof/fixnum-pred (make-pred-or eof-rec 'fixnum 'bottom))
   (define maybe-exact-integer-pred (make-pred-or false-rec 'fixnum 'bottom))
@@ -93,15 +177,14 @@
   (define maybe-pair-pred (make-pred-or false-rec 'pair 'bottom))
   (define maybe-normalptr-pred (make-pred-or false-rec 'normalptr 'bottom))
   (define maybe-$record-pred (make-pred-or false-rec 'bottom '$record))
-  ; These are just symbols, but we assign a name for uniformity.
-  (define maybe-char-pred 'maybe-char)
-  (define eof/char-pred 'eof/char)
 
   ; This can be implemented with implies?
   ; but let's use the straightforward test.
   (define (predicate-is-ptr? x)
     (and (pred-or? x)
-         (eq? (pred-or-imm x) 'immediate)
+         (let ([i (pred-or-imm x)])
+           (and (pred-immediate? i)
+                (fx= (pred-immediate-mask i) immediate-pred-mask)))
          (eq? (pred-or-nor x) 'normalptr)
          (eq? (pred-or-rec x) '$record)))
 
@@ -202,17 +285,17 @@
       [ptr ptr-pred]
       [sub-ptr (cons 'bottom ptr-pred)]
 
-      [char 'char]
+      [char char-pred]
       [maybe-char maybe-char-pred]
       [eof/char eof/char-pred]
-      [boolean 'boolean]
+      [boolean boolean-pred]
       [true true-pred]
       [false false-rec]
       [void void-rec]
       [null null-rec]
       [eof-object eof-rec]
       [bwp-object bwp-rec]
-      [$immediate 'immediate]
+      [$immediate immediate-pred]
 
       [pair 'pair]
       [maybe-pair maybe-pair-pred]
@@ -285,6 +368,13 @@
            [(quote ,d) (eqv? d v)]
            [else #f])))
 
+  (define (constant-value x)
+    (if (Lsrc? x)
+        (nanopass-case (Lsrc Expr) x
+          [(quote ,d) d]
+          [else ($oops 'constant-value "invalid expression ~s" x)])
+        ($oops 'constant-value "invalid expression ~s" x)))
+
   (define (exact-integer? x)
     (and (integer? x) (exact? x)))
 
@@ -293,112 +383,40 @@
          (not (gensym? x))
          (not (uninterned-symbol? x))))
 
-  ;only false-rec, boolean, maybe-char and immediate may be '#f
-  ;use when the other argument is truthy bur not exactly '#t
-  (define (union/true x)
-    (cond
-      [(or (eq? x 'boolean)
-           (eq? x 'maybe-char)
-           (check-constant-eqv? x #f))
-       'immediate]
-      [else
-       'true-immediate]))
-
   (define (predicate-union/immediate x y)
     (cond
       [(eq? x y) y]
       [(eq? x 'bottom) y]
       [(eq? y 'bottom) x]
-      [(eq? y 'immediate) y]
-      [(eq? x 'immediate) x]
-      [(Lsrc? y)
-       (nanopass-case (Lsrc Expr) y
-         [(quote ,d1)
-          (define dy d1)
-          (cond
-            [(check-constant-eqv? x dy)
-             y]
-            [(not dy)
-             (cond 
-               [(or (eq? x 'boolean)
-                    (check-constant-eqv? x #t))
-                'boolean]
-               [(or (eq? x 'char)
-                    (eq? x 'maybe-char)
-                    (check-constant-is? x char?))
-                'maybe-char]
-               [else
-                'immediate])]
-            [(eq? dy #t)
-             (cond 
-               [(or (eq? x 'boolean)
-                    (check-constant-eqv? x #f))
-                'boolean]
-               [(eq? x 'maybe-char)
-                'immediate]
-               [else
-                'true-immediate])]
-            [(char? dy)
-             (cond
-               [(or (eq? x 'char)
-                    (check-constant-is? x char?))
-                'char]
-               [(or (eq? x 'maybe-char)
-                    (check-constant-eqv? x #f))
-                'maybe-char]
-               [(or (eq? x 'eof/char)
-                    (check-constant-is? x eof-object?))
-                'eof/char]
-               [else
-                (union/true x)])]
-            [(eof-object? dy)
-             (cond
-               [(or (eq? x 'eof/char)
-                    (eq? x 'char)
-                    (check-constant-is? x char?))
-                'eof/char]
-               [else
-                (union/true x)])]
-            [else
-             (union/true x)])])]
+      [(Lsrc? x)
+       (let ([mx (immediate-rec->mask x #t)])
+         (cond
+           [(Lsrc? y)
+            (cond
+              [(eqv? (constant-value x)
+                     (constant-value y))
+               y]
+              [else
+               (let ([my (immediate-rec->mask y #t)])
+                 (build-pred-immediate (fxior mx my) #f #f))])]
+           [(pred-immediate? y)
+            (let ([my (pred-immediate-mask y)])
+              (build-pred-immediate (fxior mx my) y #f))]
+           [else 
+            ($oops 'predicate-union/immediate "invalid expression ~s" y)]))]
+      [(pred-immediate? x)
+       (let ([mx (pred-immediate-mask x)])
+         (cond
+           [(Lsrc? y)
+            (let ([my (immediate-rec->mask y #t)])
+              (build-pred-immediate (fxior mx my) x #f))]
+           [(pred-immediate? y)
+            (let ([my (pred-immediate-mask y)])
+              (build-pred-immediate (fxior mx my) y x))]
+           [else
+            ($oops 'predicate-union/immediate "invalid expression ~s" y)]))]
       [else
-       (case y
-         [(boolean)
-          (cond 
-            [(check-constant-is? x boolean?)
-             y]
-            [else
-             'immediate])]
-         [(char)
-          (cond
-           [(or (eq? x 'maybe-char)
-                (check-constant-eqv? x #f))
-            'maybe-char]
-           [(or (eq? x 'eof/char)
-                (check-constant-is? x eof-object?))
-            'eof/char]
-           [(check-constant-is? x char?)
-            y]
-           [else
-            (union/true x)])]
-         [(eof/char)
-          (cond
-           [(or (eq? x 'char)
-                (check-constant-is? x char?)
-                (check-constant-is? x eof-object?))
-            y]
-           [else
-            (union/true x)])]
-         [(maybe-char)
-          (cond
-           [(or (eq? x 'char)
-                (check-constant-is? x char?)
-                (check-constant-eqv? x #f))
-            y]
-           [else
-            'immediate])]
-         [else
-          (union/true x)])]))
+       ($oops 'predicate-union/immediate "invalid expression ~s" x)]))
 
   (define (union/simple x pred? y)
     (cond
@@ -626,112 +644,40 @@
       [else
        '$record]))
 
-  (define (intersect/true x y)
-    (cond
-      [(eq? x 'true-immediate)
-       y]
-      [else
-       'bottom]))
-
   (define (predicate-intersect/immediate x y)
     (cond
       [(eq? x y) x]
       [(eq? y 'bottom) 'bottom]
       [(eq? x 'bottom) 'bottom]
-      [(eq? y 'immediate) x]
-      [(eq? x 'immediate) y]
-      [(Lsrc? y)
-       (nanopass-case (Lsrc Expr) y
-         [(quote ,d1)
-          (define dy d1)
-          (cond
-            [(check-constant-eqv? x dy)
-             x]
-            [(not dy)
-             (cond 
-               [(or (eq? x 'boolean)
-                    (eq? x 'maybe-char))
-                y]
-               [else
-                'bottom])]
-            [(eq? dy #t)
-             (cond 
-               [(eq? x 'boolean)
-                y]
-               [else
-                (intersect/true x y)])]
-            [(char? dy)
-             (cond
-               [(or (eq? x 'char)
-                    (eq? x 'maybe-char)
-                    (eq? x 'eof/char))
-                y]
-               [else
-                (intersect/true x y)])]
-            [(eof-object? dy)
-             (cond 
-               [(eq? x 'eof/char)
-                y]
-               [else
-                (intersect/true x y)])]
-            [else
-             (intersect/true x y)])])]
-      [else
-       (case y
-         [(boolean)
-          (cond 
-            [(eq? x 'true-immediate)
-             true-rec]
-            [(eq? x 'maybe-char)
-             false-rec]
-            [(check-constant-is? x boolean?)
-             x]
-            [else
-             'bottom])]
-         [(true-immediate)
-          (cond 
-            [(eq? x 'boolean)
-             true-rec]
-            [(eq? x 'maybe-char)
-             'char]
-            [(check-constant-eqv? x #f)
-             'bottom]
-            [else
-             x])]
-         [(char)
-          (cond
-            [(or (eq? x 'maybe-char)
-                 (eq? x 'eof/char))
-             y]
-            [(check-constant-is? x char?)
-             x]
-            [else
-             (intersect/true x y)])]
-         [(eof/char)
-          (cond
-            [(eq? x 'maybe-char)
-             'char]
-            [(or (eq? x 'char)
-                 (check-constant-is? x char?)
-                 (check-constant-is? x eof-object?))
-             x]
-            [else
-             (intersect/true x y)])]
-         [(maybe-char)
-          (cond
-            [(or (eq? x 'eof/char)
-                 (eq? x 'true-immediate))
-             'char]
-            [(or (eq? x 'char)
-                 (check-constant-is? x char?)
-                 (check-constant-eqv? x #f))
-             x]
-            [(eq? x 'boolean)
-             false-rec]
-            [else
-             'bottom])]
+      [(Lsrc? x)
+       (cond
+         [(Lsrc? y)
+          (if (eqv? (constant-value x) (constant-value y))
+              x
+              'bottom)]
+         [(pred-immediate? y)
+          (let ([mx (immediate-rec->mask x #t)]
+                [my (pred-immediate-mask y)])
+            (if (not (fx= (fxand mx my) 0))
+                x
+                'bottom))]
          [else
-          (intersect/true x y)])]))
+          ($oops 'predicate-intersect/immediate "invalid expression ~s" y)])]
+      [(pred-immediate? x)
+       (let ([mx (pred-immediate-mask x)])
+         (cond
+           [(Lsrc? y)
+            (let ([my (immediate-rec->mask y #t)])
+              (if (not (fx= (fxand mx my) 0))
+                  y
+                  'bottom))]
+           [(pred-immediate? y)
+            (let ([my (pred-immediate-mask y)])
+              (build-pred-immediate (fxand mx my) x y))]
+           [else
+            ($oops 'predicate-intersect/immediate "invalid expression ~s" y)]))]
+      [else
+       ($oops 'predicate-intersect/immediate "invalid expression ~s" x)]))
 
   (define (intersect/simple x pred? qpred y)
      (cond
@@ -924,8 +870,6 @@
   (define (predicate-intersect/record x y)
     (cond
       [(eq? x y) x]
-      [(not y) x]
-      [(not x) y]
       [(eq? y 'bottom) 'bottom]
       [(eq? x 'bottom) 'bottom]
       [(eq? y '$record) x]
@@ -968,9 +912,75 @@
          [else
           'bottom])]))
 
+  (define (predicate-substract/immediate x y)
+    (cond
+      [(eq? x y) 'bottom]
+      [(eq? y 'bottom) x]
+      [(eq? x 'bottom) 'bottom]
+      [(Lsrc? x)
+       (cond
+         [(Lsrc? y)
+          (if (eqv? (constant-value x)
+                    (constant-value y))
+              'bottom
+              x)]
+         [(pred-immediate? y)
+          (let ([my (pred-immediate-mask y)]
+                [mx (immediate-rec->mask x #t)])
+            (if (not (fx= (fxand mx my) 0))
+                'bottom
+                x))]
+         [else
+          ($oops 'predicate-substract/immediate "invalid expression ~s" y)])]
+      [(pred-immediate? x)
+       (let ([mx (pred-immediate-mask x)])
+         (cond
+           [(Lsrc? y)
+            (let ([my (immediate-rec->mask y #f)])
+              (build-pred-immediate (fxand mx (fxnot my)) x #f))]
+           [(pred-immediate? y)
+            (let ([my (pred-immediate-mask y)])
+              (build-pred-immediate (fxand mx (fxnot my)) x #f))]
+           [else
+            ($oops 'predicate-substract/immediate "invalid expression ~s" y)]))]
+      [else
+       ($oops 'predicate-substract/immediate "invalid expression ~s" x)]))
+
+  (define (predicate-substract/normal x y)
+    (cond
+      [(eq? x y) 'bottom]
+      [(predicate-implies?/normal x y) 'bottom]
+      [(eq? x 'exact-integer)
+       (case y
+         [(fixnum) 'bignum]
+         [(bignum) 'fixnum]
+         [else x])]
+      [else x]))
+
+  (define (predicate-substract/record x y)
+    (cond
+      [(eq? x y) 'bottom]
+      [(eq? x 'bottom) 'bottom]
+      [(eq? y '$record) 'bottom]
+      [(pred-$record/rtd? x)
+       (if (and (pred-$record/rtd? y)
+                (rtd-ancestor*? (pred-$record/rtd-rtd y)
+                                (pred-$record/rtd-rtd x)))
+           'bottom
+           x)]
+      [(pred-$record/ref? x)
+       (if (and (pred-$record/ref? y)
+                (eq? (pred-$record/ref-ref x)
+                     (pred-$record/ref-ref y)))
+          'bottom
+          x)]
+      [else x]))
 
   (define (predicate-implies? x y)
     (eq? (predicate-union x y) y))
+
+  (define (predicate-implies?/normal x y)
+    (eq? (predicate-union/normal x y) y))
 
   (define (predicate-disjoint? x y)
     (eq? (predicate-intersect x y) 'bottom))
@@ -979,8 +989,8 @@
     (cond
       #;[(eq? x 'bottom) 'bottom]
       [(or (check-constant-is? x $immediate?)
-           (memq x '(boolean char maybe-char eof/char true-immediate immediate)))
-       'immediate]
+           (pred-immediate? x))
+       'immediateC]
       [(or (eq? x '$record)
            (pred-$record/rtd? x)
            (pred-$record/ref? x))
@@ -1033,7 +1043,7 @@
          (build-pred-or i n r y x))]
       [(pred-or? x)
        (case (predicate->class y)
-         [(immediate)
+         [(immediateC)
           (build-pred-or (predicate-union/immediate (pred-or-imm x) y)
                          (pred-or-nor x)
                          (pred-or-rec x)
@@ -1050,7 +1060,7 @@
                          x)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [(immediate)
+         [(immediateC)
           (build-pred-or (predicate-union/immediate x (pred-or-imm y))
                          (pred-or-nor y)
                          (pred-or-rec y)
@@ -1072,7 +1082,7 @@
          (cond
            [(eq? cx cy)
             (case cx
-              [(immediate)
+              [(immediateC)
                (predicate-union/immediate x y)]
               [(normalptr)
                (predicate-union/normal x y)]
@@ -1081,8 +1091,8 @@
            [else
             (let ()
               (define i (cond
-                          [(eq? cx 'immediate) x]
-                          [(eq? cy 'immediate) y]
+                          [(eq? cx 'immediateC) x]
+                          [(eq? cy 'immediateC) y]
                           [else 'bottom]))
               (define n (cond
                           [(eq? cx 'normalptr) x]
@@ -1114,7 +1124,7 @@
          (build-pred-or i n r x y))]
       [(pred-or? x)
        (case (predicate->class y)
-         [(immediate)
+         [(immediateC)
           (predicate-intersect/immediate (pred-or-imm x) y)]
          [(normalptr)
           (predicate-intersect/normal (pred-or-nor x) y)]
@@ -1122,7 +1132,7 @@
           (predicate-intersect/record (pred-or-rec x) y)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [(immediate)
+         [(immediateC)
           (predicate-intersect/immediate x (pred-or-imm y))]
          [(normalptr)
           (predicate-intersect/normal x (pred-or-nor y))]
@@ -1137,10 +1147,64 @@
             'bottom]
            [else
             (case cx
-              [(immediate)
+              [(immediateC)
                (predicate-intersect/immediate x y)]
               [(normalptr)
                (predicate-intersect/normal x y)]
               [($record)
                (predicate-intersect/record x y)])]))]))
+
+  ;The result may be bigger than the actual intersection 
+  ;if there is no exact result.
+  ;Anyway, it must be included in x, 
+  ;and in many cases, for now the result is just x.
+  (define (predicate-substract x y)
+    (cond
+      [(not x) x]
+      [(not y) x]
+      [(eq? x 'bottom)
+       'bottom]
+      [(eq? y 'bottom)
+       x]
+      [(and (pred-or? x)
+            (pred-or? y))
+       (let ()
+         (define i (predicate-substract/immediate (pred-or-imm x) (pred-or-imm y)))
+         (define n (predicate-substract/normal (pred-or-nor x) (pred-or-nor y)))
+         (define r (predicate-substract/record (pred-or-rec x) (pred-or-rec y)))
+         (build-pred-or i n r x))]
+      [(pred-or? x)
+       (let ([i (pred-or-imm x)]
+             [n (pred-or-nor x)]
+             [r (pred-or-rec x)])
+         (case (predicate->class y)
+           [(immediateC)
+            (build-pred-or (predicate-substract/immediate i y) n r x)]
+           [(normalptr)
+            (build-pred-or i (predicate-substract/normal n y) r x)]
+           [($record)
+            (build-pred-or i n (predicate-substract/record r y) x)]))]
+      [(pred-or? y)
+       (case (predicate->class x)
+         [(immediateC)
+          (predicate-substract/immediate x (pred-or-imm y))]
+         [(normalptr)
+          (predicate-substract/normal x (pred-or-nor y))]
+         [($record)
+          (predicate-substract/record x (pred-or-rec y))])]
+      [else
+       (let ()
+         (define cx (predicate->class x))
+         (define cy (predicate->class y))
+         (cond
+           [(not (eq? cx cy))
+            x]
+           [else
+            (case cx
+              [(immediateC)
+               (predicate-substract/immediate x y)]
+              [(normalptr)
+               (predicate-substract/normal x y)]
+              [($record)
+               (predicate-substract/record x y)])]))]))
 )

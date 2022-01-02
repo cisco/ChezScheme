@@ -325,7 +325,7 @@ Notes:
   )
 
   (module (pred-env-empty pred-env-bottom
-           pred-env-add pred-env-remove/base pred-env-lookup
+           pred-env-add pred-env-add/not pred-env-remove/base pred-env-lookup
            pred-env-intersect/base pred-env-union/super-base
            pred-env-rebase
            predicate-intersect predicate-union)
@@ -360,10 +360,30 @@ Notes:
         [else
          types]))
 
+    (define (pred-env-add/not/key types key pred)
+      (cond
+        [(and pred
+              (not (eq? pred 'bottom))
+              (not (eq? types bottom-fxmap)))
+         (let* ([old (fxmap-ref types key ptr-pred)]
+                [new (predicate-substract old pred)])
+           (cond
+             [(eq? new old) types]
+             [(eq? new 'bottom) bottom-fxmap]
+             [else (fxmap-set types key new)]))]
+        [else
+         types]))
+
     (define (pred-env-add types x pred plxc)
       (cond
         [(and x (not (prelex-assigned x)))
          (pred-env-add/key types (prelex-counter x plxc) pred)]
+        [else types]))
+
+    (define (pred-env-add/not types x pred plxc)
+      (cond
+        [(and x (not (prelex-assigned x)))
+         (pred-env-add/not/key types (prelex-counter x plxc) pred)]
         [else types]))
 
     ; When types is bottom-fxmap, the "association" is not removed
@@ -503,6 +523,12 @@ Notes:
     (nanopass-case (Lsrc Expr) r
       [(ref ,maybe-src ,x)
        (pred-env-add types x pred plxc)]
+      [else types]))
+
+  (define (pred-env-add/not/ref types r pred plxc)
+    (nanopass-case (Lsrc Expr) r
+      [(ref ,maybe-src ,x)
+       (pred-env-add/not types x pred plxc)]
       [else types]))
 
   ;copied from cp0.ss
@@ -838,56 +864,88 @@ Notes:
             [(_ id) (or (lookup #'id #'get-type-key)
                         ($oops 'get-type "invalid identifier ~s" #'id))])))
 
-      (define (try-compare-constants e1 e2 prim-name)
-        ; yes     => true-rec
-        ; no      => false-rec
-        ; unknown => #f
+      ; To avoid problems with cross compilation and eq?-ness
+      ; ensure that it's a fixnum in both machines.
+      (define (try-same-constants? e1 e2 prim-name)
         (and (Lsrc? e1)
              (Lsrc? e2)
              (nanopass-case (Lsrc Expr) e1
                [(quote ,d1)
                 (nanopass-case (Lsrc Expr) e2
                   [(quote ,d2)
-                   (cond
-                     [(eqv? d1 d2)
-                      (cond
-                        [(eq? prim-name 'eq?)
-                         (cond
-                           [(or (not (number? d1))
-                                ; To avoid problems with cross compilation and eq?-ness
-                                ; ensure that it's a fixnum in both machines.
-                                (and (fixnum? d1)
-                                     (target-fixnum? d1)))
-                            true-rec]
-                           [else
-                            #f])]
-                        [else
-                         true-rec])]
-                     [else
-                      false-rec])]
+                   (and (eqv? d1 d2)
+                        (or (not (eq? prim-name 'eq?))
+                            (not (number? d1))
+                            (and (fixnum? d1)
+                                 (target-fixnum? d1))))]
                   [else #f])]
                [else #f])))
 
+      (define (try-constant? x prim-name)
+        (and (Lsrc? x)
+             (nanopass-case (Lsrc Expr) x
+               [(quote ,d)
+                (or (not (eq? prim-name 'eq?))
+                    (not (number? d))
+                    (and (fixnum? d)
+                         (target-fixnum? d)))]
+               [else
+                #f])))
+
       (define-specialize 2 (eq? eqv?)
-        [(e1 e2) (let ([r1 (get-type e1)]
-                       [r2 (get-type e2)])
-                    (cond
-                      [(try-compare-constants r1 r2 prim-name)
-                       => (lambda (ret)
-                            (values (make-seq ctxt e1 e2 ret)
-                                    ret ntypes #f #f))]
-                      [(predicate-disjoint? r2 r1)
-                       (values (make-seq ctxt e1 e2 false-rec)
-                               false-rec ntypes #f #f)]
-                      [else
-                       (values `(call ,preinfo ,pr ,e1 ,e2)
-                               ret
-                               ntypes
-                               (and (eq? ctxt 'test)
-                                    (pred-env-add/ref
-                                     (pred-env-add/ref ntypes e1 r2 plxc)
-                                     e2 r1 plxc))
-                               #f)]))])
+        [e* (define (finish drop* e* r-int)
+              (let* ([ir (make-seq ctxt
+                                   (make-1seq* 'effect drop*)
+                                   `(call ,preinfo ,pr ,e* ...))]
+                     [ttypes (fold-left (lambda (x e) (pred-env-add/ref x e r-int plxc)) ntypes e*)]
+                     [ftypes (cond
+                               [(or (not (= (length e*) 2))
+                                    (not (try-constant? r-int prim-name)))
+                                ntypes]
+                               [else
+                                (let* ([ftypes ntypes]
+                                       [ftypes (if (try-constant? (car e*) prim-name)
+                                                   (pred-env-add/not/ref ftypes (cadr e*) r-int plxc)
+                                                   ftypes)]
+                                       [ftypes (if (try-constant? (cadr e*) prim-name)
+                                                   (pred-env-add/not/ref ftypes (car e*) r-int plxc)
+                                                   ftypes)])
+                                  ftypes)])])
+                (values ir ret ntypes ttypes ftypes)))
+            (let* ([r* (get-type e*)]
+                   [r-int (fold-left predicate-intersect ptr-pred r*)]
+                   [e-ini* e*])
+              (cond
+                [(predicate-implies? r-int 'bottom)
+                 (values (make-1seq ctxt (make-1seq* 'effect e*) false-rec)
+                         false-rec ntypes #f #f)]
+                [(try-constant? r-int prim-name)
+                 (let loop ([r* r*] [e* e*]
+                            [drop* '()] [keep* '()] [rkeep* '()])
+                   (cond
+                     [(not (null? e*))
+                      (if (try-same-constants? (car r*) r-int prim-name)
+                          (loop (cdr r*) (cdr e*) 
+                                (cons (car e*) drop*) keep* rkeep*)
+                          (loop (cdr r*) (cdr e*)
+                                drop* (cons (car e*) keep*) (cons (car r*) rkeep*)))]
+                    [(null? keep*)
+                     (values (make-1seq ctxt (make-1seq* 'effect e-ini*) true-rec)
+                             true-rec ntypes #f #f)]
+                    [(null? drop*)
+                     (finish '() e-ini* r-int)]
+                    [(try-constant? (fold-left predicate-intersect ptr-pred rkeep*) prim-name)
+                     ; The remaining arguments are enough to ensure the result is correct.
+                     (finish drop* keep* r-int)]
+                    [(and (fx= (length drop*) 1)
+                          (check-constant-is? (car drop*) (lambda (x) #t)))
+                     ; We only can drop a constant that we must add again, so keep the original arguments.
+                     (finish '() e-ini* r-int)]
+                    [else 
+                     ; Add a constant to ensure the result is correct.
+                     (finish drop* (reverse (cons r-int keep*)) r-int)]))]
+                [else
+                  (finish '() e* r-int)]))])
 
       (let ()
         (define-syntax define-specialize/fxfl
@@ -902,12 +960,12 @@ Notes:
                        [(andmap (lambda (r) (predicate-implies? r 'fixnum)) r*)
                         (let ([pr (lookup-primref 3 'fxprim)])
                           (values `(call ,preinfo ,pr ,e* (... ...))
-                                  (if boolean? 'boolean 'fixnum)
+                                  (if boolean? boolean-pred 'fixnum)
                                   ntypes #f #f))]
                        [(andmap (lambda (r) (predicate-implies? r 'flonum)) r*)
                         (let ([pr (lookup-primref 3 'flprim)])
                           (values `(call ,preinfo ,pr ,e* (... ...))
-                                  (if boolean? 'boolean 'flonum)
+                                  (if boolean? boolean-pred 'flonum)
                                   ntypes #f #f))]
                        [else
                         (values `(call ,preinfo ,pr ,e* (... ...))
@@ -954,11 +1012,11 @@ Notes:
                                                    val))
                                        ret ntypes #f #f)])]))
         (define-set-immediate $record-set! (rec i val))
-        (define-set-immediate $record-cas! (rec i old new) 'boolean)
+        (define-set-immediate $record-cas! (rec i old new) boolean-pred)
         (define-set-immediate vector-set! (vec i val))
-        (define-set-immediate vector-cas! (vec i old new) 'boolean)
+        (define-set-immediate vector-cas! (vec i old new) boolean-pred)
         (define-set-immediate set-box! (b val))
-        (define-set-immediate box-cas! (b old new) 'boolean)
+        (define-set-immediate box-cas! (b old new) boolean-pred)
         (define-set-immediate set-car! (p val))
         (define-set-immediate set-cdr! (p val)))
 
@@ -1086,16 +1144,16 @@ Notes:
         [(n) (let ([r (get-type n)]
                    [ir `(call ,preinfo ,pr ,n)])
                (cond
-                 [(predicate-implies? r 'char)
+                 [(predicate-implies? r char-pred)
                   (values ir maybe-symbol-pred ntypes #f #f)]
                  [(predicate-implies? r 'symbol)
                   (values ir maybe-char-pred ntypes #f #f)]
-                 [(and (predicate-disjoint? r 'char)
+                 [(and (predicate-disjoint? r char-pred)
                        (predicate-disjoint? r 'symbol))
                   (values ir 'bottom pred-env-bottom #f #f)]
                  [else
                   (values ir (predicate-union maybe-char-pred 'symbol)
-                          (pred-env-add/ref ntypes n (predicate-union 'char 'symbol) plxc) #f #f)]))]
+                          (pred-env-add/ref ntypes n (predicate-union char-pred 'symbol) plxc) #f #f)]))]
         [(n c) (let ([rn (get-type n)]
                      [rc (get-type c)]
                      [ir `(call ,preinfo ,pr ,n ,c)])
@@ -1242,7 +1300,8 @@ Notes:
                  ntypes
                  (and (eq? ctxt 'test)
                       (pred-env-add/ref ntypes val (primref->predicate pr #t) plxc))
-                 #f)])))
+                 (and (eq? ctxt 'test)
+                      (pred-env-add/not/ref ntypes val (primref->predicate pr #f) plxc)))])))
 
   (define (fold-call/primref preinfo pr e* ctxt oldtypes plxc)
     (fold-primref/unrestricted preinfo pr e* ctxt oldtypes plxc))

@@ -632,7 +632,7 @@
   (test-chain* '(record? #3%$record?))
   (test-chain* '((lambda (x) (eq? x car)) procedure?))
   (test-chain* '(record-type-descriptor? #3%$record?))
-  (test-chain* '(null? list-assuming-immutable? list? #;(lambda (x) (or (null? x) (pair? x)))))
+  (test-chain* '(null? list-assuming-immutable? list? (lambda (x) (or (null? x) (pair? x)))))
   (test-disjoint '(pair? box? #3%$record? number?
                    vector? string? bytevector? fxvector? symbol?
                    char? boolean? null? (lambda (x) (eq? x (void)))
@@ -1213,8 +1213,7 @@
   (cptypes-equivalent-expansion?
     '(number? (optimize-level))
     '(begin (optimize-level) #t))
-  ; this does't work for now, test a few weaker versions
-  #;(cptypes-equivalent-expansion?
+  (cptypes-equivalent-expansion?
       '(eq? (optimize-level 0) (void))
       '(begin (optimize-level 0) #t))
   (cptypes-equivalent-expansion?
@@ -1278,14 +1277,71 @@
     '(lambda (s) (define x (string->number s)) (when x (number? x)))
     '(lambda (s) (define x (string->number s)) (when x #t)))
   (cptypes-equivalent-expansion?
+    '(lambda (s) (define x (string->number s)) (unless (number? x) x))
+    '(lambda (s) (define x (string->number s)) (unless (number? x) #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (s) (define x (string->number s)) (unless (eq? x #f) (number? x)))
+    '(lambda (s) (define x (string->number s)) (unless (eq? x #f) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (s) (define x (string->number s)) (unless (number? x) (eq? x #f)))
+    '(lambda (s) (define x (string->number s)) (unless (number? x) #t)))
+  (cptypes-equivalent-expansion?
     '(lambda (p) (define x (get-char p)) (not x))
     '(lambda (p) (define x (get-char p)) #f))
   (cptypes-equivalent-expansion?
     '(lambda (p) (define x (get-char p)) (box? x))
     '(lambda (p) (define x (get-char p)) #f))
-(cptypes-equivalent-expansion?
-    '(lambda (p) (define x (get-u8 p)) (when (number? p) (fixnum? p)))
-    '(lambda (p) (define x (get-u8 p)) (when (number? p) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-char p)) (unless (eof-object? x) (char? x)))
+    '(lambda (p) (define x (get-char p)) (unless (eof-object? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-char p)) (unless (char? x) (eof-object? x)))
+    '(lambda (p) (define x (get-char p)) (unless (char? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (when (number? x) (fixnum? x)))
+    '(lambda (p) (define x (get-u8 p)) (when (number? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (unless (eof-object? x) (fixnum? x)))
+    '(lambda (p) (define x (get-u8 p)) (unless (eof-object? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) (eof-object? x)))
+    '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (unless (eq? x (eof-object)) (fixnum? x)))
+    '(lambda (p) (define x (get-u8 p)) (unless (eq? x (eof-object)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) (eq? x (eof-object))))
+    '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (fixnum? x) (bignum? x))))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (bignum? x) (fixnum? x))))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (unless (char? x) (char? x)))
+    '(lambda (x) (unless (char? x) #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (char? x) (eq? x #\A)) (char? x)))
+    '(lambda (x) (when (and (char? x) (eq? x #\A)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (char? x) (eq? x #\A)) (eq? x #\A)))
+    '(lambda (x) (when (and (char? x) (eq? x #\A)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (char? x) (eq? x #\A)) (char? x)))
+    '(lambda (x) (when (or (char? x) (eq? x #\A)) #t)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (or (char? x) (eq? x #\A)) (eq? x #\A)))
+         '(lambda (x) (when (or (char? x) (eq? x #\A)) #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (char? x) (unless (eq? x #\A) (char? x))))
+    '(lambda (x) (when (char? x) (unless (eq? x #\A) #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (char? x) (unless (eq? x #\A) (eq? x #\A))))
+         '(lambda (x) (when (char? x) (unless (eq? x #\A) #t)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (eq? x #\A) (unless (char? x) 1)))
+    '(lambda (x) (when (eq? x #\A) (unless (char? x) 2))))
 )
 
 (mat cptypes-unreachable
