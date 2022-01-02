@@ -64,10 +64,19 @@ typedef void *s_thread_rv_t;
 #define s_thread_self() pthread_self()
 #define s_thread_equal(t1, t2) pthread_equal(t1, t2)
 static inline int s_thread_create(void *(* start_routine)(void *), void *arg) {
-  pthread_attr_t attr; pthread_t thread; int status;
+  pthread_attr_t attr; size_t stacksize; pthread_t thread; int status;
+
+  /* The minimum stack with musl can be as small as 80k, which is
+     small enough that faslin could overflow (despite the depth limit
+     imposed when writing a fasl file). Make sure we have a more
+     typical amount of space to work with. */
+# define WANT_MIN_STACK_SIZE (512 * 1024)
 
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_getstacksize(&attr, &stacksize);
+  if (stacksize < WANT_MIN_STACK_SIZE)
+    pthread_attr_setstacksize(&attr, WANT_MIN_STACK_SIZE);
   status = pthread_create(&thread, &attr, start_routine, arg);
   pthread_attr_destroy(&attr);
   return status;
