@@ -9,12 +9,12 @@
 ;;@ TODO redesign regs, esp. sp
 (define-registers
   (reserved
-   [%tc  %x3 #f 3]
-   [%sfp %x28 #t 28]
-   [%ap  %x4 #f 4]
+   [%tc        %x3  #f 3]
+   [%sfp       %x28 #t 28]
+   [%ap        %x4  #f 4]
    [%real-zero %x0  #f 0]
-   [%jump %x27 #t 27]
-   [%cond %x31 #f 31])
+   [%jump      %x27 #t 27]
+   [%cond      %x31 #f 31])
   (allocable
    [%ac0 %x5 #f 5]
    [%xp  %x6 #f 6]
@@ -23,7 +23,6 @@
    [%ac1 %x9  %deact #t 9]
    [%yp  %x29 #f 29]
    [%cp  %x18 #f 18]
-   [%ra   %x1  #f 1]
    [     %x10 %Carg1 %Cretval #f 10]
    [     %x11 %Carg2 #f 11]
    [     %x12 %Carg3 #f 12]
@@ -31,7 +30,8 @@
    [     %x14 %Carg5 #f 14]
    [     %x15 %Carg6 #f 15]
    [     %x16 %Carg7 #f 16]
-   [     %x17 %Carg8 #f 17] ; omit 18
+   [     %x17 %Carg8 #f 17]
+;; [     %x18 #t 18]
    [     %x19 #t 19]
    [     %x20 #t 20]
    [     %x21 #t 21]
@@ -39,11 +39,14 @@
    [     %x23 #t 23]
    [     %x24 #t 24]
    [     %x25 #t 25]
-   [     %x26 #t 26] ; omit 27, 28
-   ;;[     %x29 #f 29]
-   [     %x30 #f 30])
+   [     %x26 #t 26]
+;; [     %x27 #t 27]
+;; [     %x28 #f 28]
+;; [     %x29 #f 29]
+   [     %x30 #f 30]
+   [%ra  %x1  #f 1])
   (machine-dependent
-   [%sp   %x2  #t 2]
+   [%sp %x2 #t 2]
    [%Cfparg1 %Cfpretval %f10 #f 10]
    [%Cfparg2 %f11           #f  11]
    [%Cfparg3 %f12           #f  12]
@@ -52,8 +55,8 @@
    [%Cfparg6 %f15           #f  15]
    [%Cfparg7 %f16           #f  16]
    [%Cfparg8 %f17           #f  17]
-   [%flreg1  %f0           #f  0]
-   [%flreg2  %f1           #f  1]))
+   [%flreg1  %f0            #f  0]
+   [%flreg2  %f1            #f  1]))
 
 ;; (include "riscv64-instructions.ss")
 
@@ -346,7 +349,12 @@
      (let ([u1 (make-tmp 'u1)]
            [u2 (make-tmp 'u2)]
            [u3 (make-tmp 'u3)])
-       `(set! ,(make-live-info) ,z (asm ,info ,asm-add/ovfl ,x ,y ,u1 ,u2 ,u3)))])
+       (seq
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y ,u1 ,u2 ,u3)))
+       )])
   
   (define-instruction value (-)
     [(op (z ur) (x ur) (y ur))
@@ -357,7 +365,12 @@
      (let ([u1 (make-tmp 'u1)]
            [u2 (make-tmp 'u2)]
            [u3 (make-tmp 'u3)])
-       `(set! ,(make-live-info) ,z (asm ,info ,asm-sub/ovfl ,x ,y ,u1 ,u2 ,u3)))])
+       (seq
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y ,u1 ,u2 ,u3)))
+      )])
 
   (define-instruction value (-/eq)
     [(op (z ur) (x ur) (y ur))
@@ -372,7 +385,12 @@
      (let ([u1 (make-tmp 'u1)]
            [u2 (make-tmp 'u2)]
            [u3 (make-tmp 'u3)])
-       `(set! ,(make-live-info) ,z (asm ,info ,asm-mul/ovfl ,x ,y ,u1 ,u2 ,u3)))])
+       (seq
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1 ,u2 ,u3)))
+)])
 
   (define-instruction value (/)
     [(op (z ur) (x ur) (y ur))
@@ -419,10 +437,9 @@
 
   
   (define-instruction value (move)
-    [(op (z mem) (x ur)) ;;@ todo imm32? mem? imm?
+    [(op (z mem) (x ur))
      `(set! ,(make-live-info) ,z ,x)]
     [(op (z ur) (x ur mem imm12))
-                                        ; NOTE: risc arch's will need to deal with limitations on imm
      `(set! ,(make-live-info) ,z ,x)])
 
   (define-instruction value lea1 ;;@ todo addi?
@@ -431,7 +448,7 @@
     [(op (z ur) (x ur)) ;;@ z = x + offset
      (begin
        (let ([offset (info-lea-offset info)])
-         (if (signed12? offset) ;;@ todo is offset a num or a terminal?
+         (if (signed12? offset)
              `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,x (immediate ,offset))) ;;@ not Trivited yet, use (immediate)
              (let ([u (make-tmp 'u)])
                (seq
@@ -575,7 +592,7 @@
      (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-add ,x ,w))
-       ;; `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
         `(asm ,null-info ,asm-inc-cc-counter ,u1 ,z ,u2)))])
 
   (define-instruction effect inc-profile-counter
@@ -629,17 +646,20 @@
     [(op (z ur))
      (let ([u (make-precolored-unspillable 'ura %ra)])
        (if (info-asmlib-save-ra? info)
-           `(set! ,(make-live-info) ,z (asm ,info ,(asm-library-call (info-asmlib-libspec info) #t) ,u ,(info-kill*-live*-live* info) ...))
            (seq
             `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-            `(set! ,(make-live-info) ,z 
-                   (asm ,info ,(asm-library-call (info-asmlib-libspec info) #f) ,u ,(info-kill*-live*-live* info) ...)))))])
+            `(set! ,(make-live-info) ,z (asm ,info ,(asm-library-call (info-asmlib-libspec info) #t) ,u ,(info-kill*-live*-live* info) ...)))
+           (seq
+            `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+            `(set! ,(make-live-info) ,z (asm ,info ,(asm-library-call (info-asmlib-libspec info) #f) ,u ,(info-kill*-live*-live* info) ...)))))])
 
   (define-instruction effect (asmlibcall!)
     [(op)
      (let ([u (make-precolored-unspillable 'ura %ra)])
        (if (info-asmlib-save-ra? info)
-           `(asm ,info ,(asm-library-call! (info-asmlib-libspec info) #t) ,u ,(info-kill*-live*-live* info) ...)
+           (seq
+            `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+            `(asm ,info ,(asm-library-call! (info-asmlib-libspec info) #t) ,u ,(info-kill*-live*-live* info) ...))
            (seq
             `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
             `(asm ,info ,(asm-library-call! (info-asmlib-libspec info) #f) ,u ,(info-kill*-live*-live* info) ...))))])
@@ -763,7 +783,7 @@
 
 
 ;;; SSECTION 3: assembler
-(module asm-module (asm-add asm-add asm-add/carry asm-add/ovfl  asm-sub asm-sub/ovfl asm-sub/eq
+(module asm-module (asm-add asm-add/carry asm-add/ovfl  asm-sub asm-sub/ovfl asm-sub/eq
                     asm-mul asm-mul/ovfl asm-div asm-logand asm-logor asm-logxor asm-lognot asm-logtest
                     asm-read-performance-monitoring-counter asm-read-time-stamp-counter asm-inc-cc-counter
                     asm-enter #;asm-shiftop asm-sll asm-srl asm-sra asm-flsqrt asm-trunc asm-flt asm-lock
@@ -893,20 +913,20 @@
                    [(fcvt.d.s) #b00000]
                    [else (ax-ea-reg-code op rs2)])])
         (emit-code (op dest rs1 rs2 code*)
-                 [25 funct7]
-                 [20 rs2]
-                 [15 (ax-ea-reg-code op rs1)]
-                 [12 funct3]
-                 [7 (ax-ea-reg-code op dest)]
-                 [0 opcode]))))
+                   [25 funct7]
+                   [20 rs2]
+                   [15 (ax-ea-reg-code op rs1)]
+                   [12 funct3]
+                   [7 (ax-ea-reg-code op dest)]
+                   [0 opcode]))))
 
   (define bin-imm-op ;;@ todo check imm range
     (lambda (op opcode funct3 dest base imm12 code*)
       (emit-code (op dest base imm12 code*)
                  [20 (ax-imm-data imm12)]
-                 [15 (ax-ea-reg-code op base)]
+                 [15 (ax-ea-reg-code base)]
                  [12 funct3]
-                 [7 (ax-ea-reg-code op dest)]
+                 [7 (ax-ea-reg-code dest)]
                  [0 opcode])))
 
   (define shift-imm-op ;;@ todo check shamt range
@@ -954,7 +974,7 @@
     (lambda (op opcode funct3 rs1 rs2 imm12 code*)
       (let ([imm12 (/ (ax-imm-data imm12) 2)])
         (emit-code (op rs1 rs2 imm12 code*)
-                 [20 (fxlogor (fxsrl (fxlogand imm12 #b100000000000) 5)
+                 [25 (fxlogor (fxsrl (fxlogand imm12 #b100000000000) 5)
                               (fxsrl (fxlogand imm12 #b001111110000) 4))]
                  [20 (ax-ea-reg-code op rs2)]
                  [15 (ax-ea-reg-code op rs1)]
@@ -990,6 +1010,12 @@
   
   (define-who ax-ea-reg-code
     (case-lambda
+      [(ea)
+       (if (pair? ea) ;;@ todo
+          (record-case ea
+            [(reg) r (reg-mdinfo r)]
+            [else (sorry! who "ea=~s" ea)])
+          (reg-mdinfo ea))]
       [(op ea)
        (if (pair? ea) ;;@ todo
           (record-case ea
@@ -1052,7 +1078,11 @@
     (syntax-rules ()
       [(byte-fields (n e) ...)
        (andmap fixnum? (datum (n ...)))
-       (+ (bitwise-arithmetic-shift-left e n) ...)]))
+       (begin
+         (printf "byte-fields: ~n")
+         (for-each (lambda (x y) (printf "(~a 0b~b)~n" x y)) '(n ...) `(,e ...))
+         (+ (bitwise-arithmetic-shift-left e n) ...))
+       ]))
 
   (define shamt?
     (lambda (imm)
@@ -1134,6 +1164,7 @@
   
   (define asm-sub
     (lambda (code* dest src0 src1)
+      (printf "begin asm-sub~n")
       (Trivit (dest src0 src1)
               (emit sub dest src0 src1 code*))))
   
@@ -1616,8 +1647,11 @@
                                         ; move pseudo instruction used by set! case in select-instruction
                                         ; guarantees dest is a reg and src is reg, mem, or imm OR dest is
                                         ; mem and src is reg.
+      (printf "beginning asm-move~n")
       (Trivit (dest src)
               (define (bad!) (sorry! who "unexpected combination of src ~s and dest ~s" src dest))
+              (printf "dest: ~a~n" dest)
+              (printf "src: ~a~n" src)
               (cond
                [(ax-reg? dest)
                 (record-case src
@@ -1650,21 +1684,22 @@
 
   (define-who asm-move/extend ;;@ todo simplify some of them
     (lambda (op)
-      (lambda (code* dest src) ;; Trivit not needed
-        (case op
-          [(sext8) (emit slli dest src 56
-                         (emit srai dest dest 56 code*))]
-          [(sext16) (emit slli dest src 48
-                          (emit srai dest dest 48 code*))]
-          [(sext32) (emit slli dest src 32
-                          (emit srai dest dest 32 code*))]
-          [(zext8) (emit slli dest src 56
-                         (emit srli dest dest 56 code*))]
-          [(zext16) (emit slli dest src 48
-                          (emit srli dest dest 48 code*))]
-          [(zext32) (emit slli dest src 32
-                          (emit srli dest dest 32 code*))]
-          [else (sorry! who "unexpected op ~s" op)]))))
+      (lambda (code* dest src)
+        (Trivit (dest src)
+                (case op
+                  [(sext8) (emit slli dest src 56
+                                 (emit srai dest dest 56 code*))]
+                  [(sext16) (emit slli dest src 48
+                                  (emit srai dest dest 48 code*))]
+                  [(sext32) (emit slli dest src 32
+                                  (emit srai dest dest 32 code*))]
+                  [(zext8) (emit slli dest src 56
+                                 (emit srli dest dest 56 code*))]
+                  [(zext16) (emit slli dest src 48
+                                  (emit srli dest dest 48 code*))]
+                  [(zext32) (emit slli dest src 32
+                                  (emit srli dest dest 32 code*))]
+                  [else (sorry! who "unexpected op ~s" op)])))))
 
   (define asm-save-flrv
     (lambda (code*)
