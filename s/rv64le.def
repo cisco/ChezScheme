@@ -60,4 +60,4 @@ asm-arg-reg-cnt is the actual number of registers used for arguments.  Registers
 (define-constant integer-divide-instruction #t)
 (define-constant software-floating-point #f)
 (define-constant segment-table-levels 3)
-(features iconv expeditor pthreads)
+(features iconv expeditor)
