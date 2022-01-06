@@ -688,7 +688,7 @@
             (pr "                        : \"r\" (addr)\\~%")
             (pr "                        : \"cc\", \"memory\", \"r12\", \"r11\")~%")]
           [(riscv64)
-           (pr "#define INITLOCK(addr) \\ ~%")
+           (pr "#define INITLOCK(addr) \\~%")
            (pr "  __asm__ __volatile__ (\"li t0, 0\\n\\t\" \\~%")
            (pr "                        \"sd t0, (%0)\\n\\t\" \\~%")
            (pr "                        : \\~%")
@@ -719,9 +719,9 @@
            (pr "                        : \\~%")
            (pr "                        : \"r\" (addr) \\~%")
            (pr "                        : \"memory\", \"t0\")~%")
-           (pr "#define LCOKED_INCR(addr, ret) \\~%")
 
            (nl)
+           (pr "#define LCOKED_INCR(addr, ret) \\~%")
            (pr "  do { \\~%")
            (pr "    long _return_; \\~%")
            (pr "    __asm__ __volatile__ (\"li %0, 0\\n\\t\" \\~%")
