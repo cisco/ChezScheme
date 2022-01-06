@@ -233,7 +233,7 @@
       [maybe-pathname maybe-string-pred]
       [procedure 'procedure]
       [maybe-procedure maybe-procedure-pred]
-      [maybe-who maybe-normalptr-pred] ;should be maybe-string/symbol
+      [maybe-who (cons maybe-symbol-pred maybe-normalptr-pred)] ;should be maybe-string/symbol
 
       [gensym 'gensym]
       [uninterned-symbol 'uninterned-symbol]
