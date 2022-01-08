@@ -39,7 +39,7 @@ asm-arg-reg-cnt is the actual number of registers used for arguments.  Registers
 (define-constant max-float-alignment 8)
 (define-constant max-integer-alignment 8)
 
-(define-constant asm-arg-reg-max 18)
+(define-constant asm-arg-reg-max 17)
 (define-constant asm-arg-reg-cnt 8)
 
 (define-constant typedef-ptr "void *")
