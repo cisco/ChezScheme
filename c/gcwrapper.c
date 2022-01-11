@@ -27,7 +27,7 @@ static void check_locked_object PROTO((ptr p, IBOOL locked, IGEN g, IBOOL afterg
 
 static IBOOL checkheap_noisy;
 
-void S_gc_init() {
+void S_gc_init(void) {
   IGEN g; INT i;
 
   S_checkheap = 0; /* 0 for disabled, 1 for enabled */
@@ -182,7 +182,7 @@ void S_set_minmarkgen(IGEN g) {
   S_G.min_mark_gen = g;
 }
 
-void S_immobilize_object(x) ptr x; {
+void S_immobilize_object(ptr x) {
   seginfo *si;
 
   if (FIXMEDIATE(x))
@@ -209,7 +209,7 @@ void S_immobilize_object(x) ptr x; {
   }
 }
 
-void S_mobilize_object(x) ptr x; {
+void S_mobilize_object(ptr x) {
   seginfo *si;
 
   if (FIXMEDIATE(x))
@@ -231,7 +231,7 @@ void S_mobilize_object(x) ptr x; {
   }
 }
 
-static IBOOL memqp(x, ls) ptr x, ls; {
+static IBOOL memqp(ptr x, ptr ls) {
   for (;;) {
     if (ls == Snil) return 0;
     if (Scar(ls) == x) return 1;
@@ -239,7 +239,7 @@ static IBOOL memqp(x, ls) ptr x, ls; {
   }
 }
 
-static IBOOL remove_first_nomorep(x, pls, look) ptr x, *pls; IBOOL look; {
+static IBOOL remove_first_nomorep(ptr x, ptr *pls, IBOOL look) {
   ptr ls;
 
   for (;;) {
@@ -258,7 +258,7 @@ static IBOOL remove_first_nomorep(x, pls, look) ptr x, *pls; IBOOL look; {
   return 0;
 }
 
-IBOOL Slocked_objectp(x) ptr x; {
+IBOOL Slocked_objectp(ptr x) {
   seginfo *si; IGEN g; IBOOL ans; ptr ls;
 
   if (FIXMEDIATE(x) || (si = MaybeSegInfo(ptr_get_segment(x))) == NULL || (g = si->generation) == static_generation) return 1;
@@ -295,7 +295,7 @@ ptr S_locked_objects(void) {
   return ans;
 }
 
-void Slock_object(x) ptr x; {
+void Slock_object(ptr x) {
   seginfo *si; IGEN g;
 
  /* weed out pointers that won't be relocated */
@@ -320,7 +320,7 @@ void Slock_object(x) ptr x; {
   }
 }
 
-void Sunlock_object(x) ptr x; {
+void Sunlock_object(ptr x) {
   seginfo *si; IGEN g;
 
   if (!FIXMEDIATE(x) && (si = MaybeSegInfo(ptr_get_segment(x))) != NULL && (g = si->generation) != static_generation) {
@@ -479,7 +479,7 @@ seginfo *S_ptr_seginfo(ptr p) {
 /* Scompact_heap().  Compact into as few O/S chunks as possible and
  * move objects into static generation
  */
-void Scompact_heap() {
+void Scompact_heap(void) {
   ptr tc = get_thread_context();
   IBOOL eoc = S_G.enable_object_counts;
   THREAD_GC(tc)->during_alloc += 1;
@@ -514,7 +514,7 @@ void Scompact_heap() {
 # define Ptd "%td"
 #endif
 
-static void segment_tell(seg) uptr seg; {
+static void segment_tell(uptr seg) {
   seginfo *si;
   ISPC s, s1;
   static char *spacename[max_space+1] = { alloc_space_names };
@@ -663,7 +663,7 @@ static ptr *find_nl(ptr *pp1, ptr *pp2, ISPC s, IGEN g) {
 
 #endif
 
-static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
+static void check_heap_dirty_msg(char *msg, ptr *x) {
     INT d; seginfo *si;
 
     si = SegInfo(addr_get_segment(TO_PTR(x)));
@@ -673,7 +673,7 @@ static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
     printf("to   "); segment_tell(ptr_get_segment(*x));
 }
 
-void S_check_heap(aftergc, mcg) IBOOL aftergc; IGEN mcg; {
+void S_check_heap(IBOOL aftergc, IGEN mcg) {
   uptr seg; INT d; ISPC s; IGEN g; IDIRTYBYTE dirty; IBOOL found_eos; IGEN pg;
   ptr p, *pp1, *pp2, *nl;
   iptr i, for_code;
@@ -1097,7 +1097,7 @@ static void check_dirty_space(ISPC s) {
   }
 }
 
-static void check_dirty() {
+static void check_dirty(void) {
   IGEN from_g, to_g; seginfo *si;
 
   for (from_g = 1; from_g <= static_generation; from_g = from_g == S_G.max_nonstatic_generation ? static_generation : from_g + 1) {

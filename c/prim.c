@@ -27,7 +27,7 @@ static IBOOL s_check_heap_enabledp PROTO((void));
 static void s_enable_check_heap PROTO((IBOOL b));
 static uptr s_check_heap_errors PROTO((void));
 
-static void install_library_entry(n, x) ptr n, x; {
+static void install_library_entry(ptr n, ptr x) {
     if (!Sfixnump(n) || UNFIX(n) < 0 || UNFIX(n) >= library_entry_vector_size)
         S_error1("$install-library-entry", "invalid index ~s", n);
     if (!Sprocedurep(x) && !Scodep(x))
@@ -51,7 +51,7 @@ static void install_library_entry(n, x) ptr n, x; {
 #endif
 }
 
-ptr S_lookup_library_entry(n, errorp) iptr n; IBOOL errorp; {
+ptr S_lookup_library_entry(iptr n, IBOOL errorp) {
     ptr p;
 
     if (n < 0 || n >= library_entry_vector_size)
@@ -62,12 +62,12 @@ ptr S_lookup_library_entry(n, errorp) iptr n; IBOOL errorp; {
     return p;
 }
 
-static void scheme_install_library_entry() {
+static void scheme_install_library_entry(void) {
     ptr tc = get_thread_context();
     install_library_entry(S_get_scheme_arg(tc, 1), S_get_scheme_arg(tc, 2));
 }
 
-static void create_library_entry_vector() {
+static void create_library_entry_vector(void) {
     iptr i;
 
     S_protect(&S_G.library_entry_vector);
@@ -88,7 +88,7 @@ ptr int2ptr(iptr f)
 #define proc2ptr(x) TO_PTR(x)
 #endif /* HPUX */
 
-void S_install_c_entry(i, x) iptr i; ptr x; {
+void S_install_c_entry(iptr i, ptr x) {
     if (i < 0 || i >= c_entry_vector_size)
         S_error1("install_c_entry", "invalid index ~s", FIX(i));
     if (Svector_ref(S_G.c_entry_vector, i) != Sfalse)
@@ -96,7 +96,7 @@ void S_install_c_entry(i, x) iptr i; ptr x; {
     SETVECTIT(S_G.c_entry_vector, i, x);
 }
 
-ptr S_lookup_c_entry(i) iptr i; {
+ptr S_lookup_c_entry(iptr i) {
    ptr x;
 
    if (i < 0 || i >= c_entry_vector_size)
@@ -106,11 +106,11 @@ ptr S_lookup_c_entry(i) iptr i; {
    return x;
 }
 
-static ptr s_get_thread_context() {
+static ptr s_get_thread_context(void) {
   return get_thread_context();
 }
 
-static void create_c_entry_vector() {
+static void create_c_entry_vector(void) {
     INT i;
 
     S_protect(&S_G.c_entry_vector);
@@ -174,7 +174,7 @@ void S_check_c_entry_vector() {
     }
 }
 
-void S_prim_init() {
+void S_prim_init(void) {
     if (!S_boot_time) return;
 
     create_library_entry_vector();
@@ -219,7 +219,7 @@ void S_prim_init() {
 #endif
 }
 
-static void s_instantiate_code_object() {
+static void s_instantiate_code_object(void) {
     ptr tc = get_thread_context();
     ptr old, cookie, proc;
     ptr new, oldreloc, newreloc;
@@ -301,7 +301,7 @@ static void s_instantiate_code_object() {
     AC0(tc) = new;
 }
 
-static void s_link_code_object(co, objs) ptr co, objs; {
+static void s_link_code_object(ptr co, ptr objs) {
     ptr t, tc = get_thread_context();
     uptr a, m, n;
 

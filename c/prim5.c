@@ -162,47 +162,47 @@ ptr S_strerror(INT errnum) {
   return p;
 }
 
-static INT s_errno() {
+static INT s_errno(void) {
   return errno;
 }
 
-static IBOOL s_addr_in_heap(x) uptr x; {
+static IBOOL s_addr_in_heap(uptr x) {
   return MaybeSegInfo(addr_get_segment(x)) != NULL;
 }
 
-static IBOOL s_ptr_in_heap(x) ptr x; {
+static IBOOL s_ptr_in_heap(ptr x) {
   return MaybeSegInfo(ptr_get_segment(x)) != NULL;
 }
 
-static ptr s_generation(x) ptr x; {
+static ptr s_generation(ptr x) {
   seginfo *si = MaybeSegInfo(ptr_get_segment(x));
   return si == NULL ? Sfalse : FIX(si->generation);
 }
 
-static iptr s_fxmul(x, y) iptr x, y; {
+static iptr s_fxmul(iptr x, iptr y) {
     return x * y;
 }
 
-static iptr s_fxdiv(x, y) iptr x, y; {
+static iptr s_fxdiv(iptr x, iptr y) {
     return x / y;
 }
 
-static ptr s_trunc_rem(x, y) ptr x, y; {
+static ptr s_trunc_rem(ptr x, ptr y) {
   ptr q, r;
   S_trunc_rem(get_thread_context(), x, y, &q, &r);
   return Scons(q, r);
 }
 
-static ptr s_fltofx(x) ptr x; {
+static ptr s_fltofx(ptr x) {
     return FIX((iptr)FLODAT(x));
 }
 
-static ptr s_weak_pairp(p) ptr p; {
+static ptr s_weak_pairp(ptr p) {
   seginfo *si;
   return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space == space_weakpair ? Strue : Sfalse;
 }
 
-static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
+static ptr s_ephemeron_cons(ptr car, ptr cdr) {
   ptr p;
 
   p = S_ephemeron_cons_in(0, car, cdr);
@@ -210,12 +210,12 @@ static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
   return p;
 }
 
-static ptr s_ephemeron_pairp(p) ptr p; {
+static ptr s_ephemeron_pairp(ptr p) {
   seginfo *si;
   return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space == space_ephemeron ? Strue : Sfalse;
 }
 
-static ptr s_box_immobile(p) ptr p; {
+static ptr s_box_immobile(ptr p) {
   ptr b = S_box2(p, 1);
   S_immobilize_object(b);
   return b;
@@ -303,15 +303,15 @@ static ptr s_oblist() {
   return ls;
 }
 
-static ptr s_bigoddp(n) ptr n; {
+static ptr s_bigoddp(ptr n) {
     return Sboolean(BIGIT(n, BIGLEN(n) - 1) & 1); /* last bigit */;
 }
 
-static ptr s_float(x) ptr x; {
+static ptr s_float(ptr x) {
     return Sflonum(S_floatify(x));
 }
 
-static ptr s_decode_float(x) ptr x; {
+static ptr s_decode_float(ptr x) {
     require(Sflonump(x),"decode-float","~s is not a float",x);
     return S_decode_float(FLODAT(x));
 }
@@ -737,7 +737,7 @@ static ptr s_system(const char *s) {
 #endif /* WIN32 */
 }
 
-static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
+static ptr s_process(char *s, IBOOL stderrp) {
     INT ifd = -1, ofd = -1, efd = -1, child = -1;
 
 #ifdef WIN32
@@ -928,7 +928,7 @@ static char *s_getwd() {
 }
 #endif /* GETWD */
 
-static ptr s_set_code_byte(p, n, x) ptr p, n, x; {
+static ptr s_set_code_byte(ptr p, ptr n, ptr x) {
     I8 *a;
     ptr tc = get_thread_context();
 
@@ -940,7 +940,7 @@ static ptr s_set_code_byte(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_code_word(p, n, x) ptr p, n, x; {
+static ptr s_set_code_word(ptr p, ptr n, ptr x) {
     I16 *a;
     ptr tc = get_thread_context();
 
@@ -952,7 +952,7 @@ static ptr s_set_code_word(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_code_long(p, n, x) ptr p, n, x; {
+static ptr s_set_code_long(ptr p, ptr n, ptr x) {
     I32 *a;
     ptr tc = get_thread_context();
 
@@ -964,7 +964,7 @@ static ptr s_set_code_long(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static void s_set_code_long2(p, n, h, l) ptr p, n, h, l; {
+static void s_set_code_long2(ptr p, ptr n, ptr h, ptr l) {
     I32 *a;
     ptr tc = get_thread_context();
 
@@ -974,7 +974,7 @@ static void s_set_code_long2(p, n, h, l) ptr p, n, h, l; {
     S_thread_end_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I32));
 }
 
-static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
+static ptr s_set_code_quad(ptr p, ptr n, ptr x) {
     I64 *a;
     ptr tc = get_thread_context();
 
@@ -986,7 +986,7 @@ static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_reloc(p, n, e) ptr p, n, e; {
+static ptr s_set_reloc(ptr p, ptr n, ptr e) {
     iptr *a;
 
     a = (iptr *)(&RELOCIT(CODERELOC(p), UNFIX(n)));
@@ -1022,7 +1022,7 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
     return co;
 }
 
-static ptr s_make_reloc_table(codeobj, n) ptr codeobj, n; {
+static ptr s_make_reloc_table(ptr codeobj, ptr n) {
     ptr tc = get_thread_context();
 
     S_thread_start_code_write(tc, 0, 0, TO_VOIDP(&CODERELOC(codeobj)), sizeof(ptr));
@@ -1032,7 +1032,7 @@ static ptr s_make_reloc_table(codeobj, n) ptr codeobj, n; {
     return Svoid;
 }
 
-static ptr s_make_closure(offset, codeobj) ptr offset, codeobj; {
+static ptr s_make_closure(ptr offset, ptr codeobj) {
 
     return S_closure((ptr)((iptr)codeobj + UNFIX(offset)), 0);
 }
@@ -1040,7 +1040,7 @@ static ptr s_make_closure(offset, codeobj) ptr offset, codeobj; {
 /* the random formula is based on Knuth.  It returns a random fixnum
  * between 0 and n-1.
  */
-static ptr s_fxrandom(p) ptr p; {
+static ptr s_fxrandom(ptr p) {
   ptr tc = get_thread_context();
   uptr t, n = UNFIX(p);
 
@@ -1055,7 +1055,7 @@ static ptr s_fxrandom(p) ptr p; {
   }
 }
 
-static ptr s_flrandom(x) ptr x; {
+static ptr s_flrandom(ptr x) {
     ptr tc = get_thread_context();
     U32 t1, t2, t3, t4;
 
@@ -1071,12 +1071,12 @@ static U32 s_random_seed() {
     return RANDOMSEED(tc);
 }
 
-static void s_set_random_seed(x) U32 x; {
+static void s_set_random_seed(U32 x) {
     ptr tc = get_thread_context();
     RANDOMSEED(tc) = x;
 }
 
-static ptr s_intern(x) ptr x; {
+static ptr s_intern(ptr x) {
   require(Sstringp(x),"string->symbol","~s is not a string",x);
 
   return S_intern_sc(&STRIT(x, 0), Sstring_length(x), x);
@@ -1384,7 +1384,7 @@ static int s_getpid(void) {
   return GETPID();
 }
 
-static ptr s_set_collect_trip_bytes(n) ptr n; {
+static ptr s_set_collect_trip_bytes(ptr n) {
     S_G.collect_trip_bytes = Sunsigned_value(n);
     return Svoid;
 }
@@ -1528,7 +1528,7 @@ static ptr s_getenv(name) char *name; {
 }
 
 static void s_putenv PROTO((char *name, char *value));
-static void s_putenv(name, value) char *name, *value; {
+static void s_putenv(char *name, char *value) {
 #ifdef WIN32
   wchar_t* namew;
   wchar_t* valuew;
@@ -1555,7 +1555,7 @@ static void s_putenv(name, value) char *name, *value; {
 #ifdef PTHREADS
 /* backdoor thread is for testing thread creation by Sactivate_thread */
 #define display(s) { const char *S = (s); if (WRITE(1, S, (unsigned int)strlen(S))) {} }
-static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
+static s_thread_rv_t s_backdoor_thread_start(void *p) {
   display("backdoor thread started\n")
   (void) Sactivate_thread();
   display("thread activated\n")
@@ -1570,7 +1570,7 @@ static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
   s_thread_return;
 }
 
-static iptr s_backdoor_thread(p) ptr p; {
+static iptr s_backdoor_thread(ptr p) {
   display("creating thread\n");
   return s_thread_create(s_backdoor_thread_start, TO_VOIDP(p));
 }
@@ -1583,7 +1583,7 @@ static ptr s_threads() {
   return ts;
 }
 
-static void s_mutex_acquire(m_p) ptr m_p; {
+static void s_mutex_acquire(ptr m_p) {
   scheme_mutex_t *m = TO_VOIDP(m_p);
   ptr tc = get_thread_context();
 
@@ -1603,7 +1603,7 @@ static void s_mutex_acquire(m_p) ptr m_p; {
   }
 }
 
-static ptr s_mutex_acquire_noblock(m_p) ptr m_p; {
+static ptr s_mutex_acquire_noblock(ptr m_p) {
   scheme_mutex_t *m = TO_VOIDP(m_p);
   return S_mutex_tryacquire(m) == 0 ? Strue : Sfalse;
 }
@@ -1701,7 +1701,7 @@ static IBOOL s_native_little_endian() {
 
 #define proc2ptr(x) TO_PTR(x)
 
-void S_prim5_init() {
+void S_prim5_init(void) {
     if (!S_boot_time) return;
 
 #ifdef PTHREADS
@@ -1954,7 +1954,7 @@ void S_prim5_init() {
     S_check_c_entry_vector();
 }
 
-static ptr s_get_reloc(co, with_offsets) ptr co; IBOOL with_offsets; {
+static ptr s_get_reloc(ptr co, IBOOL with_offsets) {
   ptr t, ls; uptr a, m, n;
 
   require(Scodep(co),"s_get_reloc","~s is not a code object",co);
@@ -2030,7 +2030,7 @@ static void s_stlv(ptr x, ptr v) {
   if (!(expr)) S_error1("s_test_schlib", "test ~s failed", FIX(test));\
 }
 
-static void s_test_schlib() {
+static void s_test_schlib(void) {
   INT test = 0;
   I32 n1 = 0x73215609;
   I64 n2 = n1 * 37;
@@ -2094,7 +2094,7 @@ static void s_breakhere(UNUSED ptr x) {
   return;
 }
 
-static IBOOL s_interactivep() {
+static IBOOL s_interactivep(void) {
   static INT interactivep = -1;
   if (interactivep == -1) {
 #ifdef WIN32

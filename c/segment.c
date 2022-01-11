@@ -49,7 +49,7 @@ static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
 static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len));
 #endif
 
-void S_segment_init() {
+void S_segment_init(void) {
   IGEN g; ISPC s; int i;
 
   if (!S_boot_time) return;
@@ -287,7 +287,7 @@ static void initialize_seginfo(seginfo *si, NO_THREADS_UNUSED thread_gc *creator
 }
 
 /* allocation mutex must be held */
-iptr S_find_segments(creator, s, g, n) thread_gc *creator; ISPC s; IGEN g; iptr n; {
+iptr S_find_segments(thread_gc *creator, ISPC s, IGEN g, iptr n) {
   chunkinfo *chunk, *nextchunk, **chunks;
   seginfo *si, *nextsi, **prevsi;
   iptr nunused_segs, j;

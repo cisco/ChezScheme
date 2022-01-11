@@ -16,7 +16,7 @@
 
 #include "system.h"
 
-ptr S_symbol_value(sym) ptr sym; {
+ptr S_symbol_value(ptr sym) {
   if (SYMVAL(sym) == sunbound)
     S_error1("","~s is not bound", sym);
   return SYMVAL(sym);
@@ -26,7 +26,7 @@ ptr S_symbol_racy_value(ptr sym) NO_THREAD_SANITIZE {
   return SYMVAL(sym);
 }
 
-void S_set_symbol_value(sym, val) ptr sym, val; {
+void S_set_symbol_value(ptr sym, ptr val) {
   SETSYMVAL(sym, val);
   SETSYMCODE(sym, Sprocedurep(val) ? CLOSCODE(val) : S_G.nonprocedure_code);
 }

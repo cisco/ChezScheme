@@ -53,7 +53,7 @@ void S_doflush(uptr start, uptr end) {
 #endif
 }
 
-void S_machine_init() {
+void S_machine_init(void) {
   int l1_dcache_line_size, l1_icache_line_size;
 
 #if defined(__linux__) && defined(_SC_LEVEL1_DCACHE_LINESIZE)

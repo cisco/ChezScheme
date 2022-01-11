@@ -1909,7 +1909,7 @@ static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
    }
 }
 
-static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
+static void forward_or_bwp(ptr *pp, ptr p) {
   seginfo *si;
  /* adapted from relocate */
   if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space && !new_marked(si, p)) {

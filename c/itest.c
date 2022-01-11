@@ -136,7 +136,7 @@ static INT read_token(ptr *v) {
 
 static ptr readx(INT t, ptr v);
 
-static ptr read_list() {
+static ptr read_list(void) {
   INT t; ptr v, x;
 
   t = read_token(&v);
@@ -163,7 +163,7 @@ static ptr readx(INT t, ptr v) {
   }
 }
 
-static ptr read_top() {
+static ptr read_top(void) {
   INT t; ptr v;
 
   t = read_token(&v);

@@ -479,4 +479,4 @@ extern ptr S_ffi_closure(ptr types, ptr proc);
 #endif
 
 /* statics.c */
-extern void scheme_statics();
+extern void scheme_statics(void);

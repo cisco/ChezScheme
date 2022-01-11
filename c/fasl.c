@@ -282,7 +282,7 @@ static void swap_code_endian(octet *code, uptr len);
 
 static double s_nan;
 
-void S_fasl_init() {
+void S_fasl_init(void) {
     if (S_boot_time) {
         S_protect(&S_G.base_rtd);
         S_G.base_rtd = Sfalse;
@@ -1323,7 +1323,7 @@ int S_fasl_intern_rtd(ptr *x)
 }
 
 /* limited version for checking rtd fields */
-static IBOOL equalp(x, y) ptr x, y; {
+static IBOOL equalp(ptr x, ptr y) {
   if (x == y) return 1;
   if (Spairp(x)) return Spairp(y) && equalp(Scar(x), Scar(y)) && equalp(Scdr(x), Scdr(y));
   if (Svectorp(x)) {
@@ -1336,7 +1336,7 @@ static IBOOL equalp(x, y) ptr x, y; {
   return Sbignump(x) && Sbignump(y) && S_big_eq(x, y);
 }
 
-static IBOOL rtd_equiv(x, y) ptr x, y; {
+static IBOOL rtd_equiv(ptr x, ptr y) {
   return ((RECORDINSTTYPE(x) == RECORDINSTTYPE(y))
           /* recognize `base-rtd` shape: */
           || ((RECORDINSTTYPE(x) == x)
@@ -1378,7 +1378,7 @@ INT pax_encode21(INT n)
 #endif /* HPUX */
 
 /* used here, in S_gc(), and in compile.ss */
-void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; ptr p, x; {
+void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
     void *address; uptr item;
 
     address = TO_VOIDP((uptr)p + n);
@@ -1472,7 +1472,7 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
 }
 
 /* used in S_gc() */
-ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
+ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
     void *address; uptr item;
 
     address = TO_VOIDP((uptr)p + n);
@@ -1813,7 +1813,7 @@ void x86_64_set_popcount_present(ptr code) {
 #define CALL(disp) (OP_CALL | (disp) >> 2 & 0x3fffffff)
 
 
-static INT extract_reg_from_sethi(address) void *address; {
+static INT extract_reg_from_sethi(void* address) {
   return *(U32 *)address >> 25;
 }
 
@@ -1827,7 +1827,7 @@ static void emit_sethi_lo(U32 item, INT destreg, void *address) {
   *((U32 *)address + 1) = ORI(destreg,low,destreg);
 }
 
-static uptr sparc64_get_literal(address) void *address; {
+static uptr sparc64_get_literal(void *address) {
   uptr item;
 
  /* we may have "call disp" followed by delay instruction */
@@ -1873,7 +1873,7 @@ static U32 adjust_delay_inst(delay_inst, old_call_addr, new_call_addr)
   return 0; /* fortunately, not a valid instruction here */
 }
 
-static void sparc64_set_call(address, call_addr, item) void *address; U32 *call_addr; uptr item; {
+static void sparc64_set_call(void *address, U32 *call_addr, uptr item) {
   U32 delay_inst = *(call_addr + 1), new_delay_inst; iptr disp;
 
  /* later: make item local if it refers to Scheme code, i.e., is in the
@@ -1893,7 +1893,7 @@ static void sparc64_set_call(address, call_addr, item) void *address; U32 *call_
   }
 }
 
-static INT sparc64_set_lit_only(address, item, destreg) void *address; uptr item; I32 destreg; {
+static INT sparc64_set_lit_only(void *address, uptr item, I32 destreg) {
 
   if ((iptr)item >= -0xffffffff && item <= 0xffffffff) {
     uptr x, high, low;
@@ -1926,7 +1926,7 @@ static INT sparc64_set_lit_only(address, item, destreg) void *address; uptr item
   }
 }
 
-static void sparc64_set_literal(address, item) void *address; uptr item; {
+static void sparc64_set_literal(void* address, uptr item) {
   I32 destreg;
 
  /* case 1: we have call followed by delay inst */

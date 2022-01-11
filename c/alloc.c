@@ -20,7 +20,7 @@
 /* locally defined functions */
 static void maybe_queue_fire_collector(thread_gc *tgc);
 
-void S_alloc_init() {
+void S_alloc_init(void) {
     ISPC s; IGEN g; UINT i;
 
     if (S_boot_time) {
@@ -95,14 +95,14 @@ void S_alloc_init() {
     }
 }
 
-void S_protect(p) ptr *p; {
+void S_protect(ptr *p) {
     if (S_G.protect_next > max_protected)
         S_error_abort("max_protected constant too small");
     *p = snil;
     S_G.protected[S_G.protect_next++] = p;
 }
 
-void S_reset_scheme_stack(tc, n) ptr tc; iptr n; {
+void S_reset_scheme_stack(ptr tc, iptr n) {
     ptr *x; iptr m;
 
   /* we allow less than one_shot_headroom here for no truly justifyable
@@ -137,7 +137,7 @@ void S_reset_scheme_stack(tc, n) ptr tc; iptr n; {
     SFP(tc) = (ptr)SCHEMESTACK(tc);
 }
 
-ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
+ptr S_compute_bytes_allocated(ptr xg, ptr xs) {
   ptr tc = get_thread_context();
   ISPC s, smax, smin; IGEN g, gmax, gmin;
   uptr n;
@@ -328,7 +328,7 @@ void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
    since we grab large blocks of segments for them.
 */
 
-void S_reset_allocation_pointer(tc) ptr tc; {
+void S_reset_allocation_pointer(ptr tc) {
   iptr seg;
   thread_gc *tgc = THREAD_GC(tc);
 
@@ -464,7 +464,7 @@ void S_scan_dirty(ptr *p, ptr *endp) {
  * is insufficient room for a remembered set addition.
  */
 
-void S_scan_remembered_set() {
+void S_scan_remembered_set(void) {
   ptr tc = get_thread_context();
   uptr ap, eap, real_eap;
 
@@ -498,7 +498,7 @@ void S_scan_remembered_set() {
  * the appropriate type and size.
  */
 
-void S_get_more_room() {
+void S_get_more_room(void) {
   ptr tc = get_thread_context();
   ptr xp; uptr ap, type, size;
 
@@ -607,7 +607,7 @@ ptr S_cons_in(tc, s, g, car, cdr) ptr tc; ISPC s; IGEN g; ptr car, cdr; {
     return p;
 }
 
-ptr Scons(car, cdr) ptr car, cdr; {
+ptr Scons(ptr car, ptr cdr) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -643,11 +643,11 @@ ptr S_box2(ref, immobile) ptr ref; IBOOL immobile; {
     return p;
 }
 
-ptr Sbox(ref) ptr ref; {
+ptr Sbox(ptr ref) {
     return S_box2(ref, 0);
 }
 
-ptr S_symbol(name) ptr name; {
+ptr S_symbol(ptr name) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -662,7 +662,7 @@ ptr S_symbol(name) ptr name; {
     return p;
 }
 
-ptr S_rational(n, d) ptr n, d; {
+ptr S_rational(ptr n, ptr d) {
     if (d == FIX(1)) return n;
     else {
         ptr tc = get_thread_context();
@@ -688,7 +688,7 @@ ptr S_tlc(ptr keyval, ptr ht, ptr next) {
     return p;
 }
 
-ptr S_vector_in(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
+ptr S_vector_in(ptr tc, ISPC s, IGEN g, iptr n) {
     ptr p; iptr d;
 
     if (n == 0) return S_G.null_vector;
@@ -702,7 +702,7 @@ ptr S_vector_in(tc, s, g, n) ptr tc; ISPC s; IGEN g; iptr n; {
     return p;
 }
 
-ptr S_vector(n) iptr n; {
+ptr S_vector(iptr n) {
     ptr tc;
     ptr p; iptr d;
 
@@ -719,7 +719,7 @@ ptr S_vector(n) iptr n; {
     return p;
 }
 
-ptr S_fxvector(n) iptr n; {
+ptr S_fxvector(iptr n) {
     ptr tc;
     ptr p; iptr d;
 
@@ -753,11 +753,11 @@ ptr S_flvector(n) iptr n; {
     return p;
 }
 
-ptr S_bytevector(n) iptr n; {
+ptr S_bytevector(iptr n) {
   return S_bytevector2(get_thread_context(), n, space_new);
 }
 
-ptr S_bytevector2(tc, n, spc) ptr tc; iptr n; ISPC spc; {
+ptr S_bytevector2(ptr tc, iptr n, ISPC spc) {
     ptr p; iptr d;
 
     if (n == 0) return S_G.null_bytevector;
@@ -774,7 +774,7 @@ ptr S_bytevector2(tc, n, spc) ptr tc; iptr n; ISPC spc; {
     return p;
 }
 
-ptr S_null_immutable_vector() {
+ptr S_null_immutable_vector(void) {
   ptr tc = get_thread_context();
   ptr v;
   find_room(tc, space_new, 0, type_typed_object, size_vector(0), v);
@@ -782,7 +782,7 @@ ptr S_null_immutable_vector() {
   return v;
 }
 
-ptr S_null_immutable_bytevector() {
+ptr S_null_immutable_bytevector(void) {
   ptr tc = get_thread_context();
   ptr v;
   find_room(tc, space_new, 0, type_typed_object, size_bytevector(0), v);
@@ -790,7 +790,7 @@ ptr S_null_immutable_bytevector() {
   return v;
 }
 
-ptr S_null_immutable_string() {
+ptr S_null_immutable_string(void) {
   ptr tc = get_thread_context();
   ptr v;
   find_room(tc, space_new, 0, type_typed_object, size_string(0), v);
@@ -835,7 +835,7 @@ int Srecord_type_uniformp(ptr rtd) {
   return RECORDDESCPM(rtd) == FIX(-1);
 }
 
-ptr S_closure(cod, n) ptr cod; iptr n; {
+ptr S_closure(ptr cod, iptr n) {
     ptr tc = get_thread_context();
     ptr p; iptr d;
 
@@ -845,9 +845,8 @@ ptr S_closure(cod, n) ptr cod; iptr n; {
     return p;
 }
 
-ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders, attachments)
-        ISPC s; IGEN g; ptr nuate; ptr stack; iptr length; iptr clength; ptr link;
-        ptr ret; ptr winders; ptr attachments; {
+ptr S_mkcontinuation(ISPC s, IGEN g, ptr nuate, ptr stack, iptr length, iptr clength, ptr link,
+                     ptr ret, ptr winders, ptr attachments) {
     ptr p;
     ptr tc = get_thread_context();
 
@@ -863,7 +862,7 @@ ptr S_mkcontinuation(s, g, nuate, stack, length, clength, link, ret, winders, at
     return p;
 }
 
-ptr Sflonum(x) double x; {
+ptr Sflonum(double x) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -872,7 +871,7 @@ ptr Sflonum(x) double x; {
     return p;
 }
 
-ptr S_inexactnum(rp, ip) double rp, ip; {
+ptr S_inexactnum(double rp, double ip) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -883,7 +882,7 @@ ptr S_inexactnum(rp, ip) double rp, ip; {
     return p;
 }
 
-ptr S_thread(tc) ptr tc; {
+ptr S_thread(ptr tc) {
     ptr p;
 
     find_room(tc, space_new, 0, type_typed_object, size_thread, p);
@@ -892,7 +891,7 @@ ptr S_thread(tc) ptr tc; {
     return p;
 }
 
-ptr S_exactnum(a, b) ptr a, b; {
+ptr S_exactnum(ptr a, ptr b) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -906,7 +905,7 @@ ptr S_exactnum(a, b) ptr a, b; {
 /* S_string returns a new string of length n.  If s is not NULL, it is
  * copied into the new string.  If n < 0, then s must be non-NULL,
  * and the length of s (by strlen) determines the length of the string */
-ptr S_string(s, n) const char *s; iptr n; {
+ptr S_string(const char *s, iptr n) {
     ptr tc;
     ptr p; iptr d;
     iptr i;
@@ -944,7 +943,7 @@ ptr S_string(s, n) const char *s; iptr n; {
     return p;
 }
 
-ptr Sstring_utf8(s, n) const char *s; iptr n; {
+ptr Sstring_utf8(const char *s, iptr n) {
   const char* u8;
   iptr cc, d, i, n8;
   ptr p, tc;
@@ -1063,7 +1062,7 @@ ptr Sstring_utf8(s, n) const char *s; iptr n; {
   return p;
 }
 
-ptr S_bignum(tc, n, sign) ptr tc; iptr n; IBOOL sign; {
+ptr S_bignum(ptr tc, iptr n, IBOOL sign) {
     ptr p; iptr d;
 
     if ((uptr)n > (uptr)maximum_bignum_length)
@@ -1078,7 +1077,7 @@ ptr S_bignum(tc, n, sign) ptr tc; iptr n; IBOOL sign; {
     return p;
 }
 
-ptr S_code(tc, type, n) ptr tc; iptr type, n; {
+ptr S_code(ptr tc, iptr type, iptr n) {
     ptr p; iptr d;
 
     d = size_code(n);
@@ -1092,7 +1091,7 @@ ptr S_code(tc, type, n) ptr tc; iptr type, n; {
     return p;
 }
 
-ptr S_relocation_table(n) iptr n; {
+ptr S_relocation_table(iptr n) {
     ptr tc = get_thread_context();
     ptr p; iptr d;
 

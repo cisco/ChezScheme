@@ -28,7 +28,7 @@ static ptr s_GetRegistry(wchar_t *s);
 static void s_PutRegistry(wchar_t *s, wchar_t *val);
 static void s_RemoveRegistry(wchar_t *s);
 
-void S_machine_init() {
+void S_machine_init(void) {
     Sregister_symbol("(com)CreateInstance", (void *)s_CreateInstance);
     Sregister_symbol("(windows)GetRegistry", (void *)s_GetRegistry);
     Sregister_symbol("(windows)PutRegistry", (void *)s_PutRegistry);
@@ -36,7 +36,7 @@ void S_machine_init() {
     Sregister_symbol("(windows)ErrorString", (void *)s_ErrorString);
 }
 
-INT S_getpagesize() {
+INT S_getpagesize(void) {
   SYSTEM_INFO si;
   GetSystemInfo(&si);
   return si.dwPageSize;

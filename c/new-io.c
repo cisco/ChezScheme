@@ -794,7 +794,7 @@ ptr S_set_fd_length(ptr file, ptr length, IBOOL gzflag) {
   return flag ? S_strerror(errno) : Strue;
 }
 
-void S_new_io_init() {
+void S_new_io_init(void) {
   if (S_boot_time) {
     S_set_symbol_value(S_intern((const unsigned char *)"$c-bufsiz"), Sinteger(SBUFSIZ));
   }

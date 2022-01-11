@@ -26,7 +26,7 @@ static ptr mkstring PROTO((const string_char *s, iptr n));
 #define OBINDEX(hc, len) ((hc) & ((len) - 1))
 #define MIN_OBLIST_LENGTH 4096
 
-void S_intern_init() {
+void S_intern_init(void) {
     IGEN g;
 
     if (!S_boot_time) return;
@@ -268,7 +268,7 @@ ptr S_intern3(const string_char *pname, iptr plen, const string_char *uname, ipt
   return sym;
 }
 
-void S_intern_gensym(sym) ptr sym; {
+void S_intern_gensym(ptr sym) {
   ptr uname_str = Scar(SYMNAME(sym));
   const string_char *uname = &STRIT(uname_str, 0);
   iptr ulen = Sstring_length(uname_str);
@@ -338,7 +338,7 @@ ptr S_intern4(sym) ptr sym; {
 }
 
 /* retrofit existing symbols once nonprocedure_code is available */
-void S_retrofit_nonprocedure_code() {
+void S_retrofit_nonprocedure_code(void) {
   ptr npc, sym, val; bucket_list *bl;
 
   npc = S_G.nonprocedure_code;

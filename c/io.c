@@ -116,7 +116,7 @@ wchar_t *S_malloc_wide_pathname(const char *inpath) {
 }
 #endif
 
-IBOOL S_fixedpathp(inpath) const char *inpath; {
+IBOOL S_fixedpathp(const char *inpath) {
   char c; IBOOL res; char *path;
 
   path = S_malloc_pathname(inpath);

@@ -46,7 +46,7 @@ static INT run_script PROTO((const char *who, const char *scriptfile, INT argc, 
 
 extern void scheme_include(void);
 
-static void main_init() {
+static void main_init(void) {
     ptr tc = get_thread_context();
     ptr p;
     INT i;
@@ -147,7 +147,7 @@ static void main_init() {
 
 static ptr fixtest = FIX(-1);
 
-static void idiot_checks() {
+static void idiot_checks(void) {
   IBOOL oops = 0;
 
   if (bytes_per_segment < S_pagesize) {
@@ -369,7 +369,7 @@ static ptr boot_call PROTO((ptr tc, ptr p, INT n));
 static void check_ap PROTO((ptr tc));
 
 /* arguments and ac0 set up */
-static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
+static ptr boot_call(ptr tc, ptr p, INT n) {
     AC1(tc) = p;
     CP(tc) = Svoid; /* don't have calling code object */
 
@@ -393,7 +393,7 @@ static ptr boot_call(tc, p, n) ptr tc; ptr p; INT n; {
     return p;
 }
 
-static void check_ap(tc) ptr tc; {
+static void check_ap(ptr tc) {
     if ((uptr)AP(tc) & (byte_alignment - 1)) {
         (void) fprintf(stderr, "ap is not double word aligned\n");
         S_abnormal_exit();
@@ -404,7 +404,7 @@ static void check_ap(tc) ptr tc; {
     }
 }
 
-void S_generic_invoke(tc, code) ptr tc; ptr code; {
+void S_generic_invoke(ptr tc, ptr code) {
 #if defined(PORTABLE_BYTECODE)
   S_pb_interp(tc, (void *)&CODEIT(code,0));
 #elif defined(PPCAIX)
@@ -456,7 +456,7 @@ static IBOOL next_path PROTO((char *path, const char *name, const char *ext, con
 static const char *path_last PROTO((const char *path));
 static char *get_defaultheapdirs PROTO((void));
 
-static const char *path_last(p) const char *p; {
+static const char *path_last(const char *p) {
   const char *s;
 #ifdef WIN32
   char c;
@@ -512,7 +512,8 @@ static char *get_defaultheapdirs() {
  * the search path.  path should be a pointer to an unoccupied buffer
  * PATH_MAX characters long.  either or both of sp/dsp may be empty,
  * but neither may be null, i.e., (char *)0. */
-static IBOOL next_path(path, name, ext, sp, dsp) char *path; const char *name, *ext, **sp, **dsp; {
+static IBOOL next_path(char *path, const char *name, const char *ext,
+                       const char **sp, const char **dsp) {
   char *p;
   const char *s, *t;
 
@@ -846,7 +847,7 @@ static uptr get_uptr(INT fd, uptr *pn) {
   return 0;
 }
 
-static INT get_string(fd, s, max, c) INT fd; char *s; iptr max; INT *c; {
+static INT get_string(INT fd, char *s, iptr max, INT *c) {
   while (max-- > 0) {
     if (*c < 0) return -1;
     if (*c == ' ' || *c == ')') {
@@ -889,7 +890,7 @@ static void boot_element(ptr tc, ptr x, iptr n) {
   }
 }
 
-static void load(tc, n, base) ptr tc; iptr n; IBOOL base; {
+static void load(ptr tc, iptr n, IBOOL base) {
   ptr x; iptr i;
 
   if (bd[n].need_check) {
@@ -975,7 +976,7 @@ const char *Skernel_version(void) {
   return VERSION;
 }
 
-extern void Sset_verbose(v) INT v; {
+extern void Sset_verbose(INT v) {
   verbose = v;
 }
 
@@ -991,7 +992,7 @@ static void default_abnormal_exit(void) {
   abort();
 }
 
-extern void Sscheme_init(abnormal_exit) void (*abnormal_exit) PROTO((void)); {
+extern void Sscheme_init(void (*abnormal_exit)(void)) {
   S_abnormal_exit_proc = abnormal_exit ? abnormal_exit : default_abnormal_exit;
   S_errors_to_console = 1;
 
@@ -1065,17 +1066,17 @@ static void check_boot_file_state(const char *who) {
   }
 }
 
-extern void Sregister_boot_file(name) const char *name; {
+extern void Sregister_boot_file(const char *name) {
   check_boot_file_state("Sregister_boot_file");
   find_boot(name, "", 0, -1, 1);
 }
 
-extern void Sregister_boot_direct_file(name) const char *name; {
+extern void Sregister_boot_direct_file(const char *name) {
   check_boot_file_state("Sregister_boot_direct_file");
   find_boot(name, "", 1, -1, 1);
 }
 
-extern void Sregister_boot_file_fd(name, fd) const char *name; int fd; {
+extern void Sregister_boot_file_fd(const char *name, int fd) {
   check_boot_file_state("Sregister_boot_file_fd");
   find_boot(name, "", 1, fd, 1);
 }
@@ -1106,7 +1107,7 @@ extern void Sregister_heap_file(UNUSED const char *path) {
   S_abnormal_exit();
 }
 
-extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_init) PROTO((void)); {
+extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
   ptr tc = Svoid; /* initialize to make gcc happy */
   ptr p;
 
@@ -1213,14 +1214,14 @@ extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_i
   S_errors_to_console = 0;
 }
 
-extern void Senable_expeditor(history_file) const char *history_file; {
+extern void Senable_expeditor(const char *history_file) {
   Scall1(S_symbol_value(Sstring_to_symbol("$enable-expeditor")), Strue);
   if (history_file != (const char *)0)
     Scall1(S_symbol_value(Sstring_to_symbol("$expeditor-history-file")),
            Sstring_utf8(history_file, -1));
 }
 
-extern INT Sscheme_start(argc, argv) INT argc; const char *argv[]; {
+extern INT Sscheme_start(INT argc, const char *argv[]) {
   ptr tc = get_thread_context();
   ptr arglist, p; INT i;
 
@@ -1290,11 +1291,11 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
   return p == Svoid ? 0 : 1;
 }
 
-extern INT Sscheme_script(scriptfile, argc, argv) const char *scriptfile; INT argc; const char *argv[]; {
+extern INT Sscheme_script(const char *scriptfile, INT argc, const char *argv[]) {
   return run_script("Sscheme_script", scriptfile, argc, argv, 0);
 }
 
-extern INT Sscheme_program(programfile, argc, argv) const char *programfile; INT argc; const char *argv[]; {
+extern INT Sscheme_program(const char *programfile, INT argc, const char *argv[]) {
   return run_script("Sscheme_program", programfile, argc, argv, 1);
 }
 
@@ -1303,7 +1304,7 @@ extern void Ssave_heap(UNUSED const char *path, UNUSED INT level) {
   S_abnormal_exit();
 }
 
-extern void Sscheme_deinit() {
+extern void Sscheme_deinit(void) {
   ptr p, tc = get_thread_context();
 
   switch (current_state) {
