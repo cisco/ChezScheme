@@ -23,4 +23,4 @@
 oops, no S_flushcache_max_gap or S_doflush
 #endif /* FLUSHCACHE */
 
-void S_machine_init() {}
+void S_machine_init(void) {}

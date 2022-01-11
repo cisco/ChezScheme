@@ -45,7 +45,7 @@ static void add_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list))
 static seginfo *sort_seginfo PROTO((seginfo *si, uptr n));
 static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
 
-void S_segment_init() {
+void S_segment_init(void) {
   IGEN g; ISPC s; int i;
 
   if (!S_boot_time) return;
@@ -231,7 +231,7 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
   }
 }
 
-iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
+iptr S_find_segments(ISPC s, IGEN g, iptr n) {
   chunkinfo *chunk, *nextchunk;
   seginfo *si, *nextsi, **prevsi;
   iptr nunused_segs, j;

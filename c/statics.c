@@ -19,4 +19,4 @@
 
 /* The C linker may require a reference to a function to pull in all
    the common declarations. */
-void scheme_statics() { }
+void scheme_statics(void) { }

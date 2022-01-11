@@ -72,7 +72,7 @@ extern void S_flush_instruction_cache(ptr tc) {
   CODERANGESTOFLUSH(tc) = Snil;
 }
 
-extern void S_flushcache_init() {
+extern void S_flushcache_init(void) {
   if (S_boot_time) {
     max_gap = S_flushcache_max_gap();
     if (max_gap < (uptr)(code_data_disp + byte_alignment)) {
@@ -84,6 +84,6 @@ extern void S_flushcache_init() {
 
 extern void S_record_code_mod(UNUSED ptr tc, UNUSED uptr addr, UNUSED uptr bytes) {}
 extern void S_flush_instruction_cache(UNUSED ptr tc) {}
-extern void S_flushcache_init() { return; }
+extern void S_flushcache_init(void) { return; }
 
 #endif /* FLUSHCACHE */

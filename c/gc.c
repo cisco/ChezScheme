@@ -234,7 +234,7 @@ static ptr append_bang(ptr ls1, ptr ls2) { /* assumes ls2 pairs are older than l
   }
 }
 
-static uptr count_unique(ls) ptr ls; { /* assumes ls is sorted and nonempty */
+static uptr count_unique(ptr ls) { /* assumes ls is sorted and nonempty */
   uptr i = 1; ptr x = Scar(ls), y;
   while ((ls = Scdr(ls)) != Snil) {
     if ((y = Scar(ls)) != x) {
@@ -1398,7 +1398,7 @@ static void resweep_weak_pairs(ONLY_FORMAL_CTGS) {
     }
 }
 
-static void forward_or_bwp(pp, p) ptr *pp; ptr p; {
+static void forward_or_bwp(ptr *pp, ptr p) {
   seginfo *si;
  /* adapted from relocate */
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
@@ -1489,7 +1489,7 @@ static void sweep_generation(ptr tc FORMAL_CTGS) {
 }
 
 #ifndef NO_LOCKED_OLDSPACE_OBJECTS
-static iptr size_object(p) ptr p; {
+static iptr size_object(ptr p) {
     ITYPE t; ptr tf;
 
     if ((t = TYPEBITS(p)) == type_pair) {
@@ -2297,7 +2297,7 @@ static IGEN check_dirty_ephemeron(ptr pe, IGEN youngest FORMAL_CTGS) {
   return youngest;
 }
 
-static void clear_trigger_ephemerons() {
+static void clear_trigger_ephemerons(void) {
   ptr pe;
 
   if (pending_ephemerons != NULL)

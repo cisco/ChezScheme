@@ -2269,3 +2269,9 @@
 - consolidate the $thread-check code in misc.ms and thread.ms, keeping
   the thread.ms version of the code since it is more recent
     mats/misc.ms mats/thread-check.ss mats/thread.ms
+- Replace K&R style function declarations with ANSI style
+    c/alloc.c c/arm32le.c c/externs.h c/fasl.c c/flushcache.c c/foreign.c
+    c/gc.c c/gcwrapper.c c/i32le.c c/intern.c c/io.c c/itest.c c/new-io.c
+    c/number.c c/ppc32.c c/ppc32le.c c/prim.c c/prim5.c c/print.c c/scheme.c
+    c/schlib.c c/schsig.c c/segment.c c/statics.c c/stats.c c/symbol.c
+    c/thread.c c/windows.c mats/foreign1.c

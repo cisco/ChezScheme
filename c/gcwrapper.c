@@ -27,7 +27,7 @@ static void check_dirty PROTO((void));
 
 static IBOOL checkheap_noisy;
 
-void S_gc_init() {
+void S_gc_init(void) {
   IGEN g; INT i;
 
   S_checkheap = 0; /* 0 for disabled, 1 for enabled */
@@ -165,7 +165,7 @@ void S_set_minfreegen(IGEN g) {
   }
 }
 
-static IBOOL memqp(x, ls) ptr x, ls; {
+static IBOOL memqp(ptr x, ptr ls) {
   for (;;) {
     if (ls == Snil) return 0;
     if (Scar(ls) == x) return 1;
@@ -173,7 +173,7 @@ static IBOOL memqp(x, ls) ptr x, ls; {
   }
 }
 
-static IBOOL remove_first_nomorep(x, pls, look) ptr x, *pls; IBOOL look; {
+static IBOOL remove_first_nomorep(ptr x, ptr *pls, IBOOL look) {
   ptr ls;
 
   for (;;) {
@@ -192,7 +192,7 @@ static IBOOL remove_first_nomorep(x, pls, look) ptr x, *pls; IBOOL look; {
   return 0;
 }
 
-IBOOL Slocked_objectp(x) ptr x; {
+IBOOL Slocked_objectp(ptr x) {
   seginfo *si; IGEN g; IBOOL ans; ptr ls;
 
   if (IMMEDIATE(x) || (si = MaybeSegInfo(ptr_get_segment(x))) == NULL || (g = si->generation) == static_generation) return 1;
@@ -229,7 +229,7 @@ ptr S_locked_objects(void) {
   return ans;
 }
 
-void Slock_object(x) ptr x; {
+void Slock_object(ptr x) {
   seginfo *si; IGEN g;
 
   tc_mutex_acquire()
@@ -250,7 +250,7 @@ void Slock_object(x) ptr x; {
   tc_mutex_release()
 }
 
-void Sunlock_object(x) ptr x; {
+void Sunlock_object(ptr x) {
   seginfo *si; IGEN g;
 
   tc_mutex_acquire()
@@ -380,7 +380,7 @@ ptr S_object_counts(void) {
 /* Scompact_heap().  Compact into as few O/S chunks as possible and
  * move objects into static generation
  */
-void Scompact_heap() {
+void Scompact_heap(void) {
   ptr tc = get_thread_context();
   S_pants_down += 1;
   S_gc_oce(tc, S_G.max_nonstatic_generation, static_generation, static_generation);
@@ -403,7 +403,7 @@ void Scompact_heap() {
    If noisy is nonzero, additional comments may be included in the output
 */
 
-static void segment_tell(seg) uptr seg; {
+static void segment_tell(uptr seg) {
   seginfo *si;
   ISPC s, s1;
   static char *spacename[max_space+1] = { alloc_space_names };
@@ -435,7 +435,7 @@ void S_addr_tell(ptr p) {
   segment_tell(addr_get_segment(p));
 }
 
-static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
+static void check_heap_dirty_msg(char *msg, ptr *x) {
     INT d; seginfo *si;
 
     si = SegInfo(addr_get_segment(x));
@@ -445,7 +445,7 @@ static void check_heap_dirty_msg(msg, x) char *msg; ptr *x; {
     printf("to   "); segment_tell(addr_get_segment(*x));
 }
 
-void S_check_heap(aftergc) IBOOL aftergc; {
+void S_check_heap(IBOOL aftergc) {
   uptr seg; INT d; ISPC s; IGEN g; IDIRTYBYTE dirty; IBOOL found_eos; IGEN pg;
   ptr p, *pp1, *pp2, *nl;
   iptr i;
@@ -675,7 +675,7 @@ static void check_dirty_space(ISPC s) {
   }
 }
 
-static void check_dirty() {
+static void check_dirty(void) {
   IGEN from_g, to_g; seginfo *si;
 
   for (from_g = 1; from_g <= static_generation; from_g = from_g == S_G.max_nonstatic_generation ? static_generation : from_g + 1) {

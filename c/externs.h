@@ -412,4 +412,4 @@ extern void S_expeditor_init PROTO((void));
 #endif /* FEATURE_EXPEDITOR */
 
 /* statics.c */
-extern void scheme_statics();
+extern void scheme_statics(void);

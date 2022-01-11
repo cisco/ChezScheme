@@ -85,7 +85,7 @@ static ptr bvstring(const char *s) {
 }
 
 /* multiplier weights each character, h = n factors in the length */
-static iptr symhash(s) const char *s; {
+static iptr symhash(const char *s) {
   iptr n, h;
 
   h = n = strlen(s);
@@ -93,7 +93,7 @@ static iptr symhash(s) const char *s; {
   return (h & 0x7fffffff) % buckets;
 }
 
-static ptr lookup_static(s) const char *s; {
+static ptr lookup_static(const char *s) {
   iptr b; ptr p;
 
   b = symhash(s);
@@ -106,7 +106,7 @@ static ptr lookup_static(s) const char *s; {
 
 #ifdef LOAD_SHARED_OBJECT
 #define LOOKUP_DYNAMIC
-static ptr lookup_dynamic(s, tbl) const char *s; ptr tbl; {
+static ptr lookup_dynamic(const char *s, ptr tbl) {
     ptr p;
 
     for (p = tbl; p != Snil; p = Scdr(p)) {
@@ -128,7 +128,7 @@ static ptr lookup_dynamic(s, tbl) const char *s; ptr tbl; {
 }
 #endif /* LOAD_SHARED_OBJECT */
 
-static ptr lookup(s) const char *s; {
+static ptr lookup(const char *s) {
     iptr b; ptr p;
 
 #ifdef LOOKUP_DYNAMIC
@@ -158,7 +158,7 @@ quit:
     return x;
 }
 
-void Sforeign_symbol(s, v) const char *s; void *v; {
+void Sforeign_symbol(const char *s, void *v) {
     iptr b; ptr x;
 
     tc_mutex_acquire()
@@ -179,7 +179,7 @@ void Sforeign_symbol(s, v) const char *s; void *v; {
 
 /* like Sforeign_symbol except it silently redefines the symbol
    if it's already in S_G.foreign_static */
-void Sregister_symbol(s, v) const char* s; void *v; {
+void Sregister_symbol(const char *s, void *v) {
   iptr b; ptr p;
 
   tc_mutex_acquire()
@@ -197,7 +197,7 @@ void Sregister_symbol(s, v) const char* s; void *v; {
   tc_mutex_release()
 }
 
-static ptr remove_foreign_entry(s) const char *s; {
+static ptr remove_foreign_entry(const char *s) {
     iptr b;
     ptr tbl, p1, p2;
 
@@ -223,7 +223,7 @@ static ptr remove_foreign_entry(s) const char *s; {
 }
 
 #ifdef LOAD_SHARED_OBJECT
-static void load_shared_object(path) const char *path; {
+static void load_shared_object(const char *path) {
     void *handle;
 
     tc_mutex_acquire()
@@ -239,7 +239,7 @@ static void load_shared_object(path) const char *path; {
 }
 #endif /* LOAD_SHARED_OBJECT */
 
-void S_foreign_entry() {
+void S_foreign_entry(void) {
     ptr tc = get_thread_context();
     ptr name, x, bvname;
     iptr i, n;
@@ -274,7 +274,7 @@ static void *lookup_foreign_entry(s) const char *s; {
   return ptr_to_addr(lookup(s));
 }
 
-static ptr foreign_entries() {
+static ptr foreign_entries(void) {
     iptr b; ptr p, entries;
 
     entries = Snil;
@@ -286,11 +286,11 @@ static ptr foreign_entries() {
     return entries;
 }
 
-static ptr foreign_static_table() { return S_G.foreign_static; }
+static ptr foreign_static_table(void) { return S_G.foreign_static; }
 #ifdef LOAD_SHARED_OBJECT
-static ptr foreign_dynamic_table() { return S_foreign_dynamic; }
+static ptr foreign_dynamic_table(void) { return S_foreign_dynamic; }
 #else
-static ptr foreign_dynamic_table() { return Sfalse; }
+static ptr foreign_dynamic_table(void) { return Sfalse; }
 #endif /* LOAD_SHARED_OBJECT */
 
 static octet *foreign_address_name(ptr addr) {
@@ -304,7 +304,7 @@ static octet *foreign_address_name(ptr addr) {
   return NULL;
 }
 
-void S_foreign_init() {
+void S_foreign_init(void) {
   if (S_boot_time) {
     S_protect(&S_G.foreign_static);
     S_G.foreign_static = S_vector(buckets);

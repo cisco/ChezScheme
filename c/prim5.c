@@ -138,47 +138,47 @@ ptr S_strerror(INT errnum) {
   return p;
 }
 
-static INT s_errno() {
+static INT s_errno(void) {
   return errno;
 }
 
-static iptr s_addr_in_heap(x) uptr x; {
+static iptr s_addr_in_heap(uptr x) {
   return MaybeSegInfo(addr_get_segment(x)) != NULL;
 }
 
-static iptr s_ptr_in_heap(x) ptr x; {
+static iptr s_ptr_in_heap(ptr x) {
   return MaybeSegInfo(ptr_get_segment(x)) != NULL;
 }
 
-static ptr s_generation(x) ptr x; {
+static ptr s_generation(ptr x) {
   seginfo *si = MaybeSegInfo(ptr_get_segment(x));
   return si == NULL ? Sfalse : FIX(si->generation);
 }
 
-static iptr s_fxmul(x, y) iptr x, y; {
+static iptr s_fxmul(iptr x, iptr y) {
     return x * y;
 }
 
-static iptr s_fxdiv(x, y) iptr x, y; {
+static iptr s_fxdiv(iptr x, iptr y) {
     return x / y;
 }
 
-static ptr s_trunc_rem(x, y) ptr x, y; {
+static ptr s_trunc_rem(ptr x, ptr y) {
   ptr q, r;
   S_trunc_rem(get_thread_context(), x, y, &q, &r);
   return Scons(q, r);
 }
 
-static ptr s_fltofx(x) ptr x; {
+static ptr s_fltofx(ptr x) {
     return FIX((iptr)FLODAT(x));
 }
 
-static ptr s_weak_pairp(p) ptr p; {
+static ptr s_weak_pairp(ptr p) {
   seginfo *si;
   return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && (si->space & ~space_locked) == space_weakpair ? Strue : Sfalse;
 }
 
-static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
+static ptr s_ephemeron_cons(ptr car, ptr cdr) {
   ptr p;
 
   tc_mutex_acquire()
@@ -187,12 +187,12 @@ static ptr s_ephemeron_cons(car, cdr) ptr car, cdr; {
   return p;
 }
 
-static ptr s_ephemeron_pairp(p) ptr p; {
+static ptr s_ephemeron_pairp(ptr p) {
   seginfo *si;
   return Spairp(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && (si->space & ~space_locked) == space_ephemeron ? Strue : Sfalse;
 }
 
-static ptr s_oblist() {
+static ptr s_oblist(void) {
   ptr ls = Snil;
   iptr idx = S_G.oblist_length;
   bucket *b;
@@ -206,15 +206,15 @@ static ptr s_oblist() {
   return ls;
 }
 
-static ptr s_bigoddp(n) ptr n; {
+static ptr s_bigoddp(ptr n) {
     return Sboolean(BIGIT(n, BIGLEN(n) - 1) & 1); /* last bigit */;
 }
 
-static ptr s_float(x) ptr x; {
+static ptr s_float(ptr x) {
     return Sflonum(S_floatify(x));
 }
 
-static ptr s_decode_float(x) ptr x; {
+static ptr s_decode_float(ptr x) {
     require(Sflonump(x),"decode-float","~s is not a float",x);
     return S_decode_float(FLODAT(x));
 }
@@ -626,7 +626,7 @@ static ptr s_system(const char *s) {
 #endif /* WIN32 */
 }
 
-static ptr s_process(s, stderrp) char *s; IBOOL stderrp; {
+static ptr s_process(char *s, IBOOL stderrp) {
     INT ifd = -1, ofd = -1, efd = -1, child = -1;
 
 #ifdef WIN32
@@ -817,7 +817,7 @@ static char *s_getwd() {
 }
 #endif /* GETWD */
 
-static ptr s_set_code_byte(p, n, x) ptr p, n, x; {
+static ptr s_set_code_byte(ptr p, ptr n, ptr x) {
     I8 *a;
 
     a = (I8 *)((uptr)p + UNFIX(n));
@@ -825,7 +825,7 @@ static ptr s_set_code_byte(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_code_word(p, n, x) ptr p, n, x; {
+static ptr s_set_code_word(ptr p, ptr n, ptr x) {
     I16 *a;
 
     a = (I16 *)((uptr)p + UNFIX(n));
@@ -833,7 +833,7 @@ static ptr s_set_code_word(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_code_long(p, n, x) ptr p, n, x; {
+static ptr s_set_code_long(ptr p, ptr n, ptr x) {
     I32 *a;
 
     a = (I32 *)((uptr)p + UNFIX(n));
@@ -841,14 +841,14 @@ static ptr s_set_code_long(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static void s_set_code_long2(p, n, h, l) ptr p, n, h, l; {
+static void s_set_code_long2(ptr p, ptr n, ptr h, ptr l) {
     I32 *a;
 
     a = (I32 *)((uptr)p + UNFIX(n));
     *a = (I32)((UNFIX(h) << 16) + UNFIX(l));
 }
 
-static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
+static ptr s_set_code_quad(ptr p, ptr n, ptr x) {
     I64 *a;
 
     a = (I64 *)((uptr)p + UNFIX(n));
@@ -856,7 +856,7 @@ static ptr s_set_code_quad(p, n, x) ptr p, n, x; {
     return Svoid;
 }
 
-static ptr s_set_reloc(p, n, e) ptr p, n, e; {
+static ptr s_set_reloc(ptr p, ptr n, ptr e) {
     iptr *a;
 
     a = (iptr *)(&RELOCIT(CODERELOC(p), UNFIX(n)));
@@ -864,7 +864,7 @@ static ptr s_set_reloc(p, n, e) ptr p, n, e; {
     return e;
 }
 
-static ptr s_flush_instruction_cache() {
+static ptr s_flush_instruction_cache(void) {
     tc_mutex_acquire()
     S_flush_instruction_cache(get_thread_context());
     tc_mutex_release()
@@ -889,13 +889,13 @@ static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
     return co;
 }
 
-static ptr s_make_reloc_table(codeobj, n) ptr codeobj, n; {
+static ptr s_make_reloc_table(ptr codeobj, ptr n) {
     CODERELOC(codeobj) = S_relocation_table(UNFIX(n));
     RELOCCODE(CODERELOC(codeobj)) = codeobj;
     return Svoid;
 }
 
-static ptr s_make_closure(offset, codeobj) ptr offset, codeobj; {
+static ptr s_make_closure(ptr offset, ptr codeobj) {
 
     return S_closure((ptr)((iptr)codeobj + UNFIX(offset)), 0);
 }
@@ -903,7 +903,7 @@ static ptr s_make_closure(offset, codeobj) ptr offset, codeobj; {
 /* the random formula is based on Knuth.  It returns a random fixnum
  * between 0 and n-1.
  */
-static ptr s_fxrandom(p) ptr p; {
+static ptr s_fxrandom(ptr p) {
   ptr tc = get_thread_context();
   uptr t, n = UNFIX(p);
 
@@ -918,7 +918,7 @@ static ptr s_fxrandom(p) ptr p; {
   }
 }
 
-static ptr s_flrandom(x) ptr x; {
+static ptr s_flrandom(ptr x) {
     ptr tc = get_thread_context();
     U32 t1, t2, t3, t4;
 
@@ -934,12 +934,12 @@ static U32 s_random_seed() {
     return RANDOMSEED(tc);
 }
 
-static void s_set_random_seed(x) U32 x; {
+static void s_set_random_seed(U32 x) {
     ptr tc = get_thread_context();
     RANDOMSEED(tc) = x;
 }
 
-static ptr s_intern(x) ptr x; {
+static ptr s_intern(ptr x) {
   require(Sstringp(x),"string->symbol","~s is not a string",x);
 
   return S_intern_sc(&STRIT(x, 0), Sstring_length(x), x);
@@ -1226,7 +1226,7 @@ static int s_getpid(void) {
   return GETPID();
 }
 
-static ptr s_set_collect_trip_bytes(n) ptr n; {
+static ptr s_set_collect_trip_bytes(ptr n) {
     S_G.collect_trip_bytes = Sunsigned_value(n);
     return Svoid;
 }
@@ -1250,20 +1250,20 @@ extern double log1p();
 #endif /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
 
 static double s_mod PROTO((double x, double y));
-static double s_mod(x, y) double x, y; { return fmod(x, y); }
+static double s_mod(double x, double y) { return fmod(x, y); }
 
 static double s_exp PROTO((double x));
-static double s_exp(x) double x; { return exp(x); }
+static double s_exp(double x) { return exp(x); }
 
 static double s_log PROTO((double x));
-static double s_log(x) double x; { return log(x); }
+static double s_log(double x) { return log(x); }
 
 static double s_pow PROTO((double x, double y));
 #if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb)
 #include <ieeefp.h>
 /* freebsd's pow delivers precise results for integer inputs, e.g.,
  * 10.0^21.0, only with * extended-precision (80-bit) floats */
-static double s_pow(x, y) double x, y; {
+static double s_pow(double x, double y) {
   fp_prec_t p;
   p = fpgetprec();
   if (p != FP_PE) {
@@ -1278,72 +1278,72 @@ static double s_pow(x, y) double x, y; {
 #elif defined(MACOSX)
 /* intel macosx delivers precise results for integer inputs, e.g.,
  * 10.0^21.0, only with long double version of pow */
-static double s_pow(x, y) double x, y; { return powl(x, y); }
+static double s_pow(double x, double y) { return powl(x, y); }
 #else /* i3fb/ti3fb */
-static double s_pow(x, y) double x, y; { return pow(x, y); }
+static double s_pow(double x, double y) { return pow(x, y); }
 #endif /* i3fb/ti3fb */
 
 static double s_sqrt PROTO((double x));
-static double s_sqrt(x) double x; { return sqrt(x); }
+static double s_sqrt(double x) { return sqrt(x); }
 
 static double s_sin PROTO((double x));
-static double s_sin(x) double x; { return sin(x); }
+static double s_sin(double x) { return sin(x); }
 
 static double s_cos PROTO((double x));
-static double s_cos(x) double x; { return cos(x); }
+static double s_cos(double x) { return cos(x); }
 
 static double s_tan PROTO((double x));
-static double s_tan(x) double x; { return tan(x); }
+static double s_tan(double x) { return tan(x); }
 
 static double s_asin PROTO((double x));
-static double s_asin(x) double x; { return asin(x); }
+static double s_asin(double x) { return asin(x); }
 
 static double s_acos PROTO((double x));
-static double s_acos(x) double x; { return acos(x); }
+static double s_acos(double x) { return acos(x); }
 
 static double s_atan PROTO((double x));
-static double s_atan(x) double x; { return atan(x); }
+static double s_atan(double x) { return atan(x); }
 
 static double s_atan2 PROTO((double x, double y));
-static double s_atan2(x, y) double x, y; { return atan2(x, y); }
+static double s_atan2(double x, double y) { return atan2(x, y); }
 
 static double s_sinh PROTO((double x));
-static double s_sinh(x) double x; { return sinh(x); }
+static double s_sinh(double x) { return sinh(x); }
 
 static double s_cosh PROTO((double x));
-static double s_cosh(x) double x; { return cosh(x); }
+static double s_cosh(double x) { return cosh(x); }
 
 static double s_tanh PROTO((double x));
-static double s_tanh(x) double x; { return tanh(x); }
+static double s_tanh(double x) { return tanh(x); }
 
 static double s_floor PROTO((double x));
-static double s_floor(x) double x; { return floor(x); }
+static double s_floor(double x) { return floor(x); }
 
 static double s_ceil PROTO((double x));
-static double s_ceil(x) double x; { return ceil(x); }
+static double s_ceil(double x) { return ceil(x); }
 
 static double s_hypot PROTO((double x, double y));
-static double s_hypot(x, y) double x, y; { return HYPOT(x, y); }
+static double s_hypot(double x, double y) { return HYPOT(x, y); }
 
 #ifdef ARCHYPERBOLIC
 static double s_asinh PROTO((double x));
-static double s_asinh(x) double x; { return asinh(x); }
+static double s_asinh(double x) { return asinh(x); }
 
 static double s_acosh PROTO((double x));
-static double s_acosh(x) double x; { return acosh(x); }
+static double s_acosh(double x){ return acosh(x); }
 
 static double s_atanh PROTO((double x));
-static double s_atanh(x) double x; { return atanh(x); }
+static double s_atanh(double x) { return atanh(x); }
 #endif /* ARCHHYPERBOLIC */
 
 #ifdef LOG1P
 static double s_log1p PROTO((double x));
-static double s_log1p(x) double x; { return log1p(x); }
+static double s_log1p(double x) { return log1p(x); }
 #endif /* LOG1P */
 
 static ptr s_getenv PROTO((char *name));
 
-static ptr s_getenv(name) char *name; {
+static ptr s_getenv(char *name) {
 #ifdef WIN32
   char *s = Sgetenv(name);
 #else /* WIN32 */
@@ -1361,7 +1361,7 @@ static ptr s_getenv(name) char *name; {
 }
 
 static void s_putenv PROTO((char *name, char *value));
-static void s_putenv(name, value) char *name, *value; {
+static void s_putenv(char *name, char *value) {
 #ifdef WIN32
   wchar_t* namew;
   wchar_t* valuew;
@@ -1388,7 +1388,7 @@ static void s_putenv(name, value) char *name, *value; {
 #ifdef PTHREADS
 /* backdoor thread is for testing thread creation by Sactivate_thread */
 #define display(s) { const char *S = (s); if (WRITE(1, S, (unsigned int)strlen(S))) {} }
-static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
+static s_thread_rv_t s_backdoor_thread_start(void *p) {
   display("backdoor thread started\n")
   (void) Sactivate_thread();
   display("thread activated\n")
@@ -1403,16 +1403,16 @@ static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
   s_thread_return;
 }
 
-static iptr s_backdoor_thread(p) ptr p; {
+static iptr s_backdoor_thread(ptr p) {
   display("creating thread\n");
   return s_thread_create(s_backdoor_thread_start, (void *)p);
 }
 
-static ptr s_threads() {
+static ptr s_threads(void) {
   return S_threads;
 }
 
-static void s_mutex_acquire(m) scheme_mutex_t *m; {
+static void s_mutex_acquire(scheme_mutex_t *m) {
   ptr tc = get_thread_context();
 
   if (m == &S_tc_mutex) {
@@ -1431,7 +1431,7 @@ static void s_mutex_acquire(m) scheme_mutex_t *m; {
   }
 }
 
-static ptr s_mutex_acquire_noblock(m) scheme_mutex_t *m; {
+static ptr s_mutex_acquire_noblock(scheme_mutex_t *m) {
   return S_mutex_tryacquire(m) == 0 ? Strue : Sfalse;
 }
 
@@ -1487,7 +1487,7 @@ void S_dump_tc(ptr tc) {
   fflush(stdout);
 }
 
-void S_prim5_init() {
+void S_prim5_init(void) {
     if (!S_boot_time) return;
 
 #ifdef PTHREADS
@@ -1695,7 +1695,7 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_profile_release_counters", (void *)s_profile_release_counters);
 }
 
-static ptr s_get_reloc(co) ptr co; {
+static ptr s_get_reloc(ptr co) {
   ptr t, ls; uptr a, m, n;
 
   require(Scodep(co),"s_get_reloc","~s is not a code object",co);
@@ -1763,7 +1763,7 @@ static void s_stlv(ptr x, ptr v) {
   if (!(expr)) S_error1("s_test_schlib", "test ~s failed", FIX(test));\
 }
 
-static void s_test_schlib() {
+static void s_test_schlib(void) {
   INT test = 0;
   I32 n1 = 0x73215609;
   I64 n2 = n1 * 37;
@@ -1827,7 +1827,7 @@ static void s_breakhere(UNUSED ptr x) {
   return;
 }
 
-static IBOOL s_interactivep() {
+static IBOOL s_interactivep(void) {
   static INT interactivep = -1;
   if (interactivep == -1) {
 #ifdef WIN32
