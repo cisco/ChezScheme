@@ -2259,3 +2259,5 @@
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
 - make threaded foreign mats more robust
     mats/foreign.ms
+- fix running mats on Windows
+    mats/Mf-a6nt mats mats/Mf-i3nt mats/Mf-ta6nt mats-Mf-ti6nt
