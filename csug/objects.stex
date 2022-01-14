@@ -2425,7 +2425,7 @@ may return different subsets of \var{hashtable}'s cells.
 \listlibraries
 \endentryheader
 
-These procedures are like the Revised$^6$ Report procedures \scheme{make-eq-hashtable},
+Like the Revised$^6$ Report procedures \scheme{make-eq-hashtable},
 \scheme{make-eqv-hashtable}, and \scheme{make-hashtable},
 except the keys of the hashtable are held weakly, i.e., they are not
 protected from the garbage collector.
@@ -2437,8 +2437,7 @@ Values in the hashtable are referenced normally as long as the key is
 not reclaimed, since keys are paired values using weak pairs. Consequently,
 if a value in the hashtable refers to its own key, then
 garbage collection is prevented from reclaiming the key. See
-\scheme{make-ephemeron-eq-hashtable}, \scheme{make-ephemeron-eqv-hashtable},
-and \scheme{make-ephemeron-hashtable}.
+\scheme{make-ephemeron-hashtable} and related functions.
 
 A copy of a weak hashtable created by \scheme{hashtable-copy} is
 also weak.
@@ -2465,7 +2464,7 @@ The effect of this can be observed via \scheme{hashtable-keys} and
 \listlibraries
 \endentryheader
 
-These procedures are like \scheme{make-weak-eq-hashtable},
+Like \scheme{make-weak-eq-hashtable},
 \scheme{make-weak-eqv-hashtable}, and \scheme{make-weak-hashtable},
 but a value in the hashtable can refer to a
 key in the hashtable (directly or indirectly) without preventing garbage collection from
@@ -4302,7 +4301,7 @@ The field names are symbols.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{record-type-field-names}{\categoryprocedure}{(record-type-field-indices \var{rtd})}
+\formdef{record-type-field-indices}{\categoryprocedure}{(record-type-field-indices \var{rtd})}
 \returns a list of field indicies of the type represented by \var{rtd}
 \listlibraries
 \endentryheader
@@ -4409,7 +4408,7 @@ rtd ;=> #<record type frob>
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{make-record-type-descriptor*}{\categoryprocedure}{(make-record-type-descriptor* \var{name} \var{parent} \var{uid} \var{s?} \var{o?} \var{fields} \var{mutability})}
+\formdef{make-record-type-descriptor*}{\categoryprocedure}{(make-record-type-descriptor* \var{name} \var{parent} \var{uid} \var{s?} \var{o?} \var{flds} \var{muts})}
 \returns a record-type descriptor for a new record type
 \listlibraries
 \endentryheader
@@ -4417,13 +4416,13 @@ rtd ;=> #<record type frob>
 \noindent
 This variant of \scheme{make-record-type-descriptor} accepts a field
 count and mutability mask in place of a vector of field descriptions,
-which results in a record type with anonymous fields. The \var{fields}
+which results in a record type with anonymous fields. The \var{flds}
 argument must be a non-negative fixnum for the field count, and it is
 added to any fields present in \var{parent} to determine the record
-type's total number of fields. The \var{mutability} argument must be
+type's total number of fields. The \var{muts} argument must be
 an exact non-negative integer that is treated as a bit array; a
 \scheme{1} bit indicates the the corresponding field among
-\var{fields} is mutable.
+\var{flds} is mutable.
 
 If \var{parent} is a record type descriptor, it must also have
 anonymous fields. The resulting anonynmous-field record type can only
@@ -4599,3 +4598,17 @@ the result is unchanged for \scheme{(procedure-arity-mask \var{w-proc})}.
 (set-wrapper-procedure! vector3 list)
 (vector3 1 2 3) ; => (1 2 3)
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{procedure-known-single-valued?}{\categoryprocedure}{(procedure-known-single-valued? \var{proc})}
+\returns a boolean indicating whether \var{proc} is known to always produce a single value
+\listlibraries
+\endentryheader
+
+\noindent
+Returns an approximate classification of \var{proc} as always having a
+single result value or not. The result may be \scheme{#f} for a procedure
+that always returns a single value, but with an implementation that was too
+complex for the compiler to prove that fact. The result is \scheme{#t} only
+for a procedure that always produces a single result value.

@@ -338,6 +338,22 @@ dividing \var{fixnum_1} by the product of the remaining arguments
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{fx+/wraparound}{\categoryprocedure}{(fx+/wraparound \var{fixnum} \dots)}
+\formdef{fx-/wraparound}{\categoryprocedure}{(fx-/wraparound \var{fixnum} \dots)}
+\formdef{fx*/wraparound}{\categoryprocedure}{(fx*/wraparound \var{fixnum} \dots)}
+\formdef{fxsll/wraparound}{\categoryprocedure}{(fxsll/wraparound \var{fixnum} \dots)}
+\returns the arithmetic result, wrapping on overflow
+\listlibraries
+\endentryheader
+
+\noindent
+These functions are like \scheme{fx+}, \scheme{fx-}, \scheme{fx*}, and
+\scheme{fxsll}, but when the result is too large to fit in a fixnum,
+as many high bits of the result are discarded to make the result representable
+as a fixnum.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{fx1+}{\categoryprocedure}{(fx1+ \var{fixnum})}
 \formdef{fx1-}{\categoryprocedure}{(fx1- \var{fixnum})}
 \returns \var{fixnum} plus 1 or \var{fixnum} minus 1

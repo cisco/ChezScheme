@@ -1542,6 +1542,21 @@ body expressions---which, for example, causes references to primitives
 to refer to unsafe variants.
 
 
+\section{Closure-Construction Hint \label{SECTSYNTAXLAMBDALIFTBARRIER}}
+
+%----------------------------------------------------------------------------
+\noskipentryheader
+\formdef{$lambda/lift-barrier}{\categorysyntax}{($lambda/lift-barrier \var{formals} \var{body_1} \var{body_2} \dots)}
+\returns procedure like to \scheme{(lambda \var{formals} \var{body_1} \var{body_2} \dots)}
+\listlibraries
+\endentryheader
+
+\scheme{$lambda/lift-barrier} creates a procedure the same as
+\scheme{lambda}, but compiled for the expectation that the procedure
+is called infrequently, while procedures created within the body may
+be called frequently.
+
+
 \section{Annotations\label{SECTSYNTAXANNOTATIONS}}
 
 \index{annotations}%

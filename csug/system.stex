@@ -1077,7 +1077,7 @@ of \var{input-port} as previously created by functions like \scheme{compile-file
 \scheme{compile-to-port}.
 
 The \var{externals} argument, if supplied, must be a vector. It should
-cooperate with an \var{external-pred} procedure passed to
+cooperate with an \var{ext-pred} procedure passed to
 \scheme{compile-to-port}, analogous to the way a procedure and vector
 cooperate with \scheme{fasl-write} and \scheme{fasl-read}.
 
@@ -1556,12 +1556,12 @@ will take care of closing the ports.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port})}
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd})}
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port})}
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop})}
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop} \var{external-pred})}
-\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{output-port} \var{sfd} \var{wpo-port} \var{covop} \var{external-pred} \var{omit-rtds?})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port} \var{sfd})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port} \var{sfd} \var{wpoop})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port} \var{sfd} \var{wpoop} \var{covop})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port} \var{sfd} \var{wpoop} \var{covop} \var{ext-pred})}
+\formdef{compile-to-port}{\categoryprocedure}{(compile-to-port \var{obj-list} \var{out-port} \var{sfd} \var{wpoop} \var{covop} \var{ext-pred} \var{no-rtds?})}
 \returns see below
 \listlibraries
 \endentryheader
@@ -1573,9 +1573,9 @@ annotated (Section~\ref{SECTSYNTAXANNOTATIONS}).
 If any of the objects does not represent a syntactically valid
 expression, \scheme{compile-to-port} raises an exception with
 condition type \scheme{&syntax}.
-\var{output-port} and, if present, \var{wpo-port} must be binary output ports.
+\var{out-port} and, if present, \var{wpoop} and \var{covop} must be binary output ports.
 If present, \var{sfd} must be a source-file descriptor.
-If present, \var{external-pred} must be \scheme{#f} or a procedure,
+If present, \var{ext-pred} must be \scheme{#f} or a procedure,
 and it must be \scheme{#f} if \var{obj-list} does not have exactlty one element.
 
 \scheme{compile-to-port} is like \scheme{compile-file} except that it takes
@@ -1583,8 +1583,8 @@ input from a list of objects and sends output to an arbitrary binary
 output port.
 \var{sfd} is used to associate block-profiling information with the
 input file name encapsulated within \var{sfd}.
-If \var{wpo-port} is present, \var{compile-to-port} sends whole-program optimization information
-to \var{wpo-port} for use by \scheme{compile-whole-program}, as if
+If \var{wpoop} is present, \var{compile-to-port} sends whole-program optimization information
+to \var{wpoop} for use by \scheme{compile-whole-program}, as if
 (and regardless of whether) \scheme{generate-wpo-files} is set.
 If \var{covop} is present, \var{compile-to-port} sends coverage information to
 \var{covop}, as if (and regardless of whether) \scheme{generate-covin-files} is set.
@@ -1593,13 +1593,13 @@ The ports are not closed automatically after compilation under the assumption
 the program that opens the port and invokes \scheme{compile-to-port}
 will take care of closing the port.
 
-If \var{external-pred} is present and not \scheme{#f}, it is used like
+If \var{ext-pred} is present and not \scheme{#f}, it is used like
 the predicate supplied to \scheme{fasl-write}. In that case, a
 corresponding vector must be provided to
 \scheme{load-compiled-from-port} to load the compiled code, analogous
 to the vector supplied to \scheme{fasl-read}.
 
-If \var{omit-rtds?} is present and true, then any record types
+If \var{no-rtds?} is present and true, then any record types
 relevant to the compiled code must be declared in the loading context,
 and the loading context is assumed to have compatible registrations
 using the same unique ID.
@@ -5567,12 +5567,31 @@ for {\PetiteChezScheme}.
 
 Each of the three return values is a nonnegative fixnum.
 
-In {\ChezScheme} Version 7.9.4:
+In {\ChezScheme} Version 9.5.7.x:
 
 \schemedisplay
-(scheme-version-number) ;=> 7
-                        ;== 9
-                        ;== 4
+(scheme-version-number) ;=> 9
+                        ;== 5
+                        ;== 6
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{scheme-fork-version-number}{\categoryprocedure}{(scheme-fork-version-number)}
+\returns four values: the major, minor, sub-minor, and development version numbers
+\listlibraries
+\endentryheader
+
+Each of the three return values is a nonnegative fixnum.
+
+In {\ChezScheme} Version 9.5.7.1:
+
+\schemedisplay
+(scheme-fork-version-number) ;=> 9
+                             ;== 5
+                             ;== 7
+                             ;== 1
 \endschemedisplay
 
 

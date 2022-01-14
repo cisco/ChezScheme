@@ -2451,7 +2451,7 @@ representation of a foreign address; see
 \noindent
 The result is \scheme{0} if \scheme{obj} is \scheme{#f}, and it is the
 address of \var{objs}'s content in the case that \var{obj} is a
-bytevector of flvector---at least, at the point where
+bytevector or flvector---at least, at the point where
 \scheme{object->reference-address} was called. Unless \var{obj} is
 a locked or immobile bytevector or flvector, its address can change at
 any time that a garbage collection is possible (i.e., when interrupts
@@ -2999,8 +2999,15 @@ cause problems.
 \xdef\cfunction#1#2#3{\noindent\index{\scheme{#2}}%
 [func] \scheme{#1} \scheme{#2}\scheme{(#3)}\\}
 
+\iflatex
 \xdef\cfunctTwo#1#2#3#4{\noindent\index{\scheme{#2}}%
 [func] \scheme{#1} \scheme{#2}\scheme{(#3}\\\hphantom{[func] \scheme{#1} \scheme{#2}\scheme{(}}\scheme{#4)}\\}
+\fi
+
+\ifhtml
+\xdef\cfunctTwo#1#2#3#4{\noindent\index{\scheme{#2}}%
+[func] \scheme{#1} \scheme{#2}\scheme{(#3}\\~~~~~~~~~~~~~~~\scheme{#4)}\\}
+\fi
 
 \parheader{Customization}
 The functions described here are used to initialize the Scheme system,
