@@ -5582,7 +5582,7 @@ In {\ChezScheme} Version 9.5.7.x:
 \schemedisplay
 (scheme-version-number) ;=> 9
                         ;== 5
-                        ;== 6
+                        ;== 7
 \endschemedisplay
 
 
