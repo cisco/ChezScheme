@@ -2989,6 +2989,11 @@ The preprocessor macros may evaluate their arguments more than once
 (or not at all), so care should be taken to ensure that this does not
 cause problems.
 
+\def\NLhphantom#1{\\\hphantom{#1}}
+\ifhtml
+\def\NLhphantom#1{ }
+\fi
+
 % these must be xdef, since their expansions contain \scheme{...}
 \xdef\cconst#1#2{\noindent\index{\scheme{#2}}%
 [macro] \scheme{#1} \scheme{#2}\\}
@@ -2999,15 +3004,8 @@ cause problems.
 \xdef\cfunction#1#2#3{\noindent\index{\scheme{#2}}%
 [func] \scheme{#1} \scheme{#2}\scheme{(#3)}\\}
 
-\iflatex
 \xdef\cfunctTwo#1#2#3#4{\noindent\index{\scheme{#2}}%
-[func] \scheme{#1} \scheme{#2}\scheme{(#3}\\\hphantom{[func] \scheme{#1} \scheme{#2}\scheme{(}}\scheme{#4)}\\}
-\fi
-
-\ifhtml
-\xdef\cfunctTwo#1#2#3#4{\noindent\index{\scheme{#2}}%
-[func] \scheme{#1} \scheme{#2}\scheme{(#3}\\~~~~~~~~~~~~~~~\scheme{#4)}\\}
-\fi
+[func] \scheme{#1} \scheme{#2}\scheme{(#3}\NLhphantom{[func] \scheme{#1} \scheme{#2}\scheme{(}}\scheme{#4)}\\}
 
 \parheader{Customization}
 The functions described here are used to initialize the Scheme system,

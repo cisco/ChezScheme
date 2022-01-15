@@ -10,7 +10,8 @@ latex = pdflatex
 stexmacrofiles = tspl4-prep
 bib = $(x).bib
 index=yes
-TSPL=$(srcdir)/tspl4
+TSPL=tspl4
+TSPLdir=$(srcdir)/$(TSPL)
 DIR=$(shell basename `pwd`)
 
 target: canned logcheck1 logcheck2 checklibs $(x).html $(x).pdf
@@ -55,7 +56,7 @@ stexsrc = csug.stex title.stex copyright.stex contents.stex\
  compat.stex bibliography.stex summary.stex
 texsrc = ${stexsrc:%.stex=%.tex}
 
-moresrc = tspl4-prep.stex priminfo.ss docond.ss csug8.cls csug810.clo scheme.sty csug.bib \
+moresrc = tspl4-prep.stex priminfo.ss docond.ss csug8.cls csug8.hcls csug810.clo scheme.sty csug.bib \
  setup.ss summary.ss tspl.bst
 
 $(stexsrc) $(moresrc):
@@ -138,28 +139,28 @@ $(x).prefirstrun: $(texsrc) csug8.cls csug810.clo
 
 $(x).firstrun: scheme.sty
 
-tspl.aux: ${TSPL}/tspl.aux
-	cat ${TSPL}/*.aux | grep '\\newlabel' | \
+tspl.aux: ${TSPLdir}/tspl.aux
+	cat ${TSPLdir}/*.aux | grep '\\newlabel' | \
          sed -e 's/\\newlabel{\(.*\){\([^}]*\)}}/\\newlabel{TSPL:\1{t\2}}/' > tspl.aux
 
-tspl.haux: ${TSPL}/tspl.haux
-	sed -e 's/(putprop (quote /(putprop (quote |TSPL|:/' ${TSPL}/tspl.haux | \
+tspl.haux: ${TSPLdir}/tspl.haux
+	sed -e 's/(putprop (quote /(putprop (quote |TSPL|:/' ${TSPLdir}/tspl.haux | \
          sed -e 's;url) ";url) "http://scheme.com/${TSPL}/;' > tspl.haux
 
-tspl.rfm: ${TSPL}/tspl.rfm
-	sed -e 's/\\pageref{/\\pageref{TSPL:/' ${TSPL}/tspl.rfm > tspl.rfm
+tspl.rfm: ${TSPLdir}/tspl.rfm
+	sed -e 's/\\pageref{/\\pageref{TSPL:/' ${TSPLdir}/tspl.rfm > tspl.rfm
 
 # this version leaves tspl entries out of the printed index
 #tspl.idx:
 #	echo -n > tspl.idx
 
 # this version includes tspl entries in the printed index
-tspl.idx: ${TSPL}/tspl.idx
-	sed -e 's/{\([1-9][0-9]*\)}$$/{t\1}/' ${TSPL}/tspl.idx | \
+tspl.idx: ${TSPLdir}/tspl.idx
+	sed -e 's/{\([1-9][0-9]*\)}$$/{t\1}/' ${TSPLdir}/tspl.idx | \
          sed -e 's/{\([ivx][ivx]*\)}$$/{t\1}/' > tspl.idx
 
-in.hidx: ${TSPL}/out.hidx
-	sed -e 's;"\(.*\)\.html#;"http://scheme.com/${TSPL}/\1.html#;' ${TSPL}/out.hidx | \
+in.hidx: ${TSPLdir}/out.hidx
+	sed -e 's;"\(.*\)\.html#;"http://scheme.com/${TSPL}/\1.html#;' ${TSPLdir}/out.hidx | \
          sed -e 's/"")$$/"t")/' > in.hidx
 
 $(texsrc): tspl4-prep.stex priminfo.ss primdata.ss
